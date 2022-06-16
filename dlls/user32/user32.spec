@@ -186,7 +186,7 @@
 @ stdcall DrawAnimatedRects(long long ptr ptr)
 @ stdcall DrawCaption(long long ptr long)
 @ stdcall DrawCaptionTempA(long long ptr long long str long)
-@ stdcall DrawCaptionTempW(long long ptr long long wstr long)
+@ stdcall DrawCaptionTempW(long long ptr long long wstr long) NtUserDrawCaptionTemp
 @ stdcall DrawEdge(long ptr long long)
 @ stdcall DrawFocusRect(long ptr)
 @ stub DrawFrame

@@ -322,6 +322,24 @@ static BOOL set_window_text( HWND hwnd, const void *text, BOOL ansi )
     return TRUE;
 }
 
+static int get_window_text( HWND hwnd, WCHAR *str, int count )
+{
+    int ret;
+
+    if (is_current_process_window( hwnd ))
+    {
+        /* FIXME: use packed send message */
+        ret = send_message( hwnd, WM_GETTEXT, count, (LPARAM)str );
+    }
+    else
+    {
+        /* when window belongs to other process, don't send a message */
+        ret = NtUserInternalGetWindowText( hwnd, str, count );
+    }
+
+    return ret;
+}
+
 static HICON get_window_icon( HWND hwnd, WPARAM type )
 {
     HICON ret;
@@ -1411,8 +1429,7 @@ static void draw_nc_caption( HDC hdc, RECT *rect, HWND hwnd, DWORD  style,
         }
     }
 
-    /* FIXME: use packed send message */
-    len = send_message( hwnd, WM_GETTEXT, ARRAY_SIZE( buffer ), (LPARAM)buffer );
+    len = get_window_text( hwnd, buffer, ARRAY_SIZE( buffer ));
     if (len)
     {
         NONCLIENTMETRICSW nclm;
@@ -1434,6 +1451,97 @@ static void draw_nc_caption( HDC hdc, RECT *rect, HWND hwnd, DWORD  style,
                      DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT );
         NtGdiDeleteObjectApp( NtGdiSelectFont( hdc, hOldFont ));
     }
+}
+
+/***********************************************************************
+ *           NtUserDrawCaptionTemp   (win32u.@)
+ */
+BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
+                                   HICON icon, const WCHAR *str, UINT flags )
+{
+    RECT rc = *rect;
+
+    TRACE( "(%p,%p,%p,%p,%p,%s,%08x)\n", hwnd, hdc, rect, font, icon, debugstr_w(str), flags );
+
+    /* drawing background */
+    if (flags & DC_INBUTTON)
+    {
+        fill_rect( hdc, &rc, get_sys_color_brush( COLOR_3DFACE ));
+
+        if (flags & DC_ACTIVE)
+        {
+            HBRUSH hbr = NtGdiSelectBrush( hdc, get_55aa_brush() );
+            NtGdiPatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 0xfa0089 );
+            NtGdiSelectBrush( hdc, hbr );
+        }
+    }
+    else
+    {
+        DWORD style = get_window_long( hwnd, GWL_STYLE );
+        draw_caption_bar( hdc, &rc, style, flags & DC_ACTIVE, flags & DC_GRADIENT );
+    }
+
+    /* drawing icon */
+    if ((flags & DC_ICON) && !(flags & DC_SMALLCAP))
+    {
+        POINT pt;
+
+        pt.x = rc.left + 2;
+        pt.y = (rc.bottom + rc.top - get_system_metrics( SM_CYSMICON )) / 2;
+
+        if (!icon) icon = get_nc_icon_for_window( hwnd );
+        NtUserDrawIconEx( hdc, pt.x, pt.y, icon, get_system_metrics( SM_CXSMICON ),
+                          get_system_metrics( SM_CYSMICON ), 0, 0, DI_NORMAL );
+        rc.left = pt.x + get_system_metrics( SM_CXSMICON );
+    }
+
+    /* drawing text */
+    if (flags & DC_TEXT)
+    {
+        HFONT prev_font;
+        WCHAR text[128];
+        DWORD color;
+
+        if (flags & DC_INBUTTON)
+            color = COLOR_BTNTEXT;
+        else if (flags & DC_ACTIVE)
+            color = COLOR_CAPTIONTEXT;
+        else
+            color = COLOR_INACTIVECAPTIONTEXT;
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( color ), NULL );
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkMode, TRANSPARENT, NULL );
+
+        if (font)
+            prev_font = NtGdiSelectFont( hdc, font );
+        else
+        {
+            NONCLIENTMETRICSW nclm;
+            HFONT new_font;
+            LOGFONTW *lf;
+            nclm.cbSize = sizeof(NONCLIENTMETRICSW);
+            NtUserSystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &nclm, 0 );
+            lf = (flags & DC_SMALLCAP) ? &nclm.lfSmCaptionFont : &nclm.lfCaptionFont;
+            new_font = NtGdiHfontCreate( &lf, sizeof(lf), 0, 0, NULL );
+            prev_font = NtGdiSelectFont( hdc, new_font );
+        }
+
+        if (!str)
+        {
+            if (!get_window_text( hwnd, text, ARRAY_SIZE( text ))) text[0] = 0;
+            str = text;
+        }
+        rc.left += 2;
+        DrawTextW( hdc, str, -1, &rc, ((flags & 0x4000) ? DT_CENTER : DT_LEFT) |
+                   DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_END_ELLIPSIS );
+
+        if (font)
+            NtGdiSelectFont( hdc, prev_font );
+        else
+            NtGdiDeleteObjectApp( NtGdiSelectFont( hdc, prev_font ));
+    }
+
+    if (flags & 0x2000) FIXME( "undocumented flag (0x2000)!\n" );
+    return FALSE;
 }
 
 /* Paint the non-client area for windows */

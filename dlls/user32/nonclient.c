@@ -87,99 +87,12 @@ static void adjust_window_rect( RECT *rect, DWORD style, BOOL menu, DWORD exStyl
 }
 
 
-static HICON NC_IconForWindow( HWND hwnd )
-{
-    HICON hIcon = 0;
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
-    {
-        hIcon = wndPtr->hIconSmall;
-        if (!hIcon) hIcon = wndPtr->hIcon;
-        WIN_ReleasePtr( wndPtr );
-    }
-    if (!hIcon) hIcon = (HICON) GetClassLongPtrW( hwnd, GCLP_HICONSM );
-    if (!hIcon) hIcon = (HICON) GetClassLongPtrW( hwnd, GCLP_HICON );
-
-    /* If there is no icon specified and this is not a modal dialog,
-     * get the default one.
-     */
-    if (!hIcon && !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_DLGMODALFRAME))
-        hIcon = LoadImageW(0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
-                           GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED);
-    return hIcon;
-}
-
-/* Draws the bar part(ie the big rectangle) of the caption */
-static void NC_DrawCaptionBar (HDC hdc, const RECT *rect, DWORD dwStyle, 
-                               BOOL active, BOOL gradient)
-{
-    if (gradient)
-    {
-        TRIVERTEX vertices[4];
-        DWORD colLeft = 
-            GetSysColor (active ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
-        DWORD colRight = 
-            GetSysColor (active ? COLOR_GRADIENTACTIVECAPTION 
-                                : COLOR_GRADIENTINACTIVECAPTION);
-        int buttonsAreaSize = GetSystemMetrics(SM_CYCAPTION) - 1;
-        static GRADIENT_RECT mesh[] = {{0, 1}, {1, 2}, {2, 3}};
-
-        vertices[0].Red   = vertices[1].Red   = GetRValue (colLeft) << 8;
-        vertices[0].Green = vertices[1].Green = GetGValue (colLeft) << 8;
-        vertices[0].Blue  = vertices[1].Blue  = GetBValue (colLeft) << 8;
-        vertices[0].Alpha = vertices[1].Alpha = 0xff00;
-        vertices[2].Red   = vertices[3].Red   = GetRValue (colRight) << 8;
-        vertices[2].Green = vertices[3].Green = GetGValue (colRight) << 8;
-        vertices[2].Blue  = vertices[3].Blue  = GetBValue (colRight) << 8;
-        vertices[2].Alpha = vertices[3].Alpha = 0xff00;
-
-        if ((dwStyle & WS_SYSMENU)
-            && ((dwStyle & WS_MAXIMIZEBOX) || (dwStyle & WS_MINIMIZEBOX)))
-            buttonsAreaSize += 2 * (GetSystemMetrics(SM_CXSIZE) + 1);
-
-        /* area behind icon; solid filled with left color */
-        vertices[0].x = rect->left;
-        vertices[0].y = rect->top;
-        if (dwStyle & WS_SYSMENU)
-            vertices[1].x = min (rect->left + GetSystemMetrics(SM_CXSMICON), rect->right);
-        else
-            vertices[1].x = vertices[0].x;
-        vertices[1].y = rect->bottom;
-
-        /* area behind text; gradient */
-        vertices[2].x = max (vertices[1].x, rect->right - buttonsAreaSize);
-        vertices[2].y = rect->top;
-
-        /* area behind buttons; solid filled with right color */
-        vertices[3].x = rect->right;
-        vertices[3].y = rect->bottom;
-
-        GdiGradientFill (hdc, vertices, 4, mesh, 3, GRADIENT_FILL_RECT_H);
-    }
-    else
-        FillRect (hdc, rect, GetSysColorBrush (active ?
-                  COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION));
-}
-
 /***********************************************************************
  *		DrawCaption (USER32.@) Draws a caption bar
- *
- * PARAMS
- *     hwnd   [I]
- *     hdc    [I]
- *     lpRect [I]
- *     uFlags [I]
- *
- * RETURNS
- *     Success:
- *     Failure:
  */
-
-BOOL WINAPI
-DrawCaption (HWND hwnd, HDC hdc, const RECT *lpRect, UINT uFlags)
+BOOL WINAPI DrawCaption( HWND hwnd, HDC hdc, const RECT *rect, UINT flags )
 {
-    return DrawCaptionTempW (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x103F);
+    return NtUserDrawCaptionTemp( hwnd, hdc, rect, 0, 0, NULL, flags & 0x103f );
 }
 
 
@@ -194,106 +107,16 @@ BOOL WINAPI DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
     BOOL ret = FALSE;
 
     if (!(uFlags & DC_TEXT) || !str)
-        return DrawCaptionTempW( hwnd, hdc, rect, hFont, hIcon, NULL, uFlags );
+        return NtUserDrawCaptionTemp( hwnd, hdc, rect, hFont, hIcon, NULL, uFlags );
 
     len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
     if ((strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
     {
         MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
-        ret = DrawCaptionTempW (hwnd, hdc, rect, hFont, hIcon, strW, uFlags);
+        ret = NtUserDrawCaptionTemp( hwnd, hdc, rect, hFont, hIcon, strW, uFlags );
         HeapFree( GetProcessHeap (), 0, strW );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *		DrawCaptionTempW (USER32.@)
- */
-BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
-                              HICON hIcon, LPCWSTR str, UINT uFlags)
-{
-    RECT   rc = *rect;
-
-    TRACE("(%p,%p,%p,%p,%p,%s,%08x)\n",
-          hwnd, hdc, rect, hFont, hIcon, debugstr_w(str), uFlags);
-
-    /* drawing background */
-    if (uFlags & DC_INBUTTON) {
-        FillRect (hdc, &rc, GetSysColorBrush (COLOR_3DFACE));
-
-        if (uFlags & DC_ACTIVE) {
-            HBRUSH hbr = SelectObject (hdc, SYSCOLOR_Get55AABrush());
-            PatBlt (hdc, rc.left, rc.top,
-                      rc.right-rc.left, rc.bottom-rc.top, 0xFA0089);
-            SelectObject (hdc, hbr);
-        }
-    }
-    else {
-        DWORD style = GetWindowLongW (hwnd, GWL_STYLE);
-        NC_DrawCaptionBar (hdc, &rc, style, uFlags & DC_ACTIVE, uFlags & DC_GRADIENT);
-    }
-
-
-    /* drawing icon */
-    if ((uFlags & DC_ICON) && !(uFlags & DC_SMALLCAP)) {
-        POINT pt;
-
-        pt.x = rc.left + 2;
-        pt.y = (rc.bottom + rc.top - GetSystemMetrics(SM_CYSMICON)) / 2;
-
-        if (!hIcon) hIcon = NC_IconForWindow(hwnd);
-        NtUserDrawIconEx( hdc, pt.x, pt.y, hIcon, GetSystemMetrics(SM_CXSMICON),
-                          GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL );
-        rc.left = pt.x + GetSystemMetrics( SM_CXSMICON );
-    }
-
-    /* drawing text */
-    if (uFlags & DC_TEXT) {
-        HFONT hOldFont;
-        WCHAR text[128];
-
-        if (uFlags & DC_INBUTTON)
-            SetTextColor (hdc, GetSysColor (COLOR_BTNTEXT));
-        else if (uFlags & DC_ACTIVE)
-            SetTextColor (hdc, GetSysColor (COLOR_CAPTIONTEXT));
-        else
-            SetTextColor (hdc, GetSysColor (COLOR_INACTIVECAPTIONTEXT));
-
-        SetBkMode (hdc, TRANSPARENT);
-
-        if (hFont)
-            hOldFont = SelectObject (hdc, hFont);
-        else {
-            NONCLIENTMETRICSW nclm;
-            HFONT hNewFont;
-            nclm.cbSize = sizeof(NONCLIENTMETRICSW);
-            SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-            hNewFont = CreateFontIndirectW ((uFlags & DC_SMALLCAP) ?
-                &nclm.lfSmCaptionFont : &nclm.lfCaptionFont);
-            hOldFont = SelectObject (hdc, hNewFont);
-        }
-
-        if (!str)
-        {
-            if (!GetWindowTextW( hwnd, text, ARRAY_SIZE( text ))) text[0] = 0;
-            str = text;
-        }
-        rc.left += 2;
-        DrawTextW( hdc, str, -1, &rc, ((uFlags & 0x4000) ? DT_CENTER : DT_LEFT) |
-                   DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_END_ELLIPSIS );
-
-        if (hFont)
-            SelectObject (hdc, hOldFont);
-        else
-            DeleteObject (SelectObject (hdc, hOldFont));
-    }
-
-    /* drawing focus ??? */
-    if (uFlags & 0x2000)
-        FIXME("undocumented flag (0x2000)!\n");
-
-    return FALSE;
 }
 
 
