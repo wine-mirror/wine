@@ -2169,6 +2169,48 @@ static LRESULT handle_nc_rbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
     return 0;
 }
 
+static LRESULT handle_nc_button_dbl_click( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    /* if this is an icon, send a restore since we are handling a double click */
+    if (is_iconic(hwnd))
+    {
+        send_message( hwnd, WM_SYSCOMMAND, SC_RESTORE, lparam );
+        return 0;
+    }
+
+    switch (wparam)  /* Hit test */
+    {
+    case HTCAPTION:
+        /* stop processing if WS_MAXIMIZEBOX is missing */
+        if (get_window_long( hwnd, GWL_STYLE ) & WS_MAXIMIZEBOX)
+            send_message( hwnd, WM_SYSCOMMAND,
+                          is_zoomed( hwnd ) ? SC_RESTORE : SC_MAXIMIZE, lparam );
+        break;
+
+    case HTSYSMENU:
+        {
+            HMENU hSysMenu = NtUserGetSystemMenu( hwnd, FALSE );
+            UINT state = get_menu_state( hSysMenu, SC_CLOSE, MF_BYCOMMAND );
+
+            /* If the close item of the sysmenu is disabled or not present do nothing */
+            if ((state & (MF_DISABLED | MF_GRAYED)) || state == 0xffffffff)
+                break;
+
+            send_message( hwnd, WM_SYSCOMMAND, SC_CLOSE, lparam );
+            break;
+        }
+
+    case HTHSCROLL:
+        send_message( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lparam );
+        break;
+
+    case HTVSCROLL:
+        send_message( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lparam );
+        break;
+    }
+    return 0;
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -2219,6 +2261,12 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_NCRBUTTONDOWN:
         return handle_nc_rbutton_down( hwnd, wparam, lparam );
+
+    case WM_LBUTTONDBLCLK:
+        return handle_nc_button_dbl_click( hwnd, HTCLIENT, lparam );
+
+    case WM_NCLBUTTONDBLCLK:
+        return handle_nc_button_dbl_click( hwnd, wparam, lparam );
 
     case WM_CONTEXTMENU:
         if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)

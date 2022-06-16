@@ -261,57 +261,6 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 
 
 /***********************************************************************
- *           NC_HandleNCLButtonDblClk
- *
- * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
- */
-LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
-{
-    /*
-     * if this is an icon, send a restore since we are handling
-     * a double click
-     */
-    if (IsIconic(hwnd))
-    {
-        SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, lParam );
-        return 0;
-    }
-
-    switch(wParam)  /* Hit test */
-    {
-    case HTCAPTION:
-        /* stop processing if WS_MAXIMIZEBOX is missing */
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_MAXIMIZEBOX)
-            SendMessageW( hwnd, WM_SYSCOMMAND,
-                          IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, lParam );
-        break;
-
-    case HTSYSMENU:
-        {
-            HMENU hSysMenu = NtUserGetSystemMenu(hwnd, FALSE);
-            UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
-
-            /* If the close item of the sysmenu is disabled or not present do nothing */
-            if ((state & (MF_DISABLED | MF_GRAYED)) || (state == 0xFFFFFFFF))
-                break;
-
-            SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, lParam );
-            break;
-        }
-
-    case HTHSCROLL:
-        SendMessageW( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
-        break;
-
-    case HTVSCROLL:
-        SendMessageW( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
-        break;
-    }
-    return 0;
-}
-
-
-/***********************************************************************
  *           NC_HandleSysCommand
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
