@@ -134,6 +134,7 @@
     SYSCALL_ENTRY( NtUserGetProp ) \
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
+    SYSCALL_ENTRY( NtUserGetTitleBarInfo ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \

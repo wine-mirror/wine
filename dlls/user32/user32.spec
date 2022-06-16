@@ -389,7 +389,7 @@
 @ stdcall GetTaskmanWindow ()
 @ stdcall GetThreadDesktop(long) NtUserGetThreadDesktop
 @ stdcall GetThreadDpiAwarenessContext()
-@ stdcall GetTitleBarInfo(long ptr)
+@ stdcall GetTitleBarInfo(long ptr) NtUserGetTitleBarInfo
 @ stdcall GetTopWindow(long)
 @ stdcall GetTouchInputInfo(long long ptr long)
 @ stdcall GetUpdateRect(long ptr long) NtUserGetUpdateRect

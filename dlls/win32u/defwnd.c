@@ -2514,3 +2514,76 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 
     return default_window_proc( hwnd, msg, wparam, lparam, FALSE );
 }
+
+/***********************************************************************
+ *           NtUserGetTitleBarInfo   (win32u.@)
+ */
+BOOL WINAPI NtUserGetTitleBarInfo( HWND hwnd, TITLEBARINFO *info )
+{
+    DWORD style, ex_style;
+
+    TRACE( "(%p %p)\n", hwnd, info );
+
+    if (!info)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    if (info->cbSize != sizeof(TITLEBARINFO))
+    {
+        TRACE( "Invalid TITLEBARINFO size: %d\n", info->cbSize );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    style = get_window_long( hwnd, GWL_STYLE );
+    ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+    get_inside_rect( hwnd, COORDS_SCREEN, &info->rcTitleBar, style, ex_style );
+
+    info->rcTitleBar.bottom = info->rcTitleBar.top;
+    if (ex_style & WS_EX_TOOLWINDOW)
+        info->rcTitleBar.bottom += get_system_metrics( SM_CYSMCAPTION );
+    else
+    {
+        info->rcTitleBar.bottom += get_system_metrics( SM_CYCAPTION );
+        info->rcTitleBar.left += get_system_metrics( SM_CXSIZE );
+    }
+
+    memset( info->rgstate, 0, sizeof(info->rgstate) );
+    info->rgstate[0] = STATE_SYSTEM_FOCUSABLE;
+
+    if (style & WS_CAPTION)
+    {
+        info->rgstate[1] = STATE_SYSTEM_INVISIBLE;
+        if (style & WS_SYSMENU)
+        {
+            if (!(style & (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)))
+            {
+                info->rgstate[2] = STATE_SYSTEM_INVISIBLE;
+                info->rgstate[3] = STATE_SYSTEM_INVISIBLE;
+            }
+            else
+            {
+                if (!(style & WS_MINIMIZEBOX))
+                    info->rgstate[2] = STATE_SYSTEM_UNAVAILABLE;
+                if (!(style & WS_MAXIMIZEBOX))
+                    info->rgstate[3] = STATE_SYSTEM_UNAVAILABLE;
+            }
+            if (!(ex_style & WS_EX_CONTEXTHELP))
+                info->rgstate[4] = STATE_SYSTEM_INVISIBLE;
+            if (get_class_long( hwnd, GCL_STYLE, FALSE ) & CS_NOCLOSE )
+                info->rgstate[5] = STATE_SYSTEM_UNAVAILABLE;
+        }
+        else
+        {
+            info->rgstate[2] = STATE_SYSTEM_INVISIBLE;
+            info->rgstate[3] = STATE_SYSTEM_INVISIBLE;
+            info->rgstate[4] = STATE_SYSTEM_INVISIBLE;
+            info->rgstate[5] = STATE_SYSTEM_INVISIBLE;
+        }
+    }
+    else
+        info->rgstate[0] |= STATE_SYSTEM_INVISIBLE;
+    return TRUE;
+}

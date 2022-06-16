@@ -997,7 +997,7 @@
 @ stdcall NtUserGetSystemMenu(long long)
 @ stdcall -syscall NtUserGetThreadDesktop(long)
 @ stub NtUserGetThreadState
-@ stub NtUserGetTitleBarInfo
+@ stdcall -syscall NtUserGetTitleBarInfo(long ptr)
 @ stub NtUserGetTopLevelWindow
 @ stub NtUserGetTouchInputInfo
 @ stub NtUserGetTouchValidationStatus

@@ -850,3 +850,11 @@ NTSTATUS WINAPI wow64_NtUserLockWindowUpdate( UINT *args )
 
     return NtUserLockWindowUpdate( hwnd );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetTitleBarInfo( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    TITLEBARINFO *info = get_ptr( &args );
+
+    return NtUserGetTitleBarInfo( hwnd, info );
+}

@@ -33,28 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
 
 #define SC_ABOUTWINE            (SC_SCREENSAVE+1)
 
-  /* Some useful macros */
-#define HAS_DLGFRAME(style,exStyle) \
-    (((exStyle) & WS_EX_DLGMODALFRAME) || \
-     (((style) & WS_DLGFRAME) && !((style) & WS_THICKFRAME)))
-
-#define HAS_THICKFRAME(style,exStyle) \
-    (((style) & WS_THICKFRAME) && \
-     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
-
-#define HAS_THINFRAME(style) \
-    (((style) & WS_BORDER) || !((style) & (WS_CHILD | WS_POPUP)))
-
-#define HAS_BIGFRAME(style,exStyle) \
-    (((style) & (WS_THICKFRAME | WS_DLGFRAME)) || \
-     ((exStyle) & WS_EX_DLGMODALFRAME))
-
-#define HAS_STATICOUTERFRAME(style,exStyle) \
-    (((exStyle) & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == \
-     WS_EX_STATICEDGE)
-
-#define HAS_MENU(hwnd,style)  ((((style) & (WS_CHILD | WS_POPUP)) != WS_CHILD) && GetMenu(hwnd))
-
 
 static void adjust_window_rect( RECT *rect, DWORD style, BOOL menu, DWORD exStyle, NONCLIENTMETRICSW *ncm )
 {
@@ -164,42 +142,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style
 }
 
 
-/***********************************************************************
- *           NC_GetInsideRect
- *
- * Get the 'inside' rectangle of a window, i.e. the whole window rectangle
- * but without the borders (if any).
- */
-static void NC_GetInsideRect( HWND hwnd, enum coords_relative relative, RECT *rect,
-                              DWORD style, DWORD ex_style )
-{
-    WIN_GetRectangles( hwnd, relative, rect, NULL );
-
-    /* Remove frame from rectangle */
-    if (HAS_THICKFRAME( style, ex_style ))
-    {
-        InflateRect( rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-    }
-    else if (HAS_DLGFRAME( style, ex_style ))
-    {
-        InflateRect( rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
-    }
-    else if (HAS_THINFRAME( style ))
-    {
-        InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
-    }
-
-    /* We have additional border information if the window
-     * is a child (but not an MDI child) */
-    if ((style & WS_CHILD) && !(ex_style & WS_EX_MDICHILD))
-    {
-        if (ex_style & WS_EX_CLIENTEDGE)
-            InflateRect (rect, -GetSystemMetrics(SM_CXEDGE), -GetSystemMetrics(SM_CYEDGE));
-        if (ex_style & WS_EX_STATICEDGE)
-            InflateRect (rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
-    }
-}
-
 LRESULT NC_HandleNCMouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     RECT rect;
@@ -305,71 +247,4 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
         break;
     }
     return 0;
-}
-
-/***********************************************************************
- *		GetTitleBarInfo (USER32.@)
- * TODO: Handle STATE_SYSTEM_PRESSED
- */
-BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
-    DWORD dwStyle;
-    DWORD dwExStyle;
-
-    TRACE("(%p %p)\n", hwnd, tbi);
-
-    if(!tbi) {
-        SetLastError(ERROR_NOACCESS);
-        return FALSE;
-    }
-
-    if(tbi->cbSize != sizeof(TITLEBARINFO)) {
-        TRACE("Invalid TITLEBARINFO size: %ld\n", tbi->cbSize);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
-    dwExStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
-    NC_GetInsideRect(hwnd, COORDS_SCREEN, &tbi->rcTitleBar, dwStyle, dwExStyle);
-
-    tbi->rcTitleBar.bottom = tbi->rcTitleBar.top;
-    if(dwExStyle & WS_EX_TOOLWINDOW)
-        tbi->rcTitleBar.bottom += GetSystemMetrics(SM_CYSMCAPTION);
-    else {
-        tbi->rcTitleBar.bottom += GetSystemMetrics(SM_CYCAPTION);
-        tbi->rcTitleBar.left += GetSystemMetrics(SM_CXSIZE);
-    }
-
-    ZeroMemory(tbi->rgstate, sizeof(tbi->rgstate));
-    /* Does the title bar always have STATE_SYSTEM_FOCUSABLE?
-     * Under XP it seems to
-     */
-    tbi->rgstate[0] = STATE_SYSTEM_FOCUSABLE;
-    if(dwStyle & WS_CAPTION) {
-        tbi->rgstate[1] = STATE_SYSTEM_INVISIBLE;
-        if(dwStyle & WS_SYSMENU) {
-            if(!(dwStyle & (WS_MINIMIZEBOX|WS_MAXIMIZEBOX))) {
-                tbi->rgstate[2] = STATE_SYSTEM_INVISIBLE;
-                tbi->rgstate[3] = STATE_SYSTEM_INVISIBLE;
-            }
-            else {
-                if(!(dwStyle & WS_MINIMIZEBOX))
-                    tbi->rgstate[2] = STATE_SYSTEM_UNAVAILABLE;
-                if(!(dwStyle & WS_MAXIMIZEBOX))
-                    tbi->rgstate[3] = STATE_SYSTEM_UNAVAILABLE;
-            }
-            if(!(dwExStyle & WS_EX_CONTEXTHELP))
-                tbi->rgstate[4] = STATE_SYSTEM_INVISIBLE;
-            if(GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE)
-                tbi->rgstate[5] = STATE_SYSTEM_UNAVAILABLE;
-        }
-        else {
-            tbi->rgstate[2] = STATE_SYSTEM_INVISIBLE;
-            tbi->rgstate[3] = STATE_SYSTEM_INVISIBLE;
-            tbi->rgstate[4] = STATE_SYSTEM_INVISIBLE;
-            tbi->rgstate[5] = STATE_SYSTEM_INVISIBLE;
-        }
-    }
-    else
-        tbi->rgstate[0] |= STATE_SYSTEM_INVISIBLE;
-    return TRUE;
 }
