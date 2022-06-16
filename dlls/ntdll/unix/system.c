@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <time.h>
+#include <dirent.h>
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -3379,12 +3380,14 @@ static ULONG mhz_from_cpuinfo(void)
     return cmz;
 }
 
-static const char * get_sys_str(const char *path, char *s)
+static const char * get_sys_str(const char *dirname, const char *basename, char *s)
 {
-    FILE *f = fopen(path, "r");
+    char path[64];
+    FILE *f;
     const char *ret = NULL;
 
-    if (f)
+    if (snprintf(path, sizeof(path), "%s/%s", dirname, basename) >= sizeof(path)) return NULL;
+    if ((f = fopen(path, "r")))
     {
         if (fgets(s, 16, f)) ret = s;
         fclose(f);
@@ -3392,42 +3395,68 @@ static const char * get_sys_str(const char *path, char *s)
     return ret;
 }
 
-static int get_sys_int(const char *path, int def)
+static int get_sys_int(const char *dirname, const char *basename)
 {
     char s[16];
-    return get_sys_str(path, s) ? atoi(s) : def;
+    return get_sys_str(dirname, basename, s) ? atoi(s) : 0;
 }
 
 static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
 {
+    DIR *d = opendir("/sys/class/power_supply");
+    struct dirent *de;
     char s[16], path[64];
-    unsigned int i = 0;
+    BOOL found_ac = FALSE;
     LONG64 voltage; /* microvolts */
 
-    bs->AcOnLine = get_sys_int("/sys/class/power_supply/AC/online", 1);
+    bs->AcOnLine = TRUE;
+    if (!d) return STATUS_SUCCESS;
 
-    for (;;)
+    while ((de = readdir(d)))
     {
-        sprintf(path, "/sys/class/power_supply/BAT%u/status", i);
-        if (!get_sys_str(path, s)) break;
-        bs->Charging |= (strcmp(s, "Charging\n") == 0);
-        bs->Discharging |= (strcmp(s, "Discharging\n") == 0);
-        bs->BatteryPresent = TRUE;
-        i++;
+        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
+        if (snprintf(path, sizeof(path), "/sys/class/power_supply/%s", de->d_name) >= sizeof(path)) continue;
+        if (get_sys_str(path, "scope", s) && strcmp(s, "Device\n") == 0) continue;
+        if (!get_sys_str(path, "type", s)) continue;
+
+        if (strcmp(s, "Mains\n") == 0)
+        {
+            if (!get_sys_str(path, "online", s)) continue;
+            if (found_ac)
+            {
+                FIXME("Multiple mains found, only reporting on the first\n");
+            }
+            else
+            {
+                bs->AcOnLine = atoi(s);
+                found_ac = TRUE;
+            }
+        }
+        else if (strcmp(s, "Battery\n") == 0)
+        {
+            if (!get_sys_str(path, "status", s)) continue;
+            if (bs->BatteryPresent)
+            {
+                FIXME("Multiple batteries found, only reporting on the first\n");
+            }
+            else
+            {
+                bs->Charging = (strcmp(s, "Charging\n") == 0);
+                bs->Discharging = (strcmp(s, "Discharging\n") == 0);
+                bs->BatteryPresent = TRUE;
+                voltage = get_sys_int(path, "voltage_now");
+                bs->MaxCapacity = get_sys_int(path, "charge_full") * voltage / 1e9;
+                bs->RemainingCapacity = get_sys_int(path, "charge_now") * voltage / 1e9;
+                bs->Rate = -get_sys_int(path, "current_now") * voltage / 1e9;
+                if (!bs->Charging && (LONG)bs->Rate < 0)
+                    bs->EstimatedTime = 3600 * bs->RemainingCapacity / -(LONG)bs->Rate;
+                else
+                    bs->EstimatedTime = ~0u;
+            }
+        }
     }
 
-    if (bs->BatteryPresent)
-    {
-        voltage = get_sys_int("/sys/class/power_supply/BAT0/voltage_now", 0);
-        bs->MaxCapacity = get_sys_int("/sys/class/power_supply/BAT0/charge_full", 0) * voltage / 1e9;
-        bs->RemainingCapacity = get_sys_int("/sys/class/power_supply/BAT0/charge_now", 0) * voltage / 1e9;
-        bs->Rate = -get_sys_int("/sys/class/power_supply/BAT0/current_now", 0) * voltage / 1e9;
-        if (!bs->Charging && (LONG)bs->Rate < 0)
-            bs->EstimatedTime = 3600 * bs->RemainingCapacity / -(LONG)bs->Rate;
-        else
-            bs->EstimatedTime = ~0u;
-    }
-
+    closedir(d);
     return STATUS_SUCCESS;
 }
 
