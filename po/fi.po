@@ -3984,10 +3984,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kirjoitussuojattua ominaisuutta '|' ei voi muokata"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' ei ole Map-objekti"
+msgstr "'this' ei ole |-objekti"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
