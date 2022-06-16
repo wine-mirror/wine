@@ -36,14 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-  /* bits in the dwKeyData */
-#define KEYDATA_ALT             0x2000
-#define KEYDATA_PREVSTATE       0x4000
-
 #define DRAG_FILE  0x454C4946
-
-static short iF10Key = 0;
-static short iMenuSysKey = 0;
 
 /***********************************************************************
  *           DEFWND_HandleWindowPosChanged
@@ -169,12 +162,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         DEFWND_HandleWindowPosChanged( hwnd, (const WINDOWPOS *)lParam );
         break;
 
-    case WM_LBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-        iF10Key = iMenuSysKey = 0;
-        break;
-
     case WM_RBUTTONUP:
         {
             POINT pt;
@@ -222,69 +209,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_SYSCOMMAND:
         return NC_HandleSysCommand( hwnd, wParam, lParam );
 
-    case WM_KEYDOWN:
-        if(wParam == VK_F10) iF10Key = VK_F10;
-        break;
-
-    case WM_SYSKEYDOWN:
-        if( HIWORD(lParam) & KEYDATA_ALT )
-        {
-            /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
-              if ( (wParam == VK_MENU || wParam == VK_LMENU
-                    || wParam == VK_RMENU) && !iMenuSysKey )
-                iMenuSysKey = 1;
-              else
-                iMenuSysKey = 0;
-
-            iF10Key = 0;
-
-            if( wParam == VK_F4 )       /* try to close the window */
-            {
-                HWND top = NtUserGetAncestor( hwnd, GA_ROOT );
-                if (!(GetClassLongW( top, GCL_STYLE ) & CS_NOCLOSE))
-                    PostMessageW( top, WM_SYSCOMMAND, SC_CLOSE, 0 );
-            }
-        }
-        else if( wParam == VK_F10 )
-        {
-            if (NtUserGetKeyState(VK_SHIFT) & 0x8000)
-                SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, -1 );
-            iF10Key = 1;
-        }
-        else if (wParam == VK_ESCAPE && (NtUserGetKeyState(VK_SHIFT) & 0x8000))
-            SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
-        break;
-
-    case WM_KEYUP:
-    case WM_SYSKEYUP:
-        /* Press and release F10 or ALT */
-        if (((wParam == VK_MENU || wParam == VK_LMENU || wParam == VK_RMENU)
-             && iMenuSysKey) || ((wParam == VK_F10) && iF10Key))
-              SendMessageW( NtUserGetAncestor( hwnd, GA_ROOT ), WM_SYSCOMMAND, SC_KEYMENU, 0L );
-        iMenuSysKey = iF10Key = 0;
-        break;
-
-    case WM_SYSCHAR:
-    {
-        iMenuSysKey = 0;
-        if (wParam == '\r' && IsIconic(hwnd))
-        {
-            PostMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0L );
-            break;
-        }
-        if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
-        {
-            if (wParam == '\t' || wParam == '\x1b') break;
-            if (wParam == ' ' && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
-                SendMessageW( GetParent(hwnd), msg, wParam, lParam );
-            else
-                SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wParam );
-        }
-        else /* check for Ctrl-Esc */
-            if (wParam != '\x1b') MessageBeep(0);
-        break;
-    }
-
     case WM_SHOWWINDOW:
         {
             LONG style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -309,11 +233,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             NtUserShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
             break;
         }
-
-    case WM_CANCELMODE:
-        iMenuSysKey = 0;
-        NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
-        break;
 
     case WM_VKEYTOITEM:
     case WM_CHARTOITEM:
@@ -485,6 +404,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SETTEXT:
+    case WM_SYSCHAR:
         result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
         break;
 
@@ -556,14 +476,6 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         }
         break;
 
-    case WM_SYSCHAR:
-    {
-        CHAR ch = LOWORD(wParam);
-        WCHAR wch;
-        MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
-        wParam = MAKEWPARAM( wch, HIWORD(wParam) );
-    }
-    /* fall through */
     default:
         result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
         break;

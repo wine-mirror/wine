@@ -31,6 +31,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
+/* bits in the dwKeyData */
+#define KEYDATA_ALT             0x2000
+#define KEYDATA_PREVSTATE       0x4000
+
+static short f10_key = 0;
+static short menu_sys_key = 0;
+
 static BOOL has_dialog_frame( UINT style, UINT ex_style )
 {
     return (ex_style & WS_EX_DLGMODALFRAME) || ((style & WS_DLGFRAME) && !(style & WS_THICKFRAME));
@@ -2404,6 +2411,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         break;
 
     case WM_CANCELMODE:
+        menu_sys_key = 0;
         end_menu( hwnd );
         if (get_capture() == hwnd) release_capture();
         break;
@@ -2441,6 +2449,78 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SYSCOMMAND:
         result = handle_sys_command( hwnd, wparam, lparam );
+        break;
+
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+        f10_key = menu_sys_key = 0;
+        break;
+
+    case WM_KEYDOWN:
+        if (wparam == VK_F10) f10_key = VK_F10;
+        break;
+
+    case WM_SYSKEYDOWN:
+        if (HIWORD( lparam ) & KEYDATA_ALT)
+        {
+            if ((wparam == VK_MENU || wparam == VK_LMENU || wparam == VK_RMENU) && !menu_sys_key)
+                menu_sys_key = 1;
+            else
+                menu_sys_key = 0;
+
+            f10_key = 0;
+
+            if (wparam == VK_F4)  /* try to close the window */
+            {
+                HWND top = NtUserGetAncestor( hwnd, GA_ROOT );
+                if (!(get_class_long( top, GCL_STYLE, FALSE ) & CS_NOCLOSE))
+                    NtUserPostMessage( top, WM_SYSCOMMAND, SC_CLOSE, 0 );
+            }
+        }
+        else if (wparam == VK_F10)
+        {
+            if (NtUserGetKeyState(VK_SHIFT) & 0x8000)
+                send_message( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, -1 );
+            f10_key = 1;
+        }
+        else if (wparam == VK_ESCAPE && (NtUserGetKeyState( VK_SHIFT ) & 0x8000))
+            send_message( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
+        break;
+
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        /* Press and release F10 or ALT */
+        if (((wparam == VK_MENU || wparam == VK_LMENU || wparam == VK_RMENU) && menu_sys_key) ||
+            (wparam == VK_F10 && f10_key))
+            send_message( NtUserGetAncestor( hwnd, GA_ROOT ), WM_SYSCOMMAND, SC_KEYMENU, 0 );
+        menu_sys_key = f10_key = 0;
+        break;
+
+    case WM_SYSCHAR:
+        menu_sys_key = 0;
+        if (wparam == '\r' && is_iconic( hwnd ))
+        {
+            NtUserPostMessage( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+            break;
+        }
+        if ((HIWORD( lparam ) & KEYDATA_ALT) && wparam)
+        {
+            WCHAR wch;
+            if (ansi)
+            {
+                char ch = wparam;
+                win32u_mbtowc( &ansi_cp, &wch, 1, &ch, 1 );
+            }
+            else wch = wparam;
+            if (wch == '\t' || wch == '\x1b') break;
+            if (wch == ' ' && (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD))
+                send_message( get_parent( hwnd ), msg, wch, lparam );
+            else
+                send_message( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wch );
+        }
+        else if (wparam != '\x1b')  /* Ctrl-Esc */
+            message_beep(0);
         break;
 
     case WM_KEYF1:
