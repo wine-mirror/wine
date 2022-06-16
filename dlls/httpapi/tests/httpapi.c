@@ -1268,8 +1268,8 @@ static void test_v2_bound_port(void)
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     ret = connect(s, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
-    todo_wine ok(ret, "Connecting to socket succeeded, %lu.\n", GetLastError());
-    todo_wine ok(GetLastError() == WSAECONNREFUSED, "Unexpected error connecting to socket, %lu.\n", GetLastError());
+    ok(ret, "Connecting to socket succeeded, %lu.\n", GetLastError());
+    ok(GetLastError() == WSAECONNREFUSED, "Unexpected error connecting to socket, %lu.\n", GetLastError());
 
     closesocket(s);
     ret = pHttpCloseRequestQueue(dummy_queue);

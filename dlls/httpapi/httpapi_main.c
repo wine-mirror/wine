@@ -686,6 +686,7 @@ ULONG WINAPI HttpAddUrlToUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url,
         HTTP_URL_CONTEXT context, ULONG reserved)
 {
     struct url_group *group = get_url_group(id);
+    ULONG ret;
 
     TRACE("id %s, url %s, context %s, reserved %#lx.\n", wine_dbgstr_longlong(id),
             debugstr_w(url), wine_dbgstr_longlong(context), reserved);
@@ -696,12 +697,16 @@ ULONG WINAPI HttpAddUrlToUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url,
         return ERROR_CALL_NOT_IMPLEMENTED;
     }
 
+    if (group->queue)
+    {
+        ret = add_url(group->queue, url, context);
+        if (ret)
+            return ret;
+    }
+
     if (!(group->url = heap_strdupW(url)))
         return ERROR_OUTOFMEMORY;
     group->context = context;
-
-    if (group->queue)
-        return add_url(group->queue, url, context);
 
     return ERROR_SUCCESS;
 }
