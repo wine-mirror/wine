@@ -244,3 +244,16 @@ interface IDXGIDebug : IUnknown
         [in] GUID apiid,
         [in] DXGI_DEBUG_RLO_FLAGS flags);
 }
+
+[
+    uuid(c5a05f0c-16f2-4adf-9f4d-a8c4d58ac550),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface IDXGIDebug1 : IDXGIDebug
+{
+    void EnableLeakTrackingForThread();
+    void DisableLeakTrackingForThread();
+    BOOL IsLeakTrackingEnabledForThread();
+}
