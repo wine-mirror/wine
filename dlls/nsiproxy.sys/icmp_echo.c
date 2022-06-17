@@ -120,10 +120,10 @@ static struct icmp_data *handle_table[MAX_HANDLES];
 static pthread_mutex_t handle_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct icmp_data **next_free, **next_unused = handle_table;
 
-static HANDLE handle_alloc( struct icmp_data *data )
+static icmp_handle handle_alloc( struct icmp_data *data )
 {
     struct icmp_data **entry;
-    HANDLE h;
+    icmp_handle h;
 
     pthread_mutex_lock( &handle_lock );
     entry = next_free;
@@ -136,25 +136,23 @@ static HANDLE handle_alloc( struct icmp_data *data )
         return 0;
     }
     *entry = data;
-    h = LongToHandle( entry - handle_table + 1 );
+    h = entry - handle_table + 1;
     pthread_mutex_unlock( &handle_lock );
-    TRACE( "returning handle %p\n", h );
+    TRACE( "returning handle %x\n", h );
     return h;
 }
 
-static struct icmp_data **handle_entry( HANDLE h )
+static struct icmp_data **handle_entry( icmp_handle h )
 {
-    unsigned int idx = HandleToLong( h );
-
-    if (!idx || idx > MAX_HANDLES)
+    if (!h || h > MAX_HANDLES)
     {
         ERR( "Invalid icmp handle\n" );
         return NULL;
     }
-    return handle_table + idx - 1;
+    return handle_table + h - 1;
 }
 
-static struct icmp_data *handle_data( HANDLE h )
+static struct icmp_data *handle_data( icmp_handle h )
 {
     struct icmp_data **entry = handle_entry( h );
 
@@ -162,11 +160,11 @@ static struct icmp_data *handle_data( HANDLE h )
     return *entry;
 }
 
-static void handle_free( HANDLE h )
+static void handle_free( icmp_handle h )
 {
     struct icmp_data **entry;
 
-    TRACE( "%p\n", h );
+    TRACE( "%x\n", h );
     pthread_mutex_lock( &handle_lock );
     entry = handle_entry( h );
     if (entry)
@@ -778,8 +776,8 @@ NTSTATUS icmp_listen( void *args )
 
 NTSTATUS icmp_cancel_listen( void *args )
 {
-    HANDLE handle = args;
-    struct icmp_data *data = handle_data( handle );
+    struct icmp_cancel_listen_params *params = args;
+    struct icmp_data *data = handle_data( params->handle );
 
     if (!data) return STATUS_INVALID_PARAMETER;
     write( data->cancel_pipe[1], "x", 1 );
@@ -788,11 +786,11 @@ NTSTATUS icmp_cancel_listen( void *args )
 
 NTSTATUS icmp_close( void *args )
 {
-    HANDLE handle = args;
-    struct icmp_data *data = handle_data( handle );
+    struct icmp_close_params *params = args;
+    struct icmp_data *data = handle_data( params->handle );
 
     if (!data) return STATUS_INVALID_PARAMETER;
     icmp_data_free( data );
-    handle_free( handle );
+    handle_free( params->handle );
     return STATUS_SUCCESS;
 }
