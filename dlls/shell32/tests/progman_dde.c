@@ -23,7 +23,7 @@
  *   functionality
  * - Todo: Handle CommonGroupFlag
  *         Better AddItem Tests (Lots of parameters to test)
- *         Tests for Invalid Characters in Names / Invalid Parameters
+ *         Tests for invalid parameters
  */
 
 #include <stdio.h>
@@ -425,6 +425,75 @@ static void test_request_groups(DWORD instance, HCONV hconv)
     FindClose(hfind);
 }
 
+static void test_name_sanitization(DWORD instance, HCONV hConv)
+{
+    static const char original_name[] = "\x01\x1F !#$%&'*+,-./:;<=>?@[\\]^`{|}~\x7F\xFF";
+    static const char sanitized_name[] = "__ !#$%&'_+,-.__;_=__@[_]^`{_}~\x7F\xFF";
+    char buf[128];
+    UINT error;
+
+    if (0) /* the directory isn't deleted on windows < 7 */
+    {
+        error = dde_execute(instance, hConv, "[CreateGroup(\" \")]");
+        ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+        ok(check_exists(" "), "directory not created\n");
+        ok(!check_window_exists(" "), "window should not exist\n");
+
+        error = dde_execute(instance, hConv, "[DeleteGroup(\" \")]");
+        ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+        ok(!check_exists(" "), "directory should not exist\n");
+    }
+
+    if (0) /* these calls will actually delete the start menu */
+    {
+        error = dde_execute(instance, hConv, "[DeleteGroup(\"\")]");
+        ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+        ok(!check_exists("../Programs"), "directory should not exist\n");
+
+        error = dde_execute(instance, hConv, "[DeleteGroup(\"..\")]");
+        ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+        ok(!check_exists("../../Start Menu"), "directory should not exist\n");
+    }
+
+    sprintf(buf, "[CreateGroup(\"Group%s\")]", original_name);
+    error = dde_execute(instance, hConv, buf);
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+    sprintf(buf, "Group%s", sanitized_name);
+    todo_wine ok(check_exists(buf), "directory not created\n");
+    if (!check_exists(buf)) return;
+    ok(check_window_exists(buf), "window not created\n");
+
+    sprintf(buf, "[ShowGroup(\"Group%s\", 0)]", original_name);
+    error = dde_execute(instance, hConv, buf);
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+    sprintf(buf, "Group%s", sanitized_name);
+    ok(check_window_exists(buf), "window not created\n");
+
+    sprintf(buf, "[AddItem(notepad,\"Notepad%s\")]", original_name);
+    error = dde_execute(instance, hConv, buf);
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+    sprintf(buf, "Group%s/Notepad%s.lnk", sanitized_name, sanitized_name);
+    ok(check_exists(buf), "link not created\n");
+
+    sprintf(buf, "[ReplaceItem(\"Notepad%s\")]", original_name);
+    error = dde_execute(instance, hConv, buf);
+    ok(error == DMLERR_NOTPROCESSED, "expected DMLERR_NOTPROCESSED, got %#x\n", error);
+    sprintf(buf, "Group%s/Notepad%s.lnk", sanitized_name, sanitized_name);
+    ok(check_exists(buf), "link should still exist\n");
+
+    sprintf(buf, "[DeleteItem(\"Notepad%s\")]", original_name);
+    error = dde_execute(instance, hConv, buf);
+    ok(error == DMLERR_NOTPROCESSED, "expected DMLERR_NOTPROCESSED, got %#x\n", error);
+    sprintf(buf, "Group%s/Notepad%s.lnk", sanitized_name, sanitized_name);
+    ok(check_exists(buf), "link should still exist\n");
+
+    sprintf(buf, "[DeleteGroup(\"Group%s\")]", original_name);
+    error = dde_execute(instance, hConv, buf);
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
+    sprintf(buf, "Group%s", sanitized_name);
+    ok(!check_exists(buf), "directory should not exist\n");
+}
+
 START_TEST(progman_dde)
 {
     DWORD instance = 0;
@@ -479,6 +548,7 @@ START_TEST(progman_dde)
 
     /* Run Tests */
     test_progman_dde2(instance, hConv);
+    test_name_sanitization(instance, hConv);
 
     /* Cleanup & Exit */
     ret = DdeDisconnect(hConv);
