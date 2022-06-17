@@ -366,6 +366,7 @@ static void handle_queued_send_echo( IRP *irp )
 {
     struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
     struct icmp_send_echo_params params;
+    icmp_handle handle;
     NTSTATUS status;
 
     TRACE( "\n" );
@@ -376,6 +377,7 @@ static void handle_queued_send_echo( IRP *irp )
     params.ttl = in->ttl;
     params.tos = in->tos;
     params.dst = &in->dst;
+    params.handle = &handle;
 
     status = nsiproxy_call( icmp_send_echo, &params );
     TRACE( "icmp_send_echo rets %08lx\n", status );
@@ -389,7 +391,7 @@ static void handle_queued_send_echo( IRP *irp )
     }
     else
     {
-        irp_set_icmp_handle( irp, params.handle );
+        irp_set_icmp_handle( irp, handle );
         RtlQueueWorkItem( listen_thread_proc, irp, WT_EXECUTELONGFUNCTION );
     }
 }

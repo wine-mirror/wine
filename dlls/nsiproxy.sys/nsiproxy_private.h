@@ -45,7 +45,7 @@ struct icmp_send_echo_params
     void *request, *reply;
     UINT request_size, reply_len;
     BYTE bits, ttl, tos;
-    icmp_handle handle;
+    icmp_handle *handle;
 };
 
 /* output for IOCTL_NSIPROXY_WINE_ICMP_ECHO - cf. ICMP_ECHO_REPLY */

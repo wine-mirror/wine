@@ -659,9 +659,9 @@ NTSTATUS icmp_send_echo( void *args )
         return STATUS_SUCCESS;
     }
 
-    params->handle = handle_alloc( data );
-    if (!params->handle) icmp_data_free( data );
-    return params->handle ? STATUS_PENDING : STATUS_NO_MEMORY;
+    *params->handle = handle_alloc( data );
+    if (!*params->handle) icmp_data_free( data );
+    return *params->handle ? STATUS_PENDING : STATUS_NO_MEMORY;
 }
 
 static int get_timeout( LARGE_INTEGER start, UINT timeout )
