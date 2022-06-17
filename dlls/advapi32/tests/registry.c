@@ -3676,18 +3676,18 @@ static void test_performance_keys(void)
 
             ok(data->PerfTime.QuadPart >= perftime1.QuadPart
                     && data->PerfTime.QuadPart <= perftime2.QuadPart,
-                    "got times %I64u, %I64u, %I64u\n",
+                    "got times %I64d, %I64d, %I64d\n",
                     perftime1.QuadPart, data->PerfTime.QuadPart, perftime2.QuadPart);
-            ok(data->PerfFreq.QuadPart == freq.QuadPart, "expected frequency %I64u, got %I64u\n",
+            ok(data->PerfFreq.QuadPart == freq.QuadPart, "expected frequency %I64d, got %I64d\n",
                     freq.QuadPart, data->PerfFreq.QuadPart);
             ok(data->PerfTime100nSec.QuadPart >= systime1.QuadPart
                     && data->PerfTime100nSec.QuadPart <= systime2.QuadPart,
-                    "got times %I64u, %I64u, %I64u\n",
+                    "got times %I64d, %I64d, %I64d\n",
                     systime1.QuadPart, data->PerfTime100nSec.QuadPart, systime2.QuadPart);
             SystemTimeToFileTime(&data->SystemTime, &file_time.f);
             /* SYSTEMTIME has a granularity of 1 ms */
             ok(file_time.l >= systime1.QuadPart - 10000 && file_time.l <= systime2.QuadPart,
-                    "got times %I64u, %I64u, %I64u\n", systime1.QuadPart, file_time.l, systime2.QuadPart);
+                    "got times %I64d, %I64d, %I64d\n", systime1.QuadPart, file_time.l, systime2.QuadPart);
 
             ok(data->SystemNameLength == (sysname_len + 1) * sizeof(WCHAR),
                     "expected name len %Iu, got %lu\n",
