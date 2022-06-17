@@ -16,10 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
 #include "initguid.h"
-#include "uiautomation.h"
+#include "uia_private.h"
 #include "ocidl.h"
 
 #include "wine/debug.h"
@@ -357,14 +355,5 @@ HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **pr
 HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *provider)
 {
     FIXME("(%p): stub\n", provider);
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
- *          UiaGetPropertyValue (uiautomationcore.@)
- */
-HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIANT *out_val)
-{
-    FIXME("(%p, %d, %p): stub\n", huianode, prop_id, out_val);
     return E_NOTIMPL;
 }

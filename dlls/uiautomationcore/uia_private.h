@@ -16,32 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep header
+#define COBJMACROS
 
-import "oaidl.idl";
+#include "uiautomation.h"
+#include "uia_classes.h"
 
-struct uia_prop_info {
-    const GUID *guid;
-    int prop_id;
-    int type;
-};
-
-[
-    object,
-    uuid(57865755-6c05-4522-98df-4ca658b768ef),
-    pointer_default(unique),
-]
-interface IWineUiaProvider : IUnknown
-{
-    HRESULT get_prop_val([in]const struct uia_prop_info *prop_info, [out, retval]VARIANT *ret_val);
-}
-
-[
-    object,
-    uuid(bccb6799-d831-4057-bd50-6425823ff1a3),
-    pointer_default(unique),
-]
-interface IWineUiaNode : IUnknown
-{
-    HRESULT get_provider([out, retval]IWineUiaProvider **out_prov);
-}
+const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;
