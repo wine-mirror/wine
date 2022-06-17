@@ -1644,7 +1644,7 @@ done:
  * Return STATUS_IMAGE_ALREADY_LOADED if we should keep the native one that we have found.
  */
 NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
-                       void **module, SIZE_T *size )
+                       void **module, SIZE_T *size, ULONG_PTR zero_bits )
 {
     WORD machine = image_info->machine;  /* request same machine as the native one */
     NTSTATUS status;
@@ -1675,9 +1675,9 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
     case LO_NATIVE_BUILTIN:
         return STATUS_IMAGE_ALREADY_LOADED;
     case LO_BUILTIN:
-        return find_builtin_dll( &nt_name, module, size, &info, 0, machine, FALSE );
+        return find_builtin_dll( &nt_name, module, size, &info, zero_bits, machine, FALSE );
     default:
-        status = find_builtin_dll( &nt_name, module, size, &info, 0, machine, (loadorder == LO_DEFAULT) );
+        status = find_builtin_dll( &nt_name, module, size, &info, zero_bits, machine, (loadorder == LO_DEFAULT) );
         if (status == STATUS_DLL_NOT_FOUND || status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
             return STATUS_IMAGE_ALREADY_LOADED;
         return status;

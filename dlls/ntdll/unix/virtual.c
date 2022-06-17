@@ -2539,7 +2539,7 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR z
     {
         filename = (WCHAR *)(image_info + 1);
         /* check if we can replace that mapping with the builtin */
-        res = load_builtin( image_info, filename, addr_ptr, size_ptr );
+        res = load_builtin( image_info, filename, addr_ptr, size_ptr, zero_bits );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
             res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits, shared_file,
                                      alloc_type, image_info, filename, FALSE );
