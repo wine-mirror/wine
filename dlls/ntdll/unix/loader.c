@@ -1477,7 +1477,7 @@ static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, HANDLE
  */
 static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr, void **module,
                                       SIZE_T *size, SECTION_IMAGE_INFORMATION *image_info,
-                                      WORD machine, BOOL prefer_native )
+                                      ULONG_PTR zero_bits, WORD machine, BOOL prefer_native )
 {
     NTSTATUS status;
     HANDLE mapping;
@@ -1486,7 +1486,7 @@ static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr,
     status = open_dll_file( name, attr, &mapping );
     if (!status)
     {
-        status = virtual_map_builtin_module( mapping, module, size, image_info, 0, machine, prefer_native );
+        status = virtual_map_builtin_module( mapping, module, size, image_info, zero_bits, machine, prefer_native );
         NtClose( mapping );
     }
     return status;
@@ -1572,7 +1572,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, 0, machine, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
@@ -1586,7 +1586,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, 0, machine, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
@@ -1599,7 +1599,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         file[pos + len + 1] = 0;
         ptr = prepend( ptr, pe_dir, strlen(pe_dir) );
         ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, 0, machine, prefer_native );
         /* use so dir for unix lib */
         ptr = file + pos;
         ptr = prepend( ptr, so_dir, strlen(so_dir) );
@@ -1610,7 +1610,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, 0, machine, prefer_native );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
         {
             found_image = TRUE;
@@ -1981,7 +1981,7 @@ static void load_ntdll(void)
     name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/ntdll.dll.so") );
     if (build_dir) sprintf( name, "%s/ntdll.dll", ntdll_dir );
     else sprintf( name, "%s%s/ntdll.dll", dll_dir, pe_dir );
-    status = open_builtin_pe_file( name, &attr, &module, &size, &info, current_machine, FALSE );
+    status = open_builtin_pe_file( name, &attr, &module, &size, &info, 0, current_machine, FALSE );
     if (status == STATUS_DLL_NOT_FOUND)
     {
         sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
