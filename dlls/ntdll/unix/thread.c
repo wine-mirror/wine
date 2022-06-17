@@ -70,6 +70,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 static int nb_threads = 1;
 
@@ -2232,10 +2233,18 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadNameInformation:
     {
         const THREAD_NAME_INFORMATION *info = data;
+        THREAD_BASIC_INFORMATION tbi;
 
         if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!info) return STATUS_ACCESS_VIOLATION;
         if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
+
+        if (handle == GetCurrentThread())
+            WARN_(threadname)( "Thread renamed to %s\n", debugstr_us(&info->ThreadName) );
+        else if (!NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL ))
+            WARN_(threadname)( "Thread ID %04x renamed to %s\n", HandleToULong( tbi.ClientId.UniqueThread ), debugstr_us(&info->ThreadName) );
+        else
+            WARN_(threadname)( "Thread handle %p renamed to %s\n", handle, debugstr_us(&info->ThreadName) );
 
         SERVER_START_REQ( set_thread_info )
         {
