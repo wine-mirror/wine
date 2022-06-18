@@ -1237,7 +1237,7 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
     ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#lx.\n", hr);
     if (hr != S_OK)
     {
-        ID3D10Texture2D_Unmap(readback, 0);
+        ID3D10Texture2D_Release(readback);
         return;
     }
 
@@ -1253,6 +1253,7 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
     }
 
     ID3D10Texture2D_Unmap(readback, 0);
+    ID3D10Texture2D_Release(readback);
 }
 
 static void test_D3DX10UnsetAllDeviceObjects(void)
@@ -2078,7 +2079,7 @@ static void test_D3DX10CreateAsyncTextureProcessor(void)
 
     CoUninitialize();
 
-    ID3D10Device_Release(device);
+    ok(!ID3D10Device_Release(device), "Unexpected refcount.\n");
 }
 
 static void test_get_image_info(void)
@@ -2433,7 +2434,7 @@ static void test_create_texture(void)
 
     CoUninitialize();
 
-    ID3D10Device_Release(device);
+    ok(!ID3D10Device_Release(device), "Unexpected refcount.\n");
 }
 
 #define check_rect(rect, left, top, right, bottom) _check_rect(__LINE__, rect, left, top, right, bottom)
