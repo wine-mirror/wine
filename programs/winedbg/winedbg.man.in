@@ -82,14 +82,14 @@ This will run \fBgdb\fR in its own xterm instead of using the current
 Unix console for textual display.
 .PP
 In all modes, the rest of the command line, when passed, is used to 
-identify which programs, if any, has to debugged:
+identify which program, if any, is to be debugged:
 .IP \fIprogram_name\fR
 This is the name of an executable to start for a debugging
 session.  \fBwinedbg\fR will actually create a process with this
-executable. If \fIprograms_arguments\fR are also given, they will be
+executable. If \fIprogram_arguments\fR are also given, they will be
 used as arguments for creating the process to be debugged.
 .IP \fIwpid\fR
-\fBwinedbg\fR will attach to the process which Windows pid is \fIwpid\fR.
+\fBwinedbg\fR will attach to the process whose Windows pid is \fIwpid\fR.
 Use the \fBinfo proc\fR command within \fBwinedbg\fR to list running processes
 and their Windows pids.
 .IP \fBdefault\fR
