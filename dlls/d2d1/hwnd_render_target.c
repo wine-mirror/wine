@@ -83,7 +83,7 @@ static ULONG STDMETHODCALLTYPE d2d_hwnd_render_target_Release(ID2D1HwndRenderTar
     {
         IUnknown_Release(render_target->dxgi_inner);
         IDXGISwapChain_Release(render_target->swapchain);
-        heap_free(render_target);
+        free(render_target);
     }
 
     return refcount;

@@ -41,7 +41,7 @@ static void d2d_effect_context_cleanup(struct d2d_effect_context *effect_context
 
     for (i = 0; i < effect_context->shader_count; ++i)
         IUnknown_Release(effect_context->shaders[i].shader);
-    heap_free(effect_context->shaders);
+    free(effect_context->shaders);
 
     ID2D1DeviceContext1_Release(&effect_context->device_context->ID2D1DeviceContext1_iface);
 }
@@ -104,7 +104,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_context_Release(ID2D1EffectContext *if
     if (!refcount)
     {
         d2d_effect_context_cleanup(effect_context);
-        heap_free(effect_context);
+        free(effect_context);
     }
 
     return refcount;
@@ -128,13 +128,13 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateEffect(ID2D1EffectCont
 
     TRACE("iface %p, clsid %s, effect %p.\n", iface, debugstr_guid(clsid), effect);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_effect_init(object, effect_context, clsid)))
     {
         WARN("Failed to initialise effect, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -379,7 +379,7 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
         if (effect->inputs[i])
             ID2D1Image_Release(effect->inputs[i]);
     }
-    heap_free(effect->inputs);
+    free(effect->inputs);
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
 }
 
@@ -431,7 +431,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_Release(ID2D1Effect *iface)
     if (!refcount)
     {
         d2d_effect_cleanup(effect);
-        heap_free(effect);
+        free(effect);
     }
 
     return refcount;

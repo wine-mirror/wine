@@ -20,7 +20,6 @@
 #define __WINE_D2D1_PRIVATE_H
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -646,7 +645,7 @@ static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t c
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return FALSE;
 
     *elements = new_elements;

@@ -1679,7 +1679,7 @@ static BOOL d2d_cdt_generate_faces(const struct d2d_cdt *cdt, struct d2d_geometr
     return TRUE;
 
 fail:
-    heap_free(geometry->fill.faces);
+    free(geometry->fill.faces);
     geometry->fill.faces = NULL;
     geometry->fill.faces_size = 0;
     geometry->fill.face_count = 0;
@@ -2275,7 +2275,7 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
     ret = d2d_geometry_apply_intersections(geometry, &intersections);
 
 done:
-    heap_free(intersections.intersections);
+    free(intersections.intersections);
     return ret;
 }
 
@@ -2299,7 +2299,7 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
         return S_OK;
     }
 
-    if (!(vertices = heap_calloc(vertex_count, sizeof(*vertices))))
+    if (!(vertices = calloc(vertex_count, sizeof(*vertices))))
         return E_OUTOFMEMORY;
 
     for (i = 0, j = 0; i < geometry->u.path.figure_count; ++i)
@@ -2326,7 +2326,7 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
     if (vertex_count < 3)
     {
         WARN("Geometry has %lu vertices after eliminating duplicates.\n", (long)vertex_count);
-        heap_free(vertices);
+        free(vertices);
         return S_OK;
     }
 
@@ -2342,14 +2342,14 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
     if (!d2d_cdt_generate_faces(&cdt, geometry))
         goto fail;
 
-    heap_free(cdt.edges);
+    free(cdt.edges);
     return S_OK;
 
 fail:
     geometry->fill.vertices = NULL;
     geometry->fill.vertex_count = 0;
-    heap_free(vertices);
-    heap_free(cdt.edges);
+    free(vertices);
+    free(cdt.edges);
     return E_FAIL;
 }
 
@@ -2702,16 +2702,16 @@ static BOOL d2d_geometry_fill_add_arc_triangle(struct d2d_geometry *geometry,
 
 static void d2d_geometry_cleanup(struct d2d_geometry *geometry)
 {
-    heap_free(geometry->outline.arc_faces);
-    heap_free(geometry->outline.arcs);
-    heap_free(geometry->outline.bezier_faces);
-    heap_free(geometry->outline.beziers);
-    heap_free(geometry->outline.faces);
-    heap_free(geometry->outline.vertices);
-    heap_free(geometry->fill.arc_vertices);
-    heap_free(geometry->fill.bezier_vertices);
-    heap_free(geometry->fill.faces);
-    heap_free(geometry->fill.vertices);
+    free(geometry->outline.arc_faces);
+    free(geometry->outline.arcs);
+    free(geometry->outline.bezier_faces);
+    free(geometry->outline.beziers);
+    free(geometry->outline.faces);
+    free(geometry->outline.vertices);
+    free(geometry->fill.arc_vertices);
+    free(geometry->fill.bezier_vertices);
+    free(geometry->fill.faces);
+    free(geometry->fill.vertices);
     ID2D1Factory_Release(geometry->factory);
 }
 
@@ -2950,11 +2950,11 @@ static void d2d_path_geometry_free_figures(struct d2d_geometry *geometry)
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
-        heap_free(geometry->u.path.figures[i].original_bezier_controls);
-        heap_free(geometry->u.path.figures[i].bezier_controls);
-        heap_free(geometry->u.path.figures[i].vertices);
+        free(geometry->u.path.figures[i].original_bezier_controls);
+        free(geometry->u.path.figures[i].bezier_controls);
+        free(geometry->u.path.figures[i].vertices);
     }
-    heap_free(geometry->u.path.figures);
+    free(geometry->u.path.figures);
     geometry->u.path.figures = NULL;
     geometry->u.path.figures_size = 0;
 }
@@ -3160,7 +3160,7 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
         geometry->fill.bezier_vertex_count += 3 * geometry->u.path.figures[i].bezier_control_count;
     }
 
-    if (!(geometry->fill.bezier_vertices = heap_calloc(geometry->fill.bezier_vertex_count,
+    if (!(geometry->fill.bezier_vertices = calloc(geometry->fill.bezier_vertex_count,
             sizeof(*geometry->fill.bezier_vertices))))
     {
         ERR("Failed to allocate bezier vertices array.\n");
@@ -3230,7 +3230,7 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
 done:
     if (FAILED(hr))
     {
-        heap_free(geometry->fill.bezier_vertices);
+        free(geometry->fill.bezier_vertices);
         geometry->fill.bezier_vertex_count = 0;
         d2d_path_geometry_free_figures(geometry);
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
@@ -3401,7 +3401,7 @@ static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry1 *ifa
     {
         d2d_path_geometry_free_figures(geometry);
         d2d_geometry_cleanup(geometry);
-        heap_free(geometry);
+        free(geometry);
     }
 
     return refcount;
@@ -4001,7 +4001,7 @@ static ULONG STDMETHODCALLTYPE d2d_ellipse_geometry_Release(ID2D1EllipseGeometry
     if (!refcount)
     {
         d2d_geometry_cleanup(geometry);
-        heap_free(geometry);
+        free(geometry);
     }
 
     return refcount;
@@ -4174,7 +4174,7 @@ HRESULT d2d_ellipse_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *f
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_ellipse_geometry_vtbl);
     geometry->u.ellipse.ellipse = *ellipse;
 
-    if (!(geometry->fill.vertices = heap_alloc(4 * sizeof(*geometry->fill.vertices))))
+    if (!(geometry->fill.vertices = malloc(4 * sizeof(*geometry->fill.vertices))))
         goto fail;
     if (!d2d_array_reserve((void **)&geometry->fill.faces,
             &geometry->fill.faces_size, 2, sizeof(*geometry->fill.faces)))
@@ -4273,7 +4273,7 @@ static ULONG STDMETHODCALLTYPE d2d_rectangle_geometry_Release(ID2D1RectangleGeom
     if (!refcount)
     {
         d2d_geometry_cleanup(geometry);
-        heap_free(geometry);
+        free(geometry);
     }
 
     return refcount;
@@ -4595,7 +4595,7 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
     geometry->u.rectangle.rect = *rect;
 
-    if (!(geometry->fill.vertices = heap_alloc(4 * sizeof(*geometry->fill.vertices))))
+    if (!(geometry->fill.vertices = malloc(4 * sizeof(*geometry->fill.vertices))))
         goto fail;
     if (!d2d_array_reserve((void **)&geometry->fill.faces,
             &geometry->fill.faces_size, 2, sizeof(*geometry->fill.faces)))
@@ -4689,7 +4689,7 @@ static ULONG STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Release(ID2D1Round
     if (!refcount)
     {
         d2d_geometry_cleanup(geometry);
-        heap_free(geometry);
+        free(geometry);
     }
 
     return refcount;
@@ -4867,7 +4867,7 @@ HRESULT d2d_rounded_rectangle_geometry_init(struct d2d_geometry *geometry,
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rounded_rectangle_geometry_vtbl);
     geometry->u.rounded_rectangle.rounded_rect = *rounded_rect;
 
-    if (!(geometry->fill.vertices = heap_alloc(8 * sizeof(*geometry->fill.vertices))))
+    if (!(geometry->fill.vertices = malloc(8 * sizeof(*geometry->fill.vertices))))
         goto fail;
     if (!d2d_array_reserve((void **)&geometry->fill.faces,
             &geometry->fill.faces_size, 6, sizeof(*geometry->fill.faces)))
@@ -4996,7 +4996,7 @@ static ULONG STDMETHODCALLTYPE d2d_transformed_geometry_Release(ID2D1Transformed
         geometry->fill.vertices = NULL;
         ID2D1Geometry_Release(geometry->u.transformed.src_geometry);
         d2d_geometry_cleanup(geometry);
-        heap_free(geometry);
+        free(geometry);
     }
 
     return refcount;
@@ -5271,9 +5271,9 @@ static ULONG STDMETHODCALLTYPE d2d_geometry_group_Release(ID2D1GeometryGroup *if
     {
         for (i = 0; i < geometry->u.group.geometry_count; ++i)
             ID2D1Geometry_Release(geometry->u.group.src_geometries[i]);
-        heap_free(geometry->u.group.src_geometries);
+        free(geometry->u.group.src_geometries);
         d2d_geometry_cleanup(geometry);
-        heap_free(geometry);
+        free(geometry);
     }
 
     return refcount;
@@ -5484,7 +5484,7 @@ HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *fac
 
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_geometry_group_vtbl);
 
-    if (!(geometry->u.group.src_geometries = heap_calloc(geometry_count, sizeof(*geometries))))
+    if (!(geometry->u.group.src_geometries = calloc(geometry_count, sizeof(*geometries))))
     {
         d2d_geometry_cleanup(geometry);
         return E_OUTOFMEMORY;

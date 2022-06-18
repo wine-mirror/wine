@@ -120,7 +120,7 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory3 *iface)
         if (factory->device)
             ID3D10Device1_Release(factory->device);
         DeleteCriticalSection(&factory->cs);
-        heap_free(factory);
+        free(factory);
     }
 
     return refcount;
@@ -153,13 +153,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factor
 
     TRACE("iface %p, rect %s, geometry %p.\n", iface, debug_d2d_rect_f(rect), geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_rectangle_geometry_init(object, (ID2D1Factory *)iface, rect)))
     {
         WARN("Failed to initialise rectangle geometry, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -177,13 +177,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRoundedRectangleGeometry(ID2D
 
     TRACE("iface %p, rounded_rect %s, geometry %p.\n", iface, debug_d2d_rounded_rect(rounded_rect), geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_rounded_rectangle_geometry_init(object, (ID2D1Factory *)iface, rounded_rect)))
     {
         WARN("Failed to initialise rounded rectangle geometry, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -201,13 +201,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateEllipseGeometry(ID2D1Factory3
 
     TRACE("iface %p, ellipse %s, geometry %p.\n", iface, debug_d2d_ellipse(ellipse), geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_ellipse_geometry_init(object, (ID2D1Factory *)iface, ellipse)))
     {
         WARN("Failed to initialise ellipse geometry, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -226,13 +226,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGeometryGroup(ID2D1Factory3 *
     TRACE("iface %p, fill_mode %#x, geometries %p, geometry_count %u, group %p.\n",
             iface, fill_mode, geometries, geometry_count, group);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_geometry_group_init(object, (ID2D1Factory *)iface, fill_mode, geometries, geometry_count)))
     {
         WARN("Failed to initialise geometry group, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -251,7 +251,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateTransformedGeometry(ID2D1Fact
     TRACE("iface %p, src_geometry %p, transform %p, transformed_geometry %p.\n",
             iface, src_geometry, transform, transformed_geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_transformed_geometry_init(object, (ID2D1Factory *)iface, src_geometry, transform);
@@ -268,7 +268,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry(ID2D1Factory3 *i
 
     TRACE("iface %p, geometry %p.\n", iface, geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_path_geometry_init(object, (ID2D1Factory *)iface);
@@ -290,7 +290,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory3 *if
     TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     desc1.startCap = desc->startCap;
@@ -305,7 +305,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory3 *if
     if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface, &desc1, dashes, dash_count)))
     {
         WARN("Failed to initialise stroke style, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -325,7 +325,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
     TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
             iface, desc, text_rendering_params, state_block);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (desc)
@@ -365,19 +365,19 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Fa
 
     TRACE("iface %p, target %p, desc %p, render_target %p.\n", iface, target, desc, render_target);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_factory_get_device(factory, &device)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
     if (FAILED(hr = d2d_wic_render_target_init(object, (ID2D1Factory1 *)iface, device, target, desc)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -401,13 +401,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
     if (FAILED(hr = d2d_factory_get_device(factory, &device)))
         return hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_hwnd_render_target_init(object, (ID2D1Factory1 *)iface, device, desc, hwnd_rt_desc)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -458,13 +458,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory3 
     if (FAILED(hr = d2d_factory_get_device(factory, &device)))
         return hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_dc_render_target_init(object, (ID2D1Factory1 *)iface, device, desc)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -481,7 +481,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDevice(ID2D1Factory3 *iface,
 
     TRACE("iface %p, dxgi_device %p, device %p.\n", iface, dxgi_device, device);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_device_init(object, (ID2D1Factory1 *)iface, dxgi_device);
@@ -502,14 +502,14 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle1(ID2D1Factory3 *i
     TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface,
             desc, dashes, dash_count)))
     {
         WARN("Failed to initialise stroke style, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -525,7 +525,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry1(ID2D1Factory3 *
 
     TRACE("iface %p, geometry %p.\n", iface, geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_path_geometry_init(object, (ID2D1Factory *)iface);
@@ -545,7 +545,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock1(ID2D1Facto
     TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
             iface, desc, text_rendering_params, state_block);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_state_block_init(object, (ID2D1Factory *)iface, desc, text_rendering_params);
@@ -760,7 +760,7 @@ HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         return E_INVALIDARG;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_factory_init(object, factory_type, factory_options);

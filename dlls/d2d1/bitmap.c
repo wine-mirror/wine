@@ -93,7 +93,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap1 *iface)
             IDXGISurface_Release(bitmap->surface);
         ID3D11Resource_Release(bitmap->resource);
         ID2D1Factory_Release(bitmap->factory);
-        heap_free(bitmap);
+        free(bitmap);
     }
 
     return refcount;
@@ -485,7 +485,7 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
         return hr;
     }
 
-    if ((*bitmap = heap_alloc_zero(sizeof(**bitmap))))
+    if ((*bitmap = calloc(1, sizeof(**bitmap))))
     {
         d2d_bitmap_init(*bitmap, context, (ID3D11Resource *)texture, size, desc);
         TRACE("Created bitmap %p.\n", *bitmap);
@@ -562,7 +562,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
             goto failed;
         }
 
-        if (!(*bitmap = heap_alloc_zero(sizeof(**bitmap))))
+        if (!(*bitmap = calloc(1, sizeof(**bitmap))))
         {
             hr = E_OUTOFMEMORY;
             goto failed;
@@ -598,7 +598,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
             return D2DERR_UNSUPPORTED_OPERATION;
         }
 
-        if (!(*bitmap = heap_alloc_zero(sizeof(**bitmap))))
+        if (!(*bitmap = calloc(1, sizeof(**bitmap))))
         {
             ID3D11Resource_Release(resource);
             return E_OUTOFMEMORY;
@@ -735,7 +735,7 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(struct d2d_device_context *context, IW
     pitch = ((bpp * size.width) + 15) & ~15;
     if (pitch / bpp < size.width)
         return E_OUTOFMEMORY;
-    if (!(data = heap_calloc(size.height, pitch)))
+    if (!(data = calloc(size.height, pitch)))
         return E_OUTOFMEMORY;
     data_size = size.height * pitch;
 
@@ -746,13 +746,13 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(struct d2d_device_context *context, IW
     if (FAILED(hr = IWICBitmapSource_CopyPixels(bitmap_source, &rect, pitch, data_size, data)))
     {
         WARN("Failed to copy bitmap pixels, hr %#lx.\n", hr);
-        heap_free(data);
+        free(data);
         return hr;
     }
 
     hr = d2d_bitmap_create(context, size, data, pitch, &bitmap_desc, bitmap);
 
-    heap_free(data);
+    free(data);
 
     return hr;
 }

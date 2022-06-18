@@ -99,7 +99,7 @@ static ULONG STDMETHODCALLTYPE d2d_dc_render_target_Release(ID2D1DCRenderTarget 
         if (render_target->dxgi_surface)
             IDXGISurface1_Release(render_target->dxgi_surface);
         ID3D10Device1_Release(render_target->d3d_device);
-        heap_free(render_target);
+        free(render_target);
     }
 
     return refcount;
