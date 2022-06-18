@@ -30,6 +30,15 @@ struct d2d_settings d2d_settings =
     ~0u,    /* No ID2D1Factory version limit by default. */
 };
 
+struct d2d_effect_property
+{
+    WCHAR *name;
+    D2D1_PROPERTY_TYPE type;
+    BYTE *value;
+    PD2D1_PROPERTY_SET_FUNCTION set_function;
+    PD2D1_PROPERTY_GET_FUNCTION get_function;
+};
+
 struct d2d_effect_registration
 {
     struct list entry;
@@ -38,10 +47,22 @@ struct d2d_effect_registration
     CLSID id;
 
     UINT32 input_count;
+
+    struct d2d_effect_property *properties;
+    size_t property_size;
+    size_t property_count;
 };
 
 static void d2d_effect_registration_cleanup(struct d2d_effect_registration *reg)
 {
+    size_t i;
+
+    for (i = 0; i < reg->property_count; ++i)
+    {
+        free(reg->properties[i].name);
+        free(reg->properties[i].value);
+    }
+    free(reg->properties);
     free(reg);
 }
 
@@ -643,7 +664,146 @@ static HRESULT parse_effect_skip_element(IXmlReader *reader, unsigned int elemen
     return hr;
 }
 
-static HRESULT parse_effect_xml(IXmlReader *reader)
+static HRESULT parse_effect_get_attribute(IXmlReader *reader, const WCHAR *name, WCHAR **ret)
+{
+    const WCHAR *value;
+
+    *ret = NULL;
+
+    if (IXmlReader_MoveToAttributeByName(reader, name, NULL) != S_OK)
+        return E_INVALIDARG;
+    if (IXmlReader_GetValue(reader, &value, NULL) != S_OK)
+        return E_INVALIDARG;
+    if (!(*ret = wcsdup(value)))
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT parse_effect_get_property_type(IXmlReader *reader, D2D1_PROPERTY_TYPE *type)
+{
+    static const WCHAR *types[] =
+    {
+        L"",             /* D2D1_PROPERTY_TYPE_UNKNOWN */
+        L"string",       /* D2D1_PROPERTY_TYPE_STRING */
+        L"bool",         /* D2D1_PROPERTY_TYPE_BOOL */
+        L"uint32",       /* D2D1_PROPERTY_TYPE_UINT32 */
+        L"int32",        /* D2D1_PROPERTY_TYPE_INT32 */
+        L"float",        /* D2D1_PROPERTY_TYPE_FLOAT */
+        L"vector2",      /* D2D1_PROPERTY_TYPE_VECTOR2 */
+        L"vector3",      /* D2D1_PROPERTY_TYPE_VECTOR3 */
+        L"vector4",      /* D2D1_PROPERTY_TYPE_VECTOR4 */
+        L"blob",         /* D2D1_PROPERTY_TYPE_BLOB */
+        L"iunknown",     /* D2D1_PROPERTY_TYPE_IUNKNOWN */
+        L"enum",         /* D2D1_PROPERTY_TYPE_ENUM */
+        L"array",        /* D2D1_PROPERTY_TYPE_ARRAY */
+        L"clsid",        /* D2D1_PROPERTY_TYPE_CLSID */
+        L"matrix3x2",    /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
+        L"matrix4x3",    /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
+        L"matrix4x4",    /* D2D1_PROPERTY_TYPE_MATRIX_4X4 */
+        L"matrix5x4",    /* D2D1_PROPERTY_TYPE_MATRIX_5X4 */
+        L"colorcontext", /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
+    };
+    unsigned int i;
+    WCHAR *value;
+    HRESULT hr;
+
+    if (FAILED(hr = parse_effect_get_attribute(reader, L"type", &value))) return hr;
+
+    *type = D2D1_PROPERTY_TYPE_UNKNOWN;
+
+    for (i = 0; i < ARRAY_SIZE(types); ++i)
+    {
+        if (!wcscmp(value, types[i]))
+        {
+            *type = i;
+            break;
+        }
+    }
+
+    free(value);
+
+    return *type == D2D1_PROPERTY_TYPE_UNKNOWN ? E_INVALIDARG : S_OK;
+}
+
+static struct d2d_effect_property * parse_effect_get_property(const struct d2d_effect_registration *effect,
+        const WCHAR *name)
+{
+    unsigned int i;
+
+    for (i = 0; i < effect->property_count; ++i)
+    {
+        if (!wcscmp(name, effect->properties[i].name))
+            return &effect->properties[i];
+    }
+
+    return NULL;
+}
+
+static HRESULT parse_effect_add_property(struct d2d_effect_registration *effect, WCHAR *name,
+        D2D1_PROPERTY_TYPE type, BYTE *value)
+{
+    struct d2d_effect_property *property;
+
+    if (!d2d_array_reserve((void **)&effect->properties, &effect->property_size,
+            effect->property_count + 1, sizeof(*effect->properties)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    property = &effect->properties[effect->property_count++];
+    property->name = name;
+    property->type = type;
+    property->value = value;
+    property->set_function = NULL;
+    property->get_function = NULL;
+
+    return S_OK;
+}
+
+static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_registration *effect)
+{
+    WCHAR *name = NULL, *value = NULL;
+    D2D1_PROPERTY_TYPE type;
+    unsigned int depth;
+    HRESULT hr;
+
+    if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name)))
+        return hr;
+
+    if (FAILED(hr = parse_effect_get_property_type(reader, &type)))
+    {
+        free(name);
+        return hr;
+    }
+
+    /* Check for duplicates. */
+    if (parse_effect_get_property(effect, name))
+        hr = E_INVALIDARG;
+
+    parse_effect_get_attribute(reader, L"value", &value);
+
+    if (SUCCEEDED(hr))
+    {
+        /* FIXME: sub properties are ignored */
+        IXmlReader_MoveToElement(reader);
+        IXmlReader_GetDepth(reader, &depth);
+        hr = parse_effect_skip_element(reader, depth);
+    }
+
+    if (SUCCEEDED(hr))
+        hr = parse_effect_add_property(effect, name, type, (BYTE *)value);
+
+    if (FAILED(hr))
+    {
+        free(value);
+        free(name);
+    }
+
+    return hr;
+}
+
+static HRESULT parse_effect_xml(IXmlReader *reader, struct d2d_effect_registration *effect)
 {
     const WCHAR *node_name;
     XmlNodeType node_type;
@@ -666,11 +826,10 @@ static HRESULT parse_effect_xml(IXmlReader *reader)
         if (FAILED(hr = IXmlReader_GetLocalName(reader, &node_name, NULL))) return hr;
         if (node_type == XmlNodeType_EndElement) break;
 
-        if (!wcscmp(node_name, L"Property")
-                || !wcscmp(node_name, L"Inputs"))
-        {
+        if (!wcscmp(node_name, L"Property"))
+            hr = parse_effect_property(reader, effect);
+        else if (!wcscmp(node_name, L"Inputs"))
             hr = parse_effect_skip_element(reader, depth);
-        }
         else
         {
             WARN("Unexpected element %s.\n", debugstr_w(node_name));
@@ -691,6 +850,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Facto
     struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
     struct d2d_effect_registration *effect;
     IXmlReader *reader;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p.\n",
@@ -720,13 +880,40 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Facto
         return E_OUTOFMEMORY;
     }
 
-    hr = parse_effect_xml(reader);
+    hr = parse_effect_xml(reader, effect);
     IXmlReader_Release(reader);
     if (FAILED(hr))
     {
         WARN("Failed to parse effect xml, hr %#lx.\n", hr);
         d2d_effect_registration_cleanup(effect);
         return hr;
+    }
+
+    /* Check required properties. */
+    if (!parse_effect_get_property(effect, L"DisplayName")
+            || !parse_effect_get_property(effect, L"Author")
+            || !parse_effect_get_property(effect, L"Category")
+            || !parse_effect_get_property(effect, L"Description"))
+    {
+        WARN("Missing required properties.\n");
+        d2d_effect_registration_cleanup(effect);
+        return E_INVALIDARG;
+    }
+
+    /* Bind getter and setter. */
+    for (i = 0; i < binding_count; ++i)
+    {
+        struct d2d_effect_property *property;
+
+        if (!(property = parse_effect_get_property(effect, bindings[i].propertyName)))
+        {
+            WARN("Failed to bind to missing property.\n");
+            d2d_effect_registration_cleanup(effect);
+            return D2DERR_INVALID_PROPERTY;
+        }
+
+        property->get_function = bindings[i].getFunction;
+        property->set_function = bindings[i].setFunction;
     }
 
     effect->registration_count = 1;
