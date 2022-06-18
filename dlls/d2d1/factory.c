@@ -19,6 +19,9 @@
 #define D2D1_INIT_GUID
 #include "d2d1_private.h"
 
+#include "xmllite.h"
+#include "wine/list.h"
+
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
@@ -26,6 +29,21 @@ struct d2d_settings d2d_settings =
 {
     ~0u,    /* No ID2D1Factory version limit by default. */
 };
+
+struct d2d_effect_registration
+{
+    struct list entry;
+    PD2D1_EFFECT_FACTORY factory;
+    UINT32 registration_count;
+    CLSID id;
+
+    UINT32 input_count;
+};
+
+static void d2d_effect_registration_cleanup(struct d2d_effect_registration *reg)
+{
+    free(reg);
+}
 
 struct d2d_factory
 {
@@ -37,6 +55,8 @@ struct d2d_factory
 
     float dpi_x;
     float dpi_y;
+
+    struct list effects;
 
     CRITICAL_SECTION cs;
 };
@@ -112,6 +132,7 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory3 *iface)
 {
     struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
     ULONG refcount = InterlockedDecrement(&factory->refcount);
+    struct d2d_effect_registration *reg, *reg2;
 
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
@@ -119,6 +140,10 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory3 *iface)
     {
         if (factory->device)
             ID3D10Device1_Release(factory->device);
+        LIST_FOR_EACH_ENTRY_SAFE(reg, reg2, &factory->effects, struct d2d_effect_registration, entry)
+        {
+            d2d_effect_registration_cleanup(reg);
+        }
         DeleteCriticalSection(&factory->cs);
         free(factory);
     }
@@ -564,24 +589,179 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGdiMetafile(ID2D1Factory3 *if
     return E_NOTIMPL;
 }
 
+static HRESULT parse_effect_get_next_xml_node(IXmlReader *reader, XmlNodeType expected_type,
+        const WCHAR *expected_name, unsigned int *depth)
+{
+    const WCHAR *node_name;
+    XmlNodeType node_type;
+    HRESULT hr;
+
+    assert(expected_type != XmlNodeType_Whitespace);
+
+    while ((hr = IXmlReader_Read(reader, &node_type)) == S_OK)
+    {
+        if (node_type == XmlNodeType_Whitespace)
+            continue;
+
+        if (expected_type != XmlNodeType_None && node_type != expected_type)
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        if (expected_name)
+        {
+            if (FAILED(hr = IXmlReader_GetLocalName(reader, &node_name, NULL)))
+                return hr;
+
+            if (wcscmp(node_name, expected_name))
+                return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+        }
+
+        if (depth)
+            IXmlReader_GetDepth(reader, depth);
+        return S_OK;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_effect_skip_element(IXmlReader *reader, unsigned int element_depth)
+{
+    XmlNodeType node_type;
+    unsigned int depth;
+    HRESULT hr;
+
+    if (IXmlReader_IsEmptyElement(reader)) return S_OK;
+
+    while ((hr = IXmlReader_Read(reader, &node_type)) == S_OK)
+    {
+        IXmlReader_GetDepth(reader, &depth);
+        if (node_type == XmlNodeType_EndElement && depth == element_depth + 1)
+        {
+            return S_OK;
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT parse_effect_xml(IXmlReader *reader)
+{
+    const WCHAR *node_name;
+    XmlNodeType node_type;
+    unsigned int depth;
+    HRESULT hr;
+
+    /* Xml declaration node is mandatory. */
+    if ((hr = parse_effect_get_next_xml_node(reader, XmlNodeType_XmlDeclaration, L"xml", NULL)) != S_OK)
+        return hr;
+
+    /* Top level "Effect" element. */
+    if ((hr = parse_effect_get_next_xml_node(reader, XmlNodeType_Element, L"Effect", NULL)) != S_OK)
+        return hr;
+
+    /* Loop inside effect node */
+    while ((hr = parse_effect_get_next_xml_node(reader, XmlNodeType_None, NULL, &depth)) == S_OK)
+    {
+        if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+        if (node_type != XmlNodeType_Element && node_type != XmlNodeType_EndElement) continue;
+        if (FAILED(hr = IXmlReader_GetLocalName(reader, &node_name, NULL))) return hr;
+        if (node_type == XmlNodeType_EndElement) break;
+
+        if (!wcscmp(node_name, L"Property")
+                || !wcscmp(node_name, L"Inputs"))
+        {
+            hr = parse_effect_skip_element(reader, depth);
+        }
+        else
+        {
+            WARN("Unexpected element %s.\n", debugstr_w(node_name));
+            hr = parse_effect_skip_element(reader, depth);
+        }
+
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return hr;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Factory3 *iface,
         REFCLSID effect_id, IStream *property_xml, const D2D1_PROPERTY_BINDING *bindings,
         UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
 {
-    FIXME("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p stub!\n",
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+    struct d2d_effect_registration *effect;
+    IXmlReader *reader;
+    HRESULT hr;
+
+    TRACE("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p.\n",
             iface, debugstr_guid(effect_id), property_xml, bindings, binding_count, effect_factory);
 
-    return E_NOTIMPL;
+    LIST_FOR_EACH_ENTRY(effect, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (IsEqualGUID(effect_id, &effect->id))
+        {
+            ++effect->registration_count;
+            return S_OK;
+        }
+    }
+
+    if (FAILED(hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL)))
+        return hr;
+
+    if (FAILED(hr = IXmlReader_SetInput(reader, (IUnknown *)property_xml)))
+    {
+        IXmlReader_Release(reader);
+        return hr;
+    }
+
+    if (!(effect = calloc(1, sizeof(*effect))))
+    {
+        IXmlReader_Release(reader);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = parse_effect_xml(reader);
+    IXmlReader_Release(reader);
+    if (FAILED(hr))
+    {
+        WARN("Failed to parse effect xml, hr %#lx.\n", hr);
+        d2d_effect_registration_cleanup(effect);
+        return hr;
+    }
+
+    effect->registration_count = 1;
+    effect->id = *effect_id;
+    effect->factory = effect_factory;
+    list_add_tail(&factory->effects, &effect->entry);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Factory3 *iface,
         REFCLSID effect_id, const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings,
         UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
 {
-    FIXME("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p stub!\n",
-            iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
+    static const LARGE_INTEGER zero;
+    IStream *stream;
+    ULONG size;
+    HRESULT hr;
 
-    return S_OK;
+    TRACE("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p.\n",
+          iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
+
+    if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &stream)))
+        return hr;
+
+    size = sizeof(*property_xml) * (wcslen(property_xml) + 1);
+    if (SUCCEEDED(hr = IStream_Write(stream, property_xml, size, NULL)))
+        hr = IStream_Seek(stream, zero, SEEK_SET, NULL);
+
+    if (SUCCEEDED(hr))
+        hr = ID2D1Factory3_RegisterEffectFromStream(iface, effect_id, stream, bindings,
+                binding_count, effect_factory);
+
+    IStream_Release(stream);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_UnregisterEffect(ID2D1Factory3 *iface, REFCLSID effect_id)
@@ -742,6 +922,7 @@ static void d2d_factory_init(struct d2d_factory *factory, D2D1_FACTORY_TYPE fact
             &d2d_factory_multithread_noop_vtbl : &d2d_factory_multithread_vtbl;
     factory->refcount = 1;
     d2d_factory_reload_sysmetrics(factory);
+    list_init(&factory->effects);
     InitializeCriticalSection(&factory->cs);
 }
 
