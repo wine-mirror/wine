@@ -10715,7 +10715,7 @@ static void test_effect_register(BOOL d3d11)
         winetest_push_context("Test %u", i);
 
         hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
-        todo_wine_if(test->hr != S_OK)
+        todo_wine_if(i == 5)
         ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
         if (hr == S_OK)
         {
@@ -10723,9 +10723,9 @@ static void test_effect_register(BOOL d3d11)
             hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
             todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-            todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-            todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+            ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
             if (effect)
                 ID2D1Effect_Release(effect);
         }
@@ -10748,11 +10748,11 @@ static void test_effect_register(BOOL d3d11)
         hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-        todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
 
         winetest_pop_context();
     }
@@ -10787,9 +10787,9 @@ static void test_effect_register(BOOL d3d11)
     }
 
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Register effect with property binding */
     for (i = 0; i < ARRAY_SIZE(binding_tests); ++i)
@@ -10799,7 +10799,6 @@ static void test_effect_register(BOOL d3d11)
 
         hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
                 test->effect_xml, test->binding, test->binding_count, effect_impl_create);
-        todo_wine_if(test->hr != S_OK)
         ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
         ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
 
@@ -10848,13 +10847,13 @@ static void test_effect_register(BOOL d3d11)
     }
 
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Unregister builtin effect */
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_D2D1Composite);
-    todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
 
     release_test_context(&ctx);
 }
@@ -10932,7 +10931,6 @@ done:
     if (effect)
         ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     release_test_context(&ctx);
 }
@@ -11089,7 +11087,7 @@ static void test_effect_properties(BOOL d3d11)
         if (effect)
             ID2D1Effect_Release(effect);
         hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         winetest_pop_context();
     }
 
@@ -11182,7 +11180,7 @@ done:
     if (effect)
         ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     release_test_context(&ctx);
 }

@@ -953,9 +953,25 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Facto
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_UnregisterEffect(ID2D1Factory3 *iface, REFCLSID effect_id)
 {
-    FIXME("iface %p, effect_id %s stub!\n", iface, debugstr_guid(effect_id));
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+    struct d2d_effect_registration *effect;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, effect_id %s.\n", iface, debugstr_guid(effect_id));
+
+    LIST_FOR_EACH_ENTRY(effect, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (IsEqualGUID(effect_id, &effect->id))
+        {
+            if (!--effect->registration_count)
+            {
+                list_remove(&effect->entry);
+                d2d_effect_registration_cleanup(effect);
+            }
+            return S_OK;
+        }
+    }
+
+    return D2DERR_EFFECT_IS_NOT_REGISTERED;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_GetRegisteredEffects(ID2D1Factory3 *iface,
