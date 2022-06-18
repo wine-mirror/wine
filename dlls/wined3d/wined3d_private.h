@@ -3014,6 +3014,8 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_RX_NAVI_10      = 0x731f,
     CARD_AMD_RADEON_RX_NAVI_14      = 0x7340,
     CARD_AMD_RADEON_RX_NAVI_21      = 0x73bf,
+    CARD_AMD_RADEON_PRO_V620        = 0x73a1,
+    CARD_AMD_RADEON_PRO_V620_VF     = 0x73ae,
     CARD_AMD_VANGOGH                = 0x163f,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
@@ -3160,6 +3162,7 @@ enum wined3d_pci_device
     CARD_NVIDIA_GEFORCE_RTX2080     = 0x1e87,
     CARD_NVIDIA_GEFORCE_RTX2080TI   = 0x1e07,
     CARD_NVIDIA_TESLA_T4            = 0x1eb8,
+    CARD_NVIDIA_AMPERE_A10          = 0x2236,
 
     CARD_REDHAT_VIRGL               = 0x1010,
 
