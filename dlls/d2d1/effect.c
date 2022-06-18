@@ -291,26 +291,35 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_FindVertexBuffer(ID2D1Effect
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContext(ID2D1EffectContext *iface,
         D2D1_COLOR_SPACE space, const BYTE *profile, UINT32 profile_size, ID2D1ColorContext **color_context)
 {
-    FIXME("iface %p, space %#x, profile %p, profile_size %u, color_context %p stub!\n",
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+
+    TRACE("iface %p, space %#x, profile %p, profile_size %u, color_context %p.\n",
             iface, space, profile, profile_size, color_context);
 
-    return E_NOTIMPL;
+    return ID2D1DeviceContext1_CreateColorContext(&effect_context->device_context->ID2D1DeviceContext1_iface,
+            space, profile, profile_size, color_context);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContextFromFilename(ID2D1EffectContext *iface,
         const WCHAR *filename, ID2D1ColorContext **color_context)
 {
-    FIXME("iface %p, filename %s, color_context %p stub!\n", iface, debugstr_w(filename), color_context);
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, filename %s, color_context %p.\n", iface, debugstr_w(filename), color_context);
+
+    return ID2D1DeviceContext1_CreateColorContextFromFilename(&effect_context->device_context->ID2D1DeviceContext1_iface,
+            filename, color_context);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContextFromWicColorContext(ID2D1EffectContext *iface,
         IWICColorContext *wic_color_context, ID2D1ColorContext **color_context)
 {
-    FIXME("iface %p, wic_color_context %p, color_context %p stub!\n", iface, wic_color_context, color_context);
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, wic_color_context %p, color_context %p.\n", iface, wic_color_context, color_context);
+
+    return ID2D1DeviceContext1_CreateColorContextFromWicColorContext(&effect_context->device_context->ID2D1DeviceContext1_iface,
+            wic_color_context, color_context);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CheckFeatureSupport(ID2D1EffectContext *iface,
