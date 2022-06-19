@@ -153,8 +153,46 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
 static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
         const struct uia_prop_info *prop_info, VARIANT *ret_val)
 {
-    FIXME("%p, %p, %p: stub\n", iface, prop_info, ret_val);
-    return E_NOTIMPL;
+    struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %p, %p\n", iface, prop_info, ret_val);
+
+    VariantInit(&v);
+    hr = IRawElementProviderSimple_GetPropertyValue(prov->elprov, prop_info->prop_id, &v);
+    if (FAILED(hr))
+        goto exit;
+
+    switch (prop_info->type)
+    {
+    case UIAutomationType_Int:
+        if (V_VT(&v) != VT_I4)
+        {
+            WARN("Invalid vt %d for UIAutomationType_Int\n", V_VT(&v));
+            goto exit;
+        }
+        *ret_val = v;
+        break;
+
+    case UIAutomationType_IntArray:
+        if (V_VT(&v) != (VT_I4 | VT_ARRAY))
+        {
+            WARN("Invalid vt %d for UIAutomationType_IntArray\n", V_VT(&v));
+            goto exit;
+        }
+        *ret_val = v;
+        break;
+
+    default:
+        break;
+    }
+
+exit:
+    if (V_VT(ret_val) == VT_EMPTY)
+        VariantClear(&v);
+
+    return S_OK;
 }
 
 static const IWineUiaProviderVtbl uia_provider_vtbl = {

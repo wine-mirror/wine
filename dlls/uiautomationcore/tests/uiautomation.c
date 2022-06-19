@@ -4100,9 +4100,7 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
         break;
 
     case UIAutomationType_Int:
-        todo_wine ok(V_VT(v) == VT_I4, "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != VT_I4)
-            break;
+        ok(V_VT(v) == VT_I4, "Unexpected VT %d\n", V_VT(v));
 
         if (prop_id == UIA_NativeWindowHandlePropertyId)
             ok(ULongToHandle(V_I4(v)) == Provider.hwnd, "Unexpected I4 %#lx\n", V_I4(v));
@@ -4112,9 +4110,7 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
         break;
 
     case UIAutomationType_IntArray:
-        todo_wine ok(V_VT(v) == (VT_ARRAY | VT_I4), "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != (VT_ARRAY | VT_I4))
-            break;
+        ok(V_VT(v) == (VT_ARRAY | VT_I4), "Unexpected VT %d\n", V_VT(v));
 
         for (idx = 0; idx < ARRAY_SIZE(uia_i4_arr_prop_val); idx++)
         {
@@ -4319,7 +4315,10 @@ static void test_UiaGetPropertyValue(void)
         }
         winetest_push_context("prop_id %d", prop_id);
         hr = UiaGetPropertyValue(node, prop_id, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (hr == E_NOTIMPL)
+            todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        else
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         check_uia_prop_val(prop_id, elem_prop->type, &v);
 
         /*
@@ -4330,7 +4329,10 @@ static void test_UiaGetPropertyValue(void)
         {
             Provider.ret_invalid_prop_type = TRUE;
             hr = UiaGetPropertyValue(node, prop_id, &v);
-            todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            if (hr == E_NOTIMPL)
+                todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            else
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             if (SUCCEEDED(hr))
             {
                 ok_method_sequence(get_prop_invalid_type_seq, NULL);
