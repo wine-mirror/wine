@@ -359,9 +359,23 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContextFromWicCol
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CheckFeatureSupport(ID2D1EffectContext *iface,
         D2D1_FEATURE feature, void *data, UINT32 data_size)
 {
-    FIXME("iface %p, feature %#x, data %p, data_size %u stub!\n", iface, feature, data, data_size);
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+    D3D11_FEATURE d3d11_feature;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, feature %#x, data %p, data_size %u.\n", iface, feature, data, data_size);
+
+    /* Data structures are compatible. */
+    switch (feature)
+    {
+        case D2D1_FEATURE_DOUBLES: d3d11_feature = D3D11_FEATURE_DOUBLES; break;
+        case D2D1_FEATURE_D3D10_X_HARDWARE_OPTIONS: d3d11_feature = D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS; break;
+        default:
+            WARN("Unexpected feature index %d.\n", feature);
+            return E_INVALIDARG;
+    }
+
+    return ID3D11Device1_CheckFeatureSupport(effect_context->device_context->d3d_device,
+            d3d11_feature, data, data_size);
 }
 
 static BOOL STDMETHODCALLTYPE d2d_effect_context_IsBufferPrecisionSupported(ID2D1EffectContext *iface,
