@@ -247,10 +247,27 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1EffectContext *iface,
         REFGUID shader_id, const BYTE *buffer, UINT32 buffer_size)
 {
-    FIXME("iface %p, shader_id %s, buffer %p, buffer_size %u stub!\n",
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+    ID3D11ComputeShader *shader;
+    HRESULT hr;
+
+    TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    return E_NOTIMPL;
+    if (ID2D1EffectContext_IsShaderLoaded(iface, shader_id))
+        return S_OK;
+
+    if (FAILED(hr = ID3D11Device1_CreateComputeShader(effect_context->device_context->d3d_device,
+            buffer, buffer_size, NULL, &shader)))
+    {
+        WARN("Failed to create a compute shader, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    hr = d2d_effect_context_add_shader(effect_context, shader_id, shader);
+    ID3D11ComputeShader_Release(shader);
+
+    return hr;
 }
 
 static BOOL STDMETHODCALLTYPE d2d_effect_context_IsShaderLoaded(ID2D1EffectContext *iface, REFGUID shader_id)
