@@ -123,25 +123,11 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateEffect(ID2D1EffectCont
         REFCLSID clsid, ID2D1Effect **effect)
 {
     struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
-    struct d2d_effect *object;
-    HRESULT hr;
 
     TRACE("iface %p, clsid %s, effect %p.\n", iface, debugstr_guid(clsid), effect);
 
-    if (!(object = calloc(1, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d2d_effect_init(object, effect_context, clsid)))
-    {
-        WARN("Failed to initialise effect, hr %#lx.\n", hr);
-        free(object);
-        return hr;
-    }
-
-    TRACE("Created effect %p.\n", object);
-    *effect = &object->ID2D1Effect_iface;
-
-    return S_OK;
+    return ID2D1DeviceContext1_CreateEffect(&effect_context->device_context->ID2D1DeviceContext1_iface,
+            clsid, effect);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_GetMaximumSupportedFeatureLevel(ID2D1EffectContext *iface,
