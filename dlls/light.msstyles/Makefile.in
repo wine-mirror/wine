@@ -426,4 +426,64 @@ SVG_SRCS = \
 	blue_treeview_expand_collapse_18px.svg \
 	blue_treeview_expand_collapse_20px.svg \
 	blue_treeview_expand_collapse_23px.svg \
-	blue_treeview_expand_collapse_9px.svg
+	blue_treeview_expand_collapse_9px.svg \
+	blue_window_caption.svg \
+	blue_window_caption_sizing_template.svg \
+	blue_window_close_button_background.svg \
+	blue_window_close_button_glyph_13px.svg \
+	blue_window_close_button_glyph_19px.svg \
+	blue_window_close_button_glyph_23px.svg \
+	blue_window_close_button_glyph_26px.svg \
+	blue_window_close_button_glyph_32px.svg \
+	blue_window_close_button_glyph_39px.svg \
+	blue_window_close_button_glyph_52px.svg \
+	blue_window_frame_bottom.svg \
+	blue_window_frame_left.svg \
+	blue_window_frame_right.svg \
+	blue_window_help_button_background.svg \
+	blue_window_help_button_glyph_13px.svg \
+	blue_window_help_button_glyph_19px.svg \
+	blue_window_help_button_glyph_23px.svg \
+	blue_window_help_button_glyph_26px.svg \
+	blue_window_help_button_glyph_32px.svg \
+	blue_window_help_button_glyph_39px.svg \
+	blue_window_help_button_glyph_52px.svg \
+	blue_window_max_button_background.svg \
+	blue_window_max_button_glyph_13px.svg \
+	blue_window_max_button_glyph_19px.svg \
+	blue_window_max_button_glyph_23px.svg \
+	blue_window_max_button_glyph_26px.svg \
+	blue_window_max_button_glyph_32px.svg \
+	blue_window_max_button_glyph_39px.svg \
+	blue_window_max_button_glyph_52px.svg \
+	blue_window_max_caption.svg \
+	blue_window_mdi_close_button_background.svg \
+	blue_window_mdi_close_button_glyph.svg \
+	blue_window_mdi_min_button_background.svg \
+	blue_window_mdi_min_button_glyph.svg \
+	blue_window_mdi_restore_button_background.svg \
+	blue_window_mdi_restore_button_glyph.svg \
+	blue_window_min_button_background.svg \
+	blue_window_min_button_glyph_13px.svg \
+	blue_window_min_button_glyph_19px.svg \
+	blue_window_min_button_glyph_23px.svg \
+	blue_window_min_button_glyph_26px.svg \
+	blue_window_min_button_glyph_32px.svg \
+	blue_window_min_button_glyph_39px.svg \
+	blue_window_min_button_glyph_52px.svg \
+	blue_window_min_caption.svg \
+	blue_window_restore_button_background.svg \
+	blue_window_restore_button_glyph_13px.svg \
+	blue_window_restore_button_glyph_19px.svg \
+	blue_window_restore_button_glyph_23px.svg \
+	blue_window_restore_button_glyph_26px.svg \
+	blue_window_restore_button_glyph_32px.svg \
+	blue_window_restore_button_glyph_39px.svg \
+	blue_window_restore_button_glyph_52px.svg \
+	blue_window_small_caption.svg \
+	blue_window_small_caption_sizing_template.svg \
+	blue_window_small_close_button_background.svg \
+	blue_window_small_close_button_glyph.svg \
+	blue_window_small_frame_bottom.svg \
+	blue_window_small_frame_left.svg \
+	blue_window_small_frame_right.svg

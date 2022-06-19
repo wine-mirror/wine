@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Zhiyi Zhang for CodeWeavers
+ * Copyright 2021-2022 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2615,6 +2615,337 @@ BLUE_INI TEXTFILE
 "MinDpi5 = 240\r\n"
 "MinDpi6 = 288\r\n"
 "MinDpi7 = 384\r\n"
+
+"\r\n; Window\r\n"
+"[Window]\r\n"
+"; No image specified here \r\n"
+"BgType = ImageFile\r\n"
+"Transparent = True\r\n"
+
+"[Window.Caption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 28, 35, 9, 17\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"CaptionMargins = 4, 3, 0, 0\r\n"
+"ImageFile = blue_window_caption.bmp\r\n"
+
+"[Window.SmallCaption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"SizingMargins = 2, 2, 2, 0\r\n"
+"ContentMargins = 3, 3, 12, 1\r\n"
+"ImageFile = blue_window_small_caption.bmp\r\n"
+
+"[Window.MinCaption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 6, 6, 6, 2\r\n"
+"ContentMargins = 3, 3, 0, 3\r\n"
+"CaptionMargins = 4, 3, 0, 0\r\n"
+"ImageFile = blue_window_min_caption.bmp\r\n"
+
+"[Window.MaxCaption]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 0, 0, 6, 0\r\n"
+"ContentMargins = 1, 1, 0, 1\r\n"
+"CaptionMargins = 8, 4, 6, 0\r\n"
+"ImageFile = blue_window_max_caption.bmp\r\n"
+
+"[Window.FrameLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 1, 91, 0\r\n"
+"ImageFile = blue_window_frame_left.bmp\r\n"
+
+"[Window.FrameRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 1, 2, 91, 0\r\n"
+"ImageFile = blue_window_frame_right.bmp\r\n"
+
+"[Window.FrameBottom]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 2, 0, 2\r\n"
+"ImageFile = blue_window_frame_bottom.bmp\r\n"
+
+"[Window.SmallFrameLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 0, 0, 0\r\n"
+"ImageFile = blue_window_small_frame_left.bmp\r\n"
+
+"[Window.SmallFrameRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 0, 2, 0, 0\r\n"
+"ImageFile = blue_window_small_frame_right.bmp\r\n"
+
+"[Window.SmallFrameBottom]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = False\r\n"
+"BorderOnly = False\r\n"
+"SizingMargins = 2, 2, 0, 2\r\n"
+"ImageFile = blue_window_small_frame_bottom.bmp\r\n"
+
+"[Window.MinButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_min_button_background.bmp\r\n"
+"ImageFile1 = blue_window_min_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_min_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_min_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_min_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_min_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_min_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_min_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.MdiMinButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageCount = 4\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 3, 5, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_mdi_min_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_mdi_min_button_glyph.bmp\r\n"
+
+"[Window.MaxButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_max_button_background.bmp\r\n"
+"ImageFile1 = blue_window_max_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_max_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_max_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_max_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_max_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_max_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_max_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.CloseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_close_button_background.bmp\r\n"
+"ImageFile1 = blue_window_close_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_close_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_close_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_close_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_close_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_close_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_close_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.SmallCloseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 2, 5, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_small_close_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_small_close_button_glyph.bmp\r\n"
+
+"[Window.MdiCloseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageCount = 4\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 3, 5, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_mdi_close_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_mdi_close_button_glyph.bmp\r\n"
+
+"[Window.RestoreButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_restore_button_background.bmp\r\n"
+"ImageFile1 = blue_window_restore_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_restore_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_restore_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_restore_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_restore_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_restore_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_restore_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.MdiRestoreButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageCount = 4\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 3, 5, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_mdi_restore_button_background.bmp\r\n"
+"GlyphImageFile = blue_window_mdi_restore_button_glyph.bmp\r\n"
+
+"[Window.HelpButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"; This part has 4 states but 8 images \r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"UniformSizing = True\r\n"
+"SizingMargins = 2, 2, 7, 7\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_window_help_button_background.bmp\r\n"
+"ImageFile1 = blue_window_help_button_glyph_13px.bmp\r\n"
+"ImageFile2 = blue_window_help_button_glyph_19px.bmp\r\n"
+"ImageFile3 = blue_window_help_button_glyph_23px.bmp\r\n"
+"ImageFile4 = blue_window_help_button_glyph_26px.bmp\r\n"
+"ImageFile5 = blue_window_help_button_glyph_32px.bmp\r\n"
+"ImageFile6 = blue_window_help_button_glyph_39px.bmp\r\n"
+"ImageFile7 = blue_window_help_button_glyph_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Window.Dialog]\r\n"
+"BgType = BorderFill\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Window.CaptionSizingTemplate]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 28, 35, 9, 17\r\n"
+"ContentMargins = 18, 18, 8, 0\r\n"
+"ImageFile = blue_window_caption_sizing_template.bmp\r\n"
+
+"[Window.SmallCaptionSizingTemplate]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 24, 37, 9, 8\r\n"
+"ContentMargins = 14, 14, 16, 0\r\n"
+"ImageFile = blue_window_small_caption_sizing_template.bmp\r\n"
+
+"[Window.Border]\r\n"
+"Width = 1\r\n"
 }
 
 /* Button */
@@ -3901,6 +4232,187 @@ BLUE_EXPLORER_TREEVIEW_ITEM_SELECTED_BMP BITMAP "blue_explorer_treeview_item_sel
 
 /* @makedep: blue_explorer_treeview_item_selected_not_focus.bmp */
 BLUE_EXPLORER_TREEVIEW_ITEM_SELECTED_NOT_FOCUS_BMP BITMAP "blue_explorer_treeview_item_selected_not_focus.bmp"
+
+/* Window */
+/* @makedep: blue_window_caption.bmp */
+BLUE_WINDOW_CAPTION_BMP BITMAP "blue_window_caption.bmp"
+
+/* @makedep: blue_window_caption_sizing_template.bmp */
+BLUE_WINDOW_CAPTION_SIZING_TEMPLATE_BMP BITMAP "blue_window_caption_sizing_template.bmp"
+
+/* @makedep: blue_window_close_button_background.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_close_button_background.bmp"
+
+/* @makedep: blue_window_close_button_glyph_13px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_close_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_19px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_close_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_23px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_close_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_26px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_close_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_32px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_close_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_39px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_close_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_close_button_glyph_52px.bmp */
+BLUE_WINDOW_CLOSE_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_close_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_frame_bottom.bmp */
+BLUE_WINDOW_FRAME_BOTTOM_BMP BITMAP "blue_window_frame_bottom.bmp"
+
+/* @makedep: blue_window_frame_left.bmp */
+BLUE_WINDOW_FRAME_LEFT_BMP BITMAP "blue_window_frame_left.bmp"
+
+/* @makedep: blue_window_frame_right.bmp */
+BLUE_WINDOW_FRAME_RIGHT_BMP BITMAP "blue_window_frame_right.bmp"
+
+/* @makedep: blue_window_help_button_background.bmp */
+BLUE_WINDOW_HELP_BUTTON_BACKGROUND_BMP BITMAP "blue_window_help_button_background.bmp"
+
+/* @makedep: blue_window_help_button_glyph_13px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_help_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_19px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_help_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_23px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_help_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_26px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_help_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_32px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_help_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_39px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_help_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_help_button_glyph_52px.bmp */
+BLUE_WINDOW_HELP_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_help_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_max_button_background.bmp */
+BLUE_WINDOW_MAX_BUTTON_BACKGROUND_BMP BITMAP "blue_window_max_button_background.bmp"
+
+/* @makedep: blue_window_max_button_glyph_13px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_max_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_19px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_max_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_23px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_max_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_26px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_max_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_32px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_max_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_39px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_max_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_max_button_glyph_52px.bmp */
+BLUE_WINDOW_MAX_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_max_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_max_caption.bmp */
+BLUE_WINDOW_MAX_CAPTION_BMP BITMAP "blue_window_max_caption.bmp"
+
+/* @makedep: blue_window_mdi_close_button_background.bmp */
+BLUE_WINDOW_MDI_CLOSE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_mdi_close_button_background.bmp"
+
+/* @makedep: blue_window_mdi_close_button_glyph.bmp */
+BLUE_WINDOW_MDI_CLOSE_BUTTON_GLYPH_BMP BITMAP "blue_window_mdi_close_button_glyph.bmp"
+
+/* @makedep: blue_window_mdi_min_button_background.bmp */
+BLUE_WINDOW_MDI_MIN_BUTTON_BACKGROUND_BMP BITMAP "blue_window_mdi_min_button_background.bmp"
+
+/* @makedep: blue_window_mdi_min_button_glyph.bmp */
+BLUE_WINDOW_MDI_MIN_BUTTON_GLYPH_BMP BITMAP "blue_window_mdi_min_button_glyph.bmp"
+
+/* @makedep: blue_window_mdi_restore_button_background.bmp */
+BLUE_WINDOW_MDI_RESTORE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_mdi_restore_button_background.bmp"
+
+/* @makedep: blue_window_mdi_restore_button_glyph.bmp */
+BLUE_WINDOW_MDI_RESTORE_BUTTON_GLYPH_BMP BITMAP "blue_window_mdi_restore_button_glyph.bmp"
+
+/* @makedep: blue_window_min_button_background.bmp */
+BLUE_WINDOW_MIN_BUTTON_BACKGROUND_BMP BITMAP "blue_window_min_button_background.bmp"
+
+/* @makedep: blue_window_min_button_glyph_13px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_min_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_19px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_min_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_23px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_min_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_26px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_min_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_32px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_min_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_39px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_min_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_min_button_glyph_52px.bmp */
+BLUE_WINDOW_MIN_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_min_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_min_caption.bmp */
+BLUE_WINDOW_MIN_CAPTION_BMP BITMAP "blue_window_min_caption.bmp"
+
+/* @makedep: blue_window_restore_button_background.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_restore_button_background.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_13px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_13PX_BMP BITMAP "blue_window_restore_button_glyph_13px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_19px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_19PX_BMP BITMAP "blue_window_restore_button_glyph_19px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_23px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_23PX_BMP BITMAP "blue_window_restore_button_glyph_23px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_26px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_26PX_BMP BITMAP "blue_window_restore_button_glyph_26px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_32px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_32PX_BMP BITMAP "blue_window_restore_button_glyph_32px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_39px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_39PX_BMP BITMAP "blue_window_restore_button_glyph_39px.bmp"
+
+/* @makedep: blue_window_restore_button_glyph_52px.bmp */
+BLUE_WINDOW_RESTORE_BUTTON_GLYPH_52PX_BMP BITMAP "blue_window_restore_button_glyph_52px.bmp"
+
+/* @makedep: blue_window_small_caption.bmp */
+BLUE_WINDOW_SMALL_CAPTION_BMP BITMAP "blue_window_small_caption.bmp"
+
+/* @makedep: blue_window_small_caption_sizing_template.bmp */
+BLUE_WINDOW_SMALL_CAPTION_SIZING_TEMPLATE_BMP BITMAP "blue_window_small_caption_sizing_template.bmp"
+
+/* @makedep: blue_window_small_close_button_background.bmp */
+BLUE_WINDOW_SMALL_CLOSE_BUTTON_BACKGROUND_BMP BITMAP "blue_window_small_close_button_background.bmp"
+
+/* @makedep: blue_window_small_close_button_glyph.bmp */
+BLUE_WINDOW_SMALL_CLOSE_BUTTON_GLYPH_BMP BITMAP "blue_window_small_close_button_glyph.bmp"
+
+/* @makedep: blue_window_small_frame_bottom.bmp */
+BLUE_WINDOW_SMALL_FRAME_BOTTOM_BMP BITMAP "blue_window_small_frame_bottom.bmp"
+
+/* @makedep: blue_window_small_frame_left.bmp */
+BLUE_WINDOW_SMALL_FRAME_LEFT_BMP BITMAP "blue_window_small_frame_left.bmp"
+
+/* @makedep: blue_window_small_frame_right.bmp */
+BLUE_WINDOW_SMALL_FRAME_RIGHT_BMP BITMAP "blue_window_small_frame_right.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
