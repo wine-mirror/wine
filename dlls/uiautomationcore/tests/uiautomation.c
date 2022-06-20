@@ -4200,9 +4200,7 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
         break;
 
     case UIAutomationType_Bool:
-        todo_wine ok(V_VT(v) == VT_BOOL, "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != VT_BOOL)
-            break;
+        ok(V_VT(v) == VT_BOOL, "Unexpected VT %d\n", V_VT(v));
 
         /* UIA_IsKeyboardFocusablePropertyId is broken on Win8 and Win10v1507. */
         if (prop_id == UIA_IsKeyboardFocusablePropertyId)
