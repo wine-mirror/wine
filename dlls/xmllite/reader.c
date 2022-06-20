@@ -424,7 +424,7 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     {
         hr = reader_strvaldup(reader, value, &attr->value);
         if (hr != S_OK)
-            reader_free_strvalued(reader, &attr->value);
+            reader_free_strvalued(reader, &attr->localname);
     }
     if (hr != S_OK)
     {
