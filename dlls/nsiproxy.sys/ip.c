@@ -1014,7 +1014,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
 
 #ifdef __linux__
     {
-        char buf[512], *ptr;
+        char buf[512], *ptr, *s;
         UINT atf_flags;
         FILE *fp;
 
@@ -1053,6 +1053,9 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
             while (*ptr && !isspace( *ptr )) ptr++;   /* mask (skip) */
             while (*ptr && isspace( *ptr )) ptr++;
 
+            s = ptr;
+            while (*s && !isspace(*s)) s++;
+            *s = 0;
             if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
             if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
 
