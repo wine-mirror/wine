@@ -187,7 +187,6 @@ struct sock
      * both pending_events and reported_events (as we should only ever report
      * any event once until it is reset.) */
     unsigned int        reported_events;
-    unsigned int        flags;       /* socket flags */
     unsigned short      proto;       /* socket protocol */
     unsigned short      type;        /* socket type */
     unsigned short      family;      /* socket family */
@@ -1479,7 +1478,6 @@ static struct sock *create_socket(void)
     sock->mask    = 0;
     sock->pending_events = 0;
     sock->reported_events = 0;
-    sock->flags   = 0;
     sock->proto   = 0;
     sock->type    = 0;
     sock->family  = 0;
@@ -1594,7 +1592,7 @@ static void set_dont_fragment( int fd, int level, int value )
     setsockopt( fd, level, optname, &value, sizeof(value) );
 }
 
-static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags )
+static int init_socket( struct sock *sock, int family, int type, int protocol )
 {
     unsigned int options = 0;
     int sockfd, unix_type, unix_family, unix_protocol, value;
@@ -1673,7 +1671,6 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
         sock->sndbuf = value;
 
     sock->state  = (type == WS_SOCK_STREAM ? SOCK_UNCONNECTED : SOCK_CONNECTIONLESS);
-    sock->flags  = flags;
     sock->proto  = protocol;
     sock->type   = type;
     sock->family = family;
@@ -1751,7 +1748,6 @@ static struct sock *accept_socket( struct sock *sock )
         acceptsock->message = sock->message;
         acceptsock->connect_time = current_time;
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
-        acceptsock->flags = sock->flags;
         if (!(acceptsock->fd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj,
                                                     get_fd_options( sock->fd ) )))
         {
@@ -2159,7 +2155,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( STATUS_INVALID_PARAMETER );
             return;
         }
-        init_socket( sock, params->family, params->type, params->protocol, params->flags );
+        init_socket( sock, params->family, params->type, params->protocol );
         return;
     }
 
