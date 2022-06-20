@@ -2505,6 +2505,20 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             handle_nc_paint( hwnd , (HRGN)1 );  /* repaint caption */
         break;
 
+    case WM_GETTEXTLENGTH:
+        {
+            WND *win = get_win_ptr( hwnd );
+            if (win && win->text)
+            {
+                if (ansi)
+                    result = win32u_wctomb_size( &ansi_cp, win->text, wcslen( win->text ));
+                else
+                    result = wcslen( win->text );
+            }
+            release_win_ptr( win );
+        }
+        break;
+
     case WM_SETICON:
         result = (LRESULT)set_window_icon( hwnd, wparam, (HICON)lparam );
         if ((get_window_long( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)

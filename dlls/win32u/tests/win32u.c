@@ -494,6 +494,12 @@ static void test_window_text(void)
     ok( len == 4, "len = %d\n", len );
     ok( !lstrcmpW( buf, L"test" ), "buf = %s\n", wine_dbgstr_w(buf) );
 
+    res = NtUserMessageCall( hwnd, WM_GETTEXTLENGTH, 0, 0, 0, NtUserDefWindowProc, TRUE );
+    ok( res == 4, "res = %Id\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_GETTEXTLENGTH, 0, 0, 0, NtUserDefWindowProc, FALSE );
+    ok( res == 4, "res = %Id\n", res );
+
     res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"TestA", 0, NtUserDefWindowProc, TRUE );
     ok( res == 1, "res = %Id\n", res );
 
@@ -501,6 +507,9 @@ static void test_window_text(void)
     len = NtUserInternalGetWindowText( hwnd, buf, ARRAYSIZE(buf) );
     ok( len == 5, "len = %d\n", len );
     ok( !lstrcmpW( buf, L"TestA" ), "buf = %s\n", wine_dbgstr_w(buf) );
+
+    res = NtUserMessageCall( hwnd, WM_GETTEXTLENGTH, 0, 0, 0, NtUserDefWindowProc, TRUE );
+    ok( res == 5, "res = %Id\n", res );
 
     DestroyWindow( hwnd );
 }

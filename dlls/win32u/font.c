@@ -3230,6 +3230,28 @@ DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *sr
     return ret;
 }
 
+DWORD win32u_wctomb_size( CPTABLEINFO *info, const WCHAR *src, DWORD srclen )
+{
+    DWORD ret;
+
+    if (info->CodePage == CP_UTF8)
+    {
+        RtlUnicodeToUTF8N( NULL, 0, &ret, src, srclen * sizeof(WCHAR) );
+    }
+    else if(info->DBCSCodePage)
+    {
+        WCHAR *uni2cp = info->WideCharTable;
+        for (ret = srclen; srclen; srclen--, src++)
+            if (uni2cp[*src] & 0xff00) ret++;
+    }
+    else
+    {
+        ret = srclen;
+    }
+
+    return ret;
+}
+
 DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src, DWORD srclen )
 {
     DWORD ret;

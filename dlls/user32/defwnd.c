@@ -145,16 +145,6 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         result = NC_HandleSysCommand( hwnd, wParam, lParam );
         break;
 
-    case WM_GETTEXTLENGTH:
-        {
-            WND *wndPtr = WIN_GetPtr( hwnd );
-            if (wndPtr && wndPtr->text)
-                result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, lstrlenW(wndPtr->text),
-                                              NULL, 0, NULL, NULL );
-            WIN_ReleasePtr( wndPtr );
-        }
-        break;
-
     case WM_GETTEXT:
         if (wParam)
         {
@@ -323,14 +313,6 @@ LRESULT WINAPI DefWindowProcW(
 
     case WM_SYSCOMMAND:
         result = NC_HandleSysCommand( hwnd, wParam, lParam );
-        break;
-
-    case WM_GETTEXTLENGTH:
-        {
-            WND *wndPtr = WIN_GetPtr( hwnd );
-            if (wndPtr && wndPtr->text) result = (LRESULT)lstrlenW(wndPtr->text);
-            WIN_ReleasePtr( wndPtr );
-        }
         break;
 
     case WM_GETTEXT:
