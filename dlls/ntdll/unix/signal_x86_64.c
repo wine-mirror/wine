@@ -3408,12 +3408,16 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x08(%rcx),%rbx\n\t"
                    "testl $0x3,%edx\n\t"           /* CONTEXT_CONTROL | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
+                   "movq 0x80(%rcx),%r11\n\t"      /* frame->eflags */
+                   "pushq %r11\n\t"
+                   "popfq\n\t"
                    "movq 0x88(%rcx),%rsp\n\t"
                    "movq 0x70(%rcx),%rcx\n\t"      /* frame->rip */
                    "jmpq *%rcx\n\t"
                    "1:\tleaq 0x70(%rcx),%rsp\n\t"
                    "testl $0x2,%edx\n\t"           /* CONTEXT_INTEGER */
                    "jnz 1f\n\t"
+                   "movq 0x10(%rsp),%r11\n\t"      /* frame->eflags */
                    "movq (%rsp),%rcx\n\t"          /* frame->rip */
                    "iretq\n"
                    "1:\tmovq 0x00(%rcx),%rax\n\t"

@@ -4949,6 +4949,8 @@ static void test_syscall_clobbered_regs(void)
     struct regs
     {
         UINT64 rcx;
+        UINT64 r11;
+        UINT32 eflags;
     };
     static const BYTE code[] =
     {
@@ -4959,6 +4961,8 @@ static void test_syscall_clobbered_regs(void)
         0x48, 0x83, 0xe8, 0x08,     /* subq $8,%rax */
         0x48, 0x89, 0x20,           /* movq %rsp,0(%rax) */
         0x48, 0x89, 0xc4,           /* movq %rax,%rsp */
+        0xfd,                       /* std */
+        0x45, 0x31, 0xdb,           /* xorl %r11d,%r11d */
         0x41, 0x50,                 /* push %r8 */
         0x53, 0x55, 0x57, 0x56, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57,
                                     /* push %rbx, %rbp, %rdi, %rsi, %r12, %r13, %r14, %r15 */
@@ -4967,6 +4971,11 @@ static void test_syscall_clobbered_regs(void)
                                     /* pop %r15, %r14, %r13, %r12, %rsi, %rdi, %rbp, %rbx */
         0x41, 0x58,                 /* pop %r8 */
         0x49, 0x89, 0x48, 0x00,     /* mov %rcx,(%r8) */
+        0x4d, 0x89, 0x58, 0x08,     /* mov %r11,0x8(%r8) */
+        0x9c,                       /* pushfq */
+        0x59,                       /* pop %rcx */
+        0xfc,                       /* cld */
+        0x41, 0x89, 0x48, 0x10,     /* mov %ecx,0x10(%r8) */
         0x5c,                       /* pop %rsp */
         0xc3,                       /* ret */
     };
@@ -4985,6 +4994,7 @@ static void test_syscall_clobbered_regs(void)
     memset(&regs, 0, sizeof(regs));
     status = func((HANDLE)0xdeadbeef, NULL, &regs, pNtCancelTimer);
     ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#lx.\n", status);
+    ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
     /* After the syscall instruction rcx contains the address of the instruction next after syscall. */
     ok((BYTE *)regs.rcx > (BYTE *)pNtCancelTimer && (BYTE *)regs.rcx < (BYTE *)pNtCancelTimer + 0x20,
@@ -4994,28 +5004,33 @@ static void test_syscall_clobbered_regs(void)
     ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtCancelTimer && (BYTE *)regs.rcx < (BYTE *)pNtCancelTimer + 0x20,
             "Got unexpected rcx %s, pNtCancelTimer %p.\n", wine_dbgstr_longlong(regs.rcx), pNtCancelTimer);
+    ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
     context.ContextFlags = CONTEXT_CONTROL;
     status = func(GetCurrentThread(), &context, &regs, pNtGetContextThread);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
             "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
+    ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
     status = func(GetCurrentThread(), &context, &regs, pNtSetContextThread);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
             "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
+    ok((regs.r11 | 0x2) == regs.eflags, "Expected r11 (%#I64x) | 0x2 to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
     context.ContextFlags = CONTEXT_INTEGER;
     status = func(GetCurrentThread(), &context, &regs, pNtGetContextThread);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
             "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
+    ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
     status = func(GetCurrentThread(), &context, &regs, pNtSetContextThread);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtSetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtSetContextThread + 0x20,
             "Got unexpected rcx %s, pNtSetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtSetContextThread);
+    ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
 
 }
 #elif defined(__arm__)
