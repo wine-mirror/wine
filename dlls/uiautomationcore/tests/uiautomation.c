@@ -4153,15 +4153,11 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
         VARIANT v1;
 
 #ifdef _WIN64
-        todo_wine ok(V_VT(v) == VT_I8, "Unexpected VT %d\n", V_VT(v));
+        ok(V_VT(v) == VT_I8, "Unexpected VT %d\n", V_VT(v));
         tmp_node = (HUIANODE)V_I8(v);
-        if (V_VT(v) != VT_I8)
-            break;
 #else
-        todo_wine ok(V_VT(v) == VT_I4, "Unexpected VT %d\n", V_VT(v));
+        ok(V_VT(v) == VT_I4, "Unexpected VT %d\n", V_VT(v));
         tmp_node = (HUIANODE)V_I4(v);
-        if (V_VT(v) != VT_I4)
-            break;
 #endif
         ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
 
@@ -4177,7 +4173,7 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
     }
 
     case UIAutomationType_ElementArray:
-        todo_wine ok(V_VT(v) == (VT_ARRAY | VT_UNKNOWN), "Unexpected VT %d\n", V_VT(v));
+        ok(V_VT(v) == (VT_ARRAY | VT_UNKNOWN), "Unexpected VT %d\n", V_VT(v));
         if (V_VT(v) != (VT_ARRAY | VT_UNKNOWN))
             break;
 

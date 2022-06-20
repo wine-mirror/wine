@@ -23,6 +23,131 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
+static void clear_uia_node_ptr_safearray(SAFEARRAY *sa, LONG elems)
+{
+    HUIANODE node;
+    HRESULT hr;
+    LONG i;
+
+    for (i = 0; i < elems; i++)
+    {
+        hr = SafeArrayGetElement(sa, &i, &node);
+        if (FAILED(hr))
+            break;
+        UiaNodeRelease(node);
+    }
+}
+
+static void create_uia_node_safearray(VARIANT *in, VARIANT *out)
+{
+    LONG i, idx, lbound, ubound, elems;
+    HUIANODE node;
+    SAFEARRAY *sa;
+    HRESULT hr;
+    UINT dims;
+
+    dims = SafeArrayGetDim(V_ARRAY(in));
+    if (!dims || (dims > 1))
+    {
+        WARN("Invalid dimensions %d for element safearray.\n", dims);
+        return;
+    }
+
+    hr = SafeArrayGetLBound(V_ARRAY(in), 1, &lbound);
+    if (FAILED(hr))
+        return;
+
+    hr = SafeArrayGetUBound(V_ARRAY(in), 1, &ubound);
+    if (FAILED(hr))
+        return;
+
+    elems = (ubound - lbound) + 1;
+    if (!(sa = SafeArrayCreateVector(VT_UINT_PTR, 0, elems)))
+        return;
+
+    for (i = 0; i < elems; i++)
+    {
+        IRawElementProviderSimple *elprov;
+        IUnknown *unk;
+
+        idx = lbound + i;
+        hr = SafeArrayGetElement(V_ARRAY(in), &idx, &unk);
+        if (FAILED(hr))
+            break;
+
+        hr = IUnknown_QueryInterface(unk, &IID_IRawElementProviderSimple, (void **)&elprov);
+        IUnknown_Release(unk);
+        if (FAILED(hr))
+            break;
+
+        hr = UiaNodeFromProvider(elprov, &node);
+        if (FAILED(hr))
+            break;
+
+        IRawElementProviderSimple_Release(elprov);
+        hr = SafeArrayPutElement(sa, &i, &node);
+        if (FAILED(hr))
+            break;
+    }
+
+    if (FAILED(hr))
+    {
+        clear_uia_node_ptr_safearray(sa, elems);
+        SafeArrayDestroy(sa);
+        return;
+    }
+
+    V_VT(out) = VT_UINT_PTR | VT_ARRAY;
+    V_ARRAY(out) = sa;
+}
+
+/* Convert a VT_UINT_PTR SAFEARRAY to VT_UNKNOWN. */
+static void uia_node_ptr_to_unk_safearray(VARIANT *in)
+{
+    SAFEARRAY *sa = NULL;
+    LONG ubound, i;
+    HUIANODE node;
+    HRESULT hr;
+
+    hr = SafeArrayGetUBound(V_ARRAY(in), 1, &ubound);
+    if (FAILED(hr))
+        goto exit;
+
+    if (!(sa = SafeArrayCreateVector(VT_UNKNOWN, 0, ubound + 1)))
+    {
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    for (i = 0; i < (ubound + 1); i++)
+    {
+        hr = SafeArrayGetElement(V_ARRAY(in), &i, &node);
+        if (FAILED(hr))
+            break;
+
+        hr = SafeArrayPutElement(sa, &i, node);
+        if (FAILED(hr))
+            break;
+
+        UiaNodeRelease(node);
+    }
+
+exit:
+    if (FAILED(hr))
+    {
+        clear_uia_node_ptr_safearray(V_ARRAY(in), ubound + 1);
+        if (sa)
+            SafeArrayDestroy(sa);
+    }
+
+    VariantClear(in);
+    if (SUCCEEDED(hr))
+    {
+        V_VT(in) = VT_UNKNOWN | VT_ARRAY;
+        V_ARRAY(in) = sa;
+    }
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -150,6 +275,17 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
     return ref;
 }
 
+static void get_variant_for_node(HUIANODE node, VARIANT *v)
+{
+#ifdef _WIN64
+            V_VT(v) = VT_I8;
+            V_I8(v) = (UINT64)node;
+#else
+            V_VT(v) = VT_I4;
+            V_I4(v) = (UINT32)node;
+#endif
+}
+
 static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
         const struct uia_prop_info *prop_info, VARIANT *ret_val)
 {
@@ -182,6 +318,43 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
             goto exit;
         }
         *ret_val = v;
+        break;
+
+    case UIAutomationType_Element:
+    {
+        IRawElementProviderSimple *elprov;
+        HUIANODE node;
+
+        if (V_VT(&v) != VT_UNKNOWN)
+        {
+            WARN("Invalid vt %d for UIAutomationType_Element\n", V_VT(&v));
+            goto exit;
+        }
+
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&v), &IID_IRawElementProviderSimple,
+                (void **)&elprov);
+        if (FAILED(hr))
+            goto exit;
+
+        hr = UiaNodeFromProvider(elprov, &node);
+        if (SUCCEEDED(hr))
+        {
+            get_variant_for_node(node, ret_val);
+            VariantClear(&v);
+            IRawElementProviderSimple_Release(elprov);
+        }
+        break;
+    }
+
+    case UIAutomationType_ElementArray:
+        if (V_VT(&v) != (VT_UNKNOWN | VT_ARRAY))
+        {
+            WARN("Invalid vt %d for UIAutomationType_ElementArray\n", V_VT(&v));
+            goto exit;
+        }
+        create_uia_node_safearray(&v, ret_val);
+        if (V_VT(ret_val) == (VT_UINT_PTR | VT_ARRAY))
+            VariantClear(&v);
         break;
 
     default:
@@ -315,7 +488,21 @@ HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIAN
     VariantInit(&v);
     hr = IWineUiaProvider_get_prop_val(prov, prop_info, &v);
     if (SUCCEEDED(hr) && V_VT(&v) != VT_EMPTY)
-        *out_val = v;
+    {
+        /*
+         * ElementArray types come back as an array of pointers to prevent the
+         * HUIANODEs from getting marshaled. We need to convert them to
+         * VT_UNKNOWN here.
+         */
+        if (prop_info->type == UIAutomationType_ElementArray)
+        {
+            uia_node_ptr_to_unk_safearray(&v);
+            if (V_VT(&v) != VT_EMPTY)
+                *out_val = v;
+        }
+        else
+            *out_val = v;
+    }
 
     IWineUiaProvider_Release(prov);
 
