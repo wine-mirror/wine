@@ -2621,6 +2621,16 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             break;
         }
 
+    case WM_PRINT:
+        if ((lparam & PRF_CHECKVISIBLE) && !is_window_visible ( hwnd )) break;
+
+        if (lparam & (PRF_CHILDREN | PRF_OWNED | PRF_NONCLIENT))
+            WARN( "WM_PRINT message with unsupported lparam %lx\n", lparam );
+
+        if (lparam & PRF_ERASEBKGND) send_message( hwnd, WM_ERASEBKGND, wparam, 0 );
+        if (lparam & PRF_CLIENT) send_message(hwnd, WM_PRINTCLIENT, wparam, lparam );
+        break;
+
     case WM_APPCOMMAND:
         {
             HWND parent = get_parent( hwnd );

@@ -76,45 +76,6 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
 
 
 /***********************************************************************
- *           DEFWND_Print
- *
- * This method handles the default behavior for the WM_PRINT message.
- */
-static void DEFWND_Print( HWND hwnd, HDC hdc, ULONG uFlags)
-{
-  /*
-   * Visibility flag.
-   */
-  if ( (uFlags & PRF_CHECKVISIBLE) &&
-       !IsWindowVisible(hwnd) )
-      return;
-
-  /*
-   * Unimplemented flags.
-   */
-  if ( (uFlags & PRF_CHILDREN) ||
-       (uFlags & PRF_OWNED)    ||
-       (uFlags & PRF_NONCLIENT) )
-  {
-    WARN("WM_PRINT message with unsupported flags\n");
-  }
-
-  /*
-   * Background
-   */
-  if ( uFlags & PRF_ERASEBKGND)
-    SendMessageW(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
-
-  /*
-   * Client area
-   */
-  if ( uFlags & PRF_CLIENT)
-    SendMessageW(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, uFlags);
-}
-
-
-
-/***********************************************************************
  *           DEFWND_DefWinProc
  *
  * Default window procedure for messages that are the same in Ansi and Unicode.
@@ -156,10 +117,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                          MAKELPARAM(LOWORD(wParam), FAPPCOMMAND_MOUSE | HIWORD(wParam)));
         }
         break;
-
-    case WM_PRINT:
-        DEFWND_Print(hwnd, (HDC)wParam, lParam);
-        return 0;
 
     case WM_SYSCOMMAND:
         return NC_HandleSysCommand( hwnd, wParam, lParam );
