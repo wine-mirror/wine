@@ -180,6 +180,13 @@ static struct element *alloc_element(xmlwriter *writer, const WCHAR *prefix, con
     len += lstrlenW(local);
 
     ret->qname = writer_alloc(writer, (len + 1)*sizeof(WCHAR));
+
+    if (!ret->qname)
+    {
+        writer_free(writer, ret);
+        return NULL;
+    }
+
     ret->len = len;
     if (prefix)
     {
@@ -249,7 +256,8 @@ static WCHAR *writer_strndupW(const xmlwriter *writer, const WCHAR *str, int len
 
     size = (len + 1) * sizeof(WCHAR);
     ret = writer_alloc(writer, size);
-    memcpy(ret, str, size);
+    if (ret) memcpy(ret, str, size);
+
     return ret;
 }
 
