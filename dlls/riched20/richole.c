@@ -647,6 +647,9 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
         cursor_from_char_ofs( services->editor, start, &from );
         cursor_from_char_ofs( services->editor, end, &to );
         ME_SetCharFormat( services->editor, &from, &to, &fmt );
+        ME_CommitUndo( services->editor );
+        ME_WrapMarkedParagraphs( services->editor );
+        ME_UpdateScrollBar( services->editor );
     }
 }
 
@@ -805,6 +808,9 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
     cursor_from_char_ofs( services->editor, start, &from );
     cursor_from_char_ofs( services->editor, end, &to );
     ME_SetCharFormat( services->editor, &from, &to, &fmt );
+    ME_CommitUndo( services->editor );
+    ME_WrapMarkedParagraphs( services->editor );
+    ME_UpdateScrollBar( services->editor );
 
     return S_OK;
 }
