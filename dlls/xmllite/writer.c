@@ -949,7 +949,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
         return S_OK;
     }
 
-    /* Ignore prefix is URI wasn't specified. */
+    /* Ignore prefix if URI wasn't specified. */
     if (is_xmlns_local && is_empty_string(uri))
     {
         write_output_attribute(This, NULL, 0, L"xmlns", 5, value);
