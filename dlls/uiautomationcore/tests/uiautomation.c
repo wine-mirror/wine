@@ -4237,19 +4237,13 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
         break;
 
     case UIAutomationType_Double:
-        todo_wine ok(V_VT(v) == VT_R8, "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != VT_R8)
-            break;
-
+        ok(V_VT(v) == VT_R8, "Unexpected VT %d\n", V_VT(v));
         ok(V_R8(v) == uia_r8_prop_val, "Unexpected R8 %lf\n", V_R8(v));
         ok_method_sequence(get_prop_seq, NULL);
         break;
 
     case UIAutomationType_DoubleArray:
-        todo_wine ok(V_VT(v) == (VT_ARRAY | VT_R8), "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != (VT_ARRAY | VT_R8))
-            break;
-
+        ok(V_VT(v) == (VT_ARRAY | VT_R8), "Unexpected VT %d\n", V_VT(v));
         for (idx = 0; idx < ARRAY_SIZE(uia_r8_arr_prop_val); idx++)
         {
             double val;

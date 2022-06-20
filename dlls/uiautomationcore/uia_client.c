@@ -369,6 +369,24 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
         *ret_val = v;
         break;
 
+    case UIAutomationType_Double:
+        if (V_VT(&v) != VT_R8)
+        {
+            WARN("Invalid vt %d for UIAutomationType_Double\n", V_VT(&v));
+            goto exit;
+        }
+        *ret_val = v;
+        break;
+
+    case UIAutomationType_DoubleArray:
+        if (V_VT(&v) != (VT_R8 | VT_ARRAY))
+        {
+            WARN("Invalid vt %d for UIAutomationType_DoubleArray\n", V_VT(&v));
+            goto exit;
+        }
+        *ret_val = v;
+        break;
+
     case UIAutomationType_Element:
     {
         IRawElementProviderSimple *elprov;
