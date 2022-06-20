@@ -2261,6 +2261,38 @@ static LRESULT handle_nc_button_dbl_click( HWND hwnd, WPARAM wparam, LPARAM lpar
     return 0;
 }
 
+static HBRUSH handle_control_color( HDC hdc, UINT type )
+{
+    if (type == CTLCOLOR_SCROLLBAR)
+    {
+        HBRUSH hb = get_sys_color_brush( COLOR_SCROLLBAR );
+        COLORREF bk = get_sys_color( COLOR_3DHILIGHT );
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_3DFACE ), NULL );
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, bk, NULL );
+
+        /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT
+         * we better use 0x55aa bitmap brush to make scrollbar's background
+         * look different from the window background.
+         */
+        if (bk == get_sys_color( COLOR_WINDOW )) return get_55aa_brush();
+
+        NtGdiUnrealizeObject( hb );
+        return hb;
+    }
+
+    NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_WINDOWTEXT ), NULL );
+
+    if (type == CTLCOLOR_EDIT || type == CTLCOLOR_LISTBOX)
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color( COLOR_WINDOW ), NULL );
+    else
+    {
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color( COLOR_3DFACE ), NULL);
+        return get_sys_color_brush( COLOR_3DFACE );
+    }
+
+    return get_sys_color_brush( COLOR_WINDOW );
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -2473,6 +2505,18 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         }
         handle_set_cursor( hwnd, wparam, lparam );
         break;
+
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORSCROLLBAR:
+        return (LRESULT)handle_control_color( (HDC)wparam, msg - WM_CTLCOLORMSGBOX );
+
+    case WM_CTLCOLOR:
+        return (LRESULT)handle_control_color( (HDC)wparam, HIWORD( lparam ));
 
     case WM_SYSCOMMAND:
         result = handle_sys_command( hwnd, wparam, lparam );

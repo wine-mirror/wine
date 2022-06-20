@@ -161,18 +161,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;
 
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSTATIC:
-    case WM_CTLCOLORSCROLLBAR:
-        return (LRESULT)DEFWND_ControlColor( (HDC)wParam, msg - WM_CTLCOLORMSGBOX );
-
-    case WM_CTLCOLOR:
-        return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
-
     case WM_SYSCOMMAND:
         return NC_HandleSysCommand( hwnd, wParam, lParam );
 
