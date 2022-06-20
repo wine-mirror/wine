@@ -73,57 +73,6 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
 }
 
 
-/***********************************************************************
- *           DEFWND_DefWinProc
- *
- * Default window procedure for messages that are the same in Ansi and Unicode.
- */
-static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    switch(msg)
-    {
-    case WM_NCMOUSEMOVE:
-        return NC_HandleNCMouseMove( hwnd, wParam, lParam );
-
-    case WM_NCMOUSELEAVE:
-        return NC_HandleNCMouseLeave( hwnd );
-
-    case WM_SYSCOMMAND:
-        return NC_HandleSysCommand( hwnd, wParam, lParam );
-
-    case WM_SHOWWINDOW:
-        {
-            LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-            WND *pWnd;
-            if (!lParam) return 0; /* sent from ShowWindow */
-            if ((style & WS_VISIBLE) && wParam) return 0;
-            if (!(style & WS_VISIBLE) && !wParam) return 0;
-            if (!GetWindow( hwnd, GW_OWNER )) return 0;
-            if (!(pWnd = WIN_GetPtr( hwnd ))) return 0;
-            if (pWnd == WND_OTHER_PROCESS) return 0;
-            if (wParam)
-            {
-                if (!(pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP))
-                {
-                    WIN_ReleasePtr( pWnd );
-                    return 0;
-                }
-                pWnd->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
-            }
-            else pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
-            WIN_ReleasePtr( pWnd );
-            NtUserShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
-            break;
-        }
-
-    default:
-        return NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
-
-    }
-
-    return 0;
-}
-
 static LPARAM DEFWND_GetTextA( WND *wndPtr, LPSTR dest, WPARAM wParam )
 {
     LPARAM result = 0;
@@ -184,6 +133,18 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         }
         break;
 
+    case WM_NCMOUSEMOVE:
+        result = NC_HandleNCMouseMove( hwnd, wParam, lParam );
+        break;
+
+    case WM_NCMOUSELEAVE:
+        result = NC_HandleNCMouseLeave( hwnd );
+        break;
+
+    case WM_SYSCOMMAND:
+        result = NC_HandleSysCommand( hwnd, wParam, lParam );
+        break;
+
     case WM_GETTEXTLENGTH:
         {
             WND *wndPtr = WIN_GetPtr( hwnd );
@@ -205,11 +166,6 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
             WIN_ReleasePtr( wndPtr );
         }
-        break;
-
-    case WM_SETTEXT:
-    case WM_SYSCHAR:
-        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
         break;
 
     case WM_IME_CHAR:
@@ -281,7 +237,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     default:
-        result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
+        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
         break;
     }
 
@@ -355,6 +311,18 @@ LRESULT WINAPI DefWindowProcW(
                 SetScrollInfo( hwnd, SB_VERT, &si, FALSE );
             }
         }
+        break;
+
+    case WM_NCMOUSEMOVE:
+        result = NC_HandleNCMouseMove( hwnd, wParam, lParam );
+        break;
+
+    case WM_NCMOUSELEAVE:
+        result = NC_HandleNCMouseLeave( hwnd );
+        break;
+
+    case WM_SYSCOMMAND:
+        result = NC_HandleSysCommand( hwnd, wParam, lParam );
         break;
 
     case WM_GETTEXTLENGTH:
@@ -431,7 +399,7 @@ LRESULT WINAPI DefWindowProcW(
         break;
 
     default:
-        result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
+        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
         break;
     }
     SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result, wParam, lParam );

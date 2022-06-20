@@ -2530,6 +2530,31 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         handle_set_cursor( hwnd, wparam, lparam );
         break;
 
+    case WM_SHOWWINDOW:
+        {
+            LONG style = get_window_long( hwnd, GWL_STYLE );
+            WND *win;
+            if (!lparam) break; /* sent from ShowWindow */
+            if ((style & WS_VISIBLE) && wparam) break;
+            if (!(style & WS_VISIBLE) && !wparam) break;
+            if (!get_window_relative( hwnd, GW_OWNER )) break;
+            if (!(win = get_win_ptr( hwnd ))) break;
+            if (win == WND_OTHER_PROCESS) break;
+            if (wparam)
+            {
+                if (!(win->flags & WIN_NEEDS_SHOW_OWNEDPOPUP))
+                {
+                    release_win_ptr( win );
+                    break;
+                }
+                win->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
+            }
+            else win->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
+            release_win_ptr( win );
+            NtUserShowWindow( hwnd, wparam ? SW_SHOWNOACTIVATE : SW_HIDE );
+            break;
+        }
+
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
