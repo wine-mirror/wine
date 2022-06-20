@@ -36,8 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-#define DRAG_FILE  0x454C4946
-
 /***********************************************************************
  *           DEFWND_ControlColor
  *
@@ -90,34 +88,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NCMOUSELEAVE:
         return NC_HandleNCMouseLeave( hwnd );
 
-    case WM_RBUTTONUP:
-        {
-            POINT pt;
-            pt.x = (short)LOWORD(lParam);
-            pt.y = (short)HIWORD(lParam);
-            ClientToScreen(hwnd, &pt);
-            SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(pt.x, pt.y) );
-        }
-        break;
-
-    case WM_NCRBUTTONUP:
-        /*
-         * FIXME : we must NOT send WM_CONTEXTMENU on a WM_NCRBUTTONUP (checked
-         * in Windows), but what _should_ we do? According to MSDN :
-         * "If it is appropriate to do so, the system sends the WM_SYSCOMMAND
-         * message to the window". When is it appropriate?
-         */
-        break;
-
-    case WM_XBUTTONUP:
-    case WM_NCXBUTTONUP:
-        if (HIWORD(wParam) == XBUTTON1 || HIWORD(wParam) == XBUTTON2)
-        {
-            SendMessageW(hwnd, WM_APPCOMMAND, (WPARAM)hwnd,
-                         MAKELPARAM(LOWORD(wParam), FAPPCOMMAND_MOUSE | HIWORD(wParam)));
-        }
-        break;
-
     case WM_SYSCOMMAND:
         return NC_HandleSysCommand( hwnd, wParam, lParam );
 
@@ -143,74 +113,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             else pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
             WIN_ReleasePtr( pWnd );
             NtUserShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
-            break;
-        }
-
-    case WM_VKEYTOITEM:
-    case WM_CHARTOITEM:
-        return -1;
-
-    case WM_DROPOBJECT:
-        return DRAG_FILE;
-
-    case WM_QUERYDROPOBJECT:
-        return (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
-
-    case WM_QUERYDRAGICON:
-        {
-            UINT len;
-
-            HICON hIcon = (HICON)GetClassLongPtrW( hwnd, GCLP_HICON );
-            HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
-            if (hIcon) return (LRESULT)hIcon;
-            for(len=1; len<64; len++)
-                if((hIcon = LoadIconW(instance, MAKEINTRESOURCEW(len))))
-                    return (LRESULT)hIcon;
-            return (LRESULT)LoadIconW(0, (LPWSTR)IDI_APPLICATION);
-        }
-        break;
-
-    case WM_ISACTIVEICON:
-        return (win_get_flags( hwnd ) & WIN_NCACTIVATED) != 0;
-
-    case WM_NOTIFYFORMAT:
-      if (IsWindowUnicode(hwnd)) return NFR_UNICODE;
-      else return NFR_ANSI;
-
-    case WM_QUERYOPEN:
-    case WM_QUERYENDSESSION:
-        return 1;
-
-    case WM_HELP:
-        SendMessageW( GetParent(hwnd), msg, wParam, lParam );
-        break;
-
-    case WM_STYLECHANGED:
-        if (wParam == GWL_STYLE && (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
-        {
-            STYLESTRUCT *style = (STYLESTRUCT *)lParam;
-            if ((style->styleOld ^ style->styleNew) & (WS_CAPTION|WS_THICKFRAME|WS_VSCROLL|WS_HSCROLL))
-                NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER |
-                                    SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE );
-        }
-        break;
-
-    case WM_INPUTLANGCHANGEREQUEST:
-        NtUserActivateKeyboardLayout( (HKL)lParam, 0 );
-        break;
-
-    case WM_INPUTLANGCHANGE:
-        {
-            struct user_thread_info *info = get_user_thread_info();
-            int count = 0;
-            HWND *win_array = WIN_ListChildren( hwnd );
-            info->kbd_layout = (HKL)lParam;
-
-            if (!win_array)
-                break;
-            while (win_array[count])
-                SendMessageW( win_array[count++], WM_INPUTLANGCHANGE, wParam, lParam);
-            HeapFree(GetProcessHeap(),0,win_array);
             break;
         }
 

@@ -2840,7 +2840,7 @@ other_process:  /* one of the parents may belong to another process, do it the h
 }
 
 /* see ClientToScreen */
-static BOOL client_to_screen( HWND hwnd, POINT *pt )
+BOOL client_to_screen( HWND hwnd, POINT *pt )
 {
     POINT offset;
     BOOL mirrored;

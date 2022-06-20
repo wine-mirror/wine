@@ -31,6 +31,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
+#define DRAG_FILE  0x454c4946
+
 /* bits in the dwKeyData */
 #define KEYDATA_ALT             0x2000
 #define KEYDATA_PREVSTATE       0x4000
@@ -2350,6 +2352,28 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_NCLBUTTONDBLCLK:
         return handle_nc_button_dbl_click( hwnd, wparam, lparam );
 
+    case WM_RBUTTONUP:
+        {
+            POINT pt;
+            pt.x = (short)LOWORD( lparam );
+            pt.y = (short)HIWORD( lparam );
+            client_to_screen( hwnd, &pt );
+            send_message( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM( pt.x, pt.y ));
+        }
+        break;
+
+    case WM_NCRBUTTONUP:
+        break;
+
+    case WM_XBUTTONUP:
+    case WM_NCXBUTTONUP:
+        if (HIWORD(wparam) == XBUTTON1 || HIWORD(wparam) == XBUTTON2)
+        {
+            send_message( hwnd, WM_APPCOMMAND, (WPARAM)hwnd,
+                          MAKELPARAM( LOWORD( wparam ), FAPPCOMMAND_MOUSE | HIWORD( wparam )));
+        }
+        break;
+
     case WM_CONTEXTMENU:
         if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
             send_message( get_parent( hwnd ), msg, (WPARAM)hwnd, lparam );
@@ -2638,6 +2662,91 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                 call_hooks( WH_SHELL, HSHELL_APPCOMMAND, wparam, lparam, TRUE );
             else
                 send_message( parent, msg, wparam, lparam );
+            break;
+        }
+
+    case WM_VKEYTOITEM:
+    case WM_CHARTOITEM:
+        result = -1;
+        break;
+
+    case WM_DROPOBJECT:
+        result = DRAG_FILE;
+        break;
+
+    case WM_QUERYDROPOBJECT:
+        result = (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
+        break;
+
+    case WM_QUERYDRAGICON:
+        {
+            UINT len;
+            HICON icon = (HICON)get_class_long_ptr( hwnd, GCLP_HICON, FALSE );
+            HINSTANCE instance = (HINSTANCE)get_window_long_ptr( hwnd, GWLP_HINSTANCE, FALSE );
+
+            if (icon)
+            {
+                result = (LRESULT)icon;
+                break;
+            }
+
+            for (len = 1; len < 64; len++)
+            {
+                if((icon = LoadImageW( instance, MAKEINTRESOURCEW( len ), IMAGE_ICON, 0, 0,
+                                       LR_SHARED | LR_DEFAULTSIZE )))
+                {
+                    result = (LRESULT)icon;
+                    break;
+                }
+            }
+            if (!result) result = (LRESULT)LoadImageW( 0, (WCHAR *)IDI_APPLICATION, IMAGE_ICON,
+                                                       0, 0, LR_SHARED | LR_DEFAULTSIZE );
+            break;
+        }
+
+    case WM_ISACTIVEICON:
+        result = (win_get_flags( hwnd ) & WIN_NCACTIVATED) != 0;
+        break;
+
+    case WM_NOTIFYFORMAT:
+        result = is_window_unicode(hwnd) ? NFR_UNICODE : NFR_ANSI;
+        break;
+
+    case WM_QUERYOPEN:
+    case WM_QUERYENDSESSION:
+        result = 1;
+        break;
+
+    case WM_HELP:
+        send_message( get_parent( hwnd ), msg, wparam, lparam );
+        break;
+
+    case WM_STYLECHANGED:
+        if (wparam == GWL_STYLE && (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
+        {
+            STYLESTRUCT *style = (STYLESTRUCT *)lparam;
+            if ((style->styleOld ^ style->styleNew) & (WS_CAPTION|WS_THICKFRAME|WS_VSCROLL|WS_HSCROLL))
+                NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER |
+                                    SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE );
+        }
+        break;
+
+    case WM_INPUTLANGCHANGEREQUEST:
+        NtUserActivateKeyboardLayout( (HKL)lparam, 0 );
+        break;
+
+    case WM_INPUTLANGCHANGE:
+        {
+            struct user_thread_info *info = get_user_thread_info();
+            HWND *win_array = list_window_children( 0, hwnd, NULL, 0 );
+            int count = 0;
+            info->kbd_layout = (HKL)lparam;
+
+            if (!win_array)
+                break;
+            while (win_array[count])
+                send_message( win_array[count++], WM_INPUTLANGCHANGE, wparam, lparam );
+            free( win_array );
             break;
         }
     }
