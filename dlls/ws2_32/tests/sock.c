@@ -3983,6 +3983,7 @@ static void test_select(void)
             .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
             .sin_port = 255,
         };
+        SOCKET client2, server2;
 
         fdWrite = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         set_blocking(fdWrite, FALSE);
@@ -4082,6 +4083,65 @@ static void test_select(void)
 
         closesocket(fdWrite);
 
+        /* Test listening after a failed connection. */
+
+        fdWrite = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        set_blocking(fdWrite, FALSE);
+
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        address.sin_port = 0;
+        ret = bind(fdWrite, (struct sockaddr *)&address, sizeof(address));
+        ok(!ret, "got %d\n", ret);
+
+        ret = connect(fdWrite, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == -1, "got %d\n", ret);
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+
+        FD_ZERO(&exceptfds);
+        FD_SET(fdWrite, &exceptfds);
+        select_timeout.tv_sec = 10;
+        ret = select(0, NULL, NULL, &exceptfds, &select_timeout);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+
+        len = sizeof(address);
+        ret = getsockname(fdWrite, (struct sockaddr *)&address, &len);
+        ok(!ret, "got error %lu\n", GetLastError());
+
+        /* Linux seems to forbid this. We'd need to replace the underlying fd. */
+        ret = listen(fdWrite, 1);
+        todo_wine ok(!ret, "got error %lu\n", GetLastError());
+
+        if (!ret)
+        {
+            client2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+            ret = connect(client2, (struct sockaddr *)&address, sizeof(address));
+            ok(!ret, "got error %lu\n", GetLastError());
+
+            server2 = accept(fdWrite, NULL, NULL);
+            ok(server2 != INVALID_SOCKET, "got %d\n", ret);
+
+            closesocket(server2);
+            closesocket(client2);
+        }
+
+        len = sizeof(id);
+        id = 0xdeadbeef;
+        ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
+        ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
+        ok(id == WSAECONNREFUSED, "got error %lu\n", id);
+
+        FD_ZERO_ALL();
+        FD_SET(fdWrite, &readfds);
+        FD_SET(fdWrite, &writefds);
+        FD_SET(fdWrite, &exceptfds);
+        select_timeout.tv_sec = 0;
+        ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+        ok(ret == 1, "got %d\n", ret);
+        ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
+
+        closesocket(fdWrite);
+
         /* test polling after a (synchronous) failure */
 
         fdWrite = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -4089,6 +4149,12 @@ static void test_select(void)
         ret = connect(fdWrite, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
         ok(ret == -1, "got %d\n", ret);
         ok(WSAGetLastError() == WSAECONNREFUSED, "got error %u\n", WSAGetLastError());
+
+        len = sizeof(id);
+        id = 0xdeadbeef;
+        ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
+        ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
+        todo_wine ok(!id, "got error %lu\n", id);
 
         FD_ZERO_ALL();
         FD_SET(fdWrite, &readfds);
