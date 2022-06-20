@@ -489,6 +489,29 @@ static LONG handle_window_pos_changing( HWND hwnd, WINDOWPOS *winpos )
     return 0;
 }
 
+static void handle_window_pos_changed( HWND hwnd, const WINDOWPOS *winpos )
+{
+    RECT rect;
+
+    get_window_rects( hwnd, COORDS_PARENT, NULL, &rect, get_thread_dpi() );
+    if (!(winpos->flags & SWP_NOCLIENTMOVE))
+        send_message( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ));
+
+    if (!(winpos->flags & SWP_NOCLIENTSIZE) || (winpos->flags & SWP_STATECHANGED))
+    {
+        if (is_iconic( hwnd ))
+        {
+            send_message( hwnd, WM_SIZE, SIZE_MINIMIZED, 0 );
+        }
+        else
+        {
+            WPARAM wp = is_zoomed( hwnd ) ? SIZE_MAXIMIZED : SIZE_RESTORED;
+            send_message( hwnd, WM_SIZE, wp,
+                          MAKELONG( rect.right-rect.left, rect.bottom-rect.top ));
+        }
+    }
+}
+
 /***********************************************************************
  *           draw_moving_frame
  *
@@ -2323,6 +2346,10 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_WINDOWPOSCHANGING:
         return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );
+
+    case WM_WINDOWPOSCHANGED:
+        handle_window_pos_changed( hwnd, (const WINDOWPOS *)lparam );
+        break;
 
     case WM_PAINTICON:
     case WM_PAINT:

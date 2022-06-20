@@ -39,35 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define DRAG_FILE  0x454C4946
 
 /***********************************************************************
- *           DEFWND_HandleWindowPosChanged
- *
- * Handle the WM_WINDOWPOSCHANGED message.
- */
-static void DEFWND_HandleWindowPosChanged( HWND hwnd, const WINDOWPOS *winpos )
-{
-    RECT rect;
-
-    WIN_GetRectangles( hwnd, COORDS_PARENT, NULL, &rect );
-    if (!(winpos->flags & SWP_NOCLIENTMOVE))
-        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG(rect.left, rect.top));
-
-    if (!(winpos->flags & SWP_NOCLIENTSIZE) || (winpos->flags & SWP_STATECHANGED))
-    {
-        if (IsIconic( hwnd ))
-        {
-            SendMessageW( hwnd, WM_SIZE, SIZE_MINIMIZED, 0 );
-        }
-        else
-        {
-            WPARAM wp = IsZoomed( hwnd ) ? SIZE_MAXIMIZED : SIZE_RESTORED;
-
-            SendMessageW( hwnd, WM_SIZE, wp, MAKELONG(rect.right-rect.left, rect.bottom-rect.top) );
-        }
-    }
-}
-
-
-/***********************************************************************
  *           DEFWND_ControlColor
  *
  * Default colors for control painting.
@@ -157,10 +128,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_NCMOUSELEAVE:
         return NC_HandleNCMouseLeave( hwnd );
-
-    case WM_WINDOWPOSCHANGED:
-        DEFWND_HandleWindowPosChanged( hwnd, (const WINDOWPOS *)lParam );
-        break;
 
     case WM_RBUTTONUP:
         {
