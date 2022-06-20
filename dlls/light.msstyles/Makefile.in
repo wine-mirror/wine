@@ -133,14 +133,56 @@ SVG_SRCS = \
 	blue_listview_group_header_open_mixed_selection_hot.svg \
 	blue_listview_group_header_open_selected_hot.svg \
 	blue_listview_group_header_open_selected_not_focused_hot.svg \
+	blue_menu_bar_background.svg \
+	blue_menu_bar_item.svg \
+	blue_menu_popup_background.svg \
+	blue_menu_popup_borders.svg \
 	blue_menu_popup_check_16px.svg \
 	blue_menu_popup_check_18px.svg \
+	blue_menu_popup_check_25px.svg \
+	blue_menu_popup_check_32px.svg \
+	blue_menu_popup_check_40px.svg \
+	blue_menu_popup_check_48px.svg \
+	blue_menu_popup_check_64px.svg \
+	blue_menu_popup_check_background.svg \
+	blue_menu_popup_gutter.svg \
+	blue_menu_popup_item.svg \
 	blue_menu_popup_separator.svg \
-	blue_menu_popup_submenu.svg \
-	blue_menu_system_close.svg \
-	blue_menu_system_maximize.svg \
-	blue_menu_system_minimize.svg \
-	blue_menu_system_restore.svg \
+	blue_menu_popup_submenu_11px.svg \
+	blue_menu_popup_submenu_14px.svg \
+	blue_menu_popup_submenu_18px.svg \
+	blue_menu_popup_submenu_23px.svg \
+	blue_menu_popup_submenu_27px.svg \
+	blue_menu_popup_submenu_36px.svg \
+	blue_menu_popup_submenu_9px.svg \
+	blue_menu_system_close_11px.svg \
+	blue_menu_system_close_14px.svg \
+	blue_menu_system_close_17px.svg \
+	blue_menu_system_close_22px.svg \
+	blue_menu_system_close_28px.svg \
+	blue_menu_system_close_34px.svg \
+	blue_menu_system_close_44px.svg \
+	blue_menu_system_maximize_11px.svg \
+	blue_menu_system_maximize_14px.svg \
+	blue_menu_system_maximize_17px.svg \
+	blue_menu_system_maximize_22px.svg \
+	blue_menu_system_maximize_28px.svg \
+	blue_menu_system_maximize_34px.svg \
+	blue_menu_system_maximize_44px.svg \
+	blue_menu_system_minimize_11px.svg \
+	blue_menu_system_minimize_14px.svg \
+	blue_menu_system_minimize_17px.svg \
+	blue_menu_system_minimize_22px.svg \
+	blue_menu_system_minimize_28px.svg \
+	blue_menu_system_minimize_34px.svg \
+	blue_menu_system_minimize_44px.svg \
+	blue_menu_system_restore_11px.svg \
+	blue_menu_system_restore_14px.svg \
+	blue_menu_system_restore_17px.svg \
+	blue_menu_system_restore_22px.svg \
+	blue_menu_system_restore_28px.svg \
+	blue_menu_system_restore_34px.svg \
+	blue_menu_system_restore_44px.svg \
 	blue_progress_chunk_horizontal.svg \
 	blue_progress_chunk_vertical.svg \
 	blue_progress_track_horizontal.svg \
