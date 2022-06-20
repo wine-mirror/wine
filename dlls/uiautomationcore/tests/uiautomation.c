@@ -1101,6 +1101,7 @@ static struct Provider
     enum ProviderOptions prov_opts;
     HWND hwnd;
     BOOL ret_invalid_prop_type;
+    DWORD expected_tid;
 } Provider, Provider2, Provider_child, Provider_child2;
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
@@ -1443,6 +1444,8 @@ HRESULT WINAPI ProviderSimple_get_ProviderOptions(IRawElementProviderSimple *ifa
     struct Provider *This = impl_from_ProviderSimple(iface);
 
     add_method_call(This, PROV_GET_PROVIDER_OPTIONS);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
 
     *ret_val = 0;
     if (This->prov_opts)
@@ -1467,6 +1470,8 @@ HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
     struct Provider *This = impl_from_ProviderSimple(iface);
 
     add_method_call(This, PROV_GET_PROPERTY_VALUE);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
 
     VariantInit(ret_val);
     switch (prop_id)
@@ -1654,6 +1659,8 @@ HRESULT WINAPI ProviderSimple_get_HostRawElementProvider(IRawElementProviderSimp
     struct Provider *This = impl_from_ProviderSimple(iface);
 
     add_method_call(This, PROV_GET_HOST_RAW_ELEMENT_PROVIDER);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
 
     *ret_val = NULL;
     if (This->hwnd)
@@ -1702,6 +1709,8 @@ static HRESULT WINAPI ProviderFragment_Navigate(IRawElementProviderFragment *ifa
     struct Provider *This = impl_from_ProviderFragment(iface);
 
     add_method_call(This, FRAG_NAVIGATE);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
 
     *ret_val = NULL;
     if ((direction == NavigateDirection_Parent) && This->parent)
@@ -3759,6 +3768,108 @@ static const struct prov_method_sequence node_from_prov8[] = {
     { 0 }
 };
 
+static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, VARIANT *v);
+static DWORD WINAPI uia_node_from_provider_test_com_thread(LPVOID param)
+{
+    HUIANODE node = param;
+    HRESULT hr;
+    VARIANT v;
+
+    /*
+     * Since this is a node representing an IRawElementProviderSimple with
+     * ProviderOptions_UseComThreading set, it is only usable in threads that
+     * have initialized COM.
+     */
+    hr = UiaGetPropertyValue(node, UIA_ProcessIdPropertyId, &v);
+    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#lx\n", hr);
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = UiaGetPropertyValue(node, UIA_ProcessIdPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_uia_prop_val(UIA_ProcessIdPropertyId, UIAutomationType_Int, &v);
+
+    /*
+     * When retrieving a UIAutomationType_Element property, if UseComThreading
+     * is set, we'll get an HUIANODE that will make calls inside of the
+     * apartment of the node it is retrieved from. I.e, if we received a node
+     * with UseComThreading set from another node with UseComThreading set
+     * inside of an STA, the returned node will have all of its methods called
+     * from the STA thread.
+     */
+    Provider_child.prov_opts = ProviderOptions_UseComThreading | ProviderOptions_ServerSideProvider;
+    Provider_child.expected_tid = Provider.expected_tid;
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_uia_prop_val(UIA_LabeledByPropertyId, UIAutomationType_Element, &v);
+
+    /* Unset ProviderOptions_UseComThreading. */
+    Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    /*
+     * ProviderOptions_UseComThreading not set, GetPropertyValue will be
+     * called on the current thread.
+     */
+    Provider_child.expected_tid = GetCurrentThreadId();
+    check_uia_prop_val(UIA_LabeledByPropertyId, UIAutomationType_Element, &v);
+
+    CoUninitialize();
+
+    return 0;
+}
+
+static void test_uia_node_from_prov_com_threading(void)
+{
+    HANDLE thread;
+    HUIANODE node;
+    HRESULT hr;
+
+    /* Test ProviderOptions_UseComThreading. */
+    Provider.hwnd = NULL;
+    prov_root = NULL;
+    Provider.prov_opts = ProviderOptions_ServerSideProvider | ProviderOptions_UseComThreading;
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok_method_sequence(node_from_prov8, "node_from_prov8");
+
+    /*
+     * On Windows versions prior to Windows 10, UiaNodeFromProvider ignores the
+     * ProviderOptions_UseComThreading flag.
+     */
+    if (hr == S_OK)
+    {
+        win_skip("Skipping ProviderOptions_UseComThreading tests for UiaNodeFromProvider.\n");
+        UiaNodeRelease(node);
+        return;
+    }
+    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#lx.\n", hr);
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok_method_sequence(node_from_prov8, "node_from_prov8");
+
+    Provider.expected_tid = GetCurrentThreadId();
+    thread = CreateThread(NULL, 0, uia_node_from_provider_test_com_thread, (void *)node, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while(PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    Provider_child.expected_tid = Provider.expected_tid = 0;
+
+    CoUninitialize();
+}
 static void test_UiaNodeFromProvider(void)
 {
     WNDCLASSA cls;
@@ -3783,6 +3894,9 @@ static void test_UiaNodeFromProvider(void)
 
     hwnd = CreateWindowA("UiaNodeFromProvider class", "Test window", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
+
+    /* Run these tests early, we end up in an implicit MTA later. */
+    test_uia_node_from_prov_com_threading();
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
@@ -4352,6 +4466,18 @@ static void test_UiaGetPropertyValue(void)
 START_TEST(uiautomation)
 {
     HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
+    BOOL (WINAPI *pImmDisableIME)(DWORD);
+    HMODULE hModuleImm32;
+
+    /* Make sure COM isn't initialized by imm32. */
+    hModuleImm32 = LoadLibraryA("imm32.dll");
+    if (hModuleImm32) {
+        pImmDisableIME = (void *)GetProcAddress(hModuleImm32, "ImmDisableIME");
+        if (pImmDisableIME)
+            pImmDisableIME(0);
+    }
+    pImmDisableIME = NULL;
+    FreeLibrary(hModuleImm32);
 
     test_UiaHostProviderFromHwnd();
     test_uia_reserved_value_ifaces();

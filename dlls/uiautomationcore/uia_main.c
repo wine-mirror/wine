@@ -16,9 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
+#include "combaseapi.h"
 #include "initguid.h"
 #include "uia_private.h"
-#include "ocidl.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"

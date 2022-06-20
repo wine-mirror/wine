@@ -148,6 +148,18 @@ exit:
     }
 }
 
+static HRESULT get_global_interface_table(IGlobalInterfaceTable **git)
+{
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_StdGlobalInterfaceTable, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IGlobalInterfaceTable, (void **)git);
+    if (FAILED(hr))
+        WARN("Failed to get GlobalInterfaceTable, hr %#lx\n", hr);
+
+    return hr;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -156,6 +168,7 @@ struct uia_node {
     LONG ref;
 
     IWineUiaProvider *prov;
+    DWORD git_cookie;
 };
 
 static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)
@@ -192,6 +205,20 @@ static ULONG WINAPI uia_node_Release(IWineUiaNode *iface)
     TRACE("%p, refcount %ld\n", node, ref);
     if (!ref)
     {
+        if (node->git_cookie)
+        {
+            IGlobalInterfaceTable *git;
+            HRESULT hr;
+
+            hr = get_global_interface_table(&git);
+            if (SUCCEEDED(hr))
+            {
+                hr = IGlobalInterfaceTable_RevokeInterfaceFromGlobal(git, node->git_cookie);
+                if (FAILED(hr))
+                    WARN("Failed to get revoke provider interface from Global Interface Table, hr %#lx\n", hr);
+            }
+        }
+
         IWineUiaProvider_Release(node->prov);
         heap_free(node);
     }
@@ -203,8 +230,30 @@ static HRESULT WINAPI uia_node_get_provider(IWineUiaNode *iface, IWineUiaProvide
 {
     struct uia_node *node = impl_from_IWineUiaNode(iface);
 
-    *out_prov = node->prov;
-    IWineUiaProvider_AddRef(node->prov);
+    if (node->git_cookie)
+    {
+        IGlobalInterfaceTable *git;
+        IWineUiaProvider *prov;
+        HRESULT hr;
+
+        hr = get_global_interface_table(&git);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(git, node->git_cookie,
+                &IID_IWineUiaProvider, (void **)&prov);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get provider interface from GlobalInterfaceTable, hr %#lx\n", hr);
+            return hr;
+        }
+        *out_prov = prov;
+    }
+    else
+    {
+        *out_prov = node->prov;
+        IWineUiaProvider_AddRef(node->prov);
+    }
 
     return S_OK;
 }
@@ -377,7 +426,7 @@ static const IWineUiaProviderVtbl uia_provider_vtbl = {
 
 static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov)
 {
-    static const int supported_prov_opts = ProviderOptions_ServerSideProvider;
+    static const int supported_prov_opts = ProviderOptions_ServerSideProvider | ProviderOptions_UseComThreading;
     enum ProviderOptions prov_opts;
     struct uia_provider *prov;
     HRESULT hr;
@@ -395,10 +444,36 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
 
     prov->IWineUiaProvider_iface.lpVtbl = &uia_provider_vtbl;
     prov->elprov = elprov;
-    IRawElementProviderSimple_AddRef(elprov);
     prov->ref = 1;
     node->prov = &prov->IWineUiaProvider_iface;
 
+    /*
+     * If the UseComThreading ProviderOption is specified, all calls to the
+     * provided IRawElementProviderSimple need to respect the apartment type
+     * of the thread that creates the HUIANODE. i.e, if it's created in an
+     * STA, and the HUIANODE is used in an MTA, we need to provide a proxy.
+     */
+    if (prov_opts & ProviderOptions_UseComThreading)
+    {
+        IGlobalInterfaceTable *git;
+
+        hr = get_global_interface_table(&git);
+        if (FAILED(hr))
+        {
+            heap_free(prov);
+            return hr;
+        }
+
+        hr = IGlobalInterfaceTable_RegisterInterfaceInGlobal(git, (IUnknown *)&prov->IWineUiaProvider_iface,
+                &IID_IWineUiaProvider, &node->git_cookie);
+        if (FAILED(hr))
+        {
+            heap_free(prov);
+            return hr;
+        }
+    }
+
+    IRawElementProviderSimple_AddRef(elprov);
     return S_OK;
 }
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep header
+#pragma makedep regtypelib
 
 import "oaidl.idl";
 
@@ -27,21 +27,31 @@ struct uia_prop_info {
 };
 
 [
-    object,
-    uuid(57865755-6c05-4522-98df-4ca658b768ef),
-    pointer_default(unique),
+   version(1.0),
+   uuid(8a9ca8eb-856b-43d9-abd7-4a590054064f),
 ]
-interface IWineUiaProvider : IUnknown
+library UIA_wine_private
 {
-    HRESULT get_prop_val([in]const struct uia_prop_info *prop_info, [out, retval]VARIANT *ret_val);
-}
+    importlib("stdole2.tlb");
 
-[
-    object,
-    uuid(bccb6799-d831-4057-bd50-6425823ff1a3),
-    pointer_default(unique),
-]
-interface IWineUiaNode : IUnknown
-{
-    HRESULT get_provider([out, retval]IWineUiaProvider **out_prov);
+    [
+        object,
+        uuid(57865755-6c05-4522-98df-4ca658b768ef),
+        pointer_default(unique),
+        oleautomation,
+    ]
+    interface IWineUiaProvider : IUnknown
+    {
+        HRESULT get_prop_val([in]const struct uia_prop_info *prop_info, [out, retval]VARIANT *ret_val);
+    }
+
+    [
+        object,
+        uuid(bccb6799-d831-4057-bd50-6425823ff1a3),
+        pointer_default(unique),
+    ]
+    interface IWineUiaNode : IUnknown
+    {
+        HRESULT get_provider([out, retval]IWineUiaProvider **out_prov);
+    }
 }
