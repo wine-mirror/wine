@@ -126,6 +126,12 @@ struct get_connection_info_params
     SecPkgContext_ConnectionInfo *info;
 };
 
+struct get_cipher_info_params
+{
+    schan_session session;
+    SecPkgContext_CipherInfo *info;
+};
+
 struct get_session_peer_certificate_params
 {
     schan_session session;
@@ -206,6 +212,7 @@ enum schan_funcs
     unix_dispose_session,
     unix_free_certificate_credentials,
     unix_get_application_protocol,
+    unix_get_cipher_info,
     unix_get_connection_info,
     unix_get_enabled_protocols,
     unix_get_key_signature_algorithm,

@@ -1244,6 +1244,12 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             struct get_application_protocol_params params = { ctx->session, protocol };
             return GNUTLS_CALL( get_application_protocol, &params );
         }
+        case SECPKG_ATTR_CIPHER_INFO:
+        {
+            SecPkgContext_CipherInfo *info = buffer;
+            struct get_cipher_info_params params = { ctx->session, info };
+            return GNUTLS_CALL( get_cipher_info, &params );
+        }
 
         default:
             FIXME("Unhandled attribute %#lx\n", attribute);
@@ -1281,6 +1287,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
         case SECPKG_ATTR_UNIQUE_BINDINGS:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
         case SECPKG_ATTR_APPLICATION_PROTOCOL:
+            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        case SECPKG_ATTR_CIPHER_INFO:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
 
         default:

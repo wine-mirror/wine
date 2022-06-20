@@ -1038,6 +1038,7 @@ static void test_communication(void)
     CRYPT_DATA_BLOB pfx;
     HCERTSTORE store;
     SecPkgContext_NegotiationInfoA info;
+    SecPkgContext_CipherInfo cipher;
     SecBufferDesc buffers[2];
     SecBuffer *buf;
     unsigned buf_size = 8192;
@@ -1289,6 +1290,34 @@ static void test_communication(void)
     if(status == SEC_E_OK) {
         ok(conn_info.dwCipherStrength >= 128, "conn_info.dwCipherStrength = %ld\n", conn_info.dwCipherStrength);
         ok(conn_info.dwHashStrength >= 128, "conn_info.dwHashStrength = %ld\n", conn_info.dwHashStrength);
+    }
+
+    memset(&cipher, 0, sizeof(cipher));
+    cipher.dwVersion = SECPKGCONTEXT_CIPHERINFO_V1;
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_CIPHER_INFO, &cipher);
+    ok(status == SEC_E_OK || broken(status == SEC_E_UNSUPPORTED_FUNCTION) /* < vista */, "got %08lx\n", status);
+    if (status == SEC_E_OK)
+    {
+        ok(cipher.dwProtocol == 0x301, "got %lx\n", cipher.dwProtocol);
+        todo_wine ok(cipher.dwCipherSuite == 0xc014, "got %lx\n", cipher.dwCipherSuite);
+        todo_wine ok(cipher.dwBaseCipherSuite == 0xc014, "got %lx\n", cipher.dwBaseCipherSuite);
+        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA") ||
+           !wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA_P256"), /* < win10 */
+           "got %s\n", wine_dbgstr_w(cipher.szCipherSuite));
+        ok(!wcscmp(cipher.szCipher, L"AES"), "got %s\n", wine_dbgstr_w(cipher.szCipher));
+        ok(cipher.dwCipherLen == 256, "got %lu\n", cipher.dwCipherLen);
+        ok(cipher.dwCipherBlockLen == 16, "got %lu\n", cipher.dwCipherBlockLen);
+        ok(!wcscmp(cipher.szHash, L"SHA1"), "got %s\n", wine_dbgstr_w(cipher.szHash));
+        ok(cipher.dwHashLen == 160, "got %lu\n", cipher.dwHashLen);
+        ok(!wcscmp(cipher.szExchange, L"ECDH") || !wcscmp(cipher.szExchange, L"ECDH_P256"), /* < win10 */
+           "got %s\n", wine_dbgstr_w(cipher.szExchange));
+        ok(cipher.dwMinExchangeLen == 0 || cipher.dwMinExchangeLen == 256,  /* < win10 */
+           "got %lu\n", cipher.dwMinExchangeLen);
+        ok(cipher.dwMaxExchangeLen == 65536 || cipher.dwMaxExchangeLen == 256, /* < win10 */
+           "got %lu\n", cipher.dwMaxExchangeLen);
+        ok(!wcscmp(cipher.szCertificate, L"RSA"), "got %s\n", wine_dbgstr_w(cipher.szCertificate));
+        todo_wine ok(cipher.dwKeyType == 0x1d || cipher.dwKeyType == 0x17, /* < win10 */
+                     "got %#lx\n", cipher.dwKeyType);
     }
 
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_KEY_INFO, &key_info);
