@@ -371,6 +371,7 @@ static void testGetIpNetTable(void)
 {
     DWORD apiReturn;
     ULONG dwSize = 0;
+    unsigned int i;
 
     apiReturn = GetIpNetTable(NULL, NULL, FALSE);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
@@ -390,10 +391,22 @@ static void testGetIpNetTable(void)
         PMIB_IPNETTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
         memset(buf, 0xcc, dwSize);
-        apiReturn = GetIpNetTable(buf, &dwSize, FALSE);
+        apiReturn = GetIpNetTable(buf, &dwSize, TRUE);
         ok((apiReturn == NO_ERROR && buf->dwNumEntries) || (apiReturn == ERROR_NO_DATA && !buf->dwNumEntries),
             "got apiReturn %lu, dwSize %lu, buf->dwNumEntries %lu.\n",
             apiReturn, dwSize, buf->dwNumEntries);
+
+        if (apiReturn == NO_ERROR)
+        {
+            for (i = 0; i < buf->dwNumEntries - 1; ++i)
+            {
+                ok( buf->table[i].dwIndex <= buf->table[i + 1].dwIndex,
+                    "Entries are not sorted by index, i %u.\n", i );
+                if (buf->table[i].dwIndex == buf->table[i + 1].dwIndex)
+                    ok(ntohl(buf->table[i].dwAddr) <= ntohl(buf->table[i + 1].dwAddr),
+                       "Entries are not sorted by address, i %u.\n", i );
+            }
+        }
 
         if (apiReturn == NO_ERROR && winetest_debug > 1)
         {
