@@ -285,6 +285,11 @@ HRESULT WINAPI ScriptShapeOpenType(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *
         int *pcGlyphs);
 HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs, int cGlyphs, const SCRIPT_VISATTR *psva,
                            SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC );
+HRESULT WINAPI ScriptPlaceOpenType(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript,
+                                   OPENTYPE_TAG tagLangSys, int *rcRangeChars, TEXTRANGE_PROPERTIES **rpRangeProperties,
+                                   int cRanges, const WCHAR *pwcChars, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProps,
+                                   int cChars, const WORD *pwGlyphs, const SCRIPT_GLYPHPROP *pGlyphProps, int cGlyphs,
+                                   int *piAdvance, GOFFSET *pGoffset, ABC *pABC);
 HRESULT WINAPI ScriptBreak(const WCHAR *pwcChars, int cChars, const SCRIPT_ANALYSIS *psa, SCRIPT_LOGATTR *psla);
 HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, LONG *tmHeight);
 HRESULT WINAPI ScriptCPtoX(int iCP, BOOL fTrailing, int cChars, int cGlyphs, const WORD *pwLogClust, const SCRIPT_VISATTR *psva,
