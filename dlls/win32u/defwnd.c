@@ -2519,6 +2519,40 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         }
         break;
 
+    case WM_GETTEXT:
+        if (wparam)
+        {
+            WND *win;
+
+            if (!(win = get_win_ptr( hwnd ))) break;
+
+            __TRY
+            {
+                if (ansi)
+                {
+                    char *dest = (char *)lparam;
+                    if (win->text)
+                        result = win32u_wctomb( &ansi_cp, dest, wparam - 1,
+                                                win->text, wcslen( win->text ));
+                    dest[result] = 0;
+                }
+                else
+                {
+                    WCHAR *dest = (WCHAR *)lparam;
+                    if (win->text) result = min( wcslen( win->text ), wparam - 1 );
+                    if (result) memcpy( dest, win->text, result * sizeof(WCHAR) );
+                    dest[result] = 0;
+                }
+            }
+            __EXCEPT
+            {
+            }
+            __ENDTRY
+
+            release_win_ptr( win );
+        }
+        break;
+
     case WM_SETICON:
         result = (LRESULT)set_window_icon( hwnd, wparam, (HICON)lparam );
         if ((get_window_long( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
