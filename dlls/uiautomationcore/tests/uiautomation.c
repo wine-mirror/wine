@@ -4191,10 +4191,7 @@ static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, V
     switch (type)
     {
     case UIAutomationType_String:
-        todo_wine ok(V_VT(v) == VT_BSTR, "Unexpected VT %d\n", V_VT(v));
-        if (V_VT(v) != VT_BSTR)
-            break;
-
+        ok(V_VT(v) == VT_BSTR, "Unexpected VT %d\n", V_VT(v));
         ok(!lstrcmpW(V_BSTR(v), uia_bstr_prop_str), "Unexpected BSTR %s\n", wine_dbgstr_w(V_BSTR(v)));
         ok_method_sequence(get_prop_seq, NULL);
         break;
@@ -4417,10 +4414,7 @@ static void test_UiaGetPropertyValue(void)
         }
         winetest_push_context("prop_id %d", prop_id);
         hr = UiaGetPropertyValue(node, prop_id, &v);
-        if (hr == E_NOTIMPL)
-            todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        else
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         check_uia_prop_val(prop_id, elem_prop->type, &v);
 
         /*

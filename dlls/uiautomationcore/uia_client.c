@@ -396,6 +396,15 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
         *ret_val = v;
         break;
 
+    case UIAutomationType_String:
+        if (V_VT(&v) != VT_BSTR)
+        {
+            WARN("Invalid vt %d for UIAutomationType_String\n", V_VT(&v));
+            goto exit;
+        }
+        *ret_val = v;
+        break;
+
     case UIAutomationType_Element:
     {
         IRawElementProviderSimple *elprov;
