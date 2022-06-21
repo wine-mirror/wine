@@ -498,39 +498,20 @@ INT WINAPI GetMenuStringA( HMENU menu, UINT item, char *str, INT count, UINT fla
 /*******************************************************************
  *         GetMenuStringW    (USER32.@)
  */
-INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
-                               LPWSTR str, INT nMaxSiz, UINT wFlags )
+INT WINAPI GetMenuStringW( HMENU menu, UINT item, WCHAR *str, INT count, UINT flags )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
-    UINT pos;
-    INT ret;
+    MENUITEMINFOW info;
+    int ret;
 
-    TRACE("menu=%p item=%04x ptr=%p len=%d flags=%04x\n", hMenu, wItemID, str, nMaxSiz, wFlags );
-    if (str && nMaxSiz) str[0] = '\0';
+    TRACE( "menu=%p item=%04x ptr=%p len=%d flags=%04x\n", menu, item, str, count, flags );
 
-    if (!(menu = find_menu_item(hMenu, wItemID, wFlags, &pos)))
-    {
-        SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
-        return 0;
-    }
-    item = &menu->items[pos];
-
-    if (!str || !nMaxSiz)
-        ret = item->text ? lstrlenW(item->text) : 0;
-    else if (!item->text)
-    {
-        str[0] = 0;
-        ret = 0;
-    }
-    else
-    {
-        lstrcpynW( str, item->text, nMaxSiz );
-        ret = lstrlenW(str);
-    }
-    release_menu_ptr(menu);
-
-    TRACE("returning %s\n", debugstr_w(str));
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_STRING;
+    info.dwTypeData = str;
+    info.cch = count;
+    ret = NtUserThunkedMenuItemInfo( menu, item, flags, NtUserGetMenuItemInfoW, &info, NULL );
+    if (ret) ret = info.cch;
+    TRACE( "returning %s %d\n", debugstr_w( str ), ret );
     return ret;
 }
 
