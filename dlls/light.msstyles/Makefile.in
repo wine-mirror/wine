@@ -183,6 +183,27 @@ SVG_SRCS = \
 	blue_menu_system_restore_28px.svg \
 	blue_menu_system_restore_34px.svg \
 	blue_menu_system_restore_44px.svg \
+	blue_navigation_back_button_120px.svg \
+	blue_navigation_back_button_30px.svg \
+	blue_navigation_back_button_38px.svg \
+	blue_navigation_back_button_45px.svg \
+	blue_navigation_back_button_60px.svg \
+	blue_navigation_back_button_74px.svg \
+	blue_navigation_back_button_90px.svg \
+	blue_navigation_forward_button_120px.svg \
+	blue_navigation_forward_button_30px.svg \
+	blue_navigation_forward_button_38px.svg \
+	blue_navigation_forward_button_45px.svg \
+	blue_navigation_forward_button_60px.svg \
+	blue_navigation_forward_button_74px.svg \
+	blue_navigation_forward_button_90px.svg \
+	blue_navigation_menu_button_13px.svg \
+	blue_navigation_menu_button_17px.svg \
+	blue_navigation_menu_button_19px.svg \
+	blue_navigation_menu_button_26px.svg \
+	blue_navigation_menu_button_32px.svg \
+	blue_navigation_menu_button_39px.svg \
+	blue_navigation_menu_button_52px.svg \
 	blue_progress_chunk_horizontal.svg \
 	blue_progress_chunk_vertical.svg \
 	blue_progress_track_horizontal.svg \

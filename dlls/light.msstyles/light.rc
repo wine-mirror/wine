@@ -1119,6 +1119,80 @@ BLUE_INI TEXTFILE
 "MinDpi6 = 288\r\n"
 "MinDpi7 = 384\r\n"
 
+"\r\n; Navigation\r\n"
+"[Navigation.BackButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"Width = 30\r\n"
+"Height = 30\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_navigation_back_button_30px.bmp\r\n"
+"ImageFile2 = blue_navigation_back_button_38px.bmp\r\n"
+"ImageFile3 = blue_navigation_back_button_45px.bmp\r\n"
+"ImageFile4 = blue_navigation_back_button_60px.bmp\r\n"
+"ImageFile5 = blue_navigation_back_button_74px.bmp\r\n"
+"ImageFile6 = blue_navigation_back_button_90px.bmp\r\n"
+"ImageFile7 = blue_navigation_back_button_120px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Navigation.ForwardButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"Width = 30\r\n"
+"Height = 30\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_navigation_forward_button_30px.bmp\r\n"
+"ImageFile2 = blue_navigation_forward_button_38px.bmp\r\n"
+"ImageFile3 = blue_navigation_forward_button_45px.bmp\r\n"
+"ImageFile4 = blue_navigation_forward_button_60px.bmp\r\n"
+"ImageFile5 = blue_navigation_forward_button_74px.bmp\r\n"
+"ImageFile6 = blue_navigation_forward_button_90px.bmp\r\n"
+"ImageFile7 = blue_navigation_forward_button_120px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Navigation.MenuButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_navigation_menu_button_13px.bmp\r\n"
+"ImageFile2 = blue_navigation_menu_button_17px.bmp\r\n"
+"ImageFile3 = blue_navigation_menu_button_19px.bmp\r\n"
+"ImageFile4 = blue_navigation_menu_button_26px.bmp\r\n"
+"ImageFile5 = blue_navigation_menu_button_32px.bmp\r\n"
+"ImageFile6 = blue_navigation_menu_button_39px.bmp\r\n"
+"ImageFile7 = blue_navigation_menu_button_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
 "\r\n; Progress\r\n"
 "[Progress]\r\n"
 "ProgressChunkSize = 1\r\n"
@@ -2506,6 +2580,70 @@ BLUE_MENU_SYSTEM_RESTORE_34PX_BMP BITMAP "blue_menu_system_restore_34px.bmp"
 
 /* @makedep: blue_menu_system_restore_44px.bmp */
 BLUE_MENU_SYSTEM_RESTORE_44PX_BMP BITMAP "blue_menu_system_restore_44px.bmp"
+
+/* Navigation */
+/* @makedep: blue_navigation_back_button_30px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_30PX_BMP BITMAP "blue_navigation_back_button_30px.bmp"
+
+/* @makedep: blue_navigation_back_button_38px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_38PX_BMP BITMAP "blue_navigation_back_button_38px.bmp"
+
+/* @makedep: blue_navigation_back_button_45px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_45PX_BMP BITMAP "blue_navigation_back_button_45px.bmp"
+
+/* @makedep: blue_navigation_back_button_60px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_60PX_BMP BITMAP "blue_navigation_back_button_60px.bmp"
+
+/* @makedep: blue_navigation_back_button_74px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_74PX_BMP BITMAP "blue_navigation_back_button_74px.bmp"
+
+/* @makedep: blue_navigation_back_button_90px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_90PX_BMP BITMAP "blue_navigation_back_button_90px.bmp"
+
+/* @makedep: blue_navigation_back_button_120px.bmp */
+BLUE_NAVIGATION_BACK_BUTTON_120PX_BMP BITMAP "blue_navigation_back_button_120px.bmp"
+
+/* @makedep: blue_navigation_forward_button_30px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_30PX_BMP BITMAP "blue_navigation_forward_button_30px.bmp"
+
+/* @makedep: blue_navigation_forward_button_38px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_38PX_BMP BITMAP "blue_navigation_forward_button_38px.bmp"
+
+/* @makedep: blue_navigation_forward_button_45px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_45PX_BMP BITMAP "blue_navigation_forward_button_45px.bmp"
+
+/* @makedep: blue_navigation_forward_button_60px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_60PX_BMP BITMAP "blue_navigation_forward_button_60px.bmp"
+
+/* @makedep: blue_navigation_forward_button_74px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_74PX_BMP BITMAP "blue_navigation_forward_button_74px.bmp"
+
+/* @makedep: blue_navigation_forward_button_90px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_90PX_BMP BITMAP "blue_navigation_forward_button_90px.bmp"
+
+/* @makedep: blue_navigation_forward_button_120px.bmp */
+BLUE_NAVIGATION_FORWARD_BUTTON_120PX_BMP BITMAP "blue_navigation_forward_button_120px.bmp"
+
+/* @makedep: blue_navigation_menu_button_13px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_13PX_BMP BITMAP "blue_navigation_menu_button_13px.bmp"
+
+/* @makedep: blue_navigation_menu_button_17px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_17PX_BMP BITMAP "blue_navigation_menu_button_17px.bmp"
+
+/* @makedep: blue_navigation_menu_button_19px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_19PX_BMP BITMAP "blue_navigation_menu_button_19px.bmp"
+
+/* @makedep: blue_navigation_menu_button_26px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_26PX_BMP BITMAP "blue_navigation_menu_button_26px.bmp"
+
+/* @makedep: blue_navigation_menu_button_32px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_32PX_BMP BITMAP "blue_navigation_menu_button_32px.bmp"
+
+/* @makedep: blue_navigation_menu_button_39px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_39PX_BMP BITMAP "blue_navigation_menu_button_39px.bmp"
+
+/* @makedep: blue_navigation_menu_button_52px.bmp */
+BLUE_NAVIGATION_MENU_BUTTON_52PX_BMP BITMAP "blue_navigation_menu_button_52px.bmp"
 
 /* Progress */
 /* @makedep: blue_progress_chunk_horizontal.bmp */
