@@ -537,17 +537,9 @@ INT WINAPI GetMenuItemCount( HMENU menu )
 /**********************************************************************
  *         GetMenuItemID    (USER32.@)
  */
-UINT WINAPI GetMenuItemID( HMENU hMenu, INT nPos )
+UINT WINAPI GetMenuItemID( HMENU menu, INT pos )
 {
-    POPUPMENU *menu;
-    UINT id, pos;
-
-    if (!(menu = find_menu_item(hMenu, nPos, MF_BYPOSITION, &pos)))
-        return -1;
-
-    id = menu->items[pos].fType & MF_POPUP ? -1 : menu->items[pos].wID;
-    release_menu_ptr(menu);
-    return id;
+    return NtUserThunkedMenuItemInfo( menu, pos, MF_BYPOSITION, NtUserGetMenuItemID, NULL, NULL );
 }
 
 

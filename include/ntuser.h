@@ -224,6 +224,7 @@ enum
     NtUserSetMenuItemInfo,
     NtUserInsertMenuItem,
     /* Wine extensions */
+    NtUserGetMenuItemID,
     NtUserGetMenuItemInfoA,
     NtUserGetMenuItemInfoW,
     NtUserGetMenuState,

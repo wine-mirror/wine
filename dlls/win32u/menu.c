@@ -1121,6 +1121,12 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
 
     switch (method)
     {
+    case NtUserGetMenuItemID:
+        if (!(menu = find_menu_item( handle, pos, flags, &i ))) return -1;
+        ret = menu->items[i].fType & MF_POPUP ? -1 : menu->items[i].wID;
+        release_menu_ptr( menu );
+        break;
+
     case NtUserGetMenuItemInfoA:
         return get_menu_item_info( handle, pos, flags, info, TRUE );
 
