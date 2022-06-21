@@ -714,30 +714,21 @@ DWORD WINAPI GetMenuCheckMarkDimensions(void)
 /**********************************************************************
  *         SetMenuItemBitmaps    (USER32.@)
  */
-BOOL WINAPI SetMenuItemBitmaps( HMENU hMenu, UINT nPos, UINT wFlags,
-                                    HBITMAP hNewUnCheck, HBITMAP hNewCheck)
+BOOL WINAPI SetMenuItemBitmaps( HMENU menu, UINT pos, UINT flags, HBITMAP uncheck, HBITMAP check )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
-    UINT pos;
+    MENUITEMINFOW info;
 
-    if (!(menu = find_menu_item(hMenu, nPos, wFlags, &pos)))
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_STATE;
+    if (!NtUserThunkedMenuItemInfo( menu, pos, flags, NtUserGetMenuItemInfoW, &info, NULL ))
         return FALSE;
 
-    item = &menu->items[pos];
-    if (!hNewCheck && !hNewUnCheck)
-    {
-        item->fState &= ~MF_USECHECKBITMAPS;
-    }
-    else  /* Install new bitmaps */
-    {
-        item->hCheckBit = hNewCheck;
-        item->hUnCheckBit = hNewUnCheck;
-        item->fState |= MF_USECHECKBITMAPS;
-    }
-    release_menu_ptr(menu);
-
-    return TRUE;
+    info.fMask = MIIM_STATE | MIIM_CHECKMARKS;
+    info.hbmpChecked = check;
+    info.hbmpUnchecked = uncheck;
+    if (check || uncheck) info.fState |= MF_USECHECKBITMAPS;
+    else info.fState &= ~MF_USECHECKBITMAPS;
+    return NtUserThunkedMenuItemInfo( menu, pos, flags, NtUserSetMenuItemInfo, &info, NULL );
 }
 
 
