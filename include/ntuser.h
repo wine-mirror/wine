@@ -229,6 +229,7 @@ enum
     NtUserGetMenuItemInfoA,
     NtUserGetMenuItemInfoW,
     NtUserGetMenuState,
+    NtUserGetSubMenu,
 };
 
 struct send_message_timeout_params

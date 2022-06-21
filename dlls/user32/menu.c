@@ -115,32 +115,6 @@ static POPUPMENU *MENU_GetMenu(HMENU hMenu)
     return menu;
 }
 
-static POPUPMENU *grab_menu_ptr(HMENU hMenu)
-{
-    POPUPMENU *menu = get_user_handle_ptr( hMenu, NTUSER_OBJ_MENU );
-
-    if (menu == OBJ_OTHER_PROCESS)
-    {
-        WARN("other process menu %p?\n", hMenu);
-        return NULL;
-    }
-
-    if (menu)
-        menu->refcount++;
-    else
-        WARN("invalid menu handle=%p\n", hMenu);
-    return menu;
-}
-
-static void release_menu_ptr(POPUPMENU *menu)
-{
-    if (menu)
-    {
-        menu->refcount--;
-        release_user_handle_ptr(menu);
-    }
-}
-
 /***********************************************************************
  *           MENU_CopySysPopup
  *
@@ -229,66 +203,6 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
     }
     ERR("failed to load system menu!\n");
     return 0;
-}
-
-
-static POPUPMENU *find_menu_item(HMENU hmenu, UINT id, UINT flags, UINT *pos)
-{
-    UINT fallback_pos = ~0u, i;
-    POPUPMENU *menu;
-
-    menu = grab_menu_ptr(hmenu);
-    if (!menu)
-        return NULL;
-
-    if (flags & MF_BYPOSITION)
-    {
-        if (id >= menu->nItems)
-        {
-            release_menu_ptr(menu);
-            return NULL;
-        }
-
-        if (pos) *pos = id;
-        return menu;
-    }
-    else
-    {
-        MENUITEM *item = menu->items;
-	for (i = 0; i < menu->nItems; i++, item++)
-	{
-	    if (item->fType & MF_POPUP)
-	    {
-                POPUPMENU *submenu = find_menu_item(item->hSubMenu, id, flags, pos);
-
-                if (submenu)
-                {
-                    release_menu_ptr(menu);
-                    return submenu;
-                }
-                else if (item->wID == id)
-		{
-		    /* fallback to this item if nothing else found */
-		    fallback_pos = i;
-		}
-	    }
-	    else if (item->wID == id)
-	    {
-                if (pos) *pos = i;
-                return menu;
-	    }
-	}
-    }
-
-    if (fallback_pos != ~0u)
-        *pos = fallback_pos;
-    else
-    {
-        release_menu_ptr(menu);
-        menu = NULL;
-    }
-
-    return menu;
 }
 
 
@@ -755,22 +669,10 @@ HMENU WINAPI GetMenu( HWND hWnd )
 /**********************************************************************
  *         GetSubMenu    (USER32.@)
  */
-HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
+HMENU WINAPI GetSubMenu( HMENU menu, INT pos )
 {
-    POPUPMENU *menu;
-    HMENU submenu;
-    UINT pos;
-
-    if (!(menu = find_menu_item(hMenu, nPos, MF_BYPOSITION, &pos)))
-        return 0;
-
-    if (menu->items[pos].fType & MF_POPUP)
-        submenu = menu->items[pos].hSubMenu;
-    else
-        submenu = 0;
-
-    release_menu_ptr(menu);
-    return submenu;
+    UINT ret = NtUserThunkedMenuItemInfo( menu, pos, MF_BYPOSITION, NtUserGetSubMenu, NULL, NULL );
+    return UlongToHandle( ret );
 }
 
 

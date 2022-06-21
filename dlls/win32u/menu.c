@@ -1151,6 +1151,25 @@ static BOOL check_menu_radio_item( HMENU handle, UINT first, UINT last, UINT che
     return done;
 }
 
+/* see GetSubMenu */
+static HMENU get_sub_menu( HMENU handle, INT pos )
+{
+    POPUPMENU *menu;
+    HMENU submenu;
+    UINT i;
+
+    if (!(menu = find_menu_item( handle, pos, MF_BYPOSITION, &i )))
+        return 0;
+
+    if (menu->items[i].fType & MF_POPUP)
+        submenu = menu->items[i].hSubMenu;
+    else
+        submenu = 0;
+
+    release_menu_ptr(menu);
+    return submenu;
+}
+
 /**********************************************************************
  *           NtUserThunkedMenuItemInfo    (win32u.@)
  */
@@ -1177,6 +1196,9 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
 
     case NtUserGetMenuItemInfoW:
         return get_menu_item_info( handle, pos, flags, info, FALSE );
+
+    case NtUserGetSubMenu:
+        return HandleToUlong( get_sub_menu( handle, pos ));
 
     case NtUserInsertMenuItem:
         if (!info || info->cbSize != sizeof(*info))
@@ -1312,25 +1334,6 @@ BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
     menu->dwContextHelpID = id;
     release_menu_ptr( menu );
     return TRUE;
-}
-
-/* see GetSubMenu */
-static HMENU get_sub_menu( HMENU handle, INT pos )
-{
-    POPUPMENU *menu;
-    HMENU submenu;
-    UINT i;
-
-    if (!(menu = find_menu_item( handle, pos, MF_BYPOSITION, &i )))
-        return 0;
-
-    if (menu->items[i].fType & MF_POPUP)
-        submenu = menu->items[i].hSubMenu;
-    else
-        submenu = 0;
-
-    release_menu_ptr(menu);
-    return submenu;
 }
 
 /**********************************************************************
