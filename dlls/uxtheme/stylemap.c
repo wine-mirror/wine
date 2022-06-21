@@ -728,6 +728,25 @@ static const MSSTYLES_CLASS_MAP classMenuband[] = {
     {0, 0, L""}
 };
 
+static const MSSTYLES_CLASS_MAP classNavigation[] = {
+    {NAV_BACKBUTTON, 0, L"BACKBUTTON"},
+    {NAV_BACKBUTTON, NAV_BB_NORMAL, L"NORMAL"},
+    {NAV_BACKBUTTON, NAV_BB_HOT, L"HOT"},
+    {NAV_BACKBUTTON, NAV_BB_PRESSED, L"PRESSED"},
+    {NAV_BACKBUTTON, NAV_BB_DISABLED, L"DISABLED"},
+    {NAV_FORWARDBUTTON, 0, L"FORWARDBUTTON"},
+    {NAV_FORWARDBUTTON, NAV_FB_NORMAL, L"NORMAL"},
+    {NAV_FORWARDBUTTON, NAV_FB_HOT, L"HOT"},
+    {NAV_FORWARDBUTTON, NAV_FB_PRESSED, L"PRESSED"},
+    {NAV_FORWARDBUTTON, NAV_FB_DISABLED, L"DISABLED"},
+    {NAV_MENUBUTTON, 0, L"MENUBUTTON"},
+    {NAV_MENUBUTTON, NAV_MB_NORMAL, L"NORMAL"},
+    {NAV_MENUBUTTON, NAV_MB_HOT, L"HOT"},
+    {NAV_MENUBUTTON, NAV_MB_PRESSED, L"PRESSED"},
+    {NAV_MENUBUTTON, NAV_MB_DISABLED, L"DISABLED"},
+    {0, 0, L""}
+};
+
 static const MSSTYLES_CLASS_MAP classPage[] = {
     {PGRP_UP, 0, L"UP"},
     {PGRP_UP, UPS_NORMAL, L"NORMAL"},
@@ -1253,6 +1272,7 @@ static const MSSTYLES_CLASS_NAME mapClass[] = {
     {classListview, L"LISTVIEW"},
     {classMenu, L"MENU"},
     {classMenuband, L"MENUBAND"},
+    {classNavigation, L"NAVIGATION"},
     {classPage, L"PAGE"},
     {classProgress, L"PROGRESS"},
     {classRebar, L"REBAR"},
