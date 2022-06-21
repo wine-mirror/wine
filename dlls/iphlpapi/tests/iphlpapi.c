@@ -350,7 +350,8 @@ static void testGetIpForwardTable(void)
         else
             ok( buf->table[i].dwForwardType == MIB_IPROUTE_TYPE_INDIRECT, "got %ld\n", buf->table[i].dwForwardType );
         ok( row->dwForwardProto == row2->Protocol, "got %ld vs %d\n", row->dwForwardProto, row2->Protocol );
-        ok( row->dwForwardAge == row2->Age, "got %ld vs %ld\n", row->dwForwardAge, row2->Age );
+        ok( row->dwForwardAge == row2->Age || row->dwForwardAge + 1 == row2->Age,
+            "got %ld vs %ld\n", row->dwForwardAge, row2->Age );
         ok( row->dwForwardNextHopAS == 0, "got %08lx\n", row->dwForwardNextHopAS );
         /* FIXME: need to add the interface's metric from GetIpInterfaceTable() */
         ok( row->dwForwardMetric1 >= row2->Metric, "got %ld vs %ld\n", row->dwForwardMetric1, row2->Metric );
