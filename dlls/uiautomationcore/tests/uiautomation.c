@@ -2078,6 +2078,7 @@ static void test_uia_prov_from_acc_properties(void)
     int i, x;
 
     /* MSAA role to UIA control type test. */
+    VariantInit(&v);
     for (i = 0; i < ARRAY_SIZE(msaa_role_uia_types); i++)
     {
         const struct msaa_role_uia_type *role = &msaa_role_uia_types[i];
