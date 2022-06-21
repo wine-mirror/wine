@@ -69,17 +69,38 @@ will exit.
 When in \fBgdb\fR proxy mode, the following options are available:
 .PP
 .IP \fB--no-start\fR
-\fBgdb\fR will not be automatically
-started. Relevant information for starting \fBgdb\fR is printed on
-screen. This is somehow useful when not directly using \fBgdb\fR but
-some graphical front-ends, like \fBddd\fR or \fBkgbd\fR. 
+Don't launch \fBgdb\fR directly; instead, print the \fBtarget remote\fR
+GDB command to execute and listen for connection from any GDB-compatible
+debugger.  Normally, \fB--gdb\fR will start both the proxy debugging server
+and an instance of \fBgdb\fR for the front end.  This option instructs
+\fBwinedbg\fR to skip launching of \fBgdb\fR, and instead prints
+the GDB command that can be used to manually connect to the server.
+This command is in the form
+.IP
+.in +4n
+.EX
+target remote localhost:\fI<port>\fR
+.EE
+.in
+.IP
+where \fI<port>\fR is the TCP port \fBwinedbg\fR's proxy debugging server is bound to.
+.IP
+This option allows the user to replace \fBgdb\fR with some other
+debugger front end, such as \fBddd\fR, \fBkgdb\fR, \fBgdbgui\fR, or Qt Creator.
+Regardless of whether \fB--no-start\fR is specified, \fBwinedbg\fR will quit
+after the first connection is hung up (e.g. \fBgdb\fR detaches from the
+debuggee).
 .IP \fB--port\fR\ \fIport\fR
-Start the \fBgdb\fR server on the given port. If this option is not
-specified, a randomly chosen port will be used. If \fB--no-start\fR is
-specified, the port used will be printed on startup.
+Start the GDB proxy debugging server on the given port.  If this option is not
+specified, \fBwinedbg\fR will let the operating system choose any available port.
+This option can be used in conjunction with \fB--no-start\fR to specify the port the
+server shall be bound to.
 .IP \fB--with-xterm\fR
-This will run \fBgdb\fR in its own xterm instead of using the current
-Unix console for textual display.
+This will run the \fBgdb\fR front end in a new
+.BR xterm (1)
+window instead of using the current Unix terminal for its interface.
+This option is ignored if \fB--no-start\fR is
+specified.
 .PP
 In all modes, the rest of the command line, when passed, is used to 
 identify which program, if any, is to be debugged:
