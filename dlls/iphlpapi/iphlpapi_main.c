@@ -2344,7 +2344,8 @@ DWORD WINAPI GetIpNetTable( MIB_IPNETTABLE *table, ULONG *size, BOOL sort )
         memset( row->bPhysAddr + row->dwPhysAddrLen, 0,
                 sizeof(row->bPhysAddr) - row->dwPhysAddrLen );
         row->dwAddr = keys[i].addr.s_addr;
-        switch (dyn->state)
+
+        switch (dyn[i].state)
         {
         case NlnsUnreachable:
         case NlnsIncomplete:
