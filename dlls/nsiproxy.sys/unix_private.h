@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifdef WORDS_BIGENDIAN
+#define IPV4_ADDR(b1, b2, b3, b4) (((unsigned int)b1 << 24) | (b2 << 16) | (b3 << 8) | b4)
+#else
+#define IPV4_ADDR(b1, b2, b3, b4) (((unsigned int)b4 << 24) | (b3 << 16) | (b2 << 8) | b1)
+#endif
+
 NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params ) DECLSPEC_HIDDEN;
 NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params ) DECLSPEC_HIDDEN;
 NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params ) DECLSPEC_HIDDEN;

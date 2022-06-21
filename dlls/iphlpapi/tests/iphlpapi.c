@@ -120,6 +120,11 @@ static const char *ntoa6( IN6_ADDR *ip )
     return buffers[i];
 }
 
+static DWORD ipv4_addr( BYTE b1, BYTE b2, BYTE b3, BYTE b4 )
+{
+    return htonl( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4 );
+}
+
 /*
 still-to-be-tested 98-only functions:
 GetUniDirectionalAdapterInfo
@@ -369,9 +374,15 @@ static void testGetIpForwardTable(void)
 
 static void testGetIpNetTable(void)
 {
-    DWORD apiReturn;
+    DWORD apiReturn, ret, prev_idx;
+    BOOL igmp3_found, ssdp_found;
+    DWORD igmp3_addr, ssdp_addr;
+    MIB_IPNET_TABLE2 *table2;
     ULONG dwSize = 0;
     unsigned int i;
+
+    igmp3_addr = ipv4_addr( 224, 0, 0, 22 );
+    ssdp_addr = ipv4_addr( 239, 255, 255, 250 );
 
     apiReturn = GetIpNetTable(NULL, NULL, FALSE);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
@@ -406,6 +417,45 @@ static void testGetIpNetTable(void)
                     ok(ntohl(buf->table[i].dwAddr) <= ntohl(buf->table[i + 1].dwAddr),
                        "Entries are not sorted by address, i %u.\n", i );
             }
+
+            igmp3_found = ssdp_found = FALSE;
+            prev_idx = ~0ul;
+            for (i = 0; i < buf->dwNumEntries; ++i)
+            {
+                if (buf->table[i].dwIndex != prev_idx)
+                {
+                    if (prev_idx != ~0ul)
+                    {
+                        ok( igmp3_found, "%s not found, iface index %lu.\n", ntoa( igmp3_addr ), prev_idx);
+                        ok( ssdp_found || broken(!ssdp_found) /* 239.255.255.250 is always present since Win10 */,
+                            "%s not found.\n", ntoa( ssdp_addr ));
+                    }
+                    prev_idx = buf->table[i].dwIndex;
+                    igmp3_found = ssdp_found = FALSE;
+                }
+                if (buf->table[i].dwAddr == igmp3_addr)
+                    igmp3_found = TRUE;
+                else if (buf->table[i].dwAddr == ssdp_addr)
+                    ssdp_found = TRUE;
+            }
+            ok( igmp3_found, "%s not found.\n", ntoa( igmp3_addr ));
+            ok( ssdp_found || broken(!ssdp_found) /* 239.255.255.250 is always present since Win10 */,
+                "%s not found.\n", ntoa( ssdp_addr ));
+
+            ret = GetIpNetTable2( AF_INET, &table2 );
+            ok( !ret, "got ret %lu.\n", ret );
+            for (i = 0; i < table2->NumEntries; ++i)
+            {
+                MIB_IPNET_ROW2 *row = &table2->Table[i];
+                if (row->Address.Ipv4.sin_addr.s_addr == igmp3_addr
+                    || row->Address.Ipv4.sin_addr.s_addr == ssdp_addr)
+                {
+                    ok( row->State == NlnsPermanent, "got state %d.\n", row->State );
+                    ok( !row->IsRouter, "IsRouter is set.\n" );
+                    ok( !row->IsUnreachable, "IsUnreachable is set.\n" );
+                }
+            }
+            FreeMibTable( table2 );
         }
 
         if (apiReturn == NO_ERROR && winetest_debug > 1)

@@ -1000,17 +1000,74 @@ static void ipv4_neighbour_fill_entry( struct ipv4_neighbour_data *entry, struct
     }
 }
 
+/* ARP entries for these multicast addresses are always present on Windows for each interface. */
+static DWORD ipv4_multicast_addresses[] =
+{
+    IPV4_ADDR(224, 0, 0, 22),
+    IPV4_ADDR(239, 255, 255, 250),
+};
+
+static void update_static_address_found( DWORD address, UINT if_index, struct nsi_ndis_ifinfo_static *iface,
+                                         unsigned int iface_count )
+{
+    unsigned int i, j;
+
+    for (i = 0; i < ARRAY_SIZE(ipv4_multicast_addresses); ++i)
+        if (ipv4_multicast_addresses[i] == address) break;
+
+    if (i == ARRAY_SIZE(ipv4_multicast_addresses)) return;
+
+    for (j = 0; j < iface_count; ++j)
+    {
+        if (iface[j].if_index == if_index)
+        {
+            iface[j].unk |= 1 << i;
+            return;
+        }
+    }
+}
+
 static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
                                               void *dynamic_data, UINT dynamic_size,
                                               void *static_data, UINT static_size, UINT_PTR *count )
 {
-    UINT num = 0;
+    UINT num = 0, iface_count;
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
+    struct nsi_ndis_ifinfo_static *iface_static;
     struct ipv4_neighbour_data entry;
+    NET_LUID *luid_tbl;
+    unsigned int i, j;
 
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
+
+    iface_count = 0;
+    if ((status = nsi_enumerate_all( 1, 0, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, NULL, 0, NULL, 0,
+                                     NULL, 0, NULL, 0, &iface_count )))
+        return status;
+
+    if (!(luid_tbl = malloc( iface_count * sizeof(*luid_tbl) )))
+        return STATUS_NO_MEMORY;
+
+    if (!(iface_static = malloc( iface_count * sizeof(*iface_static) )))
+    {
+        free( luid_tbl );
+        return STATUS_NO_MEMORY;
+    }
+
+    if ((status = nsi_enumerate_all( 1, 0, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl, sizeof(*luid_tbl),
+                                     NULL, 0, NULL, 0, iface_static, sizeof(*iface_static), &iface_count ))
+        && status != STATUS_BUFFER_OVERFLOW)
+    {
+        free( luid_tbl );
+        free( iface_static );
+        return status;
+    }
+
+    /* Use unk field to indicate whether we found mandatory multicast addresses in the host ARP table. */
+    for (i = 0; i < iface_count; ++i)
+        iface_static[i].unk = 0;
 
 #ifdef __linux__
     {
@@ -1058,6 +1115,8 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
             *s = 0;
             if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
             if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+
+            update_static_address_found( entry.addr.s_addr, entry.if_index, iface_static, iface_count );
 
             if (num < *count)
             {
@@ -1119,6 +1178,8 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
 #endif
                 entry.is_unreachable = 0; /* FIXME */
 
+                update_static_address_found( entry.addr.s_addr, entry.if_index, iface_static, iface_count );
+
                 if (num < *count)
                 {
                     ipv4_neighbour_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
@@ -1136,8 +1197,41 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
     }
 #else
     FIXME( "not implemented\n" );
+    free( luid_tbl );
+    free( iface_static );
     return STATUS_NOT_IMPLEMENTED;
 #endif
+
+    if (!want_data || num <= *count)
+    {
+        /* Certain ipv4 multicast addresses are always present on Windows for each interface.
+         * Add those if they weren't added already. */
+        memset( &entry, 0, sizeof(entry) );
+        entry.state = NlnsPermanent;
+        for (i = 0; i < iface_count; ++i)
+        {
+            entry.if_index = iface_static[i].if_index;
+            entry.luid = luid_tbl[i];
+            for (j = 0; j < ARRAY_SIZE(ipv4_multicast_addresses); ++j)
+            {
+                if (iface_static[i].unk & (1 << j)) continue;
+                if (num <= *count)
+                {
+                    entry.addr.s_addr = ipv4_multicast_addresses[j];
+                    ipv4_neighbour_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+
+                    if (key_data) key_data = (BYTE *)key_data + key_size;
+                    if (rw_data) rw_data = (BYTE *)rw_data + rw_size;
+                    if (dynamic_data) dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                    if (static_data) static_data = (BYTE *)static_data + static_size;
+                }
+                ++num;
+            }
+        }
+    }
+
+    free( luid_tbl );
+    free( iface_static );
 
     if (!want_data || num <= *count) *count = num;
     else status = STATUS_BUFFER_OVERFLOW;
