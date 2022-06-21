@@ -1098,51 +1098,12 @@ BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
 /**********************************************************************
  *		CheckMenuRadioItem    (USER32.@)
  */
-
-BOOL WINAPI CheckMenuRadioItem(HMENU hMenu, UINT first, UINT last,
-    UINT check, UINT flags)
+BOOL WINAPI CheckMenuRadioItem( HMENU menu, UINT first, UINT last, UINT check, UINT flags )
 {
-    POPUPMENU *first_menu = NULL, *check_menu;
-    UINT i, check_pos;
-    BOOL done = FALSE;
-
-    for (i = first; i <= last; i++)
-    {
-        MENUITEM *item;
-
-        if (!(check_menu = find_menu_item(hMenu, i, flags, &check_pos)))
-            continue;
-
-        if (!first_menu)
-            first_menu = grab_menu_ptr(check_menu->obj.handle);
-
-        if (first_menu != check_menu)
-        {
-            release_menu_ptr(check_menu);
-            continue;
-        }
-
-        item = &check_menu->items[check_pos];
-        if (item->fType != MFT_SEPARATOR)
-        {
-            if (i == check)
-            {
-                item->fType |= MFT_RADIOCHECK;
-                item->fState |= MFS_CHECKED;
-                done = TRUE;
-            }
-            else
-            {
-                /* MSDN is wrong, Windows does not remove MFT_RADIOCHECK */
-                item->fState &= ~MFS_CHECKED;
-            }
-        }
-
-        release_menu_ptr(check_menu);
-    }
-    release_menu_ptr(first_menu);
-
-    return done;
+    MENUITEMINFOW info; /* abuse to pass last and check */
+    info.cch = last;
+    info.fMask = check;
+    return NtUserThunkedMenuItemInfo( menu, first, flags, NtUserCheckMenuRadioItem, &info, NULL );
 }
 
 

@@ -1109,6 +1109,48 @@ static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW
     return TRUE;
 }
 
+static BOOL check_menu_radio_item( HMENU handle, UINT first, UINT last, UINT check, UINT flags )
+{
+    POPUPMENU *first_menu = NULL, *check_menu;
+    UINT i, check_pos;
+    BOOL done = FALSE;
+
+    for (i = first; i <= last; i++)
+    {
+        MENUITEM *item;
+
+        if (!(check_menu = find_menu_item( handle, i, flags, &check_pos ))) continue;
+        if (!first_menu) first_menu = grab_menu_ptr( check_menu->obj.handle );
+
+        if (first_menu != check_menu)
+        {
+            release_menu_ptr(check_menu);
+            continue;
+        }
+
+        item = &check_menu->items[check_pos];
+        if (item->fType != MFT_SEPARATOR)
+        {
+            if (i == check)
+            {
+                item->fType |= MFT_RADIOCHECK;
+                item->fState |= MFS_CHECKED;
+                done = TRUE;
+            }
+            else
+            {
+                /* Windows does not remove MFT_RADIOCHECK */
+                item->fState &= ~MFS_CHECKED;
+            }
+        }
+
+        release_menu_ptr( check_menu );
+    }
+
+    release_menu_ptr( first_menu );
+    return done;
+}
+
 /**********************************************************************
  *           NtUserThunkedMenuItemInfo    (win32u.@)
  */
@@ -1121,6 +1163,9 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
 
     switch (method)
     {
+    case NtUserCheckMenuRadioItem:
+        return check_menu_radio_item( handle, pos, info->cch, info->fMask, flags );
+
     case NtUserGetMenuItemID:
         if (!(menu = find_menu_item( handle, pos, flags, &i ))) return -1;
         ret = menu->items[i].fType & MF_POPUP ? -1 : menu->items[i].wID;
