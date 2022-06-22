@@ -364,6 +364,13 @@ static BOOL is_dynamic_env_var( const char *var )
 
 /******************************************************************
  *      ntdll_umbstowcs  (ntdll.so)
+ *
+ * Convert a multi-byte string in the Unix code page to UTF-16. Returns the
+ * number of characters converted, which may be less than the entire source
+ * string. The destination string must not be NULL.
+ *
+ * The size of the output buffer, and the return value, are both given in
+ * characters, not bytes.
  */
 DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 {
@@ -381,6 +388,11 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 
 /******************************************************************
  *      ntdll_wcstoumbs  (ntdll.so)
+ *
+ * Convert a UTF-16 string to a multi-byte string in the Unix code page.
+ * The destination string must not be NULL.
+ *
+ * The size of the source string is given in characters, not bytes.
  */
 int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
 {
