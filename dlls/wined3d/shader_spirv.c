@@ -1089,6 +1089,8 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void)
 {
+    TRACE("Using %s.\n", vkd3d_shader_get_version(NULL, NULL));
+
     return &spirv_shader_backend_vk;
 }
 
