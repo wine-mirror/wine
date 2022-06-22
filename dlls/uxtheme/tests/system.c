@@ -2322,7 +2322,6 @@ static void test_DrawThemeBackgroundEx(void)
 
         ptr += 4;
     }
-    todo_wine
     ok(i == width * height || broken(ptr[3] == 0) /* Spin button glyphs on XP don't use alpha */,
        "Unexpected alpha value %#x at (%d,%d).\n", ptr[3], i % height, i / height);
 
