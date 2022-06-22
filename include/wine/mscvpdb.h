@@ -1172,7 +1172,8 @@ union codeview_fieldtype
 #define T_64PCHAR8          0x067c  /* 64 near pointer to 8-bit unicode char */
 
 /* counts, bit masks, and shift values needed to access various parts of the built-in type numbers */
-#define T_MAXPREDEFINEDTYPE 0x0580  /* maximum type index for all built-in types */
+#define T_FIRSTDEFINABLETYPE 0x1000 /* first type index that's not predefined */
+#define T_MAXPREDEFINEDTYPE 0x0680  /* maximum type index for all built-in types */
 #define T_MAXBASICTYPE      0x0080  /* maximum type index all non-pointer built-in types */
 #define T_BASICTYPE_MASK    0x00ff  /* mask of bits that can potentially identify a non-pointer basic type */
 #define T_BASICTYPE_SHIFT   8       /* shift count to push out the basic type bits from a type number */

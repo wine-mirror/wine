@@ -132,15 +132,13 @@ static void dump(const void* ptr, unsigned len)
  * Process CodeView type information.
  */
 
-#define MAX_BUILTIN_TYPES	0x06FF
-#define FIRST_DEFINABLE_TYPE    0x1000
-
-static struct symt*     cv_basic_types[MAX_BUILTIN_TYPES];
+static struct symt*     cv_basic_types[T_MAXPREDEFINEDTYPE];
 
 struct cv_defined_module
 {
     BOOL                allowed;
-    unsigned int        num_defined_types;
+    unsigned int        first_type_index;
+    unsigned int        last_type_index;
     struct symt**       defined_types;
 };
 /* FIXME: don't make it static */
@@ -532,15 +530,12 @@ static struct symt*  codeview_get_type(unsigned int typeno, BOOL quiet)
 
     /*
      * Convert Codeview type numbers into something we can grok internally.
-     * Numbers < FIRST_DEFINABLE_TYPE are all fixed builtin types.
-     * Numbers from FIRST_DEFINABLE_TYPE and up are all user defined (structs, etc).
+     * Numbers < T_MAXPREDEFINEDTYPE all fixed builtin types.
+     * Numbers from T_FIRSTDEFINABLETYPE and up are all user defined (structs, etc).
      */
-    if (typeno < FIRST_DEFINABLE_TYPE)
-    {
-        if (typeno < MAX_BUILTIN_TYPES)
-	    symt = cv_basic_types[typeno];
-    }
-    else
+    if (typeno < T_MAXPREDEFINEDTYPE)
+        symt = cv_basic_types[typeno];
+    else if (typeno >= T_FIRSTDEFINABLETYPE)
     {
         unsigned        mod_index = typeno >> 24;
         unsigned        mod_typeno = typeno & 0x00FFFFFF;
@@ -548,12 +543,12 @@ static struct symt*  codeview_get_type(unsigned int typeno, BOOL quiet)
 
         mod = (mod_index == 0) ? cv_current_module : &cv_zmodules[mod_index];
 
-        if (mod_index >= CV_MAX_MODULES || !mod->allowed) 
+        if (mod_index >= CV_MAX_MODULES || !mod->allowed)
             FIXME("Module of index %d isn't loaded yet (%x)\n", mod_index, typeno);
         else
         {
-            if (mod_typeno - FIRST_DEFINABLE_TYPE < mod->num_defined_types)
-                symt = mod->defined_types[mod_typeno - FIRST_DEFINABLE_TYPE];
+            if (mod_typeno >= mod->first_type_index && mod_typeno < mod->last_type_index)
+                symt = mod->defined_types[mod_typeno - mod->first_type_index];
         }
     }
     if (!quiet && !symt && typeno) FIXME("Returning NULL symt for type-id %x\n", typeno);
@@ -563,22 +558,20 @@ static struct symt*  codeview_get_type(unsigned int typeno, BOOL quiet)
 struct codeview_type_parse
 {
     struct module*      module;
+    PDB_TYPES           header;
     const BYTE*         table;
     const DWORD*        offset;
-    DWORD               num;
 };
 
 static inline const void* codeview_jump_to_type(const struct codeview_type_parse* ctp, DWORD idx)
 {
-    if (idx < FIRST_DEFINABLE_TYPE) return NULL;
-    idx -= FIRST_DEFINABLE_TYPE;
-    return (idx >= ctp->num) ? NULL : (ctp->table + ctp->offset[idx]); 
+    return (idx >= ctp->header.first_index && idx < ctp->header.last_index) ?
+        ctp->table + ctp->offset[idx - ctp->header.first_index] : NULL;
 }
 
 static int codeview_add_type(unsigned int typeno, struct symt* dt)
 {
-    if (typeno < FIRST_DEFINABLE_TYPE)
-        FIXME("What the heck\n");
+    unsigned idx;
     if (!cv_current_module)
     {
         FIXME("Adding %x to non allowed module\n", typeno);
@@ -587,31 +580,19 @@ static int codeview_add_type(unsigned int typeno, struct symt* dt)
     if ((typeno >> 24) != 0)
         FIXME("No module index while inserting type-id assumption is wrong %x\n",
               typeno);
-    if (typeno - FIRST_DEFINABLE_TYPE >= cv_current_module->num_defined_types)
+    if (typeno < cv_current_module->first_type_index || typeno >= cv_current_module->last_type_index)
     {
-        if (cv_current_module->defined_types)
-        {
-            cv_current_module->num_defined_types = max( cv_current_module->num_defined_types * 2,
-                                                        typeno - FIRST_DEFINABLE_TYPE + 1 );
-            cv_current_module->defined_types = HeapReAlloc(GetProcessHeap(),
-                            HEAP_ZERO_MEMORY, cv_current_module->defined_types,
-                            cv_current_module->num_defined_types * sizeof(struct symt*));
-        }
-        else
-        {
-            cv_current_module->num_defined_types = max( 256, typeno - FIRST_DEFINABLE_TYPE + 1 );
-            cv_current_module->defined_types = HeapAlloc(GetProcessHeap(),
-                            HEAP_ZERO_MEMORY,
-                            cv_current_module->num_defined_types * sizeof(struct symt*));
-        }
-        if (cv_current_module->defined_types == NULL) return FALSE;
+        FIXME("Type number %x out of bounds [%x, %x)\n",
+              typeno, cv_current_module->first_type_index, typeno >= cv_current_module->last_type_index);
+        return FALSE;
     }
-    if (cv_current_module->defined_types[typeno - FIRST_DEFINABLE_TYPE])
+    idx = typeno - cv_current_module->first_type_index;
+    if (cv_current_module->defined_types[idx])
     {
-        if (cv_current_module->defined_types[typeno - FIRST_DEFINABLE_TYPE] != dt)
+        if (cv_current_module->defined_types[idx] != dt)
             FIXME("Overwriting at %x\n", typeno);
     }
-    cv_current_module->defined_types[typeno - FIRST_DEFINABLE_TYPE] = dt;
+    cv_current_module->defined_types[idx] = dt;
     return TRUE;
 }
 
@@ -622,10 +603,11 @@ static void codeview_clear_type_table(void)
     for (i = 0; i < CV_MAX_MODULES; i++)
     {
         if (cv_zmodules[i].allowed)
-            HeapFree(GetProcessHeap(), 0, cv_zmodules[i].defined_types);
+            free(cv_zmodules[i].defined_types);
         cv_zmodules[i].allowed = FALSE;
         cv_zmodules[i].defined_types = NULL;
-        cv_zmodules[i].num_defined_types = 0;
+        cv_zmodules[i].first_type_index = 0;
+        cv_zmodules[i].last_type_index = 0;
     }
     cv_current_module = NULL;
 }
@@ -1381,10 +1363,15 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
 
 static BOOL codeview_parse_type_table(struct codeview_type_parse* ctp)
 {
-    unsigned int                curr_type = FIRST_DEFINABLE_TYPE;
+    unsigned int                curr_type;
     const union codeview_type*  type;
 
-    for (curr_type = FIRST_DEFINABLE_TYPE; curr_type < FIRST_DEFINABLE_TYPE + ctp->num; curr_type++)
+    cv_current_module->first_type_index = ctp->header.first_index;
+    cv_current_module->last_type_index = ctp->header.last_index;
+    cv_current_module->defined_types = calloc(ctp->header.last_index - ctp->header.first_index,
+                                              sizeof(*cv_current_module->defined_types));
+
+    for (curr_type = ctp->header.first_index; curr_type < ctp->header.last_index; curr_type++)
     {
         type = codeview_jump_to_type(ctp, curr_type);
 
@@ -3053,15 +3040,14 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
                                 struct codeview_type_parse* ctp,
                                 BYTE* image)
 {
-    PDB_TYPES types;
-    DWORD total;
     const BYTE* ptr;
     DWORD* offset;
+    int i;
 
-    pdb_convert_types_header(&types, image);
+    pdb_convert_types_header(&ctp->header, image);
 
     /* Check for unknown versions */
-    switch (types.version)
+    switch (ctp->header.version)
     {
     case 19950410:      /* VC 4.0 */
     case 19951122:
@@ -3070,22 +3056,22 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
     case 20040203:      /* VC 8.0 */
         break;
     default:
-        ERR("-Unknown type info version %d\n", types.version);
+        ERR("-Unknown type info version %d\n", ctp->header.version);
         return FALSE;
     }
 
     ctp->module = msc_dbg->module;
-    /* reconstruct the types offset...
-     * FIXME: maybe it's present in the newest PDB_TYPES structures
+    /* Reconstruct the types offset table
+     * Note: the hash subfile of the PDB_TYPES only contains a partial table
+     * (not all the indexes are present, so it requires first a binary search in partial table,
+     * followed by a linear search...)
      */
-    total = types.last_index - types.first_index + 1;
-    offset = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * total);
+    offset = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * (ctp->header.last_index - ctp->header.first_index));
     if (!offset) return FALSE;
-    ctp->table = ptr = image + types.type_offset;
-    ctp->num = 0;
-    while (ptr < ctp->table + types.type_size && ctp->num < total)
+    ctp->table = ptr = image + ctp->header.type_offset;
+    for (i = ctp->header.first_index; i < ctp->header.last_index; i++)
     {
-        offset[ctp->num++] = ptr - ctp->table;
+        offset[i - ctp->header.first_index] = ptr - ctp->table;
         ptr += ((const union codeview_type*)ptr)->generic.len + 2;
     }
     ctp->offset = offset;
@@ -3882,7 +3868,9 @@ static BOOL codeview_process_info(const struct process* pcs,
                 types = (const OMFGlobalTypes*)(msc_dbg->root + ent->lfo);
                 ctp.module = msc_dbg->module;
                 ctp.offset = (const DWORD*)(types + 1);
-                ctp.num    = types->cTypes;
+                memset(&ctp.header, 0, sizeof(ctp.header));
+                ctp.header.first_index = T_FIRSTDEFINABLETYPE;
+                ctp.header.last_index = ctp.header.first_index + types->cTypes;
                 ctp.table  = (const BYTE*)(ctp.offset + types->cTypes);
 
                 cv_current_module = &cv_zmodules[0];
