@@ -2954,7 +2954,7 @@ static void pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
         types->type_size   = old->type_size;
         types->first_index = old->first_index;
         types->last_index  = old->last_index;
-        types->file        = old->file;
+        types->hash_file   = old->hash_file;
     }
     else
     {

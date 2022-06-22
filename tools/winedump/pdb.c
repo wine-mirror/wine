@@ -608,18 +608,153 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     free(filesimage);
 }
 
-static void pdb_dump_types_hash(struct pdb_reader* reader, unsigned file, const char* strmname)
+static BOOL is_bit_set(const unsigned* dw, unsigned len, unsigned i)
+{
+    if (i >= len * sizeof(unsigned) * 8) return FALSE;
+    return (dw[i >> 5] & (1u << (i & 31u))) != 0;
+}
+
+static void pdb_dump_hash_value(const BYTE* ptr, unsigned len)
+{
+    int i;
+
+    printf("[");
+    for (i = len - 1; i >= 0; i--)
+        printf("%02x", ptr[i]);
+    printf("]");
+}
+
+static struct
+{
+    const BYTE* hash;
+    unsigned hash_size;
+} collision_arg;
+
+static int collision_compar(const void *p1, const void *p2)
+{
+    unsigned idx1 = *(unsigned*)p1;
+    unsigned idx2 = *(unsigned*)p2;
+    return memcmp(collision_arg.hash + idx1 * collision_arg.hash_size,
+                  collision_arg.hash + idx2 * collision_arg.hash_size,
+                  collision_arg.hash_size);
+}
+
+static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* types, const char* strmname)
 {
     void*  hash = NULL;
-    DWORD  size;
-
-    hash = reader->read_file(reader, file);
+    unsigned i, strmsize;
+    const unsigned* table;
+    char* strbase;
+    unsigned *collision;
+    hash = reader->read_file(reader, types->hash_file);
     if (!hash) return;
 
-    size = pdb_get_file_size(reader, file);
-
     printf("Types (%s) hash:\n", strmname);
-    dump_data(hash, size, "    ");
+    strmsize = pdb_get_file_size(reader, types->hash_file);
+    if (types->hash_offset + types->hash_len > strmsize ||
+        (types->last_index - types->first_index) * types->hash_size != types->hash_len ||
+        types->search_offset + types->search_len > strmsize ||
+        types->type_remap_offset + types->type_remap_len > strmsize)
+    {
+        printf("\nIncoherent sizes... skipping\n");
+        return;
+    }
+    printf("\n\tIndexes => hash value:\n");
+    for (i = types->first_index; i < types->last_index; i++)
+    {
+        printf("\t\t%08x => ", i);
+        pdb_dump_hash_value((const BYTE*)hash + types->hash_offset + (i - types->first_index) * types->hash_size, types->hash_size);
+        printf("\n");
+    }
+    /* print collisions in hash table (if any) */
+    collision = malloc((types->last_index - types->first_index) * sizeof(unsigned));
+    if (collision)
+    {
+        unsigned head_printed = 0;
+
+        collision_arg.hash = (const BYTE*)hash + types->hash_offset;
+        collision_arg.hash_size = types->hash_size;
+
+        for (i = 0; i < types->last_index - types->first_index; i++) collision[i] = i;
+        qsort(collision, types->last_index - types->first_index, sizeof(unsigned), collision_compar);
+        for (i = 0; i < types->last_index - types->first_index; i++)
+        {
+            unsigned j;
+            for (j = i + 1; j < types->last_index - types->first_index; j++)
+                if (memcmp((const BYTE*)hash + types->hash_offset + collision[i] * types->hash_size,
+                           (const BYTE*)hash + types->hash_offset + collision[j] * types->hash_size,
+                           types->hash_size))
+                    break;
+            if (j > i + 1)
+            {
+                unsigned k;
+                if (!head_printed)
+                {
+                    printf("\n\t\tCollisions:\n");
+                    head_printed = 1;
+                }
+                printf("\t\t\tHash ");
+                pdb_dump_hash_value((const BYTE*)hash + types->hash_offset + collision[i] * types->hash_size, types->hash_size);
+                printf(":");
+                for (k = i; k < j; k++)
+                    printf(" %x", types->first_index + collision[k]);
+                printf("\n");
+                i = j - 1;
+            }
+        }
+        free(collision);
+    }
+    printf("\n\tIndexes => offsets:\n");
+    table = (const unsigned*)((const BYTE*)hash + types->search_offset);
+    for (i = 0; i < types->search_len / (2 * sizeof(unsigned)); i += 2)
+    {
+        printf("\t\t%08x => %08x\n", table[2 * i + 0], table[2 * i + 1]);
+    }
+    if (types->type_remap_len && (strbase = read_string_table(reader)))
+    {
+        unsigned num, capa, count_present, count_deleted;
+        const unsigned* present_bitset;
+        const unsigned* deleted_bitset;
+
+        printf("\n\tType remap:\n");
+        table = (const unsigned*)((const BYTE*)hash + types->type_remap_offset);
+        num = *table++;
+        capa = *table++;
+        count_present = *table++;
+        present_bitset = table;
+        table += count_present;
+        count_deleted = *table++;
+        deleted_bitset = table;
+        table += count_deleted;
+        printf("\t\tNumber of present entries: %u\n", num);
+        printf("\t\tCapacity: %u\n", capa);
+        printf("\t\tBitset present:\n");
+        printf("\t\t\tCount: %u\n", count_present);
+        printf("\t\t\tBitset: ");
+        pdb_dump_hash_value((const BYTE*)present_bitset, count_present * sizeof(unsigned));
+        printf("\n");
+        printf("\t\tBitset deleted:\n");
+        printf("\t\t\tCount: %u\n", count_deleted);
+        printf("\t\t\tBitset: ");
+        pdb_dump_hash_value((const BYTE*)deleted_bitset, count_deleted * sizeof(unsigned));
+        printf("\n");
+        for (i = 0; i < capa; ++i)
+        {
+            printf("\t\t%2u) %c",
+                   i,
+                   is_bit_set(present_bitset, count_present, i) ? 'P' :
+                   is_bit_set(deleted_bitset, count_deleted, i) ? 'D' : '_');
+            if (is_bit_set(present_bitset, count_present, i))
+            {
+                printf(" %s => ", strbase + 12 + *table++);
+                pdb_dump_hash_value((const BYTE*)table, types->hash_size);
+                table = (const unsigned*)((const BYTE*)table + types->hash_size);
+            }
+            printf("\n");
+        }
+        free(strbase);
+        printf("\n");
+    }
     free(hash);
 }
 
@@ -657,39 +792,39 @@ static void pdb_dump_types(struct pdb_reader* reader, unsigned strmidx, const ch
 
     /* Read type table */
     printf("Types (%s):\n"
-           "\tversion:        %u\n"
-           "\ttype_offset:    %08x\n"
-           "\tfirst_index:    %x\n"
-           "\tlast_index:     %x\n"
-           "\ttype_size:      %x\n"
-           "\tfile:           %x\n"
-           "\tpad:            %x\n"
-           "\thash_size:      %x\n"
-           "\thash_base:      %x\n"
-           "\thash_offset:    %x\n"
-           "\thash_len:       %x\n"
-           "\tsearch_offset:  %x\n"
-           "\tsearch_len:     %x\n"
-           "\tunknown_offset: %x\n"
-           "\tunknown_len:    %x\n",
+           "\tversion:           %u\n"
+           "\ttype_offset:       %08x\n"
+           "\tfirst_index:       %x\n"
+           "\tlast_index:        %x\n"
+           "\ttype_size:         %x\n"
+           "\thash_file:         %x\n"
+           "\tpad:               %x\n"
+           "\thash_size:         %x\n"
+           "\thash_buckets       %x\n"
+           "\thash_offset:       %x\n"
+           "\thash_len:          %x\n"
+           "\tsearch_offset:     %x\n"
+           "\tsearch_len:        %x\n"
+           "\ttype_remap_offset: %x\n"
+           "\ttype_remap_len:    %x\n",
            strmname,
            types->version,
            types->type_offset,
            types->first_index,
            types->last_index,
            types->type_size,
-           types->file,
+           types->hash_file,
            types->pad,
            types->hash_size,
-           types->hash_base,
+           types->hash_num_buckets,
            types->hash_offset,
            types->hash_len,
            types->search_offset,
            types->search_len,
-           types->unknown_offset,
-           types->unknown_len);
+           types->type_remap_offset,
+           types->type_remap_len);
     codeview_dump_types_from_block((const char*)types + types->type_offset, types->type_size);
-    pdb_dump_types_hash(reader, types->file, strmname);
+    pdb_dump_types_hash(reader, types, strmname);
     free(types);
 }
 

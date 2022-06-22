@@ -2403,7 +2403,7 @@ typedef struct _PDB_TYPES_OLD
     unsigned short first_index;
     unsigned short last_index;
     unsigned int   type_size;
-    unsigned short file;
+    unsigned short hash_file;
     unsigned short pad;
 } PDB_TYPES_OLD, *PPDB_TYPES_OLD;
 
@@ -2414,16 +2414,16 @@ typedef struct _PDB_TYPES
     unsigned int   first_index;
     unsigned int   last_index;
     unsigned int   type_size;
-    unsigned short file;
+    unsigned short hash_file;
     unsigned short pad;
     unsigned int   hash_size;
-    unsigned int   hash_base;
+    unsigned int   hash_num_buckets;
     unsigned int   hash_offset;
     unsigned int   hash_len;
     unsigned int   search_offset;
     unsigned int   search_len;
-    unsigned int   unknown_offset;
-    unsigned int   unknown_len;
+    unsigned int   type_remap_offset;
+    unsigned int   type_remap_len;
 } PDB_TYPES, *PPDB_TYPES;
 
 typedef struct _PDB_SYMBOL_RANGE
