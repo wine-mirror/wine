@@ -3201,6 +3201,12 @@ static void pdb_dispose_type_parse(struct codeview_type_parse* ctp)
     free((DWORD*)ctp->alloc_hash);
 }
 
+static BOOL pdb_bitfield_is_bit_set(const unsigned* dw, unsigned len, unsigned i)
+{
+    if (i >= len * sizeof(unsigned) * 8) return FALSE;
+    return (dw[i >> 5] & (1u << (i & 31u))) != 0;
+}
+
 static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
                                 const struct pdb_file_info* pdb_file,
                                 struct codeview_type_parse* ctp,
@@ -3267,6 +3273,42 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
         ctp->alloc_hash[i - ctp->header.first_index].id = i;
         ctp->alloc_hash[i - ctp->header.first_index].next = ctp->hash[hash_i];
         ctp->hash[hash_i] = &ctp->alloc_hash[i - ctp->header.first_index];
+    }
+    /* parse the remap table
+     * => move listed type_id at first position of their hash buckets so that we force remap to them
+     */
+    if (ctp->header.type_remap_len)
+    {
+        const unsigned* remap = (const unsigned*)((const BYTE*)ctp->hash_stream + ctp->header.type_remap_offset);
+        unsigned i, capa, count_present;
+        const unsigned* present_bitset;
+        remap++; /* no need of num */
+        capa = *remap++;
+        count_present = *remap++;
+        present_bitset = remap;
+        remap += count_present;
+        remap += *remap + 1; /* skip deleted bit set */
+        for (i = 0; i < capa; ++i)
+        {
+            if (pdb_bitfield_is_bit_set(present_bitset, count_present, i))
+            {
+                unsigned hash_i;
+                struct hash_link** phl;
+                /* remap[0] is an offset for a string in /string stream, followed by type_id to force */
+                hash_i = pdb_read_hash_value(ctp, remap[1]);
+                for (phl = &ctp->hash[hash_i]; *phl; phl = &(*phl)->next)
+                    if ((*phl)->id == remap[1])
+                    {
+                        struct hash_link* hl = *phl;
+                        /* move hl node at first position of its hash bucket */
+                        *phl = hl->next;
+                        hl->next = ctp->hash[hash_i];
+                        ctp->hash[hash_i] = hl;
+                        break;
+                    }
+                remap += 2;
+            }
+        }
     }
     return TRUE;
 oom:
