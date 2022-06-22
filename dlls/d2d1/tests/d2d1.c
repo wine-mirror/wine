@@ -10322,7 +10322,85 @@ static void test_mt_factory(BOOL d3d11)
     ID2D1Factory_Release(factory);
 }
 
-static void test_effect(BOOL d3d11)
+#define check_system_properties(effect, is_builtin) check_system_properties_(__LINE__, effect, is_builtin)
+static void check_system_properties_(unsigned int line, ID2D1Effect *effect, BOOL is_builtin)
+{
+    UINT i, value_size, str_size;
+    WCHAR name[32], buffer[256];
+    D2D1_PROPERTY_TYPE type;
+    HRESULT hr;
+
+    static const struct system_property_test
+    {
+        UINT32 index;
+        const WCHAR *name;
+        D2D1_PROPERTY_TYPE type;
+        UINT32 value_size;
+    }
+    system_property_tests[] =
+    {
+        {D2D1_PROPERTY_CLSID,       L"CLSID",       D2D1_PROPERTY_TYPE_CLSID,  sizeof(CLSID)},
+        {D2D1_PROPERTY_DISPLAYNAME, L"DisplayName", D2D1_PROPERTY_TYPE_STRING },
+        {D2D1_PROPERTY_AUTHOR,      L"Author",      D2D1_PROPERTY_TYPE_STRING },
+        {D2D1_PROPERTY_CATEGORY,    L"Category",    D2D1_PROPERTY_TYPE_STRING },
+        {D2D1_PROPERTY_DESCRIPTION, L"Description", D2D1_PROPERTY_TYPE_STRING },
+        {D2D1_PROPERTY_INPUTS,      L"Inputs",      D2D1_PROPERTY_TYPE_ARRAY,  sizeof(UINT32)},
+        {D2D1_PROPERTY_CACHED,      L"Cached",      D2D1_PROPERTY_TYPE_BOOL,   sizeof(BOOL)},
+        {D2D1_PROPERTY_PRECISION,   L"Precision",   D2D1_PROPERTY_TYPE_ENUM,   sizeof(UINT32)},
+        {D2D1_PROPERTY_MIN_INPUTS,  L"MinInputs",   D2D1_PROPERTY_TYPE_UINT32, sizeof(UINT32)},
+        {D2D1_PROPERTY_MAX_INPUTS,  L"MaxInputs",   D2D1_PROPERTY_TYPE_UINT32, sizeof(UINT32)},
+    };
+
+    hr = ID2D1Effect_GetPropertyName(effect, 0xdeadbeef, name, sizeof(name));
+    ok_(__FILE__, line)(hr == D2DERR_INVALID_PROPERTY, "GetPropertyName() got unexpected hr %#lx for 0xdeadbeef.\n", hr);
+    type = ID2D1Effect_GetType(effect, 0xdeadbeef);
+    ok_(__FILE__, line)(type == D2D1_PROPERTY_TYPE_UNKNOWN, "Got unexpected property type %#x for 0xdeadbeef.\n", type);
+    value_size = ID2D1Effect_GetValueSize(effect, 0xdeadbeef);
+    ok_(__FILE__, line)(value_size == 0, "Got unexpected value size %u for 0xdeadbeef.\n", value_size);
+
+    for (i = 0; i < ARRAY_SIZE(system_property_tests); ++i)
+    {
+        const struct system_property_test *test = &system_property_tests[i];
+        winetest_push_context("Property %u", i);
+
+        name[0] = 0;
+        hr = ID2D1Effect_GetPropertyName(effect, test->index, name, sizeof(name));
+        todo_wine_if((is_builtin && (test->type == D2D1_PROPERTY_TYPE_ARRAY || test->type == D2D1_PROPERTY_TYPE_STRING)))
+        {
+        ok_(__FILE__, line)(hr == S_OK, "Failed to get property name, hr %#lx\n", hr);
+        ok_(__FILE__, line)(!wcscmp(name, test->name), "Got unexpected property name %s, expected %s.\n",
+                debugstr_w(name), debugstr_w(test->name));
+        }
+
+        type = D2D1_PROPERTY_TYPE_UNKNOWN;
+        type = ID2D1Effect_GetType(effect, test->index);
+        todo_wine_if((is_builtin && (test->type == D2D1_PROPERTY_TYPE_ARRAY || test->type == D2D1_PROPERTY_TYPE_STRING)))
+        ok_(__FILE__, line)(type == test->type, "Got unexpected property type %#x, expected %#x.\n",
+                type, test->type);
+
+        value_size = 0;
+        value_size = ID2D1Effect_GetValueSize(effect, test->index);
+        if (test->value_size != 0)
+        {
+            todo_wine_if(is_builtin && test->type == D2D1_PROPERTY_TYPE_ARRAY)
+            ok_(__FILE__, line)(value_size == test->value_size, "Got unexpected value size %u, expected %u.\n",
+                    value_size, test->value_size);
+        }
+        else if (test->type == D2D1_PROPERTY_TYPE_STRING)
+        {
+            hr = ID2D1Effect_GetValue(effect, test->index, D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+            todo_wine_if(is_builtin)
+            ok_(__FILE__, line)(hr == S_OK, "Failed to get value, hr %#lx.\n", hr);
+            str_size = (wcslen((WCHAR *)buffer) + 1) * sizeof(WCHAR);
+            todo_wine_if(is_builtin || buffer[0] == 0)
+            ok_(__FILE__, line)(value_size == str_size, "Got unexpected value size %u, expected %u.\n",
+                    value_size, str_size);
+        }
+        winetest_pop_context();
+    }
+}
+
+static void test_builtin_effect(BOOL d3d11)
 {
     unsigned int i, j, min_inputs, max_inputs, str_size, input_count;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -10384,6 +10462,7 @@ static void test_effect(BOOL d3d11)
         hr = ID2D1DeviceContext_CreateEffect(context, test->clsid, &effect);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+        /* Test output image pointer */
         hr = ID2D1Effect_QueryInterface(effect, &IID_ID2D1Image, (void **)&image_a);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID2D1Effect_GetOutput(effect, &image_b);
@@ -10391,6 +10470,7 @@ static void test_effect(BOOL d3d11)
         ID2D1Image_Release(image_b);
         ID2D1Image_Release(image_a);
 
+        /* Test GetValue() */
         hr = ID2D1Effect_GetValue(effect, 0xdeadbeef, D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
         ok(hr == D2DERR_INVALID_PROPERTY, "Got unexpected hr %#lx.\n", hr);
 
@@ -10447,10 +10527,12 @@ static void test_effect(BOOL d3d11)
         ok(max_inputs == test->max_inputs, "Got unexpected max inputs %u, expected %u.\n",
                 max_inputs, test->max_inputs);
 
+        /* Test default input count */
         input_count = ID2D1Effect_GetInputCount(effect);
         ok(input_count == test->default_input_count, "Got unexpected input count %u, expected %u.\n",
                 input_count, test->default_input_count);
 
+        /* Test SetInputCount() */
         input_count = (test->max_inputs < 16 ? test->max_inputs : 16);
         for (j = 0; j < input_count + 4; ++j)
         {
@@ -10463,6 +10545,7 @@ static void test_effect(BOOL d3d11)
             winetest_pop_context();
         }
 
+        /* Test GetInput() before any input is set */
         input_count = ID2D1Effect_GetInputCount(effect);
         for (j = 0; j < input_count + 4; ++j)
         {
@@ -10472,6 +10555,7 @@ static void test_effect(BOOL d3d11)
             winetest_pop_context();
         }
 
+        /* Test GetInput() after an input is set */
         set_size_u(&size, 1, 1);
         bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
         bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
@@ -10498,6 +10582,7 @@ static void test_effect(BOOL d3d11)
             winetest_pop_context();
         }
 
+        /* Test setting inputs with out-of-bounds index */
         for (j = input_count; j < input_count + 4; ++j)
         {
             winetest_push_context("Input %u", j);
@@ -11053,6 +11138,8 @@ static void test_effect_properties(BOOL d3d11)
         hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+        check_system_properties(effect, FALSE);
+
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID,
                 D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -11315,6 +11402,8 @@ static void test_effect_2d_affine(BOOL d3d11)
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D12DAffineTransform, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    check_system_properties(effect, TRUE);
+
     for (i = 0; i < ARRAY_SIZE(effect_2d_affine_tests); ++i)
     {
         const struct effect_2d_affine_test *test = &effect_2d_affine_tests[i];
@@ -11425,6 +11514,8 @@ static void test_effect_crop(BOOL d3d11)
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Crop, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    check_system_properties(effect, TRUE);
+
     for (i = 0; i < ARRAY_SIZE(crop_effect_tests); ++i)
     {
         const struct crop_effect_test *test = &crop_effect_tests[i];
@@ -11497,6 +11588,8 @@ static void test_effect_grayscale(BOOL d3d11)
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Grayscale, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_system_properties(effect, TRUE);
 
     for (i = 0; i < ARRAY_SIZE(test_pixels); ++i)
     {
@@ -12351,7 +12444,7 @@ START_TEST(d2d1)
     queue_test(test_effect_register);
     queue_test(test_effect_context);
     queue_test(test_effect_properties);
-    queue_test(test_effect);
+    queue_test(test_builtin_effect);
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
     queue_test(test_effect_grayscale);
