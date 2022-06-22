@@ -2265,10 +2265,139 @@ static void test_EnableThemeDialogTexture(void)
 
 static void test_DrawThemeBackgroundEx(void)
 {
+    static const int width = 10, height = 10;
+    static const RECT rect = {0, 0, 10, 10};
+    HBITMAP bitmap, old_bitmap;
+    BOOL transparent, found;
+    BITMAPINFO bitmap_info;
+    int i, glyph_type;
+    BYTE *bits, *ptr;
+    HTHEME htheme;
     void *proc;
+    HDC mem_dc;
+    HRESULT hr;
+    HWND hwnd;
 
     proc = GetProcAddress(GetModuleHandleA("uxtheme.dll"), MAKEINTRESOURCEA(47));
     ok(proc == (void *)pDrawThemeBackgroundEx, "Expected DrawThemeBackgroundEx() at ordinal 47.\n");
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    htheme = OpenThemeData(hwnd, L"Spin");
+    if (!htheme)
+    {
+        skip("Theming is inactive.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
+    bitmap_info.bmiHeader.biWidth = width;
+    bitmap_info.bmiHeader.biHeight = height;
+    bitmap_info.bmiHeader.biPlanes = 1;
+    bitmap_info.bmiHeader.biBitCount = 32;
+    bitmap_info.bmiHeader.biCompression = BI_RGB;
+    bitmap = CreateDIBSection(0, &bitmap_info, DIB_RGB_COLORS, (void **)&bits, 0, 0);
+    mem_dc = CreateCompatibleDC(NULL);
+    old_bitmap = SelectObject(mem_dc, bitmap);
+
+    /* Drawing opaque background with transparent glyphs should discard the alpha values from the glyphs */
+    transparent = IsThemeBackgroundPartiallyTransparent(htheme, SPNP_UP, UPS_NORMAL);
+    ok(!transparent, "Expected spin button background opaque.\n");
+    hr = GetThemeBool(htheme, SPNP_UP, UPS_NORMAL, TMT_TRANSPARENT, &transparent);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "Got unexpected hr %#lx.\n", hr);
+    transparent = FALSE;
+    hr = GetThemeBool(htheme, SPNP_UP, UPS_NORMAL, TMT_GLYPHTRANSPARENT, &transparent);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(transparent, "Expected spin button glyph transparent.\n");
+
+    memset(bits, 0xa5, width * height * sizeof(int));
+    hr = DrawThemeBackgroundEx(htheme, mem_dc, SPNP_UP, UPS_NORMAL, &rect, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ptr = bits;
+    for (i = 0; i < width * height; ++i)
+    {
+        if (ptr[3] != 0xff)
+            break;
+
+        ptr += 4;
+    }
+    todo_wine
+    ok(i == width * height || broken(ptr[3] == 0) /* Spin button glyphs on XP don't use alpha */,
+       "Unexpected alpha value %#x at (%d,%d).\n", ptr[3], i % height, i / height);
+
+    /* Drawing transparent background without glyphs should keep the alpha values */
+    CloseThemeData(htheme);
+    htheme = OpenThemeData(hwnd, L"Scrollbar");
+    transparent = IsThemeBackgroundPartiallyTransparent(htheme, SBP_SIZEBOX, SZB_RIGHTALIGN);
+    ok(transparent, "Expected scrollbar sizebox transparent.\n");
+    transparent = FALSE;
+    hr = GetThemeBool(htheme, SBP_SIZEBOX, SZB_RIGHTALIGN, TMT_TRANSPARENT, &transparent);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(transparent, "Expected scrollbar sizebox transparent.\n");
+    hr = GetThemeEnumValue(htheme, SBP_SIZEBOX, SZB_RIGHTALIGN, TMT_GLYPHTYPE, &glyph_type);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "Got unexpected hr %#lx.\n", hr);
+
+    memset(bits, 0xa5, width * height * sizeof(int));
+    hr = DrawThemeBackgroundEx(htheme, mem_dc, SBP_SIZEBOX, SZB_RIGHTALIGN, &rect, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    found = FALSE;
+    ptr = bits;
+    for (i = 0; i < width * height; ++i)
+    {
+        if (ptr[3] == 0xa5)
+        {
+            found = TRUE;
+            break;
+        }
+
+        ptr += 4;
+    }
+    ok(found, "Expected alpha values found.\n");
+
+    /* Drawing transparent background with transparent glyphs should keep alpha values */
+    CloseThemeData(htheme);
+    htheme = OpenThemeData(hwnd, L"Header");
+    if (IsThemePartDefined(htheme, HP_HEADERDROPDOWN, 0))
+    {
+        transparent = IsThemeBackgroundPartiallyTransparent(htheme, HP_HEADERDROPDOWN, HDDS_NORMAL);
+        ok(transparent, "Expected header dropdown transparent.\n");
+        transparent = FALSE;
+        hr = GetThemeBool(htheme, HP_HEADERDROPDOWN, HDDS_NORMAL, TMT_TRANSPARENT, &transparent);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(transparent, "Expected header dropdown background transparent.\n");
+        transparent = FALSE;
+        hr = GetThemeBool(htheme, HP_HEADERDROPDOWN, HDDS_NORMAL, TMT_GLYPHTRANSPARENT, &transparent);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(transparent, "Expected header dropdown glyph transparent.\n");
+
+        memset(bits, 0xa5, width * height * sizeof(int));
+        hr = DrawThemeBackgroundEx(htheme, mem_dc, HP_HEADERDROPDOWN, HDDS_NORMAL, &rect, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        found = FALSE;
+        ptr = bits;
+        for (i = 0; i < width * height; ++i)
+        {
+            if (ptr[3] == 0xa5)
+            {
+                found = TRUE;
+                break;
+            }
+
+            ptr += 4;
+        }
+        ok(found, "Expected alpha values found.\n");
+    }
+    else
+    {
+        skip("Failed to get header dropdown parts.\n");
+    }
+
+    SelectObject(mem_dc, old_bitmap);
+    DeleteDC(mem_dc);
+    DeleteObject(bitmap);
+    CloseThemeData(htheme);
+    DestroyWindow(hwnd);
 }
 
 START_TEST(system)
@@ -2278,10 +2407,6 @@ START_TEST(system)
 
     init_funcs();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    /* No real functional theme API tests will be done (yet). The current tests
-     * only show input/return behaviour
-     */
 
     test_IsThemed();
     test_IsThemePartDefined();
