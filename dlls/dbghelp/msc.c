@@ -1015,7 +1015,7 @@ static struct symt* codeview_add_type_enum(struct codeview_type_parse* ctp,
 static struct symt* codeview_add_type_struct(struct codeview_type_parse* ctp,
                                              struct symt* existing,
                                              const char* name, int structlen,
-                                             enum UdtKind kind, unsigned property)
+                                             enum UdtKind kind, cv_property_t property)
 {
     struct symt_udt*    symt;
 
@@ -1045,7 +1045,7 @@ static struct symt* codeview_add_type_struct(struct codeview_type_parse* ctp,
     {
         if (!(symt = codeview_cast_symt(existing, SymTagUDT))) return NULL;
         /* should also check that all fields are the same */
-        if (!(property & 0x80)) /* 0x80 = forward declaration */
+        if (!property.is_forward_defn)
         {
             if (!symt->size) /* likely prior forward declaration, set UDT size */
                 symt_set_udt_size(ctp->module, symt, structlen);
@@ -1195,7 +1195,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         if (details)
         {
             codeview_add_type(curr_type, symt);
-            if (!(type->struct_v1.property & 0x80)) /* 0x80 = forward declaration */
+            if (!type->struct_v1.property.is_forward_defn)
                 codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
                                                     type->struct_v1.fieldlist);
         }
@@ -1211,7 +1211,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         if (details)
         {
             codeview_add_type(curr_type, symt);
-            if (!(type->struct_v2.property & 0x80)) /* 0x80 = forward declaration */
+            if (!type->struct_v2.property.is_forward_defn)
                 codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
                                                     type->struct_v2.fieldlist);
         }
@@ -1227,7 +1227,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         if (details)
         {
             codeview_add_type(curr_type, symt);
-            if (!(type->struct_v3.property & 0x80)) /* 0x80 = forward declaration */
+            if (!type->struct_v3.property.is_forward_defn)
                 codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
                                                     type->struct_v3.fieldlist);
         }

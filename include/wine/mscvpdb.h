@@ -112,6 +112,25 @@ typedef unsigned short  cv_typ16_t;
 typedef unsigned int    cv_typ_t;
 typedef cv_typ_t        cv_itemid_t;
 
+typedef struct cv_property_t
+{
+    unsigned short  is_packed               : 1;
+    unsigned short  has_ctor                : 1;
+    unsigned short  has_overloaded_operator : 1;
+    unsigned short  is_nested               : 1;
+    unsigned short  has_nested              : 1;
+    unsigned short  has_overloaded_assign   : 1;
+    unsigned short  has_operator_cast       : 1;
+    unsigned short  is_forward_defn         : 1;
+    unsigned short  is_scoped               : 1;
+    unsigned short  has_decorated_name      : 1; /* follows name field */
+    unsigned short  is_sealed               : 1; /* not usage as base class */
+    unsigned short  hfa                     : 2;
+    unsigned short  is_intrinsic            : 1;
+    unsigned short  mocom                   : 2;
+}
+cv_property_t;
+
 /* ======================================== *
  *             Type information
  * ======================================== */
@@ -201,7 +220,7 @@ union codeview_type
         unsigned short int      id;
         short int               n_element;
         cv_typ16_t              fieldlist;
-        short int               property;
+        cv_property_t           property;
         cv_typ16_t              derived;
         cv_typ16_t              vshape;
         unsigned short int      structlen;  /* numeric leaf */
@@ -215,7 +234,7 @@ union codeview_type
         unsigned short int      len;
         unsigned short int      id;
         short int               n_element;
-        short int               property;
+        cv_property_t           property;
         cv_typ_t                fieldlist;
         cv_typ_t                derived;
         cv_typ_t                vshape;
@@ -230,7 +249,7 @@ union codeview_type
         unsigned short int      len;
         unsigned short int      id;
         short int               n_element;
-        short int               property;
+        cv_property_t           property;
         cv_typ_t                fieldlist;
         cv_typ_t                derived;
         cv_typ_t                vshape;
@@ -246,7 +265,7 @@ union codeview_type
         unsigned short int      id;
         short int               count;
         cv_typ16_t              fieldlist;
-        short int               property;
+        cv_property_t           property;
         unsigned short int      un_len;     /* numeric leaf */
 #if 0
         struct p_string         p_name;
@@ -258,7 +277,7 @@ union codeview_type
         unsigned short int      len;
         unsigned short int      id;
         short int               count;
-        short int               property;
+        cv_property_t           property;
         cv_typ_t                fieldlist;
         unsigned short int      un_len;     /* numeric leaf */
 #if 0
@@ -271,7 +290,7 @@ union codeview_type
         unsigned short int      len;
         unsigned short int      id;
         short int               count;
-        short int               property;
+        cv_property_t           property;
         cv_typ_t                fieldlist;
         unsigned short int      un_len;     /* numeric leaf */
 #if 0
@@ -286,7 +305,7 @@ union codeview_type
         short int               count;
         cv_typ16_t              type;
         cv_typ16_t              fieldlist;
-        short int               property;
+        cv_property_t           property;
         struct p_string         p_name;
     } enumeration_v1;
 
@@ -295,7 +314,7 @@ union codeview_type
         unsigned short int      len;
         unsigned short int      id;
         short int               count;
-        short int               property;
+        cv_property_t           property;
         cv_typ_t                type;
         cv_typ_t                fieldlist;
         struct p_string         p_name;
@@ -306,7 +325,7 @@ union codeview_type
         unsigned short int      len;
         unsigned short int      id;
         short int               count;
-        short int               property;
+        cv_property_t           property;
         cv_typ_t                type;
         cv_typ_t                fieldlist;
         char                    name[1];
