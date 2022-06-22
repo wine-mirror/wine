@@ -127,7 +127,7 @@ static NTSTATUS resolv_get_searchlist( void *args )
     const struct get_searchlist_params *params = args;
     DNS_TXT_DATAW *list = params->list;
     DWORD i, needed, str_needed = 0;
-    char *ptr, *end;
+    WCHAR *ptr, *end;
 
     init_resolver();
 
@@ -145,11 +145,11 @@ static NTSTATUS resolv_get_searchlist( void *args )
     *params->len = needed;
     list->dwStringCount = i;
 
-    ptr = (char *)(list->pStringArray + i);
-    end = ptr + str_needed;
+    ptr = (WCHAR *)(list->pStringArray + i);
+    end = ptr + str_needed / sizeof(WCHAR);
     for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
     {
-        list->pStringArray[i] = (WCHAR *)ptr;
+        list->pStringArray[i] = ptr;
         ptr += ntdll_umbstowcs( _res.dnsrch[i], strlen(_res.dnsrch[i]) + 1,
                                 list->pStringArray[i], end - ptr );
     }
