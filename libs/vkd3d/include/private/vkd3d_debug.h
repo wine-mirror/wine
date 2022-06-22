@@ -47,6 +47,7 @@ enum vkd3d_dbg_level
 enum vkd3d_dbg_level vkd3d_dbg_get_level(void);
 
 void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const char *fmt, ...) VKD3D_PRINTF_FUNC(3, 4);
+void vkd3d_dbg_set_log_callback(PFN_vkd3d_log callback);
 
 const char *vkd3d_dbg_sprintf(const char *fmt, ...) VKD3D_PRINTF_FUNC(1, 2);
 const char *vkd3d_dbg_vsprintf(const char *fmt, va_list args);

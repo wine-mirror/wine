@@ -165,38 +165,6 @@ static bool preproc_push_if(struct preproc_ctx *ctx, bool condition)
     return true;
 }
 
-static int char_to_int(char c)
-{
-    if ('0' <= c && c <= '9')
-        return c - '0';
-    if ('A' <= c && c <= 'F')
-        return c - 'A' + 10;
-    if ('a' <= c && c <= 'f')
-        return c - 'a' + 10;
-    return -1;
-}
-
-static uint32_t preproc_parse_integer(const char *s)
-{
-    uint32_t base = 10, ret = 0;
-    int digit;
-
-    if (*s == '0')
-    {
-        base = 8;
-        ++s;
-        if (*s == 'x' || *s == 'X')
-        {
-            base = 16;
-            ++s;
-        }
-    }
-
-    while ((digit = char_to_int(*s++)) >= 0)
-        ret = ret * base + (uint32_t)digit;
-    return ret;
-}
-
 static int default_open_include(const char *filename, bool local,
         const char *parent_data, void *context, struct vkd3d_shader_code *out)
 {
@@ -691,7 +659,7 @@ directive
 primary_expr
     : T_INTEGER
         {
-            $$ = preproc_parse_integer($1);
+            $$ = vkd3d_parse_integer($1);
             vkd3d_free($1);
         }
     | T_IDENTIFIER

@@ -510,3 +510,9 @@ HRESULT vkd3d_serialize_versioned_root_signature(const D3D12_VERSIONED_ROOT_SIGN
     }
     return hr;
 }
+
+void vkd3d_set_log_callback(PFN_vkd3d_log callback)
+{
+    vkd3d_shader_set_log_callback(callback);
+    vkd3d_dbg_set_log_callback(callback);
+}

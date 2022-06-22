@@ -19,6 +19,8 @@
 #ifndef __VKD3D_TYPES_H
 #define __VKD3D_TYPES_H
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif  /* __cplusplus */
@@ -52,6 +54,8 @@ enum vkd3d_result
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_RESULT),
 };
+
+typedef void (*PFN_vkd3d_log)(const char *format, va_list args);
 
 #ifdef _WIN32
 # define VKD3D_IMPORT

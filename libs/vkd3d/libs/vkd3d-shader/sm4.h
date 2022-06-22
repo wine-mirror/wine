@@ -350,6 +350,7 @@ enum vkd3d_sm4_opcode
     VKD3D_SM5_OP_DDIV                             = 0xd2,
     VKD3D_SM5_OP_DFMA                             = 0xd3,
     VKD3D_SM5_OP_DRCP                             = 0xd4,
+    VKD3D_SM5_OP_MSAD                             = 0xd5,
     VKD3D_SM5_OP_DTOI                             = 0xd6,
     VKD3D_SM5_OP_DTOU                             = 0xd7,
     VKD3D_SM5_OP_ITOD                             = 0xd8,

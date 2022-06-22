@@ -68,6 +68,25 @@ enum vkd3d_dbg_level vkd3d_dbg_get_level(void)
     return level;
 }
 
+static PFN_vkd3d_log log_callback;
+
+static void vkd3d_dbg_voutput(const char *fmt, va_list args)
+{
+    if (log_callback)
+        log_callback(fmt, args);
+    else
+        vfprintf(stderr, fmt, args);
+}
+
+static void vkd3d_dbg_output(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    vkd3d_dbg_voutput(fmt, args);
+    va_end(args);
+}
+
 void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const char *fmt, ...)
 {
     va_list args;
@@ -77,10 +96,15 @@ void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const ch
 
     assert(level < ARRAY_SIZE(debug_level_names));
 
-    fprintf(stderr, "%s:%s: ", debug_level_names[level], function);
+    vkd3d_dbg_output("%s:%s ", debug_level_names[level], function);
     va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
+    vkd3d_dbg_voutput(fmt, args);
     va_end(args);
+}
+
+void vkd3d_dbg_set_log_callback(PFN_vkd3d_log callback)
+{
+    log_callback = callback;
 }
 
 static char *get_buffer(void)

@@ -195,6 +195,11 @@ VK_DEVICE_EXT_PFN(vkGetDescriptorSetLayoutSupportKHR)
 /* VK_KHR_push_descriptor */
 VK_DEVICE_EXT_PFN(vkCmdPushDescriptorSetKHR)
 
+/* VK_KHR_timeline_semaphore */
+VK_DEVICE_EXT_PFN(vkGetSemaphoreCounterValueKHR)
+VK_DEVICE_EXT_PFN(vkWaitSemaphoresKHR)
+VK_DEVICE_EXT_PFN(vkSignalSemaphoreKHR)
+
 /* VK_EXT_calibrated_timestamps */
 VK_DEVICE_EXT_PFN(vkGetCalibratedTimestampsEXT)
 

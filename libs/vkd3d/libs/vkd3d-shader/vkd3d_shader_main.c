@@ -22,6 +22,38 @@
 #include <stdio.h>
 #include <math.h>
 
+static inline int char_to_int(char c)
+{
+    if ('0' <= c && c <= '9')
+        return c - '0';
+    if ('A' <= c && c <= 'F')
+        return c - 'A' + 10;
+    if ('a' <= c && c <= 'f')
+        return c - 'a' + 10;
+    return -1;
+}
+
+uint32_t vkd3d_parse_integer(const char *s)
+{
+    uint32_t base = 10, ret = 0;
+    int digit;
+
+    if (*s == '0')
+    {
+        base = 8;
+        ++s;
+        if (*s == 'x' || *s == 'X')
+        {
+            base = 16;
+            ++s;
+        }
+    }
+
+    while ((digit = char_to_int(*s++)) >= 0)
+        ret = ret * base + (uint32_t)digit;
+    return ret;
+}
+
 void vkd3d_string_buffer_init(struct vkd3d_string_buffer *buffer)
 {
     buffer->buffer_size = 16;
@@ -1515,4 +1547,9 @@ int vkd3d_shader_preprocess(const struct vkd3d_shader_compile_info *compile_info
         ret = VKD3D_ERROR_OUT_OF_MEMORY;
     vkd3d_shader_message_context_cleanup(&message_context);
     return ret;
+}
+
+void vkd3d_shader_set_log_callback(PFN_vkd3d_log callback)
+{
+    vkd3d_dbg_set_log_callback(callback);
 }
