@@ -367,9 +367,12 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CheckFeatureSupport(ID2D1Eff
 static BOOL STDMETHODCALLTYPE d2d_effect_context_IsBufferPrecisionSupported(ID2D1EffectContext *iface,
         D2D1_BUFFER_PRECISION precision)
 {
-    FIXME("iface %p, precision %#x stub!\n", iface, precision);
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
 
-    return FALSE;
+    TRACE("iface %p, precision %u.\n", iface, precision);
+
+    return ID2D1DeviceContext1_IsBufferPrecisionSupported(&effect_context->device_context->ID2D1DeviceContext1_iface,
+            precision);
 }
 
 static const ID2D1EffectContextVtbl d2d_effect_context_vtbl =
