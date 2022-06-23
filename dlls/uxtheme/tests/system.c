@@ -2399,6 +2399,40 @@ static void test_DrawThemeBackgroundEx(void)
     DestroyWindow(hwnd);
 }
 
+static void test_GetThemeBackgroundRegion(void)
+{
+    HTHEME htheme;
+    HRGN region;
+    HRESULT hr;
+    HWND hwnd;
+    RECT rect;
+    int ret;
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    htheme = OpenThemeData(hwnd, L"Rebar");
+    if (!htheme)
+    {
+        skip("Theming is inactive.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    hr = GetThemeEnumValue(htheme, RP_BAND, 0, TMT_BGTYPE, &ret);
+    ok(hr == S_OK, "Got unexpected hr %#lx,\n", hr);
+    ok(ret == BT_NONE, "Got expected type %d.\n", ret);
+
+    SetRect(&rect, 0, 0, 10, 10);
+    region = (HRGN)0xdeadbeef;
+    hr = GetThemeBackgroundRegion(htheme, NULL, RP_BAND, 0, &rect, &region);
+    todo_wine
+    ok(hr == E_UNEXPECTED || broken(hr == S_OK) /* < Win10 */, "Got unexpected hr %#lx.\n", hr);
+    ok(region == (HRGN)0xdeadbeef, "Got unexpected region.\n");
+
+    CloseThemeData(htheme);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(system)
 {
     ULONG_PTR ctx_cookie;
@@ -2422,6 +2456,7 @@ START_TEST(system)
     test_GetThemeTransitionDuration();
     test_DrawThemeParentBackground();
     test_DrawThemeBackgroundEx();
+    test_GetThemeBackgroundRegion();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {
