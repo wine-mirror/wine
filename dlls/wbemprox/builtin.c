@@ -1533,7 +1533,7 @@ static UINT get_logical_processor_count( UINT *num_physical, UINT *num_packages 
     if (status != STATUS_INFO_LENGTH_MISMATCH) return get_processor_count();
 
     if (!(buf = malloc( len ))) return get_processor_count();
-    status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), buf, len, NULL );
+    status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), buf, len, &len );
     if (status != STATUS_SUCCESS)
     {
         free( buf );
