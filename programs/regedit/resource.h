@@ -146,6 +146,8 @@
 #define IDS_COLLAPSE                    33107
 #define IDS_EDIT_MODIFY                 33108
 #define IDS_EDIT_MODIFY_BIN             33109
+#define ID_EDIT_NEW_QWORDVALUE          33110
+#define IDS_EDIT_QWORD                  33111
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001

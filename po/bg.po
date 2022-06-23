@@ -67,8 +67,8 @@ msgstr ""
 msgid "&Support Information"
 msgstr "Информация"
 
-#: dlls/appwiz.cpl/appwiz.rc:68 programs/regedit/regedit.rc:133
-#: programs/regedit/regedit.rc:232
+#: dlls/appwiz.cpl/appwiz.rc:68 programs/regedit/regedit.rc:136
+#: programs/regedit/regedit.rc:237
 #, fuzzy
 msgid "&Modify..."
 msgstr "&Промени"
@@ -108,10 +108,10 @@ msgstr "Информация"
 #: programs/progman/progman.rc:106 programs/progman/progman.rc:124
 #: programs/progman/progman.rc:142 programs/progman/progman.rc:158
 #: programs/progman/progman.rc:180 programs/progman/progman.rc:199
-#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:296
-#: programs/regedit/regedit.rc:307 programs/regedit/regedit.rc:320
-#: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
-#: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
+#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:301
+#: programs/regedit/regedit.rc:312 programs/regedit/regedit.rc:325
+#: programs/regedit/regedit.rc:341 programs/regedit/regedit.rc:354
+#: programs/regedit/regedit.rc:367 programs/taskmgr/taskmgr.rc:442
 #: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
 #: programs/winecfg/winecfg.rc:223 programs/winefile/winefile.rc:127
 #: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
@@ -217,10 +217,10 @@ msgstr "Инсталирай"
 #: programs/progman/progman.rc:107 programs/progman/progman.rc:125
 #: programs/progman/progman.rc:143 programs/progman/progman.rc:159
 #: programs/progman/progman.rc:181 programs/progman/progman.rc:200
-#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:297
-#: programs/regedit/regedit.rc:308 programs/regedit/regedit.rc:321
-#: programs/regedit/regedit.rc:337 programs/regedit/regedit.rc:350
-#: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
+#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:302
+#: programs/regedit/regedit.rc:313 programs/regedit/regedit.rc:326
+#: programs/regedit/regedit.rc:342 programs/regedit/regedit.rc:355
+#: programs/regedit/regedit.rc:368 programs/taskmgr/taskmgr.rc:443
 #: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
 #: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
 #: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
@@ -283,7 +283,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
 #: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:239
-#: programs/regedit/regedit.rc:147 programs/winefile/winefile.rc:106
+#: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "Име"
 
@@ -306,7 +306,7 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
 #: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:197
 #: programs/notepad/notepad.rc:76 programs/oleview/oleview.rc:103
-#: programs/progman/progman.rc:82 programs/regedit/regedit.rc:225
+#: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Всички файлове (*.*)"
@@ -465,7 +465,7 @@ msgstr "&Възстанови"
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
 #: programs/progman/progman.rc:144 programs/progman/progman.rc:160
 #: programs/progman/progman.rc:184 programs/progman/progman.rc:202
-#: programs/progman/progman.rc:219 programs/regedit/regedit.rc:77
+#: programs/progman/progman.rc:219 programs/regedit/regedit.rc:78
 #: programs/taskmgr/taskmgr.rc:87 programs/winefile/winefile.rc:82
 #: programs/winemine/winemine.rc:53 programs/winhlp32/winhlp32.rc:57
 #: programs/wordpad/wordpad.rc:102
@@ -533,7 +533,7 @@ msgid "See details"
 msgstr "Подробности"
 
 #: dlls/comctl32/comctl32.rc:31 dlls/cryptui/cryptui.rc:235
-#: programs/regedit/regedit.rc:286 programs/taskmgr/taskmgr.rc:434
+#: programs/regedit/regedit.rc:291 programs/taskmgr/taskmgr.rc:434
 #: programs/winedbg/winedbg.rc:61 programs/winedbg/winedbg.rc:76
 #: programs/wordpad/wordpad.rc:180
 msgid "Close"
@@ -599,7 +599,7 @@ msgid "Print range"
 msgstr "Разпечатай"
 
 #: dlls/comdlg32/comdlg32.rc:208 dlls/comdlg32/comdlg32.rc:376
-#: programs/regedit/regedit.rc:268
+#: programs/regedit/regedit.rc:273
 msgid "&All"
 msgstr "&Всичко"
 
@@ -783,8 +783,8 @@ msgctxt "Solid"
 msgid "&o"
 msgstr "&Не"
 
-#: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:275
-#: programs/regedit/regedit.rc:285
+#: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:280
+#: programs/regedit/regedit.rc:290
 msgid "Find"
 msgstr "Търсене"
 
@@ -2460,8 +2460,8 @@ msgstr ""
 msgid "&Import..."
 msgstr "&Шрифт..."
 
-#: dlls/cryptui/cryptui.rc:350 programs/regedit/regedit.rc:91
-#: programs/regedit/regedit.rc:112
+#: dlls/cryptui/cryptui.rc:350 programs/regedit/regedit.rc:92
+#: programs/regedit/regedit.rc:114
 msgid "&Export..."
 msgstr ""
 
@@ -2478,7 +2478,7 @@ msgstr "&Свойства на клетката"
 #: dlls/cryptui/cryptui.rc:355 dlls/ieframe/ieframe.rc:45
 #: dlls/shell32/shell32.rc:43 dlls/shell32/shell32.rc:120
 #: programs/oleview/oleview.rc:59 programs/oleview/oleview.rc:61
-#: programs/oleview/oleview.rc:85 programs/regedit/regedit.rc:64
+#: programs/oleview/oleview.rc:85 programs/regedit/regedit.rc:65
 #: programs/taskmgr/taskmgr.rc:52 programs/winefile/winefile.rc:48
 #: programs/wordpad/wordpad.rc:69
 msgid "&View"
@@ -3460,7 +3460,7 @@ msgid "&File"
 msgstr "&Файл"
 
 #: dlls/ieframe/ieframe.rc:30 programs/regedit/regedit.rc:45
-#: programs/regedit/regedit.rc:97 programs/regedit/regedit.rc:119
+#: programs/regedit/regedit.rc:98 programs/regedit/regedit.rc:121
 msgid "&New"
 msgstr "&Нов"
 
@@ -3506,11 +3506,11 @@ msgstr ""
 msgid "&Address bar"
 msgstr ""
 
-#: dlls/ieframe/ieframe.rc:53 programs/regedit/regedit.rc:72
+#: dlls/ieframe/ieframe.rc:53 programs/regedit/regedit.rc:73
 msgid "&Favorites"
 msgstr "&Отметки"
 
-#: dlls/ieframe/ieframe.rc:55 programs/regedit/regedit.rc:74
+#: dlls/ieframe/ieframe.rc:55 programs/regedit/regedit.rc:75
 msgid "&Add to Favorites..."
 msgstr "&Добави към отметките..."
 
@@ -9694,7 +9694,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr ""
 
-#: dlls/oledlg/oledlg.rc:48 programs/regedit/regedit.rc:430
+#: dlls/oledlg/oledlg.rc:48 programs/regedit/regedit.rc:435
 msgid "Unknown Type"
 msgstr ""
 
@@ -10322,7 +10322,7 @@ msgstr ""
 msgid "Size"
 msgstr "Размер"
 
-#: dlls/shell32/shell32.rc:139 programs/regedit/regedit.rc:148
+#: dlls/shell32/shell32.rc:139 programs/regedit/regedit.rc:151
 msgid "Type"
 msgstr "Тип"
 
@@ -10358,7 +10358,7 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Работен плот"
 
-#: dlls/shell32/shell32.rc:155 programs/regedit/regedit.rc:238
+#: dlls/shell32/shell32.rc:155 programs/regedit/regedit.rc:243
 #, fuzzy
 msgid "My Computer"
 msgstr ""
@@ -10680,7 +10680,7 @@ msgid "Trash"
 msgstr ""
 
 #: dlls/shlwapi/shlwapi.rc:38 dlls/user32/user32.rc:71
-#: programs/regedit/regedit.rc:204 programs/winecfg/winecfg.rc:86
+#: programs/regedit/regedit.rc:208 programs/winecfg/winecfg.rc:86
 #: programs/winefile/winefile.rc:97
 msgid "Error"
 msgstr "Грешка"
@@ -15047,8 +15047,8 @@ msgid "&Paste\tCtrl+V"
 msgstr "&Вмъкни\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47 programs/progman/progman.rc:37
-#: programs/regedit/regedit.rc:56 programs/regedit/regedit.rc:109
-#: programs/regedit/regedit.rc:136 programs/winefile/winefile.rc:32
+#: programs/regedit/regedit.rc:57 programs/regedit/regedit.rc:111
+#: programs/regedit/regedit.rc:139 programs/winefile/winefile.rc:32
 #, fuzzy
 msgid "&Delete\tDel"
 msgstr ""
@@ -15082,7 +15082,7 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Замяна...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:61 programs/progman/progman.rc:56
-#: programs/regedit/regedit.rc:79 programs/winefile/winefile.rc:83
+#: programs/regedit/regedit.rc:80 programs/winefile/winefile.rc:83
 #, fuzzy
 msgid "&Contents\tF1"
 msgstr "&Съдържание"
@@ -15131,7 +15131,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: programs/notepad/notepad.rc:134 programs/regedit/regedit.rc:372
+#: programs/notepad/notepad.rc:134 programs/regedit/regedit.rc:377
 #: programs/wordpad/wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
@@ -15152,7 +15152,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: programs/notepad/notepad.rc:138 programs/regedit/regedit.rc:373
+#: programs/notepad/notepad.rc:138 programs/regedit/regedit.rc:378
 #: programs/wordpad/wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
@@ -15331,7 +15331,7 @@ msgstr ""
 msgid "&Status Bar"
 msgstr ""
 
-#: programs/oleview/oleview.rc:70 programs/regedit/regedit.rc:70
+#: programs/oleview/oleview.rc:70 programs/regedit/regedit.rc:71
 #: programs/winefile/winefile.rc:79
 msgid "&Refresh\tF5"
 msgstr "&Обнови\tF5"
@@ -15863,7 +15863,7 @@ msgstr "Наистина ли искате да изтриете '%1'?"
 msgid "reg: Unable to find the specified registry value\n"
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: programs/reg/reg.rc:132 programs/regedit/regedit.rc:239
+#: programs/reg/reg.rc:132 programs/regedit/regedit.rc:244
 msgid "(Default)"
 msgstr ""
 
@@ -16205,7 +16205,7 @@ msgstr "Наистина ли искате да изтриете '%1'?"
 msgid "reg: The file '%1' was not found.\n"
 msgstr "Файлът не е намерен.\n"
 
-#: programs/reg/reg.rc:143 programs/regedit/regedit.rc:240
+#: programs/reg/reg.rc:143 programs/regedit/regedit.rc:245
 msgid "(value not set)"
 msgstr ""
 
@@ -16225,183 +16225,190 @@ msgstr "&Вмъкни файл в регистъра..."
 msgid "&Export Registry File..."
 msgstr "&Изнеси файл от регистъра..."
 
-#: programs/regedit/regedit.rc:47 programs/regedit/regedit.rc:99
-#: programs/regedit/regedit.rc:121
+#: programs/regedit/regedit.rc:47 programs/regedit/regedit.rc:100
+#: programs/regedit/regedit.rc:123
 msgid "&Key"
 msgstr "&Ключ"
 
-#: programs/regedit/regedit.rc:49 programs/regedit/regedit.rc:101
-#: programs/regedit/regedit.rc:123
+#: programs/regedit/regedit.rc:49 programs/regedit/regedit.rc:102
+#: programs/regedit/regedit.rc:125
 msgid "&String Value"
 msgstr "&Текстова стойност"
 
-#: programs/regedit/regedit.rc:50 programs/regedit/regedit.rc:102
-#: programs/regedit/regedit.rc:124
+#: programs/regedit/regedit.rc:50 programs/regedit/regedit.rc:103
+#: programs/regedit/regedit.rc:126
 msgid "&Binary Value"
 msgstr "&Двоична стойност"
 
-#: programs/regedit/regedit.rc:51 programs/regedit/regedit.rc:103
-#: programs/regedit/regedit.rc:125
+#: programs/regedit/regedit.rc:51 programs/regedit/regedit.rc:104
+#: programs/regedit/regedit.rc:127
 msgid "&DWORD Value"
 msgstr "&DWORD стойност"
 
-#: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:104
-#: programs/regedit/regedit.rc:126
+#: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
+#: programs/regedit/regedit.rc:128
+#, fuzzy
+#| msgid "&DWORD Value"
+msgid "&QWORD Value"
+msgstr "&DWORD стойност"
+
+#: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
+#: programs/regedit/regedit.rc:129
 msgid "&Multi-String Value"
 msgstr ""
 
-#: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:105
-#: programs/regedit/regedit.rc:127
+#: programs/regedit/regedit.rc:54 programs/regedit/regedit.rc:107
+#: programs/regedit/regedit.rc:130
 #, fuzzy
 msgid "&Expandable String Value"
 msgstr "&Текстова стойност"
 
-#: programs/regedit/regedit.rc:57 programs/regedit/regedit.rc:110
-#: programs/regedit/regedit.rc:137
+#: programs/regedit/regedit.rc:58 programs/regedit/regedit.rc:112
+#: programs/regedit/regedit.rc:140
 msgid "&Rename\tF2"
 msgstr "Преи&менувай\tF2"
 
-#: programs/regedit/regedit.rc:59 programs/regedit/regedit.rc:114
+#: programs/regedit/regedit.rc:60 programs/regedit/regedit.rc:116
 msgid "&Copy Key Name"
 msgstr "&Копирай името на ключа"
 
-#: programs/regedit/regedit.rc:61 programs/regedit/regedit.rc:107
+#: programs/regedit/regedit.rc:62 programs/regedit/regedit.rc:109
 #: programs/wordpad/wordpad.rc:53
 #, fuzzy
 msgid "&Find...\tCtrl+F"
 msgstr "&Печат...\tCtrl+P"
 
-#: programs/regedit/regedit.rc:62
+#: programs/regedit/regedit.rc:63
 msgid "Find Ne&xt\tF3"
 msgstr "Намери &следващ\tF3"
 
-#: programs/regedit/regedit.rc:66
+#: programs/regedit/regedit.rc:67
 msgid "Status &Bar"
 msgstr "Лента на &състоянието"
 
-#: programs/regedit/regedit.rc:68 programs/winefile/winefile.rc:49
+#: programs/regedit/regedit.rc:69 programs/winefile/winefile.rc:49
 msgid "Sp&lit"
 msgstr "&Разделител"
 
-#: programs/regedit/regedit.rc:75
+#: programs/regedit/regedit.rc:76
 msgid "&Remove Favorite..."
 msgstr "&Премахни отметка..."
 
-#: programs/regedit/regedit.rc:80
+#: programs/regedit/regedit.rc:81
 msgid "&About Registry Editor"
 msgstr "&Относно редактора на системния регистър"
 
-#: programs/regedit/regedit.rc:89 programs/regedit/regedit.rc:96
-#: programs/regedit/regedit.rc:230
+#: programs/regedit/regedit.rc:90 programs/regedit/regedit.rc:97
+#: programs/regedit/regedit.rc:235
 msgid "Expand"
 msgstr ""
 
-#: programs/regedit/regedit.rc:134 programs/regedit/regedit.rc:233
+#: programs/regedit/regedit.rc:137 programs/regedit/regedit.rc:238
 #, fuzzy
 msgid "Modify &Binary Data..."
 msgstr "Промени двоичните данни"
 
-#: programs/regedit/regedit.rc:267
+#: programs/regedit/regedit.rc:272
 #, fuzzy
 msgid "Export registry"
 msgstr "&Изнеси файл от регистъра..."
 
-#: programs/regedit/regedit.rc:269
+#: programs/regedit/regedit.rc:274
 msgid "S&elected branch:"
 msgstr ""
 
-#: programs/regedit/regedit.rc:278
+#: programs/regedit/regedit.rc:283
 msgid "Find:"
 msgstr "Търси:"
 
-#: programs/regedit/regedit.rc:280
+#: programs/regedit/regedit.rc:285
 msgid "Find in:"
 msgstr "Търси в:"
 
-#: programs/regedit/regedit.rc:281
+#: programs/regedit/regedit.rc:286
 msgid "Keys"
 msgstr "Ключове"
 
-#: programs/regedit/regedit.rc:282
+#: programs/regedit/regedit.rc:287
 msgid "Value names"
 msgstr "Имена на стойности"
 
-#: programs/regedit/regedit.rc:283
+#: programs/regedit/regedit.rc:288
 msgid "Value content"
 msgstr "Съдържание на стойности"
 
-#: programs/regedit/regedit.rc:284
+#: programs/regedit/regedit.rc:289
 msgid "Whole string only"
 msgstr "Търси за целия низ"
 
-#: programs/regedit/regedit.rc:291
+#: programs/regedit/regedit.rc:296
 msgid "Add Favorite"
 msgstr "Добави отметка"
 
-#: programs/regedit/regedit.rc:294 programs/regedit/regedit.rc:305
+#: programs/regedit/regedit.rc:299 programs/regedit/regedit.rc:310
 msgid "Name:"
 msgstr "Име:"
 
-#: programs/regedit/regedit.rc:302
+#: programs/regedit/regedit.rc:307
 msgid "Remove Favorite"
 msgstr "Премахни отметка"
 
-#: programs/regedit/regedit.rc:313
+#: programs/regedit/regedit.rc:318
 msgid "Edit String"
 msgstr "Редактирай символен низ"
 
-#: programs/regedit/regedit.rc:316 programs/regedit/regedit.rc:329
-#: programs/regedit/regedit.rc:345 programs/regedit/regedit.rc:358
+#: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:334
+#: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
 msgid "Value name:"
 msgstr "Име на стойността:"
 
-#: programs/regedit/regedit.rc:318 programs/regedit/regedit.rc:331
-#: programs/regedit/regedit.rc:347 programs/regedit/regedit.rc:360
+#: programs/regedit/regedit.rc:323 programs/regedit/regedit.rc:336
+#: programs/regedit/regedit.rc:352 programs/regedit/regedit.rc:365
 msgid "Value data:"
 msgstr "Данни:"
 
-#: programs/regedit/regedit.rc:326
+#: programs/regedit/regedit.rc:331
 msgid "Edit DWORD"
 msgstr "Редактирай DWORD"
 
-#: programs/regedit/regedit.rc:333
+#: programs/regedit/regedit.rc:338
 msgid "Base"
 msgstr "Основа"
 
-#: programs/regedit/regedit.rc:334
+#: programs/regedit/regedit.rc:339
 msgid "Hexadecimal"
 msgstr "Шестанедесетична"
 
-#: programs/regedit/regedit.rc:335
+#: programs/regedit/regedit.rc:340
 msgid "Decimal"
 msgstr "Десетична"
 
-#: programs/regedit/regedit.rc:342
+#: programs/regedit/regedit.rc:347
 msgid "Edit Binary"
 msgstr "Редактирай двоична стойност"
 
-#: programs/regedit/regedit.rc:355
+#: programs/regedit/regedit.rc:360
 #, fuzzy
 msgid "Edit Multi-String"
 msgstr "Редактирай символен низ"
 
-#: programs/regedit/regedit.rc:159
+#: programs/regedit/regedit.rc:162
 msgid "Contains commands for working with the whole registry"
 msgstr "Съдържа команди за управление на целия регистър"
 
-#: programs/regedit/regedit.rc:160
+#: programs/regedit/regedit.rc:163
 msgid "Contains commands for editing values or keys"
 msgstr "Съдържа команди за редактиране на стойности или ключове"
 
-#: programs/regedit/regedit.rc:161
+#: programs/regedit/regedit.rc:164
 msgid "Contains commands for customizing the registry window"
 msgstr "Съдържа команди за персонализиране на външния вид на редактора"
 
-#: programs/regedit/regedit.rc:162
+#: programs/regedit/regedit.rc:165
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Съдържа команди за достъп до често използвани ключове"
 
-#: programs/regedit/regedit.rc:163
+#: programs/regedit/regedit.rc:166
 #, fuzzy
 #| msgid ""
 #| "Contains commands for displaying help and information about registry "
@@ -16410,105 +16417,105 @@ msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr "Съдържа команди за извикване на помощ за редактора на регистъра"
 
-#: programs/regedit/regedit.rc:164
+#: programs/regedit/regedit.rc:167
 msgid "Contains commands for creating new keys or values"
 msgstr "Съдържа команди за създаване на нови стойности или ключове"
 
-#: programs/regedit/regedit.rc:149
+#: programs/regedit/regedit.rc:152
 msgid "Data"
 msgstr "Данни"
 
-#: programs/regedit/regedit.rc:154
+#: programs/regedit/regedit.rc:157
 msgid "Registry Editor"
 msgstr "Редактор на системния регистър"
 
-#: programs/regedit/regedit.rc:221
+#: programs/regedit/regedit.rc:226
 #, fuzzy
 msgid "Import Registry File"
 msgstr "&Вмъкни файл в регистъра..."
 
-#: programs/regedit/regedit.rc:222
+#: programs/regedit/regedit.rc:227
 #, fuzzy
 msgid "Export Registry File"
 msgstr "&Изнеси файл от регистъра..."
 
-#: programs/regedit/regedit.rc:223
+#: programs/regedit/regedit.rc:228
 #, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "&Вмъкни файл в регистъра..."
 
-#: programs/regedit/regedit.rc:224
+#: programs/regedit/regedit.rc:229
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
-#: programs/regedit/regedit.rc:241
+#: programs/regedit/regedit.rc:246
 msgid "(cannot display value)"
 msgstr ""
 
-#: programs/regedit/regedit.rc:242
-msgid "(unknown %d)"
-msgstr ""
-
 #: programs/regedit/regedit.rc:247
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
-msgid "Unable to modify the selected registry value."
-msgstr "Наистина ли искате да изтриете '%1'?"
-
-#: programs/regedit/regedit.rc:248
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
-msgid "Unable to create a new registry key."
-msgstr "Наистина ли искате да изтриете '%1'?"
-
-#: programs/regedit/regedit.rc:249
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
-msgid "Unable to create a new registry value."
-msgstr "Наистина ли искате да изтриете '%1'?"
-
-#: programs/regedit/regedit.rc:250
-msgid ""
-"Unable to rename the key '%1'.\n"
-"The specified key name already exists."
-msgstr ""
-
-#: programs/regedit/regedit.rc:251
-msgid ""
-"Unable to rename the value '%1'.\n"
-"The specified value name already exists."
+msgid "(unknown %d)"
 msgstr ""
 
 #: programs/regedit/regedit.rc:252
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
-msgid "Unable to delete the selected registry key."
+msgid "Unable to modify the selected registry value."
 msgstr "Наистина ли искате да изтриете '%1'?"
 
 #: programs/regedit/regedit.rc:253
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
-msgid "Unable to rename the selected registry key."
+msgid "Unable to create a new registry key."
 msgstr "Наистина ли искате да изтриете '%1'?"
 
 #: programs/regedit/regedit.rc:254
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
-msgid "Unable to rename the selected registry value."
+msgid "Unable to create a new registry value."
 msgstr "Наистина ли искате да изтриете '%1'?"
 
 #: programs/regedit/regedit.rc:255
 msgid ""
-"The keys and values contained in %1 were successfully added to the registry."
+"Unable to rename the key '%1'.\n"
+"The specified key name already exists."
 msgstr ""
 
 #: programs/regedit/regedit.rc:256
+msgid ""
+"Unable to rename the value '%1'.\n"
+"The specified value name already exists."
+msgstr ""
+
+#: programs/regedit/regedit.rc:257
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to delete the selected registry key."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: programs/regedit/regedit.rc:258
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to rename the selected registry key."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: programs/regedit/regedit.rc:259
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to rename the selected registry value."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: programs/regedit/regedit.rc:260
+msgid ""
+"The keys and values contained in %1 were successfully added to the registry."
+msgstr ""
+
+#: programs/regedit/regedit.rc:261
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: programs/regedit/regedit.rc:408
+#: programs/regedit/regedit.rc:413
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -16539,295 +16546,307 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:409
+#: programs/regedit/regedit.rc:414
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:410
+#: programs/regedit/regedit.rc:415
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:411
+#: programs/regedit/regedit.rc:416
 msgid "regedit: No filename was specified.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:412
+#: programs/regedit/regedit.rc:417
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:413
+#: programs/regedit/regedit.rc:418
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:414
+#: programs/regedit/regedit.rc:419
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:415
+#: programs/regedit/regedit.rc:420
 msgid "regedit: Unhandled action.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:416
+#: programs/regedit/regedit.rc:421
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:417
+#: programs/regedit/regedit.rc:422
 #, fuzzy
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "Невалидни знаци в пътя.\n"
 
-#: programs/regedit/regedit.rc:418
+#: programs/regedit/regedit.rc:423
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:419
+#: programs/regedit/regedit.rc:424
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:420
+#: programs/regedit/regedit.rc:425
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:421
+#: programs/regedit/regedit.rc:426
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:422
+#: programs/regedit/regedit.rc:427
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:423
+#: programs/regedit/regedit.rc:428
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:424
+#: programs/regedit/regedit.rc:429
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: programs/regedit/regedit.rc:425
+#: programs/regedit/regedit.rc:430
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:426
+#: programs/regedit/regedit.rc:431
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:427
+#: programs/regedit/regedit.rc:432
 #, fuzzy
 msgid "regedit: Invalid system key [%1]\n"
 msgstr "Невалидни знаци в пътя.\n"
 
-#: programs/regedit/regedit.rc:428
+#: programs/regedit/regedit.rc:433
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:429
+#: programs/regedit/regedit.rc:434
 #, fuzzy
 #| msgid "Are you sure you want to delete value '%s'?"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "Наистина ли искате да изтриете стойността '%s'?"
 
-#: programs/regedit/regedit.rc:431
+#: programs/regedit/regedit.rc:436
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr ""
 
-#: programs/regedit/regedit.rc:187
+#: programs/regedit/regedit.rc:191
 #, fuzzy
 #| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Излиза от редактора на системния регистър"
 
-#: programs/regedit/regedit.rc:188
+#: programs/regedit/regedit.rc:192
 msgid "Adds keys to the favorites list"
 msgstr "Добавя ключове към списъка с отметките"
 
-#: programs/regedit/regedit.rc:189
+#: programs/regedit/regedit.rc:193
 msgid "Removes keys from the favorites list"
 msgstr "Премахва ключове от списъка с отметките"
 
-#: programs/regedit/regedit.rc:190
+#: programs/regedit/regedit.rc:194
 msgid "Shows or hides the status bar"
 msgstr "Показва или скрива лентата на състоянието"
 
-#: programs/regedit/regedit.rc:191
+#: programs/regedit/regedit.rc:195
 #, fuzzy
 #| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr ""
 "Променя местоположението на разделителя между двете половини на редактора"
 
-#: programs/regedit/regedit.rc:192
+#: programs/regedit/regedit.rc:196
 msgid "Refreshes the window"
 msgstr "Обновява съдържанието на прозореца"
 
-#: programs/regedit/regedit.rc:193
+#: programs/regedit/regedit.rc:197
 msgid "Deletes the selection"
 msgstr "Изтрива избраното"
 
-#: programs/regedit/regedit.rc:194
+#: programs/regedit/regedit.rc:198
 msgid "Renames the selection"
 msgstr "Преименува избраното"
 
-#: programs/regedit/regedit.rc:195
+#: programs/regedit/regedit.rc:199
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Копира името на избрания ключ в системния буфер"
 
-#: programs/regedit/regedit.rc:196
+#: programs/regedit/regedit.rc:200
 msgid "Finds a text string in a key, value or data"
 msgstr "Търси за текстов низ в ключовете, стойностите и данните"
 
-#: programs/regedit/regedit.rc:197
+#: programs/regedit/regedit.rc:201
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Търси следващото място, на което се среща текста от предишното търсене"
 
-#: programs/regedit/regedit.rc:169
+#: programs/regedit/regedit.rc:172
 msgid "Modifies the value's data"
 msgstr "Променя данните в стойността"
 
-#: programs/regedit/regedit.rc:171
+#: programs/regedit/regedit.rc:174
 msgid "Adds a new key"
 msgstr "Добавя нов ключ"
 
-#: programs/regedit/regedit.rc:172
+#: programs/regedit/regedit.rc:175
 msgid "Adds a new string value"
 msgstr "Добавя нова стойност от тип символен низ"
 
-#: programs/regedit/regedit.rc:173
+#: programs/regedit/regedit.rc:176
 msgid "Adds a new binary value"
 msgstr "Добавя нова двоична стойност"
 
-#: programs/regedit/regedit.rc:174
+#: programs/regedit/regedit.rc:177
 #, fuzzy
 #| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
 msgstr "Добавя нова двоична стойност"
 
-#: programs/regedit/regedit.rc:177
+#: programs/regedit/regedit.rc:181
 msgid "Imports a text file into the registry"
 msgstr "Вмъква текстов файл в системния регистър"
 
-#: programs/regedit/regedit.rc:179
+#: programs/regedit/regedit.rc:183
 msgid "Exports all or part of the registry to a text file"
 msgstr ""
 "Записва цялото или част от съдържанието на системния регистър във текстов "
 "файл"
 
-#: programs/regedit/regedit.rc:180
+#: programs/regedit/regedit.rc:184
 msgid "Prints all or part of the registry"
 msgstr "Разпечатва целия или част от системния регистър"
 
-#: programs/regedit/regedit.rc:181
+#: programs/regedit/regedit.rc:185
 #, fuzzy
 #| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
 msgstr "Редактор на системния регистър"
 
-#: programs/regedit/regedit.rc:182
+#: programs/regedit/regedit.rc:186
 msgid "Displays program information, version number and copyright"
 msgstr "Показва информация за програма, версията и авторските права"
 
-#: programs/regedit/regedit.rc:206
+#: programs/regedit/regedit.rc:210
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "Unable to query the registry value '%1'."
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: programs/regedit/regedit.rc:207
+#: programs/regedit/regedit.rc:211
 #, fuzzy
 #| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Не може да редактирате ключове от този тип (%u)"
 
-#: programs/regedit/regedit.rc:208
+#: programs/regedit/regedit.rc:212
 #, fuzzy
 #| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
 msgstr "Стойността е прекалено голяма (%u)"
 
-#: programs/regedit/regedit.rc:209
+#: programs/regedit/regedit.rc:213
 msgid "Confirm Value Delete"
 msgstr "Потвърдете изтриването на стойността"
 
-#: programs/regedit/regedit.rc:210
+#: programs/regedit/regedit.rc:214
 #, fuzzy
 #| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete the selected registry value?"
 msgstr "Наистина ли искате да изтриете стойността '%s'?"
 
-#: programs/regedit/regedit.rc:216
+#: programs/regedit/regedit.rc:220
 msgid "Search complete. The string '%1' was not found."
 msgstr ""
 
-#: programs/regedit/regedit.rc:211
+#: programs/regedit/regedit.rc:215
 msgid "Are you sure you want to delete these values?"
 msgstr ""
 
-#: programs/regedit/regedit.rc:214
+#: programs/regedit/regedit.rc:218
 msgid "New Key #%d"
 msgstr "Нов ключ #%d"
 
-#: programs/regedit/regedit.rc:215
+#: programs/regedit/regedit.rc:219
 msgid "New Value #%d"
 msgstr "Нова стойност #%d"
 
-#: programs/regedit/regedit.rc:205
+#: programs/regedit/regedit.rc:209
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "Unable to query the registry key '%1'."
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: programs/regedit/regedit.rc:170
+#: programs/regedit/regedit.rc:173
 #, fuzzy
 #| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
 msgstr "Променя данните в стойността"
 
-#: programs/regedit/regedit.rc:175
+#: programs/regedit/regedit.rc:179
 #, fuzzy
 msgid "Adds a new multi-string value"
 msgstr "Добавя нова стойност от тип символен низ"
 
-#: programs/regedit/regedit.rc:198
+#: programs/regedit/regedit.rc:202
 #, fuzzy
 msgid "Exports the selected branch of the registry to a text file"
 msgstr ""
 "Записва цялото или част от съдържанието на системния регистър във текстов "
 "файл"
 
-#: programs/regedit/regedit.rc:176
+#: programs/regedit/regedit.rc:180
 #, fuzzy
 #| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
 msgstr "Добавя нова стойност от тип символен низ"
 
-#: programs/regedit/regedit.rc:212
+#: programs/regedit/regedit.rc:216
 #, fuzzy
 #| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
 msgstr "Потвърдете изтриването на стойността"
 
-#: programs/regedit/regedit.rc:213
+#: programs/regedit/regedit.rc:217
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: programs/regedit/regedit.rc:199
+#: programs/regedit/regedit.rc:203
 msgid "Expands or collapses the selected node"
 msgstr ""
 
-#: programs/regedit/regedit.rc:231
+#: programs/regedit/regedit.rc:236
 #, fuzzy
 #| msgid "C&ollate"
 msgid "Collapse"
 msgstr "Под&реждане"
+
+#: programs/regedit/regedit.rc:178
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 64-bit value"
+msgstr "Добавя нова двоична стойност"
+
+#: programs/regedit/regedit.rc:221
+#, fuzzy
+#| msgid "Edit DWORD"
+msgid "Edit QWORD"
+msgstr "Редактирай DWORD"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""

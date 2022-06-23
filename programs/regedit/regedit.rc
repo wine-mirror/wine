@@ -48,6 +48,7 @@ BEGIN
             MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&QWORD Value",                ID_EDIT_NEW_QWORDVALUE
             MENUITEM "&Multi-String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
             MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
@@ -100,6 +101,7 @@ BEGIN
             MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&QWORD Value",                ID_EDIT_NEW_QWORDVALUE
             MENUITEM "&Multi-String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
             MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
@@ -122,6 +124,7 @@ BEGIN
             MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&QWORD Value",                ID_EDIT_NEW_QWORDVALUE
             MENUITEM "&Multi-String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
             MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
@@ -171,6 +174,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Adds a new string value"
     ID_EDIT_NEW_BINARYVALUE "Adds a new binary value"
     ID_EDIT_NEW_DWORDVALUE  "Adds a new 32-bit value"
+    ID_EDIT_NEW_QWORDVALUE  "Adds a new 64-bit value"
     ID_EDIT_NEW_MULTI_STRINGVALUE "Adds a new multi-string value"
     ID_EDIT_NEW_EXPANDVALUE "Adds a new expandable string value"
     ID_REGISTRY_IMPORTREGISTRYFILE "Imports a text file into the registry"
@@ -213,6 +217,7 @@ BEGIN
     IDS_NEWKEY              "New Key #%d"
     IDS_NEWVALUE            "New Value #%d"
     IDS_NOTFOUND            "Search complete. The string '%1' was not found."
+    IDS_EDIT_QWORD          "Edit QWORD"
 END
 
 STRINGTABLE

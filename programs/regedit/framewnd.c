@@ -158,7 +158,7 @@ static void update_new_items_and_copy_keyname(HMENU hMenu, WCHAR *keyName)
 {
     unsigned int state = MF_ENABLED, i;
     unsigned int items[] = {ID_EDIT_NEW_KEY, ID_EDIT_NEW_STRINGVALUE, ID_EDIT_NEW_BINARYVALUE,
-                            ID_EDIT_NEW_DWORDVALUE, ID_EDIT_NEW_MULTI_STRINGVALUE,
+                            ID_EDIT_NEW_DWORDVALUE, ID_EDIT_NEW_QWORDVALUE, ID_EDIT_NEW_MULTI_STRINGVALUE,
                             ID_EDIT_NEW_EXPANDVALUE, ID_EDIT_COPYKEYNAME};
 
     if (!keyName)
@@ -930,6 +930,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	goto create_value;
     case ID_EDIT_NEW_DWORDVALUE:
 	valueType = REG_DWORD;
+        goto create_value;
+    case ID_EDIT_NEW_QWORDVALUE:
+	valueType = REG_QWORD;
 	/* fall through */
     create_value:
     {

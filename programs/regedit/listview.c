@@ -118,6 +118,14 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
             ListView_SetItemTextW(hwndLV, index, 2, buf);
             break;
         }
+        case REG_QWORD:
+        {
+            UINT64 value = *(UINT64 *)data;
+            WCHAR buf[64];
+            swprintf(buf, ARRAY_SIZE(buf), L"0x%08Ix (%Iu)", value, value);
+            ListView_SetItemTextW(hwndLV, index, 2, buf);
+            break;
+        }
         case REG_MULTI_SZ:
             MakeMULTISZDisplayable(data);
             ListView_SetItemTextW(hwndLV, index, 2, data);
@@ -245,6 +253,7 @@ void OnGetDispInfo(NMLVDISPINFOW *plvdi)
                  reg_binaryT[]           = L"REG_BINARY",
                  reg_dwordT[]            = L"REG_DWORD",
                  reg_dword_big_endianT[] = L"REG_DWORD_BIG_ENDIAN",
+                 reg_qwordT[]            = L"REG_QWORD",
                  reg_multi_szT[]         = L"REG_MULTI_SZ",
                  reg_linkT[]             = L"REG_LINK",
                  reg_resource_listT[]    = L"REG_RESOURCE_LIST",
@@ -274,6 +283,9 @@ void OnGetDispInfo(NMLVDISPINFOW *plvdi)
             break;
         case REG_DWORD:
             plvdi->item.pszText = reg_dwordT;
+            break;
+        case REG_QWORD:
+            plvdi->item.pszText = reg_qwordT;
             break;
         case REG_DWORD_BIG_ENDIAN:
             plvdi->item.pszText = reg_dword_big_endianT;
