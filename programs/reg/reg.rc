@@ -55,7 +55,7 @@ STRINGTABLE
 \     The type of data to add to the registry. If [/t] is specified,\n\
 \     <type> must be one of the following:\n\n\
 \         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n\
-\         REG_DWORD | REG_BINARY   | REG_NONE\n\n\
+\         REG_DWORD | REG_QWORD    | REG_BINARY   | REG_NONE\n\n\
 \     If [/t] is not specified, the default data type is REG_SZ.\n\n\
 \  /s <separator>\n\
 \     The character used to separate strings in REG_MULTI_SZ data.\n\

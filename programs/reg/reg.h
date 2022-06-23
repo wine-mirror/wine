@@ -31,7 +31,7 @@ struct reg_type_rels {
     const WCHAR *name;
 };
 
-extern const struct reg_type_rels type_rels[8];
+extern const struct reg_type_rels type_rels[9];
 
 void output_writeconsole(const WCHAR *str, DWORD wlen);
 void WINAPIV output_message(unsigned int id, ...);

@@ -46,6 +46,7 @@ const struct reg_type_rels type_rels[] =
     {REG_DWORD,               L"REG_DWORD"},
     {REG_DWORD_LITTLE_ENDIAN, L"REG_DWORD_LITTLE_ENDIAN"},
     {REG_DWORD_BIG_ENDIAN,    L"REG_DWORD_BIG_ENDIAN"},
+    {REG_QWORD,               L"REG_QWORD"},
     {REG_MULTI_SZ,            L"REG_MULTI_SZ"},
 };
 

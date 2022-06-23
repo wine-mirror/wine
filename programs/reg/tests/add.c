@@ -764,6 +764,100 @@ static void test_reg_dword_big_endian(void)
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 }
 
+static void test_reg_qword(void)
+{
+    UINT64 qword;
+    HKEY hkey;
+    DWORD r;
+
+    add_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_QWORD /f /d 0x123456789abcdef", &r);
+    ok(r == REG_EXIT_SUCCESS, "Unexpected exit code %ld.\n", r);
+    qword = 0x123456789abcdef;
+    verify_reg(hkey, "", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /ve /t REG_QWORD /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "Unexpected exit code %ld.\n", r);
+    qword = 0;
+    verify_reg(hkey, "", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword0 /t REG_QWORD /f /d", &r);
+    ok(r == REG_EXIT_FAILURE, "Unexpected exit code %lu.\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword1 /t REG_QWORD /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "Unexpected exit code %ld.\n", r);
+    qword = 0;
+    verify_reg(hkey, "qword1", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword2 /t REG_QWORD /d zzz /f", &r);
+    ok(r == REG_EXIT_FAILURE, "Unexpected exit code %lu.\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword3 /t REG_QWORD /d deadbeef /f", &r);
+    ok(r == REG_EXIT_FAILURE, "Unexpected exit code %lu.\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword4 /t REG_QWORD /d 123xyz /f", &r);
+    ok(r == REG_EXIT_FAILURE, "Unexpected exit code %lu.\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword5 /t reg_qword /d 12345678 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "Unexpected exit code %ld.\n", r);
+    qword = 12345678;
+    verify_reg(hkey, "qword5", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword6 /t REG_QWORD /D 0123 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "Unexpected exit code %ld.\n", r);
+    qword = 123;
+    verify_reg(hkey, "qword6", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword7 /t reg_qword /d 0xabcdefg /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword8 /t REG_qword /d 0xdeadbeef /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
+    qword = 0xdeadbeef;
+    verify_reg(hkey, "qword8", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_QWORD /v qword9 /f /d -1", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
+    qword = ~0ull;
+    verify_reg(hkey, "qword9", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_QWORD /v qword10 /f /d -0x1", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %lu, expected 1\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword11 /t REG_qword /d 0x01ffffffffffffffff /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword12 /t REG_QWORD /d 0xffffffffffffffff /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
+    qword = ~0ull;
+    verify_reg(hkey, "qword12", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword13 /t REG_QWORD /d 00x123 /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword14 /t REG_QWORD /d 0X123 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
+    qword = 0x123;
+    verify_reg(hkey, "qword14", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword15 /t REG_QWORD /d 18446744073709551616 /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %lu, expected 1\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword16 /t REG_QWORD /d 456 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
+    qword = 456;
+    verify_reg(hkey, "qword16", REG_QWORD, &qword, sizeof(qword), 0);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v qword17 /t REG_QWORD /d 0x456 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
+    qword = 0x456;
+    verify_reg(hkey, "qword17", REG_QWORD, &qword, sizeof(qword), 0);
+
+    close_key(hkey);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
+}
+
 static void test_reg_multi_sz(void)
 {
     HKEY hkey;
@@ -988,6 +1082,7 @@ START_TEST(add)
     test_reg_binary();
     test_reg_dword();
     test_reg_dword_big_endian();
+    test_reg_qword();
     test_reg_multi_sz();
 
     /* Check if reg.exe is running with elevated privileges */
