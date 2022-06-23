@@ -2045,9 +2045,31 @@ static BOOL STDMETHODCALLTYPE d2d_device_context_IsDxgiFormatSupported(ID2D1Devi
 static BOOL STDMETHODCALLTYPE d2d_device_context_IsBufferPrecisionSupported(ID2D1DeviceContext1 *iface,
         D2D1_BUFFER_PRECISION buffer_precision)
 {
-    FIXME("iface %p, buffer_precision %#x stub!\n", iface, buffer_precision);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    DXGI_FORMAT format;
+    UINT support = 0;
+    HRESULT hr;
 
-    return FALSE;
+    TRACE("iface %p, buffer_precision %u.\n", iface, buffer_precision);
+
+    switch (buffer_precision)
+    {
+        case D2D1_BUFFER_PRECISION_8BPC_UNORM: format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+        case D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB: format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; break;
+        case D2D1_BUFFER_PRECISION_16BPC_UNORM: format = DXGI_FORMAT_R16G16B16A16_UNORM; break;
+        case D2D1_BUFFER_PRECISION_16BPC_FLOAT: format = DXGI_FORMAT_R16G16B16A16_FLOAT; break;
+        case D2D1_BUFFER_PRECISION_32BPC_FLOAT: format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+        default:
+            WARN("Unexpected precision %u.\n", buffer_precision);
+            return FALSE;
+    }
+
+    if (FAILED(hr = ID3D11Device1_CheckFormatSupport(context->d3d_device, format, &support)))
+    {
+        WARN("Format support check failed, hr %#lx.\n", hr);
+    }
+
+    return !!(support & D3D11_FORMAT_SUPPORT_BUFFER);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1DeviceContext1 *iface,
