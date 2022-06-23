@@ -581,19 +581,17 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
-    MFT_OUTPUT_STREAM_INFO info;
     struct wg_sample *wg_sample;
     struct wg_format wg_format;
+    UINT32 sample_size;
     UINT64 frame_rate;
+    GUID subtype;
     HRESULT hr;
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
 
     if (count != 1)
         return E_INVALIDARG;
-
-    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
-        return hr;
 
     if (!decoder->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -602,10 +600,16 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     samples[0].dwStatus = 0;
     if (!samples[0].pSample) return E_INVALIDARG;
 
+    if (FAILED(hr = IMFMediaType_GetGUID(decoder->output_type, &MF_MT_SUBTYPE, &subtype)))
+        return hr;
+    if (FAILED(hr = MFCalculateImageSize(&subtype, decoder->wg_format.u.video.width,
+            decoder->wg_format.u.video.height, &sample_size)))
+        return hr;
+
     if (FAILED(hr = wg_sample_create_mf(samples[0].pSample, &wg_sample)))
         return hr;
 
-    if (wg_sample->max_size < info.cbSize)
+    if (wg_sample->max_size < sample_size)
     {
         wg_sample_release(wg_sample);
         return MF_E_BUFFERTOOSMALL;

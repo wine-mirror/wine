@@ -7671,7 +7671,7 @@ static void test_h264_decoder(void)
 
     status = 0;
     memset(&output, 0, sizeof(output));
-    output.pSample = create_sample(NULL, actual_width * actual_height * 2);
+    output.pSample = create_sample(NULL, nv12_frame_len);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
@@ -7715,7 +7715,7 @@ static void test_h264_decoder(void)
     for (i = 0; i < actual_aperture.Area.cy; ++i)
     {
         memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
-        memset(data + actual_width * (actual_height + i) + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
+        memset(data + actual_width * (actual_height + i / 2) + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
     }
     memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
     memset(data + actual_width * (actual_height + actual_aperture.Area.cy / 2), 0xcd, (actual_height - actual_aperture.Area.cy) / 2 * actual_width);
