@@ -4628,6 +4628,21 @@ DWORD WINAPI IcmpSendEcho2( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_rou
                             opts, reply, reply_size, timeout );
 }
 
+struct icmp_apc_ctxt
+{
+    void *apc_ctxt;
+    PIO_APC_ROUTINE apc_routine;
+    IO_STATUS_BLOCK iosb;
+};
+
+void WINAPI icmp_apc_routine( void *context, IO_STATUS_BLOCK *iosb, ULONG reserved )
+{
+    struct icmp_apc_ctxt *ctxt = context;
+
+    ctxt->apc_routine( ctxt->apc_ctxt, iosb, reserved );
+    heap_free( ctxt );
+}
+
 /***********************************************************************
  *    IcmpSendEcho2Ex (IPHLPAPI.@)
  */
@@ -4636,17 +4651,22 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
                               void *reply, DWORD reply_size, DWORD timeout )
 {
     struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
+    struct icmp_apc_ctxt *ctxt = heap_alloc( sizeof(*ctxt) );
+    IO_STATUS_BLOCK *iosb = &ctxt->iosb;
     DWORD opt_size, in_size, ret = 0;
     struct nsiproxy_icmp_echo *in;
     HANDLE request_event;
-    IO_STATUS_BLOCK iosb;
     NTSTATUS status;
 
     if (handle == INVALID_HANDLE_VALUE || !reply)
     {
+        heap_free( ctxt );
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+
+    ctxt->apc_routine = apc_routine;
+    ctxt->apc_ctxt = apc_ctxt;
 
     opt_size = opts ? (opts->OptionsSize + 3) & ~3 : 0;
     in_size = FIELD_OFFSET(struct nsiproxy_icmp_echo, data[opt_size + request_size]);
@@ -4654,6 +4674,7 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
 
     if (!in)
     {
+        heap_free( ctxt );
         SetLastError( IP_NO_RESOURCES );
         return 0;
     }
@@ -4678,20 +4699,21 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
 
     request_event = event ? event : (apc_routine ? NULL : CreateEventW( NULL, 0, 0, NULL ));
 
-    status = NtDeviceIoControlFile( data->nsi_device, request_event, apc_routine, apc_ctxt,
-                                    &iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO, in, in_size,
-                                    reply, reply_size );
+    status = NtDeviceIoControlFile( data->nsi_device, request_event, apc_routine ? icmp_apc_routine : NULL,
+                                    apc_routine ? ctxt : apc_ctxt, iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO,
+                                    in, in_size, reply, reply_size );
 
     if (status == STATUS_PENDING)
     {
         if (!event && !apc_routine && !WaitForSingleObject( request_event, INFINITE ))
-            status = iosb.Status;
+            status = iosb->Status;
     }
 
     if (!status)
         ret = IcmpParseReplies( reply, reply_size );
 
     if (!event && request_event) CloseHandle( request_event );
+    if (!apc_routine || status != STATUS_PENDING) heap_free( ctxt );
     heap_free( in );
 
     if (status) SetLastError( RtlNtStatusToDosError( status ) );
