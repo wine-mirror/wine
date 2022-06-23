@@ -6390,7 +6390,7 @@ static void check_sample_pcm16_(int line, IMFSample *sample, const BYTE *expect_
         if (expect - value + 512 > 1024) break;
     }
 
-    todo_wine_if(todo)
+    todo_wine_if(todo && i < length / 2)
     ok_(__FILE__, line)(i == length, "unexpected buffer data\n");
 
     if (output_file) WriteFile(output_file, buffer, length, &length, NULL);
@@ -7027,6 +7027,9 @@ static void test_wma_decoder(void)
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
 
         winetest_pop_context();
+
+        /* some FFmpeg version request more input to complete decoding */
+        if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && i == 2) break;
     }
     todo_wine
     ok(wmadec_data_len == 0, "missing %#lx bytes\n", wmadec_data_len);
