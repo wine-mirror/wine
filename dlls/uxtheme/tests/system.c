@@ -40,6 +40,7 @@ static HTHEME  (WINAPI * pOpenThemeDataEx)(HWND, LPCWSTR, DWORD);
 static HTHEME (WINAPI *pOpenThemeDataForDpi)(HWND, LPCWSTR, UINT);
 static HPAINTBUFFER (WINAPI *pBeginBufferedPaint)(HDC, const RECT *, BP_BUFFERFORMAT, BP_PAINTPARAMS *, HDC *);
 static HRESULT (WINAPI *pBufferedPaintClear)(HPAINTBUFFER, const RECT *);
+static HRESULT (WINAPI *pDrawThemeBackgroundEx)(HTHEME, HDC, int, int, const RECT *, const DTBGOPTS *);
 static HRESULT (WINAPI *pEndBufferedPaint)(HPAINTBUFFER, BOOL);
 static HRESULT (WINAPI *pGetBufferedPaintBits)(HPAINTBUFFER, RGBQUAD **, int *);
 static HDC (WINAPI *pGetBufferedPaintDC)(HPAINTBUFFER);
@@ -80,6 +81,7 @@ static void init_funcs(void)
     GET_PROC(uxtheme, BeginBufferedPaint)
     GET_PROC(uxtheme, BufferedPaintClear)
     GET_PROC(uxtheme, EndBufferedPaint)
+    GET_PROC(uxtheme, DrawThemeBackgroundEx)
     GET_PROC(uxtheme, GetBufferedPaintBits)
     GET_PROC(uxtheme, GetBufferedPaintDC)
     GET_PROC(uxtheme, GetBufferedPaintTargetDC)
@@ -2261,6 +2263,15 @@ static void test_EnableThemeDialogTexture(void)
     UnregisterClassA(cls.lpszClassName, GetModuleHandleA(NULL));
 }
 
+static void test_DrawThemeBackgroundEx(void)
+{
+    void *proc;
+
+    proc = GetProcAddress(GetModuleHandleA("uxtheme.dll"), MAKEINTRESOURCEA(47));
+    todo_wine
+    ok(proc == (void *)pDrawThemeBackgroundEx, "Expected DrawThemeBackgroundEx() at ordinal 47.\n");
+}
+
 START_TEST(system)
 {
     ULONG_PTR ctx_cookie;
@@ -2287,6 +2298,7 @@ START_TEST(system)
     test_GetThemeIntList();
     test_GetThemeTransitionDuration();
     test_DrawThemeParentBackground();
+    test_DrawThemeBackgroundEx();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {
