@@ -540,6 +540,7 @@ static void set_preferences(void)
     set_lang(pref);
     set_bool_pref(pref, "security.warn_entering_secure", FALSE);
     set_bool_pref(pref, "security.warn_submit_insecure", FALSE);
+    set_bool_pref(pref, "layout.css.grid.enabled", TRUE);
     set_int_pref(pref, "layout.spellcheckDefault", 0);
 
     nsIPrefBranch_Release(pref);
