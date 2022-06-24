@@ -617,7 +617,7 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
         status = NtQuerySystemInformationEx( class, &handle, sizeof(handle), info, size, &size );
         if (!status)
         {
-            for (pos = pos32 = 0; pos < size && pos32 < len; pos += ex->Size, pos32 += size32)
+            for (pos = pos32 = 0; pos < size; pos += ex->Size, pos32 += size32)
             {
                 ex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)info + pos);
                 ex32 = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX32 *)((char *)info32 + pos32);
@@ -645,8 +645,8 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
                 }
                 if (pos32 + size32 <= len) put_logical_proc_info_ex( ex32, ex );
             }
-            if (pos < size) status = STATUS_INFO_LENGTH_MISMATCH;
-            else size = pos32;
+            if (pos32 > len) status = STATUS_INFO_LENGTH_MISMATCH;
+            size = pos32;
         }
         if (retlen) *retlen = size;
         return status;

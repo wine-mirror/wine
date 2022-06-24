@@ -1168,7 +1168,7 @@ static void test_query_logicalprocex(void)
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *infoex, *infoex_public, *infoex_core, *infoex_numa,
                                             *infoex_cache, *infoex_package, *infoex_group, *ex;
-    DWORD relationship, len, len_public, len_core, len_numa, len_cache, len_package, len_group, len_union;
+    DWORD relationship, len, len_public, len_core, len_numa, len_cache, len_package, len_group, len_union, ret_len;
     unsigned int i, j;
     NTSTATUS status;
     BOOL ret;
@@ -1226,8 +1226,9 @@ static void test_query_logicalprocex(void)
     infoex_group = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_group);
 
     relationship = RelationAll;
-    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &len);
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &ret_len);
     ok(status == STATUS_SUCCESS, "got 0x%08lx\n", status);
+    ok(ret_len == len, "got %08lx expected %08lx\n", ret_len, len);
 
     ret = pGetLogicalProcessorInformationEx(RelationAll, infoex_public, &len_public);
     ok(ret, "got %d, error %ld\n", ret, GetLastError());
