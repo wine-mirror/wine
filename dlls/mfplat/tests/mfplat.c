@@ -5994,7 +5994,48 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(length2 == ptr->contiguous_length, "%d: unexpected linear buffer length %lu for %u x %u, format %s.\n",
                 i, length2, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
 
-        memset(data, 0xff, length2);
+        hr = pMFGetStrideForBitmapInfoHeader(ptr->fourcc, ptr->width, &stride);
+        ok(hr == S_OK, "Failed to get stride, hr %#lx.\n", hr);
+        stride = abs(stride);
+
+        /* primary plane */
+        ok(ptr->height * stride <= length2, "Insufficient buffer space: expected at least %lu bytes, got only %lu\n",
+                ptr->height * stride, length2);
+        for (j = 0; j < ptr->height; j++)
+            for (k = 0; k < stride; k++)
+                data[j * stride + k] = ((j % 16) << 4) + (k % 16);
+
+        data += ptr->height * stride;
+
+        /* secondary planes */
+        switch (ptr->fourcc)
+        {
+            case MAKEFOURCC('I','M','C','1'):
+            case MAKEFOURCC('I','M','C','3'):
+                ok(2 * ptr->height * stride <= length2, "Insufficient buffer space: expected at least %lu bytes, got only %lu\n",
+                        2 * ptr->height * stride, length2);
+                for (j = 0; j < ptr->height; j++)
+                    for (k = 0; k < stride / 2; k++)
+                        data[j * stride + k] = (((j + ptr->height) % 16) << 4) + (k % 16);
+                break;
+
+            case MAKEFOURCC('I','M','C','2'):
+            case MAKEFOURCC('I','M','C','4'):
+                ok(stride * 3 / 2 * ptr->height <= length2, "Insufficient buffer space: expected at least %lu bytes, got only %lu\n",
+                        stride * 3 / 2 * ptr->height, length2);
+                for (j = 0; j < ptr->height; j++)
+                    for (k = 0; k < stride / 2; k++)
+                        data[j * (stride / 2) + k] = (((j + ptr->height) % 16) << 4) + (k % 16);
+                break;
+
+            case MAKEFOURCC('N','V','1','2'):
+                ok(stride * ptr->height * 3 / 2 <= length2, "Insufficient buffer space: expected at least %lu bytes, got only %lu\n",
+                        stride * ptr->height * 3 / 2, length2);
+                for (j = 0; j < ptr->height / 2; j++)
+                    for (k = 0; k < stride; k++)
+                        data[j * stride + k] = (((j + ptr->height) % 16) << 4) + (k % 16);
+                break;
+        }
 
         hr = IMFMediaBuffer_Unlock(buffer);
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
@@ -6008,37 +6049,42 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(pitch == pitch2, "Unexpected pitch.\n");
 
         /* primary plane */
-        for(j = 0; j < ptr->height; j++)
-            for (k = 0; k < ptr->width; k++)
-                ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+        for (j = 0; j < ptr->height; j++)
+            for (k = 0; k < stride; k++)
+                ok(data[j * pitch + k] == ((j % 16) << 4) + (k % 16),
+                        "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
+                        data[j * pitch + k], ((j % 16) << 4) + (k % 16), i, j, k);
 
-        hr = pMFGetStrideForBitmapInfoHeader(ptr->fourcc, ptr->width, &stride);
-        ok(hr == S_OK, "Failed to get stride, hr %#lx.\n", hr);
+        data += ptr->height * pitch;
 
         /* secondary planes */
         switch (ptr->fourcc)
         {
             case MAKEFOURCC('I','M','C','1'):
             case MAKEFOURCC('I','M','C','3'):
-                for (j = ptr->height; j < length2 / stride; j++)
-                    for (k = 0; k < ptr->width / 2; k++)
-                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                for (j = 0; j < ptr->height; j++)
+                    for (k = 0; k < stride / 2; k++)
+                        ok(data[j * pitch + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
+                                "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
+                                data[j * pitch + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
                 break;
 
             case MAKEFOURCC('I','M','C','2'):
             case MAKEFOURCC('I','M','C','4'):
-                for (j = ptr->height; j < length2 / stride; j++)
-                    for (k = 0; k < ptr->width / 2; k++)
-                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
-                for (j = ptr->height; j < length2 / stride; j++)
-                    for (k = pitch / 2; k < pitch / 2 + ptr->width / 2; k++)
-                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                for (j = 0; j < ptr->height; j++)
+                    for (k = 0; k < stride / 2; k++)
+                        todo_wine_if(ptr->height % 2 == 1 && j >= 2)
+                        ok(data[j * (pitch / 2) + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
+                                "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
+                                data[j * (pitch / 2) + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
                 break;
 
             case MAKEFOURCC('N','V','1','2'):
-                for (j = ptr->height; j < length2 / stride; j++)
-                    for (k = 0; k < ptr->width; k++)
-                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                for (j = 0; j < ptr->height / 2; j++)
+                    for (k = 0; k < stride; k++)
+                        ok(data[j * pitch + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
+                                "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
+                                data[j * pitch + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
                 break;
 
             default:
