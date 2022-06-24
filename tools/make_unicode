@@ -32,18 +32,30 @@ my $TZVERSION = "2022a";
 
 my %data_files =
 (
- ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip" },
- unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip" },
- idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt" },
- cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip" },
- cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip" },
- sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt" },
- codepages => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows Supported Code Page Data Files.zip" },
- iso639    => { url  => "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip" },
- ksx1001   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC/KSX1001.TXT" },
- jis0208   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0208.TXT" },
- jis0212   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0212.TXT" },
- tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz" },
+ ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip",
+                sha  => "033a5276b5d7af8844589f8e3482f3977a8385e71d107d375055465178c23600" },
+ unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip",
+                sha  => "2ae4519b2b82cd4d15379c17e57bfb12c33c0f54da4977de03b2b04bcf11852d" },
+ idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
+                sha  => "d43d9ca367af27b0e4c9dc645cadc23690bdecaf7ec2687f37f01180022d4dfa" },
+ cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
+                sha  => "a2b7aee281ad2f497d47995808cf5e8f24123b0814ca47f7a824556aec8a0d91" },
+ cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
+                sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
+ sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
+                sha  => "81fcfa1e5ed3e3a94d329959ff7d97d522ddf9d653d2c4d6ddcccc5cd4df663f" },
+ codepages => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows Supported Code Page Data Files.zip",
+                sha  => "5074e6dd253056ba61fc6c870c9a955467855129c6ad3a51761c386b301b125a" },
+ iso639    => { url  => "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip",
+                sha  => "d912749d10c344835f052a9f31d13f13d5ffc99bc589e1eb88f2b4663e990881" },
+ ksx1001   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC/KSX1001.TXT",
+                sha  => "d8d2a35206ac0ea2865f5d801c9d6717f735bf46f263a658a64a960abe59e371" },
+ jis0208   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0208.TXT",
+                sha  => "1c571870457f19c97720631fa83ee491549a96ba1436da1296786a67d8632e87" },
+ jis0212   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0212.TXT",
+                sha  => "477820bb3055bbcc90880d788cd95607d221dc94457bae249231adecf13c12e6" },
+ tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz",
+                sha  => "ef7fffd9f4f50f4f58328b35022a32a5a056b245c5cb3d6791dddb342f871664" },
 );
 
 
@@ -1896,6 +1908,9 @@ sub open_data_file($@)
         system "mkdir", "-p", $cache;
         !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
     }
+
+    my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
+    die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};
 
     if ($filename =~ /\.zip$/)
     {
