@@ -100,8 +100,7 @@ static void copy_image_imc1(BYTE *dest, LONG dest_stride, const BYTE *src, LONG 
 
 static void copy_image_imc2(BYTE *dest, LONG dest_stride, const BYTE *src, LONG src_stride, DWORD width, DWORD lines)
 {
-    MFCopyImage(dest, dest_stride, src, src_stride, width / 2, lines / 2);
-    MFCopyImage(dest + dest_stride / 2, dest_stride, src + src_stride / 2, src_stride, width / 2, lines / 2);
+    MFCopyImage(dest, dest_stride / 2, src, src_stride / 2, width / 2, lines);
 }
 
 static inline struct buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *iface)

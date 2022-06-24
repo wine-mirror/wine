@@ -6073,7 +6073,6 @@ static void test_MFCreate2DMediaBuffer(void)
             case MAKEFOURCC('I','M','C','4'):
                 for (j = 0; j < ptr->height; j++)
                     for (k = 0; k < stride / 2; k++)
-                        todo_wine_if(ptr->height % 2 == 1 && j >= 2)
                         ok(data[j * (pitch / 2) + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
                                 "Unexpected byte %02x instead of %02x at test %d row %d column %d.\n",
                                 data[j * (pitch / 2) + k], (((j + ptr->height) % 16) << 4) + (k % 16), i, j + ptr->height, k);
