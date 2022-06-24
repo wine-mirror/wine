@@ -25,25 +25,27 @@ use Digest::SHA;
 use Encode;
 use Time::Local qw(timegm_modern);
 
-# base URLs for www.unicode.org files
 my $UNIVERSION = "14.0.0";
-my $UNIDATA  = "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
-my $UNIHAN   = "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip";
-my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
-my $JISDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS";
-my $KSCDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC";
-my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
-my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
-
 my $CLDRVERSION = "41";
-my $CLDRDATA = "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip";
-my $CLDR33DATA = "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip";
-
 my $ISO639VERSION = "20220120";
-my $ISO639 =  "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip";
-
 my $TZVERSION = "2022a";
-my $TZDATA = "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz";
+
+my %data_files =
+(
+ ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip" },
+ unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip" },
+ idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt" },
+ cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip" },
+ cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip" },
+ sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt" },
+ codepages => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows Supported Code Page Data Files.zip" },
+ iso639    => { url  => "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip" },
+ ksx1001   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC/KSX1001.TXT" },
+ jis0208   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0208.TXT" },
+ jis0212   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0212.TXT" },
+ tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz" },
+);
+
 
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
@@ -1857,6 +1859,8 @@ my %joining_forms =
    "medial" => []
 );
 
+my $current_data_file;
+
 sub to_utf16(@)
 {
     my @ret;
@@ -1877,56 +1881,44 @@ sub to_utf16(@)
 
 ################################################################
 # fetch a unicode.org file and open it
-sub open_data_file($$)
+sub open_data_file($@)
 {
-    my ($base, $name) = @_;
+    my ($id, $name) = @_;
+    my $data = $data_files{$id};
     my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
-    (my $dir = "$cache/$name") =~ s/\/[^\/]+$//;
-    my $suffix = ($base =~ /\/\Q$UNIVERSION\E/) ? "-$UNIVERSION" : "";
     local *FILE;
 
-    if ($base =~ /.*\/([^\/]+)\.zip$/)
+    my $url = $data->{url};
+    my $filename = "$cache/" . ($data->{name} || ($url =~ s/.*\/([^\/]+)$/$1/r));
+    unless (-f $filename)
     {
-        my $zip = "$1$suffix.zip";
-        unless (-f "$cache/$zip")
-        {
-            system "mkdir", "-p", $cache;
-            print "Fetching $base...\n";
-            !system "wget", "-q", "-O", "$cache/$zip", $base or die "cannot fetch $base";
-        }
-        open FILE, "-|", "unzip", "-p", "$cache/$zip", $name or die "cannot extract $name from $zip";
+        print "Fetching $url...\n";
+        system "mkdir", "-p", $cache;
+        !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
     }
-    elsif ($base =~ /.*\/([^\/]+)\.tar\.gz$/)
+
+    if ($filename =~ /\.zip$/)
     {
-        my $tar = "$1$suffix.tar.gz";
-        unless (-f "$cache/$tar")
-        {
-            system "mkdir", "-p", $cache;
-            print "Fetching $base...\n";
-            !system "wget", "-q", "-O", "$cache/$tar", $base or die "cannot fetch $base";
-        }
-        open FILE, "-|", "tar", "-x", "-f", "$cache/$tar", "-O", $name or die "cannot extract $name from $tar";
+        open FILE, "-|", "unzip", "-p", $filename, $name or die "cannot extract $name from $filename";
+    }
+    elsif ($filename =~ /\.tar\.gz$/)
+    {
+        open FILE, "-|", "tar", "-x", "-f", $filename, "-O", $name or die "cannot extract $name from $filename";
     }
     else
     {
-        (my $dest = "$cache/$name") =~ s/(.*)(\.[^\/.]+)$/$1$suffix$2/;
-        unless (-f $dest)
-        {
-            system "mkdir", "-p", $dir;
-            print "Fetching $base/$name...\n";
-            !system "wget", "-q", "-O", $dest, "$base/$name" or die "cannot fetch $base/$name";
-        }
-        open FILE, "<$dest" or die "cannot open $dest";
+        open FILE, "<$filename" or die "cannot open $filename";
     }
+    $current_data_file = $name ? "$url:$name" : $url;
     return *FILE;
 }
 
 ################################################################
 # load a unicode.org file as XML data
-sub load_xml_data_file($$)
+sub load_xml_data_file($@)
 {
-    my ($base, $name) = @_;
-    my $FILE = open_data_file( $base, $name );
+    my ($id, $name) = @_;
+    my $FILE = open_data_file( $id, $name );
     my $xml = XML::LibXML->load_xml( IO => $FILE );
     close FILE;
     return $xml;
@@ -2053,7 +2045,7 @@ sub load_data()
 
     # now build mappings from the decomposition field of the Unicode database
 
-    my $UNICODE_DATA = open_data_file( $UNIDATA, "UnicodeData.txt" );
+    my $UNICODE_DATA = open_data_file( "ucd", "UnicodeData.txt" );
     while (<$UNICODE_DATA>)
     {
 	# Decode the fields ...
@@ -2199,7 +2191,7 @@ sub load_data()
 
     # load the composition exclusions
 
-    my $EXCL = open_data_file( $UNIDATA, "CompositionExclusions.txt" );
+    my $EXCL = open_data_file( "ucd", "CompositionExclusions.txt" );
     while (<$EXCL>)
     {
         s/\#.*//;  # remove comments
@@ -2217,7 +2209,7 @@ sub load_data()
     # load the IDNA mappings
 
     @idna_decomp_table = @decomp_compat_table;
-    my $IDNA = open_data_file( $IDNADATA, "IdnaMappingTable.txt" );
+    my $IDNA = open_data_file( "idna", "IdnaMappingTable.txt" );
     while (<$IDNA>)
     {
         s/\#.*//;  # remove comments
@@ -2260,7 +2252,7 @@ sub load_data()
 
     # load the Unihan mappings
 
-    my $UNIHAN = open_data_file( $UNIHAN, "Unihan_Variants.txt" );
+    my $UNIHAN = open_data_file( "unihan", "Unihan_Variants.txt" );
     while (<$UNIHAN>)
     {
         s/\#.*//;  # remove comments
@@ -2406,7 +2398,7 @@ sub dump_eucjp_codepage()
         }
     }
 
-    my $INPUT = open_data_file( $JISDATA, "JIS0208.TXT" );
+    my $INPUT = open_data_file( "jis0208" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -2421,7 +2413,7 @@ sub dump_eucjp_codepage()
     }
     close $INPUT;
 
-    $INPUT = open_data_file( $JISDATA, "JIS0212.TXT" );
+    $INPUT = open_data_file( "jis0212" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -2460,7 +2452,7 @@ sub dump_krwansung_codepage(@)
     add_mapping( 0xfe, 0xf8ea );
     add_mapping( 0xff, 0xf8eb );
 
-    my $INPUT = open_data_file( $KSCDATA, "KSX1001.TXT" );
+    my $INPUT = open_data_file( "ksx1001" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -2608,7 +2600,7 @@ sub dump_indic($)
     my $filename = shift;
     my @indic_table;
 
-    my $INPUT = open_data_file( $UNIDATA, "IndicSyllabicCategory.txt" );
+    my $INPUT = open_data_file( "ucd", "IndicSyllabicCategory.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -2641,7 +2633,8 @@ sub dump_indic($)
     }
     close $INPUT;
 
-    $INPUT = open_data_file( $UNIDATA, "IndicPositionalCategory.txt" );
+    my $prev_data_file = $current_data_file;
+    $INPUT = open_data_file( "ucd", "IndicPositionalCategory.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -2671,8 +2664,8 @@ sub dump_indic($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Indic Syllabic Category */\n";
-    print OUTPUT "/* generated from $UNIDATA:IndicSyllabicCategory.txt */\n";
-    print OUTPUT "/*       and from $UNIDATA:IndicPositionalCategory.txt */\n";
+    print OUTPUT "/* generated from $prev_data_file */\n";
+    print OUTPUT "/*       and from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -2689,7 +2682,7 @@ sub dump_linebreak($)
     my $filename = shift;
     my @break_table;
 
-    my $INPUT = open_data_file( $UNIDATA, "LineBreak.txt" );
+    my $INPUT = open_data_file( "ucd", "LineBreak.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -2736,7 +2729,7 @@ sub dump_linebreak($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Line Break Properties */\n";
-    print OUTPUT "/* generated from $UNIDATA:LineBreak.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -2924,7 +2917,7 @@ sub dump_scripts($)
     my $script_index;
     my $i;
 
-    my $INPUT = open_data_file( $UNIDATA, "Scripts.txt" );
+    my $INPUT = open_data_file( "ucd", "Scripts.txt" );
     # Fill the table
     # Unknown script id is always 0, so undefined scripts are automatically treated as such
     while (<$INPUT>)
@@ -2963,7 +2956,7 @@ sub dump_scripts($)
     open OUTPUT,">$header.new" or die "Cannot create $header";
     print "Building $header\n";
     print OUTPUT "/* Unicode Script IDs */\n";
-    print OUTPUT "/* generated from $UNIDATA:Scripts.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
     print OUTPUT "enum unicode_script_id {\n";
@@ -2981,7 +2974,7 @@ sub dump_scripts($)
     open OUTPUT,">$filename.new" or die "Cannot create $header";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Script IDs */\n";
-    print OUTPUT "/* generated from $UNIDATA:Scripts.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -2997,7 +2990,7 @@ sub dump_mirroring($)
     my $filename = shift;
     my @mirror_table = ();
 
-    my $INPUT = open_data_file( $UNIDATA, "BidiMirroring.txt" );
+    my $INPUT = open_data_file( "ucd", "BidiMirroring.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -3015,7 +3008,7 @@ sub dump_mirroring($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode BiDi mirroring */\n";
-    print OUTPUT "/* generated from $UNIDATA:BidiMirroring.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
     dump_two_level_mapping( "wine_mirror_map", 0, 16, @mirror_table );
@@ -3030,7 +3023,7 @@ sub dump_bracket($)
     my $filename = shift;
     my @bracket_table;
 
-    my $INPUT = open_data_file( $UNIDATA, "BidiBrackets.txt" );
+    my $INPUT = open_data_file( "ucd", "BidiBrackets.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -3052,7 +3045,7 @@ sub dump_bracket($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Bidirectional Bracket table */\n";
-    print OUTPUT "/* generated from $UNIDATA:BidiBrackets.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -3069,7 +3062,7 @@ sub dump_shaping($)
     my $filename = shift;
     my @joining_table = @initial_joining_table;
 
-    my $INPUT = open_data_file( $UNIDATA, "ArabicShaping.txt" );
+    my $INPUT = open_data_file( "ucd", "ArabicShaping.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -3088,7 +3081,7 @@ sub dump_shaping($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Arabic shaping */\n";
-    print OUTPUT "/* generated from $UNIDATA:ArabicShaping.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -3116,7 +3109,7 @@ sub dump_arabic_shaping($)
     my $filename = shift;
     my @joining_table = @initial_joining_table;
 
-    my $INPUT = open_data_file( $UNIDATA, "ArabicShaping.txt" );
+    my $INPUT = open_data_file( "ucd", "ArabicShaping.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -3145,7 +3138,7 @@ sub dump_arabic_shaping($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Arabic shaping */\n";
-    print OUTPUT "/* generated from $UNIDATA:ArabicShaping.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -3162,7 +3155,7 @@ sub dump_vertical($$)
     my ($filename, $unix) = @_;
     my @vertical_table;
 
-    my $INPUT = open_data_file( $UNIDATA, "VerticalOrientation.txt" );
+    my $INPUT = open_data_file( "ucd", "VerticalOrientation.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -3195,7 +3188,7 @@ sub dump_vertical($$)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Vertical Orientation */\n";
-    print OUTPUT "/* generated from $UNIDATA:VerticalOrientation.txt */\n";
+    print OUTPUT "/* generated from $current_data_file */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     if ($unix)
     {
@@ -3688,7 +3681,7 @@ sub dump_msdata_codepage($)
     $default_char = $DEF_CHAR;
     $default_wchar = $DEF_CHAR;
 
-    my $INPUT = open_data_file( $MSCODEPAGES, $filename ) or die "Cannot open $filename";
+    my $INPUT = open_data_file( "codepages", $filename );
 
     while (<$INPUT>)
     {
@@ -3814,10 +3807,9 @@ sub cmp_compression
 
 ################################################################
 # build a binary sort keys table
-sub dump_sortkey_table($$)
+sub dump_sortkey_table($)
 {
-    my ($filename, $download) = @_;
-
+    my $filename = shift;
     my @keys;
     my ($part, $section, $subsection, $guid, $version, $ling_flag);
     my @multiple_weights;
@@ -3836,7 +3828,7 @@ sub dump_sortkey_table($$)
 
     my %flags = ( "HAS_3_BYTE_WEIGHTS" => 0x01, "REVERSEDIACRITICS" => 0x10, "DOUBLECOMPRESSION" => 0x20, "INVERSECASING" => 0x40 );
 
-    my $KEYS = open_data_file( $MSDATA, $download );
+    my $KEYS = open_data_file( "sorting" );
 
     printf "Building $filename\n";
 
@@ -3997,7 +3989,7 @@ sub dump_sortkey_table($$)
                 next;
             }
         }
-        die "$download: $part.$section: unrecognized line $_\n";
+        die "$current_data_file: $part.$section: unrecognized line $_\n";
     }
     close $KEYS;
 
@@ -4390,7 +4382,7 @@ sub convert_time_format($)
 sub load_iso639()
 {
     my %iso639;
-    my $DATA = open_data_file( $ISO639, "iso-639-3_Code_Tables_$ISO639VERSION/iso-639-3.tab" );
+    my $DATA = open_data_file( "iso639", "iso-639-3_Code_Tables_$ISO639VERSION/iso-639-3.tab" );
     while (<$DATA>)
     {
         if (/^\s*[a-z]{3}\s+[a-z]{3}\s+([a-z]{3})\s+([a-z]{2})\s/) { $iso639{$2} = $1; }
@@ -4405,11 +4397,11 @@ sub load_iso639()
 sub build_locale_data()
 {
     my $base = "cldr-release-$CLDRVERSION";
-    my $suppl = load_xml_data_file( $CLDRDATA, "$base/common/supplemental/supplementalData.xml" );
-    my $subtags = load_xml_data_file( $CLDRDATA, "$base/common/supplemental/likelySubtags.xml" );
-    my $numbers = load_xml_data_file( $CLDRDATA, "$base/common/supplemental/numberingSystems.xml" );
+    my $suppl = load_xml_data_file( "cldr", "$base/common/supplemental/supplementalData.xml" );
+    my $subtags = load_xml_data_file( "cldr", "$base/common/supplemental/likelySubtags.xml" );
+    my $numbers = load_xml_data_file( "cldr", "$base/common/supplemental/numberingSystems.xml" );
     # obsolete phone data from CLDR version 33
-    my $phone = load_xml_data_file( $CLDR33DATA, "common/supplemental/telephoneCodeData.xml" );
+    my $phone = load_xml_data_file( "cldr33", "common/supplemental/telephoneCodeData.xml" );
     my %iso639 = load_iso639();
     $string_data = pack "S2", 0, 0;  # offset 0 == empty string
 
@@ -4444,7 +4436,7 @@ sub build_locale_data()
         next if defined $loc->{alias};
         (my $file = $loc->{file} || $loc->{name}) =~ s/-/_/g;
         $file = "$base/" . ($loc->{dir} || "common") . "/main/$file.xml";
-        my $xml = load_xml_data_file( $CLDRDATA, $file );
+        my $xml = load_xml_data_file( "cldr", $file );
         $loc->{xml} = $xml;
         $loc->{language} ||= xml_query( $xml, "/ldml/identity/language/\@type" );
         $loc->{territory} ||= xml_query( $xml, "/ldml/identity/territory/\@type" );
@@ -5350,7 +5342,7 @@ sub load_windows_zones()
     my $current_name;
     my %names;
     my $base = "cldr-release-$CLDRVERSION";
-    my $INPUT = open_data_file( $CLDRDATA, "$base/common/supplemental/windowsZones.xml" );
+    my $INPUT = open_data_file( "cldr", "$base/common/supplemental/windowsZones.xml" );
     while (<$INPUT>)
     {
         if (/<!-- +(\(UTC.*) -->.*/)
@@ -5505,7 +5497,7 @@ sub dump_timezones($@)
 
     foreach my $filename (@_)
     {
-        my $FILE = open_data_file( $TZDATA, $filename );
+        my $FILE = open_data_file( "tzdata", $filename );
         my $zonename;
         while (<$FILE>)
         {
@@ -5804,7 +5796,7 @@ dump_norm_table( "nls/normnfd.nls" );
 dump_norm_table( "nls/normnfkc.nls" );
 dump_norm_table( "nls/normnfkd.nls" );
 dump_norm_table( "nls/normidna.nls" );
-my $chartypes = dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
+my $chartypes = dump_sortkey_table( "nls/sortdefault.nls" );
 dump_locales( "nls/locale.nls", $chartypes );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
