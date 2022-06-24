@@ -46,6 +46,8 @@ my $DEF_CHAR = ord '?';
 # Last valid Unicode character
 my $MAX_CHAR = 0x10ffff;
 
+my $nlskey = "-SYSTEM\\-CurrentControlSet\\-Control\\-Nls";
+
 my @allfiles =
 (
     "CodpageFiles/037.txt",
@@ -2268,19 +2270,44 @@ sub load_data()
 
 ################################################################
 # add a new registry key
-sub add_registry_key($$)
+sub add_registry_key($$$)
 {
-    my ($key, $defval) = @_;
-    $registry_keys{$key} = [ $defval ] unless defined $registry_keys{$key};
+    my ($base, $key, $defval) = @_;
+    $registry_keys{"$base\\$key"} = [ $defval ] unless defined $registry_keys{"$base\\$key"};
 }
 
 ################################################################
-# add a new registry value
-sub add_registry_value($$$)
+# add a new registry value with explicit type
+sub add_registry_value($$$$)
 {
-    my ($key, $name, $value) = @_;
-    add_registry_key( $key, undef );
-    push @{$registry_keys{$key}}, "'$name' = s '$value'";
+    my ($base, $key, $name, $value) = @_;
+    add_registry_key( $base, $key, undef );
+    push @{$registry_keys{"$base\\$key"}}, "'$name' = $value";
+}
+
+################################################################
+# add a new registry string value
+sub add_registry_string_value($$$$)
+{
+    my ($base, $key, $name, $value) = @_;
+    $value =~ s/\'/\'\'/g;
+    add_registry_value( $base, $key, $name, "s '$value'" );
+}
+
+################################################################
+# add a new registry dword value
+sub add_registry_dword_value($$$$)
+{
+    my ($base, $key, $name, $value) = @_;
+    add_registry_value( $base, $key, $name, "d $value" );
+}
+
+################################################################
+# add a new registry binary value
+sub add_registry_binary_value($$$$)
+{
+    my ($base, $key, $name, $value) = @_;
+    add_registry_value( $base, $key, $name, "b " . join "", map { sprintf "%02x", $_; } unpack( "C*", $value ));
 }
 
 ################################################################
@@ -3603,7 +3630,7 @@ sub dump_norm_table($)
     close OUTPUT;
     save_file($filename);
 
-    add_registry_value( "Normalization", sprintf( "%x", $forms{$type} ), "norm$type.nls" );
+    add_registry_string_value( $nlskey, "Normalization", sprintf( "%x", $forms{$type} ), "norm$type.nls" );
 }
 
 
@@ -3623,7 +3650,7 @@ sub output_codepage_file($)
     close OUTPUT;
     save_file($output);
 
-    add_registry_value( "Codepage", sprintf( "%d", $codepage ), sprintf( "c_%03d.nls", $codepage ));
+    add_registry_string_value( $nlskey, "Codepage", sprintf( "%d", $codepage ), sprintf( "c_%03d.nls", $codepage ));
 }
 
 ################################################################
@@ -4098,14 +4125,14 @@ sub dump_sortkey_table($$)
 
     # Locales
 
-    add_registry_key( "Sorting\\Ids", "{$default_guid}" );
+    add_registry_key( $nlskey, "Sorting\\Ids", "{$default_guid}" );
     foreach my $loc (sort keys %locales)
     {
         # skip specific locales that match more general ones
         my @parts = split /[-_]/, $loc;
         next if @parts > 1 && defined($locales{$parts[0]}) && $locales{$parts[0]} eq $locales{$loc};
         next if @parts > 2 && defined($locales{"$parts[0]-$parts[1]"}) && $locales{"$parts[0]-$parts[1]"} eq $locales{$loc};
-        add_registry_value( "Sorting\\Ids", $loc, "\{$locales{$loc}\}" );
+        add_registry_string_value( $nlskey, "Sorting\\Ids", $loc, "\{$locales{$loc}\}" );
     }
 
     # File header
@@ -4956,7 +4983,7 @@ sub build_locale_data()
     # output language groups
 
     my %groups;
-    add_registry_key( "Locale", "00000409" );
+    add_registry_key( $nlskey, "Locale", "00000409" );
     foreach my $loc (@locales)
     {
         next unless defined $loc->{lcid};
@@ -4965,11 +4992,11 @@ sub build_locale_data()
         my $group = locale_entry( $loc, "group", 1 );
         my $name = sprintf( "%08x", $loc->{lcid} );
         my $val = sprintf( "%x", $group );
-        add_registry_value( "Locale", $name, $val ) unless ($loc->{lcid} & 0x000f0000);
-        add_registry_value( "Locale\\Alternate Sorts", $name, $val ) if $loc->{name} =~ /_/;
+        add_registry_string_value( $nlskey, "Locale", $name, $val ) unless ($loc->{lcid} & 0x000f0000);
+        add_registry_string_value( $nlskey, "Locale\\Alternate Sorts", $name, $val ) if $loc->{name} =~ /_/;
         $groups{$val} = 1;
     }
-    foreach my $group (keys %groups) { add_registry_value( "Language Groups", $group, "1" ); }
+    foreach my $group (keys %groups) { add_registry_string_value( $nlskey, "Language Groups", $group, "1" ); }
 
     # output calendar data
 
@@ -5263,30 +5290,39 @@ sub dump_registry_script($%)
 {
     my ($filename, %keys) = @_;
     my $indent = 1;
+    my @prev;
 
     printf "Building %s\n", $filename;
     open OUTPUT, ">$filename.new" or die "Cannot create $filename";
     print OUTPUT "HKLM\n{\n";
-    foreach my $k (split /\\/, "SYSTEM\\CurrentControlSet\\Control\\Nls")
-    {
-        printf OUTPUT "%*sNoRemove %s\n%*s{\n", 4 * $indent, "", $k, 4 * $indent, "";
-        $indent++;
-    }
-    foreach my $k (sort keys %keys)
+    foreach my $k (sort { ($a =~ tr/a-z\\/A-Z\001/r) cmp ($b =~ tr/a-z\\/A-Z\001/r) } keys %keys)
     {
         my @subkeys = split /\\/, $k;
+        while (@prev && @subkeys && $prev[0] eq $subkeys[0]) { shift @prev; shift @subkeys; }
+        while (@prev) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; shift @prev; }
         my ($def, @vals) = @{$keys{$k}};
         for (my $i = 0; $i < @subkeys; $i++)
         {
-            printf OUTPUT "%*s%s%s\n%*s{\n", 4 * $indent, "",
-                $subkeys[$i] =~ /\s/ ? "'$subkeys[$i]'" :  $subkeys[$i],
+            my $name = $subkeys[$i];
+            my $prefix = "";
+            if ($name =~ /^-/)
+            {
+                $name =~ s/^-//;
+                $prefix = "NoRemove ";
+            }
+            if ($name =~ /\s/)
+            {
+                $name = "'$name'";
+            }
+            printf OUTPUT "%*s%s%s%s\n%*s{\n", 4 * $indent, "", $prefix, $name,
                 $i == $#subkeys && $def ? " = s '$def'" : "", 4 * $indent, "";
             $indent++;
         }
         foreach my $v (sort @vals) { printf OUTPUT "%*sval $v\n", 4 * $indent, ""; }
-        for (my $i = 0; $i < @subkeys; $i++) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
+        @prev = split /\\/, $k;
     }
-    while ($indent) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
+    while (@prev) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; shift @prev; }
+    printf OUTPUT "}\n";
     close OUTPUT;
     save_file($filename);
 }

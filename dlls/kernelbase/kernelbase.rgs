@@ -356,9 +356,6 @@ HKLM
                         val '0000540a' = s '1'
                         val '0000580a' = s '1'
                         val '00005c0a' = s '1'
-                    }
-                    Locale
-                    {
                         'Alternate Sorts'
                         {
                             val '0000040a' = s '1'
