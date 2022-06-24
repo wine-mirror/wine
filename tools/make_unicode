@@ -21,7 +21,9 @@
 
 use strict;
 use XML::LibXML;
+use Digest::SHA;
 use Encode;
+use Time::Local qw(timegm_modern);
 
 # base URLs for www.unicode.org files
 my $UNIVERSION = "14.0.0";
@@ -40,6 +42,9 @@ my $CLDR33DATA = "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip";
 my $ISO639VERSION = "20220120";
 my $ISO639 =  "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip";
 
+my $TZVERSION = "2022a";
+my $TZDATA = "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz";
+
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
 
@@ -47,6 +52,7 @@ my $DEF_CHAR = ord '?';
 my $MAX_CHAR = 0x10ffff;
 
 my $nlskey = "-SYSTEM\\-CurrentControlSet\\-Control\\-Nls";
+my $zonekey = "-Software\\-Microsoft\\-Windows NT\\-CurrentVersion\\Time Zones";
 
 my @allfiles =
 (
@@ -118,6 +124,7 @@ my @allfiles =
     "CodpageFiles/28605.txt",
 );
 
+my @timezone_files = qw(africa antarctica asia australasia europe northamerica southamerica etcetera backward);
 
 my %ctype =
 (
@@ -1888,6 +1895,17 @@ sub open_data_file($$)
             !system "wget", "-q", "-O", "$cache/$zip", $base or die "cannot fetch $base";
         }
         open FILE, "-|", "unzip", "-p", "$cache/$zip", $name or die "cannot extract $name from $zip";
+    }
+    elsif ($base =~ /.*\/([^\/]+)\.tar\.gz$/)
+    {
+        my $tar = "$1$suffix.tar.gz";
+        unless (-f "$cache/$tar")
+        {
+            system "mkdir", "-p", $cache;
+            print "Fetching $base...\n";
+            !system "wget", "-q", "-O", "$cache/$tar", $base or die "cannot fetch $base";
+        }
+        open FILE, "-|", "tar", "-x", "-f", "$cache/$tar", "-O", $name or die "cannot extract $name from $tar";
     }
     else
     {
@@ -5285,6 +5303,423 @@ sub dump_locales($$)
 
 
 ################################################################
+# return the day of week of the first of the month
+sub month_first_dow($$)
+{
+    my ($year, $month) = @_;
+    my @time = gmtime( timegm_modern( 0, 0, 0, 1, $month - 1, $year ));
+    return $time[6];
+}
+
+
+################################################################
+# compare system time values
+sub compare_systime($$)
+{
+    my ($a, $b) = @_;
+    return $a->[0] <=> $b->[0] ||
+           $a->[1] <=> $b->[1] ||
+           $a->[2] <=> $b->[2] ||
+           $a->[3] <=> $b->[3] ||
+           $a->[4] <=> $b->[4] ||
+           $a->[5] <=> $b->[5] ||
+           $a->[6] <=> $b->[6];
+}
+
+
+################################################################
+# compare the zone transition date with the rule date
+sub compare_transition_date($$$$)
+{
+    my ($stdoff, $isdst, $zone, $rule) = @_;
+
+    if (scalar @{$zone} <= 1)
+    {
+        return (!defined($zone->[0]) || $zone->[0] > $rule->[0]) ? 1 : -1;
+    }
+
+    my @date = parse_transition_date( $stdoff, $isdst, $zone->[0], $zone->[1], $zone->[2], $zone->[3] || 0 );
+    return compare_systime( \@date, $rule );
+}
+
+
+################################################################
+# get the Windows zone names from the CLDR data
+sub load_windows_zones()
+{
+    my $current_name;
+    my %names;
+    my $base = "cldr-release-$CLDRVERSION";
+    my $INPUT = open_data_file( $CLDRDATA, "$base/common/supplemental/windowsZones.xml" );
+    while (<$INPUT>)
+    {
+        if (/<!-- +(\(UTC.*) -->.*/)
+        {
+            $current_name = $1;
+        }
+        if (/<mapZone other="(.*)" territory="001" type="(.*)"\/>/)
+        {
+            $names{$1} = [ $current_name, $2 ];
+        }
+    }
+    close $INPUT;
+    return %names;
+}
+
+
+################################################################
+# parse a transition date specification from the tzdata files
+sub parse_transition_date($$@)
+{
+    use integer;
+    my ($stdoff, $isdst, $year, $in, $on, $at) = @_;
+
+    $on = "1" unless defined $on;
+    $at = "0" unless defined $at;
+
+    my %months = ( Jan => 1, Feb => 2, Mar => 3, Apr => 4, May => 5, Jun => 6,
+                   Jul => 7, Aug => 8, Sep => 9, Oct => 10, Nov => 11, Dec => 12 );
+    my %days = ( Sun => 0, Mon => 1, Tue => 2, Wed => 3, Thu => 4, Fri => 5, Sat => 6 );
+
+    my $mon = $in ? $months{$in} : 1;
+    my ($week, $dow, $flag, $time, $sec);
+    my $first = month_first_dow( $year, $mon );
+
+    if ($on =~ /^last(.*)$/)
+    {
+        $week = 5;
+        $dow = $days{$1};
+    }
+    elsif ($on =~ /^(.*)>=(\d+)$/)
+    {
+        $dow = $days{$1};
+        my $diff = ($first + 6 - $dow) % 7;
+        $week = $2 >= 25 ? 5 : ($2 + 6 + $diff) / 7;
+    }
+    elsif ($on =~ /^(.*)<=(\d+)$/)
+    {
+        $dow = $days{$1};
+        my $diff = ($first + $2 + 6 - $dow) % 7;
+        $week = ($2 + 6 - $diff) / 7;
+        if (!$week)
+        {
+            $week = 5;
+            if (!--$mon) { $mon = 12; $year--; }
+        }
+    }
+    elsif ($on =~ /^\d+$/)
+    {
+        $dow = ($first + $on - 1) % 7;
+        $week = $on >= 25 ? 5 : ($on + 6) / 7;
+    }
+    else
+    {
+        die "unsupported date specification $year $in $on $at";
+    }
+
+    if ($at =~ /^(\d+):(\d+):(\d+)([uws]?)$/)
+    {
+        $time = $1 * 60 + $2;
+        $sec = $3;
+        $flag = $4;
+    }
+    elsif ($at =~ /^(\d+):(\d+)([uws]?)$/)
+    {
+        $time = $1 * 60 + $2;
+        $flag = $3;
+    }
+    elsif ($at =~ /^(\d+)([uws]?)$/)
+    {
+        $time = $1 * 60;
+        $flag = $2;
+    }
+    else
+    {
+        die "unsupported time specification $year $in $on $at";
+    }
+
+    $flag ||= "w";
+    $time -= $stdoff if $flag eq "u";
+    $time += 60 if !$isdst && $flag ne "w";
+
+    if ($time < 0)  # previous day
+    {
+        $week-- if $week < 5 && $dow == month_first_dow( $year, $mon );
+        $week-- if $week == 5 && $dow == month_first_dow( $year + ($mon == 12), $mon % 12 + 1 );
+        if (!$week)
+        {
+            $week = 5;
+            if (!--$mon) { $mon = 12; $year--; }
+        }
+        $dow = ($dow + 6) % 7;
+        $time += 24 * 60;
+    }
+
+    return ($year, $mon, $week, $dow, $time / 60, $time % 60, $sec || 0);
+}
+
+
+################################################################
+# parse a system time value as a SYSTEMTIME structure
+sub pack_systime(@)
+{
+    my ($year, $mon, $week, $dow, $hour, $min, $sec) = @_;
+    return pack "S<8", 0, $mon, $dow, $week, $hour < 24 ? ($hour, $min, $sec, 0) : (23, 59, 59, 999);
+}
+
+
+################################################################
+# parse a timezone offset from the tzdata files
+sub parse_tz_offset($)
+{
+    my ($hour, $min) = split /:/, shift;
+    $min ||= 0;
+    return $hour < 0 ? -$hour * 60 + $min : -$hour * 60 - $min;  # invert sign
+}
+
+
+################################################################
+# build the timezone data
+sub dump_timezones($@)
+{
+    my $filename = shift;
+    my $FIRST_YEAR = 2000;
+    my $LAST_YEAR = 2030;
+
+    my %names = load_windows_zones();
+    my %zones;
+    my %rules;
+    my %links;
+    my %res_indices;
+
+    printf "Building $filename\n";
+
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"winresrc.h\"\n\n";
+    print OUTPUT "#pragma makedep po\n\n";
+    print OUTPUT "LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT\n\n";
+    print OUTPUT "STRINGTABLE\n{\n";
+
+    # load tzdata files
+
+    foreach my $filename (@_)
+    {
+        my $FILE = open_data_file( $TZDATA, $filename );
+        my $zonename;
+        while (<$FILE>)
+        {
+            chomp;
+            s/\#.*$//;
+            next if /^\s*$/;
+            my @fields = split /\s+/;
+            if ($fields[0] eq "Zone" || ($zonename && $fields[0] eq ""))
+            {
+                shift @fields;
+                $zonename = shift @fields unless $zonename;
+                my ($stdoff, $rules, $dummy, @date) = @fields;
+                $zones{$zonename} ||= [ ];
+                push @{$zones{$zonename}}, [ parse_tz_offset( $stdoff ), $rules, @date ];
+                $zonename = undef unless @date;  # last entry doesn't have an until date
+                next;
+            }
+            if ($fields[0] eq "Rule")
+            {
+                shift @fields;
+                my ($rulename, $from, $to, $dummy, $in, $on, $at, $save) = @fields;
+                $to = $from if $to eq "only";
+                $to = $LAST_YEAR if $to eq "max";
+                push @{$rules{$rulename}}, [ parse_tz_offset( $save ), $from, $to, $in, $on, $at ];
+                next;
+            }
+            if ($fields[0] eq "Link")
+            {
+                $links{$fields[2]} = $fields[1];
+                next;
+            }
+            die "unrecognized line $_";
+        }
+        close $FILE;
+    }
+
+    foreach my $name (sort { uc($a) cmp uc($b) } keys %names)
+    {
+        my ($display, $zone) = @{$names{$name}};
+        $zone = $links{$zone} if defined $links{$zone};
+
+        # build list of transitions
+
+        my @transitions;
+        my @from_date = ( 1 );
+        my $last_stdoff = 0;
+        for (my $i = 0; $i < scalar @{$zones{$zone}}; $i++)
+        {
+            my ($stdoff, $rule, @until_date) = @{$zones{$zone}->[$i]};
+            my $isdst = ($last_stdoff != $stdoff);
+            $from_date[0] ||= $LAST_YEAR;
+            my @systime = parse_transition_date( $stdoff, $isdst, @from_date );
+            push @transitions, [ $stdoff, -1, \@systime ];
+
+            if (defined $rules{$rule})
+            {
+                foreach my $r (@{$rules{$rule}})
+                {
+                    my ($offset, $from, $to, $in, $on, $at) = @{$r};
+                    foreach my $year ($from..$to)
+                    {
+                        next if $year < $from_date[0];
+                        next if $until_date[0] && $year > $until_date[0];
+                        my @systime = parse_transition_date( $stdoff, !!$offset, $year, $in, $on, $at );
+                        next if compare_transition_date( $stdoff, $isdst, \@until_date, \@systime ) <= 0;
+                        my $ret = compare_transition_date( $stdoff, $isdst, \@from_date, \@systime );
+                        next if $ret > 0;
+                        pop @transitions if !$ret;  # remove transition if there's a dst change at the same time
+                        push @transitions, [ $stdoff, $offset, \@systime ];
+                    }
+                }
+            }
+            @from_date = @until_date;
+            $last_stdoff = $stdoff;
+        }
+        @transitions = sort { compare_systime( $a->[2], $b->[2] ) }  @transitions;
+
+        # build per-year dynamic info
+
+        my @info;
+        my $last_dstoff = 0;
+        my $last_dst = 0;
+        my $year = $FIRST_YEAR;
+        while ($year <= $LAST_YEAR)
+        {
+            if (@transitions && $transitions[0]->[2]->[0] < $year)
+            {
+                $last_stdoff = $transitions[0]->[0];
+                shift @transitions;
+                next;
+            }
+            my ($std, $dst, @trans);
+            my $cur_stdoff = $last_stdoff;
+            my $cur_dstoff = ($name =~ /^UTC/) ? 0 : -60;
+            while (@transitions && $transitions[0]->[2]->[0] == $year)
+            {
+                my $t = shift @transitions;
+                my ($stdoff, $dstoff, $systime) = @{$t};
+                $systime = pack_systime( @{$systime} );
+                if (!$dstoff)  # std
+                {
+                    $cur_stdoff = $stdoff unless $std;
+                    $std = $systime;
+                }
+                elsif ($dstoff != -1)  # dst
+                {
+                    $cur_dstoff = $dstoff unless $dst;
+                    $dst ||= $systime;
+                }
+                elsif ($stdoff != $last_stdoff)  # rule transition
+                {
+                    # Handle a special case: Samoa moved to the other side of
+                    # the date line between 2011-12-03 and 2012-01-01,
+                    # entirely skipping the day 2011-12-31. We ignore this
+                    # change because it happens on a year boundary and more
+                    # importantly it would generate on offset of -25 hours,
+                    # which some programs (e.g., Mono) do not like. See
+                    # https://bugs.winehq.org/show_bug.cgi?id=51758
+
+                    if ($last_stdoff - $stdoff < 24 * 60)
+                    {
+                        @trans = ($last_stdoff, $stdoff, $systime);
+                        $cur_stdoff = $stdoff;
+                    }
+                }
+                elsif ($dst)  # rule transition with no stdoff change
+                {
+                    $std = $systime;
+                }
+                $last_dstoff = ($dstoff == -1) ? 0 : $dstoff;
+            }
+            $last_stdoff = $cur_stdoff;
+
+            if ($cur_dstoff > 0)  # swap std and dst to ensure that offset is negative
+            {
+                ($std, $dst) = ($dst, $std);
+                $cur_stdoff += $cur_dstoff;
+                $cur_dstoff = -$cur_dstoff;
+            }
+
+            if (@trans)
+            {
+                # heuristic to prefer switching dst
+                if ($last_dst == $year - 1 || (!$last_dst && $trans[0] > $trans[1]))
+                {
+                    $dst ||= $trans[2];
+                    $cur_stdoff = $trans[0];
+                    $cur_dstoff = $trans[1] - $trans[0];
+                }
+                else
+                {
+                    $std ||= $trans[2];
+                    $cur_stdoff = $trans[1];
+                    $cur_dstoff = $trans[0] - $trans[1];
+                }
+            }
+
+            if ($std || $dst)
+            {
+                $std ||= pack_systime( parse_transition_date( 0, 0, $year, "Jan", 1 ));
+                $dst ||= pack_systime( parse_transition_date( 0, 0, $year, "Jan", 1 ));
+                $last_dst = $year;
+            }
+            else
+            {
+                $std = pack "S<8", 0;
+                $dst = pack "S<8", 0;
+                $cur_stdoff += $last_dstoff;
+            }
+            $info[$year++] = pack( "l<3", $cur_stdoff, 0, $cur_dstoff ) . $std . $dst;
+        }
+
+        # output registry keys
+
+        my $std_name = $name eq "UTC" ? "Coordinated Universal Time" : $name;
+        my $dlt_name = $std_name =~ s/Standard Time/Daylight Time/r;
+        my $res_idx = hex( substr( Digest::SHA::sha1_hex($name), -3, 3 )) << 4;
+        $res_idx += 16 while exists $res_indices{$res_idx};
+        $res_indices{$res_idx} = 1;
+
+        add_registry_string_value( $zonekey, $name, "Display", $display );
+        add_registry_string_value( $zonekey, $name, "Std", $std_name );
+        add_registry_string_value( $zonekey, $name, "Dlt", $dlt_name );
+        add_registry_string_value( $zonekey, $name, "MUI_Std", sprintf( "\@tzres.dll,-%u", $res_idx ));
+        add_registry_string_value( $zonekey, $name, "MUI_Dlt", sprintf( "\@tzres.dll,-%u", $res_idx + 1 ));
+        add_registry_string_value( $zonekey, $name, "MUI_Display", sprintf( "\@tzres.dll,-%u", $res_idx + 2 ));
+        add_registry_binary_value( $zonekey, $name, "TZI", $info[$LAST_YEAR] );
+
+        printf OUTPUT "%7d \"#msgctxt#maximum 31 characters#%s\"\n", $res_idx, $std_name;
+        printf OUTPUT "%7d \"#msgctxt#maximum 31 characters#%s\"\n", $res_idx + 1, $dlt_name;
+        printf OUTPUT "%7d \"%s\"\n", $res_idx + 2, $display;
+
+        my $first_year = $FIRST_YEAR;
+        my $last_year = $LAST_YEAR;
+        $last_year-- while $last_year > $FIRST_YEAR && $info[$last_year] eq $info[$last_year - 1];
+        $first_year++ while $first_year < $last_year && $info[$first_year] eq $info[$last_year];
+
+        next if $last_year <= $first_year;
+
+        foreach my $i ($first_year..$last_year)
+        {
+            add_registry_binary_value( $zonekey, "$name\\Dynamic DST", $i, $info[$i] );
+        }
+        add_registry_dword_value( $zonekey, "$name\\Dynamic DST", "FirstEntry", $first_year );
+        add_registry_dword_value( $zonekey, "$name\\Dynamic DST", "LastEntry", $last_year );
+    }
+
+    print OUTPUT "}\n";
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # build the script to create registry keys
 sub dump_registry_script($%)
 {
@@ -5373,6 +5808,7 @@ my $chartypes = dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting W
 dump_locales( "nls/locale.nls", $chartypes );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
+dump_timezones( "dlls/tzres/tzres.rc", @timezone_files );
 dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );
 
 exit 0;

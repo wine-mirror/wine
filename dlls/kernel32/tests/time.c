@@ -949,8 +949,6 @@ static void test_GetTimeZoneInformationForYear(void)
         USHORT year;
         LONG bias, std_bias, dlt_bias;
         WORD std_month, std_day, dlt_month, dlt_day;
-        int tzinfo_todo : 1, bias_todo : 1, std_bias_todo : 1, dlt_bias_todo : 1;
-        int std_month_todo : 1, std_day_todo : 1, dlt_month_todo : 1, dlt_day_todo : 1;
     }
     test_data[] =
     {
@@ -961,10 +959,10 @@ static void test_GetTimeZoneInformationForYear(void)
         { L"Easter Island Standard Time", 2015,  300, 0, -60,  0,  0, 0,  0 },
         { L"Easter Island Standard Time", 2016,  360, 0, -60,  5, 14, 8, 13 },
         { L"Egypt Standard Time",         2013, -120, 0, -60,  0,  0, 0,  0 },
-        { L"Egypt Standard Time",         2014, -120, 0, -60,  9, 25, 5, 15, 0, 0, 0, 0, 0, 1, 0, 1 },
+        { L"Egypt Standard Time",         2014, -120, 0, -60,  9, 25, 5, 15 },
         { L"Egypt Standard Time",         2015, -120, 0, -60,  0,  0, 0,  0 },
         { L"Egypt Standard Time",         2016, -120, 0, -60,  0,  0, 0,  0 },
-        { L"Altai Standard Time",         2016, -420, 0,  60,  3, 27, 1,  1, 0, 1, 0, 1, 1, 1, 1, 1 },
+        { L"Altai Standard Time",         2016, -420, 0,  60,  3, 27, 1,  1 },
         { L"Altai Standard Time",         2017, -420, 0, -60,  0,  0, 0,  0 },
         { L"Altai Standard Time",         2018, -420, 0, -60,  0,  0, 0,  0 },
     };
@@ -1038,33 +1036,25 @@ static void test_GetTimeZoneInformationForYear(void)
         dyn_tzinfo.DynamicDaylightTimeDisabled = FALSE;
 
         ret = pGetTimeZoneInformationForYear(test_data[i].year, &dyn_tzinfo, &tzinfo);
-        todo_wine_if(test_data[i].tzinfo_todo)
-            ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %lu, for %s\n", GetLastError(), wine_dbgstr_w(test_data[i].tzname));
+        ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %lu, for %s\n", GetLastError(), wine_dbgstr_w(test_data[i].tzname));
         if (!ret)
             continue;
-        todo_wine_if(test_data[i].bias_todo)
-            ok(tzinfo.Bias == test_data[i].bias, "Expected bias %ld, got %ld, for %s\n",
-                test_data[i].bias, tzinfo.Bias, wine_dbgstr_w(test_data[i].tzname));
-        todo_wine_if(test_data[i].std_month_todo)
-            ok(tzinfo.StandardDate.wMonth == test_data[i].std_month, "Expected standard month %d, got %d, for %s\n",
-                test_data[i].std_month, tzinfo.StandardDate.wMonth, wine_dbgstr_w(test_data[i].tzname));
+        ok(tzinfo.Bias == test_data[i].bias, "Expected bias %ld, got %ld, for %s\n",
+           test_data[i].bias, tzinfo.Bias, wine_dbgstr_w(test_data[i].tzname));
+        ok(tzinfo.StandardDate.wMonth == test_data[i].std_month, "Expected standard month %d, got %d, for %s\n",
+           test_data[i].std_month, tzinfo.StandardDate.wMonth, wine_dbgstr_w(test_data[i].tzname));
         std_day = day_of_month(&tzinfo.StandardDate, test_data[i].year);
-        todo_wine_if(test_data[i].std_day_todo)
-            ok(std_day == test_data[i].std_day, "Expected standard day %d, got %d, for %s\n",
-                test_data[i].std_day, std_day, wine_dbgstr_w(test_data[i].tzname));
-        todo_wine_if(test_data[i].std_bias_todo)
-            ok(tzinfo.StandardBias == test_data[i].std_bias, "Expected standard bias %ld, got %ld, for %s\n",
-                test_data[i].std_bias, tzinfo.StandardBias, wine_dbgstr_w(test_data[i].tzname));
-        todo_wine_if(test_data[i].dlt_month_todo)
-            ok(tzinfo.DaylightDate.wMonth == test_data[i].dlt_month, "Expected daylight month %d, got %d, for %s\n",
-                test_data[i].dlt_month, tzinfo.DaylightDate.wMonth, wine_dbgstr_w(test_data[i].tzname));
+        ok(std_day == test_data[i].std_day, "Expected standard day %d, got %d, for %s\n",
+           test_data[i].std_day, std_day, wine_dbgstr_w(test_data[i].tzname));
+        ok(tzinfo.StandardBias == test_data[i].std_bias, "Expected standard bias %ld, got %ld, for %s\n",
+           test_data[i].std_bias, tzinfo.StandardBias, wine_dbgstr_w(test_data[i].tzname));
+        ok(tzinfo.DaylightDate.wMonth == test_data[i].dlt_month, "Expected daylight month %d, got %d, for %s\n",
+           test_data[i].dlt_month, tzinfo.DaylightDate.wMonth, wine_dbgstr_w(test_data[i].tzname));
         dlt_day = day_of_month(&tzinfo.DaylightDate, test_data[i].year);
-        todo_wine_if(test_data[i].dlt_day_todo)
-            ok(dlt_day == test_data[i].dlt_day, "Expected daylight day %d, got %d, for %s\n",
-                test_data[i].dlt_day, dlt_day, wine_dbgstr_w(test_data[i].tzname));
-        todo_wine_if(test_data[i].dlt_bias_todo)
-            ok(tzinfo.DaylightBias == test_data[i].dlt_bias, "Expected daylight bias %ld, got %ld, for %s\n",
-                test_data[i].dlt_bias, tzinfo.DaylightBias, wine_dbgstr_w(test_data[i].tzname));
+        ok(dlt_day == test_data[i].dlt_day, "Expected daylight day %d, got %d, for %s\n",
+           test_data[i].dlt_day, dlt_day, wine_dbgstr_w(test_data[i].tzname));
+        ok(tzinfo.DaylightBias == test_data[i].dlt_bias, "Expected daylight bias %ld, got %ld, for %s\n",
+           test_data[i].dlt_bias, tzinfo.DaylightBias, wine_dbgstr_w(test_data[i].tzname));
 
         if (i > 0 && test_data[i-1].tzname == test_data[i].tzname)
         {
