@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-04-15 11:35+0300\n"
+"PO-Revision-Date: 2022-06-25 00:18+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -16379,10 +16379,8 @@ msgstr "&DWORD reikšmė"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "&DWORD reikšmė"
+msgstr "&QWORD reikšmė"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -16939,16 +16937,12 @@ msgid "Collapse"
 msgstr "Suskleisti"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Prideda naują 32-bitų reikšmę"
+msgstr "Prideda naują 64-bitų reikšmę"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "Redaguoti DWORD reikšmę"
+msgstr "Redaguoti QWORD reikšmę"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
