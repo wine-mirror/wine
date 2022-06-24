@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-04-15 18:10+0200\n"
+"PO-Revision-Date: 2022-06-25 00:15+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -16455,10 +16455,8 @@ msgstr "&DWORD-waarde"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "&DWORD-waarde"
+msgstr "&QWORD-waarde"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -17017,16 +17015,12 @@ msgid "Collapse"
 msgstr "Invouwen"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Een nieuwe 32-bit waarde toevoegen"
+msgstr "Een nieuwe 64-bit waarde toevoegen"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "DWORD waarde bewerken"
+msgstr "QWORD waarde bewerken"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
