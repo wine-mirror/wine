@@ -2175,9 +2175,8 @@ static void test_topology_loader(void)
 
     /* Source node only. */
     hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
-    todo_wine_if(hr == S_OK)
+    todo_wine_if(hr == E_INVALIDARG)
     ok(hr == MF_E_TOPO_UNSUPPORTED, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK) IMFTopology_Release(full_topology);
 
     hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node);
     ok(hr == S_OK, "Failed to create output node, hr %#lx.\n", hr);
@@ -2388,28 +2387,23 @@ todo_wine {
     ref = IMFTopoLoader_Release(loader);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFTopologyNode_Release(src_node);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFTopologyNode_Release(sink_node);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaSource_Release(source);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFPresentationDescriptor_Release(pd);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFStreamDescriptor_Release(sd);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(input_type);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
     /* FIXME: is native really leaking refs here, or are we? */
     ref = IMFMediaType_Release(output_type);
+    todo_wine
     ok(ref != 0, "Release returned %ld\n", ref);
 
     hr = MFShutdown();
@@ -2542,10 +2536,8 @@ static void test_topology_loader_evr(void)
     ref = IMFTopology_Release(topology);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFTopologyNode_Release(source_node);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFTopologyNode_Release(evr_node);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     hr = IMFActivate_ShutdownObject(activate);
@@ -2556,7 +2548,6 @@ static void test_topology_loader_evr(void)
     ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(media_type);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     DestroyWindow(window);
