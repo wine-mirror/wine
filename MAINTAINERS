@@ -36,7 +36,7 @@ F:	dlls/ntdll/signal_arm*
 F:	programs/winedbg/be_arm*
 
 Audio I/O
-M:	Andrew Eikum <aeikum@codeweavers.com>
+P:	Andrew Eikum <coldpie@fastmail.com>
 F:	dlls/dsound/
 F:	dlls/mmdevapi/
 F:	dlls/winealsa.drv/
@@ -104,7 +104,6 @@ F:	dlls/dpwsockx/
 
 DirectShow
 M:	Zebediah Figura <z.figura12@gmail.com>
-P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/amstream/
 F:	dlls/devenum/
 F:	dlls/mciqtz32/
@@ -188,7 +187,6 @@ F:	dlls/jscript/
 
 Joystick input
 M:	Rémi Bernon <rbernon@codeweavers.com>
-P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dinput*/
 F:	dlls/windows.gaming.input/
 F:	dlls/winebus.sys/
@@ -196,7 +194,7 @@ F:	dlls/winexinput.sys/
 F:	dlls/xinput*/
 
 Media format conversion
-M:	Andrew Eikum <aeikum@codeweavers.com>
+P:	Andrew Eikum <coldpie@fastmail.com>
 F:	dlls/*.acm/
 F:	dlls/msacm32/
 
@@ -252,7 +250,6 @@ F:	dlls/ole32/storage32.h
 F:	dlls/ole32/tests/storage32.c
 
 OLE Typelibs
-P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
 
@@ -388,7 +385,6 @@ F:	dlls/xmllite/
 THE REST
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Alex Henrie <alexhenrie24@gmail.com>
-P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 P:	Jacek Caban <jacek@codeweavers.com>
 P:	Esme Povirk <esme@codeweavers.com>
