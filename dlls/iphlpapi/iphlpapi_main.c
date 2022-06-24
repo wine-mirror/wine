@@ -1138,7 +1138,7 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
     DWORD err, i, size, attempt, sockaddr_len;
     WCHAR name[MAX_ADAPTER_NAME_LENGTH + 1];
     DNS_ADDR_ARRAY *servers;
-    DNS_TXT_DATAW *search;
+    WCHAR *search;
 
     while (aa)
     {
@@ -1192,9 +1192,9 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
             (search = heap_alloc( size )))
         {
             if (!DnsQueryConfig( DnsConfigSearchList, 0, name, NULL, search, &size ) &&
-                search->dwStringCount && wcslen( search->pStringArray[0] ) < MAX_DNS_SUFFIX_STRING_LENGTH)
+                search[0] && wcslen( search ) < MAX_DNS_SUFFIX_STRING_LENGTH)
             {
-                wcscpy( aa->DnsSuffix, search->pStringArray[0] );
+                wcscpy( aa->DnsSuffix, search );
             }
             heap_free( search );
         }
