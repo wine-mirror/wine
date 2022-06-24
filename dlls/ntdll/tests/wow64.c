@@ -2131,8 +2131,10 @@ static void test_iosb(void)
     HANDLE client, server;
     NTSTATUS status;
     ULONG64 func;
-    DWORD id;
     IO_STATUS_BLOCK iosb32;
+    char buffer[6];
+    DWORD size;
+    BOOL ret;
     struct
     {
         union
@@ -2142,12 +2144,12 @@ static void test_iosb(void)
         };
         ULONG64 Information;
     } iosb64;
-    ULONG64 args[] = { 0, 0, 0, 0, (ULONG_PTR)&iosb64, FSCTL_PIPE_LISTEN, 0, 0, 0, 0 };
+    ULONG64 args[] = { 0, 0, 0, 0, (ULONG_PTR)&iosb64, (ULONG_PTR)buffer, sizeof(buffer), 0, 0 };
 
     if (!is_wow64) return;
     if (!code_mem) return;
     if (!ntdll_module) return;
-    func = get_proc_address64( ntdll_module, "NtFsControlFile" );
+    func = get_proc_address64( ntdll_module, "NtReadFile" );
 
     /* async calls set iosb32 but not iosb64 */
 
@@ -2156,46 +2158,53 @@ static void test_iosb(void)
                                4, 1024, 1024, 1000, NULL );
     ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError() );
 
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError() );
+
+    memset( buffer, 0xcc, sizeof(buffer) );
     memset( &iosb32, 0x55, sizeof(iosb32) );
     iosb64.Pointer = PtrToUlong( &iosb32 );
     iosb64.Information = 0xdeadbeef;
 
     args[0] = (LONG_PTR)server;
     status = call_func64( func, ARRAY_SIZE(args), args );
-    ok( status == STATUS_PENDING, "NtFsControlFile returned %lx\n", status );
+    ok( status == STATUS_PENDING, "NtReadFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
-    ok( iosb64.Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", iosb64.Status );
+    ok( iosb64.Pointer == PtrToUlong(&iosb32), "pointer changed to %I64x\n", iosb64.Pointer );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
 
-    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
-    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError() );
+    ret = WriteFile( client, "data", sizeof("data"), &size, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     ok( iosb32.Status == 0, "Wrong iostatus %lx\n", iosb32.Status );
-    ok( iosb64.Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", iosb64.Status );
+    ok( iosb32.Information == sizeof("data"), "Wrong information %Ix\n", iosb32.Information );
+    ok( iosb64.Pointer == PtrToUlong(&iosb32), "pointer changed to %I64x\n", iosb64.Pointer );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
+    ok( !memcmp( buffer, "data", iosb32.Information ),
+        "got wrong data %s\n", debugstr_an(buffer, iosb32.Information) );
 
+    memset( buffer, 0xcc, sizeof(buffer) );
     memset( &iosb32, 0x55, sizeof(iosb32) );
     iosb64.Pointer = PtrToUlong( &iosb32 );
     iosb64.Information = 0xdeadbeef;
-    id = 0xdeadbeef;
 
-    args[5] = FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE;
-    args[6] = (ULONG_PTR)"ClientProcessId";
-    args[7] = sizeof("ClientProcessId");
-    args[8] = (ULONG_PTR)&id;
-    args[9] = sizeof(id);
+    ret = WriteFile( client, "data", sizeof("data"), &size, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     status = call_func64( func, ARRAY_SIZE(args), args );
-    ok( status == STATUS_PENDING || status == STATUS_SUCCESS, "NtFsControlFile returned %lx\n", status );
+    ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
     todo_wine
     {
     ok( iosb32.Status == STATUS_SUCCESS, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == sizeof(id), "info changed to %Ix\n", iosb32.Information );
-    ok( iosb64.Pointer == PtrToUlong(&iosb32), "status changed to %lx\n", iosb64.Status );
+    ok( iosb32.Information == sizeof("data"), "info changed to %lx\n", iosb32.Information );
+    ok( iosb64.Pointer == PtrToUlong(&iosb32), "pointer changed to %I64x\n", iosb64.Pointer );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
+    if (iosb32.Information == sizeof("data"))
+        ok( !memcmp( buffer, "data", iosb32.Information ),
+            "got wrong data %s\n", debugstr_an(buffer, iosb32.Information) );
     }
-    ok( id == GetCurrentProcessId(), "wrong id %lx / %lx\n", id, GetCurrentProcessId() );
+
     CloseHandle( client );
     CloseHandle( server );
 
@@ -2210,19 +2219,24 @@ static void test_iosb(void)
                           FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
     ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError() );
 
+    ret = WriteFile( client, "data", sizeof("data"), &size, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    memset( buffer, 0xcc, sizeof(buffer) );
     memset( &iosb32, 0x55, sizeof(iosb32) );
     iosb64.Pointer = PtrToUlong( &iosb32 );
     iosb64.Information = 0xdeadbeef;
-    id = 0xdeadbeef;
 
     args[0] = (LONG_PTR)server;
     status = call_func64( func, ARRAY_SIZE(args), args );
-    ok( status == STATUS_SUCCESS, "NtFsControlFile returned %lx\n", status );
+    ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == 0x55555555, "info changed to %Ix\n", iosb32.Information );
-    ok( iosb64.Pointer == STATUS_SUCCESS, "status changed to %lx\n", iosb64.Status );
-    ok( iosb64.Information == sizeof(id), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
-    ok( id == GetCurrentProcessId(), "wrong id %lx / %lx\n", id, GetCurrentProcessId() );
+    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
+    ok( iosb64.Information == sizeof("data"), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
+    ok( !memcmp( buffer, "data", iosb64.Information ),
+        "got wrong data %s\n", debugstr_an(buffer, iosb64.Information) );
+
     CloseHandle( client );
     CloseHandle( server );
 }
