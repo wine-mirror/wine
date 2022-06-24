@@ -3349,8 +3349,9 @@ static void output_static_lib( struct makefile *make )
         output_filenames_obj_dir( make, make->object_files );
         output_filenames_obj_dir( make, make->unixobj_files );
         output( "\n" );
-        add_install_rule( make, make->staticlib, make->staticlib,
-                          strmake( "d%s/%s", so_dir, make->staticlib ));
+        if (!make->extlib)
+            add_install_rule( make, make->staticlib, make->staticlib,
+                              strmake( "d%s/%s", so_dir, make->staticlib ));
     }
     if (crosstarget)
     {
