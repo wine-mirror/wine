@@ -2125,10 +2125,25 @@ static void test_init_block(void)
 }
 
 
+static DWORD WINAPI iosb_delayed_write_thread(void *arg)
+{
+    HANDLE client = arg;
+    DWORD size;
+    BOOL ret;
+
+    Sleep(100);
+
+    ret = WriteFile( client, "data", sizeof("data"), &size, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    return 0;
+}
+
+
 static void test_iosb(void)
 {
     static const char pipe_name[] = "\\\\.\\pipe\\wow64iosbnamedpipe";
-    HANDLE client, server;
+    HANDLE client, server, thread;
     NTSTATUS status;
     ULONG64 func;
     IO_STATUS_BLOCK iosb32;
@@ -2236,6 +2251,30 @@ static void test_iosb(void)
     ok( iosb64.Information == sizeof("data"), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
     ok( !memcmp( buffer, "data", iosb64.Information ),
         "got wrong data %s\n", debugstr_an(buffer, iosb64.Information) );
+
+    thread = CreateThread( NULL, 0, iosb_delayed_write_thread, client, 0, NULL );
+
+    memset( buffer, 0xcc, sizeof(buffer) );
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+
+    args[0] = (LONG_PTR)server;
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
+    todo_wine
+    {
+    ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
+    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
+    ok( iosb64.Information == sizeof("data"), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
+    ok( !memcmp( buffer, "data", iosb64.Information ),
+        "got wrong data %s\n", debugstr_an(buffer, iosb64.Information) );
+    }
+
+    ret = WaitForSingleObject( thread, 1000 );
+    ok(!ret, "got %d\n", ret );
+    CloseHandle( thread );
 
     CloseHandle( client );
     CloseHandle( server );
