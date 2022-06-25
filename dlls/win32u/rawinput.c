@@ -204,6 +204,8 @@ struct device
     struct hid_preparsed_data *data;
 };
 
+static RAWINPUTDEVICE *registered_devices;
+static unsigned int registered_device_count;
 static struct list devices = LIST_INIT( devices );
 static pthread_mutex_t rawinput_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -783,26 +785,59 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
     return TRUE;
 }
 
+static void register_rawinput_device( const RAWINPUTDEVICE *device )
+{
+    RAWINPUTDEVICE *pos, *end;
+
+    for (pos = registered_devices, end = pos + registered_device_count; pos != end; pos++)
+    {
+        if (pos->usUsagePage < device->usUsagePage) continue;
+        if (pos->usUsagePage > device->usUsagePage) break;
+        if (pos->usUsage >= device->usUsage) break;
+    }
+
+    if (device->dwFlags & RIDEV_REMOVE)
+    {
+        if (pos != end && pos->usUsagePage == device->usUsagePage && pos->usUsage == device->usUsage)
+        {
+            memmove( pos, pos + 1, (char *)end - (char *)(pos + 1) );
+            registered_device_count--;
+        }
+    }
+    else
+    {
+        if (pos == end || pos->usUsagePage != device->usUsagePage || pos->usUsage != device->usUsage)
+        {
+            memmove( pos + 1, pos, (char *)end - (char *)pos );
+            registered_device_count++;
+        }
+        *pos = *device;
+    }
+}
+
 /**********************************************************************
  *         NtUserRegisterRawInputDevices   (win32u.@)
  */
-BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT size )
+BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT device_size )
 {
     struct rawinput_device *server_devices;
+    SIZE_T size;
     BOOL ret;
     UINT i;
 
-    TRACE( "devices %p, device_count %u, size %u.\n", devices, device_count, size );
+    TRACE( "devices %p, device_count %u, device_size %u.\n", devices, device_count, device_size );
 
-    if (size != sizeof(*devices))
+    if (device_size != sizeof(RAWINPUTDEVICE))
     {
-        WARN( "Invalid structure size %u.\n", size );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
     for (i = 0; i < device_count; ++i)
     {
+        TRACE( "device %u: page %#x, usage %#x, flags %#x, target %p.\n", i, devices[i].usUsagePage,
+               devices[i].usUsage, devices[i].dwFlags, devices[i].hwndTarget );
+
         if ((devices[i].dwFlags & RIDEV_INPUTSINK) && !devices[i].hwndTarget)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
@@ -814,17 +849,29 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
+
+        if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK|RIDEV_DEVNOTIFY))
+            FIXME( "Unhandled flags %#x for device %u.\n", devices[i].dwFlags, i );
+    }
+
+    pthread_mutex_lock( &rawinput_mutex );
+
+    size = (SIZE_T)device_size * (registered_device_count + device_count);
+    registered_devices = realloc( registered_devices, size );
+    if (registered_devices) for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
+
+    pthread_mutex_unlock( &rawinput_mutex );
+
+    if (!registered_devices)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
     }
 
     if (!(server_devices = malloc( device_count * sizeof(*server_devices) ))) return FALSE;
 
     for (i = 0; i < device_count; ++i)
     {
-        TRACE( "device %u: page %#x, usage %#x, flags %#x, target %p.\n",
-               i, devices[i].usUsagePage, devices[i].usUsage,
-               devices[i].dwFlags, devices[i].hwndTarget );
-        if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK|RIDEV_DEVNOTIFY))
-            FIXME( "Unhandled flags %#x for device %u.\n", devices[i].dwFlags, i );
 
         server_devices[i].usage_page = devices[i].usUsagePage;
         server_devices[i].usage = devices[i].usUsage;
@@ -844,61 +891,37 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     return ret;
 }
 
-static int compare_raw_input_devices( const void *ap, const void *bp )
-{
-    const RAWINPUTDEVICE a = *(const RAWINPUTDEVICE *)ap;
-    const RAWINPUTDEVICE b = *(const RAWINPUTDEVICE *)bp;
-
-    if (a.usUsagePage != b.usUsagePage) return a.usUsagePage - b.usUsagePage;
-    if (a.usUsage != b.usUsage) return a.usUsage - b.usUsage;
-    return 0;
-}
-
 /**********************************************************************
  *         NtUserGetRegisteredRawInputDevices   (win32u.@)
  */
-UINT WINAPI NtUserGetRegisteredRawInputDevices( RAWINPUTDEVICE *devices, UINT *device_count, UINT size )
+UINT WINAPI NtUserGetRegisteredRawInputDevices( RAWINPUTDEVICE *devices, UINT *device_count, UINT device_size )
 {
-    struct rawinput_device *buffer = NULL;
-    unsigned int i, status, buffer_size;
+    SIZE_T size, capacity;
 
-    TRACE("devices %p, device_count %p, size %u\n", devices, device_count, size);
+    TRACE( "devices %p, device_count %p, device_size %u\n", devices, device_count, device_size );
 
-    if (size != sizeof(RAWINPUTDEVICE) || !device_count || (devices && !*device_count))
+    if (device_size != sizeof(RAWINPUTDEVICE) || !device_count || (devices && !*device_count))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
-    buffer_size = *device_count * sizeof(*buffer);
-    if (devices && !(buffer = malloc( buffer_size )))
-        return ~0u;
+    pthread_mutex_lock( &rawinput_mutex );
 
-    SERVER_START_REQ(get_rawinput_devices)
-    {
-        if (buffer) wine_server_set_reply( req, buffer, buffer_size );
-        status = wine_server_call_err(req);
-        *device_count = reply->device_count;
-    }
-    SERVER_END_REQ;
-    if (status)
-    {
-        free( buffer );
-        return ~0u;
-    }
+    capacity = *device_count * device_size;
+    *device_count = registered_device_count;
+    size = (SIZE_T)device_size * *device_count;
+    if (devices && capacity >= size) memcpy( devices, registered_devices, size );
+
+    pthread_mutex_unlock( &rawinput_mutex );
 
     if (!devices) return 0;
 
-    for (i = 0; i < *device_count; ++i)
+    if (capacity < size)
     {
-        devices[i].usUsagePage = buffer[i].usage_page;
-        devices[i].usUsage = buffer[i].usage;
-        devices[i].dwFlags = buffer[i].flags;
-        devices[i].hwndTarget = wine_server_ptr_handle(buffer[i].target);
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return ~0u;
     }
 
-    qsort( devices, *device_count, sizeof(*devices), compare_raw_input_devices );
-
-    free( buffer );
     return *device_count;
 }

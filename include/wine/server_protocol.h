@@ -5316,20 +5316,6 @@ struct update_rawinput_devices_reply
 };
 
 
-struct get_rawinput_devices_request
-{
-    struct request_header __header;
-    char __pad_12[4];
-};
-struct get_rawinput_devices_reply
-{
-    struct reply_header __header;
-    unsigned int device_count;
-    /* VARARG(devices,rawinput_devices); */
-    char __pad_12[4];
-};
-
-
 struct create_job_request
 {
     struct request_header __header;
@@ -5757,7 +5743,6 @@ enum request
     REQ_get_cursor_history,
     REQ_get_rawinput_buffer,
     REQ_update_rawinput_devices,
-    REQ_get_rawinput_devices,
     REQ_create_job,
     REQ_open_job,
     REQ_assign_job,
@@ -6042,7 +6027,6 @@ union generic_request
     struct get_cursor_history_request get_cursor_history_request;
     struct get_rawinput_buffer_request get_rawinput_buffer_request;
     struct update_rawinput_devices_request update_rawinput_devices_request;
-    struct get_rawinput_devices_request get_rawinput_devices_request;
     struct create_job_request create_job_request;
     struct open_job_request open_job_request;
     struct assign_job_request assign_job_request;
@@ -6325,7 +6309,6 @@ union generic_reply
     struct get_cursor_history_reply get_cursor_history_reply;
     struct get_rawinput_buffer_reply get_rawinput_buffer_reply;
     struct update_rawinput_devices_reply update_rawinput_devices_reply;
-    struct get_rawinput_devices_reply get_rawinput_devices_reply;
     struct create_job_reply create_job_reply;
     struct open_job_reply open_job_reply;
     struct assign_job_reply assign_job_reply;
@@ -6341,7 +6324,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 754
+#define SERVER_PROTOCOL_VERSION 755
 
 /* ### protocol_version end ### */
 

@@ -4408,16 +4408,6 @@ static void dump_update_rawinput_devices_request( const struct update_rawinput_d
     dump_varargs_rawinput_devices( " devices=", cur_size );
 }
 
-static void dump_get_rawinput_devices_request( const struct get_rawinput_devices_request *req )
-{
-}
-
-static void dump_get_rawinput_devices_reply( const struct get_rawinput_devices_reply *req )
-{
-    fprintf( stderr, " device_count=%08x", req->device_count );
-    dump_varargs_rawinput_devices( ", devices=", cur_size );
-}
-
 static void dump_create_job_request( const struct create_job_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4776,7 +4766,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_cursor_history_request,
     (dump_func)dump_get_rawinput_buffer_request,
     (dump_func)dump_update_rawinput_devices_request,
-    (dump_func)dump_get_rawinput_devices_request,
     (dump_func)dump_create_job_request,
     (dump_func)dump_open_job_request,
     (dump_func)dump_assign_job_request,
@@ -5057,7 +5046,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_cursor_history_reply,
     (dump_func)dump_get_rawinput_buffer_reply,
     NULL,
-    (dump_func)dump_get_rawinput_devices_reply,
     (dump_func)dump_create_job_reply,
     (dump_func)dump_open_job_reply,
     NULL,
@@ -5338,7 +5326,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_cursor_history",
     "get_rawinput_buffer",
     "update_rawinput_devices",
-    "get_rawinput_devices",
     "create_job",
     "open_job",
     "assign_job",
