@@ -1261,14 +1261,12 @@ NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE ap
         return STATUS_NOT_SUPPORTED;
     }
 
-    io->Information = 0;
-
-    if ((status = server_get_unix_fd( device, access, &fd, &needs_close, &type, NULL ))) goto error;
+    if ((status = server_get_unix_fd( device, access, &fd, &needs_close, &type, NULL )))
+        return status;
     if (type != FD_TYPE_SERIAL)
     {
         if (needs_close) close( fd );
-        status = STATUS_OBJECT_TYPE_MISMATCH;
-        goto error;
+        return STATUS_OBJECT_TYPE_MISMATCH;
     }
 
     switch (code)
@@ -1455,11 +1453,15 @@ NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE ap
         status = STATUS_INVALID_PARAMETER;
         break;
     }
+
     if (needs_close) close( fd );
- error:
-    io->Status = status;
-    io->Information = sz;
-    if (event) NtSetEvent(event, NULL);
+
+    if (!NT_ERROR(status))
+    {
+        io->Status = status;
+        io->Information = sz;
+        if (event) NtSetEvent(event, NULL);
+    }
     return status;
 }
 
