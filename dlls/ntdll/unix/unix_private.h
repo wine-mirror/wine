@@ -31,6 +31,16 @@
 
 struct msghdr;
 
+typedef struct
+{
+    union
+    {
+        NTSTATUS Status;
+        ULONG Pointer;
+    };
+    ULONG Information;
+} IO_STATUS_BLOCK32;
+
 #ifdef __i386__
 static const WORD current_machine = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64__)
@@ -462,11 +472,7 @@ static inline void set_async_iosb( client_ptr_t iosb, NTSTATUS status, ULONG_PTR
 
     if (in_wow64_call())
     {
-        struct iosb32
-        {
-            NTSTATUS Status;
-            ULONG    Information;
-        } *io = wine_server_get_ptr( iosb );
+        IO_STATUS_BLOCK32 *io = wine_server_get_ptr( iosb );
         io->Information = info;
         WriteRelease( &io->Status, status );
     }

@@ -6177,8 +6177,11 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
 /* helper for internal ioctl calls */
 NTSTATUS sync_ioctl( HANDLE file, ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
 {
+    IO_STATUS_BLOCK32 io32;
     IO_STATUS_BLOCK io;
 
+    /* the 32-bit iosb is filled for overlapped file handles */
+    io.Pointer = &io32;
     return NtDeviceIoControlFile( file, NULL, NULL, NULL, &io, code, in_buffer, in_size, out_buffer, out_size );
 }
 
