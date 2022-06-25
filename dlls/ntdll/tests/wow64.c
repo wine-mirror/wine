@@ -2145,7 +2145,7 @@ static void test_iosb(void)
     static const char pipe_name[] = "\\\\.\\pipe\\wow64iosbnamedpipe";
     HANDLE client, server, thread;
     NTSTATUS status;
-    ULONG64 func;
+    ULONG64 read_func, flush_func;
     IO_STATUS_BLOCK iosb32;
     char buffer[6];
     DWORD size;
@@ -2160,15 +2160,17 @@ static void test_iosb(void)
         ULONG64 Information;
     } iosb64;
     ULONG64 args[] = { 0, 0, 0, 0, (ULONG_PTR)&iosb64, (ULONG_PTR)buffer, sizeof(buffer), 0, 0 };
+    ULONG64 flush_args[] = { 0, (ULONG_PTR)&iosb64 };
 
     if (!is_wow64) return;
     if (!code_mem) return;
     if (!ntdll_module) return;
-    func = get_proc_address64( ntdll_module, "NtReadFile" );
+    read_func = get_proc_address64( ntdll_module, "NtReadFile" );
+    flush_func = get_proc_address64( ntdll_module, "NtFlushBuffersFile" );
 
     /* async calls set iosb32 but not iosb64 */
 
-    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                                4, 1024, 1024, 1000, NULL );
     ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError() );
@@ -2183,7 +2185,7 @@ static void test_iosb(void)
     iosb64.Information = 0xdeadbeef;
 
     args[0] = (LONG_PTR)server;
-    status = call_func64( func, ARRAY_SIZE(args), args );
+    status = call_func64( read_func, ARRAY_SIZE(args), args );
     ok( status == STATUS_PENDING, "NtReadFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
     ok( iosb64.Pointer == PtrToUlong(&iosb32), "pointer changed to %I64x\n", iosb64.Pointer );
@@ -2207,7 +2209,7 @@ static void test_iosb(void)
     ret = WriteFile( client, "data", sizeof("data"), &size, NULL );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
-    status = call_func64( func, ARRAY_SIZE(args), args );
+    status = call_func64( read_func, ARRAY_SIZE(args), args );
     ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
     todo_wine
     {
@@ -2220,12 +2222,26 @@ static void test_iosb(void)
             "got wrong data %s\n", debugstr_an(buffer, iosb32.Information) );
     }
 
+    /* syscalls which are always synchronous set iosb64 but not iosb32 */
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+
+    flush_args[0] = (LONG_PTR)server;
+    status = call_func64( flush_func, ARRAY_SIZE(flush_args), flush_args );
+    ok( status == STATUS_SUCCESS, "NtFlushBuffersFile returned %lx\n", status );
+    ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
+    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
+    ok( iosb64.Information == 0, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+
     CloseHandle( client );
     CloseHandle( server );
 
     /* synchronous calls set iosb64 but not iosb32 */
 
-    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND,
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_DUPLEX,
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                                4, 1024, 1024, 1000, NULL );
     ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError() );
@@ -2243,7 +2259,7 @@ static void test_iosb(void)
     iosb64.Information = 0xdeadbeef;
 
     args[0] = (LONG_PTR)server;
-    status = call_func64( func, ARRAY_SIZE(args), args );
+    status = call_func64( read_func, ARRAY_SIZE(args), args );
     ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
     ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
@@ -2260,7 +2276,7 @@ static void test_iosb(void)
     iosb64.Information = 0xdeadbeef;
 
     args[0] = (LONG_PTR)server;
-    status = call_func64( func, ARRAY_SIZE(args), args );
+    status = call_func64( read_func, ARRAY_SIZE(args), args );
     ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
     todo_wine
     {
@@ -2275,6 +2291,18 @@ static void test_iosb(void)
     ret = WaitForSingleObject( thread, 1000 );
     ok(!ret, "got %d\n", ret );
     CloseHandle( thread );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+
+    flush_args[0] = (LONG_PTR)server;
+    status = call_func64( flush_func, ARRAY_SIZE(flush_args), flush_args );
+    ok( status == STATUS_SUCCESS, "NtFlushBuffersFile returned %lx\n", status );
+    ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
+    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
+    ok( iosb64.Information == 0, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
 
     CloseHandle( client );
     CloseHandle( server );
