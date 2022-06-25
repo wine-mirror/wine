@@ -528,9 +528,8 @@ NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc,
     TRACE( "%p %s %p %d %p %d %p\n", device, io2str(code),
            in_buffer, in_size, out_buffer, out_size, io );
 
-    io->Information = 0;
-
-    if ((status = server_get_unix_fd( device, 0, &fd, &needs_close, NULL, NULL ))) goto error;
+    if ((status = server_get_unix_fd( device, 0, &fd, &needs_close, NULL, NULL )))
+        return status;
 
     switch (code)
     {
@@ -580,9 +579,11 @@ NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc,
 
     if (needs_close) close( fd );
 
-error:
-    io->Status = status;
-    io->Information = sz;
-    if (event) NtSetEvent( event, NULL );
+    if (!NT_ERROR(status))
+    {
+        io->Status = status;
+        io->Information = sz;
+        if (event) NtSetEvent( event, NULL );
+    }
     return status;
 }
