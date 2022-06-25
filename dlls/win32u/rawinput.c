@@ -196,9 +196,9 @@ static bool rawinput_from_hardware_message( RAWINPUT *rawinput, const struct har
 
 struct device
 {
-    WCHAR *path;
     HANDLE file;
     HANDLE handle;
+    WCHAR path[MAX_PATH];
     RID_DEVICE_INFO info;
     struct hid_preparsed_data *data;
 };
@@ -238,7 +238,7 @@ static bool array_reserve( void **elements, unsigned int *capacity, unsigned int
 static struct device *add_device( HKEY key, DWORD type )
 {
     static const WCHAR symbolic_linkW[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
-    char value_buffer[4096];
+    char value_buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[MAX_PATH * sizeof(WCHAR)])];
     KEY_VALUE_PARTIAL_INFORMATION *value = (KEY_VALUE_PARTIAL_INFORMATION *)value_buffer;
     static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
@@ -249,27 +249,24 @@ static struct device *add_device( HKEY key, DWORD type )
     struct device *device;
     RID_DEVICE_INFO info;
     IO_STATUS_BLOCK io;
-    WCHAR *path, *pos;
     NTSTATUS status;
     unsigned int i;
     UINT32 handle;
     void *buffer;
     SIZE_T size;
     HANDLE file;
+    WCHAR *path;
 
-    if (!query_reg_value( key, symbolic_linkW, value, sizeof(value_buffer) ))
+    if (!query_reg_value( key, symbolic_linkW, value, sizeof(value_buffer) - sizeof(WCHAR) ))
     {
         ERR( "failed to get symbolic link value\n" );
         return NULL;
     }
-
-    if (!(path = malloc( value->DataLength + sizeof(WCHAR) )))
-        return NULL;
-    memcpy( path, value->Data, value->DataLength );
-    path[value->DataLength / sizeof(WCHAR)] = 0;
+    memset( value->Data + value->DataLength, 0, sizeof(WCHAR) );
 
     /* upper case everything but the GUID */
-    for (pos = path; *pos && *pos != '{'; pos++) *pos = towupper( *pos );
+    for (path = (WCHAR *)value->Data; *path && *path != '{'; path++) *path = towupper( *path );
+    path = (WCHAR *)value->Data;
 
     /* path is in DOS format and begins with \\?\ prefix */
     path[1] = '?';
@@ -280,7 +277,6 @@ static struct device *add_device( HKEY key, DWORD type )
                               FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT )))
     {
         ERR( "Failed to open device file %s, status %#x.\n", debugstr_w(path), status );
-        free( path );
         return NULL;
     }
 
@@ -376,7 +372,7 @@ static struct device *add_device( HKEY key, DWORD type )
         goto fail;
     }
 
-    device->path = path;
+    wcscpy( device->path, path );
     device->file = file;
     device->handle = ULongToHandle(handle);
     device->info = info;
@@ -387,7 +383,6 @@ static struct device *add_device( HKEY key, DWORD type )
 fail:
     free( preparsed );
     NtClose( file );
-    free( path );
     return NULL;
 }
 
@@ -466,7 +461,6 @@ static void rawinput_update_device_list(void)
     {
         free( rawinput_devices[i].data );
         NtClose( rawinput_devices[i].file );
-        free( rawinput_devices[i].path );
     }
     rawinput_devices_count = 0;
 
