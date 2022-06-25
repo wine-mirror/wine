@@ -53,7 +53,7 @@ type_t *type_new_void(void);
 type_t *type_coclass_declare(char *name);
 type_t *type_new_enum(const char *name, struct namespace *namespace, int defined, var_list_t *enums);
 type_t *type_new_struct(char *name, struct namespace *namespace, int defined, var_list_t *fields);
-type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields);
+type_t *type_new_nonencapsulated_union(const char *name, struct namespace *namespace, int defined, var_list_t *fields);
 type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
 type_t *type_new_bitfield(type_t *field_type, const expr_t *bits);
 type_t *type_runtimeclass_declare(char *name, struct namespace *namespace);

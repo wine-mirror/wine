@@ -580,19 +580,20 @@ type_t *type_new_struct(char *name, struct namespace *namespace, int defined, va
     return t;
 }
 
-type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields)
+type_t *type_new_nonencapsulated_union(const char *name, struct namespace *namespace, int defined, var_list_t *fields)
 {
     type_t *t = NULL;
 
     if (name)
-        t = find_type(name, NULL, tsUNION);
+        t = find_type(name, namespace, tsUNION);
 
     if (!t)
     {
         t = make_type(TYPE_UNION);
         t->name = name;
+        t->namespace = namespace;
         if (name)
-            reg_type(t, name, NULL, tsUNION);
+            reg_type(t, name, namespace, tsUNION);
     }
 
     if (!t->defined && defined)
@@ -627,7 +628,7 @@ type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *unio
     {
         if (!union_field)
             union_field = make_var(xstrdup("tagged_union"));
-        union_field->declspec.type = type_new_nonencapsulated_union(gen_name(), TRUE, cases);
+        union_field->declspec.type = type_new_nonencapsulated_union(gen_name(), NULL, TRUE, cases);
 
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = append_var(NULL, switch_field);

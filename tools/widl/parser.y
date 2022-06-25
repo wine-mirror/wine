@@ -477,7 +477,7 @@ typedecl:
 	| structdef
 	| tSTRUCT aIDENTIFIER                   { $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
 	| uniondef
-	| tUNION aIDENTIFIER                    { $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
+	| tUNION aIDENTIFIER                    { $$ = type_new_nonencapsulated_union($2, current_namespace, FALSE, NULL); }
 	| attributes enumdef                    { $$ = $2; $$->attrs = check_enum_attrs($1); }
 	| attributes structdef                  { $$ = $2; $$->attrs = check_struct_attrs($1); }
 	| attributes uniondef                   { $$ = $2; $$->attrs = check_union_attrs($1); }
@@ -1277,7 +1277,7 @@ unqualified_type:
 	| structdef				{ $$ = $1; }
 	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
 	| uniondef				{ $$ = $1; }
-	| tUNION aIDENTIFIER			{ $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
+	| tUNION aIDENTIFIER			{ $$ = type_new_nonencapsulated_union($2, current_namespace, FALSE, NULL); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	| aKNOWNTYPE				{ $$ = find_type_or_error(current_namespace, $1); }
 	;
@@ -1296,7 +1296,7 @@ typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
 	;
 
 uniondef: tUNION m_typename '{' ne_union_fields '}'
-						{ $$ = type_new_nonencapsulated_union($2, TRUE, $4); }
+						{ $$ = type_new_nonencapsulated_union($2, current_namespace, TRUE, $4); }
 	| tUNION m_typename
 	  tSWITCH '(' s_field ')'
 	  m_ident '{' cases '}'			{ $$ = type_new_encapsulated_union($2, $5, $7, $9); }
