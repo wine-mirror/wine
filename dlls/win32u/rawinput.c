@@ -198,42 +198,14 @@ struct device
 {
     HANDLE file;
     HANDLE handle;
+    struct list entry;
     WCHAR path[MAX_PATH];
     RID_DEVICE_INFO info;
     struct hid_preparsed_data *data;
 };
 
-static struct device *rawinput_devices;
-static unsigned int rawinput_devices_count, rawinput_devices_max;
-
+static struct list devices = LIST_INIT( devices );
 static pthread_mutex_t rawinput_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static bool array_reserve( void **elements, unsigned int *capacity, unsigned int count, unsigned int size )
-{
-    unsigned int new_capacity, max_capacity;
-    void *new_elements;
-
-    if (count <= *capacity)
-        return true;
-
-    max_capacity = ~(unsigned int)0 / size;
-    if (count > max_capacity)
-        return false;
-
-    new_capacity = max( 4, *capacity );
-    while (new_capacity < count && new_capacity <= max_capacity / 2)
-        new_capacity *= 2;
-    if (new_capacity < count)
-        new_capacity = max_capacity;
-
-    if (!(new_elements = realloc( *elements, new_capacity * size )))
-        return false;
-
-    *elements = new_elements;
-    *capacity = new_capacity;
-
-    return true;
-}
 
 static struct device *add_device( HKEY key, DWORD type )
 {
@@ -250,7 +222,6 @@ static struct device *add_device( HKEY key, DWORD type )
     RID_DEVICE_INFO info;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    unsigned int i;
     UINT32 handle;
     void *buffer;
     SIZE_T size;
@@ -290,9 +261,9 @@ static struct device *add_device( HKEY key, DWORD type )
         goto fail;
     }
 
-    for (i = 0; i < rawinput_devices_count; ++i)
+    LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
     {
-        if (rawinput_devices[i].handle == UlongToHandle(handle))
+        if (device->handle == UlongToHandle( handle ))
         {
             TRACE( "Ignoring already added device %#x / %s.\n", handle, debugstr_w(path) );
             goto fail;
@@ -360,23 +331,19 @@ static struct device *add_device( HKEY key, DWORD type )
         break;
     }
 
-    if (array_reserve( (void **)&rawinput_devices, &rawinput_devices_max,
-                            rawinput_devices_count + 1, sizeof(*rawinput_devices) ))
-    {
-        device = &rawinput_devices[rawinput_devices_count++];
-        TRACE( "Adding device %#x / %s.\n", handle, debugstr_w(path) );
-    }
-    else
+    if (!(device = calloc( 1, sizeof(*device) )))
     {
         ERR( "Failed to allocate memory.\n" );
         goto fail;
     }
 
+    TRACE( "Adding device %#x / %s.\n", handle, debugstr_w(path) );
     wcscpy( device->path, path );
     device->file = file;
     device->handle = ULongToHandle(handle);
     device->info = info;
     device->data = preparsed;
+    list_add_tail( &devices, &device->entry );
 
     return device;
 
@@ -452,17 +419,17 @@ static void enumerate_devices( DWORD type, const WCHAR *class )
 
 static void rawinput_update_device_list(void)
 {
-    unsigned int i;
+    struct device *device, *next;
 
     TRACE( "\n" );
 
-    /* destroy previous list */
-    for (i = 0; i < rawinput_devices_count; ++i)
+    LIST_FOR_EACH_ENTRY_SAFE( device, next, &devices, struct device, entry )
     {
-        free( rawinput_devices[i].data );
-        NtClose( rawinput_devices[i].file );
+        list_remove( &device->entry );
+        NtClose( device->file );
+        free( device->data );
+        free( device );
     }
-    rawinput_devices_count = 0;
 
     enumerate_devices( RIM_TYPEMOUSE, guid_devinterface_mouseW );
     enumerate_devices( RIM_TYPEKEYBOARD, guid_devinterface_keyboardW );
@@ -471,21 +438,16 @@ static void rawinput_update_device_list(void)
 
 static struct device *find_device_from_handle( HANDLE handle )
 {
-    unsigned int i;
+    struct device *device;
 
-    for (i = 0; i < rawinput_devices_count; ++i)
-    {
-        if (rawinput_devices[i].handle == handle)
-            return rawinput_devices + i;
-    }
+    LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
+        if (device->handle == handle) return device;
 
     rawinput_update_device_list();
 
-    for (i = 0; i < rawinput_devices_count; ++i)
-    {
-        if (rawinput_devices[i].handle == handle)
-            return rawinput_devices + i;
-    }
+    LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
+        if (device->handle == handle) return device;
+
     return NULL;
 }
 
@@ -511,14 +473,15 @@ BOOL rawinput_device_get_usages( HANDLE handle, USAGE *usage_page, USAGE *usage 
 /**********************************************************************
  *         NtUserGetRawInputDeviceList   (win32u.@)
  */
-UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *devices, UINT *device_count, UINT size )
+UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *device_list, UINT *device_count, UINT size )
 {
+    unsigned int count = 0, ticks = NtGetTickCount();
     static unsigned int last_check;
-    unsigned int i, ticks = NtGetTickCount();
+    struct device *device;
 
-    TRACE("devices %p, device_count %p, size %u.\n", devices, device_count, size);
+    TRACE( "device_list %p, device_count %p, size %u.\n", device_list, device_count, size );
 
-    if (size != sizeof(*devices))
+    if (size != sizeof(*device_list))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return ~0u;
@@ -538,28 +501,30 @@ UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *devices, UINT *devi
         rawinput_update_device_list();
     }
 
+    LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
+    {
+        if (*device_count < ++count || !device_list) continue;
+        device_list->hDevice = device->handle;
+        device_list->dwType = device->info.dwType;
+        device_list++;
+    }
+
     pthread_mutex_unlock( &rawinput_mutex );
 
-    if (!devices)
+    if (!device_list)
     {
-        *device_count = rawinput_devices_count;
+        *device_count = count;
         return 0;
     }
 
-    if (*device_count < rawinput_devices_count)
+    if (*device_count < count)
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        *device_count = rawinput_devices_count;
+        *device_count = count;
         return ~0u;
     }
 
-    for (i = 0; i < rawinput_devices_count; ++i)
-    {
-        devices[i].hDevice = rawinput_devices[i].handle;
-        devices[i].dwType = rawinput_devices[i].info.dwType;
-    }
-
-    return rawinput_devices_count;
+    return count;
 }
 
 /**********************************************************************
