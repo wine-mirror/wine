@@ -8784,7 +8784,27 @@ static void test_user_apc(void)
 
     pass = 0;
     InterlockedIncrement(&pass);
+#ifdef __i386__
+    {
+        /* RtlCaptureContext puts the return address of the caller's stack
+         * frame into %eip, so we need a thunk to get it to return here */
+        static const BYTE code[] =
+        {
+            0x55,               /* pushl %ebp */
+            0x89, 0xe5,         /* movl %esp, %ebp */
+            0xff, 0x75, 0x0c,   /* pushl 0xc(%ebp) */
+            0xff, 0x55, 0x08,   /* call *0x8(%ebp) */
+            0xc9,               /* leave */
+            0xc3,               /* ret */
+        };
+        void (__cdecl *func)(void *capture, CONTEXT *context) = code_mem;
+
+        memcpy(code_mem, code, sizeof(code));
+        func(RtlCaptureContext, &context);
+    }
+#else
     RtlCaptureContext(&context);
+#endif
     InterlockedIncrement(&pass);
 
     if (pass == 2)
