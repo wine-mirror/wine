@@ -1170,6 +1170,45 @@ static HMENU get_sub_menu( HMENU handle, INT pos )
     return submenu;
 }
 
+/* see GetMenuDefaultItem */
+static UINT get_menu_default_item( HMENU handle, UINT bypos, UINT flags )
+{
+    MENUITEM *item = NULL;
+    POPUPMENU *menu;
+    UINT i;
+
+    TRACE( "(%p,%d,%d)\n", handle, bypos, flags );
+
+    if (!(menu = grab_menu_ptr( handle ))) return -1;
+
+    for (i = 0; i < menu->nItems; i++)
+    {
+        if (!(menu->items[i].fState & MFS_DEFAULT)) continue;
+        item = &menu->items[i];
+        break;
+    }
+
+    /* default: don't return disabled items */
+    if (item && (!(GMDI_USEDISABLED & flags)) && (item->fState & MFS_DISABLED)) item = NULL;
+
+    /* search submenu when needed */
+    if (item && (item->fType & MF_POPUP) && (flags & GMDI_GOINTOPOPUPS))
+    {
+        UINT ret = get_menu_default_item( item->hSubMenu, bypos, flags );
+        if (ret != -1)
+        {
+            release_menu_ptr( menu );
+            return ret;
+        }
+        /* when item not found in submenu, return the popup item */
+    }
+
+    if (!item) i = -1;
+    else if (!bypos) i = item->wID;
+    release_menu_ptr( menu );
+    return i;
+}
+
 /**********************************************************************
  *           NtUserThunkedMenuItemInfo    (win32u.@)
  */
@@ -1184,6 +1223,9 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
     {
     case NtUserCheckMenuRadioItem:
         return check_menu_radio_item( handle, pos, info->cch, info->fMask, flags );
+
+    case NtUserGetMenuDefaultItem:
+        return get_menu_default_item( handle, pos, flags );
 
     case NtUserGetMenuItemID:
         if (!(menu = find_menu_item( handle, pos, flags, &i ))) return -1;

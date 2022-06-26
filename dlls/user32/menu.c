@@ -911,42 +911,9 @@ BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
 /**********************************************************************
  *		GetMenuDefaultItem    (USER32.@)
  */
-UINT WINAPI GetMenuDefaultItem(HMENU hmenu, UINT bypos, UINT flags)
+UINT WINAPI GetMenuDefaultItem( HMENU menu, UINT bypos, UINT flags )
 {
-	POPUPMENU *menu;
-	MENUITEM * item;
-	UINT i = 0;
-
-	TRACE("(%p,%d,%d)\n", hmenu, bypos, flags);
-
-	if (!(menu = MENU_GetMenu(hmenu))) return -1;
-
-	/* find default item */
-	item = menu->items;
-
-	/* empty menu */
-	if (! item) return -1;
-
-	while ( !( item->fState & MFS_DEFAULT ) )
-	{
-	    i++; item++;
-	    if  (i >= menu->nItems ) return -1;
-	}
-
-	/* default: don't return disabled items */
-	if ( (!(GMDI_USEDISABLED & flags)) && (item->fState & MFS_DISABLED )) return -1;
-
-	/* search rekursiv when needed */
-	if ( (item->fType & MF_POPUP) &&  (flags & GMDI_GOINTOPOPUPS) )
-	{
-	    UINT ret;
-	    ret = GetMenuDefaultItem( item->hSubMenu, bypos, flags );
-	    if ( -1 != ret ) return ret;
-
-	    /* when item not found in submenu, return the popup item */
-	}
-	return ( bypos ) ? i : item->wID;
-
+    return NtUserThunkedMenuItemInfo( menu, bypos, flags, NtUserGetMenuDefaultItem, NULL, NULL );
 }
 
 
