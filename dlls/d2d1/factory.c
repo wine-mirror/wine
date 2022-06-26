@@ -829,6 +829,7 @@ static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, co
     {
         void *src = NULL;
         UINT32 _uint32;
+        BOOL _bool;
 
         p->data.offset = props->offset;
         p->size = sizes[type];
@@ -841,6 +842,12 @@ static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, co
                 case D2D1_PROPERTY_TYPE_UINT32:
                     _uint32 = wcstoul(value, NULL, 10);
                     src = &_uint32;
+                    break;
+                case D2D1_PROPERTY_TYPE_BOOL:
+                    if (!wcscmp(value, L"true")) _bool = TRUE;
+                    else if (!wcscmp(value, L"false")) _bool = FALSE;
+                    else return E_INVALIDARG;
+                    src = &_bool;
                     break;
                 case D2D1_PROPERTY_TYPE_IUNKNOWN:
                 case D2D1_PROPERTY_TYPE_COLOR_CONTEXT:

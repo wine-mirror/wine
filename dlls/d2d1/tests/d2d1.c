@@ -50,6 +50,10 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='Max'         type='uint32' value='100'/>          \
             <Property name='Default'     type='uint32' value='10'/>           \
         </Property>                                                           \
+        <Property name='Bool' type='bool'>                                     \
+            <Property name='DisplayName' type='string' value='Bool property'/> \
+            <Property name='Default'     type='bool' value='false'/>           \
+        </Property>                                                            \
     </Effect>                                                                 \
 ";
 
