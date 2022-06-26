@@ -34,6 +34,7 @@ struct d2d_effect_property
 {
     WCHAR *name;
     D2D1_PROPERTY_TYPE type;
+    UINT32 index;
     union
     {
         size_t offset;
@@ -50,6 +51,7 @@ struct d2d_effect_properties
     size_t offset;
     size_t size;
     size_t count;
+    size_t custom_count;
     struct
     {
         BYTE *ptr;
@@ -766,7 +768,7 @@ static struct d2d_effect_property * parse_effect_get_property(const struct d2d_e
 }
 
 static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, const WCHAR *name,
-        D2D1_PROPERTY_TYPE type, const WCHAR *value)
+        UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value)
 {
     static const UINT32 sizes[] =
     {
@@ -814,6 +816,8 @@ static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, co
     }
 
     p = &props->properties[props->count++];
+    p->index = index;
+    if (p->index < 0x80000000) props->custom_count++;
     p->name = wcsdup(name);
     p->type = type;
     if (p->type == D2D1_PROPERTY_TYPE_STRING)
@@ -834,11 +838,22 @@ static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, co
     return S_OK;
 }
 
+static UINT32 parse_effect_get_property_index(struct d2d_effect_properties *props,
+        const WCHAR *name)
+{
+    if (!wcscmp(name, L"DisplayName")) return D2D1_PROPERTY_DISPLAYNAME;
+    if (!wcscmp(name, L"Author")) return D2D1_PROPERTY_AUTHOR;
+    if (!wcscmp(name, L"Category")) return D2D1_PROPERTY_CATEGORY;
+    if (!wcscmp(name, L"Description")) return D2D1_PROPERTY_DESCRIPTION;
+    return props->custom_count;
+}
+
 static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_registration *effect)
 {
     WCHAR *name = NULL, *value = NULL;
     D2D1_PROPERTY_TYPE type;
     unsigned int depth;
+    UINT32 index;
     HRESULT hr;
 
     if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name)))
@@ -865,7 +880,10 @@ static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_regis
     }
 
     if (SUCCEEDED(hr))
-        hr = parse_effect_add_property(&effect->properties, name, type, value);
+    {
+        index = parse_effect_get_property_index(&effect->properties, name);
+        hr = parse_effect_add_property(&effect->properties, name, index, type, value);
+    }
 
     free(value);
     free(name);
