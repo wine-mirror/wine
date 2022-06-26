@@ -827,10 +827,32 @@ static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, co
     }
     else
     {
+        void *src = NULL;
+        UINT32 _uint32;
+
         p->data.offset = props->offset;
         p->size = sizes[type];
         props->offset += p->size;
-        /* FIXME: convert and write initial value */
+
+        if (value)
+        {
+            switch (p->type)
+            {
+                case D2D1_PROPERTY_TYPE_UINT32:
+                    _uint32 = wcstoul(value, NULL, 10);
+                    src = &_uint32;
+                    break;
+                case D2D1_PROPERTY_TYPE_IUNKNOWN:
+                case D2D1_PROPERTY_TYPE_COLOR_CONTEXT:
+                    break;
+                default:
+                    FIXME("Initial value for property type %u is not handled.\n", p->type);
+            }
+
+            if (src && p->size) memcpy(props->data.ptr + p->data.offset, src, p->size);
+        }
+        else if (p->size)
+            memset(props->data.ptr + p->data.offset, 0, p->size);
     }
     p->set_function = NULL;
     p->get_function = NULL;
