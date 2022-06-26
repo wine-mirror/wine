@@ -654,6 +654,7 @@ struct d2d_effect
     ID2D1Image ID2D1Image_iface;
     LONG refcount;
 
+    ID2D1EffectImpl *impl;
     struct d2d_effect_properties properties;
     struct d2d_effect_context *effect_context;
     ID2D1Image **inputs;

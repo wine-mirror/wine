@@ -20,6 +20,67 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+static HRESULT STDMETHODCALLTYPE d2d_effect_impl_QueryInterface(ID2D1EffectImpl *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1EffectImpl)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1EffectImpl_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_effect_impl_AddRef(ID2D1EffectImpl *iface)
+{
+    return 2;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_effect_impl_Release(ID2D1EffectImpl *iface)
+{
+    return 1;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_impl_Initialize(ID2D1EffectImpl *iface,
+        ID2D1EffectContext *context, ID2D1TransformGraph *graph)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_impl_PrepareForRender(ID2D1EffectImpl *iface, D2D1_CHANGE_TYPE type)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_impl_SetGraph(ID2D1EffectImpl *iface, ID2D1TransformGraph *graph)
+{
+    return E_NOTIMPL;
+}
+
+static const ID2D1EffectImplVtbl d2d_effect_impl_vtbl =
+{
+    d2d_effect_impl_QueryInterface,
+    d2d_effect_impl_AddRef,
+    d2d_effect_impl_Release,
+    d2d_effect_impl_Initialize,
+    d2d_effect_impl_PrepareForRender,
+    d2d_effect_impl_SetGraph,
+};
+
+static HRESULT STDMETHODCALLTYPE builtin_factory_stub(IUnknown **effect_impl)
+{
+    static ID2D1EffectImpl builtin_stub = { &d2d_effect_impl_vtbl };
+
+    *effect_impl = (IUnknown *)&builtin_stub;
+
+    return S_OK;
+}
+
 struct d2d_effect_info
 {
     const CLSID *clsid;
@@ -684,6 +745,8 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
     free(effect->inputs);
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
     d2d_effect_properties_cleanup(&effect->properties);
+    if (effect->impl)
+        ID2D1EffectImpl_Release(effect->impl);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_QueryInterface(ID2D1Effect *iface, REFIID iid, void **out)
@@ -1040,9 +1103,11 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     const struct d2d_effect_info *builtin = NULL;
     struct d2d_effect_context *effect_context;
     const struct d2d_effect_registration *reg;
+    PD2D1_EFFECT_FACTORY factory;
     struct d2d_effect *object;
     WCHAR clsidW[39];
     unsigned int i;
+    HRESULT hr;
 
     if (!(reg = d2d_factory_get_registered_effect(context->factory, effect_id)))
     {
@@ -1091,6 +1156,8 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
                 D2D1_PROPERTY_TYPE_UINT32, max_inputs);
 
         d2d_effect_SetInputCount(&object->ID2D1Effect_iface, builtin->default_input_count);
+
+        factory = builtin_factory_stub;
     }
     else
     {
@@ -1102,10 +1169,25 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
 
         d2d_effect_SetInputCount(&object->ID2D1Effect_iface, 1);
 
+        factory = reg->factory;
     }
 
     d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
+
+    if (FAILED(hr = factory((IUnknown **)&object->impl)))
+    {
+        WARN("Failed to create implementation object, hr %#lx.\n", hr);
+        ID2D1Effect_Release(&object->ID2D1Effect_iface);
+        return hr;
+    }
+
+    if (FAILED(hr = ID2D1EffectImpl_Initialize(object->impl, &effect_context->ID2D1EffectContext_iface, NULL /* FIXME */)))
+    {
+        WARN("Failed to initialize effect, hr %#lx.\n", hr);
+        ID2D1Effect_Release(&object->ID2D1Effect_iface);
+        return hr;
+    }
 
     *effect = &object->ID2D1Effect_iface;
 
