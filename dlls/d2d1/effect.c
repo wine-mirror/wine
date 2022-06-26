@@ -181,6 +181,7 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
             switch (p->type)
             {
                 case D2D1_PROPERTY_TYPE_UINT32:
+                case D2D1_PROPERTY_TYPE_ENUM:
                     _uint32 = wcstoul(value, NULL, 10);
                     src = &_uint32;
                     break;
@@ -347,6 +348,7 @@ static HRESULT d2d_effect_property_set_value(const struct d2d_effect *effect,
     {
         case D2D1_PROPERTY_TYPE_BOOL:
         case D2D1_PROPERTY_TYPE_UINT32:
+        case D2D1_PROPERTY_TYPE_ENUM:
             memcpy(properties->data.ptr + prop->data.offset, value, size);
             break;
         default:
@@ -1199,6 +1201,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
 
     d2d_effect_properties_add(&object->properties, L"CLSID", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
+    d2d_effect_properties_add(&object->properties, L"Precision", D2D1_PROPERTY_PRECISION, D2D1_PROPERTY_TYPE_ENUM, L"0");
 
     if (FAILED(hr = factory((IUnknown **)&object->impl)))
     {
