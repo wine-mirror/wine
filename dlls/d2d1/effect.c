@@ -278,11 +278,16 @@ static UINT32 d2d_effect_properties_get_value_size(const struct d2d_effect *effe
         const struct d2d_effect_properties *properties, UINT32 index)
 {
     struct d2d_effect_property *prop;
+    UINT32 size;
 
     if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
         return 0;
 
-    /* FIXME: use gettter */
+    if (prop->get_function)
+    {
+        if (FAILED(prop->get_function((IUnknown *)effect->impl, NULL, 0, &size))) return 0;
+        return size;
+    }
 
     return prop->size;
 }
@@ -300,10 +305,13 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
         const struct d2d_effect_properties *properties, const struct d2d_effect_property *prop,
         D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 size)
 {
+    UINT32 actual_size;
+
     if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
     if (prop->type != D2D1_PROPERTY_TYPE_STRING && prop->size != size) return E_INVALIDARG;
 
-    /* FIXME: use getter */
+    if (prop->get_function)
+        return prop->get_function((IUnknown *)effect->impl, value, size, &actual_size);
 
     switch (prop->type)
     {
@@ -321,12 +329,29 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
     return S_OK;
 }
 
-static HRESULT d2d_effect_property_set_value(struct d2d_effect_property *property,
+static HRESULT d2d_effect_property_set_value(const struct d2d_effect *effect,
+        struct d2d_effect_properties *properties, struct d2d_effect_property *prop,
         D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
 {
-    if (property->readonly) return E_INVALIDARG;
+    if (prop->readonly) return E_INVALIDARG;
+    if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
+    if (prop->get_function && !prop->set_function) return E_INVALIDARG;
+    if (prop->index < 0x80000000 && !prop->set_function) return E_INVALIDARG;
 
-    FIXME("Unimplemented.\n");
+    if (prop->set_function)
+        return prop->set_function((IUnknown *)effect->impl, value, size);
+
+    if (prop->size != size) return E_INVALIDARG;
+
+    switch (prop->type)
+    {
+        case D2D1_PROPERTY_TYPE_BOOL:
+        case D2D1_PROPERTY_TYPE_UINT32:
+            memcpy(properties->data.ptr + prop->data.offset, value, size);
+            break;
+        default:
+            FIXME("Unhandled type %u.\n", prop->type);
+    }
 
     return S_OK;
 }
@@ -877,7 +902,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_SetValueByName(ID2D1Effect *iface, c
     if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
         return D2DERR_INVALID_PROPERTY;
 
-    return d2d_effect_property_set_value(prop, type, value, value_size);
+    return d2d_effect_property_set_value(effect, &effect->properties, prop, type, value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
@@ -891,7 +916,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_SetValue(ID2D1Effect *iface, UINT32 
     if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
         return D2DERR_INVALID_PROPERTY;
 
-    return d2d_effect_property_set_value(prop, type, value, value_size);
+    return d2d_effect_property_set_value(effect, &effect->properties, prop, type, value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValueByName(ID2D1Effect *iface, const WCHAR *name,

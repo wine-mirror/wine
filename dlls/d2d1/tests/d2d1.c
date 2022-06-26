@@ -10818,7 +10818,6 @@ static void test_effect_register(BOOL d3d11)
     hr = ID2D1Effect_GetValueByName(effect, L"Context",
             D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(integer == 10, "Got unexpected integer %u.\n", integer);
     ok(effect_context == NULL, "Got unexpected effect context %p.\n", effect_context);
     ID2D1Effect_Release(effect);
@@ -10837,7 +10836,6 @@ static void test_effect_register(BOOL d3d11)
     hr = ID2D1Effect_GetValueByName(effect, L"Context",
             D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(integer == 10, "Got unexpected integer %u.\n", integer);
     ok(effect_context == NULL, "Got unexpected effect context %p.\n", effect_context);
     ID2D1Effect_Release(effect);
@@ -11107,31 +11105,26 @@ static void test_effect_properties(BOOL d3d11)
     hr = ID2D1Effect_GetValueByName(effect,
             L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(effect_context != NULL && effect_context != (ID2D1EffectContext *)0xdeadbeef,
        "Got unexpected effect context %p.\n", effect_context);
 
     effect_context = (ID2D1EffectContext *)0xdeadbeef;
     hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(effect_context != NULL && effect_context != (ID2D1EffectContext *)0xdeadbeef,
        "Got unexpected effect context %p.\n", effect_context);
 
     hr = ID2D1Effect_SetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     integer = 0xdeadbeef;
     hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(integer == 10, "Got unexpected integer %u.", integer);
 
     integer = 0xdeadbeef;
     hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(integer == 10, "Got unexpected integer %u.", integer);
 
     integer = 20;
@@ -11140,8 +11133,7 @@ static void test_effect_properties(BOOL d3d11)
     integer = 0xdeadbeef;
     hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(integer == 20, "Got unexpected integer %u.", integer);
+    ok(integer == 20, "Got unexpected integer %u\n.", integer);
 
     ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
@@ -11173,10 +11165,8 @@ static void test_effect_properties(BOOL d3d11)
     ok(integer == 0, "Got unexpected integer %u.", integer);
 
     hr = ID2D1Effect_SetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
-    todo_wine
     ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1Effect_Release(effect);
