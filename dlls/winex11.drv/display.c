@@ -464,9 +464,7 @@ static DWORD get_display_depth(ULONG_PTR display_id)
  */
 BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
-    static const WCHAR dev_name[CCHDEVICENAME] =
-        { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
-    DEVMODEW *modes;
+    DEVMODEW *modes, mode;
     UINT mode_count;
     ULONG_PTR id;
 
@@ -477,21 +475,20 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
             ERR("Failed to get %s registry display settings.\n", wine_dbgstr_w(name));
             return FALSE;
         }
-        goto done;
+        return TRUE;
     }
 
     if (n == ENUM_CURRENT_SETTINGS)
     {
-        if (!settings_handler.get_id(name, &id) || !settings_handler.get_current_mode(id, devmode))
+        if (!settings_handler.get_id( name, &id ) || !settings_handler.get_current_mode( id, &mode ))
         {
             ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
             return FALSE;
         }
 
-        if (!is_detached_mode(devmode))
-            devmode->dmBitsPerPel = get_display_depth(id);
-
-        goto done;
+        memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
+        if (!is_detached_mode( devmode )) devmode->dmBitsPerPel = get_display_depth( id );
+        return TRUE;
     }
 
     pthread_mutex_lock( &settings_mutex );
@@ -522,16 +519,10 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
         return FALSE;
     }
 
-    memcpy(devmode, (BYTE *)cached_modes + (sizeof(*cached_modes) + cached_modes[0].dmDriverExtra) * n, sizeof(*devmode));
+    mode = *(DEVMODEW *)((BYTE *)cached_modes + (sizeof(*cached_modes) + cached_modes[0].dmDriverExtra) * n);
     pthread_mutex_unlock( &settings_mutex );
 
-done:
-    /* Set generic fields */
-    devmode->dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod);
-    devmode->dmDriverExtra = 0;
-    devmode->dmSpecVersion = DM_SPECVERSION;
-    devmode->dmDriverVersion = DM_SPECVERSION;
-    lstrcpyW(devmode->dmDeviceName, dev_name);
+    memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
     return TRUE;
 }
 

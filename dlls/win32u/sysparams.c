@@ -1926,14 +1926,14 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
 /***********************************************************************
  *	     NtUserEnumDisplaySettings    (win32u.@)
  */
-BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
-                                       DEVMODEW *dev_mode, DWORD flags )
+BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVMODEW *devmode, DWORD flags )
 {
+    static const WCHAR wine_display_driverW[] = {'W','i','n','e',' ','D','i','s','p','l','a','y',' ','D','r','i','v','e','r',0};
     WCHAR device_name[CCHDEVICENAME];
     struct adapter *adapter;
     BOOL ret;
 
-    TRACE( "%s %#x %p %#x\n", debugstr_us(device), mode, dev_mode, flags );
+    TRACE( "device %s, index %#x, devmode %p, flags %#x\n", debugstr_us(device), index, devmode, flags );
 
     if (!lock_display_devices()) return FALSE;
     if ((adapter = find_adapter( device ))) lstrcpyW( device_name, adapter->dev.device_name );
@@ -1944,15 +1944,18 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
         return FALSE;
     }
 
-    ret = user_driver->pEnumDisplaySettingsEx( device_name, mode, dev_mode, flags );
-    if (ret)
-        TRACE( "device:%s mode index:%#x position:(%d,%d) resolution:%ux%u frequency:%uHz "
-               "depth:%ubits orientation:%#x.\n", debugstr_w(device_name), mode,
-               dev_mode->dmPosition.x, dev_mode->dmPosition.y, dev_mode->dmPelsWidth,
-               dev_mode->dmPelsHeight, dev_mode->dmDisplayFrequency, dev_mode->dmBitsPerPel,
-               dev_mode->dmDisplayOrientation );
-    else
-        WARN( "Failed to query %s display settings.\n", wine_dbgstr_w(device_name) );
+    lstrcpynW( devmode->dmDeviceName, wine_display_driverW, ARRAY_SIZE(devmode->dmDeviceName) );
+    devmode->dmSpecVersion = DM_SPECVERSION;
+    devmode->dmDriverVersion = DM_SPECVERSION;
+    devmode->dmSize = offsetof(DEVMODEW, dmICMMethod);
+    memset( &devmode->dmDriverExtra, 0, devmode->dmSize - offsetof(DEVMODEW, dmDriverExtra) );
+
+    ret = user_driver->pEnumDisplaySettingsEx( device_name, index, devmode, flags );
+
+    if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_w(device_name) );
+    else TRACE( "position %dx%d, resolution %ux%u, frequency %u, depth %u, orientation %#x.\n",
+                devmode->dmPosition.x, devmode->dmPosition.y, devmode->dmPelsWidth, devmode->dmPelsHeight,
+                devmode->dmDisplayFrequency, devmode->dmBitsPerPel, devmode->dmDisplayOrientation );
     return ret;
 }
 

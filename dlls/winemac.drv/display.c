@@ -1044,8 +1044,6 @@ better:
  */
 BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode, DWORD flags)
 {
-    static const WCHAR dev_name[CCHDEVICENAME] =
-        { 'W','i','n','e',' ','M','a','c',' ','d','r','i','v','e','r',0 };
     struct macdrv_display *displays = NULL;
     int num_displays;
     CGDisplayModeRef display_mode;
@@ -1057,13 +1055,6 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode
     TRACE("%s, %u, %p + %hu, %08x\n", debugstr_w(devname), mode, devmode, devmode->dmSize, flags);
 
     init_original_display_mode();
-
-    memcpy(devmode->dmDeviceName, dev_name, sizeof(dev_name));
-    devmode->dmSpecVersion = DM_SPECVERSION;
-    devmode->dmDriverVersion = DM_SPECVERSION;
-    devmode->dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod);
-    devmode->dmDriverExtra = 0;
-    memset(&devmode->dmFields, 0, devmode->dmSize - FIELD_OFFSET(DEVMODEW, dmFields));
 
     if (mode == ENUM_REGISTRY_SETTINGS)
     {
