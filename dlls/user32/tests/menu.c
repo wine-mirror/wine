@@ -3013,6 +3013,7 @@ static void test_InsertMenu(void)
         { MF_HELP, 1, MAKEINTRESOURCEA(1) }
     };
     HMENU hmenu;
+    BOOL ret;
 
 #define create_menu(a) create_menu_from_data((a), ARRAY_SIZE(a))
 #define create_menuitem(a) create_menuitem_from_data((a), ARRAY_SIZE(a))
@@ -3054,6 +3055,16 @@ static void test_InsertMenu(void)
 #undef create_menu
 #undef create_menuitem
 #undef compare_menu
+
+    hmenu = CreateMenu();
+
+    SetLastError(0xdeadbeef);
+    ret = InsertMenuW(hmenu, -1, MF_BYPOSITION | MF_POPUP, 0xdeadbeef, L"test");
+    ok(ret && GetLastError() == ERROR_INVALID_MENU_HANDLE,
+       "InsertMenuW returned %x %lu\n", ret, GetLastError());
+    ok(GetMenuItemCount(hmenu) == 1, "GetMenuItemCount() = %d\n", GetMenuItemCount(hmenu));
+
+    DestroyMenu(hmenu);
 }
 
 static void test_menu_getmenuinfo(void)
