@@ -34,9 +34,28 @@ struct d2d_effect_property
 {
     WCHAR *name;
     D2D1_PROPERTY_TYPE type;
-    BYTE *value;
+    union
+    {
+        size_t offset;
+        void *ptr;
+    } data;
+    UINT32 size;
     PD2D1_PROPERTY_SET_FUNCTION set_function;
     PD2D1_PROPERTY_GET_FUNCTION get_function;
+};
+
+struct d2d_effect_properties
+{
+    struct d2d_effect_property *properties;
+    size_t offset;
+    size_t size;
+    size_t count;
+    struct
+    {
+        BYTE *ptr;
+        size_t size;
+        size_t count;
+    } data;
 };
 
 struct d2d_effect_registration
@@ -47,22 +66,28 @@ struct d2d_effect_registration
     CLSID id;
 
     UINT32 input_count;
-
-    struct d2d_effect_property *properties;
-    size_t property_size;
-    size_t property_count;
+    struct d2d_effect_properties properties;
 };
+
+static void d2d_effect_properties_cleanup(struct d2d_effect_properties *props)
+{
+    struct d2d_effect_property *p;
+    size_t i;
+
+    for (i = 0; i < props->count; ++i)
+    {
+        p = &props->properties[i];
+        free(p->name);
+        if (p->type == D2D1_PROPERTY_TYPE_STRING)
+            free(p->data.ptr);
+    }
+    free(props->properties);
+    free(props->data.ptr);
+}
 
 static void d2d_effect_registration_cleanup(struct d2d_effect_registration *reg)
 {
-    size_t i;
-
-    for (i = 0; i < reg->property_count; ++i)
-    {
-        free(reg->properties[i].name);
-        free(reg->properties[i].value);
-    }
-    free(reg->properties);
+    d2d_effect_properties_cleanup(&reg->properties);
     free(reg);
 }
 
@@ -731,32 +756,80 @@ static struct d2d_effect_property * parse_effect_get_property(const struct d2d_e
 {
     unsigned int i;
 
-    for (i = 0; i < effect->property_count; ++i)
+    for (i = 0; i < effect->properties.count; ++i)
     {
-        if (!wcscmp(name, effect->properties[i].name))
-            return &effect->properties[i];
+        if (!wcscmp(name, effect->properties.properties[i].name))
+            return &effect->properties.properties[i];
     }
 
     return NULL;
 }
 
-static HRESULT parse_effect_add_property(struct d2d_effect_registration *effect, WCHAR *name,
-        D2D1_PROPERTY_TYPE type, BYTE *value)
+static HRESULT parse_effect_add_property(struct d2d_effect_properties *props, const WCHAR *name,
+        D2D1_PROPERTY_TYPE type, const WCHAR *value)
 {
-    struct d2d_effect_property *property;
+    static const UINT32 sizes[] =
+    {
+        0,                   /* D2D1_PROPERTY_TYPE_UNKNOWN */
+        0,                   /* D2D1_PROPERTY_TYPE_STRING */
+        sizeof(BOOL),        /* D2D1_PROPERTY_TYPE_BOOL */
+        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_UINT32 */
+        sizeof(INT32),       /* D2D1_PROPERTY_TYPE_IN32 */
+        sizeof(float),       /* D2D1_PROPERTY_TYPE_FLOAT */
+        2 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR2 */
+        3 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR3 */
+        4 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR4 */
+        0,                   /* FIXME: D2D1_PROPERTY_TYPE_BLOB */
+        sizeof(void *),      /* D2D1_PROPERTY_TYPE_IUNKNOWN */
+        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_ENUM */
+        0,                   /* FIXME: D2D1_PROPERTY_TYPE_ARRAY */
+        sizeof(CLSID),       /* D2D1_PROPERTY_TYPE_CLSID */
+        6 * sizeof(float),   /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
+        12 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
+        16 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X4 */
+        20 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_5X4 */
+        sizeof(void *),      /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
+    };
+    struct d2d_effect_property *p;
 
-    if (!d2d_array_reserve((void **)&effect->properties, &effect->property_size,
-            effect->property_count + 1, sizeof(*effect->properties)))
+    assert(type >= D2D1_PROPERTY_TYPE_STRING && type <= D2D1_PROPERTY_TYPE_COLOR_CONTEXT);
+
+    if (type == D2D1_PROPERTY_TYPE_BLOB || type == D2D1_PROPERTY_TYPE_ARRAY)
+    {
+        FIXME("Ignoring property %s of type %u.\n", wine_dbgstr_w(name), type);
+        return S_OK;
+    }
+
+    if (!d2d_array_reserve((void **)&props->properties, &props->size, props->count + 1,
+            sizeof(*props->properties)))
     {
         return E_OUTOFMEMORY;
     }
 
-    property = &effect->properties[effect->property_count++];
-    property->name = name;
-    property->type = type;
-    property->value = value;
-    property->set_function = NULL;
-    property->get_function = NULL;
+    /* TODO: we could save some space for properties that have both getter and setter. */
+    if (!d2d_array_reserve((void **)&props->data.ptr, &props->data.size,
+            props->data.size + sizes[type], sizeof(*props->data.ptr)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    p = &props->properties[props->count++];
+    p->name = wcsdup(name);
+    p->type = type;
+    if (p->type == D2D1_PROPERTY_TYPE_STRING)
+    {
+        p->data.ptr = value ? wcsdup(value) : NULL;
+        p->size = value ? (wcslen(value) + 1) * sizeof(WCHAR) : 0;
+    }
+    else
+    {
+        p->data.offset = props->offset;
+        p->size = sizes[type];
+        props->offset += p->size;
+        /* FIXME: convert and write initial value */
+    }
+    p->set_function = NULL;
+    p->get_function = NULL;
 
     return S_OK;
 }
@@ -792,13 +865,10 @@ static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_regis
     }
 
     if (SUCCEEDED(hr))
-        hr = parse_effect_add_property(effect, name, type, (BYTE *)value);
+        hr = parse_effect_add_property(&effect->properties, name, type, value);
 
-    if (FAILED(hr))
-    {
-        free(value);
-        free(name);
-    }
+    free(value);
+    free(name);
 
     return hr;
 }
