@@ -1175,9 +1175,9 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     {
         WCHAR max_inputs[32];
         swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", builtin->max_inputs);
-        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MIN_INPUTS,
+        d2d_effect_properties_add(&object->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
                 D2D1_PROPERTY_TYPE_UINT32, L"1");
-        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MAX_INPUTS,
+        d2d_effect_properties_add(&object->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
                 D2D1_PROPERTY_TYPE_UINT32, max_inputs);
 
         d2d_effect_SetInputCount(&object->ID2D1Effect_iface, builtin->default_input_count);
@@ -1187,9 +1187,9 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     else
     {
         d2d_effect_duplicate_properties(&object->properties, &reg->properties);
-        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MIN_INPUTS,
+        d2d_effect_properties_add(&object->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
                 D2D1_PROPERTY_TYPE_UINT32, L"1");
-        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MAX_INPUTS,
+        d2d_effect_properties_add(&object->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
                 D2D1_PROPERTY_TYPE_UINT32, L"1" /* FIXME */);
 
         d2d_effect_SetInputCount(&object->ID2D1Effect_iface, 1);
@@ -1197,7 +1197,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         factory = reg->factory;
     }
 
-    d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
+    d2d_effect_properties_add(&object->properties, L"CLSID", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
 
     if (FAILED(hr = factory((IUnknown **)&object->impl)))
