@@ -20,6 +20,7 @@
 #define __WINE_D2D1_PRIVATE_H
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -602,14 +603,6 @@ struct d2d_effect_context
 void d2d_effect_context_init(struct d2d_effect_context *effect_context,
         struct d2d_device_context *device_context) DECLSPEC_HIDDEN;
 
-struct d2d_effect_info
-{
-    const CLSID *clsid;
-    UINT32 default_input_count;
-    UINT32 min_inputs;
-    UINT32 max_inputs;
-};
-
 struct d2d_effect_property
 {
     WCHAR *name;
@@ -641,13 +634,25 @@ struct d2d_effect_properties
     } data;
 };
 
+struct d2d_effect_registration
+{
+    struct list entry;
+    PD2D1_EFFECT_FACTORY factory;
+    UINT32 registration_count;
+    CLSID id;
+
+    UINT32 input_count;
+    struct d2d_effect_properties properties;
+};
+
+struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *factory,
+        const GUID *effect_id) DECLSPEC_HIDDEN;
+
 struct d2d_effect
 {
     ID2D1Effect ID2D1Effect_iface;
     ID2D1Image ID2D1Image_iface;
     LONG refcount;
-
-    const struct d2d_effect_info *info;
 
     struct d2d_effect_properties properties;
     struct d2d_effect_context *effect_context;

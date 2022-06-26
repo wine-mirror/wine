@@ -20,6 +20,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+struct d2d_effect_info
+{
+    const CLSID *clsid;
+    UINT32 default_input_count;
+    UINT32 min_inputs;
+    UINT32 max_inputs;
+};
+
 static const struct d2d_effect_info builtin_effects[] =
 {
     {&CLSID_D2D12DAffineTransform,      1, 1, 1},
@@ -73,10 +81,11 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
 
     /* TODO: we could save some space for properties that have both getter and setter. */
     if (!d2d_array_reserve((void **)&props->data.ptr, &props->data.size,
-            props->data.size + sizes[type], sizeof(*props->data.ptr)))
+            props->data.count + sizes[type], sizeof(*props->data.ptr)))
     {
         return E_OUTOFMEMORY;
     }
+    props->data.count += sizes[type];
 
     p = &props->properties[props->count++];
     p->index = index;
@@ -139,6 +148,40 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
     }
     p->set_function = NULL;
     p->get_function = NULL;
+
+    return S_OK;
+}
+
+static HRESULT d2d_effect_duplicate_properties(struct d2d_effect_properties *dst,
+        const struct d2d_effect_properties *src)
+{
+    size_t i;
+
+    memset(dst, 0, sizeof(*dst));
+    dst->offset = src->offset;
+    dst->size = src->count;
+    dst->count = src->count;
+    dst->custom_count = src->custom_count;
+    dst->data.size = src->data.count;
+    dst->data.count = src->data.count;
+
+    if (!(dst->data.ptr = malloc(dst->data.size)))
+        return E_OUTOFMEMORY;
+    memcpy(dst->data.ptr, src->data.ptr, dst->data.size);
+
+    if (!(dst->properties = calloc(dst->size, sizeof(*dst->properties))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < dst->count; ++i)
+    {
+        struct d2d_effect_property *d = &dst->properties[i];
+        const struct d2d_effect_property *s = &src->properties[i];
+
+        *d = *s;
+        d->name = wcsdup(s->name);
+        if (d->type == D2D1_PROPERTY_TYPE_STRING)
+            d->data.ptr = wcsdup((WCHAR *)s->data.ptr);
+    }
 
     return S_OK;
 }
@@ -852,11 +895,16 @@ static void STDMETHODCALLTYPE d2d_effect_SetInput(ID2D1Effect *iface, UINT32 ind
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UINT32 count)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    unsigned int i;
+    unsigned int i, min_inputs, max_inputs;
 
     TRACE("iface %p, count %u.\n", iface, count);
 
-    if (count < effect->info->min_inputs || count > effect->info->max_inputs)
+    d2d_effect_GetValue(iface, D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)&min_inputs, sizeof(min_inputs));
+    d2d_effect_GetValue(iface, D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)&max_inputs, sizeof(max_inputs));
+
+    if (count < min_inputs || count > max_inputs)
         return E_INVALIDARG;
     if (count == effect->input_count)
         return S_OK;
@@ -990,9 +1038,32 @@ static const ID2D1ImageVtbl d2d_effect_image_vtbl =
 HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effect_id,
         ID2D1Effect **effect)
 {
+    const struct d2d_effect_info *builtin = NULL;
     struct d2d_effect_context *effect_context;
+    const struct d2d_effect_registration *reg;
     struct d2d_effect *object;
+    WCHAR clsidW[39];
     unsigned int i;
+
+    if (!(reg = d2d_factory_get_registered_effect(context->factory, effect_id)))
+    {
+        for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
+        {
+            const struct d2d_effect_info *info = &builtin_effects[i];
+
+            if (IsEqualGUID(effect_id, info->clsid))
+            {
+                builtin = info;
+                break;
+            }
+        }
+    }
+
+    if (!reg && !builtin)
+    {
+        WARN("Effect id %s not found.\n", wine_dbgstr_guid(effect_id));
+        return D2DERR_EFFECT_IS_NOT_REGISTERED;
+    }
 
     if (!(effect_context = calloc(1, sizeof(*effect_context))))
         return E_OUTOFMEMORY;
@@ -1009,36 +1080,32 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     object->refcount = 1;
     object->effect_context = effect_context;
 
-    for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
+    /* Create properties */
+    StringFromGUID2(effect_id, clsidW, ARRAY_SIZE(clsidW));
+    if (builtin)
     {
-        if (IsEqualGUID(effect_id, builtin_effects[i].clsid))
-        {
-            const struct d2d_effect_info *info = &builtin_effects[i];
-            WCHAR max_inputs[32], clsidW[39];
+        WCHAR max_inputs[32];
+        swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", builtin->max_inputs);
+        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, L"1");
+        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, max_inputs);
 
-            object->info = info;
-            d2d_effect_SetInputCount(&object->ID2D1Effect_iface, info->default_input_count);
+        d2d_effect_SetInputCount(&object->ID2D1Effect_iface, builtin->default_input_count);
+    }
+    else
+    {
+        d2d_effect_duplicate_properties(&object->properties, &reg->properties);
+        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, L"1");
+        d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, L"1" /* FIXME */);
 
-            swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", info->max_inputs);
-            StringFromGUID2(info->clsid, clsidW, ARRAY_SIZE(clsidW));
+        d2d_effect_SetInputCount(&object->ID2D1Effect_iface, 1);
 
-            d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_CLSID,
-                    D2D1_PROPERTY_TYPE_CLSID, clsidW);
-            d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MIN_INPUTS,
-                    D2D1_PROPERTY_TYPE_UINT32, L"1");
-            d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MAX_INPUTS,
-                    D2D1_PROPERTY_TYPE_UINT32, max_inputs);
-
-            break;
-        }
     }
 
-    if (i == ARRAY_SIZE(builtin_effects))
-    {
-        ID2D1Effect_Release(&object->ID2D1Effect_iface);
-        return E_FAIL;
-    }
-
+    d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
 
     *effect = &object->ID2D1Effect_iface;

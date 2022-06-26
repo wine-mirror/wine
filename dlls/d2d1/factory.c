@@ -30,17 +30,6 @@ struct d2d_settings d2d_settings =
     ~0u,    /* No ID2D1Factory version limit by default. */
 };
 
-struct d2d_effect_registration
-{
-    struct list entry;
-    PD2D1_EFFECT_FACTORY factory;
-    UINT32 registration_count;
-    CLSID id;
-
-    UINT32 input_count;
-    struct d2d_effect_properties properties;
-};
-
 static void d2d_effect_registration_cleanup(struct d2d_effect_registration *reg)
 {
     d2d_effect_properties_cleanup(&reg->properties);
@@ -68,9 +57,28 @@ static inline struct d2d_factory *impl_from_ID2D1Factory3(ID2D1Factory3 *iface)
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
 }
 
+static inline struct d2d_factory *unsafe_impl_from_ID2D1Factory(ID2D1Factory *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
+}
+
 static inline struct d2d_factory *impl_from_ID2D1Multithread(ID2D1Multithread *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Multithread_iface);
+}
+
+struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *iface,
+        const GUID *id)
+{
+    const struct d2d_factory *factory = unsafe_impl_from_ID2D1Factory(iface);
+    struct d2d_effect_registration *reg;
+
+    LIST_FOR_EACH_ENTRY(reg, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (IsEqualGUID(id, &reg->id)) return reg;
+    }
+
+    return NULL;
 }
 
 static HRESULT d2d_factory_reload_sysmetrics(struct d2d_factory *factory)
