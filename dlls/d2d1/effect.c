@@ -1029,6 +1029,8 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         return E_FAIL;
     }
 
+    d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
+
     *effect = &object->ID2D1Effect_iface;
 
     TRACE("Created effect %p.\n", *effect);

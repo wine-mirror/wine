@@ -10416,11 +10416,11 @@ static void test_effect(BOOL d3d11)
         ok(IsEqualGUID(&clsid, test->clsid), "Got unexpected clsid %s, expected %s.\n",
                 debugstr_guid(&clsid), debugstr_guid(test->clsid));
 
-        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CACHED,
-                D2D1_PROPERTY_TYPE_BOOL, (BYTE *)&cached, sizeof(cached));
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        if (hr == S_OK)
-            ok(cached == FALSE, "Got unexpected cached %d.\n", cached);
+        cached = TRUE;
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL,
+                (BYTE *)&cached, sizeof(cached));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(cached == FALSE, "Got unexpected cached %d.\n", cached);
 
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_PRECISION,
                 D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&precision, sizeof(precision));
