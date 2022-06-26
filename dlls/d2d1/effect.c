@@ -753,26 +753,47 @@ static const ID2D1ImageVtbl d2d_effect_image_vtbl =
     d2d_effect_image_GetFactory,
 };
 
-HRESULT d2d_effect_init(struct d2d_effect *effect, struct d2d_effect_context *effect_context, const CLSID *effect_id)
+HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effect_id,
+        ID2D1Effect **effect)
 {
+    struct d2d_effect_context *effect_context;
+    struct d2d_effect *object;
     unsigned int i;
 
-    effect->ID2D1Effect_iface.lpVtbl = &d2d_effect_vtbl;
-    effect->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
-    effect->refcount = 1;
+    if (!(effect_context = calloc(1, sizeof(*effect_context))))
+        return E_OUTOFMEMORY;
+    d2d_effect_context_init(effect_context, context);
+
+    if (!(object = calloc(1, sizeof(*object))))
+    {
+        ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    object->ID2D1Effect_iface.lpVtbl = &d2d_effect_vtbl;
+    object->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
+    object->refcount = 1;
+    object->effect_context = effect_context;
 
     for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
     {
         if (IsEqualGUID(effect_id, builtin_effects[i].clsid))
         {
-            effect->info = &builtin_effects[i];
-            d2d_effect_SetInputCount(&effect->ID2D1Effect_iface, effect->info->default_input_count);
-            effect->effect_context = effect_context;
-            ID2D1EffectContext_AddRef(&effect_context->ID2D1EffectContext_iface);
-            return S_OK;
+            object->info = &builtin_effects[i];
+            d2d_effect_SetInputCount(&object->ID2D1Effect_iface, object->info->default_input_count);
+            break;
         }
     }
 
-    WARN("Unsupported effect clsid %s.\n", debugstr_guid(effect_id));
-    return E_FAIL;
+    if (i == ARRAY_SIZE(builtin_effects))
+    {
+        ID2D1Effect_Release(&object->ID2D1Effect_iface);
+        return E_FAIL;
+    }
+
+    *effect = &object->ID2D1Effect_iface;
+
+    TRACE("Created effect %p.\n", *effect);
+
+    return S_OK;
 }
