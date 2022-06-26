@@ -89,15 +89,14 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
 
     p = &props->properties[props->count++];
     p->index = index;
-    if (p->index < 0x80000000) props->custom_count++;
-
-    if (index == D2D1_PROPERTY_CACHED
-            || index == D2D1_PROPERTY_PRECISION)
+    if (p->index < 0x80000000)
     {
+        props->custom_count++;
+        /* FIXME: this should probably be controller by subproperty */
         p->readonly = FALSE;
     }
     else
-        p->readonly = TRUE;
+        p->readonly = index != D2D1_PROPERTY_CACHED && index != D2D1_PROPERTY_PRECISION;
     p->name = wcsdup(name);
     p->type = type;
     if (p->type == D2D1_PROPERTY_TYPE_STRING)
