@@ -11290,9 +11290,9 @@ static void test_effect_2d_affine(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
-        todo_wine
         hr = ID2D1Effect_SetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX,
                 D2D1_PROPERTY_TYPE_MATRIX_3X2, (const BYTE *)test->matrix, sizeof(*test->matrix));
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID2D1Effect_GetOutput(effect, &output);
 
@@ -11402,6 +11402,7 @@ static void test_effect_crop(BOOL d3d11)
         ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
         hr = ID2D1Effect_SetValue(effect, D2D1_CROP_PROP_RECT, D2D1_PROPERTY_TYPE_VECTOR4,
                 (const BYTE *)&test->crop_rect, sizeof(test->crop_rect));
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID2D1Effect_GetOutput(effect, &output);
 

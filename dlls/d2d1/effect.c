@@ -135,6 +135,89 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
     return S_OK;
 }
 
+static struct d2d_effect_property * d2d_effect_properties_get_property_by_index(
+        const struct d2d_effect_properties *properties, UINT32 index)
+{
+    unsigned int i;
+
+    for (i = 0; i < properties->count; ++i)
+    {
+        if (properties->properties[i].index == index)
+            return &properties->properties[i];
+    }
+
+    return NULL;
+}
+
+static struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
+        const struct d2d_effect_properties *properties, const WCHAR *name)
+{
+    unsigned int i;
+
+    for (i = 0; i < properties->count; ++i)
+    {
+        if (!wcscmp(properties->properties[i].name, name))
+            return &properties->properties[i];
+    }
+
+    return NULL;
+}
+
+static UINT32 d2d_effect_properties_get_value_size(const struct d2d_effect *effect,
+        const struct d2d_effect_properties *properties, UINT32 index)
+{
+    struct d2d_effect_property *prop;
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return 0;
+
+    /* FIXME: use gettter */
+
+    return prop->size;
+}
+
+static HRESULT d2d_effect_return_string(const WCHAR *str, WCHAR *buffer, UINT32 buffer_size)
+{
+    UINT32 size = str ? wcslen(str) : 0;
+    if (size >= buffer_size) return D2DERR_INSUFFICIENT_BUFFER;
+    if (str) memcpy(buffer, str, (size + 1) * sizeof(*buffer));
+    else *buffer = 0;
+    return S_OK;
+}
+
+static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
+        const struct d2d_effect_properties *properties, const struct d2d_effect_property *prop,
+        D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 size)
+{
+    if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
+    if (prop->type != D2D1_PROPERTY_TYPE_STRING && prop->size != size) return E_INVALIDARG;
+
+    /* FIXME: use getter */
+
+    switch (prop->type)
+    {
+        case D2D1_PROPERTY_TYPE_ARRAY:
+        case D2D1_PROPERTY_TYPE_BLOB:
+            FIXME("Unimplemented for type %u.\n", prop->type);
+            return E_NOTIMPL;
+        case D2D1_PROPERTY_TYPE_STRING:
+            return d2d_effect_return_string(prop->data.ptr, (WCHAR *)value, size / sizeof(WCHAR));
+        default:
+            memcpy(value, properties->data.ptr + prop->data.offset, size);
+            break;
+    }
+
+    return S_OK;
+}
+
+static HRESULT d2d_effect_property_set_value(struct d2d_effect_property *property,
+        D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
+{
+    FIXME("Unimplemented.\n");
+
+    return S_OK;
+}
+
 void d2d_effect_properties_cleanup(struct d2d_effect_properties *props)
 {
     struct d2d_effect_property *p;
@@ -607,112 +690,131 @@ static ULONG STDMETHODCALLTYPE d2d_effect_Release(ID2D1Effect *iface)
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetPropertyCount(ID2D1Effect *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return effect->properties.custom_count;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetPropertyName(ID2D1Effect *iface, UINT32 index,
         WCHAR *name, UINT32 name_count)
 {
-    FIXME("iface %p, index %u, name %p, name_count %u stub!\n", iface, index, name, name_count);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, name %p, name_count %u.\n", iface, index, name, name_count);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_return_string(prop->name, name, name_count);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetPropertyNameLength(ID2D1Effect *iface, UINT32 index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
 
-    return 0;
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return wcslen(prop->name) + 1;
 }
 
 static D2D1_PROPERTY_TYPE STDMETHODCALLTYPE d2d_effect_GetType(ID2D1Effect *iface, UINT32 index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
 
-    return 0;
+    TRACE("iface %p, index %#x.\n", iface, index);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
+        return D2D1_PROPERTY_TYPE_UNKNOWN;
+
+    return prop->type;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetPropertyIndex(ID2D1Effect *iface, const WCHAR *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_w(name));
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
 
-    return 0;
+    TRACE("iface %p, name %s.\n", iface, debugstr_w(name));
+
+    if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
+        return D2D1_INVALID_PROPERTY_INDEX;
+
+    return prop->index;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetValueByName(ID2D1Effect *iface, const WCHAR *name,
         D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 value_size)
 {
-    FIXME("iface %p, name %s, type %#x, value %p, value_size %u stub!\n", iface, debugstr_w(name),
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, name %s, type %u, value %p, value_size %u.\n", iface, debugstr_w(name),
             type, value, value_size);
 
-    return E_NOTIMPL;
+    if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_set_value(prop, type, value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
         const BYTE *value, UINT32 value_size)
 {
-    FIXME("iface %p, index %u, type %#x, value %p, value_size %u stub!\n", iface, index, type, value, value_size);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
 
-    return S_OK;
+    TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_set_value(prop, type, value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValueByName(ID2D1Effect *iface, const WCHAR *name,
         D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 value_size)
 {
-    FIXME("iface %p, name %s, type %#x, value %p, value_size %u stub!\n", iface, debugstr_w(name), type,
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, name %s, type %#x, value %p, value_size %u.\n", iface, debugstr_w(name), type,
             value, value_size);
 
-    return E_NOTIMPL;
+    if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_get_value(effect, &effect->properties, prop, type, value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
         BYTE *value, UINT32 value_size)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    const void *src;
+    struct d2d_effect_property *prop;
 
-    TRACE("iface %p, index %u, type %#x, value %p, value_size %u.\n", iface, index, type, value, value_size);
+    TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
 
-    switch (index)
-    {
-        case D2D1_PROPERTY_CLSID:
-            if ((type != D2D1_PROPERTY_TYPE_UNKNOWN && type != D2D1_PROPERTY_TYPE_CLSID)
-                    || value_size != sizeof(*effect->info->clsid))
-                return E_INVALIDARG;
-            src = effect->info->clsid;
-            break;
-        case D2D1_PROPERTY_MIN_INPUTS:
-            if ((type != D2D1_PROPERTY_TYPE_UNKNOWN && type != D2D1_PROPERTY_TYPE_UINT32)
-                    || value_size != sizeof(effect->info->min_inputs))
-                return E_INVALIDARG;
-            src = &effect->info->min_inputs;
-            break;
-        case D2D1_PROPERTY_MAX_INPUTS:
-            if ((type != D2D1_PROPERTY_TYPE_UNKNOWN && type != D2D1_PROPERTY_TYPE_UINT32)
-                    || value_size != sizeof(effect->info->max_inputs))
-                return E_INVALIDARG;
-            src = &effect->info->max_inputs;
-            break;
-        default:
-            if (index < D2D1_PROPERTY_CLSID)
-                FIXME("Custom properties are not supported.\n");
-            else if (index <= D2D1_PROPERTY_MAX_INPUTS)
-                FIXME("Standard property %#x is not supported.\n", index);
-            return D2DERR_INVALID_PROPERTY;
-    }
+    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
+        return D2DERR_INVALID_PROPERTY;
 
-    memcpy(value, src, value_size);
-
-    return S_OK;
+    return d2d_effect_property_get_value(effect, &effect->properties, prop, type, value, value_size);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetValueSize(ID2D1Effect *iface, UINT32 index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
 
-    return 0;
+    TRACE("iface %p, index %#x.\n", iface, index);
+
+    return d2d_effect_properties_get_value_size(effect, &effect->properties, index);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetSubProperties(ID2D1Effect *iface, UINT32 index, ID2D1Properties **props)

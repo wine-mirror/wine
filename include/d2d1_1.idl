@@ -33,6 +33,7 @@ cpp_quote("#ifndef __dwrite_h__")
 /* already defined in dwrite.h but needed for WIDL */
 typedef struct DWRITE_GLYPH_RUN_DESCRIPTION DWRITE_GLYPH_RUN_DESCRIPTION;
 cpp_quote("#endif /* __dwrite_h__ */")
+cpp_quote("#define D2D1_INVALID_PROPERTY_INDEX UINT_MAX")
 
 typedef enum D2D1_DEVICE_CONTEXT_OPTIONS
 {
