@@ -30,6 +30,127 @@ static const struct d2d_effect_info builtin_effects[] =
     {&CLSID_D2D1Grayscale,              1, 1, 1},
 };
 
+HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCHAR *name,
+        UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value)
+{
+    static const UINT32 sizes[] =
+    {
+        0,                   /* D2D1_PROPERTY_TYPE_UNKNOWN */
+        0,                   /* D2D1_PROPERTY_TYPE_STRING */
+        sizeof(BOOL),        /* D2D1_PROPERTY_TYPE_BOOL */
+        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_UINT32 */
+        sizeof(INT32),       /* D2D1_PROPERTY_TYPE_IN32 */
+        sizeof(float),       /* D2D1_PROPERTY_TYPE_FLOAT */
+        2 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR2 */
+        3 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR3 */
+        4 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR4 */
+        0,                   /* FIXME: D2D1_PROPERTY_TYPE_BLOB */
+        sizeof(void *),      /* D2D1_PROPERTY_TYPE_IUNKNOWN */
+        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_ENUM */
+        0,                   /* FIXME: D2D1_PROPERTY_TYPE_ARRAY */
+        sizeof(CLSID),       /* D2D1_PROPERTY_TYPE_CLSID */
+        6 * sizeof(float),   /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
+        12 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
+        16 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X4 */
+        20 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_5X4 */
+        sizeof(void *),      /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
+    };
+    struct d2d_effect_property *p;
+
+    assert(type >= D2D1_PROPERTY_TYPE_STRING && type <= D2D1_PROPERTY_TYPE_COLOR_CONTEXT);
+
+    if (type == D2D1_PROPERTY_TYPE_BLOB || type == D2D1_PROPERTY_TYPE_ARRAY)
+    {
+        FIXME("Ignoring property %s of type %u.\n", wine_dbgstr_w(name), type);
+        return S_OK;
+    }
+
+    if (!d2d_array_reserve((void **)&props->properties, &props->size, props->count + 1,
+            sizeof(*props->properties)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    /* TODO: we could save some space for properties that have both getter and setter. */
+    if (!d2d_array_reserve((void **)&props->data.ptr, &props->data.size,
+            props->data.size + sizes[type], sizeof(*props->data.ptr)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    p = &props->properties[props->count++];
+    p->index = index;
+    if (p->index < 0x80000000) props->custom_count++;
+    p->name = wcsdup(name);
+    p->type = type;
+    if (p->type == D2D1_PROPERTY_TYPE_STRING)
+    {
+        p->data.ptr = value ? wcsdup(value) : NULL;
+        p->size = value ? (wcslen(value) + 1) * sizeof(WCHAR) : 0;
+    }
+    else
+    {
+        void *src = NULL;
+        UINT32 _uint32;
+        CLSID _clsid;
+        BOOL _bool;
+
+        p->data.offset = props->offset;
+        p->size = sizes[type];
+        props->offset += p->size;
+
+        if (value)
+        {
+            switch (p->type)
+            {
+                case D2D1_PROPERTY_TYPE_UINT32:
+                    _uint32 = wcstoul(value, NULL, 10);
+                    src = &_uint32;
+                    break;
+                case D2D1_PROPERTY_TYPE_BOOL:
+                    if (!wcscmp(value, L"true")) _bool = TRUE;
+                    else if (!wcscmp(value, L"false")) _bool = FALSE;
+                    else return E_INVALIDARG;
+                    src = &_bool;
+                    break;
+                case D2D1_PROPERTY_TYPE_CLSID:
+                    CLSIDFromString(value, &_clsid);
+                    src = &_clsid;
+                    break;
+                case D2D1_PROPERTY_TYPE_IUNKNOWN:
+                case D2D1_PROPERTY_TYPE_COLOR_CONTEXT:
+                    break;
+                default:
+                    FIXME("Initial value for property type %u is not handled.\n", p->type);
+            }
+
+            if (src && p->size) memcpy(props->data.ptr + p->data.offset, src, p->size);
+        }
+        else if (p->size)
+            memset(props->data.ptr + p->data.offset, 0, p->size);
+    }
+    p->set_function = NULL;
+    p->get_function = NULL;
+
+    return S_OK;
+}
+
+void d2d_effect_properties_cleanup(struct d2d_effect_properties *props)
+{
+    struct d2d_effect_property *p;
+    size_t i;
+
+    for (i = 0; i < props->count; ++i)
+    {
+        p = &props->properties[i];
+        free(p->name);
+        if (p->type == D2D1_PROPERTY_TYPE_STRING)
+            free(p->data.ptr);
+    }
+    free(props->properties);
+    free(props->data.ptr);
+}
+
 static inline struct d2d_effect_context *impl_from_ID2D1EffectContext(ID2D1EffectContext *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_effect_context, ID2D1EffectContext_iface);
@@ -427,6 +548,7 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
     }
     free(effect->inputs);
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
+    d2d_effect_properties_cleanup(&effect->properties);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_QueryInterface(ID2D1Effect *iface, REFIID iid, void **out)
@@ -779,8 +901,22 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     {
         if (IsEqualGUID(effect_id, builtin_effects[i].clsid))
         {
-            object->info = &builtin_effects[i];
-            d2d_effect_SetInputCount(&object->ID2D1Effect_iface, object->info->default_input_count);
+            const struct d2d_effect_info *info = &builtin_effects[i];
+            WCHAR max_inputs[32], clsidW[39];
+
+            object->info = info;
+            d2d_effect_SetInputCount(&object->ID2D1Effect_iface, info->default_input_count);
+
+            swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", info->max_inputs);
+            StringFromGUID2(info->clsid, clsidW, ARRAY_SIZE(clsidW));
+
+            d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_CLSID,
+                    D2D1_PROPERTY_TYPE_CLSID, clsidW);
+            d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MIN_INPUTS,
+                    D2D1_PROPERTY_TYPE_UINT32, L"1");
+            d2d_effect_properties_add(&object->properties, L"", D2D1_PROPERTY_MAX_INPUTS,
+                    D2D1_PROPERTY_TYPE_UINT32, max_inputs);
+
             break;
         }
     }

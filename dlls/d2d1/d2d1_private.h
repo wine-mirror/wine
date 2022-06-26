@@ -610,6 +610,36 @@ struct d2d_effect_info
     UINT32 max_inputs;
 };
 
+struct d2d_effect_property
+{
+    WCHAR *name;
+    D2D1_PROPERTY_TYPE type;
+    UINT32 index;
+    union
+    {
+        size_t offset;
+        void *ptr;
+    } data;
+    UINT32 size;
+    PD2D1_PROPERTY_SET_FUNCTION set_function;
+    PD2D1_PROPERTY_GET_FUNCTION get_function;
+};
+
+struct d2d_effect_properties
+{
+    struct d2d_effect_property *properties;
+    size_t offset;
+    size_t size;
+    size_t count;
+    size_t custom_count;
+    struct
+    {
+        BYTE *ptr;
+        size_t size;
+        size_t count;
+    } data;
+};
+
 struct d2d_effect
 {
     ID2D1Effect ID2D1Effect_iface;
@@ -618,6 +648,7 @@ struct d2d_effect
 
     const struct d2d_effect_info *info;
 
+    struct d2d_effect_properties properties;
     struct d2d_effect_context *effect_context;
     ID2D1Image **inputs;
     size_t inputs_size;
@@ -626,6 +657,9 @@ struct d2d_effect
 
 HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effect_id,
         ID2D1Effect **effect) DECLSPEC_HIDDEN;
+HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCHAR *name,
+        UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value) DECLSPEC_HIDDEN;
+void d2d_effect_properties_cleanup(struct d2d_effect_properties *props) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
