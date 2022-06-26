@@ -10886,8 +10886,6 @@ static void test_effect_context(BOOL d3d11)
     hr = ID2D1Effect_GetValueByName(effect, L"Context",
             D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (!strcmp(winetest_platform, "wine"))
-        goto done;
 
     /* Test shader loading */
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestVertexShader);
@@ -10920,9 +10918,7 @@ static void test_effect_context(BOOL d3d11)
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
     ok(loaded, "Shader is not loaded.\n");
 
-done:
-    if (effect)
-        ID2D1Effect_Release(effect);
+    ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     release_test_context(&ctx);
