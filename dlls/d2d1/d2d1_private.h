@@ -615,6 +615,7 @@ struct d2d_effect_property
     WCHAR *name;
     D2D1_PROPERTY_TYPE type;
     UINT32 index;
+    BOOL readonly;
     union
     {
         size_t offset;

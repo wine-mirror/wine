@@ -81,6 +81,14 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
     p = &props->properties[props->count++];
     p->index = index;
     if (p->index < 0x80000000) props->custom_count++;
+
+    if (index == D2D1_PROPERTY_CACHED
+            || index == D2D1_PROPERTY_PRECISION)
+    {
+        p->readonly = FALSE;
+    }
+    else
+        p->readonly = TRUE;
     p->name = wcsdup(name);
     p->type = type;
     if (p->type == D2D1_PROPERTY_TYPE_STRING)
@@ -213,6 +221,8 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
 static HRESULT d2d_effect_property_set_value(struct d2d_effect_property *property,
         D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
 {
+    if (property->readonly) return E_INVALIDARG;
+
     FIXME("Unimplemented.\n");
 
     return S_OK;
