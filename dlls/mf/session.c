@@ -1438,6 +1438,7 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
     struct transform_stream *streams;
     unsigned int block_alignment;
     IMFMediaType *media_type;
+    UINT32 bytes_per_second;
     GUID major = { 0 };
     HRESULT hr;
 
@@ -1479,6 +1480,8 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
                         && SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
                 {
                     streams[i].min_buffer_size = block_alignment;
+                    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &bytes_per_second)))
+                        streams[i].min_buffer_size = max(streams[i].min_buffer_size, bytes_per_second);
                 }
                 IMFMediaType_Release(media_type);
             }
