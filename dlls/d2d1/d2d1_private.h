@@ -648,6 +648,12 @@ struct d2d_effect_registration
 struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *factory,
         const GUID *effect_id) DECLSPEC_HIDDEN;
 
+struct d2d_transform_graph
+{
+    ID2D1TransformGraph ID2D1TransformGraph_iface;
+    LONG refcount;
+};
+
 struct d2d_effect
 {
     ID2D1Effect ID2D1Effect_iface;
@@ -657,6 +663,7 @@ struct d2d_effect
     ID2D1EffectImpl *impl;
     struct d2d_effect_properties properties;
     struct d2d_effect_context *effect_context;
+    struct d2d_transform_graph *graph;
     ID2D1Image **inputs;
     size_t inputs_size;
     size_t input_count;

@@ -20,6 +20,136 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+static inline struct d2d_transform_graph *impl_from_ID2D1TransformGraph(ID2D1TransformGraph *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_transform_graph, ID2D1TransformGraph_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_QueryInterface(ID2D1TransformGraph *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1TransformGraph)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1TransformGraph_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_transform_graph_AddRef(ID2D1TransformGraph *iface)
+{
+    struct d2d_transform_graph *graph =impl_from_ID2D1TransformGraph(iface);
+    ULONG refcount = InterlockedIncrement(&graph->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_transform_graph_Release(ID2D1TransformGraph *iface)
+{
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
+    ULONG refcount = InterlockedDecrement(&graph->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(graph);
+
+    return refcount;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_transform_graph_GetInputCount(ID2D1TransformGraph *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetSingleTransformNode(ID2D1TransformGraph *iface,
+        ID2D1TransformNode *node)
+{
+    FIXME("iface %p, node %p stub!\n", iface, node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_AddNode(ID2D1TransformGraph *iface, ID2D1TransformNode *node)
+{
+    FIXME("iface %p, node %p stub!\n", iface, node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_RemoveNode(ID2D1TransformGraph *iface, ID2D1TransformNode *node)
+{
+    FIXME("iface %p, node %p stub!\n", iface, node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetOutputNode(ID2D1TransformGraph *iface, ID2D1TransformNode *node)
+{
+    FIXME("iface %p, node %p stub!\n", iface, node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectNode(ID2D1TransformGraph *iface,
+        ID2D1TransformNode *from_node, ID2D1TransformNode *to_node, UINT32 index)
+{
+    FIXME("iface %p, from_node %p, to_node %p, index %u stub!\n", iface, from_node, to_node, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectToEffectInput(ID2D1TransformGraph *iface,
+        UINT32 input_index, ID2D1TransformNode *node, UINT32 node_index)
+{
+    FIXME("iface %p, input_index %u, node %p, node_index %u stub!\n", iface, input_index, node, node_index);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_transform_graph_Clear(ID2D1TransformGraph *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetPassthroughGraph(ID2D1TransformGraph *iface, UINT32 index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static const ID2D1TransformGraphVtbl d2d_transform_graph_vtbl =
+{
+    d2d_transform_graph_QueryInterface,
+    d2d_transform_graph_AddRef,
+    d2d_transform_graph_Release,
+    d2d_transform_graph_GetInputCount,
+    d2d_transform_graph_SetSingleTransformNode,
+    d2d_transform_graph_AddNode,
+    d2d_transform_graph_RemoveNode,
+    d2d_transform_graph_SetOutputNode,
+    d2d_transform_graph_ConnectNode,
+    d2d_transform_graph_ConnectToEffectInput,
+    d2d_transform_graph_Clear,
+    d2d_transform_graph_SetPassthroughGraph,
+};
+
+static void d2d_transform_graph_init(struct d2d_transform_graph *graph)
+{
+    graph->ID2D1TransformGraph_iface.lpVtbl = &d2d_transform_graph_vtbl;
+    graph->refcount = 1;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_effect_impl_QueryInterface(ID2D1EffectImpl *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
@@ -771,6 +901,7 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
     }
     free(effect->inputs);
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
+    ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
     d2d_effect_properties_cleanup(&effect->properties);
     if (effect->impl)
         ID2D1EffectImpl_Release(effect->impl);
@@ -1130,6 +1261,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     const struct d2d_effect_info *builtin = NULL;
     struct d2d_effect_context *effect_context;
     const struct d2d_effect_registration *reg;
+    struct d2d_transform_graph *graph;
     PD2D1_EFFECT_FACTORY factory;
     struct d2d_effect *object;
     WCHAR clsidW[39];
@@ -1160,8 +1292,16 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         return E_OUTOFMEMORY;
     d2d_effect_context_init(effect_context, context);
 
+    if (!(graph = calloc(1, sizeof(*graph))))
+    {
+        ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
+        return E_OUTOFMEMORY;
+    }
+    d2d_transform_graph_init(graph);
+
     if (!(object = calloc(1, sizeof(*object))))
     {
+        ID2D1TransformGraph_Release(&graph->ID2D1TransformGraph_iface);
         ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
         return E_OUTOFMEMORY;
     }
@@ -1170,6 +1310,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     object->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
     object->refcount = 1;
     object->effect_context = effect_context;
+    object->graph = graph;
 
     /* Create properties */
     StringFromGUID2(effect_id, clsidW, ARRAY_SIZE(clsidW));
@@ -1210,7 +1351,8 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         return hr;
     }
 
-    if (FAILED(hr = ID2D1EffectImpl_Initialize(object->impl, &effect_context->ID2D1EffectContext_iface, NULL /* FIXME */)))
+    if (FAILED(hr = ID2D1EffectImpl_Initialize(object->impl, &effect_context->ID2D1EffectContext_iface,
+            &graph->ID2D1TransformGraph_iface)))
     {
         WARN("Failed to initialize effect, hr %#lx.\n", hr);
         ID2D1Effect_Release(&object->ID2D1Effect_iface);
