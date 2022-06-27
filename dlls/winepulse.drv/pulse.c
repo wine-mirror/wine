@@ -2207,27 +2207,26 @@ static BOOL get_device_path(PhysDevice *dev, struct get_prop_value_params *param
 {
     const GUID *guid = params->guid;
     UINT serial_number;
-    const char *fmt;
     char path[128];
     int len;
-
-    switch (dev->bus_type) {
-    case phys_device_bus_pci:
-        fmt = "{1}.HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X\\%u&%08X";
-        break;
-    case phys_device_bus_usb:
-        fmt = "{1}.USB\\VID_%04X&PID_%04X\\%u&%08X";
-        break;
-    default:
-        return FALSE;
-    }
 
     /* As hardly any audio devices have serial numbers, Windows instead
        appears to use a persistent random number. We emulate this here
        by instead using the last 8 hex digits of the GUID. */
     serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
 
-    len = sprintf(path, fmt, dev->vendor_id, dev->product_id, dev->index, serial_number);
+    switch (dev->bus_type) {
+    case phys_device_bus_pci:
+        len = sprintf(path, "{1}.HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X\\%u&%08X", dev->vendor_id, dev->product_id, dev->index, serial_number);
+        break;
+    case phys_device_bus_usb:
+        len = sprintf(path, "{1}.USB\\VID_%04X&PID_%04X\\%u&%08X", dev->vendor_id, dev->product_id, dev->index, serial_number);
+        break;
+    default:
+        len = sprintf(path, "{1}.ROOT\\MEDIA\\%04u", dev->index);
+        break;
+    }
+
     ntdll_umbstowcs(path, len + 1, params->wstr, ARRAY_SIZE(params->wstr));
 
     params->vt = VT_LPWSTR;
