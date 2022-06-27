@@ -396,7 +396,7 @@ void ME_EmptyUndoStack(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 
 static inline BOOL editor_undo_ignored(ME_TextEditor *editor)
 {
-    return editor->nUndoMode == umIgnore;
+    return editor->undo_ctl_state != undoActive || editor->nUndoMode == umIgnore;
 }
 
 /* txtsrv.c */
