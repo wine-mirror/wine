@@ -2377,7 +2377,8 @@ todo_wine {
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
         ok(!count, "Unexpected count %u.\n", count);
 
-        IMFActivate_ShutdownObject(sink_activate);
+        hr = IMFActivate_ShutdownObject(sink_activate);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ref = IMFActivate_Release(sink_activate);
         ok(ref == 0, "Release returned %ld\n", ref);
     }
@@ -2547,15 +2548,16 @@ static void test_topology_loader_evr(void)
     todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
     ref = IMFActivate_Release(activate);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaSink_Release(sink);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(media_type);
     todo_wine
-    ok(ref == 2, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     DestroyWindow(window);
 
@@ -3521,13 +3523,15 @@ static void test_sample_grabber(void)
     ref = IMFActivate_Release(activate);
     ok(ref == 0, "Release returned %ld\n", ref);
 
+    /* required for the sink to be fully released */
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
     ref = IMFMediaSink_Release(sink);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(media_type);
-    todo_wine
-    ok(ref > 0, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
@@ -3627,19 +3631,23 @@ static void test_sample_grabber_is_mediatype_supported(void)
 
     IMFMediaTypeHandler_Release(handler);
 
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     ref = IMFActivate_Release(activate);
     ok(ref == 0, "Release returned %ld\n", ref);
 
+    /* required for the sink to be fully released */
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
     ref = IMFMediaSink_Release(sink);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(media_type2);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaType_Release(media_type);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 }
 
 static BOOL is_supported_video_type(const GUID *guid)
@@ -4668,6 +4676,9 @@ if (SUCCEEDED(hr))
     hr = IMFActivate_DetachObject(activate);
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     ref = IMFActivate_Release(activate);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaSink_Release(sink);
@@ -4690,9 +4701,12 @@ if (SUCCEEDED(hr))
     hr = MFCreateAudioRenderer(attributes, &sink);
     ok(hr == S_OK, "Failed to create a sink, hr %#lx.\n", hr);
 
+    /* required for the sink to be fully released */
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     ref = IMFMediaSink_Release(sink);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     /* Invalid endpoint. */
     hr = IMFAttributes_SetString(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, L"endpoint");
@@ -4753,9 +4767,16 @@ static void test_evr(void)
     hr = IMFVideoRenderer_InitializeRenderer(video_renderer, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    /* required for the video renderer to be fully released */
+    hr = IMFVideoRenderer_QueryInterface(video_renderer, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSink_Release(sink);
+
     ref = IMFVideoRenderer_Release(video_renderer);
     todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     hr = MFCreateVideoRendererActivate(NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
@@ -4801,11 +4822,13 @@ static void test_evr(void)
 
     IMFVideoDisplayControl_Release(display_control);
 
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     ref = IMFActivate_Release(activate);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaSink_Release(sink);
-    todo_wine
-    ok(ref == 1, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
     DestroyWindow(window);
 
     hr = MFCreateVideoRendererActivate(NULL, &activate);
