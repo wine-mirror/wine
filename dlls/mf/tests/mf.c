@@ -4766,7 +4766,6 @@ static void test_evr(void)
     IMFMediaSink_Release(sink);
 
     ref = IMFVideoRenderer_Release(video_renderer);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     hr = MFCreateVideoRendererActivate(NULL, NULL);

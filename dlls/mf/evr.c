@@ -1707,6 +1707,8 @@ static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTra
 {
     HRESULT hr;
 
+    video_renderer_release_services(renderer);
+
     if (renderer->mixer)
     {
         IMFTransform_Release(renderer->mixer);
