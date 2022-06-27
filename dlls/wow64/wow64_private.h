@@ -39,6 +39,7 @@ extern BOOL get_file_redirect( OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;
 extern USHORT native_machine DECLSPEC_HIDDEN;
 extern USHORT current_machine DECLSPEC_HIDDEN;
 extern ULONG_PTR args_alignment DECLSPEC_HIDDEN;
+extern ULONG_PTR default_zero_bits DECLSPEC_HIDDEN;
 extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock DECLSPEC_HIDDEN;
 
 struct object_attr64
@@ -83,7 +84,7 @@ static inline ULONG64 get_ulong64( UINT **args )
 
 static inline ULONG_PTR get_zero_bits( ULONG_PTR zero_bits )
 {
-    return zero_bits ? zero_bits : 0x7fffffff;
+    return zero_bits ? zero_bits : default_zero_bits;
 }
 
 static inline void **addr_32to64( void **addr, ULONG *addr32 )

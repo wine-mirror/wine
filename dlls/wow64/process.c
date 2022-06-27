@@ -1118,7 +1118,7 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
             PROCESS_STACK_ALLOCATION_INFORMATION info;
 
             info.ReserveSize = stack->ReserveSize;
-            info.ZeroBits = stack->ZeroBits ? stack->ZeroBits : 0x7fffffff;
+            info.ZeroBits = get_zero_bits( stack->ZeroBits );
             if (!(status = NtSetInformationProcess( handle, class, &info, sizeof(info) )))
                 stack->StackBase = PtrToUlong( info.StackBase );
             return status;

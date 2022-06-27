@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wow);
 USHORT native_machine = 0;
 USHORT current_machine = 0;
 ULONG_PTR args_alignment = 0;
+ULONG_PTR default_zero_bits = 0x7fffffff;
 
 typedef NTSTATUS (WINAPI *syscall_thunk)( UINT *args );
 
@@ -566,10 +567,13 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
 {
     HMODULE module;
     UNICODE_STRING str;
+    SYSTEM_BASIC_INFORMATION info;
 
     RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
     if (!current_machine) current_machine = native_machine;
     args_alignment = (current_machine == IMAGE_FILE_MACHINE_I386) ? sizeof(ULONG) : sizeof(ULONG64);
+    NtQuerySystemInformation( SystemEmulationBasicInformation, &info, sizeof(info), NULL );
+    default_zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
 
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
 
