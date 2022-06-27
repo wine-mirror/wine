@@ -1614,6 +1614,37 @@ static const struct message empty_seq[] =
     {0}
 };
 
+static const struct message wm_erasebkgnd_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_CTLCOLORDLG, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolormsgbox_seq[] =
+{
+    {WM_CTLCOLORMSGBOX, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolorbtn_seq[] =
+{
+    {WM_CTLCOLORBTN, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolordlg_seq[] =
+{
+    {WM_CTLCOLORDLG, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolorstatic_seq[] =
+{
+    {WM_CTLCOLORSTATIC, sent},
+    {0}
+};
+
 static HWND dialog_child;
 static DWORD dialog_init_flag;
 static BOOL handle_WM_ERASEBKGND;
@@ -1673,6 +1704,7 @@ static void test_EnableThemeDialogTexture(void)
     HBRUSH brush, brush2;
     HDC child_hdc, hdc;
     LOGBRUSH log_brush;
+    char buffer[32];
     ULONG_PTR proc;
     WNDCLASSA cls;
     HTHEME theme;
@@ -1777,6 +1809,20 @@ static void test_EnableThemeDialogTexture(void)
         {{WC_TREEVIEWA}},
         {{UPDOWN_CLASSA}},
         {{WC_SCROLLBARA}},
+    };
+
+    static const struct message_test
+    {
+        UINT msg;
+        const struct message *msg_seq;
+    }
+    message_tests[] =
+    {
+        {WM_ERASEBKGND, wm_erasebkgnd_seq},
+        {WM_CTLCOLORMSGBOX, wm_ctlcolormsgbox_seq},
+        {WM_CTLCOLORBTN, wm_ctlcolorbtn_seq},
+        {WM_CTLCOLORDLG, wm_ctlcolordlg_seq},
+        {WM_CTLCOLORSTATIC, wm_ctlcolorstatic_seq},
     };
 
     if (!IsThemeActive())
@@ -2259,6 +2305,24 @@ static void test_EnableThemeDialogTexture(void)
 
     DestroyWindow(hwnd2);
     DestroyWindow(hwnd);
+
+    /* Test that application dialog procedures should be called only once for each message */
+    dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                        test_EnableThemeDialogTexture_proc,
+                                        (LPARAM)&param);
+    ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
+    child = dialog_child;
+    ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
+    child_hdc = GetDC(child);
+    for (i = 0; i < ARRAY_SIZE(message_tests); ++i)
+    {
+        sprintf(buffer, "message %#x\n", message_tests[i].msg);
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        SendMessageW(dialog, message_tests[i].msg, (WPARAM)child_hdc, (LPARAM)child);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, message_tests[i].msg_seq, buffer, TRUE);
+    }
+    ReleaseDC(child, child_hdc);
+    EndDialog(dialog, 0);
 
     UnregisterClassA(cls.lpszClassName, GetModuleHandleA(NULL));
 }
