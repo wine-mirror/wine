@@ -2318,21 +2318,21 @@ static NTSTATUS get_prop_value(void *args)
 
     if(IsEqualPropertyKey(*prop, devicepath_key))
     {
+        enum AudioDeviceConnectionType connection = AudioDeviceConnectionType_Unknown;
+        USHORT vendor_id = 0, product_id = 0;
         char uevent[MAX_PATH];
-        FILE *fuevent;
+        FILE *fuevent = NULL;
         int card, device;
+        UINT serial_number;
+        char buf[128];
+        int len;
 
-        /* only implemented for identifiable devices, i.e. not "default" */
-        if(!sscanf(name, "plughw:%u,%u", &card, &device)){
-            params->result = E_NOTIMPL;
-            return STATUS_SUCCESS;
+        if(sscanf(name, "plughw:%u,%u", &card, &device)){
+            sprintf(uevent, "/sys/class/sound/card%u/device/uevent", card);
+            fuevent = fopen(uevent, "r");
         }
-        sprintf(uevent, "/sys/class/sound/card%u/device/uevent", card);
-        fuevent = fopen(uevent, "r");
 
         if(fuevent){
-            enum AudioDeviceConnectionType connection = AudioDeviceConnectionType_Unknown;
-            USHORT vendor_id = 0, product_id = 0;
             char line[256];
 
             while (fgets(line, sizeof(line), fuevent)) {
@@ -2365,41 +2365,33 @@ static NTSTATUS get_prop_value(void *args)
             }
 
             fclose(fuevent);
+        }
 
-            if(connection == AudioDeviceConnectionType_USB || connection == AudioDeviceConnectionType_PCI){
-                UINT serial_number;
-                char buf[128];
-                int len;
+        /* As hardly any audio devices have serial numbers, Windows instead
+        appears to use a persistent random number. We emulate this here
+        by instead using the last 8 hex digits of the GUID. */
+        serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
 
-                /* As hardly any audio devices have serial numbers, Windows instead
-                appears to use a persistent random number. We emulate this here
-                by instead using the last 8 hex digits of the GUID. */
-                serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
+        if(connection == AudioDeviceConnectionType_USB)
+            sprintf(buf, "{1}.USB\\VID_%04X&PID_%04X\\%u&%08X",
+                    vendor_id, product_id, device, serial_number);
+        else if (connection == AudioDeviceConnectionType_PCI)
+            sprintf(buf, "{1}.HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X\\%u&%08X",
+                    vendor_id, product_id, device, serial_number);
+        else
+            sprintf(buf, "{1}.ROOT\\MEDIA\\%04u", serial_number & 0x1FF);
 
-                if(connection == AudioDeviceConnectionType_USB)
-                    sprintf(buf, "{1}.USB\\VID_%04X&PID_%04X\\%u&%08X",
-                            vendor_id, product_id, device, serial_number);
-                else /* AudioDeviceConnectionType_PCI */
-                    sprintf(buf, "{1}.HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X\\%u&%08X",
-                            vendor_id, product_id, device, serial_number);
-
-                len = strlen(buf) + 1;
-                if(*params->buffer_size < len * sizeof(WCHAR)){
-                    params->result = E_NOT_SUFFICIENT_BUFFER;
-                    *params->buffer_size = len * sizeof(WCHAR);
-                    return STATUS_SUCCESS;
-                }
-                out->vt = VT_LPWSTR;
-                out->pwszVal = params->buffer;
-                ntdll_umbstowcs(buf, len, out->pwszVal, len);
-                params->result = S_OK;
-                return STATUS_SUCCESS;
-            }
-        }else{
-            WARN("Could not open %s for reading\n", uevent);
-            params->result = E_NOTIMPL;
+        len = strlen(buf) + 1;
+        if(*params->buffer_size < len * sizeof(WCHAR)){
+            params->result = E_NOT_SUFFICIENT_BUFFER;
+            *params->buffer_size = len * sizeof(WCHAR);
             return STATUS_SUCCESS;
         }
+        out->vt = VT_LPWSTR;
+        out->pwszVal = params->buffer;
+        ntdll_umbstowcs(buf, len, out->pwszVal, len);
+        params->result = S_OK;
+        return STATUS_SUCCESS;
     } else if (flow != eCapture && IsEqualPropertyKey(*prop, PKEY_AudioEndpoint_PhysicalSpeakers)) {
         unsigned int num_speakers, card, device;
         char hwname[255];
