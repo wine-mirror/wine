@@ -848,9 +848,7 @@ static HRESULT Global_Hex(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
         n = (WORD)V_I2(arg);
         break;
     case VT_NULL:
-        if(res)
-            V_VT(res) = VT_NULL;
-        return S_OK;
+        return return_null(res);
     default:
         hres = to_int(arg, &ret);
         if(FAILED(hres))
@@ -889,9 +887,7 @@ static HRESULT Global_Oct(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
         n = (WORD)V_I2(arg);
         break;
     case VT_NULL:
-        if(res)
-            V_VT(res) = VT_NULL;
-        return S_OK;
+        return return_null(res);
     default:
         hres = to_int(arg, &ret);
         if(FAILED(hres))
@@ -1430,9 +1426,7 @@ static HRESULT Global_LCase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     TRACE("%s\n", debugstr_variant(arg));
 
     if(V_VT(arg) == VT_NULL) {
-        if(res)
-            V_VT(res) = VT_NULL;
-        return S_OK;
+        return return_null(res);
     }
 
     hres = to_string(arg, &str);
@@ -1461,9 +1455,7 @@ static HRESULT Global_UCase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     TRACE("%s\n", debugstr_variant(arg));
 
     if(V_VT(arg) == VT_NULL) {
-        if(res)
-            V_VT(res) = VT_NULL;
-        return S_OK;
+        return return_null(res);
     }
 
     hres = to_string(arg, &str);
