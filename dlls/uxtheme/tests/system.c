@@ -2319,7 +2319,7 @@ static void test_EnableThemeDialogTexture(void)
         sprintf(buffer, "message %#x\n", message_tests[i].msg);
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
         SendMessageW(dialog, message_tests[i].msg, (WPARAM)child_hdc, (LPARAM)child);
-        ok_sequence(sequences, PARENT_SEQ_INDEX, message_tests[i].msg_seq, buffer, TRUE);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, message_tests[i].msg_seq, buffer, FALSE);
     }
     ReleaseDC(child, child_hdc);
     EndDialog(dialog, 0);
