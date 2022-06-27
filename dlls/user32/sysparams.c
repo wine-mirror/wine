@@ -670,15 +670,6 @@ BOOL WINAPI EnumDisplaySettingsExW( const WCHAR *device, DWORD mode,
 }
 
 /**********************************************************************
- *              get_monitor_dpi
- */
-UINT get_monitor_dpi( HMONITOR monitor )
-{
-    /* FIXME: use the monitor DPI instead */
-    return system_dpi;
-}
-
-/**********************************************************************
  *              get_win_monitor_dpi
  */
 UINT get_win_monitor_dpi( HWND hwnd )
@@ -727,16 +718,6 @@ POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 static POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
 {
     return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), GetDpiForWindow( hwnd ));
-}
-
-/**********************************************************************
- *              point_win_to_thread_dpi
- */
-POINT point_win_to_thread_dpi( HWND hwnd, POINT pt )
-{
-    UINT dpi = get_thread_dpi();
-    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
-    return map_dpi_point( pt, GetDpiForWindow( hwnd ), dpi );
 }
 
 /**********************************************************************

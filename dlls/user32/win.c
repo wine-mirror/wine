@@ -37,25 +37,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
-/***********************************************************************
- *           get_user_handle_ptr
- */
-void *get_user_handle_ptr( HANDLE handle, unsigned int type )
-{
-    return (void *)NtUserCallTwoParam( HandleToUlong(handle), type, NtUserGetHandlePtr );
-}
-
-
-/***********************************************************************
- *           release_user_handle_ptr
- */
-void release_user_handle_ptr( void *ptr )
-{
-    assert( ptr && ptr != OBJ_OTHER_PROCESS );
-    NtUserCallOneParam( 1, NtUserLock );
-}
-
-
 /*******************************************************************
  *           list_window_children
  *
@@ -149,13 +130,19 @@ BOOL is_desktop_window( HWND hwnd )
  */
 WND *WIN_GetPtr( HWND hwnd )
 {
-    WND *ptr;
-
-    if ((ptr = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) == WND_OTHER_PROCESS)
-    {
-        if (is_desktop_window( hwnd )) ptr = WND_DESKTOP;
-    }
+    WND *ptr = (void *)NtUserCallTwoParam( HandleToUlong(hwnd), NTUSER_OBJ_WINDOW, NtUserGetHandlePtr );
+    if (ptr == WND_OTHER_PROCESS && is_desktop_window( hwnd )) ptr = WND_DESKTOP;
     return ptr;
+}
+
+
+/***********************************************************************
+ *           WIN_ReleasePtr
+ */
+void WIN_ReleasePtr( WND *ptr )
+{
+    assert( ptr && ptr != OBJ_OTHER_PROCESS );
+    NtUserCallOneParam( 1, NtUserLock );
 }
 
 
