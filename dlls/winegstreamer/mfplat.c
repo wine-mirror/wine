@@ -698,8 +698,8 @@ static inline UINT64 make_uint64(UINT32 high, UINT32 low)
 
 static IMFMediaType *mf_media_type_from_wg_format_audio(const struct wg_format *format)
 {
+    unsigned int i, block_align;
     IMFMediaType *type;
-    unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(audio_formats); ++i)
     {
@@ -715,7 +715,10 @@ static IMFMediaType *mf_media_type_from_wg_format_audio(const struct wg_format *
             IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, format->u.audio.channels);
             IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, format->u.audio.channel_mask);
             IMFMediaType_SetUINT32(type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
-            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, format->u.audio.channels * audio_formats[i].depth / 8);
+
+            block_align = format->u.audio.channels * audio_formats[i].depth / 8;
+            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, block_align);
+            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, block_align * format->u.audio.rate);
 
             return type;
         }
