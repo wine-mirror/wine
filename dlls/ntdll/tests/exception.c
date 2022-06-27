@@ -8801,6 +8801,9 @@ static void test_user_apc(void)
 
         memcpy(code_mem, code, sizeof(code));
         func(RtlCaptureContext, &context);
+        /* work around broken RtlCaptureContext on Windows < 7 which doesn't set
+         * ContextFlags */
+        context.ContextFlags = CONTEXT_FULL;
     }
 #else
     RtlCaptureContext(&context);
@@ -8824,8 +8827,7 @@ static void test_user_apc(void)
         ok(!status, "Got unexpected status %#lx.\n", status);
         status = NtContinue(&c[0], TRUE );
 
-        /* Broken before Win7, in that case NtContinue returns here instead of restoring context after calling APC. */
-        ok(broken(TRUE), "Should not get here, status %#lx.\n", status);
+        ok(0, "Should not get here, status %#lx.\n", status);
         return;
     }
     ok(pass == 3, "Got unexpected pass %ld.\n", pass);
