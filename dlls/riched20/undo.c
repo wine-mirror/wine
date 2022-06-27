@@ -479,3 +479,17 @@ BOOL ME_Redo(ME_TextEditor *editor)
   ME_UpdateRepaint(editor, FALSE);
   return TRUE;
 }
+
+void editor_disable_undo(ME_TextEditor *editor)
+{
+    ME_EmptyUndoStack(editor);
+    editor->undo_ctl_state = undoDisabled;
+}
+
+void editor_enable_undo(ME_TextEditor *editor)
+{
+    if (editor->undo_ctl_state == undoDisabled)
+    {
+        editor->undo_ctl_state = undoActive;
+    }
+}

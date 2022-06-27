@@ -4245,15 +4245,55 @@ static HRESULT WINAPI ITextDocument2Old_fnEndEditCollection(ITextDocument2Old *i
 static HRESULT WINAPI ITextDocument2Old_fnUndo(ITextDocument2Old *iface, LONG Count, LONG *prop)
 {
     struct text_services *services = impl_from_ITextDocument2Old(iface);
-    FIXME("stub %p\n", services);
-    return E_NOTIMPL;
+    LONG actual_undo_count;
+
+    if (prop) *prop = 0;
+
+    switch (Count)
+    {
+    case tomFalse:
+        editor_disable_undo(services->editor);
+        return S_OK;
+    default:
+        if (Count > 0) break;
+        /* fallthrough */
+    case tomTrue:
+        editor_enable_undo(services->editor);
+        return S_FALSE;
+    case tomSuspend:
+        if (services->editor->undo_ctl_state == undoActive)
+        {
+            services->editor->undo_ctl_state = undoSuspended;
+        }
+        return S_FALSE;
+    case tomResume:
+        services->editor->undo_ctl_state = undoActive;
+        return S_FALSE;
+    }
+
+    for (actual_undo_count = 0; actual_undo_count < Count; actual_undo_count++)
+    {
+        if (!ME_Undo(services->editor)) break;
+    }
+
+    if (prop) *prop = actual_undo_count;
+    return actual_undo_count == Count ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI ITextDocument2Old_fnRedo(ITextDocument2Old *iface, LONG Count, LONG *prop)
 {
     struct text_services *services = impl_from_ITextDocument2Old(iface);
-    FIXME("stub %p\n", services);
-    return E_NOTIMPL;
+    LONG actual_redo_count;
+
+    if (prop) *prop = 0;
+
+    for (actual_redo_count = 0; actual_redo_count < Count; actual_redo_count++)
+    {
+        if (!ME_Redo(services->editor)) break;
+    }
+
+    if (prop) *prop = actual_redo_count;
+    return actual_redo_count == Count ? S_OK : S_FALSE;
 }
 
 static HRESULT CreateITextRange(struct text_services *services, LONG start, LONG end, ITextRange** ppRange)

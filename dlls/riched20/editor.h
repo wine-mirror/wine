@@ -393,6 +393,8 @@ void ME_CommitCoalescingUndo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 BOOL ME_Undo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 BOOL ME_Redo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_EmptyUndoStack(ME_TextEditor *editor) DECLSPEC_HIDDEN;
+void editor_disable_undo(ME_TextEditor *editor);
+void editor_enable_undo(ME_TextEditor *editor);
 
 static inline BOOL editor_undo_ignored(ME_TextEditor *editor)
 {

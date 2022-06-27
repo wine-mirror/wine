@@ -4940,8 +4940,8 @@ static void test_clipboard(void)
   ok(hr == S_OK, "Cut failed: 0x%08lx\n", hr);
   CLIPBOARD_RANGE_CONTAINS(range, 0, 4, "b\r\n c");
   hr = ITextDocument_Undo(doc, 1, NULL);
-  todo_wine ok(hr == S_OK, "Undo failed: 0x%08lx\n", hr);
-  TODO_CLIPBOARD_RANGE_CONTAINS(range, 0, 5, "ab\r\n c");
+  ok(hr == S_OK, "Undo failed: 0x%08lx\n", hr);
+  CLIPBOARD_RANGE_CONTAINS(range, 0, 5, "ab\r\n c");
 
   /* Cannot cut when read-only */
   SendMessageA(hwnd, EM_SETREADONLY, TRUE, 0);
@@ -4986,26 +4986,23 @@ static void subtest_undo(const char *dummy_text)
     if (i != tomFalse && i != tomTrue)
     {
       hr = ITextDocument_Undo(doc, i, NULL);
-      todo_wine
+      todo_wine_if(i >= 1)
       ok(hr == (i >= 1 ? S_OK : S_FALSE), "(%ld@0) Undo: %#lx\n", i, hr);
 
       count = 0xcccccccc;
       hr = ITextDocument_Undo(doc, i, &count);
-      todo_wine
+      todo_wine_if(i >= 1)
       ok(hr == (i >= 1 ? S_OK : S_FALSE), "(%ld@0) Undo: %#lx\n", i, hr);
-      todo_wine
+      todo_wine_if(i >= 1)
       ok(count == (i >= 1 ? i : 0), "(%ld@0) Expected %ld, got %ld\n", i, i >= 0 ? i : 0, count);
     }
 
     hr = ITextDocument_Redo(doc, i, NULL);
-    todo_wine
     ok(hr == (i == 0 ? S_OK : S_FALSE), "(%ld@0) Redo: %#lx\n", i, hr);
 
     count = 0xcccccccc;
     hr = ITextDocument_Redo(doc, i, &count);
-    todo_wine
     ok(hr == (i == 0 ? S_OK : S_FALSE), "(%ld@0) Redo: %#lx\n", i, hr);
-    todo_wine
     ok(count == 0, "(%ld@0) got %ld\n", i, count);
   }
 
@@ -5015,7 +5012,6 @@ static void subtest_undo(const char *dummy_text)
     if (dummy_text)
     {
       hr = ITextDocument_Undo(doc, tomSuspend, NULL);
-      todo_wine
       ok(hr == S_FALSE, "(@%ld) Undo: %#lx\n", stack_pos, hr);
       if (SUCCEEDED(hr))
       {
@@ -5024,7 +5020,6 @@ static void subtest_undo(const char *dummy_text)
         SendMessageA(hwnd, EM_SETSEL, 0, strlen(dummy_text));
         SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)"");
         hr = ITextDocument_Undo(doc, tomResume, NULL);
-        todo_wine
         ok(hr == S_FALSE, "(@%ld) Undo: %#lx\n", stack_pos, hr);
       }
     }
@@ -5038,7 +5033,6 @@ static void subtest_undo(const char *dummy_text)
 
     memset(buffer, 0, sizeof(buffer));
     SendMessageA(hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
-    todo_wine_if(stack_pos != ARRAY_SIZE(text_seq) - 1)
     ok(strcmp(buffer, text_seq[stack_pos]) == 0, "Expected %s, got %s\n",
        wine_dbgstr_a(text_seq[stack_pos]), wine_dbgstr_a(buffer));
 
@@ -5049,18 +5043,14 @@ static void subtest_undo(const char *dummy_text)
     if (seq[i] < 0)
     {
       hr = ITextDocument_Undo(doc, -seq[i], &count);
-      todo_wine
       ok(hr == S_OK, "(%ld@%ld) Undo: %#lx\n", i, stack_pos, hr);
-      todo_wine
       ok(count == expect_count, "(%ld@%ld) Expected %ld, got %ld\n", i, stack_pos, expect_count, count);
       stack_pos -= count;
     }
     else
     {
       hr = ITextDocument_Redo(doc, seq[i], &count);
-      todo_wine
       ok(hr == (expect_count ? S_OK : S_FALSE), "(%ld@%ld) Redo: %#lx\n", i, stack_pos, hr);
-      todo_wine
       ok(count == expect_count, "(%ld@%ld) Expected %ld, got %ld\n", i, stack_pos, expect_count, count);
       stack_pos += count;
     }
@@ -5145,7 +5135,6 @@ static HRESULT perform_editor_undo_state_action(struct undo_test *inst, enum edi
       else
       {
         hr = ITextDocument_Undo(inst->doc, tomTrue, count);
-        todo_wine
         ok(hr == S_FALSE, "Undo: %#lx\n", hr);
       }
       if (SUCCEEDED(hr))
@@ -5159,7 +5148,6 @@ static HRESULT perform_editor_undo_state_action(struct undo_test *inst, enum edi
       break;
     case undoActionDisable:
       hr = ITextDocument_Undo(inst->doc, tomFalse, count);
-      todo_wine
       ok(hr == S_OK, "Undo: %#lx\n", hr);
       if (SUCCEEDED(hr))
       {
@@ -5170,7 +5158,6 @@ static HRESULT perform_editor_undo_state_action(struct undo_test *inst, enum edi
       break;
     case undoActionSuspend:
       hr = ITextDocument_Undo(inst->doc, tomSuspend, count);
-      todo_wine
       ok(hr == S_FALSE, "Undo: %#lx\n", hr);
       if (SUCCEEDED(hr) && inst->undo_ctl_state == undoStateActive)
       {
@@ -5179,7 +5166,6 @@ static HRESULT perform_editor_undo_state_action(struct undo_test *inst, enum edi
       break;
     case undoActionResume:
       hr = ITextDocument_Undo(inst->doc, tomResume, count);
-      todo_wine
       ok(hr == S_FALSE, "Undo: %#lx\n", hr);
       if (SUCCEEDED(hr))
       {
@@ -5193,7 +5179,6 @@ static HRESULT perform_editor_undo_state_action(struct undo_test *inst, enum edi
 
   if (count)
   {
-    todo_wine
     ok(*count == 0, "Got %ld\n", *count);
   }
   return hr;
@@ -5221,7 +5206,6 @@ static HRESULT set_editor_undo_state(struct undo_test *inst, enum editorUndoStat
       break;
   }
   ok(inst->undo_ctl_state == state, "expected state %d, got %d\n", state, inst->undo_ctl_state);
-  todo_wine
   ok(SUCCEEDED(hr), "cannot set state to %d: %#lx\n", undoStateActive, hr);
   return hr;
 }
@@ -5243,9 +5227,7 @@ static BOOL perform_undo_(struct undo_test *inst, BOOL can_undo, int line)
   {
     count = 0xcccccccc;
     hr = ITextDocument_Undo(inst->doc, 1, &count);
-    todo_wine
     ok_(__FILE__, line)(SUCCEEDED(hr), "got hr %#lx\n", hr);
-    todo_wine
     ok_(__FILE__, line)(count == (hr == S_OK), "expected count %d, got %ld\n", hr == S_OK, count);
     result = hr == S_OK && count > 0;
   }
@@ -5279,9 +5261,7 @@ static BOOL perform_redo_(struct undo_test *inst, BOOL can_redo, int line)
   {
     count = 0xcccccccc;
     hr = ITextDocument_Redo(inst->doc, 1, &count);
-    todo_wine
     ok_(__FILE__, line)(SUCCEEDED(hr), "got hr %#lx\n", hr);
-    todo_wine
     ok_(__FILE__, line)(count == (hr == S_OK), "expected count %d, got %ld\n", hr == S_OK, count);
     result = hr == S_OK && count > 0;
   }
