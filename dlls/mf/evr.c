@@ -1702,11 +1702,8 @@ static HRESULT video_renderer_configure_presenter(struct video_renderer *rendere
     return hr;
 }
 
-static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTransform *mixer,
-        IMFVideoPresenter *presenter)
+static void video_renderer_uninitialize(struct video_renderer *renderer)
 {
-    HRESULT hr;
-
     video_renderer_release_services(renderer);
 
     if (renderer->mixer)
@@ -1726,6 +1723,12 @@ static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTra
         IUnknown_Release(renderer->device_manager);
         renderer->device_manager = NULL;
     }
+}
+
+static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTransform *mixer,
+        IMFVideoPresenter *presenter)
+{
+    HRESULT hr;
 
     renderer->mixer = mixer;
     IMFTransform_AddRef(renderer->mixer);
@@ -1747,11 +1750,22 @@ static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface,
 
     TRACE("%p, %p, %p.\n", iface, mixer, presenter);
 
+    EnterCriticalSection(&renderer->cs);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+    {
+        LeaveCriticalSection(&renderer->cs);
+        return MF_E_SHUTDOWN;
+    }
+
+    video_renderer_uninitialize(renderer);
+
     if (mixer)
         IMFTransform_AddRef(mixer);
     else if (FAILED(hr = video_renderer_create_mixer(NULL, &mixer)))
     {
         WARN("Failed to create default mixer object, hr %#lx.\n", hr);
+        LeaveCriticalSection(&renderer->cs);
         return hr;
     }
 
@@ -1760,21 +1774,15 @@ static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface,
     else if (FAILED(hr = video_renderer_create_presenter(renderer, NULL, &presenter)))
     {
         WARN("Failed to create default presenter, hr %#lx.\n", hr);
+        LeaveCriticalSection(&renderer->cs);
         IMFTransform_Release(mixer);
         return hr;
     }
 
-    EnterCriticalSection(&renderer->cs);
+    /* FIXME: check clock state */
+    /* FIXME: check that streams are not initialized */
 
-    if (renderer->flags & EVR_SHUT_DOWN)
-        hr = MF_E_SHUTDOWN;
-    else
-    {
-        /* FIXME: check clock state */
-        /* FIXME: check that streams are not initialized */
-
-        hr = video_renderer_initialize(renderer, mixer, presenter);
-    }
+    hr = video_renderer_initialize(renderer, mixer, presenter);
 
     LeaveCriticalSection(&renderer->cs);
 
