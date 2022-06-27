@@ -1896,17 +1896,54 @@ static BOOL is_detached_mode( const DEVMODEW *mode )
            mode->dmPelsHeight == 0;
 }
 
+static DEVMODEW *validate_display_settings( DEVMODEW *default_mode, DEVMODEW *current_mode, DEVMODEW *devmode )
+{
+    if (devmode)
+    {
+        trace_devmode( devmode );
+
+        if (devmode->dmSize < offsetof(DEVMODEW, dmICMMethod)) return NULL;
+        if (!is_detached_mode( devmode ) &&
+            (!(devmode->dmFields & DM_BITSPERPEL) || !devmode->dmBitsPerPel) &&
+            (!(devmode->dmFields & DM_PELSWIDTH) || !devmode->dmPelsWidth) &&
+            (!(devmode->dmFields & DM_PELSHEIGHT) || !devmode->dmPelsHeight) &&
+            (!(devmode->dmFields & DM_DISPLAYFREQUENCY) || !devmode->dmDisplayFrequency))
+            devmode = NULL;
+    }
+
+    if (!devmode)
+    {
+        if (!default_mode->dmSize) return NULL;
+        TRACE( "Return to original display mode\n" );
+        devmode = default_mode;
+    }
+
+    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
+    {
+        WARN( "devmode doesn't specify the resolution: %#x\n", devmode->dmFields );
+        return NULL;
+    }
+
+    if (!is_detached_mode( devmode ) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight))
+    {
+        if (!current_mode->dmSize) return NULL;
+        if (!devmode->dmPelsWidth) devmode->dmPelsWidth = current_mode->dmPelsWidth;
+        if (!devmode->dmPelsHeight) devmode->dmPelsHeight = current_mode->dmPelsHeight;
+    }
+
+    return devmode;
+}
+
 /***********************************************************************
  *	     NtUserChangeDisplaySettings    (win32u.@)
  */
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
+    DEVMODEW default_mode = {.dmSize = sizeof(DEVMODEW)}, current_mode = {.dmSize = sizeof(DEVMODEW)};
     WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
+    LONG ret = DISP_CHANGE_SUCCESSFUL;
     struct adapter *adapter;
-    BOOL def_mode = TRUE;
-    DEVMODEW dm;
-    LONG ret;
 
     TRACE( "%s %p %p %#x %p\n", debugstr_us(devname), devmode, hwnd, flags, lparam );
     TRACE( "flags=%s\n", _CDS_flags(flags) );
@@ -1932,60 +1969,13 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
         return DISP_CHANGE_BADPARAM;
     }
 
-    if (devmode)
-    {
-        trace_devmode( devmode );
+    if (!read_registry_settings( adapter_path, &default_mode )) default_mode.dmSize = 0;
+    if (!NtUserEnumDisplaySettings( devname, ENUM_CURRENT_SETTINGS, &current_mode, 0 )) current_mode.dmSize = 0;
 
-        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmICMMethod))
-            return DISP_CHANGE_BADMODE;
+    if (!(devmode = validate_display_settings( &default_mode, &current_mode, devmode ))) ret = DISP_CHANGE_BADMODE;
+    else ret = user_driver->pChangeDisplaySettingsEx( device_name, devmode, hwnd, flags, lparam );
 
-        if (is_detached_mode(devmode) ||
-            ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
-            ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
-            ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
-            ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
-            def_mode = FALSE;
-    }
-
-    if (def_mode)
-    {
-        memset( &dm, 0, sizeof(dm) );
-        dm.dmSize = sizeof(dm);
-        if (!read_registry_settings( adapter_path, &dm ))
-        {
-            ERR( "Default mode not found!\n" );
-            return DISP_CHANGE_BADMODE;
-        }
-
-        TRACE( "Return to original display mode\n" );
-        devmode = &dm;
-    }
-
-    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
-    {
-        WARN( "devmode doesn't specify the resolution: %#x\n", devmode->dmFields );
-        return DISP_CHANGE_BADMODE;
-    }
-
-    if (!is_detached_mode(devmode) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight))
-    {
-        memset(&dm, 0, sizeof(dm));
-        dm.dmSize = sizeof(dm);
-        if (!NtUserEnumDisplaySettings( devname, ENUM_CURRENT_SETTINGS, &dm, 0 ))
-        {
-            ERR( "Current mode not found!\n" );
-            return DISP_CHANGE_BADMODE;
-        }
-
-        if (!devmode->dmPelsWidth)
-            devmode->dmPelsWidth = dm.dmPelsWidth;
-        if (!devmode->dmPelsHeight)
-            devmode->dmPelsHeight = dm.dmPelsHeight;
-    }
-
-    ret = user_driver->pChangeDisplaySettingsEx( device_name, devmode, hwnd, flags, lparam );
-    if (ret != DISP_CHANGE_SUCCESSFUL)
-        ERR( "Changing %s display settings returned %d.\n", debugstr_us(devname), ret );
+    if (ret) ERR( "Changing %s display settings returned %d.\n", debugstr_us(devname), ret );
     return ret;
 }
 
