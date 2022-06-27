@@ -64,6 +64,7 @@ static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 static int (__cdecl *p_strcpy)(char *dst, const char *src);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
+static int (__cdecl *p_strncpy_s)(char *dst, size_t size, const char *src, size_t count);
 static int (__cdecl *p_mbscat_s)(unsigned char *dst, size_t size, const unsigned char *src);
 static int (__cdecl *p_mbsnbcat_s)(unsigned char *dst, size_t size, const unsigned char *src, size_t count);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
@@ -738,6 +739,55 @@ static void test_strcpy_s(void)
             dest[4] == 'l' && dest[5] == '\0' && dest[6] == '\0' && dest[7] == 'X',
             "Unexpected return data from strcpy: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
             dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+
+    if(!p_strncpy_s)
+    {
+        win_skip("strncpy_s not found\n");
+        return;
+    }
+
+    ret = p_strncpy_s(NULL, 18, big, ARRAY_SIZE(big));
+    ok(ret == EINVAL, "p_strncpy_s expect EINVAL got %d\n", ret);
+
+    dest[0] = 'A';
+    ret = p_strncpy_s(dest, 8, NULL, 1);
+    ok(ret == EINVAL, "expected EINVAL got %d\n", ret);
+    ok(dest[0] == 0, "dest[0] not 0\n");
+
+    dest[0] = 'A';
+    ret = p_strncpy_s(dest, 8, NULL, 0);
+    ok(ret == 0, "expected ERROR_SUCCESS got %d\n", ret);
+    ok(dest[0] == 0, "dest[0] not 0\n");
+
+    dest[0] = 'A';
+    ret = p_strncpy_s(dest, 0, big, ARRAY_SIZE(big));
+    ok(ret == ERANGE || ret == EINVAL, "expected ERANGE/EINVAL got %d\n", ret);
+    ok(dest[0] == 0 || ret == EINVAL, "dest[0] not 0\n");
+
+    ret = p_strncpy_s(dest, 8, small, ARRAY_SIZE(small));
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ok(!strcmp(dest, small), "dest != small\n");
+
+    dest[0] = 'A';
+    ret = p_strncpy_s(dest, 8, big, ARRAY_SIZE(big));
+    ok(ret == ERANGE || ret == EINVAL, "expected ERANGE/EINVAL got %d\n", ret);
+    ok(dest[0] == 0, "dest[0] not 0\n");
+
+    dest[0] = 'A';
+    ret = p_strncpy_s(dest, 5, big, -1);
+    ok(ret == STRUNCATE, "expected STRUNCATE got %d\n", ret);
+    ok(dest[4] == 0, "dest[4] not 0\n");
+    ok(!memcmp(dest, big, 4), "dest = %s\n", wine_dbgstr_a(dest));
+
+    ret = p_strncpy_s(NULL, 0, (void*)0xdeadbeef, 0);
+    ok(ret == 0, "ret = %d\n", ret);
+
+    dest[0] = '1';
+    dest[1] = 0;
+    ret = p_strncpy_s(dest+1, 4, dest, -1);
+    ok(ret == STRUNCATE, "expected ERROR_SUCCESS got %d\n", ret);
+    ok(dest[0]=='1' && dest[1]=='1' && dest[2]=='1' && dest[3]=='1',
+            "dest = %s\n", wine_dbgstr_a(dest));
 }
 
 #define okchars(dst, b0, b1, b2, b3, b4, b5, b6, b7) \
@@ -4498,6 +4548,7 @@ START_TEST(string)
     SET(p_strncmp, "strncmp");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
+    p_strncpy_s = (void *)GetProcAddress( hMsvcrt, "strncpy_s" );
     p_mbscat_s = (void*)GetProcAddress( hMsvcrt, "_mbscat_s" );
     p_mbsnbcat_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );

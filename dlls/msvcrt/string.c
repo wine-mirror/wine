@@ -1271,39 +1271,45 @@ char* __cdecl strncpy(char *dst, const char *src, size_t len)
 /******************************************************************
  *                  strncpy_s (MSVCRT.@)
  */
-int CDECL strncpy_s(char *dest, size_t numberOfElements,
-        const char *src, size_t count)
+int __cdecl strncpy_s( char *dst, size_t elem, const char *src, size_t count )
 {
-    size_t i, end;
+    char *p = dst;
+    BOOL truncate = (count == _TRUNCATE);
 
-    TRACE("(%p %Iu %s %Iu)\n", dest, numberOfElements, debugstr_a(src), count);
+    TRACE("(%p %Iu %s %Iu)\n", dst, elem, debugstr_a(src), count);
 
-    if(!count) {
-        if(dest && numberOfElements)
-            *dest = 0;
+    if (!count)
+    {
+        if (dst && elem) *dst = 0;
         return 0;
     }
 
-    if (!MSVCRT_CHECK_PMT(dest != NULL)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(src != NULL)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(numberOfElements != 0)) return EINVAL;
-
-    if(count!=_TRUNCATE && count<numberOfElements)
-        end = count;
-    else
-        end = numberOfElements-1;
-
-    for(i=0; i<end && src[i]; i++)
-        dest[i] = src[i];
-
-    if(!src[i] || end==count || count==_TRUNCATE) {
-        dest[i] = '\0';
-        return 0;
+    if (!MSVCRT_CHECK_PMT(dst != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(elem != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
+    {
+        *dst = 0;
+        return EINVAL;
     }
 
-    MSVCRT_INVALID_PMT("dest[numberOfElements] is too small", EINVAL);
-    dest[0] = '\0';
-    return EINVAL;
+    while (elem && count && *src)
+    {
+        *p++ = *src++;
+        elem--;
+        count--;
+    }
+    if (!elem && truncate)
+    {
+        *(p-1) = 0;
+        return STRUNCATE;
+    }
+    else if (!elem)
+    {
+        *dst = 0;
+        return ERANGE;
+    }
+    *p = 0;
+    return 0;
 }
 
 /*********************************************************************

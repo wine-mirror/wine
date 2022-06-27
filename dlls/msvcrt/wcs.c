@@ -2376,41 +2376,41 @@ wchar_t* __cdecl wcsncpy( wchar_t* s1, const wchar_t *s2, size_t n )
 /******************************************************************
  *		wcsncpy_s (MSVCRT.@)
  */
-INT CDECL wcsncpy_s( wchar_t* wcDest, size_t numElement, const wchar_t *wcSrc,
-                            size_t count )
+INT CDECL wcsncpy_s( wchar_t *dst, size_t elem, const wchar_t *src, size_t count )
 {
-    WCHAR *p = wcDest;
+    WCHAR *p = dst;
     BOOL truncate = (count == _TRUNCATE);
 
-    if(!wcDest && !numElement && !count)
-        return 0;
-
-    if (!wcDest || !numElement)
-        return EINVAL;
-
-    if (!wcSrc)
+    if (!count)
     {
-        *wcDest = 0;
-        return count ? EINVAL : 0;
+        if (dst && elem) *dst = 0;
+        return 0;
     }
 
-    while (numElement && count && *wcSrc)
+    if (!MSVCRT_CHECK_PMT(dst != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(elem != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
     {
-        *p++ = *wcSrc++;
-        numElement--;
+        *dst = 0;
+        return EINVAL;
+    }
+
+    while (elem && count && *src)
+    {
+        *p++ = *src++;
+        elem--;
         count--;
     }
-    if (!numElement && truncate)
+    if (!elem && truncate)
     {
         *(p-1) = 0;
         return STRUNCATE;
     }
-    else if (!numElement)
+    else if (!elem)
     {
-        *wcDest = 0;
+        *dst = 0;
         return ERANGE;
     }
-
     *p = 0;
     return 0;
 }
