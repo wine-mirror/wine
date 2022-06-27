@@ -1268,6 +1268,44 @@ char* __cdecl strncpy(char *dst, const char *src, size_t len)
     return dst;
 }
 
+/******************************************************************
+ *                  strncpy_s (MSVCRT.@)
+ */
+int CDECL strncpy_s(char *dest, size_t numberOfElements,
+        const char *src, size_t count)
+{
+    size_t i, end;
+
+    TRACE("(%p %Iu %s %Iu)\n", dest, numberOfElements, debugstr_a(src), count);
+
+    if(!count) {
+        if(dest && numberOfElements)
+            *dest = 0;
+        return 0;
+    }
+
+    if (!MSVCRT_CHECK_PMT(dest != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(numberOfElements != 0)) return EINVAL;
+
+    if(count!=_TRUNCATE && count<numberOfElements)
+        end = count;
+    else
+        end = numberOfElements-1;
+
+    for(i=0; i<end && src[i]; i++)
+        dest[i] = src[i];
+
+    if(!src[i] || end==count || count==_TRUNCATE) {
+        dest[i] = '\0';
+        return 0;
+    }
+
+    MSVCRT_INVALID_PMT("dest[numberOfElements] is too small", EINVAL);
+    dest[0] = '\0';
+    return EINVAL;
+}
+
 /*********************************************************************
  *      strcpy (MSVCRT.@)
  */
