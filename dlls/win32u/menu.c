@@ -32,6 +32,51 @@
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
+
+/* menu item structure */
+struct menu_item
+{
+    UINT      fType;          /* item type */
+    UINT      fState;         /* item state */
+    UINT_PTR  wID;            /* item id  */
+    HMENU     hSubMenu;       /* pop-up menu */
+    HBITMAP   hCheckBit;      /* bitmap when checked */
+    HBITMAP   hUnCheckBit;    /* bitmap when unchecked */
+    LPWSTR    text;           /* item text */
+    ULONG_PTR dwItemData;     /* application defined */
+    LPWSTR    dwTypeData;     /* depends on fMask */
+    HBITMAP   hbmpItem;       /* bitmap */
+    RECT      rect;           /* item area (relative to the items_rect), see adjust_menu_item_rect */
+    UINT      xTab;           /* X position of text after Tab */
+    SIZE      bmpsize;        /* size needed for the HBMMENU_CALLBACK bitmap */
+};
+
+/* menu user object */
+struct menu
+{
+    struct user_object obj;
+    struct menu_item  *items;   /* array of menu items */
+    WORD        wFlags;         /* menu flags (MF_POPUP, MF_SYSMENU) */
+    WORD        Width;          /* width of the whole menu */
+    WORD        Height;         /* height of the whole menu */
+    UINT        nItems;         /* number of items in the menu */
+    HWND        hWnd;           /* window containing the menu */
+    UINT        FocusedItem;    /* currently focused item */
+    HWND        hwndOwner;      /* window receiving the messages for ownerdraw */
+    BOOL        bScrolling;     /* scroll arrows are active */
+    UINT        nScrollPos;     /* current scroll position */
+    UINT        nTotalHeight;   /* total height of menu items inside menu */
+    RECT        items_rect;     /* rectangle within which the items lie, excludes margins and scroll arrows */
+    LONG        refcount;
+    DWORD       dwStyle;        /* extended menu style */
+    UINT        cyMax;          /* max height of the whole menu, 0 is screen height */
+    HBRUSH      hbrBack;        /* brush for menu background */
+    DWORD       dwContextHelpID;
+    ULONG_PTR   dwMenuData;     /* application defined value */
+    HMENU       hSysMenuOwner;  /* handle to the dummy sys menu holder */
+    WORD        textOffset;     /* offset of text when items have both bitmaps and text */
+};
+
 /* the accelerator user object */
 struct accelerator
 {
@@ -190,7 +235,7 @@ BOOL WINAPI NtUserDestroyAcceleratorTable( HACCEL handle )
       if (flags & (bit)) { flags &= ~(bit); strcat(buf, (text)); } \
   } while (0)
 
-static const char *debugstr_menuitem( const MENUITEM *item )
+static const char *debugstr_menuitem( const struct menu_item *item )
 {
     static const char *const hbmmenus[] = { "HBMMENU_CALLBACK", "", "HBMMENU_SYSTEM",
         "HBMMENU_MBAR_RESTORE", "HBMMENU_MBAR_MINIMIZE", "UNKNOWN BITMAP", "HBMMENU_MBAR_CLOSE",
@@ -252,9 +297,9 @@ static const char *debugstr_menuitem( const MENUITEM *item )
 
 #undef MENUFLAG
 
-static POPUPMENU *grab_menu_ptr( HMENU handle )
+static struct menu *grab_menu_ptr( HMENU handle )
 {
-    POPUPMENU *menu = get_user_handle_ptr( handle, NTUSER_OBJ_MENU );
+    struct menu *menu = get_user_handle_ptr( handle, NTUSER_OBJ_MENU );
 
     if (menu == OBJ_OTHER_PROCESS)
     {
@@ -269,7 +314,7 @@ static POPUPMENU *grab_menu_ptr( HMENU handle )
     return menu;
 }
 
-static void release_menu_ptr( POPUPMENU *menu )
+static void release_menu_ptr( struct menu *menu )
 {
     if (menu)
     {
@@ -282,9 +327,9 @@ static void release_menu_ptr( POPUPMENU *menu )
  * Validate the given menu handle and returns the menu structure pointer.
  * FIXME: this is unsafe, we should use a better mechanism instead.
  */
-static POPUPMENU *unsafe_menu_ptr( HMENU handle )
+static struct menu *unsafe_menu_ptr( HMENU handle )
 {
-    POPUPMENU *menu = grab_menu_ptr( handle );
+    struct menu *menu = grab_menu_ptr( handle );
     if (menu) release_menu_ptr( menu );
     return menu;
 }
@@ -292,7 +337,7 @@ static POPUPMENU *unsafe_menu_ptr( HMENU handle )
 /* see IsMenu */
 BOOL is_menu( HMENU handle )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     BOOL is_menu;
 
     menu = grab_menu_ptr( handle );
@@ -320,10 +365,10 @@ static HMENU get_win_sys_menu( HWND hwnd )
     return ret;
 }
 
-static POPUPMENU *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
+static struct menu *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
 {
     UINT fallback_pos = ~0u, i;
-    POPUPMENU *menu;
+    struct menu *menu;
 
     menu = grab_menu_ptr( handle );
     if (!menu)
@@ -342,12 +387,12 @@ static POPUPMENU *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
     }
     else
     {
-        MENUITEM *item = menu->items;
+        struct menu_item *item = menu->items;
         for (i = 0; i < menu->nItems; i++, item++)
         {
             if (item->fType & MF_POPUP)
             {
-                POPUPMENU *submenu = find_menu_item( item->hSubMenu, id, flags, pos );
+                struct menu *submenu = find_menu_item( item->hSubMenu, id, flags, pos );
 
                 if (submenu)
                 {
@@ -379,10 +424,10 @@ static POPUPMENU *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
     return menu;
 }
 
-static POPUPMENU *insert_menu_item( HMENU handle, UINT id, UINT flags, UINT *ret_pos )
+static struct menu *insert_menu_item( HMENU handle, UINT id, UINT flags, UINT *ret_pos )
 {
-    MENUITEM *new_items;
-    POPUPMENU *menu;
+    struct menu_item *new_items;
+    struct menu *menu;
     UINT pos = id;
 
     /* Find where to insert new item */
@@ -403,7 +448,7 @@ static POPUPMENU *insert_menu_item( HMENU handle, UINT id, UINT flags, UINT *ret
 
     TRACE( "inserting at %u flags %x\n", pos, flags );
 
-    new_items = malloc( sizeof(MENUITEM) * (menu->nItems + 1) );
+    new_items = malloc( sizeof(*new_items) * (menu->nItems + 1) );
     if (!new_items)
     {
         release_menu_ptr( menu );
@@ -412,9 +457,9 @@ static POPUPMENU *insert_menu_item( HMENU handle, UINT id, UINT flags, UINT *ret
     if (menu->nItems > 0)
     {
         /* Copy the old array into the new one */
-        if (pos > 0) memcpy( new_items, menu->items, pos * sizeof(MENUITEM) );
+        if (pos > 0) memcpy( new_items, menu->items, pos * sizeof(*new_items) );
         if (pos < menu->nItems) memcpy( &new_items[pos + 1], &menu->items[pos],
-                                        (menu->nItems - pos) * sizeof(MENUITEM) );
+                                        (menu->nItems - pos) * sizeof(*new_items) );
         free( menu->items );
     }
     menu->items = new_items;
@@ -440,8 +485,8 @@ static BOOL is_win_menu_disallowed( HWND hwnd )
  */
 static UINT find_submenu( HMENU *handle_ptr, HMENU target )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
+    struct menu *menu;
+    struct menu_item *item;
     UINT i;
 
     if (*handle_ptr == (HMENU)0xffff || !(menu = grab_menu_ptr( *handle_ptr )))
@@ -474,7 +519,7 @@ static UINT find_submenu( HMENU *handle_ptr, HMENU target )
 }
 
 /* Adjust menu item rectangle according to scrolling state */
-static void adjust_menu_item_rect( const POPUPMENU *menu, RECT *rect )
+static void adjust_menu_item_rect( const struct menu *menu, RECT *rect )
 {
     INT scroll_offset = menu->bScrolling ? menu->nScrollPos : 0;
     OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
@@ -493,10 +538,10 @@ static void adjust_menu_item_rect( const POPUPMENU *menu, RECT *rect )
  * item that's just outside the items_rect - ie, the one that would
  * be scrolled completely into view.
  */
-static enum hittest find_item_by_coords( const POPUPMENU *menu, POINT pt, UINT *pos )
+static enum hittest find_item_by_coords( const struct menu *menu, POINT pt, UINT *pos )
 {
     enum hittest ht = ht_border;
-    MENUITEM *item;
+    struct menu_item *item;
     RECT rect;
     UINT i;
 
@@ -552,7 +597,7 @@ HMENU get_menu( HWND hwnd )
 /* see CreateMenu and CreatePopupMenu */
 HMENU create_menu( BOOL is_popup )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     HMENU handle;
 
     if (!(menu = calloc( 1, sizeof(*menu) ))) return 0;
@@ -571,7 +616,7 @@ HMENU create_menu( BOOL is_popup )
  */
 BOOL WINAPI NtUserDestroyMenu( HMENU handle )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
 
     TRACE( "(%p)\n", handle );
 
@@ -588,7 +633,7 @@ BOOL WINAPI NtUserDestroyMenu( HMENU handle )
     /* recursively destroy submenus */
     if (menu->items)
     {
-        MENUITEM *item = menu->items;
+        struct menu_item *item = menu->items;
         int i;
 
         for (i = menu->nItems; i > 0; i--, item++)
@@ -627,7 +672,7 @@ BOOL set_window_menu( HWND hwnd, HMENU handle )
 
     if (handle)
     {
-        POPUPMENU *menu;
+        struct menu *menu;
 
         if (!(menu = grab_menu_ptr( handle ))) return FALSE;
         menu->hWnd = hwnd;
@@ -657,8 +702,8 @@ BOOL WINAPI NtUserSetMenu( HWND hwnd, HMENU menu )
  */
 DWORD WINAPI NtUserCheckMenuItem( HMENU handle, UINT id, UINT flags )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
+    struct menu_item *item;
+    struct menu *menu;
     DWORD ret;
     UINT pos;
 
@@ -679,8 +724,8 @@ DWORD WINAPI NtUserCheckMenuItem( HMENU handle, UINT id, UINT flags )
 BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
 {
     UINT oldflags, pos;
-    POPUPMENU *menu;
-    MENUITEM *item;
+    struct menu *menu;
+    struct menu_item *item;
 
     TRACE( "(%p, %04x, %04x)\n", handle, id, flags );
 
@@ -695,7 +740,7 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
     /* If the close item in the system menu change update the close button */
     if (item->wID == SC_CLOSE && oldflags != flags && menu->hSysMenuOwner)
     {
-        POPUPMENU *parent_menu;
+        struct menu *parent_menu;
         RECT rc;
         HWND hwnd;
 
@@ -729,7 +774,7 @@ BOOL draw_menu_bar( HWND hwnd )
 
     if ((handle = get_menu( hwnd )))
     {
-        POPUPMENU *menu = grab_menu_ptr( handle );
+        struct menu *menu = grab_menu_ptr( handle );
         if (menu)
         {
             menu->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
@@ -747,7 +792,7 @@ BOOL draw_menu_bar( HWND hwnd )
  */
 BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rect )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT pos;
     RECT window_rect;
 
@@ -784,7 +829,7 @@ BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rec
 
 static BOOL set_menu_info( HMENU handle, const MENUINFO *info )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
 
     if (!(menu = grab_menu_ptr( handle ))) return FALSE;
 
@@ -797,7 +842,7 @@ static BOOL set_menu_info( HMENU handle, const MENUINFO *info )
     if (info->fMask & MIM_APPLYTOSUBMENUS)
     {
         int i;
-        MENUITEM *item = menu->items;
+        struct menu_item *item = menu->items;
         for (i = menu->nItems; i; i--, item++)
             if (item->fType & MF_POPUP)
                 set_menu_info( item->hSubMenu, info);
@@ -838,7 +883,7 @@ BOOL WINAPI NtUserThunkedMenuInfo( HMENU menu, const MENUINFO *info )
 /* see GetMenuInfo */
 BOOL get_menu_info( HMENU handle, MENUINFO *info )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
 
     TRACE( "(%p %p)\n", handle, info );
 
@@ -863,17 +908,17 @@ BOOL get_menu_info( HMENU handle, MENUINFO *info )
  *
  * detect if there are loops in the menu tree (or the depth is too large)
  */
-static int menu_depth( POPUPMENU *pmenu, int depth)
+static int menu_depth( struct menu *pmenu, int depth)
 {
     int i, subdepth;
-    MENUITEM *item;
+    struct menu_item *item;
 
     if (++depth > MAXMENUDEPTH) return depth;
     item = pmenu->items;
     subdepth = depth;
     for (i = 0; i < pmenu->nItems && subdepth <= MAXMENUDEPTH; i++, item++)
     {
-        POPUPMENU *submenu = item->hSubMenu ? grab_menu_ptr( item->hSubMenu ) : NULL;
+        struct menu *submenu = item->hSubMenu ? grab_menu_ptr( item->hSubMenu ) : NULL;
         if (submenu)
         {
             int bdepth = menu_depth( submenu, depth);
@@ -887,7 +932,7 @@ static int menu_depth( POPUPMENU *pmenu, int depth)
     return subdepth;
 }
 
-static BOOL set_menu_item_info( MENUITEM *menu, const MENUITEMINFOW *info )
+static BOOL set_menu_item_info( struct menu_item *menu, const MENUITEMINFOW *info )
 {
     if (!menu) return FALSE;
 
@@ -922,7 +967,7 @@ static BOOL set_menu_item_info( MENUITEM *menu, const MENUITEMINFOW *info )
         menu->hSubMenu = info->hSubMenu;
         if (menu->hSubMenu)
         {
-            POPUPMENU *submenu = grab_menu_ptr( menu->hSubMenu );
+            struct menu *submenu = grab_menu_ptr( menu->hSubMenu );
             if (!submenu)
             {
                 SetLastError( ERROR_INVALID_PARAMETER);
@@ -964,9 +1009,9 @@ static BOOL set_menu_item_info( MENUITEM *menu, const MENUITEMINFOW *info )
 /* see GetMenuState */
 UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT state, pos;
-    MENUITEM *item;
+    struct menu_item *item;
 
     TRACE( "(menu=%p, id=%04x, flags=%04x);\n", handle, item_id, flags );
 
@@ -977,7 +1022,7 @@ UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
     TRACE( "  item: %s\n", debugstr_menuitem( item ));
     if (item->fType & MF_POPUP)
     {
-        POPUPMENU *submenu = grab_menu_ptr( item->hSubMenu );
+        struct menu *submenu = grab_menu_ptr( item->hSubMenu );
         if (submenu)
             state = (submenu->nItems << 8) | ((item->fState | item->fType) & 0xff);
         else
@@ -994,8 +1039,8 @@ UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
 
 static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW *info, BOOL ansi )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
+    struct menu *menu;
+    struct menu_item *item;
     UINT pos;
 
     if (!info || info->cbSize != sizeof(*info))
@@ -1111,13 +1156,13 @@ static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW
 
 static BOOL check_menu_radio_item( HMENU handle, UINT first, UINT last, UINT check, UINT flags )
 {
-    POPUPMENU *first_menu = NULL, *check_menu;
+    struct menu *first_menu = NULL, *check_menu;
     UINT i, check_pos;
     BOOL done = FALSE;
 
     for (i = first; i <= last; i++)
     {
-        MENUITEM *item;
+        struct menu_item *item;
 
         if (!(check_menu = find_menu_item( handle, i, flags, &check_pos ))) continue;
         if (!first_menu) first_menu = grab_menu_ptr( check_menu->obj.handle );
@@ -1154,7 +1199,7 @@ static BOOL check_menu_radio_item( HMENU handle, UINT first, UINT last, UINT che
 /* see GetSubMenu */
 static HMENU get_sub_menu( HMENU handle, INT pos )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     HMENU submenu;
     UINT i;
 
@@ -1173,8 +1218,8 @@ static HMENU get_sub_menu( HMENU handle, INT pos )
 /* see GetMenuDefaultItem */
 static UINT get_menu_default_item( HMENU handle, UINT bypos, UINT flags )
 {
-    MENUITEM *item = NULL;
-    POPUPMENU *menu;
+    struct menu_item *item = NULL;
+    struct menu *menu;
     UINT i;
 
     TRACE( "(%p,%d,%d)\n", handle, bypos, flags );
@@ -1215,7 +1260,7 @@ static UINT get_menu_default_item( HMENU handle, UINT bypos, UINT flags )
 UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT method,
                                        MENUITEMINFOW *info, UNICODE_STRING *str )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT i;
     BOOL ret;
 
@@ -1294,7 +1339,7 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
 /* see GetMenuItemCount */
 INT get_menu_item_count( HMENU handle )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     INT count;
 
     if (!(menu = grab_menu_ptr( handle ))) return -1;
@@ -1310,7 +1355,7 @@ INT get_menu_item_count( HMENU handle )
  */
 BOOL WINAPI NtUserRemoveMenu( HMENU handle, UINT id, UINT flags )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT pos;
 
     TRACE( "(menu=%p id=%#x flags=%04x)\n", handle, id, flags );
@@ -1328,7 +1373,7 @@ BOOL WINAPI NtUserRemoveMenu( HMENU handle, UINT id, UINT flags )
     }
     else
     {
-        MENUITEM *new_items, *item = &menu->items[pos];
+        struct menu_item *new_items, *item = &menu->items[pos];
 
         while (pos < menu->nItems)
         {
@@ -1336,7 +1381,7 @@ BOOL WINAPI NtUserRemoveMenu( HMENU handle, UINT id, UINT flags )
             item++;
             pos++;
         }
-        new_items = realloc( menu->items, menu->nItems * sizeof(MENUITEM) );
+        new_items = realloc( menu->items, menu->nItems * sizeof(*item) );
         if (new_items) menu->items = new_items;
     }
 
@@ -1349,7 +1394,7 @@ BOOL WINAPI NtUserRemoveMenu( HMENU handle, UINT id, UINT flags )
  */
 BOOL WINAPI NtUserDeleteMenu( HMENU handle, UINT id, UINT flags )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT pos;
 
     if (!(menu = find_menu_item( handle, id, flags, &pos )))
@@ -1368,7 +1413,7 @@ BOOL WINAPI NtUserDeleteMenu( HMENU handle, UINT id, UINT flags )
  */
 BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
 
     TRACE( "(%p 0x%08x)\n", handle, id );
 
@@ -1388,7 +1433,7 @@ static HMENU copy_sys_popup( BOOL mdi )
     struct load_sys_menu_params params;
     MENUITEMINFOW item_info;
     MENUINFO menu_info;
-    POPUPMENU *menu;
+    struct menu *menu;
     void *ret_ptr;
     ULONG ret_len;
     HMENU handle;
@@ -1439,7 +1484,7 @@ static HMENU copy_sys_popup( BOOL mdi )
 static HMENU get_sys_menu( HWND hwnd, HMENU popup_menu )
 {
     MENUITEMINFOW info;
-    POPUPMENU *menu;
+    struct menu *menu;
     HMENU handle;
 
     TRACE("loading system menu, hwnd %p, popup_menu %p\n", hwnd, popup_menu);
@@ -1507,7 +1552,7 @@ static HMENU get_sys_menu( HWND hwnd, HMENU popup_menu )
 INT WINAPI NtUserMenuItemFromPoint( HWND hwnd, HMENU handle, int x, int y )
 {
     POINT pt = { .x = x, .y = y };
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT pos;
 
     if (!(menu = grab_menu_ptr(handle))) return -1;
@@ -1542,7 +1587,7 @@ HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
 
     if (win->hSysMenu)
     {
-        POPUPMENU *menu;
+        struct menu *menu;
         retvalue = get_sub_menu( win->hSysMenu, 0 );
 
         /* Store the dummy sysmenu handle to facilitate the refresh */
@@ -1579,8 +1624,8 @@ BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
  */
 BOOL WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos )
 {
-    MENUITEM *menu_item;
-    POPUPMENU *menu;
+    struct menu_item *menu_item;
+    struct menu *menu;
     unsigned int i;
     BOOL ret = FALSE;
 
@@ -1676,7 +1721,7 @@ found:
     {
         HMENU menu_handle, submenu, sys_menu;
         UINT sys_stat = ~0u, stat = ~0u, pos;
-        POPUPMENU *menu;
+        struct menu *menu;
 
         menu_handle = (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) ? 0 : get_menu(hwnd);
         sys_menu = get_win_sys_menu( hwnd );
@@ -1866,7 +1911,7 @@ static HBITMAP get_arrow_bitmap(void)
 }
 
 /* Get the size of a bitmap item */
-static void get_bitmap_item_size( MENUITEM *item, SIZE *size, HWND owner )
+static void get_bitmap_item_size( struct menu_item *item, SIZE *size, HWND owner )
 {
     HBITMAP bmp = item->hbmpItem;
     BITMAP bm;
@@ -1922,8 +1967,8 @@ static void get_bitmap_item_size( MENUITEM *item, SIZE *size, HWND owner )
 }
 
 /* Calculate the size of the menu item and store it in item->rect */
-static void calc_menu_item_size( HDC hdc, MENUITEM *item, HWND owner, INT org_x, INT org_y,
-                                 BOOL menu_bar, POPUPMENU *menu )
+static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, INT org_x, INT org_y,
+                                 BOOL menu_bar, struct menu *menu )
 {
     UINT check_bitmap_width = get_system_metrics( SM_CXMENUCHECK );
     UINT arrow_bitmap_width;
@@ -2070,11 +2115,11 @@ static void calc_menu_item_size( HDC hdc, MENUITEM *item, HWND owner, INT org_x,
 }
 
 /* Calculate the size of the menu bar */
-static void calc_menu_bar_size( HDC hdc, RECT *rect, POPUPMENU *menu, HWND owner )
+static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND owner )
 {
     UINT start, i, help_pos;
     int org_x, org_y;
-    MENUITEM *item;
+    struct menu_item *item;
 
     if (!rect || !menu || !menu->nItems) return;
 
@@ -2136,7 +2181,7 @@ static void calc_menu_bar_size( HDC hdc, RECT *rect, POPUPMENU *menu, HWND owner
 
 UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     RECT rect_bar;
     HDC hdc;
 
@@ -2165,8 +2210,8 @@ static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_width, UINT arrow_h
     NtGdiDeleteObjectApp( mem_hdc );
 }
 
-static void draw_bitmap_item( HDC hdc, MENUITEM *item, const RECT *rect,
-                              POPUPMENU *menu, HWND owner, UINT odaction )
+static void draw_bitmap_item( HDC hdc, struct menu_item *item, const RECT *rect,
+                              struct menu *menu, HWND owner, UINT odaction )
 {
     int w = rect->right - rect->left;
     int h = rect->bottom - rect->top;
@@ -2300,8 +2345,8 @@ got_bitmap:
 }
 
 /* Draw a single menu item */
-static void draw_menu_item( HWND hwnd, POPUPMENU *menu, HWND owner, HDC hdc,
-                            MENUITEM *item, BOOL menu_bar, UINT odaction )
+static void draw_menu_item( HWND hwnd, struct menu *menu, HWND owner, HDC hdc,
+                            struct menu_item *item, BOOL menu_bar, UINT odaction )
 {
     UINT arrow_width = 0, arrow_height = 0;
     HRGN old_clip = NULL, clip;
@@ -2655,7 +2700,7 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
 {
     BOOL flat_menu = FALSE;
     HFONT prev_font = 0;
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT i, retvalue;
 
     NtUserSystemParametersInfo( SPI_GETFLATMENU, 0, &flat_menu, 0 );
@@ -2696,7 +2741,7 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
     return retvalue;
 }
 
-static UINT get_scroll_arrow_height( const POPUPMENU *menu )
+static UINT get_scroll_arrow_height( const struct menu *menu )
 {
     return menucharsize.cy + 4;
 }
@@ -2738,7 +2783,7 @@ static void draw_scroll_arrow( HDC hdc, int x, int top, int height, BOOL up, BOO
     }
 }
 
-static void draw_scroll_arrows( const POPUPMENU *menu, HDC hdc )
+static void draw_scroll_arrows( const struct menu *menu, HDC hdc )
 {
     UINT full_height = get_scroll_arrow_height( menu );
     UINT arrow_height = full_height / 3;
@@ -2770,7 +2815,7 @@ static int frame_rect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 static void draw_popup_menu( HWND hwnd, HDC hdc, HMENU hmenu )
 {
     HBRUSH prev_hrush, brush = get_sys_color_brush( COLOR_MENU );
-    POPUPMENU *menu = unsafe_menu_ptr( hmenu );
+    struct menu *menu = unsafe_menu_ptr( hmenu );
     RECT rect;
 
     TRACE( "wnd=%p dc=%p menu=%p\n", hwnd, hdc, hmenu );
@@ -2802,7 +2847,7 @@ static void draw_popup_menu( HWND hwnd, HDC hdc, HMENU hmenu )
                 /* draw menu items */
                 if (menu->nItems)
                 {
-                    MENUITEM *item;
+                    struct menu_item *item;
                     UINT u;
 
                     item = menu->items;
@@ -2887,11 +2932,11 @@ HWND is_menu_active(void)
 }
 
 /* Calculate the size of a popup menu */
-static void calc_popup_menu_size( POPUPMENU *menu, UINT max_height )
+static void calc_popup_menu_size( struct menu *menu, UINT max_height )
 {
     BOOL textandbmp = FALSE, multi_col = FALSE;
     int org_x, org_y, max_tab, max_tab_width;
-    MENUITEM *item;
+    struct menu_item *item;
     UINT start, i;
     HDC hdc;
 
@@ -2983,7 +3028,7 @@ static void calc_popup_menu_size( POPUPMENU *menu, UINT max_height )
 static BOOL show_popup( HWND owner, HMENU hmenu, UINT id, UINT flags,
                         int x, int y, INT xanchor, INT yanchor )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     HMONITOR monitor;
     MONITORINFO info;
     UINT max_height;
@@ -3048,11 +3093,11 @@ static BOOL show_popup( HWND owner, HMENU hmenu, UINT id, UINT flags,
     return TRUE;
 }
 
-static void ensure_menu_item_visible( POPUPMENU *menu, UINT index, HDC hdc )
+static void ensure_menu_item_visible( struct menu *menu, UINT index, HDC hdc )
 {
     if (menu->bScrolling)
     {
-        MENUITEM *item = &menu->items[index];
+        struct menu_item *item = &menu->items[index];
         UINT prev_pos = menu->nScrollPos;
         const RECT *rc = &menu->items_rect;
         UINT scroll_height = rc->bottom - rc->top;
@@ -3093,7 +3138,7 @@ static void ensure_menu_item_visible( POPUPMENU *menu, UINT index, HDC hdc )
 
 static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, HMENU topmenu )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     HDC hdc;
 
     TRACE( "owner %p menu %p index 0x%04x select 0x%04x\n", owner, hmenu, index, send_select );
@@ -3133,7 +3178,7 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
         }
         if (send_select)
         {
-            MENUITEM *ip = &menu->items[menu->FocusedItem];
+            struct menu_item *ip = &menu->items[menu->FocusedItem];
             send_message( owner, WM_MENUSELECT,
                           MAKEWPARAM( ip->fType & MF_POPUP ? index: ip->wID,
                                       ip->fType | ip->fState | (menu->wFlags & MF_SYSMENU) ),
@@ -3147,8 +3192,8 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
             int pos = find_submenu( &topmenu, hmenu );
             if (pos != NO_SELECTED_ITEM)
             {
-                POPUPMENU *ptm = unsafe_menu_ptr( topmenu );
-                MENUITEM *ip = &ptm->items[pos];
+                struct menu *ptm = unsafe_menu_ptr( topmenu );
+                struct menu_item *ip = &ptm->items[pos];
                 send_message( owner, WM_MENUSELECT,
                               MAKEWPARAM( pos, ip->fType | ip->fState | (ptm->wFlags & MF_SYSMENU) ),
                               (LPARAM)topmenu );
@@ -3167,7 +3212,7 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
  */
 static void move_selection( HWND owner, HMENU hmenu, INT offset )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     int i;
 
     TRACE( "hwnd %p hmenu %p off 0x%04x\n", owner, hmenu, offset );
@@ -3196,14 +3241,14 @@ static void move_selection( HWND owner, HMENU hmenu, INT offset )
 
 static void hide_sub_popups( HWND owner, HMENU hmenu, BOOL send_select, UINT flags )
 {
-    POPUPMENU *menu = unsafe_menu_ptr( hmenu );
+    struct menu *menu = unsafe_menu_ptr( hmenu );
 
     TRACE( "owner=%p hmenu=%p 0x%04x\n", owner, hmenu, send_select );
 
     if (menu && top_popup)
     {
-        POPUPMENU *submenu;
-        MENUITEM *item;
+        struct menu *submenu;
+        struct menu_item *item;
         HMENU hsubmenu;
 
         if (menu->FocusedItem == NO_SELECTED_ITEM) return;
@@ -3250,7 +3295,7 @@ static BOOL init_popup( HWND owner, HMENU hmenu, UINT flags )
 {
     UNICODE_STRING class_name = { .Buffer = MAKEINTRESOURCEW( POPUPMENU_CLASS_ATOM ) };
     DWORD ex_style = 0;
-    POPUPMENU *menu;
+    struct menu *menu;
 
     TRACE( "owner %p hmenu %p\n", owner, hmenu );
 
@@ -3283,8 +3328,8 @@ static BOOL init_popup( HWND owner, HMENU hmenu, UINT flags )
  */
 static HMENU show_sub_popup( HWND owner, HMENU hmenu, BOOL select_first, UINT flags )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
+    struct menu *menu;
+    struct menu_item *item;
     RECT rect;
     HDC hdc;
 
@@ -3385,8 +3430,8 @@ static HMENU show_sub_popup( HWND owner, HMENU hmenu, BOOL select_first, UINT fl
  */
 static INT exec_focused_item( MTRACKER *pmt, HMENU handle, UINT flags )
 {
-    MENUITEM *item;
-    POPUPMENU *menu = unsafe_menu_ptr( handle );
+    struct menu_item *item;
+    struct menu *menu = unsafe_menu_ptr( handle );
 
     TRACE( "%p hmenu=%p\n", pmt, handle );
 
@@ -3414,7 +3459,7 @@ static INT exec_focused_item( MTRACKER *pmt, HMENU handle, UINT flags )
                                MAKELPARAM( (INT16)pmt->pt.x, (INT16)pmt->pt.y ));
         else
         {
-            POPUPMENU *topmenu = unsafe_menu_ptr( pmt->hTopMenu );
+            struct menu *topmenu = unsafe_menu_ptr( pmt->hTopMenu );
             DWORD style = menu->dwStyle | (topmenu ? topmenu->dwStyle : 0);
 
             if (style & MNS_NOTIFYBYPOS)
@@ -3435,8 +3480,8 @@ static INT exec_focused_item( MTRACKER *pmt, HMENU handle, UINT flags )
  */
 static void switch_tracking( MTRACKER *pmt, HMENU pt_menu, UINT id, UINT flags )
 {
-    POPUPMENU *ptmenu = unsafe_menu_ptr( pt_menu );
-    POPUPMENU *topmenu = unsafe_menu_ptr( pmt->hTopMenu );
+    struct menu *ptmenu = unsafe_menu_ptr( pt_menu );
+    struct menu *topmenu = unsafe_menu_ptr( pmt->hTopMenu );
 
     TRACE( "%p hmenu=%p 0x%04x\n", pmt, pt_menu, id );
 
@@ -3462,7 +3507,7 @@ static BOOL menu_button_down( MTRACKER *pmt, UINT message, HMENU pt_menu, UINT f
 
     if (pt_menu)
     {
-        POPUPMENU *ptmenu = unsafe_menu_ptr( pt_menu );
+        struct menu *ptmenu = unsafe_menu_ptr( pt_menu );
         enum hittest ht = ht_item;
         UINT pos;
 
@@ -3505,7 +3550,7 @@ static INT menu_button_up( MTRACKER *pmt, HMENU pt_menu, UINT flags )
 
     if (pt_menu)
     {
-        POPUPMENU *ptmenu = unsafe_menu_ptr( pt_menu );
+        struct menu *ptmenu = unsafe_menu_ptr( pt_menu );
         UINT pos;
 
         if (IS_SYSTEM_MENU( ptmenu ))
@@ -3548,7 +3593,7 @@ static INT menu_button_up( MTRACKER *pmt, HMENU pt_menu, UINT flags )
  */
 void end_menu( HWND hwnd )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     BOOL call_end = FALSE;
     if (top_popup_hmenu && (menu = grab_menu_ptr( top_popup_hmenu )))
     {
@@ -3566,7 +3611,7 @@ void end_menu( HWND hwnd )
 static BOOL menu_mouse_move( MTRACKER* pmt, HMENU pt_menu, UINT flags )
 {
     UINT id = NO_SELECTED_ITEM;
-    POPUPMENU *ptmenu = NULL;
+    struct menu *ptmenu = NULL;
 
     if (pt_menu)
     {
@@ -3591,7 +3636,7 @@ static BOOL menu_mouse_move( MTRACKER* pmt, HMENU pt_menu, UINT flags )
 
 static LRESULT do_next_menu( MTRACKER *pmt, UINT vk, UINT flags )
 {
-    POPUPMENU *menu = unsafe_menu_ptr( pmt->hTopMenu );
+    struct menu *menu = unsafe_menu_ptr( pmt->hTopMenu );
     BOOL at_end = FALSE;
 
     if (vk == VK_LEFT && menu->FocusedItem == 0)
@@ -3713,8 +3758,8 @@ static LRESULT do_next_menu( MTRACKER *pmt, UINT vk, UINT flags )
  */
 static HMENU get_sub_popup( HMENU hmenu )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
+    struct menu *menu;
+    struct menu_item *item;
 
     menu = unsafe_menu_ptr( hmenu );
 
@@ -3737,7 +3782,7 @@ static BOOL menu_key_escape( MTRACKER *pmt, UINT flags )
 
     if (pmt->hCurrentMenu != pmt->hTopMenu)
     {
-        POPUPMENU *menu = unsafe_menu_ptr( pmt->hCurrentMenu );
+        struct menu *menu = unsafe_menu_ptr( pmt->hCurrentMenu );
 
         if (menu->wFlags & MF_POPUP)
         {
@@ -3763,7 +3808,7 @@ static BOOL menu_key_escape( MTRACKER *pmt, UINT flags )
 
 static UINT get_start_of_next_column( HMENU handle )
 {
-    POPUPMENU *menu = unsafe_menu_ptr( handle );
+    struct menu *menu = unsafe_menu_ptr( handle );
     UINT i;
 
     if (!menu) return NO_SELECTED_ITEM;
@@ -3783,7 +3828,7 @@ static UINT get_start_of_next_column( HMENU handle )
 
 static UINT get_start_of_prev_column( HMENU handle )
 {
-    POPUPMENU *menu = unsafe_menu_ptr( handle );
+    struct menu *menu = unsafe_menu_ptr( handle );
     UINT i;
 
     if (!menu) return NO_SELECTED_ITEM;
@@ -3843,7 +3888,7 @@ static BOOL suspend_popup( MTRACKER *pmt, UINT message )
 
 static void menu_key_left( MTRACKER *pmt, UINT flags, UINT msg )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     HMENU tmp_menu, prev_menu;
     UINT  prevcol;
 
@@ -3885,7 +3930,7 @@ static void menu_key_left( MTRACKER *pmt, UINT flags, UINT msg )
 
 static void menu_right_key( MTRACKER *pmt, UINT flags, UINT msg )
 {
-    POPUPMENU *menu = unsafe_menu_ptr( pmt->hTopMenu );
+    struct menu *menu = unsafe_menu_ptr( pmt->hTopMenu );
     HMENU tmp_menu;
     UINT  nextcol;
 
@@ -3937,7 +3982,7 @@ static void menu_right_key( MTRACKER *pmt, UINT flags, UINT msg )
  */
 static HMENU menu_from_point( HMENU handle, POINT pt )
 {
-   POPUPMENU *menu = unsafe_menu_ptr( handle );
+   struct menu *menu = unsafe_menu_ptr( handle );
    UINT item = menu->FocusedItem;
    HMENU ret = 0;
 
@@ -3975,8 +4020,8 @@ static UINT find_item_by_key( HWND owner, HMENU hmenu, WCHAR key, BOOL force_men
 
     if (hmenu)
     {
-        POPUPMENU *menu = unsafe_menu_ptr( hmenu );
-        MENUITEM *item = menu->items;
+        struct menu *menu = unsafe_menu_ptr( hmenu );
+        struct menu_item *item = menu->items;
         LRESULT menuchar;
 
         if (!force_menu_char)
@@ -4020,7 +4065,7 @@ static BOOL track_menu_impl( HMENU hmenu, UINT flags, int x, int y, HWND hwnd, c
     BOOL enter_idle_sent = FALSE;
     int executed_menu_id = -1;
     HWND capture_win;
-    POPUPMENU *menu;
+    struct menu *menu;
     BOOL remove;
     MTRACKER mt;
     MSG msg;
@@ -4331,7 +4376,7 @@ static BOOL track_menu( HMENU handle, UINT flags, int x, int y, HWND hwnd, const
 
 static BOOL init_tracking( HWND hwnd, HMENU handle, BOOL is_popup, UINT flags )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
 
     TRACE( "hwnd=%p hmenu=%p\n", hwnd, handle );
 
@@ -4461,7 +4506,7 @@ track_menu:
 BOOL WINAPI NtUserTrackPopupMenuEx( HMENU handle, UINT flags, INT x, INT y, HWND hwnd,
                                     TPMPARAMS *params )
 {
-    POPUPMENU *menu;
+    struct menu *menu;
     BOOL ret = FALSE;
 
     TRACE( "hmenu %p flags %04x (%d,%d) hwnd %p params %p rect %s\n",
@@ -4519,7 +4564,7 @@ BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilit
 {
     HMENU handle_menu;
     UINT focused_item;
-    POPUPMENU *menu;
+    struct menu *menu;
     UINT pos;
 
     TRACE( "(%p, %p, %04x, %04x);\n", hwnd, handle, item, hilite );
@@ -4544,7 +4589,7 @@ BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilit
 BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *info )
 {
     HMENU hmenu = NULL;
-    POPUPMENU *menu;
+    struct menu *menu;
     ATOM class_atom;
 
     TRACE( "(%p,0x%08x,0x%08x,%p)\n", hwnd, id, item, info );
@@ -4613,7 +4658,7 @@ BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *in
         info->fFocused = menu->FocusedItem == item - 1;
         if (info->fFocused && (menu->items[item - 1].fType & MF_POPUP))
         {
-            POPUPMENU *hwnd_menu = grab_menu_ptr( menu->items[item - 1].hSubMenu );
+            struct menu *hwnd_menu = grab_menu_ptr( menu->items[item - 1].hSubMenu );
             if (hwnd_menu)
             {
                 info->hwndMenu = hwnd_menu->hWnd;
