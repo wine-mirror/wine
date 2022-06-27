@@ -2451,51 +2451,44 @@ wchar_t* __cdecl wcscat( wchar_t *dst, const wchar_t *src )
 }
 
 /*********************************************************************
- *  wcsncat_s (MSVCRT.@)
- *
+ *           wcsncat_s (MSVCRT.@)
  */
-INT CDECL wcsncat_s(wchar_t *dst, size_t elem,
-        const wchar_t *src, size_t count)
+INT CDECL wcsncat_s(wchar_t *dst, size_t elem, const wchar_t *src, size_t count)
 {
-    size_t srclen;
-    wchar_t dststart;
-    INT ret = 0;
+    size_t i, j;
 
     if (!MSVCRT_CHECK_PMT(dst != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(elem > 0)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(src != NULL || count == 0)) return EINVAL;
-
-    if (count == 0)
-        return 0;
-
-    for (dststart = 0; dststart < elem; dststart++)
+    if (count == 0) return 0;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
     {
-        if (dst[dststart] == '\0')
-            break;
-    }
-    if (dststart == elem)
-    {
-        MSVCRT_INVALID_PMT("dst[elem] is not NULL terminated\n", EINVAL);
+        *dst = 0;
         return EINVAL;
     }
 
-    if (count == _TRUNCATE)
+    for (i = 0; i < elem; i++) if (!dst[i]) break;
+
+    if (i == elem)
     {
-        srclen = wcslen(src);
-        if (srclen >= (elem - dststart))
+        MSVCRT_INVALID_PMT("dst[elem] is not NULL terminated\n", EINVAL);
+        *dst = 0;
+        return EINVAL;
+    }
+
+    for (j = 0; (j + i) < elem; j++)
+    {
+        if(count == _TRUNCATE && j + i == elem - 1)
         {
-            srclen = elem - dststart - 1;
-            ret = STRUNCATE;
+            dst[j + i] = '\0';
+            return STRUNCATE;
+        }
+        if(j == count || (dst[j + i] = src[j]) == '\0')
+        {
+            dst[j + i] = '\0';
+            return 0;
         }
     }
-    else
-        srclen = min(wcslen(src), count);
-    if (srclen < (elem - dststart))
-    {
-        memcpy(&dst[dststart], src, srclen*sizeof(wchar_t));
-        dst[dststart+srclen] = '\0';
-        return ret;
-    }
+
     MSVCRT_INVALID_PMT("dst[elem] is too small", ERANGE);
     dst[0] = '\0';
     return ERANGE;

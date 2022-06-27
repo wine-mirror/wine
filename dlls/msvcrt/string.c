@@ -1393,32 +1393,38 @@ int CDECL strncat_s( char* dst, size_t elem, const char* src, size_t count )
 
     if (!MSVCRT_CHECK_PMT(dst != 0)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(elem != 0)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(src != 0))
+    if (count == 0) return 0;
+
+    if (!MSVCRT_CHECK_PMT(src != NULL))
     {
-        dst[0] = '\0';
+        *dst = 0;
         return EINVAL;
     }
 
-    for(i = 0; i < elem; i++)
+    for (i = 0; i < elem; i++) if (!dst[i]) break;
+
+    if (i == elem)
     {
-        if(dst[i] == '\0')
+        MSVCRT_INVALID_PMT("dst[elem] is not NULL terminated\n", EINVAL);
+        *dst = 0;
+        return EINVAL;
+    }
+
+    for (j = 0; (j + i) < elem; j++)
+    {
+        if(count == _TRUNCATE && j + i == elem - 1)
         {
-            for(j = 0; (j + i) < elem; j++)
-            {
-                if(count == _TRUNCATE && j + i == elem - 1)
-                {
-                    dst[j + i] = '\0';
-                    return STRUNCATE;
-                }
-                if(j == count || (dst[j + i] = src[j]) == '\0')
-                {
-                    dst[j + i] = '\0';
-                    return 0;
-                }
-            }
+            dst[j + i] = '\0';
+            return STRUNCATE;
+        }
+        if(j == count || (dst[j + i] = src[j]) == '\0')
+        {
+            dst[j + i] = '\0';
+            return 0;
         }
     }
-    /* Set the first element to 0, not the first element after the skipped part */
+
+    MSVCRT_INVALID_PMT("dst[elem] is too small", ERANGE);
     dst[0] = '\0';
     return ERANGE;
 }

@@ -65,6 +65,7 @@ static int (__cdecl *p_strcpy)(char *dst, const char *src);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *p_strncpy_s)(char *dst, size_t size, const char *src, size_t count);
+static int (__cdecl *p_strncat_s)(char *dst, size_t elem, const char *src, size_t count);
 static int (__cdecl *p_mbscat_s)(unsigned char *dst, size_t size, const unsigned char *src);
 static int (__cdecl *p_mbsnbcat_s)(unsigned char *dst, size_t size, const unsigned char *src, size_t count);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
@@ -2603,6 +2604,53 @@ static void test__strlwr_s(void)
     ok(ret == 0, "Expected _strlwr_s to return 0, got %d\n", ret);
 }
 
+static void test_strncat_s(void)
+{
+    int ret;
+    char dst[4];
+    char src[4];
+
+    if (!p_wcsncat_s)
+    {
+        win_skip("skipping wcsncat_s tests\n");
+        return;
+    }
+
+    strcpy(src, "abc");
+    strcpy(dst, "a");
+    ret = p_strncat_s(NULL, 4, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ret = p_strncat_s(dst, 0, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ok(dst[0] == 'a', "dst %x\n", dst[0]);
+    ret = p_strncat_s(dst, 0, src, _TRUNCATE);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ret = p_strncat_s(dst, 4, NULL, 1);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ok(!dst[0], "dst %x\n", dst[0]);
+    ret = p_strncat_s(NULL, 4, src, 0);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    strcpy(dst, "a");
+    ret = p_strncat_s(dst, 4, NULL, 0);
+    ok(ret == 0, "err = %d\n", ret);
+    ok(dst[0] == 'a', "dst %x\n", dst[0]);
+
+    dst[0] = 0;
+    ret = p_strncat_s(dst, 2, src, 4);
+    ok(ret == ERANGE, "err = %d\n", ret);
+
+    dst[0] = 0;
+    ret = p_strncat_s(dst, 2, src, _TRUNCATE);
+    ok(ret == STRUNCATE, "err = %d\n", ret);
+    ok(dst[0] == 'a' && dst[1] == 0, "dst is %s\n", wine_dbgstr_a(dst));
+
+    strcpy(dst, "abc");
+    dst[3] = 'd';
+    ret = p_strncat_s(dst, 4, src, 4);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ok(!dst[0], "dst %x\n", dst[0]);
+}
+
 static void test_wcsncat_s(void)
 {
     int ret;
@@ -2616,15 +2664,24 @@ static void test_wcsncat_s(void)
     }
 
     wcscpy(src, L"abc");
-    dst[0] = 0;
+    wcscpy(dst, L"a");
     ret = p_wcsncat_s(NULL, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
     ret = p_wcsncat_s(dst, 0, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
+    ok(dst[0] == 'a', "dst %x\n", dst[0]);
     ret = p_wcsncat_s(dst, 0, src, _TRUNCATE);
     ok(ret == EINVAL, "err = %d\n", ret);
+    ok(dst[0] == 'a', "dst %x\n", dst[0]);
+    ret = p_wcsncat_s(dst, 4, NULL, 1);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    ok(!dst[0], "dst %x\n", dst[0]);
+    ret = p_wcsncat_s(NULL, 4, src, 0);
+    ok(ret == EINVAL, "err = %d\n", ret);
+    wcscpy(dst, L"a");
     ret = p_wcsncat_s(dst, 4, NULL, 0);
     ok(ret == 0, "err = %d\n", ret);
+    ok(dst[0] == 'a', "dst %x\n", dst[0]);
 
     dst[0] = 0;
     ret = p_wcsncat_s(dst, 2, src, 4);
@@ -2639,6 +2696,7 @@ static void test_wcsncat_s(void)
     dst[3] = 'd';
     ret = p_wcsncat_s(dst, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
+    ok(!dst[0], "dst %x\n", dst[0]);
 }
 
 static void test__mbsnbcat_s(void)
@@ -4549,6 +4607,7 @@ START_TEST(string)
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_strncpy_s = (void *)GetProcAddress( hMsvcrt, "strncpy_s" );
+    p_strncat_s = (void *)GetProcAddress( hMsvcrt, "strncat_s" );
     p_mbscat_s = (void*)GetProcAddress( hMsvcrt, "_mbscat_s" );
     p_mbsnbcat_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
@@ -4623,6 +4682,7 @@ START_TEST(string)
     test_memcpy_s();
     test_memmove_s();
     test_strcat_s();
+    test_strncat_s();
     test__mbscat_s();
     test__mbsnbcpy_s();
     test__mbscpy_s();
