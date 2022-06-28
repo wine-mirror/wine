@@ -3585,7 +3585,8 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     for (i = nFirst; i <= nLast; i++)
 	LISTVIEW_SetItemState(infoPtr,i,&item);
 
-    LISTVIEW_SetOwnerDataState(infoPtr, nFirst, nLast, &item);
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+        LISTVIEW_SetOwnerDataState(infoPtr, nFirst, nLast, &item);
 
     if (!IsWindow(hwndSelf))
         return FALSE;
