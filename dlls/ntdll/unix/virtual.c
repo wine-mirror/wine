@@ -4080,47 +4080,12 @@ static int get_free_mem_state_callback( void *start, SIZE_T size, void *arg )
     return 1;
 }
 
-/* get basic information about a memory block */
-static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
-                                       MEMORY_BASIC_INFORMATION *info,
-                                       SIZE_T len, SIZE_T *res_len )
+static NTSTATUS fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFORMATION *info )
 {
-    struct file_view *view;
     char *base, *alloc_base = 0, *alloc_end = working_set_limit;
     struct wine_rb_entry *ptr;
+    struct file_view *view;
     sigset_t sigset;
-
-    if (len < sizeof(MEMORY_BASIC_INFORMATION))
-        return STATUS_INFO_LENGTH_MISMATCH;
-
-    if (process != NtCurrentProcess())
-    {
-        NTSTATUS status;
-        apc_call_t call;
-        apc_result_t result;
-
-        memset( &call, 0, sizeof(call) );
-
-        call.virtual_query.type = APC_VIRTUAL_QUERY;
-        call.virtual_query.addr = wine_server_client_ptr( addr );
-        status = server_queue_process_apc( process, &call, &result );
-        if (status != STATUS_SUCCESS) return status;
-
-        if (result.virtual_query.status == STATUS_SUCCESS)
-        {
-            info->BaseAddress       = wine_server_get_ptr( result.virtual_query.base );
-            info->AllocationBase    = wine_server_get_ptr( result.virtual_query.alloc_base );
-            info->RegionSize        = result.virtual_query.size;
-            info->Protect           = result.virtual_query.prot;
-            info->AllocationProtect = result.virtual_query.alloc_prot;
-            info->State             = (DWORD)result.virtual_query.state << 12;
-            info->Type              = (DWORD)result.virtual_query.alloc_type << 16;
-            if (info->RegionSize != result.virtual_query.size)  /* truncated */
-                return STATUS_INVALID_PARAMETER;  /* FIXME */
-            if (res_len) *res_len = sizeof(*info);
-        }
-        return result.virtual_query.status;
-    }
 
     base = ROUND_ADDR( addr, page_mask );
 
@@ -4194,6 +4159,79 @@ static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
         else info->Type = MEM_PRIVATE;
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+
+    return STATUS_SUCCESS;
+}
+
+/* get basic information about a memory block */
+static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
+                                       MEMORY_BASIC_INFORMATION *info,
+                                       SIZE_T len, SIZE_T *res_len )
+{
+    NTSTATUS status;
+
+    if (len < sizeof(*info))
+        return STATUS_INFO_LENGTH_MISMATCH;
+
+    if (process != NtCurrentProcess())
+    {
+        NTSTATUS status;
+        apc_call_t call;
+        apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
+
+        call.virtual_query.type = APC_VIRTUAL_QUERY;
+        call.virtual_query.addr = wine_server_client_ptr( addr );
+        status = server_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_query.status == STATUS_SUCCESS)
+        {
+            info->BaseAddress       = wine_server_get_ptr( result.virtual_query.base );
+            info->AllocationBase    = wine_server_get_ptr( result.virtual_query.alloc_base );
+            info->RegionSize        = result.virtual_query.size;
+            info->Protect           = result.virtual_query.prot;
+            info->AllocationProtect = result.virtual_query.alloc_prot;
+            info->State             = (DWORD)result.virtual_query.state << 12;
+            info->Type              = (DWORD)result.virtual_query.alloc_type << 16;
+            if (info->RegionSize != result.virtual_query.size)  /* truncated */
+                return STATUS_INVALID_PARAMETER;  /* FIXME */
+            if (res_len) *res_len = sizeof(*info);
+        }
+        return result.virtual_query.status;
+    }
+
+    if ((status = fill_basic_memory_info( addr, info ))) return status;
+
+    if (res_len) *res_len = sizeof(*info);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY_REGION_INFORMATION *info,
+        SIZE_T len, SIZE_T *res_len )
+{
+    MEMORY_BASIC_INFORMATION basic_info;
+    NTSTATUS status;
+
+    if (len < FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize))
+        return STATUS_INFO_LENGTH_MISMATCH;
+
+    if (process != NtCurrentProcess())
+    {
+        FIXME("Unimplemented for other processes.\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if ((status = fill_basic_memory_info( addr, &basic_info ))) return status;
+
+    info->AllocationBase = basic_info.AllocationBase;
+    info->AllocationProtect = basic_info.AllocationProtect;
+    info->RegionType = 0; /* FIXME */
+    if (len >= FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize))
+        info->RegionSize = basic_info.RegionSize;
+    if (len >= FIELD_OFFSET(MEMORY_REGION_INFORMATION, PartitionId))
+        info->CommitSize = basic_info.State == MEM_COMMIT ? basic_info.RegionSize : 0;
 
     if (res_len) *res_len = sizeof(*info);
     return STATUS_SUCCESS;
@@ -4370,6 +4408,9 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
         case MemoryMappedFilenameInformation:
             return get_memory_section_name( process, addr, buffer, len, res_len );
+
+        case MemoryRegionInformation:
+            return get_memory_region_info( process, addr, buffer, len, res_len );
 
         case MemoryWineUnixFuncs:
         case MemoryWineUnixWow64Funcs:

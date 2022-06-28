@@ -422,6 +422,29 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         break;
     }
 
+    case MemoryRegionInformation: /* MEMORY_REGION_INFORMATION */
+    {
+        if (len >= sizeof(MEMORY_REGION_INFORMATION32))
+        {
+            MEMORY_REGION_INFORMATION info;
+            MEMORY_REGION_INFORMATION32 *info32 = ptr;
+
+            if (!(status = NtQueryVirtualMemory( handle, addr, class, &info, sizeof(info), &res_len )))
+            {
+                info32->AllocationBase = PtrToUlong( info.AllocationBase );
+                info32->AllocationProtect = info.AllocationProtect;
+                info32->RegionType = info.RegionType;
+                info32->RegionSize = info.RegionSize;
+                info32->CommitSize = info.CommitSize;
+                info32->PartitionId = info.PartitionId;
+                info32->NodePreference = info.NodePreference;
+            }
+        }
+        else status = STATUS_INFO_LENGTH_MISMATCH;
+        res_len = sizeof(MEMORY_REGION_INFORMATION32);
+        break;
+    }
+
     case MemoryWorkingSetExInformation:  /* MEMORY_WORKING_SET_EX_INFORMATION */
     {
         MEMORY_WORKING_SET_EX_INFORMATION32 *info32 = ptr;

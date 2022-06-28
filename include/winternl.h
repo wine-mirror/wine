@@ -1971,6 +1971,30 @@ typedef struct _MEMORY_WORKING_SET_EX_INFORMATION {
     MEMORY_WORKING_SET_EX_BLOCK VirtualAttributes;
 } MEMORY_WORKING_SET_EX_INFORMATION, *PMEMORY_WORKING_SET_EX_INFORMATION;
 
+typedef struct _MEMORY_REGION_INFORMATION
+{
+    PVOID AllocationBase;
+    ULONG AllocationProtect;
+    union
+    {
+        ULONG RegionType;
+        struct
+        {
+            ULONG Private : 1;
+            ULONG MappedDataFile : 1;
+            ULONG MappedImage : 1;
+            ULONG MappedPageFile : 1;
+            ULONG MappedPhysical : 1;
+            ULONG DirectMapped : 1;
+            ULONG Reserved : 26;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    SIZE_T RegionSize;
+    SIZE_T CommitSize;
+    ULONG_PTR PartitionId;
+    ULONG_PTR NodePreference;
+} MEMORY_REGION_INFORMATION, *PMEMORY_REGION_INFORMATION;
+
 typedef enum _MUTANT_INFORMATION_CLASS
 {
     MutantBasicInformation

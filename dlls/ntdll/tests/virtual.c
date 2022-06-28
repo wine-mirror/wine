@@ -1574,6 +1574,102 @@ static void test_prefetch(void)
         "NtSetInformationVirtualMemory unexpected status on 2 page-aligned entries: %08lx\n", status);
 }
 
+static void test_query_region_information(void)
+{
+    MEMORY_REGION_INFORMATION info;
+    LARGE_INTEGER offset;
+    SIZE_T len, size;
+    NTSTATUS status;
+    HANDLE mapping;
+    void *ptr;
+
+    size = 0x10000;
+    ptr = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &ptr, 0, &size, MEM_RESERVE, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+#ifdef _WIN64
+    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info,
+            FIELD_OFFSET(MEMORY_REGION_INFORMATION, PartitionId), &len);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info,
+            FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize), &len);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info,
+            FIELD_OFFSET(MEMORY_REGION_INFORMATION, RegionSize), &len);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %08lx.\n", status);
+#endif
+
+    len = 0;
+    memset(&info, 0x11, sizeof(info));
+    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
+    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
+    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
+    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
+    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
+    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
+    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
+    ok(info.RegionSize == size, "Unexpected region size.\n");
+
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    /* Committed size */
+    size = 0x10000;
+    ptr = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &ptr, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    memset(&info, 0x11, sizeof(info));
+    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
+    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
+    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
+    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
+    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
+    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
+    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
+    ok(info.RegionSize == size, "Unexpected region size.\n");
+
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    /* Pagefile mapping */
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
+    ok(mapping != 0, "CreateFileMapping failed\n");
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    memset(&info, 0x11, sizeof(info));
+    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READONLY, "Unexpected protection %lu.\n", info.AllocationProtect);
+    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
+    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
+    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
+    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
+    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
+    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
+    ok(info.RegionSize == 4096, "Unexpected region size.\n");
+
+    status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    NtClose(mapping);
+}
+
 START_TEST(virtual)
 {
     HMODULE mod;
@@ -1619,4 +1715,5 @@ START_TEST(virtual)
     test_prefetch();
     test_user_shared_data();
     test_syscalls();
+    test_query_region_information();
 }
