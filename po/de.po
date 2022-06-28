@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-04-11 16:51+0200\n"
+"PO-Revision-Date: 2022-06-28 13:20+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -4000,10 +4000,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Nicht-schreibbare Eigenschaft '|' kann nicht geändert werden"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' ist kein Map-Objekt"
+msgstr "'this' ist kein |-Objekt"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
@@ -15928,56 +15926,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:67
-#, fuzzy
-#| msgid ""
-#| "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
-#| "f]\n"
-#| "\n"
-#| "  Adds a key to the registry or adds a new value to a given registry "
-#| "key.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to add or, if either [/v] or [/ve] is specified,\n"
-#| "     the key in which to add the new registry data.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  /v <value_name>\n"
-#| "     The name of the registry value to add.\n"
-#| "\n"
-#| "  /ve\n"
-#| "     Add an unnamed registry value. This option modifies the (Default)\n"
-#| "     registry value.\n"
-#| "\n"
-#| "  /t <type>\n"
-#| "     The type of data to add to the registry. If [/t] is specified,\n"
-#| "     <type> must be one of the following:\n"
-#| "\n"
-#| "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-#| "         REG_DWORD | REG_BINARY   | REG_NONE\n"
-#| "\n"
-#| "     If [/t] is not specified, the default data type is REG_SZ.\n"
-#| "\n"
-#| "  /s <separator>\n"
-#| "     The character used to separate strings in REG_MULTI_SZ data.\n"
-#| "     If [/s] is not specified, the default separator is \\0.\n"
-#| "\n"
-#| "  /d <data>\n"
-#| "     The data to add to the new registry value.\n"
-#| "\n"
-#| "  /f\n"
-#| "     Modify the registry without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
@@ -16061,7 +16009,7 @@ msgstr ""
 "     muss <Typ> einer der folgenden sein:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"         REG_DWORD | REG_QWORD    | REG_BINARY   | REG_NONE\n"
 "\n"
 "     Falls [/t] nicht angegeben wird, ist der Standardtyp REG_SZ.\n"
 "\n"
@@ -16511,10 +16459,8 @@ msgstr "&DWORD-Wert"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "&DWORD-Wert"
+msgstr "&QWORD-Wert"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -16615,7 +16561,7 @@ msgstr "Von den Favoriten entfernen"
 
 #: programs/regedit/regedit.rc:318
 msgid "Edit String"
-msgstr "Zeichenfolge editieren"
+msgstr "Zeichenfolge bearbeiten"
 
 #: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:334
 #: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
@@ -16629,7 +16575,7 @@ msgstr "Daten:"
 
 #: programs/regedit/regedit.rc:331
 msgid "Edit DWORD"
-msgstr "DWORD-Wert editieren"
+msgstr "DWORD bearbeiten"
 
 #: programs/regedit/regedit.rc:338
 msgid "Base"
@@ -16645,11 +16591,11 @@ msgstr "Dezimal"
 
 #: programs/regedit/regedit.rc:347
 msgid "Edit Binary"
-msgstr "Binären Wert editieren"
+msgstr "Binären Wert bearbeiten"
 
 #: programs/regedit/regedit.rc:360
 msgid "Edit Multi-String"
-msgstr "Mehrteilige Zeichenfolge editieren"
+msgstr "Mehrteilige Zeichenfolge bearbeiten"
 
 #: programs/regedit/regedit.rc:162
 msgid "Contains commands for working with the whole registry"
@@ -17079,16 +17025,12 @@ msgid "Collapse"
 msgstr "Reduzieren"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Fügt einen neuen 32-Bit-Wert hinzu"
+msgstr "Fügt einen neuen 64-Bit-Wert hinzu"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "DWORD-Wert editieren"
+msgstr "QWORD bearbeiten"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
