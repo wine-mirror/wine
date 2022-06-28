@@ -1062,6 +1062,32 @@ static void test_AtlAxCreateControl(void)
     DestroyWindow(hwnd);
 }
 
+static void test_AtlComModuleGetClassObject(void)
+{
+    _ATL_OBJMAP_ENTRY *null_entry = NULL;
+    _ATL_COM_MODULE module;
+    HRESULT hr;
+    void *ret;
+
+    /* Test NULL module */
+    hr = AtlComModuleGetClassObject(NULL, &GUID_NULL, &IID_NULL, &ret);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Test NULL m_ppAutoObjMapFirst and m_ppAutoObjMapLast */
+    module.cbSize = sizeof(module);
+    module.m_ppAutoObjMapFirst = NULL;
+    module.m_ppAutoObjMapLast = NULL;
+    hr = AtlComModuleGetClassObject(&module, &GUID_NULL, &IID_NULL, &ret);
+    ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
+
+    /* Test m_ppAutoObjMapFirst and m_ppAutoObjMapLast both pointing to a NULL entry */
+    module.cbSize = sizeof(module);
+    module.m_ppAutoObjMapFirst = &null_entry;
+    module.m_ppAutoObjMapLast = &null_entry;
+    hr = AtlComModuleGetClassObject(&module, &GUID_NULL, &IID_NULL, &ret);
+    ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(atl)
 {
     if (!register_class())
@@ -1077,6 +1103,7 @@ START_TEST(atl)
     test_ax_win();
     test_AtlAxAttachControl();
     test_AtlAxCreateControl();
+    test_AtlComModuleGetClassObject();
 
     CoUninitialize();
 }

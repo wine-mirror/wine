@@ -21227,6 +21227,7 @@ wine_fn_config_makefile dlls/atl/tests enable_tests
 wine_fn_config_makefile dlls/atl100 enable_atl100
 wine_fn_config_makefile dlls/atl100/tests enable_tests
 wine_fn_config_makefile dlls/atl110 enable_atl110
+wine_fn_config_makefile dlls/atl110/tests enable_tests
 wine_fn_config_makefile dlls/atl80 enable_atl80
 wine_fn_config_makefile dlls/atl80/tests enable_tests
 wine_fn_config_makefile dlls/atl90 enable_atl90

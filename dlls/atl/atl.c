@@ -482,7 +482,7 @@ HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, 
         return E_INVALIDARG;
 
     for(iter = pm->m_ppAutoObjMapFirst; iter < pm->m_ppAutoObjMapLast; iter++) {
-        if(IsEqualCLSID((*iter)->pclsid, rclsid) && (*iter)->pfnGetClassObject) {
+        if(*iter && IsEqualCLSID((*iter)->pclsid, rclsid) && (*iter)->pfnGetClassObject) {
             if(!(*iter)->pCF)
                 hres = (*iter)->pfnGetClassObject((*iter)->pfnCreateInstance, &IID_IUnknown, (void**)&(*iter)->pCF);
             if((*iter)->pCF)
@@ -507,7 +507,7 @@ HRESULT WINAPI AtlComModuleGetClassObject(_ATL_COM_MODULE *pm, REFCLSID rclsid, 
         return E_INVALIDARG;
 
     for(iter = pm->m_ppAutoObjMapFirst; iter < pm->m_ppAutoObjMapLast; iter++) {
-        if(IsEqualCLSID((*iter)->pclsid, rclsid) && (*iter)->pfnGetClassObject) {
+        if(*iter && IsEqualCLSID((*iter)->pclsid, rclsid) && (*iter)->pfnGetClassObject) {
             if(!(*iter)->pCache->pCF)
                 hres = (*iter)->pfnGetClassObject((*iter)->pfnCreateInstance, &IID_IUnknown, (void**)&(*iter)->pCache->pCF);
             if((*iter)->pCache->pCF)
