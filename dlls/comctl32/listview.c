@@ -3404,7 +3404,14 @@ static BOOL LISTVIEW_DeselectAllSkipItems(LISTVIEW_INFO *infoPtr, RANGES toSkip)
 
     lvItem.state = 0;
     lvItem.stateMask = LVIS_SELECTED;
-    
+
+    /* Only send one deselect all (-1) notification for LVS_OWNERDATA style */
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+    {
+        LISTVIEW_SetItemState(infoPtr, -1, &lvItem);
+        return TRUE;
+    }
+
     /* need to clone the DPA because callbacks can change it */
     if (!(clone = ranges_clone(infoPtr->selectionRanges))) return FALSE;
     iterator_rangesitems(&i, ranges_diff(clone, toSkip));
