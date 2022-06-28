@@ -436,6 +436,7 @@ static INT LISTVIEW_GetStringWidthT(const LISTVIEW_INFO *, LPCWSTR, BOOL);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT, BOOL);
 static UINT LISTVIEW_GetItemState(const LISTVIEW_INFO *, INT, UINT);
 static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, const LVITEMW *);
+static VOID LISTVIEW_SetOwnerDataState(LISTVIEW_INFO *, INT, INT, const LVITEMW *);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
@@ -3563,7 +3564,6 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     INT nFirst = min(infoPtr->nSelectionMark, nItem);
     INT nLast = max(infoPtr->nSelectionMark, nItem);
     HWND hwndSelf = infoPtr->hwndSelf;
-    NMLVODSTATECHANGE nmlv;
     DWORD old_mask;
     LVITEMW item;
     INT i;
@@ -3585,13 +3585,8 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     for (i = nFirst; i <= nLast; i++)
 	LISTVIEW_SetItemState(infoPtr,i,&item);
 
-    ZeroMemory(&nmlv, sizeof(nmlv));
-    nmlv.iFrom = nFirst;
-    nmlv.iTo = nLast;
-    nmlv.uOldState = 0;
-    nmlv.uNewState = item.state;
+    LISTVIEW_SetOwnerDataState(infoPtr, nFirst, nLast, &item);
 
-    notify_hdr(infoPtr, LVN_ODSTATECHANGED, (LPNMHDR)&nmlv);
     if (!IsWindow(hwndSelf))
         return FALSE;
     infoPtr->notify_mask |= old_mask;
@@ -8892,6 +8887,22 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, const PO
     Pt.y -= Origin.y;
 
     return LISTVIEW_MoveIconTo(infoPtr, nItem, &Pt, FALSE);
+}
+
+/* Make sure to also disable per item notifications via the notification mask. */
+static VOID LISTVIEW_SetOwnerDataState(LISTVIEW_INFO *infoPtr, INT nFirst, INT nLast, const LVITEMW *item)
+{
+    NMLVODSTATECHANGE nmlv;
+
+    if (!item) return;
+
+    ZeroMemory(&nmlv, sizeof(nmlv));
+    nmlv.iFrom = nFirst;
+    nmlv.iTo = nLast;
+    nmlv.uOldState = 0;
+    nmlv.uNewState = item->state;
+
+    notify_hdr(infoPtr, LVN_ODSTATECHANGED, (LPNMHDR)&nmlv);
 }
 
 /***
