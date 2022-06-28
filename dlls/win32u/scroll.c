@@ -30,6 +30,20 @@
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
 
+static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
+{
+    struct scroll_info *ret = NULL;
+    user_lock();
+    if (user_callbacks) ret = user_callbacks->get_scroll_info( hwnd, bar, alloc );
+    if (!ret) user_unlock();
+    return ret;
+}
+
+static void release_scroll_info_ptr( struct scroll_info *info )
+{
+    user_unlock();
+}
+
 static BOOL show_scroll_bar( HWND hwnd, int bar, BOOL show_horz, BOOL show_vert )
 {
     ULONG old_style, set_bits = 0, clear_bits = 0;
@@ -80,6 +94,20 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     default:
         return default_window_proc( hwnd, msg, wparam, lparam, ansi );
+    }
+}
+
+void set_standard_scroll_painted( HWND hwnd, int bar, BOOL painted )
+{
+    struct scroll_info *info;
+
+    if (bar != SB_HORZ && bar != SB_VERT)
+        return;
+
+    if ((info = get_scroll_info_ptr( hwnd, bar, FALSE )))
+    {
+        info->painted = painted;
+        release_scroll_info_ptr( info );
     }
 }
 

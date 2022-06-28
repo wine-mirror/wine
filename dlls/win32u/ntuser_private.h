@@ -37,10 +37,10 @@ struct user_callbacks
     NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     void (CDECL *draw_nc_scrollbar)( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical );
     void (CDECL *free_win_ptr)( struct tagWND *win );
+    struct scroll_info *(CDECL *get_scroll_info)( HWND hwnd, INT nBar, BOOL alloc );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     BOOL (CDECL *post_dde_message)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                                     DWORD type );
-    void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
     BOOL (WINAPI *register_imm)( HWND hwnd );
@@ -201,6 +201,19 @@ enum builtin_winprocs
     WINPROC_MESSAGE,
     NB_BUILTIN_WINPROCS,
     NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
+};
+
+/* FIXME: make it private to scroll.c */
+
+/* data for a single scroll bar */
+struct scroll_info
+{
+    INT   curVal;   /* Current scroll-bar value */
+    INT   minVal;   /* Minimum scroll-bar value */
+    INT   maxVal;   /* Maximum scroll-bar value */
+    INT   page;     /* Page size of scroll bar (Win32) */
+    UINT  flags;    /* EnableScrollBar flags */
+    BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
 };
 
 /* FIXME: make it private to class.c */

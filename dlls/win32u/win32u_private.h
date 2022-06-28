@@ -443,6 +443,7 @@ extern BOOL rawinput_device_get_usages( HANDLE handle, USHORT *usage_page, USHOR
 /* scroll.c */
 extern LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                        BOOL ansi ) DECLSPEC_HIDDEN;
+extern void set_standard_scroll_painted( HWND hwnd, int bar, BOOL painted ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
 extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;

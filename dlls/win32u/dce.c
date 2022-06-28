@@ -1188,14 +1188,14 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
         if (whole_rgn) /* NOTE: WM_NCPAINT allows wParam to be 1 */
         {
-            if ((*flags & UPDATE_NONCLIENT) && user_callbacks)
+            if (*flags & UPDATE_NONCLIENT)
             {
                 /* Mark standard scroll bars as not painted before sending WM_NCPAINT */
                 style = get_window_long( hwnd, GWL_STYLE );
                 if (style & WS_HSCROLL)
-                    user_callbacks->set_standard_scroll_painted( hwnd, SB_HORZ, FALSE );
+                    set_standard_scroll_painted( hwnd, SB_HORZ, FALSE );
                 if (style & WS_VSCROLL)
-                    user_callbacks->set_standard_scroll_painted( hwnd, SB_VERT, FALSE );
+                    set_standard_scroll_painted( hwnd, SB_VERT, FALSE );
 
                 send_message( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
             }

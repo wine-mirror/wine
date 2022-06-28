@@ -179,6 +179,6 @@ LRESULT WINAPI USER_ScrollBarProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HID
 void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
                                const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, INT, INT,
                                INT, BOOL) DECLSPEC_HIDDEN;
-void WINAPI SCROLL_SetStandardScrollPainted(HWND hwnd, INT bar, BOOL visible);
+struct scroll_info *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc );
 
 #endif /* __WINE_USER_PRIVATE_H */

@@ -31,16 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
-/* data for a single scroll bar */
-typedef struct
-{
-    INT   curVal;   /* Current scroll-bar value */
-    INT   minVal;   /* Minimum scroll-bar value */
-    INT   maxVal;   /* Maximum scroll-bar value */
-    INT   page;     /* Page size of scroll bar (Win32) */
-    UINT  flags;    /* EnableScrollBar flags */
-    BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
-} SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
+typedef struct scroll_info SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
 
 /* data for window that has (one or two) scroll bars */
 typedef struct
@@ -127,7 +118,7 @@ static inline BOOL SCROLL_ScrollInfoValid( LPCSCROLLINFO info )
  * or NULL if failed (f.i. scroll bar does not exist yet)
  * If alloc is TRUE and the struct does not exist yet, create it.
  */
-static SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
+SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
 {
     SCROLLBAR_INFO *infoPtr = NULL;
     WND *wndPtr = WIN_GetPtr( hwnd );
