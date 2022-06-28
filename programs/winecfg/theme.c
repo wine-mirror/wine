@@ -22,6 +22,7 @@
  *
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -554,15 +555,25 @@ static void set_color_from_theme(const WCHAR *keyName, COLORREF color)
 
 static void do_parse_theme(WCHAR *file)
 {
-    WCHAR keyName[MAX_PATH], keyNameValue[MAX_PATH];
+    WCHAR *keyName, keyNameValue[MAX_PATH];
+    DWORD len, allocLen = 512;
     WCHAR *keyNamePtr = NULL;
     int red = 0, green = 0, blue = 0;
     COLORREF color;
 
     WINE_TRACE("%s\n", wine_dbgstr_w(file));
+    keyName = malloc(sizeof(*keyName) * allocLen);
+    for (;;)
+    {
+        assert(keyName);
+        len = GetPrivateProfileStringW(L"Control Panel\\Colors", NULL, NULL, keyName,
+                                       allocLen, file);
+        if (len < allocLen - 2)
+            break;
 
-    GetPrivateProfileStringW(L"Control Panel\\Colors", NULL, NULL, keyName,
-                             MAX_PATH, file);
+        allocLen *= 2;
+        keyName = realloc(keyName, sizeof(*keyName) * allocLen);
+    }
 
     keyNamePtr = keyName;
     while (*keyNamePtr!=0) {
@@ -580,6 +591,7 @@ static void do_parse_theme(WCHAR *file)
         keyNamePtr+=lstrlenW(keyNamePtr);
         keyNamePtr++;
     }
+    free(keyName);
 }
 
 static void on_theme_install(HWND dialog)
