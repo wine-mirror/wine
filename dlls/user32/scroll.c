@@ -1385,46 +1385,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         break;
 
     case WM_SETFOCUS:
-        {
-            /* Create a caret when a ScrollBar get focus */
-            RECT rect;
-            int arrowSize, thumbSize, thumbPos, vertical;
-            vertical = SCROLL_GetScrollBarRect( hwnd, SB_CTL, &rect,
-                                                &arrowSize, &thumbSize, &thumbPos );
-            if (!vertical)
-            {
-                NtUserCreateCaret( hwnd, (HBITMAP)1, thumbSize - 2, rect.bottom - rect.top - 2 );
-                SetCaretPos(thumbPos+1, rect.top+1);
-            }
-            else
-            {
-                NtUserCreateCaret( hwnd, (HBITMAP)1, rect.right - rect.left - 2, thumbSize - 2);
-                SetCaretPos(rect.top+1, thumbPos+1);
-            }
-            NtUserShowCaret( hwnd );
-        }
-        break;
-
     case WM_KILLFOCUS:
-        {
-            RECT rect;
-            int arrowSize, thumbSize, thumbPos, vertical;
-            vertical = SCROLL_GetScrollBarRect( hwnd, SB_CTL, &rect,&arrowSize, &thumbSize, &thumbPos );
-            if (!vertical){
-                rect.left=thumbPos+1;
-                rect.right=rect.left+thumbSize;
-            }
-            else
-            {
-                rect.top=thumbPos+1;
-                rect.bottom=rect.top+thumbSize;
-            }
-            NtUserHideCaret( hwnd );
-            NtUserInvalidateRect( hwnd, &rect, 0 );
-            DestroyCaret();
-        }
-        break;
-
     case WM_CREATE:
     case WM_ERASEBKGND:
     case WM_GETDLGCODE:
