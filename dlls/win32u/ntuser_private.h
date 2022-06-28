@@ -216,6 +216,12 @@ struct scroll_info
     BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
 };
 
+struct scroll_bar_win_data
+{
+    DWORD magic;
+    struct scroll_info info;
+};
+
 /* FIXME: make it private to class.c */
 typedef struct tagWINDOWPROC
 {

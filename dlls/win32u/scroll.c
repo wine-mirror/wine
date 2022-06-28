@@ -30,6 +30,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
 
+#define SCROLLBAR_MAGIC 0x5c6011ba
+
 static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
 {
     struct scroll_info *ret = NULL;
@@ -82,10 +84,70 @@ static BOOL show_scroll_bar( HWND hwnd, int bar, BOOL show_horz, BOOL show_vert 
     return FALSE; /* no frame changes */
 }
 
+static void create_scroll_bar( HWND hwnd, CREATESTRUCTW *create )
+{
+    struct scroll_info *info = NULL;
+    WND *win;
+
+    TRACE( "hwnd=%p create=%p\n", hwnd, create );
+
+    win = get_win_ptr( hwnd );
+    if (win->cbWndExtra >= sizeof(struct scroll_bar_win_data))
+    {
+        struct scroll_bar_win_data *data = (struct scroll_bar_win_data *)win->wExtra;
+        data->magic = SCROLLBAR_MAGIC;
+        info = &data->info;
+    }
+    else WARN( "Not enough extra data\n" );
+    release_win_ptr( win );
+    if (!info) return;
+
+    if (create->style & WS_DISABLED)
+    {
+        info->flags = ESB_DISABLE_BOTH;
+        TRACE( "Created WS_DISABLED scrollbar\n" );
+    }
+
+    if (create->style & (SBS_SIZEGRIP | SBS_SIZEBOX))
+    {
+        if (create->style & SBS_SIZEBOXTOPLEFTALIGN)
+            NtUserMoveWindow( hwnd, create->x, create->y, get_system_metrics( SM_CXVSCROLL ) + 1,
+                              get_system_metrics( SM_CYHSCROLL ) + 1, FALSE );
+        else if(create->style & SBS_SIZEBOXBOTTOMRIGHTALIGN)
+            NtUserMoveWindow( hwnd, create->x + create->cx - get_system_metrics( SM_CXVSCROLL ) - 1,
+                              create->y + create->cy-get_system_metrics( SM_CYHSCROLL ) - 1,
+                              get_system_metrics( SM_CXVSCROLL ) + 1,
+                              get_system_metrics( SM_CYHSCROLL ) + 1, FALSE );
+    }
+    else if (create->style & SBS_VERT)
+    {
+        if (create->style & SBS_LEFTALIGN)
+            NtUserMoveWindow( hwnd, create->x, create->y, get_system_metrics( SM_CXVSCROLL ) + 1,
+                              create->cy, FALSE );
+        else if (create->style & SBS_RIGHTALIGN)
+            NtUserMoveWindow( hwnd, create->x + create->cx - get_system_metrics( SM_CXVSCROLL ) - 1,
+                              create->y, get_system_metrics( SM_CXVSCROLL ) + 1, create->cy, FALSE );
+    }
+    else  /* SBS_HORZ */
+    {
+        if (create->style & SBS_TOPALIGN)
+            NtUserMoveWindow( hwnd, create->x, create->y, create->cx,
+                              get_system_metrics( SM_CYHSCROLL ) + 1, FALSE );
+        else if (create->style & SBS_BOTTOMALIGN)
+            NtUserMoveWindow( hwnd, create->x,
+                              create->y + create->cy - get_system_metrics( SM_CYHSCROLL ) - 1,
+                              create->cx, get_system_metrics( SM_CYHSCROLL ) + 1, FALSE );
+    }
+}
+
 LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     switch (msg)
     {
+    case WM_CREATE:
+        create_scroll_bar( hwnd, (CREATESTRUCTW *)lparam );
+        return 0;
+
     case WM_ERASEBKGND:
         return 1;
 

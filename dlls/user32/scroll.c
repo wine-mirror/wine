@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
 typedef struct scroll_info SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
+typedef struct scroll_bar_win_data SCROLLBAR_WNDDATA;
 
 /* data for window that has (one or two) scroll bars */
 typedef struct
@@ -39,12 +40,6 @@ typedef struct
     SCROLLBAR_INFO horz;
     SCROLLBAR_INFO vert;
 } WINSCROLLBAR_INFO, *LPWINSCROLLBAR_INFO;
-
-typedef struct
-{
-    DWORD magic;
-    SCROLLBAR_INFO info;
-} SCROLLBAR_WNDDATA;
 
 #define SCROLLBAR_MAGIC 0x5c6011ba
 
@@ -1127,75 +1122,6 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
 }
 
 
-/***********************************************************************
- *           SCROLL_CreateScrollBar
- *
- * Create a scroll bar
- *
- * PARAMS
- *    hwnd     [I] Handle of window with scrollbar(s)
- *    lpCreate [I] The style and place of the scroll bar
- */
-static void SCROLL_CreateScrollBar(HWND hwnd, LPCREATESTRUCTW lpCreate)
-{
-    LPSCROLLBAR_INFO info = NULL;
-    WND *win;
-
-    TRACE("hwnd=%p lpCreate=%p\n", hwnd, lpCreate);
-
-    win = WIN_GetPtr(hwnd);
-    if (win->cbWndExtra >= sizeof(SCROLLBAR_WNDDATA))
-    {
-        SCROLLBAR_WNDDATA *data = (SCROLLBAR_WNDDATA*)win->wExtra;
-        data->magic = SCROLLBAR_MAGIC;
-        info = &data->info;
-    }
-    else WARN("Not enough extra data\n");
-    WIN_ReleasePtr(win);
-    if (!info) return;
-
-    if (lpCreate->style & WS_DISABLED)
-    {
-        info->flags = ESB_DISABLE_BOTH;
-        TRACE("Created WS_DISABLED scrollbar\n");
-    }
-
-    if (lpCreate->style & (SBS_SIZEGRIP | SBS_SIZEBOX))
-    {
-        if (lpCreate->style & SBS_SIZEBOXTOPLEFTALIGN)
-            NtUserMoveWindow( hwnd, lpCreate->x, lpCreate->y, GetSystemMetrics(SM_CXVSCROLL)+1,
-                              GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-        else if(lpCreate->style & SBS_SIZEBOXBOTTOMRIGHTALIGN)
-            NtUserMoveWindow( hwnd, lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
-                              lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
-                              GetSystemMetrics(SM_CXVSCROLL)+1,
-                              GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-    }
-    else if (lpCreate->style & SBS_VERT)
-    {
-        if (lpCreate->style & SBS_LEFTALIGN)
-            NtUserMoveWindow( hwnd, lpCreate->x, lpCreate->y,
-                              GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
-        else if (lpCreate->style & SBS_RIGHTALIGN)
-            NtUserMoveWindow( hwnd,
-                              lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
-                              lpCreate->y,
-                              GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
-    }
-    else  /* SBS_HORZ */
-    {
-        if (lpCreate->style & SBS_TOPALIGN)
-            NtUserMoveWindow( hwnd, lpCreate->x, lpCreate->y,
-                              lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-        else if (lpCreate->style & SBS_BOTTOMALIGN)
-            NtUserMoveWindow( hwnd,
-                              lpCreate->x,
-                              lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
-                              lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-    }
-}
-
-
 /*************************************************************************
  *           SCROLL_GetScrollInfo
  *
@@ -1409,10 +1335,6 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
 
     switch(message)
     {
-    case WM_CREATE:
-        SCROLL_CreateScrollBar(hwnd, (LPCREATESTRUCTW)lParam);
-        break;
-
     case WM_ENABLE:
         {
 	    SCROLLBAR_INFO *infoPtr;
@@ -1503,6 +1425,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         }
         break;
 
+    case WM_CREATE:
     case WM_ERASEBKGND:
     case WM_GETDLGCODE:
         return NtUserMessageCall( hwnd, message, wParam, lParam, 0, NtUserScrollBarWndProc, !unicode );
