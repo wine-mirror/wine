@@ -739,7 +739,7 @@
 @ stdcall ShowCaret(long) NtUserShowCaret
 @ stdcall -import ShowCursor(long) NtUserShowCursor
 @ stdcall ShowOwnedPopups(long long)
-@ stdcall ShowScrollBar(long long long)
+@ stdcall ShowScrollBar(long long long) NtUserShowScrollBar
 @ stub ShowStartGlass
 @ stdcall ShowWindow(long long) NtUserShowWindow
 @ stdcall ShowWindowAsync(long long) NtUserShowWindowAsync

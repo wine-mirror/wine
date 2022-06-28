@@ -1334,6 +1334,12 @@ INT WINAPI NtUserShowCursor( BOOL show )
     return unix_funcs->pNtUserShowCursor( show );
 }
 
+BOOL WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserShowScrollBar( hwnd, bar, show );
+}
+
 BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )
 {
     if (!unix_funcs) return FALSE;

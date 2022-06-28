@@ -395,7 +395,7 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
             }
             else
             {
-                ShowScrollBar( descr->self, SB_HORZ, FALSE );
+                NtUserShowScrollBar( descr->self, SB_HORZ, FALSE );
             }
         }
     }

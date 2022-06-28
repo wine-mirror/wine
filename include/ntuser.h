@@ -718,6 +718,7 @@ HWINEVENTHOOK WINAPI NtUserSetWinEventHook( DWORD event_min, DWORD event_max, HM
                                             DWORD pid, DWORD tid, DWORD flags );
 BOOL    WINAPI NtUserShowCaret( HWND hwnd );
 INT     WINAPI NtUserShowCursor( BOOL show );
+BOOL    WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show );
 BOOL    WINAPI NtUserShowWindow( HWND hwnd, INT cmd );
 BOOL    WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd );
 BOOL    WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT winini );

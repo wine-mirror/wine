@@ -2004,31 +2004,6 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV 
 
 
 /*************************************************************************
- *           ShowScrollBar   (USER32.@)
- *
- * Shows or hides the scroll bar.
- *
- * PARAMS
- *    hwnd    [I]  Handle of window with scrollbar(s)
- *    nBar    [I]  One of SB_HORZ, SB_VERT, or SB_CTL
- *    fShow   [I]  TRUE = show, FALSE = hide
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
-{
-    if ( !hwnd )
-        return FALSE;
-
-    SCROLL_ShowScrollBar( hwnd, nBar, (nBar == SB_VERT) ? 0 : fShow,
-                                      (nBar == SB_HORZ) ? 0 : fShow );
-    return TRUE;
-}
-
-
-/*************************************************************************
  *           EnableScrollBar   (USER32.@)
  *
  * Enables or disables the scroll bars.

@@ -310,6 +310,7 @@ struct unix_funcs
     WORD     (WINAPI *pNtUserSetWindowWord)( HWND hwnd, INT offset, WORD newval );
     BOOL     (WINAPI *pNtUserShowCaret)( HWND hwnd );
     INT      (WINAPI *pNtUserShowCursor)( BOOL show );
+    BOOL     (WINAPI *pNtUserShowScrollBar)( HWND hwnd, INT bar, BOOL show );
     BOOL     (WINAPI *pNtUserShowWindow)( HWND hwnd, INT cmd );
     BOOL     (WINAPI *pNtUserShowWindowAsync)( HWND hwnd, INT cmd );
     BOOL     (WINAPI *pNtUserSystemParametersInfo)( UINT action, UINT val, PVOID ptr, UINT winini );

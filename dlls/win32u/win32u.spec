@@ -1259,7 +1259,7 @@
 @ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
 @ stdcall NtUserShowCaret(long)
 @ stdcall NtUserShowCursor(long)
-@ stub NtUserShowScrollBar
+@ stdcall NtUserShowScrollBar(long long long)
 @ stub NtUserShowSystemCursor
 @ stdcall NtUserShowWindow(long long)
 @ stdcall NtUserShowWindowAsync(long long)

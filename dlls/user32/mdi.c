@@ -1158,7 +1158,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
       case WM_MDITILE:
 	ci->mdiFlags |= MDIF_NEEDUPDATE;
-        ShowScrollBar( hwnd, SB_BOTH, FALSE );
+        NtUserShowScrollBar( hwnd, SB_BOTH, FALSE );
         MDITile( hwnd, ci, wParam );
         ci->mdiFlags &= ~MDIF_NEEDUPDATE;
         return 0;
@@ -1701,7 +1701,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
             if (style & WS_MAXIMIZE)
             {
                 HeapFree( GetProcessHeap(), 0, list );
-                ShowScrollBar( hwnd, SB_BOTH, FALSE );
+                NtUserShowScrollBar( hwnd, SB_BOTH, FALSE );
                 return;
             }
             if (style & WS_VISIBLE)

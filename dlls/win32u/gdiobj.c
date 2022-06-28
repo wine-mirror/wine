@@ -1236,6 +1236,7 @@ static struct unix_funcs unix_funcs =
     NtUserSetWindowWord,
     NtUserShowCaret,
     NtUserShowCursor,
+    NtUserShowScrollBar,
     NtUserShowWindow,
     NtUserShowWindowAsync,
     NtUserSystemParametersInfo,
