@@ -43,6 +43,7 @@ extern "C" {
 #include <processthreadsapi.h>
 #include <synchapi.h>
 #include <threadpoolapiset.h>
+#include <memoryapi.h>
 
   /* Windows Exit Procedure flag values */
 #define	WEP_FREE_DLL        0

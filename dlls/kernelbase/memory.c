@@ -1412,6 +1412,23 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocExNuma( HANDLE process, void *addr, 
 
 
 /***********************************************************************
+ *             QueryVirtualMemoryInformation   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryVirtualMemoryInformation( HANDLE process, const void *addr,
+        WIN32_MEMORY_INFORMATION_CLASS info_class, void *info, SIZE_T size, SIZE_T *ret_size)
+{
+    switch (info_class)
+    {
+        case MemoryRegionInfo:
+            return set_ntstatus( NtQueryVirtualMemory( process, addr, MemoryRegionInformation, info, size, ret_size ));
+        default:
+            FIXME("Unsupported info class %u.\n", info_class);
+            return FALSE;
+    }
+}
+
+
+/***********************************************************************
  * CPU functions
  ***********************************************************************/
 

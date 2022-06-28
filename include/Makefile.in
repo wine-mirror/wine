@@ -416,6 +416,7 @@ SOURCES = \
 	mediaerr.h \
 	mediaobj.idl \
 	medparam.idl \
+	memoryapi.h \
 	metahost.idl \
 	mfapi.h \
 	mfd3d12.idl \
