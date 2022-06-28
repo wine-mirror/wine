@@ -3608,6 +3608,7 @@ static BOOL LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  */
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
+    INT nFirst = -1, nLast = -1;
     RANGES selection;
     DWORD old_mask;
     LVITEMW item;
@@ -3659,20 +3660,27 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	iterator_destroy(&i);
     }
 
-    /* disable per item notifications on LVS_OWNERDATA style
-       FIXME: single LVN_ODSTATECHANGED should be used */
+    /* Disable per item notifications on LVS_OWNERDATA style */
     old_mask = infoPtr->notify_mask & NOTIFY_MASK_ITEM_CHANGE;
     if (infoPtr->dwStyle & LVS_OWNERDATA)
         infoPtr->notify_mask &= ~NOTIFY_MASK_ITEM_CHANGE;
 
     LISTVIEW_DeselectAllSkipItems(infoPtr, selection);
 
-
     iterator_rangesitems(&i, selection);
     while(iterator_next(&i))
-	LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+    {
+        /* Find the range for LVN_ODSTATECHANGED */
+        if (nFirst == -1)
+            nFirst = i.nItem;
+        nLast = i.nItem;
+        LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+    }
     /* this will also destroy the selection */
     iterator_destroy(&i);
+
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+        LISTVIEW_SetOwnerDataState(infoPtr, nFirst, nLast, &item);
 
     infoPtr->notify_mask |= old_mask;
     LISTVIEW_SetItemFocus(infoPtr, nItem);

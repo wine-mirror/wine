@@ -3575,7 +3575,7 @@ static void test_ownerdata_multiselect(void)
 
     ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX,
                 ownerdata_multiselect_odstatechanged_seq,
-                "ownerdata select multiple notification", TRUE);
+                "ownerdata select multiple notification", FALSE);
 
     res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
     expect(0, res);
@@ -3592,7 +3592,7 @@ static void test_ownerdata_multiselect(void)
 
     ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX,
                 ownerdata_multiselect_odstatechanged_seq,
-                "ownerdata select multiple notification", TRUE);
+                "ownerdata select multiple notification", FALSE);
 
     res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
     expect(0, res);
