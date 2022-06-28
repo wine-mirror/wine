@@ -245,11 +245,77 @@ static const struct message ownerdata_deselect_all_parent_seq[] = {
     { 0 }
 };
 
-static const struct message ownerdata_multiselect_odstatechanged_seq[] = {
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+static const struct message ownerdata_multiselect_select_0_to_1_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
     { WM_NOTIFY, sent|id, 0, 0, LVN_ODSTATECHANGED },
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
-    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 1, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_0_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_0_modkey_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_move_0_to_1_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 1, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_0_to_2_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ODSTATECHANGED },
+    { WM_NOTIFY, sent|id|wparam, 1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 2, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_3_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 2, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 3, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_3_modkey_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 3, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 2, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 3, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_3_to_2_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ODSTATECHANGED },
+    { WM_NOTIFY, sent|id|wparam, 3, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 2, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_move_3_to_2_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, 3, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 2, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_select_3_to_1_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id|wparam, -1, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ODSTATECHANGED },
+    { WM_NOTIFY, sent|id|wparam, 2, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id|wparam, 1, 0, LVN_ITEMCHANGED },
     { 0 }
 };
 
@@ -3547,6 +3613,52 @@ static void test_ownerdata_multiselect(void)
     HWND hwnd;
     DWORD res;
     LVITEMA item;
+    unsigned int i;
+    char buf[256];
+
+    static const struct
+    {
+        BOOL hold_shift;
+        BOOL hold_control;
+        UINT press_key;
+        UINT selected_count;
+        const char *context;
+        const struct message *expected;
+        BOOL todo;
+    }
+    key_tests[] =
+    {
+        /* First down then up */
+        { TRUE,  FALSE, VK_DOWN, 2, "select multiple via SHIFT+DOWN",
+          ownerdata_multiselect_select_0_to_1_odstatechanged_seq, FALSE },
+        { TRUE,  FALSE, VK_UP,   1, "select one item via SHIFT+UP",
+          ownerdata_multiselect_select_0_modkey_odstatechanged_seq, TRUE },
+        { TRUE,  TRUE,  VK_DOWN, 2, "select multiple via SHIFT+CONTROL+DOWN",
+          ownerdata_multiselect_select_0_to_1_odstatechanged_seq, FALSE },
+        { TRUE,  TRUE,  VK_UP,   1, "select one item via SHIFT+CONTROL+UP",
+          ownerdata_multiselect_select_0_modkey_odstatechanged_seq, TRUE },
+        { FALSE, TRUE,  VK_DOWN, 1, "keep selection but move cursor via CONTROL+DOWN",
+          ownerdata_multiselect_move_0_to_1_odstatechanged_seq, FALSE },
+        { TRUE,  TRUE,  VK_DOWN, 3, "select multiple after skip via SHIFT+CONTROL+DOWN",
+          ownerdata_multiselect_select_0_to_2_odstatechanged_seq, FALSE },
+        { FALSE, FALSE, VK_DOWN, 1, "deselect all, select item 3 via DOWN",
+          ownerdata_multiselect_select_3_odstatechanged_seq, FALSE },
+        /* First up then down */
+        { TRUE,  FALSE, VK_UP,   2, "select multiple via SHIFT+UP",
+          ownerdata_multiselect_select_3_to_2_odstatechanged_seq, FALSE },
+        { TRUE,  FALSE, VK_DOWN, 1, "select one item via SHIFT+DOWN",
+          ownerdata_multiselect_select_3_modkey_odstatechanged_seq, TRUE },
+        { TRUE,  TRUE,  VK_UP,   2, "select multiple via SHIFT+CONTROL+UP",
+          ownerdata_multiselect_select_3_to_2_odstatechanged_seq, FALSE },
+        { TRUE,  TRUE,  VK_DOWN, 1, "select one item via SHIFT+CONTROL+DOWN",
+          ownerdata_multiselect_select_3_modkey_odstatechanged_seq, TRUE },
+        { FALSE, TRUE,  VK_UP,   1, "keep selection but move cursor via CONTROL+UP",
+          ownerdata_multiselect_move_3_to_2_odstatechanged_seq, FALSE },
+        { TRUE,  TRUE,  VK_UP,   3, "select multiple after skip via SHIFT+CONTROL+UP",
+          ownerdata_multiselect_select_3_to_1_odstatechanged_seq, FALSE },
+        { FALSE, FALSE, VK_UP,   1, "deselect all, select item 0 via UP",
+          ownerdata_multiselect_select_0_odstatechanged_seq, FALSE },
+    };
 
     hwnd = create_listview_control(LVS_OWNERDATA | LVS_REPORT);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -3555,6 +3667,7 @@ static void test_ownerdata_multiselect(void)
     res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
     expect(0, res);
 
+    /* Select and focus the first row */
     memset(&item, 0, sizeof(item));
     item.state = LVIS_SELECTED | LVIS_FOCUSED;
     item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
@@ -3562,46 +3675,35 @@ static void test_ownerdata_multiselect(void)
     expect(TRUE, res);
     res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
     expect(1, res);
-
     res = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, 0);
     expect(0, res);
 
-    hold_key(VK_SHIFT);
+    /* Select/deselect rows using UP/DOWN and SHIFT/CONTROL keys */
+    for (i = 0; i < ARRAY_SIZE(key_tests); i++)
+    {
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        if (key_tests[i].hold_shift)
+            hold_key(VK_SHIFT);
+        if (key_tests[i].hold_control)
+            hold_key(VK_CONTROL);
 
-    res = SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
-    expect(0, res);
+        res = SendMessageA(hwnd, WM_KEYDOWN, key_tests[i].press_key, 0);
+        expect(0, res);
+        sprintf(buf, "ownerdata multiselect: %s", key_tests[i].context);
+        ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX, key_tests[i].expected,
+                    buf, key_tests[i].todo);
+        res = SendMessageA(hwnd, WM_KEYUP, key_tests[i].press_key, 0);
+        expect(0, res);
 
-    ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX,
-                ownerdata_multiselect_odstatechanged_seq,
-                "ownerdata select multiple notification", FALSE);
+        res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+        expect(key_tests[i].selected_count, res);
 
-    res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
-    expect(0, res);
-
-    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
-    expect(2, res);
-
-    hold_key(VK_CONTROL);
-
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    res = SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
-    expect(0, res);
-
-    ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX,
-                ownerdata_multiselect_odstatechanged_seq,
-                "ownerdata select multiple notification", FALSE);
-
-    res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
-    expect(0, res);
-
-    release_key(VK_CONTROL);
-    release_key(VK_SHIFT);
-
-    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
-    expect(3, res);
+        if (key_tests[i].hold_shift)
+            release_key(VK_SHIFT);
+        if (key_tests[i].hold_control)
+            release_key(VK_CONTROL);
+    }
 
     DestroyWindow(hwnd);
 }
