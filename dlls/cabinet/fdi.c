@@ -2055,6 +2055,8 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
             }
             if (filenamelen)
               strcat(fullpath, cab->mii.nextname);
+            else if (fullpath[0])
+                fullpath[strlen(fullpath)-1] = 0; /* remove trailing backslash */
 
             TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
 
