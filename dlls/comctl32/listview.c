@@ -8903,6 +8903,7 @@ static VOID LISTVIEW_SetOwnerDataState(LISTVIEW_INFO *infoPtr, INT nFirst, INT n
 {
     NMLVODSTATECHANGE nmlv;
 
+    if (nFirst == nLast) return;
     if (!item) return;
 
     ZeroMemory(&nmlv, sizeof(nmlv));
