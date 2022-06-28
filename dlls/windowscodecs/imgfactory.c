@@ -901,16 +901,14 @@ static HRESULT WINAPI ImagingFactory_CreateBitmapFromHICON(IWICImagingFactory2 *
         if (bm.bmBitsPixel == 32)
         {
             /* If any pixel has a non-zero alpha, ignore hbmMask */
-            bits = (DWORD *)buffer;
-            for (x = 0; x < width && !has_alpha; x++, bits++)
+            DWORD *ptr = (DWORD *)buffer;
+            DWORD *end = ptr + width * height;
+            while (ptr != end)
             {
-                for (y = 0; y < height; y++)
+                if (*ptr++ & 0xff000000)
                 {
-                    if (*bits & 0xff000000)
-                    {
-                        has_alpha = TRUE;
-                        break;
-                    }
+                    has_alpha = TRUE;
+                    break;
                 }
             }
         }
