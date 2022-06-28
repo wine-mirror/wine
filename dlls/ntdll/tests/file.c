@@ -4251,6 +4251,21 @@ static void test_NtCreateFile(void)
     pRtlFreeUnicodeString( &nameW );
     SetFileAttributesW(path, FILE_ATTRIBUTE_ARCHIVE);
     DeleteFileW( path );
+
+    wcscat( path, L"\\" );
+    pRtlDosPathNameToNtPathName_U(path, &nameW, NULL, NULL);
+
+    status = pNtCreateFile( &handle, GENERIC_READ, &attr, &io, NULL,
+                            0, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_CREATE, 0, NULL, 0);
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_INVALID, "failed %s %lx\n", debugstr_w(nameW.Buffer), status );
+    if (!status) DeleteFileW( path );
+    status = pNtCreateFile( &handle, GENERIC_READ, &attr, &io, NULL,
+                            0, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_CREATE,
+                            FILE_DIRECTORY_FILE, NULL, 0);
+    todo_wine
+    ok( !status, "failed %s %lx\n", debugstr_w(nameW.Buffer), status );
+    if (!status) RemoveDirectoryW( path );
 }
 
 static void test_read_write(void)
