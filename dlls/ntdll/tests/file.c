@@ -417,11 +417,9 @@ static void open_file_test(void)
     pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
     status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "open %s failed %lx\n", wine_dbgstr_w(nameW.Buffer), status );
     status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_NON_DIRECTORY_FILE );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "open %s failed %lx\n", wine_dbgstr_w(nameW.Buffer), status );
     pRtlFreeUnicodeString( &nameW );
 

@@ -2594,7 +2594,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 
 not_found:
     unix_name[pos - 1] = 0;
-    return STATUS_OBJECT_PATH_NOT_FOUND;
+    return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
 
@@ -3200,9 +3200,8 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         /* if this is the last element, not finding it is not necessarily fatal */
         if (!name_len)
         {
-            if (status == STATUS_OBJECT_PATH_NOT_FOUND)
+            if (status == STATUS_OBJECT_NAME_NOT_FOUND)
             {
-                status = STATUS_OBJECT_NAME_NOT_FOUND;
                 if (disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
                 {
                     ret = ntdll_wcstoumbs( name, end - name, unix_name + pos + 1, MAX_DIR_ENTRY_LEN + 1, TRUE );
@@ -3220,6 +3219,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
                 status = STATUS_OBJECT_NAME_COLLISION;
             }
         }
+        else if (status == STATUS_OBJECT_NAME_NOT_FOUND) status = STATUS_OBJECT_PATH_NOT_FOUND;
 
         if (status != STATUS_SUCCESS) break;
 
