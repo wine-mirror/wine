@@ -68,6 +68,21 @@ static BOOL show_scroll_bar( HWND hwnd, int bar, BOOL show_horz, BOOL show_vert 
     return FALSE; /* no frame changes */
 }
 
+LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
+{
+    switch (msg)
+    {
+    case WM_ERASEBKGND:
+        return 1;
+
+    case WM_GETDLGCODE:
+        return DLGC_WANTARROWS; /* Windows returns this value */
+
+    default:
+        return default_window_proc( hwnd, msg, wparam, lparam, ansi );
+    }
+}
+
 /*************************************************************************
  *           NtUserShowScrollBar   (win32u.@)
  */

@@ -2889,17 +2889,25 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     switch (type)
     {
+    case NtUserScrollBarWndProc:
+        return scroll_bar_window_proc( hwnd, msg, wparam, lparam, ansi );
+
     case NtUserPopupMenuWndProc:
         return popup_menu_window_proc( hwnd, msg, wparam, lparam );
+
     case NtUserDesktopWindowProc:
         return desktop_window_proc( hwnd, msg, wparam, lparam );
+
     case NtUserDefWindowProc:
         return default_window_proc( hwnd, msg, wparam, lparam, ansi );
+
     case NtUserCallWindowProc:
         return init_win_proc_params( (struct win_proc_params *)result_info, hwnd, msg,
                                      wparam, lparam, ansi );
+
     case NtUserSendMessage:
         return send_window_message( hwnd, msg, wparam, lparam, ansi );
+
     case NtUserSendMessageTimeout:
         {
             struct send_message_timeout_params *params = (void *)result_info;
@@ -2908,18 +2916,24 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
                                                    params->timeout, &res, ansi );
             return res;
         }
+
     case NtUserSendNotifyMessage:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
+
     case NtUserSendMessageCallback:
         return send_message_callback( hwnd, msg, wparam, lparam, (void *)result_info, ansi );
+
     case NtUserClipboardWindowProc:
         return user_driver->pClipboardWindowProc( hwnd, msg, wparam, lparam );
+
     case NtUserSpyEnter:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
         return 0;
+
     case NtUserSpyExit:
         spy_exit_message( ansi, hwnd, msg, (LPARAM)result_info, wparam, lparam );
         return 0;
+
     default:
         FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
     }

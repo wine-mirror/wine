@@ -1513,10 +1513,8 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         break;
 
     case WM_ERASEBKGND:
-         return 1;
-
     case WM_GETDLGCODE:
-         return DLGC_WANTARROWS; /* Windows returns this value */
+        return NtUserMessageCall( hwnd, message, wParam, lParam, 0, NtUserScrollBarWndProc, !unicode );
 
     case WM_PAINT:
         {
