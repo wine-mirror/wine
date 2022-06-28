@@ -432,27 +432,10 @@ static void test__lcreat( void )
     ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 
     filehandle=_lcreat (slashname, 0); /* illegal name */
-    if (HFILE_ERROR==filehandle) {
-      err=GetLastError ();
-      ok (err==ERROR_INVALID_NAME || err==ERROR_PATH_NOT_FOUND,
-          "creating file \"%s\" failed with error %d\n", slashname, err);
-    } else { /* only NT succeeds */
-      _lclose(filehandle);
-      find=FindFirstFileA (slashname, &search_results);
-      if (INVALID_HANDLE_VALUE!=find)
-      {
-        ret = FindClose (find);
-        ok (0 != ret, "FindClose complains (%ld)\n", GetLastError ());
-        slashname[strlen(slashname)-1]=0;
-        ok (!strcmp (slashname, search_results.cFileName),
-            "found unexpected name \"%s\"\n", search_results.cFileName);
-        ok (FILE_ATTRIBUTE_ARCHIVE==search_results.dwFileAttributes,
-            "attributes of file \"%s\" are 0x%04lx\n", search_results.cFileName,
-            search_results.dwFileAttributes);
-      }
-    ret = DeleteFileA( slashname );
-    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
-    }
+    ok( filehandle == HFILE_ERROR, "succeeded\n" );
+    err=GetLastError ();
+    ok (err==ERROR_INVALID_NAME || err==ERROR_PATH_NOT_FOUND,
+        "creating file \"%s\" failed with error %d\n", slashname, err);
 
     filehandle=_lcreat (filename, 8); /* illegal attribute */
     if (HFILE_ERROR==filehandle)

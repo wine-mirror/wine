@@ -3187,7 +3187,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
 
         /* grow the buffer if needed */
 
-        if (unix_len - pos < MAX_DIR_ENTRY_LEN + 2)
+        if (unix_len - pos < MAX_DIR_ENTRY_LEN + 3)
         {
             char *new_name;
             unix_len += 2 * MAX_DIR_ENTRY_LEN;
@@ -3208,7 +3208,9 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
                     if (ret > 0 && ret <= MAX_DIR_ENTRY_LEN)
                     {
                         unix_name[pos] = '/';
-                        unix_name[pos + 1 + ret] = 0;
+                        pos += ret + 1;
+                        if (end < next) unix_name[pos++] = '/';
+                        unix_name[pos] = 0;
                         status = STATUS_NO_SUCH_FILE;
                         break;
                     }
@@ -3218,6 +3220,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
             {
                 status = STATUS_OBJECT_NAME_COLLISION;
             }
+            if (end < next) strcat( unix_name, "/" );
         }
         else if (status == STATUS_OBJECT_NAME_NOT_FOUND) status = STATUS_OBJECT_PATH_NOT_FOUND;
 

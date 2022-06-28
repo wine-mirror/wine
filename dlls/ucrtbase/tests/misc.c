@@ -1309,7 +1309,7 @@ static void test__stat32(void)
         ok(!ret, "_stat32('%s') returned %d\n", path, ret);
         strcat(path, "\\");
         ret = _stat32(path, &buf);
-        todo_wine ok(ret, "_stat32('%s') returned %d\n", path, ret);
+        ok(ret, "_stat32('%s') returned %d\n", path, ret);
         close(fd);
         remove(path);
     }
