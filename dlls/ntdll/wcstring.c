@@ -154,13 +154,26 @@ LPWSTR __cdecl _wcsupr( LPWSTR str )
 {
     WCHAR *ret = str;
 
-    while (*str)
-    {
-        WCHAR ch = *str;
-        if (ch >= 'a' && ch <= 'z') ch -= 32;
-        *str++ = ch;
-    }
+    for ( ; *str; str++) if (*str >= 'a' && *str <= 'z') *str += 'A' - 'a';
     return ret;
+}
+
+
+/*********************************************************************
+ *           _wcsupr_s    (NTDLL.@)
+ */
+errno_t __cdecl _wcsupr_s( wchar_t *str, size_t len )
+{
+    if (!str) return EINVAL;
+
+    if (wcsnlen( str, len ) == len)
+    {
+        *str = 0;
+        return EINVAL;
+    }
+
+    _wcsupr( str );
+    return 0;
 }
 
 

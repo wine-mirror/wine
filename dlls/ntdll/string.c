@@ -600,8 +600,26 @@ int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 )
 LPSTR __cdecl _strupr( LPSTR str )
 {
     LPSTR ret = str;
-    for ( ; *str; str++) *str = RtlUpperChar(*str);
+    for ( ; *str; str++) if (*str >= 'a' && *str <= 'z') *str += 'A' + 'a';
     return ret;
+}
+
+
+/*********************************************************************
+ *                  _strupr_s   (NTDLL.@)
+ */
+errno_t __cdecl _strupr_s( char *str, size_t len )
+{
+    if (!str) return EINVAL;
+
+    if (strnlen( str, len ) == len)
+    {
+        *str = 0;
+        return EINVAL;
+    }
+
+    _strupr( str );
+    return 0;
 }
 
 
