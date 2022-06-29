@@ -795,6 +795,33 @@ int CDECL _tolower(int c)
 }
 
 
+/*********************************************************************
+ *                  strtok_s   (NTDLL.@)
+ */
+char * __cdecl strtok_s( char *str, const char *delim, char **ctx )
+{
+    char *next;
+
+    if (!delim || !ctx) return NULL;
+    if (!str)
+    {
+        str = *ctx;
+        if (!str) return NULL;
+    }
+    while (*str && strchr( delim, *str )) str++;
+    if (!*str)
+    {
+        *ctx = str;
+        return NULL;
+    }
+    next = str + 1;
+    while (*next && !strchr( delim, *next )) next++;
+    if (*next) *next++ = 0;
+    *ctx = next;
+    return str;
+}
+
+
 static int char_to_int( char c )
 {
     if ('0' <= c && c <= '9') return c - '0';

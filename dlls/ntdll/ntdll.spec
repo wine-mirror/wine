@@ -1604,6 +1604,7 @@
 @ cdecl strrchr(str long)
 @ cdecl strspn(str str)
 @ cdecl strstr(str str)
+@ cdecl strtok_s(str str ptr)
 @ cdecl strtol(str ptr long)
 @ cdecl strtoul(str ptr long)
 @ varargs swprintf(ptr wstr) NTDLL_swprintf
@@ -1637,6 +1638,7 @@
 @ cdecl wcsspn(wstr wstr)
 @ cdecl wcsstr(wstr wstr)
 @ cdecl wcstok(wstr wstr)
+@ cdecl wcstok_s(wstr wstr ptr)
 @ cdecl wcstol(wstr ptr long)
 @ cdecl wcstombs(ptr ptr long)
 @ cdecl wcstoul(wstr ptr long)

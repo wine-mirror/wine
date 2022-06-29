@@ -456,6 +456,33 @@ LPWSTR __cdecl wcstok( LPWSTR str, LPCWSTR delim )
 
 
 /*********************************************************************
+ *                  wcstok_s   (NTDLL.@)
+ */
+wchar_t * __cdecl wcstok_s( wchar_t *str, const wchar_t *delim, wchar_t **ctx )
+{
+    wchar_t *next;
+
+    if (!delim || !ctx) return NULL;
+    if (!str)
+    {
+        str = *ctx;
+        if (!str) return NULL;
+    }
+    while (*str && wcschr( delim, *str )) str++;
+    if (!*str)
+    {
+        *ctx = str;
+        return NULL;
+    }
+    next = str + 1;
+    while (*next && !wcschr( delim, *next )) next++;
+    if (*next) *next++ = 0;
+    *ctx = next;
+    return str;
+}
+
+
+/*********************************************************************
  *           wcstombs    (NTDLL.@)
  */
 size_t __cdecl wcstombs( char *dst, const WCHAR *src, size_t n )
