@@ -747,6 +747,18 @@ static inline BOOL is_dtls_context(const struct schan_context *ctx)
     return ctx->header_size == HEADER_SIZE_DTLS;
 }
 
+static void fill_missing_sec_buffer(SecBufferDesc *input, DWORD size)
+{
+    int idx = schan_find_sec_buffer_idx(input, 0, SECBUFFER_EMPTY);
+    if (idx == -1) WARN("no empty buffer\n");
+    else
+    {
+        SecBuffer *buffer = &input->pBuffers[idx];
+        buffer->BufferType = SECBUFFER_MISSING;
+        buffer->cbBuffer = size;
+    }
+}
+
 /***********************************************************************
  *              InitializeSecurityContextW
  */
@@ -887,7 +899,15 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             buffer = &pInput->pBuffers[idx];
             ptr = buffer->pvBuffer;
 
-            while (buffer->cbBuffer > expected_size + ctx->header_size)
+            if (buffer->cbBuffer < ctx->header_size)
+            {
+                TRACE("Expected at least %Iu bytes, but buffer only contains %lu bytes.\n",
+                      ctx->header_size, buffer->cbBuffer);
+                fill_missing_sec_buffer(pInput, ctx->header_size - buffer->cbBuffer);
+                return SEC_E_INCOMPLETE_MESSAGE;
+            }
+
+            while (buffer->cbBuffer >= expected_size + ctx->header_size)
             {
                 record_size = ctx->header_size + read_record_size(ptr, ctx->header_size);
 
@@ -899,7 +919,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             if (!expected_size)
             {
                 TRACE("Expected at least %Iu bytes, but buffer only contains %lu bytes.\n",
-                      max(ctx->header_size + 1, record_size), buffer->cbBuffer);
+                      max(ctx->header_size, record_size), buffer->cbBuffer);
+                fill_missing_sec_buffer(pInput, record_size - buffer->cbBuffer);
                 return SEC_E_INCOMPLETE_MESSAGE;
             }
 

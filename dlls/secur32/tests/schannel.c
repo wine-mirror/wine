@@ -1132,8 +1132,10 @@ static void test_communication(void)
     ok( context2.dwLower == 0xdeadbeef, "Did not expect dwLower to be set on new context\n");
     ok( context2.dwUpper == 0xdeadbeef, "Did not expect dwUpper to be set on new context\n");
 
-    buffers[1].cBuffers = 1;
+    buffers[1].cBuffers = 2;
     buffers[1].pBuffers[0].cbBuffer = 0;
+    buffers[1].pBuffers[1].cbBuffer = 0;
+    buffers[1].pBuffers[1].BufferType = SECBUFFER_EMPTY;
 
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
@@ -1141,6 +1143,10 @@ static void test_communication(void)
     ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#lx.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+    ok(buffers[1].pBuffers[1].cbBuffer == 5 ||
+       broken(buffers[1].pBuffers[1].cbBuffer == 0), /* < win10 */ "Wrong buffer size.\n");
+    ok(buffers[1].pBuffers[1].BufferType == SECBUFFER_MISSING ||
+       broken(buffers[1].pBuffers[1].BufferType == SECBUFFER_EMPTY), /* < win10 */ "Wrong buffer type.\n");
 
     buf = &buffers[1].pBuffers[0];
     buf->cbBuffer = buf_size;
@@ -1149,6 +1155,8 @@ static void test_communication(void)
         return;
 
     buffers[1].pBuffers[0].cbBuffer = 4;
+    buffers[1].pBuffers[1].cbBuffer = 0;
+    buffers[1].pBuffers[1].BufferType = SECBUFFER_EMPTY;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
@@ -1156,9 +1164,15 @@ static void test_communication(void)
        "Got unexpected status %#lx.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+    ok(buffers[1].pBuffers[1].cbBuffer == 1 ||
+       broken(buffers[1].pBuffers[1].cbBuffer == 0), /* < win10 */ "Wrong buffer size.\n");
+    ok(buffers[1].pBuffers[1].BufferType == SECBUFFER_MISSING ||
+       broken(buffers[1].pBuffers[1].BufferType == SECBUFFER_EMPTY), /* < win10 */ "Wrong buffer type.\n");
 
     context2.dwLower = context2.dwUpper = 0xdeadbeef;
     buffers[1].pBuffers[0].cbBuffer = 5;
+    buffers[1].pBuffers[1].cbBuffer = 0;
+    buffers[1].pBuffers[1].BufferType = SECBUFFER_EMPTY;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
@@ -1166,9 +1180,14 @@ static void test_communication(void)
        "Got unexpected status %#lx.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+    ok(buffers[1].pBuffers[1].cbBuffer > 5 ||
+       broken(buffers[1].pBuffers[1].cbBuffer == 0), /* < win10 */ "Wrong buffer size\n" );
+    ok(buffers[1].pBuffers[1].BufferType == SECBUFFER_MISSING ||
+       broken(buffers[1].pBuffers[1].BufferType == SECBUFFER_EMPTY), /* < win10 */ "Wrong buffer type.\n");
     ok( context2.dwLower == 0xdeadbeef, "Did not expect dwLower to be set on new context\n");
     ok( context2.dwUpper == 0xdeadbeef, "Did not expect dwUpper to be set on new context\n");
 
+    buffers[1].cBuffers = 1;
     buffers[1].pBuffers[0].cbBuffer = ret;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS,
