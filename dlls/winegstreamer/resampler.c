@@ -435,7 +435,6 @@ failed:
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
-    IMFMediaType *ret;
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, type %p.\n", iface, id, type);
@@ -446,16 +445,18 @@ static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD i
     if (!impl->input_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = MFCreateMediaType(&ret)))
+    if (FAILED(hr = MFCreateMediaType(type)))
         return hr;
 
-    return IMFMediaType_CopyAllItems(impl->input_type, (IMFAttributes *)ret);
+    if (FAILED(hr = IMFMediaType_CopyAllItems(impl->input_type, (IMFAttributes *)*type)))
+        IMFMediaType_Release(*type);
+
+    return hr;
 }
 
 static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
-    IMFMediaType *ret;
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, type %p.\n", iface, id, type);
@@ -466,10 +467,13 @@ static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD 
     if (!impl->output_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = MFCreateMediaType(&ret)))
+    if (FAILED(hr = MFCreateMediaType(type)))
         return hr;
 
-    return IMFMediaType_CopyAllItems(impl->output_type, (IMFAttributes *)ret);
+    if (FAILED(hr = IMFMediaType_CopyAllItems(impl->output_type, (IMFAttributes *)*type)))
+        IMFMediaType_Release(*type);
+
+    return hr;
 }
 
 static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
