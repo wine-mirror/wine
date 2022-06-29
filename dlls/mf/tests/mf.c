@@ -4636,7 +4636,6 @@ if (SUCCEEDED(hr))
     ok(!!count, "Unexpected type count %lu.\n", count);
 
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, count, &mediatype);
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &mediatype);

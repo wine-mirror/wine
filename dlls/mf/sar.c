@@ -1531,12 +1531,11 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_GetMediaTypeByIndex(IMF
 
     TRACE("%p, %lu, %p.\n", iface, index, media_type);
 
-    if (index == 0)
-    {
-        *media_type = renderer->media_type;
-        IMFMediaType_AddRef(*media_type);
-    }
+    if (index > 0)
+        return MF_E_NO_MORE_TYPES;
 
+    *media_type = renderer->media_type;
+    IMFMediaType_AddRef(*media_type);
     return S_OK;
 }
 
