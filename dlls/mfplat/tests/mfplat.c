@@ -6431,6 +6431,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
     DWORD length, max_length;
     IDirect3DDevice9 *device;
     IMF2DBuffer2 *_2dbuffer2;
+    BOOL value, broken_test;
     IMFMediaBuffer *buffer;
     IMF2DBuffer *_2dbuffer;
     BYTE *data, *data2;
@@ -6439,7 +6440,6 @@ static void test_MFCreateDXSurfaceBuffer(void)
     HWND window;
     HRESULT hr;
     LONG pitch;
-    BOOL value;
 
     if (!pMFCreateDXSurfaceBuffer)
     {
@@ -6512,7 +6512,9 @@ static void test_MFCreateDXSurfaceBuffer(void)
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(length == max_length, "Unexpected length %lu instead of %lu.\n", length, max_length);
+    /* Broken on Windows 8 and 10 v1507 */
+    broken_test = length == 0;
+    ok(length == max_length || broken(broken_test), "Unexpected length %lu instead of %lu.\n", length, max_length);
 
     /* You can lock the surface while the media buffer is locked. */
     hr = IDirect3DSurface9_LockRect(backbuffer, &locked_rect, NULL, 0);
@@ -6529,7 +6531,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
 
     /* Unlock twice. */
     hr = IMFMediaBuffer_Unlock(buffer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(broken_test), "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
@@ -6546,7 +6548,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaBuffer_Unlock(buffer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(broken_test), "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -6618,9 +6620,9 @@ static void test_MFCreateDXSurfaceBuffer(void)
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(data[0] == 0xab, "Unexpected leading byte.\n");
+    ok(data[0] == 0xab || broken(broken_test), "Unexpected leading byte.\n");
     hr = IMFMediaBuffer_Unlock(buffer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(broken_test), "Unexpected hr %#lx.\n", hr);
 
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
