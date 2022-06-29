@@ -1,5 +1,5 @@
 EXTLIB    = libtiff.a
-EXTRAINCL = -I$(srcdir)/libtiff $(JPEG_PE_CFLAGS) $(ZLIB_PE_CFLAGS)
+EXTRAINCL = $(TIFF_PE_CFLAGS) $(JPEG_PE_CFLAGS) $(ZLIB_PE_CFLAGS)
 
 C_SRCS = \
 	libtiff/tif_aux.c \

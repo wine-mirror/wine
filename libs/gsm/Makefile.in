@@ -1,5 +1,5 @@
 EXTLIB    = libgsm.a
-EXTRAINCL = -I$(srcdir)/inc
+EXTRAINCL = $(GSM_PE_CFLAGS)
 EXTRADEFS = -DWAV49
 
 C_SRCS = \

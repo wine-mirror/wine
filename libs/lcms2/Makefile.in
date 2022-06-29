@@ -1,5 +1,5 @@
 EXTLIB    = liblcms2.a
-EXTRAINCL = -I$(srcdir)/include
+EXTRAINCL = $(LCMS2_PE_CFLAGS)
 
 C_SRCS = \
 	src/cmsalpha.c \

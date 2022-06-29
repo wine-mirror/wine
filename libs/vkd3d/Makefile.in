@@ -1,5 +1,5 @@
 EXTLIB    = libvkd3d.a
-EXTRAINCL = -I$(srcdir)/include -I$(srcdir)/include/private -I$(srcdir)/libs/vkd3d -I$(srcdir)/libs/vkd3d-shader
+EXTRAINCL = $(VKD3D_PE_CFLAGS) -I$(srcdir)/include/private -I$(srcdir)/libs/vkd3d -I$(srcdir)/libs/vkd3d-shader
 EXTRADEFS = \
 	-DWINE_NO_NAMELESS_EXTENSION \
 	-DCONST_VTABLE \

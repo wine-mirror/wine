@@ -429,6 +429,7 @@ SOURCES = \
 	mimeole.idl \
 	minidumpapiset.h \
 	minmax.h \
+	minschannel.h \
 	mlang.idl \
 	mmc.idl \
 	mmddk.h \
