@@ -6639,11 +6639,12 @@ static void test_MFCreateDXSurfaceBuffer(void)
     IMF2DBuffer2_Release(_2dbuffer2);
 
     IMFMediaBuffer_Release(buffer);
+    IDirect3DDevice9_Release(device);
 
 done:
     if (backbuffer)
         IDirect3DSurface9_Release(backbuffer);
-    IDirect3D9_Release(d3d);
+    ok(!IDirect3D9_Release(d3d), "Unexpected refcount.\n");
     DestroyWindow(window);
 }
 
@@ -7618,6 +7619,8 @@ static void test_sample_allocator_d3d9(void)
 
     IMFVideoSampleAllocator_Release(allocator);
     IMFMediaType_Release(video_type);
+    IDirect3DDeviceManager9_Release(d3d9_manager);
+    IDirect3DDevice9_Release(d3d9_device);
 
 done:
     IDirect3D9_Release(d3d9);
@@ -7725,6 +7728,7 @@ static void test_sample_allocator_d3d11(void)
     hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    IMFMediaBuffer_Release(buffer);
     IMFSample_Release(sample);
 
     IMFVideoSampleAllocator_Release(allocator);
@@ -7867,7 +7871,7 @@ static void test_sample_allocator_d3d11(void)
 
 static void test_sample_allocator_d3d12(void)
 {
-    IMFVideoSampleAllocator *allocator;
+    IMFVideoSampleAllocator *allocator = NULL;
     D3D12_HEAP_PROPERTIES heap_props;
     IMFDXGIDeviceManager *manager;
     D3D12_HEAP_FLAGS heap_flags;
@@ -7955,11 +7959,12 @@ static void test_sample_allocator_d3d12(void)
 
     ID3D12Resource_Release(resource);
     IMFDXGIBuffer_Release(dxgi_buffer);
+    IMFMediaBuffer_Release(buffer);
     IMFSample_Release(sample);
 
-    IMFVideoSampleAllocator_Release(allocator);
-
 done:
+    if (allocator)
+        IMFVideoSampleAllocator_Release(allocator);
     IMFDXGIDeviceManager_Release(manager);
     ID3D12Device_Release(device);
 }
