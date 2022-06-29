@@ -385,76 +385,83 @@ INT __cdecl iswctype( WCHAR wc, unsigned short type )
 
 
 /*********************************************************************
+ *           iswalnum    (NTDLL.@)
+ */
+INT __cdecl iswalnum( WCHAR wc )
+{
+    return iswctype( wc, C1_ALPHA | C1_UPPER | C1_LOWER | C1_DIGIT );
+}
+
+
+/*********************************************************************
  *           iswalpha    (NTDLL.@)
  */
 INT __cdecl iswalpha( WCHAR wc )
 {
-    if (wc >= 256) return 0;
-    return wctypes[wc] & (C1_ALPHA | C1_UPPER | C1_LOWER);
+    return iswctype( wc, C1_ALPHA | C1_UPPER | C1_LOWER );
 }
 
 
 /*********************************************************************
- *		iswdigit (NTDLL.@)
- *
- * Checks if a unicode char wc is a digit
- *
- * RETURNS
- *  TRUE: The unicode char wc is a digit.
- *  FALSE: Otherwise
+ *           iswascii    (NTDLL.@)
+ */
+INT __cdecl iswascii( WCHAR wc )
+{
+    return wc < 0x80;
+}
+
+
+/*********************************************************************
+ *           iswdigit (NTDLL.@)
  */
 INT __cdecl iswdigit( WCHAR wc )
 {
-    if (wc >= 256) return 0;
-    return wctypes[wc] & C1_DIGIT;
+    return iswctype( wc, C1_DIGIT );
 }
 
 
 /*********************************************************************
- *		iswlower (NTDLL.@)
- *
- * Checks if a unicode char wc is a lower case letter
- *
- * RETURNS
- *  TRUE: The unicode char wc is a lower case letter.
- *  FALSE: Otherwise
+ *           iswgraph    (NTDLL.@)
+ */
+INT __cdecl iswgraph( WCHAR wc )
+{
+    return iswctype( wc, C1_ALPHA | C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT );
+}
+
+
+/*********************************************************************
+ *           iswlower (NTDLL.@)
  */
 INT __cdecl iswlower( WCHAR wc )
 {
-    if (wc >= 256) return 0;
-    return wctypes[wc] & C1_LOWER;
+    return iswctype( wc, C1_LOWER );
 }
 
 
 /*********************************************************************
- *		iswspace (NTDLL.@)
- *
- * Checks if a unicode char wc is a white space character
- *
- * RETURNS
- *  TRUE: The unicode char wc is a white space character.
- *  FALSE: Otherwise
+ *           iswprint    (NTDLL.@)
+ */
+INT __cdecl iswprint( WCHAR wc )
+{
+    return iswctype( wc, C1_ALPHA | C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_BLANK );
+}
+
+
+/*********************************************************************
+ *           iswspace (NTDLL.@)
  */
 INT __cdecl iswspace( WCHAR wc )
 {
-    if (wc >= 256) return 0;
-    return wctypes[wc] & C1_SPACE;
+    return iswctype( wc, C1_SPACE );
 }
 
 
 /*********************************************************************
- *		iswxdigit (NTDLL.@)
- *
- * Checks if a unicode char wc is an extended digit
- *
- * RETURNS
- *  TRUE: The unicode char wc is an extended digit.
- *  FALSE: Otherwise
+ *           iswxdigit (NTDLL.@)
  */
 INT __cdecl iswxdigit( WCHAR wc )
 {
-    if (wc >= 256) return 0;
-    return wctypes[wc] & C1_XDIGIT;
+    return iswctype( wc, C1_XDIGIT );
 }
 
 
