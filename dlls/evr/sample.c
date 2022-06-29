@@ -1747,7 +1747,10 @@ HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sam
     }
 
     if (buffer)
+    {
         IMFSample_AddBuffer(object->sample, buffer);
+        IMFMediaBuffer_Release(buffer);
+    }
 
     video_sample_create_tracking_thread();
 
