@@ -107,7 +107,6 @@ static pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct x11_d3dkmt_adapter
 {
     D3DKMT_HANDLE handle;                   /* Kernel mode graphics adapter handle */
-    VkInstance vk_instance;                 /* Vulkan instance */
     VkPhysicalDevice vk_device;             /* Vulkan physical device */
     struct list entry;                      /* List entry */
 };
@@ -120,6 +119,7 @@ struct d3dkmt_vidpn_source
     struct list entry;                      /* List entry */
 };
 
+static VkInstance d3dkmt_vk_instance;       /* Vulkan instance for D3DKMT functions */
 static struct list x11_d3dkmt_adapters = LIST_INIT( x11_d3dkmt_adapters );
 static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
 
@@ -862,11 +862,16 @@ NTSTATUS CDECL X11DRV_D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
     {
         if (adapter->handle == desc->hAdapter)
         {
-            vulkan_funcs->p_vkDestroyInstance(adapter->vk_instance, NULL);
             list_remove(&adapter->entry);
             free(adapter);
             break;
         }
+    }
+
+    if (list_empty(&x11_d3dkmt_adapters))
+    {
+        vulkan_funcs->p_vkDestroyInstance(d3dkmt_vk_instance, NULL);
+        d3dkmt_vk_instance = NULL;
     }
     pthread_mutex_unlock(&d3dkmt_mutex);
     return STATUS_SUCCESS;
@@ -1134,7 +1139,6 @@ NTSTATUS CDECL X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *des
     struct x11_d3dkmt_adapter *adapter;
     VkInstanceCreateInfo create_info;
     VkPhysicalDeviceIDProperties id;
-    VkInstance vk_instance = NULL;
     VkResult vr;
     GUID uuid;
 
@@ -1152,30 +1156,35 @@ NTSTATUS CDECL X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *des
         return STATUS_UNSUCCESSFUL;
     }
 
-    memset(&create_info, 0, sizeof(create_info));
-    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    create_info.enabledExtensionCount = ARRAY_SIZE(extensions);
-    create_info.ppEnabledExtensionNames = extensions;
+    pthread_mutex_lock(&d3dkmt_mutex);
 
-    vr = vulkan_funcs->p_vkCreateInstance(&create_info, NULL, &vk_instance);
-    if (vr != VK_SUCCESS)
+    if (!d3dkmt_vk_instance)
     {
-        WARN("Failed to create a Vulkan instance, vr %d.\n", vr);
-        goto done;
+        memset(&create_info, 0, sizeof(create_info));
+        create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        create_info.enabledExtensionCount = ARRAY_SIZE(extensions);
+        create_info.ppEnabledExtensionNames = extensions;
+
+        vr = vulkan_funcs->p_vkCreateInstance(&create_info, NULL, &d3dkmt_vk_instance);
+        if (vr != VK_SUCCESS)
+        {
+            WARN("Failed to create a Vulkan instance, vr %d.\n", vr);
+            goto done;
+        }
     }
 
-#define LOAD_VK_FUNC(f)                                                           \
-    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(vk_instance, #f))) \
-    {                                                                             \
-        WARN("Failed to load " #f ".\n");                                         \
-        goto done;                                                                \
+#define LOAD_VK_FUNC(f)                                                                  \
+    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(d3dkmt_vk_instance, #f))) \
+    {                                                                                    \
+        WARN("Failed to load " #f ".\n");                                                \
+        goto done;                                                                       \
     }
 
     LOAD_VK_FUNC(vkEnumeratePhysicalDevices)
     LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2KHR)
 #undef LOAD_VK_FUNC
 
-    vr = pvkEnumeratePhysicalDevices(vk_instance, &device_count, NULL);
+    vr = pvkEnumeratePhysicalDevices(d3dkmt_vk_instance, &device_count, NULL);
     if (vr != VK_SUCCESS || !device_count)
     {
         WARN("No Vulkan device found, vr %d, device_count %d.\n", vr, device_count);
@@ -1185,7 +1194,7 @@ NTSTATUS CDECL X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *des
     if (!(vk_physical_devices = calloc(device_count, sizeof(*vk_physical_devices))))
         goto done;
 
-    vr = pvkEnumeratePhysicalDevices(vk_instance, &device_count, vk_physical_devices);
+    vr = pvkEnumeratePhysicalDevices(d3dkmt_vk_instance, &device_count, vk_physical_devices);
     if (vr != VK_SUCCESS)
     {
         WARN("vkEnumeratePhysicalDevices failed, vr %d.\n", vr);
@@ -1210,19 +1219,20 @@ NTSTATUS CDECL X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *des
         }
 
         adapter->handle = desc->hAdapter;
-        adapter->vk_instance = vk_instance;
         adapter->vk_device = vk_physical_devices[device_idx];
-        pthread_mutex_lock(&d3dkmt_mutex);
         list_add_head(&x11_d3dkmt_adapters, &adapter->entry);
-        pthread_mutex_unlock(&d3dkmt_mutex);
-        free(vk_physical_devices);
-        return STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
+        break;
     }
 
 done:
+    if (d3dkmt_vk_instance && list_empty(&x11_d3dkmt_adapters))
+    {
+        vulkan_funcs->p_vkDestroyInstance(d3dkmt_vk_instance, NULL);
+        d3dkmt_vk_instance = NULL;
+    }
+    pthread_mutex_unlock(&d3dkmt_mutex);
     free(vk_physical_devices);
-    if (vk_instance)
-        vulkan_funcs->p_vkDestroyInstance(vk_instance, NULL);
     return status;
 }
 
@@ -1253,7 +1263,7 @@ NTSTATUS CDECL X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *d
         if (adapter->handle != desc->hAdapter)
             continue;
 
-        if (!(pvkGetPhysicalDeviceMemoryProperties2KHR = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(adapter->vk_instance, "vkGetPhysicalDeviceMemoryProperties2KHR")))
+        if (!(pvkGetPhysicalDeviceMemoryProperties2KHR = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(d3dkmt_vk_instance, "vkGetPhysicalDeviceMemoryProperties2KHR")))
         {
             WARN("Failed to load vkGetPhysicalDeviceMemoryProperties2KHR.\n");
             status = STATUS_UNSUCCESSFUL;
