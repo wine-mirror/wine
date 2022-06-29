@@ -225,6 +225,26 @@ char * __cdecl strcat( char *dst, const char *src )
 
 
 /*********************************************************************
+ *                  strcat_s   (NTDLL.@)
+ */
+errno_t __cdecl strcat_s( char *dst, size_t len, const char *src )
+{
+    size_t i, j;
+
+    if (!dst || !len) return EINVAL;
+    if (!src)
+    {
+        *dst = 0;
+        return EINVAL;
+    }
+    for (i = 0; i < len; i++) if (!dst[i]) break;
+    for (j = 0; (j + i) < len; j++) if (!(dst[j + i] = src[j])) return 0;
+    *dst = 0;
+    return ERANGE;
+}
+
+
+/*********************************************************************
  *                  strchr   (NTDLL.@)
  */
 char * __cdecl strchr( const char *str, int c )
