@@ -293,6 +293,48 @@ LPWSTR __cdecl wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 
 
 /*********************************************************************
+ *           wcsncpy_s    (NTDLL.@)
+ */
+errno_t __cdecl wcsncpy_s( wchar_t *dst, size_t len, const wchar_t *src, size_t count )
+{
+    size_t i, end;
+
+    if (!count)
+    {
+        if (dst && len) *dst = 0;
+        return 0;
+    }
+    if (!dst || !len) return EINVAL;
+    if (!src)
+    {
+        *dst = 0;
+        return EINVAL;
+    }
+
+    if (count != _TRUNCATE && count < len)
+        end = count;
+    else
+        end = len - 1;
+
+    for (i = 0; i < end; i++)
+        if (!(dst[i] = src[i])) return 0;
+
+    if (count == _TRUNCATE)
+    {
+        dst[i] = 0;
+        return STRUNCATE;
+    }
+    if (end == count)
+    {
+        dst[i] = 0;
+        return 0;
+    }
+    dst[0] = 0;
+    return ERANGE;
+}
+
+
+/*********************************************************************
  *           wcsnlen    (NTDLL.@)
  */
 size_t __cdecl wcsnlen( const WCHAR *str, size_t len )
