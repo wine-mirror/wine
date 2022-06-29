@@ -4318,7 +4318,6 @@ image_size_tests[] =
 
 static void test_MFCalculateImageSize(void)
 {
-    DWORD plane_size;
     unsigned int i;
     UINT32 size;
     HRESULT hr;
@@ -4340,15 +4339,6 @@ static void test_MFCalculateImageSize(void)
         ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
         ok(size == ptr->size, "%u: unexpected image size %u, expected %u. Size %u x %u, format %s.\n", i, size, ptr->size,
                 ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->subtype->Data1, 4));
-
-        if (pMFGetPlaneSize)
-        {
-            unsigned int expected = ptr->plane_size ? ptr->plane_size : ptr->size;
-
-            hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &plane_size);
-            ok(hr == S_OK, "%u: failed to get plane size, hr %#lx.\n", i, hr);
-            ok(plane_size == expected, "%u: unexpected plane size %lu, expected %u.\n", i, plane_size, expected);
-        }
     }
 }
 
