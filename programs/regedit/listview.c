@@ -122,7 +122,7 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
         {
             UINT64 value = *(UINT64 *)data;
             WCHAR buf[64];
-            swprintf(buf, ARRAY_SIZE(buf), L"0x%08Ix (%Iu)", value, value);
+            swprintf(buf, ARRAY_SIZE(buf), L"0x%08I64x (%I64u)", value, value);
             ListView_SetItemTextW(hwndLV, index, 2, buf);
             break;
         }
