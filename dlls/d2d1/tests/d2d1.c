@@ -1168,7 +1168,8 @@ static void release_test_context_(unsigned int line, struct d2d1_test_context *c
     IDXGISurface_Release(ctx->surface);
     IDXGISwapChain_Release(ctx->swapchain);
     DestroyWindow(ctx->window);
-    IDXGIDevice_Release(ctx->device);
+    ref = IDXGIDevice_Release(ctx->device);
+    ok_(__FILE__, line)(!ref, "Device has %lu references left.\n", ref);
 }
 
 #define init_test_context(ctx, d3d11) init_test_context_(__LINE__, ctx, d3d11)
@@ -5182,16 +5183,17 @@ static void test_shared_bitmap(BOOL d3d11)
             todo_wine_if(i == 2 || i == 3 || i == 5 || i == 6)
             ok(hr == bitmap_format_tests[i].hr, "%u: Got unexpected hr %#lx.\n", i, hr);
 
-            if (SUCCEEDED(bitmap_format_tests[i].hr))
+            if (SUCCEEDED(hr) && hr == bitmap_format_tests[i].hr)
             {
                 pixel_format = ID2D1Bitmap_GetPixelFormat(bitmap2);
                 ok(pixel_format.format == bitmap_format_tests[i].result.format, "%u: unexpected pixel format %#x.\n",
                         i, pixel_format.format);
                 ok(pixel_format.alphaMode == bitmap_format_tests[i].result.alphaMode, "%u: unexpected alpha mode %d.\n",
                         i, pixel_format.alphaMode);
-
-                ID2D1Bitmap_Release(bitmap2);
             }
+
+            if (SUCCEEDED(hr))
+                ID2D1Bitmap_Release(bitmap2);
         }
     }
 
@@ -5723,6 +5725,8 @@ static void test_draw_text_layout(BOOL d3d11)
         IDWriteRenderingParams_Release(rendering_params);
     }
 
+    ID2D1SolidColorBrush_Release(brush2);
+    ID2D1SolidColorBrush_Release(brush);
     IDWriteTextFormat_Release(text_format);
     IDWriteTextLayout_Release(text_layout);
     IDWriteFactory_Release(dwrite_factory);
@@ -8899,7 +8903,7 @@ static void test_bitmap_surface(BOOL d3d11)
         todo_wine_if(bitmap_format_tests[i].hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
         ok(hr == bitmap_format_tests[i].hr, "%u: Got unexpected hr %#lx.\n", i, hr);
 
-        if (SUCCEEDED(bitmap_format_tests[i].hr))
+        if (SUCCEEDED(hr) && hr == bitmap_format_tests[i].hr)
         {
             pixel_format = ID2D1Bitmap1_GetPixelFormat(bitmap);
 
@@ -8907,9 +8911,10 @@ static void test_bitmap_surface(BOOL d3d11)
                     i, pixel_format.format);
             ok(pixel_format.alphaMode == bitmap_format_tests[i].result.alphaMode, "%u: unexpected alpha mode %d.\n",
                     i, pixel_format.alphaMode);
-
-            ID2D1Bitmap1_Release(bitmap);
         }
+
+        if (SUCCEEDED(hr))
+            ID2D1Bitmap1_Release(bitmap);
     }
 
     /* A8 surface */
@@ -8943,6 +8948,7 @@ static void test_bitmap_surface(BOOL d3d11)
     ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
     ID2D1DeviceContext_GetTarget(device_context, &target);
     ok(target == (ID2D1Image *)bitmap, "Unexpected target.\n");
+    ID2D1Image_Release(target);
 
     check_rt_bitmap_surface((ID2D1RenderTarget *)device_context, TRUE, D2D1_BITMAP_OPTIONS_NONE);
 
@@ -9036,6 +9042,7 @@ static void test_bitmap_surface(BOOL d3d11)
 
     hr = ID2D1Factory1_CreateWicBitmapRenderTarget(factory, wic_bitmap, &rt_desc, &rt);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    IWICBitmap_Release(wic_bitmap);
 
     check_rt_bitmap_surface(rt, FALSE, D2D1_BITMAP_OPTIONS_NONE);
     ID2D1RenderTarget_Release(rt);
@@ -9423,6 +9430,7 @@ static void test_command_list(BOOL d3d11)
     {
         ID2D1DeviceContext_Release(device_context);
         ID2D1Factory1_Release(factory);
+        release_test_context(&ctx);
         return;
     }
 
