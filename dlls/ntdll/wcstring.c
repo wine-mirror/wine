@@ -21,6 +21,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -159,6 +160,26 @@ LPWSTR __cdecl wcscpy( LPWSTR dst, LPCWSTR src )
     WCHAR *p = dst;
     while ((*p++ = *src++));
     return dst;
+}
+
+
+/*********************************************************************
+ *           wcscpy_s    (NTDLL.@)
+ */
+errno_t __cdecl wcscpy_s( wchar_t *dst, size_t len, const wchar_t *src )
+{
+    size_t i;
+
+    if (!dst || !len) return EINVAL;
+    if (!src)
+    {
+        *dst = 0;
+        return EINVAL;
+    }
+
+    for (i = 0; i < len; i++) if (!(dst[i] = src[i])) return 0;
+    *dst = 0;
+    return ERANGE;
 }
 
 

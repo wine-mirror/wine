@@ -21,6 +21,7 @@
  */
 
 #include <limits.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -253,6 +254,26 @@ char * __cdecl strcpy( char *dst, const char *src )
     char *d = dst;
     while ((*d++ = *src++));
     return dst;
+}
+
+
+/*********************************************************************
+ *                  strcpy_s   (NTDLL.@)
+ */
+errno_t __cdecl strcpy_s( char *dst, size_t len, const char *src )
+{
+    size_t i;
+
+    if (!dst || !len) return EINVAL;
+    if (!src)
+    {
+        *dst = 0;
+        return EINVAL;
+    }
+
+    for (i = 0; i < len; i++) if (!(dst[i] = src[i])) return 0;
+    *dst = 0;
+    return ERANGE;
 }
 
 
