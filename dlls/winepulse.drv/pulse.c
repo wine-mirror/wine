@@ -89,6 +89,8 @@ typedef struct _PhysDevice {
     EndpointFormFactor form;
     UINT channel_mask;
     UINT index;
+    REFERENCE_TIME min_period, def_period;
+    WAVEFORMATEXTENSIBLE fmt;
     char pulse_name[0];
 } PhysDevice;
 
@@ -542,6 +544,8 @@ static void pulse_add_device(struct list *list, pa_proplist *proplist, int index
     dev->form = form;
     dev->index = index;
     dev->channel_mask = channel_mask;
+    dev->def_period = 0;
+    dev->min_period = 0;
     fill_device_info(dev, proplist);
     memcpy(dev->pulse_name, pulse_name, len + 1);
 
@@ -659,7 +663,8 @@ static void convert_channel_map(const pa_channel_map *pa_map, WAVEFORMATEXTENSIB
     fmt->dwChannelMask = pa_mask;
 }
 
-static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
+static void pulse_probe_settings(int render, const char *pulse_name, WAVEFORMATEXTENSIBLE *fmt, REFERENCE_TIME *def_period, REFERENCE_TIME *min_period)
+{
     WAVEFORMATEX *wfx = &fmt->Format;
     pa_stream *stream;
     pa_channel_map map;
@@ -667,6 +672,9 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
     pa_buffer_attr attr;
     int ret;
     unsigned int length = 0;
+
+    if (pulse_name && !pulse_name[0])
+        pulse_name = NULL;
 
     pa_channel_map_init_auto(&map, 2, PA_CHANNEL_MAP_ALSA);
     ss.rate = 48000;
@@ -684,10 +692,10 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
     if (!stream)
         ret = -1;
     else if (render)
-        ret = pa_stream_connect_playback(stream, NULL, &attr,
+        ret = pa_stream_connect_playback(stream, pulse_name, &attr,
         PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS, NULL, NULL);
     else
-        ret = pa_stream_connect_record(stream, NULL, &attr, PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS);
+        ret = pa_stream_connect_record(stream, pulse_name, &attr, PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS);
     if (ret >= 0) {
         while (pa_mainloop_iterate(pulse_ml, 1, &ret) >= 0 &&
                 pa_stream_get_state(stream) == PA_STREAM_CREATING)
@@ -710,13 +718,13 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
         pa_stream_unref(stream);
 
     if (length)
-        pulse_def_period[!render] = pulse_min_period[!render] = pa_bytes_to_usec(10 * length, &ss);
+        *def_period = *min_period = pa_bytes_to_usec(10 * length, &ss);
 
-    if (pulse_min_period[!render] < MinimumPeriod)
-        pulse_min_period[!render] = MinimumPeriod;
+    if (*min_period < MinimumPeriod)
+        *min_period = MinimumPeriod;
 
-    if (pulse_def_period[!render] < DefaultPeriod)
-        pulse_def_period[!render] = DefaultPeriod;
+    if (*def_period < DefaultPeriod)
+        *def_period = DefaultPeriod;
 
     wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     wfx->cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
@@ -745,6 +753,7 @@ static NTSTATUS pulse_test_connect(void *args)
 {
     struct test_connect_params *params = args;
     struct pulse_config *config = params->config;
+    PhysDevice *dev;
     pa_operation *o;
     int ret;
 
@@ -787,8 +796,8 @@ static NTSTATUS pulse_test_connect(void *args)
         pa_context_get_server(pulse_ctx),
         pa_context_get_server_protocol_version(pulse_ctx));
 
-    pulse_probe_settings(1, &pulse_fmt[0]);
-    pulse_probe_settings(0, &pulse_fmt[1]);
+    pulse_probe_settings(1, NULL, &pulse_fmt[0], &pulse_def_period[0], &pulse_min_period[0]);
+    pulse_probe_settings(0, NULL, &pulse_fmt[1], &pulse_def_period[1], &pulse_min_period[1]);
 
     free_phys_device_lists();
     list_init(&g_phys_speakers);
@@ -811,6 +820,14 @@ static NTSTATUS pulse_test_connect(void *args)
                 pa_operation_get_state(o) == PA_OPERATION_RUNNING)
         {}
         pa_operation_unref(o);
+    }
+
+    LIST_FOR_EACH_ENTRY(dev, &g_phys_speakers, PhysDevice, entry) {
+        pulse_probe_settings(1, dev->pulse_name, &dev->fmt, &dev->def_period, &dev->min_period);
+    }
+
+    LIST_FOR_EACH_ENTRY(dev, &g_phys_sources, PhysDevice, entry) {
+        pulse_probe_settings(0, dev->pulse_name, &dev->fmt, &dev->def_period, &dev->min_period);
     }
 
     pa_context_unref(pulse_ctx);
