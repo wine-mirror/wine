@@ -70,9 +70,14 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de);
  */
 BOOL dbg_attach_debuggee(DWORD pid)
 {
+    if (pid == GetCurrentProcessId())
+    {
+        dbg_printf("WineDbg can't debug its own process. Please use another process ID.\n");
+        return FALSE;
+    }
     if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, pid, 0))) return FALSE;
 
-    if (!DebugActiveProcess(pid)) 
+    if (!DebugActiveProcess(pid))
     {
         dbg_printf("Can't attach process %04lx: error %lu\n", pid, GetLastError());
         dbg_del_process(dbg_curr_process);

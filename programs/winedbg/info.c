@@ -498,14 +498,18 @@ static unsigned get_parent(const struct dump_proc* dp, unsigned idx)
 static void dump_proc_info(const struct dump_proc* dp, unsigned idx, unsigned depth)
 {
     struct dump_proc_entry* dpe;
+    char info;
     for ( ; idx != -1; idx = dp->entries[idx].sibling)
     {
         assert(idx < dp->count);
         dpe = &dp->entries[idx];
-        dbg_printf("%c%08lx %-8ld ",
-                   (dpe->proc.th32ProcessID == (dbg_curr_process ?
-                                                dbg_curr_process->pid : 0)) ? '>' : ' ',
-                   dpe->proc.th32ProcessID, dpe->proc.cntThreads);
+        if (dbg_curr_process && dpe->proc.th32ProcessID == dbg_curr_process->pid)
+            info = '>';
+        else if (dpe->proc.th32ProcessID == GetCurrentProcessId())
+            info = '=';
+        else
+            info = ' ';
+        dbg_printf("%c%08lx %-8ld ", info, dpe->proc.th32ProcessID, dpe->proc.cntThreads);
         if (depth)
         {
             unsigned i;
@@ -537,11 +541,10 @@ void info_win32_processes(void)
         dp.entries[dp.count].proc.dwSize = sizeof(dp.entries[dp.count].proc);
         ok = Process32First(snap, &dp.entries[dp.count].proc);
 
-        /* fetch all process information into dp (skipping this debugger) */
+        /* fetch all process information into dp */
         while (ok)
         {
-            if (dp.entries[dp.count].proc.th32ProcessID != GetCurrentProcessId())
-                dp.entries[dp.count++].children = -1;
+            dp.entries[dp.count++].children = -1;
             if (dp.count >= dp.alloc)
             {
                 dp.entries = HeapReAlloc(GetProcessHeap(), 0, dp.entries, sizeof(*dp.entries) * (dp.alloc *= 2));
