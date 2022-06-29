@@ -142,6 +142,42 @@ void * __cdecl memmove( void *dst, const void *src, size_t n )
 }
 
 
+/*********************************************************************
+ *		memcpy_s (MSVCRT.@)
+ */
+errno_t __cdecl memcpy_s( void *dst, size_t len, const void *src, size_t count )
+{
+    if (!count) return 0;
+    if (!dst) return EINVAL;
+    if (!src)
+    {
+        memset( dst, 0, len );
+        return EINVAL;
+    }
+    if (count > len)
+    {
+        memset( dst, 0, len );
+        return ERANGE;
+    }
+    memmove( dst, src, count );
+    return 0;
+}
+
+
+/*********************************************************************
+ *		memmove_s (MSVCRT.@)
+ */
+errno_t __cdecl memmove_s( void *dst, size_t len, const void *src, size_t count )
+{
+    if (!count) return 0;
+    if (!dst) return EINVAL;
+    if (!src) return EINVAL;
+    if (count > len) return ERANGE;
+    memmove( dst, src, count );
+    return 0;
+}
+
+
 static inline void memset_aligned_32( unsigned char *d, uint64_t v, size_t n )
 {
     unsigned char *end = d + n;
