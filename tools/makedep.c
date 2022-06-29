@@ -172,6 +172,7 @@ struct makefile
     struct strarray include_paths;
     struct strarray include_args;
     struct strarray define_args;
+    struct strarray unix_cflags;
     struct strarray programs;
     struct strarray scripts;
     struct strarray imports;
@@ -2046,7 +2047,7 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
     unsigned int i, j;
 
     if (strcmp( make->unixlib, "ntdll.so" )) strarray_add( &all_libs, "-lntdll" );
-    strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+    strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
 
     for (i = 0; i < all_libs.count; i++)
     {
@@ -2277,9 +2278,11 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
 
     strarray_addall( &ret, make->include_args );
     if (source->use_msvcrt)
+    {
         strarray_add( &ret, strmake( "-I%s", root_src_dir_path( "include/msvcrt" )));
-    for (i = 0; i < make->include_paths.count; i++)
-        strarray_add( &ret, strmake( "-I%s", make->include_paths.str[i] ));
+        for (i = 0; i < make->include_paths.count; i++)
+            strarray_add( &ret, strmake( "-I%s", make->include_paths.str[i] ));
+    }
     strarray_addall( &ret, make->define_args );
     strarray_addall( &ret, get_expanded_file_local_var( make, obj, "EXTRADEFS" ));
     if ((source->file->flags & FLAG_C_UNIX) && *dll_ext) strarray_add( &ret, "-DWINE_UNIX_LIB" );
@@ -3004,6 +3007,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
+        if (!source->use_msvcrt) output_filenames( make->unix_cflags );
         output_filenames( make->extlib ? extra_cflags_extlib : extra_cflags );
         if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
         {
@@ -3137,7 +3141,7 @@ static void output_module( struct makefile *make )
 
         if (!make->use_msvcrt)
         {
-            strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+            strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
             strarray_addall( &all_libs, libs );
         }
 
@@ -3298,7 +3302,7 @@ static void output_unix_lib( struct makefile *make )
         if (spec_file) strarray_add( &unix_deps, spec_file );
 
         strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 0 ));
-        strarray_addall( &unix_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+        strarray_addall( &unix_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
         strarray_addall( &unix_libs, libs );
     }
     else unix_libs = add_unix_libraries( make, &unix_deps );
@@ -3388,7 +3392,7 @@ static void output_shared_lib( struct makefile *make )
 
     strarray_addall( &dep_libs, get_local_dependencies( make, basename, make->in_files ));
     strarray_addall( &all_libs, get_expanded_file_local_var( make, basename, "LDFLAGS" ));
-    strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+    strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
     strarray_addall( &all_libs, libs );
 
     output( "%s:", obj_dir_path( make, make->sharedlib ));
@@ -3504,7 +3508,7 @@ static void output_programs( struct makefile *make )
         if (!objs.count) objs = make->object_files;
         if (!strarray_exists( &all_libs, "-nodefaultlibs" ))
         {
-            strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+            strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
             strarray_addall( &all_libs, libs );
         }
 
@@ -4148,6 +4152,7 @@ static void load_sources( struct makefile *make )
     make->include_paths = empty_strarray;
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;
+    make->unix_cflags = empty_strarray;
     if (!make->extlib) strarray_add( &make->define_args, "-D__WINESRC__" );
 
     value = get_expanded_make_var_array( make, "EXTRAINCL" );
@@ -4167,6 +4172,7 @@ static void load_sources( struct makefile *make )
             strarray_add_uniq( &make->define_args, value.str[i] );
     }
     strarray_addall( &make->define_args, get_expanded_make_var_array( make, "EXTRADEFS" ));
+    strarray_addall_uniq( &make->unix_cflags, get_expanded_make_var_array( make, "UNIX_CFLAGS" ));
 
     strarray_add( &make->include_args, strmake( "-I%s", obj_dir_path( make, "" )));
     if (make->src_dir)

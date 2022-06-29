@@ -2,7 +2,7 @@ MODULE    = winecoreaudio.drv
 UNIXLIB   = winecoreaudio.so
 IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm
-EXTRALIBS = $(COREAUDIO_LIBS)
+UNIX_LIBS    = $(COREAUDIO_LIBS)
 
 C_SRCS = \
 	coreaudio.c \

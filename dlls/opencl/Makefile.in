@@ -1,6 +1,6 @@
 MODULE    = opencl.dll
 UNIXLIB   = opencl.so
-EXTRALIBS = $(OPENCL_LIBS)
+UNIX_LIBS = $(OPENCL_LIBS)
 
 C_SRCS = \
 	pe_thunks.c \

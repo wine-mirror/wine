@@ -1,5 +1,5 @@
 PROGRAMS = wrc
-EXTRALIBS = $(GETTEXTPO_LIBS)
+UNIX_LIBS = $(GETTEXTPO_LIBS)
 
 C_SRCS = \
 	genres.c \

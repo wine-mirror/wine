@@ -2,7 +2,7 @@ EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineandroid.drv
 UNIXLIB   = wineandroid.so
 IMPORTS   = ntoskrnl
-EXTRALIBS = -lwin32u $(PTHREAD_LIBS)
+UNIX_LIBS = -lwin32u $(PTHREAD_LIBS)
 
 C_SRCS = \
 	device.c \

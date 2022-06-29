@@ -1,5 +1,5 @@
 MODULE    = openal32.dll
-EXTRALIBS = $(OPENAL_LIBS)
+UNIX_LIBS = $(OPENAL_LIBS)
 
 EXTRADLLFLAGS = -Wb,--prefer-native -mcygwin
 

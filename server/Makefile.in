@@ -49,6 +49,6 @@ MANPAGES = \
 	wineserver.fr.UTF-8.man.in \
 	wineserver.man.in
 
-EXTRALIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS)
+UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS)
 
 unicode_EXTRADEFS = -DNLSDIR="\"${nlsdir}\"" -DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${nlsdir}`\"

@@ -3,8 +3,8 @@ UNIXLIB   = winegstreamer.so
 IMPORTLIB = winegstreamer
 IMPORTS   = strmbase ole32 oleaut32 msdmo
 DELAYIMPORTS = mfplat
-EXTRAINCL = $(GSTREAMER_CFLAGS)
-EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
+UNIX_CFLAGS  = $(GSTREAMER_CFLAGS)
+UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
 C_SRCS = \
 	color_convert.c \

@@ -2,8 +2,8 @@ MODULE    = wldap32.dll
 UNIXLIB   = wldap32.so
 IMPORTLIB = wldap32
 IMPORTS   = user32
-EXTRAINCL = $(LDAP_CFLAGS)
-EXTRALIBS = $(LDAP_LIBS)
+UNIX_CFLAGS  = $(LDAP_CFLAGS)
+UNIX_LIBS    = $(LDAP_LIBS)
 
 C_SRCS = \
 	add.c \

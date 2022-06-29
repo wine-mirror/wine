@@ -2,7 +2,7 @@ MODULE    = wpcap.dll
 UNIXLIB   = wpcap.so
 IMPORTS   = iphlpapi
 DELAYIMPORTS = ws2_32
-EXTRALIBS = $(PCAP_LIBS)
+UNIX_LIBS    = $(PCAP_LIBS)
 
 C_SRCS = \
 	unixlib.c \

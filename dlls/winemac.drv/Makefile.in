@@ -3,7 +3,7 @@ MODULE    = winemac.drv
 UNIXLIB   = winemac.so
 IMPORTS   = uuid rpcrt4 user32 gdi32 win32u
 DELAYIMPORTS = ole32 shell32 imm32
-EXTRALIBS = -lwin32u -framework AppKit -framework Carbon -framework Security -framework OpenGL -framework IOKit -framework CoreVideo -framework QuartzCore $(METAL_LIBS)
+UNIX_LIBS    = -lwin32u -framework AppKit -framework Carbon -framework Security -framework OpenGL -framework IOKit -framework CoreVideo -framework QuartzCore $(METAL_LIBS)
 
 C_SRCS = \
 	clipboard.c \

@@ -2,7 +2,7 @@ MODULE    = winealsa.drv
 UNIXLIB   = winealsa.so
 IMPORTS   = uuid ole32 advapi32
 DELAYIMPORTS = winmm
-EXTRALIBS = $(ALSA_LIBS) $(PTHREAD_LIBS)
+UNIX_LIBS    = $(ALSA_LIBS) $(PTHREAD_LIBS)
 
 C_SRCS = \
 	alsa.c \

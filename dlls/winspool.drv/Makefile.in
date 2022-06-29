@@ -2,8 +2,8 @@ MODULE    = winspool.drv
 UNIXLIB   = winspool.so
 IMPORTLIB = winspool
 IMPORTS   = user32 gdi32 advapi32
-EXTRAINCL = $(CUPS_CFLAGS)
-EXTRALIBS = $(APPLICATIONSERVICES_LIBS)
+UNIX_CFLAGS  = $(CUPS_CFLAGS)
+UNIX_LIBS    = $(APPLICATIONSERVICES_LIBS)
 
 C_SRCS = \
 	cups.c \
