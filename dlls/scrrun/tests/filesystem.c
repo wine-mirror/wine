@@ -2709,6 +2709,135 @@ static void test_MoveFile(void)
     SysFreeString(str);
 }
 
+static void test_MoveFolder(void)
+{
+    WCHAR temp_path[MAX_PATH], cwd[MAX_PATH];
+    BSTR src, dst, empty;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    GetCurrentDirectoryW(MAX_PATH, cwd);
+    GetTempPathW(MAX_PATH, temp_path);
+    SetCurrentDirectoryW(temp_path);
+    src = SysAllocString(L"winetest_src");
+    dst = SysAllocString(L"winetest_dst");
+
+    ret = CreateDirectoryW(L"winetest_src", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_PATHNOTFOUND, "Got hr %#lx.\n", hr);
+    ret = CreateDirectoryW(L"winetest_src", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Got hr %#lx.\n", hr);
+    ret = RemoveDirectoryW(L"winetest_dst");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_src");
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    empty = SysAllocString(L"");
+    hr = IFileSystem3_MoveFolder(fs3, src, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IFileSystem3_MoveFolder(fs3, NULL, dst);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IFileSystem3_MoveFolder(fs3, src, empty);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IFileSystem3_MoveFolder(fs3, empty, dst);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    SysFreeString(empty);
+
+    file = CreateFileW(L"winetest_src", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Got error %lu.\n", GetLastError());
+    CloseHandle(file);
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_PATHNOTFOUND, "Got hr %#lx.\n", hr);
+    ret = DeleteFileW(L"winetest_src");
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    dst = SysAllocString(L"winetest_dst\\");
+
+    ret = CreateDirectoryW(L"winetest_src", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_PATHNOTFOUND, "Got hr %#lx.\n", hr);
+    ret = CreateDirectoryW(L"winetest_dst", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = RemoveDirectoryW(L"winetest_dst\\winetest_src");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_dst");
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    src = SysAllocString(L"winetest_src\\");
+    dst = SysAllocString(L"winetest_dst");
+
+    ret = CreateDirectoryW(L"winetest_src", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Got hr %#lx.\n", hr);
+    src = SysAllocString(L"winetest_src\\");
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Got hr %#lx.\n", hr);
+
+    ret = RemoveDirectoryW(L"winetest_src");
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    ret = CreateDirectoryW(L"winetest_src1", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = CreateDirectoryW(L"winetest_src2", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    file = CreateFileW(L"winetest_src3", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Got error %lu.\n", GetLastError());
+    CloseHandle(file);
+
+    src = SysAllocString(L"winetest_src*");
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_PATHNOTFOUND, "Got hr %#lx.\n", hr);
+    ret = CreateDirectoryW(L"winetest_dst", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_PATHNOTFOUND, "Got hr %#lx.\n", hr);
+    ret = RemoveDirectoryW(L"winetest_dst/winetest_src1");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_dst/winetest_src2");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_dst");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = DeleteFileW(L"winetest_src3");
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    /* Fail to copy one file. */
+    ret = CreateDirectoryW(L"winetest_src1", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = CreateDirectoryW(L"winetest_src2", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = CreateDirectoryW(L"winetest_src3", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = CreateDirectoryW(L"winetest_dst", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = CreateDirectoryW(L"winetest_dst\\winetest_src2", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    hr = IFileSystem3_MoveFolder(fs3, src, dst);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "Got hr %#lx.\n", hr);
+    ret = RemoveDirectoryW(L"winetest_dst/winetest_src1");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_dst/winetest_src2");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_dst");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_src2");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"winetest_src3");
+    ok(ret, "Got error %lu.\n", GetLastError());
+}
+
 static void test_DoOpenPipeStream(void)
 {
     static const char testdata[] = "test";
@@ -2843,6 +2972,7 @@ START_TEST(filesystem)
     test_GetExtensionName();
     test_GetSpecialFolder();
     test_MoveFile();
+    test_MoveFolder();
     test_DoOpenPipeStream();
 
     IFileSystem3_Release(fs3);

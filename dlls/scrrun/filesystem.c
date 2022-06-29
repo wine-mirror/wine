@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "pathcch.h"
 #include "ole2.h"
 #include "olectl.h"
 #include "dispex.h"
@@ -3811,12 +3812,86 @@ static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR source, BSTR de
     return MoveFileW(source, destination) ? S_OK : create_error(GetLastError());
 }
 
-static HRESULT WINAPI filesys_MoveFolder(IFileSystem3 *iface,BSTR Source,
-                                            BSTR Destination)
+static HRESULT WINAPI filesys_MoveFolder(IFileSystem3 *iface, BSTR src, BSTR dst)
 {
-    FIXME("%p %s %s\n", iface, debugstr_w(Source), debugstr_w(Destination));
+    BOOL wildcard = FALSE, separator = FALSE, success = FALSE;
+    int src_len, dst_len, name_len;
+    WIN32_FIND_DATAW find_data;
+    HANDLE find;
+    BOOL ret;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %s\n", iface, debugstr_w(src), debugstr_w(dst));
+
+    if (!src || !src[0] || !dst || !dst[0])
+        return E_INVALIDARG;
+
+    src_len = SysStringLen(src);
+    if (src[src_len - 1] == '\\' || src[src_len - 1] == '/')
+        return CTL_E_ILLEGALFUNCTIONCALL;
+
+    if (wcspbrk(src, L"*?><"))
+        wildcard = TRUE;
+
+    dst_len = SysStringLen(dst);
+    if (dst[dst_len - 1] == '\\' || dst[dst_len - 1] == '/')
+        separator = TRUE;
+
+    if (!wildcard && !separator)
+    {
+        /* Ensure that we open a directory by appending a slash. */
+        WCHAR *src_copy = malloc((src_len + 2) * sizeof(WCHAR));
+
+        memcpy(src_copy, src, src_len * sizeof(WCHAR));
+        wcscpy(src_copy + src_len, L"\\");
+
+        ret = MoveFileW(src_copy, dst);
+        free(src_copy);
+        if (ret)
+            return S_OK;
+        if (GetLastError() == ERROR_INVALID_NAME || GetLastError() == ERROR_FILE_NOT_FOUND)
+            return CTL_E_PATHNOTFOUND;
+        return create_error(GetLastError());
+    }
+
+    /* Back up to the slash if there is one. */
+    while (src_len > 0 && src[src_len] != '/' && src[src_len] != '\\')
+        --src_len;
+
+    if ((find = FindFirstFileW(src, &find_data)) == INVALID_HANDLE_VALUE)
+        return create_error(GetLastError());
+
+    do
+    {
+        WCHAR *src_folder, *dst_folder;
+
+        if (!(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            continue;
+
+        name_len = wcslen(find_data.cFileName);
+        src_folder = malloc((src_len + name_len + 1) * sizeof(WCHAR));
+
+        if (src_len)
+            memcpy(src_folder, src, src_len * sizeof(WCHAR));
+        memcpy(src_folder + src_len, find_data.cFileName, (name_len + 1) * sizeof(WCHAR));
+
+        PathAllocCombine(dst, find_data.cFileName,
+                PATHCCH_ALLOW_LONG_PATHS | PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, &dst_folder);
+
+        ret = MoveFileW(src_folder, dst_folder);
+        free(src_folder);
+        LocalFree(dst_folder);
+        if (!ret)
+        {
+            FindClose(find);
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                return CTL_E_PATHNOTFOUND;
+            return create_error(GetLastError());
+        }
+        success = TRUE;
+    } while (FindNextFileW(find, &find_data));
+
+    FindClose(find);
+    return success ? S_OK : CTL_E_PATHNOTFOUND;
 }
 
 static inline HRESULT copy_file(const WCHAR *source, DWORD source_len,
