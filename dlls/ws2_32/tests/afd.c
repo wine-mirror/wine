@@ -172,15 +172,17 @@ static void test_poll(void)
     GUID acceptex_guid = WSAID_ACCEPTEX;
     SOCKET client, server, listener;
     OVERLAPPED overlapped = {0};
+    HANDLE event, afd_handle;
     LPFN_ACCEPTEX pAcceptEx;
     struct sockaddr_in addr;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
     DWORD size, flags = 0;
     char *large_buffer;
     IO_STATUS_BLOCK io;
     LARGE_INTEGER now;
     ULONG params_size;
     WSABUF wsabuf;
-    HANDLE event;
     int ret, len;
 
     large_buffer = malloc(large_buffer_size);
@@ -188,6 +190,11 @@ static void test_poll(void)
     memset(out_buffer, 0, sizeof(out_buffer));
     event = CreateEventW(NULL, TRUE, FALSE, NULL);
     overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    RtlInitUnicodeString(&string, L"\\Device\\Afd\\deadbeef");
+    InitializeObjectAttributes(&attr, &string, 0, NULL, NULL);
+    ret = NtOpenFile(&afd_handle, SYNCHRONIZE, &attr, &io, 0, 0);
+    ok(!ret, "got %#x\n", ret);
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ret = bind(listener, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
@@ -246,7 +253,7 @@ static void test_poll(void)
     in_params->sockets[0].status = 0xdeadbeef;
 
     memset(out_params, 0, params_size);
-    ret = NtDeviceIoControlFile((HANDLE)listener, event, NULL, NULL, &io,
+    ret = NtDeviceIoControlFile(afd_handle, event, NULL, NULL, &io,
             IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
     ok(!ret, "got %#x\n", ret);
     ok(!io.Status, "got %#lx\n", io.Status);
@@ -260,7 +267,7 @@ static void test_poll(void)
     NtQuerySystemTime(&now);
     in_params->timeout = now.QuadPart;
 
-    ret = NtDeviceIoControlFile((HANDLE)listener, event, NULL, NULL, &io,
+    ret = NtDeviceIoControlFile(afd_handle, event, NULL, NULL, &io,
             IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 100);
@@ -899,6 +906,8 @@ static void test_poll(void)
     CloseHandle(overlapped.hEvent);
     CloseHandle(event);
     free(large_buffer);
+
+    CloseHandle(afd_handle);
 }
 
 struct poll_exclusive_thread_cb_ctx

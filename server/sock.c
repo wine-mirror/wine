@@ -2186,11 +2186,12 @@ static struct accept_req *alloc_accept_req( struct sock *sock, struct sock *acce
 static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct sock *sock = get_fd_user( fd );
-    int unix_fd;
+    int unix_fd = -1;
 
     assert( sock->obj.ops == &sock_ops );
 
-    if (code != IOCTL_AFD_WINE_CREATE && (unix_fd = get_unix_fd( fd )) < 0) return;
+    if (code != IOCTL_AFD_WINE_CREATE && code != IOCTL_AFD_POLL && (unix_fd = get_unix_fd( fd )) < 0)
+        return;
 
     switch(code)
     {
