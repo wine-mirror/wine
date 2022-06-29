@@ -444,7 +444,7 @@ errno_t __cdecl strncpy_s( char *dst, size_t len, const char *src, size_t count 
  */
 size_t __cdecl strnlen( const char *str, size_t len )
 {
-    const char *s = str;
+    const char *s;
     for (s = str; len && *s; s++, len--) ;
     return s - str;
 }
@@ -620,8 +620,25 @@ LPSTR __cdecl _strupr( LPSTR str )
 LPSTR __cdecl _strlwr( LPSTR str )
 {
     LPSTR ret = str;
-    for ( ; *str; str++) *str = tolower(*str);
+    for ( ; *str; str++) if (*str >= 'A' && *str <= 'Z') *str += 'a' - 'A';
     return ret;
+}
+
+
+/*********************************************************************
+ *                  _strlwr_s   (NTDLL.@)
+ */
+errno_t __cdecl _strlwr_s( char *str, size_t len )
+{
+    if (!str) return EINVAL;
+
+    if (strnlen( str, len ) == len)
+    {
+        *str = 0;
+        return EINVAL;
+    }
+    _strlwr( str );
+    return 0;
 }
 
 

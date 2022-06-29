@@ -108,14 +108,26 @@ int __cdecl _wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 LPWSTR __cdecl _wcslwr( LPWSTR str )
 {
     WCHAR *ret = str;
-
-    while (*str)
-    {
-        WCHAR ch = *str;
-        if (ch >= 'A' && ch <= 'Z') ch += 32;
-        *str++ = ch;
-    }
+    for ( ; *str; str++) if (*str >= 'A' && *str <= 'Z') *str += 'a' - 'A';
     return ret;
+}
+
+
+/*********************************************************************
+ *           _wcslwr_s    (NTDLL.@)
+ */
+errno_t __cdecl _wcslwr_s( wchar_t *str, size_t len )
+{
+    if (!str) return EINVAL;
+
+    if (wcsnlen( str, len ) == len)
+    {
+        *str = 0;
+        return EINVAL;
+    }
+
+    _wcslwr( str );
+    return 0;
 }
 
 
@@ -380,7 +392,7 @@ errno_t __cdecl wcsncpy_s( wchar_t *dst, size_t len, const wchar_t *src, size_t 
  */
 size_t __cdecl wcsnlen( const WCHAR *str, size_t len )
 {
-    const WCHAR *s = str;
+    const WCHAR *s;
     for (s = str; len && *s; s++, len--) ;
     return s - str;
 }

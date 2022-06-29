@@ -1521,6 +1521,7 @@
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _stricmp(str str)
 @ cdecl _strlwr(str)
+@ cdecl _strlwr_s(str long)
 @ cdecl _strnicmp(str str long)
 @ cdecl _strupr(str)
 @ cdecl _tolower(long)
@@ -1536,6 +1537,7 @@
 @ cdecl _vswprintf(ptr wstr ptr)
 @ cdecl _wcsicmp(wstr wstr)
 @ cdecl _wcslwr(wstr)
+@ cdecl _wcslwr_s(wstr long)
 @ cdecl _wcsnicmp(wstr wstr long)
 @ cdecl _wcsupr(wstr)
 @ cdecl _wtoi(wstr)
