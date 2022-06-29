@@ -443,6 +443,7 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
     LONG lRet = ERROR_SUCCESS;
     WCHAR newValue[256];
     UINT64 value = 0;
+    DWORD size_bytes;
     BOOL result = FALSE;
     int valueNum, index;
     HKEY hKey;
@@ -466,15 +467,34 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
         error_code_messagebox(hwnd, IDS_CREATE_VALUE_FAILED);
 	goto done;
     }
-   
-    lRet = RegSetValueExW(hKey, valueName, 0, valueType, (BYTE *)&value, sizeof(value));
+
+    switch (valueType)
+    {
+        case REG_DWORD:
+        case REG_DWORD_BIG_ENDIAN:
+            size_bytes = sizeof(DWORD);
+            break;
+        case REG_QWORD:
+            size_bytes = sizeof(UINT64);
+            break;
+        case REG_BINARY:
+            size_bytes = 0;
+            break;
+        case REG_MULTI_SZ:
+            size_bytes = 2 * sizeof(WCHAR);
+            break;
+        default: /* REG_NONE, REG_SZ, REG_EXPAND_SZ */
+            size_bytes = sizeof(WCHAR);
+    }
+
+    lRet = RegSetValueExW(hKey, valueName, 0, valueType, (BYTE *)&value, size_bytes);
     if (lRet) {
         error_code_messagebox(hwnd, IDS_CREATE_VALUE_FAILED);
 	goto done;
     }
 
     /* Add the new item to the listview */
-    index = AddEntryToList(g_pChildWnd->hListWnd, valueName, valueType, (BYTE *)&value, sizeof(value), -1);
+    index = AddEntryToList(g_pChildWnd->hListWnd, valueName, valueType, (BYTE *)&value, size_bytes, -1);
     item.state = LVIS_FOCUSED | LVIS_SELECTED;
     item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
     SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, index, (LPARAM)&item);
