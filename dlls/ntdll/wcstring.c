@@ -269,6 +269,47 @@ LPWSTR __cdecl wcsncat( LPWSTR s1, LPCWSTR s2, size_t n )
 
 
 /*********************************************************************
+ *           wcsncat_s    (NTDLL.@)
+ */
+errno_t __cdecl wcsncat_s( wchar_t *dst, size_t len, const wchar_t *src, size_t count )
+{
+    size_t i, j;
+
+    if (!dst || !len) return EINVAL;
+    if (!count) return 0;
+    if (!src)
+    {
+        *dst = 0;
+        return EINVAL;
+    }
+
+    for (i = 0; i < len; i++) if (!dst[i]) break;
+
+    if (i == len)
+    {
+        *dst = 0;
+        return EINVAL;
+    }
+
+    for (j = 0; (j + i) < len; j++)
+    {
+        if (count == _TRUNCATE && j + i == len - 1)
+        {
+            dst[j + i] = 0;
+            return STRUNCATE;
+        }
+        if (j == count || !(dst[j + i] = src[j]))
+        {
+            dst[j + i] = 0;
+            return 0;
+        }
+    }
+    *dst = 0;
+    return ERANGE;
+}
+
+
+/*********************************************************************
  *           wcsncmp    (NTDLL.@)
  */
 int __cdecl wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
