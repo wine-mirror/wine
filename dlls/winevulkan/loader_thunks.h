@@ -421,6 +421,8 @@ enum unix_call
     unix_vkGetSemaphoreCounterValue,
     unix_vkGetSemaphoreCounterValueKHR,
     unix_vkGetShaderInfoAMD,
+    unix_vkGetShaderModuleCreateInfoIdentifierEXT,
+    unix_vkGetShaderModuleIdentifierEXT,
     unix_vkGetSwapchainImagesKHR,
     unix_vkGetValidationCacheDataEXT,
     unix_vkInitializePerformanceApiINTEL,
@@ -3544,6 +3546,20 @@ struct vkGetShaderInfoAMD_params
     VkShaderInfoTypeAMD infoType;
     size_t *pInfoSize;
     void *pInfo;
+};
+
+struct vkGetShaderModuleCreateInfoIdentifierEXT_params
+{
+    VkDevice device;
+    const VkShaderModuleCreateInfo *pCreateInfo;
+    VkShaderModuleIdentifierEXT *pIdentifier;
+};
+
+struct vkGetShaderModuleIdentifierEXT_params
+{
+    VkDevice device;
+    VkShaderModule shaderModule;
+    VkShaderModuleIdentifierEXT *pIdentifier;
 };
 
 struct vkGetSwapchainImagesKHR_params

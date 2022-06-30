@@ -63,6 +63,7 @@
 #define VK_SHADER_UNUSED_NV VK_SHADER_UNUSED_KHR
 #define VK_MAX_GLOBAL_PRIORITY_SIZE_KHR 16
 #define VK_MAX_GLOBAL_PRIORITY_SIZE_EXT VK_MAX_GLOBAL_PRIORITY_SIZE_KHR
+#define VK_MAX_SHADER_MODULE_IDENTIFIER_SIZE_EXT 32
 #define VK_KHR_SURFACE_SPEC_VERSION 25
 #define VK_KHR_SURFACE_EXTENSION_NAME "VK_KHR_surface"
 #define VK_KHR_SWAPCHAIN_SPEC_VERSION 70
@@ -483,6 +484,8 @@
 #define VK_HUAWEI_INVOCATION_MASK_EXTENSION_NAME "VK_HUAWEI_invocation_mask"
 #define VK_EXT_PIPELINE_PROPERTIES_SPEC_VERSION 1
 #define VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME "VK_EXT_pipeline_properties"
+#define VK_EXT_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_SPEC_VERSION 1
+#define VK_EXT_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_EXTENSION_NAME "VK_EXT_multisampled_render_to_single_sampled"
 #define VK_EXT_EXTENDED_DYNAMIC_STATE_2_SPEC_VERSION 1
 #define VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME "VK_EXT_extended_dynamic_state2"
 #define VK_EXT_COLOR_WRITE_ENABLE_SPEC_VERSION 1
@@ -521,6 +524,8 @@
 #define VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME "VK_EXT_image_compression_control_swapchain"
 #define VK_EXT_SUBPASS_MERGE_FEEDBACK_SPEC_VERSION 2
 #define VK_EXT_SUBPASS_MERGE_FEEDBACK_EXTENSION_NAME "VK_EXT_subpass_merge_feedback"
+#define VK_EXT_SHADER_MODULE_IDENTIFIER_SPEC_VERSION 1
+#define VK_EXT_SHADER_MODULE_IDENTIFIER_EXTENSION_NAME "VK_EXT_shader_module_identifier"
 #define VK_KHR_ACCELERATION_STRUCTURE_SPEC_VERSION 13
 #define VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME "VK_KHR_acceleration_structure"
 #define VK_KHR_RAY_TRACING_PIPELINE_SPEC_VERSION 1
@@ -543,7 +548,7 @@
 #define VK_API_VERSION_1_1 VK_MAKE_API_VERSION(0, 1, 1, 0)
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
-#define VK_HEADER_VERSION 217
+#define VK_HEADER_VERSION 219
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -1554,6 +1559,7 @@ typedef enum VkDriverId
     VK_DRIVER_ID_MESA_PANVK = 20,
     VK_DRIVER_ID_SAMSUNG_PROPRIETARY = 21,
     VK_DRIVER_ID_MESA_VENUS = 22,
+    VK_DRIVER_ID_MESA_DOZEN = 23,
     VK_DRIVER_ID_AMD_PROPRIETARY_KHR = VK_DRIVER_ID_AMD_PROPRIETARY,
     VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR = VK_DRIVER_ID_AMD_OPEN_SOURCE,
     VK_DRIVER_ID_MESA_RADV_KHR = VK_DRIVER_ID_MESA_RADV,
@@ -2321,6 +2327,7 @@ typedef enum VkImageCreateFlagBits
     VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT = 0x00004000,
     VK_IMAGE_CREATE_FRAGMENT_DENSITY_MAP_OFFSET_BIT_QCOM = 0x00008000,
     VK_IMAGE_CREATE_2D_VIEW_COMPATIBLE_BIT_EXT = 0x00020000,
+    VK_IMAGE_CREATE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_BIT_EXT = 0x00040000,
     VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT_KHR = VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT,
     VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT,
     VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT_KHR = VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT,
@@ -3838,6 +3845,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INVOCATION_MASK_FEATURES_HUAWEI = 1000370000,
     VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT = 1000372000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT = 1000372001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT = 1000376000,
+    VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT = 1000376001,
+    VK_STRUCTURE_TYPE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_INFO_EXT = 1000376002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT = 1000377000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT = 1000381000,
     VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT = 1000381001,
@@ -3870,6 +3880,10 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_CONTROL_EXT = 1000458001,
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT = 1000458002,
     VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_CREATE_INFO_EXT = 1000458003,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT = 1000462000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT = 1000462001,
+    VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_MODULE_IDENTIFIER_CREATE_INFO_EXT = 1000462002,
+    VK_STRUCTURE_TYPE_SHADER_MODULE_IDENTIFIER_EXT = 1000462003,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -5911,6 +5925,14 @@ typedef struct VkMultisamplePropertiesEXT
     VkExtent2D maxSampleLocationGridSize;
 } VkMultisamplePropertiesEXT;
 
+typedef struct VkMultisampledRenderToSingleSampledInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkBool32 multisampledRenderToSingleSampledEnable;
+    VkSampleCountFlagBits rasterizationSamples;
+} VkMultisampledRenderToSingleSampledInfoEXT;
+
 typedef struct VkMultiviewPerViewAttributesInfoNVX
 {
     VkStructureType sType;
@@ -7044,6 +7066,13 @@ typedef struct VkPhysicalDeviceMultiDrawPropertiesEXT
     uint32_t maxMultiDrawCount;
 } VkPhysicalDeviceMultiDrawPropertiesEXT;
 
+typedef struct VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 multisampledRenderToSingleSampled;
+} VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT;
+
 typedef struct VkPhysicalDeviceMultiviewFeatures
 {
     VkStructureType sType;
@@ -7542,6 +7571,20 @@ typedef struct VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL
     void *pNext;
     VkBool32 shaderIntegerFunctions2;
 } VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL;
+
+typedef struct VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 shaderModuleIdentifier;
+} VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT;
+
+typedef struct VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint8_t shaderModuleIdentifierAlgorithmUUID[VK_UUID_SIZE];
+} VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT;
 
 typedef struct VkPhysicalDeviceShaderSMBuiltinsFeaturesNV
 {
@@ -8374,6 +8417,14 @@ typedef struct VkPipelineRepresentativeFragmentTestStateCreateInfoNV
     VkBool32 representativeFragmentTestEnable;
 } VkPipelineRepresentativeFragmentTestStateCreateInfoNV;
 
+typedef struct VkPipelineShaderStageModuleIdentifierCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t identifierSize;
+    const uint8_t *pIdentifier;
+} VkPipelineShaderStageModuleIdentifierCreateInfoEXT;
+
 typedef struct VkPipelineShaderStageRequiredSubgroupSizeCreateInfo
 {
     VkStructureType sType;
@@ -8862,6 +8913,14 @@ typedef struct VkShaderModuleCreateInfo
     const uint32_t *pCode;
 } VkShaderModuleCreateInfo;
 
+typedef struct VkShaderModuleIdentifierEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t identifierSize;
+    uint8_t identifier[VK_MAX_SHADER_MODULE_IDENTIFIER_SIZE_EXT];
+} VkShaderModuleIdentifierEXT;
+
 typedef struct VkShaderModuleValidationCacheCreateInfoEXT
 {
     VkStructureType sType;
@@ -9095,6 +9154,13 @@ typedef struct VkSubpassFragmentDensityMapOffsetEndInfoQCOM
     uint32_t fragmentDensityOffsetCount;
     const VkOffset2D *pFragmentDensityOffsets;
 } VkSubpassFragmentDensityMapOffsetEndInfoQCOM;
+
+typedef struct VkSubpassResolvePerformanceQueryEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 optimal;
+} VkSubpassResolvePerformanceQueryEXT;
 
 typedef struct VkSubpassSampleLocationsEXT
 {
@@ -10670,6 +10736,8 @@ typedef void (VKAPI_PTR *PFN_vkGetRenderAreaGranularity)(VkDevice, VkRenderPass,
 typedef VkResult (VKAPI_PTR *PFN_vkGetSemaphoreCounterValue)(VkDevice, VkSemaphore, uint64_t *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetSemaphoreCounterValueKHR)(VkDevice, VkSemaphore, uint64_t *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetShaderInfoAMD)(VkDevice, VkPipeline, VkShaderStageFlagBits, VkShaderInfoTypeAMD, size_t *, void *);
+typedef void (VKAPI_PTR *PFN_vkGetShaderModuleCreateInfoIdentifierEXT)(VkDevice, const VkShaderModuleCreateInfo *, VkShaderModuleIdentifierEXT *);
+typedef void (VKAPI_PTR *PFN_vkGetShaderModuleIdentifierEXT)(VkDevice, VkShaderModule, VkShaderModuleIdentifierEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetValidationCacheDataEXT)(VkDevice, VkValidationCacheEXT, size_t *, void *);
 typedef VkResult (VKAPI_PTR *PFN_vkInitializePerformanceApiINTEL)(VkDevice, const VkInitializePerformanceApiInfoINTEL *);
@@ -11130,6 +11198,8 @@ void VKAPI_CALL vkGetRenderAreaGranularity(VkDevice device, VkRenderPass renderP
 VkResult VKAPI_CALL vkGetSemaphoreCounterValue(VkDevice device, VkSemaphore semaphore, uint64_t *pValue);
 VkResult VKAPI_CALL vkGetSemaphoreCounterValueKHR(VkDevice device, VkSemaphore semaphore, uint64_t *pValue);
 VkResult VKAPI_CALL vkGetShaderInfoAMD(VkDevice device, VkPipeline pipeline, VkShaderStageFlagBits shaderStage, VkShaderInfoTypeAMD infoType, size_t *pInfoSize, void *pInfo);
+void VKAPI_CALL vkGetShaderModuleCreateInfoIdentifierEXT(VkDevice device, const VkShaderModuleCreateInfo *pCreateInfo, VkShaderModuleIdentifierEXT *pIdentifier);
+void VKAPI_CALL vkGetShaderModuleIdentifierEXT(VkDevice device, VkShaderModule shaderModule, VkShaderModuleIdentifierEXT *pIdentifier);
 VkResult VKAPI_CALL vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain, uint32_t *pSwapchainImageCount, VkImage *pSwapchainImages);
 VkResult VKAPI_CALL vkGetValidationCacheDataEXT(VkDevice device, VkValidationCacheEXT validationCache, size_t *pDataSize, void *pData);
 VkResult VKAPI_CALL vkInitializePerformanceApiINTEL(VkDevice device, const VkInitializePerformanceApiInfoINTEL *pInitializeInfo);

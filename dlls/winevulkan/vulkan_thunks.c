@@ -4662,6 +4662,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT *in = (const VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT *)in_header;
+            VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->multisampledRenderToSingleSampled = in->multisampledRenderToSingleSampled;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
             const VkPhysicalDeviceInheritedViewportScissorFeaturesNV *in = (const VkPhysicalDeviceInheritedViewportScissorFeaturesNV *)in_header;
@@ -4868,6 +4884,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->descriptorSetHostMapping = in->descriptorSetHostMapping;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT *in = (const VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT *)in_header;
+            VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderModuleIdentifier = in->shaderModuleIdentifier;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -9344,6 +9376,22 @@ static NTSTATUS wine_vkGetShaderInfoAMD(void *args)
     return params->device->funcs.p_vkGetShaderInfoAMD(params->device->device, params->pipeline, params->shaderStage, params->infoType, params->pInfoSize, params->pInfo);
 }
 
+static NTSTATUS wine_vkGetShaderModuleCreateInfoIdentifierEXT(void *args)
+{
+    struct vkGetShaderModuleCreateInfoIdentifierEXT_params *params = args;
+    TRACE("%p, %p, %p\n", params->device, params->pCreateInfo, params->pIdentifier);
+    params->device->funcs.p_vkGetShaderModuleCreateInfoIdentifierEXT(params->device->device, params->pCreateInfo, params->pIdentifier);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wine_vkGetShaderModuleIdentifierEXT(void *args)
+{
+    struct vkGetShaderModuleIdentifierEXT_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->shaderModule), params->pIdentifier);
+    params->device->funcs.p_vkGetShaderModuleIdentifierEXT(params->device->device, params->shaderModule, params->pIdentifier);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wine_vkGetSwapchainImagesKHR(void *args)
 {
     struct vkGetSwapchainImagesKHR_params *params = args;
@@ -9906,6 +9954,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_memory_budget",
     "VK_EXT_memory_priority",
     "VK_EXT_multi_draw",
+    "VK_EXT_multisampled_render_to_single_sampled",
     "VK_EXT_non_seamless_cube_map",
     "VK_EXT_pageable_device_local_memory",
     "VK_EXT_pci_bus_info",
@@ -9928,6 +9977,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_shader_atomic_float2",
     "VK_EXT_shader_demote_to_helper_invocation",
     "VK_EXT_shader_image_atomic_int64",
+    "VK_EXT_shader_module_identifier",
     "VK_EXT_shader_stencil_export",
     "VK_EXT_shader_subgroup_ballot",
     "VK_EXT_shader_subgroup_vote",
@@ -10549,6 +10599,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkGetSemaphoreCounterValue,
     wine_vkGetSemaphoreCounterValueKHR,
     wine_vkGetShaderInfoAMD,
+    wine_vkGetShaderModuleCreateInfoIdentifierEXT,
+    wine_vkGetShaderModuleIdentifierEXT,
     wine_vkGetSwapchainImagesKHR,
     wine_vkGetValidationCacheDataEXT,
     wine_vkInitializePerformanceApiINTEL,

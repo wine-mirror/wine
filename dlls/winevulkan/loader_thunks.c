@@ -3857,6 +3857,24 @@ VkResult WINAPI vkGetShaderInfoAMD(VkDevice device, VkPipeline pipeline, VkShade
     return vk_unix_call(unix_vkGetShaderInfoAMD, &params);
 }
 
+void WINAPI vkGetShaderModuleCreateInfoIdentifierEXT(VkDevice device, const VkShaderModuleCreateInfo *pCreateInfo, VkShaderModuleIdentifierEXT *pIdentifier)
+{
+    struct vkGetShaderModuleCreateInfoIdentifierEXT_params params;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pIdentifier = pIdentifier;
+    vk_unix_call(unix_vkGetShaderModuleCreateInfoIdentifierEXT, &params);
+}
+
+void WINAPI vkGetShaderModuleIdentifierEXT(VkDevice device, VkShaderModule shaderModule, VkShaderModuleIdentifierEXT *pIdentifier)
+{
+    struct vkGetShaderModuleIdentifierEXT_params params;
+    params.device = device;
+    params.shaderModule = shaderModule;
+    params.pIdentifier = pIdentifier;
+    vk_unix_call(unix_vkGetShaderModuleIdentifierEXT, &params);
+}
+
 VkResult WINAPI vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain, uint32_t *pSwapchainImageCount, VkImage *pSwapchainImages)
 {
     struct vkGetSwapchainImagesKHR_params params;
@@ -4635,6 +4653,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetSemaphoreCounterValue", vkGetSemaphoreCounterValue},
     {"vkGetSemaphoreCounterValueKHR", vkGetSemaphoreCounterValueKHR},
     {"vkGetShaderInfoAMD", vkGetShaderInfoAMD},
+    {"vkGetShaderModuleCreateInfoIdentifierEXT", vkGetShaderModuleCreateInfoIdentifierEXT},
+    {"vkGetShaderModuleIdentifierEXT", vkGetShaderModuleIdentifierEXT},
     {"vkGetSwapchainImagesKHR", vkGetSwapchainImagesKHR},
     {"vkGetValidationCacheDataEXT", vkGetValidationCacheDataEXT},
     {"vkInitializePerformanceApiINTEL", vkInitializePerformanceApiINTEL},
