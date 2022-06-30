@@ -51,7 +51,7 @@ HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     FreeLibrary(d3d11);
     if (FAILED(hr))
     {
-        WARN("Failed to create device, hr %#x.\n", hr);
+        WARN("Failed to create device, hr %#lx.\n", hr);
         return hr;
     }
 
