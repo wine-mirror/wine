@@ -1730,7 +1730,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
                             info.nMin = childRect.left;
                             info.nMax = childRect.right - clientRect.right;
                             info.nPos = clientRect.left - childRect.left;
-                            SetScrollInfo(hwnd, SB_HORZ, &info, TRUE);
+                            NtUserSetScrollInfo(hwnd, SB_HORZ, &info, TRUE);
                         }
 			if (scroll == SB_HORZ) break;
 			/* fall through */
@@ -1740,7 +1740,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
                             info.nMin = childRect.top;
                             info.nMax = childRect.bottom - clientRect.bottom;
                             info.nPos = clientRect.top - childRect.top;
-                            SetScrollInfo(hwnd, SB_VERT, &info, TRUE);
+                            NtUserSetScrollInfo(hwnd, SB_VERT, &info, TRUE);
                         }
 			break;
     }

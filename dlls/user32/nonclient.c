@@ -142,65 +142,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style
 }
 
 
-LRESULT NC_HandleNCMouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    RECT rect;
-    POINT pt;
-
-    TRACE("hwnd=%p wparam=%#Ix lparam=%#Ix\n", hwnd, wParam, lParam);
-
-    if (wParam != HTHSCROLL && wParam != HTVSCROLL)
-        return 0;
-
-    WIN_GetRectangles(hwnd, COORDS_CLIENT, &rect, NULL);
-
-    pt.x = (short)LOWORD(lParam);
-    pt.y = (short)HIWORD(lParam);
-    ScreenToClient(hwnd, &pt);
-    pt.x -= rect.left;
-    pt.y -= rect.top;
-    SCROLL_HandleScrollEvent(hwnd, wParam == HTHSCROLL ? SB_HORZ : SB_VERT, WM_NCMOUSEMOVE, pt);
-    return 0;
-}
-
-LRESULT NC_HandleNCMouseLeave(HWND hwnd)
-{
-    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
-    POINT pt = {0, 0};
-
-    TRACE("hwnd=%p\n", hwnd);
-
-    if (style & WS_HSCROLL)
-        SCROLL_HandleScrollEvent(hwnd, SB_HORZ, WM_NCMOUSELEAVE, pt);
-    if (style & WS_VSCROLL)
-        SCROLL_HandleScrollEvent(hwnd, SB_VERT, WM_NCMOUSELEAVE, pt);
-
-    return 0;
-}
-
-
-/***********************************************************************
- *           NC_TrackScrollBar
- *
- * Track a mouse button press on the horizontal or vertical scroll-bar.
- */
-static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
-{
-    INT scrollbar;
-
-    if ((wParam & 0xfff0) == SC_HSCROLL)
-    {
-        if ((wParam & 0x0f) != HTHSCROLL) return;
-	scrollbar = SB_HORZ;
-    }
-    else  /* SC_VSCROLL */
-    {
-        if ((wParam & 0x0f) != HTVSCROLL) return;
-	scrollbar = SB_VERT;
-    }
-    SCROLL_TrackScrollBar( hwnd, scrollbar, pt );
-}
-
 
 /***********************************************************************
  *           NC_HandleSysCommand
@@ -214,16 +155,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     switch (wParam & 0xfff0)
     {
-    case SC_VSCROLL:
-    case SC_HSCROLL:
-        {
-            POINT pt;
-            pt.x = (short)LOWORD(lParam);
-            pt.y = (short)HIWORD(lParam);
-            NC_TrackScrollBar( hwnd, wParam, pt );
-        }
-        break;
-
     case SC_TASKLIST:
         WinExec( "taskman.exe", SW_SHOWNORMAL );
         break;

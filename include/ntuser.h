@@ -33,6 +33,7 @@ enum
     NtUserCallWinProc,
     NtUserCallWindowsHook,
     NtUserCopyImage,
+    NtUserDrawScrollBar,
     NtUserDrawText,
     NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
@@ -336,6 +337,24 @@ struct set_clipboard_params
     UINT   seqno;
 };
 
+/* NtUserDrawScrollBar params */
+struct draw_scroll_bar_params
+{
+    HWND hwnd;
+    HDC hdc;
+    INT bar;
+    UINT hit_test;
+    struct SCROLL_TRACKING_INFO tracking_info;
+    BOOL arrows;
+    BOOL interior;
+    RECT rect;
+    UINT enable_flags;
+    INT arrow_size;
+    INT thumb_pos;
+    INT thumb_size;
+    BOOL vertical;
+};
+
 /* internal messages codes */
 enum wine_internal_message
 {
@@ -559,6 +578,7 @@ BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
 DWORD   WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
 BOOL    WINAPI NtUserEmptyClipboard(void);
 BOOL    WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags );
+BOOL    WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags );
 BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );
 BOOL    WINAPI NtUserEndMenu(void);
 BOOL    WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps );
@@ -625,6 +645,7 @@ UINT    WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *da
 UINT    WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data, UINT *data_size );
 UINT    WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *devices, UINT *device_count, UINT size );
 UINT    WINAPI NtUserGetRegisteredRawInputDevices( RAWINPUTDEVICE *devices, UINT *device_count, UINT size );
+BOOL    WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info );
 ULONG   WINAPI NtUserGetSystemDpiForProcess( HANDLE process );
 HMENU   WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert );
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
@@ -701,6 +722,7 @@ HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
 BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );
+INT     WINAPI NtUserSetScrollInfo( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL redraw );
 BOOL    WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values );
 BOOL    WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu );
 UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout );
@@ -1085,6 +1107,7 @@ enum
     NtUserCallHwndParam_GetClassLongPtrW,
     NtUserCallHwndParam_GetClassWord,
     NtUserCallHwndParam_GetClientRect,
+    NtUserCallHwndParam_GetScrollInfo,
     NtUserCallHwndParam_GetWindowInfo,
     NtUserCallHwndParam_GetWindowLongA,
     NtUserCallHwndParam_GetWindowLongW,
@@ -1104,7 +1127,6 @@ enum
     NtUserCallHwndParam_SetWindowPixelFormat,
     NtUserCallHwndParam_ShowOwnedPopups,
     /* temporary exports */
-    NtUserIsWindowDrawable,
     NtUserSetWindowStyle,
     NtUserSpyGetMsgName,
 };
@@ -1147,6 +1169,18 @@ static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
 static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect )
 {
     return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetClientRect );
+}
+
+struct get_scroll_info_params
+{
+    int bar;
+    SCROLLINFO *info;
+};
+
+static inline BOOL NtUserGetScrollInfo( HWND hwnd, INT bar, SCROLLINFO *info )
+{
+    struct get_scroll_info_params params = { .bar = bar, .info = info };
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetScrollInfo );
 }
 
 static inline BOOL NtUserGetWindowInfo( HWND hwnd, WINDOWINFO *info )

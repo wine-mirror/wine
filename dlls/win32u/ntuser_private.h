@@ -35,7 +35,6 @@ struct user_callbacks
     BOOL (WINAPI *pImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
     BOOL (WINAPI *pImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
     NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
-    void (CDECL *draw_nc_scrollbar)( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     struct scroll_info *(CDECL *get_scroll_info)( HWND hwnd, INT nBar, BOOL alloc );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );

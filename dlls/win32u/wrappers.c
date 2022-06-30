@@ -887,6 +887,12 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
     return unix_funcs->pNtUserEnableMenuItem( handle, id, flags );
 }
 
+BOOL WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserEnableScrollBar( hwnd, bar, flags );
+}
+
 BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
 {
     if (!unix_funcs) return FALSE;
@@ -1046,6 +1052,12 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserGetQueueStatus( flags );
+}
+
+BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetScrollBarInfo( hwnd, id, info );
 }
 
 BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
@@ -1272,6 +1284,12 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetParent( hwnd, parent );
+}
+
+INT WINAPI NtUserSetScrollInfo( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL redraw )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetScrollInfo( hwnd, bar, info, redraw );
 }
 
 BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values )

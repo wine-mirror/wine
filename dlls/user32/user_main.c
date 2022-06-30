@@ -157,7 +157,6 @@ static const struct user_callbacks user_funcs =
     ImmProcessKey,
     ImmTranslateMessage,
     NtWaitForMultipleObjects,
-    SCROLL_DrawNCScrollBar,
     free_win_ptr,
     SCROLL_GetInternalInfo,
     notify_ime,
@@ -172,6 +171,16 @@ static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, 
 {
     HANDLE ret = CopyImage( params->hwnd, params->type, params->dx, params->dy, params->flags );
     return HandleToUlong( ret );
+}
+
+static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params *params, ULONG size )
+{
+    RECT rect = params->rect;
+    user_api->pScrollBarDraw( params->hwnd, params->hdc, params->bar, params->hit_test,
+                              &params->tracking_info, params->arrows, params->interior,
+                              &rect, params->arrow_size, params->thumb_pos,
+                              params->thumb_size, params->vertical );
+    return 0;
 }
 
 static NTSTATUS WINAPI User32DrawText( const struct draw_text_params *params, ULONG size )
@@ -220,6 +229,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CallWindowProc,
     User32CallWindowsHook,
     User32CopyImage,
+    User32DrawScrollBar,
     User32DrawText,
     User32FreeCachedClipboardData,
     User32LoadDriver,

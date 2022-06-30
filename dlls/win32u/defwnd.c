@@ -922,6 +922,28 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     }
 }
 
+/***********************************************************************
+ *           track_nc_scroll_bar
+ *
+ * Track a mouse button press on the horizontal or vertical scroll-bar.
+ */
+static void track_nc_scroll_bar( HWND hwnd, WPARAM wparam, POINT pt )
+{
+    int scrollbar;
+
+    if ((wparam & 0xfff0) == SC_HSCROLL)
+    {
+        if ((wparam & 0x0f) != HTHSCROLL) return;
+        scrollbar = SB_HORZ;
+    }
+    else  /* SC_VSCROLL */
+    {
+        if ((wparam & 0x0f) != HTVSCROLL) return;
+        scrollbar = SB_VERT;
+    }
+    track_scroll_bar( hwnd, scrollbar, pt );
+}
+
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     TRACE( "hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wparam, lparam );
@@ -956,7 +978,13 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
     case SC_VSCROLL:
     case SC_HSCROLL:
-        return 1; /* FIXME: handle on client side */
+        {
+            POINT pt;
+            pt.x = (short)LOWORD( lparam );
+            pt.y = (short)HIWORD( lparam );
+            track_nc_scroll_bar( hwnd, wparam, pt );
+        }
+        break;
 
     case SC_MOUSEMENU:
         track_mouse_menu_bar( hwnd, wparam & 0x000F, (short)LOWORD(lparam), (short)HIWORD(lparam) );
@@ -1736,8 +1764,7 @@ static void nc_paint( HWND hwnd, HRGN clip )
         draw_rect_edge( hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST, 1 );
 
     /* Draw the scroll-bars */
-    if (user_callbacks)
-        user_callbacks->draw_nc_scrollbar( hwnd, hdc, style & WS_HSCROLL, style & WS_VSCROLL );
+    draw_nc_scrollbar( hwnd, hdc, style & WS_HSCROLL, style & WS_VSCROLL );
 
     /* Draw the "size-box" */
     if ((style & WS_VSCROLL) && (style & WS_HSCROLL))
@@ -2295,6 +2322,42 @@ static HBRUSH handle_control_color( HDC hdc, UINT type )
     return get_sys_color_brush( COLOR_WINDOW );
 }
 
+static LRESULT handle_nc_mouse_move( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    RECT rect;
+    POINT pt;
+
+    TRACE( "hwnd=%p wparam=%#lx lparam=%#lx\n", hwnd, wparam, lparam );
+
+    if (wparam != HTHSCROLL && wparam != HTVSCROLL)
+        return 0;
+
+    get_window_rects( hwnd, COORDS_CLIENT, &rect, NULL, get_thread_dpi() );
+
+    pt.x = (short)LOWORD( lparam );
+    pt.y = (short)HIWORD( lparam );
+    screen_to_client( hwnd, &pt );
+    pt.x -= rect.left;
+    pt.y -= rect.top;
+    handle_scroll_event( hwnd, wparam == HTHSCROLL ? SB_HORZ : SB_VERT, WM_NCMOUSEMOVE, pt );
+    return 0;
+}
+
+static LRESULT handle_nc_mouse_leave( HWND hwnd )
+{
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+    POINT pt = {0, 0};
+
+    TRACE( "hwnd=%p\n", hwnd );
+
+    if (style & WS_HSCROLL)
+        handle_scroll_event( hwnd, SB_HORZ, WM_NCMOUSELEAVE, pt );
+    if (style & WS_VSCROLL)
+        handle_scroll_event( hwnd, SB_VERT, WM_NCMOUSELEAVE, pt );
+    return 0;
+}
+
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -2351,6 +2414,14 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_NCLBUTTONDBLCLK:
         return handle_nc_button_dbl_click( hwnd, wparam, lparam );
+
+    case WM_NCMOUSEMOVE:
+        result = handle_nc_mouse_move( hwnd, wparam, lparam );
+        break;
+
+    case WM_NCMOUSELEAVE:
+        result = handle_nc_mouse_leave( hwnd );
+        break;
 
     case WM_RBUTTONUP:
         {

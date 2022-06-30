@@ -329,7 +329,7 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
     SCROLLINFO info;
 
     /* Check the listbox scroll bar flags individually before we call
-       SetScrollInfo otherwise when the listbox style is WS_HSCROLL and
+       NtUserSetScrollInfo otherwise when the listbox style is WS_HSCROLL and
        no WS_VSCROLL, we end up with an uninitialized, visible horizontal
        scroll bar when we do not need one.
     if (!(descr->style & WS_VSCROLL)) return;
@@ -357,11 +357,11 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
         if (descr->style & LBS_DISABLENOSCROLL)
             info.fMask |= SIF_DISABLENOSCROLL;
         if (descr->style & WS_HSCROLL)
-            SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+            NtUserSetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
         info.nMax = 0;
         info.fMask = SIF_RANGE;
         if (descr->style & WS_VSCROLL)
-            SetScrollInfo( descr->self, SB_VERT, &info, TRUE );
+            NtUserSetScrollInfo( descr->self, SB_VERT, &info, TRUE );
     }
     else
     {
@@ -373,7 +373,7 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
         if (descr->style & LBS_DISABLENOSCROLL)
             info.fMask |= SIF_DISABLENOSCROLL;
         if (descr->style & WS_VSCROLL)
-            SetScrollInfo( descr->self, SB_VERT, &info, TRUE );
+            NtUserSetScrollInfo( descr->self, SB_VERT, &info, TRUE );
 
         if ((descr->style & WS_HSCROLL) && descr->horz_extent)
         {
@@ -382,7 +382,7 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
             info.fMask = SIF_POS | SIF_PAGE;
             if (descr->style & LBS_DISABLENOSCROLL)
                 info.fMask |= SIF_DISABLENOSCROLL;
-            SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+            NtUserSetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
         }
         else
         {
@@ -391,7 +391,7 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
                 info.nMin  = 0;
                 info.nMax  = 0;
                 info.fMask = SIF_RANGE | SIF_DISABLENOSCROLL;
-                SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+                NtUserSetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
             }
             else
             {
@@ -1366,7 +1366,7 @@ static LRESULT LISTBOX_SetHorizontalExtent( LB_DESCR *descr, INT extent )
         info.fMask = SIF_RANGE;
         if (descr->style & LBS_DISABLENOSCROLL)
             info.fMask |= SIF_DISABLENOSCROLL;
-        SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+        NtUserSetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
     }
     if (descr->horz_pos > extent - descr->width)
         LISTBOX_SetHorizontalPos( descr, extent - descr->width );

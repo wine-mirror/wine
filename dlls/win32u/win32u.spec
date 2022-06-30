@@ -866,7 +866,7 @@
 @ stub NtUserEnableMouseInputForCursorSuppression
 @ stub NtUserEnableNonClientDpiScaling
 @ stub NtUserEnableResizeLayoutSynchronization
-@ stub NtUserEnableScrollBar
+@ stdcall NtUserEnableScrollBar(long long long)
 @ stub NtUserEnableSoftwareCursorForScreenCapture
 @ stub NtUserEnableTouchPad
 @ stub NtUserEnableWindowGDIScaledDpiMessage
@@ -991,7 +991,7 @@
 @ stdcall -syscall NtUserGetRegisteredRawInputDevices(ptr ptr long)
 @ stub NtUserGetRequiredCursorSizes
 @ stub NtUserGetResizeDCompositionSynchronizationObject
-@ stub NtUserGetScrollBarInfo
+@ stdcall NtUserGetScrollBarInfo(long long ptr)
 @ stub NtUserGetSharedWindowData
 @ stdcall -syscall NtUserGetSystemDpiForProcess(long)
 @ stdcall NtUserGetSystemMenu(long long)
@@ -1223,7 +1223,7 @@
 @ stub NtUserSetProcessUIAccessZorder
 @ stdcall -syscall NtUserSetProcessWindowStation(long)
 @ stdcall -syscall NtUserSetProp(long wstr ptr)
-@ stub NtUserSetScrollInfo
+@ stdcall NtUserSetScrollInfo(long long ptr long)
 @ stub NtUserSetSensorPresence
 @ stub NtUserSetSharedWindowData
 @ stub NtUserSetShellWindowEx

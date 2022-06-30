@@ -1182,20 +1182,6 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
 }
 
 
-/***********************************************************************
- *           WIN_IsWindowDrawable
- *
- * hwnd is drawable when it is visible, all parents are not
- * minimized, and it is itself not minimized unless we are
- * trying to draw its default class icon.
- */
-BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL icon )
-{
-    /* FIXME: move callers to win32u */
-    return NtUserCallHwndParam( hwnd, icon, NtUserIsWindowDrawable );
-}
-
-
 /*******************************************************************
  *		GetTopWindow (USER32.@)
  */

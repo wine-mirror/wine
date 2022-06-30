@@ -223,6 +223,7 @@ struct unix_funcs
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
     BOOL     (WINAPI *pNtUserEmptyClipboard)(void);
     BOOL     (WINAPI *pNtUserEnableMenuItem)( HMENU handle, UINT id, UINT flags );
+    BOOL     (WINAPI *pNtUserEnableScrollBar)( HWND hwnd, UINT bar, UINT flags );
     BOOL     (WINAPI *pNtUserEndDeferWindowPosEx)( HDWP hdwp, BOOL async );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
     NTSTATUS (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,
@@ -248,6 +249,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetMessage)( MSG *msg, HWND hwnd, UINT first, UINT last );
     INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );
     DWORD    (WINAPI *pNtUserGetQueueStatus)( UINT flags );
+    BOOL     (WINAPI *pNtUserGetScrollBarInfo)( HWND hwnd, LONG id, SCROLLBARINFO *info );
     HMENU    (WINAPI *pNtUserGetSystemMenu)( HWND hwnd, BOOL revert );
     BOOL     (WINAPI *pNtUserGetUpdateRect)( HWND hwnd, RECT *rect, BOOL erase );
     INT      (WINAPI *pNtUserGetUpdateRgn)( HWND hwnd, HRGN hrgn, BOOL erase );
@@ -300,6 +302,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserSetLayeredWindowAttributes)( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
     BOOL     (WINAPI *pNtUserSetMenu)( HWND hwnd, HMENU menu );
     HWND     (WINAPI *pNtUserSetParent)( HWND hwnd, HWND parent );
+    INT      (WINAPI *pNtUserSetScrollInfo)( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL redraw );
     BOOL     (WINAPI *pNtUserSetSysColors)( INT count, const INT *colors, const COLORREF *values );
     BOOL     (WINAPI *pNtUserSetSystemMenu)( HWND hwnd, HMENU menu );
     LONG     (WINAPI *pNtUserSetWindowLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
@@ -441,9 +444,13 @@ extern BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardwar
 extern BOOL rawinput_device_get_usages( HANDLE handle, USHORT *usage_page, USHORT *usage ) DECLSPEC_HIDDEN;
 
 /* scroll.c */
+extern void draw_nc_scrollbar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical ) DECLSPEC_HIDDEN;
+extern BOOL get_scroll_info( HWND hwnd, INT bar, SCROLLINFO *info ) DECLSPEC_HIDDEN;
+extern void handle_scroll_event( HWND hwnd, INT bar, UINT msg, POINT pt ) DECLSPEC_HIDDEN;
 extern LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                        BOOL ansi ) DECLSPEC_HIDDEN;
 extern void set_standard_scroll_painted( HWND hwnd, int bar, BOOL painted ) DECLSPEC_HIDDEN;
+extern void track_scroll_bar( HWND hwnd, int scrollbar, POINT pt ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
 extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;
@@ -484,6 +491,7 @@ extern HDWP begin_defer_window_pos( INT count ) DECLSPEC_HIDDEN;
 extern BOOL client_to_screen( HWND hwnd, POINT *pt ) DECLSPEC_HIDDEN;
 extern void destroy_thread_windows(void) DECLSPEC_HIDDEN;
 extern LRESULT destroy_window( HWND hwnd ) DECLSPEC_HIDDEN;
+extern BOOL enable_window( HWND hwnd, BOOL enable ) DECLSPEC_HIDDEN;
 extern BOOL get_client_rect( HWND hwnd, RECT *rect ) DECLSPEC_HIDDEN;
 extern HWND get_desktop_window(void) DECLSPEC_HIDDEN;
 extern UINT get_dpi_for_window( HWND hwnd ) DECLSPEC_HIDDEN;

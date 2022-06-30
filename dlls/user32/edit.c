@@ -1639,7 +1639,7 @@ static void EDIT_UpdateScrollInfo(EDITSTATE *es)
 	si.nPos		= es->y_offset;
 	TRACE("SB_VERT, nMin=%d, nMax=%d, nPage=%d, nPos=%d\n",
 		si.nMin, si.nMax, si.nPage, si.nPos);
-	SetScrollInfo(es->hwndSelf, SB_VERT, &si, TRUE);
+	NtUserSetScrollInfo(es->hwndSelf, SB_VERT, &si, TRUE);
     }
 
     if ((es->style & WS_HSCROLL) && !(es->flags & EF_HSCROLL_TRACK))
@@ -1653,7 +1653,7 @@ static void EDIT_UpdateScrollInfo(EDITSTATE *es)
 	si.nPos		= es->x_offset;
 	TRACE("SB_HORZ, nMin=%d, nMax=%d, nPage=%d, nPos=%d\n",
 		si.nMin, si.nMax, si.nPage, si.nPos);
-	SetScrollInfo(es->hwndSelf, SB_HORZ, &si, TRUE);
+	NtUserSetScrollInfo(es->hwndSelf, SB_HORZ, &si, TRUE);
     }
 }
 
