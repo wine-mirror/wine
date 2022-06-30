@@ -1214,6 +1214,51 @@ char * __cdecl _i64toa(
 
 
 /*********************************************************************
+ *      _ui64toa_s  (NTDLL.@)
+ */
+errno_t __cdecl _ui64toa_s( unsigned __int64 value, char *str, size_t size, int radix )
+{
+    char buffer[65], *pos;
+
+    if (!str || !size) return EINVAL;
+    if (radix < 2 || radix > 36)
+    {
+        str[0] = 0;
+        return EINVAL;
+    }
+
+    pos = buffer + 64;
+    *pos = 0;
+
+    do {
+	int digit = value % radix;
+	value = value / radix;
+	if (digit < 10)
+	    *--pos = '0' + digit;
+	else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    if (buffer - pos + 65 > size)
+    {
+        str[0] = 0;
+        return ERANGE;
+    }
+    memcpy( str, pos, buffer - pos + 65 );
+    return 0;
+}
+
+
+/*********************************************************************
+ *      _ultoa_s  (NTDLL.@)
+ */
+errno_t __cdecl _ultoa_s( __msvcrt_ulong value, char *str, size_t size, int radix )
+{
+    return _ui64toa_s( value, str, size, radix );
+}
+
+
+/*********************************************************************
  *      _atoi64   (NTDLL.@)
  *
  * Convert a string to a large integer.
