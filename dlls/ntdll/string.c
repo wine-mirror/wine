@@ -1259,6 +1259,80 @@ errno_t __cdecl _ultoa_s( __msvcrt_ulong value, char *str, size_t size, int radi
 
 
 /*********************************************************************
+ *      _i64toa_s  (NTDLL.@)
+ */
+errno_t __cdecl _i64toa_s( __int64 value, char *str, size_t size, int radix )
+{
+    unsigned __int64 val;
+    BOOL is_negative;
+    char buffer[65], *pos;
+
+    if (!str || !size) return EINVAL;
+    if (radix < 2 || radix > 36)
+    {
+        str[0] = 0;
+        return EINVAL;
+    }
+
+    if (value < 0 && radix == 10)
+    {
+        is_negative = TRUE;
+        val = -value;
+    }
+    else
+    {
+        is_negative = FALSE;
+        val = value;
+    }
+
+    pos = buffer + 64;
+    *pos = 0;
+
+    do
+    {
+        unsigned int digit = val % radix;
+        val /= radix;
+
+        if (digit < 10)
+            *--pos = '0' + digit;
+        else
+            *--pos = 'a' + digit - 10;
+    }
+    while (val != 0);
+
+    if (is_negative) *--pos = '-';
+
+    if (buffer - pos + 65 > size)
+    {
+        str[0] = 0;
+        return ERANGE;
+    }
+    memcpy( str, pos, buffer - pos + 65 );
+    return 0;
+}
+
+
+/*********************************************************************
+ *      _ltoa_s  (NTDLL.@)
+ */
+errno_t __cdecl _ltoa_s( __msvcrt_long value, char *str, size_t size, int radix )
+{
+    if (value < 0 && radix == 10) return _i64toa_s( value, str, size, radix );
+    return _ui64toa_s( (__msvcrt_ulong)value, str, size, radix );
+}
+
+
+/*********************************************************************
+ *      _itoa_s  (NTDLL.@)
+ */
+errno_t __cdecl _itoa_s( int value, char *str, size_t size, int radix )
+{
+    if (value < 0 && radix == 10) return _i64toa_s( value, str, size, radix );
+    return _ui64toa_s( (unsigned int)value, str, size, radix );
+}
+
+
+/*********************************************************************
  *      _atoi64   (NTDLL.@)
  *
  * Convert a string to a large integer.
