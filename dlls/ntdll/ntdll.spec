@@ -1555,6 +1555,7 @@
 @ cdecl -ret64 _wcstoui64(wstr ptr long)
 @ cdecl _wcsupr(wstr)
 @ cdecl _wcsupr_s(wstr long)
+@ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr)
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long)
 @ cdecl _wtoi(wstr)
 @ cdecl -ret64 _wtoi64(wstr)
