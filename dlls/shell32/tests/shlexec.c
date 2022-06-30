@@ -1418,11 +1418,11 @@ typedef struct
 
 static const argify_tests_t argify_tests[] =
 {
-    /* Start with three simple parameters. Notice that one can reorder and
-     * duplicate the parameters. Also notice how %* take the raw input
-     * parameters string, including the trailing spaces, no matter what
-     * arguments have already been used.
-     */
+    {"ParamsS", "p2 p3 \"p4 ", FALSE, " p2 p3 \"p4 "},
+
+    /* Notice that one can reorder and duplicate the parameters.
+     * Also notice how %* take the raw input parameters string, including
+     * the trailing spaces, no matter what arguments have already been used. */
     {"Params232S", "p2 p3 p4 ", TRUE,
      " p2 p3 \"p2\" \"p2 p3 p4 \""},
 
@@ -1567,6 +1567,7 @@ static void test_argify(void)
         return;
     }
 
+    create_test_verb("shlexec.shlexec", "ParamsS", 0, "ParamsS %*");
     create_test_verb("shlexec.shlexec", "Params232S", 0, "Params232S %2 %3 \"%2\" \"%*\"");
     create_test_verb("shlexec.shlexec", "Params23456", 0, "Params23456 \"%2\" \"%3\" \"%4\" \"%5\" \"%6\"");
     create_test_verb("shlexec.shlexec", "Params23456789", 0, "Params23456789 \"%2\" \"%3\" \"%4\" \"%5\" \"%6\" \"%7\" \"%8\" \"%9\"");
@@ -1594,7 +1595,7 @@ static void test_argify(void)
         if (!cmd) cmd = "(null)";
         todo_wine_if(test->todo)
             okShell(!strcmp(cmd, test->cmd) || broken(!strcmp(cmd, bad)),
-                    "expected '%s', got '%s'\n", cmd, test->cmd);
+                    "expected '%s', got '%s'\n", test->cmd, cmd);
         test++;
     }
 }

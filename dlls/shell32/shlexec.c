@@ -110,8 +110,6 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                     if (*fmt == '*')
                     {
                         used++;
-                        if (used < len)
-                            *res++ = '"';
                         while(*args)
                         {
                             used++;
@@ -121,8 +119,6 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                                 args++;
                         }
                         used++;
-                        if (used < len)
-                            *res++ = '"';
                     }
                     else
                     {
