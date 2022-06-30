@@ -1852,6 +1852,82 @@ int WINAPIV sscanf( const char *str, const char *format, ... )
 }
 
 
+/******************************************************************
+ *      _splitpath_s   (NTDLL.@)
+ */
+errno_t __cdecl _splitpath_s( const char *inpath, char *drive, size_t sz_drive,
+                              char *dir, size_t sz_dir, char *fname, size_t sz_fname,
+                              char *ext, size_t sz_ext )
+{
+    const char *p, *end;
+
+    if (!inpath || (!drive && sz_drive) ||
+        (drive && !sz_drive) ||
+        (!dir && sz_dir) ||
+        (dir && !sz_dir) ||
+        (!fname && sz_fname) ||
+        (fname && !sz_fname) ||
+        (!ext && sz_ext) ||
+        (ext && !sz_ext))
+        return EINVAL;
+
+    if (inpath[0] && inpath[1] == ':')
+    {
+        if (drive)
+        {
+            if (sz_drive <= 2) goto error;
+            drive[0] = inpath[0];
+            drive[1] = inpath[1];
+            drive[2] = 0;
+        }
+        inpath += 2;
+    }
+    else if (drive) drive[0] = '\0';
+
+    /* look for end of directory part */
+    end = NULL;
+    for (p = inpath; *p; p++) if (*p == '/' || *p == '\\') end = p + 1;
+
+    if (end)  /* got a directory */
+    {
+        if (dir)
+        {
+            if (sz_dir <= end - inpath) goto error;
+            memcpy( dir, inpath, end - inpath );
+            dir[end - inpath] = 0;
+        }
+        inpath = end;
+    }
+    else if (dir) dir[0] = 0;
+
+    /* look for extension: what's after the last dot */
+    end = NULL;
+    for (p = inpath; *p; p++) if (*p == '.') end = p;
+
+    if (!end) end = p; /* there's no extension */
+
+    if (fname)
+    {
+        if (sz_fname <= end - inpath) goto error;
+        memcpy( fname, inpath, end - inpath );
+        fname[end - inpath] = 0;
+    }
+    if (ext)
+    {
+        if (sz_ext <= strlen(end)) goto error;
+        strcpy( ext, end );
+    }
+    return 0;
+
+error:
+    if (drive) drive[0] = 0;
+    if (dir) dir[0] = 0;
+    if (fname) fname[0]= 0;
+    if (ext) ext[0]= 0;
+    return ERANGE;
+}
+
+
 /*********************************************************************
  *		_splitpath (NTDLL.@)
  *
@@ -1870,45 +1946,6 @@ int WINAPIV sscanf( const char *str, const char *format, ... )
 void __cdecl _splitpath(const char* inpath, char * drv, char * dir,
                         char* fname, char * ext )
 {
-    const char *p, *end;
-
-    if (inpath[0] && inpath[1] == ':')
-    {
-        if (drv)
-        {
-            drv[0] = inpath[0];
-            drv[1] = inpath[1];
-            drv[2] = 0;
-        }
-        inpath += 2;
-    }
-    else if (drv) drv[0] = 0;
-
-    /* look for end of directory part */
-    end = NULL;
-    for (p = inpath; *p; p++) if (*p == '/' || *p == '\\') end = p + 1;
-
-    if (end)  /* got a directory */
-    {
-        if (dir)
-        {
-            memcpy( dir, inpath, end - inpath );
-            dir[end - inpath] = 0;
-        }
-        inpath = end;
-    }
-    else if (dir) dir[0] = 0;
-
-    /* look for extension: what's after the last dot */
-    end = NULL;
-    for (p = inpath; *p; p++) if (*p == '.') end = p;
-
-    if (!end) end = p; /* there's no extension */
-
-    if (fname)
-    {
-        memcpy( fname, inpath, end - inpath );
-        fname[end - inpath] = 0;
-    }
-    if (ext) strcpy( ext, end );
+    _splitpath_s( inpath, drv, drv ? _MAX_DRIVE : 0, dir, dir ? _MAX_DIR : 0,
+                  fname, fname ? _MAX_FNAME : 0, ext, ext ? _MAX_EXT : 0 );
 }

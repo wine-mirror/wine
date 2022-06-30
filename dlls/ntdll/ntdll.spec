@@ -1524,6 +1524,7 @@
 @ varargs _snwprintf_s(ptr long long wstr)
 @ varargs _swprintf(ptr wstr) NTDLL_swprintf
 @ cdecl _splitpath(str ptr ptr ptr ptr)
+@ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long)
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _stricmp(str str)
 @ cdecl _strlwr(str)
