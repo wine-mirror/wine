@@ -1516,6 +1516,7 @@
 @ cdecl _ltoa_s(long ptr long long)
 @ cdecl _ltow(long ptr long)
 @ cdecl _ltow_s(long ptr long long)
+@ cdecl _makepath_s(ptr long str str str str)
 @ cdecl _memccpy(ptr ptr long long)
 @ cdecl _memicmp(str str long)
 @ varargs _snprintf(ptr long str) NTDLL__snprintf
