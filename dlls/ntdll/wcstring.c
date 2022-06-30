@@ -1083,6 +1083,51 @@ LPWSTR __cdecl _i64tow(
 
 
 /*********************************************************************
+ *      _ui64tow_s  (NTDLL.@)
+ */
+errno_t __cdecl _ui64tow_s( unsigned __int64 value, wchar_t *str, size_t size, int radix )
+{
+    wchar_t buffer[65], *pos;
+
+    if (!str || !size) return EINVAL;
+    if (radix < 2 || radix > 36)
+    {
+        str[0] = 0;
+        return EINVAL;
+    }
+
+    pos = buffer + 64;
+    *pos = 0;
+
+    do {
+	int digit = value % radix;
+	value = value / radix;
+	if (digit < 10)
+	    *--pos = '0' + digit;
+	else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    if (buffer - pos + 65 > size)
+    {
+        str[0] = 0;
+        return ERANGE;
+    }
+    memcpy( str, pos, (buffer - pos + 65) * sizeof(wchar_t) );
+    return 0;
+}
+
+
+/*********************************************************************
+ *      _ultow_s  (NTDLL.@)
+ */
+errno_t __cdecl _ultow_s( __msvcrt_ulong value, wchar_t *str, size_t size, int radix )
+{
+    return _ui64tow_s( value, str, size, radix );
+}
+
+
+/*********************************************************************
  *      _wtol    (NTDLL.@)
  *
  * Converts a unicode string to a long integer.
