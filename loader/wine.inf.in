@@ -272,6 +272,7 @@ HKCR,DirectShow,,16
 HKCR,exefile,,2,"Application"
 HKCR,exefile\DefaultIcon,,2,"%1"
 HKCR,exefile\shell\open\command,,2,"""%1"" %*"
+HKCR,exefile\shell\runas\command,,2,"""%1"" %*"
 HKCR,folder\shell\open\ddeexec,,2,"[ViewFolder("%l", %I, %S)]"
 HKCR,folder\shell\open\ddeexec,"NoActivateHandler",2,""
 HKCR,folder\shell\open\ddeexec\application,,2,"Folders"

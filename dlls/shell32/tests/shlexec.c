@@ -54,6 +54,7 @@ static DLLVERSIONINFO dllver;
 static BOOL skip_shlexec_tests = FALSE;
 static BOOL skip_noassoc_tests = FALSE;
 static HANDLE dde_ready_event;
+static BOOL is_elevated;
 
 
 /***
@@ -2257,6 +2258,19 @@ static void test_exes(void)
         skip("Could not create associtation.\n");
     }
 
+    if (is_elevated)
+    {
+        rc = shell_execute_ex(SEE_MASK_NOZONECHECKS | SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI, "runas", argv0, params,
+                            NULL, ".exe");
+        okShell(rc > 32, "returned %Iu\n", rc);
+        okChildInt("argcA", 4);
+        okChildString("argvA3", "Exec");
+    }
+    else
+    {
+        skip("No admin privileges, skipping runas test.\n");
+    }
+
     if (! skip_noassoc_tests)
     {
         sprintf(filename, "%s\\test file.noassoc", tmpdir);
@@ -2698,6 +2712,9 @@ static void init_test(void)
     lnk_desc_t desc;
     DWORD rc;
     HRESULT r;
+    TOKEN_ELEVATION elevation;
+    HANDLE token;
+    BOOL ret;
 
     hdll=GetModuleHandleA("shell32.dll");
     pDllGetVersion=(void*)GetProcAddress(hdll, "DllGetVersion");
@@ -2822,6 +2839,13 @@ static void init_test(void)
 
     /* Set an environment variable to see if it is inherited */
     SetEnvironmentVariableA("ShlexecVar", "Present");
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(ret, "OpenProcessToken failed.\n");
+    ret = GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &rc);
+    ok(ret, "GetTokenInformation failed.\n");
+    is_elevated = elevation.TokenIsElevated;
+    CloseHandle(token);
 }
 
 static void cleanup_test(void)
