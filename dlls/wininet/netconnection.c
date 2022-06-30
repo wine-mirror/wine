@@ -500,7 +500,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         }
 
         assert(in_bufs[0].BufferType == SECBUFFER_TOKEN);
-        assert(in_bufs[1].BufferType == SECBUFFER_EMPTY);
+        in_bufs[1].BufferType = SECBUFFER_EMPTY;
 
         if(in_bufs[0].cbBuffer + 1024 > read_buf_size) {
             BYTE *new_read_buf;
