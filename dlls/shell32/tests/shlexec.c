@@ -708,23 +708,31 @@ static BOOL create_test_class(const char* class, BOOL protocol)
     return TRUE;
 }
 
-static BOOL create_test_association(const char* extension)
+static BOOL create_test_association_key(const char* extension, const char *class)
 {
     HKEY hkey;
-    char class[MAX_PATH];
     LONG rc;
 
-    sprintf(class, "shlexec%s", extension);
-    rc=RegCreateKeyExA(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
-                       NULL, &hkey, NULL);
+    rc = RegCreateKeyExA(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
+                         NULL, &hkey, NULL);
     ok(rc == ERROR_SUCCESS || rc == ERROR_ACCESS_DENIED,
        "could not create association %s (rc=%ld)\n", class, rc);
     if (rc != ERROR_SUCCESS)
         return FALSE;
 
-    rc=RegSetValueExA(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
-    ok(rc==ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %ld\n", class, rc);
+    rc = RegSetValueExA(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
+    ok(rc == ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %ld\n", class, rc);
     CloseHandle(hkey);
+    return TRUE;
+}
+
+static BOOL create_test_association(const char* extension)
+{
+    char class[MAX_PATH];
+
+    sprintf(class, "shlexec%s", extension);
+    if (!create_test_association_key(extension, class))
+        return FALSE;
 
     return create_test_class(class, FALSE);
 }
@@ -2216,6 +2224,39 @@ static void test_exes(void)
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
 
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS | SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI, NULL, argv0, params,
+                        NULL, ".exe");
+    okShell(rc > 32, "returned %Iu\n", rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Exec");
+
+    if (create_test_association_key(".qqqq", "exefile"))
+    {
+        rc = shell_execute_ex(SEE_MASK_NOZONECHECKS | SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI, NULL, argv0, params,
+                            NULL, ".qqqq");
+        okShell(rc > 32, "returned %Iu\n", rc);
+        okChildInt("argcA", 4);
+        okChildString("argvA3", "Exec");
+        delete_test_association(".qqqq");
+    }
+    else
+    {
+        skip("Could not create associtation.\n");
+    }
+
+    if (create_test_association_key("qqqq", "exefile"))
+    {
+        rc = shell_execute_ex(SEE_MASK_NOZONECHECKS | SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI, NULL, argv0, params,
+                            NULL, "qqqq");
+        okShell(rc < 32, "returned %Iu\n", rc);
+        todo_wine okShell(rc == SE_ERR_NOASSOC, "returned %Iu\n", rc);
+        delete_test_association("qqqq");
+    }
+    else
+    {
+        skip("Could not create associtation.\n");
+    }
+
     if (! skip_noassoc_tests)
     {
         sprintf(filename, "%s\\test file.noassoc", tmpdir);
@@ -2252,10 +2293,10 @@ static void test_exes(void)
         /* FIXME SEE_MASK_FLAG_NO_UI is only needed due to Wine's bug */
         rc = shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI,
                               NULL, argv0, NULL, NULL, ".shlexec");
-        todo_wine okShell(rc > 32, "returned %Iu\n", rc);
+        okShell(rc > 32, "returned %Iu\n", rc);
         okChildInt("argcA", 5);
-        todo_wine okChildString("argvA3", "Open");
-        todo_wine okChildPath("argvA4", argv0);
+        okChildString("argvA3", "Open");
+        okChildPath("argvA4", argv0);
     }
 }
 

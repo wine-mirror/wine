@@ -473,6 +473,18 @@ static UINT SHELL_FindExecutableByVerb(LPCWSTR lpVerb, LPWSTR key, LPWSTR classn
     HKEY hkeyClass;
     WCHAR verb[MAX_PATH];
 
+    if (*classname == '.')
+    {
+        /* Extension, default key value holds class name. Extension may also have
+         * empty class name and shell\verb\command subkey. */
+        WCHAR class[MAX_PATH];
+        LONG len;
+
+        len = sizeof(class);
+        if (!RegQueryValueW(HKEY_CLASSES_ROOT, classname, class, &len) && *class)
+            wcscpy(classname, class);
+    }
+
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, classname, 0, 0x02000000, &hkeyClass))
         return SE_ERR_NOASSOC;
     if (!HCR_GetDefaultVerbW(hkeyClass, lpVerb, verb, ARRAY_SIZE(verb)))
