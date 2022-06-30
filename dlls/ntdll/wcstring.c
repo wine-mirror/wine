@@ -22,6 +22,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -749,6 +750,53 @@ __msvcrt_ulong __cdecl wcstoul(LPCWSTR s, LPWSTR *end, INT base)
 
     if (end && !empty) *end = (WCHAR *)s;
     return negative ? -ret : ret;
+}
+
+
+/*********************************************************************
+ *                  _wcstoi64  (NTDLL.@)
+ */
+__int64 __cdecl _wcstoi64( const wchar_t *s, wchar_t **end, int base )
+{
+    BOOL negative = FALSE, empty = TRUE;
+    __int64 ret = 0;
+
+    if (base < 0 || base == 1 || base > 36) return 0;
+    if (end) *end = (wchar_t *)s;
+    while (iswspace(*s)) s++;
+
+    if (*s == '-')
+    {
+        negative = TRUE;
+        s++;
+    }
+    else if (*s == '+') s++;
+
+    if ((base == 0 || base == 16) && !wctoint( *s ) && (s[1] == 'x' || s[1] == 'X'))
+    {
+        base = 16;
+        s += 2;
+    }
+    if (base == 0) base = wctoint( *s ) ? 10 : 8;
+
+    while (*s)
+    {
+        int v = wctoint( *s );
+        if (v < 0 || v >= base) break;
+        if (negative) v = -v;
+        s++;
+        empty = FALSE;
+
+        if (!negative && (ret > I64_MAX / base || ret * base > I64_MAX - v))
+            ret = I64_MAX;
+        else if (negative && (ret < I64_MIN / base || ret * base < I64_MIN - v))
+            ret = I64_MIN;
+        else
+            ret = ret * base + v;
+    }
+
+    if (end && !empty) *end = (wchar_t *)s;
+    return ret;
 }
 
 
