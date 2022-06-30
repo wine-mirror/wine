@@ -782,6 +782,55 @@ static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_regis
     return hr;
 }
 
+static HRESULT parse_effect_inputs(IXmlReader *reader, struct d2d_effect_registration *effect)
+{
+    struct d2d_effect_properties *subproperties;
+    unsigned int depth, input_count = 0;
+    struct d2d_effect_property *inputs;
+    XmlNodeType node_type;
+    WCHAR nameW[16];
+    WCHAR *name;
+    HRESULT hr;
+
+    if (FAILED(hr = d2d_effect_properties_add(&effect->properties, L"Inputs",
+            D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY, NULL)))
+        return hr;
+
+    if (!(inputs = d2d_effect_properties_get_property_by_name(&effect->properties, L"Inputs")))
+        return E_FAIL;
+    if (!(inputs->subproperties = calloc(1, sizeof(*inputs->subproperties))))
+        return E_OUTOFMEMORY;
+    subproperties = inputs->subproperties;
+
+    d2d_effect_subproperties_add(subproperties, L"IsReadOnly", D2D1_SUBPROPERTY_ISREADONLY,
+            D2D1_PROPERTY_TYPE_BOOL, L"true");
+    d2d_effect_subproperties_add(subproperties, L"DisplayName", D2D1_SUBPROPERTY_DISPLAYNAME,
+            D2D1_PROPERTY_TYPE_STRING, L"Inputs");
+
+    if (IXmlReader_IsEmptyElement(reader)) return S_OK;
+
+    while (parse_effect_get_next_xml_node(reader, XmlNodeType_None, L"Input", &depth) == S_OK)
+    {
+        if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+        if (node_type == XmlNodeType_EndElement) continue;
+        if (node_type != XmlNodeType_Element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name))) return hr;
+
+        swprintf(nameW, ARRAY_SIZE(nameW), L"%lu", input_count);
+        d2d_effect_subproperties_add(subproperties, nameW, input_count, D2D1_PROPERTY_TYPE_STRING, name);
+        input_count++;
+
+        free(name);
+    }
+    *(UINT32 *)(effect->properties.data.ptr + inputs->data.offset) = input_count;
+
+    if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+    if (node_type != XmlNodeType_EndElement) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    return S_OK;
+}
+
 static HRESULT parse_effect_xml(IXmlReader *reader, struct d2d_effect_registration *effect)
 {
     const WCHAR *node_name;
@@ -808,7 +857,7 @@ static HRESULT parse_effect_xml(IXmlReader *reader, struct d2d_effect_registrati
         if (!wcscmp(node_name, L"Property"))
             hr = parse_effect_property(reader, effect);
         else if (!wcscmp(node_name, L"Inputs"))
-            hr = parse_effect_skip_element(reader, depth);
+            hr = parse_effect_inputs(reader, effect);
         else
         {
             WARN("Unexpected element %s.\n", debugstr_w(node_name));

@@ -229,8 +229,8 @@ static const struct d2d_effect_info builtin_effects[] =
     {&CLSID_D2D1Grayscale,              1, 1, 1},
 };
 
-HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCHAR *name,
-        UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value)
+static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *props,
+        const WCHAR *name, UINT32 index, BOOL subprop, D2D1_PROPERTY_TYPE type, const WCHAR *value)
 {
     static const UINT32 sizes[] =
     {
@@ -246,7 +246,7 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
         0,                   /* FIXME: D2D1_PROPERTY_TYPE_BLOB */
         sizeof(void *),      /* D2D1_PROPERTY_TYPE_IUNKNOWN */
         sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_ENUM */
-        0,                   /* FIXME: D2D1_PROPERTY_TYPE_ARRAY */
+        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_ARRAY */
         sizeof(CLSID),       /* D2D1_PROPERTY_TYPE_CLSID */
         6 * sizeof(float),   /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
         12 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
@@ -258,7 +258,7 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
 
     assert(type >= D2D1_PROPERTY_TYPE_STRING && type <= D2D1_PROPERTY_TYPE_COLOR_CONTEXT);
 
-    if (type == D2D1_PROPERTY_TYPE_BLOB || type == D2D1_PROPERTY_TYPE_ARRAY)
+    if (type == D2D1_PROPERTY_TYPE_BLOB)
     {
         FIXME("Ignoring property %s of type %u.\n", wine_dbgstr_w(name), type);
         return S_OK;
@@ -279,21 +279,24 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
     props->data.count += sizes[type];
 
     p = &props->properties[props->count++];
+    memset(p, 0, sizeof(*p));
     p->index = index;
     if (p->index < 0x80000000)
     {
         props->custom_count++;
-        /* FIXME: this should probably be controller by subproperty */
+        /* FIXME: this should probably be controlled by subproperty */
         p->readonly = FALSE;
     }
+    else if (subprop)
+        p->readonly = TRUE;
     else
         p->readonly = index != D2D1_PROPERTY_CACHED && index != D2D1_PROPERTY_PRECISION;
     p->name = wcsdup(name);
     p->type = type;
-    if (p->type == D2D1_PROPERTY_TYPE_STRING)
+    if (p->type == D2D1_PROPERTY_TYPE_STRING && value)
     {
-        p->data.ptr = value ? wcsdup(value) : NULL;
-        p->size = value ? (wcslen(value) + 1) * sizeof(WCHAR) : 0;
+        p->data.ptr = wcsdup(value);
+        p->size = (wcslen(value) + 1) * sizeof(WCHAR);
     }
     else
     {
@@ -337,15 +340,26 @@ HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCH
         else if (p->size)
             memset(props->data.ptr + p->data.offset, 0, p->size);
     }
-    p->set_function = NULL;
-    p->get_function = NULL;
 
     return S_OK;
+}
+
+HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCHAR *name,
+        UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value)
+{
+    return d2d_effect_properties_internal_add(props, name, index, FALSE, type, value);
+}
+
+HRESULT d2d_effect_subproperties_add(struct d2d_effect_properties *props, const WCHAR *name,
+        UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value)
+{
+    return d2d_effect_properties_internal_add(props, name, index, TRUE, type, value);
 }
 
 static HRESULT d2d_effect_duplicate_properties(struct d2d_effect_properties *dst,
         const struct d2d_effect_properties *src)
 {
+    HRESULT hr;
     size_t i;
 
     memset(dst, 0, sizeof(*dst));
@@ -372,6 +386,14 @@ static HRESULT d2d_effect_duplicate_properties(struct d2d_effect_properties *dst
         d->name = wcsdup(s->name);
         if (d->type == D2D1_PROPERTY_TYPE_STRING)
             d->data.ptr = wcsdup((WCHAR *)s->data.ptr);
+
+        if (s->subproperties)
+        {
+            if (!(d->subproperties = calloc(1, sizeof(*d->subproperties))))
+                return E_OUTOFMEMORY;
+            if (FAILED(hr = d2d_effect_duplicate_properties(d->subproperties, s->subproperties)))
+                return hr;
+        }
     }
 
     return S_OK;
@@ -391,7 +413,7 @@ static struct d2d_effect_property * d2d_effect_properties_get_property_by_index(
     return NULL;
 }
 
-static struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
+struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
         const struct d2d_effect_properties *properties, const WCHAR *name)
 {
     unsigned int i;
@@ -405,9 +427,10 @@ static struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
     return NULL;
 }
 
-static UINT32 d2d_effect_properties_get_value_size(const struct d2d_effect *effect,
-        const struct d2d_effect_properties *properties, UINT32 index)
+static UINT32 d2d_effect_properties_get_value_size(const struct d2d_effect_properties *properties,
+        UINT32 index)
 {
+    struct d2d_effect *effect = properties->effect;
     struct d2d_effect_property *prop;
     UINT32 size;
 
@@ -432,10 +455,10 @@ static HRESULT d2d_effect_return_string(const WCHAR *str, WCHAR *buffer, UINT32 
     return S_OK;
 }
 
-static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
-        const struct d2d_effect_properties *properties, const struct d2d_effect_property *prop,
-        D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 size)
+static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties *properties,
+        const struct d2d_effect_property *prop, D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 size)
 {
+    struct d2d_effect *effect = properties->effect;
     UINT32 actual_size;
 
     if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
@@ -446,7 +469,6 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
 
     switch (prop->type)
     {
-        case D2D1_PROPERTY_TYPE_ARRAY:
         case D2D1_PROPERTY_TYPE_BLOB:
             FIXME("Unimplemented for type %u.\n", prop->type);
             return E_NOTIMPL;
@@ -460,10 +482,10 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect *effect,
     return S_OK;
 }
 
-static HRESULT d2d_effect_property_set_value(const struct d2d_effect *effect,
-        struct d2d_effect_properties *properties, struct d2d_effect_property *prop,
-        D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
+static HRESULT d2d_effect_property_set_value(struct d2d_effect_properties *properties,
+        struct d2d_effect_property *prop, D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
 {
+    struct d2d_effect *effect = properties->effect;
     if (prop->readonly) return E_INVALIDARG;
     if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
     if (prop->get_function && !prop->set_function) return E_INVALIDARG;
@@ -499,6 +521,11 @@ void d2d_effect_properties_cleanup(struct d2d_effect_properties *props)
         free(p->name);
         if (p->type == D2D1_PROPERTY_TYPE_STRING)
             free(p->data.ptr);
+        if (p->subproperties)
+        {
+            d2d_effect_properties_cleanup(p->subproperties);
+            free(p->subproperties);
+        }
     }
     free(props->properties);
     free(props->data.ptr);
@@ -967,118 +994,91 @@ static UINT32 STDMETHODCALLTYPE d2d_effect_GetPropertyCount(ID2D1Effect *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return effect->properties.custom_count;
+    return ID2D1Properties_GetPropertyCount(&effect->properties.ID2D1Properties_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetPropertyName(ID2D1Effect *iface, UINT32 index,
         WCHAR *name, UINT32 name_count)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, index %u, name %p, name_count %u.\n", iface, index, name, name_count);
 
-    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return d2d_effect_return_string(prop->name, name, name_count);
+    return ID2D1Properties_GetPropertyName(&effect->properties.ID2D1Properties_iface,
+            index, name, name_count);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetPropertyNameLength(ID2D1Effect *iface, UINT32 index)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, index %u.\n", iface, index);
 
-    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return wcslen(prop->name) + 1;
+    return ID2D1Properties_GetPropertyNameLength(&effect->properties.ID2D1Properties_iface, index);
 }
 
 static D2D1_PROPERTY_TYPE STDMETHODCALLTYPE d2d_effect_GetType(ID2D1Effect *iface, UINT32 index)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, index %#x.\n", iface, index);
 
-    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
-        return D2D1_PROPERTY_TYPE_UNKNOWN;
-
-    return prop->type;
+    return ID2D1Properties_GetType(&effect->properties.ID2D1Properties_iface, index);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetPropertyIndex(ID2D1Effect *iface, const WCHAR *name)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_w(name));
 
-    if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
-        return D2D1_INVALID_PROPERTY_INDEX;
-
-    return prop->index;
+    return ID2D1Properties_GetPropertyIndex(&effect->properties.ID2D1Properties_iface, name);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetValueByName(ID2D1Effect *iface, const WCHAR *name,
         D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 value_size)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, name %s, type %u, value %p, value_size %u.\n", iface, debugstr_w(name),
             type, value, value_size);
 
-    if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return d2d_effect_property_set_value(effect, &effect->properties, prop, type, value, value_size);
+    return ID2D1Properties_SetValueByName(&effect->properties.ID2D1Properties_iface, name,
+            type, value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
         const BYTE *value, UINT32 value_size)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
 
-    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return d2d_effect_property_set_value(effect, &effect->properties, prop, type, value, value_size);
+    return ID2D1Properties_SetValue(&effect->properties.ID2D1Properties_iface, index, type,
+            value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValueByName(ID2D1Effect *iface, const WCHAR *name,
         D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 value_size)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, name %s, type %#x, value %p, value_size %u.\n", iface, debugstr_w(name), type,
             value, value_size);
 
-    if (!(prop = d2d_effect_properties_get_property_by_name(&effect->properties, name)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return d2d_effect_property_get_value(effect, &effect->properties, prop, type, value, value_size);
+    return ID2D1Properties_GetValueByName(&effect->properties.ID2D1Properties_iface, name, type,
+            value, value_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
         BYTE *value, UINT32 value_size)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    struct d2d_effect_property *prop;
 
     TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
 
-    if (!(prop = d2d_effect_properties_get_property_by_index(&effect->properties, index)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return d2d_effect_property_get_value(effect, &effect->properties, prop, type, value, value_size);
+    return ID2D1Properties_GetValue(&effect->properties.ID2D1Properties_iface, index, type,
+            value, value_size);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetValueSize(ID2D1Effect *iface, UINT32 index)
@@ -1087,14 +1087,17 @@ static UINT32 STDMETHODCALLTYPE d2d_effect_GetValueSize(ID2D1Effect *iface, UINT
 
     TRACE("iface %p, index %#x.\n", iface, index);
 
-    return d2d_effect_properties_get_value_size(effect, &effect->properties, index);
+    return ID2D1Properties_GetValueSize(&effect->properties.ID2D1Properties_iface, index);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_effect_GetSubProperties(ID2D1Effect *iface, UINT32 index, ID2D1Properties **props)
+static HRESULT STDMETHODCALLTYPE d2d_effect_GetSubProperties(ID2D1Effect *iface, UINT32 index,
+        ID2D1Properties **props)
 {
-    FIXME("iface %p, index %u, props %p stub!\n", iface, index, props);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, props %p.\n", iface, index, props);
+
+    return ID2D1Properties_GetSubProperties(&effect->properties.ID2D1Properties_iface, index, props);
 }
 
 static void STDMETHODCALLTYPE d2d_effect_SetInput(ID2D1Effect *iface, UINT32 index, ID2D1Image *input, BOOL invalidate)
@@ -1255,17 +1258,234 @@ static const ID2D1ImageVtbl d2d_effect_image_vtbl =
     d2d_effect_image_GetFactory,
 };
 
+static inline struct d2d_effect_properties *impl_from_ID2D1Properties(ID2D1Properties *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_effect_properties, ID2D1Properties_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_QueryInterface(ID2D1Properties *iface,
+        REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_ID2D1Properties) ||
+            IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        ID2D1Properties_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_effect_properties_AddRef(ID2D1Properties *iface)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    return ID2D1Effect_AddRef(&properties->effect->ID2D1Effect_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_effect_properties_Release(ID2D1Properties *iface)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    return ID2D1Effect_Release(&properties->effect->ID2D1Effect_iface);
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetPropertyCount(ID2D1Properties *iface)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return properties->custom_count;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_GetPropertyName(ID2D1Properties *iface,
+        UINT32 index, WCHAR *name, UINT32 name_count)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, index %u, name %p, name_count %u.\n", iface, index, name, name_count);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_return_string(prop->name, name, name_count);
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetPropertyNameLength(ID2D1Properties *iface,
+        UINT32 index)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return wcslen(prop->name) + 1;
+}
+
+static D2D1_PROPERTY_TYPE STDMETHODCALLTYPE d2d_effect_properties_GetType(ID2D1Properties *iface,
+        UINT32 index)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, index %#x.\n", iface, index);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return D2D1_PROPERTY_TYPE_UNKNOWN;
+
+    return prop->type;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetPropertyIndex(ID2D1Properties *iface,
+        const WCHAR *name)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_w(name));
+
+    if (!(prop = d2d_effect_properties_get_property_by_name(properties, name)))
+        return D2D1_INVALID_PROPERTY_INDEX;
+
+    return prop->index;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_SetValueByName(ID2D1Properties *iface,
+        const WCHAR *name, D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 value_size)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, name %s, type %u, value %p, value_size %u.\n", iface, debugstr_w(name),
+            type, value, value_size);
+
+    if (!(prop = d2d_effect_properties_get_property_by_name(properties, name)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_set_value(properties, prop, type, value, value_size);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_SetValue(ID2D1Properties *iface,
+        UINT32 index, D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 value_size)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_set_value(properties, prop, type, value, value_size);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_GetValueByName(ID2D1Properties *iface,
+        const WCHAR *name, D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 value_size)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, name %s, type %#x, value %p, value_size %u.\n", iface, debugstr_w(name), type,
+            value, value_size);
+
+    if (!(prop = d2d_effect_properties_get_property_by_name(properties, name)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_get_value(properties, prop, type, value, value_size);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_GetValue(ID2D1Properties *iface,
+        UINT32 index, D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 value_size)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    return d2d_effect_property_get_value(properties, prop, type, value, value_size);
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetValueSize(ID2D1Properties *iface,
+        UINT32 index)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+
+    TRACE("iface %p, index %#x.\n", iface, index);
+
+    return d2d_effect_properties_get_value_size(properties, index);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_properties_GetSubProperties(ID2D1Properties *iface,
+        UINT32 index, ID2D1Properties **props)
+{
+    struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
+    struct d2d_effect_property *prop;
+
+    TRACE("iface %p, index %u, props %p.\n", iface, index, props);
+
+    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
+        return D2DERR_INVALID_PROPERTY;
+
+    if (!prop->subproperties) return D2DERR_NO_SUBPROPERTIES;
+
+    *props = &prop->subproperties->ID2D1Properties_iface;
+    ID2D1Properties_AddRef(*props);
+    return S_OK;
+}
+
+static const ID2D1PropertiesVtbl d2d_effect_properties_vtbl =
+{
+    d2d_effect_properties_QueryInterface,
+    d2d_effect_properties_AddRef,
+    d2d_effect_properties_Release,
+    d2d_effect_properties_GetPropertyCount,
+    d2d_effect_properties_GetPropertyName,
+    d2d_effect_properties_GetPropertyNameLength,
+    d2d_effect_properties_GetType,
+    d2d_effect_properties_GetPropertyIndex,
+    d2d_effect_properties_SetValueByName,
+    d2d_effect_properties_SetValue,
+    d2d_effect_properties_GetValueByName,
+    d2d_effect_properties_GetValue,
+    d2d_effect_properties_GetValueSize,
+    d2d_effect_properties_GetSubProperties,
+};
+
+static void d2d_effect_init_properties_vtbls(struct d2d_effect *effect)
+{
+    unsigned int i;
+
+    effect->properties.ID2D1Properties_iface.lpVtbl = &d2d_effect_properties_vtbl;
+    effect->properties.effect = effect;
+
+    for (i = 0; i < effect->properties.count; ++i)
+    {
+        struct d2d_effect_property *prop = &effect->properties.properties[i];
+        if (!prop->subproperties) continue;
+        prop->subproperties->ID2D1Properties_iface.lpVtbl = &d2d_effect_properties_vtbl;
+        prop->subproperties->effect = effect;
+    }
+}
+
 HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effect_id,
         ID2D1Effect **effect)
 {
     const struct d2d_effect_info *builtin = NULL;
     struct d2d_effect_context *effect_context;
     const struct d2d_effect_registration *reg;
+    unsigned int i, default_input_count;
     struct d2d_transform_graph *graph;
     PD2D1_EFFECT_FACTORY factory;
     struct d2d_effect *object;
     WCHAR clsidW[39];
-    unsigned int i;
     HRESULT hr;
 
     if (!(reg = d2d_factory_get_registered_effect(context->factory, effect_id)))
@@ -1323,7 +1543,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         d2d_effect_properties_add(&object->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
                 D2D1_PROPERTY_TYPE_UINT32, max_inputs);
 
-        d2d_effect_SetInputCount(&object->ID2D1Effect_iface, builtin->default_input_count);
+        default_input_count = builtin->default_input_count;
 
         factory = builtin_factory_stub;
     }
@@ -1335,7 +1555,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         d2d_effect_properties_add(&object->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
                 D2D1_PROPERTY_TYPE_UINT32, L"1" /* FIXME */);
 
-        d2d_effect_SetInputCount(&object->ID2D1Effect_iface, 1);
+        default_input_count = 1;
 
         factory = reg->factory;
     }
@@ -1343,6 +1563,9 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     d2d_effect_properties_add(&object->properties, L"CLSID", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
     d2d_effect_properties_add(&object->properties, L"Precision", D2D1_PROPERTY_PRECISION, D2D1_PROPERTY_TYPE_ENUM, L"0");
+    d2d_effect_init_properties_vtbls(object);
+
+    d2d_effect_SetInputCount(&object->ID2D1Effect_iface, default_input_count);
 
     if (FAILED(hr = factory((IUnknown **)&object->impl)))
     {

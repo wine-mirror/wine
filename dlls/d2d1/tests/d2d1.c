@@ -10934,12 +10934,15 @@ static void test_effect_context(BOOL d3d11)
 
 static void test_effect_properties(BOOL d3d11)
 {
-    UINT32 i, min_inputs, max_inputs, integer, index;
+    UINT32 i, min_inputs, max_inputs, integer, index, size;
     ID2D1EffectContext *effect_context;
     D2D1_BUFFER_PRECISION precision;
+    ID2D1Properties *subproperties;
+    D2D1_PROPERTY_TYPE prop_type;
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory;
     ID2D1Effect *effect;
+    UINT32 count, data;
     WCHAR buffer[128];
     CLSID clsid;
     BOOL cached;
@@ -10983,6 +10986,58 @@ static void test_effect_properties(BOOL d3d11)
         release_test_context(&ctx);
         return;
     }
+
+    /* Inputs array */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, effect_xml_a,
+            NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    size = ID2D1Effect_GetValueSize(effect, D2D1_PROPERTY_INPUTS);
+    ok(size == 4, "Unexpected size %u.\n", size);
+    prop_type = ID2D1Effect_GetType(effect, D2D1_PROPERTY_INPUTS);
+    ok(prop_type == D2D1_PROPERTY_TYPE_ARRAY, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetPropertyName(effect, D2D1_PROPERTY_INPUTS, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Inputs"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+
+    /* Value is the number of elements. */
+    data = 123;
+    hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY,
+            (BYTE *)&data, sizeof(data));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(data == 1, "Unexpected data %u.\n", data);
+
+    hr = ID2D1Effect_GetSubProperties(effect, D2D1_PROPERTY_INPUTS, &subproperties);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    count = ID2D1Properties_GetPropertyCount(subproperties);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = ID2D1Properties_GetPropertyName(subproperties, 0, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"0"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    hr = ID2D1Properties_GetValue(subproperties, 0, D2D1_PROPERTY_TYPE_STRING,
+            (BYTE *)buffer, sizeof(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Source"), "Unexpected value %s.\n", wine_dbgstr_w(buffer));
+
+    hr = ID2D1Properties_GetValue(subproperties, D2D1_SUBPROPERTY_ISREADONLY, D2D1_PROPERTY_TYPE_BOOL,
+            (BYTE *)&data, sizeof(data));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(data == TRUE, "Unexpected value %u.\n", data);
+    hr = ID2D1Properties_GetPropertyName(subproperties, D2D1_SUBPROPERTY_ISREADONLY,
+            buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"IsReadOnly"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+
+    ID2D1Properties_Release(subproperties);
+    ID2D1Effect_Release(effect);
+
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Test system properties */
 
