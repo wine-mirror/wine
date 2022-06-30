@@ -1128,6 +1128,80 @@ errno_t __cdecl _ultow_s( __msvcrt_ulong value, wchar_t *str, size_t size, int r
 
 
 /*********************************************************************
+ *      _i64tow_s  (NTDLL.@)
+ */
+errno_t __cdecl _i64tow_s( __int64 value, wchar_t *str, size_t size, int radix )
+{
+    unsigned __int64 val;
+    BOOL is_negative;
+    wchar_t buffer[65], *pos;
+
+    if (!str || !size) return EINVAL;
+    if (radix < 2 || radix > 36)
+    {
+        str[0] = 0;
+        return EINVAL;
+    }
+
+    if (value < 0 && radix == 10)
+    {
+        is_negative = TRUE;
+        val = -value;
+    }
+    else
+    {
+        is_negative = FALSE;
+        val = value;
+    }
+
+    pos = buffer + 64;
+    *pos = 0;
+
+    do
+    {
+        unsigned int digit = val % radix;
+        val /= radix;
+
+        if (digit < 10)
+            *--pos = '0' + digit;
+        else
+            *--pos = 'a' + digit - 10;
+    }
+    while (val != 0);
+
+    if (is_negative) *--pos = '-';
+
+    if (buffer - pos + 65 > size)
+    {
+        str[0] = 0;
+        return ERANGE;
+    }
+    memcpy( str, pos, (buffer - pos + 65) * sizeof(wchar_t) );
+    return 0;
+}
+
+
+/*********************************************************************
+ *      _ltow_s  (NTDLL.@)
+ */
+errno_t __cdecl _ltow_s( __msvcrt_long value, wchar_t *str, size_t size, int radix )
+{
+    if (value < 0 && radix == 10) return _i64tow_s( value, str, size, radix );
+    return _ui64tow_s( (__msvcrt_ulong)value, str, size, radix );
+}
+
+
+/*********************************************************************
+ *      _itow_s  (NTDLL.@)
+ */
+errno_t __cdecl _itow_s( int value, wchar_t *str, size_t size, int radix )
+{
+    if (value < 0 && radix == 10) return _i64tow_s( value, str, size, radix );
+    return _ui64tow_s( (unsigned int)value, str, size, radix );
+}
+
+
+/*********************************************************************
  *      _wtol    (NTDLL.@)
  *
  * Converts a unicode string to a long integer.
