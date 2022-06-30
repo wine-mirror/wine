@@ -67,14 +67,6 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     ok( !ret, "ldap_search_ext_sA failed %#lx\n", ret );
     ok( res != NULL, "expected res != NULL\n" );
 
-    if (GetProcAddress(GetModuleHandleA("wldap32.dll"), "ber_init"))
-    {
-        ret = ldap_parse_resultA( NULL, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
-        ok( ret == LDAP_PARAM_ERROR, "ldap_parse_resultA failed %#lx\n", ret );
-    }
-    else
-        win_skip("Test would crash on older wldap32 versions\n");
-
     result = ~0u;
     ret = ldap_parse_resultA( ld, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
     ok( !ret, "ldap_parse_resultA failed %#lx\n", ret );
@@ -127,7 +119,7 @@ static void test_ldap_set_optionW( LDAP *ld )
     }
 
     ret = ldap_set_optionW( ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF );
-    ok( !ret || broken(ret == LDAP_PARAM_ERROR) /* nt4, win2k */, "ldap_set_optionW failed %#lx\n", ret );
+    ok( !ret, "ldap_set_optionW failed %#lx\n", ret );
 
     ret = ldap_set_optionW( ld, LDAP_OPT_REFERRALS, (void *)&oldvalue );
     ok( !ret, "ldap_set_optionW failed %#lx\n", ret );
