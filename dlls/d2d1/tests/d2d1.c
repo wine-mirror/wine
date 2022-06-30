@@ -11238,6 +11238,9 @@ static void test_effect_properties(BOOL d3d11)
     hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 2, "Got unexpected property count %u.\n", count);
+
     index = ID2D1Effect_GetPropertyIndex(effect, L"Context");
     ok(index == 0, "Got unexpected index %u.\n", index);
     index = ID2D1Effect_GetPropertyIndex(effect, L"Integer");
@@ -11322,10 +11325,10 @@ static void test_effect_2d_affine(BOOL d3d11)
 {
     D2D1_MATRIX_3X2_F rotate, scale, skew;
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    unsigned int i, x, y, w, h, count;
     D2D_RECT_F output_bounds = {0};
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
-    unsigned int i, x, y, w, h;
     D2D1_SIZE_U input_size;
     ID2D1Factory1 *factory;
     D2D1_POINT_2F offset;
@@ -11404,6 +11407,9 @@ static void test_effect_2d_affine(BOOL d3d11)
 
     check_system_properties(effect, TRUE);
 
+    count = ID2D1Effect_GetPropertyCount(effect);
+    todo_wine ok(count == 4, "Got unexpected property count %u.\n", count);
+
     for (i = 0; i < ARRAY_SIZE(effect_2d_affine_tests); ++i)
     {
         const struct effect_2d_affine_test *test = &effect_2d_affine_tests[i];
@@ -11474,11 +11480,11 @@ static void test_effect_crop(BOOL d3d11)
     D2D_RECT_F output_bounds;
     D2D1_SIZE_U input_size;
     ID2D1Factory1 *factory;
+    unsigned int count, i;
     ID2D1Bitmap1 *bitmap;
     DWORD image[16 * 16];
     ID2D1Effect *effect;
     ID2D1Image *output;
-    unsigned int i;
     HRESULT hr;
 
     const struct crop_effect_test
@@ -11515,6 +11521,9 @@ static void test_effect_crop(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_system_properties(effect, TRUE);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    todo_wine ok(count == 2, "Got unexpected property count %u.\n", count);
 
     for (i = 0; i < ARRAY_SIZE(crop_effect_tests); ++i)
     {
@@ -11565,10 +11574,10 @@ static void test_effect_grayscale(BOOL d3d11)
     ID2D1DeviceContext *context;
     D2D1_SIZE_U input_size;
     ID2D1Factory3 *factory;
+    unsigned int count, i;
     ID2D1Bitmap1 *bitmap;
     ID2D1Effect *effect;
     ID2D1Image *output;
-    unsigned int i;
     HRESULT hr;
 
     const DWORD test_pixels[] = {0xffffffff, 0x12345678, 0x89abcdef, 0x77777777, 0xdeadbeef};
@@ -11590,6 +11599,9 @@ static void test_effect_grayscale(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_system_properties(effect, TRUE);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(!count, "Got unexpected property count %u.\n", count);
 
     for (i = 0; i < ARRAY_SIZE(test_pixels); ++i)
     {
