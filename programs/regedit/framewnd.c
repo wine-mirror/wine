@@ -946,9 +946,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_RENAME:
     {
         WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-        if (keyPath == 0 || *keyPath == 0) {
+        if (!keyPath) {
             MessageBeep(MB_ICONHAND);
-        } else if (GetFocus() == g_pChildWnd->hTreeWnd) {
+            break;
+        } else if (*keyPath && GetFocus() == g_pChildWnd->hTreeWnd) {
             StartKeyRename(g_pChildWnd->hTreeWnd);
         } else if (GetFocus() == g_pChildWnd->hListWnd) {
             StartValueRename(g_pChildWnd->hListWnd);
