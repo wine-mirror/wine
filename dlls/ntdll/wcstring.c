@@ -801,6 +801,50 @@ __int64 __cdecl _wcstoi64( const wchar_t *s, wchar_t **end, int base )
 
 
 /*********************************************************************
+ *                  _wcstoui64  (NTDLL.@)
+ */
+unsigned __int64 __cdecl _wcstoui64( const wchar_t *s, wchar_t **end, int base )
+{
+    BOOL negative = FALSE, empty = TRUE;
+    unsigned __int64 ret = 0;
+
+    if (base < 0 || base == 1 || base > 36) return 0;
+    if (end) *end = (wchar_t *)s;
+    while (iswspace(*s)) s++;
+
+    if (*s == '-')
+    {
+        negative = TRUE;
+        s++;
+    }
+    else if (*s == '+') s++;
+
+    if ((base == 0 || base == 16) && !wctoint( *s ) && (s[1] == 'x' || s[1] == 'X'))
+    {
+        base = 16;
+        s += 2;
+    }
+    if (base == 0) base = wctoint( *s ) ? 10 : 8;
+
+    while (*s)
+    {
+        int v = wctoint( *s );
+        if (v < 0 || v >= base) break;
+        s++;
+        empty = FALSE;
+
+        if (ret > UI64_MAX / base || ret * base > UI64_MAX - v)
+            ret = UI64_MAX;
+        else
+            ret = ret * base + v;
+    }
+
+    if (end && !empty) *end = (wchar_t *)s;
+    return negative ? -ret : ret;
+}
+
+
+/*********************************************************************
  *      _ultow   (NTDLL.@)
  *
  * Converts an unsigned long integer to a unicode string.

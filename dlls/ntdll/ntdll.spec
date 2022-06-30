@@ -1541,6 +1541,7 @@
 @ cdecl _wcslwr_s(wstr long)
 @ cdecl _wcsnicmp(wstr wstr long)
 @ cdecl -ret64 _wcstoi64(wstr ptr long)
+@ cdecl -ret64 _wcstoui64(wstr ptr long)
 @ cdecl _wcsupr(wstr)
 @ cdecl _wcsupr_s(wstr long)
 @ cdecl _wtoi(wstr)
