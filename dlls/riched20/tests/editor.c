@@ -9030,7 +9030,7 @@ static void test_window_classes(void)
     int i;
     HWND hwnd;
 
-    for (i = 0; i < sizeof(test)/sizeof(test[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(test); i++)
     {
         SetLastError(0xdeadbeef);
         hwnd = CreateWindowExA(0, test[i].class, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL);
