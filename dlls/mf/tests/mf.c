@@ -1987,26 +1987,18 @@ static void init_media_type(IMFMediaType *mediatype, const struct attribute_desc
     }
 }
 
-static void init_source_node(IMFMediaType *mediatype, IMFMediaSource *source, IMFTopologyNode *node)
+static void init_source_node(IMFMediaSource *source, IMFTopologyNode *node,
+        UINT enum_types_count, IMFMediaType **enum_types, const media_type_desc *current_desc)
 {
     IMFPresentationDescriptor *pd;
-    IMFMediaTypeHandler *handler;
     IMFStreamDescriptor *sd;
     HRESULT hr;
 
     hr = IMFTopologyNode_DeleteAllItems(node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = MFCreateStreamDescriptor(0, 1, &mediatype, &sd);
+    hr = MFCreateStreamDescriptor(0, enum_types_count, enum_types, &sd);
     ok(hr == S_OK, "Failed to create stream descriptor, hr %#lx.\n", hr);
-
-    hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
-    ok(hr == S_OK, "Failed to get media type handler, hr %#lx.\n", hr);
-
-    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, mediatype);
-    ok(hr == S_OK, "Failed to set current media type, hr %#lx.\n", hr);
-
-    IMFMediaTypeHandler_Release(handler);
 
     hr = MFCreatePresentationDescriptor(1, &sd, &pd);
     ok(hr == S_OK, "Failed to create presentation descriptor, hr %#lx.\n", hr);
@@ -2025,10 +2017,28 @@ static void init_source_node(IMFMediaType *mediatype, IMFMediaSource *source, IM
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     }
 
+    if (current_desc)
+    {
+        IMFMediaTypeHandler *handler;
+        IMFMediaType *type;
+
+        hr = MFCreateMediaType(&type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(type, *current_desc, -1);
+
+        hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        IMFMediaTypeHandler_Release(handler);
+        IMFMediaType_Release(type);
+    }
+
     IMFStreamDescriptor_Release(sd);
 }
 
-static void init_sink_node(IMFActivate *sink_activate, unsigned int method, IMFTopologyNode *node)
+static void init_sink_node(IMFActivate *sink_activate, MF_CONNECT_METHOD method, IMFTopologyNode *node)
 {
     IMFStreamSink *stream_sink;
     IMFMediaSink *sink;
@@ -2060,6 +2070,7 @@ enum loader_test_flags
     LOADER_EXPECTED_CONVERTER = 0x2,
     LOADER_TODO = 0x4,
     LOADER_NEEDS_VIDEO_PROCESSOR = 0x8,
+    LOADER_SET_ENUMERATE_SOURCE_TYPES = 0x10,
 };
 
 static void test_topology_loader(void)
@@ -2093,11 +2104,21 @@ static void test_topology_loader(void)
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 16000),
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
     };
+    static const media_type_desc audio_pcm_44100_incomplete =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
+    };
 
     const struct loader_test
     {
         const media_type_desc *input_type;
         const media_type_desc *output_type;
+        const media_type_desc *current_input;
         MF_CONNECT_METHOD method;
         HRESULT expected_result;
         unsigned int flags;
@@ -2105,18 +2126,74 @@ static void test_topology_loader(void)
     loader_tests[] =
     {
         {
-            /* PCM -> PCM, same type */
+            /* PCM -> PCM, same enumerated type, no current type */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
             .expected_result = S_OK,
+            .flags = LOADER_TODO,
         },
         {
-            /* PCM -> PCM, different bps. */
-            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            /* PCM -> PCM, same enumerated type, incomplete current type */
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_44100_incomplete,
+            .expected_result = MF_E_INVALIDMEDIATYPE,
+            .flags = LOADER_TODO,
+        },
+        {
+            /* PCM -> PCM, same enumerated bps, different current bps */
+            .input_type = &audio_pcm_48000, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_44100,
             .expected_result = MF_E_INVALIDMEDIATYPE,
         },
         {
-            /* PCM -> PCM, different bps. */
+            /* PCM -> PCM, same enumerated bps, different current bps, force enumerate */
+            .input_type = &audio_pcm_48000, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_44100,
+            .expected_result = S_OK,
+            .flags = LOADER_SET_ENUMERATE_SOURCE_TYPES,
+        },
+
+        {
+            /* PCM -> PCM, incomplete enumerated type, same current type */
+            .input_type = &audio_pcm_44100_incomplete, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_44100,
+            .expected_result = S_OK,
+        },
+        {
+            /* PCM -> PCM, incomplete enumerated type, same current type, force enumerate */
+            .input_type = &audio_pcm_44100_incomplete, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_44100,
+            .expected_result = MF_E_NO_MORE_TYPES,
+            .flags = LOADER_SET_ENUMERATE_SOURCE_TYPES | LOADER_TODO,
+        },
+
+        {
+            /* PCM -> PCM, different enumerated bps, no current type */
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            .expected_result = MF_E_INVALIDMEDIATYPE,
+            .flags = LOADER_TODO,
+        },
+        {
+            /* PCM -> PCM, different enumerated bps, same current bps */
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_48000,
+            .expected_result = S_OK,
+        },
+        {
+            /* PCM -> PCM, different enumerated bps, same current bps, force enumerate */
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_pcm_48000,
+            .expected_result = MF_E_NO_MORE_TYPES,
+            .flags = LOADER_SET_ENUMERATE_SOURCE_TYPES,
+        },
+        {
+            /* PCM -> PCM, different enumerated bps, no current type, allow converter */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_ALLOW_CONVERTER,
+            .expected_result = S_OK,
+            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+        },
+        {
+            /* PCM -> PCM, different enumerated bps, no current type, allow decoder */
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_ALLOW_DECODER,
             .expected_result = S_OK,
             .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
@@ -2124,17 +2201,27 @@ static void test_topology_loader(void)
         {
             /* MP3 -> PCM */
             .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_mp3_44100,
             .expected_result = MF_E_INVALIDMEDIATYPE,
+        },
+        {
+            /* MP3 -> PCM, force enumerate */
+            .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .current_input = &audio_mp3_44100,
+            .expected_result = MF_E_NO_MORE_TYPES,
+            .flags = LOADER_SET_ENUMERATE_SOURCE_TYPES,
         },
         {
             /* MP3 -> PCM */
             .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_ALLOW_CONVERTER,
+            .current_input = &audio_mp3_44100,
             .expected_result = MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION,
             .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_TODO,
         },
         {
             /* MP3 -> PCM */
             .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_ALLOW_DECODER,
+            .current_input = &audio_mp3_44100,
             .expected_result = S_OK,
             .flags = LOADER_EXPECTED_DECODER | LOADER_TODO,
         },
@@ -2269,16 +2356,21 @@ static void test_topology_loader(void)
         hr = MFCreateSampleGrabberSinkActivate(output_type, &test_grabber_callback, &sink_activate);
         ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
 
-        init_source_node(input_type, source, src_node);
+        init_source_node(source, src_node, 1, &input_type, test->current_input);
         init_sink_node(sink_activate, test->method, sink_node);
 
         hr = IMFTopology_GetCount(topology, &count);
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
         ok(!count, "Unexpected count %u.\n", count);
 
+        if (test->flags & LOADER_SET_ENUMERATE_SOURCE_TYPES)
+            IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, 1);
         hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+        IMFTopology_DeleteItem(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES);
+
         if (test->flags & LOADER_NEEDS_VIDEO_PROCESSOR && !has_video_processor)
-            ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx\n", hr);
+            ok(hr == MF_E_INVALIDMEDIATYPE || hr == MF_E_TOPO_CODEC_NOT_FOUND,
+                    "Unexpected hr %#lx\n", hr);
         else
         {
             todo_wine_if(test->flags & LOADER_TODO)
@@ -2297,7 +2389,8 @@ static void test_topology_loader(void)
             hr = IMFTopology_GetCount(full_topology, &count);
             ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
             todo_wine
-            ok(count == 1, "Unexpected count %u.\n", count);
+            ok(count == (test->flags & LOADER_SET_ENUMERATE_SOURCE_TYPES ? 2 : 1),
+                    "Unexpected count %u.\n", count);
 
             value = 0xdeadbeef;
             hr = IMFTopology_GetUINT32(full_topology, &MF_TOPOLOGY_RESOLUTION_STATUS, &value);
@@ -2456,6 +2549,14 @@ todo_wine {
 
 static void test_topology_loader_evr(void)
 {
+    static const media_type_desc media_type_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 640, 480),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE),
+        {0},
+    };
     IMFTopologyNode *node, *source_node, *evr_node;
     IMFTopology *topology, *full_topology;
     IMFMediaTypeHandler *handler;
@@ -2483,17 +2584,8 @@ static void test_topology_loader_evr(void)
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
-
-    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    init_source_node(media_type, NULL, source_node);
+    init_media_type(media_type, media_type_desc, -1);
+    init_source_node(NULL, source_node, 1, &media_type, &media_type_desc);
 
     /* EVR sink node. */
     window = create_window();
