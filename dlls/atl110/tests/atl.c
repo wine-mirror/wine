@@ -82,12 +82,38 @@ static void test_AtlComModuleRegisterClassObjects(void)
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 }
 
+static void test_AtlComModuleRevokeClassObjects(void)
+{
+    _ATL_OBJMAP_ENTRY_EX *null_entry = NULL;
+    _ATL_COM_MODULE module;
+    HRESULT hr;
+
+    /* Test NULL module */
+    hr = AtlComModuleRevokeClassObjects(NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Test NULL m_ppAutoObjMapFirst and m_ppAutoObjMapLast */
+    module.cbSize = sizeof(module);
+    module.m_ppAutoObjMapFirst = NULL;
+    module.m_ppAutoObjMapLast = NULL;
+    hr = AtlComModuleRevokeClassObjects(&module);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Test m_ppAutoObjMapFirst and m_ppAutoObjMapLast both pointing to a NULL entry */
+    module.cbSize = sizeof(module);
+    module.m_ppAutoObjMapFirst = &null_entry;
+    module.m_ppAutoObjMapLast = &null_entry;
+    hr = AtlComModuleRevokeClassObjects(&module);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(atl)
 {
     CoInitialize(NULL);
 
     test_AtlComModuleGetClassObject();
     test_AtlComModuleRegisterClassObjects();
+    test_AtlComModuleRevokeClassObjects();
 
     CoUninitialize();
 }
