@@ -538,7 +538,7 @@ HRESULT WINAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE *module, DWORD c
         return E_INVALIDARG;
 
     for(iter = module->m_ppAutoObjMapFirst; iter < module->m_ppAutoObjMapLast; iter++) {
-        if(!(*iter)->pfnGetClassObject)
+        if(!(*iter) || !(*iter)->pfnGetClassObject)
             continue;
 
         hres = (*iter)->pfnGetClassObject((*iter)->pfnCreateInstance, &IID_IUnknown, (void**)&unk);
@@ -566,7 +566,7 @@ HRESULT WINAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE *module, DWORD c
         return E_INVALIDARG;
 
     for(iter = module->m_ppAutoObjMapFirst; iter < module->m_ppAutoObjMapLast; iter++) {
-        if(!(*iter)->pfnGetClassObject)
+        if(!(*iter) || !(*iter)->pfnGetClassObject)
             continue;
 
         hres = (*iter)->pfnGetClassObject((*iter)->pfnCreateInstance, &IID_IUnknown, (void**)&unk);

@@ -55,11 +55,39 @@ static void test_AtlComModuleGetClassObject(void)
     ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
 }
 
+static void test_AtlComModuleRegisterClassObjects(void)
+{
+    _ATL_OBJMAP_ENTRY_EX *null_entry = NULL;
+    _ATL_COM_MODULE module;
+    HRESULT hr;
+
+    /* Test NULL module */
+    hr = AtlComModuleRegisterClassObjects(NULL, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Test NULL m_ppAutoObjMapFirst and m_ppAutoObjMapLast */
+    module.cbSize = sizeof(module);
+    module.m_ppAutoObjMapFirst = NULL;
+    module.m_ppAutoObjMapLast = NULL;
+    hr = AtlComModuleRegisterClassObjects(&module, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE);
+    todo_wine_if(hr == S_OK)
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    /* Test m_ppAutoObjMapFirst and m_ppAutoObjMapLast both pointing to a NULL entry */
+    module.cbSize = sizeof(module);
+    module.m_ppAutoObjMapFirst = &null_entry;
+    module.m_ppAutoObjMapLast = &null_entry;
+    hr = AtlComModuleRegisterClassObjects(&module, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE);
+    todo_wine_if(hr == S_OK)
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(atl)
 {
     CoInitialize(NULL);
 
     test_AtlComModuleGetClassObject();
+    test_AtlComModuleRegisterClassObjects();
 
     CoUninitialize();
 }
