@@ -11343,6 +11343,72 @@ static void test_effect_properties(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void check_enum_property(ID2D1Effect *effect, UINT32 property,
+        const UINT32 *values, UINT32 count)
+{
+    ID2D1Properties *subproperties, *fields_subproperties, *field_subproperties;
+    D2D1_PROPERTY_TYPE prop_type;
+    UINT32 prop_count, value;
+    WCHAR buffer[64];
+    unsigned int i;
+    HRESULT hr;
+
+    prop_type = ID2D1Effect_GetType(effect, property);
+    ok(prop_type == D2D1_PROPERTY_TYPE_ENUM, "Unexpected type %d.\n", prop_type);
+
+    hr = ID2D1Effect_GetSubProperties(effect, property, &subproperties);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    prop_type = ID2D1Properties_GetType(subproperties, D2D1_SUBPROPERTY_FIELDS);
+    ok(prop_type == D2D1_PROPERTY_TYPE_ARRAY, "Unexpected type %d.\n", prop_type);
+
+    /* Number of enum members. */
+    hr = ID2D1Properties_GetValue(subproperties, D2D1_SUBPROPERTY_FIELDS, D2D1_PROPERTY_TYPE_ARRAY,
+            (BYTE *)&value, sizeof(value));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == count, "Unexpected value %u.\n", value);
+
+    prop_count = ID2D1Properties_GetPropertyCount(subproperties);
+    ok(!prop_count, "Got unexpected property count %u.\n", count);
+
+    /* Fields is an array of strings providing display names for members. */
+    hr = ID2D1Properties_GetSubProperties(subproperties, D2D1_SUBPROPERTY_FIELDS,
+            &fields_subproperties);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    prop_count = ID2D1Properties_GetPropertyCount(fields_subproperties);
+    ok(prop_count == count, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < prop_count; ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        prop_type = ID2D1Properties_GetType(fields_subproperties, i);
+        ok(prop_type == D2D1_PROPERTY_TYPE_STRING, "Unexpected type %d.\n", prop_type);
+
+        /* Field names are localized. */
+        hr = ID2D1Properties_GetSubProperties(fields_subproperties, i, &field_subproperties);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        prop_count = ID2D1Properties_GetPropertyCount(field_subproperties);
+        ok(prop_count == 1, "Got unexpected property count %u.\n", count);
+
+        prop_type = ID2D1Properties_GetType(field_subproperties, 0);
+        ok(prop_type == D2D1_PROPERTY_TYPE_UINT32, "Unexpected type %d.\n", prop_type);
+        hr = ID2D1Properties_GetPropertyName(field_subproperties, 0, buffer, ARRAY_SIZE(buffer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(buffer, L"Index"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+        hr = ID2D1Properties_GetValue(field_subproperties, 0, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&value, sizeof(value));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(value == values[i], "Unexpected value %u, expected %u.\n", value, values[i]);
+
+        ID2D1Properties_Release(field_subproperties);
+
+        winetest_pop_context();
+    }
+
+    ID2D1Properties_Release(fields_subproperties);
+    ID2D1Properties_Release(subproperties);
+}
+
 static void test_effect_2d_affine(BOOL d3d11)
 {
     D2D1_MATRIX_3X2_F rotate, scale, skew;
@@ -11357,6 +11423,7 @@ static void test_effect_2d_affine(BOOL d3d11)
     ID2D1Bitmap1 *bitmap;
     ID2D1Effect *effect;
     ID2D1Image *output;
+    UINT32 value;
     BOOL match;
     HRESULT hr;
 
@@ -11400,6 +11467,22 @@ static void test_effect_2d_affine(BOOL d3d11)
          "BgEfAQQBIQECASMChAEA"},
     };
 
+    static const unsigned int border_modes[] =
+    {
+        D2D1_BORDER_MODE_SOFT,
+        D2D1_BORDER_MODE_HARD,
+    };
+
+    static const unsigned int interp_modes[] =
+    {
+        D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR,
+        D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_CUBIC,
+        D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR,
+        D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_ANISOTROPIC,
+        D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
+    };
+
     memset(image_16x16, 0xff, sizeof(image_16x16));
     set_matrix_identity(&rotate);
     set_matrix_identity(&scale);
@@ -11431,6 +11514,28 @@ static void test_effect_2d_affine(BOOL d3d11)
 
     count = ID2D1Effect_GetPropertyCount(effect);
     todo_wine ok(count == 4, "Got unexpected property count %u.\n", count);
+
+    hr = ID2D1Effect_GetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE,
+            D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&value, sizeof(value));
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(value == D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR, "Unexpected value %u.\n", value);
+        check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE, interp_modes,
+                ARRAY_SIZE(interp_modes));
+    }
+
+    hr = ID2D1Effect_GetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, D2D1_PROPERTY_TYPE_ENUM,
+            (BYTE *)&value, sizeof(value));
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(value == D2D1_BORDER_MODE_SOFT, "Unexpected value %u.\n", value);
+        check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, border_modes,
+                ARRAY_SIZE(border_modes));
+    }
 
     for (i = 0; i < ARRAY_SIZE(effect_2d_affine_tests); ++i)
     {
