@@ -6117,10 +6117,8 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 1, TRUE, &media_type);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)input_descriptor);
@@ -6143,13 +6141,10 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
     ok(hr == S_OK, "Failed to create a node, hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
-    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 1, FALSE, &media_type);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
     stream_sink.handler = output_handler;

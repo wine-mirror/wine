@@ -1841,7 +1841,10 @@ HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOO
     switch (node_type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
-            if (SUCCEEDED(topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
+            if (output || stream)
+                return MF_E_INVALIDSTREAMNUMBER;
+
+            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
             {
                 hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
                 IMFStreamSink_Release(stream_sink);
@@ -1854,6 +1857,9 @@ HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOO
             }
             break;
         case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            if (!output || stream)
+                return MF_E_INVALIDSTREAMNUMBER;
+
             if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, &IID_IMFStreamDescriptor,
                     (void **)&sd)))
             {
