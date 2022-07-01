@@ -37,35 +37,136 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
     return debugstr_wn(us->Buffer, us->Length / sizeof(WCHAR));
 }
 
-static void
-NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(const void *, const void *),
-                 size_t left, size_t right )
+static int __cdecl compare_wrapper(void *ctx, const void *e1, const void *e2)
 {
-    if(right>left) {
-        size_t i, j, k, m;
-        m=left+(right-left)/2;
-        NTDLL_mergesort( arr, barr, elemsize, compar, left, m);
-        NTDLL_mergesort( arr, barr, elemsize, compar, m+1, right);
+    int (__cdecl *compare)( const void *, const void * ) = ctx;
+    return compare( e1, e2 );
+}
 
-#define X(a,i) ((char*)a+elemsize*(i))
-        for (k=left, i=left, j=m+1; i<=m && j<=right; k++) {
-            if (compar(X(arr, i), X(arr,j)) <= 0) {
-                memcpy(X(barr,k), X(arr, i), elemsize);
-                i++;
-            } else {
-                memcpy(X(barr,k), X(arr, j), elemsize);
-                j++;
-            }
+static inline void swap(char *l, char *r, size_t size)
+{
+    char tmp;
+
+    while(size--) {
+        tmp = *l;
+        *l++ = *r;
+        *r++ = tmp;
+    }
+}
+
+static void small_sort(void *base, size_t nmemb, size_t size,
+        int (CDECL *compar)(void *, const void *, const void *), void *context)
+{
+    size_t e, i;
+    char *max, *p;
+
+    for(e=nmemb; e>1; e--) {
+        max = base;
+        for(i=1; i<e; i++) {
+            p = (char*)base + i*size;
+            if(compar(context, p, max) > 0)
+                max = p;
         }
-        if (i<=m)
-            memcpy(X(barr,k), X(arr,i), (m-i+1)*elemsize);
-        else
-            memcpy(X(barr,k), X(arr,j), (right-j+1)*elemsize);
 
-        memcpy(X(arr, left), X(barr, left), (right-left+1)*elemsize);
+        if(p != max)
+            swap(p, max, size);
+    }
+}
+
+static void quick_sort(void *base, size_t nmemb, size_t size,
+        int (CDECL *compar)(void *, const void *, const void *), void *context)
+{
+    size_t stack_lo[8*sizeof(size_t)], stack_hi[8*sizeof(size_t)];
+    size_t beg, end, lo, hi, med;
+    int stack_pos;
+
+    stack_pos = 0;
+    stack_lo[stack_pos] = 0;
+    stack_hi[stack_pos] = nmemb-1;
+
+#define X(i) ((char*)base+size*(i))
+    while(stack_pos >= 0) {
+        beg = stack_lo[stack_pos];
+        end = stack_hi[stack_pos--];
+
+        if(end-beg < 8) {
+            small_sort(X(beg), end-beg+1, size, compar, context);
+            continue;
+        }
+
+        lo = beg;
+        hi = end;
+        med = lo + (hi-lo+1)/2;
+        if(compar(context, X(lo), X(med)) > 0)
+            swap(X(lo), X(med), size);
+        if(compar(context, X(lo), X(hi)) > 0)
+            swap(X(lo), X(hi), size);
+        if(compar(context, X(med), X(hi)) > 0)
+            swap(X(med), X(hi), size);
+
+        lo++;
+        hi--;
+        while(1) {
+            while(lo <= hi) {
+                if(lo!=med && compar(context, X(lo), X(med))>0)
+                    break;
+                lo++;
+            }
+
+            while(med != hi) {
+                if(compar(context, X(hi), X(med)) <= 0)
+                    break;
+                hi--;
+            }
+
+            if(hi < lo)
+                break;
+
+            swap(X(lo), X(hi), size);
+            if(hi == med)
+                med = lo;
+            lo++;
+            hi--;
+        }
+
+        while(hi > beg) {
+            if(hi!=med && compar(context, X(hi), X(med))!=0)
+                break;
+            hi--;
+        }
+
+        if(hi-beg >= end-lo) {
+            stack_lo[++stack_pos] = beg;
+            stack_hi[stack_pos] = hi;
+            stack_lo[++stack_pos] = lo;
+            stack_hi[stack_pos] = end;
+        }else {
+            stack_lo[++stack_pos] = lo;
+            stack_hi[stack_pos] = end;
+            stack_lo[++stack_pos] = beg;
+            stack_hi[stack_pos] = hi;
+        }
     }
 #undef X
 }
+
+
+/*********************************************************************
+ *                  qsort_s   (NTDLL.@)
+ */
+void __cdecl qsort_s( void *base, size_t nmemb, size_t size,
+                      int (__cdecl *compar)(void *, const void *, const void *), void *context )
+{
+    const size_t total_size = nmemb * size;
+
+    if (!base && nmemb) return;
+    if (!size) return;
+    if (!compar) return;
+    if (total_size / size != nmemb) return;
+    if (nmemb < 2) return;
+    quick_sort( base, nmemb, size, compar, context );
+}
+
 
 /*********************************************************************
  *                  qsort   (NTDLL.@)
@@ -73,12 +174,9 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
 void __cdecl qsort( void *base, size_t nmemb, size_t size,
                     int (__cdecl *compar)(const void *, const void *) )
 {
-    void *secondarr;
-    if (nmemb < 2 || size == 0) return;
-    secondarr = RtlAllocateHeap (GetProcessHeap(), 0, nmemb*size);
-    NTDLL_mergesort( base, secondarr, size, compar, 0, nmemb-1 );
-    RtlFreeHeap (GetProcessHeap(),0, secondarr);
+    qsort_s( base, nmemb, size, compare_wrapper, compar );
 }
+
 
 /*********************************************************************
  *                  bsearch   (NTDLL.@)

@@ -1603,6 +1603,7 @@
 @ cdecl memset(ptr long long)
 @ cdecl pow(double double)
 @ cdecl qsort(ptr long long ptr)
+@ cdecl qsort_s(ptr long long ptr ptr)
 @ cdecl sin(double)
 @ varargs sprintf(ptr str) NTDLL_sprintf
 @ varargs sprintf_s(ptr long str)
