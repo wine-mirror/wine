@@ -203,6 +203,8 @@ static const WCHAR guid_devinterface_monitorW[] =
     {'{','E','6','F','0','7','B','5','F','-','E','E','9','7','-','4','A','9','0','-',
      'B','0','7','6','-','3','3','F','5','7','B','F','4','E','A','A','7','}',0};
 
+#define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
+
 /* Cached display device information */
 struct display_device
 {
@@ -220,6 +222,8 @@ struct adapter
     struct display_device dev;
     unsigned int id;
     const WCHAR *config_key;
+    unsigned int mode_count;
+    DEVMODEW *modes;
 };
 
 struct monitor
@@ -545,8 +549,9 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     WCHAR *value_str = (WCHAR *)value->Data;
+    DWORD i, driver_extra = 0, size;
+    DEVMODEW *mode;
     HKEY hkey;
-    DWORD size;
 
     if (!enum_key && !(enum_key = reg_open_key( NULL, enum_keyW, sizeof(enum_keyW) )))
         return FALSE;
@@ -585,10 +590,29 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     /* Interface name */
     info->dev.interface_name[0] = 0;
 
+    /* ModeCount / DriverExtra */
+    if (query_reg_value( hkey, mode_countW, value, sizeof(buffer) ) && value->Type == REG_DWORD)
+        info->mode_count = *(const DWORD *)value->Data;
+    if (query_reg_value( hkey, driver_extraW, value, sizeof(buffer) ) && value->Type == REG_DWORD)
+        driver_extra = *(const DWORD *)value->Data;
+
+    /* Modes */
+    if ((info->modes = calloc( info->mode_count, sizeof(DEVMODEW) + driver_extra )))
+    {
+        for (i = 0, mode = info->modes; i < info->mode_count; i++)
+        {
+            mode->dmSize = offsetof(DEVMODEW, dmICMMethod);
+            mode->dmDriverExtra = driver_extra;
+            if (!read_adapter_mode( hkey, i, mode )) break;
+            mode = NEXT_DEVMODEW(mode);
+        }
+        info->mode_count = i;
+    }
+
     /* DeviceID */
     size = query_reg_value( hkey, gpu_idW, value, sizeof(buffer) );
     NtClose( hkey );
-    if (!size || value->Type != REG_SZ) return FALSE;
+    if (!size || value->Type != REG_SZ || !info->mode_count || !info->modes) return FALSE;
 
     if (!(hkey = reg_open_key( enum_key, value_str, value->DataLength - sizeof(WCHAR) )))
         return FALSE;
@@ -1370,6 +1394,7 @@ static void clear_display_devices(void)
     {
         adapter = LIST_ENTRY( list_head( &adapters ), struct adapter, entry );
         list_remove( &adapter->entry );
+        free( adapter->modes );
         free( adapter );
     }
 }
@@ -1408,6 +1433,7 @@ static BOOL update_display_cache_from_registry(void)
 
         if (!read_display_adapter_settings( adapter_id, adapter ))
         {
+            free( adapter->modes );
             free( adapter );
             break;
         }
