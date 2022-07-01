@@ -1523,7 +1523,6 @@
 @ varargs _snprintf_s(ptr long long str)
 @ varargs _snwprintf(ptr long wstr)
 @ varargs _snwprintf_s(ptr long long wstr)
-@ varargs _swprintf(ptr wstr) NTDLL_swprintf
 @ cdecl _splitpath(str ptr ptr ptr ptr)
 @ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long)
 @ cdecl _strcmpi(str str) _stricmp
@@ -1533,6 +1532,7 @@
 @ cdecl _strnicmp(str str long)
 @ cdecl _strupr(str)
 @ cdecl _strupr_s(str long)
+@ varargs _swprintf(ptr wstr) NTDLL_swprintf
 @ cdecl _tolower(long)
 @ cdecl _toupper(long)
 @ cdecl _ui64toa(int64 ptr long)
@@ -1543,6 +1543,8 @@
 @ cdecl _ultoa_s(long ptr long long)
 @ cdecl _ultow(long ptr long)
 @ cdecl _ultow_s(long ptr long long)
+@ cdecl _vscprintf(str ptr)
+@ cdecl _vscwprintf(wstr ptr)
 @ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnprintf_s(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr)

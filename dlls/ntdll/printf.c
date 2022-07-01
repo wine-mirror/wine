@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -72,6 +73,24 @@ int CDECL _vsnwprintf( WCHAR *str, size_t len, const WCHAR *format, va_list args
 
     if (out.used < len) str[out.used] = 0;
     return r;
+}
+
+
+/*********************************************************************
+ *                  _vscprintf   (NTDLL.@)
+ */
+int CDECL _vscprintf( const char *format, va_list valist )
+{
+    return _vsnprintf( NULL, INT_MAX, format, valist );
+}
+
+
+/*********************************************************************
+ *                  _vscwprintf   (NTDLL.@)
+ */
+int CDECL _vscwprintf( const wchar_t *format, va_list args )
+{
+    return _vsnwprintf( NULL, INT_MAX, format, args );
 }
 
 
