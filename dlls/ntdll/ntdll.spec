@@ -1567,6 +1567,7 @@
 @ cdecl _wtol(wstr)
 @ cdecl abs(long)
 @ cdecl atan(double)
+@ cdecl atan2(double double)
 @ cdecl atoi(str)
 @ cdecl atol(str)
 @ cdecl bsearch(ptr ptr long long ptr)

@@ -1174,6 +1174,79 @@ double CDECL atan( double x )
 }
 
 /*********************************************************************
+ *                  atan2   (NTDLL.@)
+ *
+ * Copied from musl: src/math/atan2.c
+ */
+double CDECL atan2( double y, double x )
+{
+    static const double pi     = 3.1415926535897931160E+00,
+                 pi_lo  = 1.2246467991473531772E-16;
+
+    double z;
+    unsigned int m, lx, ly, ix, iy;
+
+    if (isnan(x) || isnan(y))
+        return x+y;
+    ix = *(ULONGLONG*)&x >> 32;
+    lx = *(ULONGLONG*)&x;
+    iy = *(ULONGLONG*)&y >> 32;
+    ly = *(ULONGLONG*)&y;
+    if (((ix - 0x3ff00000) | lx) == 0)  /* x = 1.0 */
+        return atan(y);
+    m = ((iy >> 31) & 1) | ((ix >> 30) & 2);  /* 2*sign(x)+sign(y) */
+    ix = ix & 0x7fffffff;
+    iy = iy & 0x7fffffff;
+
+    /* when y = 0 */
+    if ((iy | ly) == 0) {
+        switch(m) {
+        case 0:
+        case 1: return y;   /* atan(+-0,+anything)=+-0 */
+        case 2: return pi;  /* atan(+0,-anything) = pi */
+        case 3: return -pi; /* atan(-0,-anything) =-pi */
+        }
+    }
+    /* when x = 0 */
+    if ((ix | lx) == 0)
+        return m & 1 ? -pi / 2 : pi / 2;
+    /* when x is INF */
+    if (ix == 0x7ff00000) {
+        if (iy == 0x7ff00000) {
+            switch(m) {
+            case 0: return pi / 4;      /* atan(+INF,+INF) */
+            case 1: return -pi / 4;     /* atan(-INF,+INF) */
+            case 2: return 3 * pi / 4;  /* atan(+INF,-INF) */
+            case 3: return -3 * pi / 4; /* atan(-INF,-INF) */
+            }
+        } else {
+            switch(m) {
+            case 0: return 0.0;  /* atan(+...,+INF) */
+            case 1: return -0.0; /* atan(-...,+INF) */
+            case 2: return pi;   /* atan(+...,-INF) */
+            case 3: return -pi;  /* atan(-...,-INF) */
+            }
+        }
+    }
+    /* |y/x| > 0x1p64 */
+    if (ix + (64 << 20) < iy || iy == 0x7ff00000)
+        return m & 1 ? -pi / 2 : pi / 2;
+
+    /* z = atan(|y/x|) without spurious underflow */
+    if ((m & 2) && iy + (64 << 20) < ix)  /* |y/x| < 0x1p-64, x<0 */
+        z = 0;
+    else
+        z = atan(fabs(y / x));
+    switch (m) {
+    case 0: return z;                /* atan(+,+) */
+    case 1: return -z;               /* atan(-,+) */
+    case 2: return pi - (z - pi_lo); /* atan(+,-) */
+    default: /* case 3 */
+        return (z - pi_lo) - pi;     /* atan(-,-) */
+    }
+}
+
+/*********************************************************************
  *                  ceil   (NTDLL.@)
  *
  * Based on musl: src/math/ceilf.c
