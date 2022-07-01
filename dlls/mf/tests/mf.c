@@ -2064,10 +2064,40 @@ enum loader_test_flags
 
 static void test_topology_loader(void)
 {
-    static const struct loader_test
+    static const media_type_desc audio_pcm_44100 =
     {
-        media_type_desc input_type;
-        media_type_desc output_type;
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
+    };
+    static const media_type_desc audio_pcm_48000 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 48000),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
+    };
+    static const media_type_desc audio_mp3_44100 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 16000),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
+    };
+
+    const struct loader_test
+    {
+        const media_type_desc *input_type;
+        const media_type_desc *output_type;
         MF_CONNECT_METHOD method;
         HRESULT expected_result;
         unsigned int flags;
@@ -2076,152 +2106,37 @@ static void test_topology_loader(void)
     {
         {
             /* PCM -> PCM, same type */
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-
-            MF_CONNECT_DIRECT,
-            S_OK,
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .expected_result = S_OK,
         },
-
         {
             /* PCM -> PCM, different bps. */
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 48000),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-
-            MF_CONNECT_DIRECT,
-            MF_E_INVALIDMEDIATYPE,
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_DIRECT,
+            .expected_result = MF_E_INVALIDMEDIATYPE,
         },
-
         {
             /* PCM -> PCM, different bps. */
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 48000),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-
-            MF_CONNECT_ALLOW_CONVERTER,
-            S_OK,
-            LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .method = MF_CONNECT_ALLOW_CONVERTER,
+            .expected_result = S_OK,
+            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
 
         {
             /* MP3 -> PCM */
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 16000),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-            },
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-
-            MF_CONNECT_DIRECT,
-            MF_E_INVALIDMEDIATYPE,
+            .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_DIRECT,
+            .expected_result = MF_E_INVALIDMEDIATYPE,
         },
-
         {
             /* MP3 -> PCM */
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 16000),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-            },
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-
-            MF_CONNECT_ALLOW_CONVERTER,
-            MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION,
-            LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_TODO,
+            .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_ALLOW_CONVERTER,
+            .expected_result = MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION,
+            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_TODO,
         },
-
         {
             /* MP3 -> PCM */
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 16000),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-            },
-            {
-                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-                ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-                ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-                ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100),
-                ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
-                ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
-            },
-
-            MF_CONNECT_ALLOW_DECODER,
-            S_OK,
-            LOADER_EXPECTED_DECODER | LOADER_TODO,
+            .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .method = MF_CONNECT_ALLOW_DECODER,
+            .expected_result = S_OK,
+            .flags = LOADER_EXPECTED_DECODER | LOADER_TODO,
         },
     };
 
@@ -2346,8 +2261,10 @@ static void test_topology_loader(void)
     {
         const struct loader_test *test = &loader_tests[i];
 
-        init_media_type(input_type, test->input_type, -1);
-        init_media_type(output_type, test->output_type, -1);
+        winetest_push_context("%u", i);
+
+        init_media_type(input_type, *test->input_type, -1);
+        init_media_type(output_type, *test->output_type, -1);
 
         hr = MFCreateSampleGrabberSinkActivate(output_type, &test_grabber_callback, &sink_activate);
         ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
@@ -2361,11 +2278,11 @@ static void test_topology_loader(void)
 
         hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
         if (test->flags & LOADER_NEEDS_VIDEO_PROCESSOR && !has_video_processor)
-            ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx on test %u.\n", hr, i);
+            ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx\n", hr);
         else
         {
             todo_wine_if(test->flags & LOADER_TODO)
-            ok(hr == test->expected_result, "Unexpected hr %#lx on test %u.\n", hr, i);
+            ok(hr == test->expected_result, "Unexpected hr %#lx\n", hr);
             ok(full_topology != topology, "Unexpected instance.\n");
         }
 
@@ -2505,6 +2422,8 @@ todo_wine {
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ref = IMFActivate_Release(sink_activate);
         ok(ref == 0, "Release returned %ld\n", ref);
+
+        winetest_pop_context();
     }
 
     ref = IMFTopology_Release(topology);
