@@ -1566,6 +1566,7 @@
 @ cdecl atoi(str)
 @ cdecl atol(str)
 @ cdecl bsearch(ptr ptr long long ptr)
+@ cdecl bsearch_s(ptr ptr long long ptr ptr)
 @ cdecl ceil(double)
 @ cdecl cos(double)
 @ cdecl fabs(double)
