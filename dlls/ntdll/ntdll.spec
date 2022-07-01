@@ -1502,6 +1502,8 @@
 @ cdecl -arch=i386 -norelay _chkstk()
 @ stub _fltused
 @ cdecl -arch=i386 -ret64 _ftol()
+@ cdecl -arch=i386 -ret64 _ftol2() _ftol
+@ cdecl -arch=i386 -ret64 _ftol2_sse() _ftol # FIXME
 @ cdecl _i64toa(int64 ptr long)
 @ cdecl _i64toa_s(int64 ptr long long)
 @ cdecl _i64tow(int64 ptr long)
