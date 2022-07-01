@@ -1301,6 +1301,131 @@ static void test_sequencer_source(void)
     ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
 }
 
+struct test_stream_sink
+{
+    IMFStreamSink IMFStreamSink_iface;
+    IMFMediaTypeHandler *handler;
+};
+
+static struct test_stream_sink *impl_from_IMFStreamSink(IMFStreamSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_stream_sink, IMFStreamSink_iface);
+}
+
+static HRESULT WINAPI test_stream_sink_QueryInterface(IMFStreamSink *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFStreamSink)
+            || IsEqualIID(riid, &IID_IMFMediaEventGenerator)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        IMFStreamSink_AddRef((*obj = iface));
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_stream_sink_AddRef(IMFStreamSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_stream_sink_Release(IMFStreamSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_stream_sink_GetEvent(IMFStreamSink *iface, DWORD flags, IMFMediaEvent **event)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_BeginGetEvent(IMFStreamSink *iface, IMFAsyncCallback *callback, IUnknown *state)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_EndGetEvent(IMFStreamSink *iface, IMFAsyncResult *result,
+        IMFMediaEvent **event)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_QueueEvent(IMFStreamSink *iface, MediaEventType event_type,
+        REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_GetMediaSink(IMFStreamSink *iface, IMFMediaSink **sink)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_GetIdentifier(IMFStreamSink *iface, DWORD *id)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_GetMediaTypeHandler(IMFStreamSink *iface, IMFMediaTypeHandler **handler)
+{
+    struct test_stream_sink *impl = impl_from_IMFStreamSink(iface);
+
+    if (impl->handler)
+    {
+        IMFMediaTypeHandler_AddRef((*handler = impl->handler));
+        return S_OK;
+    }
+
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
+        const PROPVARIANT *marker_value, const PROPVARIANT *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_sink_Flush(IMFStreamSink *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMFStreamSinkVtbl test_stream_sink_vtbl =
+{
+    test_stream_sink_QueryInterface,
+    test_stream_sink_AddRef,
+    test_stream_sink_Release,
+    test_stream_sink_GetEvent,
+    test_stream_sink_BeginGetEvent,
+    test_stream_sink_EndGetEvent,
+    test_stream_sink_QueueEvent,
+    test_stream_sink_GetMediaSink,
+    test_stream_sink_GetIdentifier,
+    test_stream_sink_GetMediaTypeHandler,
+    test_stream_sink_ProcessSample,
+    test_stream_sink_PlaceMarker,
+    test_stream_sink_Flush,
+};
+
+static const struct test_stream_sink test_stream_sink = {.IMFStreamSink_iface.lpVtbl = &test_stream_sink_vtbl};
+
 struct test_callback
 {
     IMFAsyncCallback IMFAsyncCallback_iface;
@@ -5858,8 +5983,20 @@ static void test_sample_copier_output_processing(void)
 
 static void test_MFGetTopoNodeCurrentType(void)
 {
-    IMFMediaType *media_type, *media_type2;
+    static const struct attribute_desc media_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1080),
+        {0},
+    };
+    IMFMediaType *media_type, *input_types[2], *output_types[2];
+    IMFStreamDescriptor *input_descriptor, *output_descriptor;
+    struct test_stream_sink stream_sink = test_stream_sink;
+    IMFMediaTypeHandler *input_handler, *output_handler;
+    IMFTransform *transform;
     IMFTopologyNode *node;
+    DWORD flags;
     HRESULT hr;
     LONG ref;
 
@@ -5869,80 +6006,234 @@ static void test_MFGetTopoNodeCurrentType(void)
         return;
     }
 
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&input_types[0]);
+    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+    init_media_type(input_types[0], media_type_desc, -1);
+    hr = MFCreateMediaType(&input_types[1]);
+    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+    init_media_type(input_types[1], media_type_desc, -1);
+    hr = MFCreateMediaType(&output_types[0]);
+    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+    init_media_type(output_types[0], media_type_desc, -1);
+    hr = MFCreateMediaType(&output_types[1]);
+    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+    init_media_type(output_types[1], media_type_desc, -1);
+
+    hr = MFCreateStreamDescriptor(0, 2, input_types, &input_descriptor);
+    ok(hr == S_OK, "Failed to create IMFStreamDescriptor hr %#lx.\n", hr);
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(input_descriptor, &input_handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateStreamDescriptor(0, 2, output_types, &output_descriptor);
+    ok(hr == S_OK, "Failed to create IMFStreamDescriptor hr %#lx.\n", hr);
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(output_descriptor, &output_handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_CColorConvertDMO, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+
     /* Tee node. */
     hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node);
     ok(hr == S_OK, "Failed to create a node, hr %#lx.\n", hr);
-
     hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-
-    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-
-    hr = MFCreateMediaType(&media_type2);
-    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
-
-    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
-    ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
-
-    /* Input type returned, if set. */
-    hr = IMFTopologyNode_SetInputPrefType(node, 0, media_type2);
-    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
-
-    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_type == media_type2, "Unexpected pointer.\n");
-    IMFMediaType_Release(media_type);
-
-    hr = IMFTopologyNode_SetInputPrefType(node, 0, NULL);
-    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
-
     hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Set second output. */
-    hr = IMFTopologyNode_SetOutputPrefType(node, 1, media_type2);
+    hr = IMFTopologyNode_SetOutputPrefType(node, 1, output_types[1]);
     ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
-
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTopologyNode_SetOutputPrefType(node, 1, NULL);
-    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, TRUE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, FALSE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     /* Set first output. */
-    hr = IMFTopologyNode_SetOutputPrefType(node, 0, media_type2);
+    hr = IMFTopologyNode_SetOutputPrefType(node, 0, output_types[0]);
     ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
-
-    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_type == media_type2, "Unexpected pointer.\n");
-    IMFMediaType_Release(media_type);
-
-    hr = IMFTopologyNode_SetOutputPrefType(node, 0, NULL);
-    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
-
-    /* Set primary output. */
-    hr = IMFTopologyNode_SetOutputPrefType(node, 1, media_type2);
-    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
-
-    hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_PRIMARYOUTPUT, 1);
-    ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
-
-    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_type == media_type2, "Unexpected pointer.\n");
-    IMFMediaType_Release(media_type);
-
     hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_type == media_type2, "Unexpected pointer.\n");
+    ok(media_type == output_types[0], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 1, TRUE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == output_types[0], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == output_types[0], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+
+    /* Set primary output. */
+    hr = IMFTopologyNode_SetOutputPrefType(node, 1, output_types[1]);
+    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_PRIMARYOUTPUT, 1);
+    ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == output_types[1], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == output_types[1], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 1, FALSE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == output_types[1], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+
+    /* Input type returned, if set. */
+    hr = IMFTopologyNode_SetInputPrefType(node, 0, input_types[0]);
+    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == input_types[0], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == input_types[0], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+
+    hr = IMFTopologyNode_SetInputPrefType(node, 0, NULL);
+    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetOutputPrefType(node, 0, NULL);
+    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetOutputPrefType(node, 1, NULL);
+    ok(hr == S_OK, "Failed to set media type, hr %#lx.\n", hr);
+    ref = IMFTopologyNode_Release(node);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    /* Source node. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, TRUE, &media_type);
+    todo_wine
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    todo_wine
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)input_descriptor);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(input_handler, output_types[0]);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == output_types[0], "Unexpected pointer.\n");
     IMFMediaType_Release(media_type);
 
     ref = IMFTopologyNode_Release(node);
     ok(ref == 0, "Release returned %ld\n", ref);
-    ref = IMFMediaType_Release(media_type2);
+
+
+    /* Output node. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, FALSE, &media_type);
+    todo_wine
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    todo_wine
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+
+    stream_sink.handler = output_handler;
+    hr = IMFTopologyNode_SetObject(node, (IUnknown *)&stream_sink.IMFStreamSink_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(output_handler, input_types[0]);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type == input_types[0], "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type);
+
+    ref = IMFTopologyNode_Release(node);
     ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    /* Transform node. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, TRUE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, FALSE, &media_type);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTopologyNode_SetObject(node, (IUnknown *)transform);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, TRUE, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 1, FALSE, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, input_types[0], 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_IsEqual(media_type, input_types[0], &flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFTransform_SetOutputType(transform, 0, output_types[0], 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_IsEqual(media_type, output_types[0], &flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    ref = IMFTopologyNode_Release(node);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    ref = IMFTransform_Release(transform);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    IMFMediaTypeHandler_Release(input_handler);
+    IMFMediaTypeHandler_Release(output_handler);
+    ref = IMFStreamDescriptor_Release(input_descriptor);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFStreamDescriptor_Release(output_descriptor);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    ref = IMFMediaType_Release(input_types[0]);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFMediaType_Release(input_types[1]);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFMediaType_Release(output_types[0]);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFMediaType_Release(output_types[1]);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    CoUninitialize();
 }
 
 static void init_functions(void)
