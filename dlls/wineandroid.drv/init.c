@@ -310,7 +310,7 @@ BOOL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, D
     devmode->u1.s2.dmDisplayOrientation = 0;
     devmode->u1.s2.dmDisplayFixedOutput = 0;
 
-    if (n == ENUM_CURRENT_SETTINGS || n == ENUM_REGISTRY_SETTINGS) n = 0;
+    if (n == ENUM_CURRENT_SETTINGS) n = 0;
     if (n == 0)
     {
         devmode->dmPelsWidth = screen_width;

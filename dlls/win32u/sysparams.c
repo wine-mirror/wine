@@ -169,6 +169,15 @@ static const WCHAR displayW[] = {'D','i','s','p','l','a','y',0};
 static const WCHAR monitorW[] = {'M','o','n','i','t','o','r',0};
 static const WCHAR yesW[] = {'Y','e','s',0};
 static const WCHAR noW[] = {'N','o',0};
+static const WCHAR bits_per_pelW[] = {'B','i','t','s','P','e','r','P','e','l',0};
+static const WCHAR x_resolutionW[] = {'X','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR y_resolutionW[] = {'Y','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR v_refreshW[] = {'V','R','e','f','r','e','s','h',0};
+static const WCHAR flagsW[] = {'F','l','a','g','s',0};
+static const WCHAR x_panningW[] = {'X','P','a','n','n','i','n','g',0};
+static const WCHAR y_panningW[] = {'Y','P','a','n','n','i','n','g',0};
+static const WCHAR orientationW[] = {'O','r','i','e','n','t','a','t','i','o','n',0};
+static const WCHAR fixed_outputW[] = {'F','i','x','e','d','O','u','t','p','u','t',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
 static const WCHAR guid_devclass_displayW[] =
@@ -409,6 +418,59 @@ static void release_display_device_init_mutex( HANDLE mutex )
 {
     NtReleaseMutant( mutex, NULL );
     NtClose( mutex );
+}
+
+static BOOL read_adapter_mode( HKEY adapter_key, DEVMODEW *mode )
+{
+    static const WCHAR default_settingsW[] = {'D','e','f','a','u','l','t','S','e','t','t','i','n','g','s','.',0};
+    char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buf;
+    WCHAR bufferW[MAX_PATH];
+
+#define query_mode_field( name, field, flag )                                                      \
+    do                                                                                             \
+    {                                                                                              \
+        lstrcpyW( bufferW, default_settingsW );                                                    \
+        lstrcatW( bufferW, (name) );                                                               \
+        if (!query_reg_value( adapter_key, bufferW, value, sizeof(value_buf) ) ||                  \
+            value->Type != REG_DWORD) return FALSE;                                                \
+        mode->field = *(const DWORD *)value->Data;                                                 \
+        mode->dmFields |= (flag);                                                                  \
+    } while (0)
+
+    query_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
+    query_mode_field( x_resolutionW, dmPelsWidth, DM_PELSWIDTH );
+    query_mode_field( y_resolutionW, dmPelsHeight, DM_PELSHEIGHT );
+    query_mode_field( v_refreshW, dmDisplayFrequency, DM_DISPLAYFREQUENCY );
+    query_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
+    query_mode_field( x_panningW, dmPosition.x, DM_POSITION );
+    query_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+    query_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
+    query_mode_field( fixed_outputW, dmDisplayFixedOutput, 0 );
+
+#undef query_mode_field
+
+    return TRUE;
+}
+
+static BOOL read_registry_settings( const WCHAR *adapter_path, DEVMODEW *mode )
+{
+    BOOL ret = FALSE;
+    HANDLE mutex;
+    HKEY hkey;
+
+    mutex = get_display_device_init_mutex();
+
+    if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) ))) ret = FALSE;
+    else if (!(hkey = reg_open_key( config_key, adapter_path, lstrlenW( adapter_path ) * sizeof(WCHAR) ))) ret = FALSE;
+    else
+    {
+        ret = read_adapter_mode( hkey, mode );
+        NtClose( hkey );
+    }
+
+    release_display_device_init_mutex( mutex );
+    return ret;
 }
 
 static BOOL read_display_adapter_settings( unsigned int index, struct adapter *info )
@@ -1840,7 +1902,7 @@ static BOOL is_detached_mode( const DEVMODEW *mode )
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
-    WCHAR device_name[CCHDEVICENAME];
+    WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
     struct adapter *adapter;
     BOOL def_mode = TRUE;
     DEVMODEW dm;
@@ -1858,7 +1920,11 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     }
 
     if (!lock_display_devices()) return DISP_CHANGE_FAILED;
-    if ((adapter = find_adapter( devname ))) lstrcpyW( device_name, adapter->dev.device_name );
+    if ((adapter = find_adapter( devname )))
+    {
+        lstrcpyW( device_name, adapter->dev.device_name );
+        lstrcpyW( adapter_path, adapter->config_key );
+    }
     unlock_display_devices();
     if (!adapter)
     {
@@ -1885,7 +1951,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     {
         memset( &dm, 0, sizeof(dm) );
         dm.dmSize = sizeof(dm);
-        if (!NtUserEnumDisplaySettings( devname, ENUM_REGISTRY_SETTINGS, &dm, 0 ))
+        if (!read_registry_settings( adapter_path, &dm ))
         {
             ERR( "Default mode not found!\n" );
             return DISP_CHANGE_BADMODE;
@@ -1929,14 +1995,18 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
 BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVMODEW *devmode, DWORD flags )
 {
     static const WCHAR wine_display_driverW[] = {'W','i','n','e',' ','D','i','s','p','l','a','y',' ','D','r','i','v','e','r',0};
-    WCHAR device_name[CCHDEVICENAME];
+    WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
     struct adapter *adapter;
     BOOL ret;
 
     TRACE( "device %s, index %#x, devmode %p, flags %#x\n", debugstr_us(device), index, devmode, flags );
 
     if (!lock_display_devices()) return FALSE;
-    if ((adapter = find_adapter( device ))) lstrcpyW( device_name, adapter->dev.device_name );
+    if ((adapter = find_adapter( device )))
+    {
+        lstrcpyW( device_name, adapter->dev.device_name );
+        lstrcpyW( adapter_path, adapter->config_key );
+    }
     unlock_display_devices();
     if (!adapter)
     {
@@ -1950,7 +2020,8 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     devmode->dmSize = offsetof(DEVMODEW, dmICMMethod);
     memset( &devmode->dmDriverExtra, 0, devmode->dmSize - offsetof(DEVMODEW, dmDriverExtra) );
 
-    ret = user_driver->pEnumDisplaySettingsEx( device_name, index, devmode, flags );
+    if (index == ENUM_REGISTRY_SETTINGS) ret = read_registry_settings( adapter_path, devmode );
+    else ret = user_driver->pEnumDisplaySettingsEx( device_name, index, devmode, flags );
 
     if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_w(device_name) );
     else TRACE( "position %dx%d, resolution %ux%u, frequency %u, depth %u, orientation %#x.\n",

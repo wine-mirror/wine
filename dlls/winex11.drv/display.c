@@ -257,58 +257,6 @@ static HKEY get_display_device_reg_key( const WCHAR *device_name )
     return reg_open_key( NULL, buffer, lstrlenW(buffer) * sizeof(WCHAR) );
 }
 
-static BOOL query_display_setting( HKEY hkey, const char *name, DWORD *ret )
-{
-    char buffer[1024];
-    WCHAR nameW[128];
-    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-
-    asciiz_to_unicode( nameW, name );
-    if (query_reg_value( hkey, nameW, value, sizeof(buffer) ) != sizeof(DWORD) ||
-        value->Type != REG_DWORD)
-        return FALSE;
-
-    *ret = *(DWORD *)value->Data;
-    return TRUE;
-}
-
-static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
-{
-    HANDLE mutex;
-    HKEY hkey;
-    BOOL ret = TRUE;
-
-    dm->dmFields = 0;
-
-    mutex = get_display_device_init_mutex();
-    if (!(hkey = get_display_device_reg_key( device_name )))
-    {
-        release_display_device_init_mutex(mutex);
-        return FALSE;
-    }
-
-    ret &= query_display_setting( hkey, "DefaultSettings.BitsPerPel", &dm->dmBitsPerPel );
-    dm->dmFields |= DM_BITSPERPEL;
-    ret &= query_display_setting( hkey, "DefaultSettings.XResolution", &dm->dmPelsWidth );
-    dm->dmFields |= DM_PELSWIDTH;
-    ret &= query_display_setting( hkey, "DefaultSettings.YResolution", &dm->dmPelsHeight );
-    dm->dmFields |= DM_PELSHEIGHT;
-    ret &= query_display_setting( hkey, "DefaultSettings.VRefresh", &dm->dmDisplayFrequency );
-    dm->dmFields |= DM_DISPLAYFREQUENCY;
-    ret &= query_display_setting( hkey, "DefaultSettings.Flags", &dm->dmDisplayFlags );
-    dm->dmFields |= DM_DISPLAYFLAGS;
-    ret &= query_display_setting( hkey, "DefaultSettings.XPanning", (DWORD *)&dm->dmPosition.x );
-    ret &= query_display_setting( hkey, "DefaultSettings.YPanning", (DWORD *)&dm->dmPosition.y );
-    dm->dmFields |= DM_POSITION;
-    ret &= query_display_setting( hkey, "DefaultSettings.Orientation", &dm->dmDisplayOrientation );
-    dm->dmFields |= DM_DISPLAYORIENTATION;
-    ret &= query_display_setting( hkey, "DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput );
-
-    NtClose( hkey );
-    release_display_device_init_mutex(mutex);
-    return ret;
-}
-
 static BOOL set_setting_value( HKEY hkey, const char *name, DWORD val )
 {
     WCHAR nameW[128];
@@ -467,16 +415,6 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     DEVMODEW *modes, mode;
     UINT mode_count;
     ULONG_PTR id;
-
-    if (n == ENUM_REGISTRY_SETTINGS)
-    {
-        if (!read_registry_settings(name, devmode))
-        {
-            ERR("Failed to get %s registry display settings.\n", wine_dbgstr_w(name));
-            return FALSE;
-        }
-        return TRUE;
-    }
 
     if (n == ENUM_CURRENT_SETTINGS)
     {
