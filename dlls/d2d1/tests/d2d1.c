@@ -54,6 +54,10 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='DisplayName' type='string' value='Bool property'/> \
             <Property name='Default'     type='bool' value='false'/>           \
         </Property>                                                            \
+        <Property name='Vec2Prop' type='vector2' value='( 3.0,  4.0)'>         \
+            <Property name='DisplayName' type='string' value='Vec2 prop'/>    \
+            <Property name='Default'     type='vector2' value='(1.0, 2.0)'/>  \
+        </Property>                                                           \
     </Effect>                                                                 \
 ";
 
@@ -11029,6 +11033,7 @@ static void test_effect_properties(BOOL d3d11)
     ID2D1Effect *effect;
     UINT32 count, data;
     WCHAR buffer[128];
+    float vec2[2];
     CLSID clsid;
     BOOL cached;
     HRESULT hr;
@@ -11119,6 +11124,18 @@ static void test_effect_properties(BOOL d3d11)
     ok(!wcscmp(buffer, L"IsReadOnly"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
 
     ID2D1Properties_Release(subproperties);
+
+    /* Vector2 property */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Vec2Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Vec2Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_VECTOR2, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_VECTOR2, (BYTE *)vec2, sizeof(vec2));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(vec2[0] == 3.0f && vec2[1] == 4.0f, "Unexpected vector (%.8e,%.8e).\n", vec2[0], vec2[1]);
+
     ID2D1Effect_Release(effect);
 
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);

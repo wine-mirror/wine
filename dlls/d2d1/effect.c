@@ -229,6 +229,35 @@ static const struct d2d_effect_info builtin_effects[] =
     {&CLSID_D2D1Grayscale,              1, 1, 1},
 };
 
+/* Same syntax is used for value and default values. */
+static HRESULT d2d_effect_parse_vector_value(D2D1_PROPERTY_TYPE type, const WCHAR *value,
+        float *vec)
+{
+    unsigned int i, num_components;
+    WCHAR *end_ptr;
+
+    assert(type == D2D1_PROPERTY_TYPE_VECTOR2 || type == D2D1_PROPERTY_TYPE_VECTOR3
+            || type == D2D1_PROPERTY_TYPE_VECTOR4);
+
+    if (*(value++) != '(') return E_INVALIDARG;
+
+    /* Type values are sequential. */
+    num_components = (type - D2D1_PROPERTY_TYPE_VECTOR2) + 2;
+
+    for (i = 0; i < num_components; ++i)
+    {
+        vec[i] = wcstof(value, &end_ptr);
+        if (value == end_ptr) return E_INVALIDARG;
+        value = end_ptr;
+
+        /* Trailing characters after last component are ignored. */
+        if (i == num_components - 1) continue;
+        if (*(value++) != ',') return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
 static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *props,
         const WCHAR *name, UINT32 index, BOOL subprop, D2D1_PROPERTY_TYPE type, const WCHAR *value)
 {
@@ -255,6 +284,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
         sizeof(void *),      /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
     };
     struct d2d_effect_property *p;
+    HRESULT hr;
 
     assert(type >= D2D1_PROPERTY_TYPE_STRING && type <= D2D1_PROPERTY_TYPE_COLOR_CONTEXT);
 
@@ -302,6 +332,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
     {
         void *src = NULL;
         UINT32 _uint32;
+        float _vec[4];
         CLSID _clsid;
         BOOL _bool;
 
@@ -327,6 +358,14 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
                 case D2D1_PROPERTY_TYPE_CLSID:
                     CLSIDFromString(value, &_clsid);
                     src = &_clsid;
+                    break;
+                case D2D1_PROPERTY_TYPE_VECTOR2:
+                    if (FAILED(hr = d2d_effect_parse_vector_value(p->type, value, _vec)))
+                    {
+                        WARN("Failed to parse vector value %s.\n", wine_dbgstr_w(value));
+                        return hr;
+                    }
+                    src = _vec;
                     break;
                 case D2D1_PROPERTY_TYPE_IUNKNOWN:
                 case D2D1_PROPERTY_TYPE_COLOR_CONTEXT:
