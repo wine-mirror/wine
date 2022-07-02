@@ -10934,7 +10934,11 @@ static void test_effect_register(BOOL d3d11)
         hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
                 test->effect_xml, test->binding, test->binding_count, effect_impl_create);
         ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
-        ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+        if (SUCCEEDED(hr))
+        {
+            hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
 
         winetest_pop_context();
     }
