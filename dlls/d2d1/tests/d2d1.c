@@ -10855,7 +10855,6 @@ static void test_effect_register(BOOL d3d11)
         winetest_push_context("Test %u", i);
 
         hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
-        todo_wine_if(i == 5)
         ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
         if (hr == S_OK)
         {

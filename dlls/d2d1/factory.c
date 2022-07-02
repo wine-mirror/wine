@@ -921,7 +921,8 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Facto
     if (!parse_effect_get_property(effect, L"DisplayName")
             || !parse_effect_get_property(effect, L"Author")
             || !parse_effect_get_property(effect, L"Category")
-            || !parse_effect_get_property(effect, L"Description"))
+            || !parse_effect_get_property(effect, L"Description")
+            || !parse_effect_get_property(effect, L"Inputs"))
     {
         WARN("Missing required properties.\n");
         d2d_effect_registration_cleanup(effect);
