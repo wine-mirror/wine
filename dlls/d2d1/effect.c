@@ -361,6 +361,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
                     break;
                 case D2D1_PROPERTY_TYPE_VECTOR2:
                 case D2D1_PROPERTY_TYPE_VECTOR3:
+                case D2D1_PROPERTY_TYPE_VECTOR4:
                     if (FAILED(hr = d2d_effect_parse_vector_value(p->type, value, _vec)))
                     {
                         WARN("Failed to parse vector value %s.\n", wine_dbgstr_w(value));

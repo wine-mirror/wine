@@ -62,6 +62,10 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='DisplayName' type='string' value='Vec3 prop'/>    \
             <Property name='Default' type='vector3' value='(0.1, 0.2, 0.3)'/> \
         </Property>                                                           \
+        <Property name='Vec4Prop' type='vector4' value='(8.0,9.0,10.0,11.0)'>   \
+            <Property name='DisplayName' type='string' value='Vec4 prop'/>      \
+            <Property name='Default' type='vector4' value='(0.8,0.9,1.0,1.1)'/> \
+        </Property>                                                             \
     </Effect>                                                                 \
 ";
 
@@ -11030,11 +11034,11 @@ static void test_effect_properties(BOOL d3d11)
     UINT32 i, min_inputs, max_inputs, integer, index, size;
     ID2D1EffectContext *effect_context;
     D2D1_BUFFER_PRECISION precision;
+    float vec2[2], vec3[3], vec4[4];
     ID2D1Properties *subproperties;
     D2D1_PROPERTY_TYPE prop_type;
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory;
-    float vec2[2], vec3[3];
     ID2D1Effect *effect;
     UINT32 count, data;
     WCHAR buffer[128];
@@ -11151,6 +11155,18 @@ static void test_effect_properties(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(vec3[0] == 5.0f && vec3[1] == 6.0f && vec3[2] == 7.0f, "Unexpected vector (%.8e,%.8e,%.8e).\n",
             vec3[0], vec3[1], vec3[2]);
+
+    /* Vector4 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Vec4Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Vec4Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_VECTOR4, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_VECTOR4, (BYTE *)vec4, sizeof(vec4));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(vec4[0] == 8.0f && vec4[1] == 9.0f && vec4[2] == 10.0f && vec4[3] == 11.0f,
+            "Unexpected vector (%.8e,%.8e,%.8e,%.8e).\n", vec4[0], vec4[1], vec4[2], vec4[3]);
 
     ID2D1Effect_Release(effect);
 
