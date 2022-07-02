@@ -643,14 +643,20 @@ struct d2d_effect_registration
     struct list entry;
     PD2D1_EFFECT_FACTORY factory;
     UINT32 registration_count;
+    BOOL builtin;
     CLSID id;
 
     UINT32 input_count;
+    UINT32 default_input_count;
     struct d2d_effect_properties properties;
 };
 
+struct d2d_factory;
+void d2d_effects_init_builtins(struct d2d_factory *factory) DECLSPEC_HIDDEN;
 struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *factory,
         const GUID *effect_id) DECLSPEC_HIDDEN;
+void d2d_factory_register_effect(struct d2d_factory *factory,
+        struct d2d_effect_registration *effect) DECLSPEC_HIDDEN;
 
 struct d2d_transform_graph
 {

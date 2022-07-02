@@ -10848,6 +10848,11 @@ static void test_effect_register(BOOL d3d11)
         return;
     }
 
+    /* Using builtin effect CLSID. */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_D2D1Crop, effect_xml_a, NULL,
+            0, effect_impl_create);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
     /* Register effect once */
     for (i = 0; i < ARRAY_SIZE(xml_tests); ++i)
     {

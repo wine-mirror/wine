@@ -229,6 +229,33 @@ static const struct d2d_effect_info builtin_effects[] =
     {&CLSID_D2D1Grayscale,              1, 1, 1},
 };
 
+void d2d_effects_init_builtins(struct d2d_factory *factory)
+{
+    struct d2d_effect_registration *effect;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
+    {
+        const struct d2d_effect_info *info = &builtin_effects[i];
+        WCHAR max_inputs[32];
+
+        if (!(effect = calloc(1, sizeof(*effect))))
+            return;
+
+        swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", info->max_inputs);
+        d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, L"1");
+        d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, max_inputs);
+
+        memcpy(&effect->id, info->clsid, sizeof(*info->clsid));
+        effect->default_input_count = info->default_input_count;
+        effect->factory = builtin_factory_stub;
+        effect->builtin = TRUE;
+        d2d_factory_register_effect(factory, effect);
+    }
+}
+
 /* Same syntax is used for value and default values. */
 static HRESULT d2d_effect_parse_float_array(D2D1_PROPERTY_TYPE type, const WCHAR *value,
         float *vec)
@@ -1539,31 +1566,14 @@ static void d2d_effect_init_properties_vtbls(struct d2d_effect *effect)
 HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effect_id,
         ID2D1Effect **effect)
 {
-    const struct d2d_effect_info *builtin = NULL;
     struct d2d_effect_context *effect_context;
     const struct d2d_effect_registration *reg;
-    unsigned int i, default_input_count;
     struct d2d_transform_graph *graph;
-    PD2D1_EFFECT_FACTORY factory;
     struct d2d_effect *object;
     WCHAR clsidW[39];
     HRESULT hr;
 
     if (!(reg = d2d_factory_get_registered_effect(context->factory, effect_id)))
-    {
-        for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
-        {
-            const struct d2d_effect_info *info = &builtin_effects[i];
-
-            if (IsEqualGUID(effect_id, info->clsid))
-            {
-                builtin = info;
-                break;
-            }
-        }
-    }
-
-    if (!reg && !builtin)
     {
         WARN("Effect id %s not found.\n", wine_dbgstr_guid(effect_id));
         return D2DERR_EFFECT_IS_NOT_REGISTERED;
@@ -1594,41 +1604,17 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     object->graph = graph;
 
     /* Create properties */
+    d2d_effect_duplicate_properties(&object->properties, &reg->properties);
+
     StringFromGUID2(effect_id, clsidW, ARRAY_SIZE(clsidW));
-    if (builtin)
-    {
-        WCHAR max_inputs[32];
-        swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", builtin->max_inputs);
-        d2d_effect_properties_add(&object->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
-                D2D1_PROPERTY_TYPE_UINT32, L"1");
-        d2d_effect_properties_add(&object->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
-                D2D1_PROPERTY_TYPE_UINT32, max_inputs);
-
-        default_input_count = builtin->default_input_count;
-
-        factory = builtin_factory_stub;
-    }
-    else
-    {
-        d2d_effect_duplicate_properties(&object->properties, &reg->properties);
-        d2d_effect_properties_add(&object->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
-                D2D1_PROPERTY_TYPE_UINT32, L"1");
-        d2d_effect_properties_add(&object->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
-                D2D1_PROPERTY_TYPE_UINT32, L"1" /* FIXME */);
-
-        default_input_count = 1;
-
-        factory = reg->factory;
-    }
-
     d2d_effect_properties_add(&object->properties, L"CLSID", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
     d2d_effect_properties_add(&object->properties, L"Precision", D2D1_PROPERTY_PRECISION, D2D1_PROPERTY_TYPE_ENUM, L"0");
     d2d_effect_init_properties_vtbls(object);
 
-    d2d_effect_SetInputCount(&object->ID2D1Effect_iface, default_input_count);
+    d2d_effect_SetInputCount(&object->ID2D1Effect_iface, reg->default_input_count);
 
-    if (FAILED(hr = factory((IUnknown **)&object->impl)))
+    if (FAILED(hr = reg->factory((IUnknown **)&object->impl)))
     {
         WARN("Failed to create implementation object, hr %#lx.\n", hr);
         ID2D1Effect_Release(&object->ID2D1Effect_iface);
