@@ -68,15 +68,6 @@ int CDECL pcap_compile( struct pcap *pcap, void *program, const char *buf, int o
     return PCAP_CALL( compile, &params );
 }
 
-struct pcap * CDECL pcap_create( const char *src, char *errbuf )
-{
-    struct pcap *ret;
-    struct create_params params = { src, errbuf, &ret };
-    TRACE( "%s, %p\n", src, errbuf );
-    PCAP_CALL( create, &params );
-    return ret;
-}
-
 int CDECL pcap_datalink( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
@@ -576,6 +567,26 @@ static char *map_win32_device_name( const char *dev )
         }
     }
     free( adapters );
+    return ret;
+}
+
+struct pcap * CDECL pcap_create( const char *source, char *errbuf )
+{
+    char *unix_dev;
+    struct pcap *ret;
+    TRACE( "%s, %p\n", source, errbuf );
+
+    if (!(unix_dev = map_win32_device_name( source )))
+    {
+        if (errbuf) sprintf( errbuf, "Unable to open the adapter." );
+        return NULL;
+    }
+    else
+    {
+        struct create_params params = { unix_dev, errbuf, &ret };
+        PCAP_CALL( create, &params );
+    }
+    free( unix_dev );
     return ret;
 }
 
