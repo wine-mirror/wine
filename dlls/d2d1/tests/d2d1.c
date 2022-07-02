@@ -58,6 +58,10 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='DisplayName' type='string' value='Vec2 prop'/>    \
             <Property name='Default'     type='vector2' value='(1.0, 2.0)'/>  \
         </Property>                                                           \
+        <Property name='Vec3Prop' type='vector3' value='(5.0, 6.0, 7.0)'>     \
+            <Property name='DisplayName' type='string' value='Vec3 prop'/>    \
+            <Property name='Default' type='vector3' value='(0.1, 0.2, 0.3)'/> \
+        </Property>                                                           \
     </Effect>                                                                 \
 ";
 
@@ -11030,10 +11034,10 @@ static void test_effect_properties(BOOL d3d11)
     D2D1_PROPERTY_TYPE prop_type;
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory;
+    float vec2[2], vec3[3];
     ID2D1Effect *effect;
     UINT32 count, data;
     WCHAR buffer[128];
-    float vec2[2];
     CLSID clsid;
     BOOL cached;
     HRESULT hr;
@@ -11125,7 +11129,7 @@ static void test_effect_properties(BOOL d3d11)
 
     ID2D1Properties_Release(subproperties);
 
-    /* Vector2 property */
+    /* Vector2 property. */
     index = ID2D1Effect_GetPropertyIndex(effect, L"Vec2Prop");
     hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -11135,6 +11139,18 @@ static void test_effect_properties(BOOL d3d11)
     hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_VECTOR2, (BYTE *)vec2, sizeof(vec2));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(vec2[0] == 3.0f && vec2[1] == 4.0f, "Unexpected vector (%.8e,%.8e).\n", vec2[0], vec2[1]);
+
+    /* Vector3 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Vec3Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Vec3Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_VECTOR3, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_VECTOR3, (BYTE *)vec3, sizeof(vec3));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(vec3[0] == 5.0f && vec3[1] == 6.0f && vec3[2] == 7.0f, "Unexpected vector (%.8e,%.8e,%.8e).\n",
+            vec3[0], vec3[1], vec3[2]);
 
     ID2D1Effect_Release(effect);
 
