@@ -1030,7 +1030,7 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
     {
         readerinput_grow(readerinput, len);
         memcpy(dest->data, src->data + src->cur, len);
-        dest->written += len*sizeof(WCHAR);
+        dest->written += len;
     }
     else
     {
@@ -1084,7 +1084,7 @@ static HRESULT reader_more(xmlreader *reader)
     {
         readerinput_grow(readerinput, len);
         memcpy(dest->data + dest->written, src->data + src->cur, len);
-        dest->written += len*sizeof(WCHAR);
+        dest->written += len;
     }
     else
     {
