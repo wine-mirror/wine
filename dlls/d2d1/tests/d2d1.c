@@ -50,6 +50,14 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='Max'         type='uint32' value='100'/>          \
             <Property name='Default'     type='uint32' value='10'/>           \
         </Property>                                                           \
+        <Property name='Int32Prop' type='int32' value='-2'>                   \
+            <Property name='DisplayName' type='string' value='Int32 prop'/>   \
+            <Property name='Default' type='int32' value='10'/>                \
+        </Property>                                                           \
+        <Property name='UInt32Prop' type='uint32' value='-3'>                 \
+            <Property name='DisplayName' type='string' value='UInt32 prop'/>  \
+            <Property name='Default' type='uint32' value='10'/>               \
+        </Property>                                                           \
         <Property name='Bool' type='bool'>                                     \
             <Property name='DisplayName' type='string' value='Bool property'/> \
             <Property name='Default'     type='bool' value='false'/>           \
@@ -11042,6 +11050,7 @@ static void test_effect_properties(BOOL d3d11)
     ID2D1Effect *effect;
     UINT32 count, data;
     WCHAR buffer[128];
+    INT32 _int32;
     CLSID clsid;
     BOOL cached;
     HRESULT hr;
@@ -11132,6 +11141,28 @@ static void test_effect_properties(BOOL d3d11)
     ok(!wcscmp(buffer, L"IsReadOnly"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
 
     ID2D1Properties_Release(subproperties);
+
+    /* Int32 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Int32Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Int32Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_INT32, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_INT32, (BYTE *)&_int32, sizeof(_int32));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(_int32 == -2, "Unexpected value %d.\n", _int32);
+
+    /* UInt32 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"UInt32Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"UInt32Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_UINT32, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == -3, "Unexpected value %u.\n", integer);
 
     /* Vector2 property. */
     index = ID2D1Effect_GetPropertyIndex(effect, L"Vec2Prop");

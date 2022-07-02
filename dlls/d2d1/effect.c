@@ -267,7 +267,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
         0,                   /* D2D1_PROPERTY_TYPE_STRING */
         sizeof(BOOL),        /* D2D1_PROPERTY_TYPE_BOOL */
         sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_UINT32 */
-        sizeof(INT32),       /* D2D1_PROPERTY_TYPE_IN32 */
+        sizeof(INT32),       /* D2D1_PROPERTY_TYPE_INT32 */
         sizeof(float),       /* D2D1_PROPERTY_TYPE_FLOAT */
         2 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR2 */
         3 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR3 */
@@ -345,6 +345,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
             switch (p->type)
             {
                 case D2D1_PROPERTY_TYPE_UINT32:
+                case D2D1_PROPERTY_TYPE_INT32:
                 case D2D1_PROPERTY_TYPE_ENUM:
                     _uint32 = wcstoul(value, NULL, 10);
                     src = &_uint32;
