@@ -1037,10 +1037,36 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_UnregisterEffect(ID2D1Factory3 *ifa
 static HRESULT STDMETHODCALLTYPE d2d_factory_GetRegisteredEffects(ID2D1Factory3 *iface,
         CLSID *effects, UINT32 effect_count, UINT32 *returned, UINT32 *registered)
 {
-    FIXME("iface %p, effects %p, effect_count %u, returned %p, registered %p stub!\n",
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+    struct d2d_effect_registration *effect;
+    UINT32 ret, reg;
+
+    TRACE("iface %p, effects %p, effect_count %u, returned %p, registered %p.\n",
             iface, effects, effect_count, returned, registered);
 
-    return E_NOTIMPL;
+    if (!returned) returned = &ret;
+    if (!registered) registered = &reg;
+
+    *registered = 0;
+    *returned = 0;
+
+    d2d_factory_init_builtin_effects(factory);
+
+    LIST_FOR_EACH_ENTRY(effect, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (effects && effect_count)
+        {
+            *effects = effect->id;
+            effects++;
+            effect_count--;
+            *returned += 1;
+        }
+
+        *registered += 1;
+    }
+
+    if (!effects) return S_OK;
+    return *returned == *registered ? S_OK : D2DERR_INSUFFICIENT_BUFFER;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_GetEffectProperties(ID2D1Factory3 *iface,

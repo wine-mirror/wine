@@ -11935,6 +11935,69 @@ static void test_effect_grayscale(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_registered_effects(BOOL d3d11)
+{
+    UINT32 ret, count, count2, count3;
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    CLSID *effects;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+
+    count = 0;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, NULL, 0, NULL, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count > 0, "Unexpected effect count %u.\n", count);
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, effect_xml_a,
+            NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count2 = 0;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, NULL, 0, NULL, &count2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count2 == count + 1, "Unexpected effect count %u.\n", count2);
+
+    effects = calloc(count2, sizeof(*effects));
+
+    count3 = 0;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, effects, 0, NULL, &count3);
+    ok(hr == D2DERR_INSUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
+    ok(count2 == count3, "Unexpected effect count %u.\n", count3);
+
+    ret = 999;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, effects, 0, &ret, NULL);
+    ok(hr == D2DERR_INSUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
+    ok(!ret, "Unexpected count %u.\n", ret);
+
+    ret = 0;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, effects, 1, &ret, NULL);
+    ok(hr == D2DERR_INSUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
+    ok(ret == 1, "Unexpected count %u.\n", ret);
+    ok(!IsEqualGUID(effects, &CLSID_TestEffect), "Unexpected clsid.\n");
+
+    ret = 0;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, effects, count2, &ret, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(ret == count2, "Unexpected count %u.\n", ret);
+    ok(IsEqualGUID(&effects[ret - 1], &CLSID_TestEffect), "Unexpected clsid.\n");
+
+    free(effects);
+
+    ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+
+    count2 = 0;
+    hr = ID2D1Factory1_GetRegisteredEffects(factory, NULL, 0, NULL, &count2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count2 == count, "Unexpected effect count %u.\n", count2);
+
+    release_test_context(&ctx);
+}
+
 static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
@@ -12749,6 +12812,7 @@ START_TEST(d2d1)
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
     queue_test(test_effect_grayscale);
+    queue_test(test_registered_effects);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
