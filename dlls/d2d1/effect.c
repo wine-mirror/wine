@@ -230,19 +230,33 @@ static const struct d2d_effect_info builtin_effects[] =
 };
 
 /* Same syntax is used for value and default values. */
-static HRESULT d2d_effect_parse_vector_value(D2D1_PROPERTY_TYPE type, const WCHAR *value,
+static HRESULT d2d_effect_parse_float_array(D2D1_PROPERTY_TYPE type, const WCHAR *value,
         float *vec)
 {
     unsigned int i, num_components;
     WCHAR *end_ptr;
 
-    assert(type == D2D1_PROPERTY_TYPE_VECTOR2 || type == D2D1_PROPERTY_TYPE_VECTOR3
-            || type == D2D1_PROPERTY_TYPE_VECTOR4);
+    /* Type values are sequential. */
+    switch (type)
+    {
+        case D2D1_PROPERTY_TYPE_VECTOR2:
+        case D2D1_PROPERTY_TYPE_VECTOR3:
+        case D2D1_PROPERTY_TYPE_VECTOR4:
+            num_components = (type - D2D1_PROPERTY_TYPE_VECTOR2) + 2;
+            break;
+        case D2D1_PROPERTY_TYPE_MATRIX_3X2:
+            num_components = 6;
+            break;
+        case D2D1_PROPERTY_TYPE_MATRIX_4X3:
+        case D2D1_PROPERTY_TYPE_MATRIX_4X4:
+        case D2D1_PROPERTY_TYPE_MATRIX_5X4:
+            num_components = (type - D2D1_PROPERTY_TYPE_MATRIX_4X3) * 4 + 12;
+            break;
+        default:
+            return E_UNEXPECTED;
+    }
 
     if (*(value++) != '(') return E_INVALIDARG;
-
-    /* Type values are sequential. */
-    num_components = (type - D2D1_PROPERTY_TYPE_VECTOR2) + 2;
 
     for (i = 0; i < num_components; ++i)
     {
@@ -332,7 +346,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
     {
         void *src = NULL;
         UINT32 _uint32;
-        float _vec[4];
+        float _vec[20];
         CLSID _clsid;
         BOOL _bool;
 
@@ -363,9 +377,14 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
                 case D2D1_PROPERTY_TYPE_VECTOR2:
                 case D2D1_PROPERTY_TYPE_VECTOR3:
                 case D2D1_PROPERTY_TYPE_VECTOR4:
-                    if (FAILED(hr = d2d_effect_parse_vector_value(p->type, value, _vec)))
+                case D2D1_PROPERTY_TYPE_MATRIX_3X2:
+                case D2D1_PROPERTY_TYPE_MATRIX_4X3:
+                case D2D1_PROPERTY_TYPE_MATRIX_4X4:
+                case D2D1_PROPERTY_TYPE_MATRIX_5X4:
+                    if (FAILED(hr = d2d_effect_parse_float_array(p->type, value, _vec)))
                     {
-                        WARN("Failed to parse vector value %s.\n", wine_dbgstr_w(value));
+                        WARN("Failed to parse float array %s for type %u.\n",
+                                wine_dbgstr_w(value), p->type);
                         return hr;
                     }
                     src = _vec;

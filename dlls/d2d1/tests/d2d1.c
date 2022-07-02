@@ -74,6 +74,30 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='DisplayName' type='string' value='Vec4 prop'/>      \
             <Property name='Default' type='vector4' value='(0.8,0.9,1.0,1.1)'/> \
         </Property>                                                             \
+        <Property name='Mat3x2Prop' type='matrix3x2'                          \
+            value='(1.0,2.0,3.0,4.0,5.0,6.0)'>                                \
+            <Property name='DisplayName' type='string' value='Mat3x2 prop'/>  \
+            <Property name='Default' type='matrix3x2'                         \
+                value='(0.1,0.2,0.3,0.4,0.5,0.6)'/>                           \
+        </Property>                                                           \
+        <Property name='Mat4x3Prop' type='matrix4x3'                          \
+            value='(1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12)'>       \
+            <Property name='DisplayName' type='string' value='Mat4x3 prop'/>  \
+            <Property name='Default' type='matrix4x3'                         \
+                value='(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2)'/>   \
+        </Property>                                                           \
+        <Property name='Mat4x4Prop' type='matrix4x4'                          \
+            value='(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)'>                 \
+            <Property name='DisplayName' type='string' value='Mat4x4 prop'/>  \
+            <Property name='Default' type='matrix4x4'                         \
+                value='(16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)'/>            \
+        </Property>                                                           \
+        <Property name='Mat5x4Prop' type='matrix5x4'                          \
+            value='(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)'>     \
+            <Property name='DisplayName' type='string' value='Mat5x4 prop'/>  \
+            <Property name='Default' type='matrix5x4'                         \
+                value='(20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)'/>\
+        </Property>                                                           \
     </Effect>                                                                 \
 ";
 
@@ -11050,6 +11074,7 @@ static void test_effect_properties(BOOL d3d11)
     ID2D1Effect *effect;
     UINT32 count, data;
     WCHAR buffer[128];
+    float mat[20];
     INT32 _int32;
     CLSID clsid;
     BOOL cached;
@@ -11198,6 +11223,55 @@ static void test_effect_properties(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(vec4[0] == 8.0f && vec4[1] == 9.0f && vec4[2] == 10.0f && vec4[3] == 11.0f,
             "Unexpected vector (%.8e,%.8e,%.8e,%.8e).\n", vec4[0], vec4[1], vec4[2], vec4[3]);
+
+    /* Matrix3x2 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Mat3x2Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Mat3x2Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_MATRIX_3X2, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_MATRIX_3X2, (BYTE *)mat, 6 * sizeof(float));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(mat[0] == 1.0f && mat[1] == 2.0f && mat[2] == 3.0f && mat[3] == 4.0f && mat[4] == 5.0f && mat[5] == 6.0f,
+            "Unexpected matrix (%.8e,%.8e,%.8e,%.8e,%.8e,%.8e).\n",
+            mat[0], mat[1], mat[2], mat[3], mat[4], mat[5]);
+
+    /* Matrix4x3 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Mat4x3Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Mat4x3Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_MATRIX_4X3, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_MATRIX_4X3, (BYTE *)mat, 12 * sizeof(float));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    for (i = 0; i < 12; ++i)
+        ok(mat[i] == 1.0f + i, "Unexpected matrix element %u.\n", i);
+
+    /* Matrix4x4 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Mat4x4Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Mat4x4Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_MATRIX_4X4, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_MATRIX_4X4, (BYTE *)mat, 16 * sizeof(float));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    for (i = 0; i < 16; ++i)
+        ok(mat[i] == 1.0f + i, "Unexpected matrix element %u.\n", i);
+
+    /* Matrix5x4 property. */
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Mat5x4Prop");
+    hr = ID2D1Effect_GetPropertyName(effect, index, buffer, ARRAY_SIZE(buffer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buffer, L"Mat5x4Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
+    prop_type = ID2D1Effect_GetType(effect, index);
+    ok(prop_type == D2D1_PROPERTY_TYPE_MATRIX_5X4, "Unexpected type %u.\n", prop_type);
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_MATRIX_5X4, (BYTE *)mat, 20 * sizeof(float));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    for (i = 0; i < 20; ++i)
+        ok(mat[i] == 1.0f + i, "Unexpected matrix element %u.\n", i);
 
     ID2D1Effect_Release(effect);
 
