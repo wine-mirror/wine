@@ -77,7 +77,7 @@ static int import_tables( const WCHAR *msifile, WCHAR **tables )
     if (r != ERROR_SUCCESS) return 1;
 
     len = GetCurrentDirectoryW( 0, NULL );
-    if (!(dir = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+    if (!(dir = malloc( (len + 1) * sizeof(WCHAR) )))
     {
         MsiCloseHandle( hdb );
         return 1;
@@ -102,7 +102,7 @@ static int import_tables( const WCHAR *msifile, WCHAR **tables )
             WINE_ERR( "failed to commit changes (%u)\n", r );
     }
 
-    HeapFree( GetProcessHeap(), 0, dir );
+    free( dir );
     MsiCloseHandle( hdb );
     return (r != ERROR_SUCCESS);
 }
@@ -135,7 +135,7 @@ static WCHAR *encode_stream( const WCHAR *in )
         return NULL;
 
     count += 2;
-    if (!(out = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WCHAR) ))) return NULL;
+    if (!(out = malloc( count * sizeof(WCHAR) ))) return NULL;
     p = out;
     while (count--)
     {
@@ -162,7 +162,7 @@ static WCHAR *encode_stream( const WCHAR *in )
         }
         *p++ = c;
     }
-    HeapFree( GetProcessHeap(), 0, out );
+    free( out );
     return NULL;
 }
 
@@ -236,7 +236,7 @@ static int add_stream( const WCHAR *msifile, const WCHAR *stream, const WCHAR *f
     ret = 0;
 
 done:
-    HeapFree( GetProcessHeap(), 0, encname );
+    free( encname );
     if (stm) IStream_Release( stm );
     IStorage_Release( stg );
     return ret;
