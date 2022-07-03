@@ -311,32 +311,6 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
     }
 }
 
-/*************************************************************************
- *           SCROLL_GetScrollRange
- *
- *  Internal helper for the API function
- *
- * PARAMS
- *    hwnd  [I]  Handle of window with scrollbar(s)
- *    nBar  [I]  One of SB_HORZ, SB_VERT, or SB_CTL
- *    lpMin [O]  Where to store minimum value
- *    lpMax [O]  Where to store maximum value
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-static BOOL SCROLL_GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
-{
-    LPSCROLLBAR_INFO infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE);
-
-    if (lpMin) *lpMin = infoPtr ? infoPtr->minVal : 0;
-    if (lpMax) *lpMax = infoPtr ? infoPtr->maxVal : 0;
-
-    return TRUE;
-}
-
-
 LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     switch(message)
@@ -530,15 +504,24 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetScrollRange(HWND hwnd, INT nBar, INT minVal, IN
  * RETURNS
  *    TRUE if values is filled
  */
-BOOL WINAPI DECLSPEC_HOTPATCH GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
+BOOL WINAPI DECLSPEC_HOTPATCH GetScrollRange( HWND hwnd, int bar, int *min, int *max )
 {
-    TRACE("hwnd=%p nBar=%d lpMin=%p lpMax=%p\n", hwnd, nBar, lpMin, lpMax);
+    SCROLLINFO info;
+
+    TRACE( "hwnd=%p nBar=%d lpMin=%p lpMax=%p\n", hwnd, bar, min, max );
 
     /* Refer SB_CTL requests to the window */
-    if (nBar == SB_CTL)
-        SendMessageW(hwnd, SBM_GETRANGE, (WPARAM)lpMin, (LPARAM)lpMax);
-    else
-        SCROLL_GetScrollRange(hwnd, nBar, lpMin, lpMax);
+    if (bar == SB_CTL)
+    {
+       SendMessageW( hwnd, SBM_GETRANGE, (WPARAM)min, (LPARAM)max );
+       return TRUE;
+    }
 
+    info.cbSize = sizeof(info);
+    info.fMask = SIF_RANGE;
+    info.nMin = info.nMax = 0;
+    GetScrollInfo( hwnd, bar, &info );
+    if (min) *min = info.nMin;
+    if (max) *max = info.nMax;
     return TRUE;
 }
