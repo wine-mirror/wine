@@ -518,18 +518,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO in
  *    Note the ambiguity when 0 is returned.  Use GetLastError
  *    to make sure there was an error (and to know which one).
  */
-INT WINAPI DECLSPEC_HOTPATCH SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL bRedraw)
+int WINAPI DECLSPEC_HOTPATCH SetScrollPos( HWND hwnd, int bar, int pos, BOOL redraw )
 {
     SCROLLINFO info;
-    SCROLLBAR_INFO *infoPtr;
-    INT oldPos = 0;
 
-    if ((infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE ))) oldPos = infoPtr->curVal;
     info.cbSize = sizeof(info);
-    info.nPos   = nPos;
-    info.fMask  = SIF_POS;
-    NtUserSetScrollInfo( hwnd, nBar, &info, bRedraw );
-    return oldPos;
+    info.nPos   = pos;
+    info.fMask  = SIF_POS | SIF_RETURNPREV;
+    return NtUserSetScrollInfo( hwnd, bar, &info, redraw );
 }
 
 
