@@ -312,22 +312,6 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
 }
 
 /*************************************************************************
- *           SCROLL_GetScrollPos
- *
- *  Internal helper for the API function
- *
- * PARAMS
- *    hwnd [I]  Handle of window with scrollbar(s)
- *    nBar [I]  One of SB_HORZ, SB_VERT, or SB_CTL
- */
-static INT SCROLL_GetScrollPos(HWND hwnd, INT nBar)
-{
-    LPSCROLLBAR_INFO infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE);
-    return infoPtr ? infoPtr->curVal: 0;
-}
-
-
-/*************************************************************************
  *           SCROLL_GetScrollRange
  *
  *  Internal helper for the API function
@@ -483,15 +467,19 @@ int WINAPI DECLSPEC_HOTPATCH SetScrollPos( HWND hwnd, int bar, int pos, BOOL red
  *    There is ambiguity when 0 is returned.  Use GetLastError
  *    to make sure there was an error (and to know which one).
  */
-INT WINAPI DECLSPEC_HOTPATCH GetScrollPos(HWND hwnd, INT nBar)
+int WINAPI DECLSPEC_HOTPATCH GetScrollPos( HWND hwnd, int bar )
 {
-    TRACE("hwnd=%p nBar=%d\n", hwnd, nBar);
+    SCROLLINFO info;
+
+    TRACE( "hwnd=%p bar=%d\n", hwnd, bar );
 
     /* Refer SB_CTL requests to the window */
-    if (nBar == SB_CTL)
-        return SendMessageW(hwnd, SBM_GETPOS, 0, 0);
-    else
-        return SCROLL_GetScrollPos(hwnd, nBar);
+    if (bar == SB_CTL)
+        return SendMessageW( hwnd, SBM_GETPOS, 0, 0 );
+
+    info.cbSize = sizeof(info);
+    info.fMask = SIF_POS;
+    return GetScrollInfo( hwnd, bar, &info ) ? info.nPos : 0;
 }
 
 
