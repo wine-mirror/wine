@@ -125,7 +125,7 @@ SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
  *
  * Draw the scroll bar arrows.
  */
-static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
+static void SCROLL_DrawArrows( HDC hdc, UINT flags,
                                RECT *rect, INT arrowSize, BOOL vertical,
                                BOOL top_pressed, BOOL bottom_pressed )
 {
@@ -140,7 +140,7 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
   DrawFrameControl( hdc, &r, DFC_SCROLL,
 		    (vertical ? DFCS_SCROLLUP : DFCS_SCROLLLEFT)
 		    | (top_pressed ? (DFCS_PUSHED | DFCS_FLAT) : 0 )
-		    | (infoPtr->flags&ESB_DISABLE_LTUP ? DFCS_INACTIVE : 0 ) );
+		    | (flags & ESB_DISABLE_LTUP ? DFCS_INACTIVE : 0 ) );
 
   r = *rect;
   if( vertical )
@@ -151,7 +151,7 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
   DrawFrameControl( hdc, &r, DFC_SCROLL,
 		    (vertical ? DFCS_SCROLLDOWN : DFCS_SCROLLRIGHT)
 		    | (bottom_pressed ? (DFCS_PUSHED | DFCS_FLAT) : 0 )
-		    | (infoPtr->flags&ESB_DISABLE_RTDN ? DFCS_INACTIVE : 0) );
+		    | (flags & ESB_DISABLE_RTDN ? DFCS_INACTIVE : 0) );
 }
 
 /***********************************************************************
@@ -161,8 +161,7 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
  */
 static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
                                  RECT *rect, INT arrowSize,
-                                 INT thumbSize, INT thumbPos,
-                                 UINT flags, BOOL vertical,
+                                 INT thumbSize, INT thumbPos, BOOL vertical,
                                  BOOL top_selected, BOOL bottom_selected )
 {
     RECT r;
@@ -247,11 +246,9 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
 
 void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test,
                                 const struct SCROLL_TRACKING_INFO *tracking_info, BOOL arrows,
-                                BOOL interior, RECT *rect, INT arrowSize, INT thumbPos,
-                                INT thumbSize, BOOL vertical )
+                                BOOL interior, RECT *rect, UINT enable_flags, INT arrowSize,
+                                INT thumbPos, INT thumbSize, BOOL vertical )
 {
-    SCROLLBAR_INFO *infoPtr;
-
     if (nBar == SB_CTL)
     {
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -274,34 +271,29 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
         }
     }
 
-    if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE )))
-        return;
-
-      /* Draw the arrows */
-
+    /* Draw the arrows */
     if (arrows && arrowSize)
     {
         if (vertical == tracking_info->vertical && GetCapture() == hwnd)
-            SCROLL_DrawArrows( hdc, infoPtr, rect, arrowSize, vertical,
+            SCROLL_DrawArrows( hdc, enable_flags, rect, arrowSize, vertical,
                                hit_test == tracking_info->hit_test && hit_test == SCROLL_TOP_ARROW,
                                hit_test == tracking_info->hit_test && hit_test == SCROLL_BOTTOM_ARROW );
 	else
-            SCROLL_DrawArrows( hdc, infoPtr, rect, arrowSize, vertical, FALSE, FALSE );
+            SCROLL_DrawArrows( hdc, enable_flags, rect, arrowSize, vertical, FALSE, FALSE );
     }
 
     if (interior)
     {
         if (vertical == tracking_info->vertical && GetCapture() == hwnd)
         {
-            SCROLL_DrawInterior( hwnd, hdc, nBar, rect, arrowSize, thumbSize, thumbPos,
-                                 infoPtr->flags, vertical,
+            SCROLL_DrawInterior( hwnd, hdc, nBar, rect, arrowSize, thumbSize, thumbPos, vertical,
                                  hit_test == tracking_info->hit_test && hit_test == SCROLL_TOP_RECT,
                                  hit_test == tracking_info->hit_test && hit_test == SCROLL_BOTTOM_RECT );
         }
         else
         {
             SCROLL_DrawInterior( hwnd, hdc, nBar, rect, arrowSize, thumbSize, thumbPos,
-                                 infoPtr->flags, vertical, FALSE, FALSE );
+                                 vertical, FALSE, FALSE );
         }
     }
 

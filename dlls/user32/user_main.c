@@ -178,7 +178,7 @@ static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params 
     RECT rect = params->rect;
     user_api->pScrollBarDraw( params->hwnd, params->hdc, params->bar, params->hit_test,
                               &params->tracking_info, params->arrows, params->interior,
-                              &rect, params->arrow_size, params->thumb_pos,
+                              &rect, params->enable_flags, params->arrow_size, params->thumb_pos,
                               params->thumb_size, params->vertical );
     return 0;
 }

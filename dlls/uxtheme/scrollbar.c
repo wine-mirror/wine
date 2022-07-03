@@ -34,8 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(theme_scroll);
 
 void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTEST hit_test,
                                   const struct SCROLL_TRACKING_INFO *tracking_info,
-                                  BOOL draw_arrows, BOOL draw_interior, RECT *rect, INT arrowsize,
-                                  INT thumbpos, INT thumbsize, BOOL vertical)
+                                  BOOL draw_arrows, BOOL draw_interior, RECT *rect, UINT enable_flags,
+                                  INT arrowsize, INT thumbpos, INT thumbsize, BOOL vertical)
 {
     BOOL disabled = !IsWindowEnabled(hwnd);
     HTHEME theme;
@@ -49,7 +49,7 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
     if (!theme)
     {
         user_api.pScrollBarDraw(hwnd, dc, bar, hit_test, tracking_info, draw_arrows, draw_interior,
-                                rect, arrowsize, thumbpos, thumbsize, vertical);
+                                rect, enable_flags, arrowsize, thumbpos, thumbsize, vertical);
         return;
     }
 

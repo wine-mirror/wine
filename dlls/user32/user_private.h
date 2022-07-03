@@ -177,8 +177,8 @@ extern struct user_api_hook *user_api DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_DefDlgProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_ScrollBarProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
 void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
-                               const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, INT, INT,
-                               INT, BOOL) DECLSPEC_HIDDEN;
+                               const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, UINT,
+                               INT, INT, INT, BOOL) DECLSPEC_HIDDEN;
 struct scroll_info *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc );
 
 #endif /* __WINE_USER_PRIVATE_H */
