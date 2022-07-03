@@ -311,42 +311,6 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
     }
 }
 
-/***********************************************************************
- *           SCROLL_HandleKbdEvent
- *
- * Handle a keyboard event (only for SB_CTL scrollbars with focus).
- *
- * PARAMS
- *    hwnd   [I] Handle of window with scrollbar(s)
- *    wParam [I] Variable input including enable state
- *    lParam [I] Variable input including input point
- */
-static void SCROLL_HandleKbdEvent(HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-    TRACE("hwnd=%p wParam=%Id lParam=%Id\n", hwnd, wParam, lParam);
-
-    /* hide caret on first KEYDOWN to prevent flicker */
-    if ((lParam & PFD_DOUBLEBUFFER_DONTCARE) == 0)
-        NtUserHideCaret( hwnd );
-
-    switch(wParam)
-    {
-    case VK_PRIOR: wParam = SB_PAGEUP; break;
-    case VK_NEXT:  wParam = SB_PAGEDOWN; break;
-    case VK_HOME:  wParam = SB_TOP; break;
-    case VK_END:   wParam = SB_BOTTOM; break;
-    case VK_UP:    wParam = SB_LINEUP; break;
-    case VK_DOWN:  wParam = SB_LINEDOWN; break;
-    case VK_LEFT:  wParam = SB_LINEUP; break;
-    case VK_RIGHT: wParam = SB_LINEDOWN; break;
-    default: return;
-    }
-    SendMessageW(GetParent(hwnd),
-        ((GetWindowLongW( hwnd, GWL_STYLE ) & SBS_VERT) ?
-            WM_VSCROLL : WM_HSCROLL), wParam, (LPARAM)hwnd);
-}
-
-
 /*************************************************************************
  *           SCROLL_GetScrollPos
  *
@@ -391,18 +355,10 @@ static BOOL SCROLL_GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
 
 LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-    if (!IsWindow( hwnd )) return 0;
-
     switch(message)
     {
     case WM_KEYDOWN:
-        SCROLL_HandleKbdEvent(hwnd, wParam, lParam);
-        break;
-
     case WM_KEYUP:
-        NtUserShowCaret( hwnd );
-        break;
-
     case WM_ENABLE:
     case WM_SETFOCUS:
     case WM_KILLFOCUS:
@@ -415,28 +371,11 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
     case SBM_GETSCROLLINFO:
     case SBM_GETSCROLLBARINFO:
     case SBM_SETSCROLLINFO:
-        return NtUserMessageCall( hwnd, message, wParam, lParam, 0, NtUserScrollBarWndProc, !unicode );
-
     case WM_SETCURSOR:
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
-        {
-            ULONG_PTR cursor = (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) ? IDC_SIZENESW : IDC_SIZENWSE;
-            return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)cursor ));
-        }
-        return DefWindowProcW( hwnd, message, wParam, lParam );
-
     case SBM_SETPOS:
-        return SetScrollPos( hwnd, SB_CTL, wParam, (BOOL)lParam );
-
     case SBM_GETPOS:
-       return SCROLL_GetScrollPos(hwnd, SB_CTL);
-
     case SBM_GETRANGE:
-        return SCROLL_GetScrollRange(hwnd, SB_CTL, (LPINT)wParam, (LPINT)lParam);
-
     case SBM_ENABLE_ARROWS:
-        return NtUserEnableScrollBar( hwnd, SB_CTL, wParam );
-
     case 0x00e5:
     case 0x00e7:
     case 0x00e8:
@@ -444,9 +383,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
     case 0x00ed:
     case 0x00ee:
     case 0x00ef:
-        ERR("unknown Win32 msg %04x wp=%08Ix lp=%08Ix\n",
-		    message, wParam, lParam );
-        break;
+        return NtUserMessageCall( hwnd, message, wParam, lParam, 0, NtUserScrollBarWndProc, !unicode );
 
     default:
         if (message >= WM_USER)

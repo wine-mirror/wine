@@ -1130,6 +1130,32 @@ static void create_scroll_bar( HWND hwnd, CREATESTRUCTW *create )
     }
 }
 
+static void handle_kbd_event( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd=%p wparam=%ld lparam=%ld\n", hwnd, wparam, lparam );
+
+    /* hide caret on first KEYDOWN to prevent flicker */
+    if ((lparam & PFD_DOUBLEBUFFER_DONTCARE) == 0)
+        NtUserHideCaret( hwnd );
+
+    switch (wparam)
+    {
+    case VK_PRIOR: wparam = SB_PAGEUP; break;
+    case VK_NEXT:  wparam = SB_PAGEDOWN; break;
+    case VK_HOME:  wparam = SB_TOP; break;
+    case VK_END:   wparam = SB_BOTTOM; break;
+    case VK_UP:    wparam = SB_LINEUP; break;
+    case VK_DOWN:  wparam = SB_LINEDOWN; break;
+    case VK_LEFT:  wparam = SB_LINEUP; break;
+    case VK_RIGHT: wparam = SB_LINEDOWN; break;
+    default: return;
+    }
+
+    send_message( get_parent(hwnd),
+                  (get_window_long( hwnd, GWL_STYLE ) & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
+                  wparam, (LPARAM)hwnd);
+}
+
 static int get_scroll_pos(HWND hwnd, int bar)
 {
     struct scroll_info *scroll = get_scroll_info_ptr( hwnd, bar, FALSE );
@@ -1155,12 +1181,33 @@ static BOOL set_scroll_range( HWND hwnd, int bar, int min_val, int max_val )
     return TRUE;
 }
 
+static BOOL get_scroll_range( HWND hwnd, int nBar, int *min, int *max )
+{
+    struct scroll_info *info;
+
+    if (!(info = get_scroll_info_ptr( hwnd, nBar, FALSE ))) return FALSE;
+    if (min) *min = info ? info->minVal : 0;
+    if (max) *max = info ? info->maxVal : 0;
+    release_scroll_info_ptr( info );
+    return TRUE;
+}
+
 LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
+    if (!is_window( hwnd )) return 0;
+
     switch (msg)
     {
     case WM_CREATE:
         create_scroll_bar( hwnd, (CREATESTRUCTW *)lparam );
+        return 0;
+
+    case WM_KEYDOWN:
+        handle_kbd_event( hwnd, wparam, lparam );
+        return 0;
+
+    case WM_KEYUP:
+        NtUserShowCaret( hwnd );
         return 0;
 
     case WM_LBUTTONDBLCLK:
@@ -1282,7 +1329,47 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case SBM_SETSCROLLINFO:
         return set_scroll_info( hwnd, SB_CTL, (SCROLLINFO *)lparam, wparam );
 
+    case WM_SETCURSOR:
+        if (get_window_long( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
+        {
+            ULONG_PTR cursor = (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) ?
+                IDC_SIZENESW : IDC_SIZENWSE;
+            return (LRESULT)NtUserSetCursor( LoadImageW( 0, (const WCHAR *)cursor, IMAGE_CURSOR,
+                                                         0, 0, LR_SHARED | LR_DEFAULTSIZE ));
+        }
+        return default_window_proc( hwnd, msg, wparam, lparam, ansi );
+
+    case SBM_SETPOS:
+        {
+            SCROLLINFO info;
+            info.cbSize = sizeof(info);
+            info.nPos   = wparam;
+            info.fMask  = SIF_POS | SIF_RETURNPREV;
+            return NtUserSetScrollInfo( hwnd, SB_CTL, &info, lparam );
+        }
+
+    case SBM_GETPOS:
+       return get_scroll_pos( hwnd, SB_CTL );
+
+    case SBM_GETRANGE:
+        return get_scroll_range( hwnd, SB_CTL, (int *)wparam, (int *)lparam );
+
+    case SBM_ENABLE_ARROWS:
+        return NtUserEnableScrollBar( hwnd, SB_CTL, wparam );
+
+    case 0x00e5:
+    case 0x00e7:
+    case 0x00e8:
+    case 0x00ec:
+    case 0x00ed:
+    case 0x00ee:
+    case 0x00ef:
+        ERR( "unknown Win32 msg %04x wp=%08lx lp=%08lx\n", msg, wparam, lparam );
+        return 0;
+
     default:
+        if (msg >= WM_USER)
+            WARN( "unknown msg %04x wp=%08lx lp=%08lx\n", msg, wparam, lparam );
         return default_window_proc( hwnd, msg, wparam, lparam, ansi );
     }
 }
