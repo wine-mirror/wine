@@ -28,7 +28,6 @@
 #include "wscript.h"
 
 #include <wine/debug.h>
-#include <wine/heap.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
@@ -81,13 +80,13 @@ static void print_string(const WCHAR *string)
     }
 
     lena = WideCharToMultiByte(GetOEMCP(), 0, string, len, NULL, 0, NULL, NULL);
-    buf = heap_alloc(len);
+    buf = malloc(len);
     if(!buf)
         return;
 
     WideCharToMultiByte(GetOEMCP(), 0, string, len, buf, lena, NULL, NULL);
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, lena, &count, FALSE);
-    heap_free(buf);
+    free(buf);
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), "\r\n", 2, &count, FALSE);
 }
 
@@ -334,8 +333,8 @@ static HRESULT WINAPI Host_Echo(IHost *iface, SAFEARRAY *args)
         return hres;
 
     argc = ubound-lbound+1;
-    strs = heap_alloc_zero(argc*sizeof(*strs));
-    if(!strs) {
+    if (!(strs = calloc(argc, sizeof(*strs))))
+    {
         SafeArrayUnaccessData(args);
         return E_OUTOFMEMORY;
     }
@@ -353,7 +352,7 @@ static HRESULT WINAPI Host_Echo(IHost *iface, SAFEARRAY *args)
 
     SafeArrayUnaccessData(args);
     if(SUCCEEDED(hres)) {
-        ptr = output = heap_alloc((len+1)*sizeof(WCHAR));
+        ptr = output = malloc((len+1)*sizeof(WCHAR));
         if(output) {
             for(i=0; i < argc; i++) {
                 if(i)
@@ -370,13 +369,13 @@ static HRESULT WINAPI Host_Echo(IHost *iface, SAFEARRAY *args)
 
     for(i=0; i < argc; i++)
         SysFreeString(strs[i]);
-    heap_free(strs);
+    free(strs);
     if(FAILED(hres))
         return hres;
 
     print_string(output);
 
-    heap_free(output);
+    free(output);
     return S_OK;
 }
 
