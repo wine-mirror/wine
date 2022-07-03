@@ -2607,6 +2607,15 @@ ULONGLONG WINAPI KeQueryInterruptTime( void )
     return totaltime.QuadPart;
 }
 
+/***********************************************************************
+ *           KeQueryPriorityThread   (NTOSKRNL.EXE.@)
+ */
+KPRIORITY WINAPI KeQueryPriorityThread( PKTHREAD Thread )
+{
+    FIXME("(%p): stub.\n", Thread);
+    /* priority must be a value between 0 and 31 */
+    return 15;
+}
 
 /***********************************************************************
  *           KeQuerySystemTime   (NTOSKRNL.EXE.@)

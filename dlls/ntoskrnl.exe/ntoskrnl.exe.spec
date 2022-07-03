@@ -597,7 +597,7 @@
 @ stdcall KeQueryActiveProcessors()
 @ stdcall KeQueryActiveProcessorCountEx(long)
 @ stdcall KeQueryInterruptTime()
-@ stub KeQueryPriorityThread
+@ stdcall KeQueryPriorityThread(ptr)
 @ stub KeQueryRuntimeThread
 @ stdcall KeQuerySystemTime(ptr)
 @ stdcall KeQueryTickCount(ptr)
