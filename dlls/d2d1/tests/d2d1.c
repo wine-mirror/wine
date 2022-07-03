@@ -28,7 +28,6 @@
 #include "initguid.h"
 #include "dwrite.h"
 #include "wincodec.h"
-#include "wine/heap.h"
 
 DEFINE_GUID(CLSID_TestEffect, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,0x69,0x28,0x78);
 DEFINE_GUID(GUID_TestVertexShader, 0x5bcdcfae,0x1e92,0x4dc1,0x94,0xfa,0x3b,0x01,0xca,0x54,0x59,0x20);
@@ -358,7 +357,7 @@ static void queue_d3d1x_test(void (*test)(BOOL d3d11), BOOL d3d11)
     if (mt_test_count >= mt_tests_size)
     {
         mt_tests_size = max(16, mt_tests_size * 2);
-        mt_tests = heap_realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
+        mt_tests = realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
     }
     mt_tests[mt_test_count].test = test;
     mt_tests[mt_test_count++].d3d11 = d3d11;
@@ -408,7 +407,7 @@ static void run_queued_tests(void)
 
     GetSystemInfo(&si);
     thread_count = si.dwNumberOfProcessors;
-    threads = heap_calloc(thread_count, sizeof(*threads));
+    threads = calloc(thread_count, sizeof(*threads));
     for (i = 0, test_idx = 0; i < thread_count; ++i)
     {
         threads[i] = CreateThread(NULL, 0, thread_func, &test_idx, 0, NULL);
@@ -419,7 +418,7 @@ static void run_queued_tests(void)
     {
         CloseHandle(threads[i]);
     }
-    heap_free(threads);
+    free(threads);
 }
 
 static void set_point(D2D1_POINT_2F *point, float x, float y)
@@ -10680,7 +10679,7 @@ static ULONG STDMETHODCALLTYPE effect_impl_Release(ID2D1EffectImpl *iface)
     {
         if (effect_impl->effect_context)
             ID2D1EffectContext_Release(effect_impl->effect_context);
-        heap_free(effect_impl);
+        free(effect_impl);
     }
 
     return refcount;
@@ -10718,7 +10717,7 @@ static HRESULT STDMETHODCALLTYPE effect_impl_create(IUnknown **effect_impl)
 {
     struct effect_impl *object;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID2D1EffectImpl_iface.lpVtbl = &effect_impl_vtbl;
