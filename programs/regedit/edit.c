@@ -201,7 +201,7 @@ static LPWSTR read_value(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType,
         error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
     }
-    if ( *lpType == REG_DWORD ) valueDataLen = sizeof(DWORD);
+
     buffer = heap_xalloc(valueDataLen + sizeof(WCHAR));
     lRet = RegQueryValueExW(hKey, valueName, 0, 0, (LPBYTE)buffer, &valueDataLen);
     if (lRet) {
