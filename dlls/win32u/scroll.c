@@ -824,7 +824,7 @@ void track_scroll_bar( HWND hwnd, int scrollbar, POINT pt )
  */
 static inline BOOL validate_scroll_info( const SCROLLINFO *info )
 {
-    return !(info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL) ||
+    return !(info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL | SIF_RETURNPREV) ||
              (info->cbSize != sizeof(*info) &&
               info->cbSize != sizeof(*info) - sizeof(info->nTrackPos)));
 }
@@ -862,7 +862,7 @@ static int set_scroll_info( HWND hwnd, int bar, const SCROLLINFO *info, BOOL red
 {
     struct scroll_info *scroll;
     UINT new_flags;
-    int action = 0, ret;
+    int action = 0, ret = 0;
 
     /* handle invalid data structure */
     if (!validate_scroll_info( info ) ||
@@ -877,6 +877,9 @@ static int set_scroll_info( HWND hwnd, int bar, const SCROLLINFO *info, BOOL red
         if (info->fMask & SIF_RANGE) TRACE( " min=%d max=%d", info->nMin, info->nMax );
         TRACE( "\n" );
     }
+
+    /* undocumented flag, return previous position instead of modified */
+    if (info->fMask & SIF_RETURNPREV) ret = scroll->curVal;
 
     /* Set the page size */
     if ((info->fMask & SIF_PAGE) && scroll->page != info->nPage)
@@ -970,7 +973,7 @@ static int set_scroll_info( HWND hwnd, int bar, const SCROLLINFO *info, BOOL red
     }
 
 done:
-    ret = scroll->curVal;
+    if (!(info->fMask & SIF_RETURNPREV)) ret = scroll->curVal;
     release_scroll_info_ptr( scroll );
     if (action & SA_SSI_HIDE)
         show_scroll_bar( hwnd, bar, FALSE, FALSE );

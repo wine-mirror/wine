@@ -671,6 +671,19 @@ static void test_SetScrollInfo(void)
     ret = IsWindowEnabled(hScroll);
     ok(ret, "Unexpected enabled state.\n");
 
+    EnableScrollBar(mainwnd, SB_CTL, ESB_ENABLE_BOTH);
+
+    si.fMask = SIF_POS;
+    si.nPos = 3;
+    ret = SetScrollInfo(mainwnd, SB_HORZ, &si, FALSE);
+    ok(ret == 3, "SetScrollInfo returned %d\n", ret);
+
+    /* undocumented flag making SetScrollInfo return previous position */
+    si.fMask = SIF_POS | 0x1000;
+    si.nPos = 4;
+    ret = SetScrollInfo(mainwnd, SB_HORZ, &si, FALSE);
+    ok(ret == 3, "SetScrollInfo returned %d\n", ret);
+
     DestroyWindow(hScroll);
     DestroyWindow(mainwnd);
 }

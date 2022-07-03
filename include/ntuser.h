@@ -269,6 +269,9 @@ struct send_message_callback_params
 /* NtUserScrollWindowEx flag */
 #define SW_NODCCACHE  0x8000
 
+/* NtUserSetScrollInfo flag */
+#define SIF_RETURNPREV  0x1000
+
 /* NtUserInitializeClientPfnArrays parameter, not compatible with Windows */
 struct user_client_procs
 {
