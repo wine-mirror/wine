@@ -4662,7 +4662,7 @@ static void free_window_handle( HWND hwnd )
         }
         SERVER_END_REQ;
         user_unlock();
-        if (user_callbacks) user_callbacks->free_win_ptr( win );
+        free( win->pScroll );
         free( win->text );
         free( win );
     }
@@ -4865,7 +4865,7 @@ void destroy_thread_windows(void)
             register_window_surface( win->surface, NULL );
             window_surface_release( win->surface );
         }
-        if (user_callbacks) user_callbacks->free_win_ptr( win );
+        free( win->pScroll );
         free( win->text );
         free( win );
     }

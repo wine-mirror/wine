@@ -2379,7 +2379,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             if (!win) return 0;
             free( win->text );
             win->text = NULL;
-            if (user_callbacks) user_callbacks->free_win_ptr( win );
+            free( win->pScroll );
             win->pScroll = NULL;
             release_win_ptr( win );
             break;

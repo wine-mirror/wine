@@ -135,11 +135,6 @@ static void WINAPI unregister_imm( HWND hwnd )
     imm_unregister_window( hwnd );
 }
 
-static void CDECL free_win_ptr( WND *win )
-{
-    HeapFree( GetProcessHeap(), 0, win->pScroll );
-}
-
 static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
                              void (CALLBACK *finally_func)( BOOL ))
 {
@@ -157,8 +152,6 @@ static const struct user_callbacks user_funcs =
     ImmProcessKey,
     ImmTranslateMessage,
     NtWaitForMultipleObjects,
-    free_win_ptr,
-    SCROLL_GetInternalInfo,
     notify_ime,
     post_dde_message,
     unpack_dde_message,

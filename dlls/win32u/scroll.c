@@ -62,13 +62,69 @@ static struct SCROLL_TRACKING_INFO g_tracking_info;
 /* Is the moving thumb being displayed? */
 static BOOL scroll_moving_thumb = FALSE;
 
+/* data for window that has (one or two) scroll bars */
+struct win_scroll_bar_info
+{
+    struct scroll_info horz;
+    struct scroll_info vert;
+};
+
+#define SCROLLBAR_MAGIC 0x5c6011ba
+
+
 static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
 {
-    struct scroll_info *ret = NULL;
-    user_lock();
-    if (user_callbacks) ret = user_callbacks->get_scroll_info( hwnd, bar, alloc );
-    if (!ret) user_unlock();
-    return ret;
+    struct scroll_info *info = NULL;
+    WND *win = get_win_ptr( hwnd );
+
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return NULL;
+
+    switch (bar)
+    {
+    case SB_HORZ:
+        if (win->pScroll) info = &win->pScroll->horz;
+        break;
+    case SB_VERT:
+        if (win->pScroll) info = &win->pScroll->vert;
+        break;
+    case SB_CTL:
+        if (win->cbWndExtra >= sizeof(struct scroll_bar_win_data))
+        {
+            struct scroll_bar_win_data *data = (struct scroll_bar_win_data *)win->wExtra;
+            if (data->magic == SCROLLBAR_MAGIC) info = &data->info;
+        }
+        if (!info) WARN( "window is not a scrollbar control\n" );
+        break;
+    case SB_BOTH:
+        WARN( "with SB_BOTH\n" );
+        break;
+    }
+
+    if (!info && alloc)
+    {
+        struct win_scroll_bar_info *win_info;
+
+        if (bar != SB_HORZ && bar != SB_VERT)
+            WARN("Cannot initialize bar=%d\n",bar);
+        else if ((win_info = malloc( sizeof(struct win_scroll_bar_info) )))
+        {
+            /* Set default values */
+            win_info->horz.minVal = 0;
+            win_info->horz.curVal = 0;
+            win_info->horz.page = 0;
+            /* From MSDN and our own tests:
+             * max for a standard scroll bar is 100 by default. */
+            win_info->horz.maxVal = 100;
+            win_info->horz.flags  = ESB_ENABLE_BOTH;
+            win_info->vert = win_info->horz;
+            win->pScroll = win_info;
+            info = bar == SB_HORZ ? &win_info->horz : &win_info->vert;
+        }
+    }
+
+    if (info) user_lock();
+    release_win_ptr( win );
+    return info;
 }
 
 static void release_scroll_info_ptr( struct scroll_info *info )

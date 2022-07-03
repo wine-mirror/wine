@@ -35,8 +35,6 @@ struct user_callbacks
     BOOL (WINAPI *pImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
     BOOL (WINAPI *pImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
     NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
-    void (CDECL *free_win_ptr)( struct tagWND *win );
-    struct scroll_info *(CDECL *get_scroll_info)( HWND hwnd, INT nBar, BOOL alloc );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     BOOL (CDECL *post_dde_message)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                                     DWORD type );
@@ -97,7 +95,7 @@ typedef struct tagWND
     POINT              min_pos;       /* Position for minimized window */
     POINT              max_pos;       /* Position for maximized window */
     WCHAR             *text;          /* Window text */
-    void              *pScroll;       /* Scroll-bar info */
+    struct win_scroll_bar_info *pScroll; /* Scroll-bar info */
     DWORD              dwStyle;       /* Window style (from CreateWindow) */
     DWORD              dwExStyle;     /* Extended style (from CreateWindowEx) */
     UINT_PTR           wIDmenu;       /* ID or hmenu (from CreateWindow) */

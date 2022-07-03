@@ -31,17 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
-typedef struct scroll_info SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
-typedef struct scroll_bar_win_data SCROLLBAR_WNDDATA;
-
-/* data for window that has (one or two) scroll bars */
-typedef struct
-{
-    SCROLLBAR_INFO horz;
-    SCROLLBAR_INFO vert;
-} WINSCROLLBAR_INFO, *LPWINSCROLLBAR_INFO;
-
-#define SCROLLBAR_MAGIC 0x5c6011ba
 
   /* Overlap between arrows and thumb */
 #define SCROLL_ARROW_THUMB_OVERLAP 0
@@ -54,70 +43,10 @@ const struct builtin_class_descr SCROLL_builtin_class =
     L"ScrollBar",           /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
     WINPROC_SCROLLBAR,      /* proc */
-    sizeof(SCROLLBAR_WNDDATA), /* extra */
+    sizeof(struct scroll_bar_win_data), /* extra */
     IDC_ARROW,              /* cursor */
     0                       /* brush */
 };
-
-/***********************************************************************
- *           SCROLL_GetInternalInfo
-
- * Returns pointer to internal SCROLLBAR_INFO structure for nBar
- * or NULL if failed (f.i. scroll bar does not exist yet)
- * If alloc is TRUE and the struct does not exist yet, create it.
- */
-SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
-{
-    SCROLLBAR_INFO *infoPtr = NULL;
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return NULL;
-    switch(nBar)
-    {
-        case SB_HORZ:
-            if (wndPtr->pScroll) infoPtr = &((LPWINSCROLLBAR_INFO)wndPtr->pScroll)->horz;
-            break;
-        case SB_VERT:
-            if (wndPtr->pScroll) infoPtr = &((LPWINSCROLLBAR_INFO)wndPtr->pScroll)->vert;
-            break;
-        case SB_CTL:
-            if (wndPtr->cbWndExtra >= sizeof(SCROLLBAR_WNDDATA))
-            {
-                SCROLLBAR_WNDDATA *data = (SCROLLBAR_WNDDATA*)wndPtr->wExtra;
-                if (data->magic == SCROLLBAR_MAGIC)
-                    infoPtr = &data->info;
-            }
-            if (!infoPtr) WARN("window is not a scrollbar control\n");
-            break;
-        case SB_BOTH:
-            WARN("with SB_BOTH\n");
-            break;
-    }
-
-    if (!infoPtr && alloc)
-    {
-        WINSCROLLBAR_INFO *winInfoPtr;
-
-        if (nBar != SB_HORZ && nBar != SB_VERT)
-            WARN("Cannot initialize nBar=%d\n",nBar);
-        else if ((winInfoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(WINSCROLLBAR_INFO) )))
-        {
-            /* Set default values */
-            winInfoPtr->horz.minVal = 0;
-            winInfoPtr->horz.curVal = 0;
-            winInfoPtr->horz.page = 0;
-            /* From MSDN and our own tests:
-             * max for a standard scroll bar is 100 by default. */
-            winInfoPtr->horz.maxVal = 100;
-            winInfoPtr->horz.flags  = ESB_ENABLE_BOTH;
-            winInfoPtr->vert = winInfoPtr->horz;
-            wndPtr->pScroll = winInfoPtr;
-            infoPtr = nBar == SB_HORZ ? &winInfoPtr->horz : &winInfoPtr->vert;
-        }
-    }
-    WIN_ReleasePtr( wndPtr );
-    return infoPtr;
-}
 
 
 /***********************************************************************
