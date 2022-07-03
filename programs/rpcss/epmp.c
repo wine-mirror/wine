@@ -57,7 +57,7 @@ static void delete_registered_ept_entry(struct registered_ept_entry *entry)
     I_RpcFree(entry->endpoint);
     I_RpcFree(entry->address);
     list_remove(&entry->entry);
-    HeapFree(GetProcessHeap(), 0, entry);
+    free(entry);
 }
 
 static struct registered_ept_entry *find_ept_entry(
@@ -106,7 +106,7 @@ void __cdecl ept_insert(handle_t h,
 
     for (i = 0; i < num_ents; i++)
     {
-        struct registered_ept_entry *entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
+        struct registered_ept_entry *entry = malloc(sizeof(*entry));
         if (!entry)
         {
             /* FIXME: cleanup code to delete added entries */
@@ -121,7 +121,7 @@ void __cdecl ept_insert(handle_t h,
         {
             WINE_WARN("TowerExplode failed %lu\n", rpc_status);
             *status = rpc_status;
-            HeapFree(GetProcessHeap(), 0, entry);
+            free(entry);
             break; /* FIXME: more cleanup? */
         }
 

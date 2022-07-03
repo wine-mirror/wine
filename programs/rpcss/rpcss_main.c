@@ -31,7 +31,6 @@
 #include "irpcss.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -58,14 +57,14 @@ HRESULT __cdecl irpcss_server_register(handle_t h, const GUID *clsid, unsigned i
     struct registered_class *entry;
     static LONG next_cookie;
 
-    if (!(entry = heap_alloc_zero(sizeof(*entry))))
+    if (!(entry = calloc(1, sizeof(*entry))))
         return E_OUTOFMEMORY;
 
     entry->clsid = *clsid;
     entry->single_use = !(flags & (REGCLS_MULTIPLEUSE | REGCLS_MULTI_SEPARATE));
-    if (!(entry->object = heap_alloc(FIELD_OFFSET(MInterfacePointer, abData[object->ulCntData]))))
+    if (!(entry->object = malloc(FIELD_OFFSET(MInterfacePointer, abData[object->ulCntData]))))
     {
-        heap_free(entry);
+        free(entry);
         return E_OUTOFMEMORY;
     }
     entry->object->ulCntData = object->ulCntData;
@@ -82,8 +81,8 @@ HRESULT __cdecl irpcss_server_register(handle_t h, const GUID *clsid, unsigned i
 static void scm_revoke_class(struct registered_class *_class)
 {
     list_remove(&_class->entry);
-    heap_free(_class->object);
-    heap_free(_class);
+    free(_class->object);
+    free(_class);
 }
 
 HRESULT __cdecl irpcss_server_revoke(handle_t h, unsigned int cookie)

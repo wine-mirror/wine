@@ -61,10 +61,10 @@ static inline void rot_entry_release(struct rot_entry *rot_entry)
 {
     if (!InterlockedDecrement(&rot_entry->refs))
     {
-        HeapFree(GetProcessHeap(), 0, rot_entry->object);
-        HeapFree(GetProcessHeap(), 0, rot_entry->moniker);
-        HeapFree(GetProcessHeap(), 0, rot_entry->moniker_data);
-        HeapFree(GetProcessHeap(), 0, rot_entry);
+        free(rot_entry->object);
+        free(rot_entry->moniker);
+        free(rot_entry->moniker_data);
+        free(rot_entry);
     }
 }
 
@@ -88,12 +88,11 @@ HRESULT __cdecl IrotRegister(
         return E_INVALIDARG;
     }
 
-    rot_entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rot_entry));
-    if (!rot_entry)
+    if (!(rot_entry = calloc(1, sizeof(*rot_entry))))
         return E_OUTOFMEMORY;
 
     rot_entry->refs = 1;
-    rot_entry->object = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceData, abData[obj->ulCntData]));
+    rot_entry->object = malloc(FIELD_OFFSET(InterfaceData, abData[obj->ulCntData]));
     if (!rot_entry->object)
     {
         rot_entry_release(rot_entry);
@@ -104,7 +103,7 @@ HRESULT __cdecl IrotRegister(
 
     rot_entry->last_modified = *time;
 
-    rot_entry->moniker = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceData, abData[mk->ulCntData]));
+    rot_entry->moniker = malloc(FIELD_OFFSET(InterfaceData, abData[mk->ulCntData]));
     if (!rot_entry->moniker)
     {
         rot_entry_release(rot_entry);
@@ -113,8 +112,7 @@ HRESULT __cdecl IrotRegister(
     rot_entry->moniker->ulCntData = mk->ulCntData;
     memcpy(&rot_entry->moniker->abData, mk->abData, mk->ulCntData);
 
-    rot_entry->moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MonikerComparisonData, abData[data->ulCntData]));
-    if (!rot_entry->moniker_data)
+    if (!(rot_entry->moniker_data = malloc(FIELD_OFFSET(MonikerComparisonData, abData[data->ulCntData]))))
     {
         rot_entry_release(rot_entry);
         return E_OUTOFMEMORY;
@@ -370,10 +368,10 @@ void __RPC_USER IrotContextHandle_rundown(IrotContextHandle ctxt_handle)
 
 void * __RPC_USER MIDL_user_allocate(SIZE_T size)
 {
-    return HeapAlloc(GetProcessHeap(), 0, size);
+    return malloc(size);
 }
 
 void __RPC_USER MIDL_user_free(void * p)
 {
-    HeapFree(GetProcessHeap(), 0, p);
+    free(p);
 }
