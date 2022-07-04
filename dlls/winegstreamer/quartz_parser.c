@@ -373,32 +373,80 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
     return 0;
 }
 
+static const GUID *wg_video_format_get_mediasubtype(enum wg_video_format format)
+{
+    switch (format)
+    {
+        case WG_VIDEO_FORMAT_UNKNOWN: return &GUID_NULL;
+        case WG_VIDEO_FORMAT_BGRA: return &MEDIASUBTYPE_ARGB32;
+        case WG_VIDEO_FORMAT_BGRx: return &MEDIASUBTYPE_RGB32;
+        case WG_VIDEO_FORMAT_BGR: return &MEDIASUBTYPE_RGB24;
+        case WG_VIDEO_FORMAT_RGB15: return &MEDIASUBTYPE_RGB555;
+        case WG_VIDEO_FORMAT_RGB16: return &MEDIASUBTYPE_RGB565;
+        case WG_VIDEO_FORMAT_AYUV: return &MEDIASUBTYPE_AYUV;
+        case WG_VIDEO_FORMAT_I420: return &MEDIASUBTYPE_I420;
+        case WG_VIDEO_FORMAT_NV12: return &MEDIASUBTYPE_NV12;
+        case WG_VIDEO_FORMAT_UYVY: return &MEDIASUBTYPE_UYVY;
+        case WG_VIDEO_FORMAT_YUY2: return &MEDIASUBTYPE_YUY2;
+        case WG_VIDEO_FORMAT_YV12: return &MEDIASUBTYPE_YV12;
+        case WG_VIDEO_FORMAT_YVYU: return &MEDIASUBTYPE_YVYU;
+        case WG_VIDEO_FORMAT_CINEPAK: return &MEDIASUBTYPE_CVID;
+    }
+
+    assert(0);
+    return NULL;
+}
+
+static DWORD wg_video_format_get_compression(enum wg_video_format format)
+{
+    switch (format)
+    {
+        case WG_VIDEO_FORMAT_UNKNOWN: return 0;
+        case WG_VIDEO_FORMAT_BGRA: return BI_RGB;
+        case WG_VIDEO_FORMAT_BGRx: return BI_RGB;
+        case WG_VIDEO_FORMAT_BGR: return BI_RGB;
+        case WG_VIDEO_FORMAT_RGB15: return BI_RGB;
+        case WG_VIDEO_FORMAT_RGB16: return BI_BITFIELDS;
+        case WG_VIDEO_FORMAT_AYUV: return mmioFOURCC('A','Y','U','V');
+        case WG_VIDEO_FORMAT_I420: return mmioFOURCC('I','4','2','0');
+        case WG_VIDEO_FORMAT_NV12: return mmioFOURCC('N','V','1','2');
+        case WG_VIDEO_FORMAT_UYVY: return mmioFOURCC('U','Y','V','Y');
+        case WG_VIDEO_FORMAT_YUY2: return mmioFOURCC('Y','U','Y','2');
+        case WG_VIDEO_FORMAT_YV12: return mmioFOURCC('Y','V','1','2');
+        case WG_VIDEO_FORMAT_YVYU: return mmioFOURCC('Y','V','Y','U');
+        case WG_VIDEO_FORMAT_CINEPAK: return mmioFOURCC('C','V','I','D');
+    }
+
+    assert(0);
+    return 0;
+}
+
+static WORD wg_video_format_get_depth(enum wg_video_format format)
+{
+    switch (format)
+    {
+        case WG_VIDEO_FORMAT_UNKNOWN: return 0;
+        case WG_VIDEO_FORMAT_BGRA: return 32;
+        case WG_VIDEO_FORMAT_BGRx: return 32;
+        case WG_VIDEO_FORMAT_BGR: return 24;
+        case WG_VIDEO_FORMAT_RGB15: return 16;
+        case WG_VIDEO_FORMAT_RGB16: return 16;
+        case WG_VIDEO_FORMAT_AYUV: return 32;
+        case WG_VIDEO_FORMAT_I420: return 12;
+        case WG_VIDEO_FORMAT_NV12: return 12;
+        case WG_VIDEO_FORMAT_UYVY: return 16;
+        case WG_VIDEO_FORMAT_YUY2: return 16;
+        case WG_VIDEO_FORMAT_YV12: return 12;
+        case WG_VIDEO_FORMAT_YVYU: return 16;
+        case WG_VIDEO_FORMAT_CINEPAK: return 24;
+    }
+
+    assert(0);
+    return 0;
+}
+
 static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm)
 {
-    static const struct
-    {
-        const GUID *subtype;
-        DWORD compression;
-        WORD depth;
-    }
-    format_table[] =
-    {
-        {0},
-        {&MEDIASUBTYPE_ARGB32, BI_RGB,                      32},
-        {&MEDIASUBTYPE_RGB32,  BI_RGB,                      32},
-        {&MEDIASUBTYPE_RGB24,  BI_RGB,                      24},
-        {&MEDIASUBTYPE_RGB555, BI_RGB,                      16},
-        {&MEDIASUBTYPE_RGB565, BI_BITFIELDS,                16},
-        {&MEDIASUBTYPE_AYUV,   mmioFOURCC('A','Y','U','V'), 32},
-        {&MEDIASUBTYPE_I420,   mmioFOURCC('I','4','2','0'), 12},
-        {&MEDIASUBTYPE_NV12,   mmioFOURCC('N','V','1','2'), 12},
-        {&MEDIASUBTYPE_UYVY,   mmioFOURCC('U','Y','V','Y'), 16},
-        {&MEDIASUBTYPE_YUY2,   mmioFOURCC('Y','U','Y','2'), 16},
-        {&MEDIASUBTYPE_YV12,   mmioFOURCC('Y','V','1','2'), 12},
-        {&MEDIASUBTYPE_YVYU,   mmioFOURCC('Y','V','Y','U'), 16},
-        {&MEDIASUBTYPE_CVID,   mmioFOURCC('C','V','I','D'), 24},
-    };
-
     VIDEOINFO *video_format;
     uint32_t frame_time;
 
@@ -408,10 +456,8 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
     if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
         return false;
 
-    assert(format->u.video.format < ARRAY_SIZE(format_table));
-
     mt->majortype = MEDIATYPE_Video;
-    mt->subtype = *format_table[format->u.video.format].subtype;
+    mt->subtype = *wg_video_format_get_mediasubtype(format->u.video.format);
     if (wm)
         mt->bFixedSizeSamples = TRUE;
     else
@@ -434,8 +480,8 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
     video_format->bmiHeader.biWidth = format->u.video.width;
     video_format->bmiHeader.biHeight = format->u.video.height;
     video_format->bmiHeader.biPlanes = 1;
-    video_format->bmiHeader.biBitCount = format_table[format->u.video.format].depth;
-    video_format->bmiHeader.biCompression = format_table[format->u.video.format].compression;
+    video_format->bmiHeader.biBitCount = wg_video_format_get_depth(format->u.video.format);
+    video_format->bmiHeader.biCompression = wg_video_format_get_compression(format->u.video.format);
     video_format->bmiHeader.biSizeImage = wg_format_get_max_size(format);
 
     if (format->u.video.format == WG_VIDEO_FORMAT_RGB16)
