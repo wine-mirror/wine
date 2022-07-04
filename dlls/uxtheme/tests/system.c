@@ -1122,12 +1122,10 @@ static void test_GetThemePartSize(void)
 
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    todo_wine_if(target_dpi != 96)
     ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
        "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    todo_wine_if(target_dpi != 96)
     ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
        "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
     CloseThemeData(htheme);
@@ -1145,12 +1143,10 @@ static void test_GetThemePartSize(void)
     htheme = OpenThemeData(NULL, WC_BUTTONW);
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    todo_wine_if(target_dpi != 96)
     ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
        "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    todo_wine_if(target_dpi != 96)
     ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
        "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
     CloseThemeData(htheme);

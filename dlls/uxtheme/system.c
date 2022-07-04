@@ -663,7 +663,7 @@ HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
 
     dpi = GetDpiForWindow(hwnd);
     if (!dpi)
-        dpi = 96;
+        dpi = GetDpiForSystem();
 
     return open_theme_data(hwnd, pszClassList, flags, dpi);
 }
