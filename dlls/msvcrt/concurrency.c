@@ -167,6 +167,11 @@ typedef struct
 typedef struct
 {
     char dummy;
+} _UnrealizedChore;
+
+typedef struct
+{
+    char dummy;
 } _StructuredTaskCollection;
 
 /* keep in sync with msvcp90/msvcp90.h */
@@ -1769,6 +1774,16 @@ void __thiscall _StructuredTaskCollection_dtor(_StructuredTaskCollection *this)
 }
 
 #endif /* _MSVCR_VER >= 120 */
+
+/* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAAXPAV_UnrealizedChore@23@@Z */
+/* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAEXPAV_UnrealizedChore@23@@Z */
+/* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QEAAXPEAV_UnrealizedChore@23@@Z */
+DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection__Schedule, 8)
+void __thiscall _StructuredTaskCollection__Schedule(
+        _StructuredTaskCollection *this, _UnrealizedChore *chore)
+{
+    FIXME("(%p %p): stub!\n", this, chore);
+}
 
 /* ??0critical_section@Concurrency@@QAE@XZ */
 /* ??0critical_section@Concurrency@@QEAA@XZ */
