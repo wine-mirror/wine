@@ -99,10 +99,6 @@ typedef struct _PhysDevice {
 static pa_context *pulse_ctx;
 static pa_mainloop *pulse_ml;
 
-/* Mixer format + period times */
-static WAVEFORMATEXTENSIBLE pulse_fmt[2];
-static REFERENCE_TIME pulse_min_period[2], pulse_def_period[2];
-
 static struct list g_phys_speakers = LIST_INIT(g_phys_speakers);
 static struct list g_phys_sources = LIST_INIT(g_phys_sources);
 
@@ -796,9 +792,6 @@ static NTSTATUS pulse_test_connect(void *args)
     TRACE("Test-connected to server %s with protocol version: %i.\n",
         pa_context_get_server(pulse_ctx),
         pa_context_get_server_protocol_version(pulse_ctx));
-
-    pulse_probe_settings(1, NULL, &pulse_fmt[0], &pulse_def_period[0], &pulse_min_period[0]);
-    pulse_probe_settings(0, NULL, &pulse_fmt[1], &pulse_def_period[1], &pulse_min_period[1]);
 
     free_phys_device_lists();
     list_init(&g_phys_speakers);
