@@ -4955,6 +4955,490 @@ static void test_clipboard(void)
   ITextRange_Release(range);
 }
 
+static void subtest_undo(const char *dummy_text)
+{
+  static const char *text_seq[] = {
+    "",
+    "1-alpha",
+    "2-beta",
+    "3-gamma",
+    "4-delta",
+    "5-epsilon",
+    "6-zeta",
+    "7-eta",
+  };
+  static LONG seq[] = { -1, -2, -3, -1, 1, 2, 3, 1, -5, 2, -1, 3, 1, 0 };
+  LONG i = 0, stack_pos = 0;
+  IRichEditOle *reole = NULL;
+  ITextDocument *doc = NULL;
+  ITextSelection *selection;
+  char buffer[1024] = "";
+  HRESULT hr;
+  HWND hwnd;
+  LONG count = 0;
+
+  winetest_push_context("(%Iu)", dummy_text ? strlen(dummy_text) : 0);
+
+  create_interfaces(&hwnd, &reole, &doc, &selection);
+
+  for (i = -2; i <= 2; i++)
+  {
+    if (i != tomFalse && i != tomTrue)
+    {
+      hr = ITextDocument_Undo(doc, i, NULL);
+      todo_wine
+      ok(hr == (i >= 1 ? S_OK : S_FALSE), "(%ld@0) Undo: %#lx\n", i, hr);
+
+      count = 0xcccccccc;
+      hr = ITextDocument_Undo(doc, i, &count);
+      todo_wine
+      ok(hr == (i >= 1 ? S_OK : S_FALSE), "(%ld@0) Undo: %#lx\n", i, hr);
+      todo_wine
+      ok(count == (i >= 1 ? i : 0), "(%ld@0) Expected %ld, got %ld\n", i, i >= 0 ? i : 0, count);
+    }
+
+    hr = ITextDocument_Redo(doc, i, NULL);
+    todo_wine
+    ok(hr == (i == 0 ? S_OK : S_FALSE), "(%ld@0) Redo: %#lx\n", i, hr);
+
+    count = 0xcccccccc;
+    hr = ITextDocument_Redo(doc, i, &count);
+    todo_wine
+    ok(hr == (i == 0 ? S_OK : S_FALSE), "(%ld@0) Redo: %#lx\n", i, hr);
+    todo_wine
+    ok(count == 0, "(%ld@0) got %ld\n", i, count);
+  }
+
+  while (stack_pos < ARRAY_SIZE(text_seq) - 1)
+  {
+    stack_pos++;
+    if (dummy_text)
+    {
+      hr = ITextDocument_Undo(doc, tomSuspend, NULL);
+      todo_wine
+      ok(hr == S_FALSE, "(@%ld) Undo: %#lx\n", stack_pos, hr);
+      if (SUCCEEDED(hr))
+      {
+        SendMessageA(hwnd, EM_SETSEL, 0, 0);
+        SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)dummy_text);
+        SendMessageA(hwnd, EM_SETSEL, 0, strlen(dummy_text));
+        SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)"");
+        hr = ITextDocument_Undo(doc, tomResume, NULL);
+        todo_wine
+        ok(hr == S_FALSE, "(@%ld) Undo: %#lx\n", stack_pos, hr);
+      }
+    }
+    SendMessageA(hwnd, EM_SETSEL, 0, -1);
+    SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)text_seq[stack_pos]);
+  }
+
+  for (i = 0; i < ARRAY_SIZE(seq); i++)
+  {
+    LONG expect_count;
+
+    memset(buffer, 0, sizeof(buffer));
+    SendMessageA(hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    todo_wine_if(stack_pos != ARRAY_SIZE(text_seq) - 1)
+    ok(strcmp(buffer, text_seq[stack_pos]) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_a(text_seq[stack_pos]), wine_dbgstr_a(buffer));
+
+    if (!seq[i]) break;
+
+    count = 0xcccccccc;
+    expect_count = labs(stack_pos - min(max(stack_pos + seq[i], 0), (LONG)ARRAY_SIZE(seq) - 1));
+    if (seq[i] < 0)
+    {
+      hr = ITextDocument_Undo(doc, -seq[i], &count);
+      todo_wine
+      ok(hr == S_OK, "(%ld@%ld) Undo: %#lx\n", i, stack_pos, hr);
+      todo_wine
+      ok(count == expect_count, "(%ld@%ld) Expected %ld, got %ld\n", i, stack_pos, expect_count, count);
+      stack_pos -= count;
+    }
+    else
+    {
+      hr = ITextDocument_Redo(doc, seq[i], &count);
+      todo_wine
+      ok(hr == (expect_count ? S_OK : S_FALSE), "(%ld@%ld) Redo: %#lx\n", i, stack_pos, hr);
+      todo_wine
+      ok(count == expect_count, "(%ld@%ld) Expected %ld, got %ld\n", i, stack_pos, expect_count, count);
+      stack_pos += count;
+    }
+
+    if (FAILED(hr) || count <= 0) break;
+  }
+
+  release_interfaces(&hwnd, &reole, &doc, &selection);
+  winetest_pop_context();
+}
+
+static void test_undo(void)
+{
+  subtest_undo(NULL);
+  subtest_undo("dummy 12345");
+}
+
+#define ok_msg_result(h,m,w,l,r) ok_msg_result_(__LINE__,#m,h,m,w,l,r)
+static void ok_msg_result_(int line, const char *desc, HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, LRESULT expect)
+{
+  LRESULT lresult = SendMessageA(hwnd, message, wparam, lparam);
+  ok_(__FILE__,line)(lresult == expect, "%s: Expected %Id, got %Id\n", desc, expect, lresult);
+}
+
+enum editorUndoState {
+  firstUndoState = 0,
+  undoStateActive = 0,
+  undoStateSuspended = 1,
+  undoStateDisabled = 2,
+  numUndoStates = 3,
+};
+
+enum editorUndoStateAction {
+  firstUndoAction = 0,
+  undoActionNoOp = 0,
+  undoActionEnable = 1,
+  undoActionDisable = 2,
+  undoActionSuspend = 3,
+  undoActionResume = 4,
+  numUndoActions = 5
+};
+
+enum editorUndoStateTestFlags {
+  undoTestUseWindowMessages = 0x1,
+  undoTestResetUndoLimit = 0x2,
+  undoTestDoFirstUndo = 0x4,
+  undoTestDoFirstRedo = 0x8,
+  undoTestDoSecondUndoAfterEnable = 0x10,
+  undoTestMaxFlag = 0x20,
+};
+
+struct undo_test
+{
+  HWND hwnd;
+  ITextDocument *doc;
+  int test_flags;
+  enum editorUndoState undo_ctl_state;
+  LONG_PTR undo_limit;
+  BOOL last_undo_status;
+  BOOL last_redo_status;
+};
+
+static HRESULT perform_editor_undo_state_action(struct undo_test *inst, enum editorUndoStateAction action, LONG *count)
+{
+  HRESULT hr = S_OK;
+
+  if (count) *count = 0xcccccccc;
+
+  switch (action)
+  {
+    case undoActionNoOp:
+      if (count) *count = 0;
+      break;
+    case undoActionEnable:
+      if (inst->test_flags & undoTestResetUndoLimit)
+      {
+        LONG_PTR cur_undo_limit = SendMessageA(inst->hwnd, EM_SETUNDOLIMIT, inst->undo_limit, 0);
+        ok(cur_undo_limit == inst->undo_limit, "Expected undo limit %Id, got %Id\n",
+           inst->undo_limit, cur_undo_limit);
+        if (count) *count = 0;
+      }
+      else
+      {
+        hr = ITextDocument_Undo(inst->doc, tomTrue, count);
+        todo_wine
+        ok(hr == S_FALSE, "Undo: %#lx\n", hr);
+      }
+      if (SUCCEEDED(hr))
+      {
+        if (inst->undo_ctl_state == undoStateDisabled)
+        {
+          inst->undo_ctl_state = undoStateActive;
+        }
+        inst->last_undo_status = TRUE;
+      }
+      break;
+    case undoActionDisable:
+      hr = ITextDocument_Undo(inst->doc, tomFalse, count);
+      todo_wine
+      ok(hr == S_OK, "Undo: %#lx\n", hr);
+      if (SUCCEEDED(hr))
+      {
+        inst->undo_ctl_state = undoStateDisabled;
+        inst->last_undo_status = FALSE;
+        inst->last_redo_status = FALSE;
+      }
+      break;
+    case undoActionSuspend:
+      hr = ITextDocument_Undo(inst->doc, tomSuspend, count);
+      todo_wine
+      ok(hr == S_FALSE, "Undo: %#lx\n", hr);
+      if (SUCCEEDED(hr) && inst->undo_ctl_state == undoStateActive)
+      {
+        inst->undo_ctl_state = undoStateSuspended;
+      }
+      break;
+    case undoActionResume:
+      hr = ITextDocument_Undo(inst->doc, tomResume, count);
+      todo_wine
+      ok(hr == S_FALSE, "Undo: %#lx\n", hr);
+      if (SUCCEEDED(hr))
+      {
+        inst->undo_ctl_state = undoStateActive;
+      }
+      break;
+    default:
+      ok(0, "unreachable\n");
+      break;
+  }
+
+  if (count)
+  {
+    todo_wine
+    ok(*count == 0, "Got %ld\n", *count);
+  }
+  return hr;
+}
+
+static HRESULT set_editor_undo_state(struct undo_test *inst, enum editorUndoState state)
+{
+  HRESULT hr = S_OK;
+  if (inst->undo_ctl_state == state) return hr;
+  switch (state)
+  {
+    case undoStateActive:
+      if (FAILED(hr = perform_editor_undo_state_action(inst, undoActionEnable, NULL))) break;
+      if (FAILED(hr = perform_editor_undo_state_action(inst, undoActionResume, NULL))) break;
+      break;
+    case undoStateSuspended:
+      if (FAILED(hr = perform_editor_undo_state_action(inst, undoActionEnable, NULL))) break;
+      if (FAILED(hr = perform_editor_undo_state_action(inst, undoActionSuspend, NULL))) break;
+      break;
+    case undoStateDisabled:
+      if (FAILED(hr = perform_editor_undo_state_action(inst, undoActionDisable, NULL))) break;
+      break;
+    default:
+      ok(0, "unreachable\n");
+      break;
+  }
+  ok(inst->undo_ctl_state == state, "expected state %d, got %d\n", state, inst->undo_ctl_state);
+  todo_wine
+  ok(SUCCEEDED(hr), "cannot set state to %d: %#lx\n", undoStateActive, hr);
+  return hr;
+}
+
+#define perform_undo(i,c) perform_undo_(i,c,__LINE__)
+static BOOL perform_undo_(struct undo_test *inst, BOOL can_undo, int line)
+{
+  LONG count;
+  HRESULT hr;
+  BOOL result, expect;
+
+  if (inst->test_flags & undoTestUseWindowMessages)
+  {
+    LRESULT lres = SendMessageA(inst->hwnd, EM_UNDO, 0, 0);
+    ok_(__FILE__, line)(lres == FALSE || lres == TRUE, "unexpected LRESULT %#Ix\n", lres);
+    result = lres;
+  }
+  else
+  {
+    count = 0xcccccccc;
+    hr = ITextDocument_Undo(inst->doc, 1, &count);
+    todo_wine
+    ok_(__FILE__, line)(SUCCEEDED(hr), "got hr %#lx\n", hr);
+    todo_wine
+    ok_(__FILE__, line)(count == (hr == S_OK), "expected count %d, got %ld\n", hr == S_OK, count);
+    result = hr == S_OK && count > 0;
+  }
+
+  expect = FALSE;
+  if (inst->undo_ctl_state == undoStateActive)
+  {
+    if (can_undo) inst->last_undo_status = TRUE;
+    expect = inst->last_undo_status;
+  }
+  todo_wine_if(!can_undo && !result && expect)
+  ok_(__FILE__, line)(result == expect, "state %d: expected %d, got %d\n", inst->undo_ctl_state, expect, result);
+
+  return can_undo && result;
+}
+
+#define perform_redo(i,c) perform_redo_(i,c,__LINE__)
+static BOOL perform_redo_(struct undo_test *inst, BOOL can_redo, int line)
+{
+  LONG count;
+  HRESULT hr;
+  BOOL result, expect;
+
+  if (inst->test_flags & undoTestUseWindowMessages)
+  {
+    LRESULT lres = SendMessageA(inst->hwnd, EM_REDO, 0, 0);
+    ok_(__FILE__, line)(lres == FALSE || lres == TRUE, "unexpected LRESULT %#Ix\n", lres);
+    result = lres;
+  }
+  else
+  {
+    count = 0xcccccccc;
+    hr = ITextDocument_Redo(inst->doc, 1, &count);
+    todo_wine
+    ok_(__FILE__, line)(SUCCEEDED(hr), "got hr %#lx\n", hr);
+    todo_wine
+    ok_(__FILE__, line)(count == (hr == S_OK), "expected count %d, got %ld\n", hr == S_OK, count);
+    result = hr == S_OK && count > 0;
+  }
+
+  expect = FALSE;
+  if (inst->undo_ctl_state == undoStateActive)
+  {
+    if (can_redo) inst->last_redo_status = TRUE;
+    expect = inst->last_redo_status;
+  }
+  todo_wine_if(!can_redo && !result && expect)
+  ok_(__FILE__, line)(result == expect, "state %d: expected %d, got %d\n", inst->undo_ctl_state, expect, result);
+
+  return can_redo && result;
+}
+
+static HRESULT subtest_undo_control(struct undo_test *inst, enum editorUndoStateAction action)
+{
+  LONG undo_count, redo_count, count;
+  static const char text_foo[] = "foo";
+  static const char text_bar[] = "bar";
+  static const char *last_text, *last_text2;
+  char buffer[1024] = "";
+  HRESULT hr;
+
+  SendMessageA(inst->hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
+  undo_count = redo_count = 0;
+  ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+  ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+
+  SendMessageA(inst->hwnd, WM_SETTEXT, 0, (LPARAM)(last_text = ""));
+  SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+  last_text = "";
+  ok(strcmp(buffer, last_text) == 0,
+     "Expected %s, got %s\n", wine_dbgstr_a(""), wine_dbgstr_a(buffer));
+
+  SendMessageA(inst->hwnd, EM_SETSEL, 0, -1);
+  SendMessageA(inst->hwnd, EM_REPLACESEL, TRUE, (LPARAM)(last_text = text_foo));
+  if (inst->undo_ctl_state == undoStateActive) undo_count++, redo_count = 0;
+  ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+  ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+  SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+  ok(strcmp(buffer, last_text) == 0, "Expected %s, got %s\n", wine_dbgstr_a(text_foo), wine_dbgstr_a(buffer));
+
+  hr = perform_editor_undo_state_action(inst, action, &count);
+  ok(SUCCEEDED(hr), "got %#lx\n", hr);
+  if (FAILED(hr)) return hr;
+  if (inst->undo_ctl_state == undoStateDisabled) undo_count = redo_count = 0;
+  ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+  ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+
+  if (inst->test_flags & undoTestDoFirstUndo)
+  {
+    if (perform_undo(inst, undo_count > 0)) undo_count--, redo_count++, last_text = "";
+    ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+    ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+    SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(strcmp(buffer, last_text) == 0, "Expected %s, got %s\n", wine_dbgstr_a(last_text), wine_dbgstr_a(buffer));
+  }
+
+  if (inst->test_flags & undoTestDoSecondUndoAfterEnable)
+  {
+    hr = perform_editor_undo_state_action(inst, undoActionEnable, &count);
+    ok(SUCCEEDED(hr), "got %#lx\n", hr);
+    if (FAILED(hr)) return hr;
+    ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+    ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+
+    if (perform_undo(inst, undo_count > 0)) undo_count--, redo_count++, last_text = "";
+    ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+    ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+    SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(strcmp(buffer, last_text) == 0, "Expected %s, got %s\n", wine_dbgstr_a(last_text), wine_dbgstr_a(buffer));
+  }
+
+  if (inst->test_flags & undoTestDoFirstRedo)
+  {
+    if (perform_redo(inst, redo_count > 0)) undo_count++, redo_count--, last_text = text_foo;
+    ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+    ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+    SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(strcmp(buffer, last_text) == 0, "Expected %s, got %s\n", wine_dbgstr_a(last_text), wine_dbgstr_a(buffer));
+  }
+
+  SendMessageA(inst->hwnd, EM_SETSEL, 0, -1);
+  SendMessageA(inst->hwnd, EM_REPLACESEL, TRUE, (LPARAM)(last_text2 = text_bar));
+  if (inst->undo_ctl_state == undoStateActive) undo_count++, redo_count = 0;
+  ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+  ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+  SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+  ok(strcmp(buffer, last_text2) == 0, "Expected %s, got %s\n", wine_dbgstr_a(last_text2), wine_dbgstr_a(buffer));
+
+  if (perform_undo(inst, undo_count > 0)) undo_count--, redo_count++, last_text2 = last_text;
+  ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+  ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+  SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+  ok(strcmp(buffer, last_text2) == 0, "Expected %s, got %s\n", wine_dbgstr_a(last_text2), wine_dbgstr_a(buffer));
+
+  if (perform_redo(inst, redo_count > 0)) undo_count++, redo_count--, last_text2 = text_bar;
+  ok_msg_result(inst->hwnd, EM_CANUNDO, 0, 0, undo_count > 0);
+  ok_msg_result(inst->hwnd, EM_CANREDO, 0, 0, redo_count > 0);
+  SendMessageA(inst->hwnd, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+  ok(strcmp(buffer, last_text2) == 0, "Expected %s, got %s\n", wine_dbgstr_a(last_text2), wine_dbgstr_a(buffer));
+
+  return S_OK;
+}
+
+static void test_undo_control(void)
+{
+  enum editorUndoState state0;
+  enum editorUndoStateAction action0, action1;
+  IRichEditOle *reole = NULL;
+  ITextSelection *selection;
+  struct undo_test inst = { NULL };
+  HRESULT hr;
+
+  create_interfaces(&inst.hwnd, &reole, &inst.doc, &selection);
+  inst.undo_ctl_state = undoStateActive;
+  inst.last_undo_status = TRUE;
+  inst.last_redo_status = TRUE;
+  inst.undo_limit = SendMessageA(inst.hwnd, EM_SETUNDOLIMIT, 100, 0);
+  ok(inst.undo_limit >= 1, "Message EM_SETUNDOLIMIT returned %#Ix\n", inst.undo_limit);
+
+  if (SUCCEEDED(ITextDocument_Undo(inst.doc, 1, NULL)))
+  {
+    for (inst.test_flags = 0; inst.test_flags < undoTestMaxFlag; inst.test_flags++)
+    {
+      for (state0 = firstUndoState; state0 < numUndoStates; state0++)
+      {
+        for (action0 = firstUndoAction; action0 < numUndoActions; action0++)
+        {
+          for (action1 = firstUndoAction; action1 < numUndoActions; action1++)
+          {
+            winetest_push_context("%x:%d:%d >?:%d", inst.test_flags, state0, action0, action1);
+            hr = set_editor_undo_state(&inst, state0);
+            winetest_pop_context();
+
+            if (FAILED(hr)) continue;
+
+            winetest_push_context("%x:%d:%d+>?:%d", inst.test_flags, state0, action0, action1);
+            hr = subtest_undo_control(&inst, action0);
+            winetest_pop_context();
+
+            if (FAILED(hr)) continue;
+
+            winetest_push_context("%x:%d:%d>%d:%d+", inst.test_flags, state0, action0, inst.undo_ctl_state, action1);
+            subtest_undo_control(&inst, action1);
+            winetest_pop_context();
+          }
+        }
+      }
+    }
+  }
+
+  release_interfaces(&inst.hwnd, &reole, &inst.doc, &selection);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -4996,4 +5480,6 @@ START_TEST(richole)
   test_MoveEnd_story();
   test_character_movement();
   test_clipboard();
+  test_undo();
+  test_undo_control();
 }
