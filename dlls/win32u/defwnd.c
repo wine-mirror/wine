@@ -2369,6 +2369,14 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
             set_window_text( hwnd, cs->lpszName, ansi );
+
+            if (cs->style & (WS_HSCROLL | WS_VSCROLL))
+            {
+                SCROLLINFO si = { .cbSize = sizeof(si), .fMask = SIF_ALL, .nMax = 100 };
+                NtUserSetScrollInfo( hwnd, SB_HORZ, &si, FALSE );
+                NtUserSetScrollInfo( hwnd, SB_VERT, &si, FALSE );
+            }
+
             result = 1;
         }
         break;
