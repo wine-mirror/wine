@@ -526,10 +526,10 @@ static void test_builtins(void)
     ok(l == 0xbcdef00000000000ll, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshl, 0x0123456789abcdefll, 88);
-    todo_wine ok(!l, "got %#I64x\n", l);
+    ok(!l, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshl, 0x0123456789abcdefll, 0x88);
-    todo_wine ok(!l, "got %#I64x\n", l);
+    ok(!l, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshl, 0x0123456789abcdefll, 0x108);
     ok(l == 0x23456789abcdef00ll, "got %#I64x\n", l);
@@ -541,7 +541,7 @@ static void test_builtins(void)
     ok(l == 0x01234ll, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshr, 0x0123456789abcdefll, 88);
-    todo_wine ok(!l, "got %#I64x\n", l);
+    ok(!l, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshr, 0x8123456789abcdefll, 12);
     ok(l == 0xfff8123456789abcll, "got %#I64x\n", l);
@@ -550,7 +550,7 @@ static void test_builtins(void)
     ok(l == 0xfffffffffff81234ll, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshr, 0x8123456789abcdefll, 88);
-    todo_wine ok(l == -1ll, "got %#I64x\n", l);
+    ok(l == -1ll, "got %#I64x\n", l);
 
     l = call_shift_func(p_allshr, 0x8123456789abcdefll, 0x108);
     ok(l == 0xff8123456789abcdll, "got %#I64x\n", l);
@@ -562,7 +562,7 @@ static void test_builtins(void)
     ok(l == 0x81234ll, "got %#I64x\n", l);
 
     l = call_shift_func(p_aullshr, 0x8123456789abcdefll, 88);
-    todo_wine ok(!l, "got %#I64x\n", l);
+    ok(!l, "got %#I64x\n", l);
 
     l = call_shift_func(p_aullshr, 0x8123456789abcdefll, 0x108);
     ok(l == 0x8123456789abcdll, "got %#I64x\n", l);

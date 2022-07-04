@@ -817,7 +817,10 @@ LONGLONG __stdcall __regs__allshl( LONGLONG a, unsigned char b )
 
     if (b >= 32)
     {
-        ret.HighPart = x.LowPart << (b & 31);
+        if (b >= 64)
+            ret.HighPart = 0;
+        else
+            ret.HighPart = x.LowPart << (b & 31);
         ret.LowPart = 0;
     }
     else
@@ -847,7 +850,10 @@ LONGLONG __stdcall __regs__allshr( LONGLONG a, unsigned char b )
     if (b >= 32)
     {
         ret.HighPart = x.HighPart >> 31;
-        ret.LowPart = x.HighPart >> (b & 31);
+        if (b >= 64)
+            ret.LowPart = x.HighPart >> 31;
+        else
+            ret.LowPart = x.HighPart >> (b & 31);
     }
     else
     {
@@ -876,7 +882,10 @@ ULONGLONG __stdcall __regs__aullshr( ULONGLONG a, unsigned char b )
     if (b >= 32)
     {
         ret.HighPart = 0;
-        ret.LowPart = x.HighPart >> (b & 31);
+        if (b >= 64)
+            ret.LowPart = 0;
+        else
+            ret.LowPart = x.HighPart >> (b & 31);
     }
     else
     {
