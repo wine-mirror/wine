@@ -1757,6 +1757,19 @@ _StructuredTaskCollection* __thiscall _StructuredTaskCollection_ctor(
 
 #endif /* _MSVCR_VER >= 110 */
 
+#if _MSVCR_VER >= 120
+
+/* ??1_StructuredTaskCollection@details@Concurrency@@QAA@XZ */
+/* ??1_StructuredTaskCollection@details@Concurrency@@QAE@XZ */
+/* ??1_StructuredTaskCollection@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection_dtor, 4)
+void __thiscall _StructuredTaskCollection_dtor(_StructuredTaskCollection *this)
+{
+    FIXME("(%p): stub!\n", this);
+}
+
+#endif /* _MSVCR_VER >= 120 */
+
 /* ??0critical_section@Concurrency@@QAE@XZ */
 /* ??0critical_section@Concurrency@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(critical_section_ctor, 4)
