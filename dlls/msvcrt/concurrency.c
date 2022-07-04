@@ -1775,6 +1775,21 @@ void __thiscall _StructuredTaskCollection_dtor(_StructuredTaskCollection *this)
 
 #endif /* _MSVCR_VER >= 120 */
 
+#if _MSVCR_VER >= 110
+
+/* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAAXPAV_UnrealizedChore@23@PAVlocation@3@@Z */
+/* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAEXPAV_UnrealizedChore@23@PAVlocation@3@@Z */
+/* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QEAAXPEAV_UnrealizedChore@23@PEAVlocation@3@@Z */
+DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection__Schedule_loc, 12)
+void __thiscall _StructuredTaskCollection__Schedule_loc(
+        _StructuredTaskCollection *this, _UnrealizedChore *chore,
+        /*location*/void *placement)
+{
+    FIXME("(%p %p %p): stub!\n", this, chore, placement);
+}
+
+#endif /* _MSVCR_VER >= 110 */
+
 /* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAAXPAV_UnrealizedChore@23@@Z */
 /* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAEXPAV_UnrealizedChore@23@@Z */
 /* ?_Schedule@_StructuredTaskCollection@details@Concurrency@@QEAAXPEAV_UnrealizedChore@23@@Z */
