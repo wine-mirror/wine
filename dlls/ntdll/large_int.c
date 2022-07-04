@@ -809,39 +809,54 @@ ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
     return udivmod(a, b, NULL);
 }
 
-/******************************************************************************
- *        _allshl   (NTDLL.@)
- *
- * Shift a 64 bit integer to the left.
- *
- * PARAMS
- *  a [I] Initial number.
- *  b [I] Number to shift a by to the left.
- *
- * RETURNS
- *  The left-shifted value.
- */
-LONGLONG WINAPI _allshl( LONGLONG a, LONG b )
+
+LONGLONG __stdcall __regs__allshl( LONGLONG a, unsigned char b )
 {
     return a << b;
 }
 
 /******************************************************************************
- *        _allshr   (NTDLL.@)
- *
- * Shift a 64 bit integer to the right.
- *
- * PARAMS
- *  a [I] Initial number.
- *  b [I] Number to shift a by to the right.
- *
- * RETURNS
- *  The right-shifted value.
+ *        _allshl   (NTDLL.@)
  */
-LONGLONG WINAPI _allshr( LONGLONG a, LONG b )
+__ASM_GLOBAL_FUNC( _allshl,
+                   "xchgl (%esp),%ecx\n\t"
+                   "pushl %edx\n\t"
+                   "pushl %eax\n\t"
+                   "pushl %ecx\n\t"
+                   "jmp " __ASM_STDCALL("__regs__allshl", 12) )
+
+
+LONGLONG __stdcall __regs__allshr( LONGLONG a, unsigned char b )
 {
     return a >> b;
 }
+
+/******************************************************************************
+ *        _allshr   (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( _allshr,
+                   "xchgl (%esp),%ecx\n\t"
+                   "pushl %edx\n\t"
+                   "pushl %eax\n\t"
+                   "pushl %ecx\n\t"
+                   "jmp " __ASM_STDCALL("__regs__allshr", 12) )
+
+
+ULONGLONG __stdcall __regs__aullshr( ULONGLONG a, unsigned char b )
+{
+    return a >> b;
+}
+
+/******************************************************************************
+ *        _allshr   (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( _aullshr,
+                   "xchgl (%esp),%ecx\n\t"
+                   "pushl %edx\n\t"
+                   "pushl %eax\n\t"
+                   "pushl %ecx\n\t"
+                   "jmp " __ASM_STDCALL("__regs__aullshr", 12) )
+
 
 /******************************************************************************
  *        _alldvrm   (NTDLL.@)
@@ -897,23 +912,6 @@ ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b )
     ULONGLONG r;
     udivmod(a, b, &r);
     return r;
-}
-
-/******************************************************************************
- *        _aullshr   (NTDLL.@)
- *
- * Shift a 64 bit unsigned integer to the right.
- *
- * PARAMS
- *  a [I] Initial number.
- *  b [I] Number to shift a by to the right.
- *
- * RETURNS
- *  The right-shifted value.
- */
-ULONGLONG WINAPI _aullshr( ULONGLONG a, LONG b )
-{
-    return a >> b;
 }
 
 /******************************************************************************
