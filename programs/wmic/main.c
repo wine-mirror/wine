@@ -61,34 +61,14 @@ static const WCHAR *find_class( const WCHAR *alias )
     return NULL;
 }
 
-static WCHAR *find_prop( IWbemClassObject *class, const WCHAR *prop )
-{
-    SAFEARRAY *sa;
-    WCHAR *ret = NULL;
-    LONG i, last_index = 0;
-    BSTR str;
-
-    if (IWbemClassObject_GetNames( class, NULL, WBEM_FLAG_ALWAYS, NULL, &sa ) != S_OK) return NULL;
-
-    SafeArrayGetUBound( sa, 1, &last_index );
-    for (i = 0; i <= last_index; i++)
-    {
-        SafeArrayGetElement( sa, &i, &str );
-        if (!wcsicmp( str, prop ))
-        {
-            ret = wcsdup( str );
-            break;
-        }
-    }
-    SafeArrayDestroy( sa );
-    return ret;
-}
-
 static int WINAPIV output_string( HANDLE handle, const WCHAR *msg, ... )
 {
+    BOOL output = GetStdHandle(STD_OUTPUT_HANDLE) == handle;
+    static const WCHAR bomW[] = {0xfeff};
+    static BOOL bom;
     va_list va_args;
     int len;
-    DWORD count;
+    DWORD count, bom_count = 0;
     WCHAR buffer[8192];
 
     va_start( va_args, msg );
@@ -96,9 +76,16 @@ static int WINAPIV output_string( HANDLE handle, const WCHAR *msg, ... )
     va_end( va_args );
 
     if (!WriteConsoleW( handle, buffer, len, &count, NULL ))
+    {
+        if (output && !bom)
+        {
+            WriteFile( handle, bomW, sizeof(bomW), &bom_count, FALSE );
+            bom = TRUE;
+        }
         WriteFile( handle, buffer, len * sizeof(WCHAR), &count, FALSE );
+    }
 
-    return count;
+    return count + bom_count;
 }
 
 static int output_error( int msg )
@@ -109,46 +96,90 @@ static int output_error( int msg )
     return output_string( GetStdHandle(STD_ERROR_HANDLE), L"%s", buffer );
 }
 
-static int output_header( const WCHAR *prop, ULONG column_width )
+static int output_text( const WCHAR *str, ULONG column_width )
 {
-    static const WCHAR bomW[] = {0xfeff};
-    int len;
-    DWORD count;
-    WCHAR buffer[8192];
+    return output_string( GetStdHandle(STD_OUTPUT_HANDLE), L"%-*s", column_width, str );
+}
 
-    len = swprintf( buffer, ARRAY_SIZE(buffer), L"%-*s\r\n", column_width, prop );
+static int output_newline( void )
+{
+    return output_string( GetStdHandle(STD_OUTPUT_HANDLE), L"\r\n" );
+}
 
-    if (!WriteConsoleW( GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, &count, NULL )) /* redirected */
+static WCHAR * strip_spaces(WCHAR *start)
+{
+    WCHAR *str = start, *end;
+
+    while (*str == ' ')
+        str++;
+
+    end = start + lstrlenW(start) - 1;
+    while (end >= start && *end == ' ')
     {
-        WriteFile( GetStdHandle(STD_OUTPUT_HANDLE), bomW, sizeof(bomW), &count, FALSE );
-        WriteFile( GetStdHandle(STD_OUTPUT_HANDLE), buffer, len * sizeof(WCHAR), &count, FALSE );
-        count += sizeof(bomW);
+        *end = '\0';
+        end--;
     }
 
-    return count;
+    return str;
 }
 
-static int output_line( const WCHAR *str, ULONG column_width )
+static HRESULT process_property_list( IWbemClassObject *obj, const WCHAR *proplist, WCHAR **ret )
 {
-    return output_string( GetStdHandle(STD_OUTPUT_HANDLE), L"%-*s\r\n", column_width, str );
+    WCHAR *p, *ctx, *ptr, *stripped;
+    HRESULT hr = S_OK;
+
+    if (!(p = wcsdup( proplist ))) return E_OUTOFMEMORY;
+
+    if (!(stripped = malloc( (wcslen( proplist ) + 1) * sizeof(**ret) )))
+    {
+        free( p );
+        return E_OUTOFMEMORY;
+    }
+    *stripped = 0;
+
+    /* Validate that every requested property is supported. */
+    ptr = wcstok_s( p, L",", &ctx );
+    while (ptr)
+    {
+        ptr = strip_spaces( ptr );
+
+        if (FAILED(IWbemClassObject_Get( obj, ptr, 0, NULL, NULL, NULL )))
+        {
+            hr = E_FAIL;
+            break;
+        }
+        if (*stripped) wcscat( stripped, L"," );
+        wcscat( stripped, ptr );
+        ptr = wcstok_s( NULL, L",", &ctx );
+    }
+    free( p );
+
+    if (SUCCEEDED(hr))
+        *ret = stripped;
+    else
+    {
+        free( stripped );
+        *ret = NULL;
+    }
+
+    return hr;
 }
 
-static int query_prop( const WCHAR *class, const WCHAR *propname )
+static int query_prop( const WCHAR *class, const WCHAR *propnames )
 {
     HRESULT hr;
     IWbemLocator *locator = NULL;
     IWbemServices *services = NULL;
     IEnumWbemClassObject *result = NULL;
     LONG flags = WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY;
-    BSTR path = NULL, wql = NULL, query = NULL;
-    WCHAR *prop = NULL;
-    BOOL first = TRUE;
+    BSTR path = NULL, wql = NULL, query = NULL, name, str = NULL;
+    WCHAR *proplist = NULL;
     int len, ret = -1;
     IWbemClassObject *obj;
     ULONG count, width = 0;
     VARIANT v;
 
-    WINE_TRACE("%s, %s\n", debugstr_w(class), debugstr_w(propname));
+    WINE_TRACE("%s, %s\n", debugstr_w(class), debugstr_w(propnames));
 
     CoInitialize( NULL );
     CoInitializeSecurity( NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
@@ -162,10 +193,27 @@ static int query_prop( const WCHAR *class, const WCHAR *propname )
     hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
     if (hr != S_OK) goto done;
 
-    len = lstrlenW( class ) + ARRAY_SIZE(L"SELECT * FROM ");
+    if (!(str = SysAllocString( class ))) goto done;
+    hr = IWbemServices_GetObject( services, str, 0, NULL, &obj, NULL );
+    SysFreeString( str );
+    if (hr != S_OK)
+    {
+        WARN("Unrecognized class %s.\n", debugstr_w(class));
+        goto done;
+    }
+
+    /* Check that this class supports all requested properties. */
+    hr = process_property_list( obj, propnames, &proplist );
+    IWbemClassObject_Release( obj );
+    if (FAILED(hr))
+    {
+        output_error( STRING_INVALID_QUERY );
+        goto done;
+    }
+
+    len = lstrlenW( class ) + lstrlenW( proplist ) + ARRAY_SIZE(L"SELECT * FROM ");
     if (!(query = SysAllocStringLen( NULL, len ))) goto done;
-    lstrcpyW( query, L"SELECT * FROM " );
-    lstrcatW( query, class );
+    swprintf( query, len, L"SELECT %s FROM %s", proplist, class );
 
     if (!(wql = SysAllocString(L"WQL" ))) goto done;
     hr = IWbemServices_ExecQuery( services, wql, query, flags, NULL, &result );
@@ -176,38 +224,46 @@ static int query_prop( const WCHAR *class, const WCHAR *propname )
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
 
-        if (!prop && !(prop = find_prop( obj, propname )))
-        {
-            output_error( STRING_INVALID_QUERY );
-            goto done;
-        }
-        if (IWbemClassObject_Get( obj, prop, 0, &v, NULL, NULL ) == WBEM_S_NO_ERROR)
+        while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
         {
             VariantChangeType( &v, &v, 0, VT_BSTR );
             width = max( lstrlenW( V_BSTR( &v ) ), width );
             VariantClear( &v );
+            SysFreeString( name );
         }
+
         IWbemClassObject_Release( obj );
     }
     width += 2;
 
+    /* Header */
+    IEnumWbemClassObject_Reset( result );
+    IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
+    if (count)
+    {
+        while (IWbemClassObject_Next( obj, 0, &name, NULL, NULL, NULL ) == S_OK)
+        {
+            output_text( name, width );
+            SysFreeString( name );
+        }
+        output_newline();
+        IWbemClassObject_Release( obj );
+    }
+
+    /* Values */
     IEnumWbemClassObject_Reset( result );
     for (;;)
     {
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
 
-        if (first)
-        {
-            output_header( prop, width );
-            first = FALSE;
-        }
-        if (IWbemClassObject_Get( obj, prop, 0, &v, NULL, NULL ) == WBEM_S_NO_ERROR)
+        while (IWbemClassObject_Next( obj, 0, NULL, &v, NULL, NULL ) == S_OK)
         {
             VariantChangeType( &v, &v, 0, VT_BSTR );
-            output_line( V_BSTR( &v ), width );
+            output_text( V_BSTR( &v ), width );
             VariantClear( &v );
         }
+        output_newline();
         IWbemClassObject_Release( obj );
     }
     ret = 0;
@@ -219,7 +275,7 @@ done:
     SysFreeString( path );
     SysFreeString( query );
     SysFreeString( wql );
-    free( prop );
+    free( proplist );
     CoUninitialize();
     return ret;
 }
