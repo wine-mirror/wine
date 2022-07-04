@@ -250,6 +250,8 @@ static _StructuredTaskCollection* (__thiscall *p__StructuredTaskCollection_ctor)
 static void (__thiscall *p__StructuredTaskCollection_dtor)(_StructuredTaskCollection*);
 static void (__thiscall *p__StructuredTaskCollection__Schedule)(_StructuredTaskCollection*, _UnrealizedChore*);
 static int (__stdcall *p__StructuredTaskCollection__RunAndWait)(_StructuredTaskCollection*, _UnrealizedChore*);
+static void (__thiscall *p__StructuredTaskCollection__Cancel)(_StructuredTaskCollection*);
+static MSVCRT_bool (__thiscall *p__StructuredTaskCollection__IsCanceling)(_StructuredTaskCollection*);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -313,6 +315,10 @@ static BOOL init(void)
                 "?_Schedule@_StructuredTaskCollection@details@Concurrency@@QEAAXPEAV_UnrealizedChore@23@@Z");
         SET(p__StructuredTaskCollection__RunAndWait,
                 "?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QEAA?AW4_TaskCollectionStatus@23@PEAV_UnrealizedChore@23@@Z");
+        SET(p__StructuredTaskCollection__Cancel,
+                "?_Cancel@_StructuredTaskCollection@details@Concurrency@@QEAAXXZ");
+        SET(p__StructuredTaskCollection__IsCanceling,
+                "?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ");
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QEAA@XZ");
         SET(p_critical_section_dtor,
@@ -355,6 +361,10 @@ static BOOL init(void)
                 "?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAAXPAV_UnrealizedChore@23@@Z");
         SET(p__StructuredTaskCollection__RunAndWait,
                 "?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAA?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z");
+        SET(p__StructuredTaskCollection__Cancel,
+                "?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAAXXZ");
+        SET(p__StructuredTaskCollection__IsCanceling,
+                "?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ");
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QAA@XZ");
         SET(p_critical_section_dtor,
@@ -394,6 +404,10 @@ static BOOL init(void)
                 "?_Schedule@_StructuredTaskCollection@details@Concurrency@@QAEXPAV_UnrealizedChore@23@@Z");
         SET(p__StructuredTaskCollection__RunAndWait,
                 "?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAG?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z");
+        SET(p__StructuredTaskCollection__Cancel,
+                "?_Cancel@_StructuredTaskCollection@details@Concurrency@@QAEXXZ");
+        SET(p__StructuredTaskCollection__IsCanceling,
+                "?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ");
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QAE@XZ");
         SET(p_critical_section_dtor,
@@ -1334,6 +1348,7 @@ struct chore
     HANDLE set_event;
     HANDLE wait_event;
     DWORD main_tid;
+    BOOL check_canceling;
 };
 
 static void __cdecl chore_proc(_UnrealizedChore *_this)
@@ -1355,6 +1370,14 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
                 GetCurrentThreadId(), chore->main_tid);
     }
 
+    if (chore->check_canceling)
+    {
+        MSVCRT_bool canceling = call_func1(
+                p__StructuredTaskCollection__IsCanceling,
+                chore->chore.task_collection);
+        ok(!canceling, "Task is already canceling");
+    }
+
     if (!chore->wait_event)
         chore->executed = TRUE;
 
@@ -1369,6 +1392,14 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
         DWORD ret = WaitForSingleObject(chore->wait_event, 5000);
         ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
         chore->executed = TRUE;
+    }
+
+    if (chore->check_canceling)
+    {
+        MSVCRT_bool canceling = call_func1(
+                p__StructuredTaskCollection__IsCanceling,
+                chore->chore.task_collection);
+        ok(canceling, "Task is not canceling");
     }
 }
 
@@ -1531,6 +1562,28 @@ static void test_StructuredTaskCollection(void)
     status = p__StructuredTaskCollection__RunAndWait(&task_coll, NULL);
     ok(status == 1, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
     ok(chore1.executed, "Chore was not executed\n");
+    call_func1(p__StructuredTaskCollection_dtor, &task_coll);
+
+    /* test that running chores can be canceled */
+    call_func2(p__StructuredTaskCollection_ctor, &task_coll, NULL);
+    ResetEvent(chore_start_evt);
+    chore_ctor(&chore1);
+    chore1.check_canceling = TRUE;
+    chore1.wait_event = chore_evt2;
+    chore1.set_event = chore_evt1;
+
+    call_func2(p__StructuredTaskCollection__Schedule, &task_coll, &chore1.chore);
+
+    ret = WaitForSingleObject(chore_evt1, 5000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
+
+    call_func1(p__StructuredTaskCollection__Cancel, &task_coll);
+
+    b = SetEvent(chore_evt2);
+    ok(b, "SetEvent failed\n");
+
+    status = p__StructuredTaskCollection__RunAndWait(&task_coll, NULL);
+    ok(status == 2, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
     call_func1(p__StructuredTaskCollection_dtor, &task_coll);
 
     CloseHandle(chore_start_evt);
