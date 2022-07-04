@@ -414,20 +414,23 @@ static void make_explorer_window(parameters_struct *params)
         {
             ERR("Failed to create PIDL for %s.\n", debugstr_w(path));
             IShellWindows_Release(sw);
+            free(path);
             return;
         }
 
         variant_from_pidl(&var, pidl);
         V_VT(&empty_var) = VT_EMPTY;
-        if (IShellWindows_FindWindowSW(sw, &var, &empty_var, SWC_EXPLORER, &hwnd, 0, &dispatch) == S_OK)
+        hres = IShellWindows_FindWindowSW(sw, &var, &empty_var, SWC_EXPLORER, &hwnd, 0, &dispatch);
+        VariantClear(&var);
+        ILFree(pidl);
+        if (hres == S_OK)
         {
             TRACE("Found window %#lx already browsing path %s.\n", hwnd, debugstr_w(path));
             SetForegroundWindow((HWND)(LONG_PTR)hwnd);
             IShellWindows_Release(sw);
+            free(path);
             return;
         }
-        ILFree(pidl);
-        VariantClear(&var);
     }
 
     memset(nav_buttons,0,sizeof(nav_buttons));
@@ -448,6 +451,8 @@ static void make_explorer_window(parameters_struct *params)
     if(!info)
     {
         WINE_ERR("Could not allocate an explorer_info struct\n");
+        IShellWindows_Release(sw);
+        free(path);
         return;
     }
     hres = CoCreateInstance(&CLSID_ExplorerBrowser,NULL,CLSCTX_INPROC_SERVER,
@@ -456,6 +461,8 @@ static void make_explorer_window(parameters_struct *params)
     {
         WINE_ERR("Could not obtain an instance of IExplorerBrowser\n");
         HeapFree(GetProcessHeap(),0,info);
+        IShellWindows_Release(sw);
+        free(path);
         return;
     }
     info->rebar_height=0;
@@ -537,6 +544,7 @@ static void make_explorer_window(parameters_struct *params)
     folder = get_starting_shell_folder(path);
     IExplorerBrowser_BrowseToObject(info->browser, (IUnknown *)folder, SBSP_ABSOLUTE);
     IShellFolder_Release(folder);
+    free(path);
 
     ShowWindow(info->main_window,SW_SHOWDEFAULT);
     UpdateWindow(info->main_window);
