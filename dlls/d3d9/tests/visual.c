@@ -141,18 +141,11 @@ static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y
     D3DLOCKED_RECT lockedRect;
 
     hr = IDirect3DSurface9_GetDesc(surface, &desc);
-    if(FAILED(hr))  /* This is not a test */
-    {
-        trace("Can't get the surface description, hr=%08x\n", hr);
-        return 0xdeadbeef;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirect3DSurface9_LockRect(surface, &lockedRect, &rectToLock, D3DLOCK_READONLY);
-    if(FAILED(hr))  /* This is not a test */
-    {
-        trace("Can't lock the surface, hr=%08x\n", hr);
-        return 0xdeadbeef;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     switch(desc.Format) {
         case D3DFMT_A8R8G8B8:
         {
@@ -165,10 +158,7 @@ static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y
             break;
     }
     hr = IDirect3DSurface9_UnlockRect(surface);
-    if(FAILED(hr))
-    {
-        trace("Can't unlock the surface, hr=%08x\n", hr);
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     return color;
 }
 
@@ -246,11 +236,7 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
     HRESULT hr;
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
-    if(FAILED(hr))
-    {
-        trace("Can't get the render target, hr %#x.\n", hr);
-        return 0xdeadbeed;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     get_rt_readback(rt, &rb);
     /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
