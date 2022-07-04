@@ -451,21 +451,26 @@ static HRESULT WINAPI audio_renderer_sink_GetPresentationClock(IMFMediaSink *ifa
 static HRESULT WINAPI audio_renderer_sink_Shutdown(IMFMediaSink *iface)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p.\n", iface);
 
-    if (renderer->flags & SAR_SHUT_DOWN)
-        return MF_E_SHUTDOWN;
-
     EnterCriticalSection(&renderer->cs);
-    renderer->flags |= SAR_SHUT_DOWN;
-    IMFMediaEventQueue_Shutdown(renderer->event_queue);
-    IMFMediaEventQueue_Shutdown(renderer->stream_event_queue);
-    audio_renderer_set_presentation_clock(renderer, NULL);
-    audio_renderer_release_audio_client(renderer);
+
+    if (renderer->flags & SAR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        renderer->flags |= SAR_SHUT_DOWN;
+        IMFMediaEventQueue_Shutdown(renderer->event_queue);
+        IMFMediaEventQueue_Shutdown(renderer->stream_event_queue);
+        audio_renderer_set_presentation_clock(renderer, NULL);
+        audio_renderer_release_audio_client(renderer);
+    }
+
     LeaveCriticalSection(&renderer->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static const IMFMediaSinkVtbl audio_renderer_sink_vtbl =
@@ -1364,19 +1369,22 @@ static HRESULT WINAPI audio_renderer_stream_ProcessSample(IMFStreamSink *iface, 
     if (!sample)
         return E_POINTER;
 
-    if (renderer->flags & SAR_SHUT_DOWN)
-        return MF_E_STREAMSINK_REMOVED;
-
     EnterCriticalSection(&renderer->cs);
 
-    if (renderer->state == STREAM_STATE_RUNNING)
-        hr = stream_queue_sample(renderer, sample);
-    renderer->flags &= ~SAR_SAMPLE_REQUESTED;
-
-    if (renderer->queued_frames < renderer->max_frames && renderer->state == STREAM_STATE_RUNNING)
+    if (renderer->flags & SAR_SHUT_DOWN)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
     {
-        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
-        renderer->flags |= SAR_SAMPLE_REQUESTED;
+        if (renderer->state == STREAM_STATE_RUNNING)
+            hr = stream_queue_sample(renderer, sample);
+        renderer->flags &= ~SAR_SAMPLE_REQUESTED;
+
+        if (renderer->queued_frames < renderer->max_frames && renderer->state == STREAM_STATE_RUNNING)
+        {
+            IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample,
+                    &GUID_NULL, S_OK, NULL);
+            renderer->flags |= SAR_SAMPLE_REQUESTED;
+        }
     }
 
     LeaveCriticalSection(&renderer->cs);
@@ -1414,11 +1422,13 @@ static HRESULT WINAPI audio_renderer_stream_PlaceMarker(IMFStreamSink *iface, MF
 
     TRACE("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
 
-    if (renderer->flags & SAR_SHUT_DOWN)
-        return MF_E_STREAMSINK_REMOVED;
-
     EnterCriticalSection(&renderer->cs);
-    hr = stream_place_marker(renderer, marker_type, context_value);
+
+    if (renderer->flags & SAR_SHUT_DOWN)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
+        hr = stream_place_marker(renderer, marker_type, context_value);
+
     LeaveCriticalSection(&renderer->cs);
 
     return hr;
