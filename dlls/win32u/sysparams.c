@@ -420,6 +420,35 @@ static void release_display_device_init_mutex( HANDLE mutex )
     NtClose( mutex );
 }
 
+static BOOL write_adapter_mode( HKEY adapter_key, const DEVMODEW *mode )
+{
+    static const WCHAR default_settingsW[] = {'D','e','f','a','u','l','t','S','e','t','t','i','n','g','s','.',0};
+    WCHAR bufferW[MAX_PATH];
+
+#define set_mode_field( name, field, flag )                                                        \
+    do                                                                                             \
+    {                                                                                              \
+        lstrcpyW( bufferW, default_settingsW );                                                    \
+        lstrcatW( bufferW, (name) );                                                               \
+        if (!set_reg_value( adapter_key, bufferW, REG_DWORD, &mode->field, sizeof(mode->field) ))  \
+            return FALSE;                                                                          \
+    } while (0)
+
+    set_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
+    set_mode_field( x_resolutionW, dmPelsWidth, DM_PELSWIDTH );
+    set_mode_field( y_resolutionW, dmPelsHeight, DM_PELSHEIGHT );
+    set_mode_field( v_refreshW, dmDisplayFrequency, DM_DISPLAYFREQUENCY );
+    set_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
+    set_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
+    set_mode_field( fixed_outputW, dmDisplayFixedOutput, DM_DISPLAYFIXEDOUTPUT );
+    set_mode_field( x_panningW, dmPosition.x, DM_POSITION );
+    set_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+
+#undef set_mode_field
+
+    return TRUE;
+}
+
 static BOOL read_adapter_mode( HKEY adapter_key, DEVMODEW *mode )
 {
     static const WCHAR default_settingsW[] = {'D','e','f','a','u','l','t','S','e','t','t','i','n','g','s','.',0};
@@ -466,6 +495,26 @@ static BOOL read_registry_settings( const WCHAR *adapter_path, DEVMODEW *mode )
     else
     {
         ret = read_adapter_mode( hkey, mode );
+        NtClose( hkey );
+    }
+
+    release_display_device_init_mutex( mutex );
+    return ret;
+}
+
+static BOOL write_registry_settings( const WCHAR *adapter_path, const DEVMODEW *mode )
+{
+    HANDLE mutex;
+    HKEY hkey;
+    BOOL ret;
+
+    mutex = get_display_device_init_mutex();
+
+    if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) ))) ret = FALSE;
+    if (!(hkey = reg_open_key( config_key, adapter_path, lstrlenW( adapter_path ) * sizeof(WCHAR) ))) ret = FALSE;
+    else
+    {
+        ret = write_adapter_mode( hkey, mode );
         NtClose( hkey );
     }
 
@@ -1973,6 +2022,9 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     if (!NtUserEnumDisplaySettings( devname, ENUM_CURRENT_SETTINGS, &current_mode, 0 )) current_mode.dmSize = 0;
 
     if (!(devmode = validate_display_settings( &default_mode, &current_mode, devmode ))) ret = DISP_CHANGE_BADMODE;
+    else if (user_driver->pChangeDisplaySettingsEx( device_name, devmode, hwnd, flags | CDS_TEST, lparam )) ret = DISP_CHANGE_BADMODE;
+    else if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings( adapter_path, devmode )) ret = DISP_CHANGE_NOTUPDATED;
+    else if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
     else ret = user_driver->pChangeDisplaySettingsEx( device_name, devmode, hwnd, flags, lparam );
 
     if (ret) ERR( "Changing %s display settings returned %d.\n", debugstr_us(devname), ret );

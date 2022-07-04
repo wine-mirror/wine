@@ -1017,6 +1017,25 @@ NTSTATUS CDECL X11DRV_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDP
     return STATUS_SUCCESS;
 }
 
+static HANDLE get_display_device_init_mutex(void)
+{
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t'};
+    UNICODE_STRING name = { sizeof(init_mutexW), sizeof(init_mutexW), (WCHAR *)init_mutexW };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE mutex = 0;
+
+    InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
+    NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE );
+    if (mutex) NtWaitForSingleObject( mutex, FALSE, NULL );
+    return mutex;
+}
+
+static void release_display_device_init_mutex(HANDLE mutex)
+{
+    NtReleaseMutant( mutex, NULL );
+    NtClose( mutex );
+}
+
 /* Find the Vulkan device UUID corresponding to a LUID */
 static BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
 {
