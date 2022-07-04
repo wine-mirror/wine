@@ -507,32 +507,29 @@ static HRESULT WINAPI sample_grabber_stream_Flush(IMFStreamSink *iface)
 {
     struct sample_grabber *grabber = impl_from_IMFStreamSink(iface);
     struct scheduled_item *item, *next_item;
+    HRESULT hr = S_OK;
 
     TRACE("%p.\n", iface);
 
-    if (grabber->is_shut_down)
-        return MF_E_STREAMSINK_REMOVED;
-
     EnterCriticalSection(&grabber->cs);
 
-    LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &grabber->items, struct scheduled_item, entry)
+    if (grabber->is_shut_down)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
     {
-        /* Samples are discarded, markers are processed immediately. */
-        switch (item->type)
+        LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &grabber->items, struct scheduled_item, entry)
         {
-            case ITEM_TYPE_SAMPLE:
-                break;
-            case ITEM_TYPE_MARKER:
+            /* Samples are discarded, markers are processed immediately. */
+            if (item->type == ITEM_TYPE_MARKER)
                 sample_grabber_stream_report_marker(grabber, &item->u.marker.context, E_ABORT);
-                break;
-        }
 
-        stream_release_pending_item(item);
+            stream_release_pending_item(item);
+        }
     }
 
     LeaveCriticalSection(&grabber->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static const IMFStreamSinkVtbl sample_grabber_stream_vtbl =
@@ -924,9 +921,6 @@ static HRESULT WINAPI sample_grabber_sink_GetStreamSinkByIndex(IMFMediaSink *ifa
 
     TRACE("%p, %lu, %p.\n", iface, index, stream);
 
-    if (grabber->is_shut_down)
-        return MF_E_SHUTDOWN;
-
     EnterCriticalSection(&grabber->cs);
 
     if (grabber->is_shut_down)
@@ -1057,18 +1051,22 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
 
     TRACE("%p.\n", iface);
 
-    if (grabber->is_shut_down)
-        return MF_E_SHUTDOWN;
-
     EnterCriticalSection(&grabber->cs);
-    grabber->is_shut_down = TRUE;
-    sample_grabber_release_pending_items(grabber);
-    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
+
+    if (grabber->is_shut_down)
+        hr = MF_E_SHUTDOWN;
+    else
     {
-        sample_grabber_set_presentation_clock(grabber, NULL);
-        IMFMediaEventQueue_Shutdown(grabber->stream_event_queue);
-        IMFMediaEventQueue_Shutdown(grabber->event_queue);
+        grabber->is_shut_down = TRUE;
+        sample_grabber_release_pending_items(grabber);
+        if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
+        {
+            sample_grabber_set_presentation_clock(grabber, NULL);
+            IMFMediaEventQueue_Shutdown(grabber->stream_event_queue);
+            IMFMediaEventQueue_Shutdown(grabber->event_queue);
+        }
     }
+
     LeaveCriticalSection(&grabber->cs);
 
     return hr;
