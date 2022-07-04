@@ -60,8 +60,6 @@ enum DriverPriority {
     Priority_Preferred
 };
 
-static struct pulse_config pulse_config;
-
 static HANDLE pulse_thread;
 static struct list g_sessions = LIST_INIT(g_sessions);
 static struct list g_devices_cache = LIST_INIT(g_devices_cache);
@@ -492,7 +490,6 @@ int WINAPI AUDDRV_GetPriority(void)
     char *name;
 
     params.name   = name = get_application_name(FALSE);
-    params.config = &pulse_config;
     pulse_call(test_connect, &params);
     free(name);
     return SUCCEEDED(params.result) ? Priority_Preferred : Priority_Unavailable;

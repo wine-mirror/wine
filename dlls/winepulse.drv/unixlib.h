@@ -29,16 +29,6 @@ enum phys_device_bus_type {
     phys_device_bus_usb
 };
 
-struct pulse_config
-{
-    struct
-    {
-        WAVEFORMATEXTENSIBLE format;
-        REFERENCE_TIME def_period;
-        REFERENCE_TIME min_period;
-    } modes[2];
-};
-
 struct endpoint
 {
     unsigned int name;
@@ -218,7 +208,6 @@ struct test_connect_params
 {
     const char *name;
     HRESULT result;
-    struct pulse_config *config;
 };
 
 struct is_started_params

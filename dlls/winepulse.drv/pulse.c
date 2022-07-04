@@ -752,7 +752,6 @@ static void pulse_probe_settings(int render, const char *pulse_name, WAVEFORMATE
 static NTSTATUS pulse_test_connect(void *args)
 {
     struct test_connect_params *params = args;
-    struct pulse_config *config = params->config;
     PhysDevice *dev;
     pa_operation *o;
     int ret;
@@ -834,13 +833,6 @@ static NTSTATUS pulse_test_connect(void *args)
     pulse_ctx = NULL;
     pa_mainloop_free(pulse_ml);
     pulse_ml = NULL;
-
-    config->modes[0].format = pulse_fmt[0];
-    config->modes[0].def_period = pulse_def_period[0];
-    config->modes[0].min_period = pulse_min_period[0];
-    config->modes[1].format = pulse_fmt[1];
-    config->modes[1].def_period = pulse_def_period[1];
-    config->modes[1].min_period = pulse_min_period[1];
 
     pulse_unlock();
 
@@ -2716,12 +2708,10 @@ static NTSTATUS pulse_wow64_test_connect(void *args)
     {
         PTR32 name;
         HRESULT result;
-        PTR32 config;
     } *params32 = args;
     struct test_connect_params params =
     {
         .name = ULongToPtr(params32->name),
-        .config = ULongToPtr(params32->config), /* struct pulse_config is identical */
     };
     pulse_test_connect(&params);
     params32->result = params.result;
