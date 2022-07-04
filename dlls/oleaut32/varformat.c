@@ -1585,8 +1585,34 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
     USHORT usFlags = dwFlags & VARIANT_CALENDAR_HIJRI ? VAR_CALENDAR_HIJRI : 0;
 
     hRes = VariantChangeTypeEx(&vDate, pVarIn, lcid, usFlags, VT_DATE);
+    /* 31809.40 and similar are treated as invalid by coercion functions but
+     * it simply is a DATE in string form as far as VarFormat is concerned
+     */
     if (FAILED(hRes))
-      return hRes;
+    {
+      if (V_TYPE(pVarIn) == VT_BSTR)
+      {
+        DATE out;
+        OLECHAR *endptr = NULL;
+	/* Try consume the string with wcstod */
+	double tmp = wcstod(V_BSTR(pVarIn), &endptr);
+
+	/* Not a double in string form */
+	if (*endptr)
+          return hRes;
+
+	hRes = VarDateFromR8(tmp, &out);
+
+	if (FAILED(hRes))
+	  return hRes;
+
+	V_VT(&vDate) = VT_DATE;
+	V_DATE(&vDate) = out;
+      }
+      else
+	return hRes;
+    }
+
     dateHeader = (FMT_DATE_HEADER*)(rgbTok + FmtGetPositive(header));
   }
 
