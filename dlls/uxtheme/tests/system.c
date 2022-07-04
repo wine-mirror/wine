@@ -102,6 +102,13 @@ static void init_funcs(void)
 #undef GET_PROC
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 /* Try to make sure pending X events have been processed before continuing */
 static void flush_events(void)
 {
@@ -1056,14 +1063,15 @@ static void test_buffered_paint(void)
 static void test_GetThemePartSize(void)
 {
     static const DWORD enabled = 1;
+    int old_dpi, current_dpi, system_dpi, target_dpi, min_dpi;
     DPI_AWARENESS_CONTEXT old_context;
-    unsigned int old_dpi, current_dpi;
+    int i, expected, stretch_mark = 0;
     HTHEME htheme = NULL;
     HWND hwnd = NULL;
-    SIZE size, size2;
     HKEY key = NULL;
+    HDC hdc = NULL;
     HRESULT hr;
-    HDC hdc;
+    SIZE size;
 
     if (!pSetThreadDpiAwarenessContext)
     {
@@ -1080,90 +1088,138 @@ static void test_GetThemePartSize(void)
     old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     current_dpi = get_primary_monitor_effective_dpi();
     old_dpi = current_dpi;
-    /* DPI needs to be 50% larger than 96 to avoid the effect of TrueSizeStretchMark */
-    if (current_dpi < 192 && !set_primary_monitor_effective_dpi(192))
-    {
-        skip("Failed to set primary monitor dpi to 192.\n");
-        goto done;
-    }
+    system_dpi = GetDpiForSystem();
+    target_dpi = system_dpi;
 
     hwnd = CreateWindowA("Button", "Test", WS_POPUP, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
-    htheme = OpenThemeData(hwnd, WC_BUTTONW);
+    hdc = GetDC(hwnd);
+
+    /* Test in the current DPI */
+    /* Test that OpenThemeData() with NULL window handle uses system DPI even if DPI changes while running */
+    htheme = OpenThemeData(NULL, WC_BUTTONW);
     if (!htheme)
     {
         skip("Theming is inactive.\n");
         goto done;
     }
 
-    hdc = GetDC(hwnd);
+    /* TMT_TRUESIZESTRETCHMARK is present, choose the next minimum DPI */
+    hr = GetThemeInt(htheme, BP_CHECKBOX, CBS_CHECKEDNORMAL, TMT_TRUESIZESTRETCHMARK, &stretch_mark);
+    if (SUCCEEDED(hr) && stretch_mark > 0)
+    {
+        for (i = 7; i >= 1; --i)
+        {
+            hr = GetThemeInt(htheme, BP_CHECKBOX, CBS_CHECKEDNORMAL,
+                             i <= 5 ? TMT_MINDPI1 + i - 1 : TMT_MINDPI6 + i - 6, &min_dpi);
+            if (SUCCEEDED(hr) && min_dpi <= system_dpi)
+            {
+                target_dpi = min_dpi;
+                break;
+            }
+        }
+    }
+    expected = MulDiv(13, target_dpi, 96);
+
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    todo_wine_if(target_dpi != 96)
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n",
-       size.cx, size.cy, size2.cx, size2.cy);
-    ReleaseDC(hwnd, hdc);
+    todo_wine_if(target_dpi != 96)
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    CloseThemeData(htheme);
 
-    /* Test that theme part size doesn't change even if DPI is changed */
-    if (!set_primary_monitor_effective_dpi(96))
+    /* Test in 192 DPI */
+    /* DPI needs to be 50% larger than 96 to avoid the effect of TrueSizeStretchMark */
+    if (current_dpi != 192 && !set_primary_monitor_effective_dpi(192))
     {
-        skip("Failed to set primary monitor dpi to 96.\n");
+        skip("Failed to set primary monitor dpi to 192.\n");
         goto done;
     }
 
-    hdc = GetDC(hwnd);
-    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    /* Test that OpenThemeData() with NULL window handle uses system DPI even if DPI changes while running */
+    expected = MulDiv(13, target_dpi, 96);
+    htheme = OpenThemeData(NULL, WC_BUTTONW);
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    todo_wine_if(target_dpi != 96)
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
+    todo_wine_if(target_dpi != 96)
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    CloseThemeData(htheme);
+
+    /* Test that OpenThemeData() with a window handle use window DPI */
+    expected = 26;
+    htheme = OpenThemeData(hwnd, WC_BUTTONW);
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+
+    /* Test in 96 DPI */
+    if (!set_primary_monitor_effective_dpi(96))
+    {
+        skip("Failed to set primary monitor dpi to 96.\n");
+        CloseThemeData(htheme);
+        goto done;
+    }
+
+    /* Test that theme part size doesn't change even if DPI is changed */
+    expected = 26;
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
 
     /* Test that theme part size changes after DPI is changed and theme handle is reopened.
      * If DPI awareness context is not DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, theme part size
      * still doesn't change, even after the theme handle is reopened. */
     CloseThemeData(htheme);
     htheme = OpenThemeData(hwnd, WC_BUTTONW);
-
-    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    expected = 13;
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %ldx%ld.\n", size.cx,
-       size.cy);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %ldx%ld.\n", size.cx,
-       size.cy);
-    ReleaseDC(hwnd, hdc);
-
-    /* Test that OpenThemeData() without a window will assume the DPI is 96 */
-    if (!set_primary_monitor_effective_dpi(192))
-    {
-        skip("Failed to set primary monitor dpi to 192.\n");
-        goto done;
-    }
-
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
     CloseThemeData(htheme);
-    htheme = OpenThemeData(NULL, WC_BUTTONW);
-    size = size2;
 
-    hdc = GetDC(hwnd);
-    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    /* Test that OpenThemeData() with NULL window handle use system DPI even if DPI changes while running */
+    expected = MulDiv(13, target_dpi, 96);
+    htheme = OpenThemeData(NULL, WC_BUTTONW);
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
-    ReleaseDC(hwnd, hdc);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    CloseThemeData(htheme);
 
 done:
+    if (hdc)
+        ReleaseDC(hwnd, hdc);
     if (hwnd)
         DestroyWindow(hwnd);
-    if (htheme)
-        CloseThemeData(htheme);
     if (get_primary_monitor_effective_dpi() != old_dpi)
         set_primary_monitor_effective_dpi(old_dpi);
     if (key)
