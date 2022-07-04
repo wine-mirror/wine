@@ -1432,38 +1432,43 @@ static HRESULT WINAPI video_renderer_sink_GetPresentationClock(IMFMediaSink *ifa
 static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
 {
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
     size_t i;
 
     TRACE("%p.\n", iface);
 
-    if (renderer->flags & EVR_SHUT_DOWN)
-        return MF_E_SHUTDOWN;
-
     EnterCriticalSection(&renderer->cs);
-    renderer->flags |= EVR_SHUT_DOWN;
-    /* Detach streams from the sink. */
-    for (i = 0; i < renderer->stream_count; ++i)
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
     {
-        struct video_stream *stream = renderer->streams[i];
+        renderer->flags |= EVR_SHUT_DOWN;
+        /* Detach streams from the sink. */
+        for (i = 0; i < renderer->stream_count; ++i)
+        {
+            struct video_stream *stream = renderer->streams[i];
 
-        EnterCriticalSection(&stream->cs);
-        stream->parent = NULL;
-        LeaveCriticalSection(&stream->cs);
+            EnterCriticalSection(&stream->cs);
+            stream->parent = NULL;
+            LeaveCriticalSection(&stream->cs);
 
-        IMFMediaEventQueue_Shutdown(stream->event_queue);
-        IMFStreamSink_Release(&stream->IMFStreamSink_iface);
-        IMFMediaSink_Release(iface);
-        renderer->streams[i] = NULL;
+            IMFMediaEventQueue_Shutdown(stream->event_queue);
+            IMFStreamSink_Release(&stream->IMFStreamSink_iface);
+            IMFMediaSink_Release(iface);
+            renderer->streams[i] = NULL;
+        }
+        free(renderer->streams);
+        renderer->stream_count = 0;
+        renderer->stream_size = 0;
+        IMFMediaEventQueue_Shutdown(renderer->event_queue);
+        video_renderer_set_presentation_clock(renderer, NULL);
+        video_renderer_release_services(renderer);
     }
-    free(renderer->streams);
-    renderer->stream_count = 0;
-    renderer->stream_size = 0;
-    IMFMediaEventQueue_Shutdown(renderer->event_queue);
-    video_renderer_set_presentation_clock(renderer, NULL);
-    video_renderer_release_services(renderer);
+
     LeaveCriticalSection(&renderer->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static const IMFMediaSinkVtbl video_renderer_sink_vtbl =
@@ -1742,6 +1747,35 @@ static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTra
     return hr;
 }
 
+static HRESULT video_renderer_create_mixer_and_presenter(struct video_renderer *renderer,
+        IMFTransform **mixer, IMFVideoPresenter **presenter)
+{
+    HRESULT hr;
+
+    if (*mixer)
+    {
+        IMFTransform_AddRef(*mixer);
+    }
+    else if (FAILED(hr = video_renderer_create_mixer(NULL, mixer)))
+    {
+        WARN("Failed to create default mixer object, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (*presenter)
+    {
+        IMFVideoPresenter_AddRef(*presenter);
+    }
+    else if (FAILED(hr = video_renderer_create_presenter(renderer, NULL, presenter)))
+    {
+        WARN("Failed to create default presenter, hr %#lx.\n", hr);
+        IMFTransform_Release(*mixer);
+        return hr;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface, IMFTransform *mixer,
         IMFVideoPresenter *presenter)
 {
@@ -1753,41 +1787,24 @@ static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface,
     EnterCriticalSection(&renderer->cs);
 
     if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
     {
-        LeaveCriticalSection(&renderer->cs);
-        return MF_E_SHUTDOWN;
+        video_renderer_uninitialize(renderer);
+
+        if (SUCCEEDED(hr = video_renderer_create_mixer_and_presenter(renderer, &mixer, &presenter)))
+        {
+            /* FIXME: check clock state */
+            /* FIXME: check that streams are not initialized */
+
+            hr = video_renderer_initialize(renderer, mixer, presenter);
+
+            IMFTransform_Release(mixer);
+            IMFVideoPresenter_Release(presenter);
+        }
     }
-
-    video_renderer_uninitialize(renderer);
-
-    if (mixer)
-        IMFTransform_AddRef(mixer);
-    else if (FAILED(hr = video_renderer_create_mixer(NULL, &mixer)))
-    {
-        WARN("Failed to create default mixer object, hr %#lx.\n", hr);
-        LeaveCriticalSection(&renderer->cs);
-        return hr;
-    }
-
-    if (presenter)
-        IMFVideoPresenter_AddRef(presenter);
-    else if (FAILED(hr = video_renderer_create_presenter(renderer, NULL, &presenter)))
-    {
-        WARN("Failed to create default presenter, hr %#lx.\n", hr);
-        LeaveCriticalSection(&renderer->cs);
-        IMFTransform_Release(mixer);
-        return hr;
-    }
-
-    /* FIXME: check clock state */
-    /* FIXME: check that streams are not initialized */
-
-    hr = video_renderer_initialize(renderer, mixer, presenter);
 
     LeaveCriticalSection(&renderer->cs);
-
-    IMFTransform_Release(mixer);
-    IMFVideoPresenter_Release(presenter);
 
     return hr;
 }
