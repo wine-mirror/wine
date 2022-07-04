@@ -39,6 +39,7 @@ static LONGLONG (WINAPI *p_allrem)( LONGLONG a, LONGLONG b );
 static LONGLONG (WINAPI *p_allmul)( LONGLONG a, LONGLONG b );
 static ULONGLONG (WINAPI *p_aulldiv)( ULONGLONG a, ULONGLONG b );
 static ULONGLONG (WINAPI *p_aullrem)( ULONGLONG a, ULONGLONG b );
+static void *p_allshl, *p_allshr, *p_aullshr;
 
 static void InitFunctionPtrs(void)
 {
@@ -54,8 +55,11 @@ static void InitFunctionPtrs(void)
         p_alldiv = (void *)GetProcAddress(hntdll, "_alldiv");
         p_allrem = (void *)GetProcAddress(hntdll, "_allrem");
         p_allmul = (void *)GetProcAddress(hntdll, "_allmul");
+        p_allshl = (void *)GetProcAddress(hntdll, "_allshl");
+        p_allshr = (void *)GetProcAddress(hntdll, "_allshr");
         p_aulldiv = (void *)GetProcAddress(hntdll, "_aulldiv");
         p_aullrem = (void *)GetProcAddress(hntdll, "_aullrem");
+        p_aullshr = (void *)GetProcAddress(hntdll, "_aullshr");
     } /* if */
 }
 
@@ -445,8 +449,30 @@ static void test_RtlLargeIntegerToChar(void)
 static void test_builtins(void)
 {
 #ifdef __i386__
+    void *code_mem;
     ULONGLONG u;
     LONGLONG l;
+
+    static const BYTE call_shift_code[] =
+    {
+        0x55,                           /* pushl %ebp */
+        0x89, 0xe5,                     /* movl %esp,%ebp */
+        0x31, 0xc0,                     /* xorl %eax,%eax */
+        0x31, 0xd2,                     /* xorl %edx,%edx */
+        0x31, 0xc9,                     /* xorl %ecx,%ecx */
+        0x87, 0x45, 0x0c,               /* xchgl 12(%ebp),%eax */
+        0x87, 0x55, 0x10,               /* xchgl 16(%ebp),%edx */
+        0x87, 0x4d, 0x14,               /* xchgl 20(%ebp),%ecx */
+        0xff, 0x55, 0x08,               /* call *8(%ebp) */
+        0x39, 0xe5,                     /* cmpl %esp,%ebp */
+        0x74, 0x05,                     /* je 1f */
+        0xb8, 0xef, 0xbe, 0xad, 0xde,   /* movl $0xdeadbeef,%eax */
+        0xc9,                           /* leave */
+        0xc3,                           /* ret */
+    };
+    LONGLONG (__cdecl *call_shift_func)(void *func, LONGLONG a, LONG b);
+
+    code_mem = VirtualAlloc(NULL, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
     l = p_alldiv(100, 7);
     ok(l == 14, "_alldiv returned %s\n", wine_dbgstr_longlong(l));
@@ -489,6 +515,59 @@ static void test_builtins(void)
 
     l = p_allmul(0x300000001ll, 4);
     ok(l == 0xc00000004, "_allmul = %s\n", wine_dbgstr_longlong(l));
+
+    memcpy(code_mem, call_shift_code, sizeof(call_shift_code));
+    call_shift_func = code_mem;
+
+    l = call_shift_func(p_allshl, 0x0123456789abcdefll, 12);
+    ok(l == 0x3456789abcdef000ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshl, 0x0123456789abcdefll, 44);
+    ok(l == 0xbcdef00000000000ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshl, 0x0123456789abcdefll, 88);
+    todo_wine ok(!l, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshl, 0x0123456789abcdefll, 0x88);
+    todo_wine ok(!l, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshl, 0x0123456789abcdefll, 0x108);
+    ok(l == 0x23456789abcdef00ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x0123456789abcdefll, 12);
+    ok(l == 0x0123456789abcll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x0123456789abcdefll, 44);
+    ok(l == 0x01234ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x0123456789abcdefll, 88);
+    todo_wine ok(!l, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x8123456789abcdefll, 12);
+    ok(l == 0xfff8123456789abcll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x8123456789abcdefll, 44);
+    ok(l == 0xfffffffffff81234ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x8123456789abcdefll, 88);
+    todo_wine ok(l == -1ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_allshr, 0x8123456789abcdefll, 0x108);
+    ok(l == 0xff8123456789abcdll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_aullshr, 0x8123456789abcdefll, 12);
+    ok(l == 0x8123456789abcll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_aullshr, 0x8123456789abcdefll, 44);
+    ok(l == 0x81234ll, "got %#I64x\n", l);
+
+    l = call_shift_func(p_aullshr, 0x8123456789abcdefll, 88);
+    todo_wine ok(!l, "got %#I64x\n", l);
+
+    l = call_shift_func(p_aullshr, 0x8123456789abcdefll, 0x108);
+    ok(l == 0x8123456789abcdll, "got %#I64x\n", l);
+
+    VirtualFree(code_mem, 0, MEM_RELEASE);
 #endif /* __i386__ */
 }
 
