@@ -1725,11 +1725,13 @@ static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
  */
 static void load_global_options( const UNICODE_STRING *image )
 {
-    static const WCHAR optionsW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+    static const WCHAR optionsW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+        'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','N','T','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'I','m','a','g','e',' ','F','i','l','e',' ','E','x','e','c','u','t','i','o','n',' ','O','p','t','i','o','n','s',0};
-    static const WCHAR sessionW[] = {'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+    static const WCHAR sessionW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+        'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
         'C','o','n','t','r','o','l','\\','S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
     static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};

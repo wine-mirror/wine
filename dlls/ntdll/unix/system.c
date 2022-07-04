@@ -2115,7 +2115,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
     static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
     static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
     static const WCHAR tziW[] = { 'T','Z','I',0 };
-    static const WCHAR Time_ZonesW[] = { 'M','a','c','h','i','n','e','\\',
+    static const WCHAR Time_ZonesW[] = { '\\','R','e','g','i','s','t','r','y','\\',
+        'M','a','c','h','i','n','e','\\',
         'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\',
         'W','i','n','d','o','w','s',' ','N','T','\\',

@@ -264,7 +264,7 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, L"Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion" );
+    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion" );
 
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return FALSE;
 
@@ -311,7 +311,7 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
 
         /* get service pack version */
 
-        RtlInitUnicodeString( &nameW, L"Machine\\System\\CurrentControlSet\\Control\\Windows" );
+        RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Windows" );
         if (!NtOpenKey( &hkey2, KEY_ALL_ACCESS, &attr ))
         {
             RtlInitUnicodeString( &valueW, L"CSDVersion" );
@@ -329,7 +329,7 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
 
         /* get product type */
 
-        RtlInitUnicodeString( &nameW, L"Machine\\System\\CurrentControlSet\\Control\\ProductOptions" );
+        RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ProductOptions" );
         if (!NtOpenKey( &hkey2, KEY_ALL_ACCESS, &attr ))
         {
             RtlInitUnicodeString( &valueW, L"ProductType" );
@@ -373,7 +373,7 @@ static BOOL get_win9x_registry_version( RTL_OSVERSIONINFOEXW *version )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, L"Machine\\Software\\Microsoft\\Windows\\CurrentVersion" );
+    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion" );
 
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return FALSE;
 
