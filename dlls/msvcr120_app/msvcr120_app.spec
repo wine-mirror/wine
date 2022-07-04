@@ -532,9 +532,9 @@
 @ thiscall -arch=i386 ?_GetScheduler@_Scheduler@details@Concurrency@@QAEPAVScheduler@3@XZ(ptr) msvcr120.?_GetScheduler@_Scheduler@details@Concurrency@@QAEPAVScheduler@3@XZ
 @ cdecl -arch=win64 ?_GetScheduler@_Scheduler@details@Concurrency@@QEAAPEAVScheduler@3@XZ(ptr) msvcr120.?_GetScheduler@_Scheduler@details@Concurrency@@QEAAPEAVScheduler@3@XZ
 @ cdecl ?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ() msvcr120.?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ
-@ stub -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ
-@ stub -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ
-@ stub -arch=win64 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ
+@ cdecl -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ(ptr) msvcr120.?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ
+@ thiscall -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ(ptr) msvcr120.?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ
+@ cdecl -arch=win64 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ(ptr) msvcr120.?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ
 @ stub -arch=arm ?_IsCanceling@_TaskCollection@details@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?_IsCanceling@_TaskCollection@details@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?_IsCanceling@_TaskCollection@details@Concurrency@@QEAA_NXZ

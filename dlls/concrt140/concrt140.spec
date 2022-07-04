@@ -537,9 +537,9 @@
 @ stub -arch=arm ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IBAXI@Z
 @ thiscall -arch=i386 ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IBEXI@Z(ptr long) _vector_base_v4__Internal_throw_exception
 @ cdecl -arch=win64 ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IEBAX_K@Z(ptr long) _vector_base_v4__Internal_throw_exception
-@ stub -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ
-@ stub -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ
-@ stub -arch=win64 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ
+@ cdecl -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ(ptr) _StructuredTaskCollection__IsCanceling
+@ thiscall -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ(ptr) _StructuredTaskCollection__IsCanceling
+@ cdecl -arch=win64 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ(ptr) _StructuredTaskCollection__IsCanceling
 @ stub -arch=arm ?_IsCanceling@_TaskCollection@details@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?_IsCanceling@_TaskCollection@details@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?_IsCanceling@_TaskCollection@details@Concurrency@@QEAA_NXZ

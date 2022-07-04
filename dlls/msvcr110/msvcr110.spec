@@ -544,9 +544,9 @@
 @ stub -arch=arm ?_Invoke@_CancellationTokenRegistration@details@Concurrency@@AAAXXZ
 @ stub -arch=i386 ?_Invoke@_CancellationTokenRegistration@details@Concurrency@@AAEXXZ
 @ stub -arch=win64 ?_Invoke@_CancellationTokenRegistration@details@Concurrency@@AEAAXXZ
-@ stub -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ
-@ stub -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ
-@ stub -arch=win64 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ
+@ cdecl -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ(ptr) _StructuredTaskCollection__IsCanceling
+@ thiscall -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ(ptr) _StructuredTaskCollection__IsCanceling
+@ cdecl -arch=win64 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ(ptr) _StructuredTaskCollection__IsCanceling
 @ stub -arch=arm ?_IsCanceling@_TaskCollection@details@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?_IsCanceling@_TaskCollection@details@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?_IsCanceling@_TaskCollection@details@Concurrency@@QEAA_NXZ

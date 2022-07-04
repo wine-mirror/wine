@@ -1824,6 +1824,17 @@ void __thiscall _StructuredTaskCollection__Cancel(
     FIXME("(%p): stub!\n", this);
 }
 
+/* ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ */
+/* ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ */
+/* ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection__IsCanceling, 4)
+bool __thiscall _StructuredTaskCollection__IsCanceling(
+        _StructuredTaskCollection *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return FALSE;
+}
+
 /* ??0critical_section@Concurrency@@QAE@XZ */
 /* ??0critical_section@Concurrency@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(critical_section_ctor, 4)
