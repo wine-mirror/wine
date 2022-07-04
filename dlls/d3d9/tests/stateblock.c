@@ -187,22 +187,22 @@ static int switch_render_target(IDirect3DDevice9 *device, struct event_data *eve
 
     /* Create new swapchain */
     hret = IDirect3DDevice9_CreateAdditionalSwapChain(device, &present_parameters, &swapchain);
-    ok (hret == D3D_OK, "CreateAdditionalSwapChain returned %#x.\n", hret);
+    ok (hret == D3D_OK, "CreateAdditionalSwapChain returned %#lx.\n", hret);
     if (hret != D3D_OK) goto error;
 
     /* Get its backbuffer */
     hret = IDirect3DSwapChain9_GetBackBuffer(swapchain, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok (hret == D3D_OK, "GetBackBuffer returned %#x.\n", hret);
+    ok (hret == D3D_OK, "GetBackBuffer returned %#lx.\n", hret);
     if (hret != D3D_OK) goto error;
 
     /* Save the current render target */
     hret = IDirect3DDevice9_GetRenderTarget(device, 0, &event_data->original_render_target);
-    ok (hret == D3D_OK, "GetRenderTarget returned %#x.\n", hret);
+    ok (hret == D3D_OK, "GetRenderTarget returned %#lx.\n", hret);
     if (hret != D3D_OK) goto error;
 
     /* Set the new swapchain's backbuffer as a render target */
     hret = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
-    ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
+    ok (hret == D3D_OK, "SetRenderTarget returned %#lx.\n", hret);
     if (hret != D3D_OK) goto error;
 
     IDirect3DSurface9_Release(backbuffer);
@@ -221,7 +221,7 @@ static int revert_render_target(IDirect3DDevice9 *device, struct event_data *eve
 
     /* Reset the old render target */
     hret = IDirect3DDevice9_SetRenderTarget(device, 0, event_data->original_render_target);
-    ok (hret == D3D_OK, "SetRenderTarget returned %#x.\n", hret);
+    ok (hret == D3D_OK, "SetRenderTarget returned %#lx.\n", hret);
     if (hret != D3D_OK) {
         IDirect3DSurface9_Release(event_data->original_render_target);
         return EVENT_ERROR;
@@ -238,7 +238,7 @@ static int create_stateblock_all(IDirect3DDevice9 *device, struct event_data *ev
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_ALL, &event_data->stateblock);
-    ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "CreateStateBlock returned %#lx.\n", hr);
     if (FAILED(hr)) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -248,7 +248,7 @@ static int create_stateblock_vertex(IDirect3DDevice9 *device, struct event_data 
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_VERTEXSTATE, &event_data->stateblock);
-    ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "CreateStateBlock returned %#lx.\n", hr);
     if (FAILED(hr)) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -258,7 +258,7 @@ static int create_stateblock_pixel(IDirect3DDevice9 *device, struct event_data *
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_PIXELSTATE, &event_data->stateblock);
-    ok(SUCCEEDED(hr), "CreateStateBlock returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "CreateStateBlock returned %#lx.\n", hr);
     if (FAILED(hr)) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -268,7 +268,7 @@ static int begin_stateblock(IDirect3DDevice9 *device, struct event_data *event_d
     HRESULT hret;
 
     hret = IDirect3DDevice9_BeginStateBlock(device);
-    ok(hret == D3D_OK, "BeginStateBlock returned %#x.\n", hret);
+    ok(hret == D3D_OK, "BeginStateBlock returned %#lx.\n", hret);
     if (hret != D3D_OK) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -278,7 +278,7 @@ static int end_stateblock(IDirect3DDevice9 *device, struct event_data *event_dat
     HRESULT hret;
 
     hret = IDirect3DDevice9_EndStateBlock(device, &event_data->stateblock);
-    ok(hret == D3D_OK, "EndStateBlock returned %#x.\n", hret);
+    ok(hret == D3D_OK, "EndStateBlock returned %#lx.\n", hret);
     if (hret != D3D_OK) return EVENT_ERROR;
     return EVENT_OK;
 }
@@ -294,7 +294,7 @@ static int apply_stateblock(IDirect3DDevice9 *device, struct event_data *event_d
     HRESULT hret;
 
     hret = IDirect3DStateBlock9_Apply(event_data->stateblock);
-    ok(hret == D3D_OK, "Apply returned %#x.\n", hret);
+    ok(hret == D3D_OK, "Apply returned %#lx.\n", hret);
     if (hret != D3D_OK) {
         IDirect3DStateBlock9_Release(event_data->stateblock);
         return EVENT_ERROR;
@@ -310,7 +310,7 @@ static int capture_stateblock(IDirect3DDevice9 *device, struct event_data *event
     HRESULT hret;
 
     hret = IDirect3DStateBlock9_Capture(event_data->stateblock);
-    ok(hret == D3D_OK, "Capture returned %#x.\n", hret);
+    ok(hret == D3D_OK, "Capture returned %#lx.\n", hret);
     if (hret != D3D_OK)
         return EVENT_ERROR;
 
@@ -523,19 +523,19 @@ static void shader_constant_apply_data(IDirect3DDevice9 *device, const struct st
 
     if (!scarg->pshader) {
         hret = IDirect3DDevice9_SetVertexShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "SetVertexShaderConstantI returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetVertexShaderConstantI returned %#lx.\n", hret);
         hret = IDirect3DDevice9_SetVertexShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "SetVertexShaderConstantF returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetVertexShaderConstantF returned %#lx.\n", hret);
         hret = IDirect3DDevice9_SetVertexShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "SetVertexShaderConstantB returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetVertexShaderConstantB returned %#lx.\n", hret);
 
     } else {
         hret = IDirect3DDevice9_SetPixelShaderConstantI(device, index, scdata->int_constant, 1);
-        ok(hret == D3D_OK, "SetPixelShaderConstantI returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetPixelShaderConstantI returned %#lx.\n", hret);
         hret = IDirect3DDevice9_SetPixelShaderConstantF(device, index, scdata->float_constant, 1);
-        ok(hret == D3D_OK, "SetPixelShaderConstantF returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetPixelShaderConstantF returned %#lx.\n", hret);
         hret = IDirect3DDevice9_SetPixelShaderConstantB(device, index, scdata->bool_constant, 4);
-        ok(hret == D3D_OK, "SetPixelShaderConstantB returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetPixelShaderConstantB returned %#lx.\n", hret);
     }
 }
 
@@ -550,20 +550,20 @@ static void shader_constant_check_data(IDirect3DDevice9 *device, const struct st
     if (!scarg->pshader)
     {
         hr = IDirect3DDevice9_GetVertexShaderConstantI(device, scarg->idx, value.int_constant, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstantI returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstantI returned %#lx.\n", hr);
         hr = IDirect3DDevice9_GetVertexShaderConstantF(device, scarg->idx, value.float_constant, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstantF returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstantF returned %#lx.\n", hr);
         hr = IDirect3DDevice9_GetVertexShaderConstantB(device, scarg->idx, value.bool_constant, 4);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstantB returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "GetVertexShaderConstantB returned %#lx.\n", hr);
     }
     else
     {
         hr = IDirect3DDevice9_GetPixelShaderConstantI(device, scarg->idx, value.int_constant, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstantI returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstantI returned %#lx.\n", hr);
         hr = IDirect3DDevice9_GetPixelShaderConstantF(device, scarg->idx, value.float_constant, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstantF returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstantF returned %#lx.\n", hr);
         hr = IDirect3DDevice9_GetPixelShaderConstantB(device, scarg->idx, value.bool_constant, 4);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstantB returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "GetPixelShaderConstantB returned %#lx.\n", hr);
     }
 
     ok(!memcmp(scdata->int_constant, value.int_constant, sizeof(scdata->int_constant)),
@@ -737,10 +737,10 @@ static void light_apply_data(IDirect3DDevice9 *device, const struct state_test *
     unsigned int index = larg->idx;
 
     hret = IDirect3DDevice9_SetLight(device, index, &ldata->light);
-    ok(hret == D3D_OK, "SetLight returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetLight returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_LightEnable(device, index, ldata->enabled);
-    ok(hret == D3D_OK, "SetLightEnable returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetLightEnable returned %#lx.\n", hret);
 }
 
 static void light_check_data(IDirect3DDevice9 *device, const struct state_test *test,
@@ -756,10 +756,10 @@ static void light_check_data(IDirect3DDevice9 *device, const struct state_test *
     value.get_light_result = IDirect3DDevice9_GetLight(device, larg->idx, &value.light);
 
     ok(value.get_enabled_result == ldata->get_enabled_result,
-            "Chain stage %u: expected get_enabled_result %#x, got %#x.\n",
+            "Chain stage %u: expected get_enabled_result %#lx, got %#lx.\n",
             chain_stage, ldata->get_enabled_result, value.get_enabled_result);
     ok(value.get_light_result == ldata->get_light_result,
-            "Chain stage %u: expected get_light_result %#x, got %#x.\n",
+            "Chain stage %u: expected get_light_result %#lx, got %#lx.\n",
             chain_stage, ldata->get_light_result, value.get_light_result);
 
     ok(value.enabled == ldata->enabled,
@@ -981,22 +981,22 @@ static void transform_apply_data(IDirect3DDevice9 *device, const struct state_te
     HRESULT hret;
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &tdata->view);
-    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &tdata->projection);
-    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &tdata->texture0);
-    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &tdata->texture7);
-    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &tdata->world0);
-    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 
     hret = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(255), &tdata->world255);
-    ok(hret == D3D_OK, "SetTransform returned %#x.\n", hret);
+    ok(hret == D3D_OK, "SetTransform returned %#lx.\n", hret);
 }
 
 static void compare_matrix(const char *name, unsigned int chain_stage,
@@ -1036,32 +1036,32 @@ static void transform_check_data(IDirect3DDevice9 *device, const struct state_te
 
     value = transform_poison_data.view;
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &value);
-    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetTransform returned %#lx.\n", hr);
     compare_matrix("View", chain_stage, &value, &tdata->view);
 
     value = transform_poison_data.projection;
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_PROJECTION, &value);
-    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetTransform returned %#lx.\n", hr);
     compare_matrix("Projection", chain_stage, &value, &tdata->projection);
 
     value = transform_poison_data.texture0;
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0, &value);
-    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetTransform returned %#lx.\n", hr);
     compare_matrix("Texture0", chain_stage, &value, &tdata->texture0);
 
     value = transform_poison_data.texture7;
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_TEXTURE0 + texture_stages - 1, &value);
-    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetTransform returned %#lx.\n", hr);
     compare_matrix("Texture7", chain_stage, &value, &tdata->texture7);
 
     value = transform_poison_data.world0;
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &value);
-    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetTransform returned %#lx.\n", hr);
     compare_matrix("World0", chain_stage, &value, &tdata->world0);
 
     value = transform_poison_data.world255;
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(255), &value);
-    ok(SUCCEEDED(hr), "GetTransform returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetTransform returned %#lx.\n", hr);
     compare_matrix("World255", chain_stage, &value, &tdata->world255);
 }
 
@@ -1230,7 +1230,7 @@ static void render_state_apply_data(IDirect3DDevice9 *device, const struct state
     for (i = 0; i < ARRAY_SIZE(render_state_indices); ++i)
     {
         hret = IDirect3DDevice9_SetRenderState(device, render_state_indices[i], rsdata->states[i]);
-        ok(hret == D3D_OK, "SetRenderState returned %#x.\n", hret);
+        ok(hret == D3D_OK, "SetRenderState returned %#lx.\n", hret);
     }
 }
 
@@ -1246,8 +1246,8 @@ static void render_state_check_data(IDirect3DDevice9 *device, const struct state
     {
         DWORD value = ctx->poison_data_buffer.states[i];
         hr = IDirect3DDevice9_GetRenderState(device, render_state_indices[i], &value);
-        ok(SUCCEEDED(hr), "GetRenderState returned %#x.\n", hr);
-        ok(value == rsdata->states[i], "Chain stage %u, render state %#x: expected %#x, got %#x.\n",
+        ok(SUCCEEDED(hr), "GetRenderState returned %#lx.\n", hr);
+        ok(value == rsdata->states[i], "Chain stage %u, render state %#x: expected %#lx, got %#lx.\n",
                 chain_stage, render_state_indices[i], rsdata->states[i], value);
     }
 }
@@ -1701,16 +1701,16 @@ static void resource_apply_data(IDirect3DDevice9 *device, const struct state_tes
     HRESULT hr;
 
     hr = IDirect3DDevice9_SetVertexDeclaration(device, d->decl);
-    ok(SUCCEEDED(hr), "SetVertexDeclaration (%p) returned %#x.\n", d->decl, hr);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration (%p) returned %#lx.\n", d->decl, hr);
 
     hr = IDirect3DDevice9_SetVertexShader(device, d->vs);
-    ok(SUCCEEDED(hr), "SetVertexShader (%p) returned %#x.\n", d->vs, hr);
+    ok(SUCCEEDED(hr), "SetVertexShader (%p) returned %#lx.\n", d->vs, hr);
 
     hr = IDirect3DDevice9_SetPixelShader(device, d->ps);
-    ok(SUCCEEDED(hr), "SetPixelShader (%p) returned %#x.\n", d->ps, hr);
+    ok(SUCCEEDED(hr), "SetPixelShader (%p) returned %#lx.\n", d->ps, hr);
 
     hr = IDirect3DDevice9_SetIndices(device, d->ib);
-    ok(SUCCEEDED(hr), "SetIndices (%p) returned %#x.\n", d->ib, hr);
+    ok(SUCCEEDED(hr), "SetIndices (%p) returned %#lx.\n", d->ib, hr);
 
     for (i = 0; i < arg->stream_count; ++i)
     {
@@ -1721,15 +1721,15 @@ static void resource_apply_data(IDirect3DDevice9 *device, const struct state_tes
             {
                 hr = IDirect3DDevice9_CreateVertexBuffer(device, 64, D3DUSAGE_DYNAMIC,
                         0, D3DPOOL_DEFAULT, &temp_vb, NULL);
-                ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+                ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             }
             hr = IDirect3DDevice9_SetStreamSource(device, i, temp_vb, d->stream_offset, d->stream_stride);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         }
 
         hr = IDirect3DDevice9_SetStreamSource(device, i, d->vb[i], d->stream_offset, d->stream_stride);
         ok(hr == D3D_OK, "Unexpected SetStreamSource result, i %u, vb %p, "
-                "stream_offset %u, stream_stride %u), hr %#x.\n",
+                "stream_offset %u, stream_stride %u), hr %#lx.\n",
                 i, d->vb[i], d->stream_offset, d->stream_stride, hr);
     }
     if (temp_vb)
@@ -1738,7 +1738,7 @@ static void resource_apply_data(IDirect3DDevice9 *device, const struct state_tes
     for (i = 0; i < arg->tex_count; ++i)
     {
         hr = IDirect3DDevice9_SetTexture(device, i, (IDirect3DBaseTexture9 *)d->tex[i]);
-        ok(SUCCEEDED(hr), "SetTexture (%u, %p) returned %#x.\n", i, d->tex[i], hr);
+        ok(SUCCEEDED(hr), "SetTexture (%u, %p) returned %#lx.\n", i, d->tex[i], hr);
     }
 }
 
@@ -1749,15 +1749,13 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
     const struct resource_test_data *poison = &ctx->poison_data;
     const struct resource_test_arg *arg = test->test_arg;
     const struct resource_test_data *d = expected_data;
-    unsigned int expected_offset;
-    unsigned int i;
+    unsigned int expected_offset, i, v, w;
     HRESULT hr;
     void *ptr;
-    DWORD v, w;
 
     ptr = poison->decl;
     hr = IDirect3DDevice9_GetVertexDeclaration(device, (IDirect3DVertexDeclaration9 **)&ptr);
-    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#lx.\n", hr);
     if (quirk & SB_QUIRK_RECORDED_VDECL_CAPTURE)
     {
         ok(ptr == ctx->test_data_all.decl, "Chain stage %u, expected vertex declaration %p, received %p.\n",
@@ -1775,7 +1773,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
 
     ptr = poison->vs;
     hr = IDirect3DDevice9_GetVertexShader(device, (IDirect3DVertexShader9 **)&ptr);
-    ok(SUCCEEDED(hr), "GetVertexShader returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetVertexShader returned %#lx.\n", hr);
     ok(ptr == d->vs, "Chain stage %u, expected vertex shader %p, received %p.\n",
             chain_stage, d->vs, ptr);
     if (SUCCEEDED(hr) && ptr)
@@ -1785,7 +1783,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
 
     ptr = poison->ps;
     hr = IDirect3DDevice9_GetPixelShader(device, (IDirect3DPixelShader9 **)&ptr);
-    ok(SUCCEEDED(hr), "GetPixelShader returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetPixelShader returned %#lx.\n", hr);
     ok(ptr == d->ps, "Chain stage %u, expected pixel shader %p, received %p.\n",
             chain_stage, d->ps, ptr);
     if (SUCCEEDED(hr) && ptr)
@@ -1795,7 +1793,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
 
     ptr = poison->ib;
     hr = IDirect3DDevice9_GetIndices(device, (IDirect3DIndexBuffer9 **)&ptr);
-    ok(SUCCEEDED(hr), "GetIndices returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetIndices returned %#lx.\n", hr);
     ok(ptr == d->ib, "Chain stage %u, expected index buffer %p, received %p.\n",
             chain_stage, d->ib, ptr);
     if (SUCCEEDED(hr) && ptr)
@@ -1808,7 +1806,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
     {
         ptr = poison->vb[i];
         hr = IDirect3DDevice9_GetStreamSource(device, i, (IDirect3DVertexBuffer9 **)&ptr, &v, &w);
-        ok(SUCCEEDED(hr), "GetStreamSource (%u) returned %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "GetStreamSource (%u) returned %#lx.\n", i, hr);
         ok(ptr == d->vb[i], "Chain stage %u, stream %u, expected vertex buffer %p, received %p.\n",
                 chain_stage, i, d->vb[i], ptr);
         ok(v == expected_offset, "Stream source offset %u, expected %u, stride %u.\n", v, expected_offset, w);
@@ -1823,7 +1821,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
     {
         ptr = poison->tex[i];
         hr = IDirect3DDevice9_GetTexture(device, i, (IDirect3DBaseTexture9 **)&ptr);
-        ok(SUCCEEDED(hr), "SetTexture (%u) returned %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "SetTexture (%u) returned %#lx.\n", i, hr);
         ok(ptr == d->tex[i], "Chain stage %u, texture stage %u, expected texture %p, received %p.\n",
                 chain_stage, i, d->tex[i], ptr);
         if (SUCCEEDED(hr) && ptr)
@@ -1889,12 +1887,12 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl, &data->decl);
-    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration returned %#lx.\n", hr);
 
     if (arg->vs_version)
     {
         hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &data->vs);
-        ok(SUCCEEDED(hr), "CreateVertexShader returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "CreateVertexShader returned %#lx.\n", hr);
     }
     else
     {
@@ -1904,7 +1902,7 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
     if (arg->ps_version)
     {
         hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &data->ps);
-        ok(SUCCEEDED(hr), "CreatePixelShader returned %#x.\n", hr);
+        ok(SUCCEEDED(hr), "CreatePixelShader returned %#lx.\n", hr);
     }
     else
     {
@@ -1913,14 +1911,14 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
 
     hr = IDirect3DDevice9_CreateIndexBuffer(device, 64, D3DUSAGE_DYNAMIC,
             D3DFMT_INDEX32, D3DPOOL_DEFAULT, &data->ib, NULL);
-    ok(SUCCEEDED(hr), "CreateIndexBuffer returned %#x.\n", hr);
+    ok(SUCCEEDED(hr), "CreateIndexBuffer returned %#lx.\n", hr);
 
     data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
     for (i = 0; i < arg->stream_count; ++i)
     {
         hr = IDirect3DDevice9_CreateVertexBuffer(device, 64, D3DUSAGE_DYNAMIC,
                 0, D3DPOOL_DEFAULT, &data->vb[i], NULL);
-        ok(SUCCEEDED(hr), "CreateVertexBuffer (%u) returned %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "CreateVertexBuffer (%u) returned %#lx.\n", i, hr);
     }
     data->stream_offset = 4;
     data->stream_stride = 64;
@@ -1929,7 +1927,7 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
     {
         hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0,
                 D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &data->tex[i], NULL);
-        ok(SUCCEEDED(hr), "CreateTexture (%u) returned %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "CreateTexture (%u) returned %#lx.\n", i, hr);
     }
 }
 
@@ -2078,7 +2076,7 @@ static void test_state_management(void)
     }
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#lx.\n", hr);
 
     texture_stages = caps.MaxTextureBlendStages;
 
@@ -2121,7 +2119,7 @@ static void test_state_management(void)
     execute_test_chain_all(device, tests, tcount);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
+    ok(!refcount, "Device has %lu references left\n", refcount);
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }

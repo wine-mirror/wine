@@ -33,7 +33,7 @@ static inline void wait_query_(const char *file, unsigned int line, IDirect3DQue
             break;
         Sleep(10);
     }
-    ok_(file, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok_(file, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 }
 
 #endif
