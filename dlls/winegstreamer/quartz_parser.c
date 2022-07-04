@@ -101,6 +101,40 @@ static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface);
 
+static bool wg_audio_format_is_float(enum wg_audio_format format)
+{
+    switch (format)
+    {
+        case WG_AUDIO_FORMAT_UNKNOWN: return false;
+        case WG_AUDIO_FORMAT_U8: return false;
+        case WG_AUDIO_FORMAT_S16LE: return false;
+        case WG_AUDIO_FORMAT_S24LE: return false;
+        case WG_AUDIO_FORMAT_S32LE: return false;
+        case WG_AUDIO_FORMAT_F32LE: return true;
+        case WG_AUDIO_FORMAT_F64LE: return true;
+    }
+
+    assert(0);
+    return false;
+}
+
+static WORD wg_audio_format_get_depth(enum wg_audio_format format)
+{
+    switch (format)
+    {
+        case WG_AUDIO_FORMAT_UNKNOWN: return 0;
+        case WG_AUDIO_FORMAT_U8: return 8;
+        case WG_AUDIO_FORMAT_S16LE: return 16;
+        case WG_AUDIO_FORMAT_S24LE: return 24;
+        case WG_AUDIO_FORMAT_S32LE: return 32;
+        case WG_AUDIO_FORMAT_F32LE: return 32;
+        case WG_AUDIO_FORMAT_F64LE: return 64;
+    }
+
+    assert(0);
+    return 0;
+}
+
 static bool amt_from_wg_format_audio(AM_MEDIA_TYPE *mt, const struct wg_format *format)
 {
     mt->majortype = MEDIATYPE_Audio;
@@ -118,28 +152,8 @@ static bool amt_from_wg_format_audio(AM_MEDIA_TYPE *mt, const struct wg_format *
     case WG_AUDIO_FORMAT_F32LE:
     case WG_AUDIO_FORMAT_F64LE:
     {
-        static const struct
-        {
-            bool is_float;
-            WORD depth;
-        }
-        format_table[] =
-        {
-            {0},
-            {false, 8},
-            {false, 16},
-            {false, 24},
-            {false, 32},
-            {true, 32},
-            {true, 64},
-        };
-
-        bool is_float;
-        WORD depth;
-
-        assert(format->u.audio.format < ARRAY_SIZE(format_table));
-        is_float = format_table[format->u.audio.format].is_float;
-        depth = format_table[format->u.audio.format].depth;
+        bool is_float = wg_audio_format_is_float(format->u.audio.format);
+        WORD depth = wg_audio_format_get_depth(format->u.audio.format);
 
         if (is_float || format->u.audio.channels > 2)
         {
