@@ -57,6 +57,8 @@ struct pulse_stream
     HANDLE event;
     float vol[PA_CHANNELS_MAX];
 
+    REFERENCE_TIME def_period;
+
     INT32 locked;
     BOOL started;
     SIZE_T bufsize_frames, real_bufsize_bytes, period_bytes;
@@ -1123,9 +1125,15 @@ static NTSTATUS pulse_create_stream(void *args)
     if (FAILED(hr))
         goto exit;
 
-    period = pulse_def_period[stream->dataflow == eCapture];
+    period = 0;
+    hr = get_device_period_helper(params->dataflow, params->pulse_name, &period, NULL);
+    if (FAILED(hr))
+        goto exit;
+
     if (duration < 3 * period)
         duration = 3 * period;
+
+    stream->def_period = period;
 
     stream->period_bytes = pa_frame_size(&stream->ss) * muldiv(period, stream->ss.rate, 10000000);
 
