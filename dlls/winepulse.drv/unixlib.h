@@ -146,6 +146,15 @@ struct get_mix_format_params
     HRESULT result;
 };
 
+struct get_device_period_params
+{
+    const char *pulse_name;
+    EDataFlow flow;
+    HRESULT result;
+    REFERENCE_TIME *def_period;
+    REFERENCE_TIME *min_period;
+};
+
 struct get_buffer_size_params
 {
     stream_handle stream;
@@ -250,6 +259,7 @@ enum unix_funcs
     get_capture_buffer,
     release_capture_buffer,
     get_mix_format,
+    get_device_period,
     get_buffer_size,
     get_latency,
     get_current_padding,

@@ -1165,6 +1165,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
 static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
         REFERENCE_TIME *defperiod, REFERENCE_TIME *minperiod)
 {
+    struct get_device_period_params params;
     ACImpl *This = impl_from_IAudioClient3(iface);
 
     TRACE("(%p)->(%p, %p)\n", This, defperiod, minperiod);
@@ -1172,12 +1173,14 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
     if (!defperiod && !minperiod)
         return E_POINTER;
 
-    if (defperiod)
-        *defperiod = pulse_config.modes[This->dataflow == eCapture].def_period;
-    if (minperiod)
-        *minperiod = pulse_config.modes[This->dataflow == eCapture].min_period;
+    params.flow = This->dataflow;
+    params.pulse_name = This->pulse_name;
+    params.def_period = defperiod;
+    params.min_period = minperiod;
 
-    return S_OK;
+    pulse_call(get_device_period, &params);
+
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)

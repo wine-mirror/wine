@@ -1075,6 +1075,29 @@ static ULONG_PTR zero_bits(void)
 #endif
 }
 
+static HRESULT get_device_period_helper(EDataFlow flow, const char *pulse_name, REFERENCE_TIME *def, REFERENCE_TIME *min)
+{
+    struct list *list = (flow == eRender) ? &g_phys_speakers : &g_phys_sources;
+    PhysDevice *dev;
+
+    if (!def && !min) {
+        return E_POINTER;
+    }
+
+    LIST_FOR_EACH_ENTRY(dev, list, PhysDevice, entry) {
+        if (strcmp(pulse_name, dev->pulse_name))
+            continue;
+
+        if (def)
+            *def = dev->def_period;
+        if (min)
+            *min = dev->min_period;
+        return S_OK;
+    }
+
+    return E_FAIL;
+}
+
 static NTSTATUS pulse_create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -2052,6 +2075,14 @@ static NTSTATUS pulse_get_mix_format(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS pulse_get_device_period(void *args)
+{
+    struct get_device_period_params *params = args;
+
+    params->result = get_device_period_helper(params->flow, params->pulse_name, params->def_period, params->min_period);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pulse_get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
@@ -2332,6 +2363,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_get_capture_buffer,
     pulse_release_capture_buffer,
     pulse_get_mix_format,
+    pulse_get_device_period,
     pulse_get_buffer_size,
     pulse_get_latency,
     pulse_get_current_padding,
@@ -2503,6 +2535,28 @@ static NTSTATUS pulse_wow64_get_mix_format(void *args)
         .fmt = ULongToPtr(params32->fmt),
     };
     pulse_get_mix_format(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_device_period(void *args)
+{
+    struct
+    {
+        PTR32 pulse_name;
+        EDataFlow flow;
+        HRESULT result;
+        PTR32 def_period;
+        PTR32 min_period;
+    } *params32 = args;
+    struct get_device_period_params params =
+    {
+        .pulse_name = ULongToPtr(params32->pulse_name),
+        .flow = params32->flow,
+        .def_period = ULongToPtr(params32->def_period),
+        .min_period = ULongToPtr(params32->min_period),
+    };
+    pulse_get_device_period(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
@@ -2734,6 +2788,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_get_capture_buffer,
     pulse_release_capture_buffer,
     pulse_wow64_get_mix_format,
+    pulse_wow64_get_device_period,
     pulse_wow64_get_buffer_size,
     pulse_wow64_get_latency,
     pulse_wow64_get_current_padding,
