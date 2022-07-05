@@ -2324,7 +2324,6 @@ static void test_topology_loader(void)
 
     /* Source node only. */
     hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
-    todo_wine_if(hr == E_INVALIDARG)
     ok(hr == MF_E_TOPO_UNSUPPORTED, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node);
