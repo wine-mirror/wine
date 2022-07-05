@@ -449,10 +449,13 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     IVideoWindow_put_Visible(wma->vidwin, OATRUE);
 
-    wma->thread = CreateThread(NULL, 0, MCIQTZ_notifyThread, wma, 0, NULL);
-    if (!wma->thread) {
-        TRACE("Can't create thread\n");
-        return MCIERR_INTERNAL;
+    if (!wma->thread)
+    {
+        wma->thread = CreateThread(NULL, 0, MCIQTZ_notifyThread, wma, 0, NULL);
+        if (!wma->thread) {
+            TRACE("Can't create thread\n");
+            return MCIERR_INTERNAL;
+        }
     }
     return 0;
 }

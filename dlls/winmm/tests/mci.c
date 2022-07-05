@@ -1336,6 +1336,19 @@ static void test_playWaveTypeMpegvideo(void)
 
     err = mciSendStringA("close mysound", NULL, 0, NULL);
     ok(!err,"mci close returned %s\n", dbg_mcierr(err));
+
+    /* test a second play */
+    err = mciSendStringA("open tempfile.wav type MPEGVideo alias mysound", NULL, 0, NULL);
+    ok(err==ok_saved,"mci open tempfile.wav type MPEGVideo returned %s\n", dbg_mcierr(err));
+
+    err = mciSendStringA("play mysound", NULL, 0, NULL);
+    ok(!err,"mci play retuend %s\n", dbg_mcierr(err));
+
+    err = mciSendStringA("play mysound", NULL, 0, NULL);
+    ok(!err,"mci play retuend %s\n", dbg_mcierr(err));
+
+    err = mciSendStringA("close mysound", NULL, 0, NULL);
+    ok(!err,"mci close returned %s\n", dbg_mcierr(err));
 }
 
 static void test_asyncWaveTypeMpegvideo(HWND hwnd)
