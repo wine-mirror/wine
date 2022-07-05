@@ -603,7 +603,6 @@ static void test_NtCreateKey(void)
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
