@@ -412,6 +412,12 @@ static void test_NtOpenKey(void)
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
+    pRtlCreateUnicodeStringFromAsciiz( &str, "\\\\\\" );
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    todo_wine
+    ok( status == STATUS_OBJECT_NAME_INVALID, "NtOpenKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
+
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
@@ -421,6 +427,13 @@ static void test_NtOpenKey(void)
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    pNtClose( key );
+    pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\\\" );
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    todo_wine
     ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
     pNtClose( key );
     pRtlFreeUnicodeString( &str );
@@ -493,7 +506,7 @@ static void test_NtCreateKey(void)
 {
     /*Create WineTest*/
     OBJECT_ATTRIBUTES attr;
-    HANDLE key, subkey;
+    HANDLE key, subkey, subkey2;
     ACCESS_MASK am = GENERIC_ALL;
     NTSTATUS status;
     UNICODE_STRING str;
@@ -545,6 +558,11 @@ static void test_NtCreateKey(void)
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test\\\\subkey" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
+
     pRtlCreateUnicodeStringFromAsciiz( &str, "test\\subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
@@ -553,9 +571,25 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     pNtDeleteKey( subkey );
     pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey2\\\\" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey2\\\\test\\\\" );
+    status = pNtCreateKey( &subkey2, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
+    pNtDeleteKey( subkey2 );
+    pNtClose( subkey2 );
+    pNtDeleteKey( subkey );
+    pNtClose( subkey );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
@@ -589,6 +623,14 @@ static void test_NtCreateKey(void)
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+        "NtCreateKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( subkey );
+    pRtlFreeUnicodeString( &str );
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\\\" );
+    status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
+    todo_wine
     ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
         "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
