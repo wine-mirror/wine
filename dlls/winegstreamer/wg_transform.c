@@ -310,15 +310,10 @@ static bool transform_append_element(struct wg_transform *transform, GstElement 
 static struct wg_sample *transform_request_sample(gsize size, void *context)
 {
     struct wg_transform *transform = context;
-    struct wg_sample *sample;
 
     GST_LOG("size %#zx, context %p", size, transform);
 
-    sample = InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL);
-    if (!sample || sample->max_size < size)
-        return NULL;
-
-    return sample;
+    return InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL);
 }
 
 NTSTATUS wg_transform_create(void *args)
