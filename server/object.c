@@ -331,31 +331,31 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
             free_object( new_obj );
             return NULL;
         }
-        goto done;
     }
-
-    if (!(obj = lookup_named_object( parent, name, attributes, &new_name ))) return NULL;
-
-    if (!new_name.len)
+    else
     {
-        if (attributes & OBJ_OPENIF && obj->ops == ops)
-            set_error( STATUS_OBJECT_NAME_EXISTS );
-        else
+        if (!(obj = lookup_named_object( parent, name, attributes, &new_name ))) return NULL;
+
+        if (!new_name.len)
         {
+            if (attributes & OBJ_OPENIF && obj->ops == ops)
+            {
+                set_error( STATUS_OBJECT_NAME_EXISTS );
+                return obj;
+            }
             release_object( obj );
-            obj = NULL;
             if (attributes & OBJ_OPENIF)
                 set_error( STATUS_OBJECT_TYPE_MISMATCH );
             else
                 set_error( STATUS_OBJECT_NAME_COLLISION );
+            return NULL;
         }
-        return obj;
+
+        new_obj = create_object( obj, ops, &new_name, attributes, sd );
+        release_object( obj );
+        if (!new_obj) return NULL;
     }
 
-    new_obj = create_object( obj, ops, &new_name, attributes, sd );
-    release_object( obj );
-
-done:
     if (attributes & OBJ_PERMANENT)
     {
         make_object_permanent( new_obj );
