@@ -2937,18 +2937,38 @@ static void test_WSASocket(void)
     }
     else
     {
+        WSAPROTOCOL_INFOW info;
+
         size = sizeof(socktype);
         socktype = 0xdead;
         err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
         ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
         ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
            SOCK_RAW, socktype);
+
+        size = sizeof(info);
+        err = getsockopt(sock, SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &info, &size);
+        ok(!err,"got error %d\n", WSAGetLastError());
+        ok(!wcscmp(info.szProtocol, L"MSAFD Tcpip [RAW/IP]")
+                || broken(!wcscmp(info.szProtocol, L"MSAFD-Tcpip [RAW/IP]")) /* Some Win7 machines. */,
+                "got szProtocol %s.\n", debugstr_w(info.szProtocol));
+        ok(info.iAddressFamily == AF_INET, "got iAddressFamily %d.\n", info.iAddressFamily);
+        ok(info.iSocketType == SOCK_RAW, "got iSocketType %d.\n", info.iSocketType);
+        ok(info.iMaxSockAddr == 0x10, "got iMaxSockAddr %d.\n", info.iMaxSockAddr);
+        ok(info.iMinSockAddr == 0x10, "got iMinSockAddr %d.\n", info.iMinSockAddr);
+        todo_wine ok(!info.iProtocol, "got iProtocol %d.\n", info.iProtocol);
+        ok(info.iProtocolMaxOffset == 255, "got iProtocol %d.\n", info.iProtocolMaxOffset);
+        ok(info.dwProviderFlags == (PFL_MATCHES_PROTOCOL_ZERO | PFL_HIDDEN), "got dwProviderFlags %#lx.\n",
+                info.dwProviderFlags);
+        ok(info.dwServiceFlags1 == (XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST | XP1_SUPPORT_MULTIPOINT
+                | XP1_MESSAGE_ORIENTED | XP1_CONNECTIONLESS), "got dwServiceFlags1 %#lx.\n",
+                info.dwServiceFlags1);
+
         closesocket(sock);
 
         sock = WSASocketA(0, 0, IPPROTO_RAW, NULL, 0, 0);
         if (sock != INVALID_SOCKET)
         {
-            todo_wine {
             size = sizeof(socktype);
             socktype = 0xdead;
             err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
@@ -2956,7 +2976,6 @@ static void test_WSASocket(void)
             ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
                SOCK_RAW, socktype);
             closesocket(sock);
-            }
 
             sock = WSASocketA(AF_INET, SOCK_RAW, IPPROTO_TCP, NULL, 0, 0);
             ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",

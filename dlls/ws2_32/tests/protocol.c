@@ -107,6 +107,7 @@ static void test_WSAEnumProtocolsA(void)
         for (i = 0; i < ret; i++)
         {
             ok( strlen( buffer[i].szProtocol ), "No protocol name found\n" );
+            ok( !(buffer[i].dwProviderFlags & PFL_HIDDEN), "Found a protocol with PFL_HIDDEN.\n" );
             test_service_flags( buffer[i].iAddressFamily, buffer[i].iVersion,
                                 buffer[i].iSocketType, buffer[i].iProtocol,
                                 buffer[i].dwServiceFlags1);
@@ -174,6 +175,7 @@ static void test_WSAEnumProtocolsW(void)
         for (i = 0; i < ret; i++)
         {
             ok( lstrlenW( buffer[i].szProtocol ), "No protocol name found\n" );
+            ok( !(buffer[i].dwProviderFlags & PFL_HIDDEN), "Found a protocol with PFL_HIDDEN.\n" );
             test_service_flags( buffer[i].iAddressFamily, buffer[i].iVersion,
                                 buffer[i].iSocketType, buffer[i].iProtocol,
                                 buffer[i].dwServiceFlags1);

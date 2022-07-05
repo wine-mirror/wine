@@ -71,6 +71,23 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .szProtocol = L"UDP/IP",
     },
     {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST
+                | XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED | XP1_CONNECTIONLESS,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO | PFL_HIDDEN,
+        .ProviderId = {0xe70f1aa0, 0xab8b, 0x11cf, {0x8c, 0xa3, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92}},
+        .dwCatalogEntryId = 1003,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = AF_INET,
+        .iMaxSockAddr = sizeof(struct sockaddr_in),
+        .iMinSockAddr = sizeof(struct sockaddr_in),
+        .iSocketType = SOCK_RAW,
+        .iProtocol = 0,
+        .iProtocolMaxOffset = 255,
+        .dwMessageSize = 0x8000,
+        .szProtocol = L"MSAFD Tcpip [RAW/IP]",
+    },
+    {
         .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA | XP1_GRACEFUL_CLOSE
                 | XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY,
         .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
@@ -4097,12 +4114,13 @@ int WINAPI WSARecvDisconnect( SOCKET s, WSABUF *data )
 }
 
 
-static BOOL protocol_matches_filter( const int *filter, int protocol )
+static BOOL protocol_matches_filter( const int *filter, unsigned int index )
 {
+    if (supported_protocols[index].dwProviderFlags & PFL_HIDDEN) return FALSE;
     if (!filter) return TRUE;
     while (*filter)
     {
-        if (protocol == *filter++) return TRUE;
+        if (supported_protocols[index].iProtocol == *filter++) return TRUE;
     }
     return FALSE;
 }
@@ -4120,7 +4138,7 @@ int WINAPI WSAEnumProtocolsA( int *filter, WSAPROTOCOL_INFOA *protocols, DWORD *
 
     for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
     {
-        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+        if (protocol_matches_filter( filter, i ))
             ++count;
     }
 
@@ -4134,7 +4152,7 @@ int WINAPI WSAEnumProtocolsA( int *filter, WSAPROTOCOL_INFOA *protocols, DWORD *
     count = 0;
     for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
     {
-        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+        if (protocol_matches_filter( filter, i ))
         {
             memcpy( &protocols[count], &supported_protocols[i], offsetof( WSAPROTOCOL_INFOW, szProtocol ) );
             WideCharToMultiByte( CP_ACP, 0, supported_protocols[i].szProtocol, -1,
@@ -4190,7 +4208,7 @@ int WINAPI WSAEnumProtocolsW( int *filter, WSAPROTOCOL_INFOW *protocols, DWORD *
 
     for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
     {
-        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+        if (protocol_matches_filter( filter, i ))
             ++count;
     }
 
@@ -4204,7 +4222,7 @@ int WINAPI WSAEnumProtocolsW( int *filter, WSAPROTOCOL_INFOW *protocols, DWORD *
     count = 0;
     for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
     {
-        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+        if (protocol_matches_filter( filter, i ))
             protocols[count++] = supported_protocols[i];
     }
     return count;
