@@ -233,6 +233,7 @@ static void free_object( struct object *obj )
 struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
                                     unsigned int attr, struct unicode_str *name_left )
 {
+    static int recursion_count;
     struct object *obj, *parent;
     struct unicode_str name_tmp = *name, *ptr = &name_tmp;
 
@@ -261,6 +262,13 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
 
     if (!name_tmp.len) ptr = NULL;  /* special case for empty path */
 
+    if (recursion_count > 32)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        release_object( parent );
+        return NULL;
+    }
+    recursion_count++;
     clear_error();
 
     while ((obj = parent->ops->lookup_name( parent, ptr, attr, root )))
@@ -269,6 +277,8 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
         release_object ( parent );
         parent = obj;
     }
+
+    recursion_count--;
     if (get_error())
     {
         release_object( parent );
