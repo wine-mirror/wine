@@ -138,6 +138,14 @@ struct release_capture_buffer_params
     HRESULT result;
 };
 
+struct get_mix_format_params
+{
+    const char *pulse_name;
+    EDataFlow flow;
+    WAVEFORMATEXTENSIBLE *fmt;
+    HRESULT result;
+};
+
 struct get_buffer_size_params
 {
     stream_handle stream;
@@ -241,6 +249,7 @@ enum unix_funcs
     release_render_buffer,
     get_capture_buffer,
     release_capture_buffer,
+    get_mix_format,
     get_buffer_size,
     get_latency,
     get_current_padding,

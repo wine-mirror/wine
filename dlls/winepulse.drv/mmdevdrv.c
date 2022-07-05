@@ -1136,17 +1136,30 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         WAVEFORMATEX **pwfx)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct get_mix_format_params params;
 
     TRACE("(%p)->(%p)\n", This, pwfx);
 
     if (!pwfx)
         return E_POINTER;
+    *pwfx = NULL;
 
-    *pwfx = clone_format(&pulse_config.modes[This->dataflow == eCapture].format.Format);
-    if (!*pwfx)
+    params.pulse_name = This->pulse_name;
+    params.flow = This->dataflow;
+    params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if (!params.fmt)
         return E_OUTOFMEMORY;
-    dump_fmt(*pwfx);
-    return S_OK;
+
+    pulse_call(get_mix_format, &params);
+
+    if (SUCCEEDED(params.result)) {
+        *pwfx = &params.fmt->Format;
+        dump_fmt(*pwfx);
+    } else {
+        CoTaskMemFree(params.fmt);
+    }
+
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
