@@ -1198,8 +1198,7 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
 
 static BOOL force_display_devices_refresh;
 
-void X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                  BOOL force, void *param )
+BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct x11drv_display_device_handler *handler;
     struct gdi_adapter *adapters;
@@ -1208,15 +1207,14 @@ void X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
 
-    if (!force && !force_display_devices_refresh) return;
+    if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;
     handler = is_virtual_desktop() ? &desktop_handler : &host_handler;
 
     TRACE("via %s\n", wine_dbgstr_a(handler->name));
 
     /* Initialize GPUs */
-    if (!handler->get_gpus(&gpus, &gpu_count))
-        return;
+    if (!handler->get_gpus( &gpus, &gpu_count )) return FALSE;
     TRACE("GPU count: %d\n", gpu_count);
 
     for (gpu = 0; gpu < gpu_count; gpu++)
@@ -1248,6 +1246,7 @@ void X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     }
 
     handler->free_gpus(gpus);
+    return TRUE;
 }
 
 void X11DRV_DisplayDevices_Init(BOOL force)

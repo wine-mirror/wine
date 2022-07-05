@@ -764,9 +764,9 @@ static BOOL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW m
     return FALSE;
 }
 
-static void nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager,
-                                          BOOL force, void *param )
+static BOOL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, BOOL force, void *param )
 {
+    return FALSE;
 }
 
 static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )
@@ -1111,10 +1111,9 @@ static void loaderdrv_UpdateClipboard(void)
     load_driver()->pUpdateClipboard();
 }
 
-static void loaderdrv_UpdateDisplayDevices( const struct gdi_device_manager *manager,
-                                            BOOL force, void *param )
+static BOOL loaderdrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, BOOL force, void *param )
 {
-    load_driver()->pUpdateDisplayDevices( manager, force, param );
+    return load_driver()->pUpdateDisplayDevices( manager, force, param );
 }
 
 static BOOL loaderdrv_CreateDesktopWindow( HWND hwnd )

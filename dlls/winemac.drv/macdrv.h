@@ -131,7 +131,7 @@ extern LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
 extern BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
                                          LPDEVMODEW devmode, DWORD flags) DECLSPEC_HIDDEN;
 extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
-extern void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+extern BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
                                          BOOL force, void *param ) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;

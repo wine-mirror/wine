@@ -1007,13 +1007,6 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
 
     TRACE( "\n" );
 
-    if (!ctx->gpu_count)
-    {
-        static const struct gdi_gpu default_gpu;
-        TRACE( "adding default fake GPU\n" );
-        add_gpu( &default_gpu, ctx );
-    }
-
     if (ctx->adapter_key)
     {
         NtClose( ctx->adapter_key );
@@ -1078,17 +1071,6 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
 
     TRACE( "%s %s %s\n", debugstr_w(monitor->name), wine_dbgstr_rect(&monitor->rc_monitor),
            wine_dbgstr_rect(&monitor->rc_work) );
-
-    if (!ctx->adapter_count)
-    {
-        static const struct gdi_adapter default_adapter =
-        {
-            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE |
-                           DISPLAY_DEVICE_VGA_COMPATIBLE,
-        };
-        TRACE( "adding default fake adapter\n" );
-        add_adapter( &default_adapter, ctx );
-    }
 
     monitor_index = ctx->monitor_count++;
     output_index = ctx->output_count++;
@@ -1336,7 +1318,25 @@ static BOOL update_display_cache(void)
         return FALSE;
     }
 
-    user_driver->pUpdateDisplayDevices( &device_manager, TRUE, &ctx );
+    if (!user_driver->pUpdateDisplayDevices( &device_manager, TRUE, &ctx ))
+    {
+        static const struct gdi_gpu gpu;
+        static const struct gdi_adapter adapter =
+        {
+            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
+        };
+        DEVMODEW mode = {.dmPelsWidth = 1024, .dmPelsHeight = 768};
+        struct gdi_monitor monitor =
+        {
+            .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
+            .rc_monitor = {.right = mode.dmPelsWidth, .bottom = mode.dmPelsHeight},
+            .rc_work = {.right = mode.dmPelsWidth, .bottom = mode.dmPelsHeight},
+        };
+
+        add_gpu( &gpu, &ctx );
+        add_adapter( &adapter, &ctx );
+        add_monitor( &monitor, &ctx );
+    }
     release_display_manager_ctx( &ctx );
 
     if (!update_display_cache_from_registry())

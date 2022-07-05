@@ -273,20 +273,28 @@ LONG ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 /***********************************************************************
  *           ANDROID_UpdateDisplayDevices
  */
-void ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                   BOOL force, void *param )
+BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     if (force || force_display_devices_refresh)
     {
+        static const struct gdi_gpu gpu;
+        static const struct gdi_adapter adapter =
+        {
+            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
+        };
         struct gdi_monitor gdi_monitor =
         {
             .rc_monitor = virtual_screen_rect,
             .rc_work = monitor_rc_work,
             .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
         };
+        device_manager->add_gpu( &gpu, param );
+        device_manager->add_adapter( &adapter, param );
         device_manager->add_monitor( &gdi_monitor, param );
         force_display_devices_refresh = FALSE;
     }
+
+    return TRUE;
 }
 
 

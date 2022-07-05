@@ -1457,8 +1457,7 @@ void macdrv_displays_changed(const macdrv_event *event)
 
 static BOOL force_display_devices_refresh;
 
-void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                  BOOL force, void *param )
+BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
@@ -1466,14 +1465,14 @@ void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu_count, adapter_count, monitor_count;
     DWORD len;
 
-    if (!force && !force_display_devices_refresh) return;
+    if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;
 
     /* Initialize GPUs */
     if (macdrv_get_gpus(&gpus, &gpu_count))
     {
         ERR("could not get GPUs\n");
-        return;
+        return FALSE;
     }
     TRACE("GPU count: %d\n", gpu_count);
 
@@ -1528,6 +1527,7 @@ void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     }
 
     macdrv_free_gpus(gpus);
+    return TRUE;
 }
 
 /***********************************************************************

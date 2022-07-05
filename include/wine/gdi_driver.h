@@ -168,7 +168,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 80
+#define WINE_GDI_DRIVER_VERSION 81
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -296,7 +296,7 @@ struct user_driver_funcs
     /* display modes */
     LONG    (*pChangeDisplaySettingsEx)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
     BOOL    (*pEnumDisplaySettingsEx)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
-    void    (*pUpdateDisplayDevices)(const struct gdi_device_manager *,BOOL,void*);
+    BOOL    (*pUpdateDisplayDevices)(const struct gdi_device_manager *,BOOL,void*);
     /* windowing functions */
     BOOL    (*pCreateDesktopWindow)(HWND);
     BOOL    (*pCreateWindow)(HWND);
