@@ -293,18 +293,19 @@ NTSTATUS dhcp_request( void *args )
 
     params->req->offset = 0;
     params->req->size   = 0;
+    *params->ret_size = 0;
 
     if (!service_id) return 0;
     if (!(dict = SCDynamicStoreCopyDHCPInfo( NULL, service_id )))
     {
         CFRelease( service_id );
-        return 0;
+        return STATUS_SUCCESS;
     }
     CFRelease( service_id );
     if (!(value = DHCPInfoGetOptionData( dict, map_option(params->req->id) )))
     {
         CFRelease( dict );
-        return 0;
+        return STATUS_SUCCESS;
     }
     len = CFDataGetLength( value );
 
