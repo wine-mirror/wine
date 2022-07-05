@@ -11082,7 +11082,7 @@ static void test_effect_properties(BOOL d3d11)
     UINT32 count, data;
     WCHAR buffer[128];
     float mat[20];
-    INT32 _int32;
+    INT32 val;
     CLSID clsid;
     BOOL cached;
     HRESULT hr;
@@ -11181,9 +11181,9 @@ static void test_effect_properties(BOOL d3d11)
     ok(!wcscmp(buffer, L"Int32Prop"), "Unexpected name %s.\n", wine_dbgstr_w(buffer));
     prop_type = ID2D1Effect_GetType(effect, index);
     ok(prop_type == D2D1_PROPERTY_TYPE_INT32, "Unexpected type %u.\n", prop_type);
-    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_INT32, (BYTE *)&_int32, sizeof(_int32));
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_INT32, (BYTE *)&val, sizeof(val));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(_int32 == -2, "Unexpected value %d.\n", _int32);
+    ok(val == -2, "Unexpected value %d.\n", val);
 
     /* UInt32 property. */
     index = ID2D1Effect_GetPropertyIndex(effect, L"UInt32Prop");
