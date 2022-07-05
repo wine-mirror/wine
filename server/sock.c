@@ -1618,6 +1618,23 @@ static int init_socket( struct sock *sock, int family, int type, int protocol )
     }
 
     sockfd = socket( unix_family, unix_type, unix_protocol );
+
+#ifdef linux
+    if (sockfd == -1 && errno == EPERM && unix_family == AF_INET
+        && unix_type == SOCK_RAW && unix_protocol == IPPROTO_ICMP)
+    {
+        sockfd = socket( unix_family, SOCK_DGRAM, unix_protocol );
+        if (sockfd != -1)
+        {
+            const int val = 1;
+
+            setsockopt( sockfd, IPPROTO_IP, IP_RECVTTL, (const char *)&val, sizeof(val) );
+            setsockopt( sockfd, IPPROTO_IP, IP_RECVTOS, (const char *)&val, sizeof(val) );
+            setsockopt( sockfd, IPPROTO_IP, IP_PKTINFO, (const char *)&val, sizeof(val) );
+        }
+    }
+#endif
+
     if (sockfd == -1)
     {
         if (errno == EINVAL) set_win32_error( WSAESOCKTNOSUPPORT );
