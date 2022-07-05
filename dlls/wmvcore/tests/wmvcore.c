@@ -48,6 +48,61 @@ static BOOL compare_media_types(const WM_MEDIA_TYPE *a, const WM_MEDIA_TYPE *b)
             && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
 }
 
+static void init_audio_type(WM_MEDIA_TYPE *mt, const GUID *subtype, UINT bits, UINT channels, UINT rate)
+{
+    WAVEFORMATEX *format = (WAVEFORMATEX *)(mt + 1);
+
+    format->wFormatTag = subtype->Data1;
+    format->nChannels = channels;
+    format->nSamplesPerSec = rate;
+    format->wBitsPerSample = bits;
+    format->nBlockAlign = format->nChannels * format->wBitsPerSample / 8;
+    format->nAvgBytesPerSec = format->nSamplesPerSec * format->nBlockAlign;
+    format->cbSize = 0;
+
+    mt->majortype = MEDIATYPE_Audio;
+    mt->subtype = *subtype;
+    mt->bFixedSizeSamples = TRUE;
+    mt->bTemporalCompression = FALSE;
+    mt->lSampleSize = format->nBlockAlign;
+    mt->formattype = FORMAT_WaveFormatEx;
+    mt->pUnk = NULL;
+    mt->cbFormat = sizeof(*format);
+    mt->pbFormat = (BYTE *)format;
+}
+
+static void init_video_type(WM_MEDIA_TYPE *mt, const GUID *subtype, UINT depth, DWORD compression, const RECT *rect)
+{
+    VIDEOINFOHEADER *video_info = (VIDEOINFOHEADER *)(mt + 1);
+
+    video_info->rcSource = *rect;
+    video_info->rcTarget = *rect;
+    video_info->dwBitRate = 0;
+    video_info->dwBitErrorRate = 0;
+    video_info->AvgTimePerFrame = 0;
+    video_info->bmiHeader.biSize = sizeof(video_info->bmiHeader);
+    video_info->bmiHeader.biWidth = rect->right;
+    video_info->bmiHeader.biHeight = rect->bottom;
+    video_info->bmiHeader.biPlanes = 1;
+    video_info->bmiHeader.biBitCount = depth;
+    video_info->bmiHeader.biCompression = compression;
+    video_info->bmiHeader.biSizeImage = rect->right * rect->bottom * 4;
+    video_info->bmiHeader.biXPelsPerMeter = 0;
+    video_info->bmiHeader.biYPelsPerMeter = 0;
+    video_info->bmiHeader.biClrUsed = 0;
+    video_info->bmiHeader.biClrImportant = 0;
+
+    mt->majortype = MEDIATYPE_Video;
+    mt->subtype = *subtype;
+    mt->bFixedSizeSamples = TRUE;
+    mt->bTemporalCompression = FALSE;
+    mt->lSampleSize = video_info->bmiHeader.biSizeImage;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->pUnk = NULL;
+    mt->cbFormat = sizeof(*video_info);
+    mt->pbFormat = (BYTE *)video_info;
+}
+
 static WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -1239,6 +1294,78 @@ static void test_sync_reader_types(void)
         ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
                 debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
+        hr = IWMOutputMediaProps_SetMediaType(output_props, NULL);
+        todo_wine
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        memset(mt2_buffer, 0, sizeof(mt2_buffer));
+        hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+        todo_wine
+        ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+        {
+            WAVEFORMATEX *format = (WAVEFORMATEX *)mt->pbFormat;
+
+            init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels * 2, format->nSamplesPerSec);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine
+            ok(hr == NS_E_AUDIO_CODEC_NOT_INSTALLED, "Got hr %#lx.\n", hr);
+
+            init_audio_type(mt2, &MEDIASUBTYPE_PCM, 8, 1, 11025);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels, format->nSamplesPerSec / 4);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+        else
+        {
+            VIDEOINFO *info = (VIDEOINFO *)mt->pbFormat;
+            RECT rect = info->rcTarget;
+
+            init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            init_video_type(mt2, &MEDIASUBTYPE_NV12, 12, MAKEFOURCC('N','V','1','2'), &rect);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine
+            ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
+
+            InflateRect(&rect, 10, 10);
+
+            init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine
+            ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
+        }
+
+        hr = IWMOutputMediaProps_SetMediaType(output_props, mt);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
         ref = IWMOutputMediaProps_Release(output_props);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
@@ -1293,9 +1420,15 @@ static void test_sync_reader_types(void)
             ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
 
             if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+            {
+                ok(IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
                 check_audio_type(mt);
+            }
             else
+            {
+                ok(!IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_AYUV), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
                 check_video_type(mt);
+            }
 
             memset(&majortype2, 0xcc, sizeof(majortype2));
             hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
@@ -2444,6 +2577,78 @@ static void test_async_reader_types(void)
         ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
                 debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
+        hr = IWMOutputMediaProps_SetMediaType(output_props, NULL);
+        todo_wine
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        memset(mt2_buffer, 0, sizeof(mt2_buffer));
+        hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+        todo_wine
+        ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+        {
+            WAVEFORMATEX *format = (WAVEFORMATEX *)mt->pbFormat;
+
+            init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels * 2, format->nSamplesPerSec);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine
+            ok(hr == NS_E_AUDIO_CODEC_NOT_INSTALLED, "Got hr %#lx.\n", hr);
+
+            init_audio_type(mt2, &MEDIASUBTYPE_PCM, 8, 1, 11025);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels, format->nSamplesPerSec / 4);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+        else
+        {
+            VIDEOINFO *info = (VIDEOINFO *)mt->pbFormat;
+            RECT rect = info->rcTarget;
+
+            init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            init_video_type(mt2, &MEDIASUBTYPE_NV12, 12, MAKEFOURCC('N','V','1','2'), &rect);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine
+            ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
+
+            InflateRect(&rect, 10, 10);
+
+            init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
+            hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
+            todo_wine
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine
+            ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
+        }
+
+        hr = IWMOutputMediaProps_SetMediaType(output_props, mt);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
         ref = IWMOutputMediaProps_Release(output_props);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
@@ -2520,9 +2725,15 @@ static void test_async_reader_types(void)
             ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
 
             if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+            {
+                ok(IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
                 check_audio_type(mt);
+            }
             else
+            {
+                ok(!IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_AYUV), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
                 check_video_type(mt);
+            }
 
             memset(&majortype2, 0xcc, sizeof(majortype2));
             hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
