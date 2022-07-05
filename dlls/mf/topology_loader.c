@@ -109,33 +109,32 @@ static IMFTopologyNode *topology_loader_get_node_for_marker(struct topoloader_co
 }
 
 static HRESULT topology_loader_clone_node(struct topoloader_context *context, IMFTopologyNode *node,
-        IMFTopologyNode **ret, unsigned int marker)
+        IMFTopologyNode **clone, unsigned int marker)
 {
-    IMFTopologyNode *cloned_node;
     MF_TOPOLOGY_TYPE node_type;
     HRESULT hr;
+    TOPOID id;
 
-    if (ret) *ret = NULL;
-
-    IMFTopologyNode_GetNodeType(node, &node_type);
-
-    if (FAILED(hr = MFCreateTopologyNode(node_type, &cloned_node)))
+    if (FAILED(hr = IMFTopologyNode_GetTopoNodeID(node, &id)))
+        return hr;
+    if (SUCCEEDED(hr = IMFTopology_GetNodeByID(context->output_topology, id, clone)))
         return hr;
 
-    if (SUCCEEDED(hr = IMFTopologyNode_CloneFrom(cloned_node, node)))
-        hr = IMFTopologyNode_SetUINT32(cloned_node, &context->key, marker);
+    IMFTopologyNode_GetNodeType(node, &node_type);
+    if (FAILED(hr = MFCreateTopologyNode(node_type, clone)))
+        return hr;
+
+    if (SUCCEEDED(hr = IMFTopologyNode_CloneFrom(*clone, node)))
+        hr = IMFTopologyNode_SetUINT32(*clone, &context->key, marker);
 
     if (SUCCEEDED(hr))
-        hr = IMFTopology_AddNode(context->output_topology, cloned_node);
+        hr = IMFTopology_AddNode(context->output_topology, *clone);
 
-    if (SUCCEEDED(hr) && ret)
+    if (FAILED(hr))
     {
-        *ret = cloned_node;
-        IMFTopologyNode_AddRef(*ret);
+        IMFTopologyNode_Release(*clone);
+        *clone = NULL;
     }
-
-    IMFTopologyNode_Release(cloned_node);
-
     return hr;
 }
 
@@ -470,12 +469,9 @@ static HRESULT topology_loader_resolve_branch(struct topoloader_context *context
     MF_TOPOLOGY_TYPE u_type, d_type;
     IMFTopologyNode *node;
     HRESULT hr;
-    TOPOID id;
 
-    /* Downstream node might have already been cloned. */
-    IMFTopologyNode_GetTopoNodeID(downstream_node, &id);
-    if (FAILED(IMFTopology_GetNodeByID(context->output_topology, id, &node)))
-        topology_loader_clone_node(context, downstream_node, &node, context->marker + 1);
+    if (FAILED(hr = topology_loader_clone_node(context, downstream_node, &node, context->marker + 1)))
+        return hr;
 
     IMFTopologyNode_GetNodeType(upstream_node, &u_type);
     IMFTopologyNode_GetNodeType(downstream_node, &d_type);
@@ -763,8 +759,12 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
 
         if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
         {
-            if (FAILED(hr = topology_loader_clone_node(&context, node, NULL, 0)))
+            IMFTopologyNode *clone;
+
+            if (FAILED(hr = topology_loader_clone_node(&context, node, &clone, 0)))
                 WARN("Failed to clone source node, hr %#lx.\n", hr);
+            else
+                IMFTopologyNode_Release(clone);
         }
 
         IMFTopologyNode_Release(node);
