@@ -12816,6 +12816,155 @@ static void test_tcp_reset(void)
     CloseHandle(overlapped.hEvent);
 }
 
+struct icmp_hdr
+{
+    BYTE type;
+    BYTE code;
+    UINT16 checksum;
+    union
+    {
+        struct
+        {
+            UINT16 id;
+            UINT16 sequence;
+        } echo;
+    } un;
+};
+
+struct ip_hdr
+{
+    BYTE v_hl; /* version << 4 | hdr_len */
+    BYTE tos;
+    UINT16 tot_len;
+    UINT16 id;
+    UINT16 frag_off;
+    BYTE ttl;
+    BYTE protocol;
+    UINT16 checksum;
+    ULONG saddr;
+    ULONG daddr;
+};
+
+/* rfc 1071 checksum */
+static unsigned short chksum(BYTE *data, unsigned int count)
+{
+    unsigned int sum = 0, carry = 0;
+    unsigned short check, s;
+
+    while (count > 1)
+    {
+        s = *(unsigned short *)data;
+        data += 2;
+        sum += carry;
+        sum += s;
+        carry = s > sum;
+        count -= 2;
+    }
+    sum += carry; /* This won't produce another carry */
+    sum = (sum & 0xffff) + (sum >> 16);
+
+    if (count) sum += *data; /* LE-only */
+
+    sum = (sum & 0xffff) + (sum >> 16);
+    /* fold in any carry */
+    sum = (sum & 0xffff) + (sum >> 16);
+
+    check = ~sum;
+    return check;
+}
+
+static void test_icmp(void)
+{
+    static const unsigned int ping_data = 0xdeadbeef;
+    struct icmp_hdr *icmp_h;
+    BYTE send_buf[sizeof(struct icmp_hdr) + sizeof(ping_data)];
+    UINT16 recv_checksum, checksum;
+    unsigned int reply_data;
+    struct sockaddr_in sa;
+    struct ip_hdr *ip_h;
+    struct in_addr addr;
+    BYTE recv_buf[256];
+    SOCKET s;
+    int ret;
+
+    s = WSASocketA(AF_INET, SOCK_RAW, IPPROTO_ICMP, NULL, 0, 0);
+    if (s == INVALID_SOCKET)
+    {
+        ret = WSAGetLastError();
+        ok(ret == WSAEACCES, "Expected 10013, received %d\n", ret);
+        skip("SOCK_RAW is not supported\n");
+        return;
+    }
+
+    icmp_h = (struct icmp_hdr *)send_buf;
+    icmp_h->type = ICMP4_ECHO_REQUEST;
+    icmp_h->code = 0;
+    icmp_h->checksum = 0;
+    icmp_h->un.echo.id = 0xbeaf; /* will be overwritten for linux ping socks */
+    icmp_h->un.echo.sequence = 1;
+    *(unsigned int *)(icmp_h + 1) = ping_data;
+    icmp_h->checksum = chksum(send_buf, sizeof(send_buf));
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    sa.sin_port = 0;
+    sa.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    ret = sendto(s, (char *)send_buf, sizeof(send_buf), 0, (struct sockaddr*)&sa, sizeof(sa));
+    ok(ret == sizeof(send_buf), "got %d, error %d.\n", ret, WSAGetLastError());
+
+    ret = recv(s, (char *)recv_buf, sizeof(struct ip_hdr) + sizeof(send_buf) - 1, 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEMSGSIZE, "got %d\n", WSAGetLastError());
+
+    icmp_h->un.echo.sequence = 2;
+    icmp_h->checksum = 0;
+    icmp_h->checksum = chksum(send_buf, sizeof(send_buf));
+
+    ret = sendto(s, (char *)send_buf, sizeof(send_buf), 0, (struct sockaddr*)&sa, sizeof(sa));
+    ok(ret != SOCKET_ERROR, "got error %d.\n", WSAGetLastError());
+
+    memset(recv_buf, 0xcc, sizeof(recv_buf));
+    ret = recv(s, (char *)recv_buf, sizeof(recv_buf), 0);
+    ok(ret == sizeof(struct ip_hdr) + sizeof(send_buf), "got %d\n", ret);
+
+    ip_h = (struct ip_hdr *)recv_buf;
+    icmp_h = (struct icmp_hdr *)(ip_h + 1);
+    reply_data = *(unsigned int *)(icmp_h + 1);
+
+    ok(ip_h->v_hl == ((4 << 4) | (sizeof(*ip_h) >> 2)), "got v_hl %#x.\n", ip_h->v_hl);
+    ok(ntohs(ip_h->tot_len) == sizeof(struct ip_hdr) + sizeof(send_buf),
+            "got tot_len %#x.\n", ntohs(ip_h->tot_len));
+
+    recv_checksum = ip_h->checksum;
+    ip_h->checksum = 0;
+    checksum = chksum((BYTE *)ip_h, sizeof(*ip_h));
+    /* Checksum is 0 for localhost ping on Windows but not for remote host ping. */
+    ok(recv_checksum == checksum || !recv_checksum, "got checksum %#x, expected %#x.\n", recv_checksum, checksum);
+
+    ok(!ip_h->frag_off, "got id %#x.\n", ip_h->frag_off);
+    addr.s_addr = ip_h->saddr;
+    ok(ip_h->saddr == sa.sin_addr.s_addr, "got saddr %s.\n", inet_ntoa(addr));
+    addr.s_addr = ip_h->daddr;
+    ok(!!ip_h->daddr, "got daddr %s.\n", inet_ntoa(addr));
+
+    ok(ip_h->protocol == 1, "got protocol %#x.\n", ip_h->protocol);
+
+    ok(icmp_h->type == ICMP4_ECHO_REPLY, "got type %#x.\n", icmp_h->type);
+    ok(!icmp_h->code, "got code %#x.\n", icmp_h->code);
+    todo_wine ok(icmp_h->un.echo.id == 0xbeaf, "got echo id %#x.\n", icmp_h->un.echo.id);
+    ok(icmp_h->un.echo.sequence == 2, "got echo sequence %#x.\n", icmp_h->un.echo.sequence);
+
+    recv_checksum = icmp_h->checksum;
+    icmp_h->checksum = 0;
+    checksum = chksum((BYTE *)icmp_h, sizeof(send_buf));
+    ok(recv_checksum == checksum, "got checksum %#x, expected %#x.\n", recv_checksum, checksum);
+
+    ok(reply_data == ping_data, "got reply_data %#x.\n", reply_data);
+
+    closesocket(s);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -12892,6 +13041,7 @@ START_TEST( sock )
     test_empty_recv();
     test_timeout();
     test_tcp_reset();
+    test_icmp();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
