@@ -1625,33 +1625,6 @@ static WCHAR *get_username(void)
     return ret;
 }
 
-static enum fill_status fill_compsys( struct table *table, const struct expr *cond )
-{
-    struct record_computersystem *rec;
-    enum fill_status status = FILL_STATUS_UNFILTERED;
-    UINT row = 0;
-
-    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
-
-    rec = (struct record_computersystem *)table->data;
-    rec->description            = L"AT/AT COMPATIBLE";
-    rec->domain                 = L"WORKGROUP";
-    rec->domainrole             = 0; /* standalone workstation */
-    rec->manufacturer           = L"The Wine Project";
-    rec->model                  = L"Wine";
-    rec->name                   = get_computername();
-    rec->num_logical_processors = get_logical_processor_count( NULL, &rec->num_processors );
-    rec->systemtype             = get_systemtype();
-    rec->total_physical_memory  = get_total_physical_memory();
-    rec->username               = get_username();
-    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
-    else row++;
-
-    TRACE("created %u rows\n", row);
-    table->num_rows = row;
-    return status;
-}
-
 static WCHAR *get_compsysproduct_string( BYTE id, const char *buf, UINT len )
 {
     const struct smbios_header *hdr;
@@ -1665,17 +1638,58 @@ static WCHAR *get_compsysproduct_string( BYTE id, const char *buf, UINT len )
     return get_smbios_string( id, buf, offset, len );
 }
 
-static WCHAR *get_compsysproduct_identifyingnumber( const char *buf, UINT len )
-{
-    WCHAR *ret = get_compsysproduct_string( 4, buf, len );
-    if (!ret) return wcsdup( L"0" );
-    return ret;
-}
-
 static WCHAR *get_compsysproduct_name( const char *buf, UINT len )
 {
     WCHAR *ret = get_compsysproduct_string( 2, buf, len );
     if (!ret) return wcsdup( L"Wine" );
+    return ret;
+}
+
+static WCHAR *get_compsysproduct_vendor( const char *buf, UINT len )
+{
+    WCHAR *ret = get_compsysproduct_string( 1, buf, len );
+    if (!ret) return wcsdup( L"The Wine Project" );
+    return ret;
+}
+
+static enum fill_status fill_compsys( struct table *table, const struct expr *cond )
+{
+    struct record_computersystem *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0, len;
+    char *buf;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
+    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
+    GetSystemFirmwareTable( RSMB, 0, buf, len );
+
+    rec = (struct record_computersystem *)table->data;
+    rec->description            = L"AT/AT COMPATIBLE";
+    rec->domain                 = L"WORKGROUP";
+    rec->domainrole             = 0; /* standalone workstation */
+    rec->manufacturer           = get_compsysproduct_vendor( buf, len );
+    rec->model                  = get_compsysproduct_name( buf, len );
+    rec->name                   = get_computername();
+    rec->num_logical_processors = get_logical_processor_count( NULL, &rec->num_processors );
+    rec->systemtype             = get_systemtype();
+    rec->total_physical_memory  = get_total_physical_memory();
+    rec->username               = get_username();
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
+
+    free( buf );
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
+static WCHAR *get_compsysproduct_identifyingnumber( const char *buf, UINT len )
+{
+    WCHAR *ret = get_compsysproduct_string( 4, buf, len );
+    if (!ret) return wcsdup( L"0" );
     return ret;
 }
 
@@ -1697,13 +1711,6 @@ static WCHAR *get_compsysproduct_uuid( const char *buf, UINT len )
               ptr[14], ptr[15] );
 done:
     if (!ret) ret = wcsdup( L"deaddead-dead-dead-dead-deaddeaddead" );
-    return ret;
-}
-
-static WCHAR *get_compsysproduct_vendor( const char *buf, UINT len )
-{
-    WCHAR *ret = get_compsysproduct_string( 1, buf, len );
-    if (!ret) return wcsdup( L"The Wine Project" );
     return ret;
 }
 
