@@ -803,12 +803,11 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
 static struct key *create_key( struct key *key, const struct unicode_str *name,
                                const struct unicode_str *class, unsigned int options,
                                unsigned int access, unsigned int attributes,
-                               const struct security_descriptor *sd, int *created )
+                               const struct security_descriptor *sd )
 {
     int index;
     struct unicode_str token, next;
 
-    *created = 0;
     if (!(key = open_key_prefix( key, name, access, &token, &index ))) return NULL;
 
     if (!token.len)  /* the key already exists */
@@ -827,6 +826,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         if (debug_level > 1) dump_operation( key, NULL, "Open" );
         if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
         grab_object( key );
+        set_error( STATUS_OBJECT_NAME_EXISTS );
         return key;
     }
 
@@ -844,7 +844,6 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         set_error( STATUS_CHILD_MUST_BE_VOLATILE );
         return NULL;
     }
-    *created = 1;
     make_dirty( key );
     if (!(key = alloc_subkey( key, &token, index, current_time ))) return NULL;
 
@@ -2212,7 +2211,7 @@ DECL_HANDLER(create_key)
     if ((parent = get_parent_hkey_obj( objattr->rootdir )))
     {
         if ((key = create_key( parent, &name, &class, req->options, access,
-                               objattr->attributes, sd, &reply->created )))
+                               objattr->attributes, sd )))
         {
             reply->hkey = alloc_handle( current->process, key, access, objattr->attributes );
             release_object( key );
@@ -2367,8 +2366,7 @@ DECL_HANDLER(load_registry)
 
     if ((parent = get_parent_hkey_obj( objattr->rootdir )))
     {
-        int dummy;
-        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, sd, &dummy )))
+        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, sd )))
         {
             load_registry( key, req->file );
             release_object( key );

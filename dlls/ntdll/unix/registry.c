@@ -95,9 +95,18 @@ NTSTATUS WINAPI NtCreateKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
         if (class) wine_server_add_data( req, class->Buffer, class->Length );
         ret = wine_server_call( req );
         *key = wine_server_ptr_handle( reply->hkey );
-        if (dispos && !ret) *dispos = reply->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
     }
     SERVER_END_REQ;
+
+    if (ret == STATUS_OBJECT_NAME_EXISTS)
+    {
+        if (dispos) *dispos = REG_OPENED_EXISTING_KEY;
+        ret = STATUS_SUCCESS;
+    }
+    else if (ret == STATUS_SUCCESS)
+    {
+        if (dispos) *dispos = REG_CREATED_NEW_KEY;
+    }
 
     TRACE( "<- %p\n", *key );
     free( objattr );
@@ -700,6 +709,7 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
         req->file = wine_server_obj_handle( key );
         wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
+        if (ret == STATUS_OBJECT_NAME_EXISTS) ret = STATUS_SUCCESS;
     }
     SERVER_END_REQ;
 

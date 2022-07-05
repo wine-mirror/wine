@@ -2295,7 +2295,6 @@ static void dump_create_key_request( const struct create_key_request *req )
 static void dump_create_key_reply( const struct create_key_reply *req )
 {
     fprintf( stderr, " hkey=%04x", req->hkey );
-    fprintf( stderr, ", created=%d", req->created );
 }
 
 static void dump_open_key_request( const struct open_key_request *req )

@@ -1718,7 +1718,6 @@ struct process_info
     VARARG(class,unicode_str);         /* class name */
 @REPLY
     obj_handle_t hkey;         /* handle to the created key */
-    int          created;      /* has it been newly created? */
 @END
 
 /* Open a registry key */

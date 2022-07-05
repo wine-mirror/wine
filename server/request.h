@@ -1174,7 +1174,6 @@ C_ASSERT( FIELD_OFFSET(struct create_key_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_key_request, options) == 16 );
 C_ASSERT( sizeof(struct create_key_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct create_key_reply, hkey) == 8 );
-C_ASSERT( FIELD_OFFSET(struct create_key_reply, created) == 12 );
 C_ASSERT( sizeof(struct create_key_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_key_request, parent) == 12 );
 C_ASSERT( FIELD_OFFSET(struct open_key_request, access) == 16 );
