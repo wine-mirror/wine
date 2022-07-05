@@ -711,6 +711,8 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
             icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len - sizeof(ip_h) );
         }
     }
+    ip_h.checksum = 0;
+    ip_h.checksum = chksum( (BYTE *)&ip_h, sizeof(ip_h) );
     memcpy( buf, &ip_h, min( sizeof(ip_h), buf_len ));
 
     return recv_len;
