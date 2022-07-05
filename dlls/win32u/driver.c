@@ -767,7 +767,6 @@ static BOOL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW m
 static void nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager,
                                           BOOL force, void *param )
 {
-    manager->add_monitor( NULL, param ); /* use virtual monitor */
 }
 
 static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )

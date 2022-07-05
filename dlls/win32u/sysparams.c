@@ -192,8 +192,6 @@ static const WCHAR guid_devinterface_monitorW[] =
     {'{','E','6','F','0','7','B','5','F','-','E','E','9','7','-','4','A','9','0','-',
      'B','0','7','6','-','3','3','F','5','7','B','F','4','E','A','A','7','}',0};
 
-#define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
-
 /* Cached display device information */
 struct display_device
 {
@@ -233,9 +231,10 @@ static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
 
 BOOL enable_thunk_lock = FALSE;
 
+#define VIRTUAL_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
 static struct monitor virtual_monitor =
 {
-    .handle = NULLDRV_DEFAULT_HMONITOR,
+    .handle = VIRTUAL_HMONITOR,
     .flags = MONITORINFOF_PRIMARY,
     .rc_monitor.right = 1024,
     .rc_monitor.bottom = 768,
@@ -804,7 +803,6 @@ struct device_manager_ctx
     WCHAR gpu_guid[64];
     LUID gpu_luid;
     HKEY adapter_key;
-    BOOL virtual_monitor;
 };
 
 static void link_device( const WCHAR *instance, const WCHAR *class )
@@ -1078,12 +1076,6 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     static const WCHAR default_monitorW[] =
         {'M','O','N','I','T','O','R','\\','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
-    if (!monitor)
-    {
-        ctx->virtual_monitor = TRUE;
-        return;
-    }
-
     TRACE( "%s %s %s\n", debugstr_w(monitor->name), wine_dbgstr_rect(&monitor->rc_monitor),
            wine_dbgstr_rect(&monitor->rc_work) );
 
@@ -1319,16 +1311,23 @@ static BOOL update_display_cache_from_registry(void)
 
 static BOOL update_display_cache(void)
 {
-    struct device_manager_ctx ctx = { 0 };
+    HWINSTA winstation = NtUserGetProcessWindowStation();
+    struct device_manager_ctx ctx = {0};
+    USEROBJECTFLAGS flags;
+
+    /* services do not have any adapters, only a virtual monitor */
+    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL )
+        && !(flags.dwFlags & WSF_VISIBLE))
+    {
+        pthread_mutex_lock( &display_lock );
+        clear_display_devices();
+        list_add_tail( &monitors, &virtual_monitor.entry );
+        pthread_mutex_unlock( &display_lock );
+        return TRUE;
+    }
 
     user_driver->pUpdateDisplayDevices( &device_manager, FALSE, &ctx );
     release_display_manager_ctx( &ctx );
-    if (ctx.virtual_monitor)
-    {
-        clear_display_devices();
-        list_add_tail( &monitors, &virtual_monitor.entry );
-        return TRUE;
-    }
 
     if (update_display_cache_from_registry()) return TRUE;
     if (ctx.gpu_count)
