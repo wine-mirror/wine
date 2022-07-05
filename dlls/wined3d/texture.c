@@ -5014,7 +5014,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
             return;
         }
 
-        wined3d_format_copy_data(src_format, src_bo_addr->addr, src_row_pitch, src_slice_pitch,
+        wined3d_format_copy_data(src_format, src_bo_addr->addr + src_offset, src_row_pitch, src_slice_pitch,
                 map_ptr, staging_row_pitch, staging_slice_pitch, src_width, src_height, src_depth);
 
         range.offset = 0;
