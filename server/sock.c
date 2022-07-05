@@ -168,6 +168,8 @@ enum connection_state
     SOCK_CONNECTIONLESS,
 };
 
+#define MAX_ICMP_HISTORY_LENGTH 8
+
 struct sock
 {
     struct object       obj;         /* object header */
@@ -215,6 +217,13 @@ struct sock
     unsigned int        sndbuf;      /* advisory send buffer size */
     unsigned int        rcvtimeo;    /* receive timeout in ms */
     unsigned int        sndtimeo;    /* send timeout in ms */
+    struct
+    {
+        unsigned short icmp_id;
+        unsigned short icmp_seq;
+    }
+    icmp_fixup_data[MAX_ICMP_HISTORY_LENGTH]; /* Sent ICMP packets history used to fixup reply id. */
+    unsigned int        icmp_fixup_data_len;  /* Sent ICMP packets history length. */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
@@ -1502,6 +1511,7 @@ static struct sock *create_socket(void)
     sock->sndbuf = 0;
     sock->rcvtimeo = 0;
     sock->sndtimeo = 0;
+    sock->icmp_fixup_data_len = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
@@ -3587,5 +3597,49 @@ DECL_HANDLER(send_socket)
         reply->nonblocking = sock->nonblocking;
         release_object( async );
     }
+    release_object( sock );
+}
+
+DECL_HANDLER(socket_send_icmp_id)
+{
+    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->handle, 0, &sock_ops );
+
+    if (!sock) return;
+
+    if (sock->icmp_fixup_data_len == MAX_ICMP_HISTORY_LENGTH)
+    {
+        memmove( sock->icmp_fixup_data, sock->icmp_fixup_data + 1,
+                 sizeof(*sock->icmp_fixup_data) * (MAX_ICMP_HISTORY_LENGTH - 1) );
+        --sock->icmp_fixup_data_len;
+    }
+
+    sock->icmp_fixup_data[sock->icmp_fixup_data_len].icmp_id = req->icmp_id;
+    sock->icmp_fixup_data[sock->icmp_fixup_data_len].icmp_seq = req->icmp_seq;
+    ++sock->icmp_fixup_data_len;
+
+    release_object( sock );
+}
+
+DECL_HANDLER(socket_get_icmp_id)
+{
+    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->handle, 0, &sock_ops );
+    unsigned int i;
+
+    if (!sock) return;
+
+    for (i = 0; i < sock->icmp_fixup_data_len; ++i)
+    {
+        if (sock->icmp_fixup_data[i].icmp_seq == req->icmp_seq)
+        {
+            reply->icmp_id = sock->icmp_fixup_data[i].icmp_id;
+            --sock->icmp_fixup_data_len;
+            memmove( &sock->icmp_fixup_data[i], &sock->icmp_fixup_data[i + 1],
+                     (sock->icmp_fixup_data_len - i) * sizeof(*sock->icmp_fixup_data) );
+            release_object( sock );
+            return;
+        }
+    }
+
+    set_error( STATUS_NOT_FOUND );
     release_object( sock );
 }

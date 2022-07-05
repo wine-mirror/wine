@@ -2055,6 +2055,24 @@ static void dump_send_socket_reply( const struct send_socket_reply *req )
     fprintf( stderr, ", nonblocking=%d", req->nonblocking );
 }
 
+static void dump_socket_send_icmp_id_request( const struct socket_send_icmp_id_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", icmp_id=%04x", req->icmp_id );
+    fprintf( stderr, ", icmp_seq=%04x", req->icmp_seq );
+}
+
+static void dump_socket_get_icmp_id_request( const struct socket_get_icmp_id_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", icmp_seq=%04x", req->icmp_seq );
+}
+
+static void dump_socket_get_icmp_id_reply( const struct socket_get_icmp_id_reply *req )
+{
+    fprintf( stderr, " icmp_id=%04x", req->icmp_id );
+}
+
 static void dump_get_next_console_request_request( const struct get_next_console_request_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4548,6 +4566,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_unlock_file_request,
     (dump_func)dump_recv_socket_request,
     (dump_func)dump_send_socket_request,
+    (dump_func)dump_socket_send_icmp_id_request,
+    (dump_func)dump_socket_get_icmp_id_request,
     (dump_func)dump_get_next_console_request_request,
     (dump_func)dump_read_directory_changes_request,
     (dump_func)dump_read_change_request,
@@ -4827,6 +4847,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_recv_socket_reply,
     (dump_func)dump_send_socket_reply,
+    NULL,
+    (dump_func)dump_socket_get_icmp_id_reply,
     (dump_func)dump_get_next_console_request_reply,
     NULL,
     (dump_func)dump_read_change_reply,
@@ -5106,6 +5128,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "unlock_file",
     "recv_socket",
     "send_socket",
+    "socket_send_icmp_id",
+    "socket_get_icmp_id",
     "get_next_console_request",
     "read_directory_changes",
     "read_change",

@@ -581,10 +581,55 @@ struct ip_hdr
     ULONG daddr;
 };
 
+struct icmp_hdr
+{
+    BYTE type;
+    BYTE code;
+    UINT16 checksum;
+    union
+    {
+        struct
+        {
+            UINT16 id;
+            UINT16 sequence;
+        } echo;
+    } un;
+};
+
+/* rfc 1071 checksum */
+static unsigned short chksum(BYTE *data, unsigned int count)
+{
+    unsigned int sum = 0, carry = 0;
+    unsigned short check, s;
+
+    while (count > 1)
+    {
+        s = *(unsigned short *)data;
+        data += 2;
+        sum += carry;
+        sum += s;
+        carry = s > sum;
+        count -= 2;
+    }
+    sum += carry; /* This won't produce another carry */
+    sum = (sum & 0xffff) + (sum >> 16);
+
+    if (count) sum += *data; /* LE-only */
+
+    sum = (sum & 0xffff) + (sum >> 16);
+    /* fold in any carry */
+    sum = (sum & 0xffff) + (sum >> 16);
+
+    check = ~sum;
+    return check;
+}
+
 static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *unix_addr,
-                                      ssize_t recv_len, NTSTATUS *status )
+                                      HANDLE handle, ssize_t recv_len, NTSTATUS *status )
 {
     unsigned int tot_len = sizeof(struct ip_hdr) + recv_len;
+    struct icmp_hdr *icmp_h = NULL;
+    NTSTATUS fixup_status;
     struct cmsghdr *cmsg;
     struct ip_hdr ip_h;
     size_t buf_len;
@@ -610,6 +655,8 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
     {
         recv_len = min( recv_len, buf_len - sizeof(ip_h) );
         memmove( buf + sizeof(ip_h), buf, recv_len );
+        if (recv_len >= sizeof(struct icmp_hdr))
+            icmp_h = (struct icmp_hdr *)(buf + sizeof(ip_h));
         recv_len += sizeof(ip_h);
     }
     memset( &ip_h, 0, sizeof(ip_h) );
@@ -643,6 +690,25 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
                 break;
             }
 #endif
+        }
+    }
+    if (icmp_h)
+    {
+        SERVER_START_REQ( socket_get_icmp_id )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->icmp_seq = icmp_h->un.echo.sequence;
+            if (!(fixup_status = wine_server_call( req )))
+                icmp_h->un.echo.id = reply->icmp_id;
+            else
+                WARN( "socket_get_fixup_data returned %#x.\n", fixup_status );
+        }
+        SERVER_END_REQ;
+
+        if (!fixup_status)
+        {
+            icmp_h->checksum = 0;
+            icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len - sizeof(ip_h) );
         }
     }
     memcpy( buf, &ip_h, min( sizeof(ip_h), buf_len ));
@@ -687,7 +753,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
 
     status = (hdr.msg_flags & MSG_TRUNC) ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
     if (async->icmp_over_dgram)
-        ret = fixup_icmp_over_dgram( &hdr, &unix_addr, ret, &status );
+        ret = fixup_icmp_over_dgram( &hdr, &unix_addr, async->io.handle, ret, &status );
 
     if (async->control)
     {
@@ -1001,6 +1067,31 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
     return TRUE;
 }
 
+static void sock_save_icmp_id( struct async_send_ioctl *async )
+{
+    unsigned short id, seq;
+    struct icmp_hdr *h;
+
+    if (async->count != 1 || async->iov[0].iov_len < sizeof(*h))
+    {
+        FIXME( "ICMP over DGRAM fixup is not supported for count %u, len %zu.\n", async->count, async->iov[0].iov_len );
+        return;
+    }
+
+    h = async->iov[0].iov_base;
+    id = h->un.echo.id;
+    seq = h->un.echo.sequence;
+    SERVER_START_REQ( socket_send_icmp_id )
+    {
+        req->handle = wine_server_obj_handle( async->io.handle );
+        req->icmp_id = id;
+        req->icmp_seq = seq;
+        if (wine_server_call( req ))
+            WARN( "socket_fixup_send_data failed.\n" );
+    }
+    SERVER_END_REQ;
+}
+
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                            IO_STATUS_BLOCK *io, int fd, struct async_send_ioctl *async, int force_async )
 {
@@ -1020,6 +1111,9 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         nonblocking = reply->nonblocking;
     }
     SERVER_END_REQ;
+
+    if (!NT_ERROR(status) && is_icmp_over_dgram( fd ))
+        sock_save_icmp_id( async );
 
     alerted = status == STATUS_ALERTED;
     if (alerted)

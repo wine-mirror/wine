@@ -12952,7 +12952,7 @@ static void test_icmp(void)
 
     ok(icmp_h->type == ICMP4_ECHO_REPLY, "got type %#x.\n", icmp_h->type);
     ok(!icmp_h->code, "got code %#x.\n", icmp_h->code);
-    todo_wine ok(icmp_h->un.echo.id == 0xbeaf, "got echo id %#x.\n", icmp_h->un.echo.id);
+    ok(icmp_h->un.echo.id == 0xbeaf, "got echo id %#x.\n", icmp_h->un.echo.id);
     ok(icmp_h->un.echo.sequence == 2, "got echo sequence %#x.\n", icmp_h->un.echo.sequence);
 
     recv_checksum = icmp_h->checksum;
