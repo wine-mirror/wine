@@ -916,8 +916,8 @@ exit:
         if (stream->stream) {
             pa_stream_disconnect(stream->stream);
             pa_stream_unref(stream->stream);
-            free(stream);
         }
+        free(stream);
     }
 
     pulse_unlock();
