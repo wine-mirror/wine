@@ -2153,7 +2153,6 @@ static void test_NtRenameKey(void)
 
     info = (KEY_NAME_INFORMATION *)buffer;
     status = pNtQueryKey(subkey, KeyNameInformation, info, sizeof(buffer), &size);
-    todo_wine
     ok(!status, "Unexpected status %#lx.\n", status);
     if (status == STATUS_SUCCESS)
     {
