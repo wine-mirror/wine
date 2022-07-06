@@ -812,7 +812,20 @@ ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
 
 LONGLONG __stdcall __regs__allshl( LONGLONG a, unsigned char b )
 {
-    return a << b;
+    const LARGE_INTEGER x = { .QuadPart = a };
+    LARGE_INTEGER ret;
+
+    if (b >= 32)
+    {
+        ret.HighPart = x.LowPart << (b & 31);
+        ret.LowPart = 0;
+    }
+    else
+    {
+        ret.HighPart = (x.LowPart >> (32 - b)) | (x.HighPart << b);
+        ret.LowPart = x.LowPart << b;
+    }
+    return ret.QuadPart;
 }
 
 /******************************************************************************
@@ -828,7 +841,20 @@ __ASM_GLOBAL_FUNC( _allshl,
 
 LONGLONG __stdcall __regs__allshr( LONGLONG a, unsigned char b )
 {
-    return a >> b;
+    const LARGE_INTEGER x = { .QuadPart = a };
+    LARGE_INTEGER ret;
+
+    if (b >= 32)
+    {
+        ret.HighPart = x.HighPart >> 31;
+        ret.LowPart = x.HighPart >> (b & 31);
+    }
+    else
+    {
+        ret.HighPart = x.HighPart >> b;
+        ret.LowPart = (x.HighPart << (32 - b)) | (x.LowPart >> b);
+    }
+    return ret.QuadPart;
 }
 
 /******************************************************************************
@@ -844,7 +870,20 @@ __ASM_GLOBAL_FUNC( _allshr,
 
 ULONGLONG __stdcall __regs__aullshr( ULONGLONG a, unsigned char b )
 {
-    return a >> b;
+    const ULARGE_INTEGER x = { .QuadPart = a };
+    ULARGE_INTEGER ret;
+
+    if (b >= 32)
+    {
+        ret.HighPart = 0;
+        ret.LowPart = x.HighPart >> (b & 31);
+    }
+    else
+    {
+        ret.HighPart = x.HighPart >> b;
+        ret.LowPart = (x.HighPart << (32 - b)) | (x.LowPart >> b);
+    }
+    return ret.QuadPart;
 }
 
 /******************************************************************************
