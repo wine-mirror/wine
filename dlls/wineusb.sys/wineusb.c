@@ -487,6 +487,9 @@ static NTSTATUS fdo_pnp(IRP *irp)
         }
 
         case IRP_MN_START_DEVICE:
+            libusb_event_thread = CreateThread(NULL, 0, libusb_event_thread_proc, NULL, 0, NULL);
+            event_thread = CreateThread(NULL, 0, event_thread_proc, NULL, 0, NULL);
+
             if ((ret = libusb_hotplug_register_callback(NULL,
                     LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
                     LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
@@ -1153,9 +1156,6 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
         ERR("Failed to initialize libusb: %s\n", libusb_strerror(err));
         return STATUS_UNSUCCESSFUL;
     }
-
-    libusb_event_thread = CreateThread(NULL, 0, libusb_event_thread_proc, NULL, 0, NULL);
-    event_thread = CreateThread(NULL, 0, event_thread_proc, NULL, 0, NULL);
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
