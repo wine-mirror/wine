@@ -98,9 +98,11 @@
     SYSCALL_ENTRY( NtUserCopyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserCreateAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
+    SYSCALL_ENTRY( NtUserCreateInputContext ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserDeleteMenu ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
+    SYSCALL_ENTRY( NtUserDestroyInputContext ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
@@ -150,6 +152,7 @@
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \
     SYSCALL_ENTRY( NtUserOpenWindowStation ) \
+    SYSCALL_ENTRY( NtUserQueryInputContext ) \
     SYSCALL_ENTRY( NtUserRegisterRawInputDevices ) \
     SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserRemoveMenu ) \
@@ -170,6 +173,7 @@
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
     SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \
+    SYSCALL_ENTRY( NtUserUpdateInputContext ) \
     SYSCALL_ENTRY( NtUserWindowFromDC )
 
 #endif /* __WOW64WIN_SYSCALL_H */

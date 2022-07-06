@@ -226,6 +226,13 @@ NTSTATUS WINAPI wow64_NtUserCreateDesktopEx( UINT *args )
     return HandleToUlong( ret );
 }
 
+NTSTATUS WINAPI wow64_NtUserCreateInputContext( UINT *args )
+{
+    UINT_PTR client_ptr = get_ulong( &args );
+
+    return HandleToUlong( NtUserCreateInputContext( client_ptr ));
+}
+
 NTSTATUS WINAPI wow64_NtUserCreateWindowStation( UINT *args )
 {
     OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
@@ -256,6 +263,13 @@ NTSTATUS WINAPI wow64_NtUserDestroyAcceleratorTable( UINT *args )
     HACCEL handle = get_handle( &args );
 
     return NtUserDestroyAcceleratorTable( handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserDestroyInputContext( UINT *args )
+{
+    HIMC handle = get_handle( &args );
+
+    return NtUserDestroyInputContext( handle );
 }
 
 NTSTATUS WINAPI wow64_NtUserEndMenu( UINT *args )
@@ -848,6 +862,14 @@ NTSTATUS WINAPI wow64_NtUserOpenWindowStation( UINT *args )
     return HandleToUlong( NtUserOpenWindowStation( objattr_32to64( &attr, attr32 ), access ));
 }
 
+NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
+{
+    HIMC handle = get_handle( &args );
+    UINT attr = get_ulong( &args );
+
+    return NtUserQueryInputContext( handle, attr );
+}
+
 NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
 {
     const RAWINPUTDEVICE32 *devices32 = get_ptr( &args );
@@ -1103,6 +1125,15 @@ NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
     HHOOK handle = get_handle( &args );
 
     return NtUserUnhookWindowsHookEx( handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserUpdateInputContext( UINT *args )
+{
+    HIMC handle = get_handle( &args );
+    UINT attr = get_ulong( &args );
+    UINT_PTR value = get_ulong( &args );
+
+    return NtUserUpdateInputContext( handle, attr, value );
 }
 
 NTSTATUS WINAPI wow64_NtUserWindowFromDC( UINT *args )

@@ -21,6 +21,7 @@
 
 #include <winuser.h>
 #include <wingdi.h>
+#include <imm.h>
 #include <winternl.h>
 
 /* KernelCallbackTable codes, not compatible with Windows */
@@ -265,6 +266,7 @@ struct send_message_callback_params
 #define NTUSER_OBJ_WINPOS   0x04
 #define NTUSER_OBJ_ACCEL    0x08
 #define NTUSER_OBJ_HOOK     0x0f
+#define NTUSER_OBJ_IMC      0x11
 
 /* NtUserScrollWindowEx flag */
 #define SW_NODCCACHE  0x8000
@@ -356,6 +358,13 @@ struct draw_scroll_bar_params
     INT thumb_pos;
     INT thumb_size;
     BOOL vertical;
+};
+
+/* NtUserUpdateInputContext param, not compatible with Window */
+enum input_context_attr
+{
+    NtUserInputContextClientPtr,
+    NtUserInputContextThreadId,
 };
 
 /* internal messages codes */
@@ -558,6 +567,7 @@ BOOL    WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int heig
 HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *device,
                                       DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
                                       ULONG heap_size );
+HIMC    WINAPI NtUserCreateInputContext( UINT_PTR client_ptr );
 HWND    WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                      UNICODE_STRING *version, UNICODE_STRING *window_name,
                                      DWORD style, INT x, INT y, INT cx, INT cy,
@@ -570,6 +580,7 @@ HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after, IN
 BOOL    WINAPI NtUserDeleteMenu( HMENU menu, UINT id, UINT flags );
 BOOL    WINAPI NtUserDestroyAcceleratorTable( HACCEL handle );
 BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
+BOOL    WINAPI NtUserDestroyInputContext( HIMC handle );
 BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
 BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
 LRESULT WINAPI NtUserDispatchMessage( const MSG *msg );
@@ -686,6 +697,7 @@ HDESK   WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK ac
 BOOL    WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags );
 BOOL    WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 BOOL    WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam );
+UINT_PTR WINAPI NtUserQueryInputContext( HIMC handle, UINT attr );
 BOOL    WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
 ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
                                          struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
@@ -763,6 +775,7 @@ BOOL    WINAPI NtUserUnhookWindowsHookEx( HHOOK handle );
 BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
                                       struct client_menu_name *client_menu_name );
 BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
+BOOL    WINAPI NtUserUpdateInputContext( HIMC handle, UINT attr, UINT_PTR value );
 BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
                                           HDC hdc_src, const POINT *pts_src, COLORREF key,
                                           const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty );

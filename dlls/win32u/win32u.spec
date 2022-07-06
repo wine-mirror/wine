@@ -811,7 +811,7 @@
 @ stub NtUserCreateDCompositionHwndTarget
 @ stdcall -syscall NtUserCreateDesktopEx(ptr ptr ptr long long long)
 @ stub NtUserCreateEmptyCursorObject
-@ stub NtUserCreateInputContext
+@ stdcall -syscall NtUserCreateInputContext(ptr)
 @ stub NtUserCreateLocalMemHandle
 @ stub NtUserCreatePalmRejectionDelayZone
 @ stdcall NtUserCreateWindowEx(long ptr ptr ptr long long long long long long long long ptr long long long long)
@@ -831,7 +831,7 @@
 @ stub NtUserDestroyActivationObject
 @ stdcall NtUserDestroyCursor(long long)
 @ stub NtUserDestroyDCompositionHwndTarget
-@ stub NtUserDestroyInputContext
+@ stdcall -syscall NtUserDestroyInputContext(long)
 @ stdcall NtUserDestroyMenu(long)
 @ stub NtUserDestroyPalmRejectionDelayZone
 @ stdcall NtUserDestroyWindow(long)
@@ -1114,7 +1114,7 @@
 @ stub NtUserQueryBSDRWindow
 @ stub NtUserQueryDisplayConfig
 @ stub NtUserQueryInformationThread
-@ stub NtUserQueryInputContext
+@ stdcall -syscall NtUserQueryInputContext(long long)
 @ stub NtUserQuerySendMessage
 @ stub NtUserQueryWindow
 @ stub NtUserRealChildWindowFromPoint
@@ -1293,7 +1293,7 @@
 @ stub NtUserUnregisterSessionPort
 @ stub NtUserUnregisterUserApiHook
 @ stub NtUserUpdateDefaultDesktopThumbnail
-@ stub NtUserUpdateInputContext
+@ stdcall -syscall NtUserUpdateInputContext(long long ptr)
 @ stub NtUserUpdateInstance
 @ stdcall NtUserUpdateLayeredWindow(long long ptr ptr long ptr long ptr long ptr)
 @ stub NtUserUpdatePerUserSystemParameters

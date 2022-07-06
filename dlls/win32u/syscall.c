@@ -111,9 +111,11 @@ static void * const syscalls[] =
     NtUserCopyAcceleratorTable,
     NtUserCreateAcceleratorTable,
     NtUserCreateDesktopEx,
+    NtUserCreateInputContext,
     NtUserCreateWindowStation,
     NtUserDeleteMenu,
     NtUserDestroyAcceleratorTable,
+    NtUserDestroyInputContext,
     NtUserEndMenu,
     NtUserFindExistingCursorIcon,
     NtUserFindWindowEx,
@@ -163,6 +165,7 @@ static void * const syscalls[] =
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,
     NtUserOpenWindowStation,
+    NtUserQueryInputContext,
     NtUserRegisterRawInputDevices,
     NtUserRemoveClipboardFormatListener,
     NtUserRemoveMenu,
@@ -183,6 +186,7 @@ static void * const syscalls[] =
     NtUserThunkedMenuItemInfo,
     NtUserUnhookWinEvent,
     NtUserUnhookWindowsHookEx,
+    NtUserUpdateInputContext,
     NtUserWindowFromDC,
 };
 
