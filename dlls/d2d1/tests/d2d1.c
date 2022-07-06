@@ -132,6 +132,9 @@ L"<?xml version='1.0'?>                                                       \
         <Property name='Integer' type='uint32'>                               \
             <Property name='DisplayName' type='string' value='Integer'/>      \
         </Property>                                                           \
+        <Property name='Graph' type='iunknown'>                               \
+            <Property name='DisplayName' type='string' value='Graph'/>        \
+        </Property>                                                           \
     </Effect>                                                                 \
 ";
 
@@ -350,6 +353,7 @@ struct effect_impl
     LONG refcount;
     UINT integer;
     ID2D1EffectContext *effect_context;
+    ID2D1TransformGraph *transform_graph;
 };
 
 static void queue_d3d1x_test(void (*test)(BOOL d3d11), BOOL d3d11)
@@ -10690,6 +10694,7 @@ static HRESULT STDMETHODCALLTYPE effect_impl_Initialize(ID2D1EffectImpl *iface,
 {
     struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
     ID2D1EffectContext_AddRef(effect_impl->effect_context = context);
+    ID2D1TransformGraph_AddRef(effect_impl->transform_graph = graph);
     return S_OK;
 }
 
@@ -10724,6 +10729,7 @@ static HRESULT STDMETHODCALLTYPE effect_impl_create(IUnknown **effect_impl)
     object->refcount = 1;
     object->integer = 10;
     object->effect_context = NULL;
+    object->transform_graph = NULL;
 
     *effect_impl = (IUnknown *)&object->ID2D1EffectImpl_iface;
     return S_OK;
@@ -10767,6 +10773,21 @@ static HRESULT STDMETHODCALLTYPE effect_impl_get_context(const IUnknown *iface,
     *((ID2D1EffectContext **)data) = effect_impl->effect_context;
     if (actual_size)
         *actual_size = sizeof(effect_impl->effect_context);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_get_graph(const IUnknown *iface,
+        BYTE *data, UINT32 data_size, UINT32 *actual_size)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl((ID2D1EffectImpl *)iface);
+
+    if (!data)
+        return E_INVALIDARG;
+
+    *((ID2D1TransformGraph **)data) = effect_impl->transform_graph;
+    if (actual_size)
+        *actual_size = sizeof(effect_impl->transform_graph);
 
     return S_OK;
 }
@@ -11400,7 +11421,7 @@ static void test_effect_properties(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     count = ID2D1Effect_GetPropertyCount(effect);
-    ok(count == 2, "Got unexpected property count %u.\n", count);
+    ok(count == 3, "Got unexpected property count %u.\n", count);
 
     index = ID2D1Effect_GetPropertyIndex(effect, L"Context");
     ok(index == 0, "Got unexpected index %u.\n", index);
@@ -11994,6 +12015,125 @@ static void test_registered_effects(BOOL d3d11)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count2 == count, "Unexpected effect count %u.\n", count2);
 
+    release_test_context(&ctx);
+}
+
+static void test_transform_graph(BOOL d3d11)
+{
+    ID2D1OffsetTransform *offset_transform = NULL;
+    ID2D1BlendTransform *blend_transform = NULL;
+    D2D1_BLEND_DESCRIPTION blend_desc = {0};
+    ID2D1EffectContext *effect_context;
+    struct d2d1_test_context ctx;
+    ID2D1TransformGraph *graph;
+    ID2D1Factory1 *factory;
+    POINT point = {0 ,0};
+    ID2D1Effect *effect;
+    UINT i, count;
+    HRESULT hr;
+
+    const D2D1_PROPERTY_BINDING binding[] =
+    {
+        {L"Context", NULL, effect_impl_get_context},
+        {L"Graph",   NULL, effect_impl_get_graph},
+    };
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_c, binding, ARRAY_SIZE(binding), effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Graph", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&graph, sizeof(graph));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Create transforms */
+    hr = ID2D1EffectContext_CreateOffsetTransform(effect_context, point, &offset_transform);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 2, &blend_desc, &blend_transform);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (!offset_transform || !blend_transform)
+        goto done;
+
+    /* Add nodes */
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Remove nodes */
+    hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Connect nodes which are both un-added */
+    ID2D1TransformGraph_Clear(graph);
+    hr = ID2D1TransformGraph_ConnectNode(graph,
+            (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
+
+    /* Connect added node to un-added node */
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_ConnectNode(graph,
+            (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
+
+    /* Connect un-added node to added node */
+    ID2D1TransformGraph_Clear(graph);
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_ConnectNode(graph,
+            (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
+
+    /* Connect nodes */
+    ID2D1TransformGraph_Clear(graph);
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    count = ID2D1BlendTransform_GetInputCount(blend_transform);
+    for (i = 0; i < count; ++i)
+    {
+        hr = ID2D1TransformGraph_ConnectNode(graph,
+                (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
+
+    /* Connect node to out-of-bounds index */
+    hr = ID2D1TransformGraph_ConnectNode(graph,
+            (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, count);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+done:
+    if (blend_transform)
+        ID2D1BlendTransform_Release(blend_transform);
+    if (offset_transform)
+        ID2D1OffsetTransform_Release(offset_transform);
+    ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     release_test_context(&ctx);
 }
 
@@ -12812,6 +12952,7 @@ START_TEST(d2d1)
     queue_test(test_effect_crop);
     queue_test(test_effect_grayscale);
     queue_test(test_registered_effects);
+    queue_test(test_transform_graph);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
