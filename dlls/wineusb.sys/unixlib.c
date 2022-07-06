@@ -173,12 +173,19 @@ static NTSTATUS usb_main_loop(void *args)
 
     TRACE("Starting libusb event thread.\n");
 
+    if ((ret = libusb_init(NULL)))
+    {
+        ERR("Failed to initialize libusb: %s\n", libusb_strerror(ret));
+        return STATUS_UNSUCCESSFUL;
+    }
+
     if ((ret = libusb_hotplug_register_callback(NULL,
             LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
             LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
             LIBUSB_HOTPLUG_MATCH_ANY, hotplug_cb, NULL, &hotplug_cb_handle)))
     {
         ERR("Failed to register callback: %s\n", libusb_strerror(ret));
+        libusb_exit(NULL);
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -187,6 +194,8 @@ static NTSTATUS usb_main_loop(void *args)
         if ((ret = libusb_handle_events(NULL)))
             ERR("Error handling events: %s\n", libusb_strerror(ret));
     }
+
+    libusb_exit(NULL);
 
     queue_event(&shutdown_event);
 

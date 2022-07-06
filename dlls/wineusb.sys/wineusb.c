@@ -731,14 +731,12 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *p
 
 static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 {
-    libusb_exit(NULL);
 }
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
     NTSTATUS status;
     void *instance;
-    int err;
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
 
@@ -751,12 +749,6 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     }
 
     driver_obj = driver;
-
-    if ((err = libusb_init(NULL)))
-    {
-        ERR("Failed to initialize libusb: %s\n", libusb_strerror(err));
-        return STATUS_UNSUCCESSFUL;
-    }
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
