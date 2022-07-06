@@ -177,8 +177,8 @@ static const WCHAR guid_devclass_displayW[] =
 
 static const char  guid_devclass_monitorA[] = "{4D36E96E-E325-11CE-BFC1-08002BE10318}";
 static const WCHAR guid_devclass_monitorW[] =
-    {'{','4','D','3','6','E','9','6','E','-','E','3','2','5','-','1','1','C','E','-'
-        ,'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}'};
+    {'{','4','D','3','6','E','9','6','E','-','E','3','2','5','-','1','1','C','E','-',
+     'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}',0};
 
 static const WCHAR guid_devinterface_display_adapterW[] =
     {'{','5','B','4','5','2','0','1','D','-','F','2','F','2','-','4','F','3','B','-',
