@@ -178,11 +178,6 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
     return FALSE;
 }
 
-static BOOL value_exists(HWND hwnd, HKEY hKey, const WCHAR *value_name)
-{
-    return !RegQueryValueExW(hKey, value_name, NULL, NULL, NULL, NULL);
-}
-
 static LPWSTR read_value(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType, LONG *len)
 {
     DWORD valueDataLen;
@@ -523,7 +518,7 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR oldName, LPC
 	return FALSE;
     }
 
-    if (value_exists(hwnd, hKey, newName)) {
+    if (!RegQueryValueExW(hKey, newName, NULL, NULL, NULL, NULL)) {
         error_code_messagebox(hwnd, IDS_VALUE_EXISTS, oldName);
         goto done;
     }
