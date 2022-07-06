@@ -86,6 +86,7 @@ struct key
     int               last_subkey; /* last in use subkey */
     int               nb_subkeys;  /* count of allocated subkeys */
     struct key      **subkeys;     /* subkeys array */
+    struct key       *wow6432node; /* Wow6432Node subkey */
     int               last_value;  /* last in use value */
     int               nb_values;   /* count of allocated values in array */
     struct key_value *values;      /* values array */
@@ -99,9 +100,8 @@ struct key
 #define KEY_DELETED  0x0002  /* key has been deleted */
 #define KEY_DIRTY    0x0004  /* key has been modified */
 #define KEY_SYMLINK  0x0008  /* key is a symbolic link */
-#define KEY_WOW64    0x0010  /* key contains a Wow6432Node subkey */
-#define KEY_WOWSHARE 0x0020  /* key is a Wow64 shared key (used for Software\Classes) */
-#define KEY_PREDEF   0x0040  /* key is marked as predefined */
+#define KEY_WOWSHARE 0x0010  /* key is a Wow64 shared key (used for Software\Classes) */
+#define KEY_PREDEF   0x0020  /* key is marked as predefined */
 
 /* a key value */
 struct key_value
@@ -519,6 +519,7 @@ static struct key *alloc_key( const struct unicode_str *name, timeout_t modif )
         key->last_subkey = -1;
         key->nb_subkeys  = 0;
         key->subkeys     = NULL;
+        key->wow6432node = NULL;
         key->nb_values   = 0;
         key->last_value  = -1;
         key->values      = NULL;
@@ -632,7 +633,7 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
             parent->subkeys[i] = parent->subkeys[i-1];
         parent->subkeys[index] = key;
         if (is_wow6432node( key->name, key->namelen ) && !is_wow6432node( parent->name, parent->namelen ))
-            parent->flags |= KEY_WOW64;
+            parent->wow6432node = key;
     }
     return key;
 }
@@ -651,7 +652,7 @@ static void free_subkey( struct key *parent, int index )
     parent->last_subkey--;
     key->flags |= KEY_DELETED;
     key->parent = NULL;
-    if (is_wow6432node( key->name, key->namelen )) parent->flags &= ~KEY_WOW64;
+    if (parent->wow6432node == key) parent->wow6432node = NULL;
     release_object( key );
 
     /* try to shrink the array */
@@ -696,15 +697,8 @@ static struct key *find_subkey( const struct key *key, const struct unicode_str 
 /* return the wow64 variant of the key, or the key itself if none */
 static struct key *find_wow64_subkey( struct key *key, const struct unicode_str *name )
 {
-    static const struct unicode_str wow6432node_str = { wow6432node, sizeof(wow6432node) };
-    int index;
-
-    if (!(key->flags & KEY_WOW64)) return key;
-    if (!is_wow6432node( name->str, name->len ))
-    {
-        key = find_subkey( key, &wow6432node_str, &index );
-        assert( key );  /* if KEY_WOW64 is set we must find it */
-    }
+    if (!key->wow6432node) return key;
+    if (!is_wow6432node( name->str, name->len )) return key->wow6432node;
     return key;
 }
 
@@ -1015,11 +1009,6 @@ static int rename_key( struct key *key, const struct unicode_str *new_name )
     WCHAR *ptr;
 
     token.str = NULL;
-    if (is_wow6432node( key->name, key->namelen ))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return -1;
-    }
 
     /* changing to a path is not allowed */
     if (!new_name->len || !get_path_token( new_name, &token ) || token.len != new_name->len)
@@ -1034,6 +1023,13 @@ static int rename_key( struct key *key, const struct unicode_str *new_name )
         set_error( STATUS_CANNOT_DELETE );
         return -1;
     }
+
+    if (key == key->parent->wow6432node || is_wow6432node( new_name->str, new_name->len ))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return -1;
+    }
+
 
     if (!(ptr = memdup( new_name->str, new_name->len ))) return -1;
 
