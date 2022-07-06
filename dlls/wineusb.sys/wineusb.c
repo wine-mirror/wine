@@ -376,7 +376,6 @@ static void remove_usb_device(libusb_device *libusb_device)
     }
 }
 
-static BOOL thread_shutdown;
 static HANDLE libusb_event_thread, event_thread;
 
 static int LIBUSB_CALL hotplug_cb(libusb_context *context, libusb_device *device,
@@ -393,19 +392,11 @@ static int LIBUSB_CALL hotplug_cb(libusb_context *context, libusb_device *device
 static DWORD CALLBACK libusb_event_thread_proc(void *arg)
 {
     static const struct usb_event shutdown_event = {.type = USB_EVENT_SHUTDOWN};
-    int ret;
 
-    TRACE("Starting libusb event thread.\n");
-
-    while (!thread_shutdown)
-    {
-        if ((ret = libusb_handle_events(NULL)))
-            ERR("Error handling events: %s\n", libusb_strerror(ret));
-    }
+    __wine_unix_call(unix_handle, unix_usb_main_loop, NULL);
 
     queue_event(&shutdown_event);
 
-    TRACE("Shutting down libusb event thread.\n");
     return 0;
 }
 
@@ -517,8 +508,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
             struct usb_device *device, *cursor;
 
             libusb_hotplug_deregister_callback(NULL, hotplug_cb_handle);
-            thread_shutdown = TRUE;
-            libusb_interrupt_event_handler(NULL);
+            __wine_unix_call(unix_handle, unix_usb_exit, NULL);
             WaitForSingleObject(libusb_event_thread, INFINITE);
             CloseHandle(libusb_event_thread);
             WaitForSingleObject(event_thread, INFINITE);

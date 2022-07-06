@@ -32,6 +32,8 @@ struct usb_cancel_transfer_params
 
 enum unix_funcs
 {
+    unix_usb_main_loop,
+    unix_usb_exit,
     unix_usb_cancel_transfer,
 };
 
