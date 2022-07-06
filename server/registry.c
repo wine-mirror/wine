@@ -78,10 +78,8 @@ struct type_descr key_type =
 struct key
 {
     struct object     obj;         /* object header */
-    WCHAR            *name;        /* key name */
     WCHAR            *class;       /* key class */
-    unsigned short    namelen;     /* length of key name */
-    unsigned short    classlen;    /* length of class name */
+    data_size_t       classlen;    /* length of class name */
     struct key       *parent;      /* parent key */
     int               last_subkey; /* last in use subkey */
     int               nb_subkeys;  /* count of allocated subkeys */
@@ -167,6 +165,7 @@ static void key_dump( struct object *obj, int verbose );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
 static WCHAR *key_get_full_name( struct object *obj, data_size_t *len );
+static void key_unlink_name( struct object *obj, struct object_name *name );
 static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void key_destroy( struct object *obj );
 
@@ -187,7 +186,7 @@ static const struct object_ops key_ops =
     key_get_full_name,       /* get_full_name */
     no_lookup_name,          /* lookup_name */
     no_link_name,            /* link_name */
-    NULL,                    /* unlink_name */
+    key_unlink_name,         /* unlink_name */
     no_open_file,            /* open_file */
     no_kernel_obj_list,      /* get_kernel_obj_list */
     key_close_handle,        /* close_handle */
@@ -217,7 +216,7 @@ static void dump_path( const struct key *key, const struct key *base, FILE *f )
         dump_path( key->parent, base, f );
         fprintf( f, "\\\\" );
     }
-    dump_strW( key->name, key->namelen, f, "[]" );
+    dump_strW( key->obj.name->name, key->obj.name->len, f, "[]" );
 }
 
 /* dump a value to a text file */
@@ -412,19 +411,23 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
         return NULL;
     }
 
-    for (key = (struct key *)obj; key != root_key; key = key->parent) len += key->namelen + sizeof(WCHAR);
+    for (key = (struct key *)obj; key != root_key; key = key->parent) len += key->obj.name->len + sizeof(WCHAR);
     if (!(ret = malloc( len ))) return NULL;
 
     *ret_len = len;
     key = (struct key *)obj;
     for (key = (struct key *)obj; key != root_key; key = key->parent)
     {
-        memcpy( ret + len - key->namelen, key->name, key->namelen );
-        len -= key->namelen + sizeof(WCHAR);
+        memcpy( ret + len - key->obj.name->len, key->obj.name->name, key->obj.name->len );
+        len -= key->obj.name->len + sizeof(WCHAR);
         memcpy( ret + len, &backslash, sizeof(WCHAR) );
     }
     memcpy( ret, root_name, sizeof(root_name) - sizeof(WCHAR) );
     return (WCHAR *)ret;
+}
+
+static void key_unlink_name( struct object *obj, struct object_name *name )
+{
 }
 
 /* close the notification associated with a handle */
@@ -443,7 +446,6 @@ static void key_destroy( struct object *obj )
     struct key *key = (struct key *)obj;
     assert( obj->ops == &key_ops );
 
-    free( key->name );
     free( key->class );
     for (i = 0; i <= key->last_value; i++)
     {
@@ -508,12 +510,16 @@ static struct unicode_str *get_path_token( const struct unicode_str *path, struc
 /* allocate a key object */
 static struct key *alloc_key( const struct unicode_str *name, timeout_t modif )
 {
+    struct object_name *name_ptr;
     struct key *key;
+
+    if (!(name_ptr = mem_alloc( offsetof( struct object_name, name[name->len / sizeof(WCHAR)] ))))
+        return NULL;
+
     if ((key = alloc_object( &key_ops )))
     {
-        key->name        = NULL;
+        key->obj.name    = name_ptr;
         key->class       = NULL;
-        key->namelen     = name->len;
         key->classlen    = 0;
         key->flags       = 0;
         key->last_subkey = -1;
@@ -526,12 +532,13 @@ static struct key *alloc_key( const struct unicode_str *name, timeout_t modif )
         key->modif       = modif;
         key->parent      = NULL;
         list_init( &key->notify_list );
-        if (name->len && !(key->name = memdup( name->str, name->len )))
-        {
-            release_object( key );
-            key = NULL;
-        }
+
+        name_ptr->obj = &key->obj;
+        name_ptr->len = name->len;
+        name_ptr->parent = NULL;
+        memcpy( name_ptr->name, name->str, name->len );
     }
+    else free( name_ptr );
     return key;
 }
 
@@ -632,7 +639,8 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
         for (i = ++parent->last_subkey; i > index; i--)
             parent->subkeys[i] = parent->subkeys[i-1];
         parent->subkeys[index] = key;
-        if (is_wow6432node( key->name, key->namelen ) && !is_wow6432node( parent->name, parent->namelen ))
+        if (is_wow6432node( key->obj.name->name, key->obj.name->len ) &&
+            !is_wow6432node( parent->obj.name->name, parent->obj.name->len ))
             parent->wow6432node = key;
     }
     return key;
@@ -679,9 +687,9 @@ static struct key *find_subkey( const struct key *key, const struct unicode_str 
     while (min <= max)
     {
         i = (min + max) / 2;
-        len = min( key->subkeys[i]->namelen, name->len );
-        res = memicmp_strW( key->subkeys[i]->name, name->str, len );
-        if (!res) res = key->subkeys[i]->namelen - name->len;
+        len = min( key->subkeys[i]->obj.name->len, name->len );
+        res = memicmp_strW( key->subkeys[i]->obj.name->name, name->str, len );
+        if (!res) res = key->subkeys[i]->obj.name->len - name->len;
         if (!res)
         {
             *index = i;
@@ -929,7 +937,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         key = key->subkeys[index];
     }
 
-    namelen = key->namelen;
+    namelen = key->obj.name->len;
     classlen = key->classlen;
 
     switch(info_class)
@@ -950,7 +958,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
     case KeyCachedInformation:
         for (i = 0; i <= key->last_subkey; i++)
         {
-            if (key->subkeys[i]->namelen > max_subkey) max_subkey = key->subkeys[i]->namelen;
+            if (key->subkeys[i]->obj.name->len > max_subkey) max_subkey = key->subkeys[i]->obj.name->len;
             if (key->subkeys[i]->classlen > max_class) max_class = key->subkeys[i]->classlen;
         }
         for (i = 0; i <= key->last_value; i++)
@@ -982,7 +990,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         if (len > namelen)
         {
             reply->namelen = namelen;
-            memcpy( data, key->name, namelen );
+            memcpy( data, key->obj.name->name, namelen );
             memcpy( data + namelen, key->class, len - namelen );
         }
         else if (info_class == KeyNameInformation)
@@ -993,7 +1001,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         else
         {
             reply->namelen = len;
-            memcpy( data, key->name, len );
+            memcpy( data, key->obj.name->name, len );
         }
     }
     free( fullname );
@@ -1004,9 +1012,9 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
 static int rename_key( struct key *key, const struct unicode_str *new_name )
 {
     struct unicode_str token, name;
+    struct object_name *new_name_ptr;
     struct key *subkey;
     int i, index, cur_index;
-    WCHAR *ptr;
 
     token.str = NULL;
 
@@ -1030,11 +1038,16 @@ static int rename_key( struct key *key, const struct unicode_str *new_name )
         return -1;
     }
 
+    if (!(new_name_ptr = mem_alloc( offsetof( struct object_name, name[new_name->len / sizeof(WCHAR)] ))))
+        return -1;
 
-    if (!(ptr = memdup( new_name->str, new_name->len ))) return -1;
+    new_name_ptr->obj = &key->obj;
+    new_name_ptr->len = new_name->len;
+    new_name_ptr->parent = NULL;
+    memcpy( new_name_ptr->name, new_name->str, new_name->len );
 
-    name.str = key->name;
-    name.len = key->namelen;
+    name.str = key->obj.name->name;
+    name.len = key->obj.name->len;
     find_subkey( key->parent, &name, &cur_index );
 
     if (cur_index < index && (index - cur_index) > 1)
@@ -1050,9 +1063,8 @@ static int rename_key( struct key *key, const struct unicode_str *new_name )
     }
     key->parent->subkeys[index] = key;
 
-    free( key->name );
-    key->name = ptr;
-    key->namelen = new_name->len;
+    free( key->obj.name );
+    key->obj.name = new_name_ptr;
 
     if (debug_level > 1) dump_operation( key, NULL, "Rename" );
     make_dirty( key );
@@ -1722,7 +1734,7 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     len = (p - info->tmp) * sizeof(WCHAR);
     for (res = 1; key != root_key; res++)
     {
-        if (len == key->namelen && !memicmp_strW( info->tmp, key->name, len )) break;
+        if (len == key->obj.name->len && !memicmp_strW( info->tmp, key->obj.name->name, len )) break;
         key = key->parent;
     }
     if (key == root_key) res = 0;  /* no matching name */
