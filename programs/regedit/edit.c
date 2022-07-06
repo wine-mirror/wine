@@ -312,12 +312,12 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
         WCHAR *tmpValueData = NULL;
         INT i, j, count;
 
-        for ( i = 0, count = 0; i < len - 1; i++)
+        for (i = 0, count = 0; i < len / sizeof(WCHAR); i++)
             if ( !stringValueData[i] && stringValueData[i + 1] )
                 count++;
-        tmpValueData = heap_xalloc((len + count) * sizeof(WCHAR));
+        tmpValueData = heap_xalloc(len + (count * sizeof(WCHAR)));
 
-        for ( i = 0, j = 0; i < len - 1; i++)
+        for ( i = 0, j = 0; i < len / sizeof(WCHAR); i++)
         {
             if ( !stringValueData[i] && stringValueData[i + 1])
             {
@@ -327,7 +327,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
             else
                 tmpValueData[j++] = stringValueData[i];
         }
-        tmpValueData[j] = stringValueData[i];
+
         heap_free(stringValueData);
         stringValueData = tmpValueData;
         tmpValueData = NULL;
@@ -337,7 +337,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
             len = lstrlenW( stringValueData );
             tmpValueData = heap_xalloc((len + 2) * sizeof(WCHAR));
 
-            for ( i = 0, j = 0; i < len - 1; i++)
+            for (i = 0, j = 0; i < len; i++)
             {
                 if ( stringValueData[i] == char1 && stringValueData[i + 1] == char2)
                 {
@@ -348,7 +348,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
                 else
                     tmpValueData[j++] = stringValueData[i];
             }
-            tmpValueData[j++] = stringValueData[i];
+
             tmpValueData[j++] = 0;
             tmpValueData[j++] = 0;
             heap_free(stringValueData);
