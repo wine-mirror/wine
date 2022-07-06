@@ -434,6 +434,37 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
 
 static void key_unlink_name( struct object *obj, struct object_name *name )
 {
+    struct key *key = (struct key *)obj;
+    struct key *parent = (struct key *)name->parent;
+    int i, nb_subkeys;
+
+    if (!parent) return;
+
+    if (parent->obj.ops != &key_ops)
+    {
+        default_unlink_name( obj, name );
+        return;
+    }
+
+    for (i = 0; i <= parent->last_subkey; i++) if (parent->subkeys[i] == key) break;
+    assert( i <= parent->last_subkey );
+    for ( ; i < parent->last_subkey; i++) parent->subkeys[i] = parent->subkeys[i + 1];
+    parent->last_subkey--;
+    name->parent = NULL;
+    if (parent->wow6432node == key) parent->wow6432node = NULL;
+    release_object( key );
+
+    /* try to shrink the array */
+    nb_subkeys = parent->nb_subkeys;
+    if (nb_subkeys > MIN_SUBKEYS && parent->last_subkey < nb_subkeys / 2)
+    {
+        struct key **new_subkeys;
+        nb_subkeys -= nb_subkeys / 3;  /* shrink by 33% */
+        if (nb_subkeys < MIN_SUBKEYS) nb_subkeys = MIN_SUBKEYS;
+        if (!(new_subkeys = realloc( parent->subkeys, nb_subkeys * sizeof(*new_subkeys) ))) return;
+        parent->subkeys = new_subkeys;
+        parent->nb_subkeys = nb_subkeys;
+    }
 }
 
 /* close the notification associated with a handle */
@@ -646,36 +677,6 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
             parent->wow6432node = key;
     }
     return key;
-}
-
-/* free a subkey of a given key */
-static void free_subkey( struct key *parent, int index )
-{
-    struct key *key;
-    int i, nb_subkeys;
-
-    assert( index >= 0 );
-    assert( index <= parent->last_subkey );
-
-    key = parent->subkeys[index];
-    for (i = index; i < parent->last_subkey; i++) parent->subkeys[i] = parent->subkeys[i + 1];
-    parent->last_subkey--;
-    key->flags |= KEY_DELETED;
-    key->obj.name->parent = NULL;
-    if (parent->wow6432node == key) parent->wow6432node = NULL;
-    release_object( key );
-
-    /* try to shrink the array */
-    nb_subkeys = parent->nb_subkeys;
-    if (nb_subkeys > MIN_SUBKEYS && parent->last_subkey < nb_subkeys / 2)
-    {
-        struct key **new_subkeys;
-        nb_subkeys -= nb_subkeys / 3;  /* shrink by 33% */
-        if (nb_subkeys < MIN_SUBKEYS) nb_subkeys = MIN_SUBKEYS;
-        if (!(new_subkeys = realloc( parent->subkeys, nb_subkeys * sizeof(*new_subkeys) ))) return;
-        parent->subkeys = new_subkeys;
-        parent->nb_subkeys = nb_subkeys;
-    }
 }
 
 /* find the named child of a given key and return its index */
@@ -903,7 +904,7 @@ static struct key *create_key_recursive( struct key *key, const struct unicode_s
             /* we know the index is always 0 in a new key */
             if (!(key = alloc_subkey( key, &token, 0, modif )))
             {
-                free_subkey( base, index );
+                unlink_named_object( &base->obj );
                 return NULL;
             }
         }
@@ -1075,42 +1076,37 @@ static int rename_key( struct key *key, const struct unicode_str *new_name )
 /* delete a key and its values */
 static int delete_key( struct key *key, int recurse )
 {
-    int index;
     struct key *parent = get_parent( key );
 
-    /* must find parent and index */
-    if (key == root_key)
+    if (key->flags & KEY_DELETED) return 1;
+
+    if (!parent)
     {
         set_error( STATUS_ACCESS_DENIED );
-        return -1;
+        return 0;
     }
-    assert( parent );
-
     if (key->flags & KEY_PREDEF)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return -1;
+        return 0;
     }
 
-    while (recurse && (key->last_subkey>=0))
-        if (0 > delete_key(key->subkeys[key->last_subkey], 1))
-            return -1;
-
-    for (index = 0; index <= parent->last_subkey; index++)
-        if (parent->subkeys[index] == key) break;
-    assert( index <= parent->last_subkey );
-
-    /* we can only delete a key that has no subkeys */
-    if (key->last_subkey >= 0)
+    if (recurse)
+    {
+        while (key->last_subkey >= 0)
+            if (!delete_key( key->subkeys[key->last_subkey], 1 )) return 0;
+    }
+    else if (key->last_subkey >= 0)  /* we can only delete a key that has no subkeys */
     {
         set_error( STATUS_ACCESS_DENIED );
-        return -1;
+        return 0;
     }
 
     if (debug_level > 1) dump_operation( key, NULL, "Delete" );
-    free_subkey( parent, index );
+    key->flags |= KEY_DELETED;
+    unlink_named_object( &key->obj );
     touch_key( parent, REG_NOTIFY_CHANGE_NAME );
-    return 0;
+    return 1;
 }
 
 /* try to grow the array of values; return 1 if OK, 0 on error */
@@ -2254,11 +2250,11 @@ DECL_HANDLER(open_key)
 /* delete a registry key */
 DECL_HANDLER(delete_key)
 {
-    struct key *key;
+    struct key *key = (struct key *)get_handle_obj( current->process, req->hkey, DELETE, &key_ops );
 
-    if ((key = get_hkey_obj( req->hkey, DELETE )))
+    if (key)
     {
-        delete_key( key, 0);
+        delete_key( key, 0 );
         release_object( key );
     }
 }

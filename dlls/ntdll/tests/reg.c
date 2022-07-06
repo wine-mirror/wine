@@ -940,7 +940,7 @@ static void test_NtDeleteKey(void)
     ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtDeleteKey(hkey);
-    todo_wine ok(!status, "got %#lx\n", status);
+    ok(!status, "got %#lx\n", status);
 
     RtlInitUnicodeString(&string, L"subkey");
     InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, hkey, NULL);
