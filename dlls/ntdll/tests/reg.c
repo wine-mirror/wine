@@ -1817,10 +1817,23 @@ static void test_NtQueryKey(void)
         pNtClose(key);
         return;
     }
-    todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08lx\n", status);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08lx\n", status);
     info = HeapAlloc(GetProcessHeap(), 0, length);
 
     /* non-zero buffer size, but insufficient */
+    len = 0;
+    status = pNtQueryKey(key, KeyNameInformation, info, 1, &len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08lx\n", status);
+    ok(length == len, "got %ld, expected %ld\n", len, length);
+    len = 0;
+    status = pNtQueryKey(key, KeyNameInformation, info, offsetof( KEY_NAME_INFORMATION, Name ) - 1, &len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08lx\n", status);
+    ok(length == len, "got %ld, expected %ld\n", len, length);
+    len = 0;
+    status = pNtQueryKey(key, KeyNameInformation, info, offsetof( KEY_NAME_INFORMATION, Name ), &len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryKey Failed: 0x%08lx\n", status);
+    ok(length == len, "got %ld, expected %ld\n", len, length);
+    len = 0;
     status = pNtQueryKey(key, KeyNameInformation, info, sizeof(*info), &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryKey Failed: 0x%08lx\n", status);
     ok(length == len, "got %ld, expected %ld\n", len, length);
@@ -1828,6 +1841,7 @@ static void test_NtQueryKey(void)
        info->NameLength, winetestpath.Length);
 
     /* correct buffer size */
+    len = 0;
     status = pNtQueryKey(key, KeyNameInformation, info, length, &len);
     ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08lx\n", status);
     ok(length == len, "got %ld, expected %ld\n", len, length);
