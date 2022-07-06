@@ -929,7 +929,6 @@ static void test_name_limits(void)
     for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + wcslen(registryW)] = 'a';
     str.Length = 0;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "%u: NtCreateKey failed %lx\n", str.Length, status );
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr2, 0, NULL, 0, NULL );
     ok( status == STATUS_INVALID_HANDLE, "%u: NtCreateKey failed %lx\n", str.Length, status );
@@ -1052,11 +1051,9 @@ static void test_name_limits(void)
     attr3.RootDirectory = 0;
     attr2.ObjectName = attr3.ObjectName = NULL;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr2, 0, NULL, 0, NULL );
-    todo_wine
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE /* vista wow64 */,
         "NULL: NtCreateKey failed %lx\n", status );
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr3, 0, NULL, 0, NULL );
-    todo_wine
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtCreateKey( &ret, GENERIC_ALL, NULL, 0, NULL, 0, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
