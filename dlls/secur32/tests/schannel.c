@@ -1157,11 +1157,11 @@ static void test_communication(void)
     buffers[1].pBuffers[0].cbBuffer = 4;
     buffers[1].pBuffers[1].cbBuffer = 0;
     buffers[1].pBuffers[1].BufferType = SECBUFFER_EMPTY;
+    buffers[1].pBuffers[1].cbBuffer = 0;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
-    ok(status == SEC_E_INCOMPLETE_MESSAGE || status == SEC_E_INVALID_TOKEN,
-       "Got unexpected status %#lx.\n", status);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#lx.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
     ok(buffers[1].pBuffers[1].cbBuffer == 1 ||
@@ -1173,11 +1173,11 @@ static void test_communication(void)
     buffers[1].pBuffers[0].cbBuffer = 5;
     buffers[1].pBuffers[1].cbBuffer = 0;
     buffers[1].pBuffers[1].BufferType = SECBUFFER_EMPTY;
+    buffers[1].pBuffers[1].cbBuffer = 0;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
-    ok(status == SEC_E_INCOMPLETE_MESSAGE || status == SEC_E_INVALID_TOKEN,
-       "Got unexpected status %#lx.\n", status);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#lx.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
     ok(buffers[1].pBuffers[1].cbBuffer > 5 ||
@@ -1210,6 +1210,16 @@ static void test_communication(void)
         context2.dwLower = context2.dwUpper = 0xdeadbeef;
         buf->BufferType = SECBUFFER_TOKEN;
 
+        buffers[1].cBuffers = 2;
+        buffers[1].pBuffers[1].BufferType = SECBUFFER_EMPTY;
+        buffers[1].pBuffers[1].cbBuffer = 0xdeadbeef;
+
+        status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_USE_SUPPLIED_CREDS,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+        ok(status == SEC_E_INVALID_TOKEN, "Got unexpected status %#lx.\n", status);
+
+        buffers[1].cBuffers = 1;
         status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_USE_SUPPLIED_CREDS,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
