@@ -23,18 +23,65 @@
 
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/unixlib.h"
+
+struct unix_device
+{
+    struct list entry;
+
+    libusb_device_handle *handle;
+};
+
+enum usb_event_type
+{
+    USB_EVENT_ADD_DEVICE,
+    USB_EVENT_REMOVE_DEVICE,
+    USB_EVENT_TRANSFER_COMPLETE,
+    USB_EVENT_SHUTDOWN,
+};
+
+struct usb_event
+{
+    enum usb_event_type type;
+
+    union
+    {
+        struct unix_device *added_device;
+        struct unix_device *removed_device;
+        IRP *completed_irp;
+    } u;
+};
+
+struct usb_get_event_params
+{
+    struct usb_event *event;
+};
+
+struct usb_submit_urb_params
+{
+    struct unix_device *device;
+    IRP *irp;
+};
 
 struct usb_cancel_transfer_params
 {
     void *transfer;
 };
 
+struct usb_destroy_device_params
+{
+    struct unix_device *device;
+};
+
 enum unix_funcs
 {
     unix_usb_main_loop,
     unix_usb_exit,
+    unix_usb_get_event,
+    unix_usb_submit_urb,
     unix_usb_cancel_transfer,
+    unix_usb_destroy_device,
 };
 
 #endif
