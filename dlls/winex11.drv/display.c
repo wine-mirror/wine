@@ -1026,6 +1026,8 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     struct gdi_gpu *gpus;
     INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
+    DEVMODEW *modes, *mode;
+    DWORD mode_count;
 
     if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;
@@ -1060,6 +1062,20 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             }
 
             handler->free_monitors(monitors, monitor_count);
+
+            if (!settings_handler.get_modes( adapters[adapter].id, EDS_ROTATEDMODE, &modes, &mode_count ))
+                continue;
+
+            qsort( modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare );
+
+            for (mode = modes; mode_count; mode_count--)
+            {
+                TRACE( "mode: %p\n", mode );
+                device_manager->add_mode( mode, param );
+                mode = (DEVMODEW *)((char *)mode + sizeof(*modes) + modes[0].dmDriverExtra);
+            }
+
+            settings_handler.free_modes( modes );
         }
 
         handler->free_adapters(adapters);

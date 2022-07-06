@@ -918,6 +918,73 @@ better:
     return ret;
 }
 
+
+static DEVMODEW *display_get_modes(CGDirectDisplayID display_id, int *modes_count)
+{
+    int default_bpp = get_default_bpp(), synth_count = 0, count, i;
+    BOOL modes_has_8bpp = FALSE, modes_has_16bpp = FALSE;
+    struct display_mode_descriptor *desc;
+    DEVMODEW *devmodes;
+    CFArrayRef modes;
+
+    modes = copy_display_modes(display_id, TRUE);
+    if (!modes)
+        return NULL;
+
+    count = CFArrayGetCount(modes);
+    for (i = 0; i < count && !(modes_has_8bpp && modes_has_16bpp); i++)
+    {
+        CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+        int bpp = display_mode_bits_per_pixel(mode);
+        if (bpp == 8)
+            modes_has_8bpp = TRUE;
+        else if (bpp == 16)
+            modes_has_16bpp = TRUE;
+    }
+
+    if (!(devmodes = calloc(count * 3, sizeof(DEVMODEW))))
+    {
+        CFRelease(modes);
+        return NULL;
+    }
+
+    desc = create_original_display_mode_descriptor(display_id);
+    for (i = 0; i < count; i++)
+    {
+        CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+        display_mode_to_devmode(display_id, mode, devmodes + i);
+
+        if (retina_enabled && display_mode_matches_descriptor(mode, desc))
+        {
+            devmodes[i].dmPelsWidth *= 2;
+            devmodes[i].dmPelsHeight *= 2;
+        }
+    }
+    free_display_mode_descriptor(desc);
+
+    for (i = 0; !modes_has_16bpp && i < count; i++)
+    {
+        /* We only synthesize modes from those having the default bpp. */
+        if (devmodes[i].dmBitsPerPel != default_bpp) continue;
+        devmodes[count + synth_count] = devmodes[i];
+        devmodes[count + synth_count].dmBitsPerPel = 16;
+        synth_count++;
+    }
+
+    for (i = 0; !modes_has_8bpp && i < count; i++)
+    {
+        /* We only synthesize modes from those having the default bpp. */
+        if (devmodes[i].dmBitsPerPel != default_bpp) continue;
+        devmodes[count + synth_count] = devmodes[i];
+        devmodes[count + synth_count].dmBitsPerPel = 8;
+        synth_count++;
+    }
+
+    CFRelease(modes);
+    *modes_count = count + synth_count;
+    return devmodes;
+}
+
 /***********************************************************************
  *              EnumDisplaySettingsEx  (MACDRV.@)
  *
@@ -1301,7 +1368,8 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
     struct macdrv_gpu *gpus, *gpu;
-    INT gpu_count, adapter_count, monitor_count;
+    INT gpu_count, adapter_count, monitor_count, mode_count;
+    DEVMODEW *mode, *modes;
     DWORD len;
 
     if (!force && !force_display_devices_refresh) return TRUE;
@@ -1357,6 +1425,19 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
                                   monitor->name, strlen(monitor->name));
                 TRACE("monitor: %s\n", debugstr_a(monitor->name));
                 device_manager->add_monitor( &gdi_monitor, param );
+            }
+
+            if (!(modes = display_get_modes(adapter->id, &mode_count))) break;
+            TRACE("adapter: %#x, mode count: %d\n", adapter->id, mode_count);
+
+            /* Initialize modes */
+            for (mode = modes; mode < modes + mode_count; mode++)
+            {
+                TRACE("mode: %dx%dx%dbpp @%d Hz, %sstretched %sinterlaced\n", mode->dmPelsWidth, mode->dmPelsHeight,
+                      mode->dmBitsPerPel, mode->dmDisplayFrequency,
+                      mode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un",
+                      mode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
+                device_manager->add_mode( mode, param );
             }
 
             macdrv_free_monitors(monitors);

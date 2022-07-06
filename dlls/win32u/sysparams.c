@@ -178,6 +178,8 @@ static const WCHAR x_panningW[] = {'X','P','a','n','n','i','n','g',0};
 static const WCHAR y_panningW[] = {'Y','P','a','n','n','i','n','g',0};
 static const WCHAR orientationW[] = {'O','r','i','e','n','t','a','t','i','o','n',0};
 static const WCHAR fixed_outputW[] = {'F','i','x','e','d','O','u','t','p','u','t',0};
+static const WCHAR driver_extraW[] = {'D','r','i','v','e','r','E','x','t','r','a',0};
+static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
 static const WCHAR guid_devclass_displayW[] =
@@ -420,19 +422,20 @@ static void release_display_device_init_mutex( HANDLE mutex )
     NtClose( mutex );
 }
 
-static BOOL write_adapter_mode( HKEY adapter_key, const DEVMODEW *mode )
+static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *mode )
 {
-    static const WCHAR default_settingsW[] = {'D','e','f','a','u','l','t','S','e','t','t','i','n','g','s','.',0};
     WCHAR bufferW[MAX_PATH];
+    char buffer[MAX_PATH];
+    HKEY hkey;
+    BOOL ret;
 
-#define set_mode_field( name, field, flag )                                                        \
-    do                                                                                             \
-    {                                                                                              \
-        lstrcpyW( bufferW, default_settingsW );                                                    \
-        lstrcatW( bufferW, (name) );                                                               \
-        if (!set_reg_value( adapter_key, bufferW, REG_DWORD, &mode->field, sizeof(mode->field) ))  \
-            return FALSE;                                                                          \
-    } while (0)
+    sprintf( buffer, "Modes\\%08X", index );
+    if (!(hkey = reg_create_key( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR),
+                                 REG_OPTION_VOLATILE, NULL )))
+        return FALSE;
+
+#define set_mode_field( name, field, flag ) \
+    if (!(ret = set_reg_value( hkey, (name), REG_DWORD, &mode->field, sizeof(mode->field) ))) goto done;
 
     set_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
     set_mode_field( x_resolutionW, dmPelsWidth, DM_PELSWIDTH );
@@ -443,26 +446,34 @@ static BOOL write_adapter_mode( HKEY adapter_key, const DEVMODEW *mode )
     set_mode_field( fixed_outputW, dmDisplayFixedOutput, DM_DISPLAYFIXEDOUTPUT );
     set_mode_field( x_panningW, dmPosition.x, DM_POSITION );
     set_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+    ret = set_reg_value( hkey, driver_extraW, REG_BINARY, mode + 1, mode->dmDriverExtra );
 
 #undef set_mode_field
 
-    return TRUE;
+done:
+    NtClose( hkey );
+    return ret;
 }
 
-static BOOL read_adapter_mode( HKEY adapter_key, DEVMODEW *mode )
+static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
 {
-    static const WCHAR default_settingsW[] = {'D','e','f','a','u','l','t','S','e','t','t','i','n','g','s','.',0};
     char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buf;
     WCHAR bufferW[MAX_PATH];
+    char buffer[MAX_PATH];
+    HKEY hkey;
+    BOOL ret;
+
+    sprintf( buffer, "Modes\\%08X", index );
+    if (!(hkey = reg_open_key( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR) )))
+        return FALSE;
 
 #define query_mode_field( name, field, flag )                                                      \
     do                                                                                             \
     {                                                                                              \
-        lstrcpyW( bufferW, default_settingsW );                                                    \
-        lstrcatW( bufferW, (name) );                                                               \
-        if (!query_reg_value( adapter_key, bufferW, value, sizeof(value_buf) ) ||                  \
-            value->Type != REG_DWORD) return FALSE;                                                \
+        ret = query_reg_value( hkey, (name), value, sizeof(value_buf) ) &&                         \
+              value->Type == REG_DWORD;                                                            \
+        if (!ret) goto done;                                                                       \
         mode->field = *(const DWORD *)value->Data;                                                 \
         mode->dmFields |= (flag);                                                                  \
     } while (0)
@@ -479,6 +490,13 @@ static BOOL read_adapter_mode( HKEY adapter_key, DEVMODEW *mode )
 
 #undef query_mode_field
 
+    ret = query_reg_value( hkey, driver_extraW, value, sizeof(value_buf) ) &&
+          value->Type == REG_BINARY;
+    if (ret && value->DataLength <= mode->dmDriverExtra)
+        memcpy( mode + 1, value->Data, mode->dmDriverExtra );
+
+done:
+    NtClose( hkey );
     return TRUE;
 }
 
@@ -494,7 +512,7 @@ static BOOL read_registry_settings( const WCHAR *adapter_path, DEVMODEW *mode )
     else if (!(hkey = reg_open_key( config_key, adapter_path, lstrlenW( adapter_path ) * sizeof(WCHAR) ))) ret = FALSE;
     else
     {
-        ret = read_adapter_mode( hkey, mode );
+        ret = read_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
         NtClose( hkey );
     }
 
@@ -514,7 +532,7 @@ static BOOL write_registry_settings( const WCHAR *adapter_path, const DEVMODEW *
     if (!(hkey = reg_open_key( config_key, adapter_path, lstrlenW( adapter_path ) * sizeof(WCHAR) ))) ret = FALSE;
     else
     {
-        ret = write_adapter_mode( hkey, mode );
+        ret = write_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
         NtClose( hkey );
     }
 
@@ -909,6 +927,7 @@ struct device_manager_ctx
     unsigned int video_count;
     unsigned int monitor_count;
     unsigned int output_count;
+    unsigned int mode_count;
     HANDLE mutex;
     WCHAR gpuid[128];
     WCHAR gpu_guid[64];
@@ -998,6 +1017,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     gpu_index = ctx->gpu_count++;
     ctx->adapter_count = 0;
     ctx->monitor_count = 0;
+    ctx->mode_count = 0;
 
     if (!enum_key && !(enum_key = reg_create_key( NULL, enum_keyW, sizeof(enum_keyW), 0, NULL )))
         return;
@@ -1127,6 +1147,7 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     adapter_index = ctx->adapter_count++;
     video_index = ctx->video_count++;
     ctx->monitor_count = 0;
+    ctx->mode_count = 0;
 
     len = asciiz_to_unicode( bufferW, "\\Registry\\Machine\\System\\CurrentControlSet\\"
                              "Control\\Video\\" ) / sizeof(WCHAR) - 1;
@@ -1282,11 +1303,34 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     if (hkey) NtClose( hkey );
 }
 
+static void add_mode( const DEVMODEW *mode, void *param )
+{
+    struct device_manager_ctx *ctx = param;
+
+    if (!ctx->adapter_count)
+    {
+        static const struct gdi_adapter default_adapter =
+        {
+            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
+        };
+        TRACE( "adding default fake adapter\n" );
+        add_adapter( &default_adapter, ctx );
+    }
+
+    if (write_adapter_mode( ctx->adapter_key, ctx->mode_count, mode ))
+    {
+        if (!ctx->mode_count++) set_reg_value( ctx->adapter_key, driver_extraW, REG_DWORD,
+                                               &mode->dmDriverExtra, sizeof(mode->dmDriverExtra) );
+        set_reg_value( ctx->adapter_key, mode_countW, REG_DWORD, &ctx->mode_count, sizeof(ctx->mode_count) );
+    }
+}
+
 static const struct gdi_device_manager device_manager =
 {
     add_gpu,
     add_adapter,
     add_monitor,
+    add_mode,
 };
 
 static void release_display_manager_ctx( struct device_manager_ctx *ctx )
@@ -1431,22 +1475,38 @@ static BOOL update_display_cache(void)
 
     if (!user_driver->pUpdateDisplayDevices( &device_manager, TRUE, &ctx ))
     {
+        static const DEVMODEW modes[] =
+        {
+            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+              .dmBitsPerPel = 32, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
+            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+              .dmBitsPerPel = 32, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
+            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+              .dmBitsPerPel = 32, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
+            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+              .dmBitsPerPel = 16, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
+            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+              .dmBitsPerPel = 16, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
+            { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+              .dmBitsPerPel = 16, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
+        };
         static const struct gdi_gpu gpu;
         static const struct gdi_adapter adapter =
         {
             .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
         };
-        DEVMODEW mode = {.dmPelsWidth = 1024, .dmPelsHeight = 768};
         struct gdi_monitor monitor =
         {
             .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
-            .rc_monitor = {.right = mode.dmPelsWidth, .bottom = mode.dmPelsHeight},
-            .rc_work = {.right = mode.dmPelsWidth, .bottom = mode.dmPelsHeight},
+            .rc_monitor = {.right = modes[2].dmPelsWidth, .bottom = modes[2].dmPelsHeight},
+            .rc_work = {.right = modes[2].dmPelsWidth, .bottom = modes[2].dmPelsHeight},
         };
+        UINT i;
 
         add_gpu( &gpu, &ctx );
         add_adapter( &adapter, &ctx );
         add_monitor( &monitor, &ctx );
+        for (i = 0; i < ARRAY_SIZE(modes); ++i) add_mode( modes + i, &ctx );
     }
     release_display_manager_ctx( &ctx );
 
