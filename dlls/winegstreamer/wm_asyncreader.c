@@ -57,22 +57,17 @@ static REFERENCE_TIME get_current_time(const struct async_reader *reader)
 static void open_stream(struct async_reader *reader, IWMReaderCallback *callback, void *context)
 {
     static const DWORD zero;
-    HRESULT hr;
 
     IWMReaderCallback_AddRef(reader->callback = callback);
     reader->context = context;
     IWMReaderCallback_OnStatus(callback, WMT_OPENED, S_OK, WMT_TYPE_DWORD, (BYTE *)&zero, context);
-
-    if (FAILED(hr = IWMReaderCallback_QueryInterface(callback,
-            &IID_IWMReaderCallbackAdvanced, (void **)&reader->reader.callback_advanced)))
-        reader->reader.callback_advanced = NULL;
-    TRACE("Querying for IWMReaderCallbackAdvanced returned %#lx.\n", hr);
 }
 
 static DWORD WINAPI stream_thread(void *arg)
 {
     struct async_reader *reader = arg;
     IWMReaderCallback *callback = reader->callback;
+    IWMReaderCallbackAdvanced *callback_advanced;
     REFERENCE_TIME start_time;
     struct wm_stream *stream;
     static const DWORD zero;
@@ -86,9 +81,14 @@ static DWORD WINAPI stream_thread(void *arg)
 
     EnterCriticalSection(&reader->stream_cs);
 
+    if (FAILED(hr = IWMReaderCallback_QueryInterface(callback,
+            &IID_IWMReaderCallbackAdvanced, (void **)&callback_advanced)))
+        callback_advanced = NULL;
+    TRACE("Querying for IWMReaderCallbackAdvanced returned %#lx.\n", hr);
+
     while (reader->running)
     {
-        hr = wm_reader_get_stream_sample(&reader->reader, 0, &sample, &pts, &duration, &flags, &stream_number);
+        hr = wm_reader_get_stream_sample(&reader->reader, callback_advanced, 0, &sample, &pts, &duration, &flags, &stream_number);
         if (hr != S_OK)
             break;
 
@@ -98,10 +98,10 @@ static DWORD WINAPI stream_thread(void *arg)
         {
             QWORD user_time = reader->user_time;
 
-            if (pts > user_time && reader->reader.callback_advanced)
+            if (pts > user_time && callback_advanced)
             {
                 LeaveCriticalSection(&reader->stream_cs);
-                IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced, user_time, reader->context);
+                IWMReaderCallbackAdvanced_OnTime(callback_advanced, user_time, reader->context);
                 EnterCriticalSection(&reader->stream_cs);
             }
 
@@ -126,7 +126,7 @@ static DWORD WINAPI stream_thread(void *arg)
         {
             LeaveCriticalSection(&reader->stream_cs);
             if (stream->read_compressed)
-                hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
+                hr = IWMReaderCallbackAdvanced_OnStreamSample(callback_advanced,
                         stream_number, pts, duration, flags, sample, reader->context);
             else
                 hr = IWMReaderCallback_OnSample(callback, stream_number - 1, pts, duration,
@@ -148,12 +148,12 @@ static DWORD WINAPI stream_thread(void *arg)
         IWMReaderCallback_OnStatus(callback, WMT_EOF, S_OK,
                 WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
 
-        if (reader->user_clock && reader->reader.callback_advanced)
+        if (reader->user_clock && callback_advanced)
         {
             /* We can only get here if user_time is greater than the PTS
              * of all samples, in which case we cannot have sent this
              * notification already. */
-            IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced,
+            IWMReaderCallbackAdvanced_OnTime(callback_advanced,
                     reader->user_time, reader->context);
         }
 
@@ -163,6 +163,9 @@ static DWORD WINAPI stream_thread(void *arg)
     {
         ERR("Failed to get sample, hr %#lx.\n", hr);
     }
+
+    if (callback_advanced)
+        IWMReaderCallbackAdvanced_Release(callback_advanced);
 
     TRACE("Reader is stopping; exiting.\n");
     return 0;

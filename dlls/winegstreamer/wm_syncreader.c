@@ -92,7 +92,7 @@ static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface,
 
     EnterCriticalSection(&reader->reader.cs);
 
-    hr = wm_reader_get_stream_sample(&reader->reader, stream_number, sample, pts, duration, flags, &stream_number);
+    hr = wm_reader_get_stream_sample(&reader->reader, NULL, stream_number, sample, pts, duration, flags, &stream_number);
     if (output_number && hr == S_OK)
         *output_number = stream_number - 1;
     if (ret_stream_number && (hr == S_OK || stream_number))

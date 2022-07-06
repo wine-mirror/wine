@@ -1607,10 +1607,6 @@ HRESULT wm_reader_close(struct wm_reader *reader)
     CloseHandle(reader->read_thread);
     reader->read_thread = NULL;
 
-    if (reader->callback_advanced)
-        IWMReaderCallbackAdvanced_Release(reader->callback_advanced);
-    reader->callback_advanced = NULL;
-
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = NULL;
 
@@ -1871,10 +1867,9 @@ static WORD get_earliest_buffer(struct wm_reader *reader, struct wg_parser_buffe
     return stream_number;
 }
 
-HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, WORD stream_number,
+HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackAdvanced *callback_advanced, WORD stream_number,
         INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number)
 {
-    IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
     struct wg_parser_stream *wg_stream;
     struct wg_parser_buffer wg_buffer;
     struct wm_stream *stream;
