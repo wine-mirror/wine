@@ -1422,8 +1422,11 @@ struct callback
     IWMReaderCallbackAdvanced IWMReaderCallbackAdvanced_iface;
     IWMReaderAllocatorEx IWMReaderAllocatorEx_iface;
     LONG refcount;
-    HANDLE got_opened, got_stopped, eof_event;
-    unsigned int got_closed, got_started, got_sample, got_end_of_streaming, got_eof;
+    HANDLE expect_opened, got_opened;
+    HANDLE expect_started, got_started;
+    HANDLE expect_stopped, got_stopped;
+    HANDLE expect_eof, got_eof;
+    unsigned int closed_count, started_count, end_of_streaming_count, eof_count, sample_count;
     bool all_streams_off;
     bool allocated_samples;
 
@@ -1480,6 +1483,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
         HRESULT hr, WMT_ATTR_DATATYPE type, BYTE *value, void *context)
 {
     struct callback *callback = impl_from_IWMReaderCallback(iface);
+    DWORD ret;
 
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallback::OnStatus(status %u, hr %#lx, type %#x, value %p)\n",
@@ -1491,6 +1495,9 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xdeadbeef, "Got unexpected context %p.\n", context);
+            ret = WaitForSingleObject(callback->expect_opened, 100);
+            todo_wine
+            ok(!ret, "Wait timed out.\n");
             SetEvent(callback->got_opened);
             break;
 
@@ -1498,14 +1505,22 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
-            callback->got_end_of_streaming = callback->got_eof = callback->got_sample = 0;
-            ++callback->got_started;
+            ret = WaitForSingleObject(callback->expect_started, 100);
+            todo_wine
+            ok(!ret, "Wait timed out.\n");
+            callback->end_of_streaming_count = callback->eof_count = callback->sample_count = 0;
+            ++callback->started_count;
+            ResetEvent(callback->got_eof);
+            SetEvent(callback->got_started);
             break;
 
         case WMT_STOPPED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ret = WaitForSingleObject(callback->expect_stopped, 100);
+            todo_wine
+            ok(!ret, "Wait timed out.\n");
             SetEvent(callback->got_stopped);
             break;
 
@@ -1513,15 +1528,14 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
-            ++callback->got_closed;
+            ++callback->closed_count;
             break;
 
         case WMT_END_OF_STREAMING:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
-            ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
-            ++callback->got_end_of_streaming;
+            ++callback->end_of_streaming_count;
             break;
 
         case WMT_EOF:
@@ -1529,13 +1543,15 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             if (callback->all_streams_off)
-                ok(callback->got_sample == 0, "Got %u samples.\n", callback->got_sample);
+                ok(callback->sample_count == 0, "Got %u samples.\n", callback->sample_count);
             else
-                ok(callback->got_sample > 0, "Got no samples.\n");
-            ok(callback->got_end_of_streaming == 1, "Got %u WMT_END_OF_STREAMING callbacks.\n",
-                    callback->got_end_of_streaming);
-            ++callback->got_eof;
-            SetEvent(callback->eof_event);
+                ok(callback->sample_count > 0, "Got no samples.\n");
+            ret = WaitForSingleObject(callback->expect_eof, 100);
+            ok(!ret, "Wait timed out.\n");
+            ++callback->eof_count;
+            SetEvent(callback->got_eof);
+            ok(callback->end_of_streaming_count == 1, "Got %u WMT_END_OF_STREAMING callbacks.\n",
+                    callback->end_of_streaming_count);
             break;
 
         /* Not sent when not using IWMReaderAdvanced::DeliverTime(). */
@@ -1544,17 +1560,18 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(*(QWORD *)value == 3000, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             if (callback->all_streams_off)
-                ok(callback->got_sample == 0, "Got %u samples.\n", callback->got_sample);
+                ok(callback->sample_count == 0, "Got %u samples.\n", callback->sample_count);
             else
-                ok(callback->got_sample > 0, "Got no samples.\n");
-            ok(callback->got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+                ok(callback->sample_count > 0, "Got no samples.\n");
+            ok(callback->eof_count == 1, "Got %u WMT_EOF callbacks.\n",
+                    callback->eof_count);
             break;
 
         default:
             ok(0, "Unexpected status %#x.\n", status);
     }
 
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == E_ABORT, "Got hr %#lx.\n", hr);
     return S_OK;
 }
 
@@ -1613,9 +1630,9 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
     check_async_sample(callback, sample);
 
     ok(!callback->read_compressed, "OnSample() should not be called when reading compressed samples.\n");
-    ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
-    ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
-    ++callback->got_sample;
+    ok(callback->started_count > 0, "Got %u WMT_STARTED callbacks.\n", callback->started_count);
+    ok(!callback->eof_count, "Got %u WMT_EOF callbacks.\n", callback->eof_count);
+    ++callback->sample_count;
 
     return S_OK;
 }
@@ -1666,9 +1683,9 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
     check_async_sample(callback, sample);
 
     ok(callback->read_compressed, "OnStreamSample() should not be called unless reading compressed samples.\n");
-    ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
-    ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
-    ++callback->got_sample;
+    ok(callback->started_count > 0, "Got %u WMT_STARTED callbacks.\n", callback->started_count);
+    ok(!callback->eof_count, "Got %u WMT_EOF callbacks.\n", callback->eof_count);
+    ++callback->sample_count;
 
     return S_OK;
 }
@@ -1681,6 +1698,7 @@ static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface,
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnTime(time %I64u)\n",
                 GetTickCount(), GetCurrentThreadId(), time);
 
+    todo_wine_if(time == 0 && callback->expect_ontime)
     ok(time == callback->expect_ontime, "Got time %I64u.\n", time);
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
     SetEvent(callback->ontime_event);
@@ -1840,47 +1858,132 @@ static void callback_init(struct callback *callback)
     callback->IWMReaderCallbackAdvanced_iface.lpVtbl = &callback_advanced_vtbl;
     callback->IWMReaderAllocatorEx_iface.lpVtbl = &callback_allocator_vtbl;
     callback->refcount = 1;
+    callback->expect_opened = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->got_opened = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->expect_started = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->got_started = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->expect_stopped = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->got_stopped = CreateEventW(NULL, FALSE, FALSE, NULL);
-    callback->eof_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->expect_eof = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->got_eof = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->ontime_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
 static void callback_cleanup(struct callback *callback)
 {
     CloseHandle(callback->got_opened);
+    CloseHandle(callback->expect_opened);
+    CloseHandle(callback->got_started);
+    CloseHandle(callback->expect_started);
     CloseHandle(callback->got_stopped);
-    CloseHandle(callback->eof_event);
+    CloseHandle(callback->expect_stopped);
+    CloseHandle(callback->got_eof);
+    CloseHandle(callback->expect_eof);
     CloseHandle(callback->ontime_event);
+}
+
+#define wait_opened_callback(a) wait_opened_callback_(__LINE__, a)
+static void wait_opened_callback_(int line, struct callback *callback)
+{
+    DWORD ret;
+
+    ret = WaitForSingleObject(callback->got_opened, 0);
+    todo_wine
+    ok_(__FILE__, line)(ret == WAIT_TIMEOUT, "Got unexpected WMT_OPENED.\n");
+    if (ret == WAIT_TIMEOUT)
+    {
+        SetEvent(callback->expect_opened);
+        ret = WaitForSingleObject(callback->got_opened, 1000);
+        ok_(__FILE__, line)(!ret, "Wait timed out.\n");
+    }
+}
+
+#define wait_started_callback(a) wait_started_callback_(__LINE__, a)
+static void wait_started_callback_(int line, struct callback *callback)
+{
+    DWORD ret;
+
+    ret = WaitForSingleObject(callback->got_started, 0);
+    todo_wine
+    ok_(__FILE__, line)(ret == WAIT_TIMEOUT, "Got unexpected WMT_STARTED.\n");
+    if (ret == WAIT_TIMEOUT)
+    {
+        SetEvent(callback->expect_started);
+        ret = WaitForSingleObject(callback->got_started, 1000);
+        ok_(__FILE__, line)(!ret, "Wait timed out.\n");
+    }
+}
+
+#define wait_stopped_callback(a) wait_stopped_callback_(__LINE__, a)
+static void wait_stopped_callback_(int line, struct callback *callback)
+{
+    DWORD ret;
+
+    ret = WaitForSingleObject(callback->got_stopped, 0);
+    todo_wine
+    ok_(__FILE__, line)(ret == WAIT_TIMEOUT, "Got unexpected WMT_STOPPED.\n");
+    if (ret == WAIT_TIMEOUT)
+    {
+        SetEvent(callback->expect_stopped);
+        ret = WaitForSingleObject(callback->got_stopped, 1000);
+        ok_(__FILE__, line)(!ret, "Wait timed out.\n");
+    }
+}
+
+#define wait_eof_callback(a) wait_eof_callback_(__LINE__, a)
+static void wait_eof_callback_(int line, struct callback *callback)
+{
+    DWORD ret;
+
+    ret = WaitForSingleObject(callback->got_eof, 0);
+    ok_(__FILE__, line)(ret == WAIT_TIMEOUT, "Got unexpected WMT_EOF.\n");
+    SetEvent(callback->expect_eof);
+    ret = WaitForSingleObject(callback->got_eof, 1000);
+    ok_(__FILE__, line)(!ret, "Wait timed out.\n");
+    ok_(__FILE__, line)(callback->eof_count == 1, "Got %u WMT_EOF callbacks.\n", callback->eof_count);
 }
 
 static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, struct callback *callback)
 {
     HRESULT hr;
-    DWORD ret;
 
-    callback->got_closed = 0;
-    callback->got_started = 0;
-    callback->got_sample = 0;
-    callback->got_end_of_streaming = 0;
-    callback->got_eof = 0;
+    callback->closed_count = 0;
+    callback->started_count = 0;
+    callback->sample_count = 0;
+    callback->end_of_streaming_count = 0;
+    callback->eof_count = 0;
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* When all streams are disabled we may get an EOF callback right
+     * after the first Start, or after the second if it took a bit more
+     * time to be processed. This is unpredictable so skip the test
+     */
+    if (!callback->all_streams_off)
+    {
+        hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        wait_started_callback(callback);
+    }
+
+    if (callback->all_streams_off || strcmp(winetest_platform, "wine"))
+        wait_started_callback(callback);
 
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    ret = WaitForSingleObject(callback->eof_event, 1000);
-    ok(!ret, "Wait timed out.\n");
-    ok(callback->got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+    wait_eof_callback(callback);
 
     hr = IWMReader_Stop(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ret = WaitForSingleObject(callback->got_stopped, 1000);
-    ok(!ret, "Wait timed out.\n");
+    hr = IWMReader_Stop(reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_stopped_callback(callback);
+    if (strcmp(winetest_platform, "wine"))
+        wait_stopped_callback(callback);
 
     ok(!outstanding_buffers, "Got %ld outstanding buffers.\n", outstanding_buffers);
 }
@@ -2178,8 +2281,7 @@ static void test_async_reader_streaming(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
     ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
-    ret = WaitForSingleObject(callback.got_opened, 1000);
-    ok(!ret, "Wait timed out.\n");
+    wait_opened_callback(&callback);
 
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbee0);
     ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
@@ -2205,6 +2307,7 @@ static void test_async_reader_streaming(void)
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_started_callback(&callback);
 
     /* By default the reader will time itself, and attempt to deliver samples
      * according to their presentation time. Call DeliverTime with the file
@@ -2226,32 +2329,28 @@ static void test_async_reader_streaming(void)
     callback.expect_ontime = 3000 * 10000;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    wait_eof_callback(&callback);
+
     ret = WaitForSingleObject(callback.ontime_event, 1000);
     ok(!ret, "Wait timed out.\n");
 
-    ret = WaitForSingleObject(callback.eof_event, 1000);
-    ok(!ret, "Wait timed out.\n");
-    ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
-
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_started_callback(&callback);
 
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    ret = WaitForSingleObject(callback.eof_event, 1000);
-    ok(!ret, "Wait timed out.\n");
-    ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
+    wait_eof_callback(&callback);
 
     hr = IWMReader_Stop(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ret = WaitForSingleObject(callback.got_stopped, 1000);
-    ok(!ret, "Wait timed out.\n");
+    wait_stopped_callback(&callback);
 
     hr = IWMReader_Stop(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ret = WaitForSingleObject(callback.got_stopped, 1000);
-    ok(!ret, "Wait timed out.\n");
+    wait_stopped_callback(&callback);
 
     test_reader_attributes(profile);
     test_async_reader_selection(reader, advanced, &callback);
@@ -2261,8 +2360,10 @@ static void test_async_reader_streaming(void)
 
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(callback.closed_count == 1, "Got %u WMT_CLOSED callbacks.\n", callback.closed_count);
     ok(callback.refcount == 1, "Got outstanding refcount %ld.\n", callback.refcount);
+    ret = WaitForSingleObject(callback.got_stopped, 0);
+    ok(ret == WAIT_TIMEOUT, "Got unexpected WMT_STOPPED.\n");
     callback_cleanup(&callback);
 
     hr = IWMReader_Stop(reader);
@@ -2318,8 +2419,7 @@ static void test_async_reader_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
     ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
-    ret = WaitForSingleObject(callback.got_opened, 1000);
-    ok(!ret, "Wait timed out.\n");
+    wait_opened_callback(&callback);
 
     for (i = 0; i < 2; ++i)
     {
@@ -2541,8 +2641,7 @@ static void test_async_reader_file(void)
     hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
-    ret = WaitForSingleObject(callback.got_opened, 1000);
-    ok(!ret, "Wait timed out.\n");
+    wait_opened_callback(&callback);
 
     hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbee0);
     ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
@@ -2554,11 +2653,14 @@ static void test_async_reader_file(void)
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_started_callback(&callback);
 
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(callback.closed_count == 1, "Got %u WMT_CLOSED callbacks.\n", callback.closed_count);
     ok(callback.refcount == 1, "Got outstanding refcount %ld.\n", callback.refcount);
+    ret = WaitForSingleObject(callback.got_stopped, 0);
+    ok(ret == WAIT_TIMEOUT, "Got unexpected WMT_STOPPED.\n");
     callback_cleanup(&callback);
 
     hr = IWMReader_Close(reader);
@@ -2566,7 +2668,7 @@ static void test_async_reader_file(void)
 
     ref = IWMReader_Release(reader);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(callback.closed_count == 1, "Got %u WMT_CLOSED callbacks.\n", callback.closed_count);
     ok(callback.refcount == 1, "Got outstanding refcount %ld.\n", callback.refcount);
     callback_cleanup(&callback);
 
