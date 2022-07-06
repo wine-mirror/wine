@@ -12137,6 +12137,73 @@ done:
     release_test_context(&ctx);
 }
 
+static void test_offset_transform(BOOL d3d11)
+{
+    ID2D1OffsetTransform *transform = NULL;
+    ID2D1EffectContext *effect_context;
+    D2D1_PROPERTY_BINDING binding;
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    D2D1_POINT_2L offset;
+    ID2D1Effect *effect;
+    UINT input_count;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    binding.propertyName = L"Context";
+    binding.setFunction = NULL;
+    binding.getFunction = effect_impl_get_context;
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_b, &binding, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Create transform */
+    offset.x = 1;
+    offset.y = 2;
+    hr = ID2D1EffectContext_CreateOffsetTransform(effect_context, offset, &transform);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto done;
+    offset = ID2D1OffsetTransform_GetOffset(transform);
+    ok(offset.x == 1 && offset.y == 2, "Got unexpected offset {%ld, %ld}.\n", offset.x, offset.y);
+
+    /* Input count */
+    input_count = ID2D1OffsetTransform_GetInputCount(transform);
+    ok(input_count == 1, "Got unexpected input count %u.\n", input_count);
+
+    /* Set offset */
+    offset.x = -10;
+    offset.y = 20;
+    ID2D1OffsetTransform_SetOffset(transform, offset);
+    offset = ID2D1OffsetTransform_GetOffset(transform);
+    ok(offset.x == -10 && offset.y == 20, "Got unexpected offset {%ld, %ld}.\n", offset.x, offset.y);
+
+done:
+    if (transform)
+        ID2D1OffsetTransform_Release(transform);
+    ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    release_test_context(&ctx);
+}
+
 static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
@@ -12953,6 +13020,7 @@ START_TEST(d2d1)
     queue_test(test_effect_grayscale);
     queue_test(test_registered_effects);
     queue_test(test_transform_graph);
+    queue_test(test_offset_transform);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
