@@ -4219,6 +4219,7 @@ static void test_ConvertStringSecurityDescriptor(void)
         BOOL       ret;
         DWORD      GLE;
         DWORD      altGLE;
+        DWORD      ace_Mask;
     } cssd[] =
     {
         { "D:(A;;GA;;;WD)",                  0xdeadbeef,      FALSE, ERROR_UNKNOWN_REVISION },
@@ -4239,9 +4240,12 @@ static void test_ConvertStringSecurityDescriptor(void)
         { "D:(D;;GA;;; WD)",                SDDL_REVISION_1, TRUE },
         { "D:(D;;GA;;;WD )",                SDDL_REVISION_1, TRUE },
         /* test ACE string access rights */
-        { "D:(A;;GA;;;WD)",                  SDDL_REVISION_1, TRUE },
-        { "D:(A;;GRGWGX;;;WD)",              SDDL_REVISION_1, TRUE },
-        { "D:(A;;RCSDWDWO;;;WD)",            SDDL_REVISION_1, TRUE },
+        { "D:(A;;GA;;;WD)",                  SDDL_REVISION_1, TRUE, 0, 0, GENERIC_ALL },
+        { "D:(A;;1;;;WD)",                   SDDL_REVISION_1, TRUE, 0, 0, 1 },
+        { "D:(A;;020000000000;;;WD)",        SDDL_REVISION_1, TRUE, 0, 0, GENERIC_READ },
+        { "D:(A;;0X40000000;;;WD)",          SDDL_REVISION_1, TRUE, 0, 0, GENERIC_WRITE },
+        { "D:(A;;GRGWGX;;;WD)",              SDDL_REVISION_1, TRUE, 0, 0, GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE },
+        { "D:(A;;RCSDWDWO;;;WD)",            SDDL_REVISION_1, TRUE, 0, 0, READ_CONTROL | DELETE | WRITE_DAC | WRITE_OWNER },
         { "D:(A;;RPWPCCDCLCSWLODTCR;;;WD)",  SDDL_REVISION_1, TRUE },
         { "D:(A;;FAFRFWFX;;;WD)",            SDDL_REVISION_1, TRUE },
         { "D:(A;;KAKRKWKX;;;WD)",            SDDL_REVISION_1, TRUE },
@@ -4275,7 +4279,20 @@ static void test_ConvertStringSecurityDescriptor(void)
                (cssd[i].altGLE && GLE == cssd[i].altGLE),
                "(%02u) Unexpected last error %ld\n", i, GLE);
         if (ret)
+        {
+            if (cssd[i].ace_Mask)
+            {
+                ACCESS_ALLOWED_ACE *ace;
+
+                acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
+                ok(acl->AclRevision == ACL_REVISION, "(%02u) Got %u\n", i, acl->AclRevision);
+
+                ace = (ACCESS_ALLOWED_ACE *)(acl + 1);
+                ok(ace->Mask == cssd[i].ace_Mask, "(%02u) Expected %08lx, got %08lx\n",
+                   i, cssd[i].ace_Mask, ace->Mask);
+            }
             LocalFree(pSD);
+        }
     }
 
     /* test behaviour with NULL parameters */

@@ -900,8 +900,8 @@ static DWORD parse_ace_right( const WCHAR **string_ptr )
     const WCHAR *string = *string_ptr;
     unsigned int i;
 
-    if (string[0] == '0' && string[1] == 'x')
-        return wcstoul( string, (WCHAR **)string_ptr, 16 );
+    if (iswdigit( string[0] ))
+        return wcstoul( string, (WCHAR **)string_ptr, 0 );
 
     for (i = 0; i < ARRAY_SIZE(ace_rights); ++i)
     {
