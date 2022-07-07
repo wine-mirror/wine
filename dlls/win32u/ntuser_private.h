@@ -134,10 +134,6 @@ static inline BOOL is_broadcast( HWND hwnd )
     return hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST;
 }
 
-#define WM_IME_INTERNAL 0x287
-#define IME_INTERNAL_ACTIVATE 0x17
-#define IME_INTERNAL_DEACTIVATE 0x18
-
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info

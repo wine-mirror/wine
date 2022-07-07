@@ -43,6 +43,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 #define IMM_INIT_MAGIC 0x19650412
 BOOL WINAPI User32InitializeImmEntryTable(DWORD);
 
+/* MSIME messages */
+static UINT WM_MSIME_SERVICE;
+static UINT WM_MSIME_RECONVERTOPTIONS;
+static UINT WM_MSIME_MOUSE;
+static UINT WM_MSIME_RECONVERTREQUEST;
+static UINT WM_MSIME_RECONVERT;
+static UINT WM_MSIME_QUERYPOSITION;
+static UINT WM_MSIME_DOCUMENTFEED;
+
 typedef struct _tagImmHkl{
     struct list entry;
     HKL         hkl;
@@ -534,11 +543,6 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
 }
 #undef LOAD_FUNCPTR
 
-HWND WINAPI __wine_get_ui_window(HKL hkl)
-{
-    ImmHkl *immHkl = IMM_GetImmHkl(hkl);
-    return immHkl->UIWnd;
-}
 
 static void IMM_FreeAllImmHkl(void)
 {
@@ -3360,4 +3364,107 @@ BOOL WINAPI ImmDisableLegacyIME(void)
 {
     FIXME("stub\n");
     return TRUE;
+}
+
+static HWND get_ui_window(HKL hkl)
+{
+    ImmHkl *immHkl = IMM_GetImmHkl(hkl);
+    return immHkl->UIWnd;
+}
+
+static BOOL is_ime_ui_msg(UINT msg)
+{
+    switch (msg)
+    {
+    case WM_IME_STARTCOMPOSITION:
+    case WM_IME_ENDCOMPOSITION:
+    case WM_IME_COMPOSITION:
+    case WM_IME_SETCONTEXT:
+    case WM_IME_NOTIFY:
+    case WM_IME_CONTROL:
+    case WM_IME_COMPOSITIONFULL:
+    case WM_IME_SELECT:
+    case WM_IME_CHAR:
+    case WM_IME_REQUEST:
+    case WM_IME_KEYDOWN:
+    case WM_IME_KEYUP:
+        return TRUE;
+    default:
+        return msg == WM_MSIME_RECONVERTOPTIONS ||
+            msg == WM_MSIME_SERVICE ||
+            msg == WM_MSIME_MOUSE ||
+            msg == WM_MSIME_RECONVERTREQUEST ||
+            msg == WM_MSIME_RECONVERT ||
+            msg == WM_MSIME_QUERYPOSITION ||
+            msg == WM_MSIME_DOCUMENTFEED;
+    }
+}
+
+static LRESULT ime_internal_msg( WPARAM wparam, LPARAM lparam)
+{
+    HWND hwnd = (HWND)lparam;
+    HIMC himc;
+
+    switch (wparam)
+    {
+    case IME_INTERNAL_ACTIVATE:
+    case IME_INTERNAL_DEACTIVATE:
+        himc = ImmGetContext(hwnd);
+        ImmSetActiveContext(hwnd, himc, wparam == IME_INTERNAL_ACTIVATE);
+        ImmReleaseContext(hwnd, himc);
+        break;
+    default:
+        FIXME("wparam = %Ix\n", wparam);
+        break;
+    }
+
+    return 0;
+}
+
+static void init_messages(void)
+{
+    static BOOL initialized;
+
+    if (initialized) return;
+
+    WM_MSIME_SERVICE = RegisterWindowMessageW(L"MSIMEService");
+    WM_MSIME_RECONVERTOPTIONS = RegisterWindowMessageW(L"MSIMEReconvertOptions");
+    WM_MSIME_MOUSE = RegisterWindowMessageW(L"MSIMEMouseOperation");
+    WM_MSIME_RECONVERTREQUEST = RegisterWindowMessageW(L"MSIMEReconvertRequest");
+    WM_MSIME_RECONVERT = RegisterWindowMessageW(L"MSIMEReconvert");
+    WM_MSIME_QUERYPOSITION = RegisterWindowMessageW(L"MSIMEQueryPosition");
+    WM_MSIME_DOCUMENTFEED = RegisterWindowMessageW(L"MSIMEDocumentFeed");
+    initialized = TRUE;
+}
+
+LRESULT WINAPI __wine_ime_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi)
+{
+    HWND uiwnd;
+
+    switch (msg)
+    {
+    case WM_CREATE:
+        init_messages();
+        return TRUE;
+
+    case WM_IME_INTERNAL:
+        return ime_internal_msg(wparam, lparam);
+    }
+
+    if (is_ime_ui_msg(msg))
+    {
+        if ((uiwnd = get_ui_window(NtUserGetKeyboardLayout(0))))
+        {
+            if (ansi)
+                return SendMessageA(uiwnd, msg, wparam, lparam);
+            else
+                return SendMessageW(uiwnd, msg, wparam, lparam);
+        }
+        return FALSE;
+    }
+
+    if (ansi)
+        return DefWindowProcA(hwnd, msg, wparam, lparam);
+    else
+        return DefWindowProcW(hwnd, msg, wparam, lparam);
 }

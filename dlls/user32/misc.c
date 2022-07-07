@@ -38,18 +38,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
 #define IMM_INIT_MAGIC 0x19650412
-static HWND (WINAPI *imm_get_ui_window)(HKL);
+static LRESULT (WINAPI *imm_ime_wnd_proc)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi);
 BOOL (WINAPI *imm_register_window)(HWND) = NULL;
 void (WINAPI *imm_unregister_window)(HWND) = NULL;
-
-/* MSIME messages */
-static UINT WM_MSIME_SERVICE;
-static UINT WM_MSIME_RECONVERTOPTIONS;
-static UINT WM_MSIME_MOUSE;
-static UINT WM_MSIME_RECONVERTREQUEST;
-static UINT WM_MSIME_RECONVERT;
-static UINT WM_MSIME_QUERYPOSITION;
-static UINT WM_MSIME_DOCUMENTFEED;
 
 /* USER signal proc flags and codes */
 /* See UserSignalProc for comments */
@@ -332,22 +323,14 @@ BOOL WINAPI User32InitializeImmEntryTable(DWORD magic)
     if (!imm32 || magic != IMM_INIT_MAGIC)
         return FALSE;
 
-    if (imm_get_ui_window)
+    if (imm_ime_wnd_proc)
         return TRUE;
 
-    WM_MSIME_SERVICE = RegisterWindowMessageA("MSIMEService");
-    WM_MSIME_RECONVERTOPTIONS = RegisterWindowMessageA("MSIMEReconvertOptions");
-    WM_MSIME_MOUSE = RegisterWindowMessageA("MSIMEMouseOperation");
-    WM_MSIME_RECONVERTREQUEST = RegisterWindowMessageA("MSIMEReconvertRequest");
-    WM_MSIME_RECONVERT = RegisterWindowMessageA("MSIMEReconvert");
-    WM_MSIME_QUERYPOSITION = RegisterWindowMessageA("MSIMEQueryPosition");
-    WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
-
     /* this part is not compatible with native imm32.dll */
-    imm_get_ui_window = (void*)GetProcAddress(imm32, "__wine_get_ui_window");
+    imm_ime_wnd_proc = (void*)GetProcAddress(imm32, "__wine_ime_wnd_proc");
     imm_register_window = (void*)GetProcAddress(imm32, "__wine_register_window");
     imm_unregister_window = (void*)GetProcAddress(imm32, "__wine_unregister_window");
-    if (!imm_get_ui_window)
+    if (!imm_ime_wnd_proc)
         FIXME("native imm32.dll not supported\n");
     return TRUE;
 }
@@ -561,93 +544,14 @@ const struct builtin_class_descr IME_builtin_class =
     0                   /* brush */
 };
 
-static BOOL is_ime_ui_msg( UINT msg )
-{
-    switch(msg) {
-    case WM_IME_STARTCOMPOSITION:
-    case WM_IME_ENDCOMPOSITION:
-    case WM_IME_COMPOSITION:
-    case WM_IME_SETCONTEXT:
-    case WM_IME_NOTIFY:
-    case WM_IME_CONTROL:
-    case WM_IME_COMPOSITIONFULL:
-    case WM_IME_SELECT:
-    case WM_IME_CHAR:
-    case WM_IME_REQUEST:
-    case WM_IME_KEYDOWN:
-    case WM_IME_KEYUP:
-        return TRUE;
-    default:
-        if ((msg == WM_MSIME_RECONVERTOPTIONS) ||
-                (msg == WM_MSIME_SERVICE) ||
-                (msg == WM_MSIME_MOUSE) ||
-                (msg == WM_MSIME_RECONVERTREQUEST) ||
-                (msg == WM_MSIME_RECONVERT) ||
-                (msg == WM_MSIME_QUERYPOSITION) ||
-                (msg == WM_MSIME_DOCUMENTFEED))
-            return TRUE;
-
-        return FALSE;
-    }
-}
-
-static LRESULT ime_internal_msg( WPARAM wParam, LPARAM lParam)
-{
-    HWND hwnd = (HWND)lParam;
-    HIMC himc;
-
-    switch(wParam)
-    {
-    case IME_INTERNAL_ACTIVATE:
-    case IME_INTERNAL_DEACTIVATE:
-        himc = ImmGetContext(hwnd);
-        ImmSetActiveContext(hwnd, himc, wParam == IME_INTERNAL_ACTIVATE);
-        ImmReleaseContext(hwnd, himc);
-        break;
-    default:
-        FIXME("wParam = %Ix\n", wParam);
-        break;
-    }
-
-    return 0;
-}
-
 LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    HWND uiwnd;
-
-    if (msg==WM_CREATE)
-        return TRUE;
-
-    if (msg==WM_IME_INTERNAL)
-        return ime_internal_msg(wParam, lParam);
-
-    if (imm_get_ui_window && is_ime_ui_msg(msg))
-    {
-        if ((uiwnd = imm_get_ui_window( NtUserGetKeyboardLayout(0) )))
-            return SendMessageA(uiwnd, msg, wParam, lParam);
-        return FALSE;
-    }
-
-    return DefWindowProcA(hwnd, msg, wParam, lParam);
+    if (!imm_ime_wnd_proc) return DefWindowProcA(hwnd, msg, wParam, lParam);
+    return imm_ime_wnd_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
 LRESULT WINAPI ImeWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    HWND uiwnd;
-
-    if (msg==WM_CREATE)
-        return TRUE;
-
-    if (msg==WM_IME_INTERNAL)
-        return ime_internal_msg(wParam, lParam);
-
-    if (imm_get_ui_window && is_ime_ui_msg(msg))
-    {
-        if ((uiwnd = imm_get_ui_window( NtUserGetKeyboardLayout(0) )))
-            return SendMessageW(uiwnd, msg, wParam, lParam);
-        return FALSE;
-    }
-
-    return DefWindowProcW(hwnd, msg, wParam, lParam);
+    if (!imm_ime_wnd_proc) return DefWindowProcW(hwnd, msg, wParam, lParam);
+    return imm_ime_wnd_proc( hwnd, msg, wParam, lParam, FALSE );
 }

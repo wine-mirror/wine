@@ -385,6 +385,11 @@ enum wine_internal_message
     WM_WINE_LAST_DRIVER_MSG = 0x80001fff
 };
 
+/* internal IME message */
+#define WM_IME_INTERNAL 0x287
+#define IME_INTERNAL_ACTIVATE   0x17
+#define IME_INTERNAL_DEACTIVATE 0x18
+
 /* the various structures that can be sent in messages, in platform-independent layout */
 struct packed_CREATESTRUCTW
 {

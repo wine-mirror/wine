@@ -114,6 +114,6 @@
 
 ################################################################
 # Wine internal extensions
-@ stdcall __wine_get_ui_window(ptr)
+@ stdcall __wine_ime_wnd_proc(long long long long long)
 @ stdcall __wine_register_window(long)
 @ stdcall __wine_unregister_window(long)
