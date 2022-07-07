@@ -1210,6 +1210,10 @@ static void test_v1_relative_urls(void)
     ret = HttpAddUrl(queue2, url2, NULL);
     ok(ret == ERROR_ALREADY_EXISTS, "Got error %u.\n", ret);
 
+    swprintf(url2, ARRAY_SIZE(url2), L"http://localhost:%u/barfoo?a=b", port);
+    ret = HttpAddUrl(queue2, url2, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+
     ret = CloseHandle(queue);
     ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
     ret = CloseHandle(queue2);
