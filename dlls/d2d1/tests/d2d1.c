@@ -12204,6 +12204,130 @@ done:
     release_test_context(&ctx);
 }
 
+#define check_blend_desc(blend_desc, expected) check_blend_desc_(__LINE__, blend_desc, expected)
+static void check_blend_desc_(unsigned int line,
+        const D2D1_BLEND_DESCRIPTION *blend_desc, const D2D1_BLEND_DESCRIPTION *expected)
+{
+    ok_(__FILE__, line)(blend_desc->sourceBlend == expected->sourceBlend,
+            "Got unexpected source blend %u, expected %u.\n",
+            blend_desc->sourceBlend, expected->sourceBlend);
+    ok_(__FILE__, line)(blend_desc->destinationBlend == expected->destinationBlend,
+            "Got unexpected destination blend %u, expected %u.\n",
+            blend_desc->destinationBlend, expected->destinationBlend);
+    ok_(__FILE__, line)(blend_desc->blendOperation == expected->blendOperation,
+            "Got unexpected blend operation %u, expected %u.\n",
+            blend_desc->blendOperation, expected->blendOperation);
+    ok_(__FILE__, line)(blend_desc->sourceBlendAlpha == expected->sourceBlendAlpha,
+            "Got unexpected source blend alpha %u, expected %u.\n",
+            blend_desc->sourceBlendAlpha, expected->sourceBlendAlpha);
+    ok_(__FILE__, line)(blend_desc->destinationBlendAlpha == expected->destinationBlendAlpha,
+            "Got unexpected destination blend alpha %u, expected %u.\n",
+            blend_desc->destinationBlendAlpha, expected->destinationBlendAlpha);
+    ok_(__FILE__, line)(blend_desc->blendOperationAlpha == expected->blendOperationAlpha,
+            "Got unexpected blend operation alpha %u, expected %u.\n",
+            blend_desc->blendOperationAlpha, expected->blendOperationAlpha);
+    ok_(__FILE__, line)(blend_desc->blendFactor[0] == expected->blendFactor[0],
+            "Got unexpected blendFactor[0] %.8e, expected %.8e.\n",
+            blend_desc->blendFactor[0], expected->blendFactor[0]);
+    ok_(__FILE__, line)(blend_desc->blendFactor[1] == expected->blendFactor[1],
+            "Got unexpected blendFactor[1] %.8e, expected %.8e.\n",
+            blend_desc->blendFactor[1], expected->blendFactor[1]);
+    ok_(__FILE__, line)(blend_desc->blendFactor[2] == expected->blendFactor[2],
+            "Got unexpected blendFactor[2] %.8e, expected %.8e.\n",
+            blend_desc->blendFactor[2], expected->blendFactor[2]);
+    ok_(__FILE__, line)(blend_desc->blendFactor[3] == expected->blendFactor[3],
+            "Got unexpected blendFactor[3] %.8e, expected %.8e.\n",
+            blend_desc->blendFactor[3], expected->blendFactor[3]);
+}
+
+static void test_blend_transform(BOOL d3d11)
+{
+    D2D1_BLEND_DESCRIPTION blend_desc, expected= {0};
+    ID2D1BlendTransform *transform = NULL;
+    ID2D1EffectContext *effect_context;
+    D2D1_PROPERTY_BINDING binding;
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    ID2D1Effect *effect;
+    UINT input_count;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    binding.propertyName = L"Context";
+    binding.setFunction = NULL;
+    binding.getFunction = effect_impl_get_context;
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_b, &binding, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Create transform */
+    hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 0, &expected, &transform);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 1, &expected, &transform);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto done;
+    ID2D1BlendTransform_Release(transform);
+    hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 4, &expected, &transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Get description */
+    ID2D1BlendTransform_GetDescription(transform, &blend_desc);
+    check_blend_desc(&blend_desc, &expected);
+
+    /* Input count */
+    input_count = ID2D1BlendTransform_GetInputCount(transform);
+    ok(input_count == 4, "Got unexpected input count %u.\n", input_count);
+
+    /* Set output buffer */
+    hr = ID2D1BlendTransform_SetOutputBuffer(transform, 0xdeadbeef, D2D1_CHANNEL_DEPTH_DEFAULT);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1BlendTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, 0xdeadbeef);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1BlendTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, D2D1_CHANNEL_DEPTH_DEFAULT);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Set description */
+    expected.sourceBlend = D2D1_BLEND_ZERO;
+    expected.destinationBlend = D2D1_BLEND_ZERO;
+    expected.blendOperation = D2D1_BLEND_OPERATION_ADD;
+    expected.sourceBlendAlpha = 0xdeadbeef;
+    expected.destinationBlendAlpha = 0;
+    expected.blendOperationAlpha = 12345678;
+    expected.blendFactor[0] = 0.0f;
+    expected.blendFactor[1] = 0.0f;
+    expected.blendFactor[2] = 0.0f;
+    expected.blendFactor[3] = 0.0f;
+    ID2D1BlendTransform_SetDescription(transform, &expected);
+    ID2D1BlendTransform_GetDescription(transform, &blend_desc);
+    check_blend_desc(&blend_desc, &expected);
+
+done:
+    if (transform)
+        ID2D1BlendTransform_Release(transform);
+    ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    release_test_context(&ctx);
+}
+
 static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
@@ -13021,6 +13145,7 @@ START_TEST(d2d1)
     queue_test(test_registered_effects);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
+    queue_test(test_blend_transform);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
