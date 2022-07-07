@@ -22,16 +22,12 @@
  */
 
 #include <errno.h>
-#include <stdlib.h>
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
 #include <commctrl.h>
-#include <wine/debug.h>
-#include <wine/heap.h>
-#include "main.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(regedit);
+#include "main.h"
 
 #define REG_VAL_BUF_SIZE        4096
 
@@ -39,30 +35,6 @@ static HKEY reg_class_keys[] = {
             HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CLASSES_ROOT,
             HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER, HKEY_DYN_DATA
         };
-
-void *heap_xalloc(size_t size)
-{
-    void *buf = heap_alloc(size);
-    if (!buf)
-    {
-        ERR("Out of memory!\n");
-        exit(1);
-    }
-    return buf;
-}
-
-void *heap_xrealloc(void *buf, size_t size)
-{
-    void *new_buf = heap_realloc(buf, size);
-
-    if (!new_buf)
-    {
-        ERR("Out of memory!\n");
-        exit(1);
-    }
-
-    return new_buf;
-}
 
 /******************************************************************************
  * Allocates memory and converts input from multibyte to wide chars
@@ -75,7 +47,7 @@ static WCHAR* GetWideString(const char* strA)
         WCHAR* strW;
         int len = MultiByteToWideChar(CP_ACP, 0, strA, -1, NULL, 0);
 
-        strW = heap_xalloc(len * sizeof(WCHAR));
+        strW = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, strA, -1, strW, len);
         return strW;
     }
@@ -93,7 +65,7 @@ static WCHAR* GetWideStringN(const char* strA, int chars, DWORD *len)
         WCHAR* strW;
         *len = MultiByteToWideChar(CP_ACP, 0, strA, chars, NULL, 0);
 
-        strW = heap_xalloc(*len * sizeof(WCHAR));
+        strW = malloc(*len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, strA, chars, strW, *len);
         return strW;
     }
@@ -112,7 +84,7 @@ char* GetMultiByteString(const WCHAR* strW)
         char* strA;
         int len = WideCharToMultiByte(CP_ACP, 0, strW, -1, NULL, 0, NULL, NULL);
 
-        strA = heap_xalloc(len);
+        strA = malloc(len);
         WideCharToMultiByte(CP_ACP, 0, strW, -1, strA, len, NULL, NULL);
         return strA;
     }
@@ -130,7 +102,7 @@ static char* GetMultiByteStringN(const WCHAR* strW, int chars, DWORD* len)
         char* strA;
         *len = WideCharToMultiByte(CP_ACP, 0, strW, chars, NULL, 0, NULL, NULL);
 
-        strA = heap_xalloc(*len);
+        strA = malloc(*len);
         WideCharToMultiByte(CP_ACP, 0, strW, chars, strA, *len, NULL, NULL);
         return strA;
     }
@@ -277,7 +249,7 @@ static BOOL convert_hex_csv_to_hex(struct parser *parser, WCHAR **str)
 
     /* The worst case is 1 digit + 1 comma per byte */
     size = ((lstrlenW(*str) + 1) / 2) + parser->data_size;
-    parser->data = heap_xrealloc(parser->data, size);
+    parser->data = realloc(parser->data, size);
 
     s = *str;
     d = (BYTE *)parser->data + parser->data_size;
@@ -447,7 +419,7 @@ static void close_key(struct parser *parser)
 {
     if (parser->hkey)
     {
-        heap_free(parser->key_name);
+        free(parser->key_name);
         parser->key_name = NULL;
 
         RegCloseKey(parser->hkey);
@@ -476,7 +448,7 @@ static LONG open_key(struct parser *parser, WCHAR *path)
 
     if (res == ERROR_SUCCESS)
     {
-        parser->key_name = heap_xalloc((lstrlenW(path) + 1) * sizeof(WCHAR));
+        parser->key_name = malloc((lstrlenW(path) + 1) * sizeof(WCHAR));
         lstrcpyW(parser->key_name, path);
     }
     else
@@ -488,7 +460,7 @@ static LONG open_key(struct parser *parser, WCHAR *path)
 static void free_parser_data(struct parser *parser)
 {
     if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
-        heap_free(parser->data);
+        free(parser->data);
 
     parser->data = NULL;
     parser->data_size = 0;
@@ -522,7 +494,7 @@ static void prepare_hex_string_data(struct parser *parser)
 
             parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
             parser->data_size *= sizeof(WCHAR);
-            heap_free(data);
+            free(data);
         }
     }
 }
@@ -571,12 +543,12 @@ static WCHAR *header_state(struct parser *parser, WCHAR *pos)
 
     if (!parser->is_unicode)
     {
-        header = heap_xalloc((lstrlenW(line) + 3) * sizeof(WCHAR));
+        header = malloc((lstrlenW(line) + 3) * sizeof(WCHAR));
         header[0] = parser->two_wchars[0];
         header[1] = parser->two_wchars[1];
         lstrcpyW(header + 2, line);
         parser->reg_version = parse_file_header(header);
-        heap_free(header);
+        free(header);
     }
     else parser->reg_version = parse_file_header(line);
 
@@ -708,7 +680,7 @@ static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
 /* handler for parser DEFAULT_VALUE_NAME state */
 static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos)
 {
-    heap_free(parser->value_name);
+    free(parser->value_name);
     parser->value_name = NULL;
 
     set_state(parser, DATA_START);
@@ -720,14 +692,14 @@ static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *val_name = pos, *p;
 
-    heap_free(parser->value_name);
+    free(parser->value_name);
     parser->value_name = NULL;
 
     if (!REGPROC_unescape_string(val_name, &p))
         goto invalid;
 
     /* copy the value name in case we need to parse multiple lines and the buffer is overwritten */
-    parser->value_name = heap_xalloc((lstrlenW(val_name) + 1) * sizeof(WCHAR));
+    parser->value_name = malloc((lstrlenW(val_name) + 1) * sizeof(WCHAR));
     lstrcpyW(parser->value_name, val_name);
 
     set_state(parser, DATA_START);
@@ -838,7 +810,7 @@ static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *line = pos;
 
-    parser->data = heap_xalloc(sizeof(DWORD));
+    parser->data = malloc(sizeof(DWORD));
 
     if (!convert_hex_to_dword(line, parser->data))
         goto invalid;
@@ -958,14 +930,14 @@ static WCHAR *get_lineA(FILE *fp)
     static char *buf, *next;
     char *line;
 
-    heap_free(lineW);
+    free(lineW);
 
     if (!fp) goto cleanup;
 
     if (!size)
     {
         size = REG_VAL_BUF_SIZE;
-        buf = heap_xalloc(size);
+        buf = malloc(size);
         *buf = 0;
         next = buf;
     }
@@ -982,7 +954,7 @@ static WCHAR *get_lineA(FILE *fp)
             if (size - len < 3)
             {
                 size *= 2;
-                buf = heap_xrealloc(buf, size);
+                buf = realloc(buf, size);
             }
             if (!(count = fread(buf + len, 1, size - len - 1, fp)))
             {
@@ -1004,7 +976,7 @@ static WCHAR *get_lineA(FILE *fp)
 
 cleanup:
     lineW = NULL;
-    if (size) heap_free(buf);
+    if (size) free(buf);
     size = 0;
     return NULL;
 }
@@ -1020,7 +992,7 @@ static WCHAR *get_lineW(FILE *fp)
     if (!size)
     {
         size = REG_VAL_BUF_SIZE;
-        buf = heap_xalloc(size * sizeof(WCHAR));
+        buf = malloc(size * sizeof(WCHAR));
         *buf = 0;
         next = buf;
     }
@@ -1037,7 +1009,7 @@ static WCHAR *get_lineW(FILE *fp)
             if (size - len < 3)
             {
                 size *= 2;
-                buf = heap_xrealloc(buf, size * sizeof(WCHAR));
+                buf = realloc(buf, size * sizeof(WCHAR));
             }
             if (!(count = fread(buf + len, sizeof(WCHAR), size - len - 1, fp)))
             {
@@ -1056,7 +1028,7 @@ static WCHAR *get_lineW(FILE *fp)
     }
 
 cleanup:
-    if (size) heap_free(buf);
+    if (size) free(buf);
     size = 0;
     return NULL;
 }
@@ -1099,7 +1071,7 @@ BOOL import_registry_file(FILE *reg_file)
     if (parser.reg_version == REG_VERSION_FUZZY || parser.reg_version == REG_VERSION_INVALID)
         return parser.reg_version == REG_VERSION_FUZZY;
 
-    heap_free(parser.value_name);
+    free(parser.value_name);
     close_key(&parser);
 
     return TRUE;
@@ -1140,7 +1112,7 @@ static void REGPROC_write_line(FILE *fp, const WCHAR *str, BOOL unicode)
     {
         char *strA = GetMultiByteString(str);
         fputs(strA, fp);
-        heap_free(strA);
+        free(strA);
     }
 }
 
@@ -1159,7 +1131,7 @@ static WCHAR *REGPROC_escape_string(WCHAR *str, size_t str_len, size_t *line_len
             escape_count++;
     }
 
-    buf = heap_xalloc((str_len + escape_count + 1) * sizeof(WCHAR));
+    buf = malloc((str_len + escape_count + 1) * sizeof(WCHAR));
 
     for (i = 0, pos = 0; i < str_len; i++, pos++)
     {
@@ -1203,11 +1175,11 @@ static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
     if (name && *name)
     {
         WCHAR *str = REGPROC_escape_string(name, len, &line_len);
-        WCHAR *buf = heap_xalloc((line_len + 4) * sizeof(WCHAR));
+        WCHAR *buf = malloc((line_len + 4) * sizeof(WCHAR));
         line_len = swprintf(buf, line_len + 4, L"\"%s\"=", str);
         REGPROC_write_line(fp, buf, unicode);
-        heap_free(buf);
-        heap_free(str);
+        free(buf);
+        free(str);
     }
     else
     {
@@ -1226,14 +1198,14 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
     if (size)
         len = size / sizeof(WCHAR) - 1;
     str = REGPROC_escape_string(data, len, &line_len);
-    *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
+    *buf = malloc((line_len + 3) * sizeof(WCHAR));
     swprintf(*buf, line_len + 3, L"\"%s\"", str);
-    heap_free(str);
+    free(str);
 }
 
 static void export_dword_data(WCHAR **buf, DWORD *data)
 {
-    *buf = heap_xalloc(15 * sizeof(WCHAR));
+    *buf = malloc(15 * sizeof(WCHAR));
     swprintf(*buf, 15, L"dword:%08x", *data);
 }
 
@@ -1249,10 +1221,10 @@ static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
     }
     else
     {
-        WCHAR *buf = heap_xalloc(15 * sizeof(WCHAR));
+        WCHAR *buf = malloc(15 * sizeof(WCHAR));
         line_len = swprintf(buf, 15, L"hex(%x):", type);
         REGPROC_write_line(fp, buf, unicode);
-        heap_free(buf);
+        free(buf);
     }
 
     return line_len;
@@ -1273,7 +1245,7 @@ static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
         data = GetMultiByteStringN(data, size / sizeof(WCHAR), &size);
 
     num_commas = size - 1;
-    *buf = heap_xalloc(size * 3 * sizeof(WCHAR));
+    *buf = malloc(size * 3 * sizeof(WCHAR));
 
     for (i = 0, pos = 0; i < size; i++)
     {
@@ -1328,7 +1300,7 @@ static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type
     if (size || type == REG_SZ)
     {
         REGPROC_write_line(fp, buf, unicode);
-        heap_free(buf);
+        free(buf);
     }
 
     export_newline(fp, unicode);
@@ -1338,7 +1310,7 @@ static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name,
 {
     WCHAR *subkey_path;
 
-    subkey_path = heap_xalloc((path_len + subkey_len + 2) * sizeof(WCHAR));
+    subkey_path = malloc((path_len + subkey_len + 2) * sizeof(WCHAR));
     swprintf(subkey_path, path_len + subkey_len + 2, L"%s\\%s", path, subkey_name);
 
     return subkey_path;
@@ -1348,10 +1320,10 @@ static void export_key_name(FILE *fp, WCHAR *name, BOOL unicode)
 {
     WCHAR *buf;
 
-    buf = heap_xalloc((lstrlenW(name) + 7) * sizeof(WCHAR));
+    buf = malloc((lstrlenW(name) + 7) * sizeof(WCHAR));
     swprintf(buf, lstrlenW(name) + 7, L"\r\n[%s]\r\n", name);
     REGPROC_write_line(fp, buf, unicode);
-    heap_free(buf);
+    free(buf);
 }
 
 #define MAX_SUBKEY_LEN   257
@@ -1369,8 +1341,8 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
 
     export_key_name(fp, path, unicode);
 
-    value_name = heap_xalloc(max_value_len * sizeof(WCHAR));
-    data = heap_xalloc(max_data_bytes);
+    value_name = malloc(max_value_len * sizeof(WCHAR));
+    data = malloc(max_data_bytes);
 
     i = 0;
     for (;;)
@@ -1388,21 +1360,21 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
             if (data_size > max_data_bytes)
             {
                 max_data_bytes = data_size;
-                data = heap_xrealloc(data, max_data_bytes);
+                data = realloc(data, max_data_bytes);
             }
             else
             {
                 max_value_len *= 2;
-                value_name = heap_xrealloc(value_name, max_value_len * sizeof(WCHAR));
+                value_name = realloc(value_name, max_value_len * sizeof(WCHAR));
             }
         }
         else break;
     }
 
-    heap_free(data);
-    heap_free(value_name);
+    free(data);
+    free(value_name);
 
-    subkey_name = heap_xalloc(MAX_SUBKEY_LEN * sizeof(WCHAR));
+    subkey_name = malloc(MAX_SUBKEY_LEN * sizeof(WCHAR));
 
     path_len = lstrlenW(path);
 
@@ -1419,13 +1391,13 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
                 export_registry_data(fp, subkey, subkey_path, unicode);
                 RegCloseKey(subkey);
             }
-            heap_free(subkey_path);
+            free(subkey_path);
             i++;
         }
         else break;
     }
 
-    heap_free(subkey_name);
+    free(subkey_name);
     return 0;
 }
 
@@ -1516,12 +1488,12 @@ static BOOL export_all(WCHAR *file_name, WCHAR *path, BOOL unicode)
             return FALSE;
         }
 
-        class_name = heap_xalloc((lstrlenW(reg_class_namesW[i]) + 1) * sizeof(WCHAR));
+        class_name = malloc((lstrlenW(reg_class_namesW[i]) + 1) * sizeof(WCHAR));
         lstrcpyW(class_name, reg_class_namesW[i]);
 
         export_registry_data(fp, classes[i], class_name, unicode);
 
-        heap_free(class_name);
+        free(class_name);
         RegCloseKey(key);
     }
 

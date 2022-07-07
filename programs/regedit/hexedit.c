@@ -34,7 +34,6 @@
 #include "winnls.h"
 #include "commctrl.h"
 
-#include "wine/heap.h"
 #include "main.h"
 
 /* spaces dividing hex and ASCII */
@@ -71,7 +70,7 @@ static inline BYTE hexchar_to_byte(WCHAR ch)
 
 static LPWSTR HexEdit_GetLineText(int offset, BYTE *pData, LONG cbData, LONG pad)
 {
-    WCHAR *lpszLine = heap_xalloc((6 + cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
+    WCHAR *lpszLine = malloc((6 + cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
     LONG i;
 
     wsprintfW(lpszLine, L"%04X  ", offset);
@@ -133,7 +132,7 @@ HexEdit_Paint(HEXEDIT_INFO *infoPtr)
         TextOutW(hdc, nXStart, nYStart, lpszLine, lstrlenW(lpszLine));
 
         nYStart += infoPtr->nHeight;
-        heap_free(lpszLine);
+        free(lpszLine);
     }
 
     SelectObject(hdc, hOldFont);
@@ -172,7 +171,7 @@ HexEdit_UpdateCaret(HEXEDIT_INFO *infoPtr)
 
     if (!nLineLen) size.cx = 0;
 
-    heap_free(lpszLine);
+    free(lpszLine);
 
     SetCaretPos(
         GetSystemMetrics(SM_CXBORDER) + size.cx,
@@ -224,10 +223,10 @@ HexEdit_EnsureVisible(HEXEDIT_INFO *infoPtr, INT nCaretPos)
 static LRESULT
 HexEdit_SetData(HEXEDIT_INFO *infoPtr, INT cbData, const BYTE *pData)
 {
-    heap_free(infoPtr->pData);
+    free(infoPtr->pData);
     infoPtr->cbData = 0;
 
-    infoPtr->pData = heap_xalloc(cbData);
+    infoPtr->pData = malloc(cbData);
     memcpy(infoPtr->pData, pData, cbData);
     infoPtr->cbData = cbData;
 
@@ -286,7 +285,7 @@ HexEdit_Char (HEXEDIT_INFO *infoPtr, WCHAR ch)
         {
             /* make room for another byte */
             infoPtr->cbData++;
-            infoPtr->pData = heap_xrealloc(infoPtr->pData, infoPtr->cbData + 1);
+            infoPtr->pData = realloc(infoPtr->pData, infoPtr->cbData + 1);
 
             /* move everything after caret up one byte */
             memmove(infoPtr->pData + nCaretBytePos + 1,
@@ -328,9 +327,9 @@ static inline LRESULT
 HexEdit_Destroy (HEXEDIT_INFO *infoPtr)
 {
     HWND hwnd = infoPtr->hwndSelf;
-    heap_free(infoPtr->pData);
+    free(infoPtr->pData);
     /* free info data */
-    heap_free(infoPtr);
+    free(infoPtr);
     SetWindowLongPtrW(hwnd, 0, 0);
     return 0;
 }
@@ -430,7 +429,7 @@ static inline LRESULT HexEdit_NCCreate (HWND hwnd, LPCREATESTRUCTW lpcs)
                    lpcs->dwExStyle | WS_EX_CLIENTEDGE);
 
     /* allocate memory for info structure */
-    infoPtr = heap_xalloc(sizeof(HEXEDIT_INFO));
+    infoPtr = malloc(sizeof(HEXEDIT_INFO));
     memset(infoPtr, 0, sizeof(HEXEDIT_INFO));
     SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -479,15 +478,15 @@ HexEdit_SetFont (HEXEDIT_INFO *infoPtr, HFONT hFont, BOOL redraw)
 
     for (i = 0; ; i++)
     {
-        BYTE *pData = heap_xalloc(i);
+        BYTE *pData = malloc(i);
         WCHAR *lpszLine;
         SIZE size;
 
         memset(pData, 0, i);
         lpszLine = HexEdit_GetLineText(0, pData, i, 0);
         GetTextExtentPoint32W(hdc, lpszLine, lstrlenW(lpszLine), &size);
-        heap_free(lpszLine);
-        heap_free(pData);
+        free(lpszLine);
+        free(pData);
         if (size.cx > (rcClient.right - rcClient.left))
         {
             infoPtr->nBytesPerLine = i - 1;

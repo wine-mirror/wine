@@ -22,10 +22,8 @@
 #include <windows.h>
 #include <winternl.h>
 #include <commctrl.h>
-#include <stdlib.h>
 
 #include "main.h"
-#include "wine/heap.h"
 
 static INT Image_String;
 static INT Image_Binary;
@@ -50,14 +48,14 @@ LPWSTR GetItemText(HWND hwndLV, UINT item)
     unsigned int maxLen = 128;
     if (item == 0) return NULL; /* first item is ALWAYS a default */
 
-    curStr = heap_xalloc(maxLen * sizeof(WCHAR));
+    curStr = malloc(maxLen * sizeof(WCHAR));
     do {
         ListView_GetItemTextW(hwndLV, item, 0, curStr, maxLen);
         if (lstrlenW(curStr) < maxLen - 1) return curStr;
         maxLen *= 2;
-        curStr = heap_xrealloc(curStr, maxLen * sizeof(WCHAR));
+        curStr = realloc(curStr, maxLen * sizeof(WCHAR));
     } while (TRUE);
-    heap_free(curStr);
+    free(curStr);
     return NULL;
 }
 
@@ -73,9 +71,9 @@ WCHAR *GetValueName(HWND hwndLV)
 
 BOOL update_listview_path(const WCHAR *path)
 {
-    heap_free(g_currentPath);
+    free(g_currentPath);
 
-    g_currentPath = heap_xalloc((lstrlenW(path) + 1) * sizeof(WCHAR));
+    g_currentPath = malloc((lstrlenW(path) + 1) * sizeof(WCHAR));
     lstrcpyW(g_currentPath, path);
 
     return TRUE;
@@ -136,12 +134,12 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
         {
             unsigned int i;
             BYTE *pData = data;
-            WCHAR *strBinary = heap_xalloc(size * sizeof(WCHAR) * 3 + sizeof(WCHAR));
+            WCHAR *strBinary = malloc(size * sizeof(WCHAR) * 3 + sizeof(WCHAR));
             for (i = 0; i < size; i++)
                 wsprintfW( strBinary + i*3, L"%02X ", pData[i] );
             strBinary[size * 3] = 0;
             ListView_SetItemTextW(hwndLV, index, 2, strBinary);
-            heap_free(strBinary);
+            free(strBinary);
             break;
         }
     }
@@ -153,20 +151,20 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
     LVITEMW item = { 0 };
     int index;
 
-    linfo = heap_xalloc(sizeof(LINE_INFO));
+    linfo = malloc(sizeof(LINE_INFO));
     linfo->dwValType = dwValType;
     linfo->val_len = dwCount;
 
     if (Name)
     {
-        linfo->name = heap_xalloc((lstrlenW(Name) + 1) * sizeof(WCHAR));
+        linfo->name = malloc((lstrlenW(Name) + 1) * sizeof(WCHAR));
         lstrcpyW(linfo->name, Name);
     }
     else linfo->name = NULL;
 
     if (ValBuf && dwCount)
     {
-        linfo->val = heap_xalloc(dwCount);
+        linfo->val = malloc(dwCount);
         memcpy(linfo->val, ValBuf, dwCount);
     }
     else linfo->val = NULL;
@@ -411,8 +409,8 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     max_val_name_len++;
     max_val_size++;
 
-    valName = heap_xalloc(max_val_name_len * sizeof(WCHAR));
-    valBuf = heap_xalloc(max_val_size);
+    valName = malloc(max_val_name_len * sizeof(WCHAR));
+    valBuf = malloc(max_val_size);
 
     valSize = max_val_size;
     if (RegQueryValueExW(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) {
@@ -444,8 +442,8 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     result = TRUE;
 
 done:
-    heap_free(valBuf);
-    heap_free(valName);
+    free(valBuf);
+    free(valName);
     SendMessageW(hwndLV, WM_SETREDRAW, TRUE, 0);
     if (hKey) RegCloseKey(hKey);
 
