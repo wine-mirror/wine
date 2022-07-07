@@ -164,6 +164,8 @@ static void key_dump( struct object *obj, int verbose );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
 static WCHAR *key_get_full_name( struct object *obj, data_size_t *len );
+static struct object *key_lookup_name( struct object *obj, struct unicode_str *name,
+                                       unsigned int attr, struct object *root );
 static int key_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static void key_unlink_name( struct object *obj, struct object_name *name );
 static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
@@ -184,7 +186,7 @@ static const struct object_ops key_ops =
     key_get_sd,              /* get_sd */
     default_set_sd,          /* set_sd */
     key_get_full_name,       /* get_full_name */
-    no_lookup_name,          /* lookup_name */
+    key_lookup_name,         /* lookup_name */
     key_link_name,           /* link_name */
     key_unlink_name,         /* unlink_name */
     no_open_file,            /* open_file */
@@ -483,6 +485,89 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
     }
     memcpy( ret, root_name, sizeof(root_name) - sizeof(WCHAR) );
     return (WCHAR *)ret;
+}
+
+static struct object *key_lookup_name( struct object *obj, struct unicode_str *name,
+                                       unsigned int attr, struct object *root )
+{
+    struct key *found, *key = (struct key *)obj;
+    struct unicode_str tmp;
+    data_size_t next;
+    int index;
+
+    assert( obj->ops == &key_ops );
+
+    if (!name) return NULL;  /* open the key itself */
+
+    if (key->flags & KEY_DELETED)
+    {
+        set_error( STATUS_KEY_DELETED );
+        return NULL;
+    }
+
+    if (key->flags & KEY_SYMLINK)
+    {
+        struct unicode_str name_left;
+        struct key_value *value;
+
+        if (!name->len && (attr & OBJ_OPENLINK)) return NULL;
+
+        if (!(value = find_value( key, &symlink_str, &index )) ||
+            value->len < sizeof(WCHAR) || *(WCHAR *)value->data != '\\')
+        {
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+            return NULL;
+        }
+        tmp.str = value->data;
+        tmp.len = (value->len / sizeof(WCHAR)) * sizeof(WCHAR);
+        if ((obj = lookup_named_object( NULL, &tmp, OBJ_CASE_INSENSITIVE, &name_left )))
+        {
+            if (!name->len) *name = name_left;  /* symlink destination can be created if missing */
+            else if (name_left.len)  /* symlink must have been resolved completely */
+            {
+                release_object( obj );
+                obj = NULL;
+                set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+            }
+        }
+        return obj;
+    }
+
+    if (!name->str) return NULL;
+
+    tmp.str = name->str;
+    tmp.len = get_path_element( name->str, name->len );
+
+    if (tmp.len > MAX_NAME_LEN * sizeof(WCHAR))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return 0;
+    }
+
+    /* skip trailing backslashes */
+    for (next = tmp.len; next < name->len; next += sizeof(WCHAR))
+        if (name->str[next / sizeof(WCHAR)] != '\\') break;
+
+    if (!(found = find_subkey( key, &tmp, &index )))
+    {
+        if (next < name->len)  /* path still has elements */
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        else  /* only trailing backslashes */
+            name->len = tmp.len;
+        return NULL;
+    }
+
+    if (next < name->len)  /* move to the next element */
+    {
+        name->str += next / sizeof(WCHAR);
+        name->len -= next;
+    }
+    else
+    {
+        name->str = NULL;
+        name->len = 0;
+    }
+    return grab_object( found );
 }
 
 static int key_link_name( struct object *obj, struct object_name *name, struct object *parent )
