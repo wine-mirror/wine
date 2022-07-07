@@ -2260,13 +2260,22 @@ static enum wined3d_feature_level feature_level_from_caps(const struct shader_ca
     shader_model = min(shader_model, max(shader_caps->hs_version, 4));
     shader_model = min(shader_model, max(shader_caps->ds_version, 4));
 
-    if (shader_model >= 5)
-        return WINED3D_FEATURE_LEVEL_11_1;
+    if (!shader_model)
+        return WINED3D_FEATURE_LEVEL_7;
 
-    if (shader_model >= 4)
+    if (shader_model <= 1)
+        return WINED3D_FEATURE_LEVEL_8;
+
+    if (shader_model <= 2)
+        return WINED3D_FEATURE_LEVEL_9_2;
+
+    if (shader_model <= 3)
+        return WINED3D_FEATURE_LEVEL_9_3;
+
+    if (shader_model <= 4)
         return WINED3D_FEATURE_LEVEL_10_1;
 
-    return WINED3D_FEATURE_LEVEL_NONE;
+    return WINED3D_FEATURE_LEVEL_11_1;
 }
 
 static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_vk, uint32_t wined3d_creation_flags)
