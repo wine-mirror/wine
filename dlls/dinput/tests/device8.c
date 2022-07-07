@@ -1893,7 +1893,6 @@ static void test_sys_mouse( DWORD version )
     hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
                           50, 50, 200, 200, NULL, NULL, NULL, NULL );
     ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
-    flush_events();
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND );
     ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
@@ -1926,7 +1925,6 @@ static void test_sys_mouse( DWORD version )
     child = CreateWindowW( L"static", L"static", WS_CHILD | WS_VISIBLE,
                            10, 10, 50, 50, hwnd, NULL, NULL, NULL );
     ok( !!child, "CreateWindowW failed, error %lu\n", GetLastError() );
-    flush_events();
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND );
     ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
@@ -1965,27 +1963,6 @@ static void test_sys_mouse( DWORD version )
     ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_NOEFFECT, "Acquire returned %#lx\n", hr );
-
-
-    tmp_hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
-                              50, 250, 200, 200, NULL, NULL, NULL, NULL );
-    ok( !!tmp_hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
-    flush_events();
-
-    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState  returned %#lx\n", hr );
-
-    hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DIERR_OTHERAPPHASPRIO, "Acquire returned %#lx\n", hr );
-
-    SetActiveWindow( hwnd );
-    flush_events();
-
-    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&prop_dword );
-    ok( hr == DI_OK, "SetProperty returned %#lx\n", hr );
-
-    hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
 
     mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
     res = WaitForSingleObject( event, 100 );
@@ -2058,7 +2035,22 @@ static void test_sys_mouse( DWORD version )
     ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
     ok( count == 1, "got count %lu\n", count );
 
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+
+
+    tmp_hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
+                              50, 250, 200, 200, NULL, NULL, NULL, NULL );
+    ok( !!tmp_hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState  returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DIERR_OTHERAPPHASPRIO, "Acquire returned %#lx\n", hr );
+
     DestroyWindow( tmp_hwnd );
+
 
     CloseHandle( event );
     DestroyWindow( hwnd );
@@ -2554,7 +2546,6 @@ static void test_sys_keyboard( DWORD version )
     hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
                           50, 50, 200, 200, NULL, NULL, NULL, NULL );
     ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
-    flush_events();
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND );
     ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
@@ -2589,7 +2580,6 @@ static void test_sys_keyboard( DWORD version )
     child = CreateWindowW( L"static", L"static", WS_CHILD | WS_VISIBLE,
                            10, 10, 50, 50, hwnd, NULL, NULL, NULL );
     ok( !!child, "CreateWindowW failed, error %lu\n", GetLastError() );
-    flush_events();
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND );
     ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
