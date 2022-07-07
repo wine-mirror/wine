@@ -521,7 +521,7 @@ typedef struct _SecPkgContext_StreamSizes
     ULONG cbHeader;
     ULONG cbTrailer;
     ULONG cbMaximumMessage;
-    ULONG cbBuffers;
+    ULONG cBuffers;
     ULONG cbBlockSize;
 } SecPkgContext_StreamSizes, *PSecPkgContext_StreamSizes;
 

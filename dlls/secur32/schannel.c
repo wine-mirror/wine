@@ -1164,7 +1164,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
                 stream_sizes->cbHeader = ctx->header_size;
                 stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
                 stream_sizes->cbMaximumMessage = message_size;
-                stream_sizes->cbBuffers = 4;
+                stream_sizes->cBuffers = 4;
                 stream_sizes->cbBlockSize = block_size;
             }
 
