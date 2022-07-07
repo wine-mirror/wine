@@ -2693,22 +2693,12 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec.ExceptionAddress = (void *)RIP_sig(ucontext);
     save_context( &context, sigcontext );
 
-    switch (siginfo->si_code)
+    switch (TRAP_sig(ucontext))
     {
-    case TRAP_TRACE:  /* Single-step exception */
-    case 4 /* TRAP_HWBKPT */: /* Hardware breakpoint exception */
+    case TRAP_x86_TRCTRAP:
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
-    case TRAP_BRKPT:   /* Breakpoint exception */
-#ifdef SI_KERNEL
-    case SI_KERNEL:
-#endif
-        /* Check if this is actually icebp instruction */
-        if (((unsigned char *)RIP_sig(ucontext))[-1] == 0xF1)
-        {
-            rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-            break;
-        }
+    case TRAP_x86_BPTFLT:
         rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
         /* fall through */
     default:
