@@ -12328,6 +12328,101 @@ done:
     release_test_context(&ctx);
 }
 
+static void test_border_transform(BOOL d3d11)
+{
+    ID2D1BorderTransform *transform = NULL;
+    ID2D1EffectContext *effect_context;
+    D2D1_PROPERTY_BINDING binding;
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    D2D1_EXTEND_MODE mode;
+    ID2D1Effect *effect;
+    UINT input_count;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    binding.propertyName = L"Context";
+    binding.setFunction = NULL;
+    binding.getFunction = effect_impl_get_context;
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_b, &binding, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Create transform with invalid extend mode */
+    hr = ID2D1EffectContext_CreateBorderTransform(effect_context, 0xdeadbeef, 0xdeadbeef, &transform);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto done;
+    mode = ID2D1BorderTransform_GetExtendModeX(transform);
+    ok(mode == 0xdeadbeef, "Got unexpected extend mode %u.\n", mode);
+    mode = ID2D1BorderTransform_GetExtendModeY(transform);
+    ok(mode == 0xdeadbeef, "Got unexpected extend mode %u.\n", mode);
+    ID2D1BorderTransform_Release(transform);
+
+    /* Create transform */
+    hr = ID2D1EffectContext_CreateBorderTransform(effect_context, D2D1_EXTEND_MODE_CLAMP, D2D1_EXTEND_MODE_WRAP, &transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Get extend mode */
+    mode = ID2D1BorderTransform_GetExtendModeX(transform);
+    ok(mode == D2D1_EXTEND_MODE_CLAMP, "Got unexpected extend mode %u.\n", mode);
+    mode = ID2D1BorderTransform_GetExtendModeY(transform);
+    ok(mode == D2D1_EXTEND_MODE_WRAP, "Got unexpected extend mode %u.\n", mode);
+
+    /* Input count */
+    input_count = ID2D1BorderTransform_GetInputCount(transform);
+    ok(input_count == 1, "Got unexpected input count %u.\n", input_count);
+
+    /* Set output buffer */
+    hr = ID2D1BorderTransform_SetOutputBuffer(transform, 0xdeadbeef, D2D1_CHANNEL_DEPTH_DEFAULT);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1BorderTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, 0xdeadbeef);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1BorderTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, D2D1_CHANNEL_DEPTH_DEFAULT);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Set extend mode */
+    ID2D1BorderTransform_SetExtendModeX(transform, D2D1_EXTEND_MODE_MIRROR);
+    mode = ID2D1BorderTransform_GetExtendModeX(transform);
+    ok(mode == D2D1_EXTEND_MODE_MIRROR, "Got unexpected extend mode %u.\n", mode);
+    ID2D1BorderTransform_SetExtendModeY(transform, D2D1_EXTEND_MODE_CLAMP);
+    mode = ID2D1BorderTransform_GetExtendModeY(transform);
+    ok(mode == D2D1_EXTEND_MODE_CLAMP, "Got unexpected extend mode %u.\n", mode);
+
+    /* Set extend mode with invalid value */
+    ID2D1BorderTransform_SetExtendModeX(transform, 0xdeadbeef);
+    mode = ID2D1BorderTransform_GetExtendModeX(transform);
+    ok(mode == D2D1_EXTEND_MODE_MIRROR, "Got unexpected extend mode %u.\n", mode);
+    ID2D1BorderTransform_SetExtendModeY(transform, 0xdeadbeef);
+    mode = ID2D1BorderTransform_GetExtendModeY(transform);
+    ok(mode == D2D1_EXTEND_MODE_CLAMP, "Got unexpected extend mode %u.\n", mode);
+
+done:
+    if (transform)
+        ID2D1BorderTransform_Release(transform);
+    ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    release_test_context(&ctx);
+}
+
 static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
@@ -13146,6 +13241,7 @@ START_TEST(d2d1)
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
     queue_test(test_blend_transform);
+    queue_test(test_border_transform);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
