@@ -229,9 +229,9 @@ struct d3d8_indexbuffer
     struct d3d8_resource resource;
     struct wined3d_buffer *wined3d_buffer;
     IDirect3DDevice8 *parent_device;
-    struct wined3d_buffer *draw_buffer;
     enum wined3d_format_id format;
     DWORD usage;
+    bool sysmem;
 };
 
 HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *device,
