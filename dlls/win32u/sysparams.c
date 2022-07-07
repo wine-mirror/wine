@@ -1835,7 +1835,7 @@ static BOOL is_detached_mode( const DEVMODEW *mode )
 }
 
 /***********************************************************************
- *	     NtUserChangeDisplaySettingsExW    (win32u.@)
+ *	     NtUserChangeDisplaySettings    (win32u.@)
  */
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
