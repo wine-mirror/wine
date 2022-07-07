@@ -1121,6 +1121,103 @@ static void test_v1_multiple_urls(void)
     ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
+static void test_v1_relative_urls(void)
+{
+    char DECLSPEC_ALIGN(8) req_buffer[2048];
+    char relative_req[] =
+        "GET %s HTTP/1.1\r\n"
+        "Host: localhost:%u\r\n"
+        "Connection: keep-alive\r\n"
+        "User-Agent: WINE\r\n"
+        "\r\n";
+    HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
+    unsigned short port;
+    WCHAR url[50], url2[50];
+    char req_text[200];
+    DWORD ret_size;
+    HANDLE queue, queue2;
+    SOCKET s;
+    int ret;
+
+    ret = HttpCreateHttpHandle(&queue, 0);
+    ok(!ret, "Got error %u.\n", ret);
+    ret = HttpCreateHttpHandle(&queue2, 0);
+    ok(!ret, "Got error %u.\n", ret);
+
+    port = add_url_v1(queue);
+    swprintf(url2, ARRAY_SIZE(url2), L"http://localhost:%u/foobar/foo/", port);
+    ret = HttpAddUrl(queue2, url2, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    s = create_client_socket(port);
+    sprintf(req_text, simple_req, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
+    send_response_v1(queue, req->RequestId, s);
+
+    sprintf(req_text, relative_req, "/foobar/foo/bar", port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue2, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
+    send_response_v1(queue2, req->RequestId, s);
+
+    sprintf(req_text, relative_req, "/foobar/foo", port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue2, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
+    send_response_v1(queue2, req->RequestId, s);
+
+    sprintf(req_text, relative_req, "/foobar/foo?a=b", port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue2, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
+    send_response_v1(queue2, req->RequestId, s);
+
+    closesocket(s);
+    remove_url_v1(queue, port);
+    ret = HttpRemoveUrl(queue2, url2);
+    ok(!ret, "Got error %u.\n", ret);
+
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/barfoo/", port);
+    ret = HttpAddUrl(queue, url, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    swprintf(url2, ARRAY_SIZE(url2), L"http://localhost:%u/barfoo/", port);
+    ret = HttpAddUrl(queue2, url2, NULL);
+    ok(ret == ERROR_ALREADY_EXISTS, "Got error %u.\n", ret);
+
+    swprintf(url2, ARRAY_SIZE(url2), L"http://localhost:%u/barfoo", port);
+    ret = HttpAddUrl(queue2, url2, NULL);
+    ok(ret == ERROR_ALREADY_EXISTS, "Got error %u.\n", ret);
+
+    ret = CloseHandle(queue);
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
+    ret = CloseHandle(queue2);
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
+
+    return;
+}
+
 static void test_v1_urls(void)
 {
     char DECLSPEC_ALIGN(8) req_buffer[2048];
@@ -1682,6 +1779,7 @@ START_TEST(httpapi)
     test_v1_cooked_url();
     test_v1_unknown_tokens();
     test_v1_multiple_urls();
+    test_v1_relative_urls();
     test_v1_urls();
 
     ret = HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
