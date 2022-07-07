@@ -2612,6 +2612,7 @@ static DWORD WINAPI wndproc_thread(void *param)
 
 static void test_wndproc(void)
 {
+    unsigned int adapter_mode_count, i, d3d_width = 0, d3d_height = 0, user32_width = 0, user32_height = 0;
     struct wndproc_thread_param thread_params;
     struct device_desc device_desc;
     static WINDOWPOS windowpos;
@@ -2622,10 +2623,8 @@ static void test_wndproc(void)
     ULONG ref;
     DWORD res, tid;
     HWND tmp;
-    UINT i, adapter_mode_count;
     HRESULT hr;
     D3DDISPLAYMODE d3ddm;
-    DWORD d3d_width = 0, d3d_height = 0, user32_width = 0, user32_height = 0;
     DEVMODEW devmode;
     LONG change_ret, device_style;
     BOOL ret;
