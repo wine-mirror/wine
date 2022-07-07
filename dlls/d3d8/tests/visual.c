@@ -114,56 +114,28 @@ static void get_rt_readback(IDirect3DSurface8 *surface, struct surface_readback 
     hr = IDirect3DSurface8_GetDesc(surface, &desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
     hr = IDirect3DDevice8_CreateTexture(device, desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex);
-    if (FAILED(hr) || !tex)
-    {
-        trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
-        goto error;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &rb->surface);
-    if (FAILED(hr))
-    {
-        trace("Can't get surface from texture, hr %#x.\n", hr);
-        goto error;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IDirect3DDevice8_CopyRects(device, surface, NULL, 0, rb->surface, NULL);
-    if (FAILED(hr))
-    {
-        trace("Can't read the render target, hr %#x.\n", hr);
-        goto error;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IDirect3DSurface8_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
-    if (FAILED(hr))
-    {
-        trace("Can't lock the offscreen surface, hr %#x.\n", hr);
-        goto error;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IDirect3DTexture8_Release(tex);
-    IDirect3DDevice8_Release(device);
-    return;
-
-error:
-    if (rb->surface)
-        IDirect3DSurface8_Release(rb->surface);
-    rb->surface = NULL;
-    if (tex)
-        IDirect3DTexture8_Release(tex);
     IDirect3DDevice8_Release(device);
 }
 
 static DWORD get_readback_color(struct surface_readback *rb, unsigned int x, unsigned int y)
 {
-    return rb->locked_rect.pBits
-            ? ((DWORD *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(DWORD) + x] : 0xdeadbeef;
+    return ((DWORD *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(DWORD) + x];
 }
 
 static void release_surface_readback(struct surface_readback *rb)
 {
     HRESULT hr;
 
-    if (!rb->surface)
-        return;
-    if (rb->locked_rect.pBits && FAILED(hr = IDirect3DSurface8_UnlockRect(rb->surface)))
-        trace("Can't unlock the offscreen surface, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_UnlockRect(rb->surface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IDirect3DSurface8_Release(rb->surface);
 }
 
@@ -175,11 +147,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     HRESULT hr;
 
     hr = IDirect3DDevice8_GetRenderTarget(device, &rt);
-    if (FAILED(hr))
-    {
-        trace("Can't get the render target, hr %#x.\n", hr);
-        return 0xdeadbeef;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     get_rt_readback(rt, &rb);
     /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
@@ -6812,6 +6780,7 @@ done:
 
 static void test_updatetexture(void)
 {
+    D3DADAPTER_IDENTIFIER8 identifier;
     IDirect3DDevice8 *device;
     IDirect3D8 *d3d;
     HWND window;
@@ -6922,6 +6891,8 @@ static void test_updatetexture(void)
         return;
     }
 
+    hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
 
@@ -7110,6 +7081,11 @@ static void test_updatetexture(void)
 
             if (do_visual_test)
             {
+                IDirect3DTexture8 *rb_texture;
+                struct surface_readback rb;
+                IDirect3DSurface8 *rt;
+                D3DSURFACE_DESC desc;
+
                 hr = IDirect3DDevice8_SetTexture(device, 0, dst);
                 ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
 
@@ -7124,10 +7100,38 @@ static void test_updatetexture(void)
                 hr = IDirect3DDevice8_EndScene(device);
                 ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-                color = getPixelColor(device, 320, 240);
-                ok (color_match(color, 0x007f7f00, 3) || broken(tests[i].broken_result)
-                        || broken(color == 0x00adbeef), /* WARP device often just breaks down. */
-                        "Got unexpected color 0x%08x, case %u, %u.\n", color, t, i);
+                /* Read back manually. WARP often completely breaks down with
+                 * these draws and fails to copy to the staging texture. */
+
+                hr = IDirect3DDevice8_GetRenderTarget(device, &rt);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+                hr = IDirect3DSurface8_GetDesc(rt, &desc);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                hr = IDirect3DDevice8_CreateTexture(device, desc.Width, desc.Height,
+                        1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &rb_texture);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                hr = IDirect3DTexture8_GetSurfaceLevel(rb_texture, 0, &rb.surface);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+                hr = IDirect3DDevice8_CopyRects(device, rt, NULL, 0, rb.surface, NULL);
+                ok(hr == S_OK || broken(adapter_is_warp(&identifier)), "Got hr %#x.\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirect3DSurface8_LockRect(rb.surface, &rb.locked_rect, NULL, D3DLOCK_READONLY);
+                    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+                    color = get_readback_color(&rb, 320, 240) & 0x00ffffff;
+                    ok(color_match(color, 0x007f7f00, 3) || broken(tests[i].broken_result),
+                            "Got unexpected color 0x%08x, case %u, %u.\n", color, t, i);
+
+                    hr = IDirect3DSurface8_UnlockRect(rb.surface);
+                    ok(hr == S_OK, "Got hr %#x.\n", hr);
+                }
+
+                IDirect3DSurface8_Release(rb.surface);
+                IDirect3DTexture8_Release(rb_texture);
+                IDirect3DSurface8_Release(rt);
             }
 
             IDirect3DBaseTexture8_Release(src);
