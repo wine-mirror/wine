@@ -1009,13 +1009,11 @@ static void test_name_limits(void)
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "%u: NtCreateKey failed %lx\n", str.Length, status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER, "%u: NtOpenKey failed %lx\n", str.Length, status );
     str.Length = 2000;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "%u: NtCreateKey failed %lx\n", str.Length, status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER, "%u: NtOpenKey failed %lx\n", str.Length, status );
     /* some Windows versions change the error past 2050 chars, others past 4066 chars, some don't */
     str.Length = 5000;
@@ -1026,7 +1024,6 @@ static void test_name_limits(void)
         "%u: NtCreateKey failed %lx\n", str.Length, status );
     ret = (HANDLE)0xdeadbeef;
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_BUFFER_OVERFLOW ||
         status == STATUS_BUFFER_TOO_SMALL ||
         status == STATUS_INVALID_PARAMETER,
@@ -1042,7 +1039,6 @@ static void test_name_limits(void)
     ok( !ret, "handle set %p\n", ret );
     ret = (HANDLE)0xdeadbeef;
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID ||
         status == STATUS_BUFFER_OVERFLOW ||
         status == STATUS_BUFFER_TOO_SMALL,
