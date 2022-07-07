@@ -279,6 +279,57 @@ static void dump_value( const struct key_value *value, FILE *f )
     fputc( '\n', f );
 }
 
+/* find the named child of a given key and return its index */
+static struct key *find_subkey( const struct key *key, const struct unicode_str *name, int *index )
+{
+    int i, min, max, res;
+    data_size_t len;
+
+    min = 0;
+    max = key->last_subkey;
+    while (min <= max)
+    {
+        i = (min + max) / 2;
+        len = min( key->subkeys[i]->obj.name->len, name->len );
+        res = memicmp_strW( key->subkeys[i]->obj.name->name, name->str, len );
+        if (!res) res = key->subkeys[i]->obj.name->len - name->len;
+        if (!res)
+        {
+            *index = i;
+            return key->subkeys[i];
+        }
+        if (res > 0) max = i - 1;
+        else min = i + 1;
+    }
+    *index = min;  /* this is where we should insert it */
+    return NULL;
+}
+
+/* try to grow the array of subkeys; return 1 if OK, 0 on error */
+static int grow_subkeys( struct key *key )
+{
+    struct key **new_subkeys;
+    int nb_subkeys;
+
+    if (key->nb_subkeys)
+    {
+        nb_subkeys = key->nb_subkeys + (key->nb_subkeys / 2);  /* grow by 50% */
+        if (!(new_subkeys = realloc( key->subkeys, nb_subkeys * sizeof(*new_subkeys) )))
+        {
+            set_error( STATUS_NO_MEMORY );
+            return 0;
+        }
+    }
+    else
+    {
+        nb_subkeys = MIN_SUBKEYS;
+        if (!(new_subkeys = mem_alloc( nb_subkeys * sizeof(*new_subkeys) ))) return 0;
+    }
+    key->subkeys    = new_subkeys;
+    key->nb_subkeys = nb_subkeys;
+    return 1;
+}
+
 /* save a registry and all its subkeys to a text file */
 static void save_subkeys( const struct key *key, const struct key *base, FILE *f )
 {
@@ -624,31 +675,6 @@ static void touch_key( struct key *key, unsigned int change )
     for (key = get_parent( key ); key; key = get_parent( key )) check_notify( key, change, 0 );
 }
 
-/* try to grow the array of subkeys; return 1 if OK, 0 on error */
-static int grow_subkeys( struct key *key )
-{
-    struct key **new_subkeys;
-    int nb_subkeys;
-
-    if (key->nb_subkeys)
-    {
-        nb_subkeys = key->nb_subkeys + (key->nb_subkeys / 2);  /* grow by 50% */
-        if (!(new_subkeys = realloc( key->subkeys, nb_subkeys * sizeof(*new_subkeys) )))
-        {
-            set_error( STATUS_NO_MEMORY );
-            return 0;
-        }
-    }
-    else
-    {
-        nb_subkeys = MIN_SUBKEYS;
-        if (!(new_subkeys = mem_alloc( nb_subkeys * sizeof(*new_subkeys) ))) return 0;
-    }
-    key->subkeys    = new_subkeys;
-    key->nb_subkeys = nb_subkeys;
-    return 1;
-}
-
 /* allocate a subkey for a given key, and return its index */
 static struct key *alloc_subkey( struct key *parent, const struct unicode_str *name,
                                  int index, timeout_t modif )
@@ -677,32 +703,6 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
             parent->wow6432node = key;
     }
     return key;
-}
-
-/* find the named child of a given key and return its index */
-static struct key *find_subkey( const struct key *key, const struct unicode_str *name, int *index )
-{
-    int i, min, max, res;
-    data_size_t len;
-
-    min = 0;
-    max = key->last_subkey;
-    while (min <= max)
-    {
-        i = (min + max) / 2;
-        len = min( key->subkeys[i]->obj.name->len, name->len );
-        res = memicmp_strW( key->subkeys[i]->obj.name->name, name->str, len );
-        if (!res) res = key->subkeys[i]->obj.name->len - name->len;
-        if (!res)
-        {
-            *index = i;
-            return key->subkeys[i];
-        }
-        if (res > 0) max = i - 1;
-        else min = i + 1;
-    }
-    *index = min;  /* this is where we should insert it */
-    return NULL;
 }
 
 /* return the wow64 variant of the key, or the key itself if none */
