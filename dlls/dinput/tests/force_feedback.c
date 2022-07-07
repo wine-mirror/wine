@@ -5673,7 +5673,6 @@ static void test_windows_gaming_input(void)
     UINT32 size;
     HRESULT hr;
     DWORD ret;
-    LONG ref;
 
     if (!load_combase_functions()) return;
 
@@ -6053,8 +6052,7 @@ static void test_windows_gaming_input(void)
     todo_wine
     ok( hr == 0x86854003, "TryUnloadEffectAsync returned %#lx\n", hr );
 
-    ref = IForceFeedbackEffect_Release( effect );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IForceFeedbackEffect_Release( effect );
 
 
     hr = IPeriodicForceEffectFactory_CreateInstance( periodic_factory, PeriodicForceEffectKind_SineWave, &effect );
@@ -6127,8 +6125,7 @@ static void test_windows_gaming_input(void)
     IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
-    ref = IForceFeedbackEffect_Release( effect );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IForceFeedbackEffect_Release( effect );
 
     IPeriodicForceEffectFactory_Release( periodic_factory );
 
@@ -6220,8 +6217,7 @@ static void test_windows_gaming_input(void)
     IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
-    ref = IForceFeedbackEffect_Release( effect );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IForceFeedbackEffect_Release( effect );
 
     IConditionForceEffectFactory_Release( condition_factory );
 
@@ -6313,8 +6309,7 @@ static void test_windows_gaming_input(void)
     IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
-    ref = IForceFeedbackEffect_Release( effect );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IForceFeedbackEffect_Release( effect );
 
 
     hr = pWindowsCreateString( ramp_effect_class_name, wcslen( ramp_effect_class_name ), &str );
@@ -6387,8 +6382,7 @@ static void test_windows_gaming_input(void)
     IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
-    ref = IForceFeedbackEffect_Release( effect );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IForceFeedbackEffect_Release( effect );
 
 
     IForceFeedbackMotor_Release( motor );
