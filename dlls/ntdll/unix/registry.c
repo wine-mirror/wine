@@ -83,6 +83,7 @@ NTSTATUS WINAPI NtCreateKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
     if (attr->Length != sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
     if (!attr->ObjectName->Length && !attr->RootDirectory) return STATUS_OBJECT_PATH_SYNTAX_BAD;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+    objattr->attributes |= OBJ_OPENIF | OBJ_CASE_INSENSITIVE;
 
     TRACE( "(%p,%s,%s,%x,%x,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, key );
@@ -133,6 +134,7 @@ NTSTATUS WINAPI NtCreateKeyTransacted( HANDLE *key, ACCESS_MASK access, const OB
 NTSTATUS WINAPI NtOpenKeyEx( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
 {
     NTSTATUS ret;
+    ULONG attributes;
 
     *key = 0;
     if (attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
@@ -142,11 +144,13 @@ NTSTATUS WINAPI NtOpenKeyEx( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
 
     if (options & ~REG_OPTION_OPEN_LINK) FIXME( "options %x not implemented\n", options );
 
+    attributes = attr->Attributes | OBJ_CASE_INSENSITIVE;
+
     SERVER_START_REQ( open_key )
     {
         req->parent     = wine_server_obj_handle( attr->RootDirectory );
         req->access     = access;
-        req->attributes = attr->Attributes;
+        req->attributes = attributes;
         wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call( req );
         *key = wine_server_ptr_handle( reply->hkey );
@@ -699,6 +703,7 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
     if (ret) return ret;
 
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+    objattr->attributes |= OBJ_OPENIF | OBJ_CASE_INSENSITIVE;
 
     SERVER_START_REQ( load_registry )
     {
