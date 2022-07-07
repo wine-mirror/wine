@@ -6421,7 +6421,7 @@ DECLSPEC_NORETURN void __fastfail(unsigned int);
 #pragma intrinsic(_InterlockedExchangePointer)
 #pragma intrinsic(_InterlockedIncrement64)
 #pragma intrinsic(_InterlockedOr64)
-#pragma intrinsic(_InterlockedXord64)
+#pragma intrinsic(_InterlockedXor64)
 
 __int64   _InterlockedAnd64(__int64 volatile *, __int64);
 void *    _InterlockedCompareExchangePointer(void *volatile*,void*,void*);
