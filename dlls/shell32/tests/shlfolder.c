@@ -5398,15 +5398,12 @@ static void test_SHOpenFolderAndSelectItems(void)
 
     /* NULL folder */
     hr = SHOpenFolderAndSelectItems(NULL, 0, NULL, 0);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     /* Open and select folder without child items */
     folder = ILCreateFromPathW(L"C:\\Windows\\System32");
     hr = SHOpenFolderAndSelectItems(folder, 0, NULL, 0);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine
     ok(check_window_exists("Windows"), "Failed to create window.\n");
     ILFree(folder);
 
@@ -5414,9 +5411,7 @@ static void test_SHOpenFolderAndSelectItems(void)
     folder = ILCreateFromPathW(L"C:\\Windows");
     items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
     hr = SHOpenFolderAndSelectItems(folder, 1, (PCUITEMID_CHILD_ARRAY)items, 0);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine
     ok(check_window_exists("Windows"), "Failed to create window.\n");
     ILFree(items[0]);
     ILFree(folder);
@@ -5426,9 +5421,7 @@ static void test_SHOpenFolderAndSelectItems(void)
     items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
     items[1] = ILCreateFromPathW(L"C:\\Windows\\Resources");
     hr = SHOpenFolderAndSelectItems(folder, 2, (PCUITEMID_CHILD_ARRAY)items, 0);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine
     ok(check_window_exists("Windows"), "Failed to create window.\n");
     ILFree(items[1]);
     ILFree(items[0]);
@@ -5438,9 +5431,7 @@ static void test_SHOpenFolderAndSelectItems(void)
     folder = ILCreateFromPathW(L"C:\\Windows");
     items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
     hr = SHOpenFolderAndSelectItems(folder, 1, (PCUITEMID_CHILD_ARRAY)items, OFASI_EDIT);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine
     ok(check_window_exists("Windows"), "Failed to create window.\n");
     ILFree(items[0]);
     ILFree(folder);
@@ -5450,9 +5441,7 @@ static void test_SHOpenFolderAndSelectItems(void)
     items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
     items[1] = ILCreateFromPathW(L"C:\\Windows\\Resources");
     hr = SHOpenFolderAndSelectItems(folder, 2, (PCUITEMID_CHILD_ARRAY)items, 0);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine
     ok(check_window_exists("Windows"), "Failed to create window.\n");
     ILFree(items[1]);
     ILFree(items[0]);

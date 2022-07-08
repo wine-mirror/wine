@@ -615,8 +615,142 @@ HRESULT WINAPI SHCreateLinks( HWND hWnd, LPCSTR lpszDir, LPDATAOBJECT lpDataObje
 HRESULT WINAPI SHOpenFolderAndSelectItems(PCIDLIST_ABSOLUTE pidlFolder, UINT cidl,
                                           PCUITEMID_CHILD_ARRAY apidl, DWORD flags)
 {
-    FIXME("%p %u %p 0x%x: stub\n", pidlFolder, cidl, apidl, flags);
-    return E_NOTIMPL;
+    static const unsigned int magic = 0xe32ee32e;
+    unsigned int i, uint_flags, size, child_count = 0;
+    const ITEMIDLIST *pidl_parent, *pidl_child;
+    VARIANT var_parent, var_empty;
+    ITEMIDLIST *pidl_tmp = NULL;
+    SHELLEXECUTEINFOW sei = {0};
+    COPYDATASTRUCT cds = {0};
+    IDispatch *dispatch;
+    int timeout = 1000;
+    unsigned char *ptr;
+    IShellWindows *sw;
+    BOOL ret = FALSE;
+    HRESULT hr;
+    LONG hwnd;
+
+    TRACE("%p %u %p 0x%x\n", pidlFolder, cidl, apidl, flags);
+
+    if (!pidlFolder)
+        return E_INVALIDARG;
+
+    if (flags & OFASI_OPENDESKTOP)
+        FIXME("Ignoring unsupported OFASI_OPENDESKTOP flag.\n");
+
+    if (flags & OFASI_EDIT && cidl > 1)
+        flags &= ~OFASI_EDIT;
+
+    hr = CoCreateInstance(&CLSID_ShellWindows, NULL, CLSCTX_LOCAL_SERVER, &IID_IShellWindows,
+                          (void **)&sw);
+    if (FAILED(hr))
+        return hr;
+
+    if (!cidl)
+    {
+        pidl_tmp = ILClone(pidlFolder);
+        ILRemoveLastID(pidl_tmp);
+        pidl_parent = pidl_tmp;
+
+        pidl_child = ILFindLastID(pidlFolder);
+        apidl = &pidl_child;
+        cidl = 1;
+    }
+    else
+    {
+        pidl_parent = pidlFolder;
+    }
+
+    /* Find the existing explorer window for the parent path. Create a new one if not present. */
+    VariantInit(&var_empty);
+    VariantInit(&var_parent);
+    size = ILGetSize(pidl_parent);
+    V_VT(&var_parent) = VT_ARRAY | VT_UI1;
+    V_ARRAY(&var_parent) = SafeArrayCreateVector(VT_UI1, 0, size);
+    memcpy(V_ARRAY(&var_parent)->pvData, pidl_parent, size);
+    hr = IShellWindows_FindWindowSW(sw, &var_parent, &var_empty, SWC_EXPLORER, &hwnd, 0, &dispatch);
+    if (hr != S_OK)
+    {
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_IDLIST | SEE_MASK_NOASYNC | SEE_MASK_WAITFORINPUTIDLE;
+        sei.lpVerb = L"explore";
+        sei.lpIDList = (void *)pidl_parent;
+        sei.nShow = SW_NORMAL;
+        if (!ShellExecuteExW(&sei))
+        {
+            WARN("Failed to create a explorer window.\n");
+            goto done;
+        }
+
+        while (timeout > 0)
+        {
+            hr = IShellWindows_FindWindowSW(sw, &var_parent, &var_empty, SWC_EXPLORER, &hwnd, 0,
+                                            &dispatch);
+            if (hr == S_OK)
+                break;
+
+            timeout -= 100;
+            Sleep(100);
+        }
+
+        if (hr != S_OK)
+        {
+            WARN("Failed to find the explorer window.\n");
+            goto done;
+        }
+    }
+
+    /* Send WM_COPYDATA to tell explorer.exe to open windows */
+    size = sizeof(cidl) + sizeof(uint_flags);
+    for (i = 0; i < cidl; ++i)
+        size += ILGetSize(apidl[i]);
+
+    cds.dwData = magic;
+    cds.cbData = size;
+    cds.lpData = malloc(size);
+    if (!cds.lpData)
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    /* Add the count of child ITEMIDLIST, set its value at the end */
+    ptr = (unsigned char *)cds.lpData + sizeof(cidl);
+
+    /* Add flags. Have to use unsigned int because DWORD may have a different size */
+    uint_flags = flags;
+    memcpy(ptr, &uint_flags, sizeof(uint_flags));
+    ptr += sizeof(uint_flags);
+
+    /* Add child ITEMIDLIST */
+    for (i = 0; i < cidl; ++i)
+    {
+        if (apidl != &pidl_child)
+            pidl_child = ILFindChild(pidl_parent, apidl[i]);
+
+        if (pidl_child)
+        {
+            size = ILGetSize(pidl_child);
+            memcpy(ptr, pidl_child, size);
+            ptr += size;
+            ++child_count;
+        }
+    }
+
+    /* Set the count of child ITEMIDLIST */
+    memcpy(cds.lpData, &child_count, sizeof(child_count));
+
+    SetForegroundWindow(GetAncestor((HWND)(LONG_PTR)hwnd, GA_ROOT));
+    ret = SendMessageW((HWND)(LONG_PTR)hwnd, WM_COPYDATA, 0, (LPARAM)&cds);
+    hr = ret ? S_OK : E_FAIL;
+
+done:
+    free(cds.lpData);
+    VariantClear(&var_parent);
+    if (pidl_tmp)
+        ILFree(pidl_tmp);
+    IShellWindows_Release(sw);
+    return hr;
 }
 
 /***********************************************************************

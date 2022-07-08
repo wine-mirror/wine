@@ -659,6 +659,43 @@ static LRESULT explorer_on_notify(explorer_info* info,NMHDR* notification)
     return 0;
 }
 
+static BOOL handle_copydata(const explorer_info *info, const COPYDATASTRUCT *cds)
+{
+    static const unsigned int magic = 0xe32ee32e;
+    unsigned int i, flags, count;
+    const ITEMIDLIST *child;
+    unsigned char *ptr;
+    IShellView *sv;
+    SVSIF sv_flags;
+
+    TRACE("\n");
+
+    /* For SHOpenFolderAndSelectItems() */
+    if (cds->dwData != magic)
+        return FALSE;
+
+    ptr = cds->lpData;
+    memcpy(&count, ptr, sizeof(count));
+    ptr += sizeof(count);
+    memcpy(&flags, ptr, sizeof(flags));
+    ptr += sizeof(flags);
+
+    sv_flags = flags & OFASI_EDIT ? SVSI_EDIT : SVSI_SELECT;
+
+    IExplorerBrowser_GetCurrentView(info->browser, &IID_IShellView, (void **)&sv);
+    for (i = 0; i < count; ++i)
+    {
+        child = (const ITEMIDLIST *)ptr;
+        if (i == 0)
+            IShellView_SelectItem(sv, child, sv_flags | SVSI_ENSUREVISIBLE | SVSI_FOCUSED | SVSI_DESELECTOTHERS);
+        else
+            IShellView_SelectItem(sv, child, sv_flags);
+        ptr += ILGetSize(child);
+    }
+    IShellView_Release(sv);
+    return TRUE;
+}
+
 static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     explorer_info *info
@@ -710,6 +747,8 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     case WM_SIZE:
         update_window_size(info,HIWORD(lParam),LOWORD(lParam));
         break;
+    case WM_COPYDATA:
+        return handle_copydata(info, (const COPYDATASTRUCT *)lParam);
     default:
         return DefWindowProcW(hwnd,uMsg,wParam,lParam);
     }
