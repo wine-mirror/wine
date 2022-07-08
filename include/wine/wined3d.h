@@ -2320,6 +2320,13 @@ struct wined3d_private_data
 
 typedef HRESULT (CDECL *wined3d_device_reset_cb)(struct wined3d_resource *resource);
 
+struct wined3d_streaming_buffer
+{
+    struct wined3d_buffer *buffer;
+    unsigned int pos;
+    unsigned int bind_flags;
+};
+
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
 
@@ -2825,6 +2832,9 @@ HRESULT __cdecl wined3d_stateblock_set_vs_consts_f(struct wined3d_stateblock *st
 HRESULT __cdecl wined3d_stateblock_set_vs_consts_i(struct wined3d_stateblock *stateblock,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants);
 
+HRESULT __cdecl wined3d_streaming_buffer_upload(struct wined3d_device *device, struct wined3d_streaming_buffer *buffer,
+        const void *data, unsigned int size, unsigned int stride, unsigned int *pos);
+
 HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device,
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops,
@@ -2921,6 +2931,20 @@ ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaratio
 
 HRESULT __cdecl wined3d_extract_shader_input_signature_from_dxbc(struct wined3d_shader_signature *signature,
         const void *byte_code, SIZE_T byte_code_size);
+
+static inline void wined3d_streaming_buffer_init(struct wined3d_streaming_buffer *buffer, unsigned int bind_flags)
+{
+    memset(buffer, 0, sizeof(*buffer));
+    buffer->bind_flags = bind_flags;
+}
+
+static inline void wined3d_streaming_buffer_cleanup(struct wined3d_streaming_buffer *buffer)
+{
+    if (buffer->buffer)
+        wined3d_buffer_decref(buffer->buffer);
+    buffer->buffer = NULL;
+    buffer->pos = 0;
+}
 
 /* Return the integer base-2 logarithm of x. Undefined for x == 0. */
 static inline unsigned int wined3d_log2i(unsigned int x)

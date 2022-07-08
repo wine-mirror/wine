@@ -1647,3 +1647,81 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct 
 
     return device->adapter->adapter_ops->adapter_create_buffer(device, desc, data, parent, parent_ops, buffer);
 }
+
+static HRESULT wined3d_streaming_buffer_prepare(struct wined3d_device *device,
+        struct wined3d_streaming_buffer *buffer, unsigned int min_size)
+{
+    struct wined3d_buffer *wined3d_buffer;
+    struct wined3d_buffer_desc desc;
+    unsigned int old_size = 0;
+    unsigned int size;
+    HRESULT hr;
+
+    if (buffer->buffer)
+    {
+        old_size = buffer->buffer->resource.size;
+        if (old_size >= min_size)
+            return S_OK;
+    }
+
+    size = max(old_size * 2, min_size);
+    TRACE("Growing buffer to %u bytes.\n", size);
+
+    desc.byte_width = size;
+    desc.usage = WINED3DUSAGE_DYNAMIC;
+    desc.bind_flags = buffer->bind_flags;
+    desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_W;
+    desc.misc_flags = 0;
+    desc.structure_byte_stride = 0;
+
+    if (SUCCEEDED(hr = wined3d_buffer_create(device, &desc, NULL, NULL, &wined3d_null_parent_ops, &wined3d_buffer)))
+    {
+        if (buffer->buffer)
+            wined3d_buffer_decref(buffer->buffer);
+        buffer->buffer = wined3d_buffer;
+        buffer->pos = 0;
+    }
+    return hr;
+}
+
+HRESULT CDECL wined3d_streaming_buffer_upload(struct wined3d_device *device, struct wined3d_streaming_buffer *buffer,
+        const void *data, unsigned int size, unsigned int stride, unsigned int *ret_pos)
+{
+    unsigned int map_flags = WINED3D_MAP_WRITE;
+    struct wined3d_resource *resource;
+    struct wined3d_map_desc map_desc;
+    unsigned int pos, align;
+    struct wined3d_box box;
+    HRESULT hr;
+
+    TRACE("device %p, buffer %p, data %p, size %u, stride %u, ret_pos %p.\n",
+            device, buffer, data, size, stride, ret_pos);
+
+    if (FAILED(hr = wined3d_streaming_buffer_prepare(device, buffer, size)))
+        return hr;
+    resource = &buffer->buffer->resource;
+
+    pos = buffer->pos;
+    if ((align = pos % stride))
+        align = stride - align;
+    if (pos + size + align > resource->size)
+    {
+        pos = 0;
+        map_flags |= WINED3D_MAP_DISCARD;
+    }
+    else
+    {
+        pos += align;
+        map_flags |= WINED3D_MAP_NOOVERWRITE;
+    }
+
+    wined3d_box_set(&box, pos, 0, pos + size, 1, 0, 1);
+    if (SUCCEEDED(hr = wined3d_resource_map(resource, 0, &map_desc, &box, map_flags)))
+    {
+        memcpy(map_desc.data, data, size);
+        wined3d_resource_unmap(resource, 0);
+        *ret_pos = pos;
+        buffer->pos = pos + size;
+    }
+    return hr;
+}
