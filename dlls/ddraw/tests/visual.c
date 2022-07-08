@@ -19,6 +19,8 @@
 
 /* See comment in dlls/d3d9/tests/visual.c for general guidelines */
 
+#define WINE_NO_LONG_TYPES
+
 #include "wine/test.h"
 #include "ddraw.h"
 #include "d3d.h"
