@@ -849,6 +849,12 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
     return unix_funcs->pNtUserDestroyWindow( hwnd );
 }
 
+BOOL WINAPI NtUserDisableThreadIme( DWORD thread_id )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserDisableThreadIme( thread_id );
+}
+
 LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
 {
     if (!unix_funcs) return 0;

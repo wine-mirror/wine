@@ -119,22 +119,6 @@ static void dpiaware_init(void)
     }
 }
 
-static void CDECL notify_ime( HWND hwnd, UINT param )
-{
-    HWND ime_default = ImmGetDefaultIMEWnd( hwnd );
-    if (ime_default) SendMessageW( ime_default, WM_IME_INTERNAL, param, HandleToUlong(hwnd) );
-}
-
-static BOOL WINAPI register_imm( HWND hwnd )
-{
-    return imm_register_window( hwnd );
-}
-
-static void WINAPI unregister_imm( HWND hwnd )
-{
-    imm_unregister_window( hwnd );
-}
-
 static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
                              void (CALLBACK *finally_func)( BOOL ))
 {
@@ -152,11 +136,8 @@ static const struct user_callbacks user_funcs =
     ImmProcessKey,
     ImmTranslateMessage,
     NtWaitForMultipleObjects,
-    notify_ime,
     post_dde_message,
     unpack_dde_message,
-    register_imm,
-    unregister_imm,
     try_finally,
 };
 

@@ -47,9 +47,6 @@ struct wm_char_mapping_data
     MSG  get_msg;
 };
 
-extern BOOL (WINAPI *imm_register_window)(HWND) DECLSPEC_HIDDEN;
-extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
-
 static inline struct user_thread_info *get_user_thread_info(void)
 {
     return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;

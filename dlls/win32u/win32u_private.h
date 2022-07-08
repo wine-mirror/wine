@@ -214,6 +214,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserDestroyCursor)( HCURSOR cursor, ULONG arg );
     BOOL     (WINAPI *pNtUserDestroyMenu)( HMENU handle );
     BOOL     (WINAPI *pNtUserDestroyWindow)( HWND hwnd );
+    BOOL     (WINAPI *pNtUserDisableThreadIme)( DWORD thread_id );
     LRESULT  (WINAPI *pNtUserDispatchMessage)( const MSG *msg );
     BOOL     (WINAPI *pNtUserDragDetect)( HWND hwnd, int x, int y );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
@@ -393,8 +394,12 @@ extern LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL 
 extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 
 /* imm.c */
+extern void cleanup_imm_thread(void) DECLSPEC_HIDDEN;
+extern HWND get_default_ime_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HIMC get_default_input_context(void) DECLSPEC_HIDDEN;
 extern HIMC get_window_input_context( HWND hwnd ) DECLSPEC_HIDDEN;
+extern BOOL register_imm_window( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void unregister_imm_window( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* input.c */
 extern BOOL destroy_caret(void) DECLSPEC_HIDDEN;

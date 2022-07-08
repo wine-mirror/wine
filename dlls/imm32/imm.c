@@ -100,14 +100,6 @@ typedef struct _tagTRANSMSG {
     LPARAM lParam;
 } TRANSMSG, *LPTRANSMSG;
 
-typedef struct _tagIMMThreadData {
-    struct list entry;
-    DWORD threadID;
-    HWND hwndDefault;
-    BOOL disableIME;
-    DWORD windowRefs;
-} IMMThreadData;
-
 struct coinit_spy
 {
     IInitializeSpy IInitializeSpy_iface;
@@ -123,19 +115,8 @@ struct coinit_spy
 };
 
 static struct list ImmHklList = LIST_INIT(ImmHklList);
-static struct list ImmThreadDataList = LIST_INIT(ImmThreadDataList);
 
 static const WCHAR szImeRegFmt[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
-
-static CRITICAL_SECTION threaddata_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &threaddata_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": threaddata_cs") }
-};
-static CRITICAL_SECTION threaddata_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-static BOOL disable_ime;
 
 static inline BOOL is_himc_ime_unicode(const InputContextData *data)
 {
@@ -412,38 +393,6 @@ static void imm_coinit_thread(void)
         spy->apt_flags |= IMM_APT_CREATED;
 }
 
-static IMMThreadData *IMM_GetThreadData(HWND hwnd, DWORD thread)
-{
-    IMMThreadData *data;
-    DWORD process;
-
-    if (hwnd)
-    {
-        if (!(thread = GetWindowThreadProcessId(hwnd, &process))) return NULL;
-        if (process != GetCurrentProcessId()) return NULL;
-    }
-    else if (thread)
-    {
-        HANDLE h = OpenThread(THREAD_QUERY_INFORMATION, FALSE, thread);
-        if (!h) return NULL;
-        process = GetProcessIdOfThread(h);
-        CloseHandle(h);
-        if (process != GetCurrentProcessId()) return NULL;
-    }
-    else
-        thread = GetCurrentThreadId();
-
-    EnterCriticalSection(&threaddata_cs);
-    LIST_FOR_EACH_ENTRY(data, &ImmThreadDataList, IMMThreadData, entry)
-        if (data->threadID == thread) return data;
-
-    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
-    data->threadID = thread;
-    list_add_head(&ImmThreadDataList,&data->entry);
-    TRACE("Thread Data Created (%lx)\n",thread);
-    return data;
-}
-
 static BOOL IMM_IsDefaultContext(HIMC imc)
 {
     InputContextData *data = get_imc_data(imc);
@@ -490,21 +439,6 @@ static BOOL free_input_context_data(HIMC hIMC)
 static void IMM_FreeThreadData(void)
 {
     struct coinit_spy *spy;
-    IMMThreadData *data;
-
-    EnterCriticalSection(&threaddata_cs);
-    LIST_FOR_EACH_ENTRY(data, &ImmThreadDataList, IMMThreadData, entry)
-    {
-        if (data->threadID == GetCurrentThreadId())
-        {
-            list_remove(&data->entry);
-            LeaveCriticalSection(&threaddata_cs);
-            HeapFree(GetProcessHeap(),0,data);
-            TRACE("Thread Data Destroyed\n");
-            return;
-        }
-    }
-    LeaveCriticalSection(&threaddata_cs);
 
     free_input_context_data(NtUserGetThreadInfo()->default_imc);
     if ((spy = get_thread_coinit_spy()))
@@ -979,62 +913,6 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
         return IMM_DestroyContext(hIMC);
     else
         return FALSE;
-}
-
-static HWND imm_detach_default_window(IMMThreadData *thread_data)
-{
-    HWND to_destroy;
-
-    to_destroy = thread_data->hwndDefault;
-    thread_data->hwndDefault = NULL;
-    thread_data->windowRefs = 0;
-    return to_destroy;
-}
-
-/***********************************************************************
- *		ImmDisableIME (IMM32.@)
- */
-BOOL WINAPI ImmDisableIME(DWORD idThread)
-{
-    IMMThreadData *thread_data;
-    HWND to_destroy;
-
-    if (idThread == (DWORD)-1)
-    {
-        disable_ime = TRUE;
-
-        while (1)
-        {
-            to_destroy = 0;
-            EnterCriticalSection(&threaddata_cs);
-            LIST_FOR_EACH_ENTRY(thread_data, &ImmThreadDataList, IMMThreadData, entry)
-            {
-                if (thread_data->hwndDefault)
-                {
-                    to_destroy = imm_detach_default_window(thread_data);
-                    break;
-                }
-            }
-            LeaveCriticalSection(&threaddata_cs);
-
-            if (!to_destroy)
-                break;
-            DestroyWindow(to_destroy);
-        }
-    }
-    else if (!idThread || idThread == GetCurrentThreadId())
-    {
-        thread_data = IMM_GetThreadData(NULL, idThread);
-        if (!thread_data) return FALSE;
-        thread_data->disableIME = TRUE;
-        to_destroy = imm_detach_default_window(thread_data);
-        LeaveCriticalSection(&threaddata_cs);
-
-        if (to_destroy)
-            DestroyWindow(to_destroy);
-    }
-    else return FALSE;
-    return TRUE;
 }
 
 /***********************************************************************
@@ -1816,107 +1694,12 @@ BOOL WINAPI ImmGetConversionStatus(
     return TRUE;
 }
 
-static BOOL needs_ime_window(HWND hwnd)
-{
-    WCHAR classW[8];
-
-    if (GetClassNameW(hwnd, classW, ARRAY_SIZE(classW)) && !lstrcmpW(classW, L"IME"))
-        return FALSE;
-    if (GetClassLongPtrW(hwnd, GCL_STYLE) & CS_IME) return FALSE;
-
-    return TRUE;
-}
-
-/***********************************************************************
- *		__wine_register_window (IMM32.@)
- */
-BOOL WINAPI __wine_register_window(HWND hwnd)
-{
-    HWND new = NULL;
-    IMMThreadData *thread_data;
-    TRACE("(%p)\n", hwnd);
-
-    if (!needs_ime_window(hwnd))
-        return FALSE;
-
-    thread_data = IMM_GetThreadData(hwnd, 0);
-    if (!thread_data)
-        return FALSE;
-
-    if (thread_data->disableIME || disable_ime)
-    {
-        TRACE("IME for this thread is disabled\n");
-        LeaveCriticalSection(&threaddata_cs);
-        return FALSE;
-    }
-    thread_data->windowRefs++;
-    TRACE("windowRefs=%lu, hwndDefault=%p\n",
-          thread_data->windowRefs, thread_data->hwndDefault);
-
-    /* Create default IME window */
-    if (thread_data->windowRefs == 1)
-    {
-        /* Do not create the window inside of a critical section */
-        LeaveCriticalSection(&threaddata_cs);
-        new = CreateWindowExW( 0, L"IME", L"Default IME",
-                               WS_POPUP | WS_DISABLED | WS_CLIPSIBLINGS,
-                               0, 0, 1, 1, 0, 0, 0, 0);
-        /* thread_data is in the current thread so we can assume it's still valid */
-        EnterCriticalSection(&threaddata_cs);
-        /* See if anyone beat us */
-        if (thread_data->hwndDefault == NULL)
-        {
-            thread_data->hwndDefault = new;
-            new = NULL;
-            TRACE("Default is %p\n", thread_data->hwndDefault);
-        }
-    }
-
-    LeaveCriticalSection(&threaddata_cs);
-
-    /* Clean up an unused new window outside of the critical section */
-    if (new != NULL)
-        DestroyWindow(new);
-    return TRUE;
-}
-
-/***********************************************************************
- *		__wine_unregister_window (IMM32.@)
- */
-void WINAPI __wine_unregister_window(HWND hwnd)
-{
-    HWND to_destroy = 0;
-    IMMThreadData *thread_data;
-    TRACE("(%p)\n", hwnd);
-
-    thread_data = IMM_GetThreadData(hwnd, 0);
-    if (!thread_data) return;
-
-    thread_data->windowRefs--;
-    TRACE("windowRefs=%lu, hwndDefault=%p\n",
-          thread_data->windowRefs, thread_data->hwndDefault);
-
-    /* Destroy default IME window */
-    if (thread_data->windowRefs == 0)
-        to_destroy = imm_detach_default_window(thread_data);
-    LeaveCriticalSection(&threaddata_cs);
-
-    if (to_destroy) DestroyWindow( to_destroy );
-}
-
 /***********************************************************************
  *		ImmGetDefaultIMEWnd (IMM32.@)
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
-    HWND ret;
-    IMMThreadData* thread_data = IMM_GetThreadData(hWnd, 0);
-    if (!thread_data)
-        return NULL;
-    ret = thread_data->hwndDefault;
-    LeaveCriticalSection(&threaddata_cs);
-    TRACE("Default is %p\n",ret);
-    return ret;
+    return NtUserGetDefaultImeWindow(hWnd);
 }
 
 /***********************************************************************

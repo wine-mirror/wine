@@ -1551,7 +1551,7 @@ HWND get_focus(void)
  */
 static HWND set_focus_window( HWND hwnd )
 {
-    HWND previous = 0;
+    HWND previous = 0, ime_hwnd;
     BOOL ret;
 
     SERVER_START_REQ( set_focus_window )
@@ -1568,7 +1568,10 @@ static HWND set_focus_window( HWND hwnd )
     {
         send_message( previous, WM_KILLFOCUS, (WPARAM)hwnd, 0 );
 
-        if (user_callbacks) user_callbacks->notify_ime( previous, IME_INTERNAL_DEACTIVATE );
+        ime_hwnd = get_default_ime_window( previous );
+        if (ime_hwnd)
+            send_message( ime_hwnd, WM_IME_INTERNAL, IME_INTERNAL_DEACTIVATE,
+                          HandleToUlong(previous) );
 
         if (hwnd != get_focus()) return previous;  /* changed by the message */
     }
@@ -1576,7 +1579,10 @@ static HWND set_focus_window( HWND hwnd )
     {
         user_driver->pSetFocus(hwnd);
 
-        if (user_callbacks) user_callbacks->notify_ime( hwnd, IME_INTERNAL_ACTIVATE );
+        ime_hwnd = get_default_ime_window( hwnd );
+        if (ime_hwnd)
+            send_message( ime_hwnd, WM_IME_INTERNAL, IME_INTERNAL_ACTIVATE,
+                          HandleToUlong(hwnd) );
 
         if (previous)
             NtUserNotifyWinEvent( EVENT_OBJECT_FOCUS, hwnd, OBJID_CLIENT, 0 );

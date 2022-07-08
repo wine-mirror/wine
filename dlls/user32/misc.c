@@ -39,8 +39,6 @@ BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
 #define IMM_INIT_MAGIC 0x19650412
 static LRESULT (WINAPI *imm_ime_wnd_proc)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi);
-BOOL (WINAPI *imm_register_window)(HWND) = NULL;
-void (WINAPI *imm_unregister_window)(HWND) = NULL;
 
 /* USER signal proc flags and codes */
 /* See UserSignalProc for comments */
@@ -328,8 +326,6 @@ BOOL WINAPI User32InitializeImmEntryTable(DWORD magic)
 
     /* this part is not compatible with native imm32.dll */
     imm_ime_wnd_proc = (void*)GetProcAddress(imm32, "__wine_ime_wnd_proc");
-    imm_register_window = (void*)GetProcAddress(imm32, "__wine_register_window");
-    imm_unregister_window = (void*)GetProcAddress(imm32, "__wine_unregister_window");
     if (!imm_ime_wnd_proc)
         FIXME("native imm32.dll not supported\n");
     return TRUE;

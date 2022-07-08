@@ -1007,6 +1007,18 @@ WORD get_class_word( HWND hwnd, INT offset )
     return retvalue;
 }
 
+BOOL needs_ime_window( HWND hwnd )
+{
+    static const WCHAR imeW[] = {'I','M','E',0};
+    CLASS *class;
+    BOOL ret;
+
+    if (!(class = get_class_ptr( hwnd, FALSE ))) return FALSE;
+    ret = !(class->style & CS_IME) && wcscmp( imeW, class->name );
+    release_class_ptr( class );
+    return ret;
+}
+
 static void register_builtins(void)
 {
     void *ret_ptr;

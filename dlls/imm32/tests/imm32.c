@@ -2426,11 +2426,9 @@ static void test_ImmDisableIME(void)
 
     ok(IsWindow(def), "not a window\n");
     def2 = ImmGetDefaultIMEWnd(hwnd);
-    todo_wine
     ok(def2 == def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def2);
     ok(IsWindow(def), "not a window\n");
     msg_spy_pump_msg_queue();
-    todo_wine
     ok(!IsWindow(def), "window is still valid\n");
     def = ImmGetDefaultIMEWnd(hwnd);
     ok(!def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def);

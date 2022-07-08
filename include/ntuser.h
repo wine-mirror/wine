@@ -599,6 +599,7 @@ BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
 BOOL    WINAPI NtUserDestroyInputContext( HIMC handle );
 BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
 BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
+BOOL    WINAPI NtUserDisableThreadIme( DWORD thread_id );
 LRESULT WINAPI NtUserDispatchMessage( const MSG *msg );
 BOOL    WINAPI NtUserDragDetect( HWND hwnd, int x, int y );
 BOOL    WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
@@ -1055,6 +1056,7 @@ enum
 {
     NtUserCallHwnd_ArrangeIconicWindows,
     NtUserCallHwnd_DrawMenuBar,
+    NtUserCallHwnd_GetDefaultImeWindow,
     NtUserCallHwnd_GetDpiForWindow,
     NtUserCallHwnd_GetParent,
     NtUserCallHwnd_GetWindowContextHelpId,
@@ -1081,6 +1083,11 @@ static inline BOOL NtUserDrawMenuBar( HWND hwnd )
 static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowContextHelpId );
+}
+
+static inline HWND NtUserGetDefaultImeWindow( HWND hwnd )
+{
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetDefaultImeWindow ));
 }
 
 static inline UINT NtUserGetDpiForWindow( HWND hwnd )
