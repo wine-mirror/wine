@@ -81,6 +81,35 @@ static void WINAPIV error_code_messagebox(HWND hwnd, unsigned int msg_id, ...)
     va_end(ap);
 }
 
+static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    HWND hwndValue;
+    unsigned int len;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, editValueName);
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, stringValueData);
+        return TRUE;
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDOK:
+            hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA);
+            len = GetWindowTextLengthW(hwndValue);
+            stringValueData = realloc(stringValueData, (len + 1) * sizeof(WCHAR));
+            if (!GetWindowTextW(hwndValue, stringValueData, len + 1))
+                *stringValueData = 0;
+            /* fall through */
+        case IDCANCEL:
+            EndDialog(hwndDlg, wparam);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
 {
     WCHAR buf[128];
@@ -268,7 +297,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, &len))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
-        if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
+        if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_STRING), hwnd, modify_string_dlgproc) == IDOK) {
             lRet = RegSetValueExW(hKey, valueName, 0, type, (LPBYTE)stringValueData, (lstrlenW(stringValueData) + 1) * sizeof(WCHAR));
             if (lRet == ERROR_SUCCESS) result = TRUE;
             else error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);
