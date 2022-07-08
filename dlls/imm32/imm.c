@@ -103,7 +103,6 @@ typedef struct _tagTRANSMSG {
 typedef struct _tagIMMThreadData {
     struct list entry;
     DWORD threadID;
-    HIMC defaultContext;
     HWND hwndDefault;
     BOOL disableIME;
     DWORD windowRefs;
@@ -126,7 +125,6 @@ struct coinit_spy
 static struct list ImmHklList = LIST_INIT(ImmHklList);
 static struct list ImmThreadDataList = LIST_INIT(ImmThreadDataList);
 
-static const WCHAR szwWineIMCProperty[] = L"WineImmHIMCProperty";
 static const WCHAR szImeRegFmt[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
 
 static CRITICAL_SECTION threaddata_cs;
@@ -456,6 +454,39 @@ static BOOL IMM_IsDefaultContext(HIMC imc)
     return data->threadDefault;
 }
 
+static InputContextData *query_imc_data(HIMC handle)
+{
+    InputContextData *ret;
+
+    if (!handle) return NULL;
+    ret = (void *)NtUserQueryInputContext(handle, NtUserInputContextClientPtr);
+    return ret && ret->handle == handle ? ret : NULL;
+}
+
+static BOOL free_input_context_data(HIMC hIMC)
+{
+    InputContextData *data = query_imc_data(hIMC);
+
+    if (!data)
+        return FALSE;
+
+    TRACE("Destroying %p\n", hIMC);
+
+    data->immKbd->uSelected--;
+    data->immKbd->pImeSelect(hIMC, FALSE);
+    SendMessageW(data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->immKbd);
+
+    ImmDestroyIMCC(data->IMC.hCompStr);
+    ImmDestroyIMCC(data->IMC.hCandInfo);
+    ImmDestroyIMCC(data->IMC.hGuideLine);
+    ImmDestroyIMCC(data->IMC.hPrivate);
+    ImmDestroyIMCC(data->IMC.hMsgBuf);
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return TRUE;
+}
+
 static void IMM_FreeThreadData(void)
 {
     struct coinit_spy *spy;
@@ -468,7 +499,6 @@ static void IMM_FreeThreadData(void)
         {
             list_remove(&data->entry);
             LeaveCriticalSection(&threaddata_cs);
-            IMM_DestroyContext(data->defaultContext);
             HeapFree(GetProcessHeap(),0,data);
             TRACE("Thread Data Destroyed\n");
             return;
@@ -476,6 +506,7 @@ static void IMM_FreeThreadData(void)
     }
     LeaveCriticalSection(&threaddata_cs);
 
+    free_input_context_data(NtUserGetThreadInfo()->default_imc);
     if ((spy = get_thread_coinit_spy()))
         IInitializeSpy_Release(&spy->IInitializeSpy_iface);
 }
@@ -664,56 +695,6 @@ static HIMCC ImmCreateBlankCompStr(void)
     return rc;
 }
 
-static InputContextData *get_imc_data(HIMC handle)
-{
-    InputContextData *ret;
-
-    if (!handle) return NULL;
-    ret = (void *)NtUserQueryInputContext( handle, NtUserInputContextClientPtr );
-    return ret && ret->handle == handle ? ret : NULL;
-}
-
-static HIMC get_default_context( HWND hwnd )
-{
-    HIMC ret;
-    IMMThreadData* thread_data = IMM_GetThreadData( hwnd, 0 );
-
-    if (!thread_data) return 0;
-
-    if (thread_data->defaultContext)
-    {
-        ret = thread_data->defaultContext;
-        LeaveCriticalSection(&threaddata_cs);
-        return ret;
-    }
-
-    /* can't create a default context in another thread */
-    if (thread_data->threadID != GetCurrentThreadId())
-    {
-        LeaveCriticalSection(&threaddata_cs);
-        return 0;
-    }
-
-    LeaveCriticalSection(&threaddata_cs);
-
-    ret = ImmCreateContext();
-    if (!ret) return 0;
-    get_imc_data(ret)->threadDefault = TRUE;
-
-    /* thread_data is in the current thread so we can assume it's still valid */
-    EnterCriticalSection(&threaddata_cs);
-
-    if (thread_data->defaultContext) /* someone beat us */
-    {
-        IMM_DestroyContext( ret );
-        ret = thread_data->defaultContext;
-    }
-    else thread_data->defaultContext = ret;
-
-    LeaveCriticalSection(&threaddata_cs);
-    return ret;
-}
-
 static BOOL IMM_IsCrossThreadAccess(HWND hWnd,  HIMC hIMC)
 {
     InputContextData *data;
@@ -764,44 +745,21 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
 /***********************************************************************
  *		ImmAssociateContext (IMM32.@)
  */
-HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
+HIMC WINAPI ImmAssociateContext(HWND hwnd, HIMC imc)
 {
-    InputContextData *data = get_imc_data(hIMC);
-    HIMC defaultContext;
     HIMC old;
+    UINT ret;
 
-    TRACE("(%p, %p):\n", hWnd, hIMC);
+    TRACE("(%p, %p):\n", hwnd, imc);
 
-    if (!IsWindow(hWnd) || (hIMC && !data))
-        return NULL;
-
-    if (hIMC && IMM_IsCrossThreadAccess(hWnd, hIMC))
-        return NULL;
-
-    old = GetPropW(hWnd, szwWineIMCProperty);
-    defaultContext = get_default_context( hWnd );
-    if (!old)
-        old = defaultContext;
-    else if (old == (HIMC)-1)
-        old = NULL;
-
-    /* If already associated just return */
-    if (old == hIMC)
-        return hIMC;
-
-    if (!hIMC) /* Meaning disable imm for that window*/
-        SetPropW(hWnd, szwWineIMCProperty, (HANDLE)-1);
-    else if (hIMC == defaultContext)
-        RemovePropW(hWnd, szwWineIMCProperty);
-    else
-        SetPropW(hWnd, szwWineIMCProperty, hIMC);
-
-    if (GetFocus() == hWnd)
+    old = NtUserGetWindowInputContext(hwnd);
+    ret = NtUserAssociateInputContext(hwnd, imc, 0);
+    if (ret == AICR_FOCUS_CHANGED)
     {
-        ImmSetActiveContext(hWnd, old, FALSE);
-        ImmSetActiveContext(hWnd, hIMC, TRUE);
+        ImmSetActiveContext(hwnd, old, FALSE);
+        ImmSetActiveContext(hwnd, imc, TRUE);
     }
-    return old;
+    return ret == AICR_FAILED ? 0 : old;
 }
 
 
@@ -818,36 +776,30 @@ static BOOL CALLBACK _ImmAssociateContextExEnumProc(HWND hwnd, LPARAM lParam)
 /***********************************************************************
  *              ImmAssociateContextEx (IMM32.@)
  */
-BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
+BOOL WINAPI ImmAssociateContextEx(HWND hwnd, HIMC imc, DWORD flags)
 {
-    TRACE("(%p, %p, 0x%lx):\n", hWnd, hIMC, dwFlags);
+    HIMC old;
+    UINT ret;
 
-    if (!hWnd)
+    TRACE("(%p, %p, 0x%lx):\n", hwnd, imc, flags);
+
+    if (!hwnd)
         return FALSE;
 
-    switch (dwFlags)
+    if (flags == IACE_CHILDREN)
     {
-    case 0:
-        ImmAssociateContext(hWnd,hIMC);
-        return TRUE;
-    case IACE_DEFAULT:
-    {
-        HIMC defaultContext = get_default_context( hWnd );
-        if (!defaultContext) return FALSE;
-        ImmAssociateContext(hWnd,defaultContext);
+        EnumChildWindows(hwnd, _ImmAssociateContextExEnumProc, (LPARAM)imc);
         return TRUE;
     }
-    case IACE_IGNORENOCONTEXT:
-        if (GetPropW(hWnd,szwWineIMCProperty))
-            ImmAssociateContext(hWnd,hIMC);
-        return TRUE;
-    case IACE_CHILDREN:
-        EnumChildWindows(hWnd,_ImmAssociateContextExEnumProc,(LPARAM)hIMC);
-        return TRUE;
-    default:
-        FIXME("Unknown dwFlags 0x%lx\n",dwFlags);
-        return FALSE;
+
+    old = NtUserGetWindowInputContext(hwnd);
+    ret = NtUserAssociateInputContext(hwnd, imc, flags);
+    if (ret == AICR_FOCUS_CHANGED)
+    {
+        ImmSetActiveContext(hwnd, old, FALSE);
+        ImmSetActiveContext(hwnd, imc, TRUE);
     }
+    return ret != AICR_FAILED;
 }
 
 /***********************************************************************
@@ -920,24 +872,14 @@ BOOL WINAPI ImmConfigureIMEW(
         return FALSE;
 }
 
-/***********************************************************************
- *		ImmCreateContext (IMM32.@)
- */
-HIMC WINAPI ImmCreateContext(void)
+static InputContextData *alloc_input_context_data(void)
 {
     InputContextData *new_context;
     LPGUIDELINE gl;
     LPCANDIDATEINFO ci;
-    HIMC handle;
     int i;
 
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
-
-    if (!(handle = NtUserCreateInputContext((UINT_PTR)new_context)))
-    {
-        HeapFree(GetProcessHeap(),0,new_context);
-        return 0;
-    }
 
     /* Load the IME */
     new_context->immKbd = IMM_GetImmHkl(GetKeyboardLayout(0));
@@ -945,7 +887,6 @@ HIMC WINAPI ImmCreateContext(void)
     if (!new_context->immKbd->hIME)
     {
         TRACE("IME dll could not be loaded\n");
-        NtUserDestroyInputContext(handle);
         HeapFree(GetProcessHeap(),0,new_context);
         return 0;
     }
@@ -973,10 +914,43 @@ HIMC WINAPI ImmCreateContext(void)
     new_context->IMC.fdwConversion = new_context->immKbd->imeInfo.fdwConversionCaps;
     new_context->IMC.fdwSentence = new_context->immKbd->imeInfo.fdwSentenceCaps;
 
-    if (!new_context->immKbd->pImeSelect(handle, TRUE))
+    return new_context;
+}
+
+static InputContextData* get_imc_data(HIMC handle)
+{
+    InputContextData *ret;
+
+    if ((ret = query_imc_data(handle)) || !handle) return ret;
+    if (!(ret = alloc_input_context_data())) return NULL;
+    ret->threadID = NtUserQueryInputContext(handle, NtUserInputContextThreadId);
+    ret->handle = handle;
+    ret->threadDefault = TRUE;
+    if (!NtUserUpdateInputContext(handle, NtUserInputContextClientPtr, (UINT_PTR)ret))
+    {
+        free_input_context_data(ret);
+        return NULL;
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		ImmCreateContext (IMM32.@)
+ */
+HIMC WINAPI ImmCreateContext(void)
+{
+    InputContextData *new_context;
+
+    if (!(new_context = alloc_input_context_data())) return 0;
+    if (!(new_context->handle = NtUserCreateInputContext((UINT_PTR)new_context)))
+    {
+        free_input_context_data(new_context);
+        return 0;
+    }
+
+    if (!new_context->immKbd->pImeSelect(new_context->handle, TRUE))
     {
         TRACE("Selection of IME failed\n");
-        NtUserDestroyInputContext(handle);
         IMM_DestroyContext(new_context);
         return 0;
     }
@@ -986,31 +960,13 @@ HIMC WINAPI ImmCreateContext(void)
     new_context->immKbd->uSelected++;
     TRACE("Created context %p\n",new_context);
 
-    return new_context->handle = handle;
+    return new_context->handle;
 }
 
 static BOOL IMM_DestroyContext(HIMC hIMC)
 {
-    InputContextData *data = get_imc_data(hIMC);
-
-    TRACE("Destroying %p\n",hIMC);
-
-    if (!data)
-        return FALSE;
-
-    data->immKbd->uSelected --;
-    data->immKbd->pImeSelect(hIMC, FALSE);
-    SendMessageW(data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->immKbd);
-
-    ImmDestroyIMCC(data->IMC.hCompStr);
-    ImmDestroyIMCC(data->IMC.hCandInfo);
-    ImmDestroyIMCC(data->IMC.hGuideLine);
-    ImmDestroyIMCC(data->IMC.hPrivate);
-    ImmDestroyIMCC(data->IMC.hMsgBuf);
-
-    NtUserDestroyInputContext(data->handle);
-    HeapFree(GetProcessHeap(),0,data);
-
+    if (!free_input_context_data(hIMC)) return FALSE;
+    NtUserDestroyInputContext(hIMC);
     return TRUE;
 }
 
@@ -1748,17 +1704,7 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
 
     TRACE("%p\n", hWnd);
 
-    if (!IsWindow(hWnd))
-    {
-        SetLastError(ERROR_INVALID_WINDOW_HANDLE);
-        return NULL;
-    }
-
-    rc = GetPropW(hWnd,szwWineIMCProperty);
-    if (rc == (HIMC)-1)
-        rc = NULL;
-    else if (rc == NULL)
-        rc = get_default_context( hWnd );
+    rc = NtUserGetWindowInputContext(hWnd);
 
     if (rc)
     {

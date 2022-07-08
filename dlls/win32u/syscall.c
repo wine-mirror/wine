@@ -101,6 +101,7 @@ static void * const syscalls[] =
     NtGdiSwapBuffers,
     NtGdiTransformPoints,
     NtUserAddClipboardFormatListener,
+    NtUserAssociateInputContext,
     NtUserAttachThreadInput,
     NtUserBuildHwndList,
     NtUserCallMsgFilter,

@@ -63,6 +63,7 @@ struct ntuser_thread_info
     ULONG_PTR  message_extra;     /* value for GetMessageExtraInfo */
     HWND       top_window;        /* desktop window */
     HWND       msg_window;        /* HWND_MESSAGE parent window */
+    HIMC       default_imc;       /* default input context */
     void      *client_imm;        /* client IMM thread info */
 };
 
@@ -368,6 +369,14 @@ enum input_context_attr
     NtUserInputContextThreadId,
 };
 
+/* NtUserAssociateInputContext result */
+enum associate_input_context_result
+{
+    AICR_OK,
+    AICR_FOCUS_CHANGED,
+    AICR_FAILED,
+};
+
 /* internal messages codes */
 enum wine_internal_message
 {
@@ -546,6 +555,7 @@ struct packed_MDICREATESTRUCTW
 
 HKL     WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags );
 BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
+UINT    WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 HDC     WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps );
 NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
@@ -1049,6 +1059,7 @@ enum
     NtUserCallHwnd_GetParent,
     NtUserCallHwnd_GetWindowContextHelpId,
     NtUserCallHwnd_GetWindowDpiAwarenessContext,
+    NtUserCallHwnd_GetWindowInputContext,
     NtUserCallHwnd_GetWindowTextLength,
     NtUserCallHwnd_IsWindow,
     NtUserCallHwnd_IsWindowEnabled,
@@ -1086,6 +1097,11 @@ static inline DPI_AWARENESS_CONTEXT NtUserGetWindowDpiAwarenessContext( HWND hwn
 {
     return (DPI_AWARENESS_CONTEXT)NtUserCallHwnd( hwnd,
                                                   NtUserCallHwnd_GetWindowDpiAwarenessContext );
+}
+
+static inline HIMC NtUserGetWindowInputContext( HWND hwnd )
+{
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowInputContext ));
 }
 
 static inline INT NtUserGetWindowTextLength( HWND hwnd )

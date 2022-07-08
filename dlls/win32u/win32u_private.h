@@ -392,6 +392,10 @@ extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM l
 extern LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode ) DECLSPEC_HIDDEN;
 extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 
+/* imm.c */
+extern HIMC get_default_input_context(void) DECLSPEC_HIDDEN;
+extern HIMC get_window_input_context( HWND hwnd ) DECLSPEC_HIDDEN;
+
 /* input.c */
 extern BOOL destroy_caret(void) DECLSPEC_HIDDEN;
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;

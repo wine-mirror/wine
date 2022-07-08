@@ -4818,6 +4818,7 @@ static void thread_detach(void)
     free( thread_info->rawinput );
 
     destroy_thread_windows();
+    NtUserDestroyInputContext( thread_info->client_info.default_imc );
     NtClose( thread_info->server_queue );
 
     exiting_thread_id = 0;

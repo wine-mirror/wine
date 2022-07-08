@@ -146,3 +146,72 @@ UINT_PTR WINAPI NtUserQueryInputContext( HIMC handle, UINT attr )
     release_imc_ptr( imc );
     return ret;
 }
+
+/******************************************************************************
+ *           NtUserAssociateInputContext   (win32u.@)
+ */
+UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
+{
+    WND *win;
+    UINT ret = AICR_OK;
+
+    TRACE( "%p %p %x\n", hwnd, ctx, flags );
+
+    switch (flags)
+    {
+    case 0:
+    case IACE_IGNORENOCONTEXT:
+    case IACE_DEFAULT:
+        break;
+
+    default:
+        FIXME( "unknown flags 0x%x\n", flags );
+        return AICR_FAILED;
+    }
+
+    if (flags == IACE_DEFAULT)
+    {
+        if (!(ctx = get_default_input_context())) return AICR_FAILED;
+    }
+    else if (ctx)
+    {
+        if (NtUserQueryInputContext( ctx, NtUserInputContextThreadId ) != GetCurrentThreadId())
+            return AICR_FAILED;
+    }
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+        return AICR_FAILED;
+
+    if (ctx && win->tid != GetCurrentThreadId()) ret = AICR_FAILED;
+    else if (flags != IACE_IGNORENOCONTEXT || win->imc)
+    {
+        if (win->imc != ctx && get_focus() == hwnd) ret = AICR_FOCUS_CHANGED;
+        win->imc = ctx;
+    }
+
+    release_win_ptr( win );
+    return ret;
+}
+
+HIMC get_default_input_context(void)
+{
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    if (!thread_info->default_imc) thread_info->default_imc = NtUserCreateInputContext( 0 );
+    return thread_info->default_imc;
+}
+
+HIMC get_window_input_context( HWND hwnd )
+{
+    WND *win;
+    HIMC ret;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    ret = win->imc;
+    release_win_ptr( win );
+    return ret;
+}

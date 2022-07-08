@@ -111,6 +111,15 @@ NTSTATUS WINAPI wow64_NtUserAddClipboardFormatListener( UINT *args )
     return NtUserAddClipboardFormatListener( hwnd );
 }
 
+NTSTATUS WINAPI wow64_NtUserAssociateInputContext( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HIMC ctx = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+
+    return NtUserAssociateInputContext( hwnd, ctx, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
 {
     DWORD from = get_ulong( &args );

@@ -5163,6 +5163,8 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if (win->dwStyle & WS_SYSMENU) NtUserSetSystemMenu( hwnd, 0 );
 
+    win->imc = get_default_input_context();
+
     /* call the WH_CBT hook */
 
     release_win_ptr( win );
@@ -5386,6 +5388,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 
     case NtUserCallHwnd_GetWindowDpiAwarenessContext:
         return (ULONG_PTR)get_window_dpi_awareness_context( hwnd );
+
+    case NtUserCallHwnd_GetWindowInputContext:
+        return HandleToUlong( get_window_input_context( hwnd ));
 
     case NtUserCallHwnd_GetWindowTextLength:
         return get_server_window_text( hwnd, NULL, 0 );
