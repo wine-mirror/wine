@@ -25667,7 +25667,7 @@ static void test_sysmem_draw(void)
         0xff443322,
         0xff443322,
     };
-    static const short indices[] = {0, 1, 2, 3};
+    static const short indices[] = {5, 6, 7, 8, 0, 1, 2, 3};
 
     window = create_window();
     ok(!!window, "Failed to create a window.\n");
@@ -25745,7 +25745,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 0, 2);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 4, 2);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -25783,7 +25783,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 0, 2);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 4, 2);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -25796,7 +25796,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 4, 0, 5, 0, 2);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 4, 0, 5, 4, 2);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -25825,7 +25825,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 0, 2);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 4, 2);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -25843,7 +25843,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 0, 2);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 4, 2);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
