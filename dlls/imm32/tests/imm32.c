@@ -2377,7 +2377,6 @@ static DWORD WINAPI check_not_disabled_ime_thread(void *arg)
     hwnd = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
     ok(hwnd != NULL, "CreateWindow failed\n");
     def = ImmGetDefaultIMEWnd(hwnd);
-    todo_wine
     ok(def != NULL, "ImmGetDefaultIMEWnd returned %p\n", def);
     return 0;
 }
@@ -2403,7 +2402,6 @@ static void test_ImmDisableIME(void)
     thread = CreateThread(NULL, 0, check_not_disabled_ime_thread, event, 0, &tid);
     ok(thread != NULL, "CreateThread failed\n");
     r = ImmDisableIME(tid);
-    todo_wine
     ok(!r, "ImmDisableIME(tid) succeeded\n");
     SetEvent(event);
     WaitForSingleObject(thread, INFINITE);

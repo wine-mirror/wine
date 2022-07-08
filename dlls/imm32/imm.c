@@ -1022,7 +1022,7 @@ BOOL WINAPI ImmDisableIME(DWORD idThread)
             DestroyWindow(to_destroy);
         }
     }
-    else
+    else if (!idThread || idThread == GetCurrentThreadId())
     {
         thread_data = IMM_GetThreadData(NULL, idThread);
         if (!thread_data) return FALSE;
@@ -1033,6 +1033,7 @@ BOOL WINAPI ImmDisableIME(DWORD idThread)
         if (to_destroy)
             DestroyWindow(to_destroy);
     }
+    else return FALSE;
     return TRUE;
 }
 
