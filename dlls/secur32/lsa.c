@@ -620,6 +620,31 @@ static SECURITY_STATUS nego_info_WtoA( const SecPkgContext_NegotiationInfoW *inf
     return SEC_E_OK;
 }
 
+static SECURITY_STATUS key_info_WtoA( const SecPkgContext_KeyInfoW *infoW, SecPkgContext_KeyInfoA *infoA )
+{
+    int size;
+
+    size = WideCharToMultiByte( CP_ACP, 0, infoW->sSignatureAlgorithmName, -1, NULL, 0, NULL, NULL );
+    if (!(infoA->sSignatureAlgorithmName = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        return SEC_E_INSUFFICIENT_MEMORY;
+    WideCharToMultiByte( CP_ACP, 0, infoW->sSignatureAlgorithmName, -1, infoA->sSignatureAlgorithmName,
+                         size, NULL, NULL );
+
+    size = WideCharToMultiByte( CP_ACP, 0, infoW->sEncryptAlgorithmName, -1, NULL, 0, NULL, NULL );
+    if (!(infoA->sEncryptAlgorithmName = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, infoA->sSignatureAlgorithmName );
+        return SEC_E_INSUFFICIENT_MEMORY;
+    }
+    WideCharToMultiByte( CP_ACP, 0, infoW->sEncryptAlgorithmName, -1, infoA->sEncryptAlgorithmName,
+                         size, NULL, NULL );
+
+    infoA->KeySize = infoW->KeySize;
+    infoA->SignatureAlgorithm = infoW->SignatureAlgorithm;
+    infoA->EncryptAlgorithm = infoW->EncryptAlgorithm;
+    return SEC_E_OK;
+}
+
 static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, ULONG attribute, void *buffer)
 {
     TRACE("%p %ld %p\n", context, attribute, buffer);
@@ -642,12 +667,24 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, U
         FreeContextBuffer( infoW.PackageInfo );
         return status;
     }
+    case SECPKG_ATTR_KEY_INFO:
+    {
+        SecPkgContext_KeyInfoW infoW;
+        SecPkgContext_KeyInfoA *infoA = (SecPkgContext_KeyInfoA *)buffer;
+
+        SECURITY_STATUS status = lsa_QueryContextAttributesW( context, SECPKG_ATTR_KEY_INFO, &infoW );
+
+        if (status != SEC_E_OK) return status;
+        status = key_info_WtoA( &infoW, infoA );
+        FreeContextBuffer( infoW.sSignatureAlgorithmName );
+        FreeContextBuffer( infoW.sEncryptAlgorithmName );
+        return status;
+    }
 
 #define X(x) case (x) : FIXME(#x" stub\n"); break
     X(SECPKG_ATTR_ACCESS_TOKEN);
     X(SECPKG_ATTR_AUTHORITY);
     X(SECPKG_ATTR_DCE_INFO);
-    X(SECPKG_ATTR_KEY_INFO);
     X(SECPKG_ATTR_LIFESPAN);
     X(SECPKG_ATTR_NAMES);
     X(SECPKG_ATTR_NATIVE_NAMES);
