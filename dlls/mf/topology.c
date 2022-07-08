@@ -1809,12 +1809,198 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
     return hr;
 }
 
+/* private helper for node types without an actual IMFMediaTypeHandler */
+struct type_handler
+{
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+    LONG refcount;
+
+    IMFTopologyNode *node;
+    DWORD stream;
+    BOOL output;
+
+    IMFTransform *transform;
+};
+
+static struct type_handler *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct type_handler, IMFMediaTypeHandler_iface);
+}
+
+static HRESULT WINAPI type_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFMediaTypeHandler)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        IMFMediaTypeHandler_AddRef((*obj = iface));
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI type_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    struct type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    ULONG refcount = InterlockedIncrement(&handler->refcount);
+    return refcount;
+}
+
+static ULONG WINAPI type_handler_Release(IMFMediaTypeHandler *iface)
+{
+    struct type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    ULONG refcount = InterlockedDecrement(&handler->refcount);
+
+    if (!refcount)
+    {
+        if (handler->transform)
+            IMFTransform_Release(handler->transform);
+        IMFTopologyNode_Release(handler->node);
+        free(handler);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
+        IMFMediaType **out_type)
+{
+    struct type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    IMFMediaType *type;
+    DWORD flags;
+    HRESULT hr;
+
+    if (out_type)
+        *out_type = NULL;
+
+    if (handler->transform)
+    {
+        if (handler->output)
+            return IMFTransform_SetOutputType(handler->transform, handler->stream, in_type, MFT_SET_TYPE_TEST_ONLY);
+        else
+            return IMFTransform_SetInputType(handler->transform, handler->stream, in_type, MFT_SET_TYPE_TEST_ONLY);
+    }
+
+    if (FAILED(hr = IMFMediaTypeHandler_GetCurrentMediaType(iface, &type)))
+        return hr;
+
+    hr = IMFMediaType_IsEqual(type, in_type, &flags);
+    IMFMediaType_Release(type);
+    return hr;
+}
+
+static HRESULT WINAPI type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **type)
+{
+    struct type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+
+    if (handler->transform)
+    {
+        if (handler->output)
+            return IMFTransform_GetOutputAvailableType(handler->transform, handler->stream, index, type);
+        else
+            return IMFTransform_GetInputAvailableType(handler->transform, handler->stream, index, type);
+    }
+
+    if (index)
+        return MF_E_NO_MORE_TYPES;
+
+    return IMFMediaTypeHandler_GetCurrentMediaType(iface, type);
+}
+
+static HRESULT WINAPI type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *type)
+{
+    struct type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+
+    if (handler->transform)
+    {
+        if (handler->output)
+            return IMFTransform_SetOutputType(handler->transform, handler->stream, type, 0);
+        else
+            return IMFTransform_SetInputType(handler->transform, handler->stream, type, 0);
+    }
+
+    return IMFTopologyNode_SetInputPrefType(handler->node, handler->stream, type);
+}
+
+static HRESULT WINAPI type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **type)
+{
+    struct type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    UINT32 output;
+
+    if (handler->transform)
+    {
+        if (handler->output)
+            return IMFTransform_GetOutputCurrentType(handler->transform, handler->stream, type);
+        else
+            return IMFTransform_GetInputCurrentType(handler->transform, handler->stream, type);
+    }
+
+    if (SUCCEEDED(IMFTopologyNode_GetInputPrefType(handler->node, 0, type)))
+        return S_OK;
+
+    if (FAILED(IMFTopologyNode_GetUINT32(handler->node, &MF_TOPONODE_PRIMARYOUTPUT, &output)))
+        output = 0;
+
+    return IMFTopologyNode_GetOutputPrefType(handler->node, output, type);
+}
+
+static HRESULT WINAPI type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    IMFMediaType *media_type;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaTypeHandler_GetCurrentMediaType(iface, &media_type)))
+        return hr;
+
+    hr = IMFMediaType_GetMajorType(media_type, type);
+    IMFMediaType_Release(media_type);
+    return hr;
+}
+
+static const IMFMediaTypeHandlerVtbl type_handler_vtbl =
+{
+    type_handler_QueryInterface,
+    type_handler_AddRef,
+    type_handler_Release,
+    type_handler_IsMediaTypeSupported,
+    type_handler_GetMediaTypeCount,
+    type_handler_GetMediaTypeByIndex,
+    type_handler_SetCurrentMediaType,
+    type_handler_GetCurrentMediaType,
+    type_handler_GetMajorType,
+};
+
+static HRESULT type_handler_create(IMFTopologyNode *node, DWORD stream, BOOL output, IMFTransform *transform, IMFMediaTypeHandler **out)
+{
+    struct type_handler *handler;
+
+    if (!(handler = calloc(1, sizeof(*handler)))) return E_OUTOFMEMORY;
+    handler->IMFMediaTypeHandler_iface.lpVtbl = &type_handler_vtbl;
+    handler->refcount = 1;
+    handler->stream = stream;
+    handler->output = output;
+    IMFTopologyNode_AddRef((handler->node = node));
+    if (transform)
+        IMFTransform_AddRef((handler->transform = transform));
+
+    *out = &handler->IMFMediaTypeHandler_iface;
+    return S_OK;
+}
+
 HRESULT topology_node_get_type_handler(IMFTopologyNode *node, DWORD stream,
         BOOL output, IMFMediaTypeHandler **handler)
 {
     MF_TOPOLOGY_TYPE node_type;
     IMFStreamSink *stream_sink;
     IMFStreamDescriptor *sd;
+    IMFTransform *transform;
     HRESULT hr;
 
     if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
@@ -1843,6 +2029,16 @@ HRESULT topology_node_get_type_handler(IMFTopologyNode *node, DWORD stream,
                 IMFStreamDescriptor_Release(sd);
             }
             break;
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
+            {
+                hr = type_handler_create(node, stream, output, transform, handler);
+                IMFTransform_Release(transform);
+            }
+            break;
+        case MF_TOPOLOGY_TEE_NODE:
+            hr = type_handler_create(node, stream, output, NULL, handler);
+            break;
         default:
             WARN("Unexpected node type %u.\n", node_type);
             return MF_E_UNEXPECTED;
@@ -1857,48 +2053,15 @@ HRESULT topology_node_get_type_handler(IMFTopologyNode *node, DWORD stream,
 HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type)
 {
     IMFMediaTypeHandler *handler;
-    MF_TOPOLOGY_TYPE node_type;
-    IMFTransform *transform;
-    UINT32 primary_output;
     HRESULT hr;
 
     TRACE("%p, %lu, %d, %p.\n", node, stream, output, type);
 
-    if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
+    if (FAILED(hr = topology_node_get_type_handler(node, stream, output, &handler)))
         return hr;
 
-    if (SUCCEEDED(hr = topology_node_get_type_handler(node, stream, output, &handler)))
-    {
-        hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, type);
-        IMFMediaTypeHandler_Release(handler);
-        return hr;
-    }
-
-    switch (node_type)
-    {
-        case MF_TOPOLOGY_TRANSFORM_NODE:
-            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
-            {
-                if (output)
-                    hr = IMFTransform_GetOutputCurrentType(transform, stream, type);
-                else
-                    hr = IMFTransform_GetInputCurrentType(transform, stream, type);
-                IMFTransform_Release(transform);
-            }
-            break;
-        case MF_TOPOLOGY_TEE_NODE:
-            if (SUCCEEDED(hr = IMFTopologyNode_GetInputPrefType(node, 0, type)))
-                break;
-
-            if (FAILED(IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_PRIMARYOUTPUT, &primary_output)))
-                primary_output = 0;
-
-            hr = IMFTopologyNode_GetOutputPrefType(node, primary_output, type);
-            break;
-        default:
-            ;
-    }
-
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, type);
+    IMFMediaTypeHandler_Release(handler);
     return hr;
 }
 
