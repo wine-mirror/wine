@@ -2873,7 +2873,7 @@ static HRESULT WINAPI FolderView_SelectItem(IFolderView2 *iface, int item, DWORD
 
     SendMessageW(This->hWndList, LVM_SETITEMSTATE, item, (LPARAM)&lvItem);
 
-    if (flags & SVSI_EDIT)
+    if ((flags & SVSI_EDIT) == SVSI_EDIT)
         SendMessageW(This->hWndList, LVM_EDITLABELW, item, 0);
 
     return S_OK;
