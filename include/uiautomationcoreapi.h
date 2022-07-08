@@ -255,6 +255,7 @@ LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wParam, LPARAM lPar
 BOOL WINAPI UiaTextRangeRelease(HUIATEXTRANGE hobj);
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **elprov);
 HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD flags, IRawElementProviderSimple **elprov);
+HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIANT *out_val);
 
 #ifdef __cplusplus
 }

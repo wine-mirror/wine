@@ -359,3 +359,12 @@ HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *provider)
     FIXME("(%p): stub\n", provider);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *          UiaGetPropertyValue (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIANT *out_val)
+{
+    FIXME("(%p, %d, %p): stub\n", huianode, prop_id, out_val);
+    return E_NOTIMPL;
+}
