@@ -172,6 +172,7 @@ static void WINAPI notification_cb(const XACT_NOTIFICATION *notification)
     data->received = TRUE;
     ok(notification->type == data->type,
             "Unexpected notification type %u\n", notification->type);
+    todo_wine_if(notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
     ok(notification->waveBank.pWaveBank == data->wave_bank, "Unexpected wave bank %p instead of %p\n",
             notification->waveBank.pWaveBank, data->wave_bank);
     ok(thread_id == data->thread_id, "Unexpected thread id %#lx instead of %#lx\n", thread_id, data->thread_id);
@@ -248,11 +249,11 @@ static void test_notifications(void)
     ok(hr == S_OK, "Cannot query wave bank state, hr %#lx\n", hr);
     ok(state == XACT_WAVEBANKSTATE_PREPARED, "Wave bank is not in prepared state, but in %#lx\n", state);
 
-    todo_wine ok(prepared_data.received, "The 'wave bank prepared' notification was never received\n");
+    ok(prepared_data.received, "The 'wave bank prepared' notification was never received\n");
     ok(!destroyed_data.received, "The 'wave bank destroyed' notification was received too early\n");
 
     IXACT3WaveBank_Destroy(prepared_data.wave_bank);
-    todo_wine ok(destroyed_data.received, "The 'wave bank destroyed' notification was never received\n");
+    ok(destroyed_data.received, "The 'wave bank destroyed' notification was never received\n");
 
     CloseHandle(file);
     IXACT3Engine_Release(engine);
