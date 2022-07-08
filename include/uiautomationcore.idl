@@ -204,6 +204,20 @@ library UIA
         HRESULT GetFocus([out, retval] IRawElementProviderFragment **pRetVal);
     }
 
+
+    [
+        object,
+        uuid(1d5df27c-8947-4425-b8d9-79787bb460b8),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderHwndOverride : IUnknown
+    {
+        HRESULT GetOverrideProviderForHwnd(
+                [in] HWND hwnd,
+                [out, retval] IRawElementProviderSimple **pRetVal);
+    }
+
     [
         object,
         uuid(e44c3566-915d-4070-99c6-047bff5a08f5),
