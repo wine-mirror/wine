@@ -61,6 +61,78 @@ static pthread_mutex_t modes_mutex = PTHREAD_MUTEX_INITIALIZER;
 static BOOL inited_original_display_mode;
 
 
+static int display_mode_bits_per_pixel(CGDisplayModeRef display_mode)
+{
+    CFStringRef pixel_encoding;
+    int bits_per_pixel = 0;
+
+    pixel_encoding = CGDisplayModeCopyPixelEncoding(display_mode);
+    if (pixel_encoding)
+    {
+        if (CFEqual(pixel_encoding, CFSTR(kIO32BitFloatPixels)))
+            bits_per_pixel = 128;
+        else if (CFEqual(pixel_encoding, CFSTR(kIO16BitFloatPixels)))
+            bits_per_pixel = 64;
+        else if (CFEqual(pixel_encoding, CFSTR(kIO64BitDirectPixels)))
+            bits_per_pixel = 64;
+        else if (CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels)))
+            bits_per_pixel = 30;
+        else if (CFEqual(pixel_encoding, CFSTR(IO32BitDirectPixels)))
+            bits_per_pixel = 32;
+        else if (CFEqual(pixel_encoding, CFSTR(IO16BitDirectPixels)))
+            bits_per_pixel = 16;
+        else if (CFEqual(pixel_encoding, CFSTR(IO8BitIndexedPixels)))
+            bits_per_pixel = 8;
+        else if (CFEqual(pixel_encoding, CFSTR(IO4BitIndexedPixels)))
+            bits_per_pixel = 4;
+        else if (CFEqual(pixel_encoding, CFSTR(IO2BitIndexedPixels)))
+            bits_per_pixel = 2;
+        else if (CFEqual(pixel_encoding, CFSTR(IO1BitIndexedPixels)))
+            bits_per_pixel = 1;
+
+        CFRelease(pixel_encoding);
+    }
+
+    return bits_per_pixel;
+}
+
+
+static void display_mode_to_devmode(CGDirectDisplayID display_id, CGDisplayModeRef display_mode, DEVMODEW *devmode)
+{
+    uint32_t io_flags;
+    double rotation;
+
+    rotation = CGDisplayRotation(display_id);
+    devmode->dmDisplayOrientation = ((int)((rotation / 90) + 0.5)) % 4;
+    devmode->dmFields |= DM_DISPLAYORIENTATION;
+
+    io_flags = CGDisplayModeGetIOFlags(display_mode);
+    if (io_flags & kDisplayModeStretchedFlag)
+        devmode->dmDisplayFixedOutput = DMDFO_STRETCH;
+    else
+        devmode->dmDisplayFixedOutput = DMDFO_CENTER;
+    devmode->dmFields |= DM_DISPLAYFIXEDOUTPUT;
+
+    devmode->dmBitsPerPel = display_mode_bits_per_pixel(display_mode);
+    if (devmode->dmBitsPerPel)
+        devmode->dmFields |= DM_BITSPERPEL;
+
+    devmode->dmPelsWidth = CGDisplayModeGetWidth(display_mode);
+    devmode->dmPelsHeight = CGDisplayModeGetHeight(display_mode);
+    devmode->dmFields |= DM_PELSWIDTH | DM_PELSHEIGHT;
+
+    devmode->dmDisplayFlags = 0;
+    if (io_flags & kDisplayModeInterlacedFlag)
+        devmode->dmDisplayFlags |= DM_INTERLACED;
+    devmode->dmFields |= DM_DISPLAYFLAGS;
+
+    devmode->dmDisplayFrequency = CGDisplayModeGetRefreshRate(display_mode);
+    if (!devmode->dmDisplayFrequency)
+        devmode->dmDisplayFrequency = 60;
+    devmode->dmFields |= DM_DISPLAYFREQUENCY;
+}
+
+
 static BOOL set_setting_value(HKEY hkey, const char *name, DWORD val)
 {
     WCHAR nameW[128];
@@ -318,42 +390,6 @@ static BOOL display_mode_matches_descriptor(CGDisplayModeRef mode, const struct 
     CFRelease(mode_pixel_encoding);
 
     return TRUE;
-}
-
-
-static int display_mode_bits_per_pixel(CGDisplayModeRef display_mode)
-{
-    CFStringRef pixel_encoding;
-    int bits_per_pixel = 0;
-
-    pixel_encoding = CGDisplayModeCopyPixelEncoding(display_mode);
-    if (pixel_encoding)
-    {
-        if (CFEqual(pixel_encoding, CFSTR(kIO32BitFloatPixels)))
-            bits_per_pixel = 128;
-        else if (CFEqual(pixel_encoding, CFSTR(kIO16BitFloatPixels)))
-            bits_per_pixel = 64;
-        else if (CFEqual(pixel_encoding, CFSTR(kIO64BitDirectPixels)))
-            bits_per_pixel = 64;
-        else if (CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels)))
-            bits_per_pixel = 30;
-        else if (CFEqual(pixel_encoding, CFSTR(IO32BitDirectPixels)))
-            bits_per_pixel = 32;
-        else if (CFEqual(pixel_encoding, CFSTR(IO16BitDirectPixels)))
-            bits_per_pixel = 16;
-        else if (CFEqual(pixel_encoding, CFSTR(IO8BitIndexedPixels)))
-            bits_per_pixel = 8;
-        else if (CFEqual(pixel_encoding, CFSTR(IO4BitIndexedPixels)))
-            bits_per_pixel = 4;
-        else if (CFEqual(pixel_encoding, CFSTR(IO2BitIndexedPixels)))
-            bits_per_pixel = 2;
-        else if (CFEqual(pixel_encoding, CFSTR(IO1BitIndexedPixels)))
-            bits_per_pixel = 1;
-
-        CFRelease(pixel_encoding);
-    }
-
-    return bits_per_pixel;
 }
 
 
@@ -893,8 +929,6 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode
     CGDisplayModeRef display_mode;
     int display_mode_bpp;
     BOOL synthesized = FALSE;
-    double rotation;
-    uint32_t io_flags;
 
     TRACE("%s, %u, %p + %hu, %08x\n", debugstr_w(devname), mode, devmode, devmode->dmSize, flags);
 
@@ -1004,23 +1038,10 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode
     devmode->dmPosition.y = 0;
     devmode->dmFields |= DM_POSITION;
 
-    rotation = CGDisplayRotation(displays[0].displayID);
-    devmode->dmDisplayOrientation = ((int)((rotation / 90) + 0.5)) % 4;
-    devmode->dmFields |= DM_DISPLAYORIENTATION;
-
-    io_flags = CGDisplayModeGetIOFlags(display_mode);
-    if (io_flags & kDisplayModeStretchedFlag)
-        devmode->dmDisplayFixedOutput = DMDFO_STRETCH;
-    else
-        devmode->dmDisplayFixedOutput = DMDFO_CENTER;
-    devmode->dmFields |= DM_DISPLAYFIXEDOUTPUT;
-
+    display_mode_to_devmode(displays[0].displayID, display_mode, devmode);
     devmode->dmBitsPerPel = display_mode_bpp;
     if (devmode->dmBitsPerPel)
         devmode->dmFields |= DM_BITSPERPEL;
-
-    devmode->dmPelsWidth = CGDisplayModeGetWidth(display_mode);
-    devmode->dmPelsHeight = CGDisplayModeGetHeight(display_mode);
     if (retina_enabled)
     {
         struct display_mode_descriptor* desc = create_original_display_mode_descriptor(displays[0].displayID);
@@ -1031,17 +1052,6 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode
         }
         free_display_mode_descriptor(desc);
     }
-    devmode->dmFields |= DM_PELSWIDTH | DM_PELSHEIGHT;
-
-    devmode->dmDisplayFlags = 0;
-    if (io_flags & kDisplayModeInterlacedFlag)
-        devmode->dmDisplayFlags |= DM_INTERLACED;
-    devmode->dmFields |= DM_DISPLAYFLAGS;
-
-    devmode->dmDisplayFrequency = CGDisplayModeGetRefreshRate(display_mode);
-    if (!devmode->dmDisplayFrequency)
-        devmode->dmDisplayFrequency = 60;
-    devmode->dmFields |= DM_DISPLAYFREQUENCY;
 
     CFRelease(display_mode);
     macdrv_free_displays(displays);
