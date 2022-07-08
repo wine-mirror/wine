@@ -100,9 +100,8 @@ struct d3d9_device
     struct fvf_declaration *fvf_decls;
     UINT fvf_decl_count, fvf_decl_size;
 
-    struct wined3d_buffer *vertex_buffer;
-    UINT vertex_buffer_size;
-    UINT vertex_buffer_pos;
+    struct wined3d_streaming_buffer vertex_buffer;
+
     struct wined3d_buffer *index_buffer;
     UINT index_buffer_size;
     UINT index_buffer_pos;
