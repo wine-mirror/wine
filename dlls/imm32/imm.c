@@ -1028,7 +1028,6 @@ static HWND imm_detach_default_window(IMMThreadData *thread_data)
     to_destroy = thread_data->hwndDefault;
     thread_data->hwndDefault = NULL;
     thread_data->windowRefs = 0;
-    imm_couninit_thread(TRUE);
     return to_destroy;
 }
 
@@ -3468,6 +3467,14 @@ LRESULT WINAPI __wine_ime_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     {
     case WM_CREATE:
         init_messages();
+        return TRUE;
+
+    case WM_DESTROY:
+        {
+            HWND default_hwnd = ImmGetDefaultIMEWnd(0);
+            if (!default_hwnd || hwnd == default_hwnd)
+                imm_couninit_thread(TRUE);
+        }
         return TRUE;
 
     case WM_IME_INTERNAL:

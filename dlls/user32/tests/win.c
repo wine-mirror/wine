@@ -3760,7 +3760,6 @@ static void test_SetActiveWindow_0_proc( char **argv )
     else /* < Win10 */
     {
         ok( tmp == hwnd, "SetActiveWindow returned %p\n", tmp );
-        todo_wine
         ok( GetLastError() == 0, "got error %lu\n", GetLastError() );
 
         tmp = GetForegroundWindow();
