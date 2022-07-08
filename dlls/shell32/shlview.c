@@ -2869,7 +2869,10 @@ static HRESULT WINAPI FolderView_SelectItem(IFolderView2 *iface, int item, DWORD
         lvItem.state |= LVIS_SELECTED;
 
     if (flags & SVSI_FOCUSED)
+    {
         lvItem.stateMask |= LVIS_FOCUSED;
+        lvItem.state |= LVIS_FOCUSED;
+    }
 
     SendMessageW(This->hWndList, LVM_SETITEMSTATE, item, (LPARAM)&lvItem);
 
