@@ -836,6 +836,20 @@ NTSTATUS WINAPI wow64_NtUserMenuItemFromPoint( UINT *args )
     return NtUserMenuItemFromPoint( hwnd, handle, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT msg = get_ulong( &args );
+    UINT wparam = get_ulong( &args );
+    UINT lparam = get_ulong( &args );
+    void *result_info = get_ptr( &args );
+    UINT type = get_ulong ( &args );
+    BOOL ansi = get_ulong( &args );
+
+    FIXME( "%p %x %x %x %p %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
+    return 0;
+}
+
 NTSTATUS WINAPI wow64_NtUserMsgWaitForMultipleObjectsEx( UINT *args )
 {
     DWORD count = get_ulong( &args );
@@ -1149,6 +1163,18 @@ NTSTATUS WINAPI wow64_NtUserThunkedMenuItemInfo( UINT *args )
 
     return NtUserThunkedMenuItemInfo( handle, pos, flags, method, info_ptr,
                                       unicode_str_32to64( &str, str32 ));
+}
+
+NTSTATUS WINAPI wow64_NtUserTrackPopupMenuEx( UINT *args )
+{
+    HMENU handle = get_handle( &args );
+    UINT flags = get_ulong( &args );
+    int x = get_ulong( &args );
+    int y = get_ulong( &args );
+    HWND hwnd = get_handle( &args );
+    TPMPARAMS *params = get_ptr( &args );
+
+    return NtUserTrackPopupMenuEx( handle, flags, x, y, hwnd, params );
 }
 
 NTSTATUS WINAPI wow64_NtUserUnhookWinEvent( UINT *args )

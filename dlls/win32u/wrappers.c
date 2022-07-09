@@ -1103,13 +1103,6 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return unix_funcs->pNtUserMapVirtualKeyEx( code, type, layout );
 }
 
-LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                  void *result_info, DWORD type, BOOL ansi )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
-}
-
 BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
 {
     if (!unix_funcs) return FALSE;
@@ -1386,13 +1379,6 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserTrackMouseEvent( info );
-}
-
-BOOL WINAPI NtUserTrackPopupMenuEx( HMENU handle, UINT flags, INT x, INT y, HWND hwnd,
-                                    TPMPARAMS *params )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserTrackPopupMenuEx( handle, flags, x, y, hwnd, params );
 }
 
 INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )

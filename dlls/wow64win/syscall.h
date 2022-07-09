@@ -150,6 +150,7 @@
     SYSCALL_ENTRY( NtUserKillTimer ) \
     SYSCALL_ENTRY( NtUserLockWindowUpdate ) \
     SYSCALL_ENTRY( NtUserMenuItemFromPoint ) \
+    SYSCALL_ENTRY( NtUserMessageCall ) \
     SYSCALL_ENTRY( NtUserMsgWaitForMultipleObjectsEx ) \
     SYSCALL_ENTRY( NtUserNotifyWinEvent ) \
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
@@ -174,6 +175,7 @@
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
+    SYSCALL_ENTRY( NtUserTrackPopupMenuEx ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
     SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserUpdateInputContext ) \
