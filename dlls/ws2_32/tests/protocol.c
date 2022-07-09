@@ -1572,7 +1572,7 @@ static const struct addr_hint_tests
 }
 hinttests[] =
 {
-    {AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0},
+    {AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0}, /* 0 */
     {AF_UNSPEC, SOCK_STREAM, IPPROTO_UDP, 0},
     {AF_UNSPEC, SOCK_STREAM, IPPROTO_IPV6,0},
     {AF_UNSPEC, SOCK_DGRAM,  IPPROTO_TCP, 0},
@@ -1582,7 +1582,7 @@ hinttests[] =
     {AF_INET,   SOCK_STREAM, IPPROTO_UDP, 0},
     {AF_INET,   SOCK_STREAM, IPPROTO_IPV6,0},
     {AF_INET,   SOCK_DGRAM,  IPPROTO_TCP, 0},
-    {AF_INET,   SOCK_DGRAM,  IPPROTO_UDP, 0},
+    {AF_INET,   SOCK_DGRAM,  IPPROTO_UDP, 0}, /* 10 */
     {AF_INET,   SOCK_DGRAM,  IPPROTO_IPV6,0},
     {AF_UNSPEC, 0,           IPPROTO_TCP, 0},
     {AF_UNSPEC, 0,           IPPROTO_UDP, 0},
@@ -1592,7 +1592,7 @@ hinttests[] =
     {AF_INET,   0,           IPPROTO_TCP, 0},
     {AF_INET,   0,           IPPROTO_UDP, 0},
     {AF_INET,   0,           IPPROTO_IPV6,0},
-    {AF_INET,   SOCK_STREAM, 0,           0},
+    {AF_INET,   SOCK_STREAM, 0,           0}, /* 20 */
     {AF_INET,   SOCK_DGRAM,  0,           0},
     {AF_UNSPEC, 999,         IPPROTO_TCP, WSAESOCKTNOSUPPORT},
     {AF_UNSPEC, 999,         IPPROTO_UDP, WSAESOCKTNOSUPPORT},
@@ -1602,7 +1602,7 @@ hinttests[] =
     {AF_INET,   999,         IPPROTO_IPV6,WSAESOCKTNOSUPPORT},
     {AF_UNSPEC, SOCK_STREAM, 999,         0},
     {AF_UNSPEC, SOCK_STREAM, 999,         0},
-    {AF_INET,   SOCK_DGRAM,  999,         0},
+    {AF_INET,   SOCK_DGRAM,  999,         0}, /* 30 */
     {AF_INET,   SOCK_DGRAM,  999,         0},
 };
 
