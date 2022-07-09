@@ -223,6 +223,8 @@ struct wined3d_vk_info
 
     BOOL supported[WINED3D_VK_EXT_COUNT];
     HMODULE vulkan_lib;
+
+    unsigned int multiple_viewports : 1;
 };
 
 #define VK_CALL(f) (vk_info->vk_ops.f)

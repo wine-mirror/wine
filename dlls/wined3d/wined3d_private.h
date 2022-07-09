@@ -2608,8 +2608,8 @@ struct wined3d_graphics_pipeline_key_vk
     VkVertexInputBindingDivisorDescriptionEXT divisors[MAX_ATTRIBS];
     VkVertexInputAttributeDescription attributes[MAX_ATTRIBS];
     VkVertexInputBindingDescription bindings[MAX_ATTRIBS];
-    VkViewport viewport;
-    VkRect2D scissor;
+    VkViewport viewports[WINED3D_MAX_VIEWPORTS];
+    VkRect2D scissors[WINED3D_MAX_VIEWPORTS];
     VkSampleMask sample_mask;
     VkPipelineColorBlendAttachmentState blend_attachments[WINED3D_MAX_RENDER_TARGETS];
 

@@ -2255,6 +2255,7 @@ static bool feature_level_9_3_supported(const struct wined3d_physical_device_inf
 static bool feature_level_10_supported(const struct wined3d_physical_device_info *info, unsigned int shader_model)
 {
     return shader_model >= 4
+            && info->features2.features.multiViewport
             && info->vertex_divisor_features.vertexAttributeInstanceRateDivisor
             && info->vertex_divisor_features.vertexAttributeInstanceRateZeroDivisor;
 }
@@ -2290,6 +2291,7 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_p
 static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_vk, uint32_t wined3d_creation_flags)
 {
     struct wined3d_d3d_info *d3d_info = &adapter_vk->a.d3d_info;
+    struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     struct wined3d_physical_device_info device_info;
     struct wined3d_vertex_caps vertex_caps;
     struct fragment_caps fragment_caps;
@@ -2356,6 +2358,8 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->filling_convention_offset = 0.0f;
 
     d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;
+
+    vk_info->multiple_viewports = device_info.features2.features.multiViewport;
 }
 
 static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk *adapter_vk)
