@@ -4181,7 +4181,7 @@ START_TEST(url)
         trace("emulated about test (to object)...\n");
         test_BindToObject(ABOUT_TEST, BINDTEST_EMULATE, S_OK);
 
-        trace("emulalated test reporting result in read...\n");
+        trace("emulated test reporting result in read...\n");
         test_BindToStorage(WINETEST_SYNC_TEST, BINDTEST_EMULATE, TYMED_ISTREAM);
 
         trace("file test...\n");
