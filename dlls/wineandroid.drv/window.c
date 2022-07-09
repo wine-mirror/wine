@@ -1212,8 +1212,8 @@ NTSTATUS ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles
         if (current_event) mask = 0;
         if (process_events( mask )) return count - 1;
     }
-    return pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                      !!(flags & MWMO_ALERTABLE), timeout );
+    return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                     !!(flags & MWMO_ALERTABLE), timeout );
 }
 
 /**********************************************************************

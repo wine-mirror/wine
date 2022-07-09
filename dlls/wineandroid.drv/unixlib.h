@@ -37,7 +37,6 @@ enum android_funcs
 struct init_params
 {
     PNTAPCFUNC register_window_callback;
-    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)( ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER* );
     NTSTATUS (CDECL *unix_call)( enum android_funcs code, void *params );
 };
 

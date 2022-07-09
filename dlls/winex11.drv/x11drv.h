@@ -446,9 +446,6 @@ extern char *process_name DECLSPEC_HIDDEN;
 extern Display *clipboard_display DECLSPEC_HIDDEN;
 extern WNDPROC client_foreign_window_proc;
 
-extern NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,
-                                                    BOOLEAN,const LARGE_INTEGER*) DECLSPEC_HIDDEN;
-
 /* atoms */
 
 enum x11drv_atoms

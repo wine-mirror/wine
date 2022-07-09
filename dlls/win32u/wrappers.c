@@ -1110,13 +1110,6 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     return unix_funcs->pNtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
 }
 
-DWORD WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                                DWORD timeout, DWORD mask, DWORD flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
-}
-
 BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
 {
     if (!unix_funcs) return FALSE;

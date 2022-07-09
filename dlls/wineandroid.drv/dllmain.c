@@ -130,7 +130,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         return FALSE;
 
     params.register_window_callback = register_window_callback;
-    params.pNtWaitForMultipleObjects = NtWaitForMultipleObjects;
     if (__wine_unix_call( unix_handle, unix_init, &params )) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;

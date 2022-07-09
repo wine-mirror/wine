@@ -414,7 +414,6 @@ static BOOL process_attach(void)
         str->len = LoadStringW(macdrv_module, str->id, (WCHAR *)&str->str, 0);
     params.strings = strings;
 
-    params.pNtWaitForMultipleObjects = NtWaitForMultipleObjects;
     if (__wine_unix_call(macdrv_handle, unix_init, &params)) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;

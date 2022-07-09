@@ -220,14 +220,6 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "text/uri-list"
 };
 
-/* We use use pointer to call NtWaitForMultipleObjects to make it go through
- * syscall dispatcher. We need that because win32u bypasses syscall thunks and
- * if we called NtWaitForMultipleObjects directly, it wouldn't be able to handle
- * user APCs. This will be removed as soon as we may use syscall interface
- * for NtUserMsgWaitForMultipleObjectsEx. */
-NTSTATUS (WINAPI *pNtWaitForMultipleObjects)( ULONG, const HANDLE *, BOOLEAN,
-                                              BOOLEAN, const LARGE_INTEGER* );
-
 static NTSTATUS CDECL unix_call( enum x11drv_funcs code, void *params );
 
 /***********************************************************************
@@ -686,7 +678,6 @@ static NTSTATUS x11drv_init( void *arg )
     if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
     if (!(display = XOpenDisplay( NULL ))) return STATUS_UNSUCCESSFUL;
 
-    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
     client_foreign_window_proc = params->foreign_window_proc;
 
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */

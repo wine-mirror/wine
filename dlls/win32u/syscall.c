@@ -163,6 +163,7 @@ static void * const syscalls[] =
     NtUserKillTimer,
     NtUserLockWindowUpdate,
     NtUserMenuItemFromPoint,
+    NtUserMsgWaitForMultipleObjectsEx,
     NtUserNotifyWinEvent,
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,

@@ -50,7 +50,6 @@ struct create_desktop_params
 /* x11drv_init params */
 struct init_params
 {
-    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     WNDPROC foreign_window_proc;
     BOOL show_systray;
     NTSTATUS (CDECL *unix_call)( enum x11drv_funcs code, void *params );

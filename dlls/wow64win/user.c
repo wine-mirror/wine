@@ -836,6 +836,27 @@ NTSTATUS WINAPI wow64_NtUserMenuItemFromPoint( UINT *args )
     return NtUserMenuItemFromPoint( hwnd, handle, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtUserMsgWaitForMultipleObjectsEx( UINT *args )
+{
+    DWORD count = get_ulong( &args );
+    const ULONG *handles32 = get_ptr( &args );
+    DWORD timeout = get_ulong( &args );
+    DWORD mask = get_ulong( &args );
+    DWORD flags = get_ulong( &args );
+
+    HANDLE handles[MAXIMUM_WAIT_OBJECTS];
+    unsigned int i;
+
+    if (count > ARRAYSIZE(handles))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return WAIT_FAILED;
+    }
+    for (i = 0; i < count; i++) handles[i] = UlongToHandle( handles32[i] );
+
+    return NtUserMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserNotifyWinEvent( UINT *args )
 {
     DWORD event = get_ulong( &args );

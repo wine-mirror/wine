@@ -563,8 +563,6 @@ jobject *p_java_object = NULL;
 unsigned short *p_java_gdt_sel = NULL;
 
 static NTSTATUS CDECL unix_call( enum android_funcs code, void *params );
-NTSTATUS (WINAPI *pNtWaitForMultipleObjects)( ULONG,const HANDLE*,BOOLEAN,
-                                              BOOLEAN,const LARGE_INTEGER* );
 
 static HRESULT android_init( void *arg )
 {
@@ -611,7 +609,6 @@ static HRESULT android_init( void *arg )
 #endif
     }
     __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
-    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
     params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }

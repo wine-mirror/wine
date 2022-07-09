@@ -525,8 +525,8 @@ NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
     if (!data)
     {
         if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
-        return pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                          !!(flags & MWMO_ALERTABLE), timeout );
+        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                         !!(flags & MWMO_ALERTABLE), timeout );
     }
 
     if (data->current_event && data->current_event->type != QUERY_EVENT &&
@@ -538,8 +538,8 @@ NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
     if (process_events(data->queue, event_mask)) ret = count - 1;
     else if (count || !timeout || timeout->QuadPart)
     {
-        ret = pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                         !!(flags & MWMO_ALERTABLE), timeout );
+        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                        !!(flags & MWMO_ALERTABLE), timeout );
         if (ret == count - 1) process_events(data->queue, event_mask);
     }
     else ret = WAIT_TIMEOUT;

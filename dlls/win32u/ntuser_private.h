@@ -32,7 +32,6 @@ struct hardware_msg_data;
 
 struct user_callbacks
 {
-    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     NTSTATUS (CDECL *try_finally)( NTSTATUS (CDECL *func)( void *), void *arg,
                                    void (CALLBACK *finally_func)( BOOL ));
 };

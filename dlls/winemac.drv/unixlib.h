@@ -83,7 +83,6 @@ struct localized_string
 
 struct init_params
 {
-    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     struct localized_string *strings;
     NTSTATUS (CDECL *unix_call)(enum macdrv_funcs code, void *params);
 };

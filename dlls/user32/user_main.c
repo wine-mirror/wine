@@ -133,7 +133,6 @@ static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
 
 static const struct user_callbacks user_funcs =
 {
-    NtWaitForMultipleObjects,
     try_finally,
 };
 

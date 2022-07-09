@@ -69,8 +69,6 @@ int enable_app_nap = FALSE;
 
 CFDictionaryRef localized_strings;
 
-NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,
-                                             BOOLEAN,const LARGE_INTEGER*);
 
 /**************************************************************************
  *              debugstr_cf
@@ -461,7 +459,6 @@ static NTSTATUS macdrv_init(void *arg)
     init_user_driver();
     macdrv_init_display_devices(FALSE);
 
-    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
     params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }

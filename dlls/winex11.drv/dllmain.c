@@ -67,7 +67,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     void **callback_table;
     struct init_params params =
     {
-        NtWaitForMultipleObjects,
         foreign_window_proc,
     };
 
