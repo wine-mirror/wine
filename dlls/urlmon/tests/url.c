@@ -3771,7 +3771,7 @@ static void create_file(const char *file_name, const char *content)
 
     file = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
     if(file == INVALID_HANDLE_VALUE)
         return;
 
