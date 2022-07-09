@@ -255,11 +255,7 @@ static void add_unix_device(struct unix_device *unix_device)
     device->device_obj = device_obj;
     device->unix_device = unix_device;
     InitializeListHead(&device->irp_list);
-
-    EnterCriticalSection(&wineusb_cs);
-    list_add_tail(&device_list, &device->entry);
     device->removed = FALSE;
-    LeaveCriticalSection(&wineusb_cs);
 
     device->class = device_desc.bDeviceClass;
     device->subclass = device_desc.bDeviceSubClass;
@@ -267,6 +263,10 @@ static void add_unix_device(struct unix_device *unix_device)
     device->vendor = device_desc.idVendor;
     device->product = device_desc.idProduct;
     device->revision = device_desc.bcdDevice;
+
+    EnterCriticalSection(&wineusb_cs);
+    list_add_tail(&device_list, &device->entry);
+    LeaveCriticalSection(&wineusb_cs);
 
     if (!(ret = libusb_get_active_config_descriptor(libusb_device, &config_desc)))
     {
