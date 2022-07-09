@@ -272,11 +272,11 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             device->power_state = PowerDeviceD0;
 
             status = ZwWaitForSingleObject(device->plug_event, TRUE, &wait_time);
-            todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
             status = ZwSetEvent(device->plug_event2, NULL);
             ok(!status, "Failed to set event, status %#lx.\n", status);
             status = ZwWaitForSingleObject(device->plug_event, TRUE, &wait_time);
-            todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
 
             ret = STATUS_SUCCESS;
             break;
@@ -692,15 +692,15 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
              * for the other. */
 
             status = ZwSetEvent(plug_event, NULL);
-            todo_wine ok(!status, "Failed to set event, status %#lx.\n", status);
+            ok(!status, "Failed to set event, status %#lx.\n", status);
             status = ZwWaitForSingleObject(plug_event2, TRUE, &wait_time);
-            todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
             ok(surprise_removal_count == 1, "Got %u surprise removal events.\n", surprise_removal_count);
             /* We shouldn't get IRP_MN_REMOVE_DEVICE until all user-space
              * handles to the device are closed (and the user-space thread is
              * currently blocked in this ioctl and won't close its handle
              * yet.) */
-            todo_wine ok(!remove_device_count, "Got %u remove events.\n", remove_device_count);
+            ok(!remove_device_count, "Got %u remove events.\n", remove_device_count);
 
             return STATUS_SUCCESS;
         }
