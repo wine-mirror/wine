@@ -1350,7 +1350,7 @@ IA2_STATE_PINNED =					0x80000
  @ref _indexes\n
  @ref _enumBase\n
  @ref _specialOffsets\n
- @ref _dicoveringInterfaces\n
+ @ref _discoveringInterfaces\n
  @ref _changingInterfaces\n
  @ref _applicationInfo\n
  @ref _childIDs\n
@@ -1440,7 +1440,7 @@ IA2_STATE_PINNED =					0x80000
    Since the same offset is associated with two different lines a special means is needed
    to fetch text from the line where the caret is physically located.
 
- @section _dicoveringInterfaces Discovery of Interfaces
+ @section _discoveringInterfaces Discovery of Interfaces
   In general AT (Assistive Technology) should try IAccessible2 interfaces, followed by using
   the MSAA (Microsoft&reg; Active Accessibility&reg;) interfaces.  (In cases where the an application
   is known to have custom interfaces which provide information not supplied by IAccessible2
@@ -2381,7 +2381,7 @@ enum IA2TextBoundaryType {
   that present textual information on the display like  buttons,
   text entry fields, or text portions of the document window.  The interface
   provides access to the text's content, attributes, and spatial location.
-  However, text can not be modified with this interface.  That is the task
+  However, text cannot be modified with this interface.  That is the task
   of the IAccessibleEditableText interface.
 
  The text length, i.e. the number of characters in the text, is
@@ -3686,7 +3686,7 @@ interface IAccessibleHypertext : IAccessibleText
 /** @brief This interface exposes information about hypertext in a document.
 
  The %IAccessibleHypertext2 interface extends the functinality of the
- %IAccessibleHypertext inteface.
+ %IAccessibleHypertext interface.
 */
 [object, uuid(CF64D89F-8287-4B44-8501-A827453A6077)]
 interface IAccessibleHypertext2 : IAccessibleHypertext
@@ -4326,7 +4326,7 @@ interface IAccessibleTable : IUnknown
  Please also refer to the IAccessibleTableCell interface.
 
  If you want to support older applications you should also support the
-  IAccessibleTable inteface.
+  IAccessibleTable interface.
 */
 [object, uuid(6167f295-06f0-4cdd-a1fa-02e25153d869)]
 interface IAccessibleTable2 : IUnknown
@@ -4821,7 +4821,7 @@ interface IAccessibleTableCell : IUnknown
      [out, retval] boolean *isSelected
     );
 
-  /** @brief Returns a reference to the accessbile of the containing table.
+  /** @brief Returns a reference to the accessible of the containing table.
 
    @param [out] table
     Returns a reference to the IUnknown of the containing table.
