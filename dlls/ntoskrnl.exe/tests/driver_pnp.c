@@ -275,6 +275,8 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
             status = ZwSetEvent(device->plug_event2, NULL);
             ok(!status, "Failed to set event, status %#lx.\n", status);
+            status = ZwWaitForSingleObject(device->plug_event, TRUE, &wait_time);
+            todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
 
             ret = STATUS_SUCCESS;
             break;
@@ -648,6 +650,10 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             ok(!status, "Failed to set event, status %#lx.\n", status);
             status = ZwWaitForSingleObject(device->plug_event2, TRUE, &wait_time);
             ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            /* IoInvalidateDeviceRelations() here shouldn't deadlock either. */
+            IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+            status = ZwSetEvent(device->plug_event, NULL);
+            ok(!status, "Failed to set event, status %#lx.\n", status);
 
             return STATUS_SUCCESS;
         }
