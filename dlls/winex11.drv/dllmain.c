@@ -23,8 +23,7 @@
 
 
 HMODULE x11drv_module = 0;
-static unixlib_handle_t x11drv_handle;
-NTSTATUS (CDECL *x11drv_unix_call)( enum x11drv_funcs code, void *params );
+unixlib_handle_t x11drv_handle;
 
 
 typedef NTSTATUS (*callback_func)( UINT arg );
@@ -78,13 +77,12 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
                               &x11drv_handle, sizeof(x11drv_handle), NULL ))
         return FALSE;
 
-    if (__wine_unix_call( x11drv_handle, unix_init, &params )) return FALSE;
+    if (X11DRV_CALL( init, &params )) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     memcpy( callback_table + NtUserDriverCallbackFirst, kernel_callbacks, sizeof(kernel_callbacks) );
 
     show_systray = params.show_systray;
-    x11drv_unix_call = params.unix_call;
     return TRUE;
 }
 
