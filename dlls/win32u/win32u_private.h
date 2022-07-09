@@ -215,7 +215,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserDestroyMenu)( HMENU handle );
     BOOL     (WINAPI *pNtUserDestroyWindow)( HWND hwnd );
     BOOL     (WINAPI *pNtUserDisableThreadIme)( DWORD thread_id );
-    LRESULT  (WINAPI *pNtUserDispatchMessage)( const MSG *msg );
     BOOL     (WINAPI *pNtUserDragDetect)( HWND hwnd, int x, int y );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                                HICON icon, const WCHAR *str, UINT flags );

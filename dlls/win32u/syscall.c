@@ -117,6 +117,7 @@ static void * const syscalls[] =
     NtUserDeleteMenu,
     NtUserDestroyAcceleratorTable,
     NtUserDestroyInputContext,
+    NtUserDispatchMessage,
     NtUserEndMenu,
     NtUserFindExistingCursorIcon,
     NtUserFindWindowEx,

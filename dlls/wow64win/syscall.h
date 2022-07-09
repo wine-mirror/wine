@@ -104,6 +104,7 @@
     SYSCALL_ENTRY( NtUserDeleteMenu ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
+    SYSCALL_ENTRY( NtUserDispatchMessage ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \

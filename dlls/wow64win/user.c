@@ -78,7 +78,7 @@ typedef struct
     DWORD dwType;
 } RAWINPUTDEVICELIST32;
 
-static MSG *msg_32to64( MSG *msg, MSG32 *msg32 )
+static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
 
@@ -279,6 +279,14 @@ NTSTATUS WINAPI wow64_NtUserDestroyInputContext( UINT *args )
     HIMC handle = get_handle( &args );
 
     return NtUserDestroyInputContext( handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserDispatchMessage( UINT *args )
+{
+    const MSG32 *msg32 = get_ptr( &args );
+    MSG msg;
+
+    return NtUserDispatchMessage( msg_32to64( &msg, msg32 ));
 }
 
 NTSTATUS WINAPI wow64_NtUserEndMenu( UINT *args )

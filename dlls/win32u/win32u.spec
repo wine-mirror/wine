@@ -839,7 +839,7 @@
 @ stub NtUserDisableProcessWindowFiltering
 @ stdcall NtUserDisableThreadIme(long)
 @ stub NtUserDiscardPointerFrameMessages
-@ stdcall NtUserDispatchMessage(ptr)
+@ stdcall -syscall NtUserDispatchMessage(ptr)
 @ stub NtUserDisplayConfigGetDeviceInfo
 @ stub NtUserDisplayConfigSetDeviceInfo
 @ stub NtUserDoSoundConnect

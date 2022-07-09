@@ -2514,15 +2514,7 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
         if (!init_win_proc_params( &params, msg->hwnd, msg->message,
                                    msg->wParam, NtGetTickCount(), FALSE ))
             return 0;
-        __TRY
-        {
-            dispatch_win_proc_params( &params, sizeof(params) );
-        }
-        __EXCEPT
-        {
-            retval = 0;
-        }
-        __ENDTRY
+        dispatch_win_proc_params( &params, sizeof(params) );
         return retval;
     }
     if (msg->message == WM_SYSTIMER)

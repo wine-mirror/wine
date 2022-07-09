@@ -855,12 +855,6 @@ BOOL WINAPI NtUserDisableThreadIme( DWORD thread_id )
     return unix_funcs->pNtUserDisableThreadIme( thread_id );
 }
 
-LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserDispatchMessage( msg );
-}
-
 BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
 {
     if (!unix_funcs) return FALSE;
