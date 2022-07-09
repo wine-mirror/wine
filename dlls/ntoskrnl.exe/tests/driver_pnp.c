@@ -41,10 +41,7 @@ static UNICODE_STRING control_symlink, bus_symlink;
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
-static DWORD remove_device_count;
-static DWORD surprise_removal_count;
-static DWORD query_remove_device_count;
-static DWORD cancel_remove_device_count;
+static unsigned int remove_device_count, surprise_removal_count, query_remove_device_count, cancel_remove_device_count;
 
 struct irp_queue
 {
@@ -100,6 +97,7 @@ struct device
     UNICODE_STRING child_symlink;
     DEVICE_POWER_STATE power_state;
     struct irp_queue irp_queue;
+    HANDLE plug_event, plug_event2;
 };
 
 static struct list device_list = LIST_INIT(device_list);
@@ -255,6 +253,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 
         case IRP_MN_START_DEVICE:
         {
+            static const LARGE_INTEGER wait_time = {.QuadPart = -500 * 10000};
             POWER_STATE state = {.DeviceState = PowerDeviceD0};
             NTSTATUS status;
 
@@ -271,6 +270,12 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             state = PoSetPowerState(device_obj, DevicePowerState, state);
             todo_wine ok(state.DeviceState == device->power_state, "got previous state %u\n", state.DeviceState);
             device->power_state = PowerDeviceD0;
+
+            status = ZwWaitForSingleObject(device->plug_event, TRUE, &wait_time);
+            todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            status = ZwSetEvent(device->plug_event2, NULL);
+            ok(!status, "Failed to set event, status %#lx.\n", status);
+
             ret = STATUS_SUCCESS;
             break;
         }
@@ -288,6 +293,8 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             {
                 IoSetDeviceInterfaceState(&device->child_symlink, FALSE);
                 RtlFreeUnicodeString(&device->child_symlink);
+                ZwClose(device->plug_event);
+                ZwClose(device->plug_event2);
                 irp->IoStatus.Status = STATUS_SUCCESS;
                 IoCompleteRequest(irp, IO_NO_INCREMENT);
                 IoDeleteDevice(device->device_obj);
@@ -351,10 +358,21 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
         }
 
         case IRP_MN_SURPRISE_REMOVAL:
+        {
+            static const LARGE_INTEGER wait_time = {.QuadPart = -500 * 10000};
+            NTSTATUS status;
+
             surprise_removal_count++;
             irp_queue_clear(&device->irp_queue);
+
+            status = ZwWaitForSingleObject(device->plug_event, TRUE, &wait_time);
+            ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            status = ZwSetEvent(device->plug_event2, NULL);
+            ok(!status, "Failed to set event, status %#lx.\n", status);
+
             ret = STATUS_SUCCESS;
             break;
+        }
 
         case IRP_MN_QUERY_REMOVE_DEVICE:
             query_remove_device_count++;
@@ -584,7 +602,9 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 
         case IOCTL_WINETEST_BUS_ADD_CHILD:
         {
+            static const LARGE_INTEGER wait_time = {.QuadPart = -500 * 10000};
             DEVICE_OBJECT *device_obj;
+            OBJECT_ATTRIBUTES attr;
             UNICODE_STRING string;
             struct device *device;
             NTSTATUS status;
@@ -605,6 +625,11 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             device->device_obj = device_obj;
             device->id = id;
             device->removed = FALSE;
+            InitializeObjectAttributes(&attr, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+            status = ZwCreateEvent(&device->plug_event, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE);
+            ok(!status, "Failed to create event, status %#lx.\n", status);
+            status = ZwCreateEvent(&device->plug_event2, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE);
+            ok(!status, "Failed to create event, status %#lx.\n", status);
 
             ExAcquireFastMutex(&driver_lock);
             list_add_tail(&device_list, &device->entry);
@@ -613,13 +638,26 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             device_obj->Flags &= ~DO_DEVICE_INITIALIZING;
 
             IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+            IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+
+            /* Synchronize both ways, to show that the bus invalidation happens
+             * completely asynchronously and that neither thread blocks waiting
+             * for the other. */
+
+            status = ZwSetEvent(device->plug_event, NULL);
+            ok(!status, "Failed to set event, status %#lx.\n", status);
+            status = ZwWaitForSingleObject(device->plug_event2, TRUE, &wait_time);
+            ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
 
             return STATUS_SUCCESS;
         }
 
         case IOCTL_WINETEST_BUS_REMOVE_CHILD:
         {
+            static const LARGE_INTEGER wait_time = {.QuadPart = -500 * 10000};
+            HANDLE plug_event = NULL, plug_event2 = NULL;
             struct device *device;
+            NTSTATUS status;
             int id;
 
             if (stack->Parameters.DeviceIoControl.InputBufferLength < sizeof(int))
@@ -631,6 +669,8 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             {
                 if (device->id == id)
                 {
+                    plug_event = device->plug_event;
+                    plug_event2 = device->plug_event2;
                     list_remove(&device->entry);
                     device->removed = TRUE;
                     break;
@@ -639,9 +679,22 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             ExReleaseFastMutex(&driver_lock);
 
             IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+            IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
-            /* The actual removal might be asynchronous; we can't test that the
-             * device is gone here. */
+            /* Synchronize both ways, to show that the bus invalidation happens
+             * completely asynchronously and that neither thread blocks waiting
+             * for the other. */
+
+            status = ZwSetEvent(plug_event, NULL);
+            todo_wine ok(!status, "Failed to set event, status %#lx.\n", status);
+            status = ZwWaitForSingleObject(plug_event2, TRUE, &wait_time);
+            todo_wine ok(!status, "Failed to wait for child plug event, status %#lx.\n", status);
+            ok(surprise_removal_count == 1, "Got %u surprise removal events.\n", surprise_removal_count);
+            /* We shouldn't get IRP_MN_REMOVE_DEVICE until all user-space
+             * handles to the device are closed (and the user-space thread is
+             * currently blocked in this ioctl and won't close its handle
+             * yet.) */
+            todo_wine ok(!remove_device_count, "Got %u remove events.\n", remove_device_count);
 
             return STATUS_SUCCESS;
         }
