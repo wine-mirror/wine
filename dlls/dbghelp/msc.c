@@ -803,7 +803,7 @@ static BOOL codeview_resolve_forward_type(struct codeview_type_parse* ctp, const
     unsigned hash;
 
     /* Unfortunately, hash of forward defs are computed on the whole type record, not its name
-     * (unlike hash of UDT & enum implementations which is based primarly on the name... sigh)
+     * (unlike hash of UDT & enum implementations which is based primarily on the name... sigh)
      * So compute the hash of the expected implementation.
      */
     if (!codeview_type_extract_name(cvref,  &nameref,  &lenref,  &decoratedref)) return FALSE;
