@@ -1180,7 +1180,6 @@ static struct unix_funcs unix_funcs =
     NtUserGetKeyNameText,
     NtUserGetKeyboardLayoutList,
     NtUserGetMenuBarInfo,
-    NtUserGetMessage,
     NtUserGetPriorityClipboardFormat,
     NtUserGetQueueStatus,
     NtUserGetScrollBarInfo,

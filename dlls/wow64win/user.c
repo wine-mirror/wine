@@ -519,6 +519,19 @@ NTSTATUS WINAPI wow64_NtUserGetMenuItemRect( UINT *args )
     return NtUserGetMenuItemRect( hwnd, handle, item, rect );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetMessage( UINT *args )
+{
+    MSG32 *msg32 = get_ptr( &args );
+    HWND hwnd = get_handle( &args );
+    UINT first = get_ulong( &args );
+    UINT last = get_ulong( &args );
+    MSG msg;
+
+    if (!NtUserGetMessage( &msg, hwnd, first, last )) return FALSE;
+    msg_64to32( &msg, msg32 );
+    return TRUE;
+}
+
 NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
 {
     UINT size = get_ulong( &args );

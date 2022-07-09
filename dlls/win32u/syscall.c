@@ -143,6 +143,7 @@ static void * const syscalls[] =
     NtUserGetKeyboardState,
     NtUserGetLayeredWindowAttributes,
     NtUserGetMenuItemRect,
+    NtUserGetMessage,
     NtUserGetMouseMovePointsEx,
     NtUserGetObjectInformation,
     NtUserGetOpenClipboardWindow,

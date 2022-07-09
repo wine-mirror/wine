@@ -955,7 +955,7 @@
 @ stdcall NtUserGetMenuBarInfo(long long long ptr)
 @ stub NtUserGetMenuIndex
 @ stdcall -syscall NtUserGetMenuItemRect(long long long ptr)
-@ stdcall NtUserGetMessage(ptr long long long)
+@ stdcall -syscall NtUserGetMessage(ptr long long long)
 @ stdcall -syscall NtUserGetMouseMovePointsEx(long ptr ptr long long)
 @ stdcall -syscall NtUserGetObjectInformation(long long long long ptr)
 @ stub NtUserGetOemBitmapSize

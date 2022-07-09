@@ -1000,12 +1000,6 @@ BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *in
     return unix_funcs->pNtUserGetMenuBarInfo( hwnd, id, item, info );
 }
 
-BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetMessage( msg, hwnd, first, last );
-}
-
 HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
 {
     if (!unix_funcs) return 0;
