@@ -755,7 +755,7 @@ static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *
     }
     else if (!heap->shared)
     {
-        /* keep room for a full commited block as hysteresis */
+        /* keep room for a full committed block as hysteresis */
         subheap_decommit( heap, subheap, (char *)(entry + 1) + (COMMIT_MASK + 1) );
     }
 }
