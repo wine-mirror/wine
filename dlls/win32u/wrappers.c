@@ -1103,24 +1103,6 @@ BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
     return unix_funcs->pNtUserOpenClipboard( hwnd, unk );
 }
 
-BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserPeekMessage( msg_out, hwnd, first, last, flags );
-}
-
-BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserPostMessage( hwnd, msg, wparam, lparam );
-}
-
-BOOL WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserPostThreadMessage( thread, msg, wparam, lparam );
-}
-
 BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
 {
     if (!unix_funcs) return FALSE;
@@ -1381,12 +1363,6 @@ INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )
     return unix_funcs->pNtUserTranslateAccelerator( hwnd, accel, msg );
 }
 
-BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserTranslateMessage( msg, flags );
-}
-
 BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
                                    struct client_menu_name *client_menu_name )
 {
@@ -1413,12 +1389,6 @@ WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
-}
-
-DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserWaitForInputIdle( process, timeout, wow );
 }
 
 HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )

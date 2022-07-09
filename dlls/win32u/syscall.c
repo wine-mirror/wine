@@ -170,6 +170,9 @@ static void * const syscalls[] =
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,
     NtUserOpenWindowStation,
+    NtUserPeekMessage,
+    NtUserPostMessage,
+    NtUserPostThreadMessage,
     NtUserQueryInputContext,
     NtUserRegisterRawInputDevices,
     NtUserRemoveClipboardFormatListener,
@@ -190,9 +193,11 @@ static void * const syscalls[] =
     NtUserThunkedMenuInfo,
     NtUserThunkedMenuItemInfo,
     NtUserTrackPopupMenuEx,
+    NtUserTranslateMessage,
     NtUserUnhookWinEvent,
     NtUserUnhookWindowsHookEx,
     NtUserUpdateInputContext,
+    NtUserWaitForInputIdle,
     NtUserWindowFromDC,
 };
 

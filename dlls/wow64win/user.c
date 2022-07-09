@@ -927,6 +927,40 @@ NTSTATUS WINAPI wow64_NtUserOpenWindowStation( UINT *args )
     return HandleToUlong( NtUserOpenWindowStation( objattr_32to64( &attr, attr32 ), access ));
 }
 
+NTSTATUS WINAPI wow64_NtUserPeekMessage( UINT *args )
+{
+    MSG32 *msg32 = get_ptr( &args );
+    HWND hwnd = get_handle( &args );
+    UINT first = get_ulong( &args );
+    UINT last = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+    MSG msg;
+
+    if (!NtUserPeekMessage( &msg, hwnd, first, last, flags )) return FALSE;
+    msg_64to32( &msg, msg32 );
+    return TRUE;
+}
+
+NTSTATUS WINAPI wow64_NtUserPostMessage( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT msg = get_ulong( &args );
+    WPARAM wparam = get_ulong( &args );
+    LPARAM lparam = get_ulong( &args );
+
+    return NtUserPostMessage( hwnd, msg, wparam, lparam );
+}
+
+NTSTATUS WINAPI wow64_NtUserPostThreadMessage( UINT *args )
+{
+    DWORD thread = get_ulong( &args );
+    UINT msg = get_ulong( &args );
+    WPARAM wparam = get_ulong( &args );
+    LPARAM lparam = get_ulong( &args );
+
+    return NtUserPostThreadMessage( thread, msg, wparam, lparam );
+}
+
 NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
 {
     HIMC handle = get_handle( &args );
@@ -1190,6 +1224,15 @@ NTSTATUS WINAPI wow64_NtUserTrackPopupMenuEx( UINT *args )
     return NtUserTrackPopupMenuEx( handle, flags, x, y, hwnd, params );
 }
 
+NTSTATUS WINAPI wow64_NtUserTranslateMessage( UINT *args )
+{
+    const MSG32 *msg32 = get_ptr( &args );
+    UINT flags = get_ulong( &args );
+    MSG msg;
+
+    return NtUserTranslateMessage( msg_32to64( &msg, msg32 ), flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserUnhookWinEvent( UINT *args )
 {
     HWINEVENTHOOK handle = get_handle( &args );
@@ -1211,6 +1254,15 @@ NTSTATUS WINAPI wow64_NtUserUpdateInputContext( UINT *args )
     UINT_PTR value = get_ulong( &args );
 
     return NtUserUpdateInputContext( handle, attr, value );
+}
+
+NTSTATUS WINAPI wow64_NtUserWaitForInputIdle( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    DWORD timeout = get_ulong( &args );
+    BOOL wow = get_ulong( &args );
+
+    return NtUserWaitForInputIdle( process, timeout, wow );
 }
 
 NTSTATUS WINAPI wow64_NtUserWindowFromDC( UINT *args )
