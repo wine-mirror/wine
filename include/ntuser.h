@@ -37,6 +37,8 @@ enum
     NtUserDrawScrollBar,
     NtUserDrawText,
     NtUserFreeCachedClipboardData,
+    NtUserImmProcessKey,
+    NtUserImmTranslateMessage,
     NtUserLoadDriver,
     NtUserLoadImage,
     NtUserLoadSysMenu,
@@ -179,6 +181,24 @@ struct free_cached_data_params
 {
     UINT format;
     HANDLE handle;
+};
+
+/* NtUserImmProcessKey params */
+struct imm_process_key_params
+{
+    HWND hwnd;
+    HKL hkl;
+    UINT vkey;
+    LPARAM key_data;
+};
+
+/* NtUserImmTranslateMessage params */
+struct imm_translate_message_params
+{
+    HWND hwnd;
+    UINT msg;
+    WPARAM wparam;
+    LPARAM key_data;
 };
 
 /* NtUserLoadImage params */

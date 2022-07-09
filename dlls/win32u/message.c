@@ -32,6 +32,7 @@
 #include "hidusage.h"
 #include "dbt.h"
 #include "dde.h"
+#include "ddk/imm.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -1362,9 +1363,8 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     if (remove) accept_hardware_message( hw_id );
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
 
-    if (remove && msg->message == WM_KEYDOWN && user_callbacks)
-        if (user_callbacks->pImmProcessKey( msg->hwnd, NtUserGetKeyboardLayout(0),
-                                            msg->wParam, msg->lParam, 0 ))
+    if (remove && msg->message == WM_KEYDOWN)
+        if (ImmProcessKey( msg->hwnd, NtUserGetKeyboardLayout(0), msg->wParam, msg->lParam, 0 ))
             msg->wParam = VK_PROCESSKEY;
 
     return TRUE;
@@ -2969,8 +2969,7 @@ BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
         return TRUE;
 
     case VK_PROCESSKEY:
-        return user_callbacks && user_callbacks->pImmTranslateMessage( msg->hwnd, msg->message,
-                                                                       msg->wParam, msg->lParam );
+        return ImmTranslateMessage( msg->hwnd, msg->message, msg->wParam, msg->lParam );
     }
 
     NtUserGetKeyboardState( state );

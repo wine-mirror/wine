@@ -27,6 +27,7 @@
 #include <pthread.h>
 #include "win32u_private.h"
 #include "ntuser_private.h"
+#include "ddk/imm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
@@ -390,4 +391,23 @@ void cleanup_imm_thread(void)
     }
 
     NtUserDestroyInputContext( thread_info->client_info.default_imc );
+}
+
+BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM key_data, DWORD unknown )
+{
+    struct imm_process_key_params params =
+        { .hwnd = hwnd, .hkl = hkl, .vkey = vkey, .key_data = key_data };
+    void *ret_ptr;
+    ULONG ret_len;
+    return KeUserModeCallback( NtUserImmProcessKey, &params, sizeof(params), &ret_ptr, &ret_len );
+}
+
+BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM key_data )
+{
+    struct imm_translate_message_params params =
+        { .hwnd = hwnd, .msg = msg, .wparam = wparam, .key_data = key_data };
+    void *ret_ptr;
+    ULONG ret_len;
+    return KeUserModeCallback( NtUserImmTranslateMessage, &params, sizeof(params),
+                               &ret_ptr, &ret_len );
 }

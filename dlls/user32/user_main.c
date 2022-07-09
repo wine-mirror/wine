@@ -133,8 +133,6 @@ static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
 
 static const struct user_callbacks user_funcs =
 {
-    ImmProcessKey,
-    ImmTranslateMessage,
     NtWaitForMultipleObjects,
     post_dde_message,
     unpack_dde_message,
@@ -161,6 +159,17 @@ static NTSTATUS WINAPI User32DrawText( const struct draw_text_params *params, UL
 {
     size -= FIELD_OFFSET( struct draw_text_params, str );
     return DrawTextW( params->hdc, params->str, size / sizeof(WCHAR), params->rect, params->flags );
+}
+
+static NTSTATUS WINAPI User32ImmProcessKey( const struct imm_process_key_params *params, ULONG size )
+{
+    return ImmProcessKey( params->hwnd, params->hkl, params->vkey, params->key_data, 0 );
+}
+
+static NTSTATUS WINAPI User32ImmTranslateMessage( const struct imm_translate_message_params *params,
+                                                  ULONG size )
+{
+    return ImmTranslateMessage( params->hwnd, params->msg, params->wparam, params->key_data );
 }
 
 static NTSTATUS WINAPI User32LoadImage( const struct load_image_params *params, ULONG size )
@@ -206,6 +215,8 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32DrawScrollBar,
     User32DrawText,
     User32FreeCachedClipboardData,
+    User32ImmProcessKey,
+    User32ImmTranslateMessage,
     User32LoadDriver,
     User32LoadImage,
     User32LoadSysMenu,
