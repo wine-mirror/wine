@@ -159,7 +159,7 @@ static HMENU top_popup_hmenu;
 static BOOL exit_menu = FALSE;
 
 static SIZE menucharsize;
-static UINT od_item_hight; /* default owner drawn item height */
+static UINT od_item_height; /* default owner drawn item height */
 
 /**********************************************************************
  *           NtUserCopyAcceleratorTable   (win32u.@)
@@ -1986,7 +1986,7 @@ static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, IN
         menucharsize.cx = get_char_dimensions( hdc, NULL, &menucharsize.cy );
         /* Win95/98/ME will use menucharsize.cy here. Testing is possible
          * but it is unlikely an application will depend on that */
-        od_item_hight = HIWORD( get_dialog_base_units() );
+        od_item_height = HIWORD( get_dialog_base_units() );
     }
 
     SetRect( &item->rect, org_x, org_y, org_x, org_y );
@@ -1998,7 +1998,7 @@ static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, IN
         mis.CtlID      = 0;
         mis.itemID     = item->wID;
         mis.itemData   = item->dwItemData;
-        mis.itemHeight = od_item_hight;
+        mis.itemHeight = od_item_height;
         mis.itemWidth  = 0;
         send_message( owner, WM_MEASUREITEM, 0, (LPARAM)&mis );
         /* Tests reveal that Windows ( Win95 through WinXP) adds twice the average
