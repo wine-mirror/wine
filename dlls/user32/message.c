@@ -477,7 +477,7 @@ BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD 
  * Unpack a posted DDE message received from another process.
  */
 BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                         void **buffer, size_t size )
+                         const void *buffer, size_t size )
 {
     UINT_PTR	uiLo, uiHi;
     HGLOBAL	hMem = 0;
@@ -491,9 +491,9 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
             ULONGLONG hpack;
             /* hMem is being passed */
             if (size != sizeof(hpack)) return FALSE;
-            if (!buffer || !*buffer) return FALSE;
+            if (!size) return FALSE;
             uiLo = *lparam;
-            memcpy( &hpack, *buffer, size );
+            memcpy( &hpack, buffer, size );
             hMem = unpack_ptr( hpack );
             uiHi = (UINT_PTR)hMem;
             TRACE("recv dde-ack %Ix mem=%Ix[%Ix]\n", uiLo, uiHi, GlobalSize( hMem ));
@@ -509,7 +509,7 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
-	if ((!buffer || !*buffer) && message != WM_DDE_DATA) return FALSE;
+	if (!size && message != WM_DDE_DATA) return FALSE;
 	uiHi = *lparam;
         if (size)
         {
@@ -517,7 +517,7 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
                 return FALSE;
             if ((ptr = GlobalLock( hMem )))
             {
-                memcpy( ptr, *buffer, size );
+                memcpy( ptr, buffer, size );
                 GlobalUnlock( hMem );
             }
             else
@@ -533,11 +533,11 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
     case WM_DDE_EXECUTE:
 	if (size)
 	{
-	    if (!buffer || !*buffer) return FALSE;
+	    if (!size) return FALSE;
             if (!(hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size ))) return FALSE;
             if ((ptr = GlobalLock( hMem )))
 	    {
-		memcpy( ptr, *buffer, size );
+		memcpy( ptr, buffer, size );
 		GlobalUnlock( hMem );
                 TRACE( "exec: pairing c=%08Ix s=%p\n", *lparam, hMem );
                 if (!dde_add_pair( (HGLOBAL)*lparam, hMem ))

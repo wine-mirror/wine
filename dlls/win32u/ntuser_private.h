@@ -33,10 +33,6 @@ struct hardware_msg_data;
 struct user_callbacks
 {
     NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
-    BOOL (CDECL *post_dde_message)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
-                                    DWORD type );
-    BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                                      void **buffer, size_t size );
     NTSTATUS (CDECL *try_finally)( NTSTATUS (CDECL *func)( void *), void *arg,
                                    void (CALLBACK *finally_func)( BOOL ));
 };

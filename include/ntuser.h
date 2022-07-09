@@ -42,8 +42,10 @@ enum
     NtUserLoadDriver,
     NtUserLoadImage,
     NtUserLoadSysMenu,
+    NtUserPostDDEMessage,
     NtUserRegisterBuiltinClasses,
     NtUserRenderSynthesizedFormat,
+    NtUserUnpackDDEMessage,
     /* win16 hooks */
     NtUserCallFreeIcon,
     NtUserThunkLock,
@@ -218,11 +220,39 @@ struct load_sys_menu_params
     BOOL mdi;
 };
 
+/* NtUserPostDDEMessage params */
+struct post_dde_message_params
+{
+    HWND hwnd;
+    UINT msg;
+    WPARAM wparam;
+    LPARAM lparam;
+    DWORD dest_tid;
+    DWORD type;
+};
+
 /* NtUserRenderSynthesizedFormat params */
 struct render_synthesized_format_params
 {
     UINT format;
     UINT from;
+};
+
+/* NtUserUnpackDDEMessage params */
+struct unpack_dde_message_result
+{
+    WPARAM wparam;
+    LPARAM lparam;
+};
+
+struct unpack_dde_message_params
+{
+    struct unpack_dde_message_result *result;  /* FIXME: Use NtCallbackReturn instead */
+    HWND hwnd;
+    UINT message;
+    WPARAM wparam;
+    LPARAM lparam;
+    char data[1];
 };
 
 /* process DPI awareness contexts */

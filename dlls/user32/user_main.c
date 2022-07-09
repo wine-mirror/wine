@@ -134,8 +134,6 @@ static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
 static const struct user_callbacks user_funcs =
 {
     NtWaitForMultipleObjects,
-    post_dde_message,
-    unpack_dde_message,
     try_finally,
 };
 
@@ -192,6 +190,12 @@ static NTSTATUS WINAPI User32FreeCachedClipboardData( const struct free_cached_d
     return 0;
 }
 
+static NTSTATUS WINAPI User32PostDDEMessage( const struct post_dde_message_params *params, ULONG size )
+{
+    return post_dde_message( params->hwnd, params->msg, params->wparam, params->lparam,
+                             params->dest_tid, params->type );
+}
+
 static NTSTATUS WINAPI User32RenderSsynthesizedFormat( const struct render_synthesized_format_params *params,
                                                        ULONG size )
 {
@@ -202,6 +206,16 @@ static NTSTATUS WINAPI User32RenderSsynthesizedFormat( const struct render_synth
 static BOOL WINAPI User32LoadDriver( const WCHAR *path, ULONG size )
 {
     return LoadLibraryW( path ) != NULL;
+}
+
+static NTSTATUS WINAPI User32UnpackDDEMessage( const struct unpack_dde_message_params *params, ULONG size )
+{
+    struct unpack_dde_message_result *result = params->result;
+    result->wparam = params->wparam;
+    result->lparam = params->lparam;
+    size -= FIELD_OFFSET( struct unpack_dde_message_params, data );
+    return unpack_dde_message( params->hwnd, params->message, &result->wparam, &result->lparam,
+                               params->data, size );
 }
 
 static const void *kernel_callback_table[NtUserCallCount] =
@@ -220,8 +234,10 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32LoadDriver,
     User32LoadImage,
     User32LoadSysMenu,
+    User32PostDDEMessage,
     User32RegisterBuiltinClasses,
     User32RenderSsynthesizedFormat,
+    User32UnpackDDEMessage,
 };
 
 
