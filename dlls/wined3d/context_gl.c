@@ -2949,8 +2949,7 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
         struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
 
         wined3d_allocator_chunk_gl_unmap(chunk_gl, context_gl);
-        if (!chunk_gl->c.map_ptr)
-            bo->b.map_ptr = NULL;
+        bo->b.map_ptr = NULL;
         return;
     }
 
