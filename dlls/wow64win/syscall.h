@@ -96,6 +96,10 @@
     SYSCALL_ENTRY( NtUserCallHwnd ) \
     SYSCALL_ENTRY( NtUserCallHwndParam ) \
     SYSCALL_ENTRY( NtUserCallMsgFilter ) \
+    SYSCALL_ENTRY( NtUserCallNextHookEx ) \
+    SYSCALL_ENTRY( NtUserCallNoParam ) \
+    SYSCALL_ENTRY( NtUserCallOneParam ) \
+    SYSCALL_ENTRY( NtUserCallTwoParam ) \
     SYSCALL_ENTRY( NtUserCheckMenuItem ) \
     SYSCALL_ENTRY( NtUserChildWindowFromPointEx ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \

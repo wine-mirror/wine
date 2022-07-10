@@ -250,6 +250,42 @@ NTSTATUS WINAPI wow64_NtUserCallMsgFilter( UINT *args )
     return ret;
 }
 
+NTSTATUS WINAPI wow64_NtUserCallNextHookEx( UINT *args )
+{
+    HHOOK hhook = get_handle( &args );
+    INT code = get_ulong( &args );
+    WPARAM wparam = get_ulong( &args );
+    LPARAM lparam = get_ulong( &args );
+
+    return NtUserCallNextHookEx( hhook, code, wparam, lparam );
+}
+
+NTSTATUS WINAPI wow64_NtUserCallNoParam( UINT *args )
+{
+    ULONG code = get_ulong( &args );
+
+    return NtUserCallNoParam( code );
+}
+
+NTSTATUS WINAPI wow64_NtUserCallOneParam( UINT *args )
+{
+    ULONG_PTR arg = get_ulong( &args );
+    ULONG code = get_ulong( &args );
+
+    FIXME( "%Ix %lu\n", arg, code );
+    return 0;
+}
+
+NTSTATUS WINAPI wow64_NtUserCallTwoParam( UINT *args )
+{
+    ULONG_PTR arg1 = get_ulong( &args );
+    ULONG_PTR arg2 = get_ulong( &args );
+    ULONG code = get_ulong( &args );
+
+    FIXME( "%Ix %Ix %lu\n", arg1, arg2, code );
+    return 0;
+}
+
 NTSTATUS WINAPI wow64_NtUserCheckMenuItem( UINT *args )
 {
     HMENU handle = get_handle( &args );

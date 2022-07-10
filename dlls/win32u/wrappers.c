@@ -725,30 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCallNextHookEx( hhook, code, wparam, lparam );
-}
-
-ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCallNoParam( code );
-}
-
-ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCallOneParam( arg, code );
-}
-
-ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCallTwoParam( arg1, arg2, code );
-}
-
 BOOL WINAPI NtUserCloseClipboard(void)
 {
     if (!unix_funcs) return FALSE;

@@ -777,10 +777,10 @@
 @ stub NtUserCallHwndParamLockSafe
 @ stub NtUserCallHwndSafe
 @ stdcall -syscall NtUserCallMsgFilter(ptr long)
-@ stdcall NtUserCallNextHookEx(long long long long)
-@ stdcall NtUserCallNoParam(long)
-@ stdcall NtUserCallOneParam(long long)
-@ stdcall NtUserCallTwoParam(long long long)
+@ stdcall -syscall NtUserCallNextHookEx(long long long long)
+@ stdcall -syscall NtUserCallNoParam(long)
+@ stdcall -syscall NtUserCallOneParam(long long)
+@ stdcall -syscall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground
 @ stdcall NtUserChangeClipboardChain(long long)
 @ stdcall NtUserChangeDisplaySettings(ptr ptr long long ptr)
