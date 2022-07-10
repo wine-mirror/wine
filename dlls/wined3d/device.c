@@ -1080,7 +1080,7 @@ static struct wined3d_allocator_block *wined3d_device_gl_allocate_memory(struct 
     *id = wined3d_allocator_chunk_gl(block->chunk)->gl_buffer;
 
     wined3d_device_gl_allocator_unlock(device_gl);
-    TRACE("Allocated offset %Iu from buffer object %u.\n", block->offset, *id);
+    TRACE("Allocated offset %#Ix from chunk %p.\n", block->offset, block->chunk);
     return block;
 }
 
