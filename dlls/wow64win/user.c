@@ -108,6 +108,16 @@ typedef struct
     } DUMMYUNIONNAME;
 } INPUT32;
 
+typedef struct
+{
+    UINT32 hdc;
+    BOOL   fErase;
+    RECT   rcPaint;
+    BOOL   fRestore;
+    BOOL   fIncUpdate;
+    BYTE   rgbReserved[32];
+} PAINTSTRUCT32;
+
 static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -165,6 +175,24 @@ NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
     BOOL attach = get_ulong( &args );
 
     return NtUserAttachThreadInput( from, to, attach );
+}
+
+NTSTATUS WINAPI wow64_NtUserBeginPaint( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    PAINTSTRUCT32 *ps32 = get_ptr( &args );
+
+    PAINTSTRUCT ps;
+    HDC ret;
+
+    ret = NtUserBeginPaint( hwnd, ps32 ? & ps : NULL );
+    if (ret && ps32)
+    {
+        ps32->hdc = HandleToUlong( ps.hdc );
+        ps32->fErase  = ps.fErase;
+        ps32->rcPaint = ps.rcPaint;
+    }
+    return HandleToUlong( ret );
 }
 
 NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
@@ -468,6 +496,15 @@ NTSTATUS WINAPI wow64_NtUserGetCursorInfo( UINT *args )
     info32->hCursor = HandleToUlong( info.hCursor );
     info32->ptScreenPos = info.ptScreenPos;
     return TRUE;
+}
+
+NTSTATUS WINAPI wow64_NtUserGetDCEx( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HRGN clip_rgn = get_handle( &args );
+    DWORD flags = get_ulong( &args );
+
+    return HandleToUlong( NtUserGetDCEx( hwnd, clip_rgn, flags ));
 }
 
 NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
@@ -897,6 +934,24 @@ NTSTATUS WINAPI wow64_NtUserGetTitleBarInfo( UINT *args )
     return NtUserGetTitleBarInfo( hwnd, info );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetUpdateRect( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    RECT *rect = get_ptr( &args );
+    BOOL erase = get_ulong( &args );
+
+    return NtUserGetUpdateRect( hwnd, rect, erase );
+}
+
+NTSTATUS WINAPI wow64_NtUserGetUpdateRgn( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HRGN hrgn = get_handle( &args );
+    BOOL erase = get_ulong( &args );
+
+    return NtUserGetUpdateRgn( hwnd, hrgn, erase );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetWindowRgnEx( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -919,6 +974,24 @@ NTSTATUS WINAPI wow64_NtUserInternalGetWindowText( UINT *args )
     INT count = get_ulong( &args );
 
     return NtUserInternalGetWindowText( hwnd, text, count );
+}
+
+NTSTATUS WINAPI wow64_NtUserInvalidateRect( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const RECT *rect = get_ptr( &args );
+    BOOL erase = get_ulong( &args );
+
+    return NtUserInvalidateRect( hwnd, rect, erase );
+}
+
+NTSTATUS WINAPI wow64_NtUserInvalidateRgn( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HRGN hrgn = get_handle( &args );
+    BOOL erase = get_ulong( &args );
+
+    return NtUserInvalidateRgn( hwnd, hrgn, erase );
 }
 
 NTSTATUS WINAPI wow64_NtUserKillTimer( UINT *args )
@@ -1075,6 +1148,16 @@ NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
     return NtUserQueryInputContext( handle, attr );
 }
 
+NTSTATUS WINAPI wow64_NtUserRedrawWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const RECT *rect = get_ptr( &args );
+    HRGN hrgn = get_handle( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserRedrawWindow( hwnd, rect, hrgn, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserRegisterHotKey( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -1139,6 +1222,20 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     const WCHAR *str = get_ptr( &args );
 
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
+}
+
+NTSTATUS WINAPI wow64_NtUserScrollWindowEx( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT dx = get_ulong( &args );
+    INT dy = get_ulong( &args );
+    const RECT *rect = get_ptr( &args );
+    const RECT *clip_rect = get_ptr( &args );
+    HRGN update_rgn = get_handle( &args );
+    RECT *update_rect = get_ptr( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserScrollWindowEx( hwnd, dx, dy, rect, clip_rect, update_rgn, update_rect, flags );
 }
 
 NTSTATUS WINAPI wow64_NtUserSendInput( UINT *args )

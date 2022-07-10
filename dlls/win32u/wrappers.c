@@ -725,12 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-HDC WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserBeginPaint( hwnd, ps );
-}
-
 LRESULT WINAPI NtUserCallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
 {
     if (!unix_funcs) return 0;
@@ -944,12 +938,6 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
     return unix_funcs->pNtUserGetClipboardData( format, params );
 }
 
-HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserGetDCEx( hwnd, clip_rgn, flags );
-}
-
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                UINT32 *num_mode_info )
 {
@@ -974,18 +962,6 @@ HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserGetSystemMenu( hwnd, revert );
-}
-
-BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetUpdateRect( hwnd, rect, erase );
-}
-
-INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserGetUpdateRgn( hwnd, hrgn, erase );
 }
 
 BOOL WINAPI NtUserHideCaret( HWND hwnd )
@@ -1037,18 +1013,6 @@ HICON WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type )
     return unix_funcs->pNtUserInternalGetWindowIcon( hwnd, type );
 }
 
-BOOL WINAPI NtUserInvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserInvalidateRect( hwnd, rect, erase );
-}
-
-BOOL WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserInvalidateRgn( hwnd, hrgn, erase );
-}
-
 BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
 {
     if (!unix_funcs) return FALSE;
@@ -1059,12 +1023,6 @@ BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserOpenClipboard( hwnd, unk );
-}
-
-BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserRedrawWindow( hwnd, rect, hrgn, flags );
 }
 
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
@@ -1086,15 +1044,6 @@ BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const R
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserScrollDC( hdc, dx, dy, scroll, clip, ret_update_rgn, update_rect );
-}
-
-INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
-                                 const RECT *clip_rect, HRGN update_rgn,
-                                 RECT *update_rect, UINT flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserScrollWindowEx( hwnd, dx, dy, rect, clip_rect,
-                                              update_rgn, update_rect, flags );
 }
 
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )

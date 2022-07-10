@@ -91,6 +91,7 @@
     SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserAssociateInputContext ) \
     SYSCALL_ENTRY( NtUserAttachThreadInput ) \
+    SYSCALL_ENTRY( NtUserBeginPaint ) \
     SYSCALL_ENTRY( NtUserBuildHwndList ) \
     SYSCALL_ENTRY( NtUserCallMsgFilter ) \
     SYSCALL_ENTRY( NtUserCheckMenuItem ) \
@@ -122,6 +123,7 @@
     SYSCALL_ENTRY( NtUserGetCursor ) \
     SYSCALL_ENTRY( NtUserGetCursorFrameInfo ) \
     SYSCALL_ENTRY( NtUserGetCursorInfo ) \
+    SYSCALL_ENTRY( NtUserGetDCEx ) \
     SYSCALL_ENTRY( NtUserGetDoubleClickTime ) \
     SYSCALL_ENTRY( NtUserGetDpiForMonitor ) \
     SYSCALL_ENTRY( NtUserGetForegroundWindow ) \
@@ -151,9 +153,13 @@
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserGetTitleBarInfo ) \
+    SYSCALL_ENTRY( NtUserGetUpdateRect ) \
+    SYSCALL_ENTRY( NtUserGetUpdateRgn ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
+    SYSCALL_ENTRY( NtUserInvalidateRect ) \
+    SYSCALL_ENTRY( NtUserInvalidateRgn ) \
     SYSCALL_ENTRY( NtUserKillTimer ) \
     SYSCALL_ENTRY( NtUserLockWindowUpdate ) \
     SYSCALL_ENTRY( NtUserMapVirtualKeyEx ) \
@@ -168,11 +174,13 @@
     SYSCALL_ENTRY( NtUserPostMessage ) \
     SYSCALL_ENTRY( NtUserPostThreadMessage ) \
     SYSCALL_ENTRY( NtUserQueryInputContext ) \
+    SYSCALL_ENTRY( NtUserRedrawWindow ) \
     SYSCALL_ENTRY( NtUserRegisterHotKey ) \
     SYSCALL_ENTRY( NtUserRegisterRawInputDevices ) \
     SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserRemoveMenu ) \
     SYSCALL_ENTRY( NtUserRemoveProp ) \
+    SYSCALL_ENTRY( NtUserScrollWindowEx ) \
     SYSCALL_ENTRY( NtUserSendInput ) \
     SYSCALL_ENTRY( NtUserSetCursorPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \

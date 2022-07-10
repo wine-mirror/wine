@@ -758,7 +758,7 @@
 @ stub NtUserAutoPromoteMouseInPointer
 @ stub NtUserAutoRotateScreen
 @ stub NtUserBeginLayoutUpdate
-@ stdcall NtUserBeginPaint(long ptr)
+@ stdcall -syscall NtUserBeginPaint(long ptr)
 @ stub NtUserBitBltSysBmp
 @ stub NtUserBlockInput
 @ stub NtUserBroadcastThemeChangeEvent
@@ -916,7 +916,7 @@
 @ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
 @ stdcall -syscall NtUserGetCursorInfo(ptr)
 @ stub NtUserGetDC
-@ stdcall NtUserGetDCEx(long long long)
+@ stdcall -syscall NtUserGetDCEx(long long long)
 @ stub NtUserGetDManipHookInitFunction
 @ stub NtUserGetDesktopID
 @ stub NtUserGetDisplayAutoRotationPreferences
@@ -1002,8 +1002,8 @@
 @ stub NtUserGetTouchInputInfo
 @ stub NtUserGetTouchValidationStatus
 @ stub NtUserGetUniformSpaceMapping
-@ stdcall NtUserGetUpdateRect(long ptr long)
-@ stdcall NtUserGetUpdateRgn(long long long)
+@ stdcall -syscall NtUserGetUpdateRect(long ptr long)
+@ stdcall -syscall NtUserGetUpdateRgn(long long long)
 @ stdcall NtUserGetUpdatedClipboardFormats(ptr long ptr)
 @ stub NtUserGetWOWClass
 @ stub NtUserGetWindowBand
@@ -1047,8 +1047,8 @@
 @ stdcall NtUserInternalGetWindowIcon(ptr long)
 @ stdcall -syscall NtUserInternalGetWindowText(long ptr long)
 @ stub NtUserInternalToUnicode
-@ stdcall NtUserInvalidateRect(long ptr long)
-@ stdcall NtUserInvalidateRgn(long long long)
+@ stdcall -syscall NtUserInvalidateRect(long ptr long)
+@ stdcall -syscall NtUserInvalidateRgn(long long long)
 @ stub NtUserIsChildWindowDpiMessageEnabled
 @ stdcall NtUserIsClipboardFormatAvailable(long)
 @ stub NtUserIsMouseInPointerEnabled
@@ -1120,7 +1120,7 @@
 @ stub NtUserRealChildWindowFromPoint
 @ stub NtUserRealInternalGetMessage
 @ stub NtUserRealWaitMessageEx
-@ stdcall NtUserRedrawWindow(long ptr long long)
+@ stdcall -syscall NtUserRedrawWindow(long ptr long long)
 @ stub NtUserRegisterBSDRWindow
 @ stdcall NtUserRegisterClassExWOW(ptr ptr ptr ptr long long long)
 @ stub NtUserRegisterDManipHook
@@ -1156,7 +1156,7 @@
 @ stub NtUserRestoreWindowDpiChanges
 @ stub NtUserSBGetParms
 @ stdcall NtUserScrollDC(long long long ptr ptr long ptr)
-@ stdcall NtUserScrollWindowEx(long long long ptr ptr long ptr long)
+@ stdcall -syscall NtUserScrollWindowEx(long long long ptr ptr long ptr long)
 @ stdcall NtUserSelectPalette(long long long)
 @ stub NtUserSendEventMessage
 @ stdcall -syscall NtUserSendInput(long ptr long)
