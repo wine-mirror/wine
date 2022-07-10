@@ -749,7 +749,7 @@
 @ stub NtUpdateInputSinkTransforms
 @ stub NtUserAcquireIAMKey
 @ stub NtUserAcquireInteractiveControlBackgroundAccess
-@ stdcall NtUserActivateKeyboardLayout(long long)
+@ stdcall -syscall NtUserActivateKeyboardLayout(long long)
 @ stdcall -syscall NtUserAddClipboardFormatListener(long)
 @ stub NtUserAddVisualIdentifier
 @ stub NtUserAlterWindowStyle
@@ -891,7 +891,7 @@
 @ stub NtUserGetAltTabInfo
 @ stdcall -syscall NtUserGetAncestor(long long)
 @ stub NtUserGetAppImeLevel
-@ stdcall NtUserGetAsyncKeyState(long)
+@ stdcall -syscall NtUserGetAsyncKeyState(long)
 @ stdcall -syscall NtUserGetAtomName(long ptr)
 @ stub NtUserGetAutoRotationState
 @ stub NtUserGetCIMSSM
@@ -914,7 +914,7 @@
 @ stub NtUserGetCurrentInputMessageSource
 @ stdcall -syscall NtUserGetCursor()
 @ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
-@ stdcall NtUserGetCursorInfo(ptr)
+@ stdcall -syscall NtUserGetCursorInfo(ptr)
 @ stub NtUserGetDC
 @ stdcall NtUserGetDCEx(long long long)
 @ stub NtUserGetDManipHookInitFunction
@@ -944,10 +944,10 @@
 @ stub NtUserGetInteractiveControlInfo
 @ stub NtUserGetInteractiveCtrlSupportedWaveforms
 @ stub NtUserGetInternalWindowPos
-@ stdcall NtUserGetKeyNameText(long ptr long)
+@ stdcall -syscall NtUserGetKeyNameText(long ptr long)
 @ stdcall -syscall NtUserGetKeyState(long)
 @ stdcall -syscall NtUserGetKeyboardLayout(long)
-@ stdcall NtUserGetKeyboardLayoutList(long ptr)
+@ stdcall -syscall NtUserGetKeyboardLayoutList(long ptr)
 @ stdcall -syscall NtUserGetKeyboardLayoutName(ptr)
 @ stdcall -syscall NtUserGetKeyboardState(ptr)
 @ stdcall -syscall NtUserGetLayeredWindowAttributes(long ptr ptr ptr)
@@ -981,7 +981,7 @@
 @ stub NtUserGetProcessUIContextInformation
 @ stdcall -syscall NtUserGetProcessWindowStation()
 @ stdcall -syscall NtUserGetProp(long wstr)
-@ stdcall NtUserGetQueueStatus(long)
+@ stdcall -syscall NtUserGetQueueStatus(long)
 @ stub NtUserGetQueueStatusReadonly
 @ stdcall -syscall NtUserGetRawInputBuffer(ptr ptr long)
 @ stdcall -syscall NtUserGetRawInputData(ptr long ptr ptr long)
@@ -1076,7 +1076,7 @@
 @ stub NtUserMagGetContextInformation
 @ stub NtUserMagSetContextInformation
 @ stub NtUserMapPointsByVisualIdentifier
-@ stdcall NtUserMapVirtualKeyEx(long long long)
+@ stdcall -syscall NtUserMapVirtualKeyEx(long long long)
 @ stub NtUserMarkWindowForRawMouse
 @ stdcall -syscall NtUserMenuItemFromPoint(long long long long)
 @ stdcall -syscall NtUserMessageCall(long long long long long long long)
@@ -1126,7 +1126,7 @@
 @ stub NtUserRegisterDManipHook
 @ stub NtUserRegisterEdgy
 @ stub NtUserRegisterErrorReportingDialog
-@ stdcall NtUserRegisterHotKey(long long long long)
+@ stdcall -syscall NtUserRegisterHotKey(long long long long)
 @ stub NtUserRegisterManipulationThread
 @ stub NtUserRegisterPointerDeviceNotifications
 @ stub NtUserRegisterPointerInputTarget
@@ -1159,8 +1159,8 @@
 @ stdcall NtUserScrollWindowEx(long long long ptr ptr long ptr long)
 @ stdcall NtUserSelectPalette(long long long)
 @ stub NtUserSendEventMessage
-@ stdcall NtUserSendInput(long ptr long)
-@ stub NtUserSendInteractiveControlHapticsReport
+@ stdcall -syscall NtUserSendInput(long ptr long)
+@ stub NtUserSendInteracsetiveControlHapticsReport
 @ stub NtUserSetActivationFilter
 @ stub NtUserSetActiveProcessForMonitor
 @ stdcall NtUserSetActiveWindow(long)
@@ -1181,7 +1181,7 @@
 @ stdcall NtUserSetCursor(long)
 @ stub NtUserSetCursorContents
 @ stdcall NtUserSetCursorIconData(long ptr ptr ptr)
-@ stdcall NtUserSetCursorPos(long long)
+@ stdcall -syscall NtUserSetCursorPos(long long)
 @ stub NtUserSetDesktopColorTransform
 @ stub NtUserSetDesktopVisualInputSink
 @ stub NtUserSetDialogControlDpiChangeBehavior
@@ -1276,7 +1276,7 @@
 @ stub NtUserTestForInteractiveUser
 @ stdcall -syscall NtUserThunkedMenuInfo(long ptr)
 @ stdcall -syscall NtUserThunkedMenuItemInfo(long long long long ptr ptr)
-@ stdcall NtUserToUnicodeEx(long long ptr ptr long long long)
+@ stdcall -syscall NtUserToUnicodeEx(long long ptr ptr long long long)
 @ stdcall NtUserTrackMouseEvent(ptr)
 @ stdcall -syscall NtUserTrackPopupMenuEx(long long long long long ptr)
 @ stub NtUserTransformPoint
@@ -1289,7 +1289,7 @@
 @ stub NtUserUnloadKeyboardLayout
 @ stub NtUserUnlockWindowStation
 @ stdcall NtUserUnregisterClass(ptr ptr ptr)
-@ stdcall NtUserUnregisterHotKey(long long)
+@ stdcall -syscall NtUserUnregisterHotKey(long long)
 @ stub NtUserUnregisterSessionPort
 @ stub NtUserUnregisterUserApiHook
 @ stub NtUserUpdateDefaultDesktopThumbnail
@@ -1302,7 +1302,7 @@
 @ stub NtUserUserHandleGrantAccess
 @ stub NtUserValidateRect
 @ stub NtUserValidateTimerCallback
-@ stdcall NtUserVkKeyScanEx(long long)
+@ stdcall -syscall NtUserVkKeyScanEx(long long)
 @ stub NtUserWOWCleanup
 @ stub NtUserWaitAvailableMessageEx
 @ stdcall -syscall NtUserWaitForInputIdle(long long long)

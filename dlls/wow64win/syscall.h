@@ -87,6 +87,7 @@
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
+    SYSCALL_ENTRY( NtUserActivateKeyboardLayout ) \
     SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserAssociateInputContext ) \
     SYSCALL_ENTRY( NtUserAttachThreadInput ) \
@@ -109,6 +110,7 @@
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \
+    SYSCALL_ENTRY( NtUserGetAsyncKeyState ) \
     SYSCALL_ENTRY( NtUserGetAtomName ) \
     SYSCALL_ENTRY( NtUserGetCaretBlinkTime ) \
     SYSCALL_ENTRY( NtUserGetCaretPos ) \
@@ -119,13 +121,16 @@
     SYSCALL_ENTRY( NtUserGetClipboardViewer ) \
     SYSCALL_ENTRY( NtUserGetCursor ) \
     SYSCALL_ENTRY( NtUserGetCursorFrameInfo ) \
+    SYSCALL_ENTRY( NtUserGetCursorInfo ) \
     SYSCALL_ENTRY( NtUserGetDoubleClickTime ) \
     SYSCALL_ENTRY( NtUserGetDpiForMonitor ) \
     SYSCALL_ENTRY( NtUserGetForegroundWindow ) \
     SYSCALL_ENTRY( NtUserGetGUIThreadInfo ) \
     SYSCALL_ENTRY( NtUserGetIconSize ) \
+    SYSCALL_ENTRY( NtUserGetKeyNameText ) \
     SYSCALL_ENTRY( NtUserGetKeyState ) \
     SYSCALL_ENTRY( NtUserGetKeyboardLayout ) \
+    SYSCALL_ENTRY( NtUserGetKeyboardLayoutList ) \
     SYSCALL_ENTRY( NtUserGetKeyboardLayoutName ) \
     SYSCALL_ENTRY( NtUserGetKeyboardState ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
@@ -137,6 +142,7 @@
     SYSCALL_ENTRY( NtUserGetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProp ) \
+    SYSCALL_ENTRY( NtUserGetQueueStatus ) \
     SYSCALL_ENTRY( NtUserGetRawInputBuffer ) \
     SYSCALL_ENTRY( NtUserGetRawInputData ) \
     SYSCALL_ENTRY( NtUserGetRawInputDeviceInfo ) \
@@ -150,6 +156,7 @@
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
     SYSCALL_ENTRY( NtUserKillTimer ) \
     SYSCALL_ENTRY( NtUserLockWindowUpdate ) \
+    SYSCALL_ENTRY( NtUserMapVirtualKeyEx ) \
     SYSCALL_ENTRY( NtUserMenuItemFromPoint ) \
     SYSCALL_ENTRY( NtUserMessageCall ) \
     SYSCALL_ENTRY( NtUserMsgWaitForMultipleObjectsEx ) \
@@ -161,10 +168,13 @@
     SYSCALL_ENTRY( NtUserPostMessage ) \
     SYSCALL_ENTRY( NtUserPostThreadMessage ) \
     SYSCALL_ENTRY( NtUserQueryInputContext ) \
+    SYSCALL_ENTRY( NtUserRegisterHotKey ) \
     SYSCALL_ENTRY( NtUserRegisterRawInputDevices ) \
     SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserRemoveMenu ) \
     SYSCALL_ENTRY( NtUserRemoveProp ) \
+    SYSCALL_ENTRY( NtUserSendInput ) \
+    SYSCALL_ENTRY( NtUserSetCursorPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
     SYSCALL_ENTRY( NtUserSetMenuDefaultItem ) \
@@ -179,11 +189,14 @@
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
+    SYSCALL_ENTRY( NtUserToUnicodeEx ) \
     SYSCALL_ENTRY( NtUserTrackPopupMenuEx ) \
     SYSCALL_ENTRY( NtUserTranslateMessage ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
     SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \
+    SYSCALL_ENTRY( NtUserUnregisterHotKey ) \
     SYSCALL_ENTRY( NtUserUpdateInputContext ) \
+    SYSCALL_ENTRY( NtUserVkKeyScanEx ) \
     SYSCALL_ENTRY( NtUserWaitForInputIdle ) \
     SYSCALL_ENTRY( NtUserWindowFromDC )
 

@@ -78,6 +78,36 @@ typedef struct
     DWORD dwType;
 } RAWINPUTDEVICELIST32;
 
+typedef struct
+{
+    LONG    dx;
+    LONG    dy;
+    DWORD   mouseData;
+    DWORD   dwFlags;
+    DWORD   time;
+    ULONG   dwExtraInfo;
+} MOUSEINPUT32;
+
+typedef struct
+{
+    WORD    wVk;
+    WORD    wScan;
+    DWORD   dwFlags;
+    DWORD   time;
+    ULONG   dwExtraInfo;
+} KEYBDINPUT32;
+
+typedef struct
+{
+    DWORD type;
+    union
+    {
+        MOUSEINPUT32   mi;
+        KEYBDINPUT32   ki;
+        HARDWAREINPUT  hi;
+    } DUMMYUNIONNAME;
+} INPUT32;
+
 static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -102,6 +132,14 @@ static MSG32 *msg_64to32( MSG *msg, MSG32 *msg32 )
     msg32->time    = msg->time;
     msg32->pt      = msg->pt;
     return msg32;
+}
+
+NTSTATUS WINAPI wow64_NtUserActivateKeyboardLayout( UINT *args )
+{
+    HKL layout = get_handle( &args );
+    UINT flags = get_ulong( &args );
+
+    return HandleToUlong( NtUserActivateKeyboardLayout( layout, flags ));
 }
 
 NTSTATUS WINAPI wow64_NtUserAddClipboardFormatListener( UINT *args )
@@ -333,6 +371,13 @@ NTSTATUS WINAPI wow64_NtUserGetAncestor( UINT *args )
     return HandleToUlong( NtUserGetAncestor( hwnd, type ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetAsyncKeyState( UINT *args )
+{
+    INT key = get_ulong( &args );
+
+    return NtUserGetAsyncKeyState( key );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetAtomName( UINT *args )
 {
     ATOM atom = get_ulong( &args );
@@ -405,6 +450,26 @@ NTSTATUS WINAPI wow64_NtUserGetCursorFrameInfo( UINT *args )
     return HandleToUlong( NtUserGetCursorFrameInfo( cursor, istep, rate_jiffies, num_steps ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetCursorInfo( UINT *args )
+{
+    struct
+    {
+        DWORD cbSize;
+        DWORD flags;
+        ULONG hCursor;
+        POINT ptScreenPos;
+    } *info32 = get_ptr( &args );
+    CURSORINFO info;
+
+    if (!info32) return FALSE;
+    info.cbSize = sizeof(info);
+    if (!NtUserGetCursorInfo( &info )) return FALSE;
+    info32->flags = info.flags;
+    info32->hCursor = HandleToUlong( info.hCursor );
+    info32->ptScreenPos = info.ptScreenPos;
+    return TRUE;
+}
+
 NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
 {
     return NtUserGetDoubleClickTime();
@@ -471,6 +536,15 @@ NTSTATUS WINAPI wow64_NtUserGetIconSize( UINT *args )
     return NtUserGetIconSize( handle, step, width, height );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetKeyNameText( UINT *args )
+{
+    LONG lparam = get_ulong( &args );
+    WCHAR *buffer = get_ptr( &args );
+    INT size = get_ulong( &args );
+
+    return NtUserGetKeyNameText( lparam, buffer, size );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetKeyState( UINT *args )
 {
     INT vkey = get_ulong( &args );
@@ -483,6 +557,22 @@ NTSTATUS WINAPI wow64_NtUserGetKeyboardLayout( UINT *args )
     DWORD tid = get_ulong( &args );
 
     return HandleToUlong( NtUserGetKeyboardLayout( tid ));
+}
+
+NTSTATUS WINAPI wow64_NtUserGetKeyboardLayoutList( UINT *args )
+{
+    INT size = get_ulong( &args );
+    UINT32 *layouts32 = get_ptr( &args );
+    HKL *layouts = NULL;
+    UINT ret, i;
+
+    if (layouts32 && size && !(layouts = Wow64AllocateTemp( size * sizeof(*layouts) )))
+        return 0;
+
+    ret = NtUserGetKeyboardLayoutList( size, layouts );
+    if (layouts)
+        for (i = 0; i < ret; i++) layouts32[i] = HandleToUlong( layouts[i] );
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserGetKeyboardLayoutName( UINT *args )
@@ -577,6 +667,13 @@ NTSTATUS WINAPI wow64_NtUserGetProp( UINT *args )
     const WCHAR *str = get_ptr( &args );
 
     return HandleToUlong( NtUserGetProp( hwnd, str ));
+}
+
+NTSTATUS WINAPI wow64_NtUserGetQueueStatus( UINT *args )
+{
+    UINT flags = get_ulong( &args );
+
+    return NtUserGetQueueStatus( flags );
 }
 
 NTSTATUS WINAPI wow64_NtUserGetRawInputBuffer( UINT *args )
@@ -839,6 +936,15 @@ NTSTATUS WINAPI wow64_NtUserLockWindowUpdate( UINT *args )
     return NtUserLockWindowUpdate( hwnd );
 }
 
+NTSTATUS WINAPI wow64_NtUserMapVirtualKeyEx( UINT *args )
+{
+    UINT code = get_ulong( &args );
+    UINT type = get_ulong( &args );
+    HKL layout = get_handle( &args );
+
+    return NtUserMapVirtualKeyEx( code, type, layout );
+}
+
 NTSTATUS WINAPI wow64_NtUserMenuItemFromPoint( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -969,6 +1075,16 @@ NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
     return NtUserQueryInputContext( handle, attr );
 }
 
+NTSTATUS WINAPI wow64_NtUserRegisterHotKey( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT id = get_ulong( &args );
+    UINT modifiers = get_ulong( &args );
+    UINT vk = get_ulong( &args );
+
+    return NtUserRegisterHotKey( hwnd, id, modifiers, vk );
+}
+
 NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
 {
     const RAWINPUTDEVICE32 *devices32 = get_ptr( &args );
@@ -1023,6 +1139,61 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     const WCHAR *str = get_ptr( &args );
 
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
+}
+
+NTSTATUS WINAPI wow64_NtUserSendInput( UINT *args )
+{
+    UINT count = get_ulong( &args );
+    INPUT32 *inputs32 = get_ptr( &args );
+    int size = get_ulong( &args );
+
+    INPUT *inputs = NULL;
+    unsigned int i;
+
+    if (size != sizeof(*inputs32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (count && !(inputs = Wow64AllocateTemp( count * sizeof(*inputs) )))
+        return 0;
+
+    for (i = 0; i < count; i++)
+    {
+        inputs[i].type = inputs32[i].type;
+        switch (inputs[i].type)
+        {
+        case INPUT_MOUSE:
+            inputs[i].mi.dx          = inputs32[i].mi.dx;
+            inputs[i].mi.dy          = inputs32[i].mi.dy;
+            inputs[i].mi.mouseData   = inputs32[i].mi.mouseData;
+            inputs[i].mi.dwFlags     = inputs32[i].mi.dwFlags;
+            inputs[i].mi.time        = inputs32[i].mi.time;
+            inputs[i].mi.dwExtraInfo = inputs32[i].mi.dwExtraInfo;
+            break;
+        case INPUT_KEYBOARD:
+            inputs[i].ki.wVk         = inputs32[i].ki.wVk;
+            inputs[i].ki.wScan       = inputs32[i].ki.wScan;
+            inputs[i].ki.dwFlags     = inputs32[i].ki.dwFlags;
+            inputs[i].ki.time        = inputs32[i].ki.time;
+            inputs[i].ki.dwExtraInfo = inputs32[i].ki.dwExtraInfo;
+            break;
+        case INPUT_HARDWARE:
+            inputs[i].hi = inputs32[i].hi;
+            break;
+        }
+    }
+
+    return NtUserSendInput( count, inputs, sizeof(*inputs) );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetCursorPos( UINT *args )
+{
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+
+    return NtUserSetCursorPos( x, y );
 }
 
 NTSTATUS WINAPI wow64_NtUserSetKeyboardState( UINT *args )
@@ -1212,6 +1383,19 @@ NTSTATUS WINAPI wow64_NtUserThunkedMenuItemInfo( UINT *args )
                                       unicode_str_32to64( &str, str32 ));
 }
 
+NTSTATUS WINAPI wow64_NtUserToUnicodeEx( UINT *args )
+{
+    UINT virt = get_ulong( &args );
+    UINT scan = get_ulong( &args );
+    const BYTE *state = get_ptr( &args );
+    WCHAR *str = get_ptr( &args );
+    int size = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+    HKL layout = get_handle( &args );
+
+    return NtUserToUnicodeEx( virt, scan, state, str, size, flags, layout );
+}
+
 NTSTATUS WINAPI wow64_NtUserTrackPopupMenuEx( UINT *args )
 {
     HMENU handle = get_handle( &args );
@@ -1247,6 +1431,14 @@ NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
     return NtUserUnhookWindowsHookEx( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserUnregisterHotKey( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    int id = get_ulong( &args );
+
+    return NtUserUnregisterHotKey( hwnd, id );
+}
+
 NTSTATUS WINAPI wow64_NtUserUpdateInputContext( UINT *args )
 {
     HIMC handle = get_handle( &args );
@@ -1254,6 +1446,14 @@ NTSTATUS WINAPI wow64_NtUserUpdateInputContext( UINT *args )
     UINT_PTR value = get_ulong( &args );
 
     return NtUserUpdateInputContext( handle, attr, value );
+}
+
+NTSTATUS WINAPI wow64_NtUserVkKeyScanEx( UINT *args )
+{
+    WCHAR chr = get_ulong( &args );
+    HKL layout = get_handle( &args );
+
+    return NtUserVkKeyScanEx( chr, layout );
 }
 
 NTSTATUS WINAPI wow64_NtUserWaitForInputIdle( UINT *args )
