@@ -119,6 +119,7 @@
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserDestroyCursor ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
+    SYSCALL_ENTRY( NtUserDisableThreadIme ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
     SYSCALL_ENTRY( NtUserDragDetect ) \
     SYSCALL_ENTRY( NtUserDrawIconEx ) \

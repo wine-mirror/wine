@@ -1140,7 +1140,6 @@ static struct unix_funcs unix_funcs =
     NtUserDeferWindowPosAndBand,
     NtUserDestroyMenu,
     NtUserDestroyWindow,
-    NtUserDisableThreadIme,
     NtUserDrawCaptionTemp,
     NtUserDrawMenuBarTemp,
     NtUserEnableMenuItem,

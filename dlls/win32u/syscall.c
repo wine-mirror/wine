@@ -132,6 +132,7 @@ static void * const syscalls[] =
     NtUserDestroyAcceleratorTable,
     NtUserDestroyCursor,
     NtUserDestroyInputContext,
+    NtUserDisableThreadIme,
     NtUserDispatchMessage,
     NtUserDragDetect,
     NtUserDrawIconEx,

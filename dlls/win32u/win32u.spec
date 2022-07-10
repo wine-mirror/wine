@@ -837,7 +837,7 @@
 @ stdcall NtUserDestroyWindow(long)
 @ stub NtUserDisableImmersiveOwner
 @ stub NtUserDisableProcessWindowFiltering
-@ stdcall NtUserDisableThreadIme(long)
+@ stdcall -syscall NtUserDisableThreadIme(long)
 @ stub NtUserDiscardPointerFrameMessages
 @ stdcall -syscall NtUserDispatchMessage(ptr)
 @ stub NtUserDisplayConfigGetDeviceInfo

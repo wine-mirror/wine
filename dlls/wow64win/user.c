@@ -458,6 +458,13 @@ NTSTATUS WINAPI wow64_NtUserDestroyInputContext( UINT *args )
     return NtUserDestroyInputContext( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserDisableThreadIme( UINT *args )
+{
+    DWORD thread_id = get_ulong( &args );
+
+    return NtUserDisableThreadIme( thread_id );
+}
+
 NTSTATUS WINAPI wow64_NtUserDispatchMessage( UINT *args )
 {
     const MSG32 *msg32 = get_ptr( &args );
