@@ -725,12 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCreateCaret( hwnd, bitmap, width, height );
-}
-
 HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   UNICODE_STRING *version, UNICODE_STRING *window_name,
                                   DWORD style, INT x, INT y, INT width, INT height,
@@ -768,12 +762,6 @@ BOOL WINAPI NtUserDisableThreadIme( DWORD thread_id )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserDisableThreadIme( thread_id );
-}
-
-BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserDragDetect( hwnd, x, y );
 }
 
 BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
@@ -838,12 +826,6 @@ HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
     return unix_funcs->pNtUserGetSystemMenu( hwnd, revert );
 }
 
-BOOL WINAPI NtUserHideCaret( HWND hwnd )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserHideCaret( hwnd );
-}
-
 BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilite )
 {
     if (!unix_funcs) return FALSE;
@@ -901,18 +883,6 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
-HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetActiveWindow( hwnd );
-}
-
-HWND WINAPI NtUserSetCapture( HWND hwnd )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetCapture( hwnd );
-}
-
 DWORD WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     if (!unix_funcs) return 0;
@@ -929,12 +899,6 @@ WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
-}
-
-HWND WINAPI NtUserSetFocus( HWND hwnd )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSetFocus( hwnd );
 }
 
 void WINAPI NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt )
@@ -1009,12 +973,6 @@ WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
     return unix_funcs->pNtUserSetWindowWord( hwnd, offset, newval );
 }
 
-BOOL WINAPI NtUserShowCaret( HWND hwnd )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserShowCaret( hwnd );
-}
-
 BOOL WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
 {
     if (!unix_funcs) return FALSE;
@@ -1043,12 +1001,6 @@ BOOL WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, 
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserSystemParametersInfoForDpi( action, val, ptr, winini, dpi );
-}
-
-BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserTrackMouseEvent( info );
 }
 
 INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )

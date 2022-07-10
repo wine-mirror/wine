@@ -807,7 +807,7 @@
 @ stdcall -syscall NtUserCreateAcceleratorTable(ptr long)
 @ stub NtUserCreateActivationGroup
 @ stub NtUserCreateActivationObject
-@ stdcall NtUserCreateCaret(long long long long)
+@ stdcall -syscall NtUserCreateCaret(long long long long)
 @ stub NtUserCreateDCompositionHwndTarget
 @ stdcall -syscall NtUserCreateDesktopEx(ptr ptr ptr long long long)
 @ stub NtUserCreateEmptyCursorObject
@@ -845,7 +845,7 @@
 @ stub NtUserDoSoundConnect
 @ stub NtUserDoSoundDisconnect
 @ stub NtUserDownlevelTouchpad
-@ stdcall NtUserDragDetect(long long long)
+@ stdcall -syscall NtUserDragDetect(long long long)
 @ stub NtUserDragObject
 @ stub NtUserDrawAnimatedRects
 @ stub NtUserDrawCaption
@@ -1020,7 +1020,7 @@
 @ stub NtUserGhostWindowFromHungWindow
 @ stub NtUserHandleDelegatedInput
 @ stub NtUserHardErrorControl
-@ stdcall NtUserHideCaret(long)
+@ stdcall -syscall NtUserHideCaret(long)
 @ stub NtUserHidePointerContactVisualization
 @ stdcall NtUserHiliteMenuItem(long long long long)
 @ stub NtUserHungWindowFromGhostWindow
@@ -1163,13 +1163,13 @@
 @ stub NtUserSendInteracsetiveControlHapticsReport
 @ stub NtUserSetActivationFilter
 @ stub NtUserSetActiveProcessForMonitor
-@ stdcall NtUserSetActiveWindow(long)
+@ stdcall -syscall NtUserSetActiveWindow(long)
 @ stub NtUserSetAppImeLevel
 @ stub NtUserSetAutoRotation
 @ stub NtUserSetBridgeWindowChild
 @ stub NtUserSetBrokeredForeground
 @ stub NtUserSetCalibrationData
-@ stdcall NtUserSetCapture(long)
+@ stdcall -syscall NtUserSetCapture(long)
 @ stub NtUserSetChildWindowNoActivate
 @ stdcall NtUserSetClassLong(long long long long)
 @ stdcall NtUserSetClassLongPtr(long long long long)
@@ -1190,7 +1190,7 @@
 @ stub NtUserSetDisplayMapping
 @ stub NtUserSetFallbackForeground
 @ stub NtUserSetFeatureReportResponse
-@ stdcall NtUserSetFocus(long)
+@ stdcall -syscall NtUserSetFocus(long)
 @ stub NtUserSetForegroundWindowForApplication
 @ stub NtUserSetFullscreenMagnifierOffsetsDWMUpdated
 @ stub NtUserSetGestureConfig
@@ -1257,7 +1257,7 @@
 @ stdcall NtUserSetWindowWord(long long long)
 @ stub NtUserSetWindowsHookAW
 @ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
-@ stdcall NtUserShowCaret(long)
+@ stdcall -syscall NtUserShowCaret(long)
 @ stdcall -syscall NtUserShowCursor(long)
 @ stdcall NtUserShowScrollBar(long long long)
 @ stub NtUserShowSystemCursor
@@ -1277,7 +1277,7 @@
 @ stdcall -syscall NtUserThunkedMenuInfo(long ptr)
 @ stdcall -syscall NtUserThunkedMenuItemInfo(long long long long ptr ptr)
 @ stdcall -syscall NtUserToUnicodeEx(long long ptr ptr long long long)
-@ stdcall NtUserTrackMouseEvent(ptr)
+@ stdcall -syscall NtUserTrackMouseEvent(ptr)
 @ stdcall -syscall NtUserTrackPopupMenuEx(long long long long long ptr)
 @ stub NtUserTransformPoint
 @ stub NtUserTransformRect

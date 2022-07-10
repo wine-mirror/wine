@@ -111,6 +111,7 @@
     SYSCALL_ENTRY( NtUserCopyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserCountClipboardFormats ) \
     SYSCALL_ENTRY( NtUserCreateAcceleratorTable ) \
+    SYSCALL_ENTRY( NtUserCreateCaret ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
     SYSCALL_ENTRY( NtUserCreateInputContext ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
@@ -119,6 +120,7 @@
     SYSCALL_ENTRY( NtUserDestroyCursor ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
+    SYSCALL_ENTRY( NtUserDragDetect ) \
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
@@ -178,6 +180,7 @@
     SYSCALL_ENTRY( NtUserGetUpdateRgn ) \
     SYSCALL_ENTRY( NtUserGetUpdatedClipboardFormats ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
+    SYSCALL_ENTRY( NtUserHideCaret ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
     SYSCALL_ENTRY( NtUserInvalidateRect ) \
@@ -206,11 +209,14 @@
     SYSCALL_ENTRY( NtUserRemoveProp ) \
     SYSCALL_ENTRY( NtUserScrollWindowEx ) \
     SYSCALL_ENTRY( NtUserSendInput ) \
+    SYSCALL_ENTRY( NtUserSetActiveWindow ) \
+    SYSCALL_ENTRY( NtUserSetCapture ) \
     SYSCALL_ENTRY( NtUserSetClipboardData ) \
     SYSCALL_ENTRY( NtUserSetClipboardViewer ) \
     SYSCALL_ENTRY( NtUserSetCursor ) \
     SYSCALL_ENTRY( NtUserSetCursorIconData ) \
     SYSCALL_ENTRY( NtUserSetCursorPos ) \
+    SYSCALL_ENTRY( NtUserSetFocus ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
     SYSCALL_ENTRY( NtUserSetMenuDefaultItem ) \
@@ -224,10 +230,12 @@
     SYSCALL_ENTRY( NtUserSetTimer ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
+    SYSCALL_ENTRY( NtUserShowCaret ) \
     SYSCALL_ENTRY( NtUserShowCursor ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserToUnicodeEx ) \
+    SYSCALL_ENTRY( NtUserTrackMouseEvent ) \
     SYSCALL_ENTRY( NtUserTrackPopupMenuEx ) \
     SYSCALL_ENTRY( NtUserTranslateMessage ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
