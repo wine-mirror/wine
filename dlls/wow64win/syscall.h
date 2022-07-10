@@ -93,6 +93,8 @@
     SYSCALL_ENTRY( NtUserAttachThreadInput ) \
     SYSCALL_ENTRY( NtUserBeginPaint ) \
     SYSCALL_ENTRY( NtUserBuildHwndList ) \
+    SYSCALL_ENTRY( NtUserCallHwnd ) \
+    SYSCALL_ENTRY( NtUserCallHwndParam ) \
     SYSCALL_ENTRY( NtUserCallMsgFilter ) \
     SYSCALL_ENTRY( NtUserCheckMenuItem ) \
     SYSCALL_ENTRY( NtUserChildWindowFromPointEx ) \

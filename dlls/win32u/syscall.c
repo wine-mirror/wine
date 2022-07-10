@@ -106,6 +106,8 @@ static void * const syscalls[] =
     NtUserAttachThreadInput,
     NtUserBeginPaint,
     NtUserBuildHwndList,
+    NtUserCallHwnd,
+    NtUserCallHwndParam,
     NtUserCallMsgFilter,
     NtUserCheckMenuItem,
     NtUserChildWindowFromPointEx,

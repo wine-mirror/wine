@@ -220,6 +220,24 @@ NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtUserCallHwnd( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    DWORD code = get_ulong( &args );
+
+    return NtUserCallHwnd( hwnd, code );
+}
+
+NTSTATUS WINAPI wow64_NtUserCallHwndParam( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    DWORD_PTR param = get_ulong( &args );
+    DWORD code = get_ulong( &args );
+
+    FIXME( "%p %Ix %lu\n", hwnd, param, code );
+    return 0;
+}
+
 NTSTATUS WINAPI wow64_NtUserCallMsgFilter( UINT *args )
 {
     MSG32 *msg32 = get_ptr( &args );

@@ -749,18 +749,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     return unix_funcs->pNtUserCallTwoParam( arg1, arg2, code );
 }
 
-ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCallHwnd( hwnd, code );
-}
-
-ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCallHwndParam( hwnd, param, code );
-}
-
 BOOL WINAPI NtUserCloseClipboard(void)
 {
     if (!unix_funcs) return FALSE;
