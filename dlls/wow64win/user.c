@@ -327,6 +327,13 @@ NTSTATUS WINAPI wow64_NtUserChildWindowFromPointEx( UINT *args )
     return HandleToUlong( NtUserChildWindowFromPointEx( parent, x, y, flags ));
 }
 
+NTSTATUS WINAPI wow64_NtUserClipCursor( UINT *args )
+{
+    const RECT *rect = get_ptr( &args );
+
+    return NtUserClipCursor( rect );
+}
+
 NTSTATUS WINAPI wow64_NtUserCloseClipboard( UINT *args )
 {
     return NtUserCloseClipboard();
@@ -426,6 +433,14 @@ NTSTATUS WINAPI wow64_NtUserDestroyAcceleratorTable( UINT *args )
     return NtUserDestroyAcceleratorTable( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserDestroyCursor( UINT *args )
+{
+    HCURSOR cursor = get_handle( &args );
+    ULONG arg = get_ulong( &args );
+
+    return NtUserDestroyCursor( cursor, arg );
+}
+
 NTSTATUS WINAPI wow64_NtUserDestroyInputContext( UINT *args )
 {
     HIMC handle = get_handle( &args );
@@ -439,6 +454,21 @@ NTSTATUS WINAPI wow64_NtUserDispatchMessage( UINT *args )
     MSG msg;
 
     return NtUserDispatchMessage( msg_32to64( &msg, msg32 ));
+}
+
+NTSTATUS WINAPI wow64_NtUserDrawIconEx( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    int x0 = get_ulong( &args );
+    int y0 = get_ulong( &args );
+    HICON icon = get_handle( &args );
+    int width = get_ulong( &args );
+    int height = get_ulong( &args );
+    UINT istep = get_ulong( &args );
+    HBRUSH hbr = get_handle( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
 }
 
 NTSTATUS WINAPI wow64_NtUserEmptyClipboard( UINT *args )
@@ -721,6 +751,39 @@ NTSTATUS WINAPI wow64_NtUserGetGUIThreadInfo( UINT *args )
     info32->hwndMoveSize  = HandleToUlong( info.hwndMoveSize );
     info32->hwndCaret     = HandleToUlong( info.hwndCaret );
     info32->rcCaret       = info.rcCaret;
+    return TRUE;
+}
+
+NTSTATUS WINAPI wow64_NtUserGetIconInfo( UINT *args )
+{
+    HICON icon = get_handle( &args );
+    struct
+    {
+	BOOL   fIcon;
+	DWORD  xHotspot;
+	DWORD  yHotspot;
+	UINT32 hbmMask;
+	UINT32 hbmColor;
+    } *info32 = get_ptr( &args );
+    UNICODE_STRING32 *module32 = get_ptr( &args );
+    UNICODE_STRING32 *res_name32 = get_ptr( &args );
+    DWORD *bpp = get_ptr( &args );
+    LONG unk = get_ulong( &args );
+
+    ICONINFO info;
+    UNICODE_STRING module, res_name;
+
+    if (!NtUserGetIconInfo( icon, &info, unicode_str_32to64( &module, module32 ),
+                            unicode_str_32to64( &res_name, res_name32 ), bpp, unk ))
+        return FALSE;
+
+    info32->fIcon    = info.fIcon;
+    info32->xHotspot = info.xHotspot;
+    info32->yHotspot = info.yHotspot;
+    info32->hbmMask  = HandleToUlong( info.hbmMask );
+    info32->hbmColor = HandleToUlong( info.hbmColor );
+    if (module32) module32->Length = module.Length;
+    if (res_name32) res_name32->Length = res_name.Length;
     return TRUE;
 }
 
@@ -1506,6 +1569,24 @@ NTSTATUS WINAPI wow64_NtUserSetClipboardViewer( UINT *args )
     return HandleToUlong( NtUserSetClipboardViewer( hwnd ));
 }
 
+NTSTATUS WINAPI wow64_NtUserSetCursor( UINT *args )
+{
+    HCURSOR cursor = get_handle( &args );
+
+    return HandleToUlong( NtUserSetCursor( cursor ));
+}
+
+NTSTATUS WINAPI wow64_NtUserSetCursorIconData( UINT *args )
+{
+    HCURSOR cursor = get_handle( &args );
+    UNICODE_STRING32 *module32 = get_ptr( &args );
+    UNICODE_STRING32 *res_name32 = get_ptr( &args );
+    void *desc = get_ptr( &args );
+
+    FIXME( "%p %p %p %p\n", cursor, module32, res_name32, desc );
+    return 0;
+}
+
 NTSTATUS WINAPI wow64_NtUserSetCursorPos( UINT *args )
 {
     INT x = get_ulong( &args );
@@ -1641,6 +1722,13 @@ NTSTATUS WINAPI wow64_NtUserSetWindowsHookEx( UINT *args )
     ret = NtUserSetWindowsHookEx( inst, unicode_str_32to64( &module, module32 ),
                                   tid, id, proc, ansi );
     return HandleToUlong( ret );
+}
+
+NTSTATUS WINAPI wow64_NtUserShowCursor( UINT *args )
+{
+    BOOL show = get_ulong( &args );
+
+    return NtUserShowCursor( show );
 }
 
 NTSTATUS WINAPI wow64_NtUserThunkedMenuInfo( UINT *args )

@@ -792,7 +792,7 @@
 @ stub NtUserCheckWindowThreadDesktop
 @ stdcall -syscall NtUserChildWindowFromPointEx(long long long long)
 @ stub NtUserClearForeground
-@ stdcall NtUserClipCursor(ptr)
+@ stdcall -syscall NtUserClipCursor(ptr)
 @ stdcall -syscall NtUserCloseClipboard()
 @ stdcall -syscall NtUserCloseDesktop(long)
 @ stdcall -syscall NtUserCloseWindowStation(long)
@@ -829,7 +829,7 @@
 @ stdcall -syscall NtUserDestroyAcceleratorTable(long)
 @ stub NtUserDestroyActivationGroup
 @ stub NtUserDestroyActivationObject
-@ stdcall NtUserDestroyCursor(long long)
+@ stdcall -syscall NtUserDestroyCursor(long long)
 @ stub NtUserDestroyDCompositionHwndTarget
 @ stdcall -syscall NtUserDestroyInputContext(long)
 @ stdcall NtUserDestroyMenu(long)
@@ -850,7 +850,7 @@
 @ stub NtUserDrawAnimatedRects
 @ stub NtUserDrawCaption
 @ stdcall NtUserDrawCaptionTemp(long long ptr long long wstr long)
-@ stdcall NtUserDrawIconEx(long long long long long long long long long)
+@ stdcall -syscall NtUserDrawIconEx(long long long long long long long long long)
 @ stdcall NtUserDrawMenuBarTemp(long long ptr long long)
 @ stub NtUserDwmGetRemoteSessionOcclusionEvent
 @ stub NtUserDwmGetRemoteSessionOcclusionState
@@ -934,7 +934,7 @@
 @ stub NtUserGetGuiResources
 @ stub NtUserGetHDevName
 @ stub NtUserGetHimetricScaleFactorFromPixelLocation
-@ stdcall NtUserGetIconInfo(long ptr ptr ptr ptr long)
+@ stdcall -syscall NtUserGetIconInfo(long ptr ptr ptr ptr long)
 @ stdcall -syscall NtUserGetIconSize(long long ptr ptr)
 @ stub NtUserGetImeHotKey
 @ stub NtUserGetImeInfoEx
@@ -1178,9 +1178,9 @@
 @ stdcall -syscall NtUserSetClipboardViewer(long)
 @ stub NtUserSetCoreWindow
 @ stub NtUserSetCoreWindowPartner
-@ stdcall NtUserSetCursor(long)
+@ stdcall -syscall NtUserSetCursor(long)
 @ stub NtUserSetCursorContents
-@ stdcall NtUserSetCursorIconData(long ptr ptr ptr)
+@ stdcall -syscall NtUserSetCursorIconData(long ptr ptr ptr)
 @ stdcall -syscall NtUserSetCursorPos(long long)
 @ stub NtUserSetDesktopColorTransform
 @ stub NtUserSetDesktopVisualInputSink
@@ -1258,7 +1258,7 @@
 @ stub NtUserSetWindowsHookAW
 @ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
 @ stdcall NtUserShowCaret(long)
-@ stdcall NtUserShowCursor(long)
+@ stdcall -syscall NtUserShowCursor(long)
 @ stdcall NtUserShowScrollBar(long long long)
 @ stub NtUserShowSystemCursor
 @ stdcall NtUserShowWindow(long long)

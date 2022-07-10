@@ -104,6 +104,7 @@
     SYSCALL_ENTRY( NtUserChangeDisplaySettings ) \
     SYSCALL_ENTRY( NtUserCheckMenuItem ) \
     SYSCALL_ENTRY( NtUserChildWindowFromPointEx ) \
+    SYSCALL_ENTRY( NtUserClipCursor ) \
     SYSCALL_ENTRY( NtUserCloseClipboard ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
@@ -115,8 +116,10 @@
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserDeleteMenu ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
+    SYSCALL_ENTRY( NtUserDestroyCursor ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
+    SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserEnumDisplayDevices ) \
@@ -144,6 +147,7 @@
     SYSCALL_ENTRY( NtUserGetDpiForMonitor ) \
     SYSCALL_ENTRY( NtUserGetForegroundWindow ) \
     SYSCALL_ENTRY( NtUserGetGUIThreadInfo ) \
+    SYSCALL_ENTRY( NtUserGetIconInfo ) \
     SYSCALL_ENTRY( NtUserGetIconSize ) \
     SYSCALL_ENTRY( NtUserGetKeyNameText ) \
     SYSCALL_ENTRY( NtUserGetKeyState ) \
@@ -204,6 +208,8 @@
     SYSCALL_ENTRY( NtUserSendInput ) \
     SYSCALL_ENTRY( NtUserSetClipboardData ) \
     SYSCALL_ENTRY( NtUserSetClipboardViewer ) \
+    SYSCALL_ENTRY( NtUserSetCursor ) \
+    SYSCALL_ENTRY( NtUserSetCursorIconData ) \
     SYSCALL_ENTRY( NtUserSetCursorPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
@@ -218,6 +224,7 @@
     SYSCALL_ENTRY( NtUserSetTimer ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
+    SYSCALL_ENTRY( NtUserShowCursor ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserToUnicodeEx ) \

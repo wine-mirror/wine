@@ -725,12 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-BOOL WINAPI NtUserClipCursor( const RECT *rect )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserClipCursor( rect );
-}
-
 BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height )
 {
     if (!unix_funcs) return 0;
@@ -756,12 +750,6 @@ HDWP WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after,
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserDeferWindowPosAndBand( hdwp, hwnd, after, x, y, cx, cy,
                                                      flags, unk1, unk2 );
-}
-
-BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserDestroyCursor( cursor, arg );
 }
 
 BOOL WINAPI NtUserDestroyMenu( HMENU handle )
@@ -793,13 +781,6 @@ BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT f
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserDrawCaptionTemp( hwnd, hdc, rect, font, icon, str, flags );
-}
-
-BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
-                              INT height, UINT istep, HBRUSH hbr, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
 }
 
 DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font )
@@ -843,13 +824,6 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *module,
-                               UNICODE_STRING *res_name, DWORD *bpp, LONG unk )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetIconInfo( icon, info, module, res_name, bpp, unk );
 }
 
 BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *info )
@@ -939,12 +913,6 @@ HWND WINAPI NtUserSetCapture( HWND hwnd )
     return unix_funcs->pNtUserSetCapture( hwnd );
 }
 
-HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetCursor( cursor );
-}
-
 DWORD WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     if (!unix_funcs) return 0;
@@ -961,13 +929,6 @@ WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
-}
-
-BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,
-                                     struct cursoricon_desc *desc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSetCursorIconData( cursor, module, res_name, desc );
 }
 
 HWND WINAPI NtUserSetFocus( HWND hwnd )
@@ -1052,12 +1013,6 @@ BOOL WINAPI NtUserShowCaret( HWND hwnd )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserShowCaret( hwnd );
-}
-
-INT WINAPI NtUserShowCursor( BOOL show )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserShowCursor( show );
 }
 
 BOOL WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
