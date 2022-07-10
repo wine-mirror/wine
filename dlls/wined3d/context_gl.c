@@ -2944,15 +2944,6 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
         return;
     }
 
-    if (bo->memory)
-    {
-        struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
-
-        wined3d_allocator_chunk_gl_unmap(chunk_gl, context_gl);
-        bo->b.map_ptr = NULL;
-        return;
-    }
-
     wined3d_device_bo_map_lock(context_gl->c.device);
     /* The mapping is still in use by the client (viz. for an accelerated
      * NOOVERWRITE map). The client will trigger another unmap request when the
@@ -2966,6 +2957,14 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
     }
     bo->b.map_ptr = NULL;
     wined3d_device_bo_map_unlock(context_gl->c.device);
+
+    if (bo->memory)
+    {
+        struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
+
+        wined3d_allocator_chunk_gl_unmap(chunk_gl, context_gl);
+        return;
+    }
 
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
     GL_EXTCALL(glUnmapBuffer(bo->binding));
