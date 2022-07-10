@@ -101,6 +101,7 @@
     SYSCALL_ENTRY( NtUserCallOneParam ) \
     SYSCALL_ENTRY( NtUserCallTwoParam ) \
     SYSCALL_ENTRY( NtUserChangeClipboardChain ) \
+    SYSCALL_ENTRY( NtUserChangeDisplaySettings ) \
     SYSCALL_ENTRY( NtUserCheckMenuItem ) \
     SYSCALL_ENTRY( NtUserChildWindowFromPointEx ) \
     SYSCALL_ENTRY( NtUserCloseClipboard ) \
@@ -118,6 +119,9 @@
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
+    SYSCALL_ENTRY( NtUserEnumDisplayDevices ) \
+    SYSCALL_ENTRY( NtUserEnumDisplayMonitors ) \
+    SYSCALL_ENTRY( NtUserEnumDisplaySettings ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \
@@ -135,6 +139,7 @@
     SYSCALL_ENTRY( NtUserGetCursorFrameInfo ) \
     SYSCALL_ENTRY( NtUserGetCursorInfo ) \
     SYSCALL_ENTRY( NtUserGetDCEx ) \
+    SYSCALL_ENTRY( NtUserGetDisplayConfigBufferSizes ) \
     SYSCALL_ENTRY( NtUserGetDoubleClickTime ) \
     SYSCALL_ENTRY( NtUserGetDpiForMonitor ) \
     SYSCALL_ENTRY( NtUserGetForegroundWindow ) \
@@ -207,6 +212,7 @@
     SYSCALL_ENTRY( NtUserSetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
+    SYSCALL_ENTRY( NtUserSetSysColors ) \
     SYSCALL_ENTRY( NtUserSetSystemTimer ) \
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserSetTimer ) \

@@ -2155,9 +2155,12 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     params.lparam = lparam;
     for (i = 0; i < count; i++)
     {
+        void *ret_ptr;
+        ULONG ret_len;
         params.monitor = enum_info[i].handle;
         params.rect = enum_info[i].rect;
-        if (!user32_call( NtUserCallEnumDisplayMonitor, &params, sizeof(params) ))
+        if (!KeUserModeCallback( NtUserCallEnumDisplayMonitor, &params, sizeof(params),
+                                 &ret_ptr, &ret_len ))
         {
             ret = FALSE;
             break;

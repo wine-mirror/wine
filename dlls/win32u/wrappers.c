@@ -725,13 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
-                                         DWORD flags, void *lparam )
-{
-    if (!unix_funcs) return DISP_CHANGE_FAILED;
-    return unix_funcs->pNtUserChangeDisplaySettings( devname, devmode, hwnd, flags, lparam );
-}
-
 BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
     if (!unix_funcs) return FALSE;
@@ -833,26 +826,6 @@ BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
     return unix_funcs->pNtUserEndDeferWindowPosEx( hdwp, async );
 }
 
-NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
-                                          DISPLAY_DEVICEW *info, DWORD flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEnumDisplayDevices( device, index, info, flags );
-}
-
-BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEnumDisplayMonitors( hdc, rect, proc, lp );
-}
-
-BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
-                                       DEVMODEW *dev_mode, DWORD flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEnumDisplaySettings( device, mode, dev_mode, flags );
-}
-
 INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
 {
     if (!unix_funcs) return ERROR;
@@ -870,13 +843,6 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
-                                               UINT32 *num_mode_info )
-{
-    if (!unix_funcs) return ERROR_NOT_SUPPORTED;
-    return unix_funcs->pNtUserGetDisplayConfigBufferSizes( flags, num_path_info, num_mode_info );
 }
 
 BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *module,
@@ -1038,12 +1004,6 @@ INT WINAPI NtUserSetScrollInfo( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetScrollInfo( hwnd, bar, info, redraw );
-}
-
-BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSetSysColors( count, colors, values );
 }
 
 BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )

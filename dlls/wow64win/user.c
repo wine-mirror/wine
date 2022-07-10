@@ -294,6 +294,20 @@ NTSTATUS WINAPI wow64_NtUserChangeClipboardChain( UINT *args )
     return NtUserChangeClipboardChain( hwnd, next );
 }
 
+NTSTATUS WINAPI wow64_NtUserChangeDisplaySettings( UINT *args )
+{
+    UNICODE_STRING32 *devname32 = get_ptr( &args );
+    DEVMODEW *devmode = get_ptr( &args );
+    HWND hwnd = get_handle( &args );
+    DWORD flags = get_ulong( &args );
+    void *lparam = get_ptr( &args );
+
+    UNICODE_STRING devname;
+
+    return NtUserChangeDisplaySettings( unicode_str_32to64( &devname, devname32 ),
+                                        devmode, hwnd, flags, lparam );
+}
+
 NTSTATUS WINAPI wow64_NtUserCheckMenuItem( UINT *args )
 {
     HMENU handle = get_handle( &args );
@@ -435,6 +449,41 @@ NTSTATUS WINAPI wow64_NtUserEmptyClipboard( UINT *args )
 NTSTATUS WINAPI wow64_NtUserEndMenu( UINT *args )
 {
     return NtUserEndMenu();
+}
+
+NTSTATUS WINAPI wow64_NtUserEnumDisplayDevices( UINT *args )
+{
+    UNICODE_STRING32 *device32 = get_ptr( &args );
+    DWORD index = get_ulong( &args );
+    DISPLAY_DEVICEW *info = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+
+    UNICODE_STRING device;
+
+    return NtUserEnumDisplayDevices( unicode_str_32to64( &device, device32 ), index, info, flags );
+}
+
+NTSTATUS WINAPI wow64_NtUserEnumDisplayMonitors( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    RECT *rect = get_ptr( &args );
+    MONITORENUMPROC proc = get_ptr( &args );
+    LPARAM lp = get_ulong( &args );
+
+    return NtUserEnumDisplayMonitors( hdc, rect, proc, lp );
+}
+
+NTSTATUS WINAPI wow64_NtUserEnumDisplaySettings( UINT *args )
+{
+    UNICODE_STRING32 *device32 = get_ptr( &args );
+    DWORD mode = get_ulong( &args );
+    DEVMODEW *dev_mode = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+
+    UNICODE_STRING device;
+
+    return NtUserEnumDisplaySettings( unicode_str_32to64( &device, device32 ),
+                                      mode, dev_mode, flags );
 }
 
 NTSTATUS WINAPI wow64_NtUserFindExistingCursorIcon( UINT *args )
@@ -608,6 +657,15 @@ NTSTATUS WINAPI wow64_NtUserGetDCEx( UINT *args )
     DWORD flags = get_ulong( &args );
 
     return HandleToUlong( NtUserGetDCEx( hwnd, clip_rgn, flags ));
+}
+
+NTSTATUS WINAPI wow64_NtUserGetDisplayConfigBufferSizes( UINT *args )
+{
+    UINT32 flags = get_ulong( &args );
+    UINT32 *num_path_info = get_ptr( &args );
+    UINT32 *num_mode_info = get_ptr( &args );
+
+    return NtUserGetDisplayConfigBufferSizes( flags, num_path_info, num_mode_info );
 }
 
 NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
@@ -1512,6 +1570,15 @@ NTSTATUS WINAPI wow64_NtUserSetProp( UINT *args )
     HANDLE handle = get_handle( &args );
 
     return NtUserSetProp( hwnd, str, handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetSysColors( UINT *args )
+{
+    INT count = get_ulong( &args );
+    const INT *colors = get_ptr( &args );
+    const COLORREF *values = get_ptr( &args );
+
+    return NtUserSetSysColors( count, colors, values );
 }
 
 NTSTATUS WINAPI wow64_NtUserSetSystemTimer( UINT *args )

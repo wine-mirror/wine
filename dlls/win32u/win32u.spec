@@ -783,7 +783,7 @@
 @ stdcall -syscall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground
 @ stdcall -syscall NtUserChangeClipboardChain(long long)
-@ stdcall NtUserChangeDisplaySettings(ptr ptr long long ptr)
+@ stdcall -syscall NtUserChangeDisplaySettings(ptr ptr long long ptr)
 @ stub NtUserChangeWindowMessageFilterEx
 @ stub NtUserCheckAccessForIntegrityLevel
 @ stdcall -syscall NtUserCheckMenuItem(long long long)
@@ -875,9 +875,9 @@
 @ stdcall NtUserEndDeferWindowPosEx(long long)
 @ stdcall -syscall NtUserEndMenu()
 @ stdcall NtUserEndPaint(long ptr)
-@ stdcall NtUserEnumDisplayDevices(ptr long ptr long)
-@ stdcall NtUserEnumDisplayMonitors(long ptr ptr long)
-@ stdcall NtUserEnumDisplaySettings(ptr long ptr long)
+@ stdcall -syscall NtUserEnumDisplayDevices(ptr long ptr long)
+@ stdcall -syscall NtUserEnumDisplayMonitors(long ptr ptr long)
+@ stdcall -syscall NtUserEnumDisplaySettings(ptr long ptr long)
 @ stub NtUserEvent
 @ stdcall NtUserExcludeUpdateRgn(long long)
 @ stub NtUserFillWindow
@@ -921,7 +921,7 @@
 @ stub NtUserGetDesktopID
 @ stub NtUserGetDisplayAutoRotationPreferences
 @ stub NtUserGetDisplayAutoRotationPreferencesByProcessId
-@ stdcall NtUserGetDisplayConfigBufferSizes(long ptr ptr)
+@ stdcall -syscall NtUserGetDisplayConfigBufferSizes(long ptr ptr)
 @ stdcall -syscall NtUserGetDoubleClickTime()
 @ stub NtUserGetDpiForCurrentProcess
 @ stdcall -syscall NtUserGetDpiForMonitor(long long ptr ptr)
@@ -1227,7 +1227,7 @@
 @ stub NtUserSetSensorPresence
 @ stub NtUserSetSharedWindowData
 @ stub NtUserSetShellWindowEx
-@ stdcall NtUserSetSysColors(long ptr ptr)
+@ stdcall -syscall NtUserSetSysColors(long ptr ptr)
 @ stub NtUserSetSystemCursor
 @ stdcall NtUserSetSystemMenu(long long)
 @ stdcall -syscall NtUserSetSystemTimer(long long long)
