@@ -24,6 +24,7 @@
 #include "ddraw_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface);
 static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface);
@@ -86,6 +87,21 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
 
     if (w <= 0 || h <= 0)
         return DD_OK;
+
+    if (!read && TRACE_ON(fps))
+    {
+        DWORD time = GetTickCount();
+        ++ddraw->frames;
+
+        /* every 1.5 seconds */
+        if (time - ddraw->prev_frame_time > 1500)
+        {
+            TRACE_(fps)("%p @ approx %.2ffps\n",
+                    ddraw, 1000.0 * ddraw->frames / (time - ddraw->prev_frame_time));
+            ddraw->prev_frame_time = time;
+            ddraw->frames = 0;
+        }
+    }
 
     /* The interaction between ddraw and GDI drawing is not all that well
      * documented, and somewhat arcane. In ddraw exclusive mode, GDI draws

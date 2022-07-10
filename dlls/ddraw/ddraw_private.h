@@ -136,6 +136,9 @@ struct ddraw
 
     struct wined3d_stateblock *state;
     const struct wined3d_stateblock_state *stateblock_state;
+
+    unsigned int frames;
+    DWORD prev_frame_time;
 };
 
 #define DDRAW_WINDOW_CLASS_NAME "DirectDrawDeviceWnd"
