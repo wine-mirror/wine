@@ -83,6 +83,37 @@ static WCHAR *make_wstr(const char *str)
     return ret;
 }
 
+static BOOL check_window_exists(const char *name)
+{
+    HWND window = NULL;
+    int i;
+
+    for (i = 0; i < 10; i++)
+    {
+        if ((window = FindWindowA("ExplorerWClass", name))
+            || (window = FindWindowA("CabinetWClass", name)))
+        {
+            SendMessageA(window, WM_SYSCOMMAND, SC_CLOSE, 0);
+            break;
+        }
+
+        Sleep(100);
+    }
+
+    if (!window)
+        return FALSE;
+
+    for (i = 0; i < 10; i++)
+    {
+        if (!IsWindow(window))
+            break;
+
+        Sleep(100);
+    }
+
+    return TRUE;
+}
+
 static void init_function_pointers(void)
 {
     HMODULE hmod;
@@ -5360,6 +5391,74 @@ static void test_SHGetSetFolderCustomSettings(void)
     RemoveDirectoryW(pathW);
 }
 
+static void test_SHOpenFolderAndSelectItems(void)
+{
+    PIDLIST_ABSOLUTE folder, items[2];
+    HRESULT hr;
+
+    /* NULL folder */
+    hr = SHOpenFolderAndSelectItems(NULL, 0, NULL, 0);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    /* Open and select folder without child items */
+    folder = ILCreateFromPathW(L"C:\\Windows\\System32");
+    hr = SHOpenFolderAndSelectItems(folder, 0, NULL, 0);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine
+    ok(check_window_exists("Windows"), "Failed to create window.\n");
+    ILFree(folder);
+
+    /* Open folder and select one child item */
+    folder = ILCreateFromPathW(L"C:\\Windows");
+    items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
+    hr = SHOpenFolderAndSelectItems(folder, 1, (PCUITEMID_CHILD_ARRAY)items, 0);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine
+    ok(check_window_exists("Windows"), "Failed to create window.\n");
+    ILFree(items[0]);
+    ILFree(folder);
+
+    /* Open folder and select two child items */
+    folder = ILCreateFromPathW(L"C:\\Windows");
+    items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
+    items[1] = ILCreateFromPathW(L"C:\\Windows\\Resources");
+    hr = SHOpenFolderAndSelectItems(folder, 2, (PCUITEMID_CHILD_ARRAY)items, 0);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine
+    ok(check_window_exists("Windows"), "Failed to create window.\n");
+    ILFree(items[1]);
+    ILFree(items[0]);
+    ILFree(folder);
+
+    /* Open folder and select one child item with OFASI_EDIT */
+    folder = ILCreateFromPathW(L"C:\\Windows");
+    items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
+    hr = SHOpenFolderAndSelectItems(folder, 1, (PCUITEMID_CHILD_ARRAY)items, OFASI_EDIT);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine
+    ok(check_window_exists("Windows"), "Failed to create window.\n");
+    ILFree(items[0]);
+    ILFree(folder);
+
+    /* Open folder and select two child items and OFASI_EDIT */
+    folder = ILCreateFromPathW(L"C:\\Windows");
+    items[0] = ILCreateFromPathW(L"C:\\Windows\\System32");
+    items[1] = ILCreateFromPathW(L"C:\\Windows\\Resources");
+    hr = SHOpenFolderAndSelectItems(folder, 2, (PCUITEMID_CHILD_ARRAY)items, 0);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine
+    ok(check_window_exists("Windows"), "Failed to create window.\n");
+    ILFree(items[1]);
+    ILFree(items[0]);
+    ILFree(folder);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5404,6 +5503,7 @@ START_TEST(shlfolder)
     test_GetDefaultSearchGUID();
     test_SHLimitInputEdit();
     test_SHGetSetFolderCustomSettings();
+    test_SHOpenFolderAndSelectItems();
 
     OleUninitialize();
 }
