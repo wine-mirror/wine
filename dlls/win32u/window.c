@@ -3751,10 +3751,12 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         if (winpos->hwndInsertAfter == (HWND)0xffff) winpos->hwndInsertAfter = HWND_TOPMOST;
         else if (winpos->hwndInsertAfter == (HWND)0xfffe) winpos->hwndInsertAfter = HWND_NOTOPMOST;
 
-        if (!(winpos->hwndInsertAfter == HWND_TOP ||
-              winpos->hwndInsertAfter == HWND_BOTTOM ||
-              winpos->hwndInsertAfter == HWND_TOPMOST ||
-              winpos->hwndInsertAfter == HWND_NOTOPMOST))
+        if (winpos->hwndInsertAfter == HWND_TOPMOST || winpos->hwndInsertAfter == HWND_NOTOPMOST)
+        {
+            HWND parent = NtUserGetAncestor( NtUserGetAncestor( winpos->hwnd, GA_ROOT ), GA_PARENT );
+            if (parent == get_hwnd_message_parent()) return TRUE;
+        }
+        else if (winpos->hwndInsertAfter != HWND_TOP && winpos->hwndInsertAfter != HWND_BOTTOM)
         {
             HWND parent = NtUserGetAncestor( winpos->hwnd, GA_PARENT );
             HWND insertafter_parent = NtUserGetAncestor( winpos->hwndInsertAfter, GA_PARENT );
