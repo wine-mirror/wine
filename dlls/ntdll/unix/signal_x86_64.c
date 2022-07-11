@@ -3295,6 +3295,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "pushfq\n\t"
                    "popq 0x80(%rcx)\n\t"
                    "movl $0,0x94(%rcx)\n\t"        /* frame->restore_flags */
+                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_prolog_end") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movq %rax,0x00(%rcx)\n\t"
                    "movq %rbx,0x08(%rcx)\n\t"
@@ -3424,7 +3425,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x10(%rcx),%rcx\n"
                    "iretq\n"
                    "5:\tmovl $0xc000000d,%edx\n\t" /* STATUS_INVALID_PARAMETER */
-                   "movq %rsp,%rcx\n"
+                   "movq %rsp,%rcx\n\t"
+                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "movq %rdx,%rax\n\t"

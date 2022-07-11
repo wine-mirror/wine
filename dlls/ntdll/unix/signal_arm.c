@@ -1261,7 +1261,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "movt r0, #0xc000\n\t"
                    "add sp, sp, #0x10\n\t"
-                   "b 4b\n"
+                   "b 4b\n\t"
+                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "mov r8, r0\n\t"
                    "mov r0, r1\n\t"
