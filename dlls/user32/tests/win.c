@@ -8919,6 +8919,133 @@ static void test_hwnd_message(void)
     DestroyWindow(hwnd);
 }
 
+static HWND message_window_topmost_hwnd_msg = NULL;
+static BOOL message_window_topmost_received_killfocus;
+
+static LRESULT WINAPI message_window_topmost_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    todo_wine_if(hwnd == message_window_topmost_hwnd_msg)
+    ok(hwnd != message_window_topmost_hwnd_msg, "Received message %u for message-only window %p\n", msg, hwnd);
+    if (msg == WM_KILLFOCUS) message_window_topmost_received_killfocus = TRUE;
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+
+static void test_message_window_topmost(void)
+{
+    /* All SWP_* flags except SWP_NOZORDER, which has a different effect. */
+    const UINT swp_flags = SWP_ASYNCWINDOWPOS | SWP_DEFERERASE | SWP_DRAWFRAME | SWP_FRAMECHANGED
+            | SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOOWNERZORDER
+            | SWP_NOREDRAW | SWP_NOSENDCHANGING | SWP_NOSIZE | SWP_SHOWWINDOW;
+    /* Same as above, except the flags that cause
+     * ERROR_INVALID_PARAMETER to be returned by DeferWindowPos(). */
+    const UINT dwp_flags = SWP_DRAWFRAME | SWP_FRAMECHANGED
+            | SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOOWNERZORDER
+            | SWP_NOREDRAW | SWP_NOSIZE | SWP_SHOWWINDOW;
+    HWND hwnd, hwnd_msg;
+    HDWP hdwp;
+    RECT rect;
+    BOOL ret;
+    MSG msg;
+
+    hwnd = CreateWindowW(L"static", L"main window", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            210, 211, 212, 213, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    ok(!!hwnd, "Cannot create main window\n");
+    flush_events(TRUE);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)message_window_topmost_proc);
+
+    hwnd_msg = CreateWindowW(L"static", L"message window", 0,
+            220, 221, 222, 223, HWND_MESSAGE, NULL, GetModuleHandleW(NULL), NULL);
+    ok(!!hwnd_msg, "Cannot create message window\n");
+    flush_events(TRUE);
+    SetWindowLongPtrW(hwnd_msg, GWLP_WNDPROC, (LONG_PTR)message_window_topmost_proc);
+
+    ret = GetWindowRect(hwnd_msg, &rect);
+    ok(ret, "Unexpected failure when calling GetWindowRect()\n");
+    ok(rect.left == 220 && rect.top == 221 && rect.right == 220 + 222 && rect.bottom == 221 + 223,
+            "Unexpected rectangle %s\n", wine_dbgstr_rect(&rect));
+
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    message_window_topmost_hwnd_msg = hwnd_msg;
+
+    SetLastError(0xdeadbeef);
+
+    ret = SetWindowPos(hwnd_msg, HWND_TOPMOST, 230, 231, 232, 233, 0);
+    ok(ret, "Unexpected failure when calling SetWindowPos()\n");
+
+    ret = SetWindowPos(hwnd_msg, HWND_TOPMOST, 234, 235, 236, 237, swp_flags);
+    ok(ret, "Unexpected failure when calling SetWindowPos()\n");
+
+    ret = SetWindowPos(hwnd_msg, HWND_NOTOPMOST, 240, 241, 242, 243, 0);
+    ok(ret, "Unexpected failure when calling SetWindowPos()\n");
+
+    ret = SetWindowPos(hwnd_msg, HWND_NOTOPMOST, 244, 245, 246, 247, swp_flags);
+    ok(ret, "Unexpected failure when calling SetWindowPos()\n");
+
+    hdwp = BeginDeferWindowPos(4);
+    ok(!!hdwp, "Unexpected failure when calling BeginDeferWindowPos()\n");
+
+    hdwp = DeferWindowPos(hdwp, hwnd_msg, HWND_TOPMOST, 250, 251, 252, 253, 0);
+    ok(!!hdwp, "Unexpected failure when calling DeferWindowPos()\n");
+
+    hdwp = DeferWindowPos(hdwp, hwnd_msg, HWND_TOPMOST, 254, 255, 256, 257, dwp_flags);
+    ok(!!hdwp, "Unexpected failure when calling DeferWindowPos()\n");
+
+    hdwp = DeferWindowPos(hdwp, hwnd_msg, HWND_NOTOPMOST, 260, 261, 262, 263, 0);
+    ok(!!hdwp, "Unexpected failure when calling DeferWindowPos()\n");
+
+    hdwp = DeferWindowPos(hdwp, hwnd_msg, HWND_NOTOPMOST, 264, 265, 266, 267, dwp_flags);
+    ok(!!hdwp, "Unexpected failure when calling DeferWindowPos()\n");
+
+    ret = EndDeferWindowPos(hdwp);
+    ok(ret, "Unexpected failure when calling EndDeferWindowPos()\n");
+
+    todo_wine ok(GetLastError() == 0xdeadbeef, "Last error unexpectedly set to %#lx\n", GetLastError());
+
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    message_window_topmost_hwnd_msg = NULL;
+
+    ret = GetWindowRect(hwnd_msg, &rect);
+    ok(ret, "Unexpected failure when calling GetWindowRect()\n");
+    todo_wine ok(rect.left == 220 && rect.top == 221 && rect.right == 220 + 222 && rect.bottom == 221 + 223,
+            "Unexpected rectangle %s\n", wine_dbgstr_rect(&rect));
+
+    todo_wine
+    ok(!message_window_topmost_received_killfocus, "Received WM_KILLFOCUS\n");
+    message_window_topmost_received_killfocus = FALSE;
+
+    ret = SetWindowPos(hwnd_msg, HWND_TOPMOST, 230, 231, 232, 233, SWP_NOZORDER);
+    ok(ret, "Unexpected failure when calling SetWindowPos()\n");
+
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    todo_wine_if(!message_window_topmost_received_killfocus)
+    ok(message_window_topmost_received_killfocus, "Did not receive WM_KILLFOCUS\n");
+
+    ret = GetWindowRect(hwnd_msg, &rect);
+    ok(ret, "Unexpected failure when calling GetWindowRect()\n");
+    ok(rect.left == 230 && rect.top == 231 && rect.right == 230 + 232 && rect.bottom == 231 + 233,
+            "Unexpected rectangle %s\n", wine_dbgstr_rect(&rect));
+
+    ok(DestroyWindow(hwnd_msg), "Cannot destroy main window\n");
+    ok(DestroyWindow(hwnd), "Cannot destroy message window\n");
+}
+
+
 static void test_layered_window(void)
 {
     HWND hwnd, child;
@@ -13326,6 +13453,7 @@ START_TEST(win)
     test_thick_child_size(hwndMain);
     test_fullscreen();
     test_hwnd_message();
+    test_message_window_topmost();
     test_nonclient_area(hwndMain);
     test_params();
     test_GetWindowModuleFileName();
