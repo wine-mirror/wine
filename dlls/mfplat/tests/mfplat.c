@@ -6195,7 +6195,7 @@ static void test_MFCreate2DMediaBuffer(void)
             data2[j] = j & 0x7f;
 
         hr = IMF2DBuffer2_ContiguousCopyFrom(_2dbuffer2, data2, ptr->contiguous_length - 1);
-        todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
         ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
@@ -6207,7 +6207,7 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
         hr = IMF2DBuffer2_ContiguousCopyFrom(_2dbuffer2, data2, ptr->contiguous_length + 16);
-        todo_wine ok(hr == S_OK, "Failed to copy from contiguous buffer, hr %#lx.\n", hr);
+        ok(hr == S_OK, "Failed to copy from contiguous buffer, hr %#lx.\n", hr);
 
         hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
         ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
@@ -6226,7 +6226,7 @@ static void test_MFCreate2DMediaBuffer(void)
             if (data[j] != (j & 0x7f))
                 break;
         }
-        todo_wine ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data[j], j & 0x7f, j);
+        ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data[j], j & 0x7f, j);
 
         memset(data, 0xff, length2);
 
@@ -6234,7 +6234,7 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
         hr = IMF2DBuffer2_ContiguousCopyFrom(_2dbuffer2, data2, ptr->contiguous_length);
-        todo_wine ok(hr == S_OK, "Failed to copy from contiguous buffer, hr %#lx.\n", hr);
+        ok(hr == S_OK, "Failed to copy from contiguous buffer, hr %#lx.\n", hr);
 
         free(data2);
 
@@ -6255,7 +6255,7 @@ static void test_MFCreate2DMediaBuffer(void)
             if (data[j] != (j & 0x7f))
                 break;
         }
-        todo_wine ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data[j], j & 0x7f, j);
+        ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data[j], j & 0x7f, j);
 
         hr = pMFGetStrideForBitmapInfoHeader(ptr->subtype->Data1, ptr->width, &stride);
         ok(hr == S_OK, "Failed to get stride, hr %#lx.\n", hr);

@@ -608,9 +608,28 @@ static HRESULT WINAPI memory_2d_buffer_ContiguousCopyTo(IMF2DBuffer2 *iface, BYT
 
 static HRESULT WINAPI memory_2d_buffer_ContiguousCopyFrom(IMF2DBuffer2 *iface, const BYTE *src_buffer, DWORD src_length)
 {
-    FIXME("%p, %p, %lu.\n", iface, src_buffer, src_length);
+    struct buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    BYTE *dst_scanline0, *dst_buffer_start;
+    DWORD dst_length;
+    LONG dst_pitch;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %lu.\n", iface, src_buffer, src_length);
+
+    if (src_length < buffer->_2d.plane_size)
+        return E_INVALIDARG;
+
+    hr = IMF2DBuffer2_Lock2DSize(iface, MF2DBuffer_LockFlags_Write, &dst_scanline0, &dst_pitch, &dst_buffer_start, &dst_length);
+
+    if (SUCCEEDED(hr))
+    {
+        copy_image(buffer, dst_scanline0, dst_pitch, src_buffer, buffer->_2d.width, buffer->_2d.width, buffer->_2d.height);
+
+        if (FAILED(IMF2DBuffer2_Unlock2D(iface)))
+            WARN("Couldn't unlock destination buffer %p, hr %#lx.\n", iface, hr);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI memory_2d_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DBuffer_LockFlags flags, BYTE **scanline0,
