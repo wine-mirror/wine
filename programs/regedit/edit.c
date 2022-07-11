@@ -81,29 +81,53 @@ static void WINAPIV error_code_messagebox(HWND hwnd, unsigned int msg_id, ...)
     va_end(ap);
 }
 
-static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wparam, LPARAM lparam)
+static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
 {
     HWND hwndValue;
     unsigned int len;
+    WCHAR *buf;
+    LONG ret;
+
+    hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA);
+    len = GetWindowTextLengthW(hwndValue);
+    buf = malloc((len + 1) * sizeof(WCHAR));
+    len = GetWindowTextW(hwndValue, buf, len + 1);
+
+    free(params->data);
+    params->data = buf;
+    params->size = (len + 1) * sizeof(WCHAR);
+
+    ret = RegSetValueExW(params->hkey, params->value_name, 0, params->type, (BYTE *)params->data, params->size);
+    if (ret) error_code_messagebox(hwndDlg, IDS_SET_VALUE_FAILED);
+
+    free(params->data);
+    params->data = NULL;
+
+    return !ret;
+}
+
+static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    struct edit_params *params;
+    int ret = 0;
 
     switch (msg)
     {
     case WM_INITDIALOG:
+        params = (struct edit_params *)lparam;
+        SetWindowLongPtrW(hwndDlg, DWLP_USER, (ULONG_PTR)params);
         SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, editValueName);
-        SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, stringValueData);
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, params->data);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wparam))
         {
         case IDOK:
-            hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA);
-            len = GetWindowTextLengthW(hwndValue);
-            stringValueData = realloc(stringValueData, (len + 1) * sizeof(WCHAR));
-            if (!GetWindowTextW(hwndValue, stringValueData, len + 1))
-                *stringValueData = 0;
+            params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+            ret = update_registry_value(hwndDlg, params);
             /* fall through */
         case IDCANCEL:
-            EndDialog(hwndDlg, wparam);
+            EndDialog(hwndDlg, ret);
             return TRUE;
         }
     }
@@ -281,11 +305,12 @@ done:
 
 BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 {
-    BOOL result = FALSE;
+    HKEY hKey;
     DWORD type;
     LONG lRet;
-    HKEY hKey;
     LONG len;
+    struct edit_params params;
+    BOOL result = FALSE;
 
     lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet) {
@@ -296,12 +321,14 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     editValueName = valueName ? valueName : g_pszDefaultValueName;
     if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, &len))) goto done;
 
+    params.hkey = hKey;
+    params.value_name = valueName;
+    params.type = type;
+    params.data = stringValueData;
+    params.size = len;
+
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
-        if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_STRING), hwnd, modify_string_dlgproc) == IDOK) {
-            lRet = RegSetValueExW(hKey, valueName, 0, type, (LPBYTE)stringValueData, (lstrlenW(stringValueData) + 1) * sizeof(WCHAR));
-            if (lRet == ERROR_SUCCESS) result = TRUE;
-            else error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);
-        }
+        result = DialogBoxParamW(0, MAKEINTRESOURCEW(IDD_EDIT_STRING), hwnd, modify_string_dlgproc, (LPARAM)&params);
     } else if ( type == REG_DWORD ) {
         DWORD value = *((DWORD*)stringValueData);
         stringValueData = realloc(stringValueData, 64);
@@ -383,13 +410,6 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     }
     else /* hex data types */
     {
-        struct edit_params params;
-
-        params.hkey = hKey;
-        params.value_name = valueName;
-        params.type = type;
-        params.data = stringValueData;
-        params.size = len;
         result = DialogBoxParamW(NULL, MAKEINTRESOURCEW(IDD_EDIT_BINARY), hwnd,
                                  bin_modify_dlgproc, (LPARAM)&params);
     }
