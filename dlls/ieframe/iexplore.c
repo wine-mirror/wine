@@ -1027,10 +1027,12 @@ static HDDEDATA open_dde_url(WCHAR *dde_url)
     }
 
     hres = IWebBrowser2_Navigate2(&ie->IWebBrowser2_iface, &urlv, NULL, NULL, NULL, NULL);
+
+    SysFreeString(V_BSTR(&urlv));
+    IWebBrowser2_Release(&ie->IWebBrowser2_iface);
+
     if(FAILED(hres))
         return 0;
-
-    IWebBrowser2_Release(&ie->IWebBrowser2_iface);
     return ULongToHandle(DDE_FACK);
 }
 
