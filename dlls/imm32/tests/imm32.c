@@ -30,6 +30,7 @@
 BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
 static BOOL (WINAPI *pImmAssociateContextEx)(HWND,HIMC,DWORD);
+static UINT (WINAPI *pNtUserAssociateInputContext)(HWND,HIMC,ULONG);
 static BOOL (WINAPI *pImmIsUIMessageA)(HWND,UINT,WPARAM,LPARAM);
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
@@ -303,6 +304,8 @@ static BOOL init(void) {
     pImmAssociateContextEx = (void*)GetProcAddress(hmod, "ImmAssociateContextEx");
     pImmIsUIMessageA = (void*)GetProcAddress(hmod, "ImmIsUIMessageA");
     pSendInput = (void*)GetProcAddress(huser, "SendInput");
+    pNtUserAssociateInputContext = (void*)GetProcAddress(GetModuleHandleW(L"win32u.dll"),
+                                                         "NtUserAssociateInputContext");
 
     wc.cbSize        = sizeof(WNDCLASSEXA);
     wc.style         = 0;
@@ -746,6 +749,81 @@ static void test_ImmAssociateContextEx(void)
         CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
         CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
+
+        SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
+        SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, FALSE);
+    }
+    ImmReleaseContext(hwnd,imc);
+}
+
+/* similar to above, but using NtUserAssociateInputContext */
+static void test_NtUserAssociateInputContext(void)
+{
+    HIMC imc;
+    UINT rc;
+
+    if (!pNtUserAssociateInputContext)
+    {
+        win_skip("NtUserAssociateInputContext not available\n");
+        return;
+    }
+
+    imc = ImmGetContext(hwnd);
+    if (imc)
+    {
+        HIMC retimc, newimc;
+        HWND focus;
+
+        SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, TRUE);
+        SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, TRUE);
+
+        ok(GetActiveWindow() == hwnd, "hwnd is not active\n");
+        newimc = ImmCreateContext();
+        ok(newimc != imc, "handles should not be the same\n");
+        rc = pNtUserAssociateInputContext(NULL, NULL, 0);
+        ok(rc == 2, "NtUserAssociateInputContext returned %x\n", rc);
+        rc = pNtUserAssociateInputContext(hwnd, NULL, 0);
+        ok(rc == 1, "NtUserAssociateInputContext returned %x\n", rc);
+        rc = pNtUserAssociateInputContext(NULL, imc, 0);
+        ok(rc == 2, "NtUserAssociateInputContext returned %x\n", rc);
+
+        rc = pNtUserAssociateInputContext(hwnd, imc, 0);
+        ok(rc == 1, "NtUserAssociateInputContext returned %x\n", rc);
+        retimc = ImmGetContext(hwnd);
+        ok(retimc == imc, "handles should be the same\n");
+        ImmReleaseContext(hwnd,retimc);
+
+        rc = pNtUserAssociateInputContext(hwnd, imc, 0);
+        ok(rc == 0, "NtUserAssociateInputContext returned %x\n", rc);
+
+        rc = pNtUserAssociateInputContext(hwnd, newimc, 0);
+        ok(rc == 1, "NtUserAssociateInputContext returned %x\n", rc);
+        retimc = ImmGetContext(hwnd);
+        ok(retimc == newimc, "handles should be the same\n");
+        ImmReleaseContext(hwnd,retimc);
+
+        focus = CreateWindowA("button", "button", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        ok(focus != NULL, "CreateWindow failed\n");
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SetFocus(focus);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        rc = pNtUserAssociateInputContext(hwnd, imc, 0);
+        ok(rc == 0, "NtUserAssociateInputContext returned %x\n", rc);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
+        DestroyWindow(focus);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
+
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SetFocus(child);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        rc = pNtUserAssociateInputContext(hwnd, newimc, 0);
+        ok(rc == 0, "NtUserAssociateInputContext returned %x\n", rc);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
+        SetFocus(hwnd);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
+
+        rc = pNtUserAssociateInputContext(hwnd, NULL, IACE_DEFAULT);
+        ok(rc == 1, "NtUserAssociateInputContext returned %x\n", rc);
 
         SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
         SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, FALSE);
@@ -2331,6 +2409,7 @@ START_TEST(imm32) {
         test_ImmSetCompositionString();
         test_ImmIME();
         test_ImmAssociateContextEx();
+        test_NtUserAssociateInputContext();
         test_ImmThreads();
         test_ImmIsUIMessage();
         test_ImmGetContext();
