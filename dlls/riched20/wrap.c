@@ -835,6 +835,15 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
       if (SUCCEEDED( itemize_para( c, para ) ))
           shape_para( c, para );
   }
+  else
+  {
+      /* If the user has just converted a normal rich editor with already
+       * existing text into a password input, the text may contain paragraphs
+       * with MEPF_COMPLEX set.  Since we don't really shape any paragraphs
+       * here, we need to ensure that the MEPF_COMPLEX flag is unset.
+       */
+      para->nFlags &= ~MEPF_COMPLEX;
+  }
 
   wc.context = c;
   wc.para = para;
