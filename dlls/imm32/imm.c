@@ -29,7 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "winerror.h"
 #include "wine/debug.h"
 #include "imm.h"
@@ -73,6 +73,7 @@ typedef struct _tagImmHkl{
 
 typedef struct tagInputContextData
 {
+        HIMC            handle;
         DWORD           dwLock;
         INPUTCONTEXT    IMC;
         DWORD           threadID;
@@ -80,7 +81,6 @@ typedef struct tagInputContextData
         ImmHkl          *immKbd;
         UINT            lastVK;
         BOOL            threadDefault;
-        DWORD           magic;
 } InputContextData;
 
 #define WINE_IMC_VALID_MAGIC 0x56434D49
@@ -628,19 +628,13 @@ static HIMCC ImmCreateBlankCompStr(void)
     return rc;
 }
 
-static InputContextData* get_imc_data(HIMC hIMC)
+static InputContextData *get_imc_data(HIMC handle)
 {
-    InputContextData *data = hIMC;
+    InputContextData *ret;
 
-    if (hIMC == NULL)
-        return NULL;
-
-    if(IsBadReadPtr(data, sizeof(InputContextData)) || data->magic != WINE_IMC_VALID_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
-    }
-    return data;
+    if (!handle) return NULL;
+    ret = (void *)NtUserQueryInputContext( handle, NtUserInputContextClientPtr );
+    return ret && ret->handle == handle ? ret : NULL;
 }
 
 static HIMC get_default_context( HWND hwnd )
@@ -668,7 +662,7 @@ static HIMC get_default_context( HWND hwnd )
 
     ret = ImmCreateContext();
     if (!ret) return 0;
-    ((InputContextData*)ret)->threadDefault = TRUE;
+    get_imc_data(ret)->threadDefault = TRUE;
 
     /* thread_data is in the current thread so we can assume it's still valid */
     EnterCriticalSection(&threaddata_cs);
@@ -903,9 +897,16 @@ HIMC WINAPI ImmCreateContext(void)
     InputContextData *new_context;
     LPGUIDELINE gl;
     LPCANDIDATEINFO ci;
+    HIMC handle;
     int i;
 
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
+
+    if (!(handle = NtUserCreateInputContext((UINT_PTR)new_context)))
+    {
+        HeapFree(GetProcessHeap(),0,new_context);
+        return 0;
+    }
 
     /* Load the IME */
     new_context->immKbd = IMM_GetImmHkl(GetKeyboardLayout(0));
@@ -913,6 +914,7 @@ HIMC WINAPI ImmCreateContext(void)
     if (!new_context->immKbd->hIME)
     {
         TRACE("IME dll could not be loaded\n");
+        NtUserDestroyInputContext(handle);
         HeapFree(GetProcessHeap(),0,new_context);
         return 0;
     }
@@ -940,9 +942,10 @@ HIMC WINAPI ImmCreateContext(void)
     new_context->IMC.fdwConversion = new_context->immKbd->imeInfo.fdwConversionCaps;
     new_context->IMC.fdwSentence = new_context->immKbd->imeInfo.fdwSentenceCaps;
 
-    if (!new_context->immKbd->pImeSelect(new_context, TRUE))
+    if (!new_context->immKbd->pImeSelect(handle, TRUE))
     {
         TRACE("Selection of IME failed\n");
+        NtUserDestroyInputContext(handle);
         IMM_DestroyContext(new_context);
         return 0;
     }
@@ -952,8 +955,7 @@ HIMC WINAPI ImmCreateContext(void)
     new_context->immKbd->uSelected++;
     TRACE("Created context %p\n",new_context);
 
-    new_context->magic = WINE_IMC_VALID_MAGIC;
-    return new_context;
+    return new_context->handle = handle;
 }
 
 static BOOL IMM_DestroyContext(HIMC hIMC)
@@ -975,7 +977,7 @@ static BOOL IMM_DestroyContext(HIMC hIMC)
     ImmDestroyIMCC(data->IMC.hPrivate);
     ImmDestroyIMCC(data->IMC.hMsgBuf);
 
-    data->magic = 0;
+    NtUserDestroyInputContext(data->handle);
     HeapFree(GetProcessHeap(),0,data);
 
     return TRUE;
@@ -1730,8 +1732,9 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
 
     if (rc)
     {
-        InputContextData *data = rc;
-        data->IMC.hWnd = hWnd;
+        InputContextData *data = get_imc_data(rc);
+        if (data) data->IMC.hWnd = hWnd;
+        else rc = 0;
     }
 
     TRACE("returning %p\n", rc);
@@ -2218,7 +2221,7 @@ BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 {
   OSVERSIONINFOA version;
-  InputContextData *data = ImmGetContext( hWnd );
+  InputContextData *data = get_imc_data( ImmGetContext( hWnd ));
   TRACE("%p\n", hWnd);
 
   if ( data )
@@ -3233,10 +3236,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
 
     TRACE("%p %x %x %x\n",hwnd, msg, (UINT)wParam, (UINT)lKeyData);
 
-    if (imc)
-        data = imc;
-    else
-        return FALSE;
+    if (!(data = get_imc_data( imc ))) return FALSE;
 
     if (!data->immKbd->hIME || !data->immKbd->pImeToAsciiEx || data->lastVK == VK_PROCESSKEY)
         return FALSE;
@@ -3292,10 +3292,7 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
 
     TRACE("%p %p %x %x %lx\n",hwnd, hKL, vKey, (UINT)lKeyData, unknown);
 
-    if (imc)
-        data = imc;
-    else
-        return FALSE;
+    if (!(data = get_imc_data( imc ))) return FALSE;
 
     /* Make sure we are inputting to the correct keyboard */
     if (data->immKbd->hkl != hKL)
