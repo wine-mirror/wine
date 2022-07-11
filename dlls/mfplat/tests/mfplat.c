@@ -6259,12 +6259,12 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
         hr = IMF2DBuffer2_ContiguousCopyTo(_2dbuffer2, data2, ptr->contiguous_length - 1);
-        todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
         memset(data2, 0xff, ptr->contiguous_length + 16);
 
         hr = IMF2DBuffer2_ContiguousCopyTo(_2dbuffer2, data2, ptr->contiguous_length + 16);
-        todo_wine ok(hr == S_OK, "Failed to copy to contiguous buffer, hr %#lx.\n", hr);
+        ok(hr == S_OK, "Failed to copy to contiguous buffer, hr %#lx.\n", hr);
 
         for (j = 0; j < ptr->contiguous_length; j++)
         {
@@ -6278,12 +6278,12 @@ static void test_MFCreate2DMediaBuffer(void)
             if (data2[j] != (j & 0x7f))
                 break;
         }
-        todo_wine ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data2[j], j & 0x7f, j);
+        ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data2[j], j & 0x7f, j);
 
         memset(data2, 0xff, ptr->contiguous_length + 16);
 
         hr = IMF2DBuffer2_ContiguousCopyTo(_2dbuffer2, data2, ptr->contiguous_length);
-        todo_wine ok(hr == S_OK, "Failed to copy to contiguous buffer, hr %#lx.\n", hr);
+        ok(hr == S_OK, "Failed to copy to contiguous buffer, hr %#lx.\n", hr);
 
         for (j = 0; j < ptr->contiguous_length; j++)
         {
@@ -6297,7 +6297,7 @@ static void test_MFCreate2DMediaBuffer(void)
             if (data2[j] != (j & 0x7f))
                 break;
         }
-        todo_wine ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data2[j], j & 0x7f, j);
+        ok(j == ptr->contiguous_length, "Unexpected byte %02x instead of %02x at position %u.\n", data2[j], j & 0x7f, j);
 
         free(data2);
 

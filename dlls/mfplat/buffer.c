@@ -601,9 +601,28 @@ static HRESULT WINAPI memory_2d_buffer_GetContiguousLength(IMF2DBuffer2 *iface, 
 
 static HRESULT WINAPI memory_2d_buffer_ContiguousCopyTo(IMF2DBuffer2 *iface, BYTE *dest_buffer, DWORD dest_length)
 {
-    FIXME("%p, %p, %lu.\n", iface, dest_buffer, dest_length);
+    struct buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    BYTE *src_scanline0, *src_buffer_start;
+    DWORD src_length;
+    LONG src_pitch;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %lu.\n", iface, dest_buffer, dest_length);
+
+    if (dest_length < buffer->_2d.plane_size)
+        return E_INVALIDARG;
+
+    hr = IMF2DBuffer2_Lock2DSize(iface, MF2DBuffer_LockFlags_Read, &src_scanline0, &src_pitch, &src_buffer_start, &src_length);
+
+    if (SUCCEEDED(hr))
+    {
+        copy_image(buffer, dest_buffer, buffer->_2d.width, src_scanline0, src_pitch, buffer->_2d.width, buffer->_2d.height);
+
+        if (FAILED(IMF2DBuffer2_Unlock2D(iface)))
+            WARN("Couldn't unlock source buffer %p, hr %#lx.\n", iface, hr);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI memory_2d_buffer_ContiguousCopyFrom(IMF2DBuffer2 *iface, const BYTE *src_buffer, DWORD src_length)
