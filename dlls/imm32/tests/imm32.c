@@ -2336,6 +2336,7 @@ static void test_com_initialization(void)
 
     wnd = CreateWindowA("static", "static", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, 0);
     ok(wnd != NULL, "CreateWindow failed\n");
+    test_apttype(-1);
     ShowWindow(wnd, SW_SHOW);
     test_apttype(APTTYPE_MAINSTA);
     DestroyWindow(wnd);
@@ -2368,14 +2369,46 @@ static DWORD WINAPI disable_ime_thread(void *arg)
     return 0;
 }
 
+static DWORD WINAPI check_not_disabled_ime_thread(void *arg)
+{
+    HWND def, hwnd;
+
+    WaitForSingleObject(arg, INFINITE);
+    hwnd = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+    def = ImmGetDefaultIMEWnd(hwnd);
+    todo_wine
+    ok(def != NULL, "ImmGetDefaultIMEWnd returned %p\n", def);
+    return 0;
+}
+
+static DWORD WINAPI disable_ime_process(void *arg)
+{
+    BOOL r = ImmDisableIME(-1);
+    ok(r, "ImmDisableIME failed\n");
+    return 0;
+}
+
 static void test_ImmDisableIME(void)
 {
-    HANDLE thread;
-    HWND def;
+    HANDLE thread, event;
+    DWORD tid;
+    HWND def, def2;
     BOOL r;
 
     def = ImmGetDefaultIMEWnd(hwnd);
     ok(def != NULL, "ImmGetDefaultIMEWnd(hwnd) returned NULL\n");
+
+    event = CreateEventW(NULL, TRUE, FALSE, FALSE);
+    thread = CreateThread(NULL, 0, check_not_disabled_ime_thread, event, 0, &tid);
+    ok(thread != NULL, "CreateThread failed\n");
+    r = ImmDisableIME(tid);
+    todo_wine
+    ok(!r, "ImmDisableIME(tid) succeeded\n");
+    SetEvent(event);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    CloseHandle(event);
 
     thread = CreateThread(NULL, 0, disable_ime_thread, 0, 0, NULL);
     ok(thread != NULL, "CreateThread failed\n");
@@ -2386,6 +2419,23 @@ static void test_ImmDisableIME(void)
     ok(thread != NULL, "CreateThread failed\n");
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
+
+    msg_spy_pump_msg_queue();
+    thread = CreateThread(NULL, 0, disable_ime_process, 0, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    ok(IsWindow(def), "not a window\n");
+    def2 = ImmGetDefaultIMEWnd(hwnd);
+    todo_wine
+    ok(def2 == def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def2);
+    ok(IsWindow(def), "not a window\n");
+    msg_spy_pump_msg_queue();
+    todo_wine
+    ok(!IsWindow(def), "window is still valid\n");
+    def = ImmGetDefaultIMEWnd(hwnd);
+    ok(!def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def);
 
     r = ImmDisableIME(-1);
     ok(r, "ImmDisableIME(-1) failed\n");
