@@ -322,7 +322,7 @@ struct d3d10_effect_prop_dependency
 
 static HRESULT d3d10_reg_table_allocate(struct d3d10_reg_table *table, unsigned int count)
 {
-    if (!(table->f = heap_calloc(count, sizeof(*table->f))))
+    if (!(table->f = calloc(count, sizeof(*table->f))))
         return E_OUTOFMEMORY;
     table->count = count;
     return S_OK;
@@ -333,10 +333,10 @@ static void d3d10_effect_preshader_clear(struct d3d10_effect_preshader *p)
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(p->reg_tables); ++i)
-        heap_free(p->reg_tables[i].f);
+        free(p->reg_tables[i].f);
     if (p->code)
         ID3D10Blob_Release(p->code);
-    heap_free(p->vars);
+    free(p->vars);
     memset(p, 0, sizeof(*p));
 }
 
@@ -420,7 +420,7 @@ static void d3d10_effect_clear_prop_dependencies(struct d3d10_effect_prop_depend
                 break;
         }
     }
-    heap_free(d->entries);
+    free(d->entries);
     memset(d, 0, sizeof(*d));
 }
 
@@ -829,7 +829,7 @@ static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, S
     if (new_capacity < count)
         new_capacity = count;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return FALSE;
 
     *elements = new_elements;
@@ -966,7 +966,7 @@ static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, c
         return TRUE;
     }
 
-    if (!(*s = heap_alloc(len)))
+    if (!(*s = malloc(len)))
     {
         ERR("Failed to allocate string memory.\n");
         return FALSE;
@@ -979,23 +979,13 @@ static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, c
 
 static BOOL copy_name(const char *ptr, char **name)
 {
-    size_t name_len;
+    if (!ptr || !*ptr) return TRUE;
 
-    if (!ptr) return TRUE;
-
-    name_len = strlen(ptr) + 1;
-    if (name_len == 1)
-    {
-        return TRUE;
-    }
-
-    if (!(*name = heap_alloc(name_len)))
+    if (!(*name = strdup(ptr)))
     {
         ERR("Failed to allocate name memory.\n");
         return FALSE;
     }
-
-    memcpy(*name, ptr, name_len);
 
     return TRUE;
 }
@@ -1052,7 +1042,7 @@ static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v)
     sv->reflection->lpVtbl->GetDesc(sv->reflection, &desc);
     sv->resource_count = desc.BoundResources;
 
-    if (!(sv->resources = heap_calloc(sv->resource_count, sizeof(*sv->resources))))
+    if (!(sv->resources = calloc(sv->resource_count, sizeof(*sv->resources))))
     {
         ERR("Failed to allocate shader resource binding information memory.\n");
         return E_OUTOFMEMORY;
@@ -1110,8 +1100,8 @@ struct d3d10_effect_so_decl
 
 static void d3d10_effect_cleanup_so_decl(struct d3d10_effect_so_decl *so_decl)
 {
-    heap_free(so_decl->entries);
-    heap_free(so_decl->decl);
+    free(so_decl->entries);
+    free(so_decl->decl);
     memset(so_decl, 0, sizeof(*so_decl));
 }
 
@@ -1121,14 +1111,13 @@ static HRESULT d3d10_effect_parse_stream_output_declaration(const char *decl,
     static const char * xyzw = "xyzw";
     static const char * rgba = "rgba";
     char *p, *ptr, *end, *next, *mask, *m, *slot;
-    unsigned int len = strlen(decl);
     D3D10_SO_DECLARATION_ENTRY e;
+    unsigned int len;
 
     memset(so_decl, 0, sizeof(*so_decl));
 
-    if (!(so_decl->decl = heap_alloc(len + 1)))
+    if (!(so_decl->decl = strdup(decl)))
         return E_OUTOFMEMORY;
-    memcpy(so_decl->decl, decl, len + 1);
 
     p = so_decl->decl;
 
@@ -1485,7 +1474,7 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, uint32_t offs
             t->basetype = 0;
             t->type_class = D3D10_SVC_STRUCT;
 
-            if (!(t->members = heap_calloc(t->member_count, sizeof(*t->members))))
+            if (!(t->members = calloc(t->member_count, sizeof(*t->members))))
             {
                 ERR("Failed to allocate members memory.\n");
                 return E_OUTOFMEMORY;
@@ -1546,7 +1535,7 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, uint32_t offs
         TRACE("Elementtype for type at offset: %#lx\n", t->id);
 
         /* allocate elementtype - we need only one, because all elements have the same type */
-        if (!(t->elementtype = heap_alloc_zero(sizeof(*t->elementtype))))
+        if (!(t->elementtype = calloc(1, sizeof(*t->elementtype))))
         {
             ERR("Failed to allocate members memory.\n");
             return E_OUTOFMEMORY;
@@ -1614,7 +1603,7 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
         return WINE_RB_ENTRY_VALUE(entry, struct d3d10_effect_type, entry);
     }
 
-    if (!(type = heap_alloc_zero(sizeof(*type))))
+    if (!(type = calloc(1, sizeof(*type))))
     {
         ERR("Failed to allocate type memory.\n");
         return NULL;
@@ -1626,14 +1615,14 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
     if (FAILED(hr = parse_fx10_type(data, data_size, offset, type)))
     {
         ERR("Failed to parse type info, hr %#lx.\n", hr);
-        heap_free(type);
+        free(type);
         return NULL;
     }
 
     if (wine_rb_put(&effect->types, &offset, &type->entry) == -1)
     {
         ERR("Failed to insert type entry.\n");
-        heap_free(type);
+        free(type);
         return NULL;
     }
 
@@ -1734,7 +1723,7 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
 
     if (v->type->member_count)
     {
-        if (!(v->members = heap_calloc(v->type->member_count, sizeof(*v->members))))
+        if (!(v->members = calloc(v->type->member_count, sizeof(*v->members))))
         {
             ERR("Failed to allocate members memory.\n");
             return E_OUTOFMEMORY;
@@ -1776,7 +1765,7 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
     {
         unsigned int bufferoffset = v->buffer_offset;
 
-        if (!(v->elements = heap_calloc(v->type->element_count, sizeof(*v->elements))))
+        if (!(v->elements = calloc(v->type->element_count, sizeof(*v->elements))))
         {
             ERR("Failed to allocate elements memory.\n");
             return E_OUTOFMEMORY;
@@ -1891,7 +1880,7 @@ static HRESULT parse_fx10_annotations(const char *data, size_t data_size, const 
     unsigned int i;
     HRESULT hr;
 
-    if (!(annotations->elements = heap_calloc(annotations->count, sizeof(*annotations->elements))))
+    if (!(annotations->elements = calloc(annotations->count, sizeof(*annotations->elements))))
     {
         ERR("Failed to allocate annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -2294,7 +2283,7 @@ static HRESULT parse_fx10_ctab(void *ctx, const char *data, unsigned int data_si
 
     TRACE("Variable count %u.\n", p->vars_count);
 
-    if (!(p->vars = heap_calloc(p->vars_count, sizeof(*p->vars))))
+    if (!(p->vars = calloc(p->vars_count, sizeof(*p->vars))))
         return E_OUTOFMEMORY;
 
     info = (struct ctab_const_info *)(data + header.constantinfo);
@@ -2821,7 +2810,7 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
         return hr;
     }
 
-    if (!(t->passes = heap_calloc(t->pass_count, sizeof(*t->passes))))
+    if (!(t->passes = calloc(t->pass_count, sizeof(*t->passes))))
     {
         ERR("Failed to allocate passes memory\n");
         return E_OUTOFMEMORY;
@@ -3061,7 +3050,7 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
         case D3D10_SVT_TEXTURE2DMSARRAY:
         case D3D10_SVT_TEXTURE3D:
         case D3D10_SVT_TEXTURECUBE:
-            if (!(v->u.resource.srv = heap_calloc(element_count, sizeof(*v->u.resource.srv))))
+            if (!(v->u.resource.srv = calloc(element_count, sizeof(*v->u.resource.srv))))
             {
                 ERR("Failed to allocate shader resource view array memory.\n");
                 return E_OUTOFMEMORY;
@@ -3263,7 +3252,7 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
     unsigned int stride = 0;
 
     /* Generate our own type, it isn't in the fx blob. */
-    if (!(l->type = heap_alloc_zero(sizeof(*l->type))))
+    if (!(l->type = calloc(1, sizeof(*l->type))))
     {
         ERR("Failed to allocate local buffer type memory.\n");
         return E_OUTOFMEMORY;
@@ -3335,19 +3324,19 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
         }
     }
 
-    if (!(l->members = heap_calloc(l->type->member_count, sizeof(*l->members))))
+    if (!(l->members = calloc(l->type->member_count, sizeof(*l->members))))
     {
         ERR("Failed to allocate members memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(l->type->members = heap_calloc(l->type->member_count, sizeof(*l->type->members))))
+    if (!(l->type->members = calloc(l->type->member_count, sizeof(*l->type->members))))
     {
         ERR("Failed to allocate type members memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (local && !(l->u.buffer.local_buffer = heap_alloc_zero(l->data_size)))
+    if (local && !(l->u.buffer.local_buffer = calloc(1, l->data_size)))
     {
         ERR("Failed to allocate local constant buffer memory.\n");
         return E_OUTOFMEMORY;
@@ -3462,8 +3451,8 @@ static void d3d10_effect_type_member_destroy(struct d3d10_effect_type_member *ty
     TRACE("effect type member %p.\n", typem);
 
     /* Do not release typem->type, it will be covered by d3d10_effect_type_destroy(). */
-    heap_free(typem->semantic);
-    heap_free(typem->name);
+    free(typem->semantic);
+    free(typem->name);
 }
 
 static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context)
@@ -3474,8 +3463,8 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
 
     if (t->elementtype)
     {
-        heap_free(t->elementtype->name);
-        heap_free(t->elementtype);
+        free(t->elementtype->name);
+        free(t->elementtype);
     }
 
     if (t->members)
@@ -3486,11 +3475,11 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
         {
             d3d10_effect_type_member_destroy(&t->members[i]);
         }
-        heap_free(t->members);
+        free(t->members);
     }
 
-    heap_free(t->name);
-    heap_free(t);
+    free(t->name);
+    free(t);
 }
 
 static BOOL d3d10_effect_types_match(const struct d3d10_effect_type *t1,
@@ -3560,55 +3549,55 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, size_t 
     }
     ptr = data + e->index_offset;
 
-    if (!(e->local_buffers = heap_calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
+    if (!(e->local_buffers = calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
     {
         ERR("Failed to allocate local buffer memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->local_variables = heap_calloc(e->local_variable_count, sizeof(*e->local_variables))))
+    if (!(e->local_variables = calloc(e->local_variable_count, sizeof(*e->local_variables))))
     {
         ERR("Failed to allocate local variable memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->anonymous_shaders = heap_calloc(e->anonymous_shader_count, sizeof(*e->anonymous_shaders))))
+    if (!(e->anonymous_shaders = calloc(e->anonymous_shader_count, sizeof(*e->anonymous_shaders))))
     {
         ERR("Failed to allocate anonymous shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->shaders.v = heap_calloc(e->shaders.count, sizeof(*e->shaders.v))))
+    if (!(e->shaders.v = calloc(e->shaders.count, sizeof(*e->shaders.v))))
     {
         ERR("Failed to allocate used shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->samplers.v = heap_calloc(e->samplers.count, sizeof(*e->samplers.v))))
+    if (!(e->samplers.v = calloc(e->samplers.count, sizeof(*e->samplers.v))))
     {
         ERR("Failed to allocate samplers array.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->blend_states.v = heap_calloc(e->blend_states.count, sizeof(*e->blend_states.v))))
+    if (!(e->blend_states.v = calloc(e->blend_states.count, sizeof(*e->blend_states.v))))
     {
         ERR("Failed to allocate blend states array.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->ds_states.v = heap_calloc(e->ds_states.count, sizeof(*e->ds_states.v))))
+    if (!(e->ds_states.v = calloc(e->ds_states.count, sizeof(*e->ds_states.v))))
     {
         ERR("Failed to allocate depth stencil states array.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->rs_states.v = heap_calloc(e->rs_states.count, sizeof(*e->rs_states.v))))
+    if (!(e->rs_states.v = calloc(e->rs_states.count, sizeof(*e->rs_states.v))))
     {
         ERR("Failed to allocate rasterizer states array.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->techniques = heap_calloc(e->technique_count, sizeof(*e->techniques))))
+    if (!(e->techniques = calloc(e->technique_count, sizeof(*e->techniques))))
     {
         ERR("Failed to allocate techniques memory\n");
         return E_OUTOFMEMORY;
@@ -3812,7 +3801,7 @@ static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_vari
     }
 
     if (s->resource_count)
-        heap_free(s->resources);
+        free(s->resources);
 }
 
 static void d3d10_effect_annotations_destroy(struct d3d10_effect_annotations *a)
@@ -3823,7 +3812,7 @@ static void d3d10_effect_annotations_destroy(struct d3d10_effect_annotations *a)
 
     for (i = 0; i < a->count; ++i)
         d3d10_effect_variable_destroy(&a->elements[i]);
-    heap_free(a->elements);
+    free(a->elements);
     a->elements = NULL;
     a->count = 0;
 }
@@ -3834,8 +3823,8 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 
     TRACE("variable %p.\n", v);
 
-    heap_free(v->name);
-    heap_free(v->semantic);
+    free(v->name);
+    free(v->semantic);
     d3d10_effect_annotations_destroy(&v->annotations);
 
     if (v->members)
@@ -3844,7 +3833,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
         {
             d3d10_effect_variable_destroy(&v->members[i]);
         }
-        heap_free(v->members);
+        free(v->members);
     }
 
     if (v->elements)
@@ -3853,7 +3842,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
         {
             d3d10_effect_variable_destroy(&v->elements[i]);
         }
-        heap_free(v->elements);
+        free(v->elements);
     }
 
     if (v->type)
@@ -3897,11 +3886,11 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
                         ID3D10ShaderResourceView_Release(v->u.resource.srv[i]);
                 }
 
-                heap_free(v->u.resource.srv);
+                free(v->u.resource.srv);
                 break;
 
             case D3D10_SVT_STRING:
-                heap_free(v->u.buffer.local_buffer);
+                free(v->u.buffer.local_buffer);
                 break;
 
             default:
@@ -3914,7 +3903,7 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 {
     TRACE("pass %p\n", p);
 
-    heap_free(p->name);
+    free(p->name);
     d3d10_effect_annotations_destroy(&p->annotations);
     d3d10_effect_clear_prop_dependencies(&p->dependencies);
 }
@@ -3925,14 +3914,14 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
 
     TRACE("technique %p\n", t);
 
-    heap_free(t->name);
+    free(t->name);
     if (t->passes)
     {
         for (i = 0; i < t->pass_count; ++i)
         {
             d3d10_effect_pass_destroy(&t->passes[i]);
         }
-        heap_free(t->passes);
+        free(t->passes);
     }
 
     d3d10_effect_annotations_destroy(&t->annotations);
@@ -3944,21 +3933,21 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
 
     TRACE("local buffer %p.\n", l);
 
-    heap_free(l->name);
+    free(l->name);
     if (l->members)
     {
         for (i = 0; i < l->type->member_count; ++i)
         {
             d3d10_effect_variable_destroy(&l->members[i]);
         }
-        heap_free(l->members);
+        free(l->members);
     }
 
     if (l->type)
         d3d10_effect_type_destroy(&l->type->entry, NULL);
 
     d3d10_effect_annotations_destroy(&l->annotations);
-    heap_free(l->u.buffer.local_buffer);
+    free(l->u.buffer.local_buffer);
 
     if (l->u.buffer.buffer)
         ID3D10Buffer_Release(l->u.buffer.buffer);
@@ -4018,7 +4007,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_technique_destroy(&effect->techniques[i]);
             }
-            heap_free(effect->techniques);
+            free(effect->techniques);
         }
 
         if (effect->local_variables)
@@ -4027,7 +4016,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_variable_destroy(&effect->local_variables[i]);
             }
-            heap_free(effect->local_variables);
+            free(effect->local_variables);
         }
 
         if (effect->local_buffers)
@@ -4036,7 +4025,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_local_buffer_destroy(&effect->local_buffers[i]);
             }
-            heap_free(effect->local_buffers);
+            free(effect->local_buffers);
         }
 
         if (effect->anonymous_shaders)
@@ -4044,25 +4033,25 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             for (i = 0; i < effect->anonymous_shader_count; ++i)
             {
                 d3d10_effect_variable_destroy(&effect->anonymous_shaders[i].shader);
-                heap_free(effect->anonymous_shaders[i].type.name);
+                free(effect->anonymous_shaders[i].type.name);
             }
-            heap_free(effect->anonymous_shaders);
+            free(effect->anonymous_shaders);
         }
 
-        heap_free(effect->shaders.v);
-        heap_free(effect->samplers.v);
-        heap_free(effect->rtvs.v);
-        heap_free(effect->dsvs.v);
-        heap_free(effect->blend_states.v);
-        heap_free(effect->ds_states.v);
-        heap_free(effect->rs_states.v);
+        free(effect->shaders.v);
+        free(effect->samplers.v);
+        free(effect->rtvs.v);
+        free(effect->dsvs.v);
+        free(effect->blend_states.v);
+        free(effect->ds_states.v);
+        free(effect->rs_states.v);
 
         wine_rb_destroy(&effect->types, d3d10_effect_type_destroy, NULL);
 
         if (effect->pool)
             IUnknown_Release(&effect->pool->ID3D10Effect_iface);
         ID3D10Device_Release(effect->device);
-        heap_free(effect);
+        free(effect);
     }
 
     return refcount;
@@ -4382,7 +4371,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
             ID3D10Blob_Release(v->u.shader.bytecode);
             v->u.shader.bytecode = NULL;
         }
-        heap_free(v->u.shader.stream_output_declaration);
+        free(v->u.shader.stream_output_declaration);
         v->u.shader.stream_output_declaration = NULL;
     }
 
@@ -4390,11 +4379,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
     {
         for (j = 0; j < effect->techniques[i].pass_count; ++j)
         {
-            heap_free(effect->techniques[i].passes[j].name);
+            free(effect->techniques[i].passes[j].name);
             effect->techniques[i].passes[j].name = NULL;
         }
 
-        heap_free(effect->techniques[i].name);
+        free(effect->techniques[i].name);
         effect->techniques[i].name = NULL;
     }
 
@@ -9548,7 +9537,7 @@ static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *d
     struct d3d10_effect *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     wine_rb_init(&object->types, d3d10_effect_type_compare);
