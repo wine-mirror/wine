@@ -84,11 +84,16 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     irpsp->MinorFunction = IRP_MN_QUERY_ID;
     irpsp->Parameters.QueryId.IdType = type;
 
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     if (IoCallDriver(device, irp) == STATUS_PENDING)
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
-    wcscpy(id, (WCHAR *)irp_status.Information);
-    ExFreePool((WCHAR *)irp_status.Information);
+    if (!irp_status.Status)
+    {
+        wcscpy(id, (WCHAR *)irp_status.Information);
+        ExFreePool((WCHAR *)irp_status.Information);
+    }
+
     return irp_status.Status;
 }
 
