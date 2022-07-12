@@ -1375,7 +1375,7 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
         MSVCRT_bool canceling = call_func1(
                 p__StructuredTaskCollection__IsCanceling,
                 chore->chore.task_collection);
-        ok(!canceling, "Task is already canceling");
+        ok(!canceling, "Task is already canceling\n");
     }
 
     if (!chore->wait_event)
@@ -1399,7 +1399,7 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
         MSVCRT_bool canceling = call_func1(
                 p__StructuredTaskCollection__IsCanceling,
                 chore->chore.task_collection);
-        ok(canceling, "Task is not canceling");
+        ok(canceling, "Task is not canceling\n");
     }
 }
 
