@@ -645,20 +645,35 @@ static inline int sock_error( struct sock *sock )
     socklen_t len = sizeof(error);
 
     getsockopt( get_unix_fd(sock->fd), SOL_SOCKET, SO_ERROR, (void *)&error, &len);
-    if (sock->state == SOCK_CONNECTING)
+
+    switch (sock->state)
     {
+    case SOCK_UNCONNECTED:
+        break;
+
+    case SOCK_CONNECTING:
         if (error)
             sock->errors[AFD_POLL_BIT_CONNECT_ERR] = error;
         else
             error = sock->errors[AFD_POLL_BIT_CONNECT_ERR];
-    }
-    else if (sock->state == SOCK_LISTENING)
-    {
+        break;
+
+    case SOCK_LISTENING:
         if (error)
             sock->errors[AFD_POLL_BIT_ACCEPT] = error;
         else
             error = sock->errors[AFD_POLL_BIT_ACCEPT];
+        break;
+
+    case SOCK_CONNECTED:
+    case SOCK_CONNECTIONLESS:
+        if (error)
+            sock->errors[AFD_POLL_BIT_HUP] = error;
+        else
+            error = sock->errors[AFD_POLL_BIT_HUP];
+        break;
     }
+
     return error;
 }
 
