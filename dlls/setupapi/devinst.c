@@ -96,6 +96,7 @@ static const WCHAR Capabilities[] = {'C','a','p','a','b','i','l','i','t','i','e'
 static const WCHAR UINumber[] = {'U','I','N','u','m','b','e','r',0};
 static const WCHAR UpperFilters[] = {'U','p','p','e','r','F','i','l','t','e','r','s',0};
 static const WCHAR LowerFilters[] = {'L','o','w','e','r','F','i','l','t','e','r','s',0};
+static const WCHAR ContainerId[] = {'C','o','n','t','a','i','n','e','r','I','d',0};
 static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
 static const WCHAR SymbolicLink[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
 static const WCHAR Control[] = {'C','o','n','t','r','o','l',0};
@@ -654,6 +655,7 @@ static const struct PropertyMapEntry PropertyMap[] = {
     { REG_DWORD, "UINumber", UINumber },
     { REG_MULTI_SZ, "UpperFilters", UpperFilters },
     { REG_MULTI_SZ, "LowerFilters", LowerFilters },
+    [SPDRP_BASE_CONTAINERID] = { REG_SZ, "ContainerId", ContainerId },
 };
 
 static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct device *device,
