@@ -1462,6 +1462,7 @@ static void test_pnp_devices(void)
     static const char expect_compat_id[] = "winetest_compat\0winetest_compat_1\0";
 
     char buffer[200];
+    WCHAR buffer_w[200];
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVINFO_DATA device = {sizeof(device)};
@@ -1645,6 +1646,11 @@ static void test_pnp_devices(void)
     ok(type == REG_MULTI_SZ, "got type %lu\n", type);
     ok(size == sizeof(expect_hardware_id), "got size %lu\n", size);
     ok(!memcmp(buffer, expect_hardware_id, size), "got hardware IDs %s\n", debugstr_an(buffer, size));
+
+    /* Using the WCHAR variant because Windows returns a WCHAR for this property even when using SetupDiGetDeviceRegistryPropertyA */
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_BASE_CONTAINERID,
+            &type, (BYTE *)buffer_w, sizeof(buffer_w), &size);
+    todo_wine ok(ret, "got error %#lx\n", GetLastError());
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_COMPATIBLEIDS,
             &type, (BYTE *)buffer, sizeof(buffer), &size);

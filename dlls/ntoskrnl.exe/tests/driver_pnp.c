@@ -228,7 +228,10 @@ static NTSTATUS query_id(struct device *device, IRP *irp, BUS_QUERY_ID_TYPE type
         }
 
         case BusQueryContainerID:
-            return STATUS_NOT_SUPPORTED;
+            if (!(id = ExAllocatePool(PagedPool, 39 * sizeof(WCHAR))))
+                return STATUS_NO_MEMORY;
+            wcscpy(id, L"{12345678-1234-1234-1234-123456789123}");
+            break;
 
         default:
             ok(0, "Unexpected ID query type %#x.\n", type);
