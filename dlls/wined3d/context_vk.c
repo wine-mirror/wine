@@ -964,6 +964,32 @@ static void wined3d_context_vk_reset_completed_queries(struct wined3d_context_vk
     memset(pool_vk->completed, 0, sizeof(pool_vk->completed));
 }
 
+void wined3d_context_vk_destroy_vk_pipeline(struct wined3d_context_vk *context_vk,
+        VkPipeline vk_pipeline, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkDestroyPipeline(device_vk->vk_device, vk_pipeline, NULL));
+        TRACE("Destroyed pipeline 0x%s.\n", wine_dbgstr_longlong(vk_pipeline));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking pipeline 0x%s.\n", wine_dbgstr_longlong(vk_pipeline));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_PIPELINE_VK;
+    o->u.vk_pipeline = vk_pipeline;
+    o->command_buffer_id = command_buffer_id;
+}
+
+
 void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk,
         VkSampler vk_sampler, uint64_t command_buffer_id)
 {
@@ -1182,6 +1208,11 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             case WINED3D_RETIRED_EVENT_VK:
                 VK_CALL(vkDestroyEvent(device_vk->vk_device, o->u.vk_event, NULL));
                 TRACE("Destroyed event 0x%s.\n", wine_dbgstr_longlong(o->u.vk_event));
+                break;
+
+            case WINED3D_RETIRED_PIPELINE_VK:
+                VK_CALL(vkDestroyPipeline(device_vk->vk_device, o->u.vk_pipeline, NULL));
+                TRACE("Destroyed pipeline 0x%s.\n", wine_dbgstr_longlong(o->u.vk_pipeline));
                 break;
 
             default:

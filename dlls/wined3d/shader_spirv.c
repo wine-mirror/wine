@@ -926,10 +926,11 @@ static void shader_spirv_destroy_compute_vk(struct wined3d_shader *shader)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(shader->device);
     struct shader_spirv_compute_program_vk *program = shader->backend_data;
+    struct wined3d_context_vk *context_vk = &device_vk->context_vk;
     struct wined3d_vk_info *vk_info = &device_vk->vk_info;
 
     shader_spirv_invalidate_contexts_compute_program(&device_vk->d, program);
-    VK_CALL(vkDestroyPipeline(device_vk->vk_device, program->vk_pipeline, NULL));
+    wined3d_context_vk_destroy_vk_pipeline(context_vk, program->vk_pipeline, context_vk->current_command_buffer.id);
     VK_CALL(vkDestroyShaderModule(device_vk->vk_device, program->vk_module, NULL));
     vkd3d_shader_free_scan_descriptor_info(&program->descriptor_info);
     shader->backend_data = NULL;
