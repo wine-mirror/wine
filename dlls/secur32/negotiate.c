@@ -117,8 +117,9 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleA(
     PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry )
 {
     SECURITY_STATUS ret = SEC_E_INSUFFICIENT_MEMORY;
-    SEC_WCHAR *user = NULL, *domain = NULL, *passwd = NULL, *package = NULL;
-    SEC_WINNT_AUTH_IDENTITY_W *identityW = NULL;
+    SEC_WCHAR *package = NULL;
+    SEC_WINNT_AUTH_IDENTITY_A *id = pAuthData;
+    SEC_WINNT_AUTH_IDENTITY_W idW = {};
 
     TRACE("%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p\n",
           debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
@@ -130,60 +131,28 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleA(
         if (!(package = malloc( package_len * sizeof(SEC_WCHAR) ))) return SEC_E_INSUFFICIENT_MEMORY;
         MultiByteToWideChar( CP_ACP, 0, pszPackage, -1, package, package_len );
     }
-    if (pAuthData)
+    if (id && id->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
     {
-        SEC_WINNT_AUTH_IDENTITY_A *identity = pAuthData;
-        int user_len, domain_len, passwd_len;
+        idW.UserLength = MultiByteToWideChar( CP_ACP, 0, (const char *)id->User, id->UserLength, NULL, 0 );
+        if (!(idW.User = malloc( idW.UserLength * sizeof(SEC_WCHAR) ))) goto done;
+        MultiByteToWideChar( CP_ACP, 0, (const char *)id->User, id->UserLength, idW.User, idW.UserLength );
 
-        if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
-        {
-            if (!(identityW = malloc( sizeof(*identityW) ))) goto done;
+        idW.DomainLength = MultiByteToWideChar( CP_ACP, 0, (const char *)id->Domain, id->DomainLength, NULL, 0 );
+        if (!(idW.Domain = malloc( idW.DomainLength * sizeof(SEC_WCHAR) ))) goto done;
+        MultiByteToWideChar( CP_ACP, 0, (const char *)id->Domain, id->DomainLength, idW.Domain, idW.DomainLength );
 
-            if (!identity->UserLength) user_len = 0;
-            else
-            {
-                user_len = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)identity->User,
-                                                identity->UserLength, NULL, 0 );
-                if (!(user = malloc( user_len * sizeof(SEC_WCHAR) ))) goto done;
-                MultiByteToWideChar( CP_ACP, 0, (LPCSTR)identity->User, identity->UserLength,
-                                     user, user_len );
-            }
-            if (!identity->DomainLength) domain_len = 0;
-            else
-            {
-                domain_len = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)identity->Domain,
-                                                  identity->DomainLength, NULL, 0 );
-                if (!(domain = malloc( domain_len * sizeof(SEC_WCHAR) ))) goto done;
-                MultiByteToWideChar( CP_ACP, 0, (LPCSTR)identity->Domain, identity->DomainLength,
-                                     domain, domain_len );
-            }
-            if (!identity->PasswordLength) passwd_len = 0;
-            else
-            {
-                passwd_len = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)identity->Password,
-                                                  identity->PasswordLength, NULL, 0 );
-                if (!(passwd = malloc( passwd_len * sizeof(SEC_WCHAR) ))) goto done;
-                MultiByteToWideChar( CP_ACP, 0, (LPCSTR)identity->Password, identity->PasswordLength,
-                                     passwd, passwd_len );
-            }
-            identityW->Flags          = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-            identityW->User           = user;
-            identityW->UserLength     = user_len;
-            identityW->Domain         = domain;
-            identityW->DomainLength   = domain_len;
-            identityW->Password       = passwd;
-            identityW->PasswordLength = passwd_len;
-        }
-        else identityW = (SEC_WINNT_AUTH_IDENTITY_W *)identity;
+        idW.PasswordLength = MultiByteToWideChar( CP_ACP, 0, (const char *)id->Password, id->PasswordLength, NULL, 0 );
+        if (!(idW.Password = malloc( idW.PasswordLength * sizeof(SEC_WCHAR) ))) goto done;
+        MultiByteToWideChar( CP_ACP, 0, (const char *)id->Password, id->PasswordLength, idW.Password, idW.PasswordLength );
+
+        idW.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+        pAuthData = &idW;
     }
-    ret = nego_AcquireCredentialsHandleW( NULL, package, fCredentialUse, pLogonID, identityW,
+
+    ret = nego_AcquireCredentialsHandleW( NULL, package, fCredentialUse, pLogonID, pAuthData,
                                           pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry );
 done:
     free( package );
-    free( user );
-    free( domain );
-    free( passwd );
-    free( identityW );
     return ret;
 }
 
