@@ -321,7 +321,7 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     m->hash_elt.next = NULL;
 
     m->kind            = DataIsMember;
-    m->container       = &udt_type->symt;
+    m->container       = &module->top->symt; /* native defines lexical parent as module, not udt... */
     m->type            = elt_type;
     m->u.member.offset = offset;
     m->u.member.bit_offset = bit_offset;
