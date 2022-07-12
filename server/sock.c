@@ -1084,7 +1084,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
     return event;
 }
 
-static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit, int error )
+static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit )
 {
     unsigned int event = (1 << event_bit);
 
@@ -1092,11 +1092,10 @@ static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit, i
     {
         sock->pending_events |= event;
         sock->reported_events |= event;
-        sock->errors[event_bit] = error;
     }
 }
 
-static void sock_dispatch_events( struct sock *sock, enum connection_state prevstate, int event, int error )
+static void sock_dispatch_events( struct sock *sock, enum connection_state prevstate, int event )
 {
     switch (prevstate)
     {
@@ -1105,29 +1104,29 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
 
     case SOCK_CONNECTING:
         if (event & POLLOUT)
-            post_socket_event( sock, AFD_POLL_BIT_CONNECT, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_CONNECT );
         if (event & (POLLERR | POLLHUP))
-            post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR, error );
+            post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR );
         break;
 
     case SOCK_LISTENING:
         if (event & (POLLIN | POLLERR | POLLHUP))
-            post_socket_event( sock, AFD_POLL_BIT_ACCEPT, error );
+            post_socket_event( sock, AFD_POLL_BIT_ACCEPT );
         break;
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
         if (event & POLLIN)
-            post_socket_event( sock, AFD_POLL_BIT_READ, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_READ );
 
         if (event & POLLOUT)
-            post_socket_event( sock, AFD_POLL_BIT_WRITE, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_WRITE );
 
         if (event & POLLPRI)
-            post_socket_event( sock, AFD_POLL_BIT_OOB, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_OOB );
 
         if (event & (POLLERR | POLLHUP))
-            post_socket_event( sock, AFD_POLL_BIT_HUP, error );
+            post_socket_event( sock, AFD_POLL_BIT_HUP );
         break;
     }
 
@@ -1194,6 +1193,7 @@ static void sock_poll_event( struct fd *fd, int event )
                 {
                     error = errno;
                     event |= POLLERR;
+                    sock->errors[AFD_POLL_BIT_HUP] = error;
                     if ( debug_level )
                         fprintf( stderr, "recv error on socket %p: %d\n", sock, errno );
                 }
@@ -1218,7 +1218,7 @@ static void sock_poll_event( struct fd *fd, int event )
     }
 
     event = sock_dispatch_asyncs( sock, event, error );
-    sock_dispatch_events( sock, prevstate, event, error );
+    sock_dispatch_events( sock, prevstate, event );
     complete_async_polls( sock, event, error );
 
     sock_reselect( sock );
