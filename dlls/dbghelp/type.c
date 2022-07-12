@@ -945,7 +945,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
                 X(ULONG) = ((const struct symt_data*)type)->u.member.offset;
                 break;
             default:
-                FIXME("Unknown kind (%u) for get-offset\n",     
+                WARN("Unsupported kind (%u) for get-offset\n",
                       ((const struct symt_data*)type)->kind);
                 return FALSE;
             }
@@ -957,6 +957,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagExe:
         case SymTagCompiland:
         case SymTagUDT:
+        case SymTagEnum:
         case SymTagFunctionType:
         case SymTagFunctionArgType:
         case SymTagPointerType:
