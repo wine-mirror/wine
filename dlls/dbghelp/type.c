@@ -939,7 +939,13 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             {
             case DataIsParam:
             case DataIsLocal:
-                X(ULONG) = ((const struct symt_data*)type)->u.var.offset; 
+                {
+                    struct location loc = ((const struct symt_data*)type)->u.var;
+                    if (loc.kind == loc_register || loc.kind == loc_regrel)
+                        X(ULONG) = ((const struct symt_data*)type)->u.var.offset;
+                    else
+                        return FALSE; /* FIXME perhaps do better with local context? */
+                }
                 break;
             case DataIsMember:
                 X(ULONG) = ((const struct symt_data*)type)->u.member.offset;
