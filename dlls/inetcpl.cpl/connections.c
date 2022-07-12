@@ -291,7 +291,7 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
         RegCloseKey(hkey);
         return FALSE;
     }
-    TRACE("ProxtServer set to %s\n", wine_dbgstr_w(proxy));
+    TRACE("ProxyServer set to %s\n", wine_dbgstr_w(proxy));
 
     use_pac_script = IsDlgButtonChecked(hwnd, IDC_USE_PAC_SCRIPT);
     pac_script_len = GetDlgItemTextW(hwnd, IDC_EDIT_PAC_SCRIPT,
