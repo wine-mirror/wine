@@ -173,6 +173,9 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     swprintf(ext->device_id, ARRAY_SIZE(ext->device_id), L"HID\\%s", wcsrchr(device_id, '\\') + 1);
     wcscpy(ext->instance_id, instance_id);
 
+    if (get_device_id(bus_pdo, BusQueryContainerID, ext->container_id))
+        ext->container_id[0] = 0;
+
     is_xinput_class = !wcsncmp(device_id, L"WINEXINPUT\\", 7) && wcsstr(device_id, L"&XI_") != NULL;
     if (is_xinput_class) ext->class_guid = &GUID_DEVINTERFACE_WINEXINPUT;
     else ext->class_guid = &GUID_DEVINTERFACE_HID;
@@ -229,6 +232,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     KeInitializeSpinLock( &pdo_ext->u.pdo.queues_lock );
     wcscpy(pdo_ext->device_id, fdo_ext->device_id);
     wcscpy(pdo_ext->instance_id, fdo_ext->instance_id);
+    wcscpy(pdo_ext->container_id, fdo_ext->container_id);
     pdo_ext->class_guid = fdo_ext->class_guid;
 
     pdo_ext->u.pdo.information.VendorID = attr.VendorID;
@@ -416,8 +420,19 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
                     irp->IoStatus.Information = (ULONG_PTR)id;
                     status = STATUS_SUCCESS;
                     break;
-
                 case BusQueryContainerID:
+                    if (ext->container_id[0])
+                    {
+                        lstrcpyW(id, ext->container_id);
+                        irp->IoStatus.Information = (ULONG_PTR)id;
+                        status = STATUS_SUCCESS;
+                    }
+                    else
+                    {
+                        ExFreePool(id);
+                    }
+                    break;
+
                 case BusQueryDeviceSerialNumber:
                     FIXME("unimplemented id type %#x\n", irpsp->Parameters.QueryId.IdType);
                     ExFreePool(id);
