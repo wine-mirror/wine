@@ -2569,7 +2569,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_LOCAL:
             length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
             symt_add_func_local(msc_dbg->module, curr_func,
-                                sym->local_v3.varflags & 0x0001 ? DataIsParam : DataIsLocal,
+                                sym->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
                                 &loc, block,
                                 codeview_get_type(sym->local_v3.symtype, FALSE),
                                 sym->local_v3.name);

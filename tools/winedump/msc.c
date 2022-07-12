@@ -275,27 +275,27 @@ static const char* get_funcattr(unsigned attr)
     return tmp;
 }
 
-static const char* get_varflags(unsigned flags)
+static const char* get_varflags(struct cv_local_varflag flags)
 {
     static char tmp[1024];
     unsigned    pos = 0;
 
-    if (!flags) return "none";
 #define X(s) {if (pos) tmp[pos++] = ';'; strcpy(tmp + pos, s); pos += strlen(s);}
-    if (flags & 0x0001) X("param");
-    if (flags & 0x0002) X("addr-taken");
-    if (flags & 0x0004) X("compiler-gen");
-    if (flags & 0x0008) X("aggregated");
-    if (flags & 0x0010) X("in-aggregate");
-    if (flags & 0x0020) X("aliased");
-    if (flags & 0x0040) X("alias");
-    if (flags & 0x0080) X("retval");
-    if (flags & 0x0100) X("optimized-out");
-    if (flags & 0x0200) X("enreg-global");
-    if (flags & 0x0400) X("enreg-static");
-    if (flags & 0xf800) pos += sprintf(tmp, "unk:%x", flags & 0xf800);
+    if (flags.is_param)        X("param");
+    if (flags.address_taken)   X("addr-taken");
+    if (flags.from_compiler)   X("compiler-gen");
+    if (flags.is_aggregate)    X("aggregated");
+    if (flags.from_aggregate)  X("in-aggregate");
+    if (flags.is_aliased)      X("aliased");
+    if (flags.from_alias)      X("alias");
+    if (flags.is_return_value) X("retval");
+    if (flags.optimized_out)   X("optimized-out");
+    if (flags.enreg_global)    X("enreg-global");
+    if (flags.enreg_static)    X("enreg-static");
+    if (flags.unused)          pos += sprintf(tmp, "unk:%x", flags.unused);
 #undef X
 
+    if (!pos) return "none";
     tmp[pos] = '\0';
     assert(pos < sizeof(tmp));
 
