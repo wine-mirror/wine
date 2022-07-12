@@ -662,7 +662,7 @@ struct symt_data* symt_new_constant(struct module* module,
         sym->symt.tag      = SymTagData;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
         sym->kind          = DataIsConstant;
-        sym->container     = compiland ? &compiland->symt : NULL;
+        sym->container     = compiland ? &compiland->symt : &module->top->symt;
         sym->type          = type;
         sym->u.value       = *v;
         symt_add_module_ht(module, (struct symt_ht*)sym);
