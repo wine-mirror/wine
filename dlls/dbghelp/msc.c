@@ -1821,6 +1821,17 @@ static void codeview_xform_range(const struct msc_debug_info* msc_dbg,
     locinfo->rangelen = adrange->cbRange;
 }
 
+static unsigned codeview_defrange_length(const union codeview_symbol* sym)
+{
+    const union codeview_symbol* first_symrange = get_next_sym(sym);
+    const union codeview_symbol* symrange;
+
+    for (symrange = first_symrange;
+         symrange->generic.id >= S_DEFRANGE && symrange->generic.id <= S_DEFRANGE_REGISTER_REL;
+         symrange = get_next_sym(symrange)) {}
+    return (const char*)symrange - (const char*)first_symrange;
+}
+
 static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg,
                                             struct symt_function* curr_func,
                                             const union codeview_symbol* sym,
@@ -2567,12 +2578,21 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             }
             break;
         case S_LOCAL:
-            length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
-            symt_add_func_local(msc_dbg->module, curr_func,
-                                sym->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
-                                &loc, block,
-                                codeview_get_type(sym->local_v3.symtype, FALSE),
-                                sym->local_v3.name);
+            /* FIXME: don't store global/static variables accessed through registers... we don't support that
+             * in locals... anyway, global data record should be present as well (so variable will be avaible
+             * through global defintion, but potentially not updated)
+             */
+            if (!sym->local_v3.varflags.enreg_global && !sym->local_v3.varflags.enreg_static)
+            {
+                length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
+                symt_add_func_local(msc_dbg->module, curr_func,
+                                    sym->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
+                                    &loc, block,
+                                    codeview_get_type(sym->local_v3.symtype, FALSE),
+                                    sym->local_v3.name);
+            }
+            else
+                length += codeview_defrange_length(sym);
             break;
         case S_INLINESITE:
             {
