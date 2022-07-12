@@ -123,8 +123,6 @@ struct coinit_spy
     } apt_flags;
 };
 
-static LONG spy_tls = TLS_OUT_OF_INDEXES;
-
 static struct list ImmHklList = LIST_INIT(ImmHklList);
 static struct list ImmThreadDataList = LIST_INIT(ImmThreadDataList);
 
@@ -256,13 +254,18 @@ static DWORD convert_candidatelist_AtoW(
     return ret;
 }
 
+static struct coinit_spy *get_thread_coinit_spy(void)
+{
+    return NtUserGetThreadInfo()->client_imm;
+}
+
 static void imm_couninit_thread(BOOL cleanup)
 {
     struct coinit_spy *spy;
 
     TRACE("implicit COM deinitialization\n");
 
-    if (!(spy = TlsGetValue(spy_tls)) || (spy->apt_flags & IMM_APT_BROKEN))
+    if (!(spy = get_thread_coinit_spy()) || (spy->apt_flags & IMM_APT_BROKEN))
         return;
 
     if (cleanup && spy->cookie.QuadPart)
@@ -314,7 +317,11 @@ static ULONG WINAPI InitializeSpy_Release(IInitializeSpy *iface)
 {
     struct coinit_spy *spy = impl_from_IInitializeSpy(iface);
     LONG ref = InterlockedDecrement(&spy->ref);
-    if (!ref) HeapFree(GetProcessHeap(), 0, spy);
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, spy);
+        NtUserGetThreadInfo()->client_imm = NULL;
+    }
     return ref;
 }
 
@@ -380,20 +387,15 @@ static void imm_coinit_thread(void)
 
     TRACE("implicit COM initialization\n");
 
-    if (spy_tls == TLS_OUT_OF_INDEXES)
-    {
-        DWORD tls = TlsAlloc();
-        if (tls == TLS_OUT_OF_INDEXES) return;
-        if (InterlockedCompareExchange(&spy_tls, tls, TLS_OUT_OF_INDEXES)) TlsFree(tls);
-    }
-    if (!(spy = TlsGetValue(spy_tls)))
+    if (!(spy = get_thread_coinit_spy()))
     {
         if (!(spy = HeapAlloc(GetProcessHeap(), 0, sizeof(*spy)))) return;
         spy->IInitializeSpy_iface.lpVtbl = &InitializeSpyVtbl;
         spy->ref = 1;
         spy->cookie.QuadPart = 0;
         spy->apt_flags = 0;
-        TlsSetValue(spy_tls, spy);
+        NtUserGetThreadInfo()->client_imm = spy;
+
     }
 
     if (spy->apt_flags & (IMM_APT_INIT | IMM_APT_BROKEN))
@@ -474,7 +476,8 @@ static void IMM_FreeThreadData(void)
     }
     LeaveCriticalSection(&threaddata_cs);
 
-    if ((spy = TlsGetValue(spy_tls))) IInitializeSpy_Release(&spy->IInitializeSpy_iface);
+    if ((spy = get_thread_coinit_spy()))
+        IInitializeSpy_Release(&spy->IInitializeSpy_iface);
 }
 
 static HMODULE load_graphics_driver(void)
@@ -754,6 +757,7 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
         SendMessageW(hwnd, WM_IME_SETCONTEXT, activate, ISC_SHOWUIALL);
         /* TODO: send WM_IME_NOTIFY */
     }
+    SetLastError(0);
     return TRUE;
 }
 

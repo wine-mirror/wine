@@ -63,6 +63,7 @@ struct ntuser_thread_info
     ULONG_PTR  message_extra;     /* value for GetMessageExtraInfo */
     HWND       top_window;        /* desktop window */
     HWND       msg_window;        /* HWND_MESSAGE parent window */
+    void      *client_imm;        /* client IMM thread info */
 };
 
 static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
