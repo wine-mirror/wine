@@ -1090,10 +1090,7 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
 
     case SOCK_CONNECTING:
         if (event & POLLOUT)
-        {
             post_socket_event( sock, AFD_POLL_BIT_CONNECT, 0 );
-            sock->errors[AFD_POLL_BIT_CONNECT_ERR] = 0;
-        }
         if (event & (POLLERR | POLLHUP))
             post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR, error );
         break;
@@ -1149,6 +1146,7 @@ static void sock_poll_event( struct fd *fd, int event )
         {
             sock->state = SOCK_CONNECTED;
             sock->connect_time = current_time;
+            sock->errors[AFD_POLL_BIT_CONNECT_ERR] = 0;
         }
         break;
 
