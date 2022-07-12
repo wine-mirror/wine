@@ -299,7 +299,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->symt.tag      = SymTagData;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
         sym->kind          = is_static ? DataIsFileStatic : DataIsGlobal;
-        sym->container     = compiland ? &compiland->symt : NULL;
+        sym->container     = compiland ? &compiland->symt : &module->top->symt;
         sym->type          = type;
         sym->u.var         = loc;
         if (type && size && symt_get_info(module, type, TI_GET_LENGTH, &tsz))
@@ -310,11 +310,8 @@ struct symt_data* symt_new_global_variable(struct module* module,
                       wine_dbgstr_longlong(tsz), size);
         }
         symt_add_module_ht(module, (struct symt_ht*)sym);
-        if (compiland)
-        {
-            p = vector_add(&compiland->vchildren, &module->pool);
-            *p = &sym->symt;
-        }
+        p = vector_add(compiland ? &compiland->vchildren : &module->top->vchildren, &module->pool);
+        *p = &sym->symt;
     }
     return sym;
 }
