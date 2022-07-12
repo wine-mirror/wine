@@ -46,13 +46,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
-#define GECKO_VERSION "2.47.2"
+#define GECKO_VERSION "2.47.3"
 #ifdef __i386__
 #define GECKO_ARCH "x86"
-#define GECKO_SHA "e520ce7336cd420cd09c91337d87e74bb420300fd5cbc6f724c1802766b6a61d"
+#define GECKO_SHA "e5b9b06d3ce355646a8d2e72e044e37e1e0c8d18464eb1985adcd187a7f48e01"
 #elif defined(__x86_64__)
 #define GECKO_ARCH "x86_64"
-#define GECKO_SHA "0596761024823ff3c21f13e1cd5cd3e89dccc698294d62974d8930aeda86ce45"
+#define GECKO_SHA "a53ee954392b6d1fe3d68545f6e4e2a97afbc8dc8b03a8b443349545ce139675"
 #else
 #define GECKO_ARCH ""
 #define GECKO_SHA "???"

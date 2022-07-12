@@ -25,7 +25,7 @@
 
 #pragma makedep header
 
-cpp_quote("#define GECKO_VERSION \"2.47.2\"")
+cpp_quote("#define GECKO_VERSION \"2.47.3\"")
 cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
@@ -4287,6 +4287,7 @@ interface nsIXMLHttpRequest : nsISupports
     nsresult SetOnreadystatechange(JSContext*cx, int /*JS::HandleValue*/ aOnreadystatechange);
     nsresult GetMozAnon(bool *aMozAnon);
     nsresult GetMozSystem(bool *aMozSystem);
+    nsresult GetResponseBuffer(void *buffer, uint32_t buffer_size, uint32_t *_retval);
 }
 
 cpp_quote("DEFINE_GUID(IID_nsCycleCollectionISupports, 0xc61eac14,0x5f7a,0x4481,0x96,0x5e,0x7e,0xaa,0x6e,0xff,0xa8,0x5f);")
