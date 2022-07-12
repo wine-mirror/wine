@@ -318,6 +318,7 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
     BOOL need_driver = TRUE;
     NTSTATUS status;
     HKEY key;
+    WCHAR *id;
 
     if (get_device_instance_id( device, device_instance_id ))
         return;
@@ -345,6 +346,13 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
     {
         ERR("Failed to get caps for device %s, status %#lx.\n", debugstr_w(device_instance_id), status);
         return;
+    }
+
+    if (!get_device_id(device, BusQueryContainerID, &id) && id)
+    {
+        SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, (BYTE *)id,
+            (lstrlenW( id ) + 1) * sizeof(WCHAR) );
+        ExFreePool( id );
     }
 
     if (need_driver && !install_device_driver( device, set, &sp_device ) && !caps.RawDeviceOK)

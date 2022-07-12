@@ -1460,6 +1460,7 @@ static void test_pnp_devices(void)
 {
     static const char expect_hardware_id[] = "winetest_hardware\0winetest_hardware_1\0";
     static const char expect_compat_id[] = "winetest_compat\0winetest_compat_1\0";
+    static const WCHAR expect_container_id_w[] = L"{12345678-1234-1234-1234-123456789123}";
 
     char buffer[200];
     WCHAR buffer_w[200];
@@ -1650,7 +1651,10 @@ static void test_pnp_devices(void)
     /* Using the WCHAR variant because Windows returns a WCHAR for this property even when using SetupDiGetDeviceRegistryPropertyA */
     ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_BASE_CONTAINERID,
             &type, (BYTE *)buffer_w, sizeof(buffer_w), &size);
-    todo_wine ok(ret, "got error %#lx\n", GetLastError());
+    ok(ret, "got error %#lx\n", GetLastError());
+    ok(type == REG_SZ, "got type %lu\n", type);
+    ok(size == sizeof(expect_container_id_w), "got size %lu\n", size);
+    ok(!memcmp(buffer_w, expect_container_id_w, size), "got container ID %s\n", debugstr_w(buffer_w));
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_COMPATIBLEIDS,
             &type, (BYTE *)buffer, sizeof(buffer), &size);
