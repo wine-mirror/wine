@@ -1145,6 +1145,9 @@ static void sock_poll_event( struct fd *fd, int event )
     if (debug_level)
         fprintf(stderr, "socket %p select event: %x\n", sock, event);
 
+    if (event & (POLLERR | POLLHUP))
+        error = sock_error( sock );
+
     switch (sock->state)
     {
     case SOCK_UNCONNECTED:
@@ -1153,7 +1156,6 @@ static void sock_poll_event( struct fd *fd, int event )
     case SOCK_CONNECTING:
         if (event & (POLLERR|POLLHUP))
         {
-            error = sock_error( sock );
             sock->state = SOCK_UNCONNECTED;
             event &= ~POLLOUT;
         }
@@ -1166,8 +1168,6 @@ static void sock_poll_event( struct fd *fd, int event )
         break;
 
     case SOCK_LISTENING:
-        if (event & (POLLERR|POLLHUP))
-            error = sock_error( sock );
         break;
 
     case SOCK_CONNECTED:

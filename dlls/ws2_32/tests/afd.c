@@ -162,7 +162,8 @@ static void check_poll_(int line, SOCKET s, HANDLE event, int mask, int expect, 
     ok_(__FILE__, line)(out_params.count == 1, "got count %u\n", out_params.count);
     ok_(__FILE__, line)(out_params.sockets[0].socket == s, "got socket %#Ix\n", out_params.sockets[0].socket);
     todo_wine_if (todo) ok_(__FILE__, line)(out_params.sockets[0].flags == expect, "got flags %#x\n", out_params.sockets[0].flags);
-    ok_(__FILE__, line)(!out_params.sockets[0].status, "got status %#x\n", out_params.sockets[0].status);
+    todo_wine_if (expect & AFD_POLL_RESET)
+        ok_(__FILE__, line)(!out_params.sockets[0].status, "got status %#x\n", out_params.sockets[0].status);
 }
 
 static void test_poll(void)
