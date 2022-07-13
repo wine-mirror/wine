@@ -80,3 +80,6 @@ res.html test "jstest.html"
 
 /* @makedep: jstest.html */
 dir/dir2/res.html test "jstest.html"
+
+/* @makedep: img.png */
+img.png PNG "img.png"

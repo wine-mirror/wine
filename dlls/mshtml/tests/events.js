@@ -797,6 +797,16 @@ async_test("detached_img_error_event", function() {
     img.src = "about:blank";
 });
 
+async_test("img_wrong_content_type", function() {
+    var img = new Image();
+    img.onload = function() {
+        ok(img.width === 2, "width = " + img.width);
+        ok(img.height === 2, "height = " + img.height);
+        next_test();
+    }
+    img.src = "img.png?content-type=image/jpeg";
+});
+
 async_test("message event", function() {
     var listener_called = false;
 

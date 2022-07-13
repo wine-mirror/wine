@@ -3043,6 +3043,7 @@ typedef struct {
     IInternetProtocolSink *sink;
     BINDINFO bind_info;
 
+    BSTR content_type;
     IStream *stream;
     char *data;
     ULONG size;
@@ -3068,6 +3069,7 @@ static void report_data(ProtocolHandler *This)
     IServiceProvider *service_provider;
     IHttpNegotiate *http_negotiate;
     WCHAR *addl_headers = NULL;
+    WCHAR headers_buf[128];
     BSTR headers, url;
     HRESULT hres;
 
@@ -3091,7 +3093,10 @@ static void report_data(ProtocolHandler *This)
 
         CoTaskMemFree(addl_headers);
 
-        headers = SysAllocString(L"HTTP/1.1 200 OK\r\n\r\n");
+        if(This->content_type)
+            swprintf(headers_buf, ARRAY_SIZE(headers_buf), L"HTTP/1.1 200 OK\r\nContent-Type: %s\r\n", This->content_type);
+
+        headers = SysAllocString(This->content_type ? headers_buf : L"HTTP/1.1 200 OK\r\n\r\n");
         hres = IHttpNegotiate_OnResponse(http_negotiate, 200, headers, NULL, NULL);
         ok(hres == S_OK, "OnResponse failed: %08lx\n", hres);
         SysFreeString(headers);
@@ -3250,6 +3255,7 @@ static ULONG WINAPI Protocol_Release(IInternetProtocolEx *iface)
         if(This->uri)
             IUri_Release(This->uri);
         ReleaseBindInfo(&This->bind_info);
+        SysFreeString(This->content_type);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -3397,7 +3403,8 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
         This->data = empty_data;
         This->size = strlen(This->data);
     }else {
-        src = FindResourceW(NULL, *path == '/' ? path+1 : path, (const WCHAR*)RT_HTML);
+        const WCHAR *type = (SysStringLen(path) > 4 && !wcsicmp(path + SysStringLen(path) - 4, L".png")) ? L"PNG" : (const WCHAR*)RT_HTML;
+        src = FindResourceW(NULL, *path == '/' ? path+1 : path, type);
         if(src) {
             This->size = SizeofResource(NULL, src);
             This->data = LoadResource(NULL, src);
@@ -3424,6 +3431,8 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
     if(SUCCEEDED(hres)) {
         if(!lstrcmpW(query, L"?delay"))
             This->delay = 1000;
+        else if(!wcsncmp(query, L"?content-type=", sizeof("?content-type=")-1))
+            This->content_type = SysAllocString(query + sizeof("?content-type=")-1);
         SysFreeString(query);
     }
 

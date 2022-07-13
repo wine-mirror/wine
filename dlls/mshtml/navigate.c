@@ -1670,7 +1670,8 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
             This->nschannel = NULL;
         }
 
-        if(!This->nschannel)
+        if(!This->nschannel ||
+           (This->nschannel->content_type && !(This->nschannel->load_flags & LOAD_CALL_CONTENT_SNIFFERS)))
             return S_OK;
 
         heap_free(This->nschannel->content_type);
