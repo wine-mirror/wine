@@ -816,7 +816,7 @@ static HRESULT convert_image(IWICImagingFactory *factory, IWICBitmapFrameDecode 
 HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
         D3D10_SUBRESOURCE_DATA **resource_data)
 {
-    unsigned int frame_count, stride, frame_size, i;
+    unsigned int stride, frame_size, i;
     IWICDdsFrameDecode *dds_frame = NULL;
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
@@ -872,8 +872,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     if (FAILED(hr = IWICStream_InitializeFromMemory(stream, (BYTE *)data, size)))
         goto end;
     if (FAILED(hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream *)stream, NULL, 0, &decoder)))
-        goto end;
-    if (FAILED(hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count)) || !frame_count)
         goto end;
 
     if (img_info.ImageFileFormat == D3DX10_IFF_DDS)
