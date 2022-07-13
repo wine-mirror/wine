@@ -52,6 +52,7 @@ static HRESULT (WINAPI *pGetThemeTransitionDuration)(HTHEME, int, int, int, int,
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static BOOL (WINAPI *pGetDpiForMonitorInternal)(HMONITOR, UINT, UINT *, UINT *);
+static UINT (WINAPI *pGetDpiForSystem)(void);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
@@ -94,6 +95,7 @@ static void init_funcs(void)
     GET_PROC(user32, DisplayConfigGetDeviceInfo)
     GET_PROC(user32, DisplayConfigSetDeviceInfo)
     GET_PROC(user32, GetDpiForMonitorInternal)
+    GET_PROC(user32, GetDpiForSystem)
     GET_PROC(user32, SetThreadDpiAwarenessContext)
 
     GET_PROC(gdi32, D3DKMTCloseAdapter)
@@ -1073,9 +1075,9 @@ static void test_GetThemePartSize(void)
     HRESULT hr;
     SIZE size;
 
-    if (!pSetThreadDpiAwarenessContext)
+    if (!pSetThreadDpiAwarenessContext || !pGetDpiForSystem)
     {
-        win_skip("SetThreadDpiAwarenessContext is unavailable.\n");
+        win_skip("SetThreadDpiAwarenessContext() or GetDpiForSystem() is unavailable.\n");
         return;
     }
 
@@ -1088,7 +1090,7 @@ static void test_GetThemePartSize(void)
     old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     current_dpi = get_primary_monitor_effective_dpi();
     old_dpi = current_dpi;
-    system_dpi = GetDpiForSystem();
+    system_dpi = pGetDpiForSystem();
     target_dpi = system_dpi;
 
     hwnd = CreateWindowA("Button", "Test", WS_POPUP, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
