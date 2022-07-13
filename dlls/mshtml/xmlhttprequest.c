@@ -36,8 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD MSHTML_DISPID_CUSTOM_MIN
-
 static HRESULT bstr_to_nsacstr(BSTR bstr, nsACString *str)
 {
     char *cstr = heap_strdupWtoU(bstr);
@@ -1093,6 +1091,24 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_get_onloadend(IWineXMLHttpReque
     return get_event_handler(&This->event_target, EVENTID_LOADEND, p);
 }
 
+static HRESULT WINAPI HTMLXMLHttpRequest_private_put_onload(IWineXMLHttpRequestPrivate *iface, VARIANT v)
+{
+    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    return set_event_handler(&This->event_target, EVENTID_LOAD, &v);
+}
+
+static HRESULT WINAPI HTMLXMLHttpRequest_private_get_onload(IWineXMLHttpRequestPrivate *iface, VARIANT *p)
+{
+    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_event_handler(&This->event_target, EVENTID_LOAD, p);
+}
+
 static const IWineXMLHttpRequestPrivateVtbl WineXMLHttpRequestPrivateVtbl = {
     HTMLXMLHttpRequest_private_QueryInterface,
     HTMLXMLHttpRequest_private_AddRef,
@@ -1117,7 +1133,9 @@ static const IWineXMLHttpRequestPrivateVtbl WineXMLHttpRequestPrivateVtbl = {
     HTMLXMLHttpRequest_private_put_onloadstart,
     HTMLXMLHttpRequest_private_get_onloadstart,
     HTMLXMLHttpRequest_private_put_onloadend,
-    HTMLXMLHttpRequest_private_get_onloadend
+    HTMLXMLHttpRequest_private_get_onloadend,
+    HTMLXMLHttpRequest_private_put_onload,
+    HTMLXMLHttpRequest_private_get_onload
 };
 
 static inline HTMLXMLHttpRequest *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
@@ -1168,47 +1186,6 @@ static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
 static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
-}
-
-static HRESULT HTMLXMLHttpRequest_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
-{
-    /* onload event handler property is supported, but not exposed by any interface. We implement as a custom property. */
-    if(!wcscmp(L"onload", name)) {
-        *dispid = MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD;
-        return S_OK;
-    }
-
-    return DISP_E_UNKNOWNNAME;
-}
-
-static HRESULT HTMLXMLHttpRequest_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
-        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
-{
-    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
-
-    if(id == MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD) {
-        switch(flags) {
-        case DISPATCH_PROPERTYGET:
-            TRACE("(%p) get onload\n", This);
-            return get_event_handler(&This->event_target, EVENTID_LOAD, res);
-
-        case DISPATCH_PROPERTYPUT:
-            if(params->cArgs != 1 || (params->cNamedArgs == 1 && *params->rgdispidNamedArgs != DISPID_PROPERTYPUT)
-               || params->cNamedArgs > 1) {
-                FIXME("invalid args\n");
-                return E_INVALIDARG;
-            }
-
-            TRACE("(%p)->(%p) set onload\n", This, params->rgvarg);
-            return set_event_handler(&This->event_target, EVENTID_LOAD, params->rgvarg);
-
-        default:
-            FIXME("Unimplemented flags %x\n", flags);
-            return E_NOTIMPL;
-        }
-    }
-
-    return DISP_E_UNKNOWNNAME;
 }
 
 static nsISupports *HTMLXMLHttpRequest_get_gecko_target(DispatchEx *dispex)
@@ -1266,22 +1243,33 @@ static void HTMLXMLHttpRequest_init_dispex_info(dispex_data_t *info, compat_mode
         {DISPID_IHTMLXMLHTTPREQUEST_OPEN, HTMLXMLHttpRequest_open_hook},
         {DISPID_UNKNOWN}
     };
-    static const dispex_hook_t private_ie10_hooks[] = {
+    static const dispex_hook_t private_hooks[] = {
+        {DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSE},
+        {DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE},
+        {DISPID_IWINEXMLHTTPREQUESTPRIVATE_UPLOAD},
+        {DISPID_IWINEXMLHTTPREQUESTPRIVATE_WITHCREDENTIALS},
+        {DISPID_EVPROP_ONERROR},
+        {DISPID_EVPROP_ONABORT},
+        {DISPID_EVPROP_PROGRESS},
+        {DISPID_EVPROP_LOADSTART},
+        {DISPID_EVPROP_LOADEND},
+
+        /* IE10 only */
         {DISPID_IWINEXMLHTTPREQUESTPRIVATE_OVERRIDEMIMETYPE},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const private_ie10_hooks = private_hooks + ARRAY_SIZE(private_hooks) - 2;
 
     EventTarget_init_dispex_info(info, compat_mode);
     dispex_info_add_interface(info, IHTMLXMLHttpRequest_tid, compat_mode >= COMPAT_MODE_IE10 ? xhr_hooks : NULL);
-    if(compat_mode >= COMPAT_MODE_IE10)
-        dispex_info_add_interface(info, IWineXMLHttpRequestPrivate_tid, compat_mode == COMPAT_MODE_IE10 ? private_ie10_hooks : NULL);
+    dispex_info_add_interface(info, IWineXMLHttpRequestPrivate_tid,
+        compat_mode < COMPAT_MODE_IE10 ? private_hooks :
+        compat_mode < COMPAT_MODE_IE11 ? private_ie10_hooks : NULL);
 }
 
 static event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
     {
         NULL,
-        HTMLXMLHttpRequest_get_dispid,
-        HTMLXMLHttpRequest_invoke
     },
     HTMLXMLHttpRequest_get_gecko_target,
     HTMLXMLHttpRequest_bind_event

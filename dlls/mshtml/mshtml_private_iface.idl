@@ -139,6 +139,10 @@ interface IWineDOMTokenList : IDispatch
     HRESULT toString([retval, out] BSTR *String);
 }
 
+const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSE = 1;
+const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE = 2;
+const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_UPLOAD = 3;
+const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_WITHCREDENTIALS = 4;
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_OVERRIDEMIMETYPE = 5;
 [
     odl,
@@ -149,17 +153,17 @@ const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_OVERRIDEMIMETYPE = 5;
 ]
 interface IWineXMLHttpRequestPrivate : IDispatch
 {
-    [propget, id(1)]
+    [propget, id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSE)]
     HRESULT response([retval, out] VARIANT *p);
-    [propput, id(2)]
+    [propput, id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE)]
     HRESULT responseType([in] BSTR v);
-    [propget, id(2)]
+    [propget, id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE)]
     HRESULT responseType([retval, out] BSTR *p);
-    [propget, id(3)]
+    [propget, id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_UPLOAD)]
     HRESULT upload([retval, out] IDispatch **p);
-    [propput, id(4)]
+    [propput, id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_WITHCREDENTIALS)]
     HRESULT withCredentials([in] VARIANT_BOOL v);
-    [propget, id(4)]
+    [propget, id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_WITHCREDENTIALS)]
     HRESULT withCredentials([retval, out] VARIANT_BOOL *p);
     [id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_OVERRIDEMIMETYPE)]
     HRESULT overrideMimeType([in] BSTR mimeType);
@@ -183,6 +187,10 @@ interface IWineXMLHttpRequestPrivate : IDispatch
     HRESULT onloadend([in] VARIANT v);
     [propget, id(DISPID_EVPROP_LOADEND)]
     HRESULT onloadend([retval, out] VARIANT *p);
+    [propput, id(DISPID_EVPROP_ONLOAD)]
+    HRESULT onload([in] VARIANT v);
+    [propget, id(DISPID_EVPROP_ONLOAD)]
+    HRESULT onload([retval, out] VARIANT *p);
 }
 
 } /* library MSHTML_private */
