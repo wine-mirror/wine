@@ -2059,7 +2059,6 @@ static void test_D3DX10CreateAsyncTextureProcessor(void)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID3DX10DataProcessor_Process(dp, (void *)test_image[i].data, test_image[i].size);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -2434,7 +2433,6 @@ static void test_D3DX10CreateThreadPump(void)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = ID3DX10ThreadPump_WaitForAllItems(pump);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(work_item_hr == S_OK || (work_item_hr == E_FAIL
                     && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", work_item_hr);
@@ -2665,7 +2663,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX10CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, NULL, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -2716,7 +2713,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX10CreateTextureFromFileW(device, path, NULL, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -2729,7 +2725,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX10CreateTextureFromFileA(device, get_str_a(path), NULL, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -2775,7 +2770,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX10CreateTextureFromResourceW(device, resource_module,
                 test_resource_name, NULL, NULL, &resource, &hr2);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
@@ -2789,7 +2783,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX10CreateTextureFromResourceA(device, resource_module,
                 get_str_a(test_resource_name), NULL, NULL, &resource, &hr2);
-        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
