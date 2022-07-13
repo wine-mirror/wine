@@ -27,13 +27,6 @@
 #include <winbase.h>
 #include <wine/debug.h>
 
-#ifdef __WINE_CONFIG_H
-#error config.h should not be used in Wine tests
-#endif
-#ifdef __WINE_WINE_UNICODE_H
-#error wine/unicode.h should not be used in Wine tests
-#endif
-
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES  (~0u)
 #endif
