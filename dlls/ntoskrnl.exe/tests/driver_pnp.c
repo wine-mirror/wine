@@ -700,7 +700,8 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
              * handles to the device are closed (and the user-space thread is
              * currently blocked in this ioctl and won't close its handle
              * yet.) */
-            ok(!remove_device_count, "Got %u remove events.\n", remove_device_count);
+            todo_wine_if (remove_device_count)
+                ok(!remove_device_count, "Got %u remove events.\n", remove_device_count);
 
             return STATUS_SUCCESS;
         }
