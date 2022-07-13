@@ -1829,30 +1829,22 @@ static void test_redirection(void)
 
     attr.RootDirectory = root64;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    todo_wine_if( ptr_size == 32)
     ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
-    if (!status)
-    {
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
     ok( dw == 32, "wrong value %lu\n", dw );
     pNtClose( key );
-    }
 
     attr.RootDirectory = root64;
     status = pNtOpenKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
-    todo_wine_if( ptr_size == 32)
     ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
-    if (!status)
-    {
     len = sizeof(buffer);
     status = pNtQueryValueKey( key64, &value_str, KeyValuePartialInformation, info, len, &len );
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
     ok( dw == 32, "wrong value %lu\n", dw );
-    }
 
     pNtDeleteKey( key32 );
     pNtClose( key32 );

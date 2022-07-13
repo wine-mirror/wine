@@ -536,9 +536,12 @@ static struct object *key_lookup_name( struct object *obj, struct unicode_str *n
 
     if (!(found = find_subkey( key, &tmp, &index )))
     {
-         /* try in the 64-bit parent */
         if ((key->flags & KEY_WOWSHARE) && (attr & OBJ_KEY_WOW64))
-            found = find_subkey( get_parent( key ), &tmp, &index );
+        {
+            /* try in the 64-bit parent */
+            key = get_parent( key );
+            if (!(found = find_subkey( key, &tmp, &index ))) return grab_object( key );
+        }
     }
 
     if (!found)
