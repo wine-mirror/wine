@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<a name=\"test\">wine</a>";
+
 function test_xhr() {
     var xhr = new XMLHttpRequest();
     var complete_cnt = 0, loadstart = false;
@@ -24,7 +26,9 @@ function test_xhr() {
         if(xhr.readyState != 4)
             return;
 
-        ok(xhr.responseText === "Testing...", "unexpected responseText " + xhr.responseText);
+        ok(xhr.responseText === xml, "unexpected responseText " + xhr.responseText);
+        ok(xhr.responseXML !== null, "unexpected null responseXML");
+
         if(complete_cnt++ && !("onloadend" in xhr))
             next_test();
     }
@@ -63,7 +67,55 @@ function test_xhr() {
         ok(xhr.withCredentials === true, "withCredentials = " + xhr.withCredentials);
         xhr.withCredentials = false;
     }
-    xhr.send("Testing...");
+    xhr.send(xml);
+}
+
+function test_content_types() {
+    var xhr = new XMLHttpRequest(), types, i = 0;
+    var v = document.documentMode;
+
+    var types = [
+        "",
+        "text/plain",
+        "text/html",
+        "wine/xml",
+        "xml"
+    ];
+    var xml_types = [
+        "text/xmL",
+        "apPliCation/xml",
+        "image/SvG+xml",
+        "Wine/Test+xml",
+        "++Xml",
+        "+xMl"
+    ];
+
+    function onload() {
+        ok(xhr.responseText === xml, "unexpected responseText " + xhr.responseText);
+        if(v < 10 || types === xml_types)
+            ok(xhr.responseXML !== null, "unexpected null responseXML for " + types[i]);
+        else
+            ok(xhr.responseXML === null, "unexpected non-null responseXML for " + types[i]);
+
+        if(++i >= types.length) {
+            if(types === xml_types) {
+                next_test();
+                return;
+            }
+            types = xml_types;
+            i = 0;
+        }
+        xhr = new XMLHttpRequest();
+        xhr.onload = onload;
+        xhr.open("POST", "echo.php?content-type=" + types[i], true);
+        xhr.setRequestHeader("X-Test", "True");
+        xhr.send(xml);
+    }
+
+    xhr.onload = onload;
+    xhr.open("POST", "echo.php?content-type=" + types[i], true);
+    xhr.setRequestHeader("X-Test", "True");
+    xhr.send(xml);
 }
 
 function test_abort() {
@@ -118,6 +170,7 @@ function test_timeout() {
 
 var tests = [
     test_xhr,
+    test_content_types,
     test_abort,
     test_timeout
 ];

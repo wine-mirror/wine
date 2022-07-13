@@ -374,6 +374,20 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_responseXML(IHTMLXMLHttpRequest *if
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(dispex_compat_mode(&This->event_target.dispex) >= COMPAT_MODE_IE10) {
+        nsIDOMDocument *nsdoc;
+        nsresult nsres;
+
+        nsres = nsIXMLHttpRequest_GetResponseXML(This->nsxhr, &nsdoc);
+        if(NS_FAILED(nsres))
+            return map_nsresult(nsres);
+        if(!nsdoc) {
+            *p = NULL;
+            return S_OK;
+        }
+        nsIDOMDocument_Release(nsdoc);
+    }
+
     hres = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&xmldoc);
     if(FAILED(hres)) {
         ERR("CoCreateInstance failed: %08lx\n", hres);
