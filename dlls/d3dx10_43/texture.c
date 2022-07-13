@@ -816,7 +816,7 @@ static HRESULT convert_image(IWICImagingFactory *factory, IWICBitmapFrameDecode 
 HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
         D3D10_SUBRESOURCE_DATA **resource_data)
 {
-    unsigned int stride, frame_size, i;
+    unsigned int stride, frame_size, i, j;
     IWICDdsFrameDecode *dds_frame = NULL;
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
@@ -884,25 +884,29 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
 
         for (i = 0; i < img_info.ArraySize; ++i)
         {
-            if (FAILED(hr = IWICDdsDecoder_GetFrame(dds_decoder, i, 0, 0, &frame)))
-                goto end;
-            if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
-                goto end;
-            if (FAILED(hr = dds_get_frame_info(dds_frame, &img_info, &format_info, &stride, &frame_size)))
-                goto end;
-
-            if (!i)
+            for (j = 0; j < img_info.MipLevels; ++j)
             {
-                img_info.Width = (img_info.Width + format_info.BlockWidth - 1) & ~(format_info.BlockWidth - 1);
-                img_info.Height = (img_info.Height + format_info.BlockHeight - 1) & ~(format_info.BlockHeight - 1);
+                if (FAILED(hr = IWICDdsDecoder_GetFrame(dds_decoder, i, j, 0, &frame)))
+                    goto end;
+                if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame,
+                                &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
+                    goto end;
+                if (FAILED(hr = dds_get_frame_info(dds_frame, &img_info, &format_info, &stride, &frame_size)))
+                    goto end;
+
+                if (!i && !j)
+                {
+                    img_info.Width = (img_info.Width + format_info.BlockWidth - 1) & ~(format_info.BlockWidth - 1);
+                    img_info.Height = (img_info.Height + format_info.BlockHeight - 1) & ~(format_info.BlockHeight - 1);
+                }
+
+                size += sizeof(**resource_data) + frame_size;
+
+                IWICDdsFrameDecode_Release(dds_frame);
+                dds_frame = NULL;
+                IWICBitmapFrameDecode_Release(frame);
+                frame = NULL;
             }
-
-            size += sizeof(**resource_data) + frame_size;
-
-            IWICDdsFrameDecode_Release(dds_frame);
-            dds_frame = NULL;
-            IWICBitmapFrameDecode_Release(frame);
-            frame = NULL;
         }
 
         if (!(res_data = malloc(size)))
@@ -915,41 +919,45 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         size = 0;
         for (i = 0; i < img_info.ArraySize; ++i)
         {
-            if (FAILED(hr = IWICDdsDecoder_GetFrame(dds_decoder, i, 0, 0, &frame)))
-                goto end;
-            if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
-                goto end;
-            if (FAILED(hr = dds_get_frame_info(dds_frame, &img_info, &format_info, &stride, &frame_size)))
-                goto end;
-
-            buffer = res_data + sizeof(**resource_data) * img_info.ArraySize + size;
-            size += frame_size;
-
-            if (img_info.Format == format_info.DxgiFormat)
+            for (j = 0; j < img_info.MipLevels; ++j)
             {
-                if (FAILED(hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, frame_size, buffer)))
+                if (FAILED(hr = IWICDdsDecoder_GetFrame(dds_decoder, i, j, 0, &frame)))
                     goto end;
-            }
-            else
-            {
-                if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
+                if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame,
+                                &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
+                    goto end;
+                if (FAILED(hr = dds_get_frame_info(dds_frame, &img_info, &format_info, &stride, &frame_size)))
+                    goto end;
+
+                buffer = res_data + sizeof(**resource_data) * img_info.ArraySize * img_info.MipLevels + size;
+                size += frame_size;
+
+                if (img_info.Format == format_info.DxgiFormat)
                 {
-                    hr = E_FAIL;
-                    FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
-                    goto end;
+                    if (FAILED(hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, frame_size, buffer)))
+                        goto end;
                 }
-                if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
-                    goto end;
+                else
+                {
+                    if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
+                    {
+                        hr = E_FAIL;
+                        FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
+                        goto end;
+                    }
+                    if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
+                        goto end;
+                }
+
+                IWICDdsFrameDecode_Release(dds_frame);
+                dds_frame = NULL;
+                IWICBitmapFrameDecode_Release(frame);
+                frame = NULL;
+
+                (*resource_data)[i * img_info.MipLevels + j].pSysMem = buffer;
+                (*resource_data)[i * img_info.MipLevels + j].SysMemPitch = stride;
+                (*resource_data)[i * img_info.MipLevels + j].SysMemSlicePitch = frame_size;
             }
-
-            IWICDdsFrameDecode_Release(dds_frame);
-            dds_frame = NULL;
-            IWICBitmapFrameDecode_Release(frame);
-            frame = NULL;
-
-            (*resource_data)[i].pSysMem = buffer;
-            (*resource_data)[i].SysMemPitch = stride;
-            (*resource_data)[i].SysMemSlicePitch = frame_size;
         }
     }
     else
@@ -984,7 +992,7 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
 
     load_info->Width = img_info.Width;
     load_info->Height = img_info.Height;
-    load_info->MipLevels = 1;
+    load_info->MipLevels = img_info.MipLevels;
     load_info->Format = img_info.Format;
     load_info->Usage = D3D10_USAGE_DEFAULT;
     load_info->BindFlags = D3D10_BIND_SHADER_RESOURCE;
