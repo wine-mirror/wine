@@ -71,7 +71,7 @@ function test_xhr() {
 }
 
 function test_content_types() {
-    var xhr = new XMLHttpRequest(), types, i = 0;
+    var xhr = new XMLHttpRequest(), types, i = 0, override = false;
     var v = document.documentMode;
 
     var types = [
@@ -95,7 +95,19 @@ function test_content_types() {
         if(v < 10 || types === xml_types)
             ok(xhr.responseXML !== null, "unexpected null responseXML for " + types[i]);
         else
-            ok(xhr.responseXML === null, "unexpected non-null responseXML for " + types[i]);
+            ok(xhr.responseXML === null, "unexpected non-null responseXML for " + (override ? "overriden " : "") + types[i]);
+
+        if(("overrideMimeType" in xhr) && !override) {
+            override = true;
+            xhr = new XMLHttpRequest();
+            xhr.onload = onload;
+            xhr.open("POST", "echo.php", true);
+            xhr.setRequestHeader("X-Test", "True");
+            xhr.overrideMimeType(types[i]);
+            xhr.send(xml);
+            return;
+        }
+        override = false;
 
         if(++i >= types.length) {
             if(types === xml_types) {

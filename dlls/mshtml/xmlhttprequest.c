@@ -978,10 +978,29 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_get_withCredentials(IWineXMLHtt
 static HRESULT WINAPI HTMLXMLHttpRequest_private_overrideMimeType(IWineXMLHttpRequestPrivate *iface, BSTR mimeType)
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
+    static const WCHAR generic_type[] = L"application/octet-stream";
+    const WCHAR *type = NULL;
+    WCHAR *lowercase = NULL;
+    nsAString nsstr;
+    nsresult nsres;
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(mimeType));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(mimeType));
 
-    return E_NOTIMPL;
+    if(mimeType) {
+        if(mimeType[0]) {
+            if(!(lowercase = heap_strdupW(mimeType)))
+                return E_OUTOFMEMORY;
+            _wcslwr(lowercase);
+            type = lowercase;
+        }else
+            type = generic_type;
+    }
+
+    nsAString_InitDepend(&nsstr, type);
+    nsres = nsIXMLHttpRequest_SlowOverrideMimeType(This->nsxhr, &nsstr);
+    nsAString_Finish(&nsstr);
+    heap_free(lowercase);
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_put_onerror(IWineXMLHttpRequestPrivate *iface, VARIANT v)
