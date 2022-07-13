@@ -708,12 +708,29 @@ HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DW
 
 static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
 {
-    const WCHAR *ptr;
-    size_t len;
+    const WCHAR *ptr, *beg, *end;
+    size_t len = wcslen(value);
+    char *content_type;
 
     static const WCHAR charsetW[] = {'c','h','a','r','s','e','t','='};
 
     ptr = wcschr(value, ';');
+
+    if(!This->nschannel->content_type || !(This->nschannel->load_flags & LOAD_CALL_CONTENT_SNIFFERS)) {
+        for(end = ptr ? ptr : value + len; end > value; end--)
+            if(!iswspace(end[-1]))
+                break;
+        for(beg = value; beg < end; beg++)
+            if(!iswspace(*beg))
+                break;
+
+        if((content_type = heap_strndupWtoU(beg, end - beg))) {
+            heap_free(This->nschannel->content_type);
+            This->nschannel->content_type = content_type;
+            strlwr(content_type);
+        }
+    }
+
     if(!ptr)
         return;
 
@@ -721,7 +738,6 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
     while(*ptr && iswspace(*ptr))
         ptr++;
 
-    len = lstrlenW(value);
     if(ptr + ARRAY_SIZE(charsetW) < value+len && !wcsnicmp(ptr, charsetW, ARRAY_SIZE(charsetW))) {
         size_t charset_len, lena;
         nsACString charset_str;
