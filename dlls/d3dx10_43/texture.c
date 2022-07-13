@@ -766,11 +766,53 @@ void init_load_info(const D3DX10_IMAGE_LOAD_INFO *load_info, D3DX10_IMAGE_LOAD_I
     out->pSrcInfo = NULL;
 }
 
+static HRESULT convert_image(IWICImagingFactory *factory, IWICBitmapFrameDecode *frame,
+        const GUID *dst_format, unsigned int stride, unsigned int frame_size, BYTE *buffer)
+{
+    IWICFormatConverter *converter;
+    BOOL can_convert;
+    GUID src_format;
+    HRESULT hr;
+
+    if (FAILED(hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &src_format)))
+        return hr;
+
+    if (IsEqualGUID(&src_format, dst_format))
+    {
+        if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, stride, frame_size, buffer)))
+            return hr;
+        return S_OK;
+    }
+
+    if (FAILED(hr = IWICImagingFactory_CreateFormatConverter(factory, &converter)))
+        return hr;
+    if (FAILED(hr = IWICFormatConverter_CanConvert(converter, &src_format, dst_format, &can_convert)))
+    {
+        IWICFormatConverter_Release(converter);
+        return hr;
+    }
+    if (!can_convert)
+    {
+        WARN("Format converting %s to %s is not supported by WIC.\n",
+                debugstr_guid(&src_format), debugstr_guid(dst_format));
+        IWICFormatConverter_Release(converter);
+        return E_NOTIMPL;
+    }
+    if (FAILED(hr = IWICFormatConverter_Initialize(converter, (IWICBitmapSource *)frame, dst_format,
+                    WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom)))
+    {
+        IWICFormatConverter_Release(converter);
+        return hr;
+    }
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, stride, frame_size, buffer);
+    IWICFormatConverter_Release(converter);
+    return hr;
+}
+
 HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
         D3D10_SUBRESOURCE_DATA **resource_data)
 {
     unsigned int frame_count, width, height, stride, frame_size;
-    IWICFormatConverter *converter = NULL;
     IWICDdsFrameDecode *dds_frame = NULL;
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
@@ -779,8 +821,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     D3DX10_IMAGE_INFO img_info;
     IWICStream *stream = NULL;
     const GUID *dst_format;
-    BOOL can_convert;
-    GUID src_format;
     HRESULT hr;
 
     if (load_info->Width != D3DX10_DEFAULT)
@@ -835,8 +875,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         goto end;
     if (FAILED(hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame)))
         goto end;
-    if (FAILED(hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &src_format)))
-        goto end;
 
     width = img_info.Width;
     height = img_info.Height;
@@ -870,30 +908,8 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
             FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
             goto end;
         }
-
-        if (IsEqualGUID(&src_format, dst_format))
-        {
-            if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, stride, frame_size, buffer)))
-                goto end;
-        }
-        else
-        {
-            if (FAILED(hr = IWICImagingFactory_CreateFormatConverter(factory, &converter)))
-                goto end;
-            if (FAILED(hr = IWICFormatConverter_CanConvert(converter, &src_format, dst_format, &can_convert)))
-                goto end;
-            if (!can_convert)
-            {
-                WARN("Format converting %s to %s is not supported by WIC.\n",
-                        debugstr_guid(&src_format), debugstr_guid(dst_format));
-                goto end;
-            }
-            if (FAILED(hr = IWICFormatConverter_Initialize(converter, (IWICBitmapSource *)frame, dst_format,
-                    WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom)))
-                goto end;
-            if (FAILED(hr = IWICFormatConverter_CopyPixels(converter, NULL, stride, frame_size, buffer)))
-                goto end;
-        }
+        if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
+            goto end;
     }
 
     load_info->Width = width;
@@ -913,8 +929,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     hr = S_OK;
 
 end:
-    if (converter)
-        IWICFormatConverter_Release(converter);
     if (dds_frame)
         IWICDdsFrameDecode_Release(dds_frame);
     free(res_data);
