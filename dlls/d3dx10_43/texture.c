@@ -71,17 +71,6 @@ wic_pixel_formats[] =
     { &GUID_WICPixelFormat128bppRGBAFloat,    DXGI_FORMAT_R32G32B32A32_FLOAT }
 };
 
-static const DXGI_FORMAT block_compressed_formats[] =
-{
-    DXGI_FORMAT_BC1_TYPELESS,  DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB,
-    DXGI_FORMAT_BC2_TYPELESS,  DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
-    DXGI_FORMAT_BC3_TYPELESS,  DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
-    DXGI_FORMAT_BC4_TYPELESS,  DXGI_FORMAT_BC4_UNORM, DXGI_FORMAT_BC4_SNORM,
-    DXGI_FORMAT_BC5_TYPELESS,  DXGI_FORMAT_BC5_UNORM, DXGI_FORMAT_BC5_SNORM,
-    DXGI_FORMAT_BC6H_TYPELESS, DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_SF16,
-    DXGI_FORMAT_BC7_TYPELESS,  DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB
-};
-
 static const DXGI_FORMAT to_be_converted_format[] =
 {
     DXGI_FORMAT_UNKNOWN,
@@ -133,17 +122,6 @@ static D3D10_RESOURCE_DIMENSION wic_dimension_to_d3dx10_dimension(WICDdsDimensio
         default:
             return D3D10_RESOURCE_DIMENSION_UNKNOWN;
     }
-}
-
-static BOOL is_block_compressed(DXGI_FORMAT format)
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(block_compressed_formats); ++i)
-        if (format == block_compressed_formats[i])
-            return TRUE;
-
-    return FALSE;
 }
 
 static unsigned int get_bpp_from_format(DXGI_FORMAT format)
@@ -876,32 +854,70 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     if (FAILED(hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame)))
         goto end;
 
-    width = img_info.Width;
-    height = img_info.Height;
-    if (is_block_compressed(img_info.Format))
+    if (img_info.ImageFileFormat == D3DX10_IFF_DDS)
     {
-        width = (width + 3) & ~3;
-        height = (height + 3) & ~3;
-    }
-    stride = (width * get_bpp_from_format(img_info.Format) + 7) / 8;
-    frame_size = stride * height;
+        WICDdsFormatInfo format_info;
 
-    if (!(res_data = malloc(sizeof(**resource_data) + frame_size)))
-    {
-        hr = E_FAIL;
-        goto end;
-    }
-    buffer = res_data + sizeof(**resource_data);
-
-    if (is_block_compressed(img_info.Format))
-    {
         if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
             goto end;
-        if (FAILED(hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride * 4, frame_size, buffer)))
+        if (FAILED(hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, &format_info)))
             goto end;
+        if (FAILED(hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width, &height)))
+            goto end;
+
+        if (img_info.Format == format_info.DxgiFormat)
+        {
+            stride = width * format_info.BytesPerBlock;
+            frame_size = stride * height;
+            width *= format_info.BlockWidth;
+            height *= format_info.BlockHeight;
+        }
+        else
+        {
+            width *= format_info.BlockWidth;
+            height *= format_info.BlockHeight;
+            stride = (width * get_bpp_from_format(img_info.Format) + 7) / 8;
+            frame_size = stride * height;
+        }
+
+        if (!(res_data = malloc(sizeof(**resource_data) + frame_size)))
+        {
+            hr = E_FAIL;
+            goto end;
+        }
+        buffer = res_data + sizeof(**resource_data);
+
+        if (img_info.Format == format_info.DxgiFormat)
+        {
+            if (FAILED(hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, frame_size, buffer)))
+                goto end;
+        }
+        else
+        {
+            if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
+            {
+                hr = E_FAIL;
+                FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
+                goto end;
+            }
+            if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
+                goto end;
+        }
     }
     else
     {
+        width = img_info.Width;
+        height = img_info.Height;
+        stride = (width * get_bpp_from_format(img_info.Format) + 7) / 8;
+        frame_size = stride * height;
+
+        if (!(res_data = malloc(sizeof(**resource_data) + frame_size)))
+        {
+            hr = E_FAIL;
+            goto end;
+        }
+        buffer = res_data + sizeof(**resource_data);
+
         if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
         {
             hr = E_FAIL;
