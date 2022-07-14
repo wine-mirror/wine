@@ -511,6 +511,11 @@ static const BYTE test_dds_cube[] =
 };
 static const BYTE test_dds_cube_data[] =
 {
+    0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7,
+    0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7,
+    0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7,
+    0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7,
+    0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7,
     0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7
 };
 
@@ -1211,10 +1216,11 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
 
 static void check_resource_data(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
 {
-    unsigned int width, height, stride, i;
+    unsigned int width, height, stride, i, array_slice;
     D3D10_MAPPED_TEXTURE2D map;
     D3D10_TEXTURE2D_DESC desc;
     ID3D10Texture2D *readback;
+    const BYTE *expected_data;
     BOOL line_match;
     HRESULT hr;
 
@@ -1233,26 +1239,32 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
         height = (height + 3) / 4;
     }
 
-    hr = ID3D10Texture2D_Map(readback, 0, D3D10_MAP_READ, 0, &map);
-    ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#lx.\n", hr);
-    if (hr != S_OK)
+    expected_data = image->expected_data;
+    for (array_slice = 0; array_slice < desc.ArraySize; ++array_slice)
     {
-        ID3D10Texture2D_Release(readback);
-        return;
+        hr = ID3D10Texture2D_Map(readback, array_slice * desc.MipLevels, D3D10_MAP_READ, 0, &map);
+        ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#lx.\n", hr);
+        if (hr != S_OK)
+        {
+            ID3D10Texture2D_Release(readback);
+            return;
+        }
+
+        for (i = 0; i < height; ++i)
+        {
+            line_match = !memcmp(expected_data + stride * i,
+                    (BYTE *)map.pData + map.RowPitch * i, stride);
+            todo_wine_if(is_block_compressed(image->expected_info.Format)
+                    && (image->expected_info.Width % 4 != 0 || image->expected_info.Height % 4 != 0))
+                ok_(__FILE__, line)(line_match, "Data mismatch for line %u, array slice %u.\n", i, array_slice);
+            if (!line_match)
+                break;
+        }
+        expected_data += stride * height;
+
+        ID3D10Texture2D_Unmap(readback, 0);
     }
 
-    for (i = 0; i < height; ++i)
-    {
-        line_match = !memcmp(image->expected_data + stride * i,
-                (BYTE *)map.pData + map.RowPitch * i, stride);
-        todo_wine_if(is_block_compressed(image->expected_info.Format)
-                && (image->expected_info.Width % 4 != 0 || image->expected_info.Height % 4 != 0))
-        ok_(__FILE__, line)(line_match, "Data mismatch for line %u.\n", i);
-        if (!line_match)
-            break;
-    }
-
-    ID3D10Texture2D_Unmap(readback, 0);
     ID3D10Texture2D_Release(readback);
 }
 
