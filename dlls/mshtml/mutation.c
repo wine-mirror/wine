@@ -27,6 +27,7 @@
 #include "ole2.h"
 #include "shlguid.h"
 #include "wininet.h"
+#include "winternl.h"
 
 #include "mshtml_private.h"
 #include "htmlscript.h"
@@ -51,6 +52,20 @@ static const IID NS_ICONTENTUTILS_CID =
     {0x762C4AE7,0xB923,0x422F,{0xB9,0x7E,0xB9,0xBF,0xC1,0xEF,0x7B,0xF0}};
 
 static nsIContentUtils *content_utils;
+
+static BOOL is_iexplore(void)
+{
+    static volatile char cache = -1;
+    BOOL ret = cache;
+    if(ret == -1) {
+        const WCHAR *p, *name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+        if((p = wcsrchr(name, '/'))) name = p + 1;
+        if((p = wcsrchr(name, '\\'))) name = p + 1;
+        ret = !wcsicmp(name, L"iexplore.exe");
+        cache = ret;
+    }
+    return ret;
+}
 
 static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *comment)
 {
@@ -823,7 +838,13 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
             TRACE("doctype node\n");
 
-            if(This->window && This->window->base.outer_window) {
+            /* Native mshtml hardcodes special behavior for iexplore.exe here. The feature control registry
+               keys under HKLM or HKCU\Software\Microsoft\Internet Explorer\Main\FeatureControl are not used
+               in this case (neither in Wow6432Node), although FEATURE_BROWSER_EMULATION does override this,
+               but it is not set by default on native, and the behavior is still different. This was tested
+               by removing all iexplore.exe values from any FeatureControl subkeys, and renaming the test
+               executable to iexplore.exe, which changed its default compat mode in such cases. */
+            if(This->window && This->window->base.outer_window && is_iexplore()) {
                 HTMLOuterWindow *window = This->window->base.outer_window;
                 DWORD zone;
                 HRESULT hres;

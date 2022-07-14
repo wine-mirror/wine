@@ -11449,6 +11449,9 @@ static void test_quirks_mode(void)
     expected_document_mode = 5;
     run_domtest("<html><body></body></html>", test_document_mode);
 
+    expected_document_mode = 7;
+    run_domtest("<!DOCTYPE html>\n<html></html>", test_document_mode);
+
     if(!is_ie9plus)
         return;
 

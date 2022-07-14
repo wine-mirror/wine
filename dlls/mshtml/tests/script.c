@@ -3734,6 +3734,28 @@ static void run_script_as_http_with_mode(const char *script, const char *opt, co
     run_from_path(L"/index.html", opt ? opt : script);
 }
 
+static void test_strict_mode(void)
+{
+    sprintf(index_html_data,
+            "<!DOCTYPE html>\n"
+            "<html>\n"
+            "  <head>\n"
+            "    <script src=\"winetest.js\" type=\"text/javascript\"></script>\n"
+            "    <script type=\"text/javascript\">\n"
+            "      function test() {\n"
+            "        ok(document.documentMode === 7, 'document mode = ' + document.documentMode);\n"
+            "        next_test();\n"
+            "      }\n"
+            "      var tests = [ test ];\n"
+            "    </script>\n"
+            "  </head>\n"
+            "  <body onload=\"run_tests();\">\n"
+            "  </body>\n"
+            "</html>\n");
+
+    run_from_path(L"/index.html", "test_strict_mode");
+}
+
 static void init_protocol_handler(void)
 {
     IInternetSession *internet_session;
@@ -3767,6 +3789,7 @@ static void run_js_tests(void)
 
     init_protocol_handler();
 
+    test_strict_mode();
     run_script_as_http_with_mode("xhr.js", NULL, "9");
     run_script_as_http_with_mode("xhr.js", NULL, "10");
     run_script_as_http_with_mode("xhr.js", NULL, "11");
