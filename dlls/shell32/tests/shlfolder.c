@@ -4487,7 +4487,6 @@ static void test_IShellItemImageFactory(void)
 
         ret = IShellItemImageFactory_GetImage(siif, size, SIIGBF_BIGGERSIZEOK, &hbm);
         IShellItemImageFactory_Release(siif);
-        todo_wine
         ok(ret == S_OK, "GetImage returned %lx\n", ret);
         ok(FAILED(ret) == !hbm, "result = %lx but bitmap = %p\n", ret, hbm);
 

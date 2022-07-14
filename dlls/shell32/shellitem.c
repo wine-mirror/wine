@@ -569,13 +569,26 @@ static HRESULT WINAPI ShellItem_IShellItemImageFactory_GetImage(IShellItemImageF
     SIZE size, SIIGBF flags, HBITMAP *phbm)
 {
     ShellItem *This = impl_from_IShellItemImageFactory(iface);
+    static const BITMAPINFOHEADER dummy_bmi_header = {
+        .biSize = sizeof(dummy_bmi_header),
+        .biWidth = 1,
+        .biHeight = 1,
+        .biPlanes = 1,
+        .biBitCount = 32,
+        .biCompression = BI_RGB
+    };
     static int once;
 
     if (!once++)
         FIXME("%p ({%lu, %lu} %d %p): stub\n", This, size.cx, size.cy, flags, phbm);
 
-    *phbm = NULL;
-    return E_NOTIMPL;
+    if (!(*phbm = CreateDIBSection(NULL, (const BITMAPINFO *)&dummy_bmi_header,
+                                   DIB_RGB_COLORS, NULL, NULL, 0)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 static const IShellItemImageFactoryVtbl ShellItem_IShellItemImageFactory_Vtbl = {
