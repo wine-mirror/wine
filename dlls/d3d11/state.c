@@ -325,7 +325,7 @@ static void STDMETHODCALLTYPE d3d_blend_state_wined3d_object_destroyed(void *par
 
     wine_rb_remove(&device->blend_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_blend_state_wined3d_parent_ops =
@@ -406,7 +406,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
         return S_OK;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -422,7 +422,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     {
         ERR("Failed to insert blend state entry.\n");
         wined3d_private_store_cleanup(&object->private_store);
-        heap_free(object);
+        free(object);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
@@ -452,7 +452,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
         WARN("Failed to create wined3d blend state, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&object->private_store);
         wine_rb_remove(&device->blend_states, &object->entry);
-        heap_free(object);
+        free(object);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -730,7 +730,7 @@ static void STDMETHODCALLTYPE d3d_depthstencil_state_wined3d_object_destroyed(vo
 
     wine_rb_remove(&device->depthstencil_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_depthstencil_state_wined3d_parent_ops =
@@ -799,7 +799,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
         return S_OK;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -815,7 +815,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
     {
         ERR("Failed to insert depth/stencil state entry.\n");
         wined3d_private_store_cleanup(&object->private_store);
-        heap_free(object);
+        free(object);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
@@ -843,7 +843,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
         WARN("Failed to create wined3d depth/stencil state, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&object->private_store);
         wine_rb_remove(&device->depthstencil_states, &object->entry);
-        heap_free(object);
+        free(object);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -1138,7 +1138,7 @@ static void STDMETHODCALLTYPE d3d_rasterizer_state_wined3d_object_destroyed(void
 
     wine_rb_remove(&device->rasterizer_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_rasterizer_state_wined3d_parent_ops =
@@ -1235,7 +1235,7 @@ HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTE
         return S_OK;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -1246,7 +1246,7 @@ HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTE
     if (FAILED(hr))
     {
         WARN("Failed to initialise rasterizer state, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1524,7 +1524,7 @@ static void STDMETHODCALLTYPE d3d_sampler_wined3d_object_destroyed(void *parent)
 
     wine_rb_remove(&device->sampler_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_sampler_wined3d_parent_ops =
@@ -1653,7 +1653,7 @@ HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_
         return S_OK;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -1664,7 +1664,7 @@ HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_
     if (FAILED(hr))
     {
         WARN("Failed to initialise sampler state, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

@@ -252,7 +252,7 @@ static void STDMETHODCALLTYPE d3d_texture1d_wined3d_object_released(void *parent
 
     if (texture->dxgi_resource)
         IUnknown_Release(texture->dxgi_resource);
-    heap_free(texture);
+    free(texture);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_texture1d_Release(ID3D10Texture1D *iface)
@@ -447,7 +447,7 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
     DWORD flags = 0;
     HRESULT hr;
 
-    if (!(texture = heap_alloc_zero(sizeof(*texture))))
+    if (!(texture = calloc(1, sizeof(*texture))))
         return E_OUTOFMEMORY;
 
     texture->ID3D11Texture1D_iface.lpVtbl = &d3d11_texture1d_vtbl;
@@ -481,7 +481,7 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
             texture, &d3d_texture1d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
-        heap_free(texture);
+        free(texture);
         wined3d_mutex_unlock();
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
             hr = E_INVALIDARG;
@@ -747,7 +747,7 @@ static void STDMETHODCALLTYPE d3d_texture2d_wined3d_object_released(void *parent
     struct d3d_texture2d *texture = parent;
 
     if (texture->dxgi_resource) IUnknown_Release(texture->dxgi_resource);
-    heap_free(texture);
+    free(texture);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
@@ -971,7 +971,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
         return E_INVALIDARG;
     }
 
-    if (!(texture = heap_alloc_zero(sizeof(*texture))))
+    if (!(texture = calloc(1, sizeof(*texture))))
         return E_OUTOFMEMORY;
 
     texture->ID3D11Texture2D_iface.lpVtbl = &d3d11_texture2d_vtbl;
@@ -1005,7 +1005,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
             texture, &d3d_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
-        heap_free(texture);
+        free(texture);
         wined3d_mutex_unlock();
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
             hr = E_INVALIDARG;
@@ -1099,7 +1099,7 @@ static void STDMETHODCALLTYPE d3d_texture3d_wined3d_object_released(void *parent
 
     if (texture->dxgi_resource)
         IUnknown_Release(texture->dxgi_resource);
-    heap_free(parent);
+    free(parent);
 }
 
 static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
@@ -1497,13 +1497,13 @@ HRESULT d3d_texture3d_create(struct d3d_device *device, const D3D11_TEXTURE3D_DE
     struct d3d_texture3d *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_texture3d_init(object, device, desc, data)))
     {
         WARN("Failed to initialise texture, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

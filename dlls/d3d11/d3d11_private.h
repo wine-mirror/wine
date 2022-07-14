@@ -20,7 +20,6 @@
 #define __WINE_D3D11_PRIVATE_H
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include <assert.h>
 

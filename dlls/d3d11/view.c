@@ -1194,7 +1194,7 @@ static void STDMETHODCALLTYPE d3d_depth_stencil_view_wined3d_object_destroyed(vo
     struct d3d_depthstencil_view *view = parent;
 
     wined3d_private_store_cleanup(&view->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_depth_stencil_view_wined3d_parent_ops =
@@ -1318,13 +1318,13 @@ HRESULT d3d_depthstencil_view_create(struct d3d_device *device, ID3D11Resource *
     struct d3d_depthstencil_view *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_depthstencil_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialise depth/stencil view, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1629,7 +1629,7 @@ static void STDMETHODCALLTYPE d3d_render_target_view_wined3d_object_destroyed(vo
     struct d3d_rendertarget_view *view = parent;
 
     wined3d_private_store_cleanup(&view->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_render_target_view_wined3d_parent_ops =
@@ -1759,13 +1759,13 @@ HRESULT d3d_rendertarget_view_create(struct d3d_device *device, ID3D11Resource *
     struct d3d_rendertarget_view *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_rendertarget_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialise rendertarget view, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -2084,7 +2084,7 @@ static void STDMETHODCALLTYPE d3d_shader_resource_view_wined3d_object_destroyed(
     struct d3d_shader_resource_view *view = parent;
 
     wined3d_private_store_cleanup(&view->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_shader_resource_view_wined3d_parent_ops =
@@ -2253,13 +2253,13 @@ HRESULT d3d_shader_resource_view_create(struct d3d_device *device, ID3D11Resourc
     struct d3d_shader_resource_view *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_shader_resource_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialise shader resource view, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -2427,7 +2427,7 @@ static void STDMETHODCALLTYPE d3d11_unordered_access_view_wined3d_object_destroy
     struct d3d11_unordered_access_view *view = parent;
 
     wined3d_private_store_cleanup(&view->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_unordered_access_view_wined3d_parent_ops =
@@ -2556,13 +2556,13 @@ HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Reso
     struct d3d11_unordered_access_view *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_unordered_access_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialise unordered access view, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

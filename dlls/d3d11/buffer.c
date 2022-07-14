@@ -396,7 +396,7 @@ static void STDMETHODCALLTYPE d3d_buffer_wined3d_object_released(void *parent)
     struct d3d_buffer *buffer = parent;
 
     if (buffer->dxgi_resource) IUnknown_Release(buffer->dxgi_resource);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_buffer_wined3d_parent_ops =
@@ -507,13 +507,13 @@ HRESULT d3d_buffer_create(struct d3d_device *device, const D3D11_BUFFER_DESC *de
     struct d3d_buffer *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_buffer_init(object, device, desc, data)))
     {
         WARN("Failed to initialise buffer, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

@@ -180,7 +180,7 @@ static void STDMETHODCALLTYPE d3d_query_wined3d_object_destroyed(void *parent)
     struct d3d_query *query = parent;
 
     wined3d_private_store_cleanup(&query->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_query_wined3d_parent_ops =
@@ -488,13 +488,13 @@ HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc
     if (is_predicate_type)
         predicate = TRUE;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_query_init(object, device, desc, predicate)))
     {
         WARN("Failed to initialise predicate, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

@@ -247,7 +247,7 @@ static void STDMETHODCALLTYPE d3d_vertex_shader_wined3d_object_destroyed(void *p
     struct d3d_vertex_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_vertex_shader_wined3d_parent_ops =
@@ -290,13 +290,13 @@ HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_cod
     struct d3d_vertex_shader *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_vertex_shader_init(object, device, byte_code, byte_code_length)))
     {
         WARN("Failed to initialise vertex shader, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -445,7 +445,7 @@ static void STDMETHODCALLTYPE d3d11_hull_shader_wined3d_object_destroyed(void *p
     struct d3d11_hull_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_hull_shader_wined3d_parent_ops =
@@ -487,12 +487,12 @@ HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_cod
     struct d3d11_hull_shader *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_hull_shader_init(object, device, byte_code, byte_code_length)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -632,7 +632,7 @@ static void STDMETHODCALLTYPE d3d11_domain_shader_wined3d_object_destroyed(void 
     struct d3d11_domain_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_domain_shader_wined3d_parent_ops =
@@ -674,12 +674,12 @@ HRESULT d3d11_domain_shader_create(struct d3d_device *device, const void *byte_c
     struct d3d11_domain_shader *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_domain_shader_init(object, device, byte_code, byte_code_length)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -922,7 +922,7 @@ static void STDMETHODCALLTYPE d3d_geometry_shader_wined3d_object_destroyed(void 
     struct d3d_geometry_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
@@ -1161,14 +1161,14 @@ HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_c
     struct d3d_geometry_shader *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_geometry_shader_init(object, device, byte_code, byte_code_length,
             so_entries, so_entry_count, buffer_strides, buffer_stride_count, rasterizer_stream)))
     {
         WARN("Failed to initialise geometry shader, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1420,7 +1420,7 @@ static void STDMETHODCALLTYPE d3d_pixel_shader_wined3d_object_destroyed(void *pa
     struct d3d_pixel_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_pixel_shader_wined3d_parent_ops =
@@ -1463,13 +1463,13 @@ HRESULT d3d_pixel_shader_create(struct d3d_device *device, const void *byte_code
     struct d3d_pixel_shader *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_pixel_shader_init(object, device, byte_code, byte_code_length)))
     {
         WARN("Failed to initialise pixel shader, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1616,7 +1616,7 @@ static void STDMETHODCALLTYPE d3d11_compute_shader_wined3d_object_destroyed(void
     struct d3d11_compute_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_compute_shader_wined3d_parent_ops =
@@ -1658,12 +1658,12 @@ HRESULT d3d11_compute_shader_create(struct d3d_device *device, const void *byte_
     struct d3d11_compute_shader *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_compute_shader_init(object, device, byte_code, byte_code_length)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1730,7 +1730,7 @@ static ULONG STDMETHODCALLTYPE d3d11_class_linkage_Release(ID3D11ClassLinkage *i
         ID3D11Device2 *device = class_linkage->device;
 
         wined3d_private_store_cleanup(&class_linkage->private_store);
-        heap_free(class_linkage);
+        free(class_linkage);
 
         ID3D11Device2_Release(device);
     }
@@ -1819,7 +1819,7 @@ HRESULT d3d11_class_linkage_create(struct d3d_device *device, struct d3d11_class
 {
     struct d3d11_class_linkage *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID3D11ClassLinkage_iface.lpVtbl = &d3d11_class_linkage_vtbl;

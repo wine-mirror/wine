@@ -41,7 +41,7 @@ static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, S
     if (new_capacity < count)
         new_capacity = count;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return FALSE;
 
     *elements = new_elements;
@@ -158,9 +158,9 @@ static void d3d_device_context_state_private_release(struct d3d_device_context_s
 
             d3d_device_remove_context_state(device, state);
         }
-        heap_free(state->entries);
+        free(state->entries);
         wined3d_device_decref(state->wined3d_device);
-        heap_free(state);
+        free(state);
     }
 }
 
@@ -378,7 +378,7 @@ static ULONG STDMETHODCALLTYPE d3d11_command_list_Release(ID3D11CommandList *ifa
         wined3d_command_list_decref(list->wined3d_list);
         wined3d_private_store_cleanup(&list->private_store);
         ID3D11Device2_Release(list->device);
-        heap_free(list);
+        free(list);
     }
 
     return refcount;
@@ -528,7 +528,7 @@ static ULONG STDMETHODCALLTYPE d3d11_device_context_Release(ID3D11DeviceContext1
         {
             wined3d_deferred_context_destroy(context->wined3d_context);
             d3d11_device_context_cleanup(context);
-            heap_free(context);
+            free(context);
         }
         ID3D11Device2_Release(device);
     }
@@ -2703,14 +2703,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_FinishCommandList(ID3D11De
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_deferred_context_record_command_list(context->wined3d_context,
             !!restore, &object->wined3d_list)))
     {
         WARN("Failed to record wined3d command list, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -3814,14 +3814,14 @@ static HRESULT d3d11_deferred_context_create(struct d3d_device *device,
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
     d3d11_device_context_init(object, device, D3D11_DEVICE_CONTEXT_DEFERRED);
 
     if (FAILED(hr = wined3d_deferred_context_create(device->wined3d_device, &object->wined3d_context)))
     {
         WARN("Failed to create wined3d deferred context, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -4385,7 +4385,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
         return S_FALSE;
     }
 
-    if (!(state_impl = heap_alloc_zero(sizeof(*state_impl))))
+    if (!(state_impl = calloc(1, sizeof(*state_impl))))
     {
         wined3d_state_destroy(wined3d_state);
         hr = E_OUTOFMEMORY;
@@ -4600,7 +4600,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
         {
             d3d_device_context_state_remove_entry(device->context_states[i], device);
         }
-        heap_free(device->context_states);
+        free(device->context_states);
         d3d11_device_context_cleanup(&device->immediate_context);
         if (device->wined3d_device)
         {
@@ -6247,7 +6247,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
     }
 
     if (output_stream_decl_count
-            && !(so_entries = heap_calloc(output_stream_decl_count, sizeof(*so_entries))))
+            && !(so_entries = calloc(output_stream_decl_count, sizeof(*so_entries))))
     {
         ERR("Failed to allocate D3D11 SO declaration array memory.\n");
         return E_OUTOFMEMORY;
@@ -6268,7 +6268,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
             if (output_stream_stride)
             {
                 WARN("Stride must be 0 when multiple output slots are used.\n");
-                heap_free(so_entries);
+                free(so_entries);
                 return E_INVALIDARG;
             }
         }
@@ -6276,7 +6276,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
 
     hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
             so_entries, output_stream_decl_count, &output_stream_stride, stride_count, 0, &object);
-    heap_free(so_entries);
+    free(so_entries);
     if (FAILED(hr))
         return hr;
 
@@ -6799,7 +6799,7 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     wined3d_state = wined3d_device_get_state(device->wined3d_device);
     feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(wined3d_state));
 
-    if (!(state = heap_alloc_zero(sizeof(*state))))
+    if (!(state = calloc(1, sizeof(*state))))
     {
         ERR("Failed to create the initial device context state.\n");
         return;
