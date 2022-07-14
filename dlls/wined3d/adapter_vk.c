@@ -2261,6 +2261,12 @@ static bool feature_level_10_supported(const struct wined3d_physical_device_info
             && info->vertex_divisor_features.vertexAttributeInstanceRateZeroDivisor;
 }
 
+static bool feature_level_11_supported(const struct wined3d_physical_device_info *info, unsigned int shader_model)
+{
+    return shader_model >= 5
+            && info->features2.features.tessellationShader;
+}
+
 static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_physical_device_info *info,
         const struct shader_caps *shader_caps)
 {
@@ -2283,7 +2289,7 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_p
     if (!feature_level_10_supported(info, shader_model))
         return WINED3D_FEATURE_LEVEL_9_3;
 
-    if (shader_model <= 4)
+    if (!feature_level_11_supported(info, shader_model))
         return WINED3D_FEATURE_LEVEL_10_1;
 
     return WINED3D_FEATURE_LEVEL_11_1;
