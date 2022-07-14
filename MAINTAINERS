@@ -22,6 +22,7 @@ Descriptions of section entries used here:
 	P: Other knowledgeable person. FullName <address@domain>
 	F: Files and directories with wildcard patterns.
 	   One pattern per line.  Multiple F: lines acceptable.
+	   A trailing / implies /*.
 	W: Link to additional information.
 
 Maintainers List
@@ -272,12 +273,12 @@ F:	dlls/winspool.drv/
 
 Richedit
 M:	Huw Davies <huw@codeweavers.com>
-F:	dlls/riched20
+F:	dlls/riched20/
 
 RPC Runtime
 P:	Huw Davies <huw@codeweavers.com>
 P:	Zebediah Figura <z.figura12@gmail.com>
-F:	dlls/rpcrt4
+F:	dlls/rpcrt4/
 
 Theming
 M:	Zhiyi Zhang <zzhang@codeweavers.com>
@@ -316,7 +317,7 @@ WIDL
 P:	Huw Davies <huw@codeweavers.com>
 P:	Rémi Bernon <rbernon@codeweavers.com>
 P:	Zebediah Figura <z.figura12@gmail.com>
-F:	tools/widl
+F:	tools/widl/
 
 Windows Imaging Component
 M:	Esme Povirk <esme@codeweavers.com>
