@@ -2261,6 +2261,11 @@ static bool feature_level_10_supported(const struct wined3d_physical_device_info
             && info->vertex_divisor_features.vertexAttributeInstanceRateZeroDivisor;
 }
 
+static bool feature_level_10_1_supported(const struct wined3d_physical_device_info *info, unsigned int shader_model)
+{
+    return info->features2.features.imageCubeArray;
+}
+
 static bool feature_level_11_supported(const struct wined3d_physical_device_info *info, unsigned int shader_model)
 {
     return shader_model >= 5
@@ -2288,6 +2293,9 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_p
 
     if (!feature_level_10_supported(info, shader_model))
         return WINED3D_FEATURE_LEVEL_9_3;
+
+    if (!feature_level_10_1_supported(info, shader_model))
+        return WINED3D_FEATURE_LEVEL_10;
 
     if (!feature_level_11_supported(info, shader_model))
         return WINED3D_FEATURE_LEVEL_10_1;
