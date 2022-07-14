@@ -154,7 +154,7 @@ static BOOL read_compat_mode(HKEY key, compat_mode_t *r)
     if(status != ERROR_SUCCESS || type != REG_SZ)
         return FALSE;
 
-    return parse_compat_version(version, r);
+    return parse_compat_version(version, r) != NULL;
 }
 
 static BOOL WINAPI load_compat_settings(INIT_ONCE *once, void *param, void **context)

@@ -297,6 +297,7 @@ PRIVATE_TID_LIST
 } tid_t;
 
 typedef enum {
+    COMPAT_MODE_INVALID = -1,
     COMPAT_MODE_QUIRKS,
     COMPAT_MODE_IE5,
     COMPAT_MODE_IE7,
@@ -1253,7 +1254,7 @@ HRESULT set_task_timer(HTMLInnerWindow*,LONG,enum timer_type,IDispatch*,LONG*) D
 HRESULT clear_task_timer(HTMLInnerWindow*,DWORD) DECLSPEC_HIDDEN;
 HRESULT clear_animation_timer(HTMLInnerWindow*,DWORD) DECLSPEC_HIDDEN;
 
-BOOL parse_compat_version(const WCHAR*,compat_mode_t*) DECLSPEC_HIDDEN;
+const WCHAR *parse_compat_version(const WCHAR*,compat_mode_t*) DECLSPEC_HIDDEN;
 
 const char *debugstr_mshtml_guid(const GUID*) DECLSPEC_HIDDEN;
 

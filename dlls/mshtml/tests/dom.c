@@ -11441,6 +11441,26 @@ static void test_document_mode(IHTMLDocument2 *doc2)
 
 static void test_quirks_mode(void)
 {
+    static const struct {
+        const char *str;
+        unsigned expected_mode;
+    } tests[] = {
+        { "9",          9 },
+        { " \t9 ",      9 },
+        { " 5 , 8 , 7", 8 },
+        { " 8 , 7 , 5", 8 },
+        { " 5 , 5 , 7", 7 },
+        { " 5 , 9 , 7", 9 },
+        { " 5, 7,9",    9 },
+        { " 5, 7;9",    7 },
+        { " 5, edge,8", 11 },
+        { " 5, foo,8",  5 },
+        { " 5, 8,foo",  8 },
+        { " 5, ,,7",    5 },
+        { " 5, , ,7",   5 },
+    };
+    unsigned i;
+
     run_domtest("<html></html>", check_quirks_mode);
     run_domtest("<!DOCTYPE html>\n<html></html>", check_strict_mode);
     run_domtest("<!-- comment --><!DOCTYPE html>\n<html></html>", check_quirks_mode);
@@ -11455,15 +11475,14 @@ static void test_quirks_mode(void)
     if(!is_ie9plus)
         return;
 
-    expected_document_mode = 9;
-    run_domtest("<!DOCTYPE html>\n"
-                "<html>"
-                " <head>"
-                "  <meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" />"
-                " </head>"
-                " <body>"
-                " </body>"
-                "</html>", test_document_mode);
+    for(i = 0; i < ARRAY_SIZE(tests); i++) {
+        char buf[128];
+        expected_document_mode = tests[i].expected_mode;
+        sprintf(buf, "<!DOCTYPE html>\n<html><head>"
+                     " <meta http-equiv=\"x-ua-compatible\" content=\"IE=%s\" />"
+                     "</head><body></body></html>", tests[i].str);
+        run_domtest(buf, test_document_mode);
+    }
 
     expected_document_mode = 8;
     run_domtest("<!DOCTYPE html>\n"

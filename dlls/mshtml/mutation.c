@@ -412,15 +412,20 @@ static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode
         lock_document_mode(doc);
 }
 
-BOOL parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
+static BOOL is_ua_compatible_delimiter(WCHAR c)
+{
+    return !c || c == ';' || c == ',' || iswspace(c);
+}
+
+const WCHAR *parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
 {
     DWORD version = 0;
     const WCHAR *p;
 
     for(p = version_string; '0' <= *p && *p <= '9'; p++)
         version = version * 10 + *p-'0';
-    if((*p && *p != ';') || p == version_string)
-        return FALSE;
+    if(!is_ua_compatible_delimiter(*p) || p == version_string)
+        return NULL;
 
     switch(version){
     case 5:
@@ -442,13 +447,14 @@ BOOL parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
     default:
         *r = version < 5 ? COMPAT_MODE_QUIRKS : COMPAT_MODE_IE11;
     }
-    return TRUE;
+    return p;
 }
 
 static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 {
     static const WCHAR ie_eqW[] = {'I','E','='};
     static const WCHAR edgeW[] = {'e','d','g','e'};
+    compat_mode_t mode = COMPAT_MODE_INVALID;
 
     TRACE("%s\n", debugstr_w(p));
 
@@ -456,15 +462,22 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
         return FALSE;
     p += 3;
 
-    if(!wcsnicmp(p, edgeW, ARRAY_SIZE(edgeW))) {
-        p += ARRAY_SIZE(edgeW);
-        if(*p && *p != ';')
-            return FALSE;
-        *r = COMPAT_MODE_IE11;
-        return TRUE;
-    }
+    do {
+        while(iswspace(*p)) p++;
+        if(!wcsnicmp(p, edgeW, ARRAY_SIZE(edgeW))) {
+            p += ARRAY_SIZE(edgeW);
+            if(is_ua_compatible_delimiter(*p))
+                mode = COMPAT_MODE_IE11;
+            break;
+        }else if(!(p = parse_compat_version(p, r)))
+            break;
+        if(mode < *r)
+            mode = *r;
+        while(iswspace(*p)) p++;
+    } while(*p++ == ',');
 
-    return parse_compat_version(p, r);
+    *r = mode;
+    return mode != COMPAT_MODE_INVALID;
 }
 
 void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)
