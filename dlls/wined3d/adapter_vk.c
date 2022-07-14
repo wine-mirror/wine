@@ -2256,6 +2256,7 @@ static bool feature_level_10_supported(const struct wined3d_physical_device_info
 {
     return shader_model >= 4
             && info->features2.features.multiViewport
+            && info->features2.features.geometryShader
             && info->vertex_divisor_features.vertexAttributeInstanceRateDivisor
             && info->vertex_divisor_features.vertexAttributeInstanceRateZeroDivisor;
 }
