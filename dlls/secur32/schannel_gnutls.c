@@ -54,6 +54,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+static const char *system_priority_file;
+
 /* Not present in gnutls version < 2.9.10. */
 static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 
@@ -109,6 +111,7 @@ MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
 MAKE_FUNCPTR(gnutls_server_name_set);
 MAKE_FUNCPTR(gnutls_session_channel_binding);
+MAKE_FUNCPTR(gnutls_set_default_priority);
 MAKE_FUNCPTR(gnutls_transport_get_ptr);
 MAKE_FUNCPTR(gnutls_transport_set_errno);
 MAKE_FUNCPTR(gnutls_transport_set_ptr);
@@ -408,37 +411,23 @@ static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
     return 0;
 }
 
-static NTSTATUS schan_create_session( void *args )
+static NTSTATUS set_priority(schan_credentials *cred, gnutls_session_t session)
 {
-    const struct create_session_params *params = args;
-    schan_credentials *cred = params->cred;
     char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
     BOOL using_vers_all = FALSE, disabled;
-    unsigned int i, flags = (cred->credential_use == SECPKG_CRED_INBOUND) ? GNUTLS_SERVER : GNUTLS_CLIENT;
-    struct schan_transport *transport;
-    gnutls_session_t s;
-    int err;
+    int i, err;
 
-    *params->session = 0;
-
-    if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
+    if (system_priority_file && strcmp(system_priority_file, "/dev/null"))
     {
-        flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
+        TRACE("Using defaults with system priority file override\n");
+        err = pgnutls_set_default_priority(session);
+        if (err != GNUTLS_E_SUCCESS)
+        {
+            pgnutls_perror(err);
+            return STATUS_INTERNAL_ERROR;
+        }
+        return STATUS_SUCCESS;
     }
-
-    err = pgnutls_init(&s, flags);
-    if (err != GNUTLS_E_SUCCESS)
-    {
-        pgnutls_perror(err);
-        return STATUS_INTERNAL_ERROR;
-    }
-
-    if (!(transport = calloc(1, sizeof(*transport))))
-    {
-        pgnutls_deinit(s);
-        return STATUS_INTERNAL_ERROR;
-    }
-    transport->session = s;
 
     p = priority + strlen(priority);
 
@@ -466,13 +455,52 @@ static NTSTATUS schan_create_session( void *args )
     }
 
     TRACE("Using %s priority\n", debugstr_a(priority));
-    err = pgnutls_priority_set_direct(s, priority, NULL);
+    err = pgnutls_priority_set_direct(session, priority, NULL);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS schan_create_session( void *args )
+{
+    const struct create_session_params *params = args;
+    schan_credentials *cred = params->cred;
+    unsigned int flags = (cred->credential_use == SECPKG_CRED_INBOUND) ? GNUTLS_SERVER : GNUTLS_CLIENT;
+    struct schan_transport *transport;
+    gnutls_session_t s;
+    NTSTATUS status;
+    int err;
+
+    *params->session = 0;
+
+    if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
+    {
+        flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
+    }
+
+    err = pgnutls_init(&s, flags);
+    if (err != GNUTLS_E_SUCCESS)
+    {
+        pgnutls_perror(err);
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (!(transport = calloc(1, sizeof(*transport))))
+    {
+        pgnutls_deinit(s);
+        return STATUS_INTERNAL_ERROR;
+    }
+    transport->session = s;
+
+    if ((status = set_priority(cred, s)))
+    {
         pgnutls_deinit(s);
         free(transport);
-        return STATUS_INTERNAL_ERROR;
+        return status;
     }
 
     err = pgnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE, certificate_creds_from_handle(cred->credentials));
@@ -1329,12 +1357,11 @@ static void gnutls_log(int level, const char *msg)
 
 static NTSTATUS process_attach( void *args )
 {
-    const char *env_str;
     int ret;
 
-    if ((env_str = getenv("GNUTLS_SYSTEM_PRIORITY_FILE")))
+    if ((system_priority_file = getenv("GNUTLS_SYSTEM_PRIORITY_FILE")))
     {
-        WARN("GNUTLS_SYSTEM_PRIORITY_FILE is %s.\n", debugstr_a(env_str));
+        TRACE("GNUTLS_SYSTEM_PRIORITY_FILE is %s.\n", debugstr_a(system_priority_file));
     }
     else
     {
@@ -1385,6 +1412,7 @@ static NTSTATUS process_attach( void *args )
     LOAD_FUNCPTR(gnutls_record_send);
     LOAD_FUNCPTR(gnutls_server_name_set)
     LOAD_FUNCPTR(gnutls_session_channel_binding)
+    LOAD_FUNCPTR(gnutls_set_default_priority)
     LOAD_FUNCPTR(gnutls_transport_get_ptr)
     LOAD_FUNCPTR(gnutls_transport_set_errno)
     LOAD_FUNCPTR(gnutls_transport_set_ptr)
