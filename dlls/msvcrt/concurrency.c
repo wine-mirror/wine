@@ -378,7 +378,7 @@ static void create_default_scheduler(void);
 DEFINE_THISCALL_WRAPPER(improper_lock_ctor_str, 8)
 improper_lock* __thiscall improper_lock_ctor_str(improper_lock *this, const char *str)
 {
-    TRACE("(%p %p)\n", this, str);
+    TRACE("(%p %s)\n", this, str);
     return __exception_ctor(this, str, &improper_lock_vtable);
 }
 
@@ -403,7 +403,7 @@ DEFINE_THISCALL_WRAPPER(improper_scheduler_attach_ctor_str, 8)
 improper_scheduler_attach* __thiscall improper_scheduler_attach_ctor_str(
         improper_scheduler_attach *this, const char *str)
 {
-    TRACE("(%p %p)\n", this, str);
+    TRACE("(%p %s)\n", this, str);
     return __exception_ctor(this, str, &improper_scheduler_attach_vtable);
 }
 
@@ -430,7 +430,7 @@ DEFINE_THISCALL_WRAPPER(improper_scheduler_detach_ctor_str, 8)
 improper_scheduler_detach* __thiscall improper_scheduler_detach_ctor_str(
         improper_scheduler_detach *this, const char *str)
 {
-    TRACE("(%p %p)\n", this, str);
+    TRACE("(%p %s)\n", this, str);
     return __exception_ctor(this, str, &improper_scheduler_detach_vtable);
 }
 
@@ -457,7 +457,7 @@ DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_key_ctor_str, 8)
 invalid_scheduler_policy_key* __thiscall invalid_scheduler_policy_key_ctor_str(
         invalid_scheduler_policy_key *this, const char *str)
 {
-    TRACE("(%p %p)\n", this, str);
+    TRACE("(%p %s)\n", this, str);
     return __exception_ctor(this, str, &invalid_scheduler_policy_key_vtable);
 }
 
@@ -484,7 +484,7 @@ DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_thread_specification_ctor_str, 
 invalid_scheduler_policy_thread_specification* __thiscall invalid_scheduler_policy_thread_specification_ctor_str(
         invalid_scheduler_policy_thread_specification *this, const char *str)
 {
-    TRACE("(%p %p)\n", this, str);
+    TRACE("(%p %s)\n", this, str);
     return __exception_ctor(this, str, &invalid_scheduler_policy_thread_specification_vtable);
 }
 
@@ -511,7 +511,7 @@ DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_value_ctor_str, 8)
 invalid_scheduler_policy_value* __thiscall invalid_scheduler_policy_value_ctor_str(
         invalid_scheduler_policy_value *this, const char *str)
 {
-    TRACE("(%p %p)\n", this, str);
+    TRACE("(%p %s)\n", this, str);
     return __exception_ctor(this, str, &invalid_scheduler_policy_value_vtable);
 }
 
