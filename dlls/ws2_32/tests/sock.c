@@ -13660,6 +13660,11 @@ static void test_tcp_reset(void)
     todo_wine ok(ret == -1, "got %d\n", ret);
     todo_wine ok(WSAGetLastError() == WSAECONNRESET, "got error %u\n", WSAGetLastError());
 
+    WSASetLastError(0xdeadbeef);
+    ret = send(client, "data", 5, 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAECONNRESET, "got error %u\n", WSAGetLastError());
+
     check_poll(client, POLLERR | POLLHUP | POLLWRNORM);
 
     FD_ZERO(&readfds);
