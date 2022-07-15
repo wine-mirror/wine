@@ -2901,6 +2901,21 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             free( win_array );
             break;
         }
+
+    case WM_IME_SETCONTEXT:
+    case WM_IME_COMPOSITION:
+    case WM_IME_STARTCOMPOSITION:
+    case WM_IME_ENDCOMPOSITION:
+    case WM_IME_SELECT:
+    case WM_IME_NOTIFY:
+    case WM_IME_CONTROL:
+        {
+            HWND ime_hwnd = get_default_ime_window( hwnd );
+            if (ime_hwnd)
+                result = NtUserMessageCall( ime_hwnd, msg, wparam, lparam,
+                                            0, NtUserSendMessage, ansi );
+        }
+        break;
     }
 
     return result;

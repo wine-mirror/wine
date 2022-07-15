@@ -147,23 +147,6 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             }
         }
         /* fall through */
-    case WM_IME_STARTCOMPOSITION:
-    case WM_IME_ENDCOMPOSITION:
-    case WM_IME_SELECT:
-    case WM_IME_NOTIFY:
-    case WM_IME_CONTROL:
-        {
-            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
-            if (hwndIME)
-                result = SendMessageA( hwndIME, msg, wParam, lParam );
-        }
-        break;
-    case WM_IME_SETCONTEXT:
-        {
-            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
-            if (hwndIME) result = ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
-        }
-        break;
 
     default:
         result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
@@ -220,13 +203,6 @@ LRESULT WINAPI DefWindowProcW(
         result = PostMessageW( hwnd, WM_KEYUP, wParam, lParam );
         break;
 
-    case WM_IME_SETCONTEXT:
-        {
-            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
-            if (hwndIME) result = ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
-        }
-        break;
-
     case WM_IME_COMPOSITION:
         if (lParam & GCS_RESULTSTR)
         {
@@ -249,17 +225,6 @@ LRESULT WINAPI DefWindowProcW(
             }
         }
         /* fall through */
-    case WM_IME_STARTCOMPOSITION:
-    case WM_IME_ENDCOMPOSITION:
-    case WM_IME_SELECT:
-    case WM_IME_NOTIFY:
-    case WM_IME_CONTROL:
-        {
-            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
-            if (hwndIME)
-                result = SendMessageW( hwndIME, msg, wParam, lParam );
-        }
-        break;
 
     default:
         result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
