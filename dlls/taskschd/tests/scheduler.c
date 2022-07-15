@@ -860,11 +860,9 @@ static void test_GetTask(void)
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
     ok(hr == S_OK, "get_State error %#lx\n", hr);
-    todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
-    todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task2);
@@ -919,11 +917,9 @@ static void test_GetTask(void)
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
     ok(hr == S_OK, "get_State error %#lx\n", hr);
-    todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
-    todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     hr = IRegisteredTask_get_State(task2, NULL);

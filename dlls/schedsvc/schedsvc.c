@@ -20,7 +20,12 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
+#include "initguid.h"
+#include "objbase.h"
+#include "xmllite.h"
 #include "schrpc.h"
 #include "taskschd.h"
 #include "wine/debug.h"
@@ -30,6 +35,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
 static const char bom_utf8[] = { 0xef,0xbb,0xbf };
+
+struct task_info
+{
+    BOOL enabled;
+};
 
 HRESULT __cdecl SchRpcHighestVersion(DWORD *version)
 {
@@ -308,6 +318,212 @@ static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
     heap_free(buff);
 
     return hr;
+}
+
+static HRESULT read_text_value(IXmlReader *reader, WCHAR **value)
+{
+    HRESULT hr;
+    XmlNodeType type;
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+            case XmlNodeType_Text:
+                if (FAILED(hr = IXmlReader_GetValue(reader, (const WCHAR **)value, NULL)))
+                    return hr;
+                TRACE("%s\n", debugstr_w(*value));
+                return S_OK;
+
+            case XmlNodeType_Whitespace:
+            case XmlNodeType_Comment:
+                break;
+
+            default:
+                FIXME("unexpected node type %d\n", type);
+                return E_FAIL;
+        }
+    }
+
+    return E_FAIL;
+}
+
+static HRESULT read_variantbool_value(IXmlReader *reader, VARIANT_BOOL *vbool)
+{
+    WCHAR *value;
+    HRESULT hr;
+
+    *vbool = VARIANT_FALSE;
+
+    if (FAILED(hr = read_text_value(reader, &value)))
+        return hr;
+
+    if (!wcscmp(value, L"true"))
+    {
+        *vbool = VARIANT_TRUE;
+    }
+    else if (wcscmp(value, L"false"))
+    {
+        WARN("unexpected bool value %s\n", debugstr_w(value));
+        return SCHED_E_INVALIDVALUE;
+    }
+
+    return S_OK;
+}
+
+static HRESULT read_task_settings(IXmlReader *reader, struct task_info *info)
+{
+    VARIANT_BOOL bool_val;
+    const WCHAR *name;
+    XmlNodeType type;
+    HRESULT hr;
+
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("Settings is empty.\n");
+        return S_OK;
+    }
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+            case XmlNodeType_EndElement:
+                hr = IXmlReader_GetLocalName(reader, &name, NULL);
+                if (hr != S_OK) return hr;
+
+                TRACE("/%s\n", debugstr_w(name));
+
+                if (!wcscmp(name, L"Settings"))
+                    return S_OK;
+
+                break;
+
+            case XmlNodeType_Element:
+                hr = IXmlReader_GetLocalName(reader, &name, NULL);
+                if (hr != S_OK) return hr;
+
+                TRACE("Element: %s\n", debugstr_w(name));
+
+                if (!wcscmp(name, L"Enabled"))
+                {
+                    if (FAILED(hr = read_variantbool_value(reader, &bool_val)))
+                        return hr;
+                    info->enabled = !!bool_val;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    WARN("Settings was not terminated\n");
+    return SCHED_E_MALFORMEDXML;
+}
+
+static HRESULT read_task_info(IXmlReader *reader, struct task_info *info)
+{
+    const WCHAR *name;
+    XmlNodeType type;
+    HRESULT hr;
+
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("Task is empty\n");
+        return S_OK;
+    }
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+            case XmlNodeType_EndElement:
+                if (FAILED(hr = IXmlReader_GetLocalName(reader, &name, NULL)))
+                    return hr;
+
+                if (!wcscmp(name, L"Task"))
+                    return S_OK;
+                break;
+
+            case XmlNodeType_Element:
+                if (FAILED(hr = IXmlReader_GetLocalName(reader, &name, NULL)))
+                    return hr;
+
+                TRACE("Element: %s\n", debugstr_w(name));
+
+                if (!wcscmp(name, L"Settings"))
+                {
+                    if (FAILED(hr = read_task_settings(reader, info)))
+                        return hr;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    WARN("Task was not terminated\n");
+    return SCHED_E_MALFORMEDXML;
+
+}
+
+static HRESULT read_task_info_from_xml(const WCHAR *xml, struct task_info *info)
+{
+    IXmlReader *reader;
+    const WCHAR *name;
+    XmlNodeType type;
+    IStream *stream;
+    HGLOBAL hmem;
+    HRESULT hr;
+    void *buf;
+
+    memset(info, 0, sizeof(*info));
+
+    if (!(hmem = GlobalAlloc(0, wcslen(xml) * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+
+    buf = GlobalLock(hmem);
+    memcpy(buf, xml, lstrlenW(xml) * sizeof(WCHAR));
+    GlobalUnlock(hmem);
+
+    if (FAILED(hr = CreateStreamOnHGlobal(hmem, TRUE, &stream)))
+    {
+        GlobalFree(hmem);
+        return hr;
+    }
+
+    if (FAILED(hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL)))
+    {
+        IStream_Release(stream);
+        return hr;
+    }
+
+    if (FAILED(hr = IXmlReader_SetInput(reader, (IUnknown *)stream)))
+        goto done;
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        if (type != XmlNodeType_Element) continue;
+        if (FAILED(hr = IXmlReader_GetLocalName(reader, &name, NULL)))
+            goto done;
+
+        TRACE("Element: %s\n", debugstr_w(name));
+        if (wcscmp(name, L"Task"))
+            continue;
+
+        hr = read_task_info(reader, info);
+        break;
+    }
+
+done:
+    IXmlReader_Release(reader);
+    IStream_Release(stream);
+    if (FAILED(hr))
+    {
+        WARN("Failed parsing xml, hr %#lx.\n", hr);
+        return SCHED_E_MALFORMEDXML;
+    }
+    return S_OK;
 }
 
 HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, ULONG *n_languages, WCHAR **xml)
@@ -685,6 +901,7 @@ HRESULT __cdecl SchRpcGetLastRunInfo(const WCHAR *path, SYSTEMTIME *last_runtime
 HRESULT __cdecl SchRpcGetTaskInfo(const WCHAR *path, DWORD flags, DWORD *enabled, DWORD *task_state)
 {
     WCHAR *full_name, *xml;
+    struct task_info info;
     HRESULT hr;
 
     FIXME("%s,%#lx,%p,%p: stub\n", debugstr_w(path), flags, enabled, task_state);
@@ -695,10 +912,15 @@ HRESULT __cdecl SchRpcGetTaskInfo(const WCHAR *path, DWORD flags, DWORD *enabled
     hr = read_xml(full_name, &xml);
     heap_free(full_name);
     if (hr != S_OK) return hr;
+    hr = read_task_info_from_xml(xml, &info);
     heap_free(xml);
+    if (FAILED(hr)) return hr;
 
-    *enabled = 0;
-    *task_state = (flags & SCH_FLAG_STATE) ? TASK_STATE_DISABLED : TASK_STATE_UNKNOWN;
+    *enabled = info.enabled;
+    if (flags & SCH_FLAG_STATE)
+        *task_state = *enabled ? TASK_STATE_READY : TASK_STATE_DISABLED;
+    else
+        *task_state = TASK_STATE_UNKNOWN;
     return S_OK;
 }
 
