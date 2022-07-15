@@ -2756,12 +2756,6 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glVertexAttribPointer)                         /* OpenGL 2.0 */
 #undef USE_GL_FUNC
 
-#ifndef USE_WIN32_OPENGL
-    /* hack: use the functions directly from the TEB table to bypass the thunks */
-    /* note that we still need the above wglGetProcAddress calls to initialize the table */
-    gl_info->gl_ops.ext = ((struct opengl_funcs *)NtCurrentTeb()->glTable)->ext;
-#endif
-
 #define MAP_GL_FUNCTION(core_func, ext_func)                                          \
         do                                                                            \
         {                                                                             \
@@ -5312,7 +5306,6 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         return FALSE;
 
     /* Dynamically load all GL core functions */
-#ifdef USE_WIN32_OPENGL
     {
         HMODULE mod_gl = GetModuleHandleA("opengl32.dll");
 #define USE_GL_FUNC(f) gl_info->gl_ops.gl.p_##f = (void *)GetProcAddress(mod_gl, #f);
@@ -5321,17 +5314,6 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         gl_info->gl_ops.wgl.p_wglSwapBuffers = (void *)GetProcAddress(mod_gl, "wglSwapBuffers");
         gl_info->gl_ops.wgl.p_wglGetPixelFormat = (void *)GetProcAddress(mod_gl, "wglGetPixelFormat");
     }
-#else
-    /* To bypass the opengl32 thunks retrieve functions from the WGL driver instead of opengl32 */
-    {
-        HDC hdc = GetDC( 0 );
-        const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
-        ReleaseDC( 0, hdc );
-        if (!wgl_driver || wgl_driver == (void *)-1) return FALSE;
-        gl_info->gl_ops.wgl = wgl_driver->wgl;
-        gl_info->gl_ops.gl = wgl_driver->gl;
-    }
-#endif
 
     gl_info->p_glEnableWINE = gl_info->gl_ops.gl.p_glEnable;
     gl_info->p_glDisableWINE = gl_info->gl_ops.gl.p_glDisable;
