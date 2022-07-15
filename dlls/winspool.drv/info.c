@@ -1990,32 +1990,9 @@ BOOL WINAPI IsValidDevmodeW(PDEVMODEW dm, SIZE_T size)
  * See OpenPrinterW.
  *
  */
-BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
-			 LPPRINTER_DEFAULTSA pDefault)
+BOOL WINAPI OpenPrinterA(LPSTR name, HANDLE *printer, PRINTER_DEFAULTSA *defaults)
 {
-    UNICODE_STRING lpPrinterNameW;
-    UNICODE_STRING usBuffer;
-    PRINTER_DEFAULTSW DefaultW, *pDefaultW = NULL;
-    PWSTR pwstrPrinterNameW;
-    BOOL ret;
-
-    TRACE("%s,%p,%p\n", debugstr_a(lpPrinterName), phPrinter, pDefault);
-
-    pwstrPrinterNameW = asciitounicode(&lpPrinterNameW,lpPrinterName);
-
-    if(pDefault) {
-        DefaultW.pDatatype = asciitounicode(&usBuffer,pDefault->pDatatype);
-	DefaultW.pDevMode = pDefault->pDevMode ? GdiConvertToDevmodeW(pDefault->pDevMode) : NULL;
-	DefaultW.DesiredAccess = pDefault->DesiredAccess;
-	pDefaultW = &DefaultW;
-    }
-    ret = OpenPrinterW(pwstrPrinterNameW, phPrinter, pDefaultW);
-    if(pDefault) {
-        RtlFreeUnicodeString(&usBuffer);
-	HeapFree(GetProcessHeap(), 0, DefaultW.pDevMode);
-    }
-    RtlFreeUnicodeString(&lpPrinterNameW);
-    return ret;
+    return OpenPrinter2A(name, printer, defaults, NULL);
 }
 
 /******************************************************************
@@ -2045,22 +2022,73 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
  *|  pDefaults is ignored
  *
  */
-BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAULTSW pDefault)
+BOOL WINAPI OpenPrinterW(LPWSTR name, HANDLE *printer, PRINTER_DEFAULTSW *defaults)
+{
+    return OpenPrinter2W(name, printer, defaults, NULL);
+}
+
+BOOL WINAPI OpenPrinter2A(LPSTR name, HANDLE *printer,
+    PRINTER_DEFAULTSA *defaults, PRINTER_OPTIONSA *options)
+{
+    UNICODE_STRING nameU;
+    UNICODE_STRING datatypeU;
+    PRINTER_DEFAULTSW defaultsW, *p_defaultsW = NULL;
+    PRINTER_OPTIONSW optionsW, *p_optionsW = NULL;
+    WCHAR *nameW;
+    BOOL ret;
+
+    TRACE("(%s,%p,%p,%p)\n", debugstr_a(name), printer, defaults, options);
+
+    nameW = asciitounicode(&nameU, name);
+
+    if (options)
+    {
+        optionsW.cbSize = sizeof(optionsW);
+        optionsW.dwFlags = options->dwFlags;
+        p_optionsW = &optionsW;
+    }
+
+    if (defaults)
+    {
+        defaultsW.pDatatype = asciitounicode(&datatypeU, defaults->pDatatype);
+        defaultsW.pDevMode = defaults->pDevMode ? GdiConvertToDevmodeW(defaults->pDevMode) : NULL;
+        defaultsW.DesiredAccess = defaults->DesiredAccess;
+        p_defaultsW = &defaultsW;
+    }
+
+    ret = OpenPrinter2W(nameW, printer, p_defaultsW, p_optionsW);
+
+    if (p_defaultsW)
+    {
+        RtlFreeUnicodeString(&datatypeU);
+        HeapFree(GetProcessHeap(), 0, defaultsW.pDevMode);
+    }
+    RtlFreeUnicodeString(&nameU);
+
+    return ret;
+}
+
+BOOL WINAPI OpenPrinter2W(LPWSTR name, HANDLE *printer,
+    PRINTER_DEFAULTSW *defaults, PRINTER_OPTIONSW *options)
 {
     HKEY key;
 
-    TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), phPrinter, pDefault);
+    TRACE("(%s,%p,%p,%p)\n", debugstr_w(name), printer, defaults, options);
 
-    if(!phPrinter) {
+    if (options)
+        FIXME("flags %08lx ignored\n", options->dwFlags);
+
+    if(!printer)
+    {
         /* NT: FALSE with ERROR_INVALID_PARAMETER, 9x: TRUE */
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
     /* Get the unique handle of the printer or Printserver */
-    *phPrinter = get_opened_printer_entry(lpPrinterName, pDefault);
+    *printer = get_opened_printer_entry( name, defaults );
 
-    if (*phPrinter && WINSPOOL_GetOpenedPrinterRegKey( *phPrinter, &key ) == ERROR_SUCCESS)
+    if (*printer && WINSPOOL_GetOpenedPrinterRegKey( *printer, &key ) == ERROR_SUCCESS)
     {
         DWORD deleting = 0, size = sizeof( deleting ), type;
         DWORD status;
@@ -2070,12 +2098,12 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
         set_reg_DWORD( key, L"Status", status & ~PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
         ReleaseMutex( init_mutex );
         if (!deleting && (status & PRINTER_STATUS_DRIVER_UPDATE_NEEDED))
-            update_driver( *phPrinter );
+            update_driver( *printer );
         RegCloseKey( key );
     }
 
-    TRACE("returning %d with %lu and %p\n", *phPrinter != NULL, GetLastError(), *phPrinter);
-    return (*phPrinter != 0);
+    TRACE("returning %d with %lu and %p\n", *printer != NULL, GetLastError(), *printer);
+    return (*printer != NULL);
 }
 
 /******************************************************************
