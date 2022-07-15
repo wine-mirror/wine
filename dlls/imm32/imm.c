@@ -806,7 +806,7 @@ BOOL WINAPI ImmConfigureIMEW(
         return FALSE;
 }
 
-static InputContextData *alloc_input_context_data(void)
+static InputContextData *create_input_context(HIMC default_imc)
 {
     InputContextData *new_context;
     LPGUIDELINE gl;
@@ -816,6 +816,7 @@ static InputContextData *alloc_input_context_data(void)
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
 
     /* Load the IME */
+    new_context->threadDefault = !!default_imc;
     new_context->immKbd = IMM_GetImmHkl(GetKeyboardLayout(0));
 
     if (!new_context->immKbd->hIME)
@@ -848,35 +849,11 @@ static InputContextData *alloc_input_context_data(void)
     new_context->IMC.fdwConversion = new_context->immKbd->imeInfo.fdwConversionCaps;
     new_context->IMC.fdwSentence = new_context->immKbd->imeInfo.fdwSentenceCaps;
 
-    return new_context;
-}
-
-static InputContextData* get_imc_data(HIMC handle)
-{
-    InputContextData *ret;
-
-    if ((ret = query_imc_data(handle)) || !handle) return ret;
-    if (!(ret = alloc_input_context_data())) return NULL;
-    ret->threadID = NtUserQueryInputContext(handle, NtUserInputContextThreadId);
-    ret->handle = handle;
-    ret->threadDefault = TRUE;
-    if (!NtUserUpdateInputContext(handle, NtUserInputContextClientPtr, (UINT_PTR)ret))
-    {
-        free_input_context_data(ret);
-        return NULL;
-    }
-    return ret;
-}
-
-/***********************************************************************
- *		ImmCreateContext (IMM32.@)
- */
-HIMC WINAPI ImmCreateContext(void)
-{
-    InputContextData *new_context;
-
-    if (!(new_context = alloc_input_context_data())) return 0;
-    if (!(new_context->handle = NtUserCreateInputContext((UINT_PTR)new_context)))
+    if (!default_imc)
+        new_context->handle = NtUserCreateInputContext((UINT_PTR)new_context);
+    else if (NtUserUpdateInputContext(default_imc, NtUserInputContextClientPtr, (UINT_PTR)new_context))
+        new_context->handle = default_imc;
+    if (!new_context->handle)
     {
         free_input_context_data(new_context);
         return 0;
@@ -892,8 +869,26 @@ HIMC WINAPI ImmCreateContext(void)
     SendMessageW(GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)new_context->immKbd);
 
     new_context->immKbd->uSelected++;
-    TRACE("Created context %p\n",new_context);
+    TRACE("Created context %p\n", new_context);
+    return new_context;
+}
 
+static InputContextData* get_imc_data(HIMC handle)
+{
+    InputContextData *ret;
+
+    if ((ret = query_imc_data(handle)) || !handle) return ret;
+    return create_input_context(handle);
+}
+
+/***********************************************************************
+ *		ImmCreateContext (IMM32.@)
+ */
+HIMC WINAPI ImmCreateContext(void)
+{
+    InputContextData *new_context;
+
+    if (!(new_context = create_input_context(0))) return 0;
     return new_context->handle;
 }
 
