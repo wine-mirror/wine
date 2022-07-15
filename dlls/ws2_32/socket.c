@@ -2709,6 +2709,10 @@ static int add_fd_to_set( SOCKET fd, struct fd_set *set )
 int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
                    fd_set *except_ptr, const struct timeval *timeout)
 {
+    static const int read_flags = AFD_POLL_READ | AFD_POLL_ACCEPT | AFD_POLL_HUP | AFD_POLL_RESET;
+    static const int write_flags = AFD_POLL_WRITE;
+    static const int except_flags = AFD_POLL_OOB | AFD_POLL_CONNECT_ERR;
+
     struct fd_set *read_input = NULL;
     struct afd_poll_params *params;
     unsigned int poll_count = 0;
@@ -2760,7 +2764,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
         for (i = 0; i < read_ptr->fd_count; ++i)
         {
             params->sockets[params->count].socket = read_ptr->fd_array[i];
-            params->sockets[params->count].flags = AFD_POLL_READ | AFD_POLL_ACCEPT | AFD_POLL_HUP;
+            params->sockets[params->count].flags = read_flags;
             ++params->count;
             poll_socket = read_ptr->fd_array[i];
         }
@@ -2771,7 +2775,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
         for (i = 0; i < write_ptr->fd_count; ++i)
         {
             params->sockets[params->count].socket = write_ptr->fd_array[i];
-            params->sockets[params->count].flags = AFD_POLL_WRITE;
+            params->sockets[params->count].flags = write_flags;
             ++params->count;
             poll_socket = write_ptr->fd_array[i];
         }
@@ -2782,7 +2786,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
         for (i = 0; i < except_ptr->fd_count; ++i)
         {
             params->sockets[params->count].socket = except_ptr->fd_array[i];
-            params->sockets[params->count].flags = AFD_POLL_OOB | AFD_POLL_CONNECT_ERR;
+            params->sockets[params->count].flags = except_flags;
             ++params->count;
             poll_socket = except_ptr->fd_array[i];
         }
@@ -2819,8 +2823,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
             {
                 for (j = 0; j < read_input->fd_count; ++j)
                 {
-                    if (read_input->fd_array[j] == s
-                            && (flags & (AFD_POLL_READ | AFD_POLL_ACCEPT | AFD_POLL_HUP | AFD_POLL_CLOSE)))
+                    if (read_input->fd_array[j] == s && (flags & (read_flags | AFD_POLL_CLOSE)))
                     {
                         ret_count += add_fd_to_set( s, read_ptr );
                         flags &= ~AFD_POLL_CLOSE;
@@ -2831,10 +2834,10 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
             if (flags & AFD_POLL_CLOSE)
                 status = STATUS_INVALID_HANDLE;
 
-            if (flags & AFD_POLL_WRITE)
+            if (flags & write_flags)
                 ret_count += add_fd_to_set( s, write_ptr );
 
-            if (flags & (AFD_POLL_OOB | AFD_POLL_CONNECT_ERR))
+            if (flags & except_flags)
                 ret_count += add_fd_to_set( s, except_ptr );
         }
     }
