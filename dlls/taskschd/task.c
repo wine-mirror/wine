@@ -2457,6 +2457,19 @@ static inline HRESULT write_text_value(IStream *stream, const WCHAR *name, const
     return write_stringW(stream, L">\n");
 }
 
+static HRESULT write_bool_value(IStream *stream, const WCHAR *name, VARIANT_BOOL value)
+{
+    return write_text_value(stream, name, value ? L"true" : L"false");
+}
+
+static HRESULT write_int_value(IStream *stream, const WCHAR *name, int val)
+{
+    WCHAR s[32];
+
+    swprintf(s, ARRAY_SIZE(s), L"%d", val);
+    return write_text_value(stream, name, s);
+}
+
 static HRESULT write_task_attributes(IStream *stream, ITaskDefinition *taskdef)
 {
     HRESULT hr;
@@ -2684,12 +2697,104 @@ static HRESULT write_principal(IStream *stream, IPrincipal *principal)
     return write_element_end(stream, L"Principals");
 }
 
+const WCHAR *string_from_instances_policy(TASK_INSTANCES_POLICY policy)
+{
+    switch (policy)
+    {
+        case TASK_INSTANCES_PARALLEL:       return L"Parallel";
+        case TASK_INSTANCES_QUEUE:          return L"Queue";
+        case TASK_INSTANCES_IGNORE_NEW:     return L"IgnoreNew";
+        case TASK_INSTANCES_STOP_EXISTING : return L"StopExisting";
+    }
+    return L"<error>";
+}
+
 static HRESULT write_settings(IStream *stream, ITaskSettings *settings)
 {
+    INetworkSettings *network_settings;
+    TASK_INSTANCES_POLICY policy;
+    IIdleSettings *idle_settings;
+    VARIANT_BOOL bval;
+    HRESULT hr;
+    INT ival;
+    BSTR s;
+
     if (!settings)
         return write_empty_element(stream, L"Settings");
 
-    FIXME("stub\n");
+    if (FAILED(hr = write_element(stream, L"Settings")))
+        return hr;
+
+    push_indent();
+
+#define WRITE_BOOL_OPTION(name) \
+    { \
+        if (FAILED(hr = ITaskSettings_get_##name(settings, &bval))) \
+            return hr; \
+        if (FAILED(hr = write_bool_value(stream, L ## #name, bval))) \
+            return hr; \
+    }
+
+
+    if (FAILED(hr = ITaskSettings_get_AllowDemandStart(settings, &bval)))
+        return hr;
+    if (FAILED(hr = write_bool_value(stream, L"AllowStartOnDemand", bval)))
+        return hr;
+
+    if (SUCCEEDED(hr = TaskSettings_get_RestartInterval(settings, &s)) && s)
+    {
+        FIXME("RestartInterval not handled.\n");
+        SysFreeString(s);
+    }
+    if (FAILED(hr = ITaskSettings_get_MultipleInstances(settings, &policy)))
+        return hr;
+    if (FAILED(hr = write_text_value(stream, L"MultipleInstancesPolicy", string_from_instances_policy(policy))))
+        return hr;
+
+    WRITE_BOOL_OPTION(DisallowStartIfOnBatteries);
+    WRITE_BOOL_OPTION(StopIfGoingOnBatteries);
+    WRITE_BOOL_OPTION(AllowHardTerminate);
+    WRITE_BOOL_OPTION(StartWhenAvailable);
+    WRITE_BOOL_OPTION(RunOnlyIfNetworkAvailable);
+    WRITE_BOOL_OPTION(WakeToRun);
+    WRITE_BOOL_OPTION(Enabled);
+    WRITE_BOOL_OPTION(Hidden);
+
+    if (SUCCEEDED(hr = TaskSettings_get_DeleteExpiredTaskAfter(settings, &s)) && s)
+    {
+        hr = write_text_value(stream, L"DeleteExpiredTaskAfter", s);
+        SysFreeString(s);
+        if (FAILED(hr))
+            return hr;
+    }
+    if (SUCCEEDED(hr = TaskSettings_get_IdleSettings(settings, &idle_settings)))
+    {
+        FIXME("IdleSettings not handled.\n");
+        IIdleSettings_Release(idle_settings);
+    }
+    if (SUCCEEDED(hr = TaskSettings_get_NetworkSettings(settings, &network_settings)))
+    {
+        FIXME("NetworkSettings not handled.\n");
+        INetworkSettings_Release(network_settings);
+    }
+    if (SUCCEEDED(hr = TaskSettings_get_ExecutionTimeLimit(settings, &s)) && s)
+    {
+        hr = write_text_value(stream, L"ExecutionTimeLimit", s);
+        SysFreeString(s);
+        if (FAILED(hr))
+            return hr;
+    }
+    if (FAILED(hr = ITaskSettings_get_Priority(settings, &ival)))
+        return hr;
+    if (FAILED(hr = write_int_value(stream, L"Priority", ival)))
+        return hr;
+
+    WRITE_BOOL_OPTION(RunOnlyIfIdle);
+#undef WRITE_BOOL_OPTION
+
+    pop_indent();
+    write_element_end(stream, L"Settings");
+
     return S_OK;
 }
 
