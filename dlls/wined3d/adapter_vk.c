@@ -18,8 +18,6 @@
 
 #include "wined3d_private.h"
 
-#include "wine/vulkan_driver.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 static const struct wined3d_state_entry_template misc_state_template_vk[] =
@@ -214,7 +212,6 @@ static HRESULT hresult_from_vk_result(VkResult vr)
     }
 }
 
-#ifdef USE_WIN32_VULKAN
 static BOOL wined3d_load_vulkan(struct wined3d_vk_info *vk_info)
 {
     struct vulkan_ops *vk_ops = &vk_info->vk_ops;
@@ -244,23 +241,6 @@ static void wined3d_unload_vulkan(struct wined3d_vk_info *vk_info)
         vk_info->vulkan_lib = NULL;
     }
 }
-#else
-static BOOL wined3d_load_vulkan(struct wined3d_vk_info *vk_info)
-{
-    struct vulkan_ops *vk_ops = &vk_info->vk_ops;
-    const struct vulkan_funcs *vk_funcs;
-
-    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
-
-    if (!vk_funcs)
-        return FALSE;
-
-    vk_ops->vkGetInstanceProcAddr = (void *)vk_funcs->p_vkGetInstanceProcAddr;
-    return TRUE;
-}
-
-static void wined3d_unload_vulkan(struct wined3d_vk_info *vk_info) {}
-#endif
 
 static void adapter_vk_destroy(struct wined3d_adapter *adapter)
 {
