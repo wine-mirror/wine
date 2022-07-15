@@ -2830,7 +2830,7 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     GetThemeBackgroundContentRect(theme, hDC, part, state, &client_rect, &content_rect);
     region = set_control_clipping(hDC, &client_rect);
 
-    if (FAILED(GetThemePartSize(theme, hDC, part, state, NULL, TS_DRAW, &box_size)))
+    if (FAILED(GetThemePartSize(theme, hDC, part, state, &content_rect, TS_DRAW, &box_size)))
     {
         box_size.cx = 12 * GetDpiForWindow(infoPtr->hwnd) / 96 + 1;
         box_size.cy = box_size.cx;
