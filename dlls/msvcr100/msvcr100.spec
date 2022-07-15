@@ -94,10 +94,10 @@
 @ stub -arch=win64 ??0invalid_link_target@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0invalid_link_target@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0invalid_link_target@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??0invalid_multiple_scheduling@Concurrency@@QAE@PBD@Z
-@ stub -arch=win64 ??0invalid_multiple_scheduling@Concurrency@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0invalid_multiple_scheduling@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0invalid_multiple_scheduling@Concurrency@@QEAA@XZ
+@ thiscall -arch=win32 ??0invalid_multiple_scheduling@Concurrency@@QAE@PBD@Z(ptr ptr) invalid_multiple_scheduling_ctor_str
+@ cdecl -arch=win64 ??0invalid_multiple_scheduling@Concurrency@@QEAA@PEBD@Z(ptr ptr) invalid_multiple_scheduling_ctor_str
+@ thiscall -arch=win32 ??0invalid_multiple_scheduling@Concurrency@@QAE@XZ(ptr) invalid_multiple_scheduling_ctor
+@ cdecl -arch=win64 ??0invalid_multiple_scheduling@Concurrency@@QEAA@XZ(ptr) invalid_multiple_scheduling_ctor
 @ stub -arch=win32 ??0invalid_operation@Concurrency@@QAE@PBD@Z
 @ stub -arch=win64 ??0invalid_operation@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0invalid_operation@Concurrency@@QAE@XZ
