@@ -12861,7 +12861,7 @@ static void test_tcp_reset(void)
     len = sizeof(error);
     ret = getsockopt(client, SOL_SOCKET, SO_ERROR, (char *)&error, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!error, "got error %u\n", error);
+    ok(!error, "got error %u\n", error);
 
     wsabuf.buf = buffer;
     wsabuf.len = sizeof(buffer);

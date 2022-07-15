@@ -232,6 +232,7 @@ struct sock
     unsigned int        aborted : 1; /* did we get a POLLERR or irregular POLLHUP? */
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
     unsigned int        bound : 1;   /* is the socket bound? */
+    unsigned int        reset : 1;   /* did we get a TCP reset? */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -667,7 +668,12 @@ static inline int sock_error( struct sock *sock )
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
-        if (error)
+        if (error == ECONNRESET || error == EPIPE)
+        {
+            sock->reset = 1;
+            error = 0;
+        }
+        else if (error)
             sock->errors[AFD_POLL_BIT_HUP] = error;
         else
             error = sock->errors[AFD_POLL_BIT_HUP];
@@ -897,6 +903,8 @@ static int get_poll_flags( struct sock *sock, int event )
         flags |= AFD_POLL_HUP;
     if (event & POLLERR)
         flags |= AFD_POLL_CONNECT_ERR;
+    if (sock->reset)
+        flags |= AFD_POLL_RESET;
 
     return flags;
 }
@@ -1081,6 +1089,15 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
             async_terminate( sock->connect_req->async, status );
     }
 
+    if (sock->reset)
+    {
+        async_wake_up( &sock->read_q, STATUS_CONNECTION_RESET );
+        async_wake_up( &sock->write_q, STATUS_CONNECTION_RESET );
+
+        if (sock->accept_recv_req && sock->accept_recv_req->iosb->status == STATUS_PENDING)
+            async_terminate( sock->accept_recv_req->async, STATUS_CONNECTION_RESET );
+    }
+
     return event;
 }
 
@@ -1116,6 +1133,9 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
+        if (sock->reset)
+            post_socket_event( sock, AFD_POLL_BIT_RESET );
+
         if (event & POLLIN)
             post_socket_event( sock, AFD_POLL_BIT_READ );
 
@@ -1171,6 +1191,9 @@ static void sock_poll_event( struct fd *fd, int event )
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
+        if (sock->reset)
+            event &= ~(POLLIN | POLLERR | POLLHUP);
+
         if (sock->type == WS_SOCK_STREAM && (event & POLLIN))
         {
             char dummy;
@@ -1189,7 +1212,11 @@ static void sock_poll_event( struct fd *fd, int event )
                 event &= ~POLLIN;
                 /* EAGAIN can happen if an async recv() falls between the server's poll()
                    call and the invocation of this routine */
-                if ( errno != EAGAIN )
+                if (errno == ECONNRESET || errno == EPIPE)
+                {
+                    sock->reset = 1;
+                }
+                else if (errno != EAGAIN)
                 {
                     error = errno;
                     event |= POLLERR;
@@ -1312,7 +1339,7 @@ static int sock_get_poll_events( struct fd *fd )
             return -1;
         }
 
-        if (sock->aborted)
+        if (sock->aborted || sock->reset)
             return -1;
 
         if (sock->accept_recv_req)
@@ -1517,6 +1544,7 @@ static struct sock *create_socket(void)
     sock->aborted = 0;
     sock->nonblocking = 0;
     sock->bound = 0;
+    sock->reset = 0;
     sock->rcvbuf = 0;
     sock->sndbuf = 0;
     sock->rcvtimeo = 0;
