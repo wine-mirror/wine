@@ -744,6 +744,7 @@ static void test_GetTask(void)
     ITaskService *service;
     ITaskFolder *root, *folder;
     IRegisteredTask *task1, *task2;
+    DATE date;
     IID iid;
     int i;
 
@@ -840,6 +841,9 @@ static void test_GetTask(void)
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
+    hr = IRegisteredTask_get_LastRunTime(task1, &date);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
+
     IRegisteredTask_Release(task1);
 
     hr = ITaskFolder_RegisterTask(folder, Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
@@ -864,6 +868,9 @@ static void test_GetTask(void)
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
+
+    hr = IRegisteredTask_get_LastRunTime(task2, &date);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
 
     IRegisteredTask_Release(task2);
 
@@ -891,6 +898,9 @@ static void test_GetTask(void)
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
+    hr = IRegisteredTask_get_LastRunTime(task1, &date);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
+
     hr = IRegisteredTask_put_Enabled(task1, VARIANT_TRUE);
     ok(hr == S_OK, "put_Enabled error %#lx\n", hr);
     hr = IRegisteredTask_get_State(task1, &state);
@@ -901,6 +911,9 @@ static void test_GetTask(void)
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
     todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
+
+    hr = IRegisteredTask_get_LastRunTime(task1, &date);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
 
     IRegisteredTask_Release(task1);
 
@@ -921,6 +934,9 @@ static void test_GetTask(void)
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
     ok(hr == S_OK, "get_Enabled error %#lx\n", hr);
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
+
+    hr = IRegisteredTask_get_LastRunTime(task2, &date);
+    ok(hr == SCHED_S_TASK_HAS_NOT_RUN, "got %#lx\n", hr);
 
     hr = IRegisteredTask_get_State(task2, NULL);
     ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);

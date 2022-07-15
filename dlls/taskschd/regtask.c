@@ -205,7 +205,7 @@ static HRESULT WINAPI regtask_GetInstances(IRegisteredTask *iface, LONG flags, I
 static HRESULT WINAPI regtask_get_LastRunTime(IRegisteredTask *iface, DATE *date)
 {
     FIXME("%p,%p: stub\n", iface, date);
-    return E_NOTIMPL;
+    return SCHED_S_TASK_HAS_NOT_RUN;
 }
 
 static HRESULT WINAPI regtask_get_LastTaskResult(IRegisteredTask *iface, LONG *result)
