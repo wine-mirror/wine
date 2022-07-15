@@ -2839,6 +2839,9 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
 
             if (flags & except_flags)
                 ret_count += add_fd_to_set( s, except_ptr );
+
+            if (flags & ~(read_flags | write_flags | except_flags | AFD_POLL_CLOSE))
+                FIXME( "not reporting AFD flags %#x\n", flags );
         }
     }
 
