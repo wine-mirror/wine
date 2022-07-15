@@ -165,11 +165,11 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    "Window settings",IDC_STATIC,8,4,244,84
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,10
+    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,10
+    CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,10
     CONTROL     "&Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
-                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,10
     LTEXT       "Desktop &size:",IDC_DESKTOP_SIZE,15,70,64,16,WS_DISABLED
     LTEXT       "#msgctxt#do not translate#X",IDC_DESKTOP_BY,129,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,84,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -252,7 +252,7 @@ BEGIN
     LTEXT           "S&erial:",IDC_STATIC_SERIAL,15,183,42,12
     EDITTEXT        IDC_EDIT_SERIAL,59,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "&Show dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+    CONTROL         "&Show dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,10
 END
 
 IDD_AUDIOCFG DIALOG  0, 0, 260, 220
@@ -299,7 +299,7 @@ BEGIN
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASSA,UDS_SETBUDDYINT | UDS_ALIGNRIGHT | WS_DISABLED, 185,75,15,13
 
     GROUPBOX        "MIME types",IDC_STATIC,8,95,244,23
-    CONTROL         "Manage file &associations",IDC_ENABLE_FILE_ASSOCIATIONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,105,230,8
+    CONTROL         "Manage file &associations",IDC_ENABLE_FILE_ASSOCIATIONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,105,230,10
 
     PUSHBUTTON      "&Font...",IDC_SYSPARAM_FONT,190,75,55,13,WS_DISABLED
     GROUPBOX        "Folders",IDC_STATIC,8,120,244,94
