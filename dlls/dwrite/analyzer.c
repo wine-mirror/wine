@@ -2374,7 +2374,7 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
 {
     struct dwrite_fontfallback_builder *builder = impl_from_IDWriteFontFallbackBuilder(iface);
     struct fallback_mapping *mapping;
-    UINT32 i;
+    unsigned int i, count;
 
     TRACE("%p, %p, %u, %p, %u, %p, %s, %s, %f.\n", iface, ranges, ranges_count, families, families_count,
             collection, debugstr_w(locale_name), debugstr_w(base_family), scale);
@@ -2397,8 +2397,22 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
     if (!(mapping->ranges = calloc(ranges_count, sizeof(*mapping->ranges))))
         goto failed;
 
-    mapping->ranges_count = ranges_count;
-    memcpy(mapping->ranges, ranges, sizeof(*mapping->ranges) * ranges_count);
+    /* Filter ranges that won't be usable. */
+    for (i = 0, count = 0; i < ranges_count; ++i)
+    {
+        if (ranges[i].first > ranges[i].last) continue;
+        if (ranges[i].first > 0x10ffff) continue;
+        mapping->ranges[count].first = ranges[i].first;
+        mapping->ranges[count].last = min(ranges[i].last, 0x10ffff);
+        count++;
+    }
+    if (!count)
+    {
+        release_fallback_mapping(mapping);
+        return S_OK;
+    }
+
+    mapping->ranges_count = count;
 
     if (!(mapping->families = calloc(families_count, sizeof(*mapping->families))))
         goto failed;
