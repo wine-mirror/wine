@@ -4422,6 +4422,7 @@ static void test_select(void)
     ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
     ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
     ok(id == 0, "expected 0, got %ld\n", id);
+    set_blocking(fdRead, FALSE);
 
     /* When data is received the receiver gets the read descriptor */
     ret = send(fdWrite, "1234", 4, 0);
@@ -4481,6 +4482,14 @@ static void test_select(void)
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
+
+    /* Linux has some odd behaviour (probably a bug) where receiving OOB,
+     * setting SO_OOBINLINE, and then calling recv() again will cause the same
+     * data to be received twice. Avoid that messing with further tests by
+     * calling recv() here. */
+    ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
+    todo_wine ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(GetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
     /* When the connection is closed the socket is set in the read descriptor */
     ret = closesocket(fdRead);
