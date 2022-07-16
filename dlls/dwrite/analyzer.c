@@ -240,6 +240,12 @@ static const struct fallback_mapping fontfallback_neutral_data[] = {
 #undef MAPPING_RANGE
 };
 
+struct fallback_data
+{
+    struct fallback_mapping *mappings;
+    size_t count;
+};
+
 struct dwrite_fontfallback
 {
     IDWriteFontFallback1 IDWriteFontFallback1_iface;
@@ -255,10 +261,30 @@ struct dwrite_fontfallback_builder
     IDWriteFontFallbackBuilder IDWriteFontFallbackBuilder_iface;
     LONG refcount;
     IDWriteFactory7 *factory;
-    struct fallback_mapping *mappings;
-    size_t size;
-    size_t count;
+    struct fallback_data data;
+    size_t mappings_size;
 };
+
+static void release_fallback_mapping(struct fallback_mapping *mapping)
+{
+    unsigned int i;
+
+    free(mapping->ranges);
+    for (i = 0; i < mapping->families_count; ++i)
+        free(mapping->families[i]);
+    free(mapping->families);
+    if (mapping->collection)
+        IDWriteFontCollection_Release(mapping->collection);
+}
+
+static void release_fallback_data(struct fallback_data *data)
+{
+    size_t i;
+
+    for (i = 0; i < data->count; ++i)
+        release_fallback_mapping(&data->mappings[i]);
+    free(data->mappings);
+}
 
 struct dwrite_numbersubstitution
 {
@@ -2327,76 +2353,70 @@ static ULONG WINAPI fontfallbackbuilder_AddRef(IDWriteFontFallbackBuilder *iface
 
 static ULONG WINAPI fontfallbackbuilder_Release(IDWriteFontFallbackBuilder *iface)
 {
-    struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
-    ULONG refcount = InterlockedDecrement(&fallbackbuilder->refcount);
-    size_t i;
+    struct dwrite_fontfallback_builder *builder = impl_from_IDWriteFontFallbackBuilder(iface);
+    ULONG refcount = InterlockedDecrement(&builder->refcount);
 
     TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
     {
-        for (i = 0; i < fallbackbuilder->count; ++i)
-        {
-            struct fallback_mapping *mapping = &fallbackbuilder->mappings[i];
-            UINT32 j;
-
-            for (j = 0; j < mapping->families_count; j++)
-                free(mapping->families[j]);
-            free(mapping->families);
-
-            if (mapping->collection)
-                IDWriteFontCollection_Release(mapping->collection);
-            free(mapping->ranges);
-            free(mapping->locale);
-        }
-
-        IDWriteFactory7_Release(fallbackbuilder->factory);
-        free(fallbackbuilder->mappings);
-        free(fallbackbuilder);
+        IDWriteFactory7_Release(builder->factory);
+        release_fallback_data(&builder->data);
+        free(builder);
     }
 
     return refcount;
 }
 
 static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder *iface,
-        const DWRITE_UNICODE_RANGE *ranges, UINT32 ranges_count, WCHAR const **target_families, UINT32 families_count,
-        IDWriteFontCollection *collection, WCHAR const *locale, WCHAR const *base_family, FLOAT scale)
+        const DWRITE_UNICODE_RANGE *ranges, UINT32 ranges_count, WCHAR const **families, UINT32 families_count,
+        IDWriteFontCollection *collection, WCHAR const *locale_name, WCHAR const *base_family, float scale)
 {
-    struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
+    struct dwrite_fontfallback_builder *builder = impl_from_IDWriteFontFallbackBuilder(iface);
     struct fallback_mapping *mapping;
     UINT32 i;
 
-    TRACE("%p, %p, %u, %p, %u, %p, %s, %s, %f.\n", iface, ranges, ranges_count, target_families, families_count,
-            collection, debugstr_w(locale), debugstr_w(base_family), scale);
+    TRACE("%p, %p, %u, %p, %u, %p, %s, %s, %f.\n", iface, ranges, ranges_count, families, families_count,
+            collection, debugstr_w(locale_name), debugstr_w(base_family), scale);
 
-    if (!ranges || ranges_count == 0 || !target_families || families_count == 0 || scale < 0.0f)
+    if (!ranges || !ranges_count || !families || !families_count || scale < 0.0f)
         return E_INVALIDARG;
 
     if (base_family)
         FIXME("base family ignored.\n");
 
-    if (!dwrite_array_reserve((void **)&fallbackbuilder->mappings, &fallbackbuilder->size, fallbackbuilder->count + 1,
-            sizeof(*fallbackbuilder->mappings)))
+    if (!dwrite_array_reserve((void **)&builder->data.mappings, &builder->mappings_size,
+            builder->data.count + 1, sizeof(*builder->data.mappings)))
     {
         return E_OUTOFMEMORY;
     }
 
-    mapping = &fallbackbuilder->mappings[fallbackbuilder->count++];
+    mapping = &builder->data.mappings[builder->data.count];
+    memset(mapping, 0, sizeof(*mapping));
 
-    mapping->ranges = calloc(ranges_count, sizeof(*mapping->ranges));
-    memcpy(mapping->ranges, ranges, sizeof(*mapping->ranges) * ranges_count);
+    if (!(mapping->ranges = calloc(ranges_count, sizeof(*mapping->ranges))))
+        goto failed;
+
     mapping->ranges_count = ranges_count;
-    mapping->families = calloc(families_count, sizeof(*mapping->families));
+    memcpy(mapping->ranges, ranges, sizeof(*mapping->ranges) * ranges_count);
+
+    if (!(mapping->families = calloc(families_count, sizeof(*mapping->families))))
+        goto failed;
     mapping->families_count = families_count;
     for (i = 0; i < families_count; i++)
-        mapping->families[i] = wcsdup(target_families[i]);
+        if (!(mapping->families[i] = wcsdup(families[i]))) goto failed;
     mapping->collection = collection;
     if (mapping->collection)
         IDWriteFontCollection_AddRef(mapping->collection);
-    mapping->locale = wcsdup(locale);
+    mapping->locale = wcsdup(locale_name);
     mapping->scale = scale;
 
+    builder->data.count++;
     return S_OK;
+
+failed:
+    release_fallback_mapping(mapping);
+    return E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI fontfallbackbuilder_AddMappings(IDWriteFontFallbackBuilder *iface, IDWriteFontFallback *fallback)
