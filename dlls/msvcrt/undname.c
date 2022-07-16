@@ -1368,13 +1368,13 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     sym->current++;
 
     /* Then function name or operator code */
-    if (*sym->current == '?' && (sym->current[1] != '$' || sym->current[2] == '?'))
+    if (*sym->current == '?')
     {
         const char* function_name = NULL;
 
-        if (sym->current[1] == '$')
+        if (sym->current[1] == '$' && sym->current[2] == '?')
         {
-            do_after = 6;
+            do_after = 5;
             sym->current += 2;
         }
 
@@ -1506,6 +1506,11 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
                 return FALSE;
             }
             break;
+        case '$':
+            sym->current++;
+            if (!(function_name = get_template_name(sym))) goto done;
+            --sym->current;
+            break;
         default:
             /* FIXME: Other operators */
             ERR("Unknown operator: %c\n", *sym->current);
@@ -1522,7 +1527,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             sym->result = (char*)function_name;
             ret = TRUE;
             goto done;
-        case 6:
+        case 5:
             {
                 char *args;
                 struct array array_pmt;
@@ -1547,8 +1552,6 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         ret = (sym->result = get_template_name(sym)) != NULL;
         goto done;
     }
-    else if (*sym->current == '?' && sym->current[1] == '$')
-        do_after = 5;
 
     /* Either a class name, or '@' if the symbol is not a class member */
     switch (*sym->current)
@@ -1576,9 +1579,6 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         break;
     case 3:
         sym->flags &= ~UNDNAME_NO_FUNCTION_RETURNS;
-        break;
-    case 5:
-        sym->names.start++;
         break;
     }
 
