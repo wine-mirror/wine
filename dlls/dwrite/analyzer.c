@@ -245,7 +245,7 @@ struct dwrite_fontfallback
     IDWriteFontFallback1 IDWriteFontFallback1_iface;
     LONG refcount;
     IDWriteFactory7 *factory;
-    IDWriteFontCollection1 *systemcollection;
+    IDWriteFontCollection *systemcollection;
     struct fallback_mapping *mappings;
     UINT32 mappings_count;
 };
@@ -2228,7 +2228,7 @@ HRESULT create_system_fontfallback(IDWriteFactory7 *factory, IDWriteFontFallback
     fallback->factory = factory;
     fallback->mappings = (struct fallback_mapping *)fontfallback_neutral_data;
     fallback->mappings_count = ARRAY_SIZE(fontfallback_neutral_data);
-    IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)fallback->factory, FALSE, &fallback->systemcollection, FALSE);
+    IDWriteFactory_GetSystemFontCollection((IDWriteFactory *)fallback->factory, &fallback->systemcollection, FALSE);
 
     *ret = &fallback->IDWriteFontFallback1_iface;
 
@@ -2238,7 +2238,7 @@ HRESULT create_system_fontfallback(IDWriteFactory7 *factory, IDWriteFontFallback
 void release_system_fontfallback(IDWriteFontFallback1 *iface)
 {
     struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback1(iface);
-    IDWriteFontCollection1_Release(fallback->systemcollection);
+    IDWriteFontCollection_Release(fallback->systemcollection);
     free(fallback);
 }
 
