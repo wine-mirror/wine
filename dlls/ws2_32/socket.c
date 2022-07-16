@@ -2974,7 +2974,7 @@ int WINAPI WSAPoll( WSAPOLLFD *fds, ULONG count, int timeout )
                         revents |= POLLRDBAND;
                     if (params->sockets[j].flags & AFD_POLL_WRITE)
                         revents |= POLLWRNORM;
-                    if (params->sockets[j].flags & AFD_POLL_HUP)
+                    if (params->sockets[j].flags & (AFD_POLL_RESET | AFD_POLL_HUP))
                         revents |= POLLHUP;
                     if (params->sockets[j].flags & (AFD_POLL_RESET | AFD_POLL_CONNECT_ERR))
                         revents |= POLLERR;

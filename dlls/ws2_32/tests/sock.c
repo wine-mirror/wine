@@ -12871,7 +12871,7 @@ static void test_tcp_reset(void)
     todo_wine ok(ret == -1, "got %d\n", ret);
     todo_wine ok(WSAGetLastError() == WSAECONNRESET, "got error %u\n", WSAGetLastError());
 
-    check_poll_todo(client, POLLERR | POLLHUP | POLLWRNORM);
+    check_poll(client, POLLERR | POLLHUP | POLLWRNORM);
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
