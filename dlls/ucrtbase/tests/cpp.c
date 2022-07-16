@@ -192,19 +192,24 @@ static void test___std_type_info(void)
 
 static void test___unDName(void)
 {
-    char *name;
-
-    name = p___unDName(0, "??4QDnsDomainNameRecord@@QAEAAV0@$$QAV0@@Z", 0, malloc, free, 0);
-    ok(!strcmp(name, "public: class QDnsDomainNameRecord & __thiscall "
-                "QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord &&)"),
-            "unDName returned %s\n", wine_dbgstr_a(name));
-    free(name);
-
-    name = p___unDName(0, "??4QDnsDomainNameRecord@@QAEAAV0@$$QEAV0@@Z", 0, malloc, free, 0);
-    ok(!strcmp(name, "public: class QDnsDomainNameRecord & __thiscall "
-                "QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord && __ptr64)"),
-            "unDName returned %s\n", wine_dbgstr_a(name));
-    free(name);
+    static struct {const char *in; const char *out; const char *broken;} und_tests[] =
+    {
+/*   1 */ {"??4QDnsDomainNameRecord@@QAEAAV0@$$QAV0@@Z",
+           "public: class QDnsDomainNameRecord & __thiscall QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord &&)"},
+/*   2 */ {"??4QDnsDomainNameRecord@@QAEAAV0@$$QEAV0@@Z",
+          "public: class QDnsDomainNameRecord & __thiscall QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord && __ptr64)"},
+/*   3 */ {"??__K_l@@YA?AUCC@@I@Z", "struct CC __cdecl operator \"\" _l(unsigned int)",
+           "??__K_l@@YA?AUCC@@I@Z" /* W10 1507 fails on this :-( */},
+    };
+    unsigned i;
+    for (i = 0; i < ARRAY_SIZE(und_tests); i++)
+    {
+        char *name = p___unDName(0, und_tests[i].in, 0, malloc, free, 0);
+        ok(!strcmp(name, und_tests[i].out) ||
+           (broken(und_tests[i].broken && !strcmp(und_tests[i].broken, name))),
+           "unDName returned %s for #%u\n", wine_dbgstr_a(name), i);
+        free(name);
+    }
 }
 
 START_TEST(cpp)

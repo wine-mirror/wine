@@ -1488,6 +1488,19 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             case 'V': function_name = "operator delete[]"; break;
             case 'X': function_name = "`placement delete closure'"; break;
             case 'Y': function_name = "`placement delete[] closure'"; break;
+            case '_':
+                switch (*++sym->current)
+                {
+                case 'K':
+                    sym->current++;
+                    function_name = str_printf(sym, "operator \"\" %s", get_literal_string(sym));
+                    --sym->current;
+                    break;
+                default:
+                    FIXME("Unknown operator: __%c\n", *sym->current);
+                    return FALSE;
+                }
+                break;
             default:
                 ERR("Unknown operator: _%c\n", *sym->current);
                 return FALSE;
