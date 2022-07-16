@@ -1293,6 +1293,7 @@ static void test_demangle(void)
            "public: virtual void * __thiscall TStrArray<char [256],16>::`vector deleting destructor'(unsigned int)"},
 /* 131 */ {"??_R0?AVCC@DD@@@8", "class DD::CC `RTTI Type Descriptor'"},
 /* 132 */ {"??$meth@FD@DD@CC@@QAE_NK@Z", "public: bool __thiscall CC::DD::meth<short,char>(unsigned long)"},
+/* 133 */ {"?func@@YAXPIFAH@Z", "void __cdecl func(int __unaligned * __restrict)"},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;
