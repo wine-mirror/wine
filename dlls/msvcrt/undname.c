@@ -466,11 +466,14 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
     default: return FALSE;
     }
     if (ref || str_modif || xdt.left || xdt.right)
-        str_modif = str_printf(sym, " %s%s%s%s%s%s%s",
-                               xdt.left,
-                               xdt.left && ref ? " " : NULL, ref,
-                               (xdt.left || ref) && xdt.right ? " " : NULL, xdt.right,
-                               (xdt.left || ref || xdt.right) && str_modif ? " " : NULL, str_modif);
+        ct->left = str_printf(sym, " %s%s%s%s%s%s%s",
+                              xdt.left,
+                              xdt.left && ref ? " " : NULL, ref,
+                              (xdt.left || ref) && xdt.right ? " " : NULL, xdt.right,
+                              (xdt.left || ref || xdt.right) && str_modif ? " " : NULL, str_modif);
+    else
+        ct->left = NULL;
+    ct->right = NULL;
 
     if (get_modifier(sym, &xdt))
     {
@@ -487,29 +490,30 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
             if (!(n1 = get_number(sym))) return FALSE;
             num = atoi(n1);
 
-            if (str_modif[0] == ' ' && !xdt.left)
-                str_modif++;
+            if (ct->left && ct->left[0] == ' ' && !xdt.left)
+                ct->left++;
 
-            str_modif = str_printf(sym, " (%s%s)", xdt.left, str_modif);
+            ct->left = str_printf(sym, " (%s%s", xdt.left, ct->left);
+            ct->right = ")";
             xdt.left = NULL;
 
             while (num--)
-                str_modif = str_printf(sym, "%s[%s]", str_modif, get_number(sym));
+                ct->right = str_printf(sym, "%s[%s]", ct->right, get_number(sym));
         }
 
         /* Recurse to get the referred-to type */
         if (!demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
             return FALSE;
         if (xdt.left)
-            ct->left = str_printf(sym, "%s %s%s", sub_ct.left, xdt.left, str_modif);
+            ct->left = str_printf(sym, "%s %s%s", sub_ct.left, xdt.left, ct->left);
         else
         {
             /* don't insert a space between duplicate '*' */
-            if (!in_args && str_modif && str_modif[0] && str_modif[1] == '*' && sub_ct.left[strlen(sub_ct.left)-1] == '*')
-                str_modif++;
-            ct->left = str_printf(sym, "%s%s", sub_ct.left, str_modif );
+            if (!in_args && ct->left && ct->left[0] && ct->left[1] == '*' && sub_ct.left[strlen(sub_ct.left)-1] == '*')
+                ct->left++;
+            ct->left = str_printf(sym, "%s%s", sub_ct.left, ct->left);
         }
-        ct->right = sub_ct.right;
+        if (sub_ct.right) ct->right = str_printf(sym, "%s%s", ct->right, sub_ct.right);
         sym->stack.num = mark;
     }
     return TRUE;

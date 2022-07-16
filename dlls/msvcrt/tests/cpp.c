@@ -1294,6 +1294,7 @@ static void test_demangle(void)
 /* 131 */ {"??_R0?AVCC@DD@@@8", "class DD::CC `RTTI Type Descriptor'"},
 /* 132 */ {"??$meth@FD@DD@CC@@QAE_NK@Z", "public: bool __thiscall CC::DD::meth<short,char>(unsigned long)"},
 /* 133 */ {"?func@@YAXPIFAH@Z", "void __cdecl func(int __unaligned * __restrict)"},
+/* 135 */ {"?x@@3PAY02HA", "int (* x)[3]"},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;
