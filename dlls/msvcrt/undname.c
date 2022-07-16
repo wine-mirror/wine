@@ -1452,11 +1452,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
                 case '0':
                     {
                         struct datatype_t       ct;
-                        struct array pmt;
 
                         sym->current++;
-                        str_array_init(&pmt);
-                        demangle_datatype(sym, &ct, &pmt, FALSE);
                         if (!demangle_datatype(sym, &ct, NULL, FALSE))
                             goto done;
                         function_name = str_printf(sym, "%s%s `RTTI Type Descriptor'",
