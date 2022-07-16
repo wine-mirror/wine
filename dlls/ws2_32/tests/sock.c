@@ -10594,9 +10594,9 @@ static void test_completion_port(void)
 
     /* Somehow a hard shutdown doesn't work on my Linux box. It seems SO_LINGER is ignored. */
     iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
-    todo_wine ok(iret == SOCKET_ERROR, "WSARecv failed - %d\n", iret);
-    todo_wine ok(GetLastError() == WSAECONNRESET, "Last error was %ld\n", GetLastError());
-    todo_wine ok(num_bytes == 0xdeadbeef, "Managed to read %ld\n", num_bytes);
+    ok(iret == SOCKET_ERROR, "WSARecv failed - %d\n", iret);
+    ok(GetLastError() == WSAECONNRESET, "Last error was %ld\n", GetLastError());
+    ok(num_bytes == 0xdeadbeef, "Managed to read %ld\n", num_bytes);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -10604,11 +10604,11 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
-    todo_wine ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
-    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
-    todo_wine ok(key == 0xdeadbeef, "Key is %Iu\n", key);
-    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
-    todo_wine ok(!olp, "Overlapped structure is at %p\n", olp);
+    ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
+    ok(!olp, "Overlapped structure is at %p\n", olp);
 
     closesocket(dest);
 
@@ -13666,8 +13666,8 @@ static void test_tcp_reset(void)
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, &overlapped, NULL);
-    todo_wine ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAECONNRESET, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAECONNRESET, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = send(client, "data", 5, 0);

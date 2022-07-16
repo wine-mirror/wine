@@ -3830,7 +3830,10 @@ DECL_HANDLER(recv_socket)
     if (!req->force_async && !sock->nonblocking && is_fd_overlapped( fd ))
         timeout = (timeout_t)sock->rcvtimeo * -10000;
 
-    if (sock->rd_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    if (sock->rd_shutdown)
+        status = STATUS_PIPE_DISCONNECTED;
+    else if (sock->reset)
+        status = STATUS_CONNECTION_RESET;
     else if (!async_queued( &sock->read_q ))
     {
         /* If read_q is not empty, we cannot really tell if the already queued
