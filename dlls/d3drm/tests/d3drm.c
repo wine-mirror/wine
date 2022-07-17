@@ -7122,6 +7122,15 @@ static void test_viewport_clear1(void)
     ok(compare_color(ret_color, 0x00ffffff, 1), "Got unexpected color 0x%08lx.\n", ret_color);
     CHECK_REFCOUNT(frame1, 1);
 
+    hr = IDirect3DRMFrame_SetSceneBackgroundRGB(frame1, 0.5f, 0.5f, 0.5f);
+    ok(SUCCEEDED(hr), "Cannot set scene background RGB, hr %#lx\n", hr);
+
+    hr = IDirect3DRMViewport_Render(viewport1, frame1);
+    ok(SUCCEEDED(hr), "Cannot Render, hr %#lx\n", hr);
+
+    ret_color = get_surface_color(surface, 320, 240);
+    ok(compare_color(ret_color, 0x00ffffff, 1), "Got unexpected color 0x%08lx.\n", ret_color);
+
     hr = IDirect3DRMFrame_SetSceneBackgroundRGB(frame1, 0.0f, 0.0f, 1.0f);
     ok(SUCCEEDED(hr), "Cannot set scene background RGB, hr %#lx\n", hr);
     ret_color = IDirect3DRMFrame_GetSceneBackground(frame1);
@@ -7326,6 +7335,18 @@ static void test_viewport_clear2(void)
     ret_color = get_surface_color(surface, 320, 240);
     ok(compare_color(ret_color, 0x00ffffff, 1), "Got unexpected color 0x%08lx.\n", ret_color);
     CHECK_REFCOUNT(frame3, 1);
+
+    hr = IDirect3DRMFrame3_SetSceneBackgroundRGB(frame3, 0.5f, 0.5f, 0.5f);
+    ok(SUCCEEDED(hr), "Cannot set scene background RGB, hr %#lx\n", hr);
+
+    hr = IDirect3DRMViewport2_Render(viewport2, frame3);
+    ok(SUCCEEDED(hr), "Cannot Render, hr %#lx\n", hr);
+
+    ret_color = get_surface_color(surface, 320, 240);
+    ok(compare_color(ret_color, 0x00ffffff, 1), "Got unexpected color 0x%08lx.\n", ret_color);
+
+    hr = IDirect3DRMFrame3_SetSceneBackgroundRGB(frame3, 1.0f, 1.0f, 1.0f);
+    ok(SUCCEEDED(hr), "Cannot set scene background RGB, hr %#lx\n", hr);
 
     hr = IDirect3DRMViewport2_GetDirect3DViewport(viewport2, &d3d_viewport);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface, hr %#lx.\n", hr);
