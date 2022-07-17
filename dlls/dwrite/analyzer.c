@@ -2452,7 +2452,7 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
     struct dwrite_fontfallback_builder *builder = impl_from_IDWriteFontFallbackBuilder(iface);
     struct fallback_mapping *mapping;
     struct fallback_locale *locale;
-    unsigned int i, count;
+    unsigned int i, j, m, count;
 
     TRACE("%p, %p, %u, %p, %u, %p, %s, %s, %f.\n", iface, ranges, ranges_count, families, families_count,
             collection, debugstr_w(locale_name), debugstr_w(base_family), scale);
@@ -2502,12 +2502,47 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
     mapping->families_count = families_count;
     for (i = 0; i < families_count; i++)
         if (!(mapping->families[i] = wcsdup(families[i]))) goto failed;
-    mapping->collection = collection;
-    if (mapping->collection)
-        IDWriteFontCollection_AddRef(mapping->collection);
     mapping->scale = scale;
 
     if (FAILED(fallback_locale_add_mapping(locale, builder->data.count))) goto failed;
+
+    /* Mappings with explicit collections take priority, for that reduce existing mappings ranges
+       by newly added ranges. */
+
+    mapping->collection = collection;
+    if (mapping->collection)
+    {
+        IDWriteFontCollection_AddRef(mapping->collection);
+
+        for (m = 0; m < builder->data.count; ++m)
+        {
+            struct fallback_mapping *c = &builder->data.mappings[m];
+            if (c->collection) continue;
+            for (i = 0; i < count; ++i)
+            {
+                const DWRITE_UNICODE_RANGE *new_range = &mapping->ranges[i];
+
+                for (j = 0; j < c->ranges_count; ++j)
+                {
+                    DWRITE_UNICODE_RANGE *range = &c->ranges[j];
+
+                    /* In case existing ranges intersect, disable or reduce them */
+                    if (range->first >= new_range->first && range->last <= new_range->last)
+                    {
+                        range->first = range->last = ~0u;
+                    }
+                    else if (range->first >= new_range->first && range->first <= new_range->last)
+                    {
+                        range->first = new_range->last;
+                    }
+                    else if (range->last >= new_range->first && range->last <= new_range->last)
+                    {
+                        range->last = new_range->first;
+                    }
+                }
+            }
+        }
+    }
 
     builder->data.count++;
     return S_OK;
