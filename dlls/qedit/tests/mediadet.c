@@ -866,6 +866,17 @@ static void test_put_filter(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+struct test_sample
+{
+    IMediaSample sample;
+    LONG refcount;
+};
+
+static struct test_sample *impl_from_IMediaSample(IMediaSample *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_sample, sample);
+}
+
 static HRESULT WINAPI ms_QueryInterface(IMediaSample *iface, REFIID riid,
         void **ppvObject)
 {
@@ -874,12 +885,14 @@ static HRESULT WINAPI ms_QueryInterface(IMediaSample *iface, REFIID riid,
 
 static ULONG WINAPI ms_AddRef(IMediaSample *iface)
 {
-    return 2;
+    struct test_sample *sample = impl_from_IMediaSample(iface);
+    return InterlockedIncrement(&sample->refcount);
 }
 
 static ULONG WINAPI ms_Release(IMediaSample *iface)
 {
-    return 1;
+    struct test_sample *sample = impl_from_IMediaSample(iface);
+    return InterlockedDecrement(&sample->refcount);
 }
 
 static HRESULT WINAPI ms_GetPointer(IMediaSample *iface, BYTE **ppBuffer)
@@ -989,7 +1002,7 @@ static const IMediaSampleVtbl my_sample_vt = {
     ms_SetMediaTime
 };
 
-static IMediaSample my_sample = { &my_sample_vt };
+static struct test_sample my_sample = { {&my_sample_vt}, 0 };
 
 static BOOL samplecb_called = FALSE;
 
@@ -1012,8 +1025,9 @@ static ULONG WINAPI sgcb_Release(ISampleGrabberCB *iface)
 static HRESULT WINAPI sgcb_SampleCB(ISampleGrabberCB *iface, double SampleTime,
         IMediaSample *pSample)
 {
-    ok(pSample == &my_sample, "Got wrong IMediaSample: %p, expected %p\n", pSample, &my_sample);
+    ok(pSample == &my_sample.sample, "Got wrong IMediaSample: %p, expected %p\n", pSample, &my_sample);
     samplecb_called = TRUE;
+    IMediaSample_AddRef(pSample);
     return E_NOTIMPL;
 }
 
@@ -1043,6 +1057,7 @@ static void test_samplegrabber(void)
     IEnumPins *pins;
     HRESULT hr;
     FILTER_STATE fstate;
+    ULONG refcount;
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_IClassFactory,
@@ -1074,9 +1089,12 @@ static void test_samplegrabber(void)
     hr = IPin_QueryInterface(pin, &IID_IMemInputPin, (void**)&inpin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IMemInputPin_Receive(inpin, &my_sample);
+    hr = IMemInputPin_Receive(inpin, &my_sample.sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(samplecb_called == TRUE, "SampleCB should have been called\n");
+
+    refcount = IUnknown_Release(&my_sample.sample);
+    todo_wine ok(!refcount, "Got unexpected refcount %ld.\n", refcount);
 
     IMemInputPin_Release(inpin);
     IPin_Release(pin);
