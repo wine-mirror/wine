@@ -1773,6 +1773,7 @@ static void test_token_attr(void)
     TOKEN_PRIVILEGES *Privileges;
     TOKEN_GROUPS *Groups;
     TOKEN_USER *User;
+    TOKEN_OWNER *Owner;
     TOKEN_DEFAULT_DACL *Dacl;
     BOOL ret;
     DWORD i, GLE;
@@ -1873,6 +1874,20 @@ static void test_token_attr(void)
     trace("TokenUser: %s attr: 0x%08lx\n", SidString, User->User.Attributes);
     LocalFree(SidString);
     HeapFree(GetProcessHeap(), 0, User);
+
+    /* owner */
+    ret = GetTokenInformation(Token, TokenOwner, NULL, 0, &Size);
+    ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "GetTokenInformation(TokenOwner) failed with error %ld\n", GetLastError());
+    Owner = HeapAlloc(GetProcessHeap(), 0, Size);
+    ret = GetTokenInformation(Token, TokenOwner, Owner, Size, &Size);
+    ok(ret,
+        "GetTokenInformation(TokenOwner) failed with error %ld\n", GetLastError());
+
+    ConvertSidToStringSidA(Owner->Owner, &SidString);
+    trace("TokenOwner: %s\n", SidString);
+    LocalFree(SidString);
+    HeapFree(GetProcessHeap(), 0, Owner);
 
     /* logon */
     ret = GetTokenInformation(Token, TokenLogonSid, NULL, 0, &Size);
