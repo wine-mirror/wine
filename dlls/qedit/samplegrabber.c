@@ -164,9 +164,6 @@ static void SampleGrabber_callback(struct sample_grabber *This, IMediaSample *sa
 		if (ref)
 		{
 		    ERR("(%p) Callback referenced sample %p by %lu\n", This, sample, ref);
-		    /* ugly as hell but some apps are sooo buggy */
-		    while (ref--)
-			IMediaSample_Release(sample);
 		}
 	    }
             break;

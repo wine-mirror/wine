@@ -1094,7 +1094,7 @@ static void test_samplegrabber(void)
     ok(samplecb_called == TRUE, "SampleCB should have been called\n");
 
     refcount = IUnknown_Release(&my_sample.sample);
-    todo_wine ok(!refcount, "Got unexpected refcount %ld.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %ld.\n", refcount);
 
     IMemInputPin_Release(inpin);
     IPin_Release(pin);
