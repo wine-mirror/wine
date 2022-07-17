@@ -220,15 +220,77 @@ static const DWRITE_UNICODE_RANGE cjk_ranges[] =
     { 0x4e00, 0x9fff }, /* CJK Unified Ideographs */
 };
 
-struct fallback_mapping {
+struct fallback_mapping
+{
     DWRITE_UNICODE_RANGE *ranges;
     UINT32 ranges_count;
     WCHAR **families;
     UINT32 families_count;
     IDWriteFontCollection *collection;
-    WCHAR *locale;
-    FLOAT scale;
+    float scale;
 };
+
+struct fallback_locale
+{
+    struct list entry;
+    WCHAR name[LOCALE_NAME_MAX_LENGTH];
+    struct
+    {
+        size_t *data;
+        size_t count;
+        size_t size;
+    } ranges;
+};
+
+static void fallback_locale_list_destroy(struct list *locales)
+{
+    struct fallback_locale *cur, *cur2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, locales, struct fallback_locale, entry)
+    {
+        list_remove(&cur->entry);
+        free(cur->ranges.data);
+        free(cur);
+    }
+}
+
+static HRESULT fallback_locale_add_mapping(struct fallback_locale *locale, size_t index)
+{
+    size_t count = locale->ranges.count;
+
+    /* Append to last range, or start a new one. */
+    if (count && locale->ranges.data[count - 1] == (index - 1))
+    {
+        locale->ranges.data[count - 1] = index;
+        return S_OK;
+    }
+
+    if (!dwrite_array_reserve((void **)&locale->ranges.data, &locale->ranges.size, count + 2,
+            sizeof(*locale->ranges.data)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    locale->ranges.data[count] = locale->ranges.data[count + 1] = index;
+    locale->ranges.count += 2;
+
+    return S_OK;
+}
+
+/* TODO: potentially needs improvement to consider partially matching locale names. */
+static struct fallback_locale * font_fallback_get_locale(const struct list *locales,
+        const WCHAR *locale_name)
+{
+    struct fallback_locale *locale, *neutral = NULL;
+
+    LIST_FOR_EACH_ENTRY(locale, locales, struct fallback_locale, entry)
+    {
+        if (!wcsicmp(locale->name, locale_name)) return locale;
+        if (!*locale->name) neutral = locale;
+    }
+
+    return neutral;
+}
 
 static const struct fallback_mapping fontfallback_neutral_data[] = {
 #define MAPPING_RANGE(ranges, families) \
@@ -244,6 +306,7 @@ struct fallback_data
 {
     struct fallback_mapping *mappings;
     size_t count;
+    struct list locales;
 };
 
 struct dwrite_fontfallback
@@ -284,6 +347,7 @@ static void release_fallback_data(struct fallback_data *data)
     for (i = 0; i < data->count; ++i)
         release_fallback_mapping(&data->mappings[i]);
     free(data->mappings);
+    fallback_locale_list_destroy(&data->locales);
 }
 
 struct dwrite_numbersubstitution
@@ -2368,12 +2432,26 @@ static ULONG WINAPI fontfallbackbuilder_Release(IDWriteFontFallbackBuilder *ifac
     return refcount;
 }
 
+static struct fallback_locale * fallback_builder_add_locale(struct dwrite_fontfallback_builder *builder,
+        const WCHAR *locale_name)
+{
+    struct fallback_locale *locale;
+
+    if (!locale_name) locale_name = L"";
+    if ((locale = font_fallback_get_locale(&builder->data.locales, locale_name))) return locale;
+    if (!(locale = calloc(1, sizeof(*locale)))) return NULL;
+    lstrcpynW(locale->name, locale_name, ARRAY_SIZE(locale->name));
+    list_add_tail(&builder->data.locales, &locale->entry);
+    return locale;
+}
+
 static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder *iface,
         const DWRITE_UNICODE_RANGE *ranges, UINT32 ranges_count, WCHAR const **families, UINT32 families_count,
         IDWriteFontCollection *collection, WCHAR const *locale_name, WCHAR const *base_family, float scale)
 {
     struct dwrite_fontfallback_builder *builder = impl_from_IDWriteFontFallbackBuilder(iface);
     struct fallback_mapping *mapping;
+    struct fallback_locale *locale;
     unsigned int i, count;
 
     TRACE("%p, %p, %u, %p, %u, %p, %s, %s, %f.\n", iface, ranges, ranges_count, families, families_count,
@@ -2393,6 +2471,11 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
 
     mapping = &builder->data.mappings[builder->data.count];
     memset(mapping, 0, sizeof(*mapping));
+
+    /* Append new mapping, link to its locale node. */
+
+    if (!(locale = fallback_builder_add_locale(builder, locale_name)))
+        return E_FAIL;
 
     if (!(mapping->ranges = calloc(ranges_count, sizeof(*mapping->ranges))))
         goto failed;
@@ -2422,8 +2505,9 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
     mapping->collection = collection;
     if (mapping->collection)
         IDWriteFontCollection_AddRef(mapping->collection);
-    mapping->locale = wcsdup(locale_name);
     mapping->scale = scale;
+
+    if (FAILED(fallback_locale_add_mapping(locale, builder->data.count))) goto failed;
 
     builder->data.count++;
     return S_OK;
@@ -2485,6 +2569,7 @@ HRESULT create_fontfallback_builder(IDWriteFactory7 *factory, IDWriteFontFallbac
     builder->refcount = 1;
     builder->factory = factory;
     IDWriteFactory7_AddRef(builder->factory);
+    list_init(&builder->data.locales);
 
     *ret = &builder->IDWriteFontFallbackBuilder_iface;
     return S_OK;
