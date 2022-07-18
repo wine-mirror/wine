@@ -323,6 +323,7 @@ extern HRESULT create_colorglyphenum(D2D1_POINT_2F origin, const DWRITE_GLYPH_RU
 extern BOOL lb_is_newline_char(WCHAR) DECLSPEC_HIDDEN;
 extern HRESULT create_system_fontfallback(IDWriteFactory7 *factory, IDWriteFontFallback1 **fallback) DECLSPEC_HIDDEN;
 extern void release_system_fontfallback(IDWriteFontFallback1 *fallback) DECLSPEC_HIDDEN;
+extern void release_system_fallback_data(void) DECLSPEC_HIDDEN;
 extern HRESULT create_fontfallback_builder(IDWriteFactory7 *factory, IDWriteFontFallbackBuilder **builder) DECLSPEC_HIDDEN;
 extern HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *family, DWRITE_FONT_WEIGHT weight,
         DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, REFIID riid, void **obj) DECLSPEC_HIDDEN;

@@ -643,7 +643,7 @@ static HRESULT layout_itemize(struct dwrite_textlayout *layout)
 
 static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 {
-    IDWriteFontCollection *sys_collection;
+    IDWriteFontCollection *sys_collection, *collection;
     IDWriteFontFallback *fallback = NULL;
     struct layout_range *range;
     struct layout_run *r;
@@ -675,12 +675,10 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
             continue;
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
+        collection = range->collection ? range->collection : sys_collection;
 
-        if (run->sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL) {
-            IDWriteFontCollection *collection;
-
-            collection = range->collection ? range->collection : sys_collection;
-
+        if (run->sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL)
+        {
             if (FAILED(hr = create_matching_font(collection, range->fontfamily, range->weight, range->style,
                     range->stretch, &IID_IDWriteFont, (void **)&font)))
             {
@@ -702,8 +700,9 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 
         length = run->descr.stringLength;
 
-        while (length) {
-            UINT32 mapped_length;
+        while (length)
+        {
+            UINT32 mapped_length = 0;
             FLOAT scale;
 
             run = &r->u.regular;
@@ -724,6 +723,21 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
                 WARN("%s: failed to map family %s, collection %p, hr %#lx.\n", debugstr_rundescr(&run->descr),
                         debugstr_w(range->fontfamily), range->collection, hr);
                 goto fatal;
+            }
+
+            if (!mapped_length)
+            {
+                if (FAILED(create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
+                        range->stretch, &IID_IDWriteFont3, (void **)&font)))
+                {
+                    if (FAILED(hr = create_matching_font(sys_collection, L"Tahoma", range->weight, range->style,
+                        range->stretch, &IID_IDWriteFont3, (void **)&font)))
+                    {
+                        WARN("Failed to create last resort font, hr %#lx.\n", hr);
+                        goto fatal;
+                    }
+                }
+                mapped_length = run->descr.stringLength;
             }
 
             hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);

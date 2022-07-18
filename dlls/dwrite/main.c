@@ -55,6 +55,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         release_shared_factory(shared_factory);
+        release_system_fallback_data();
         if (unixlib_handle) UNIX_CALL(process_detach, NULL);
     }
     return TRUE;
