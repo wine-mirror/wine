@@ -4861,14 +4861,14 @@ static void test_FontFallbackBuilder(void)
     EXPECT_REF(builder, 1);
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(factory2, 3);
+    todo_wine EXPECT_REF(factory2, 3);
     EXPECT_REF(fallback, 1);
     EXPECT_REF(builder, 1);
 
     IDWriteFontFallback_AddRef(fallback);
     EXPECT_REF(builder, 1);
     EXPECT_REF(fallback, 2);
-    EXPECT_REF(factory2, 3);
+    todo_wine EXPECT_REF(factory2, 3);
     IDWriteFontFallback_Release(fallback);
 
     /* New instance is created every time, even if mappings have not changed. */

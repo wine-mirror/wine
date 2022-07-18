@@ -317,6 +317,8 @@ struct dwrite_fontfallback
     IDWriteFontCollection *systemcollection;
     struct fallback_mapping *mappings;
     UINT32 mappings_count;
+    struct fallback_data data;
+    size_t mappings_size;
 };
 
 struct dwrite_fontfallback_builder
@@ -2352,6 +2354,9 @@ static ULONG WINAPI customfontfallback_Release(IDWriteFontFallback1 *iface)
     if (!refcount)
     {
         IDWriteFactory7_Release(fallback->factory);
+        if (fallback->systemcollection)
+            IDWriteFontCollection_Release(fallback->systemcollection);
+        release_fallback_data(&fallback->data);
         free(fallback);
     }
 
@@ -2559,26 +2564,113 @@ static HRESULT WINAPI fontfallbackbuilder_AddMappings(IDWriteFontFallbackBuilder
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI fontfallbackbuilder_CreateFontFallback(IDWriteFontFallbackBuilder *iface,
-        IDWriteFontFallback **ret)
+static HRESULT fallbackbuilder_init_fallback_data(const struct dwrite_fontfallback_builder *builder,
+        struct fallback_data *data)
 {
-    struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
+    struct fallback_locale *iter, *locale;
+    size_t i, j;
+
+    /* Duplicate locales list. */
+    list_init(&data->locales);
+    LIST_FOR_EACH_ENTRY(iter, &builder->data.locales, struct fallback_locale, entry)
+    {
+        if (!(locale = calloc(1, sizeof(*locale)))) goto failed;
+        wcscpy(locale->name, iter->name);
+        locale->ranges.count = iter->ranges.count;
+        locale->ranges.size = iter->ranges.count;
+        if (!(locale->ranges.data = malloc(iter->ranges.count * sizeof(*iter->ranges.data))))
+        {
+            free(locale);
+            goto failed;
+        }
+        memcpy(locale->ranges.data, iter->ranges.data, iter->ranges.count * sizeof(*iter->ranges.data));
+        list_add_tail(&data->locales, &locale->entry);
+    }
+
+    /* Duplicate mappings. */
+    if (!(data->mappings = calloc(builder->data.count, sizeof(*data->mappings))))
+        goto failed;
+
+    data->count = builder->data.count;
+    for (i = 0; i < data->count; ++i)
+    {
+        struct fallback_mapping *src = &builder->data.mappings[i];
+        struct fallback_mapping *dst = &data->mappings[i];
+
+        if (!(dst->ranges = calloc(src->ranges_count, sizeof(*src->ranges)))) goto failed;
+        memcpy(dst->ranges, src->ranges, src->ranges_count * sizeof(*src->ranges));
+        dst->ranges_count = src->ranges_count;
+
+        if (!(dst->families = calloc(src->families_count, sizeof(*src->families)))) goto failed;
+        dst->families_count = src->families_count;
+        for (j = 0; j < src->families_count; ++j)
+        {
+            if (!(dst->families[j] = wcsdup(src->families[j]))) goto failed;
+        }
+
+        dst->collection = src->collection;
+        if (dst->collection)
+            IDWriteFontCollection_AddRef(dst->collection);
+        dst->scale = src->scale;
+    }
+
+    return S_OK;
+
+failed:
+
+    return E_OUTOFMEMORY;
+}
+
+static HRESULT fallbackbuilder_create_fallback(struct dwrite_fontfallback_builder *builder, struct dwrite_fontfallback **ret)
+{
     struct dwrite_fontfallback *fallback;
-
-    TRACE("%p, %p.\n", iface, ret);
-
-    *ret = NULL;
+    HRESULT hr;
 
     if (!(fallback = calloc(1, sizeof(*fallback))))
         return E_OUTOFMEMORY;
 
     fallback->IDWriteFontFallback1_iface.lpVtbl = &customfontfallbackvtbl;
     fallback->refcount = 1;
-    fallback->factory = fallbackbuilder->factory;
+    fallback->factory = builder->factory;
     IDWriteFactory7_AddRef(fallback->factory);
+    if (FAILED(hr = IDWriteFactory_GetSystemFontCollection((IDWriteFactory *)fallback->factory,
+            &fallback->systemcollection, FALSE)))
+    {
+        goto done;
+    }
 
-    *ret = (IDWriteFontFallback *)&fallback->IDWriteFontFallback1_iface;
+    if (FAILED(hr = fallbackbuilder_init_fallback_data(builder, &fallback->data)))
+    {
+        goto done;
+    }
+
+    *ret = fallback;
+
     return S_OK;
+
+done:
+
+    IDWriteFontFallback1_Release(&fallback->IDWriteFontFallback1_iface);
+    return hr;
+}
+
+static HRESULT WINAPI fontfallbackbuilder_CreateFontFallback(IDWriteFontFallbackBuilder *iface,
+        IDWriteFontFallback **ret)
+{
+    struct dwrite_fontfallback_builder *builder = impl_from_IDWriteFontFallbackBuilder(iface);
+    struct dwrite_fontfallback *fallback;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, ret);
+
+    *ret = NULL;
+
+    if (SUCCEEDED(hr = fallbackbuilder_create_fallback(builder, &fallback)))
+    {
+        *ret = (IDWriteFontFallback *)&fallback->IDWriteFontFallback1_iface;
+    }
+
+    return hr;
 }
 
 static const IDWriteFontFallbackBuilderVtbl fontfallbackbuildervtbl =
