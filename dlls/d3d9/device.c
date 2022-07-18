@@ -2993,7 +2993,7 @@ static HRESULT d3d9_device_upload_sysmem_index_buffer(struct d3d9_device *device
     wined3d_box_set(&box, src_offset, 0, buffer_size, 1, 0, 1);
     if (FAILED(hr = wined3d_resource_map(index_buffer, 0, &map_desc, &box, WINED3D_MAP_READ)))
     {
-        wined3d_mutex_unlock();
+        ERR("Failed to map index buffer, hr %#x.\n", hr);
         return hr;
     }
     wined3d_streaming_buffer_upload(device->wined3d_device, &device->index_buffer,
