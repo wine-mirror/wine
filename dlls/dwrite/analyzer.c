@@ -220,6 +220,95 @@ static const DWRITE_UNICODE_RANGE cjk_ranges[] =
     { 0x4e00, 0x9fff }, /* CJK Unified Ideographs */
 };
 
+struct text_source_context
+{
+    IDWriteTextAnalysisSource *source;
+
+    UINT32 position;
+    UINT32 length;
+    UINT32 consumed;
+
+    UINT32 chunk_length;
+    const WCHAR *text;
+    UINT32 cursor;
+    HRESULT status;
+    BOOL end;
+
+    UINT32 ch;
+};
+
+static void text_source_read_more(struct text_source_context *context)
+{
+    if ((context->chunk_length - context->cursor) > 1) return;
+
+    context->position += context->cursor;
+    context->cursor = 0;
+    if (FAILED(context->status = IDWriteTextAnalysisSource_GetTextAtPosition(context->source, context->position,
+            &context->text, &context->chunk_length)))
+    {
+        context->end = TRUE;
+    }
+}
+
+static void text_source_get_u32_char(struct text_source_context *context)
+{
+    const WCHAR *text;
+    UINT32 available;
+
+    /* Make sure to have full pair of surrogates */
+    text_source_read_more(context);
+
+    available = context->chunk_length - context->cursor;
+    text = context->text + context->cursor;
+
+    if (available > 1 && IS_HIGH_SURROGATE(*text) && IS_LOW_SURROGATE(*(text + 1)))
+    {
+        context->cursor += 2;
+        context->consumed += 2;
+        context->ch = 0x10000 + ((*text - 0xd800) << 10) + *(text + 1) - 0xdc00;
+        return;
+    }
+
+    context->cursor++;
+    context->consumed++;
+    context->ch = *text;
+}
+
+static HRESULT text_source_context_init(struct text_source_context *context, IDWriteTextAnalysisSource *source,
+        UINT32 position, UINT32 length)
+{
+    memset(context, 0, sizeof(*context));
+    context->source = source;
+    context->position = position;
+    context->length = length;
+
+    return IDWriteTextAnalysisSource_GetTextAtPosition(source, position, &context->text, &context->chunk_length);
+}
+
+static BOOL text_source_get_next_u32_char(struct text_source_context *context)
+{
+    if (context->consumed == context->length)
+    {
+        context->ch = 0;
+        context->end = TRUE;
+    }
+    else if (context->cursor < context->chunk_length)
+    {
+        text_source_get_u32_char(context);
+    }
+    else
+    {
+        text_source_read_more(context);
+        /* Normal end-of-text condition. */
+        if (!context->text || !context->chunk_length)
+            context->end = TRUE;
+        else
+            text_source_get_u32_char(context);
+    }
+
+    return context->end;
+}
+
 struct fallback_mapping
 {
     DWRITE_UNICODE_RANGE *ranges;
@@ -350,6 +439,38 @@ static void release_fallback_data(struct fallback_data *data)
         release_fallback_mapping(&data->mappings[i]);
     free(data->mappings);
     fallback_locale_list_destroy(&data->locales);
+}
+
+static const struct fallback_mapping * find_fallback_mapping(const struct fallback_data *fallback,
+        const struct fallback_locale *locale, UINT32 ch)
+{
+    const struct fallback_mapping *mapping;
+    size_t i, j, r;
+
+    for (i = 0; i < locale->ranges.count; i += 2)
+    {
+        size_t start = locale->ranges.data[i], end = locale->ranges.data[i + 1];
+        for (j = start; j <= end; ++j)
+        {
+            mapping = &fallback->mappings[j];
+            for (r = 0; r < mapping->ranges_count; ++r)
+            {
+                const DWRITE_UNICODE_RANGE *range = &mapping->ranges[r];
+                if (range->first <= ch && range->last >= ch) return mapping;
+            }
+        }
+    }
+
+    mapping = NULL;
+
+    /* Mapping wasn't found for specific locale, try with neutral one. This will only recurse once. */
+    if (*locale->name)
+    {
+        locale = font_fallback_get_locale(&fallback->locales, L"");
+        mapping = find_fallback_mapping(fallback, locale, ch);
+    }
+
+    return mapping;
 }
 
 struct dwrite_numbersubstitution
@@ -2114,7 +2235,7 @@ static int __cdecl compare_mapping_range(const void *a, const void *b)
         return 0;
 }
 
-static const struct fallback_mapping *find_fallback_mapping(struct dwrite_fontfallback *fallback, UINT32 ch)
+static const struct fallback_mapping *find_fallback_mapping_system(struct dwrite_fontfallback *fallback, UINT32 ch)
 {
     UINT32 i;
 
@@ -2127,6 +2248,89 @@ static const struct fallback_mapping *find_fallback_mapping(struct dwrite_fontfa
     }
 
     return NULL;
+}
+
+static UINT32 fallback_font_get_supported_length(IDWriteFont3 *font, IDWriteTextAnalysisSource *source, UINT32 position,
+        UINT32 length)
+{
+    struct text_source_context context;
+    UINT32 mapped = 0;
+
+    text_source_context_init(&context, source, position, length);
+    while (!text_source_get_next_u32_char(&context))
+    {
+        if (!IDWriteFont3_HasCharacter(font, context.ch)) break;
+        mapped++;
+    }
+
+    return mapped;
+}
+
+static HRESULT fallback_map_characters(const struct dwrite_fontfallback *fallback, IDWriteTextAnalysisSource *source,
+        UINT32 position, UINT32 text_length, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
+        DWRITE_FONT_STRETCH stretch, IDWriteFont **ret_font, UINT32 *ret_length, float *scale)
+{
+    const struct fallback_mapping *mapping = NULL;
+    struct text_source_context context;
+    const WCHAR *locale_name = NULL;
+    struct fallback_locale *locale;
+    UINT32 i, length = 0, mapped;
+    IDWriteFont3 *font;
+    HRESULT hr;
+
+    /* We will try to map as much of given input as GetLocaleName() says. It's assumed that returned length covers
+       whole span of characters set with that locale, so callback is only used once. */
+    if (FAILED(hr = IDWriteTextAnalysisSource_GetLocaleName(source, position, &length, &locale_name)))
+        return hr;
+
+    length = length ? min(length, text_length) : text_length;
+    if (!locale_name) locale_name = L"";
+
+    /* Lookup locale entry once, if specific locale is missing neutral one will be returned. */
+    locale = font_fallback_get_locale(&fallback->data.locales, locale_name);
+
+    if (FAILED(hr = text_source_context_init(&context, source, position, length))) return hr;
+
+    /* Find a mapping for given locale. */
+    text_source_get_next_u32_char(&context);
+    if (!(mapping = find_fallback_mapping(&fallback->data, locale, context.ch)))
+    {
+        *ret_font = NULL;
+        *ret_length = 0;
+
+        return S_OK;
+    }
+
+    while (!text_source_get_next_u32_char(&context))
+    {
+        if (find_fallback_mapping(&fallback->data, locale, context.ch) != mapping) break;
+    }
+
+    /* Go through families in the mapping, use first family that supports some of the input. */
+    for (i = 0; i < mapping->families_count; ++i)
+    {
+        if (SUCCEEDED(create_matching_font(mapping->collection ? mapping->collection : fallback->systemcollection,
+                mapping->families[i], weight, style, stretch, &IID_IDWriteFont3, (void **)&font)))
+        {
+            if (!(mapped = fallback_font_get_supported_length(font, source, position, length)))
+            {
+                IDWriteFont3_Release(font);
+                continue;
+            }
+
+            *ret_font = (IDWriteFont *)font;
+            *ret_length = mapped;
+            *scale = mapping->scale;
+
+            return S_OK;
+        }
+    }
+
+    /* Mapping was found, but either font couldn't be created or there's no font that supports given input. */
+    *ret_font = NULL;
+    *ret_length = length;
+
+    return S_OK;
 }
 
 HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *name, DWRITE_FONT_WEIGHT weight,
@@ -2163,7 +2367,7 @@ HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *nam
     return hr;
 }
 
-static HRESULT fallback_map_characters(IDWriteFont *font, const WCHAR *text, UINT32 length, UINT32 *mapped_length)
+static HRESULT fallback_map_characters_system(IDWriteFont *font, const WCHAR *text, UINT32 length, UINT32 *mapped_length)
 {
     HRESULT hr = S_OK;
     UINT32 i;
@@ -2199,7 +2403,7 @@ static HRESULT fallback_get_fallback_font(struct dwrite_fontfallback *fallback, 
 
     *mapped_font = NULL;
 
-    mapping = find_fallback_mapping(fallback, text[0]);
+    mapping = find_fallback_mapping_system(fallback, text[0]);
     if (!mapping) {
         WARN("No mapping range for %#x.\n", text[0]);
         return E_FAIL;
@@ -2220,7 +2424,7 @@ static HRESULT fallback_get_fallback_font(struct dwrite_fontfallback *fallback, 
         return E_FAIL;
     }
 
-    hr = fallback_map_characters(*mapped_font, text, length, mapped_length);
+    hr = fallback_map_characters_system(*mapped_font, text, length, mapped_length);
     if (FAILED(hr))
         WARN("Mapping with fallback family %s failed, hr %#lx.\n", debugstr_w(mapping->families[i]), hr);
 
@@ -2267,7 +2471,7 @@ static HRESULT WINAPI fontfallback_MapCharacters(IDWriteFontFallback1 *iface, ID
         if (FAILED(hr))
             goto done;
 
-        hr = fallback_map_characters(*ret_font, text, length, mapped_length);
+        hr = fallback_map_characters_system(*ret_font, text, length, mapped_length);
         if (FAILED(hr))
             goto done;
     }
@@ -2372,14 +2576,42 @@ static ULONG WINAPI customfontfallback_Release(IDWriteFontFallback1 *iface)
 }
 
 static HRESULT WINAPI customfontfallback_MapCharacters(IDWriteFontFallback1 *iface, IDWriteTextAnalysisSource *source,
-    UINT32 position, UINT32 length, IDWriteFontCollection *basecollection, const WCHAR *basefamily,
-    DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, UINT32 *mapped_length,
-    IDWriteFont **ret_font, FLOAT *scale)
+        UINT32 position, UINT32 length, IDWriteFontCollection *basecollection, const WCHAR *basefamily,
+        DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, UINT32 *mapped_length,
+        IDWriteFont **ret_font, float *scale)
 {
-    FIXME("%p, %p, %u, %u, %p, %s, %u, %u, %u, %p, %p, %p.\n", iface, source, position, length,
+    struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback1(iface);
+    IDWriteFont3 *font;
+
+    TRACE("%p, %p, %u, %u, %p, %s, %u, %u, %u, %p, %p, %p.\n", iface, source, position, length,
         basecollection, debugstr_w(basefamily), weight, style, stretch, mapped_length, ret_font, scale);
 
-    return E_NOTIMPL;
+    *mapped_length = 0;
+    *ret_font = NULL;
+    *scale = 1.0f;
+
+    if (!length)
+        return S_OK;
+
+    if (!basecollection)
+        basecollection = fallback->systemcollection;
+
+    if (basefamily && *basefamily)
+    {
+        if (SUCCEEDED(create_matching_font(basecollection, basefamily, weight, style, stretch,
+                &IID_IDWriteFont, (void **)&font)))
+        {
+            if ((*mapped_length = fallback_font_get_supported_length(font, source, position, length)))
+            {
+                *ret_font = (IDWriteFont *)font;
+                *scale = 1.0f;
+                return S_OK;
+            }
+            IDWriteFont3_Release(font);
+        }
+    }
+
+    return fallback_map_characters(fallback, source, position, length, weight, style, stretch, ret_font, mapped_length, scale);
 }
 
 static HRESULT WINAPI customfontfallback1_MapCharacters(IDWriteFontFallback1 *iface, IDWriteTextAnalysisSource *source,

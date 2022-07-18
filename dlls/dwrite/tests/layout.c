@@ -4937,12 +4937,11 @@ static void test_FontFallbackBuilder(void)
     font = (void*)0xdeadbeef;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 1.0f, "got %f\n", scale);
-    ok(font == NULL, "got %p\n", font);
-}
+    ok(mappedlength == 1, "Unexpected length %u.\n", mappedlength);
+    ok(scale == 1.0f, "Unexpected scale %f.\n", scale);
+    ok(!font, "Unexpected font instance %p.\n", font);
+
     IDWriteFontFallback_Release(fallback);
 
     /* remap with custom collection */
@@ -4959,12 +4958,10 @@ todo_wine {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 5.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
-}
+    ok(mappedlength == 1, "Unexpected length %u.\n", mappedlength);
+    ok(scale == 5.0f, "Unexpected scale %f.\n", scale);
+    ok(font != NULL, "Expected font instance %p.\n", font);
     if (font)
         IDWriteFont_Release(font);
 
@@ -4984,12 +4981,10 @@ todo_wine {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 5.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
-}
+    ok(mappedlength == 1, "Unexpected length %u.\n", mappedlength);
+    ok(scale == 5.0f, "Unexpected scale %f.\n", scale);
+    ok(font != NULL, "Expected font instance %p.\n", font);
     if (font)
         IDWriteFont_Release(font);
 
@@ -5010,12 +5005,10 @@ todo_wine {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 5.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
-}
+    ok(mappedlength == 1, "Unexpected length %u.\n", mappedlength);
+    ok(scale == 5.0f, "Unexpected scale %f.\n", scale);
+    ok(font != NULL, "Expected font instance %p.\n", font);
     if (font)
         IDWriteFont_Release(font);
 
