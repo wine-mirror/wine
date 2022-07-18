@@ -1015,35 +1015,35 @@ static inline float DspReverb_INTERNAL_Process_2_to_2(
 	size_t sample_count
 ) {
 	const float *in_end = samples_in + sample_count;
-	float in, in_ratio, early, late[2];
+	float in, early, late[2];
 	float squared_sum = 0;
 
 	while (samples_in < in_end)
 	{
 		/* Input - Combine 2 channels into 1 */
 		in = (samples_in[0] + samples_in[1]) / 2.0f;
-		in_ratio = in * reverb->dry_ratio;
-		samples_in += 2;
 
 		/* Early Reflections */
 		early = DspReverb_INTERNAL_ProcessEarly(reverb, in);
 
 		/* Reverberation with Wet/Dry Mix */
-		late[0] = DspReverb_INTERNAL_ProcessChannel(
+		late[0] = (DspReverb_INTERNAL_ProcessChannel(
 			reverb,
 			&reverb->channel[0],
 			early
-		);
+		) * reverb->wet_ratio) + samples_in[0] * reverb->dry_ratio;
 		late[1] = (DspReverb_INTERNAL_ProcessChannel(
 			reverb,
 			&reverb->channel[1],
 			early
-		) * reverb->wet_ratio) + in_ratio;
+		) * reverb->wet_ratio) + samples_in[1] * reverb->dry_ratio;
 		squared_sum += (late[0] * late[0]) + (late[1] * late[1]);
 
 		/* Output */
 		*samples_out++ = late[0];
 		*samples_out++ = late[1];
+
+		samples_in += 2;
 	}
 
 	return squared_sum;
@@ -1407,6 +1407,22 @@ uint32_t FAudioFXReverb_LockForProcess(
 		fapo->base.pMalloc
 	);
 
+	/* Initialize the effect to a default setting */
+	if (fapo->apiVersion == 9)
+	{
+		DspReverb_SetParameters9(
+			&fapo->reverb,
+			(FAudioFXReverbParameters9*) fapo->base.m_pParameterBlocks
+		);
+	}
+	else
+	{
+		DspReverb_SetParameters(
+			&fapo->reverb,
+			(FAudioFXReverbParameters*) fapo->base.m_pParameterBlocks
+		);
+	}
+
 	/* Call	parent to do basic validation */
 	return FAPOBase_LockForProcess(
 		&fapo->base,
@@ -1487,6 +1503,24 @@ void FAudioFXReverb_Process(
 	FAudioFXReverbParameters *params;
 	uint8_t update_params = FAPOBase_ParametersChanged(&fapo->base);
 	float total;
+
+	params = (FAudioFXReverbParameters*) FAPOBase_BeginProcess(&fapo->base);
+
+	/* Update parameters before doing anything else  */
+	if (update_params)
+	{
+		if (fapo->apiVersion == 9)
+		{
+			DspReverb_SetParameters9(
+				&fapo->reverb,
+				(FAudioFXReverbParameters9*) params
+			);
+		}
+		else
+		{
+			DspReverb_SetParameters(&fapo->reverb, params);
+		}
+	}
 	
 	/* Handle disabled filter */
 	if (IsEnabled == 0)
@@ -1503,6 +1537,7 @@ void FAudioFXReverb_Process(
 			);
 		}
 
+		FAPOBase_EndProcess(&fapo->base);
 		return;
 	}
 	
@@ -1514,24 +1549,6 @@ void FAudioFXReverb_Process(
 			pInputProcessParameters->pBuffer,
 			pInputProcessParameters->ValidFrameCount * fapo->inBlockAlign
 		);
-	}
-
-	params = (FAudioFXReverbParameters*) FAPOBase_BeginProcess(&fapo->base);
-
-	/* Update parameters  */
-	if (update_params)
-	{
-		if (fapo->apiVersion == 9)
-		{
-			DspReverb_SetParameters9(
-				&fapo->reverb,
-				(FAudioFXReverbParameters9*) params
-			);
-		}
-		else
-		{
-			DspReverb_SetParameters(&fapo->reverb, params);
-		}
 	}
 
 	/* Run reverb effect */
@@ -1666,16 +1683,6 @@ uint32_t FAudioCreateReverbWithCustomAllocatorEXT(
 		sizeof(FAudioFXReverbParameters) * 3
 	);
 	result->apiVersion = 7;
-	#define INITPARAMS(offset) \
-		FAudio_memcpy( \
-			params + sizeof(FAudioFXReverbParameters) * offset, \
-			&fxdefault, \
-			sizeof(FAudioFXReverbParameters) \
-		);
-	INITPARAMS(0)
-	INITPARAMS(1)
-	INITPARAMS(2)
-	#undef INITPARAMS
 
 	/* Initialize... */
 	FAudio_memcpy(
@@ -1710,6 +1717,13 @@ uint32_t FAudioCreateReverbWithCustomAllocatorEXT(
 	ASSIGN_VT(Process);
 	result->base.Destructor = FAudioFXReverb_Free;
 	#undef ASSIGN_VT
+
+	/* Prepare the default parameters */
+	result->base.base.Initialize(
+		result,
+		&fxdefault,
+		sizeof(FAudioFXReverbParameters)
+	);
 
 	/* Finally. */
 	*ppApo = &result->base.base;
@@ -1839,16 +1853,6 @@ uint32_t FAudioCreateReverb9WithCustomAllocatorEXT(
 		sizeof(FAudioFXReverbParameters9) * 3
 	);
 	result->apiVersion = 9;
-	#define INITPARAMS(offset) \
-		FAudio_memcpy( \
-			params + sizeof(FAudioFXReverbParameters9) * offset, \
-			&fxdefault, \
-			sizeof(FAudioFXReverbParameters9) \
-		);
-	INITPARAMS(0)
-	INITPARAMS(1)
-	INITPARAMS(2)
-	#undef INITPARAMS
 
 	/* Initialize... */
 	FAudio_memcpy(
@@ -1883,6 +1887,13 @@ uint32_t FAudioCreateReverb9WithCustomAllocatorEXT(
 	ASSIGN_VT(Process);
 	result->base.Destructor = FAudioFXReverb_Free;
 	#undef ASSIGN_VT
+
+	/* Prepare the default parameters */
+	result->base.base.Initialize(
+		result,
+		&fxdefault,
+		sizeof(FAudioFXReverbParameters9)
+	);
 
 	/* Finally. */
 	*ppApo = &result->base.base;

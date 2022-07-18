@@ -440,6 +440,7 @@ struct FACTAudioEngine
 	void *sb_context;
 	void *wb_context;
 	void *wave_context;
+	LinkedList *wb_notifications_list;
 
 	/* Settings handle */
 	void *settings;
