@@ -182,6 +182,51 @@ static void test_signalandwait(void)
     CloseHandle(file);
 }
 
+static void test_temporary_objects(void)
+{
+    HANDLE handle;
+
+    SetLastError(0xdeadbeef);
+    handle = CreateMutexA(NULL, FALSE, "WineTestMutex2");
+    ok(handle != NULL, "CreateMutex failed with error %ld\n", GetLastError());
+    CloseHandle(handle);
+
+    SetLastError(0xdeadbeef);
+    handle = OpenMutexA(READ_CONTROL, FALSE, "WineTestMutex2");
+    ok(!handle, "OpenMutex succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle = CreateSemaphoreA(NULL, 0, 1, "WineTestSemaphore2");
+    ok(handle != NULL, "CreateSemaphore failed with error %ld\n", GetLastError());
+    CloseHandle(handle);
+
+    SetLastError(0xdeadbeef);
+    handle = OpenSemaphoreA(READ_CONTROL, FALSE, "WineTestSemaphore2");
+    ok(!handle, "OpenSemaphore succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle = CreateEventA(NULL, FALSE, FALSE, "WineTestEvent2");
+    ok(handle != NULL, "CreateEvent failed with error %ld\n", GetLastError());
+    CloseHandle(handle);
+
+    SetLastError(0xdeadbeef);
+    handle = OpenEventA(READ_CONTROL, FALSE, "WineTestEvent2");
+    ok(!handle, "OpenEvent succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle = CreateWaitableTimerA(NULL, FALSE, "WineTestWaitableTimer2");
+    ok(handle != NULL, "CreateWaitableTimer failed with error %ld\n", GetLastError());
+    CloseHandle(handle);
+
+    SetLastError(0xdeadbeef);
+    handle = OpenWaitableTimerA(READ_CONTROL, FALSE, "WineTestWaitableTimer2");
+    ok(!handle, "OpenWaitableTimer succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
+}
+
 static void test_mutex(void)
 {
     DWORD wait_ret;
@@ -2825,6 +2870,7 @@ START_TEST(sync)
 
     test_QueueUserAPC();
     test_signalandwait();
+    test_temporary_objects();
     test_mutex();
     test_slist();
     test_event();
