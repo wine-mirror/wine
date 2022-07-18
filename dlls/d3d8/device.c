@@ -2032,9 +2032,10 @@ static HRESULT WINAPI d3d8_device_ApplyStateBlock(IDirect3DDevice8 *iface, DWORD
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     const struct wined3d_stateblock_state *state;
+    struct d3d8_vertexbuffer *vertex_buffer;
     struct wined3d_stateblock *stateblock;
+    struct d3d8_indexbuffer *index_buffer;
     struct wined3d_buffer *wined3d_buffer;
-    struct d3d8_vertexbuffer *buffer;
     unsigned int i;
 
     TRACE("iface %p, token %#x.\n", iface, token);
@@ -2062,13 +2063,13 @@ static HRESULT WINAPI d3d8_device_ApplyStateBlock(IDirect3DDevice8 *iface, DWORD
     for (i = 0; i < D3D8_MAX_STREAMS; ++i)
     {
         wined3d_buffer = state->streams[i].buffer;
-        if (!wined3d_buffer || !(buffer = wined3d_buffer_get_parent(wined3d_buffer)))
+        if (!wined3d_buffer || !(vertex_buffer = wined3d_buffer_get_parent(wined3d_buffer)))
             continue;
-        if (buffer->draw_buffer)
+        if (vertex_buffer->draw_buffer)
             device->sysmem_vb |= 1u << i;
     }
     device->sysmem_ib = (wined3d_buffer = state->index_buffer)
-            && (buffer = wined3d_buffer_get_parent(wined3d_buffer)) && buffer->draw_buffer;
+            && (index_buffer = wined3d_buffer_get_parent(wined3d_buffer)) && index_buffer->sysmem;
     wined3d_mutex_unlock();
 
     return D3D_OK;
