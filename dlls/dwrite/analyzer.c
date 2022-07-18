@@ -2129,15 +2129,16 @@ static const struct fallback_mapping *find_fallback_mapping(struct dwrite_fontfa
     return NULL;
 }
 
-HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *name,
-    DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, IDWriteFont **font)
+HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *name, DWRITE_FONT_WEIGHT weight,
+        DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, REFIID riid, void **obj)
 {
     IDWriteFontFamily *family;
     BOOL exists = FALSE;
+    IDWriteFont *font;
     HRESULT hr;
     UINT32 i;
 
-    *font = NULL;
+    *obj = NULL;
 
     hr = IDWriteFontCollection_FindFamilyName(collection, name, &i, &exists);
     if (FAILED(hr))
@@ -2150,8 +2151,15 @@ HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *nam
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family, weight, stretch, style, font);
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, weight, stretch, style, &font);
     IDWriteFontFamily_Release(family);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IDWriteFont_QueryInterface(font, riid, obj);
+        IDWriteFont_Release(font);
+    }
+
     return hr;
 }
 
@@ -2200,7 +2208,7 @@ static HRESULT fallback_get_fallback_font(struct dwrite_fontfallback *fallback, 
     /* Now let's see what fallback can handle. Pick first font that could be created. */
     for (i = 0; i < mapping->families_count; i++) {
         hr = create_matching_font((IDWriteFontCollection *)fallback->systemcollection, mapping->families[i],
-                weight, style, stretch, mapped_font);
+                weight, style, stretch, &IID_IDWriteFont, (void **)mapped_font);
         if (hr == S_OK) {
             TRACE("Created fallback font using family %s.\n", debugstr_w(mapping->families[i]));
             break;
@@ -2255,7 +2263,7 @@ static HRESULT WINAPI fontfallback_MapCharacters(IDWriteFontFallback1 *iface, ID
         goto done;
 
     if (basefamily && *basefamily) {
-        hr = create_matching_font(basecollection, basefamily, weight, style, stretch, ret_font);
+        hr = create_matching_font(basecollection, basefamily, weight, style, stretch, &IID_IDWriteFont, (void **)ret_font);
         if (FAILED(hr))
             goto done;
 
