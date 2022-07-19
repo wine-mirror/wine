@@ -6368,6 +6368,8 @@ static void test_default_dacl_owner_sid(void)
     found = FALSE;
     while (GetAce( dacl, index++, (void **)&ace ))
     {
+        ok( ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE,
+            "expected ACCESS_ALLOWED_ACE_TYPE, got %d\n", ace->Header.AceType );
         if (EqualSid( &ace->SidStart, owner )) found = TRUE;
     }
     ok( found, "owner sid not found in dacl\n" );
