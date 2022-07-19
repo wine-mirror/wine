@@ -1197,9 +1197,12 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     enter_script(This->ctx, &ei);
     hres = compile_script(This->ctx, pstrCode, dwSourceContextCookie, ulStartingLineNumber, pstrFormalParams,
                           pstrDelimiter, FALSE, This->is_encode, item, &code);
-    if(SUCCEEDED(hres))
-        hres = create_source_function(This->ctx, code, &code->global_code, NULL,  &dispex);
+    if(FAILED(hres))
+        return leave_script(This->ctx, hres);
+
+    hres = create_source_function(This->ctx, code, &code->global_code, NULL, &dispex);
     release_bytecode(code);
+
     hres = leave_script(This->ctx, hres);
     if(FAILED(hres))
         return hres;
