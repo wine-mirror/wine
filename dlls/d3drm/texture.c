@@ -103,9 +103,9 @@ static BOOL d3drm_image_palettise(D3DRMIMAGE *image, unsigned char *src_data,
             for (i = 0; i < colour_count; ++i)
             {
                 entry = &palette[i];
-                if (entry->red == src_ptr[x * 3 + 0]
+                if (entry->red == src_ptr[x * 3 + 2]
                         && entry->green == src_ptr[x * 3 + 1]
-                        && entry->blue == src_ptr[x * 3 + 2])
+                        && entry->blue == src_ptr[x * 3 + 0])
                     break;
             }
 
@@ -119,9 +119,9 @@ static BOOL d3drm_image_palettise(D3DRMIMAGE *image, unsigned char *src_data,
                 }
 
                 entry = &palette[colour_count++];
-                entry->red = src_ptr[x * 3 + 0];
+                entry->red = src_ptr[x * 3 + 2];
                 entry->green = src_ptr[x * 3 + 1];
-                entry->blue = src_ptr[x * 3 + 2];
+                entry->blue = src_ptr[x * 3 + 0];
                 entry->flags = D3DRMPALETTE_READONLY;
             }
 
