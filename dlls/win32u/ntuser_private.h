@@ -25,16 +25,6 @@
 #include "ntuser.h"
 #include "wine/list.h"
 
-struct dce;
-struct tagWND;
-
-struct hardware_msg_data;
-
-struct user_callbacks
-{
-    NTSTATUS (CDECL *try_finally)( NTSTATUS (CDECL *func)( void *), void *arg,
-                                   void (CALLBACK *finally_func)( BOOL ));
-};
 
 #define WM_SYSTIMER         0x0118
 #define WM_POPUPSYSTEMMENU  0x0313

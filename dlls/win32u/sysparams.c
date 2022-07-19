@@ -4953,9 +4953,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         default: user_check_not_lock(); return 0;
         }
 
-    case NtUserSetCallbacks:
-        return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
-
     case NtUserSpyGetVKeyName:
         return (UINT_PTR)debugstr_vkey_name( arg );
 

@@ -3438,7 +3438,7 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         /* child windows get WM_CHILDACTIVATE message */
         if ((get_window_long( winpos->hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
             send_message( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
-        else if (user_callbacks)
+        else
             set_foreground_window( winpos->hwnd, FALSE );
     }
 

@@ -32,8 +32,6 @@
 #include "wine/debug.h"
 #include "wine/server.h"
 
-extern const struct user_callbacks *user_callbacks DECLSPEC_HIDDEN;
-
 struct unix_funcs
 {
     /* win32u functions */

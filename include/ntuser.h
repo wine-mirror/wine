@@ -924,7 +924,6 @@ enum
     NtUserGetDeskPattern,
     NtUserGetWinProcPtr,
     NtUserLock,
-    NtUserSetCallbacks,
     NtUserSpyGetVKeyName,
 };
 

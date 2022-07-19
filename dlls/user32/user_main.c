@@ -119,23 +119,6 @@ static void dpiaware_init(void)
     }
 }
 
-static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
-                             void (CALLBACK *finally_func)( BOOL ))
-{
-    NTSTATUS status;
-    __TRY
-    {
-        status = func( arg );
-    }
-    __FINALLY( finally_func );
-    return status;
-}
-
-static const struct user_callbacks user_funcs =
-{
-    try_finally,
-};
-
 static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, ULONG size )
 {
     HANDLE ret = CopyImage( params->hwnd, params->type, params->dx, params->dy, params->flags );
@@ -246,9 +229,6 @@ static const void *kernel_callback_table[NtUserCallCount] =
 static BOOL process_attach(void)
 {
     NtCurrentTeb()->Peb->KernelCallbackTable = kernel_callback_table;
-
-    /* FIXME: should not be needed */
-    NtUserCallOneParam( (UINT_PTR)&user_funcs, NtUserSetCallbacks );
 
     dpiaware_init();
     winproc_init();

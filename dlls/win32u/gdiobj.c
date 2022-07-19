@@ -50,8 +50,6 @@ static GDI_HANDLE_ENTRY *next_unused;
 static LONG debug_count;
 SYSTEM_BASIC_INFORMATION system_info;
 
-const struct user_callbacks *user_callbacks = NULL;
-
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
     unsigned int idx = entry - gdi_shared->Handles;
@@ -1283,7 +1281,6 @@ NTSTATUS gdi_init(void)
 
 NTSTATUS callbacks_init( void *args )
 {
-    user_callbacks = *(const struct user_callbacks **)args;
     *(const struct unix_funcs **)args = &unix_funcs;
     return 0;
 }
