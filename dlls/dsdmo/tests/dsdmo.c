@@ -151,14 +151,7 @@ static void test_interfaces(const GUID *clsid, const GUID *iid)
         winetest_push_context("GUID %s", debugstr_guid(guids[i]));
 
         hr = IUnknown_QueryInterface(unk, guids[i], (void **)&unk2);
-        todo_wine_if(guids[i] == &IID_IMediaParamInfo)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (hr != S_OK)
-        {
-            winetest_pop_context();
-            continue;
-        }
-
         hr = IUnknown_QueryInterface(unk2, iid, (void **)&unk3);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(unk3 == unk, "Interface pointers didn't match.\n");

@@ -22,6 +22,7 @@
 #include "mmsystem.h"
 #include "uuids.h"
 #include "initguid.h"
+#include "medparam.h"
 #include "dsound.h"
 #include "rpcproxy.h"
 
@@ -33,6 +34,7 @@ struct effect
 {
     IMediaObject IMediaObject_iface;
     IMediaObjectInPlace IMediaObjectInPlace_iface;
+    IMediaParamInfo IMediaParamInfo_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -66,6 +68,8 @@ static HRESULT WINAPI effect_inner_QueryInterface(IUnknown *iface, REFIID iid, v
         *out = &effect->IMediaObject_iface;
     else if (IsEqualGUID(iid, &IID_IMediaObjectInPlace))
         *out = &effect->IMediaObjectInPlace_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaParamInfo))
+        *out = &effect->IMediaParamInfo_iface;
     else if (!(*out = effect->ops->query_interface(effect, iid)))
     {
         WARN("%s not implemented; returning E_NOINTERFACE.\n", debugstr_guid(iid));
@@ -418,6 +422,78 @@ static const IMediaObjectInPlaceVtbl effect_inplace_vtbl =
     effect_inplace_GetLatency,
 };
 
+static struct effect *impl_from_IMediaParamInfo(IMediaParamInfo *iface)
+{
+    return CONTAINING_RECORD(iface, struct effect, IMediaParamInfo_iface);
+}
+
+static HRESULT WINAPI effect_media_param_info_QueryInterface(IMediaParamInfo *iface, REFIID iid, void **out)
+{
+    struct effect *effect = impl_from_IMediaParamInfo(iface);
+    return IUnknown_QueryInterface(effect->outer_unk, iid, out);
+}
+
+static ULONG WINAPI effect_media_param_info_AddRef(IMediaParamInfo *iface)
+{
+    struct effect *effect = impl_from_IMediaParamInfo(iface);
+    return IUnknown_AddRef(effect->outer_unk);
+}
+
+static ULONG WINAPI effect_media_param_info_Release(IMediaParamInfo *iface)
+{
+    struct effect *effect = impl_from_IMediaParamInfo(iface);
+    return IUnknown_Release(effect->outer_unk);
+}
+
+static HRESULT WINAPI effect_media_param_info_GetParamCount(IMediaParamInfo *iface, DWORD *count)
+{
+    FIXME("iface %p, count %p, stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_param_info_GetParamInfo(IMediaParamInfo *iface, DWORD index, MP_PARAMINFO *info)
+{
+    FIXME("iface %p, index %lu, info %p, stub!\n", iface, index, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_param_info_GetParamText(IMediaParamInfo *iface, DWORD index, WCHAR **text)
+{
+    FIXME("iface %p, index %lu, text %p, stub!\n", iface, index, text);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_param_info_GetNumTimeFormats(IMediaParamInfo *iface, DWORD *count)
+{
+    FIXME("iface %p, count %p, stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_param_info_GetSupportedTimeFormat(IMediaParamInfo *iface, DWORD index, GUID *guid)
+{
+    FIXME("iface %p, index %lu, guid %p, stub!\n", iface, index, guid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_param_info_GetCurrentTimeFormat(IMediaParamInfo *iface, GUID *guid, MP_TIMEDATA *time_data)
+{
+    FIXME("iface %p, guid %p, time_data %p, stub!\n", iface, guid, time_data);
+    return E_NOTIMPL;
+}
+
+static const IMediaParamInfoVtbl effect_media_param_info_vtbl =
+{
+    effect_media_param_info_QueryInterface,
+    effect_media_param_info_AddRef,
+    effect_media_param_info_Release,
+    effect_media_param_info_GetParamCount,
+    effect_media_param_info_GetParamInfo,
+    effect_media_param_info_GetParamText,
+    effect_media_param_info_GetNumTimeFormats,
+    effect_media_param_info_GetSupportedTimeFormat,
+    effect_media_param_info_GetCurrentTimeFormat,
+};
+
 static void effect_init(struct effect *effect, IUnknown *outer, const struct effect_ops *ops)
 {
     effect->outer_unk = outer ? outer : &effect->IUnknown_inner;
@@ -425,6 +501,7 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
     effect->IUnknown_inner.lpVtbl = &effect_inner_vtbl;
     effect->IMediaObject_iface.lpVtbl = &effect_vtbl;
     effect->IMediaObjectInPlace_iface.lpVtbl = &effect_inplace_vtbl;
+    effect->IMediaParamInfo_iface.lpVtbl = &effect_media_param_info_vtbl;
 
     InitializeCriticalSection(&effect->cs);
     effect->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": effect.cs");
