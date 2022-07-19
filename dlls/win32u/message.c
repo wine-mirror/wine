@@ -2496,9 +2496,9 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
 }
 
 /**********************************************************************
- *           dispatch_message
+ *           NtUserDispatchMessage  (win32u.@)
  */
-LRESULT dispatch_message( const MSG *msg, BOOL ansi )
+LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
 {
     struct win_proc_params params;
     LRESULT retval = 0;
@@ -2509,7 +2509,7 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
         params.func = (WNDPROC)msg->lParam;
         params.result = &retval; /* FIXME */
         if (!init_win_proc_params( &params, msg->hwnd, msg->message,
-                                   msg->wParam, NtGetTickCount(), ansi ))
+                                   msg->wParam, NtGetTickCount(), FALSE ))
             return 0;
         __TRY
         {
@@ -2541,7 +2541,7 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
     spy_enter_message( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message, msg->wParam, msg->lParam );
 
     if (init_window_call_params( &params, msg->hwnd, msg->message, msg->wParam, msg->lParam,
-                                 &retval, ansi, WMCHAR_MAP_DISPATCHMESSAGE ))
+                                 &retval, FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
         dispatch_win_proc_params( &params, sizeof(params) );
     else if (!is_window( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
@@ -2556,14 +2556,6 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
         NtGdiDeleteObjectApp( hrgn );
     }
     return retval;
-}
-
-/**********************************************************************
- *           NtUserDispatchMessage  (win32u.@)
- */
-LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
-{
-    return dispatch_message( msg, FALSE );
 }
 
 static BOOL is_message_broadcastable( UINT msg )

@@ -4880,9 +4880,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_CreateMenu:
         return HandleToUlong( create_menu( arg ) );
 
-    case NtUserCallOneParam_DispatchMessageA:
-        return dispatch_message( (const MSG *)arg, TRUE );
-
     case NtUserCallOneParam_EnableDC:
         return set_dce_flags( UlongToHandle(arg), DCHF_ENABLEDC );
 

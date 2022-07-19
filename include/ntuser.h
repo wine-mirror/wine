@@ -902,7 +902,6 @@ enum
     NtUserCallOneParam_BeginDeferWindowPos,
     NtUserCallOneParam_CreateCursorIcon,
     NtUserCallOneParam_CreateMenu,
-    NtUserCallOneParam_DispatchMessageA,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
     NtUserCallOneParam_EnumClipboardFormats,
@@ -942,11 +941,6 @@ static inline HICON NtUserCreateCursorIcon( BOOL is_icon )
 static inline HMENU NtUserCreateMenu( BOOL is_popup )
 {
     return UlongToHandle( NtUserCallOneParam( is_popup, NtUserCallOneParam_CreateMenu ));
-}
-
-static inline LRESULT NtUserDispatchMessageA( const MSG *msg )
-{
-    return NtUserCallOneParam( (UINT_PTR)msg, NtUserCallOneParam_DispatchMessageA );
 }
 
 static inline WORD NtUserEnableDC( HDC hdc )

@@ -877,7 +877,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
     if (msg->message != WM_SYSTIMER && msg->message != WM_PAINT)
         return dispatch_message( msg, TRUE );
 
-    return NtUserDispatchMessageA( msg );
+    return NtUserDispatchMessage( msg );
 }
 
 
