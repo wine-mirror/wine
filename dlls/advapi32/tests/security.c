@@ -1765,6 +1765,24 @@ static void test_AccessCheck(void)
     HeapFree(GetProcessHeap(), 0, PrivSet);
 }
 
+static TOKEN_USER *get_alloc_token_user( HANDLE token )
+{
+    TOKEN_USER *token_user;
+    DWORD size;
+    BOOL ret;
+
+    ret = GetTokenInformation( token, TokenUser, NULL, 0, &size );
+    ok(!ret, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
+
+    token_user = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = GetTokenInformation( token, TokenUser, token_user, size, &size );
+    ok(ret, "GetTokenInformation failed with error %ld\n", GetLastError());
+
+    return token_user;
+}
+
 static TOKEN_OWNER *get_alloc_token_owner( HANDLE token )
 {
     TOKEN_OWNER *token_owner;
@@ -6357,6 +6375,7 @@ static void test_TokenIntegrityLevel(void)
 
 static void test_default_dacl_owner_group_sid(void)
 {
+    TOKEN_USER *token_user;
     TOKEN_OWNER *token_owner;
     TOKEN_PRIMARY_GROUP *token_primary_group;
     HANDLE handle, token;
@@ -6371,6 +6390,7 @@ static void test_default_dacl_owner_group_sid(void)
     ret = OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token );
     ok(ret, "OpenProcessToken failed with error %ld\n", GetLastError());
 
+    token_user = get_alloc_token_user( token );
     token_owner = get_alloc_token_owner( token );
     token_primary_group = get_alloc_token_primary_group( token );
 
@@ -6430,12 +6450,27 @@ static void test_default_dacl_owner_group_sid(void)
     }
     ok( found, "owner sid not found in dacl\n" );
 
+    if (!EqualSid( token_user->User.Sid, token_owner->Owner ))
+    {
+        index = 0;
+        found = FALSE;
+        while (GetAce( dacl, index++, (void **)&ace ))
+        {
+            ok( ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE,
+                "expected ACCESS_ALLOWED_ACE_TYPE, got %d\n", ace->Header.AceType );
+            if (EqualSid( &ace->SidStart, token_user->User.Sid )) found = TRUE;
+        }
+        todo_wine
+        ok( !found, "DACL shall not reference token user if it is different from token owner\n" );
+    }
+
     HeapFree( GetProcessHeap(), 0, sa.lpSecurityDescriptor );
     HeapFree( GetProcessHeap(), 0, sd );
     CloseHandle( handle );
 
     HeapFree( GetProcessHeap(), 0, token_primary_group );
     HeapFree( GetProcessHeap(), 0, token_owner );
+    HeapFree( GetProcessHeap(), 0, token_user );
 }
 
 static void test_AdjustTokenPrivileges(void)
