@@ -60,7 +60,7 @@ static const char *debugstr_hook_id( unsigned int id )
     return hook_names[id - WH_MINHOOK];
 }
 
-static BOOL is_hooked( INT id )
+BOOL is_hooked( INT id )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 

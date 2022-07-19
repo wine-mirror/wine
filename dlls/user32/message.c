@@ -597,12 +597,41 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 }
 
 
+static LRESULT dispatch_send_message( struct win_proc_params *params )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
+    LRESULT retval = 0;
+
+    static const INPUT_MESSAGE_SOURCE msg_source_unavailable = { IMDT_UNAVAILABLE, IMO_UNAVAILABLE };
+
+    thread_info->recursion_count++;
+
+    params->result = &retval;
+    thread_info->msg_source = msg_source_unavailable;
+    SPY_EnterMessage( SPY_SENDMESSAGE, params->hwnd, params->msg, params->wparam, params->lparam );
+
+    dispatch_win_proc_params( params );
+
+    SPY_ExitMessage( SPY_RESULT_OK, params->hwnd, params->msg, retval, params->wparam, params->lparam );
+    thread_info->msg_source = prev_source;
+    thread_info->recursion_count--;
+    return retval;
+}
+
+
 /***********************************************************************
  *		SendMessageW  (USER32.@)
  */
 LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE );
+    struct win_proc_params params;
+    LRESULT retval;
+
+    params.hwnd = 0;
+    retval = NtUserMessageCall( hwnd, msg, wparam, lparam, &params, NtUserSendMessage, FALSE );
+    if (params.hwnd) retval = dispatch_send_message( &params );
+    return retval;
 }
 
 
@@ -611,6 +640,9 @@ LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
  */
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
+    struct win_proc_params params;
+    LRESULT retval;
+
     if (msg == WM_CHAR && !WIN_IsCurrentThread( hwnd ))
     {
         if (!map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
@@ -618,7 +650,10 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE );
     }
 
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, TRUE );
+    params.hwnd = 0;
+    retval = NtUserMessageCall( hwnd, msg, wparam, lparam, &params, NtUserSendMessage, TRUE );
+    if (params.hwnd) retval = dispatch_send_message( &params );
+    return retval;
 }
 
 

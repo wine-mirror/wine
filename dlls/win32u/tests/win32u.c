@@ -425,10 +425,10 @@ static void test_message_call(void)
 
     hwnd = CreateWindowExW( 0, L"TestClass", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
 
-    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, NtUserSendMessage, FALSE );
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, NULL, NtUserSendMessage, FALSE );
     ok( res == 3, "res = %Iu\n", res );
 
-    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, NtUserSendMessage, TRUE );
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, NULL, NtUserSendMessage, TRUE );
     ok( res == 3, "res = %Iu\n", res );
 
     res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", NULL, NtUserSendMessage, FALSE );
