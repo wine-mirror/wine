@@ -5032,7 +5032,6 @@ static void check_EM_SETSEL_multiline(HWND hwnd)
     oldY = get_scroll_pos_y(hwnd);
     SendMessageA(hwnd, EM_SETSEL, 59, 59);
     curY = get_scroll_pos_y(hwnd);
-    todo_wine
     ok(oldY < curY, "oldY %d >= curY %d\n", oldY, curY);
 }
 
