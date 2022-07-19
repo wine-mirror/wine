@@ -1783,6 +1783,24 @@ static TOKEN_OWNER *get_alloc_token_owner( HANDLE token )
     return token_owner;
 }
 
+static TOKEN_PRIMARY_GROUP *get_alloc_token_primary_group( HANDLE token )
+{
+    TOKEN_PRIMARY_GROUP *token_primary_group;
+    DWORD size;
+    BOOL ret;
+
+    ret = GetTokenInformation( token, TokenPrimaryGroup, NULL, 0, &size );
+    ok(!ret, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
+
+    token_primary_group = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = GetTokenInformation( token, TokenPrimaryGroup, token_primary_group, size, &size );
+    ok(ret, "GetTokenInformation failed with error %ld\n", GetLastError());
+
+    return token_primary_group;
+}
+
 /* test GetTokenInformation for the various attributes */
 static void test_token_attr(void)
 {
@@ -6337,15 +6355,16 @@ static void test_TokenIntegrityLevel(void)
     CloseHandle(token);
 }
 
-static void test_default_dacl_owner_sid(void)
+static void test_default_dacl_owner_group_sid(void)
 {
     TOKEN_OWNER *token_owner;
+    TOKEN_PRIMARY_GROUP *token_primary_group;
     HANDLE handle, token;
     BOOL ret, defaulted, present, found;
     DWORD size, index;
     SECURITY_DESCRIPTOR *sd;
     SECURITY_ATTRIBUTES sa;
-    PSID owner;
+    PSID owner, group;
     ACL *dacl;
     ACCESS_ALLOWED_ACE *ace;
 
@@ -6353,6 +6372,7 @@ static void test_default_dacl_owner_sid(void)
     ok(ret, "OpenProcessToken failed with error %ld\n", GetLastError());
 
     token_owner = get_alloc_token_owner( token );
+    token_primary_group = get_alloc_token_primary_group( token );
 
     CloseHandle( token );
 
@@ -6367,11 +6387,11 @@ static void test_default_dacl_owner_sid(void)
     ok( handle != NULL, "error %lu\n", GetLastError() );
 
     size = 0;
-    ret = GetKernelObjectSecurity( handle, OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, NULL, 0, &size );
+    ret = GetKernelObjectSecurity( handle, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, NULL, 0, &size );
     ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "error %lu\n", GetLastError() );
 
     sd = HeapAlloc( GetProcessHeap(), 0, size );
-    ret = GetKernelObjectSecurity( handle, OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, sd, size, &size );
+    ret = GetKernelObjectSecurity( handle, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION, sd, size, &size );
     ok( ret, "error %lu\n", GetLastError() );
 
     owner = (void *)0xdeadbeef;
@@ -6382,6 +6402,14 @@ static void test_default_dacl_owner_sid(void)
     ok( !defaulted, "owner defaulted\n" );
     todo_wine
     ok( EqualSid( owner, token_owner->Owner ), "owner shall equal token owner\n" );
+
+    group = (void *)0xdeadbeef;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorGroup( sd, &group, &defaulted );
+    ok( ret, "error %lu\n", GetLastError() );
+    ok( group != (void *)0xdeadbeef, "group not set\n" );
+    ok( !defaulted, "group defaulted\n" );
+    ok( EqualSid( group, token_primary_group->PrimaryGroup ), "group shall equal token primary group\n" );
 
     dacl = (void *)0xdeadbeef;
     present = FALSE;
@@ -6406,6 +6434,7 @@ static void test_default_dacl_owner_sid(void)
     HeapFree( GetProcessHeap(), 0, sd );
     CloseHandle( handle );
 
+    HeapFree( GetProcessHeap(), 0, token_primary_group );
     HeapFree( GetProcessHeap(), 0, token_owner );
 }
 
@@ -8549,7 +8578,7 @@ START_TEST(security)
     test_GetUserNameW();
     test_CreateRestrictedToken();
     test_TokenIntegrityLevel();
-    test_default_dacl_owner_sid();
+    test_default_dacl_owner_group_sid();
     test_AdjustTokenPrivileges();
     test_AddAce();
     test_AddMandatoryAce();
