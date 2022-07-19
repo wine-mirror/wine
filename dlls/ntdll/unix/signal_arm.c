@@ -721,6 +721,7 @@ struct user_callback_frame
     ULONG               *ret_len;
     __wine_jmp_buf       jmpbuf;
     NTSTATUS             status;
+    void                *teb_frame;
 };
 
 /***********************************************************************
@@ -756,6 +757,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.restore_flags = CONTEXT_INTEGER;
         callback_frame.frame.syscall_table = frame->syscall_table;
         callback_frame.frame.prev_frame    = frame;
+        callback_frame.teb_frame           = NtCurrentTeb()->Tib.ExceptionList;
         arm_thread_data()->syscall_frame = &callback_frame.frame;
 
         __wine_syscall_dispatcher_return( &callback_frame.frame, 0 );
@@ -777,6 +779,7 @@ NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status 
     *frame->ret_len = ret_len;
     frame->status = status;
     arm_thread_data()->syscall_frame = frame->frame.prev_frame;
+    NtCurrentTeb()->Tib.ExceptionList = frame->teb_frame;
     __wine_longjmp( &frame->jmpbuf, 1 );
 }
 

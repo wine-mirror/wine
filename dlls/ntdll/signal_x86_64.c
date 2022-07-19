@@ -661,9 +661,21 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
  */
 void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
 {
-    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+    NTSTATUS status;
 
-    RtlRaiseStatus( NtCallbackReturn( NULL, 0, func( args, len )));
+    __TRY
+    {
+        NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+        status = NtCallbackReturn( NULL, 0, func( args, len ));
+    }
+    __EXCEPT_ALL
+    {
+        ERR_(seh)( "ignoring exception\n" );
+        status = NtCallbackReturn( 0, 0, 0 );
+    }
+    __ENDTRY
+
+    RtlRaiseStatus( status );
 }
 
 
