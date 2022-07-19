@@ -632,6 +632,50 @@ static void test_message_filter(void)
     ok( ret, "NtUserUnhookWindowsHook failed: %lu\n", GetLastError() );
 }
 
+static char calls[128];
+
+static void WINAPI timer_func( HWND hwnd, UINT msg, UINT_PTR id, DWORD time )
+{
+    sprintf( calls + strlen( calls ), "timer%Iu,", id );
+    NtUserKillTimer( hwnd, id );
+
+    if (!id)
+    {
+        MSG msg;
+        NtUserSetTimer( hwnd, 1, 1, timer_func, TIMERV_DEFAULT_COALESCING );
+        while (GetMessageW( &msg, NULL, 0, 0 ))
+        {
+            TranslateMessage( &msg );
+            NtUserDispatchMessage( &msg );
+            if (msg.message == WM_TIMER) break;
+        }
+    }
+
+    strcat( calls, "crash," );
+    *(volatile int *)0 = 0;
+}
+
+static void test_timer(void)
+{
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowExA( 0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
+
+    NtUserSetTimer( hwnd, 0, 1, timer_func, TIMERV_DEFAULT_COALESCING );
+
+    calls[0] = 0;
+    while (GetMessageW( &msg, NULL, 0, 0 ))
+    {
+        TranslateMessage( &msg );
+        NtUserDispatchMessage( &msg );
+        if (msg.message == WM_TIMER) break;
+    }
+
+    ok( !strcmp( calls, "timer0,timer1,crash,crash," ), "calls = %s\n", calls );
+    DestroyWindow( hwnd );
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -646,6 +690,7 @@ START_TEST(win32u)
     test_window_text();
     test_menu();
     test_message_filter();
+    test_timer();
 
     test_NtUserCloseWindowStation();
 }
