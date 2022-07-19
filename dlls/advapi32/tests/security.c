@@ -6420,7 +6420,6 @@ static void test_default_dacl_owner_group_sid(void)
     ok( ret, "error %lu\n", GetLastError() );
     ok( owner != (void *)0xdeadbeef, "owner not set\n" );
     ok( !defaulted, "owner defaulted\n" );
-    todo_wine
     ok( EqualSid( owner, token_owner->Owner ), "owner shall equal token owner\n" );
 
     group = (void *)0xdeadbeef;
@@ -6460,7 +6459,6 @@ static void test_default_dacl_owner_group_sid(void)
                 "expected ACCESS_ALLOWED_ACE_TYPE, got %d\n", ace->Header.AceType );
             if (EqualSid( &ace->SidStart, token_user->User.Sid )) found = TRUE;
         }
-        todo_wine
         ok( !found, "DACL shall not reference token user if it is different from token owner\n" );
     }
 

@@ -732,7 +732,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
     /* on Windows, this value changes every time the user logs on */
     struct sid logon_sid = { SID_REVISION, 3, SECURITY_NT_AUTHORITY, { SECURITY_LOGON_IDS_RID, 0, 0 /* FIXME: should be randomly generated when tokens are inherited by new processes */ }};
     const struct sid *user_sid = security_unix_uid_to_sid( getuid() );
-    struct acl *default_dacl = create_default_dacl( user_sid );
+    struct acl *default_dacl = create_default_dacl( &domain_users_sid );
     const struct luid_attr admin_privs[] =
     {
         { SeChangeNotifyPrivilege, SE_PRIVILEGE_ENABLED },
@@ -1044,9 +1044,9 @@ const struct acl *token_get_default_dacl( struct token *token )
     return token->default_dacl;
 }
 
-const struct sid *token_get_user( struct token *token )
+const struct sid *token_get_owner( struct token *token )
 {
-    return token->user;
+    return token->owner;
 }
 
 const struct sid *token_get_primary_group( struct token *token )

@@ -245,7 +245,7 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
     {
         const struct sid *owner = sd_get_owner( sd );
         if (!owner)
-            owner = token_get_user( current->process->token );
+            owner = token_get_owner( current->process->token );
         mode = sd_to_mode( sd, owner );
     }
     else if (options & FILE_DIRECTORY_FILE)
@@ -528,7 +528,7 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
     else if (obj->sd)
         owner = sd_get_owner( obj->sd );
     else
-        owner = token_get_user( current->process->token );
+        owner = token_get_owner( current->process->token );
 
     /* group and sacl not supported */
 

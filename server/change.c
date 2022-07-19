@@ -391,7 +391,7 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
     else if (obj->sd)
         owner = sd_get_owner( obj->sd );
     else
-        owner = token_get_user( current->process->token );
+        owner = token_get_owner( current->process->token );
 
     if (set_info & DACL_SECURITY_INFORMATION)
     {

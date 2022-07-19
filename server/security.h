@@ -73,7 +73,7 @@ extern int token_check_privileges( struct token *token, int all_required,
                                    const struct luid_attr *reqprivs,
                                    unsigned int count, struct luid_attr *usedprivs );
 extern const struct acl *token_get_default_dacl( struct token *token );
-extern const struct sid *token_get_user( struct token *token );
+extern const struct sid *token_get_owner( struct token *token );
 extern const struct sid *token_get_primary_group( struct token *token );
 extern unsigned int token_get_session_id( struct token *token );
 extern int token_sid_present( struct token *token, const struct sid *sid, int deny );
