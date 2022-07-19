@@ -5018,6 +5018,24 @@ static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) 
             id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
 }
 
+/* When the selection is out of the windows view, the scrollbar should move. */
+static void check_EM_SETSEL_multiline(HWND hwnd)
+{
+    int oldY;
+    int curY;
+    const char textwithlines[] = "This is a text\n"
+                                 "with lines\n"
+                                 "I expect this text\n"
+                                 "to be\nlarge\nenough\n";
+
+    SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)textwithlines);
+    oldY = get_scroll_pos_y(hwnd);
+    SendMessageA(hwnd, EM_SETSEL, 59, 59);
+    curY = get_scroll_pos_y(hwnd);
+    todo_wine
+    ok(oldY < curY, "oldY %d >= curY %d\n", oldY, curY);
+}
+
 static void test_EM_SETSEL(void)
 {
     char buffA[32] = {0};
@@ -5057,6 +5075,8 @@ static void test_EM_SETSEL(void)
         ok(sel_start == 4, "Selection start incorrectly: %d expected 4\n", sel_start);
         ok(sel_end == 8, "Selection end incorrectly: %d expected 8\n", sel_end);
     }
+
+    check_EM_SETSEL_multiline(hwndRichEdit);
 
     DestroyWindow(hwndRichEdit);
 }
