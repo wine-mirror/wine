@@ -6191,8 +6191,8 @@ static void test_bitmap_data(unsigned int test_idx, const D3DRMIMAGE *img,
         for (i = 0; i < img->palette_size; ++i)
         {
             unsigned int idx = upside_down ? (h - 1) * w - i + (i % w) * 2 : i;
-            ok(img->palette[i].red == idx % MOD_B
-                    && img->palette[i].green == idx % MOD_G && img->palette[i].blue == idx % MOD_R,
+            ok(img->palette[i].red == idx % MOD_R
+                    && img->palette[i].green == idx % MOD_G && img->palette[i].blue == idx % MOD_B,
                     "Test %u: Got unexpected palette entry (%u) color 0x%02x%02x%02x.\n",
                     test_idx, i, img->palette[i].red, img->palette[i].green, img->palette[i].blue);
             ok(img->palette[i].flags == D3DRMPALETTE_READONLY,
@@ -6271,6 +6271,7 @@ static void test_load_texture(void)
         {100, 100, FALSE},
         {99,  100, FALSE},
         {3,   39,  FALSE},
+        {16,  16,  FALSE},
     };
 
     hr = Direct3DRMCreate(&d3drm1);
