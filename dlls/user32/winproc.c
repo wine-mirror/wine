@@ -719,7 +719,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 }
 
 
-static void dispatch_win_proc_params( struct win_proc_params *params )
+void dispatch_win_proc_params( struct win_proc_params *params )
 {
     DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( params->dpi_awareness );
 

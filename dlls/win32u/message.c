@@ -2952,6 +2952,15 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     case NtUserClipboardWindowProc:
         return user_driver->pClipboardWindowProc( hwnd, msg, wparam, lparam );
 
+    case NtUserGetDispatchParams:
+        if (!hwnd) return FALSE;
+        if (init_window_call_params( result_info, hwnd, msg, wparam, lparam,
+                                     NULL, ansi, WMCHAR_MAP_DISPATCHMESSAGE ))
+            return TRUE;
+        if (!is_window( hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        return FALSE;
+
     case NtUserSpyEnter:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
         return 0;
