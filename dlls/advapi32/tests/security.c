@@ -1765,6 +1765,24 @@ static void test_AccessCheck(void)
     HeapFree(GetProcessHeap(), 0, PrivSet);
 }
 
+static TOKEN_OWNER *get_alloc_token_owner( HANDLE token )
+{
+    TOKEN_OWNER *token_owner;
+    DWORD size;
+    BOOL ret;
+
+    ret = GetTokenInformation( token, TokenOwner, NULL, 0, &size );
+    ok(!ret, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
+
+    token_owner = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = GetTokenInformation( token, TokenOwner, token_owner, size, &size );
+    ok(ret, "GetTokenInformation failed with error %ld\n", GetLastError());
+
+    return token_owner;
+}
+
 /* test GetTokenInformation for the various attributes */
 static void test_token_attr(void)
 {
@@ -6321,7 +6339,8 @@ static void test_TokenIntegrityLevel(void)
 
 static void test_default_dacl_owner_sid(void)
 {
-    HANDLE handle;
+    TOKEN_OWNER *token_owner;
+    HANDLE handle, token;
     BOOL ret, defaulted, present, found;
     DWORD size, index;
     SECURITY_DESCRIPTOR *sd;
@@ -6329,6 +6348,13 @@ static void test_default_dacl_owner_sid(void)
     PSID owner;
     ACL *dacl;
     ACCESS_ALLOWED_ACE *ace;
+
+    ret = OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token );
+    ok(ret, "OpenProcessToken failed with error %ld\n", GetLastError());
+
+    token_owner = get_alloc_token_owner( token );
+
+    CloseHandle( token );
 
     sd = HeapAlloc( GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH );
     ret = InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION );
@@ -6354,6 +6380,8 @@ static void test_default_dacl_owner_sid(void)
     ok( ret, "error %lu\n", GetLastError() );
     ok( owner != (void *)0xdeadbeef, "owner not set\n" );
     ok( !defaulted, "owner defaulted\n" );
+    todo_wine
+    ok( EqualSid( owner, token_owner->Owner ), "owner shall equal token owner\n" );
 
     dacl = (void *)0xdeadbeef;
     present = FALSE;
@@ -6377,6 +6405,8 @@ static void test_default_dacl_owner_sid(void)
     HeapFree( GetProcessHeap(), 0, sa.lpSecurityDescriptor );
     HeapFree( GetProcessHeap(), 0, sd );
     CloseHandle( handle );
+
+    HeapFree( GetProcessHeap(), 0, token_owner );
 }
 
 static void test_AdjustTokenPrivileges(void)
