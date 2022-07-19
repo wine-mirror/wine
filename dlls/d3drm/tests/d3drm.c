@@ -6049,6 +6049,10 @@ static void test_create_device_3(void)
     IDirect3DRM_Release(d3drm);
 }
 
+#define MOD_R 247
+#define MOD_G 239
+#define MOD_B 251
+
 static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
 {
     unsigned int bpp = palettized ? 8 : 24;
@@ -6109,9 +6113,9 @@ static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
         }
         else
         {
-            buffer[i++] = j % 251;
-            buffer[i++] = j % 239;
-            buffer[i++] = j++ % 247;
+            buffer[i++] = j % MOD_B;
+            buffer[i++] = j % MOD_G;
+            buffer[i++] = j++ % MOD_R;
         }
     }
     ret = WriteFile(file, buffer, size, &written, NULL);
@@ -6157,11 +6161,11 @@ static void test_bitmap_data(unsigned int test_idx, const D3DRMIMAGE *img,
                 const unsigned char *ptr = &data[i * img->bytes_per_line + j * 4];
                 unsigned int idx = upside_down ? (h - 1 - i) * w + j : i * w + j;
 
-                if (ptr[0] != idx % 251 || ptr[1] != idx % 239 || ptr[2] != idx % 247 || ptr[3] != 0xff)
+                if (ptr[0] != idx % MOD_B || ptr[1] != idx % MOD_G || ptr[2] != idx % MOD_R || ptr[3] != 0xff)
                 {
                     ok(0, "Test %u: Got unexpected color 0x%02x%02x%02x%02x at position %u, %u, "
                             "expected 0x%02x%02x%02x%02x.\n", test_idx, ptr[0], ptr[1], ptr[2], ptr[3],
-                            j, i, idx % 251, idx % 239, idx % 247, 0xff);
+                            j, i, idx % MOD_B, idx % MOD_G, idx % MOD_R, 0xff);
                     return;
                 }
             }
@@ -6187,8 +6191,8 @@ static void test_bitmap_data(unsigned int test_idx, const D3DRMIMAGE *img,
         for (i = 0; i < img->palette_size; ++i)
         {
             unsigned int idx = upside_down ? (h - 1) * w - i + (i % w) * 2 : i;
-            ok(img->palette[i].red == idx % 251
-                    && img->palette[i].green == idx % 239 && img->palette[i].blue == idx % 247,
+            ok(img->palette[i].red == idx % MOD_B
+                    && img->palette[i].green == idx % MOD_G && img->palette[i].blue == idx % MOD_R,
                     "Test %u: Got unexpected palette entry (%u) color 0x%02x%02x%02x.\n",
                     test_idx, i, img->palette[i].red, img->palette[i].green, img->palette[i].blue);
             ok(img->palette[i].flags == D3DRMPALETTE_READONLY,
