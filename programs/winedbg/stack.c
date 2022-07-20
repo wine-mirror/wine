@@ -204,8 +204,10 @@ unsigned stack_fetch_frames(const dbg_ctx_t* _ctx)
                               SymFunctionTableAccess64, SymGetModuleBase64, NULL, SYM_STKWALK_DEFAULT)) ||
            nf == 0) /* we always register first frame information */
     {
-        dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames,
-                                                   (nf + 1) * sizeof(dbg_curr_thread->frames[0]));
+        struct dbg_frame* new = dbg_heap_realloc(dbg_curr_thread->frames,
+                                                 (nf + 1) * sizeof(dbg_curr_thread->frames[0]));
+        if (!new) break;
+        dbg_curr_thread->frames = new;
 
         dbg_curr_thread->frames[nf].addr_pc      = sf.AddrPC;
         dbg_curr_thread->frames[nf].linear_pc    = (DWORD_PTR)memory_to_linear_addr(&sf.AddrPC);

@@ -63,10 +63,13 @@ BOOL display_add(struct expr *exp, int count, char format)
 
     if (i == maxdisplays)
     {
+        struct display *new;
 	/* no space left - expand */
+        new = dbg_heap_realloc(displaypoints,
+                               (maxdisplays + DISPTAB_DELTA) * sizeof(*displaypoints));
+        if (!new) return FALSE;
+        displaypoints = new;
         maxdisplays += DISPTAB_DELTA;
-        displaypoints = dbg_heap_realloc(displaypoints,
-                                         maxdisplays * sizeof(*displaypoints));
     }
 
     if (i == ndisplays) ndisplays++;

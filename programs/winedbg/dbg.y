@@ -514,8 +514,14 @@ static int input_fetch_entire_line(const char* pfx, char** line)
 
         if (len + 2 > alloc)
         {
+            char* new;
             while (len + 2 > alloc) alloc *= 2;
-            buffer = dbg_heap_realloc(buffer, alloc);
+            if (!(new = dbg_heap_realloc(buffer, alloc)))
+            {
+                HeapFree(GetProcessHeap(), 0, buffer);
+                return -1;
+            }
+            buffer = new;
         }
         buffer[len++] = ch;
     }

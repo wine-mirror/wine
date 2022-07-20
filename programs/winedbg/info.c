@@ -199,8 +199,10 @@ static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 
     if (im->num_used + 1 > im->num_alloc)
     {
+        struct info_module* new = dbg_heap_realloc(im->modules, (im->num_alloc + 16) * sizeof(*im->modules));
+        if (!new) return FALSE; /* stop enumeration in case of OOM */
         im->num_alloc += 16;
-        im->modules = dbg_heap_realloc(im->modules, im->num_alloc * sizeof(*im->modules));
+        im->modules = new;
     }
     im->modules[im->num_used].mi.SizeOfStruct = sizeof(im->modules[im->num_used].mi);
     if (SymGetModuleInfo64(dbg_curr_process->handle, base, &im->modules[im->num_used].mi))
@@ -315,8 +317,10 @@ static void class_walker(HWND hWnd, struct class_walker* cw)
     {
         if (cw->used >= cw->alloc)
         {
+            ATOM* new = dbg_heap_realloc(cw->table, (cw->alloc + 16) * sizeof(ATOM));
+            if (!new) return;
             cw->alloc += 16;
-            cw->table = dbg_heap_realloc(cw->table, cw->alloc * sizeof(ATOM));
+            cw->table = new;
         }
         cw->table[cw->used++] = atom;
         info_win32_class(hWnd, clsName);
@@ -547,8 +551,15 @@ void info_win32_processes(void)
             dp.entries[dp.count++].children = -1;
             if (dp.count >= dp.alloc)
             {
-                dp.entries = HeapReAlloc(GetProcessHeap(), 0, dp.entries, sizeof(*dp.entries) * (dp.alloc *= 2));
-                if (!dp.entries) return;
+                struct dump_proc_entry* new = HeapReAlloc(GetProcessHeap(), 0, dp.entries, sizeof(*dp.entries) * (dp.alloc * 2));
+                if (!new)
+                {
+                    CloseHandle(snap);
+                    HeapFree(GetProcessHeap(), 0, dp.entries);
+                    return;
+                }
+                dp.alloc *= 2;
+                dp.entries = new;
             }
             dp.entries[dp.count].proc.dwSize = sizeof(dp.entries[dp.count].proc);
             ok = Process32Next(snap, &dp.entries[dp.count].proc);
