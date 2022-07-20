@@ -71,8 +71,8 @@ typedef struct _XACT3EngineImpl {
 
     void *wb_prepared_context;
     void *wb_destroyed_context;
-    struct wine_rb_tree wb_wrapper_lookup;
-    CRITICAL_SECTION wb_wrapper_lookup_cs;
+    struct wine_rb_tree wrapper_lookup;
+    CRITICAL_SECTION wrapper_lookup_cs;
 } XACT3EngineImpl;
 
 static int wrapper_lookup_compare(const void *key, const struct wine_rb_entry *entry)
@@ -94,24 +94,51 @@ static void wrapper_remove_entry(XACT3EngineImpl *engine, void *key)
     struct wrapper_lookup *lookup;
     struct wine_rb_entry *entry;
 
-    EnterCriticalSection(&engine->wb_wrapper_lookup_cs);
+    EnterCriticalSection(&engine->wrapper_lookup_cs);
 
-    entry = wine_rb_get(&engine->wb_wrapper_lookup, key);
+    entry = wine_rb_get(&engine->wrapper_lookup, key);
     if (!entry)
     {
-        LeaveCriticalSection(&engine->wb_wrapper_lookup_cs);
+        LeaveCriticalSection(&engine->wrapper_lookup_cs);
 
         WARN("cannot find key in wrapper lookup\n");
     }
     else
     {
-        wine_rb_remove(&engine->wb_wrapper_lookup, entry);
+        wine_rb_remove(&engine->wrapper_lookup, entry);
 
-        LeaveCriticalSection(&engine->wb_wrapper_lookup_cs);
+        LeaveCriticalSection(&engine->wrapper_lookup_cs);
 
         lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
         HeapFree(GetProcessHeap(), 0, lookup);
     }
+}
+
+static HRESULT wrapper_add_entry(XACT3EngineImpl *engine, void *fact, void *xact)
+{
+    struct wrapper_lookup *lookup;
+    UINT ret;
+
+    lookup = HeapAlloc(GetProcessHeap(), 0, sizeof(*lookup));
+    if (!lookup)
+    {
+        ERR("Failed to allocate wrapper_lookup!\n");
+        return E_OUTOFMEMORY;
+    }
+    lookup->fact = fact;
+    lookup->xact = xact;
+
+    EnterCriticalSection(&engine->wrapper_lookup_cs);
+    ret = wine_rb_put(&engine->wrapper_lookup, lookup->fact, &lookup->entry);
+    LeaveCriticalSection(&engine->wrapper_lookup_cs);
+
+    if (ret)
+    {
+        WARN("wrapper_lookup already present in the tree??\n");
+        HeapFree(GetProcessHeap(), 0, lookup);
+    }
+
+    return S_OK;
 }
 
 typedef struct _XACT3CueImpl {
@@ -849,8 +876,8 @@ static ULONG WINAPI IXACT3EngineImpl_Release(IXACT3Engine *iface)
 
     if (!ref)
     {
-        DeleteCriticalSection(&This->wb_wrapper_lookup_cs);
-        wine_rb_destroy(&This->wb_wrapper_lookup, wrapper_lookup_destroy, NULL);
+        DeleteCriticalSection(&This->wrapper_lookup_cs);
+        wine_rb_destroy(&This->wrapper_lookup, wrapper_lookup_destroy, NULL);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -945,8 +972,8 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
     if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED
             || notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
     {
-        EnterCriticalSection(&engine->wb_wrapper_lookup_cs);
-        entry = wine_rb_get(&engine->wb_wrapper_lookup, notification->waveBank.pWaveBank);
+        EnterCriticalSection(&engine->wrapper_lookup_cs);
+        entry = wine_rb_get(&engine->wrapper_lookup, notification->waveBank.pWaveBank);
         if (!entry)
         {
             WARN("cannot find wave bank in wrapper lookup\n");
@@ -957,7 +984,7 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
             lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
             xnotification.waveBank.pWaveBank = lookup->xact;
         }
-        LeaveCriticalSection(&engine->wb_wrapper_lookup_cs);
+        LeaveCriticalSection(&engine->wrapper_lookup_cs);
         if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED)
             xnotification.pvContext = engine->wb_prepared_context;
         else
@@ -1095,9 +1122,9 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
         DWORD dwAllocAttributes, IXACT3WaveBank **ppWaveBank)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
-    struct wrapper_lookup *lookup;
     XACT3WaveBankImpl *wb;
     FACTWaveBank *fwb;
+    HRESULT hr;
     UINT ret;
 
     TRACE("(%p)->(%p, %lu, 0x%lx, 0x%lx, %p)\n", This, pvBuffer, dwSize, dwFlags,
@@ -1119,27 +1146,12 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
         return E_OUTOFMEMORY;
     }
 
-    lookup = HeapAlloc(GetProcessHeap(), 0, sizeof(*lookup));
-    if (!lookup)
+    hr = wrapper_add_entry(This, fwb, &wb->IXACT3WaveBank_iface);
+    if (FAILED(hr))
     {
         FACTWaveBank_Destroy(fwb);
         HeapFree(GetProcessHeap(), 0, wb);
-        ERR("Failed to allocate wrapper_lookup!\n");
-        return E_OUTOFMEMORY;
-    }
-    lookup->fact = fwb;
-    lookup->xact = &wb->IXACT3WaveBank_iface;
-
-    EnterCriticalSection(&This->wb_wrapper_lookup_cs);
-
-    ret = wine_rb_put(&This->wb_wrapper_lookup, lookup->fact, &lookup->entry);
-
-    LeaveCriticalSection(&This->wb_wrapper_lookup_cs);
-
-    if (ret)
-    {
-        WARN("wrapper_lookup already present in the tree??\n");
-        HeapFree(GetProcessHeap(), 0, lookup);
+        return hr;
     }
 
     wb->IXACT3WaveBank_iface.lpVtbl = &XACT3WaveBank_Vtbl;
@@ -1158,11 +1170,11 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *ifa
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
     FACTStreamingParameters fakeParms;
-    struct wrapper_lookup *lookup;
     wrap_readfile_struct *fake;
     XACT3WaveBankImpl *wb;
     FACTWaveBank *fwb;
     UINT ret;
+    HRESULT hr;
 
     TRACE("(%p)->(%p, %p)\n", This, pParms, ppWaveBank);
 
@@ -1192,27 +1204,12 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *ifa
         return E_OUTOFMEMORY;
     }
 
-    lookup = HeapAlloc(GetProcessHeap(), 0, sizeof(*lookup));
-    if (!lookup)
+    hr = wrapper_add_entry(This, fwb, &wb->IXACT3WaveBank_iface);
+    if (FAILED(hr))
     {
         FACTWaveBank_Destroy(fwb);
         HeapFree(GetProcessHeap(), 0, wb);
-        ERR("Failed to allocate wrapper_lookup!\n");
-        return E_OUTOFMEMORY;
-    }
-    lookup->fact = fwb;
-    lookup->xact = &wb->IXACT3WaveBank_iface;
-
-    EnterCriticalSection(&This->wb_wrapper_lookup_cs);
-
-    ret = wine_rb_put(&This->wb_wrapper_lookup, lookup->fact, &lookup->entry);
-
-    LeaveCriticalSection(&This->wb_wrapper_lookup_cs);
-
-    if (ret)
-    {
-        WARN("wrapper_lookup already present in the tree??\n");
-        HeapFree(GetProcessHeap(), 0, lookup);
+        return hr;
     }
 
     wb->IXACT3WaveBank_iface.lpVtbl = &XACT3WaveBank_Vtbl;
@@ -1618,8 +1615,8 @@ static HRESULT WINAPI XACT3CF_CreateInstance(IClassFactory *iface, IUnknown *pOu
         return hr;
     }
 
-    wine_rb_init(&object->wb_wrapper_lookup, wrapper_lookup_compare);
-    InitializeCriticalSection(&object->wb_wrapper_lookup_cs);
+    wine_rb_init(&object->wrapper_lookup, wrapper_lookup_compare);
+    InitializeCriticalSection(&object->wrapper_lookup_cs);
 
     return hr;
 }
