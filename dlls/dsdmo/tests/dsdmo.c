@@ -24,6 +24,7 @@
 #include "mmsystem.h"
 #include "dmo.h"
 #include "initguid.h"
+#include "medparam.h"
 #include "dsound.h"
 #include "uuids.h"
 #include "wine/test.h"
@@ -131,28 +132,41 @@ static void test_aggregation(const GUID *clsid)
 
 static void test_interfaces(const GUID *clsid, const GUID *iid)
 {
+    static const GUID *guids[] =
+    {
+        &IID_IMediaObject,
+        &IID_IMediaObjectInPlace,
+        &IID_IMediaParamInfo,
+    };
     IUnknown *unk, *unk2, *unk3;
+    unsigned int i;
     HRESULT hr;
     ULONG ref;
 
     hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, iid, (void **)&unk);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IUnknown_QueryInterface(unk, &IID_IMediaObject, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IUnknown_QueryInterface(unk2, iid, (void **)&unk3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(unk3 == unk, "Interface pointers didn't match.\n");
-    IUnknown_Release(unk3);
-    IUnknown_Release(unk2);
+    for (i = 0; i < ARRAY_SIZE(guids); ++i)
+    {
+        winetest_push_context("GUID %s", debugstr_guid(guids[i]));
 
-    hr = IUnknown_QueryInterface(unk, &IID_IMediaObjectInPlace, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IUnknown_QueryInterface(unk2, iid, (void **)&unk3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(unk3 == unk, "Interface pointers didn't match.\n");
-    IUnknown_Release(unk3);
-    IUnknown_Release(unk2);
+        hr = IUnknown_QueryInterface(unk, guids[i], (void **)&unk2);
+        todo_wine_if(guids[i] == &IID_IMediaParamInfo)
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr != S_OK)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        hr = IUnknown_QueryInterface(unk2, iid, (void **)&unk3);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(unk3 == unk, "Interface pointers didn't match.\n");
+        IUnknown_Release(unk3);
+        IUnknown_Release(unk2);
+
+        winetest_pop_context();
+    }
 
     ref = IUnknown_Release(unk);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
