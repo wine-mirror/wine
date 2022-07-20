@@ -1185,7 +1185,8 @@ void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wi
          */
         range.offset = offset;
         range.size = size;
-        wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 1, &range);
+        if (upload_bo->addr.buffer_object->map_ptr)
+            wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 1, &range);
     }
     else
     {
