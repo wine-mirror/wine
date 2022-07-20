@@ -53,6 +53,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(xact3);
 #define IXACT3WaveBankVtbl IXACTWaveBankVtbl
 #endif
 
+#define XACTNOTIFICATIONTYPE_MAX 18  /* XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT + 1 */
+
 struct wrapper_lookup
 {
     struct wine_rb_entry entry;
@@ -69,8 +71,7 @@ typedef struct _XACT3EngineImpl {
     XACT_GETOVERLAPPEDRESULT_CALLBACK pGetOverlappedResult;
     XACT_NOTIFICATION_CALLBACK notification_callback;
 
-    void *wb_prepared_context;
-    void *wb_destroyed_context;
+    void *contexts[XACTNOTIFICATIONTYPE_MAX];
     struct wine_rb_tree wrapper_lookup;
     CRITICAL_SECTION wrapper_lookup_cs;
 } XACT3EngineImpl;
@@ -1013,6 +1014,7 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
 
     xnotification.type = xact_notification_type_from_fact(notification->type);
     xnotification.timeStamp = notification->timeStamp;
+    xnotification.pvContext = engine->contexts[notification->type];
 
     if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED
             || notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
@@ -1030,10 +1032,6 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
             xnotification.waveBank.pWaveBank = lookup->xact;
         }
         LeaveCriticalSection(&engine->wrapper_lookup_cs);
-        if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED)
-            xnotification.pvContext = engine->wb_prepared_context;
-        else
-            xnotification.pvContext = engine->wb_destroyed_context;
     }
     else
     {
@@ -1482,12 +1480,8 @@ static HRESULT WINAPI IXACT3EngineImpl_RegisterNotification(IXACT3Engine *iface,
 
     TRACE("(%p)->(%p)\n", This, pNotificationDesc);
 
-    if (pNotificationDesc->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED)
-        This->wb_prepared_context = pNotificationDesc->pvContext;
-    else if (pNotificationDesc->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
-        This->wb_destroyed_context = pNotificationDesc->pvContext;
-
     unwrap_notificationdesc(&fdesc, pNotificationDesc);
+    This->contexts[pNotificationDesc->type] = pNotificationDesc->pvContext;
     fdesc.pvContext = This;
     return FACTAudioEngine_RegisterNotification(This->fact_engine, &fdesc);
 }
