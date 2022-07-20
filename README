@@ -151,6 +151,8 @@ FAQ:	The Wine FAQ is located at https://www.winehq.org/FAQ
 
 Wiki:	The Wine Wiki is located at https://wiki.winehq.org
 
+Gitlab: Wine development is hosted at https://gitlab.winehq.org
+
 Mailing lists:
 	There are several mailing lists for Wine users and developers;
 	see https://www.winehq.org/forums for more information.
@@ -160,13 +162,6 @@ Bugs:	Report bugs to Wine Bugzilla at https://bugs.winehq.org
 	problem is already known or fixed before posting a bug report.
 
 IRC:	Online help is available at channel #WineHQ on irc.libera.chat.
-
-Git:	The current Wine development tree is available through Git.
-	Go to https://www.winehq.org/git for more information.
-
-If you add something, or fix a bug, please send a patch (preferably
-using git-format-patch) to the wine-devel@winehq.org list for
-inclusion in the next release.
 
 --
 Alexandre Julliard
