@@ -2048,9 +2048,9 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
 }
 
 /**************************************************************************
- * WCMD_forf_getinputhandle
+ * WCMD_forf_getinput
  *
- * Return a file handle which can be used for reading the input lines,
+ * Return a FILE* which can be used for reading the input lines,
  * either to a specific file (which may be quote delimited as we have to
  * read the parameters in raw mode) or to a command which we need to
  * execute. The command being executed runs in its own shell and stores
@@ -2064,12 +2064,12 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
  *
  * Returns a file handle which can be used to read the input lines from.
  */
-static HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd) {
+static FILE* WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd) {
   WCHAR  temp_str[MAX_PATH];
   WCHAR  temp_file[MAX_PATH];
   WCHAR  temp_cmd[MAXSTRING];
   WCHAR *trimmed = NULL;
-  HANDLE hinput = INVALID_HANDLE_VALUE;
+  FILE*  ret;
 
   /* Remove leading and trailing character (but there may be trailing whitespace too) */
   if ((iscmd && (itemstr[0] == '`' && usebackq)) ||
@@ -2097,17 +2097,14 @@ static HANDLE WCMD_forf_getinputhandle(BOOL usebackq, WCHAR *itemstr, BOOL iscmd
     WCMD_execute (temp_cmd, temp_str, NULL, FALSE);
 
     /* Open the file, read line by line and process */
-    hinput = CreateFileW(temp_file, GENERIC_READ, FILE_SHARE_READ,
-                        NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, NULL);
-
+    ret = _wfopen(temp_file, L"rt,ccs=unicode");
   } else {
     /* Open the file, read line by line and process */
     WINE_TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(itemstr));
-    hinput = CreateFileW(itemstr, GENERIC_READ, FILE_SHARE_READ,
-                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ret = _wfopen(itemstr, L"rt,ccs=unicode");
   }
   heap_free(trimmed);
-  return hinput;
+  return ret;
 }
 
 /**************************************************************************
@@ -2389,7 +2386,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
         } else if (doFileset && ((!forf_usebackq && *itemStart != '"') ||
                                  (forf_usebackq && *itemStart != '\''))) {
 
-            HANDLE input;
+            FILE *input;
             WCHAR *itemparm;
 
             WINE_TRACE("Processing for filespec from item %d '%s'\n", itemNum,
@@ -2407,10 +2404,10 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
               /* Use item because the file to process is just the first item in the set */
               itemparm = item;
             }
-            input = WCMD_forf_getinputhandle(forf_usebackq, itemparm, (itemparm==itemStart));
+            input = WCMD_forf_getinput(forf_usebackq, itemparm, (itemparm==itemStart));
 
             /* Process the input file */
-            if (input == INVALID_HANDLE_VALUE) {
+            if (!input) {
               WCMD_print_error ();
               WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), item);
               errorlevel = 1;
@@ -2419,12 +2416,20 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
             } else {
 
               /* Read line by line until end of file */
-              while (WCMD_fgets(buffer, ARRAY_SIZE(buffer), input)) {
+              while (fgetws(buffer, ARRAY_SIZE(buffer), input)) {
+                size_t len = wcslen(buffer);
+                /* Either our buffer isn't large enough to fit a full line, or there's a stray
+                 * '\0' in the buffer.
+                 */
+                if (!feof(input) && (len == 0 || (buffer[len - 1] != '\n' && buffer[len - 1] != '\r')))
+                    break;
+                while (len && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r'))
+                    buffer[--len] = L'\0';
                 WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable[1], buffer, &doExecuted,
                                 &forf_skip, forf_eol, forf_delims, forf_tokens);
                 buffer[0] = 0;
               }
-              CloseHandle (input);
+              fclose (input);
             }
 
             /* When we have processed the item as a whole command, abort future set processing */
