@@ -3039,6 +3039,8 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
         return;
     bo = wined3d_bo_gl(data->buffer_object);
 
+    assert(bo->b.map_ptr);
+
     flush_bo_ranges(context_gl, wined3d_const_bo_address(data), range_count, ranges);
     wined3d_bo_gl_unmap(bo, context_gl);
 }

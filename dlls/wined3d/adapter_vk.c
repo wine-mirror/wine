@@ -1064,6 +1064,8 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
         return;
     bo = wined3d_bo_vk(data->buffer_object);
 
+    assert(bo->b.map_ptr);
+
     if (!bo->b.coherent)
     {
         for (i = 0; i < range_count; ++i)
