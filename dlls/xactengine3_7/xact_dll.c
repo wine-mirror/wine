@@ -144,6 +144,7 @@ static HRESULT wrapper_add_entry(XACT3EngineImpl *engine, void *fact, void *xact
 typedef struct _XACT3CueImpl {
     IXACT3Cue IXACT3Cue_iface;
     FACTCue *fact_cue;
+    XACT3EngineImpl *engine;
 } XACT3CueImpl;
 
 static inline XACT3CueImpl *impl_from_IXACT3Cue(IXACT3Cue *iface)
@@ -188,6 +189,7 @@ static HRESULT WINAPI IXACT3CueImpl_Destroy(IXACT3Cue *iface)
     ret = FACTCue_Destroy(This->fact_cue);
     if (ret != 0)
         WARN("FACTCue_Destroy returned %d\n", ret);
+    wrapper_remove_entry(This->engine, This->fact_cue);
     HeapFree(GetProcessHeap(), 0, This);
     return S_OK;
 }
@@ -395,6 +397,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
     XACT3CueImpl *cue;
     FACTCue *fcue;
     UINT ret;
+    HRESULT hr;
 
     TRACE("(%p)->(%u, 0x%lx, %lu, %p)\n", This, nCueIndex, dwFlags, timeOffset,
             ppCue);
@@ -415,8 +418,17 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
         return E_OUTOFMEMORY;
     }
 
+    hr = wrapper_add_entry(This->engine, fcue, &cue->IXACT3Cue_iface);
+    if (FAILED(hr))
+    {
+        FACTCue_Destroy(fcue);
+        HeapFree(GetProcessHeap(), 0, cue);
+        return hr;
+    }
+
     cue->IXACT3Cue_iface.lpVtbl = &XACT3Cue_Vtbl;
     cue->fact_cue = fcue;
+    cue->engine = This->engine;
     *ppCue = &cue->IXACT3Cue_iface;
 
     TRACE("Created Cue: %p\n", cue);
@@ -457,8 +469,17 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
             return E_OUTOFMEMORY;
         }
 
+        hr = wrapper_add_entry(This->engine, fcue, &cue->IXACT3Cue_iface);
+        if (FAILED(hr))
+        {
+            FACTCue_Destroy(fcue);
+            HeapFree(GetProcessHeap(), 0, cue);
+            return hr;
+        }
+
         cue->IXACT3Cue_iface.lpVtbl = &XACT3Cue_Vtbl;
         cue->fact_cue = fcue;
+        cue->engine = This->engine;
         *ppCue = &cue->IXACT3Cue_iface;
     }
 
