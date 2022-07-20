@@ -4737,7 +4737,8 @@ void wined3d_texture_update_sub_resource(struct wined3d_texture *texture, unsign
         wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_BUFFER);
         /* Try to free address space if we are not mapping persistently. */
-        wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 0, NULL);
+        if (upload_bo->addr.buffer_object->map_ptr)
+            wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 0, NULL);
     }
 
     /* Only load the sub-resource for partial updates. */
