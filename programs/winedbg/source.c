@@ -59,14 +59,14 @@ void source_add_path(const char* path)
     if (dbg_curr_process->search_path)
     {
         unsigned pos = strlen(dbg_curr_process->search_path) + 1;
-        new = HeapReAlloc(GetProcessHeap(), 0, dbg_curr_process->search_path, pos + size);
+        new = realloc(dbg_curr_process->search_path, pos + size);
         if (!new) return;
         new[pos - 1] = ';';
         strcpy(&new[pos], path);
     }
     else
     {
-        new = HeapAlloc(GetProcessHeap(), 0, size);
+        new = malloc(size);
         if (!new) return;
         strcpy(new, path);
     }
@@ -75,7 +75,7 @@ void source_add_path(const char* path)
 
 void source_nuke_path(struct dbg_process* p)
 {
-    HeapFree(GetProcessHeap(), 0, p->search_path);
+    free(p->search_path);
     p->search_path = NULL;
 }
 
@@ -146,7 +146,7 @@ static struct open_file_list* source_add_file(const char* name, const char* real
     sz = sizeof(*ol);
     nlen = strlen(name) + 1;
     if (realpath) sz += strlen(realpath) + 1;
-    ol = HeapAlloc(GetProcessHeap(), 0, sz + nlen);
+    ol = malloc(sz + nlen);
     if (!ol) return NULL;
     strcpy(ol->path = (char*)(ol + 1), name);
     if (realpath)
@@ -255,7 +255,7 @@ static int source_display(const char* sourcefile, int start, int end)
         }
 
         ol->nlines++;
-        ol->linelist = HeapAlloc(GetProcessHeap(), 0, ol->nlines * sizeof(unsigned int));
+        ol->linelist = malloc(ol->nlines * sizeof(unsigned int));
 
         nlines = 0;
         pnt = addr;
@@ -379,7 +379,7 @@ void source_free_files(struct dbg_process* p)
     for (ofile = p->source_ofiles; ofile; ofile = ofile_next)
     {
         ofile_next = ofile->next;
-        HeapFree(GetProcessHeap(), 0, ofile->linelist);
-        HeapFree(GetProcessHeap(), 0, ofile);
+        free(ofile->linelist);
+        free(ofile);
     }
 }

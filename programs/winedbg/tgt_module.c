@@ -55,7 +55,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
     if (!dbg_init(hDummy, NULL, FALSE))
         return start_error_init;
     len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
-    nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    nameW = malloc(len * sizeof(WCHAR));
     if (!nameW)
     {
         ret = start_error_init;
@@ -69,7 +69,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
             ret = start_error_init;
             keep = FALSE;
         }
-        HeapFree(GetProcessHeap(), 0, nameW);
+        free(nameW);
     }
 
     if (keep)

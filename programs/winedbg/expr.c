@@ -721,7 +721,7 @@ struct expr* expr_clone(const struct expr* exp, BOOL *local_binding)
     int		        i;
     struct expr*        rtn;
 
-    rtn = HeapAlloc(GetProcessHeap(), 0, sizeof(struct expr));
+    rtn = malloc(sizeof(struct expr));
 
     /*
      * First copy the contents of the expression itself.
@@ -734,30 +734,30 @@ struct expr* expr_clone(const struct expr* exp, BOOL *local_binding)
         rtn->un.cast.expr = expr_clone(exp->un.cast.expr, local_binding);
         break;
     case EXPR_TYPE_INTVAR:
-        rtn->un.intvar.name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.intvar.name) + 1), exp->un.intvar.name);
+        rtn->un.intvar.name = strdup(exp->un.intvar.name);
         break;
     case EXPR_TYPE_U_CONST:
     case EXPR_TYPE_S_CONST:
         break;
     case EXPR_TYPE_STRING:
-        rtn->un.string.str = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.string.str) + 1), exp->un.string.str);
+        rtn->un.string.str = strdup(exp->un.string.str);
         break;
     case EXPR_TYPE_SYMBOL:
-        rtn->un.symbol.name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.symbol.name) + 1), exp->un.symbol.name);
+        rtn->un.symbol.name = strdup(exp->un.symbol.name);
         if (local_binding && symbol_is_local(exp->un.symbol.name))
             *local_binding = TRUE;
         break;
     case EXPR_TYPE_PSTRUCT:
     case EXPR_TYPE_STRUCT:
         rtn->un.structure.exp1 = expr_clone(exp->un.structure.exp1, local_binding);
-        rtn->un.structure.element_name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.structure.element_name) + 1), exp->un.structure.element_name);
+        rtn->un.structure.element_name = strdup(exp->un.structure.element_name);
         break;
     case EXPR_TYPE_CALL:
         for (i = 0; i < exp->un.call.nargs; i++)
         {
             rtn->un.call.arg[i] = expr_clone(exp->un.call.arg[i], local_binding);
 	}
-        rtn->un.call.funcname = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.call.funcname) + 1), exp->un.call.funcname);
+        rtn->un.call.funcname = strdup(exp->un.call.funcname);
         break;
     case EXPR_TYPE_BINOP:
         rtn->un.binop.exp1 = expr_clone(exp->un.binop.exp1, local_binding);
@@ -790,28 +790,28 @@ BOOL expr_free(struct expr* exp)
         expr_free(exp->un.cast.expr);
         break;
     case EXPR_TYPE_INTVAR:
-        HeapFree(GetProcessHeap(), 0, (char*)exp->un.intvar.name);
+        free((char*)exp->un.intvar.name);
         break;
     case EXPR_TYPE_U_CONST:
     case EXPR_TYPE_S_CONST:
         break;
     case EXPR_TYPE_STRING:
-        HeapFree(GetProcessHeap(), 0, (char*)exp->un.string.str);
+        free((char*)exp->un.string.str);
         break;
     case EXPR_TYPE_SYMBOL:
-        HeapFree(GetProcessHeap(), 0, (char*)exp->un.symbol.name);
+        free((char*)exp->un.symbol.name);
         break;
     case EXPR_TYPE_PSTRUCT:
     case EXPR_TYPE_STRUCT:
         expr_free(exp->un.structure.exp1);
-        HeapFree(GetProcessHeap(), 0, (char*)exp->un.structure.element_name);
+        free((char*)exp->un.structure.element_name);
         break;
     case EXPR_TYPE_CALL:
         for (i = 0; i < exp->un.call.nargs; i++)
 	{
             expr_free(exp->un.call.arg[i]);
 	}
-        HeapFree(GetProcessHeap(), 0, (char*)exp->un.call.funcname);
+        free((char*)exp->un.call.funcname);
         break;
     case EXPR_TYPE_BINOP:
         expr_free(exp->un.binop.exp1);
@@ -826,6 +826,6 @@ BOOL expr_free(struct expr* exp)
         break;
     }
 
-    HeapFree(GetProcessHeap(), 0, exp);
+    free(exp);
     return TRUE;
 }

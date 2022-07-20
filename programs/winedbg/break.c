@@ -216,8 +216,8 @@ BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue, BOOL swbp)
             return FALSE;
         }
         dbg_printf("Unable to add breakpoint, will check again any time a new DLL is loaded\n");
-        new = dbg_heap_realloc(dbg_curr_process->delayed_bp,
-                               sizeof(struct dbg_delayed_bp) * (dbg_curr_process->num_delayed_bp + 1));
+        new = realloc(dbg_curr_process->delayed_bp,
+                      sizeof(struct dbg_delayed_bp) * (dbg_curr_process->num_delayed_bp + 1));
         if (!new) return FALSE;
         dbg_curr_process->delayed_bp = new;
 
@@ -260,13 +260,13 @@ void	break_add_break_from_id(const char *name, int lineno, BOOL swbp)
             lineno == dbg_curr_process->delayed_bp[i].u.symbol.lineno)
             return;
     }
-    new = dbg_heap_realloc(dbg_curr_process->delayed_bp,
-                           sizeof(struct dbg_delayed_bp) * (dbg_curr_process->num_delayed_bp + 1));
+    new = realloc(dbg_curr_process->delayed_bp,
+                  sizeof(struct dbg_delayed_bp) * (dbg_curr_process->num_delayed_bp + 1));
     if (!new) return;
     dbg_curr_process->delayed_bp = new;
     dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp].is_symbol       = TRUE;
     dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp].software_bp     = swbp;
-    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp].u.symbol.name   = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(name) + 1), name);
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp].u.symbol.name   = strdup(name);
     dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp].u.symbol.lineno = lineno;
     dbg_curr_process->num_delayed_bp++;
 }

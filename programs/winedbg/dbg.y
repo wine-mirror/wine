@@ -499,7 +499,7 @@ static int input_fetch_entire_line(const char* pfx, char** line)
      */
     WriteFile(dbg_parser.output, pfx, strlen(pfx), &nread, NULL);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, alloc = 16);
+    buffer = malloc(alloc = 16);
     assert(buffer != NULL);
 
     dbg_parser.line_no++;
@@ -508,7 +508,7 @@ static int input_fetch_entire_line(const char* pfx, char** line)
     {
         if (!ReadFile(dbg_parser.input, &ch, 1, &nread, NULL) || nread == 0)
         {
-            HeapFree(GetProcessHeap(), 0, buffer);
+            free(buffer);
             return -1;
         }
 
@@ -516,9 +516,9 @@ static int input_fetch_entire_line(const char* pfx, char** line)
         {
             char* new;
             while (len + 2 > alloc) alloc *= 2;
-            if (!(new = dbg_heap_realloc(buffer, alloc)))
+            if (!(new = realloc(buffer, alloc)))
             {
-                HeapFree(GetProcessHeap(), 0, buffer);
+                free(buffer);
                 return -1;
             }
             buffer = new;
@@ -557,11 +557,11 @@ size_t input_lex_read_buffer(char* buf, int size)
         if (dbg_parser.last_line && (len == 0 || (len == 1 && tmp[0] == '\n')) &&
             dbg_parser.output != INVALID_HANDLE_VALUE)
         {
-            HeapFree(GetProcessHeap(), 0, tmp);
+            free(tmp);
         }
         else
         {
-            HeapFree(GetProcessHeap(), 0, dbg_parser.last_line);
+            free(dbg_parser.last_line);
             dbg_parser.last_line = tmp;
         }
     }
@@ -585,7 +585,7 @@ int input_read_line(const char* pfx, char* buf, int size)
     len = min(size - 1, len);
     memcpy(buf, line, len);
     buf[len] = '\0';
-    HeapFree(GetProcessHeap(), 0, line);
+    free(line);
     return 1;
 }
 

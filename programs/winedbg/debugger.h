@@ -537,12 +537,6 @@ static inline BOOL dbg_write_memory(void* addr, const void* buffer, size_t len)
     return dbg_curr_process->process_io->write(dbg_curr_process->handle, addr, buffer, len, &wlen) && len == wlen;
 }
 
-static inline void* dbg_heap_realloc(void* buffer, size_t size)
-{
-    return (buffer) ? HeapReAlloc(GetProcessHeap(), 0, buffer, size) :
-        HeapAlloc(GetProcessHeap(), 0, size);
-}
-
 struct data_model
 {
     enum dbg_internal_types     itype;

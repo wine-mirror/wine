@@ -197,10 +197,10 @@ static BOOL dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
             if ((!last_name || strcmp(last_name, si->Name)) ||
                 (!last_file || strcmp(last_file, il.FileName)))
             {
-                HeapFree(GetProcessHeap(), 0, last_name);
-                HeapFree(GetProcessHeap(), 0, last_file);
-                last_name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(si->Name) + 1), si->Name);
-                last_file = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(il.FileName) + 1), il.FileName);
+                free(last_name);
+                free(last_file);
+                last_name = strdup(si->Name);
+                last_file = strdup(il.FileName);
                 dbg_printf("%s () at %s:%lu\n", last_name, last_file, il.LineNumber);
             }
         }

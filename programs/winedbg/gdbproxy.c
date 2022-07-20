@@ -129,7 +129,7 @@ static void gdbctx_delete_xpoint(struct gdb_context *gdbctx, struct dbg_thread *
         ERR("%04lx:%04lx: Couldn't remove breakpoint at:%p/%x type:%d\n", process->pid, thread ? thread->tid : ~0, x->addr, x->size, x->type);
 
     list_remove(&x->entry);
-    HeapFree(GetProcessHeap(), 0, x);
+    free(x);
 }
 
 static void gdbctx_insert_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
@@ -146,7 +146,7 @@ static void gdbctx_insert_xpoint(struct gdb_context *gdbctx, struct dbg_thread *
         return;
     }
 
-    if (!(x = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gdb_xpoint))))
+    if (!(x = malloc(sizeof(struct gdb_xpoint))))
     {
         ERR("%04lx:%04lx: Couldn't allocate memory for breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
         return;

@@ -65,8 +65,8 @@ BOOL display_add(struct expr *exp, int count, char format)
     {
         struct display *new;
 	/* no space left - expand */
-        new = dbg_heap_realloc(displaypoints,
-                               (maxdisplays + DISPTAB_DELTA) * sizeof(*displaypoints));
+        new = realloc(displaypoints,
+                      (maxdisplays + DISPTAB_DELTA) * sizeof(*displaypoints));
         if (!new) return FALSE;
         displaypoints = new;
         maxdisplays += DISPTAB_DELTA;
@@ -208,8 +208,8 @@ BOOL display_delete(int displaynum)
             }
         }
         maxdisplays = DISPTAB_DELTA;
-        displaypoints = dbg_heap_realloc(displaypoints,
-                                         (maxdisplays = DISPTAB_DELTA) * sizeof(*displaypoints));
+        displaypoints = realloc(displaypoints,
+                                (maxdisplays = DISPTAB_DELTA) * sizeof(*displaypoints));
         ndisplays = 0;
     }
     else if (displaypoints[--displaynum].exp != NULL) 
@@ -225,8 +225,8 @@ BOOL display_delete(int displaynum)
         {
             /* MARK */
             maxdisplays = (ndisplays + DISPTAB_DELTA - 1) & ~(DISPTAB_DELTA - 1);
-            displaypoints = dbg_heap_realloc(displaypoints,
-                                             maxdisplays * sizeof(*displaypoints));
+            displaypoints = realloc(displaypoints,
+                                    maxdisplays * sizeof(*displaypoints));
         }
     }
     return TRUE;

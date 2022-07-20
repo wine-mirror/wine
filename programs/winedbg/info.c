@@ -199,7 +199,7 @@ static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 
     if (im->num_used + 1 > im->num_alloc)
     {
-        struct info_module* new = dbg_heap_realloc(im->modules, (im->num_alloc + 16) * sizeof(*im->modules));
+        struct info_module* new = realloc(im->modules, (im->num_alloc + 16) * sizeof(*im->modules));
         if (!new) return FALSE; /* stop enumeration in case of OOM */
         im->num_alloc += 16;
         im->modules = new;
@@ -283,7 +283,7 @@ void info_win32_module(DWORD64 base)
         }
         num_printed++;
     }
-    HeapFree(GetProcessHeap(), 0, im.modules);
+    free(im.modules);
 
     if (base && !num_printed)
         dbg_printf("'0x%0*I64x' is not a valid module address\n", ADDRWIDTH, base);
@@ -317,7 +317,7 @@ static void class_walker(HWND hWnd, struct class_walker* cw)
     {
         if (cw->used >= cw->alloc)
         {
-            ATOM* new = dbg_heap_realloc(cw->table, (cw->alloc + 16) * sizeof(ATOM));
+            ATOM* new = realloc(cw->table, (cw->alloc + 16) * sizeof(ATOM));
             if (!new) return;
             cw->alloc += 16;
             cw->table = new;
@@ -344,7 +344,7 @@ void info_win32_class(HWND hWnd, const char* name)
         cw.table = NULL;
         cw.used = cw.alloc = 0;
         class_walker(GetDesktopWindow(), &cw);
-        HeapFree(GetProcessHeap(), 0, cw.table);
+        free(cw.table);
         return;
     }
 
@@ -536,7 +536,7 @@ void info_win32_processes(void)
 
         dp.count   = 0;
         dp.alloc   = 16;
-        dp.entries = HeapAlloc(GetProcessHeap(), 0, sizeof(*dp.entries) * dp.alloc);
+        dp.entries = malloc(sizeof(*dp.entries) * dp.alloc);
         if (!dp.entries)
         {
              CloseHandle(snap);
@@ -551,11 +551,11 @@ void info_win32_processes(void)
             dp.entries[dp.count++].children = -1;
             if (dp.count >= dp.alloc)
             {
-                struct dump_proc_entry* new = HeapReAlloc(GetProcessHeap(), 0, dp.entries, sizeof(*dp.entries) * (dp.alloc * 2));
+                struct dump_proc_entry* new = realloc(dp.entries, sizeof(*dp.entries) * (dp.alloc * 2));
                 if (!new)
                 {
                     CloseHandle(snap);
-                    HeapFree(GetProcessHeap(), 0, dp.entries);
+                    free(dp.entries);
                     return;
                 }
                 dp.alloc *= 2;
@@ -575,7 +575,7 @@ void info_win32_processes(void)
         }
         dbg_printf(" %-8.8s %-8.8s %s (all id:s are in hex)\n", "pid", "threads", "executable");
         dump_proc_info(&dp, first, 0);
-        HeapFree(GetProcessHeap(), 0, dp.entries);
+        free(dp.entries);
     }
 }
 

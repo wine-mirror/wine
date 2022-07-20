@@ -266,7 +266,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     if (!h)
         h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
-    if (!(p = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dbg_process)))) return NULL;
+    if (!(p = malloc(sizeof(struct dbg_process)))) return NULL;
     p->handle = h;
     p->pid = pid;
     p->process_io = pio;
@@ -307,11 +307,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
 void dbg_set_process_name(struct dbg_process* p, const WCHAR* imageName)
 {
     assert(p->imageName == NULL);
-    if (imageName)
-    {
-        WCHAR* tmp = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(imageName) + 1) * sizeof(WCHAR));
-        if (tmp) p->imageName = lstrcpyW(tmp, imageName);
-    }
+    if (imageName) p->imageName = wcsdup(imageName);
 }
 
 void dbg_del_process(struct dbg_process* p)
@@ -325,16 +321,16 @@ void dbg_del_process(struct dbg_process* p)
 
     for (i = 0; i < p->num_delayed_bp; i++)
         if (p->delayed_bp[i].is_symbol)
-            HeapFree(GetProcessHeap(), 0, p->delayed_bp[i].u.symbol.name);
+            free(p->delayed_bp[i].u.symbol.name);
 
-    HeapFree(GetProcessHeap(), 0, p->delayed_bp);
+    free(p->delayed_bp);
     source_nuke_path(p);
     source_free_files(p);
     list_remove(&p->entry);
     if (p == dbg_curr_process) dbg_curr_process = NULL;
     if (p->event_on_first_exception) CloseHandle(p->event_on_first_exception);
-    HeapFree(GetProcessHeap(), 0, (char*)p->imageName);
-    HeapFree(GetProcessHeap(), 0, p);
+    free((char*)p->imageName);
+    free(p);
 }
 
 /******************************************************************
@@ -357,7 +353,7 @@ BOOL dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade)
             if (*last == '/' || *last == '\\')
             {
                 WCHAR*  tmp;
-                tmp = HeapAlloc(GetProcessHeap(), 0, (1024 + 1 + (last - in) + 1) * sizeof(WCHAR));
+                tmp = malloc((1024 + 1 + (last - in) + 1) * sizeof(WCHAR));
                 if (tmp && SymGetSearchPathW(hProc, tmp, 1024))
                 {
                     WCHAR*      x = tmp + lstrlenW(tmp);
@@ -368,7 +364,7 @@ BOOL dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade)
                     ret = SymSetSearchPathW(hProc, tmp);
                 }
                 else ret = FALSE;
-                HeapFree(GetProcessHeap(), 0, tmp);
+                free(tmp);
                 break;
             }
         }
@@ -402,7 +398,7 @@ struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid)
 struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
                                   HANDLE h, void* teb)
 {
-    struct dbg_thread*	t = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dbg_thread));
+    struct dbg_thread*	t = malloc(sizeof(struct dbg_thread));
 
     if (!t)
 	return NULL;
@@ -431,10 +427,10 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
 
 void dbg_del_thread(struct dbg_thread* t)
 {
-    HeapFree(GetProcessHeap(), 0, t->frames);
+    free(t->frames);
     list_remove(&t->entry);
     if (t == dbg_curr_thread) dbg_curr_thread = NULL;
-    HeapFree(GetProcessHeap(), 0, t);
+    free(t);
 }
 
 void dbg_set_option(const char* option, const char* val)

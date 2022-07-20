@@ -42,10 +42,10 @@ char* lexeme_alloc_size(int size)
     if (next_lexeme >= alloc_lexeme)
     {
         alloc_lexeme += 32;
-        local_lexemes = dbg_heap_realloc(local_lexemes, alloc_lexeme * sizeof(local_lexemes[0]));
+        local_lexemes = realloc(local_lexemes, alloc_lexeme * sizeof(local_lexemes[0]));
         assert(local_lexemes);
     }
-    return local_lexemes[next_lexeme++] = HeapAlloc(GetProcessHeap(), 0, size + 1);
+    return local_lexemes[next_lexeme++] = malloc(size + 1);
 }
 
 static char* lexeme_alloc(const char* lexeme)
@@ -68,7 +68,7 @@ static char* lexeme_alloc_if(const char* lexeme, unsigned sz)
 
 void lexeme_flush(void)
 {
-    while (--next_lexeme >= 0) HeapFree(GetProcessHeap(), 0, local_lexemes[next_lexeme]);
+    while (--next_lexeme >= 0) free(local_lexemes[next_lexeme]);
     next_lexeme = 0;
 }
 

@@ -386,11 +386,11 @@ BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
         if (!unicode) ret = pcs->process_io->read(pcs->handle, addr, buffer, size, &sz);
         else
         {
-            buffW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            buffW = malloc(size * sizeof(WCHAR));
             ret = pcs->process_io->read(pcs->handle, addr, buffW, size * sizeof(WCHAR), &sz);
             WideCharToMultiByte(CP_ACP, 0, buffW, sz / sizeof(WCHAR), buffer, size,
                                 NULL, NULL);
-            HeapFree(GetProcessHeap(), 0, buffW);
+            free(buffW);
         }
         if (size) buffer[size-1] = 0;
         return ret;
@@ -418,11 +418,11 @@ BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicod
             ret = pcs->process_io->read(pcs->handle, ad, buffer, size * sizeof(WCHAR), &sz) && sz != 0;
         else
         {
-            if ((buff = HeapAlloc(GetProcessHeap(), 0, size)))
+            if ((buff = malloc(size)))
             {
                 ret = pcs->process_io->read(pcs->handle, ad, buff, size, &sz) && sz != 0;
                 MultiByteToWideChar(CP_ACP, 0, buff, sz, buffer, size);
-                HeapFree(GetProcessHeap(), 0, buff);
+                free(buff);
             }
             else ret = FALSE;
         }
