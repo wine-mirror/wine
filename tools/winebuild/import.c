@@ -631,6 +631,8 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     }
     for (j = 0; j < extra_ld_symbols.count; j++)
         output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
+
+    output_gnu_stack_note();
     fclose( output_file );
 
     obj_file = get_temp_file_name( output_file_name, ".o" );
