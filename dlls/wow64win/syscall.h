@@ -116,6 +116,7 @@
     SYSCALL_ENTRY( NtUserCreateInputContext ) \
     SYSCALL_ENTRY( NtUserCreateWindowEx ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
+    SYSCALL_ENTRY( NtUserDeferWindowPosAndBand ) \
     SYSCALL_ENTRY( NtUserDeleteMenu ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserDestroyCursor ) \
@@ -126,6 +127,7 @@
     SYSCALL_ENTRY( NtUserDragDetect ) \
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
+    SYSCALL_ENTRY( NtUserEndDeferWindowPosEx ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserEnumDisplayDevices ) \
     SYSCALL_ENTRY( NtUserEnumDisplayMonitors ) \
@@ -194,6 +196,7 @@
     SYSCALL_ENTRY( NtUserMapVirtualKeyEx ) \
     SYSCALL_ENTRY( NtUserMenuItemFromPoint ) \
     SYSCALL_ENTRY( NtUserMessageCall ) \
+    SYSCALL_ENTRY( NtUserMoveWindow ) \
     SYSCALL_ENTRY( NtUserMsgWaitForMultipleObjectsEx ) \
     SYSCALL_ENTRY( NtUserNotifyWinEvent ) \
     SYSCALL_ENTRY( NtUserOpenClipboard ) \
@@ -220,6 +223,7 @@
     SYSCALL_ENTRY( NtUserSetCursorIconData ) \
     SYSCALL_ENTRY( NtUserSetCursorPos ) \
     SYSCALL_ENTRY( NtUserSetFocus ) \
+    SYSCALL_ENTRY( NtUserSetInternalWindowPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
     SYSCALL_ENTRY( NtUserSetMenuDefaultItem ) \
@@ -232,6 +236,7 @@
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserSetTimer ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
+    SYSCALL_ENTRY( NtUserSetWindowPos ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserShowCaret ) \
     SYSCALL_ENTRY( NtUserShowCursor ) \

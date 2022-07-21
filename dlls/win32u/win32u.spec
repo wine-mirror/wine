@@ -821,7 +821,7 @@
 @ stub NtUserDdeInitialize
 @ stub NtUserDefSetText
 @ stub NtUserDeferWindowDpiChanges
-@ stdcall NtUserDeferWindowPosAndBand(long long long long long long long long long long)
+@ stdcall -syscall NtUserDeferWindowPosAndBand(long long long long long long long long long long)
 @ stub NtUserDelegateCapturePointers
 @ stub NtUserDelegateInput
 @ stdcall -syscall NtUserDeleteMenu(long long long)
@@ -872,7 +872,7 @@
 @ stub NtUserEnableWindowGDIScaledDpiMessage
 @ stub NtUserEnableWindowGroupPolicy
 @ stub NtUserEnableWindowResizeOptimization
-@ stdcall NtUserEndDeferWindowPosEx(long long)
+@ stdcall -syscall NtUserEndDeferWindowPosEx(long long)
 @ stdcall -syscall NtUserEndMenu()
 @ stdcall NtUserEndPaint(long ptr)
 @ stdcall -syscall NtUserEnumDisplayDevices(ptr long ptr long)
@@ -1084,7 +1084,7 @@
 @ stub NtUserMinMaximize
 @ stub NtUserModifyUserStartupInfoFlags
 @ stub NtUserModifyWindowTouchCapability
-@ stdcall NtUserMoveWindow(long long long long long long)
+@ stdcall -syscall NtUserMoveWindow(long long long long long long)
 @ stdcall -syscall NtUserMsgWaitForMultipleObjectsEx(long ptr long long long)
 @ stub NtUserNavigateFocus
 @ stub NtUserNotifyIMEStatus
@@ -1201,7 +1201,7 @@
 @ stub NtUserSetInputServiceState
 @ stub NtUserSetInteractiveControlFocus
 @ stub NtUserSetInteractiveCtrlRotationAngle
-@ stdcall NtUserSetInternalWindowPos(long long ptr ptr)
+@ stdcall -syscall NtUserSetInternalWindowPos(long long ptr ptr)
 @ stdcall -syscall NtUserSetKeyboardState(ptr)
 @ stdcall NtUserSetLayeredWindowAttributes(ptr long long long)
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated
@@ -1249,7 +1249,7 @@
 @ stdcall NtUserSetWindowLong(long long long long)
 @ stdcall NtUserSetWindowLongPtr(long long long long)
 @ stdcall NtUserSetWindowPlacement(long ptr)
-@ stdcall NtUserSetWindowPos(long long long long long long long)
+@ stdcall -syscall NtUserSetWindowPos(long long long long long long long)
 @ stdcall NtUserSetWindowRgn(long long long)
 @ stub NtUserSetWindowRgnEx
 @ stub NtUserSetWindowShowState

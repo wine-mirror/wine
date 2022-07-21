@@ -725,15 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-HDWP WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after,
-                                         INT x, INT y, INT cx, INT cy,
-                                         UINT flags, UINT unk1, UINT unk2 )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserDeferWindowPosAndBand( hdwp, hwnd, after, x, y, cx, cy,
-                                                     flags, unk1, unk2 );
-}
-
 BOOL WINAPI NtUserDestroyMenu( HMENU handle )
 {
     if (!unix_funcs) return FALSE;
@@ -763,12 +754,6 @@ BOOL WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserEnableScrollBar( hwnd, bar, flags );
-}
-
-BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEndDeferWindowPosEx( hdwp, async );
 }
 
 INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
@@ -806,12 +791,6 @@ BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilit
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserHiliteMenuItem( hwnd, handle, item, hilite );
-}
-
-BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserMoveWindow( hwnd, x, y, cx, cy, repaint );
 }
 
 BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
@@ -877,12 +856,6 @@ WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
     return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
 }
 
-void WINAPI NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt )
-{
-    if (!unix_funcs) return;
-    return unix_funcs->pNtUserSetInternalWindowPos( hwnd, cmd, rect, pt );
-}
-
 BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
     if (!unix_funcs) return FALSE;
@@ -929,12 +902,6 @@ BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetWindowPlacement( hwnd, wpl );
-}
-
-BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetWindowPos( hwnd, after, x, y, cx, cy, flags );
 }
 
 int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
