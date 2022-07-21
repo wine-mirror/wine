@@ -540,6 +540,7 @@ typedef struct _XACT3WaveImpl {
     IXACT3Wave IXACT3Wave_iface;
 
     FACTWave *fact_wave;
+    XACT3EngineImpl *engine;
 } XACT3WaveImpl;
 
 static inline XACT3WaveImpl *impl_from_IXACT3Wave(IXACT3Wave *iface)
@@ -555,6 +556,7 @@ static HRESULT WINAPI IXACT3WaveImpl_Destroy(IXACT3Wave *iface)
     TRACE("(%p)\n", This);
 
     hr = FACTWave_Destroy(This->fact_wave);
+    wrapper_remove_entry(This->engine, This->fact_wave);
     HeapFree(GetProcessHeap(), 0, This);
     return hr;
 }
@@ -720,6 +722,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Prepare(IXACT3WaveBank *iface,
     XACT3WaveImpl *wave;
     FACTWave *fwave;
     UINT ret;
+    HRESULT hr;
 
     TRACE("(%p)->(0x%x, %lu, 0x%lx, %u, %p)\n", This, nWaveIndex, dwFlags,
             dwPlayOffset, nLoopCount, ppWave);
@@ -740,8 +743,17 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Prepare(IXACT3WaveBank *iface,
         return E_OUTOFMEMORY;
     }
 
+    hr = wrapper_add_entry(This->engine, fwave, &wave->IXACT3Wave_iface);
+    if (FAILED(hr))
+    {
+        FACTWave_Destroy(fwave);
+        HeapFree(GetProcessHeap(), 0, wave);
+        return hr;
+    }
+
     wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
     wave->fact_wave = fwave;
+    wave->engine = This->engine;
     *ppWave = &wave->IXACT3Wave_iface;
 
     TRACE("Created Wave: %p\n", wave);
@@ -782,8 +794,17 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Play(IXACT3WaveBank *iface,
             return E_OUTOFMEMORY;
         }
 
+        hr = wrapper_add_entry(This->engine, fwave, &wave->IXACT3Wave_iface);
+        if (FAILED(hr))
+        {
+            FACTWave_Destroy(fwave);
+            HeapFree(GetProcessHeap(), 0, wave);
+            return hr;
+        }
+
         wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
         wave->fact_wave = fwave;
+        wave->engine = This->engine;
         *ppWave = &wave->IXACT3Wave_iface;
     }
 
@@ -1288,6 +1309,7 @@ static HRESULT WINAPI IXACT3EngineImpl_PrepareWave(IXACT3Engine *iface,
     XACT3WaveImpl *wave;
     FACTWave *fwave = NULL;
     UINT ret;
+    HRESULT hr;
 
     TRACE("(%p)->(0x%08lx, %s, %d, %ld, %ld, %d, %p)\n", This, dwFlags, debugstr_a(szWavePath),
           wStreamingPacketSize, dwAlignment, dwPlayOffset, nLoopCount, ppWave);
@@ -1307,8 +1329,17 @@ static HRESULT WINAPI IXACT3EngineImpl_PrepareWave(IXACT3Engine *iface,
         return E_OUTOFMEMORY;
     }
 
+    hr = wrapper_add_entry(This, fwave, &wave->IXACT3Wave_iface);
+    if (FAILED(hr))
+    {
+        FACTWave_Destroy(fwave);
+        HeapFree(GetProcessHeap(), 0, wave);
+        return hr;
+    }
+
     wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
     wave->fact_wave = fwave;
+    wave->engine = This;
     *ppWave = &wave->IXACT3Wave_iface;
 
     TRACE("Created Wave: %p\n", wave);
