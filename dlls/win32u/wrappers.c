@@ -744,29 +744,11 @@ INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
     return unix_funcs->pNtUserExcludeUpdateRgn( hdc, hwnd );
 }
 
-BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserFlashWindowEx( info );
-}
-
 ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                   struct client_menu_name *menu_name, BOOL ansi )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetWindowPlacement( hwnd, placement );
-}
-
-HICON WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserInternalGetWindowIcon( hwnd, type );
 }
 
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
@@ -814,30 +796,6 @@ WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
     return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
 }
 
-BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSetLayeredWindowAttributes( hwnd, key, alpha, flags );
-}
-
-HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetParent( hwnd, parent );
-}
-
-BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserShowWindowAsync( hwnd, cmd );
-}
-
-BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserShowWindow( hwnd, cmd );
-}
-
 BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, PVOID ptr, UINT winini )
 {
     if (!unix_funcs) return FALSE;
@@ -864,12 +822,6 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserUpdateLayeredWindow( hwnd, hdc_dst, pts_dst, size, hdc_src, pts_src,
                                                    key, blend, flags, dirty );
-}
-
-HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserWindowFromPoint( x, y );
 }
 
 INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,

@@ -137,6 +137,7 @@
     SYSCALL_ENTRY( NtUserEnumDisplaySettings ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
+    SYSCALL_ENTRY( NtUserFlashWindowEx ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \
     SYSCALL_ENTRY( NtUserGetAsyncKeyState ) \
     SYSCALL_ENTRY( NtUserGetAtomName ) \
@@ -190,10 +191,12 @@
     SYSCALL_ENTRY( NtUserGetUpdateRect ) \
     SYSCALL_ENTRY( NtUserGetUpdateRgn ) \
     SYSCALL_ENTRY( NtUserGetUpdatedClipboardFormats ) \
+    SYSCALL_ENTRY( NtUserGetWindowPlacement ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
     SYSCALL_ENTRY( NtUserHideCaret ) \
     SYSCALL_ENTRY( NtUserHiliteMenuItem ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
+    SYSCALL_ENTRY( NtUserInternalGetWindowIcon ) \
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
     SYSCALL_ENTRY( NtUserInvalidateRect ) \
     SYSCALL_ENTRY( NtUserInvalidateRgn ) \
@@ -232,10 +235,12 @@
     SYSCALL_ENTRY( NtUserSetFocus ) \
     SYSCALL_ENTRY( NtUserSetInternalWindowPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
+    SYSCALL_ENTRY( NtUserSetLayeredWindowAttributes ) \
     SYSCALL_ENTRY( NtUserSetMenu ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
     SYSCALL_ENTRY( NtUserSetMenuDefaultItem ) \
     SYSCALL_ENTRY( NtUserSetObjectInformation ) \
+    SYSCALL_ENTRY( NtUserSetParent ) \
     SYSCALL_ENTRY( NtUserSetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
@@ -256,6 +261,8 @@
     SYSCALL_ENTRY( NtUserShowCaret ) \
     SYSCALL_ENTRY( NtUserShowCursor ) \
     SYSCALL_ENTRY( NtUserShowScrollBar ) \
+    SYSCALL_ENTRY( NtUserShowWindow ) \
+    SYSCALL_ENTRY( NtUserShowWindowAsync ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserToUnicodeEx ) \
@@ -269,6 +276,7 @@
     SYSCALL_ENTRY( NtUserUpdateInputContext ) \
     SYSCALL_ENTRY( NtUserVkKeyScanEx ) \
     SYSCALL_ENTRY( NtUserWaitForInputIdle ) \
-    SYSCALL_ENTRY( NtUserWindowFromDC )
+    SYSCALL_ENTRY( NtUserWindowFromDC ) \
+    SYSCALL_ENTRY( NtUserWindowFromPoint )
 
 #endif /* __WOW64WIN_SYSCALL_H */

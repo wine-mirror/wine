@@ -883,7 +883,7 @@
 @ stub NtUserFillWindow
 @ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
 @ stdcall -syscall NtUserFindWindowEx(long long ptr ptr long)
-@ stdcall NtUserFlashWindowEx(ptr)
+@ stdcall -syscall NtUserFlashWindowEx(ptr)
 @ stub NtUserForceWindowToDpiForTest
 @ stub NtUserFrostCrashedWindow
 @ stub NtUserFunctionalizeDisplayConfig
@@ -1014,7 +1014,7 @@
 @ stub NtUserGetWindowFeedbackSetting
 @ stub NtUserGetWindowGroupId
 @ stub NtUserGetWindowMinimizeRect
-@ stdcall NtUserGetWindowPlacement(long ptr)
+@ stdcall -syscall NtUserGetWindowPlacement(long ptr)
 @ stub NtUserGetWindowProcessHandle
 @ stdcall -syscall NtUserGetWindowRgnEx(long long long)
 @ stub NtUserGhostWindowFromHungWindow
@@ -1044,7 +1044,7 @@
 @ stub NtUserInjectPointerInput
 @ stub NtUserInjectTouchInput
 @ stub NtUserInteractiveControlQueryUsage
-@ stdcall NtUserInternalGetWindowIcon(ptr long)
+@ stdcall -syscall NtUserInternalGetWindowIcon(ptr long)
 @ stdcall -syscall NtUserInternalGetWindowText(long ptr long)
 @ stub NtUserInternalToUnicode
 @ stdcall -syscall NtUserInvalidateRect(long ptr long)
@@ -1203,7 +1203,7 @@
 @ stub NtUserSetInteractiveCtrlRotationAngle
 @ stdcall -syscall NtUserSetInternalWindowPos(long long ptr ptr)
 @ stdcall -syscall NtUserSetKeyboardState(ptr)
-@ stdcall NtUserSetLayeredWindowAttributes(ptr long long long)
+@ stdcall -syscall NtUserSetLayeredWindowAttributes(ptr long long long)
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated
 @ stub NtUserSetManipulationInputTarget
 @ stdcall -syscall NtUserSetMenu(long long)
@@ -1214,7 +1214,7 @@
 @ stub NtUserSetMonitorWorkArea
 @ stub NtUserSetMouseInputRateLimitingTimer
 @ stdcall -syscall NtUserSetObjectInformation(long long ptr long)
-@ stdcall NtUserSetParent(long long)
+@ stdcall -syscall NtUserSetParent(long long)
 @ stub NtUserSetPrecisionTouchPadConfiguration
 @ stdcall -syscall NtUserSetProcessDpiAwarenessContext(long long)
 @ stub NtUserSetProcessInteractionFlags
@@ -1261,8 +1261,8 @@
 @ stdcall -syscall NtUserShowCursor(long)
 @ stdcall -syscall NtUserShowScrollBar(long long long)
 @ stub NtUserShowSystemCursor
-@ stdcall NtUserShowWindow(long long)
-@ stdcall NtUserShowWindowAsync(long long)
+@ stdcall -syscall NtUserShowWindow(long long)
+@ stdcall -syscall NtUserShowWindowAsync(long long)
 @ stub NtUserShutdownBlockReasonCreate
 @ stub NtUserShutdownBlockReasonQuery
 @ stub NtUserShutdownReasonDestroy
@@ -1311,7 +1311,7 @@
 @ stub NtUserWaitMessage
 @ stdcall -syscall NtUserWindowFromDC(long)
 @ stub NtUserWindowFromPhysicalPoint
-@ stdcall NtUserWindowFromPoint(long long)
+@ stdcall -syscall NtUserWindowFromPoint(long long)
 @ stub NtUserYieldTask
 @ stub NtValidateCompositionSurfaceHandle
 @ stub NtVisualCaptureBits

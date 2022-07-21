@@ -191,11 +191,8 @@ struct unix_funcs
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
     INT      (WINAPI *pNtUserExcludeUpdateRgn)( HDC hdc, HWND hwnd );
-    BOOL     (WINAPI *pNtUserFlashWindowEx)( FLASHWINFO *info );
     ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                               struct client_menu_name *menu_name, BOOL ansi );
-    BOOL     (WINAPI *pNtUserGetWindowPlacement)( HWND hwnd, WINDOWPLACEMENT *placement );
-    HICON    (WINAPI *pNtUserInternalGetWindowIcon)( HWND hwnd, UINT type );
     ATOM     (WINAPI *pNtUserRegisterClassExWOW)( const WNDCLASSEXW *wc, UNICODE_STRING *name,
                                                   UNICODE_STRING *version,
                                                   struct client_menu_name *client_menu_name,
@@ -207,10 +204,6 @@ struct unix_funcs
     DWORD    (WINAPI *pNtUserSetClassLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
     ULONG_PTR (WINAPI *pNtUserSetClassLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
     WORD     (WINAPI *pNtUserSetClassWord)( HWND hwnd, INT offset, WORD newval );
-    BOOL     (WINAPI *pNtUserSetLayeredWindowAttributes)( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
-    HWND     (WINAPI *pNtUserSetParent)( HWND hwnd, HWND parent );
-    BOOL     (WINAPI *pNtUserShowWindow)( HWND hwnd, INT cmd );
-    BOOL     (WINAPI *pNtUserShowWindowAsync)( HWND hwnd, INT cmd );
     BOOL     (WINAPI *pNtUserSystemParametersInfo)( UINT action, UINT val, PVOID ptr, UINT winini );
     BOOL     (WINAPI *pNtUserSystemParametersInfoForDpi)( UINT action, UINT val, PVOID ptr,
                                                          UINT winini, UINT dpi );
@@ -220,7 +213,6 @@ struct unix_funcs
                                                    const SIZE *size, HDC hdc_src, const POINT *pts_src,
                                                    COLORREF key, const BLENDFUNCTION *blend,
                                                    DWORD flags, const RECT *dirty );
-    HWND     (WINAPI *pNtUserWindowFromPoint)( LONG x, LONG y );
 
     /* Wine-specific functions */
     INT (WINAPI *pSetDIBits)( HDC hdc, HBITMAP hbitmap, UINT startscan,
