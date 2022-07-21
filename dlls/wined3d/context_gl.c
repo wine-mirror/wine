@@ -507,7 +507,7 @@ static inline void wined3d_context_gl_set_fbo_key_for_render_target(const struct
         key->objects[idx].object = render_target->gl_view.name;
         key->objects[idx].target = render_target->gl_view.target;
         key->objects[idx].level = 0;
-        key->objects[idx].layer = WINED3D_ALL_LAYERS;
+        key->objects[idx].layer = (render_target->layer_count == 1 ? 0 : WINED3D_ALL_LAYERS);
         return;
     }
 
