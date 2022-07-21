@@ -246,7 +246,12 @@
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserSetTimer ) \
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
+    SYSCALL_ENTRY( NtUserSetWindowLong ) \
+    SYSCALL_ENTRY( NtUserSetWindowLongPtr ) \
+    SYSCALL_ENTRY( NtUserSetWindowPlacement ) \
     SYSCALL_ENTRY( NtUserSetWindowPos ) \
+    SYSCALL_ENTRY( NtUserSetWindowRgn ) \
+    SYSCALL_ENTRY( NtUserSetWindowWord ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserShowCaret ) \
     SYSCALL_ENTRY( NtUserShowCursor ) \

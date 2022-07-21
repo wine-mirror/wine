@@ -826,36 +826,6 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
     return unix_funcs->pNtUserSetParent( hwnd, parent );
 }
 
-LONG WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetWindowLong( hwnd, offset, newval, ansi );
-}
-
-LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetWindowLongPtr( hwnd, offset, newval, ansi );
-}
-
-BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetWindowPlacement( hwnd, wpl );
-}
-
-int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetWindowRgn( hwnd, hrgn, redraw );
-}
-
-WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetWindowWord( hwnd, offset, newval );
-}
-
 BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )
 {
     if (!unix_funcs) return FALSE;

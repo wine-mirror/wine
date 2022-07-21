@@ -1959,6 +1959,34 @@ NTSTATUS WINAPI wow64_NtUserSetWinEventHook( UINT *args )
     return HandleToUlong( ret );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetWindowLong( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT offset = get_ulong( &args );
+    LONG newval = get_ulong( &args );
+    BOOL ansi = get_ulong( &args );
+
+    return NtUserSetWindowLong( hwnd, offset, newval, ansi );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetWindowLongPtr( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT offset = get_ulong( &args );
+    LONG_PTR newval = get_ulong( &args );
+    BOOL ansi = get_ulong( &args );
+
+    return NtUserSetWindowLongPtr( hwnd, offset, newval, ansi );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetWindowPlacement( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const WINDOWPLACEMENT *wpl = get_ptr( &args );
+
+    return NtUserSetWindowPlacement( hwnd, wpl );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetWindowPos( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -1970,6 +1998,24 @@ NTSTATUS WINAPI wow64_NtUserSetWindowPos( UINT *args )
     UINT flags = get_ulong( &args );
 
     return NtUserSetWindowPos( hwnd, after, x, y, cx, cy, flags );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetWindowRgn( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HRGN hrgn = get_handle( &args );
+    BOOL redraw = get_ulong( &args );
+
+    return NtUserSetWindowRgn( hwnd, hrgn, redraw );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetWindowWord( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT offset = get_ulong( &args );
+    WORD newval = get_ulong( &args );
+
+    return NtUserSetWindowWord( hwnd, offset, newval );
 }
 
 NTSTATUS WINAPI wow64_NtUserSetWindowsHookEx( UINT *args )
