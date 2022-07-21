@@ -738,12 +738,6 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
     return unix_funcs->pNtUserDrawMenuBarTemp( hwnd, hdc, rect, handle, font );
 }
 
-BOOL WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEnableScrollBar( hwnd, bar, flags );
-}
-
 INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
 {
     if (!unix_funcs) return ERROR;
@@ -761,12 +755,6 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetScrollBarInfo( hwnd, id, info );
 }
 
 BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
@@ -838,12 +826,6 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
     return unix_funcs->pNtUserSetParent( hwnd, parent );
 }
 
-INT WINAPI NtUserSetScrollInfo( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL redraw )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetScrollInfo( hwnd, bar, info, redraw );
-}
-
 LONG WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     if (!unix_funcs) return 0;
@@ -872,12 +854,6 @@ WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetWindowWord( hwnd, offset, newval );
-}
-
-BOOL WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserShowScrollBar( hwnd, bar, show );
 }
 
 BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )

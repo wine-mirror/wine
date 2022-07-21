@@ -574,6 +574,15 @@ NTSTATUS WINAPI wow64_NtUserEnableMenuItem( UINT *args )
     return NtUserEnableMenuItem( handle, id, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserEnableScrollBar( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT bar = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserEnableScrollBar( hwnd, bar, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserEndDeferWindowPosEx( UINT *args )
 {
     HDWP hdwp = get_handle( &args );
@@ -1282,6 +1291,15 @@ NTSTATUS WINAPI wow64_NtUserGetRegisteredRawInputDevices( UINT *args )
     }
 }
 
+NTSTATUS WINAPI wow64_NtUserGetScrollBarInfo( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    LONG id = get_ulong( &args );
+    SCROLLBARINFO *info = get_ptr( &args );
+
+    return NtUserGetScrollBarInfo( hwnd, id, info );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetSystemDpiForProcess( UINT *args )
 {
     HANDLE process = get_handle( &args );
@@ -1868,6 +1886,16 @@ NTSTATUS WINAPI wow64_NtUserSetProp( UINT *args )
     return NtUserSetProp( hwnd, str, handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetScrollInfo( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT bar = get_ulong( &args );
+    const SCROLLINFO *info = get_ptr( &args );
+    BOOL redraw = get_ulong( &args );
+
+    return NtUserSetScrollInfo( hwnd, bar, info, redraw );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetSysColors( UINT *args )
 {
     INT count = get_ulong( &args );
@@ -1972,6 +2000,15 @@ NTSTATUS WINAPI wow64_NtUserShowCursor( UINT *args )
     BOOL show = get_ulong( &args );
 
     return NtUserShowCursor( show );
+}
+
+NTSTATUS WINAPI wow64_NtUserShowScrollBar( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT bar = get_ulong( &args );
+    BOOL show = get_ulong( &args );
+
+    return NtUserShowScrollBar( hwnd, bar, show );
 }
 
 NTSTATUS WINAPI wow64_NtUserThunkedMenuInfo( UINT *args )

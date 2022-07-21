@@ -129,6 +129,7 @@
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEnableMenuItem ) \
+    SYSCALL_ENTRY( NtUserEnableScrollBar ) \
     SYSCALL_ENTRY( NtUserEndDeferWindowPosEx ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserEnumDisplayDevices ) \
@@ -181,6 +182,7 @@
     SYSCALL_ENTRY( NtUserGetRawInputDeviceInfo ) \
     SYSCALL_ENTRY( NtUserGetRawInputDeviceList ) \
     SYSCALL_ENTRY( NtUserGetRegisteredRawInputDevices ) \
+    SYSCALL_ENTRY( NtUserGetScrollBarInfo ) \
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetSystemMenu ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
@@ -237,6 +239,7 @@
     SYSCALL_ENTRY( NtUserSetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
+    SYSCALL_ENTRY( NtUserSetScrollInfo ) \
     SYSCALL_ENTRY( NtUserSetSysColors ) \
     SYSCALL_ENTRY( NtUserSetSystemMenu ) \
     SYSCALL_ENTRY( NtUserSetSystemTimer ) \
@@ -247,6 +250,7 @@
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserShowCaret ) \
     SYSCALL_ENTRY( NtUserShowCursor ) \
+    SYSCALL_ENTRY( NtUserShowScrollBar ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserToUnicodeEx ) \
