@@ -142,6 +142,23 @@ static HRESULT wrapper_add_entry(XACT3EngineImpl *engine, void *fact, void *xact
     return S_OK;
 }
 
+/* Must be protected by engine->wrapper_lookup_cs */
+static void* wrapper_find_entry(XACT3EngineImpl *engine, void *faudio)
+{
+    struct wrapper_lookup *lookup;
+    struct wine_rb_entry *entry;
+
+    entry = wine_rb_get(&engine->wrapper_lookup, faudio);
+    if (entry)
+    {
+        lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
+        return lookup->xact;
+    }
+
+    WARN("cannot find interface in wrapper lookup\n");
+    return NULL;
+}
+
 typedef struct _XACT3CueImpl {
     IXACT3Cue IXACT3Cue_iface;
     FACTCue *fact_cue;
@@ -1000,10 +1017,8 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
 {
     XACT3EngineImpl *engine = (XACT3EngineImpl *)notification->pvContext;
     XACT_NOTIFICATION xnotification;
-    struct wrapper_lookup *lookup;
-    struct wine_rb_entry *entry;
 
-    TRACE("notification %p\n", notification->pvContext);
+    TRACE("notification %d, context %p\n", notification->type, notification->pvContext);
 
     /* Older versions of FAudio don't pass through the context */
     if (!engine)
@@ -1016,28 +1031,50 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
     xnotification.timeStamp = notification->timeStamp;
     xnotification.pvContext = engine->contexts[notification->type];
 
+    EnterCriticalSection(&engine->wrapper_lookup_cs);
     if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED
             || notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
     {
-        EnterCriticalSection(&engine->wrapper_lookup_cs);
-        entry = wine_rb_get(&engine->wrapper_lookup, notification->waveBank.pWaveBank);
-        if (!entry)
-        {
-            WARN("cannot find wave bank in wrapper lookup\n");
-            xnotification.waveBank.pWaveBank = NULL;
-        }
-        else
-        {
-            lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
-            xnotification.waveBank.pWaveBank = lookup->xact;
-        }
-        LeaveCriticalSection(&engine->wrapper_lookup_cs);
+        xnotification.waveBank.pWaveBank = wrapper_find_entry(engine, notification->waveBank.pWaveBank);
+    }
+    else if(notification->type == XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED)
+    {
+        xnotification.soundBank.pSoundBank = wrapper_find_entry(engine, notification->soundBank.pSoundBank);
+    }
+    else if (notification->type == XACTNOTIFICATIONTYPE_WAVESTOP
+#if XACT3_VER >= 0x0205
+             || notification->type == XACTNOTIFICATIONTYPE_WAVEDESTROYED
+             || notification->type == XACTNOTIFICATIONTYPE_WAVELOOPED
+             || notification->type == XACTNOTIFICATIONTYPE_WAVEPLAY
+             || notification->type == XACTNOTIFICATIONTYPE_WAVEPREPARED)
+#else
+             )
+#endif
+    {
+        xnotification.wave.cueIndex = notification->wave.cueIndex;
+        xnotification.wave.pCue = wrapper_find_entry(engine, notification->wave.pCue);
+        xnotification.wave.pSoundBank = wrapper_find_entry(engine, notification->wave.pSoundBank);
+#if XACT3_VER >= 0x0205
+        xnotification.wave.pWave = wrapper_find_entry(engine, notification->wave.pWave);
+#endif
+        xnotification.wave.pWaveBank = wrapper_find_entry(engine, notification->wave.pWaveBank);
+    }
+    else if (notification->type == XACTNOTIFICATIONTYPE_CUEPLAY ||
+             notification->type == XACTNOTIFICATIONTYPE_CUEPREPARED ||
+             notification->type == XACTNOTIFICATIONTYPE_CUESTOP ||
+             notification->type == XACTNOTIFICATIONTYPE_CUEDESTROYED)
+    {
+        xnotification.cue.pCue = wrapper_find_entry(engine, notification->cue.pCue);
+        xnotification.cue.cueIndex = notification->cue.cueIndex;
+        xnotification.cue.pSoundBank = wrapper_find_entry(engine, notification->cue.pSoundBank);
     }
     else
     {
+        LeaveCriticalSection(&engine->wrapper_lookup_cs);
         FIXME("Unsupported callback type %d\n", notification->type);
         return;
     }
+    LeaveCriticalSection(&engine->wrapper_lookup_cs);
 
     engine->notification_callback(&xnotification);
 }
