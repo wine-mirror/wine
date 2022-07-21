@@ -725,18 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
-                                  UNICODE_STRING *version, UNICODE_STRING *window_name,
-                                  DWORD style, INT x, INT y, INT width, INT height,
-                                  HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                  DWORD flags, CBT_CREATEWNDW *cbtc, DWORD unk, BOOL ansi )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCreateWindowEx( ex_style, class_name, version, window_name,
-                                              style, x, y, width, height, parent, menu,
-                                              instance, params, flags, cbtc, unk, ansi );
-}
-
 HDWP WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after,
                                          INT x, INT y, INT cx, INT cy,
                                          UINT flags, UINT unk1, UINT unk2 )
@@ -750,12 +738,6 @@ BOOL WINAPI NtUserDestroyMenu( HMENU handle )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserDestroyMenu( handle );
-}
-
-BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserDestroyWindow( hwnd );
 }
 
 BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,

@@ -186,16 +186,10 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
-    HWND     (WINAPI *pNtUserCreateWindowEx)( DWORD ex_style, UNICODE_STRING *class_name,
-                                              UNICODE_STRING *version, UNICODE_STRING *window_name,
-                                              DWORD style, INT x, INT y, INT width, INT height,
-                                              HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                              DWORD flags, CBT_CREATEWNDW *cbtc, DWORD unk, BOOL ansi );
     HDWP     (WINAPI *pNtUserDeferWindowPosAndBand)( HDWP hdwp, HWND hwnd, HWND after,
                                                      INT x, INT y, INT cx, INT cy,
                                                      UINT flags, UINT unk1, UINT unk2 );
     BOOL     (WINAPI *pNtUserDestroyMenu)( HMENU handle );
-    BOOL     (WINAPI *pNtUserDestroyWindow)( HWND hwnd );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                                HICON icon, const WCHAR *str, UINT flags );
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );

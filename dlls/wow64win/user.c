@@ -411,6 +411,38 @@ NTSTATUS WINAPI wow64_NtUserCreateInputContext( UINT *args )
     return HandleToUlong( NtUserCreateInputContext( client_ptr ));
 }
 
+NTSTATUS WINAPI wow64_NtUserCreateWindowEx( UINT *args )
+{
+    DWORD ex_style = get_ulong( &args );
+    UNICODE_STRING32 *class_name32 = get_ptr( &args );
+    UNICODE_STRING32 *version32 = get_ptr( &args );
+    UNICODE_STRING32 *window_name32 = get_ptr( &args );
+    DWORD style = get_ulong( &args );
+    int x = get_ulong( &args );
+    int y = get_ulong( &args );
+    int width = get_ulong( &args );
+    int height = get_ulong( &args );
+    HWND parent = get_handle( &args );
+    HMENU menu = get_handle( &args );
+    HINSTANCE instance = get_handle( &args );
+    void *params = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+    void *cbtc = get_ptr( &args );
+    DWORD unk = get_ulong( &args );
+    BOOL ansi = get_ulong( &args );
+
+    UNICODE_STRING class_name, version, window_name;
+    HWND ret;
+
+    ret = NtUserCreateWindowEx( ex_style,
+                                unicode_str_32to64( &class_name, class_name32),
+                                unicode_str_32to64( &version, version32 ),
+                                unicode_str_32to64( &window_name, window_name32 ),
+                                style, x, y, width, height, parent, menu,
+                                instance, params, flags, cbtc, unk, ansi );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtUserCreateWindowStation( UINT *args )
 {
     OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
@@ -456,6 +488,13 @@ NTSTATUS WINAPI wow64_NtUserDestroyInputContext( UINT *args )
     HIMC handle = get_handle( &args );
 
     return NtUserDestroyInputContext( handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserDestroyWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserDestroyWindow( hwnd );
 }
 
 NTSTATUS WINAPI wow64_NtUserDisableThreadIme( UINT *args )

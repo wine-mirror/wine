@@ -114,11 +114,13 @@
     SYSCALL_ENTRY( NtUserCreateCaret ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
     SYSCALL_ENTRY( NtUserCreateInputContext ) \
+    SYSCALL_ENTRY( NtUserCreateWindowEx ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserDeleteMenu ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserDestroyCursor ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
+    SYSCALL_ENTRY( NtUserDestroyWindow ) \
     SYSCALL_ENTRY( NtUserDisableThreadIme ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
     SYSCALL_ENTRY( NtUserDragDetect ) \
