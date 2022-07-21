@@ -832,7 +832,7 @@
 @ stdcall -syscall NtUserDestroyCursor(long long)
 @ stub NtUserDestroyDCompositionHwndTarget
 @ stdcall -syscall NtUserDestroyInputContext(long)
-@ stdcall NtUserDestroyMenu(long)
+@ stdcall -syscall NtUserDestroyMenu(long)
 @ stub NtUserDestroyPalmRejectionDelayZone
 @ stdcall -syscall NtUserDestroyWindow(long)
 @ stub NtUserDisableImmersiveOwner
@@ -860,7 +860,7 @@
 @ stdcall -syscall NtUserEmptyClipboard()
 @ stub NtUserEnableChildWindowDpiMessage
 @ stub NtUserEnableIAMAccess
-@ stdcall NtUserEnableMenuItem(long long long)
+@ stdcall -syscall NtUserEnableMenuItem(long long long)
 @ stub NtUserEnableMouseInPointer
 @ stub NtUserEnableMouseInPointerForWindow
 @ stub NtUserEnableMouseInputForCursorSuppression
@@ -952,7 +952,7 @@
 @ stdcall -syscall NtUserGetKeyboardState(ptr)
 @ stdcall -syscall NtUserGetLayeredWindowAttributes(long ptr ptr ptr)
 @ stub NtUserGetListBoxInfo
-@ stdcall NtUserGetMenuBarInfo(long long long ptr)
+@ stdcall -syscall NtUserGetMenuBarInfo(long long long ptr)
 @ stub NtUserGetMenuIndex
 @ stdcall -syscall NtUserGetMenuItemRect(long long long ptr)
 @ stdcall -syscall NtUserGetMessage(ptr long long long)
@@ -994,7 +994,7 @@
 @ stdcall NtUserGetScrollBarInfo(long long ptr)
 @ stub NtUserGetSharedWindowData
 @ stdcall -syscall NtUserGetSystemDpiForProcess(long)
-@ stdcall NtUserGetSystemMenu(long long)
+@ stdcall -syscall NtUserGetSystemMenu(long long)
 @ stdcall -syscall NtUserGetThreadDesktop(long)
 @ stub NtUserGetThreadState
 @ stdcall -syscall NtUserGetTitleBarInfo(long ptr)
@@ -1022,7 +1022,7 @@
 @ stub NtUserHardErrorControl
 @ stdcall -syscall NtUserHideCaret(long)
 @ stub NtUserHidePointerContactVisualization
-@ stdcall NtUserHiliteMenuItem(long long long long)
+@ stdcall -syscall NtUserHiliteMenuItem(long long long long)
 @ stub NtUserHungWindowFromGhostWindow
 @ stub NtUserHwndQueryRedirectionInfo
 @ stub NtUserHwndSetRedirectionInfo
@@ -1206,7 +1206,7 @@
 @ stdcall NtUserSetLayeredWindowAttributes(ptr long long long)
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated
 @ stub NtUserSetManipulationInputTarget
-@ stdcall NtUserSetMenu(long long)
+@ stdcall -syscall NtUserSetMenu(long long)
 @ stdcall -syscall NtUserSetMenuContextHelpId(long long)
 @ stdcall -syscall NtUserSetMenuDefaultItem(long long long)
 @ stub NtUserSetMenuFlagRtoL
@@ -1229,7 +1229,7 @@
 @ stub NtUserSetShellWindowEx
 @ stdcall -syscall NtUserSetSysColors(long ptr ptr)
 @ stub NtUserSetSystemCursor
-@ stdcall NtUserSetSystemMenu(long long)
+@ stdcall -syscall NtUserSetSystemMenu(long long)
 @ stdcall -syscall NtUserSetSystemTimer(long long long)
 @ stub NtUserSetTargetForResourceBrokering
 @ stdcall -syscall NtUserSetThreadDesktop(long)
@@ -1281,7 +1281,7 @@
 @ stdcall -syscall NtUserTrackPopupMenuEx(long long long long long ptr)
 @ stub NtUserTransformPoint
 @ stub NtUserTransformRect
-@ stdcall NtUserTranslateAccelerator(long long ptr)
+@ stdcall -syscall NtUserTranslateAccelerator(long long ptr)
 @ stdcall -syscall NtUserTranslateMessage(ptr long)
 @ stub NtUserUndelegateInput
 @ stdcall -syscall NtUserUnhookWinEvent(long)

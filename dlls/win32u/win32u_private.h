@@ -186,22 +186,17 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
-    BOOL     (WINAPI *pNtUserDestroyMenu)( HMENU handle );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                                HICON icon, const WCHAR *str, UINT flags );
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
-    BOOL     (WINAPI *pNtUserEnableMenuItem)( HMENU handle, UINT id, UINT flags );
     BOOL     (WINAPI *pNtUserEnableScrollBar)( HWND hwnd, UINT bar, UINT flags );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
     INT      (WINAPI *pNtUserExcludeUpdateRgn)( HDC hdc, HWND hwnd );
     BOOL     (WINAPI *pNtUserFlashWindowEx)( FLASHWINFO *info );
     ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                               struct client_menu_name *menu_name, BOOL ansi );
-    BOOL     (WINAPI *pNtUserGetMenuBarInfo)( HWND hwnd, LONG id, LONG item, MENUBARINFO *info );
     BOOL     (WINAPI *pNtUserGetScrollBarInfo)( HWND hwnd, LONG id, SCROLLBARINFO *info );
-    HMENU    (WINAPI *pNtUserGetSystemMenu)( HWND hwnd, BOOL revert );
     BOOL     (WINAPI *pNtUserGetWindowPlacement)( HWND hwnd, WINDOWPLACEMENT *placement );
-    BOOL     (WINAPI *pNtUserHiliteMenuItem)( HWND hwnd, HMENU handle, UINT item, UINT hilite );
     HICON    (WINAPI *pNtUserInternalGetWindowIcon)( HWND hwnd, UINT type );
     ATOM     (WINAPI *pNtUserRegisterClassExWOW)( const WNDCLASSEXW *wc, UNICODE_STRING *name,
                                                   UNICODE_STRING *version,
@@ -215,10 +210,8 @@ struct unix_funcs
     ULONG_PTR (WINAPI *pNtUserSetClassLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
     WORD     (WINAPI *pNtUserSetClassWord)( HWND hwnd, INT offset, WORD newval );
     BOOL     (WINAPI *pNtUserSetLayeredWindowAttributes)( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
-    BOOL     (WINAPI *pNtUserSetMenu)( HWND hwnd, HMENU menu );
     HWND     (WINAPI *pNtUserSetParent)( HWND hwnd, HWND parent );
     INT      (WINAPI *pNtUserSetScrollInfo)( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL redraw );
-    BOOL     (WINAPI *pNtUserSetSystemMenu)( HWND hwnd, HMENU menu );
     LONG     (WINAPI *pNtUserSetWindowLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
     LONG_PTR (WINAPI *pNtUserSetWindowLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
     BOOL     (WINAPI *pNtUserSetWindowPlacement)( HWND hwnd, const WINDOWPLACEMENT *wpl );
@@ -230,7 +223,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserSystemParametersInfo)( UINT action, UINT val, PVOID ptr, UINT winini );
     BOOL     (WINAPI *pNtUserSystemParametersInfoForDpi)( UINT action, UINT val, PVOID ptr,
                                                          UINT winini, UINT dpi );
-    INT      (WINAPI *pNtUserTranslateAccelerator)( HWND hwnd, HACCEL accel, MSG *msg );
     BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
                                                struct client_menu_name *client_menu_name );
     BOOL     (WINAPI *pNtUserUpdateLayeredWindow)( HWND hwnd, HDC hdc_dst, const POINT *pts_dst,

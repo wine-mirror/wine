@@ -121,12 +121,14 @@
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserDestroyCursor ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
+    SYSCALL_ENTRY( NtUserDestroyMenu ) \
     SYSCALL_ENTRY( NtUserDestroyWindow ) \
     SYSCALL_ENTRY( NtUserDisableThreadIme ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
     SYSCALL_ENTRY( NtUserDragDetect ) \
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
+    SYSCALL_ENTRY( NtUserEnableMenuItem ) \
     SYSCALL_ENTRY( NtUserEndDeferWindowPosEx ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserEnumDisplayDevices ) \
@@ -163,6 +165,7 @@
     SYSCALL_ENTRY( NtUserGetKeyboardLayoutName ) \
     SYSCALL_ENTRY( NtUserGetKeyboardState ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
+    SYSCALL_ENTRY( NtUserGetMenuBarInfo ) \
     SYSCALL_ENTRY( NtUserGetMenuItemRect ) \
     SYSCALL_ENTRY( NtUserGetMessage ) \
     SYSCALL_ENTRY( NtUserGetMouseMovePointsEx ) \
@@ -179,6 +182,7 @@
     SYSCALL_ENTRY( NtUserGetRawInputDeviceList ) \
     SYSCALL_ENTRY( NtUserGetRegisteredRawInputDevices ) \
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
+    SYSCALL_ENTRY( NtUserGetSystemMenu ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserGetTitleBarInfo ) \
     SYSCALL_ENTRY( NtUserGetUpdateRect ) \
@@ -186,6 +190,7 @@
     SYSCALL_ENTRY( NtUserGetUpdatedClipboardFormats ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
     SYSCALL_ENTRY( NtUserHideCaret ) \
+    SYSCALL_ENTRY( NtUserHiliteMenuItem ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
     SYSCALL_ENTRY( NtUserInvalidateRect ) \
@@ -225,6 +230,7 @@
     SYSCALL_ENTRY( NtUserSetFocus ) \
     SYSCALL_ENTRY( NtUserSetInternalWindowPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
+    SYSCALL_ENTRY( NtUserSetMenu ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
     SYSCALL_ENTRY( NtUserSetMenuDefaultItem ) \
     SYSCALL_ENTRY( NtUserSetObjectInformation ) \
@@ -232,6 +238,7 @@
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
     SYSCALL_ENTRY( NtUserSetSysColors ) \
+    SYSCALL_ENTRY( NtUserSetSystemMenu ) \
     SYSCALL_ENTRY( NtUserSetSystemTimer ) \
     SYSCALL_ENTRY( NtUserSetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserSetTimer ) \
@@ -245,6 +252,7 @@
     SYSCALL_ENTRY( NtUserToUnicodeEx ) \
     SYSCALL_ENTRY( NtUserTrackMouseEvent ) \
     SYSCALL_ENTRY( NtUserTrackPopupMenuEx ) \
+    SYSCALL_ENTRY( NtUserTranslateAccelerator )  \
     SYSCALL_ENTRY( NtUserTranslateMessage ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
     SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \

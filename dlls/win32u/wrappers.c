@@ -725,12 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-BOOL WINAPI NtUserDestroyMenu( HMENU handle )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserDestroyMenu( handle );
-}
-
 BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                    HICON icon, const WCHAR *str, UINT flags )
 {
@@ -742,12 +736,6 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserDrawMenuBarTemp( hwnd, hdc, rect, handle, font );
-}
-
-BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEnableMenuItem( handle, id, flags );
 }
 
 BOOL WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags )
@@ -773,24 +761,6 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *info )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserGetMenuBarInfo( hwnd, id, item, info );
-}
-
-HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserGetSystemMenu( hwnd, revert );
-}
-
-BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilite )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserHiliteMenuItem( hwnd, handle, item, hilite );
 }
 
 BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
@@ -862,12 +832,6 @@ BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
     return unix_funcs->pNtUserSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
-BOOL WINAPI NtUserSetMenu( HWND hwnd, HMENU menu )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSetMenu( hwnd, menu );
-}
-
 HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
 {
     if (!unix_funcs) return 0;
@@ -878,12 +842,6 @@ INT WINAPI NtUserSetScrollInfo( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetScrollInfo( hwnd, bar, info, redraw );
-}
-
-BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSetSystemMenu( hwnd, menu );
 }
 
 LONG WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
@@ -944,12 +902,6 @@ BOOL WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, 
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserSystemParametersInfoForDpi( action, val, ptr, winini, dpi );
-}
-
-INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserTranslateAccelerator( hwnd, accel, msg );
 }
 
 BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,

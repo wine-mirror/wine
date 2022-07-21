@@ -507,6 +507,13 @@ NTSTATUS WINAPI wow64_NtUserDestroyInputContext( UINT *args )
     return NtUserDestroyInputContext( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserDestroyMenu( UINT *args )
+{
+    HMENU handle = get_handle( &args );
+
+    return NtUserDestroyMenu( handle );
+}
+
 NTSTATUS WINAPI wow64_NtUserDestroyWindow( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -556,6 +563,15 @@ NTSTATUS WINAPI wow64_NtUserDrawIconEx( UINT *args )
 NTSTATUS WINAPI wow64_NtUserEmptyClipboard( UINT *args )
 {
     return NtUserEmptyClipboard();
+}
+
+NTSTATUS WINAPI wow64_NtUserEnableMenuItem( UINT *args )
+{
+    HMENU handle = get_handle( &args );
+    UINT id = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserEnableMenuItem( handle, id, flags );
 }
 
 NTSTATUS WINAPI wow64_NtUserEndDeferWindowPosEx( UINT *args )
@@ -950,6 +966,38 @@ NTSTATUS WINAPI wow64_NtUserGetLayeredWindowAttributes( UINT *args )
     return NtUserGetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetMenuBarInfo( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    LONG id = get_ulong( &args );
+    LONG item = get_ulong( &args );
+    struct
+    {
+        DWORD cbSize;
+        RECT  rcBar;
+        ULONG hMenu;
+        ULONG hwndMenu;
+        BOOL  fBarFocused:1;
+        BOOL  fFocused:1;
+    } *info32 = get_ptr( &args );
+
+    MENUBARINFO info;
+
+    if (info32->cbSize != sizeof(*info32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    info.cbSize = sizeof(info);
+    info.rcBar = info32->rcBar;
+    info.hMenu = UlongToHandle( info32->hMenu );
+    info.hwndMenu = UlongToHandle( info32->hwndMenu );
+    info.fBarFocused = info32->fBarFocused;
+    info.fFocused = info32->fFocused;
+    return NtUserGetMenuBarInfo( hwnd, id, item, &info );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetMenuItemRect( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -1241,6 +1289,14 @@ NTSTATUS WINAPI wow64_NtUserGetSystemDpiForProcess( UINT *args )
     return NtUserGetSystemDpiForProcess( process );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetSystemMenu( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    BOOL revert = get_ulong( &args );
+
+    return HandleToUlong( NtUserGetSystemMenu( hwnd, revert ));
+}
+
 NTSTATUS WINAPI wow64_NtUserGetThreadDesktop( UINT *args )
 {
     DWORD thread = get_ulong( &args );
@@ -1297,6 +1353,16 @@ NTSTATUS WINAPI wow64_NtUserHideCaret( UINT *args )
     HWND hwnd = get_handle( &args );
 
     return NtUserHideCaret( hwnd );
+}
+
+NTSTATUS WINAPI wow64_NtUserHiliteMenuItem( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HMENU handle = get_handle( &args );
+    UINT item = get_ulong( &args );
+    UINT hilite = get_ulong( &args );
+
+    return NtUserHiliteMenuItem( hwnd, handle, item, hilite );
 }
 
 NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
@@ -1743,6 +1809,14 @@ NTSTATUS WINAPI wow64_NtUserSetKeyboardState( UINT *args )
     return NtUserSetKeyboardState( state );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetMenu( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HMENU menu = get_handle( &args );
+
+    return NtUserSetMenu( hwnd, menu );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetMenuContextHelpId( UINT *args )
 {
     HMENU menu = get_handle( &args );
@@ -1801,6 +1875,14 @@ NTSTATUS WINAPI wow64_NtUserSetSysColors( UINT *args )
     const COLORREF *values = get_ptr( &args );
 
     return NtUserSetSysColors( count, colors, values );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetSystemMenu( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HMENU menu = get_handle( &args );
+
+    return NtUserSetSystemMenu( hwnd, menu );
 }
 
 NTSTATUS WINAPI wow64_NtUserSetSystemTimer( UINT *args )
@@ -2006,6 +2088,17 @@ NTSTATUS WINAPI wow64_NtUserTrackPopupMenuEx( UINT *args )
     TPMPARAMS *params = get_ptr( &args );
 
     return NtUserTrackPopupMenuEx( handle, flags, x, y, hwnd, params );
+}
+
+NTSTATUS WINAPI wow64_NtUserTranslateAccelerator( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HACCEL accel = get_handle( &args );
+    MSG32 *msg32 = get_ptr( &args );
+
+    MSG msg;
+
+    return NtUserTranslateAccelerator( hwnd, accel, msg_32to64( &msg, msg32 ));
 }
 
 NTSTATUS WINAPI wow64_NtUserTranslateMessage( UINT *args )
