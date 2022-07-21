@@ -30,7 +30,6 @@
 #include "main.h"
 
 static const WCHAR* editValueName;
-static WCHAR* stringValueData;
 static BOOL isDecimal;
 
 struct edit_params
@@ -267,39 +266,42 @@ static INT_PTR CALLBACK modify_binary_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wP
     return FALSE;
 }
 
-static LPWSTR read_value(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType, LONG *len)
+static BOOL read_value(HWND hwnd, struct edit_params *params)
 {
-    DWORD valueDataLen;
-    LPWSTR buffer = NULL;
-    LONG lRet;
+    LONG ret;
+    WCHAR *buf = NULL;
 
-    lRet = RegQueryValueExW(hKey, valueName, NULL, lpType, NULL, &valueDataLen);
-    if (lRet) {
-        if (lRet == ERROR_FILE_NOT_FOUND && !valueName) { /* no default value here, make it up */
-            if (len) *len = 1;
-            if (lpType) *lpType = REG_SZ;
-            buffer = malloc(sizeof(WCHAR));
-            *buffer = '\0';
-            return buffer;
+    if ((ret = RegQueryValueExW(params->hkey, params->value_name, NULL, &params->type, NULL, &params->size)))
+    {
+        if (ret == ERROR_FILE_NOT_FOUND && !params->value_name)
+        {
+            params->type = REG_SZ;
+            params->size = sizeof(WCHAR);
+            params->data = malloc(params->size);
+            *(WCHAR *)params->data = 0;
+            return TRUE;
         }
-        error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
-        goto done;
+
+        goto error;
     }
 
-    buffer = malloc(valueDataLen + sizeof(WCHAR));
-    lRet = RegQueryValueExW(hKey, valueName, 0, 0, (LPBYTE)buffer, &valueDataLen);
-    if (lRet) {
-        error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
-        goto done;
-    }
-    if((valueDataLen % sizeof(WCHAR)) == 0)
-        buffer[valueDataLen / sizeof(WCHAR)] = 0;
-    if(len) *len = valueDataLen;
-    return buffer;
+    buf = malloc(params->size + sizeof(WCHAR));
 
-done:
-    free(buffer);
-    return NULL;
+    if (RegQueryValueExW(params->hkey, params->value_name, NULL, &params->type, (BYTE *)buf, &params->size))
+        goto error;
+
+    if (params->size % sizeof(WCHAR) == 0)
+        buf[params->size / sizeof(WCHAR)] = 0;
+
+    params->data = buf;
+
+    return TRUE;
+
+error:
+    error_code_messagebox(hwnd, IDS_BAD_VALUE, params->value_name);
+    free(buf);
+    params->data = NULL;
+    return FALSE;
 }
 
 BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR keyName)
@@ -383,27 +385,24 @@ static void format_dlgproc_string(struct edit_params *params)
 
 BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 {
-    HKEY hKey;
-    DWORD type;
-    LONG lRet;
-    LONG len;
     struct edit_params params;
     BOOL result = FALSE;
 
-    lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
-    if (lRet) {
+    editValueName = valueName ? valueName : g_pszDefaultValueName;
+
+    if (RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &params.hkey))
+    {
         error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);
-	return FALSE;
+        return FALSE;
     }
 
-    editValueName = valueName ? valueName : g_pszDefaultValueName;
-    if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, &len))) goto done;
-
-    params.hkey = hKey;
     params.value_name = valueName;
-    params.type = type;
-    params.data = stringValueData;
-    params.size = len;
+
+    if (!read_value(hwnd, &params))
+    {
+        RegCloseKey(params.hkey);
+        return FALSE;
+    }
 
     switch (params.type)
     {
@@ -433,15 +432,13 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     {
         int index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
                                  MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
-        free(stringValueData);
-        stringValueData = read_value(hwnd, hKey, valueName, &type, &len);
-        format_value_data(g_pChildWnd->hListWnd, index, type, stringValueData, len);
+
+        read_value(hwnd, &params);
+        format_value_data(g_pChildWnd->hListWnd, index, params.type, params.data, params.size);
     }
 
-done:
-    free(stringValueData);
-    stringValueData = NULL;
-    RegCloseKey(hKey);
+    free(params.data);
+    RegCloseKey(params.hkey);
     return result;
 }
 
@@ -564,46 +561,47 @@ done:
 
 BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName)
 {
-    LPWSTR value = NULL;
-    DWORD type;
-    LONG len, lRet;
+    struct edit_params params;
     BOOL result = FALSE;
-    HKEY hKey;
 
     if (!oldName) return FALSE;
     if (!newName) return FALSE;
 
-    lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
-    if (lRet) {
+    if (RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &params.hkey))
+    {
         error_code_messagebox(hwnd, IDS_RENAME_VALUE_FAILED);
-	return FALSE;
+        return FALSE;
     }
 
-    if (!RegQueryValueExW(hKey, newName, NULL, NULL, NULL, NULL)) {
+    if (!RegQueryValueExW(params.hkey, newName, NULL, NULL, NULL, NULL))
+    {
         error_code_messagebox(hwnd, IDS_VALUE_EXISTS, oldName);
         goto done;
     }
-    value = read_value(hwnd, hKey, oldName, &type, &len);
-    if(!value) goto done;
-    lRet = RegSetValueExW(hKey, newName, 0, type, (BYTE*)value, len);
-    if (lRet) {
+
+    params.value_name = oldName;
+    if (!read_value(hwnd, &params)) goto done;
+
+    if (RegSetValueExW(params.hkey, newName, 0, params.type, (BYTE *)params.data, params.size))
+    {
         error_code_messagebox(hwnd, IDS_RENAME_VALUE_FAILED);
-	goto done;
+        goto done;
     }
-    lRet = RegDeleteValueW(hKey, oldName);
-    if (lRet) {
-	RegDeleteValueW(hKey, newName);
+
+    if (RegDeleteValueW(params.hkey, oldName))
+    {
+        RegDeleteValueW(params.hkey, newName);
         error_code_messagebox(hwnd, IDS_RENAME_VALUE_FAILED);
-	goto done;
+        goto done;
     }
+
     result = TRUE;
 
 done:
-    free(value);
-    RegCloseKey(hKey);
+    free(params.data);
+    RegCloseKey(params.hkey);
     return result;
 }
-
 
 BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName)
 {
