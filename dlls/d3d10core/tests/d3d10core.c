@@ -19626,6 +19626,73 @@ static void test_vertex_formats(void)
     release_test_context(&test_context);
 }
 
+/* This is a regression test for a specific code path triggered by
+ * "Sonic Colors: Ultimate" and "My Place".
+ *
+ * GL_ARB_geometry_shader4 requires that either all or none of the FBO
+ * attachments are layered, where "layered" notably means whether they were
+ * array textures attached with glFramebufferTexture(), and does *not* depend
+ * on whether the attachment has more than one layer. */
+static void test_layered_rtv_mismatch(void)
+{
+    static const struct vec4 black = {0.0f, 0.0f, 0.0f, 0.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    struct d3d10core_test_context test_context;
+    ID3D10Texture2D *rt_texture, *ds_texture;
+    D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    struct resource_readback rb;
+    ID3D10RenderTargetView *rtv;
+    ID3D10DepthStencilView *dsv;
+    const struct vec4 *colour;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    texture_desc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &ds_texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)ds_texture, NULL, &dsv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_TYPELESS;
+    texture_desc.ArraySize = 2;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    rtv_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
+    rtv_desc.Texture2DArray.ArraySize = 1;
+    rtv_desc.Texture2DArray.FirstArraySlice = 0;
+    rtv_desc.Texture2DArray.MipSlice = 0;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)rt_texture, &rtv_desc, &rtv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, dsv);
+    clear_rtv(&test_context, rtv, &black);
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+
+    draw_color_quad(&test_context, &green);
+
+    get_texture_readback(rt_texture, 0, &rb);
+    colour = get_readback_vec4(&rb, 320, 240);
+    ok(compare_vec4(colour, &green, 0), "Got colour {%.8e, %.8e, %.8e, %.8e}.\n",
+            colour->x, colour->y, colour->z, colour->w);
+    release_resource_readback(&rb);
+
+    ID3D10Texture2D_Release(rt_texture);
+    ID3D10Texture2D_Release(ds_texture);
+    ID3D10RenderTargetView_Release(rtv);
+    ID3D10DepthStencilView_Release(dsv);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19759,6 +19826,7 @@ START_TEST(d3d10core)
     queue_test(test_rtv_depth_slice);
     queue_test(test_stencil_only_write_after_clear);
     queue_test(test_vertex_formats);
+    queue_test(test_layered_rtv_mismatch);
 
     run_queued_tests();
 
