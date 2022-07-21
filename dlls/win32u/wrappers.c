@@ -744,21 +744,6 @@ INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
     return unix_funcs->pNtUserExcludeUpdateRgn( hdc, hwnd );
 }
 
-ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
-                                  struct client_menu_name *menu_name, BOOL ansi )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
-                                      struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
-                                      DWORD *wow )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserRegisterClassExWOW( wc, name, version, client_menu_name, fnid, flags, wow );
-}
-
 INT WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc )
 {
     if (!unix_funcs) return 0;
@@ -778,24 +763,6 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
-DWORD WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetClassLong( hwnd, offset, newval, ansi );
-}
-
-ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetClassLongPtr( hwnd, offset, newval, ansi );
-}
-
-WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
-}
-
 BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, PVOID ptr, UINT winini )
 {
     if (!unix_funcs) return FALSE;
@@ -806,13 +773,6 @@ BOOL WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, 
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserSystemParametersInfoForDpi( action, val, ptr, winini, dpi );
-}
-
-BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
-                                   struct client_menu_name *client_menu_name )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserUnregisterClass( name, instance, client_menu_name );
 }
 
 BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,

@@ -118,6 +118,29 @@ typedef struct
     BYTE   rgbReserved[32];
 } PAINTSTRUCT32;
 
+typedef struct
+{
+    UINT   cbSize;
+    UINT   style;
+    ULONG  lpfnWndProc;
+    INT    cbClsExtra;
+    INT    cbWndExtra;
+    ULONG  hInstance;
+    ULONG  hIcon;
+    ULONG  hCursor;
+    ULONG  hbrBackground;
+    ULONG  lpszMenuName;
+    ULONG  lpszClassName;
+    ULONG  hIconSm;
+} WNDCLASSEXW32;
+
+struct client_menu_name32
+{
+    ULONG nameA;
+    ULONG nameW;
+    ULONG nameUS;
+};
+
 static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -142,6 +165,28 @@ static MSG32 *msg_64to32( MSG *msg, MSG32 *msg32 )
     msg32->time    = msg->time;
     msg32->pt      = msg->pt;
     return msg32;
+}
+
+static struct client_menu_name *client_menu_name_32to64( struct client_menu_name *name,
+                                                         const struct client_menu_name32 *name32 )
+{
+    if (!name32) return NULL;
+    name->nameA = UlongToPtr( name32->nameA );
+    name->nameW = UlongToPtr( name32->nameW );
+    name->nameUS = UlongToPtr( name32->nameUS );
+    return name;
+}
+
+static struct client_menu_name32 *client_menu_name_64to32( const struct client_menu_name *name,
+                                                           struct client_menu_name32 *name32 )
+{
+    if (name32)
+    {
+        name32->nameA = PtrToUlong( name->nameA );
+        name32->nameW = PtrToUlong( name->nameW );
+        name32->nameUS = PtrToUlong( name->nameUS );
+    }
+    return name32;
 }
 
 NTSTATUS WINAPI wow64_NtUserActivateKeyboardLayout( UINT *args )
@@ -732,6 +777,38 @@ NTSTATUS WINAPI wow64_NtUserGetCaretPos( UINT *args )
     return NtUserGetCaretPos( pt );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetClassInfoEx( UINT *args )
+{
+    HINSTANCE instance = get_ptr( &args );
+    UNICODE_STRING32 *name32 = get_ptr( &args );
+    WNDCLASSEXW32 *wc32 = get_ptr( &args );
+    struct client_menu_name32 *client_name32 = get_ptr( &args );
+    BOOL ansi = get_ulong( &args );
+
+    struct client_menu_name client_name;
+    UNICODE_STRING name;
+    WNDCLASSEXW wc;
+
+    wc.cbSize = sizeof(wc);
+    if (!NtUserGetClassInfoEx( instance, unicode_str_32to64( &name, name32 ), &wc,
+                               &client_name, ansi ))
+        return FALSE;
+
+    wc32->style = wc.style;
+    wc32->lpfnWndProc = PtrToUlong( wc.lpfnWndProc );
+    wc32->cbClsExtra = wc.cbClsExtra;
+    wc32->cbWndExtra = wc.cbWndExtra;
+    wc32->hInstance = HandleToUlong( wc.hInstance );
+    wc32->hIcon = HandleToUlong( wc.hIcon );
+    wc32->hCursor = HandleToUlong( wc.hCursor );
+    wc32->hbrBackground = HandleToUlong( wc.hbrBackground );
+    wc32->lpszMenuName = PtrToUlong( wc.lpszMenuName );
+    wc32->lpszClassName = PtrToUlong( wc.lpszClassName );
+    wc32->hIconSm = HandleToUlong( wc.hIconSm );
+    client_menu_name_64to32( &client_name, client_name32 );
+    return TRUE;
+}
+
 NTSTATUS WINAPI wow64_NtUserGetClassName( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -1283,6 +1360,46 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
     }
 }
 
+NTSTATUS WINAPI wow64_NtUserRegisterClassExWOW( UINT *args )
+{
+    const WNDCLASSEXW32 *wc32 = get_ptr( &args );
+    UNICODE_STRING32 *name32 = get_ptr( &args );
+    UNICODE_STRING32 *version32 = get_ptr( &args );
+    struct client_menu_name32 *client_name32 = get_ptr( &args );
+    DWORD fnid = get_ulong( &args );
+    DWORD flags = get_ulong( &args );
+    DWORD *wow = get_ptr( &args );
+
+    struct client_menu_name client_name;
+    UNICODE_STRING name, version;
+    WNDCLASSEXW wc;
+
+    if (wc32->cbSize != sizeof(*wc32))
+    {
+         SetLastError( ERROR_INVALID_PARAMETER );
+         return 0;
+    }
+
+    wc.cbSize = sizeof(wc);
+    wc.style = wc32->style;
+    wc.lpfnWndProc = UlongToPtr( wc32->lpfnWndProc );
+    wc.cbClsExtra = wc32->cbClsExtra;
+    wc.cbWndExtra = wc32->cbWndExtra;
+    wc.hInstance = UlongToHandle( wc32->hInstance );
+    wc.hIcon = UlongToHandle( wc32->hIcon );
+    wc.hCursor = UlongToHandle( wc32->hCursor );
+    wc.hbrBackground = UlongToHandle( wc32->hbrBackground );
+    wc.lpszMenuName = UlongToPtr( wc32->lpszMenuName );
+    wc.lpszClassName = UlongToPtr( wc32->lpszClassName );
+    wc.hIconSm = UlongToHandle( wc32->hIconSm );
+
+    return NtUserRegisterClassExWOW( &wc,
+                                     unicode_str_32to64( &name, name32 ),
+                                     unicode_str_32to64( &version, version32 ),
+                                     client_menu_name_32to64( &client_name, client_name32 ),
+                                     fnid, flags, wow );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetRegisteredRawInputDevices( UINT *args )
 {
     RAWINPUTDEVICE32 *devices32 = get_ptr( &args );
@@ -1797,6 +1914,35 @@ NTSTATUS WINAPI wow64_NtUserSetCapture( UINT *args )
     return HandleToUlong( NtUserSetCapture( hwnd ));
 }
 
+NTSTATUS WINAPI wow64_NtUserSetClassLong( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT offset = get_ulong( &args );
+    LONG newval = get_ulong( &args );
+    BOOL ansi = get_ulong( &args );
+
+    return NtUserSetClassLong( hwnd, offset, newval, ansi );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetClassLongPtr( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT offset = get_ulong( &args );
+    LONG_PTR newval = get_ulong( &args );
+    BOOL ansi = get_ulong( &args );
+
+    return NtUserSetClassLongPtr( hwnd, offset, newval, ansi );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetClassWord( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    INT offset = get_ulong( &args );
+    WORD newval = get_ulong( &args );
+
+    return NtUserSetClassWord( hwnd, offset, newval );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetClipboardData( UINT *args )
 {
     UINT format = get_ulong( &args );
@@ -2288,6 +2434,21 @@ NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
     HHOOK handle = get_handle( &args );
 
     return NtUserUnhookWindowsHookEx( handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserUnregisterClass( UINT *args )
+{
+    UNICODE_STRING32 *name32 = get_ptr( &args );
+    HINSTANCE instance = get_ptr( &args );
+    struct client_menu_name32 *menu_name32 = get_ptr( &args );
+
+    UNICODE_STRING name;
+    struct client_menu_name menu_name;
+    BOOL ret;
+
+    ret = NtUserUnregisterClass( unicode_str_32to64( &name, name32 ), instance, &menu_name );
+    if (ret) client_menu_name_64to32( &menu_name, menu_name32 );
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserUnregisterHotKey( UINT *args )

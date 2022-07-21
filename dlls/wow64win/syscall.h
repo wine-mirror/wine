@@ -143,6 +143,7 @@
     SYSCALL_ENTRY( NtUserGetAtomName ) \
     SYSCALL_ENTRY( NtUserGetCaretBlinkTime ) \
     SYSCALL_ENTRY( NtUserGetCaretPos ) \
+    SYSCALL_ENTRY( NtUserGetClassInfoEx ) \
     SYSCALL_ENTRY( NtUserGetClassName ) \
     SYSCALL_ENTRY( NtUserGetClipboardData ) \
     SYSCALL_ENTRY( NtUserGetClipboardFormatName ) \
@@ -218,6 +219,7 @@
     SYSCALL_ENTRY( NtUserPostThreadMessage ) \
     SYSCALL_ENTRY( NtUserQueryInputContext ) \
     SYSCALL_ENTRY( NtUserRedrawWindow ) \
+    SYSCALL_ENTRY( NtUserRegisterClassExWOW ) \
     SYSCALL_ENTRY( NtUserRegisterHotKey ) \
     SYSCALL_ENTRY( NtUserRegisterRawInputDevices ) \
     SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
@@ -227,6 +229,9 @@
     SYSCALL_ENTRY( NtUserSendInput ) \
     SYSCALL_ENTRY( NtUserSetActiveWindow ) \
     SYSCALL_ENTRY( NtUserSetCapture ) \
+    SYSCALL_ENTRY( NtUserSetClassLong ) \
+    SYSCALL_ENTRY( NtUserSetClassLongPtr ) \
+    SYSCALL_ENTRY( NtUserSetClassWord ) \
     SYSCALL_ENTRY( NtUserSetClipboardData ) \
     SYSCALL_ENTRY( NtUserSetClipboardViewer ) \
     SYSCALL_ENTRY( NtUserSetCursor ) \
@@ -272,6 +277,7 @@
     SYSCALL_ENTRY( NtUserTranslateMessage ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
     SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \
+    SYSCALL_ENTRY( NtUserUnregisterClass ) \
     SYSCALL_ENTRY( NtUserUnregisterHotKey ) \
     SYSCALL_ENTRY( NtUserUpdateInputContext ) \
     SYSCALL_ENTRY( NtUserVkKeyScanEx ) \

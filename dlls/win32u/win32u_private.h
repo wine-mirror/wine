@@ -191,24 +191,13 @@ struct unix_funcs
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
     INT      (WINAPI *pNtUserExcludeUpdateRgn)( HDC hdc, HWND hwnd );
-    ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
-                                              struct client_menu_name *menu_name, BOOL ansi );
-    ATOM     (WINAPI *pNtUserRegisterClassExWOW)( const WNDCLASSEXW *wc, UNICODE_STRING *name,
-                                                  UNICODE_STRING *version,
-                                                  struct client_menu_name *client_menu_name,
-                                                  DWORD fnid, DWORD flags, DWORD *wow );
     INT      (WINAPI *pNtUserReleaseDC)( HWND hwnd, HDC hdc );
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
-    DWORD    (WINAPI *pNtUserSetClassLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
-    ULONG_PTR (WINAPI *pNtUserSetClassLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
-    WORD     (WINAPI *pNtUserSetClassWord)( HWND hwnd, INT offset, WORD newval );
     BOOL     (WINAPI *pNtUserSystemParametersInfo)( UINT action, UINT val, PVOID ptr, UINT winini );
     BOOL     (WINAPI *pNtUserSystemParametersInfoForDpi)( UINT action, UINT val, PVOID ptr,
                                                          UINT winini, UINT dpi );
-    BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
-                                               struct client_menu_name *client_menu_name );
     BOOL     (WINAPI *pNtUserUpdateLayeredWindow)( HWND hwnd, HDC hdc_dst, const POINT *pts_dst,
                                                    const SIZE *size, HDC hdc_src, const POINT *pts_src,
                                                    COLORREF key, const BLENDFUNCTION *blend,
