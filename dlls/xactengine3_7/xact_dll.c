@@ -346,6 +346,7 @@ typedef struct _XACT3SoundBankImpl {
     IXACT3SoundBank IXACT3SoundBank_iface;
 
     FACTSoundBank *fact_soundbank;
+    XACT3EngineImpl *engine;
 } XACT3SoundBankImpl;
 
 static inline XACT3SoundBankImpl *impl_from_IXACT3SoundBank(IXACT3SoundBank *iface)
@@ -482,6 +483,8 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Destroy(IXACT3SoundBank *iface)
     TRACE("(%p)\n", This);
 
     hr = FACTSoundBank_Destroy(This->fact_soundbank);
+
+    wrapper_remove_entry(This->engine, This->fact_soundbank);
     HeapFree(GetProcessHeap(), 0, This);
     return hr;
 }
@@ -1088,6 +1091,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
     XACT3SoundBankImpl *sb;
     FACTSoundBank *fsb;
     UINT ret;
+    HRESULT hr;
 
     TRACE("(%p)->(%p, %lu, 0x%lx, 0x%lx, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
             dwAllocAttributes, ppSoundBank);
@@ -1108,8 +1112,17 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
         return E_OUTOFMEMORY;
     }
 
+    hr = wrapper_add_entry(This, fsb, &sb->IXACT3SoundBank_iface);
+    if (FAILED(hr))
+    {
+        FACTSoundBank_Destroy(fsb);
+        HeapFree(GetProcessHeap(), 0, sb);
+        return hr;
+    }
+
     sb->IXACT3SoundBank_iface.lpVtbl = &XACT3SoundBank_Vtbl;
     sb->fact_soundbank = fsb;
+    sb->engine = This;
     *ppSoundBank = &sb->IXACT3SoundBank_iface;
 
     TRACE("Created SoundBank: %p\n", sb);
