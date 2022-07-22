@@ -1588,6 +1588,7 @@ HRESULT WINAPI WsAbortServiceProxy(WS_SERVICE_PROXY*, WS_ERROR*);
 HRESULT WINAPI WsAcceptChannel(WS_LISTENER*, WS_CHANNEL*, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsAddCustomHeader(WS_MESSAGE*, const WS_ELEMENT_DESCRIPTION*, WS_WRITE_OPTION,
                                  const void*, ULONG, ULONG, WS_ERROR*);
+HRESULT WINAPI WsAddErrorString(WS_ERROR*, const WS_STRING*);
 HRESULT WINAPI WsAddMappedHeader(WS_MESSAGE*, const WS_XML_STRING*, WS_TYPE, WS_WRITE_OPTION,
                                  const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsAddressMessage(WS_MESSAGE*, const WS_ENDPOINT_ADDRESS*, WS_ERROR*);

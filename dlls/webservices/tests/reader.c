@@ -3890,9 +3890,10 @@ static void test_WsReadValue(void)
 static void test_WsResetError(void)
 {
     WS_ERROR_PROPERTY prop;
-    ULONG size, code;
+    ULONG size, code, count;
     WS_ERROR *error;
     LANGID langid;
+    WS_STRING str;
     HRESULT hr;
 
     hr = WsResetError( NULL );
@@ -3940,6 +3941,34 @@ static void test_WsResetError(void)
     hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_LANGID, &langid, size );
     ok( hr == S_OK, "got %#lx\n", hr );
     ok( langid == MAKELANGID( LANG_DUTCH, SUBLANG_DEFAULT ), "got %u\n", langid );
+
+    WsFreeError( error );
+
+    str.chars = (WCHAR *) L"str";
+    str.length = 3;
+
+    hr = WsCreateError( NULL, 0, &error );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsAddErrorString(error, &str );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    hr = WsAddErrorString(error, &str );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    count = 0xdeadbeef;
+    size = sizeof(count);
+    hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_STRING_COUNT, &count, size );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( count == 2, "got %lu\n", count );
+
+    hr = WsResetError( error );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    count = 0xdeadbeef;
+    size = sizeof(count);
+    hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_STRING_COUNT, &count, size );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( count == 0, "got %lu\n", count );
 
     WsFreeError( error );
 }
@@ -7044,6 +7073,55 @@ static void test_description_type(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsAddErrorString(void)
+{
+    ULONG count;
+    WS_ERROR *error;
+    WS_STRING emptystr = { 0 };
+    WS_STRING str1 = { 4, (WCHAR *) L"str1" };
+    WS_STRING str2 = { 4, (WCHAR *) L"str2" };
+    WS_STRING out;
+    HRESULT hr;
+
+    hr = WsCreateError( NULL, 0, &error );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsAddErrorString( NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+    hr = WsAddErrorString( NULL, &str1 );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+    hr = WsAddErrorString( error, NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+
+    hr = WsAddErrorString( error, &emptystr );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    hr = WsAddErrorString(error, &str2 );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    hr = WsAddErrorString(error, &str1 );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_STRING_COUNT, &count, sizeof(count) );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( count == 3, "got %lu\n", count );
+
+    hr = WsGetErrorString( error, 0, &out );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( out.length == str1.length, "got %lu\n", out.length );
+    ok( !memcmp( out.chars, str1.chars, str1.length ), "wrong error string\n" );
+
+    hr = WsGetErrorString( error, 1, &out );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( out.length == str2.length, "got %lu\n", out.length );
+    ok( !memcmp( out.chars, str2.chars, str2.length ), "wrong error string\n" );
+
+    hr = WsGetErrorString( error, 2, &out );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( out.length == 0, "got %lu\n", out.length );
+    ok( out.chars != NULL, "out.chars == NULL\n" );
+
+    WsFreeError( error );
+}
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -7095,4 +7173,5 @@ START_TEST(reader)
     test_empty_text_field();
     test_stream_input();
     test_description_type();
+    test_WsAddErrorString();
 }
