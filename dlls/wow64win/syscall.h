@@ -100,11 +100,14 @@
     SYSCALL_ENTRY( NtUserCallNoParam ) \
     SYSCALL_ENTRY( NtUserCallOneParam ) \
     SYSCALL_ENTRY( NtUserCallTwoParam ) \
+    SYSCALL_ENTRY( NtUserChangeClipboardChain ) \
     SYSCALL_ENTRY( NtUserCheckMenuItem ) \
     SYSCALL_ENTRY( NtUserChildWindowFromPointEx ) \
+    SYSCALL_ENTRY( NtUserCloseClipboard ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
     SYSCALL_ENTRY( NtUserCopyAcceleratorTable ) \
+    SYSCALL_ENTRY( NtUserCountClipboardFormats ) \
     SYSCALL_ENTRY( NtUserCreateAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
     SYSCALL_ENTRY( NtUserCreateInputContext ) \
@@ -113,6 +116,7 @@
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserDestroyInputContext ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
+    SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
@@ -122,6 +126,7 @@
     SYSCALL_ENTRY( NtUserGetCaretBlinkTime ) \
     SYSCALL_ENTRY( NtUserGetCaretPos ) \
     SYSCALL_ENTRY( NtUserGetClassName ) \
+    SYSCALL_ENTRY( NtUserGetClipboardData ) \
     SYSCALL_ENTRY( NtUserGetClipboardFormatName ) \
     SYSCALL_ENTRY( NtUserGetClipboardOwner ) \
     SYSCALL_ENTRY( NtUserGetClipboardSequenceNumber ) \
@@ -147,6 +152,7 @@
     SYSCALL_ENTRY( NtUserGetMouseMovePointsEx ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
     SYSCALL_ENTRY( NtUserGetOpenClipboardWindow ) \
+    SYSCALL_ENTRY( NtUserGetPriorityClipboardFormat ) \
     SYSCALL_ENTRY( NtUserGetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProp ) \
@@ -161,11 +167,13 @@
     SYSCALL_ENTRY( NtUserGetTitleBarInfo ) \
     SYSCALL_ENTRY( NtUserGetUpdateRect ) \
     SYSCALL_ENTRY( NtUserGetUpdateRgn ) \
+    SYSCALL_ENTRY( NtUserGetUpdatedClipboardFormats ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
     SYSCALL_ENTRY( NtUserInitializeClientPfnArrays ) \
     SYSCALL_ENTRY( NtUserInternalGetWindowText ) \
     SYSCALL_ENTRY( NtUserInvalidateRect ) \
     SYSCALL_ENTRY( NtUserInvalidateRgn ) \
+    SYSCALL_ENTRY( NtUserIsClipboardFormatAvailable ) \
     SYSCALL_ENTRY( NtUserKillTimer ) \
     SYSCALL_ENTRY( NtUserLockWindowUpdate ) \
     SYSCALL_ENTRY( NtUserMapVirtualKeyEx ) \
@@ -173,6 +181,7 @@
     SYSCALL_ENTRY( NtUserMessageCall ) \
     SYSCALL_ENTRY( NtUserMsgWaitForMultipleObjectsEx ) \
     SYSCALL_ENTRY( NtUserNotifyWinEvent ) \
+    SYSCALL_ENTRY( NtUserOpenClipboard ) \
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \
     SYSCALL_ENTRY( NtUserOpenWindowStation ) \
@@ -188,6 +197,8 @@
     SYSCALL_ENTRY( NtUserRemoveProp ) \
     SYSCALL_ENTRY( NtUserScrollWindowEx ) \
     SYSCALL_ENTRY( NtUserSendInput ) \
+    SYSCALL_ENTRY( NtUserSetClipboardData ) \
+    SYSCALL_ENTRY( NtUserSetClipboardViewer ) \
     SYSCALL_ENTRY( NtUserSetCursorPos ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \

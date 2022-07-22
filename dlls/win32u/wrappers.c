@@ -725,18 +725,6 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
-BOOL WINAPI NtUserCloseClipboard(void)
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserCloseClipboard();
-}
-
-BOOL WINAPI NtUserChangeClipboardChain( HWND hwnd, HWND next )
-{
-    if (!unix_funcs) return DISP_CHANGE_FAILED;
-    return unix_funcs->pNtUserChangeClipboardChain( hwnd, next );
-}
-
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
@@ -748,12 +736,6 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserClipCursor( rect );
-}
-
-INT WINAPI NtUserCountClipboardFormats(void)
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserCountClipboardFormats();
 }
 
 BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height )
@@ -851,12 +833,6 @@ BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
     return unix_funcs->pNtUserEndDeferWindowPosEx( hdwp, async );
 }
 
-BOOL WINAPI NtUserEmptyClipboard(void)
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEmptyClipboard();
-}
-
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags )
 {
@@ -894,12 +870,6 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
-}
-
-HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserGetClipboardData( format, params );
 }
 
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
@@ -946,24 +916,11 @@ BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repa
     return unix_funcs->pNtUserMoveWindow( hwnd, x, y, cx, cy, repaint );
 }
 
-INT WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserGetPriorityClipboardFormat( list, count );
-}
-
 BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetScrollBarInfo( hwnd, id, info );
 }
-
-BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserGetUpdatedClipboardFormats( formats, size, out_size );
-}
-
 
 BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
 {
@@ -975,18 +932,6 @@ HICON WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserInternalGetWindowIcon( hwnd, type );
-}
-
-BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserIsClipboardFormatAvailable( format );
-}
-
-BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserOpenClipboard( hwnd, unk );
 }
 
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
@@ -1028,12 +973,6 @@ HWND WINAPI NtUserSetCapture( HWND hwnd )
     return unix_funcs->pNtUserSetCapture( hwnd );
 }
 
-NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE handle, struct set_clipboard_params *params )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetClipboardData( format, handle, params );
-}
-
 HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
 {
     if (!unix_funcs) return 0;
@@ -1056,12 +995,6 @@ WORD WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetClassWord( hwnd, offset, newval );
-}
-
-HWND WINAPI NtUserSetClipboardViewer( HWND hwnd )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSetClipboardViewer( hwnd );
 }
 
 BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNICODE_STRING *res_name,

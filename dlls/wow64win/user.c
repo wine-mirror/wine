@@ -286,6 +286,14 @@ NTSTATUS WINAPI wow64_NtUserCallTwoParam( UINT *args )
     return 0;
 }
 
+NTSTATUS WINAPI wow64_NtUserChangeClipboardChain( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HWND next = get_handle( &args );
+
+    return NtUserChangeClipboardChain( hwnd, next );
+}
+
 NTSTATUS WINAPI wow64_NtUserCheckMenuItem( UINT *args )
 {
     HMENU handle = get_handle( &args );
@@ -303,6 +311,11 @@ NTSTATUS WINAPI wow64_NtUserChildWindowFromPointEx( UINT *args )
     UINT flags = get_ulong( &args );
 
     return HandleToUlong( NtUserChildWindowFromPointEx( parent, x, y, flags ));
+}
+
+NTSTATUS WINAPI wow64_NtUserCloseClipboard( UINT *args )
+{
+    return NtUserCloseClipboard();
 }
 
 NTSTATUS WINAPI wow64_NtUserCloseDesktop( UINT *args )
@@ -326,6 +339,11 @@ NTSTATUS WINAPI wow64_NtUserCopyAcceleratorTable( UINT *args )
     INT count = get_ulong( &args );
 
     return NtUserCopyAcceleratorTable( src, dst, count );
+}
+
+NTSTATUS WINAPI wow64_NtUserCountClipboardFormats( UINT *args )
+{
+    return NtUserCountClipboardFormats();
 }
 
 NTSTATUS WINAPI wow64_NtUserCreateAcceleratorTable( UINT *args )
@@ -407,6 +425,11 @@ NTSTATUS WINAPI wow64_NtUserDispatchMessage( UINT *args )
     MSG msg;
 
     return NtUserDispatchMessage( msg_32to64( &msg, msg32 ));
+}
+
+NTSTATUS WINAPI wow64_NtUserEmptyClipboard( UINT *args )
+{
+    return NtUserEmptyClipboard();
 }
 
 NTSTATUS WINAPI wow64_NtUserEndMenu( UINT *args )
@@ -491,6 +514,32 @@ NTSTATUS WINAPI wow64_NtUserGetClassName( UINT *args )
     UNICODE_STRING str;
 
     return NtUserGetClassName( hwnd, real, unicode_str_32to64( &str, str32 ));
+}
+
+NTSTATUS WINAPI wow64_NtUserGetClipboardData( UINT *args )
+{
+    UINT format = get_ulong( &args );
+    struct
+    {
+        UINT32 data;
+        UINT32 size;
+        UINT32 data_size;
+        UINT   seqno;
+        BOOL   data_only;
+    } *params32 = get_ptr( &args );
+
+    struct get_clipboard_params params;
+    HANDLE ret;
+
+    params.data = UlongToPtr( params32->data );
+    params.size = params32->size;
+
+    ret = NtUserGetClipboardData( format, &params );
+
+    params32->data_size = params.data_size;
+    params32->seqno     = params.seqno;
+    params32->data_only = params.data_only;
+    return HandleToUlong( ret );
 }
 
 NTSTATUS WINAPI wow64_NtUserGetClipboardFormatName( UINT *args )
@@ -738,6 +787,14 @@ NTSTATUS WINAPI wow64_NtUserGetObjectInformation( UINT *args )
 NTSTATUS WINAPI wow64_NtUserGetOpenClipboardWindow( UINT *args )
 {
     return HandleToUlong( NtUserGetOpenClipboardWindow() );
+}
+
+NTSTATUS WINAPI wow64_NtUserGetPriorityClipboardFormat( UINT *args )
+{
+    UINT *list = get_ptr( &args );
+    INT count = get_ulong( &args );
+
+    return NtUserGetPriorityClipboardFormat( list, count );
 }
 
 NTSTATUS WINAPI wow64_NtUserGetProcessDpiAwarenessContext( UINT *args )
@@ -1006,6 +1063,15 @@ NTSTATUS WINAPI wow64_NtUserGetUpdateRgn( UINT *args )
     return NtUserGetUpdateRgn( hwnd, hrgn, erase );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetUpdatedClipboardFormats( UINT *args )
+{
+    UINT *formats = get_ptr( &args );
+    UINT size = get_ulong( &args );
+    UINT *out_size = get_ptr( &args );
+
+    return NtUserGetUpdatedClipboardFormats( formats, size, out_size );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetWindowRgnEx( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -1046,6 +1112,13 @@ NTSTATUS WINAPI wow64_NtUserInvalidateRgn( UINT *args )
     BOOL erase = get_ulong( &args );
 
     return NtUserInvalidateRgn( hwnd, hrgn, erase );
+}
+
+NTSTATUS WINAPI wow64_NtUserIsClipboardFormatAvailable( UINT *args )
+{
+    UINT format = get_ulong( &args );
+
+    return NtUserIsClipboardFormatAvailable( format );
 }
 
 NTSTATUS WINAPI wow64_NtUserKillTimer( UINT *args )
@@ -1126,6 +1199,14 @@ NTSTATUS WINAPI wow64_NtUserNotifyWinEvent( UINT *args )
 
     NtUserNotifyWinEvent( event, hwnd, object_id, child_id );
     return 0;
+}
+
+NTSTATUS WINAPI wow64_NtUserOpenClipboard( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    ULONG unk = get_ulong( &args );
+
+    return NtUserOpenClipboard( hwnd, unk );
 }
 
 NTSTATUS WINAPI wow64_NtUserOpenDesktop( UINT *args )
@@ -1337,6 +1418,34 @@ NTSTATUS WINAPI wow64_NtUserSendInput( UINT *args )
     }
 
     return NtUserSendInput( count, inputs, sizeof(*inputs) );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetClipboardData( UINT *args )
+{
+    UINT format = get_ulong( &args );
+    HANDLE handle = get_handle( &args );
+    struct
+    {
+        UINT32 data;
+        UINT32 size;
+        BOOL   cache_only;
+        UINT   seqno;
+    } *params32 = get_ptr( &args );
+
+    struct set_clipboard_params params;
+    params.data       = UlongToPtr( params32->data );
+    params.size       = params32->size;
+    params.cache_only = params32->cache_only;
+    params.seqno      = params32->seqno;
+
+    return NtUserSetClipboardData( format, handle, &params );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetClipboardViewer( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return HandleToUlong( NtUserSetClipboardViewer( hwnd ));
 }
 
 NTSTATUS WINAPI wow64_NtUserSetCursorPos( UINT *args )

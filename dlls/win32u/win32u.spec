@@ -782,7 +782,7 @@
 @ stdcall -syscall NtUserCallOneParam(long long)
 @ stdcall -syscall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground
-@ stdcall NtUserChangeClipboardChain(long long)
+@ stdcall -syscall NtUserChangeClipboardChain(long long)
 @ stdcall NtUserChangeDisplaySettings(ptr ptr long long ptr)
 @ stub NtUserChangeWindowMessageFilterEx
 @ stub NtUserCheckAccessForIntegrityLevel
@@ -793,7 +793,7 @@
 @ stdcall -syscall NtUserChildWindowFromPointEx(long long long long)
 @ stub NtUserClearForeground
 @ stdcall NtUserClipCursor(ptr)
-@ stdcall NtUserCloseClipboard()
+@ stdcall -syscall NtUserCloseClipboard()
 @ stdcall -syscall NtUserCloseDesktop(long)
 @ stdcall -syscall NtUserCloseWindowStation(long)
 @ stub NtUserCompositionInputSinkLuidFromPoint
@@ -803,7 +803,7 @@
 @ stub NtUserConsoleControl
 @ stub NtUserConvertMemHandle
 @ stdcall -syscall NtUserCopyAcceleratorTable(long ptr long)
-@ stdcall NtUserCountClipboardFormats()
+@ stdcall -syscall NtUserCountClipboardFormats()
 @ stdcall -syscall NtUserCreateAcceleratorTable(ptr long)
 @ stub NtUserCreateActivationGroup
 @ stub NtUserCreateActivationObject
@@ -857,7 +857,7 @@
 @ stub NtUserDwmKernelShutdown
 @ stub NtUserDwmKernelStartup
 @ stub NtUserDwmValidateWindow
-@ stdcall NtUserEmptyClipboard()
+@ stdcall -syscall NtUserEmptyClipboard()
 @ stub NtUserEnableChildWindowDpiMessage
 @ stub NtUserEnableIAMAccess
 @ stdcall NtUserEnableMenuItem(long long long)
@@ -902,7 +902,7 @@
 @ stdcall -syscall NtUserGetClassName(long long ptr)
 @ stub NtUserGetClipCursor
 @ stub NtUserGetClipboardAccessToken
-@ stdcall NtUserGetClipboardData(long ptr)
+@ stdcall -syscall NtUserGetClipboardData(long ptr)
 @ stdcall -syscall NtUserGetClipboardFormatName(long ptr long)
 @ stdcall -syscall NtUserGetClipboardOwner()
 @ stdcall -syscall NtUserGetClipboardSequenceNumber()
@@ -976,7 +976,7 @@
 @ stub NtUserGetPointerProprietaryId
 @ stub NtUserGetPointerType
 @ stub NtUserGetPrecisionTouchPadConfiguration
-@ stdcall NtUserGetPriorityClipboardFormat(ptr long)
+@ stdcall -syscall NtUserGetPriorityClipboardFormat(ptr long)
 @ stdcall -syscall NtUserGetProcessDpiAwarenessContext(long)
 @ stub NtUserGetProcessUIContextInformation
 @ stdcall -syscall NtUserGetProcessWindowStation()
@@ -1004,7 +1004,7 @@
 @ stub NtUserGetUniformSpaceMapping
 @ stdcall -syscall NtUserGetUpdateRect(long ptr long)
 @ stdcall -syscall NtUserGetUpdateRgn(long long long)
-@ stdcall NtUserGetUpdatedClipboardFormats(ptr long ptr)
+@ stdcall -syscall NtUserGetUpdatedClipboardFormats(ptr long ptr)
 @ stub NtUserGetWOWClass
 @ stub NtUserGetWindowBand
 @ stub NtUserGetWindowCompositionAttribute
@@ -1050,7 +1050,7 @@
 @ stdcall -syscall NtUserInvalidateRect(long ptr long)
 @ stdcall -syscall NtUserInvalidateRgn(long long long)
 @ stub NtUserIsChildWindowDpiMessageEnabled
-@ stdcall NtUserIsClipboardFormatAvailable(long)
+@ stdcall -syscall NtUserIsClipboardFormatAvailable(long)
 @ stub NtUserIsMouseInPointerEnabled
 @ stub NtUserIsMouseInputEnabled
 @ stub NtUserIsNonClientDpiScalingEnabled
@@ -1090,7 +1090,7 @@
 @ stub NtUserNotifyIMEStatus
 @ stub NtUserNotifyProcessCreate
 @ stdcall -syscall NtUserNotifyWinEvent(long long long long)
-@ stdcall NtUserOpenClipboard(long long)
+@ stdcall -syscall NtUserOpenClipboard(long long)
 @ stdcall -syscall NtUserOpenDesktop(ptr long long)
 @ stdcall -syscall NtUserOpenInputDesktop(long long long)
 @ stub NtUserOpenThreadDesktop
@@ -1174,8 +1174,8 @@
 @ stdcall NtUserSetClassLong(long long long long)
 @ stdcall NtUserSetClassLongPtr(long long long long)
 @ stdcall NtUserSetClassWord(long long long)
-@ stdcall NtUserSetClipboardData(long ptr ptr)
-@ stdcall NtUserSetClipboardViewer(long)
+@ stdcall -syscall NtUserSetClipboardData(long ptr ptr)
+@ stdcall -syscall NtUserSetClipboardViewer(long)
 @ stub NtUserSetCoreWindow
 @ stub NtUserSetCoreWindowPartner
 @ stdcall NtUserSetCursor(long)
