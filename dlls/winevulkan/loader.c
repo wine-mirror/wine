@@ -327,15 +327,22 @@ static void wait_graphics_driver_ready(void)
 
 static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
 {
+    VkPhysicalDeviceVulkan11Properties *vk11;
+    VkBool32 device_luid_valid = VK_FALSE;
     VkPhysicalDeviceIDProperties *id;
+    uint32_t device_node_mask = 0;
     SP_DEVINFO_DATA device_data;
+    const uint8_t* device_uuid;
     DWORD type, device_idx = 0;
     HDEVINFO devinfo;
     HANDLE mutex;
     GUID uuid;
     LUID luid;
 
-    if (!(id = wine_vk_find_struct(properties2, PHYSICAL_DEVICE_ID_PROPERTIES)))
+    vk11 = wine_vk_find_struct(properties2, PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
+    id = wine_vk_find_struct(properties2, PHYSICAL_DEVICE_ID_PROPERTIES);
+
+    if (!vk11 && !id)
         return;
 
     wait_graphics_driver_ready();
@@ -348,15 +355,30 @@ static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
                 &type, (BYTE *)&uuid, sizeof(uuid), NULL, 0))
             continue;
 
-        if (!IsEqualGUID(&uuid, id->deviceUUID))
+        device_uuid = id ? id->deviceUUID : vk11->deviceUUID;
+
+        if (!IsEqualGUID(&uuid, device_uuid))
             continue;
 
         if (SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &type,
                 (BYTE *)&luid, sizeof(luid), NULL, 0))
         {
-            memcpy(&id->deviceLUID, &luid, sizeof(id->deviceLUID));
-            id->deviceLUIDValid = VK_TRUE;
-            id->deviceNodeMask = 1;
+            device_luid_valid = VK_TRUE;
+            device_node_mask = 1;
+
+            if (id)
+            {
+                memcpy(&id->deviceLUID, &luid, sizeof(id->deviceLUID));
+                id->deviceLUIDValid = device_luid_valid;
+                id->deviceNodeMask = device_node_mask;
+            }
+
+            if (vk11)
+            {
+                memcpy(&vk11->deviceLUID, &luid, sizeof(vk11->deviceLUID));
+                vk11->deviceLUIDValid = device_luid_valid;
+                vk11->deviceNodeMask = device_node_mask;
+            }
             break;
         }
     }
@@ -364,8 +386,8 @@ static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
     release_display_device_init_mutex(mutex);
 
     TRACE("deviceName:%s deviceLUIDValid:%d LUID:%08lx:%08lx deviceNodeMask:%#x.\n",
-            properties2->properties.deviceName, id->deviceLUIDValid, luid.HighPart, luid.LowPart,
-            id->deviceNodeMask);
+            properties2->properties.deviceName, device_luid_valid, luid.HighPart, luid.LowPart,
+            device_node_mask);
 }
 
 void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
