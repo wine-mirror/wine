@@ -2992,8 +2992,8 @@ static void test_many_axes_joystick(void)
         {0},
         {0},
         {0},
-        {.name = TRUE},
-        {.name = TRUE, .guid = TRUE},
+        {0},
+        {.guid = TRUE},
         {.flags = TRUE},
         {.flags = TRUE},
         {.flags = TRUE},
@@ -3120,7 +3120,7 @@ static void test_many_axes_joystick(void)
     check_member( objinst, expect_objects[8], "%#lx", dwOfs );
     check_member( objinst, expect_objects[8], "%#lx", dwType );
     check_member( objinst, expect_objects[8], "%#lx", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[8], tszName );
+    if (!localized) check_member_wstr( objinst, expect_objects[8], tszName );
     check_member( objinst, expect_objects[8], "%lu", dwFFMaxForce );
     check_member( objinst, expect_objects[8], "%lu", dwFFForceResolution );
     check_member( objinst, expect_objects[8], "%u", wCollectionNumber );
