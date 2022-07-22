@@ -562,8 +562,6 @@ JavaVM **p_java_vm = NULL;
 jobject *p_java_object = NULL;
 unsigned short *p_java_gdt_sel = NULL;
 
-static NTSTATUS CDECL unix_call( enum android_funcs code, void *params );
-
 static HRESULT android_init( void *arg )
 {
     struct init_params *params = arg;
@@ -609,7 +607,6 @@ static HRESULT android_init( void *arg )
 #endif
     }
     __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
-    params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }
 
@@ -625,10 +622,3 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
-
-
-/* FIXME: Use __wine_unix_call instead */
-static NTSTATUS CDECL unix_call( enum android_funcs code, void *params )
-{
-    return __wine_unix_call_funcs[code]( params );
-}

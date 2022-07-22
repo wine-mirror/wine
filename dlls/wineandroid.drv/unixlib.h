@@ -30,14 +30,12 @@ enum android_funcs
     unix_funcs_count
 };
 
-/* FIXME: Use __wine_unix_call when the rest of the stack is ready */
-#define ANDROID_CALL(func, params) unix_call( unix_ ## func, params )
+#define ANDROID_CALL(func, params) __wine_unix_call( unix_handle, unix_ ## func, params )
 
 /* android_init params */
 struct init_params
 {
     PNTAPCFUNC register_window_callback;
-    NTSTATUS (CDECL *unix_call)( enum android_funcs code, void *params );
 };
 
 
