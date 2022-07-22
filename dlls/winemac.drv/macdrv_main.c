@@ -429,9 +429,6 @@ static void load_strings(struct localized_string *str)
 }
 
 
-static NTSTATUS CDECL unix_call( enum macdrv_funcs code, void *params );
-
-
 /***********************************************************************
  *              macdrv_init
  */
@@ -458,8 +455,6 @@ static NTSTATUS macdrv_init(void *arg)
 
     init_user_driver();
     macdrv_init_display_devices(FALSE);
-
-    params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }
 
@@ -658,10 +653,3 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
-
-
-/* FIXME: Use __wine_unix_call instead */
-static NTSTATUS CDECL unix_call(enum macdrv_funcs code, void *params)
-{
-    return __wine_unix_call_funcs[code]( params );
-}

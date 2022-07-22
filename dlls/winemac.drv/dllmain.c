@@ -27,8 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
 HMODULE macdrv_module = 0;
-static unixlib_handle_t macdrv_handle;
-NTSTATUS (CDECL *macdrv_unix_call)(enum macdrv_funcs code, void *params);
+unixlib_handle_t macdrv_handle;
 
 struct quit_info {
     HWND               *wins;
@@ -414,12 +413,10 @@ static BOOL process_attach(void)
         str->len = LoadStringW(macdrv_module, str->id, (WCHAR *)&str->str, 0);
     params.strings = strings;
 
-    if (__wine_unix_call(macdrv_handle, unix_init, &params)) return FALSE;
+    if (MACDRV_CALL(init, &params)) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     memcpy( callback_table + NtUserDriverCallbackFirst, kernel_callbacks, sizeof(kernel_callbacks) );
-
-    macdrv_unix_call = params.unix_call;
     return TRUE;
 }
 

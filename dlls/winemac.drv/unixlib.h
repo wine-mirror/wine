@@ -35,9 +35,8 @@ enum macdrv_funcs
     unix_funcs_count
 };
 
-/* FIXME: Use __wine_unix_call when the rest of the stack is ready */
-extern NTSTATUS (CDECL *macdrv_unix_call)(enum macdrv_funcs code, void *params) DECLSPEC_HIDDEN;
-#define MACDRV_CALL(func, params) macdrv_unix_call(unix_ ## func, params)
+extern unixlib_handle_t macdrv_handle DECLSPEC_HIDDEN;
+#define MACDRV_CALL(func, params) __wine_unix_call(macdrv_handle, unix_ ## func, params)
 
 /* macdrv_dnd_get_data params */
 struct dnd_get_data_params
@@ -84,7 +83,6 @@ struct localized_string
 struct init_params
 {
     struct localized_string *strings;
-    NTSTATUS (CDECL *unix_call)(enum macdrv_funcs code, void *params);
 };
 
 /* macdrv_notify_icon params */
