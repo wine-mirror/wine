@@ -3054,6 +3054,10 @@ static void test_many_axes_joystick(void)
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
     check_object( &objinst, &expect_objects[8], NULL );
 
+    /* c_dfDIJoystick2 is broken when it comes to more than two sliders */
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, rglVSlider[0]), DIPH_BYOFFSET );
+    ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#lx\n", hr );
+
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, lVX), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
     check_object( &objinst, &expect_objects[10], &todo_flags );
