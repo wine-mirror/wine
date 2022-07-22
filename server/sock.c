@@ -800,7 +800,11 @@ static void post_sock_messages( struct sock *sock )
             enum afd_poll_bit event = event_bitorder[i];
             if (events & (1 << event))
             {
-                lparam_t lparam = afd_poll_flag_to_win32(1 << event) | (sock_get_error( sock->errors[event] ) << 16);
+                lparam_t lparam;
+                if (event == AFD_POLL_BIT_RESET)
+                    lparam = FD_CLOSE | (WSAECONNABORTED << 16);
+                else
+                    lparam = afd_poll_flag_to_win32(1 << event) | (sock_get_error( sock->errors[event] ) << 16);
                 post_message( sock->window, sock->message, sock->wparam, lparam );
             }
         }
