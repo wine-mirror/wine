@@ -218,6 +218,10 @@ static const struct fallback_description
 }
 system_fallback_config[] =
 {
+    /* Latin, Combining Diacritical Marks */
+    { "0000-007F, 0080-00FF, 0100-017F, 0180-024F, "
+      "0250-02AF, 02B0-02FF, 0300-036F", L"Tahoma" },
+
     { "3000-30FF, 31F0-31FF, 4E00-9FFF", L"Meiryo" },
 };
 

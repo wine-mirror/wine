@@ -725,7 +725,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
                 goto fatal;
             }
 
-            if (!mapped_length)
+            if (!font)
             {
                 if (FAILED(create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
                         range->stretch, &IID_IDWriteFont3, (void **)&font)))

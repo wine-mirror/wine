@@ -4640,14 +4640,12 @@ static void test_MapCharacters(void)
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
-    todo_wine
     ok(font != NULL, "got %p\n", font);
-if (font) {
-    IDWriteFont_Release(font);
-}
+    if (font)
+        IDWriteFont_Release(font);
+
     /* same Latin text, full length */
     g_source = L"abc";
     mappedlength = 0;
@@ -4656,15 +4654,13 @@ if (font) {
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(mappedlength == 3, "got %u\n", mappedlength);
 
     ok(scale == 1.0f, "got %f\n", scale);
-    todo_wine
     ok(font != NULL, "got %p\n", font);
-if (font) {
-    IDWriteFont_Release(font);
-}
+    if (font)
+        IDWriteFont_Release(font);
+
     /* string 'a\x3058b' */
     g_source = str2W;
     mappedlength = 0;
@@ -4673,14 +4669,12 @@ if (font) {
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
-    todo_wine
     ok(font != NULL, "got %p\n", font);
-if (font) {
-    IDWriteFont_Release(font);
-}
+    if (font)
+        IDWriteFont_Release(font);
+
     g_source = str2W;
     mappedlength = 0;
     scale = 0.0f;
