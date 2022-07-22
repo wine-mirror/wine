@@ -6290,7 +6290,7 @@ static void check_events_(int line, struct event_test_ctx *ctx,
         for (i = 0; i < ARRAY_SIZE(events.iErrorCode); ++i)
         {
             if ((1u << i) == LOWORD(flag1) && (events.lNetworkEvents & LOWORD(flag1)))
-                todo_wine_if (HIWORD(flag1)) ok_(__FILE__, line)(events.iErrorCode[i] == HIWORD(flag1),
+                ok_(__FILE__, line)(events.iErrorCode[i] == HIWORD(flag1),
                         "got error code %d for event %#x\n", events.iErrorCode[i], 1u << i);
             if ((1u << i) == LOWORD(flag2) && (events.lNetworkEvents & LOWORD(flag2)))
                 ok_(__FILE__, line)(events.iErrorCode[i] == HIWORD(flag2),

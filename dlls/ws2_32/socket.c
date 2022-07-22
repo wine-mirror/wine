@@ -3629,7 +3629,10 @@ int WINAPI WSAEnumNetworkEvents( SOCKET s, WSAEVENT event, WSANETWORKEVENTS *ret
         if (ret_events->lNetworkEvents & FD_CLOSE)
         {
             if (!(ret_events->iErrorCode[FD_CLOSE_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_HUP] )))
-                ret_events->iErrorCode[FD_CLOSE_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_RESET] );
+            {
+                if (params.flags & AFD_POLL_RESET)
+                    ret_events->iErrorCode[FD_CLOSE_BIT] = WSAECONNABORTED;
+            }
         }
     }
     SetLastError( NtStatusToWSAError( status ) );
