@@ -2960,7 +2960,7 @@ static void test_many_axes_joystick(void)
         {0},
         {0},
         {0},
-        {.guid = TRUE},
+        {0},
         {.flags = TRUE},
         {.flags = TRUE},
         {.flags = TRUE},
