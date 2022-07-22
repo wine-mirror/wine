@@ -6189,9 +6189,9 @@ static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
     {
         for (i = 0; i < 256; ++i)
         {
-            info->bmiColors[i].rgbBlue = i;
-            info->bmiColors[i].rgbGreen = i;
-            info->bmiColors[i].rgbRed = i;
+            info->bmiColors[i].rgbBlue = i % MOD_B;
+            info->bmiColors[i].rgbGreen = i % MOD_G;
+            info->bmiColors[i].rgbRed = i % MOD_R;
         }
     }
     ret = WriteFile(file, info, size, &written, NULL);
@@ -6317,7 +6317,8 @@ static void test_bitmap_data(unsigned int test_idx, const D3DRMIMAGE *img,
     ok(img->palette_size == 256, "Test %u: Got unexpected palette size %u.\n", test_idx, img->palette_size);
     for (i = 0; i < 256; ++i)
     {
-        ok(img->palette[i].red == i && img->palette[i].green == i && img->palette[i].blue == i,
+        ok(img->palette[i].red == i % MOD_R
+                && img->palette[i].green == i % MOD_G && img->palette[i].blue == i % MOD_B,
                 "Test %u: Got unexpected palette entry (%u) color 0x%02x%02x%02x.\n",
                 test_idx, i, img->palette[i].red, img->palette[i].green, img->palette[i].blue);
         ok(img->palette[i].flags == D3DRMPALETTE_READONLY,

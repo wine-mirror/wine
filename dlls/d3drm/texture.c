@@ -219,9 +219,11 @@ static HRESULT d3drm_image_load_8(D3DRMIMAGE *image, const RGBQUAD *palette,
         return D3DRMERR_BADALLOC;
     }
 
-    memcpy(image->palette, palette, 256 * sizeof(*image->palette));
     for (i = 0; i < 256; ++i)
     {
+        image->palette[i].red = palette[i].rgbRed;
+        image->palette[i].green = palette[i].rgbGreen;
+        image->palette[i].blue = palette[i].rgbBlue;
         image->palette[i].flags = D3DRMPALETTE_READONLY;
     }
 
