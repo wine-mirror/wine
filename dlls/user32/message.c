@@ -491,7 +491,6 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
             ULONGLONG hpack;
             /* hMem is being passed */
             if (size != sizeof(hpack)) return FALSE;
-            if (!size) return FALSE;
             uiLo = *lparam;
             memcpy( &hpack, buffer, size );
             hMem = unpack_ptr( hpack );
@@ -533,7 +532,6 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
     case WM_DDE_EXECUTE:
 	if (size)
 	{
-	    if (!size) return FALSE;
             if (!(hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size ))) return FALSE;
             if ((ptr = GlobalLock( hMem )))
 	    {
