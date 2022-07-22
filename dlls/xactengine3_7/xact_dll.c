@@ -60,20 +60,6 @@ struct wrapper_lookup
     void *xact;
 };
 
-static int wrapper_lookup_compare(const void *key, const struct wine_rb_entry *entry)
-{
-    struct wrapper_lookup *lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
-
-    return (key > lookup->fact) - (key < lookup->fact);
-}
-
-static void wrapper_lookup_destroy(struct wine_rb_entry *entry, void *context)
-{
-    struct wrapper_lookup *lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
-
-    HeapFree(GetProcessHeap(), 0, lookup);
-}
-
 typedef struct _XACT3EngineImpl {
     IXACT3Engine IXACT3Engine_iface;
 
@@ -88,6 +74,45 @@ typedef struct _XACT3EngineImpl {
     struct wine_rb_tree wb_wrapper_lookup;
     CRITICAL_SECTION wb_wrapper_lookup_cs;
 } XACT3EngineImpl;
+
+static int wrapper_lookup_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    struct wrapper_lookup *lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
+
+    return (key > lookup->fact) - (key < lookup->fact);
+}
+
+static void wrapper_lookup_destroy(struct wine_rb_entry *entry, void *context)
+{
+    struct wrapper_lookup *lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
+
+    HeapFree(GetProcessHeap(), 0, lookup);
+}
+
+static void wrapper_remove_entry(XACT3EngineImpl *engine, void *key)
+{
+    struct wrapper_lookup *lookup;
+    struct wine_rb_entry *entry;
+
+    EnterCriticalSection(&engine->wb_wrapper_lookup_cs);
+
+    entry = wine_rb_get(&engine->wb_wrapper_lookup, key);
+    if (!entry)
+    {
+        LeaveCriticalSection(&engine->wb_wrapper_lookup_cs);
+
+        WARN("cannot find key in wrapper lookup\n");
+    }
+    else
+    {
+        wine_rb_remove(&engine->wb_wrapper_lookup, entry);
+
+        LeaveCriticalSection(&engine->wb_wrapper_lookup_cs);
+
+        lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
+        HeapFree(GetProcessHeap(), 0, lookup);
+    }
+}
 
 typedef struct _XACT3CueImpl {
     IXACT3Cue IXACT3Cue_iface;
@@ -591,33 +616,14 @@ static inline XACT3WaveBankImpl *impl_from_IXACT3WaveBank(IXACT3WaveBank *iface)
 static HRESULT WINAPI IXACT3WaveBankImpl_Destroy(IXACT3WaveBank *iface)
 {
     XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
-    struct wrapper_lookup *lookup;
-    struct wine_rb_entry *entry;
     HRESULT hr;
 
     TRACE("(%p)\n", This);
 
-    EnterCriticalSection(&This->engine->wb_wrapper_lookup_cs);
-
-    entry = wine_rb_get(&This->engine->wb_wrapper_lookup, This->fact_wavebank);
-
-    if (!entry)
-    {
-        LeaveCriticalSection(&This->engine->wb_wrapper_lookup_cs);
-
-        WARN("cannot find wave bank in wrapper lookup\n");
-    }
-    else
-    {
-        wine_rb_remove(&This->engine->wb_wrapper_lookup, entry);
-
-        LeaveCriticalSection(&This->engine->wb_wrapper_lookup_cs);
-
-        lookup = WINE_RB_ENTRY_VALUE(entry, struct wrapper_lookup, entry);
-        HeapFree(GetProcessHeap(), 0, lookup);
-    }
-
     hr = FACTWaveBank_Destroy(This->fact_wavebank);
+
+    wrapper_remove_entry(This->engine, This->fact_wavebank);
+
     HeapFree(GetProcessHeap(), 0, This);
     return hr;
 }

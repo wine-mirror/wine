@@ -172,9 +172,11 @@ static void WINAPI notification_cb(const XACT_NOTIFICATION *notification)
     data->received = TRUE;
     ok(notification->type == data->type,
             "Unexpected notification type %u\n", notification->type);
-    todo_wine_if(notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
-    ok(notification->waveBank.pWaveBank == data->wave_bank, "Unexpected wave bank %p instead of %p\n",
+    if(notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
+    {
+        ok(notification->waveBank.pWaveBank == data->wave_bank, "Unexpected wave bank %p instead of %p\n",
             notification->waveBank.pWaveBank, data->wave_bank);
+    }
     ok(thread_id == data->thread_id, "Unexpected thread id %#lx instead of %#lx\n", thread_id, data->thread_id);
 }
 
