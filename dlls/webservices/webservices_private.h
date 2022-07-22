@@ -171,6 +171,8 @@ HRESULT channel_get_reader( WS_CHANNEL *, WS_XML_READER ** ) DECLSPEC_HIDDEN;
 
 HRESULT parse_url( const WS_STRING *, WS_URL_SCHEME_TYPE *, WCHAR **, USHORT * ) DECLSPEC_HIDDEN;
 
+void free_fault_fields( WS_HEAP *, WS_FAULT * ) DECLSPEC_HIDDEN;
+
 enum record_type
 {
     /* 0x00 reserved */

@@ -1116,6 +1116,41 @@ struct _WS_ENDPOINT_ADDRESS {
     WS_ENDPOINT_IDENTITY *identity;
 };
 
+typedef struct _WS_FAULT_CODE {
+    WS_XML_QNAME           value;
+    struct _WS_FAULT_CODE *subCode;
+} WS_FAULT_CODE;
+
+typedef struct _WS_FAULT_REASON {
+    WS_STRING text;
+    WS_STRING lang;
+} WS_FAULT_REASON;
+
+typedef struct _WS_FAULT {
+    WS_FAULT_CODE   *code;
+    WS_FAULT_REASON *reasons;
+    ULONG            reasonCount;
+    WS_STRING        actor;
+    WS_STRING        node;
+    WS_XML_BUFFER   *detail;
+} WS_FAULT;
+
+typedef struct _WS_FAULT_DESCRIPTION {
+    WS_ENVELOPE_VERSION envelopeVersion;
+} WS_FAULT_DESCRIPTION;
+
+typedef struct _WS_FAULT_DETAIL_DESCRIPTION {
+    WS_XML_STRING          *action;
+    WS_ELEMENT_DESCRIPTION *detailElementDescription;
+} WS_FAULT_DETAIL_DESCRIPTION;
+
+typedef enum  {
+    WS_FAULT_ERROR_PROPERTY_FAULT = 0,
+    WS_FAULT_ERROR_PROPERTY_ACTION = 1,
+    WS_FAULT_ERROR_PROPERTY_HEADER = 2
+} WS_FAULT_ERROR_PROPERTY_ID;
+
+
 struct _WS_HTTP_POLICY_DESCRIPTION {
     WS_CHANNEL_PROPERTIES channelProperties;
 };
@@ -1649,6 +1684,9 @@ HRESULT WINAPI WsGetCustomHeader(WS_MESSAGE*, const WS_ELEMENT_DESCRIPTION*, WS_
 HRESULT WINAPI WsGetDictionary(WS_ENCODING, WS_XML_DICTIONARY**, WS_ERROR*);
 HRESULT WINAPI WsGetErrorProperty(WS_ERROR*, WS_ERROR_PROPERTY_ID, void*, ULONG);
 HRESULT WINAPI WsGetErrorString(WS_ERROR*, ULONG, WS_STRING*);
+HRESULT WINAPI WsGetFaultErrorDetail(WS_ERROR*, const WS_FAULT_DETAIL_DESCRIPTION*, WS_READ_OPTION,
+                                     WS_HEAP*, void*, ULONG);
+HRESULT WINAPI WsGetFaultErrorProperty(WS_ERROR*, WS_FAULT_ERROR_PROPERTY_ID, void*, ULONG);
 HRESULT WINAPI WsGetHeader(WS_MESSAGE*, WS_HEADER_TYPE, WS_TYPE, WS_READ_OPTION, WS_HEAP*, void*,
                            ULONG, WS_ERROR*);
 HRESULT WINAPI WsGetHeapProperty(WS_HEAP*, WS_HEAP_PROPERTY_ID, void*, ULONG, WS_ERROR*);
@@ -1731,6 +1769,7 @@ HRESULT WINAPI WsSendReplyMessage(WS_CHANNEL*, WS_MESSAGE*, const WS_MESSAGE_DES
                                   const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsSetChannelProperty(WS_CHANNEL*, WS_CHANNEL_PROPERTY_ID, const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsSetErrorProperty(WS_ERROR*, WS_ERROR_PROPERTY_ID, const void*, ULONG);
+HRESULT WINAPI WsSetFaultErrorProperty(WS_ERROR*, WS_FAULT_ERROR_PROPERTY_ID, const void*, ULONG);
 HRESULT WINAPI WsSetHeader(WS_MESSAGE*, WS_HEADER_TYPE, WS_TYPE, WS_WRITE_OPTION, const void*, ULONG,
                            WS_ERROR*);
 HRESULT WINAPI WsSetInput(WS_XML_READER*, const WS_XML_READER_ENCODING*, const WS_XML_READER_INPUT*,
