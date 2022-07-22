@@ -244,7 +244,7 @@ LPDIOBJECTDATAFORMAT dataformat_to_odf_by_type(LPCDIDATAFORMAT df, int n, DWORD 
 }
 
 static BOOL match_device_object( const DIDATAFORMAT *device_format, DIDATAFORMAT *user_format,
-                                 const DIDATAFORMAT *format, const DIOBJECTDATAFORMAT *match_obj, DWORD version )
+                                 const DIOBJECTDATAFORMAT *match_obj, DWORD version )
 {
     DWORD i, device_instance, instance = DIDFT_GETINSTANCE( match_obj->dwType );
     DIOBJECTDATAFORMAT *device_obj, *user_obj;
@@ -292,7 +292,7 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
     {
         match_obj = format->rgodf + i;
 
-        if (!match_device_object( device_format, user_format, format, match_obj, impl->dinput->dwVersion ))
+        if (!match_device_object( device_format, user_format, match_obj, impl->dinput->dwVersion ))
         {
             WARN( "object %s not found\n", debugstr_diobjectdataformat( match_obj ) );
             if (!(match_obj->dwType & DIDFT_OPTIONAL)) goto failed;
