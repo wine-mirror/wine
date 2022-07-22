@@ -1242,8 +1242,8 @@ static BOOL get_scroll_range( HWND hwnd, int nBar, int *min, int *max )
     struct scroll_info *info;
 
     if (!(info = get_scroll_info_ptr( hwnd, nBar, FALSE ))) return FALSE;
-    if (min) *min = info ? info->minVal : 0;
-    if (max) *max = info ? info->maxVal : 0;
+    if (min) *min = info->minVal;
+    if (max) *max = info->maxVal;
     release_scroll_info_ptr( info );
     return TRUE;
 }
