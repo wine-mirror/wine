@@ -12008,7 +12008,8 @@ static void test_registered_effects(BOOL d3d11)
 
     free(effects);
 
-    ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count2 = 0;
     hr = ID2D1Factory1_GetRegisteredEffects(factory, NULL, 0, NULL, &count2);
