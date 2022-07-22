@@ -2596,6 +2596,28 @@ static BOOL test_device_types( DWORD version )
     return success;
 }
 
+struct three_sliders_state
+{
+    LONG slider[3];
+};
+
+static const DIOBJECTDATAFORMAT df_three_sliders[] =
+{
+    {&GUID_Slider, FIELD_OFFSET(struct three_sliders_state, slider[0]), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION},
+    {&GUID_Slider, FIELD_OFFSET(struct three_sliders_state, slider[1]), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION},
+    {&GUID_Slider, FIELD_OFFSET(struct three_sliders_state, slider[2]), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION},
+};
+
+static const DIDATAFORMAT c_df_three_sliders =
+{
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDF_ABSAXIS,
+    sizeof(struct three_sliders_state),
+    ARRAY_SIZE(df_three_sliders),
+    (DIOBJECTDATAFORMAT *)df_three_sliders,
+};
+
 static void test_many_axes_joystick(void)
 {
 #include "psh_hid_macros.h"
@@ -3069,6 +3091,22 @@ static void test_many_axes_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, lFX), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
     check_object( &objinst, &expect_objects[16], &todo_flags );
+
+    /* make sure that we handle three sliders correctly when the format allows */
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_df_three_sliders );
+    ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(struct three_sliders_state, slider[0]), DIPH_BYOFFSET );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
+    check_object( &objinst, &expect_objects[6], NULL );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(struct three_sliders_state, slider[1]), DIPH_BYOFFSET );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
+    check_object( &objinst, &expect_objects[8], NULL );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(struct three_sliders_state, slider[2]), DIPH_BYOFFSET );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
+    check_object( &objinst, &expect_objects[9], NULL );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
