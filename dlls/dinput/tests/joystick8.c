@@ -74,7 +74,7 @@ failed:
     return FALSE;
 }
 
-struct check_objects_todos
+struct check_object_todo
 {
     BOOL type;
     BOOL ofs;
@@ -91,17 +91,48 @@ struct check_objects_params
     UINT index;
     UINT expect_count;
     const DIDEVICEOBJECTINSTANCEW *expect_objs;
-    const struct check_objects_todos *todo_objs;
+    const struct check_object_todo *todo_objs;
     BOOL todo_extra;
 };
+
+#define check_object( a, b, c ) check_object_( __LINE__, a, b, c )
+static void check_object_( int line, const DIDEVICEOBJECTINSTANCEW *actual,
+                           const DIDEVICEOBJECTINSTANCEW *expected,
+                           const struct check_object_todo *todo )
+{
+    static const struct check_object_todo todo_none = {0};
+    if (!todo) todo = &todo_none;
+
+    check_member_( __FILE__, line, *actual, *expected, "%lu", dwSize );
+    todo_wine_if( todo->guid )
+    check_member_guid_( __FILE__, line, *actual, *expected, guidType );
+    todo_wine_if( todo->ofs )
+    check_member_( __FILE__, line, *actual, *expected, "%#lx", dwOfs );
+    todo_wine_if( todo->type )
+    check_member_( __FILE__, line, *actual, *expected, "%#lx", dwType );
+    todo_wine_if( todo->flags )
+    check_member_( __FILE__, line, *actual, *expected, "%#lx", dwFlags );
+    if (!localized) todo_wine_if( todo->name ) check_member_wstr_( __FILE__, line, *actual, *expected, tszName );
+    check_member_( __FILE__, line, *actual, *expected, "%lu", dwFFMaxForce );
+    check_member_( __FILE__, line, *actual, *expected, "%lu", dwFFForceResolution );
+    check_member_( __FILE__, line, *actual, *expected, "%u", wCollectionNumber );
+    check_member_( __FILE__, line, *actual, *expected, "%u", wDesignatorIndex );
+    todo_wine_if( todo->usage_page )
+    check_member_( __FILE__, line, *actual, *expected, "%#04x", wUsagePage );
+    todo_wine_if( todo->usage )
+    check_member_( __FILE__, line, *actual, *expected, "%#04x", wUsage );
+    check_member_( __FILE__, line, *actual, *expected, "%#lx", dwDimension );
+    check_member_( __FILE__, line, *actual, *expected, "%#04x", wExponent );
+    check_member_( __FILE__, line, *actual, *expected, "%u", wReportId );
+}
 
 static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
 {
     static const DIDEVICEOBJECTINSTANCEW unexpected_obj = {0};
-    static const struct check_objects_todos todo_none = {0};
+    static const struct check_object_todo todo_none = {0};
     struct check_objects_params *params = args;
     const DIDEVICEOBJECTINSTANCEW *exp = params->expect_objs + params->index;
-    const struct check_objects_todos *todo;
+    const struct check_object_todo *todo;
 
     if (!params->todo_objs) todo = &todo_none;
     else todo = params->todo_objs + params->index;
@@ -115,27 +146,7 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     ok( params->index < params->expect_count, "unexpected extra object\n" );
     if (params->index >= params->expect_count) exp = &unexpected_obj;
 
-    check_member( *obj, *exp, "%lu", dwSize );
-    todo_wine_if( todo->guid )
-    check_member_guid( *obj, *exp, guidType );
-    todo_wine_if( todo->ofs )
-    check_member( *obj, *exp, "%#lx", dwOfs );
-    todo_wine_if( todo->type )
-    check_member( *obj, *exp, "%#lx", dwType );
-    todo_wine_if( todo->flags )
-    check_member( *obj, *exp, "%#lx", dwFlags );
-    if (!localized) todo_wine_if( todo->name )check_member_wstr( *obj, *exp, tszName );
-    check_member( *obj, *exp, "%lu", dwFFMaxForce );
-    check_member( *obj, *exp, "%lu", dwFFForceResolution );
-    check_member( *obj, *exp, "%u", wCollectionNumber );
-    check_member( *obj, *exp, "%u", wDesignatorIndex );
-    todo_wine_if( todo->usage_page )
-    check_member( *obj, *exp, "%#04x", wUsagePage );
-    todo_wine_if( todo->usage )
-    check_member( *obj, *exp, "%#04x", wUsage );
-    check_member( *obj, *exp, "%#lx", dwDimension );
-    check_member( *obj, *exp, "%#04x", wExponent );
-    check_member( *obj, *exp, "%u", wReportId );
+    check_object( obj, exp, todo );
 
     winetest_pop_context();
 
@@ -708,7 +719,7 @@ static void test_simple_joystick( DWORD version )
             .wReportId = 1,
         },
     };
-    struct check_objects_todos todo_objects_5[ARRAY_SIZE(expect_objects_5)] =
+    struct check_object_todo todo_objects_5[ARRAY_SIZE(expect_objects_5)] =
     {
         {.guid = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
         {.guid = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
@@ -718,6 +729,7 @@ static void test_simple_joystick( DWORD version )
         {.guid = TRUE, .ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
         {.guid = TRUE, .ofs = TRUE, .type = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
     };
+    struct check_object_todo todo_ofs = {.ofs = TRUE};
     struct check_objects_params check_objects_params =
     {
         .version = version,
@@ -1117,22 +1129,7 @@ static void test_simple_joystick( DWORD version )
 
     if (version < 0x0700) expect_obj = expect_objects_5[0];
     else expect_obj = expect_objects[4];
-    check_member( objinst, expect_obj, "%lu", dwSize );
-    check_member_guid( objinst, expect_obj, guidType );
-    todo_wine_if( version < 0x0700 )
-    check_member( objinst, expect_obj, "%#lx", dwOfs );
-    check_member( objinst, expect_obj, "%#lx", dwType );
-    check_member( objinst, expect_obj, "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_obj, tszName );
-    check_member( objinst, expect_obj, "%lu", dwFFMaxForce );
-    check_member( objinst, expect_obj, "%lu", dwFFForceResolution );
-    check_member( objinst, expect_obj, "%u", wCollectionNumber );
-    check_member( objinst, expect_obj, "%u", wDesignatorIndex );
-    check_member( objinst, expect_obj, "%#04x", wUsagePage );
-    check_member( objinst, expect_obj, "%#04x", wUsage );
-    check_member( objinst, expect_obj, "%#lx", dwDimension );
-    check_member( objinst, expect_obj, "%#04x", wExponent );
-    check_member( objinst, expect_obj, "%u", wReportId );
+    check_object( &objinst, &expect_obj, version < 0x0700 ? &todo_ofs : NULL );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0x14, DIPH_BYOFFSET );
     ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#lx\n", hr );
@@ -1147,22 +1144,7 @@ static void test_simple_joystick( DWORD version )
 
     if (version < 0x0700) expect_obj = expect_objects_5[6];
     else expect_obj = expect_objects[8];
-    check_member( objinst, expect_obj, "%lu", dwSize );
-    check_member_guid( objinst, expect_obj, guidType );
-    todo_wine_if( version < 0x0700 )
-    check_member( objinst, expect_obj, "%#lx", dwOfs );
-    check_member( objinst, expect_obj, "%#lx", dwType );
-    check_member( objinst, expect_obj, "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_obj, tszName );
-    check_member( objinst, expect_obj, "%lu", dwFFMaxForce );
-    check_member( objinst, expect_obj, "%lu", dwFFForceResolution );
-    check_member( objinst, expect_obj, "%u", wCollectionNumber );
-    check_member( objinst, expect_obj, "%u", wDesignatorIndex );
-    check_member( objinst, expect_obj, "%#04x", wUsagePage );
-    check_member( objinst, expect_obj, "%#04x", wUsage );
-    check_member( objinst, expect_obj, "%#lx", dwDimension );
-    check_member( objinst, expect_obj, "%#04x", wExponent );
-    check_member( objinst, expect_obj, "%u", wReportId );
+    check_object( &objinst, &expect_obj, version < 0x0700 ? &todo_ofs : NULL );
 
     hr = IDirectInputDevice8_EnumEffects( device, NULL, NULL, DIEFT_ALL );
     ok( hr == DIERR_INVALIDPARAM, "EnumEffects returned %#lx\n", hr );
@@ -1209,22 +1191,7 @@ static void test_simple_joystick( DWORD version )
     if (version < 0x0700) expect_obj = expect_objects_5[1];
     else expect_obj = expect_objects[3];
     if (version < 0x0800) expect_obj.dwOfs = DIJOFS_Y;
-    check_member( objinst, expect_obj, "%lu", dwSize );
-    check_member_guid( objinst, expect_obj, guidType );
-    todo_wine_if( version < 0x0800 )
-    check_member( objinst, expect_obj, "%#lx", dwOfs );
-    check_member( objinst, expect_obj, "%#lx", dwType );
-    check_member( objinst, expect_obj, "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_obj, tszName );
-    check_member( objinst, expect_obj, "%lu", dwFFMaxForce );
-    check_member( objinst, expect_obj, "%lu", dwFFForceResolution );
-    check_member( objinst, expect_obj, "%u", wCollectionNumber );
-    check_member( objinst, expect_obj, "%u", wDesignatorIndex );
-    check_member( objinst, expect_obj, "%#04x", wUsagePage );
-    check_member( objinst, expect_obj, "%#04x", wUsage );
-    check_member( objinst, expect_obj, "%#lx", dwDimension );
-    check_member( objinst, expect_obj, "%#04x", wExponent );
-    check_member( objinst, expect_obj, "%u", wReportId );
+    check_object( &objinst, &expect_obj, version < 0x0800 ? &todo_ofs : NULL );
 
     hr = IDirectInputDevice8_SetEventNotification( device, (HANDLE)0xdeadbeef );
     todo_wine
@@ -2982,7 +2949,7 @@ static void test_many_axes_joystick(void)
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
     };
-    struct check_objects_todos todo_objects[ARRAY_SIZE(expect_objects)] =
+    struct check_object_todo todo_objects[ARRAY_SIZE(expect_objects)] =
     {
         {0},
         {0},
@@ -3013,6 +2980,7 @@ static void test_many_axes_joystick(void)
     };
 
     DIDEVICEOBJECTINSTANCEW objinst = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
+    struct check_object_todo todo_flags = {.flags = TRUE};
     DIDEVICEINSTANCEW devinst = {0};
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
@@ -3076,120 +3044,27 @@ static void test_many_axes_joystick(void)
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, DIJOFS_RZ, DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
-
-    check_member( objinst, expect_objects[5], "%lu", dwSize );
-    check_member_guid( objinst, expect_objects[5], guidType );
-    check_member( objinst, expect_objects[5], "%#lx", dwOfs );
-    check_member( objinst, expect_objects[5], "%#lx", dwType );
-    check_member( objinst, expect_objects[5], "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[5], tszName );
-    check_member( objinst, expect_objects[5], "%lu", dwFFMaxForce );
-    check_member( objinst, expect_objects[5], "%lu", dwFFForceResolution );
-    check_member( objinst, expect_objects[5], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[5], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[5], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[5], "%#04x", wUsage );
-    check_member( objinst, expect_objects[5], "%#lx", dwDimension );
-    check_member( objinst, expect_objects[5], "%#04x", wExponent );
-    check_member( objinst, expect_objects[5], "%u", wReportId );
+    check_object( &objinst, &expect_objects[5], NULL );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, rglSlider[0]), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
-
-    check_member( objinst, expect_objects[6], "%lu", dwSize );
-    check_member_guid( objinst, expect_objects[6], guidType );
-    check_member( objinst, expect_objects[6], "%#lx", dwOfs );
-    check_member( objinst, expect_objects[6], "%#lx", dwType );
-    check_member( objinst, expect_objects[6], "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[6], tszName );
-    check_member( objinst, expect_objects[6], "%lu", dwFFMaxForce );
-    check_member( objinst, expect_objects[6], "%lu", dwFFForceResolution );
-    check_member( objinst, expect_objects[6], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[6], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[6], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[6], "%#04x", wUsage );
-    check_member( objinst, expect_objects[6], "%#lx", dwDimension );
-    check_member( objinst, expect_objects[6], "%#04x", wExponent );
-    check_member( objinst, expect_objects[6], "%u", wReportId );
+    check_object( &objinst, &expect_objects[6], NULL );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, rglSlider[1]), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
-
-    check_member( objinst, expect_objects[8], "%lu", dwSize );
-    check_member_guid( objinst, expect_objects[8], guidType );
-    check_member( objinst, expect_objects[8], "%#lx", dwOfs );
-    check_member( objinst, expect_objects[8], "%#lx", dwType );
-    check_member( objinst, expect_objects[8], "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[8], tszName );
-    check_member( objinst, expect_objects[8], "%lu", dwFFMaxForce );
-    check_member( objinst, expect_objects[8], "%lu", dwFFForceResolution );
-    check_member( objinst, expect_objects[8], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[8], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[8], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[8], "%#04x", wUsage );
-    check_member( objinst, expect_objects[8], "%#lx", dwDimension );
-    check_member( objinst, expect_objects[8], "%#04x", wExponent );
-    check_member( objinst, expect_objects[8], "%u", wReportId );
+    check_object( &objinst, &expect_objects[8], NULL );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, lVX), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
-
-    check_member( objinst, expect_objects[10], "%lu", dwSize );
-    check_member_guid( objinst, expect_objects[10], guidType );
-    check_member( objinst, expect_objects[10], "%#lx", dwOfs );
-    check_member( objinst, expect_objects[10], "%#lx", dwType );
-    todo_wine
-    check_member( objinst, expect_objects[10], "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[10], tszName );
-    check_member( objinst, expect_objects[10], "%lu", dwFFMaxForce );
-    check_member( objinst, expect_objects[10], "%lu", dwFFForceResolution );
-    check_member( objinst, expect_objects[10], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[10], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[10], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[10], "%#04x", wUsage );
-    check_member( objinst, expect_objects[10], "%#lx", dwDimension );
-    check_member( objinst, expect_objects[10], "%#04x", wExponent );
-    check_member( objinst, expect_objects[10], "%u", wReportId );
+    check_object( &objinst, &expect_objects[10], &todo_flags );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, lAX), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
-
-    check_member( objinst, expect_objects[13], "%lu", dwSize );
-    check_member_guid( objinst, expect_objects[13], guidType );
-    check_member( objinst, expect_objects[13], "%#lx", dwOfs );
-    check_member( objinst, expect_objects[13], "%#lx", dwType );
-    todo_wine
-    check_member( objinst, expect_objects[13], "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[13], tszName );
-    check_member( objinst, expect_objects[13], "%lu", dwFFMaxForce );
-    check_member( objinst, expect_objects[13], "%lu", dwFFForceResolution );
-    check_member( objinst, expect_objects[13], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[13], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[13], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[13], "%#04x", wUsage );
-    check_member( objinst, expect_objects[13], "%#lx", dwDimension );
-    check_member( objinst, expect_objects[13], "%#04x", wExponent );
-    check_member( objinst, expect_objects[13], "%u", wReportId );
+    check_object( &objinst, &expect_objects[13], &todo_flags );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, offsetof(DIJOYSTATE2, lFX), DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#lx\n", hr );
-
-    check_member( objinst, expect_objects[16], "%lu", dwSize );
-    check_member_guid( objinst, expect_objects[16], guidType );
-    check_member( objinst, expect_objects[16], "%#lx", dwOfs );
-    check_member( objinst, expect_objects[16], "%#lx", dwType );
-    todo_wine
-    check_member( objinst, expect_objects[16], "%#lx", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[16], tszName );
-    check_member( objinst, expect_objects[16], "%lu", dwFFMaxForce );
-    check_member( objinst, expect_objects[16], "%lu", dwFFForceResolution );
-    check_member( objinst, expect_objects[16], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[16], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[16], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[16], "%#04x", wUsage );
-    check_member( objinst, expect_objects[16], "%#lx", dwDimension );
-    check_member( objinst, expect_objects[16], "%#04x", wExponent );
-    check_member( objinst, expect_objects[16], "%u", wReportId );
+    check_object( &objinst, &expect_objects[16], &todo_flags );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
