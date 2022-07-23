@@ -5735,10 +5735,10 @@ static void test_windows_gaming_input(void)
     EventRegistrationToken controller_added_token;
     IPeriodicForceEffectFactory *periodic_factory;
     struct bool_async_handler bool_async_handler;
+    ForceFeedbackEffectAxes supported_axes, axes;
     IVectorView_ForceFeedbackMotor *motors_view;
     IConditionForceEffect *condition_effect;
     ConditionForceEffectKind condition_kind;
-    ForceFeedbackEffectAxes supported_axes;
     IActivationFactory *activation_factory;
     IPeriodicForceEffect *periodic_effect;
     IConstantForceEffect *constant_effect;
@@ -5856,12 +5856,17 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_IsEnabled returned %#lx\n", hr );
     ok( enabled == TRUE, "got enabled %u\n", enabled );
 
+    /* SupportedAxes always returns ForceFeedbackEffectAxes_X on Windows,
+     * no matter which axis is available for FFB in the Set Effects report,
+     * or whether a X axis is declared at all.
+     */
+
     supported_axes = 0xdeadbeef;
     hr = IForceFeedbackMotor_get_SupportedAxes( motor, &supported_axes );
-    todo_wine
     ok( hr == S_OK, "get_SupportedAxes returned %#lx\n", hr );
-    todo_wine
-    ok( supported_axes == ForceFeedbackEffectAxes_X, "got axes %#x\n", supported_axes );
+    axes = ForceFeedbackEffectAxes_X | ForceFeedbackEffectAxes_Y | ForceFeedbackEffectAxes_Z;
+    ok( supported_axes == axes || broken( supported_axes == ForceFeedbackEffectAxes_X ),
+        "got axes %#x\n", supported_axes );
 
     set_hid_expect( file, &expect_pause, sizeof(expect_pause) );
     hr = IForceFeedbackMotor_PauseAllEffects( motor );

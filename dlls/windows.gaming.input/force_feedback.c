@@ -532,10 +532,32 @@ static HRESULT WINAPI motor_get_IsEnabled( IForceFeedbackMotor *iface, BOOLEAN *
     return hr;
 }
 
+static BOOL CALLBACK check_ffb_axes( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    ForceFeedbackEffectAxes *value = args;
+
+    if (obj->dwType & DIDFT_FFACTUATOR)
+    {
+        if (IsEqualIID( &obj->guidType, &GUID_XAxis )) *value |= ForceFeedbackEffectAxes_X;
+        else if (IsEqualIID( &obj->guidType, &GUID_YAxis )) *value |= ForceFeedbackEffectAxes_Y;
+        else if (IsEqualIID( &obj->guidType, &GUID_ZAxis )) *value |= ForceFeedbackEffectAxes_Z;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI motor_get_SupportedAxes( IForceFeedbackMotor *iface, enum ForceFeedbackEffectAxes *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    *value = ForceFeedbackEffectAxes_None;
+    if (FAILED(hr = IDirectInputDevice8_EnumObjects( impl->device, check_ffb_axes, value, DIDFT_AXIS )))
+        *value = ForceFeedbackEffectAxes_None;
+
+    return hr;
 }
 
 static HRESULT WINAPI motor_load_effect_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
