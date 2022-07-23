@@ -694,6 +694,108 @@ static void test_empty_response( int port )
     WsFreeHeap( heap );
 }
 
+static const char req_test4[] =
+    "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
+    "<req_test4 xmlns=\"ns\"><str>test4</str><val>1</val><val>2</val><val>3</val></req_test4>"
+    "</s:Body></s:Envelope>";
+
+static const char resp_test4[] =
+    "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
+    "<resp_test4 xmlns=\"ns\"><str>out4</str><val>4</val><val>5</val></resp_test4>"
+    "</s:Body></s:Envelope>";
+
+static void test_inout_params( int port )
+{
+    WS_XML_STRING str = {3, (BYTE *)"str"};
+    WS_XML_STRING req = {3, (BYTE *)"req"};
+    WS_XML_STRING resp = {4, (BYTE *)"resp"};
+    WS_XML_STRING req_elem = {9, (BYTE *)"req_test4"};
+    WS_XML_STRING resp_elem = {10, (BYTE *)"resp_test4"};
+    WS_XML_STRING req_action = {9, (BYTE *)"req_test4"};
+    WS_XML_STRING resp_action = {10, (BYTE *)"resp_test4"};
+    WS_XML_STRING val = {3, (BYTE *)"val"};
+    WS_XML_STRING ns = {2, (BYTE *)"ns"};
+    HRESULT hr;
+    WS_SERVICE_PROXY *proxy;
+    WS_OPERATION_DESCRIPTION op;
+    WS_MESSAGE_DESCRIPTION input_msg, output_msg;
+    WS_ELEMENT_DESCRIPTION input_elem, output_elem;
+    WS_STRUCT_DESCRIPTION input_struct, output_struct;
+    WS_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_PARAMETER_DESCRIPTION param[3];
+    const void *args[3];
+    WS_HEAP *heap;
+    INT32 val_array[] = {1, 2, 3};
+    WCHAR **str_ptr;
+    INT32 **val_ptr;
+    ULONG *count_ptr;
+    struct data
+    {
+        WCHAR *str;
+        ULONG  count;
+        INT32 *val;
+    } data;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsCall( NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+
+    hr = create_proxy( port, &proxy );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsCall( proxy, NULL, NULL, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+
+    set_field_desc( &f, WS_ELEMENT_FIELD_MAPPING, &str, &ns, WS_WSZ_TYPE, NULL,
+                    FIELD_OFFSET(struct data, str), 0, 0, NULL, NULL );
+    set_field_desc( &f2, WS_REPEATING_ELEMENT_FIELD_MAPPING, NULL, NULL, WS_INT32_TYPE, NULL,
+                    FIELD_OFFSET(struct data, val), 0, FIELD_OFFSET(struct data, count), &val, &ns );
+
+    fields[0] = &f;
+    fields[1] = &f2;
+
+    set_struct_desc( &input_struct, sizeof(struct data), TYPE_ALIGNMENT(struct data), fields, 2, &req, &ns, 0 );
+    set_elem_desc( &input_elem, &req_elem, &ns, WS_STRUCT_TYPE, &input_struct );
+    set_msg_desc( &input_msg, &req_action, &input_elem );
+
+    set_struct_desc( &output_struct, sizeof(struct data), TYPE_ALIGNMENT(struct data), fields, 2, &resp, &ns, 0 );
+    set_elem_desc( &output_elem, &resp_elem, &ns, WS_STRUCT_TYPE, &output_struct );
+    set_msg_desc( &output_msg, &resp_action, &output_elem );
+
+    set_param_desc( &param[0], WS_PARAMETER_TYPE_NORMAL, 0, 0 );
+    set_param_desc( &param[1], WS_PARAMETER_TYPE_ARRAY, 1, 1 );
+    set_param_desc( &param[2], WS_PARAMETER_TYPE_ARRAY_COUNT, 1, 1 );
+
+    set_op_desc( &op, &input_msg, &output_msg, 3, param );
+
+    data.str   = (WCHAR *) L"test4";
+    data.count = ARRAY_SIZE(val_array);
+    data.val   = val_array;
+
+    str_ptr   = &data.str;
+    val_ptr   = &data.val;
+    count_ptr = &data.count;
+
+    args[0] = &str_ptr;
+    args[1] = &val_ptr;
+    args[2] = &count_ptr;
+
+    hr = WsCall( proxy, &op, args, heap, NULL, 0, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( !wcscmp( data.str, L"out4" ), "wrong str\n" );
+    ok( data.count == 2, "got %lu\n", data.count );
+    ok( data.val[0] == 4, "got %u\n", data.val[0] );
+    ok( data.val[1] == 5, "got %u\n", data.val[1] );
+
+    hr = WsCloseServiceProxy( proxy, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    WsFreeServiceProxy( proxy );
+    WsFreeHeap( heap );
+}
+
 static const char status_200[] = "HTTP/1.1 200 OK\r\n";
 
 static const struct
@@ -710,6 +812,7 @@ tests[] =
     { "req_test1", req_test1, sizeof(req_test1)-1, status_200, resp_test1, sizeof(resp_test1)-1 },
     { "req_test2", req_test2, sizeof(req_test2)-1, status_200, resp_test2, sizeof(resp_test2)-1 },
     { "req_test3", req_test3, sizeof(req_test3)-1, status_200, resp_test3, sizeof(resp_test3)-1 },
+    { "req_test4", req_test4, sizeof(req_test4)-1, status_200, resp_test4, sizeof(resp_test4)-1 },
 };
 
 static void send_response( int c, const char *status, const char *data, unsigned int len )
@@ -843,6 +946,7 @@ START_TEST(proxy)
     test_WsReceiveMessage( info.port );
     test_WsCall( info.port );
     test_empty_response( info.port );
+    test_inout_params( info.port );
 
     test_WsSendMessage( info.port, &quit );
     WaitForSingleObject( thread, 3000 );

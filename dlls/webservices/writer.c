@@ -4904,7 +4904,10 @@ static ULONG get_array_len( const WS_PARAMETER_DESCRIPTION *params, ULONG count,
     {
         if (params[i].inputMessageIndex != index || params[i].parameterType != WS_PARAMETER_TYPE_ARRAY_COUNT)
             continue;
-        if (args[i]) ret = *(const ULONG *)args[i];
+        if (params[i].outputMessageIndex != INVALID_PARAMETER_INDEX)
+            ret = **(const ULONG **)args[i];
+        else
+            ret = *(const ULONG *)args[i];
         break;
     }
     return ret;
@@ -4949,12 +4952,22 @@ HRESULT write_input_params( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION 
         if ((hr = get_param_desc( desc_struct, params[i].inputMessageIndex, &desc_field )) != S_OK) goto done;
         if (params[i].parameterType == WS_PARAMETER_TYPE_NORMAL)
         {
-            if ((hr = write_param( writer, desc_field, args[i] )) != S_OK) goto done;
+            const void *ptr;
+            if (params[i].outputMessageIndex != INVALID_PARAMETER_INDEX)
+                ptr = *(const void **)args[i];
+            else
+                ptr = args[i];
+            if ((hr = write_param( writer, desc_field, ptr )) != S_OK) goto done;
         }
         else if (params[i].parameterType == WS_PARAMETER_TYPE_ARRAY)
         {
-            const void *ptr = *(const void **)args[i];
-            ULONG len = get_array_len( params, count, params[i].inputMessageIndex, args );
+            const void *ptr;
+            ULONG len;
+            if (params[i].outputMessageIndex != INVALID_PARAMETER_INDEX)
+                ptr = **(const void ***)args[i];
+            else
+                ptr = *(const void **)args[i];
+            len = get_array_len( params, count, params[i].inputMessageIndex, args );
             if ((hr = write_param_array( writer, desc_field, ptr, len )) != S_OK) goto done;
         }
     }
