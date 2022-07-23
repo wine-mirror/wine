@@ -625,23 +625,25 @@ static HRESULT write_headers( struct msg *msg, WS_MESSAGE_INITIALIZATION init, W
     if ((hr = write_action_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, msg->action )) != S_OK)
         return hr;
 
-    if (init == WS_REPLY_MESSAGE)
+    if (init == WS_REPLY_MESSAGE || init == WS_FAULT_MESSAGE)
     {
         if ((hr = write_relatesto_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->id_req )) != S_OK)
             return hr;
     }
-    else if (msg->addr.length)
-    {
-        if ((hr = write_to_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->addr )) != S_OK)
-            return hr;
-    }
     else
     {
-        if (init == WS_REQUEST_MESSAGE &&
-            (hr = write_msgid_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->id )) != S_OK) return hr;
+        if (init == WS_REQUEST_MESSAGE)
+        {
+            if ((hr = write_msgid_header(writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->id)) != S_OK)
+                return hr;
+            if (msg->version_addr == WS_ADDRESSING_VERSION_0_9 &&
+                (hr = write_replyto_header(writer, prefix_env, ns_env, prefix_addr, ns_addr)) != S_OK)
+                return hr;
+        }
 
-        if (msg->version_addr == WS_ADDRESSING_VERSION_0_9 &&
-            (hr = write_replyto_header( writer, prefix_env, ns_env, prefix_addr, ns_addr )) != S_OK) return hr;
+        if (msg->addr.length &&
+            (hr = write_to_header(writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->addr)) != S_OK)
+            return hr;
     }
 
     for (i = 0; i < msg->header_count; i++)
