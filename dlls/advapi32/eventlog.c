@@ -642,20 +642,34 @@ BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dw
 
     for (i = 0; i < wNumStrings; i++)
     {
-        switch (wType)
+        const WCHAR *line = lpStrings[i];
+
+        while (*line)
         {
-        case EVENTLOG_SUCCESS:
-            TRACE_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
-            break;
-        case EVENTLOG_ERROR_TYPE:
-            ERR_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
-            break;
-        case EVENTLOG_WARNING_TYPE:
-            WARN_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
-            break;
-        default:
-            TRACE_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
-            break;
+            const WCHAR *next = wcschr( line, '\n' );
+
+            if (next)
+                ++next;
+            else
+                next = line + wcslen( line );
+
+            switch (wType)
+            {
+            case EVENTLOG_SUCCESS:
+                TRACE_(eventlog)("%s\n", debugstr_wn(line, next - line));
+                break;
+            case EVENTLOG_ERROR_TYPE:
+                ERR_(eventlog)("%s\n", debugstr_wn(line, next - line));
+                break;
+            case EVENTLOG_WARNING_TYPE:
+                WARN_(eventlog)("%s\n", debugstr_wn(line, next - line));
+                break;
+            default:
+                TRACE_(eventlog)("%s\n", debugstr_wn(line, next - line));
+                break;
+            }
+
+            line = next;
         }
     }
     return TRUE;
