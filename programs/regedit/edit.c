@@ -96,6 +96,11 @@ static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
 
     switch (params->type)
     {
+    case REG_SZ:
+    case REG_EXPAND_SZ:
+        params->data = buf;
+        params->size = (len + 1) * sizeof(WCHAR);
+        break;
     case REG_DWORD:
         params->size = sizeof(DWORD);
         params->data = malloc(params->size);
@@ -129,9 +134,11 @@ static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
         params->size = j * sizeof(WCHAR);
         break;
     }
-    default: /* REG_SZ, REG_EXPAND_SZ */
-        params->data = buf;
-        params->size = (len + 1) * sizeof(WCHAR);
+    default: /* hex data types */
+        free(buf);
+        params->size = SendMessageW(hwndValue, HEM_GETDATA, 0, 0);
+        params->data = malloc(params->size);
+        SendMessageW(hwndValue, HEM_GETDATA, (WPARAM)params->size, (LPARAM)params->data);
     }
 
     ret = RegSetValueExW(params->hkey, params->value_name, 0, params->type, (BYTE *)params->data, params->size);
@@ -224,9 +231,7 @@ static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpar
 static INT_PTR CALLBACK modify_binary_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     struct edit_params *params;
-    BYTE *data;
-    LONG size;
-    LONG lRet;
+    int ret = 0;
 
     switch(uMsg) {
     case WM_INITDIALOG:
@@ -243,23 +248,10 @@ static INT_PTR CALLBACK modify_binary_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wP
         switch (LOWORD(wParam)) {
         case IDOK:
             params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
-            size = SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
-            data = malloc(size);
-
-            SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)size, (LPARAM)data);
-            lRet = RegSetValueExW(params->hkey, params->value_name, 0, params->type, data, size);
-            free(data);
-
-            if (lRet == ERROR_SUCCESS)
-                EndDialog(hwndDlg, 1);
-            else
-            {
-                error_code_messagebox(hwndDlg, IDS_SET_VALUE_FAILED);
-                EndDialog(hwndDlg, 0);
-            }
-            return TRUE;
+            ret = update_registry_value(hwndDlg, params);
+            /* fall through */
         case IDCANCEL:
-            EndDialog(hwndDlg, 0);
+            EndDialog(hwndDlg, ret);
             return TRUE;
         }
     }
