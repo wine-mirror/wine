@@ -1075,6 +1075,7 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
     {
     case ProcessDefaultHardErrorMode:   /* ULONG */
     case ProcessPriorityClass:   /* PROCESS_PRIORITY_CLASS */
+    case ProcessExecuteFlags:   /* ULONG */
         return NtSetInformationProcess( handle, class, ptr, len );
 
     case ProcessAffinityMask:   /* ULONG_PTR */
@@ -1084,9 +1085,6 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
             return NtSetInformationProcess( handle, class, &mask, sizeof(mask) );
         }
         else return STATUS_INVALID_PARAMETER;
-
-    case ProcessExecuteFlags:   /* ULONG */
-        return STATUS_ACCESS_DENIED;
 
     case ProcessInstrumentationCallback:   /* PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION */
         if (len == sizeof(PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION32))
