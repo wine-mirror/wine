@@ -1315,7 +1315,7 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
     if (!is_callas(func->attrs)) {
       const var_t *arg;
 
-      fprintf(header, "static FORCEINLINE ");
+      fprintf(header, "static __WIDL_INLINE ");
       write_type_decl_left(header, type_function_get_ret(func->declspec.type));
       fprintf(header, " %s_%s(", name, get_name(func));
       write_args(header, type_function_get_args(func->declspec.type), name, 1, FALSE, NAME_C);
@@ -2154,6 +2154,14 @@ void write_header(const statement_list_t *stmts)
 
   fprintf(header, "#ifndef __%s__\n", header_token);
   fprintf(header, "#define __%s__\n\n", header_token);
+
+  fprintf(header, "#ifndef __WIDL_INLINE\n");
+  fprintf(header, "#if defined(__cplusplus) || defined(_MSC_VER)\n");
+  fprintf(header, "#define __WIDL_INLINE inline\n");
+  fprintf(header, "#elif defined(__GNUC__)\n");
+  fprintf(header, "#define __WIDL_INLINE __inline__\n");
+  fprintf(header, "#endif\n");
+  fprintf(header, "#endif\n\n");
 
   fprintf(header, "/* Forward declarations */\n\n");
   write_forward_decls(header, stmts);
