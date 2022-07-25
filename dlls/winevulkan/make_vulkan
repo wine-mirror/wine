@@ -147,12 +147,8 @@ ALLOWED_X_EXTENSIONS = [
     "VK_NVX_image_view_handle",
 ]
 
-# We can't use syscall interface for functions that may call display drivers
-# until drivers are converted to pure Unix libraries. Also some frequently
-# called functions use direct calls for performance reasons.
+# Some frequently called functions use direct calls for performance reasons.
 DIRECT_CALL_FUNCTIONS = [
-    "vkCreateDevice",
-    "vkEnumerateInstanceVersion",
     "vkUpdateDescriptorSets",
     "vkUpdateDescriptorSetWithTemplate",
 ]
@@ -691,7 +687,7 @@ class VkFunction(object):
         # vkCmd* functions are frequently called, use direct calls for performance
         if self.name.startswith("vkCmd"):
             return True
-        return self.is_driver_func() or self.name in DIRECT_CALL_FUNCTIONS
+        return self.name in DIRECT_CALL_FUNCTIONS
 
     def pfn(self, prefix="p", call_conv=None, conv=False):
         """ Create function pointer. """
