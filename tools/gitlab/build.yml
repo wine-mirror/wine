@@ -1,0 +1,62 @@
+# CI script for building Wine
+
+.wine-build:
+  stage: build
+  image: $CI_REGISTRY/wine/wine:debian-bullseye
+  interruptible: true
+  cache:
+    - paths:
+        - ccache/
+    - key:
+        files:
+          - configure.ac
+      paths:
+        - build32/config.cache
+        - build64/config.cache
+  before_script:
+    - export CCACHE_BASEDIR="$PWD"
+    - export CCACHE_DIR="$PWD/ccache"
+    - export CCACHE_COMPILERCHECK=content
+    - export PATH="/usr/lib/ccache:$PATH"
+    - mkdir -p build32 build64
+
+build-all:
+  extends: .wine-build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  artifacts:
+    when: on_failure
+    paths:
+      - build64/config.log
+      - build32/config.log
+  script:
+    - ./tools/make_requests
+    - ./tools/make_makefiles
+    - autoreconf
+    - cd build64
+    - ../configure -C --enable-win64 --enable-werror --with-mingw
+    - make -s -j$(nproc)
+    - cd ../build32
+    - ../configure -C --enable-werror --with-mingw
+    - make -s -j$(nproc)
+
+build-winetest:
+  extends: .wine-build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  artifacts:
+    name: winetest
+    paths:
+      - winetest.exe
+      - winetest64.exe
+  script:
+    - cd build64
+    - ../configure -C --enable-win64 --with-mingw
+    - make -s -j$(nproc) programs/winetest/winetest.exe
+    - cd ../build32
+    - ../configure -C --with-mingw
+    - make -s -j$(nproc) programs/winetest/winetest.exe
+    - cd ..
+    - mv build32/programs/winetest/winetest.exe winetest.exe
+    - mv build64/programs/winetest/winetest.exe winetest64.exe
+    - chmod 644 winetest.exe winetest64.exe

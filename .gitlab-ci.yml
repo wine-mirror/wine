@@ -1,0 +1,9 @@
+# main Gitlab CI script
+
+stages:
+  - image
+  - build
+
+include:
+  - local: "/tools/gitlab/image.yml"
+  - local: "/tools/gitlab/build.yml"
