@@ -49,6 +49,7 @@ function test_xhr() {
                 ok(props[i] in e, props[i] + " not available in loadstart");
             ok(e.lengthComputable === false, "lengthComputable in loadstart = " + e.lengthComputable);
             ok(e.loaded === 0, "loaded in loadstart = " + e.loaded);
+            ok(e.total === 18446744073709552000, "total in loadstart = " + e.total);
             loadstart = true;
         };
         xhr.onloadend = function(e) {
@@ -60,6 +61,8 @@ function test_xhr() {
             ok(e.lengthComputable === true, "lengthComputable in loadend = " + e.lengthComputable);
             todo_wine.
             ok(e.loaded === xml.length, "loaded in loadend = " + e.loaded);
+            todo_wine.
+            ok(e.total === xml.length, "total in loadend = " + e.total);
             next_test();
         };
     }
@@ -179,6 +182,7 @@ function test_timeout() {
         if(v >= 10) {
             ok(e.lengthComputable === false, "lengthComputable = " + e.lengthComputable);
             ok(e.loaded === 0, "loaded = " + e.loaded);
+            ok(e.total === 18446744073709552000, "total = " + e.total);
         }
         next_test();
     }

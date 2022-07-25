@@ -2523,8 +2523,16 @@ static HRESULT WINAPI DOMProgressEvent_get_loaded(IDOMProgressEvent *iface, ULON
 static HRESULT WINAPI DOMProgressEvent_get_total(IDOMProgressEvent *iface, ULONGLONG *p)
 {
     DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool b;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(NS_FAILED(nsIDOMProgressEvent_GetLengthComputable(This->nsevent, &b)) || !b) {
+        *p = ~0;
+        return S_OK;
+    }
+
+    return map_nsresult(nsIDOMProgressEvent_GetTotal(This->nsevent, p));
 }
 
 static HRESULT WINAPI DOMProgressEvent_initProgressEvent(IDOMProgressEvent *iface, BSTR type, VARIANT_BOOL can_bubble,
