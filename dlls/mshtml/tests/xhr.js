@@ -54,7 +54,7 @@ function test_xhr() {
             ok(loadstart, "onloadstart not fired before onloadend");
             var props = [ "initProgressEvent", "lengthComputable", "loaded", "total" ];
             for(var i = 0; i < props.length; i++)
-                ok(props[i] in e, props[i] + " not available in loadstart");
+                ok(props[i] in e, props[i] + " not available in loadend");
             next_test();
         };
     }
