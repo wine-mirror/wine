@@ -236,6 +236,8 @@ static unsigned int logical_proc_info_len, logical_proc_info_alloc_len;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *logical_proc_info_ex;
 static unsigned int logical_proc_info_ex_size, logical_proc_info_ex_alloc_size;
 
+static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /*******************************************************************************
  * Architecture specific feature detection for CPUs
  *
@@ -2562,17 +2564,28 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemTimeOfDayInformation:  /* 3 */
     {
+        static LONGLONG last_bias;
+        static time_t last_utc;
         struct tm *tm;
-        time_t now;
+        time_t utc;
         SYSTEM_TIMEOFDAY_INFORMATION sti = {{{ 0 }}};
 
         sti.BootTime.QuadPart = server_start_time;
-        now = time( NULL );
-        tm = gmtime( &now );
-        sti.TimeZoneBias.QuadPart = mktime( tm ) - now;
-        tm = localtime( &now );
-        if (tm->tm_isdst) sti.TimeZoneBias.QuadPart -= 3600;
-        sti.TimeZoneBias.QuadPart *= TICKSPERSEC;
+
+        utc = time( NULL );
+        pthread_mutex_lock( &timezone_mutex );
+        if (utc != last_utc)
+        {
+            last_utc = utc;
+            tm = gmtime( &utc );
+            last_bias = mktime( tm ) - utc;
+            tm = localtime( &utc );
+            if (tm->tm_isdst) last_bias -= 3600;
+            last_bias *= TICKSPERSEC;
+        }
+        sti.TimeZoneBias.QuadPart = last_bias;
+        pthread_mutex_unlock( &timezone_mutex );
+
         NtQuerySystemTime( &sti.SystemTime );
 
         if (size <= sizeof(sti))
