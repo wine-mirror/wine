@@ -902,9 +902,8 @@ void ME_GetCharFormat( ME_TextEditor *editor, const ME_Cursor *from,
     run_copy_char_fmt( run, &tmp );
 
     assert((tmp.dwMask & dwAttribs) == dwAttribs);
-    /* reset flags that differ */
 
-    if (fmt->yHeight != tmp.yHeight) fmt->dwMask &= ~CFM_SIZE;
+    /* reset flags that differ */
     if (fmt->dwMask & CFM_FACE)
     {
       if (!(tmp.dwMask & CFM_FACE))
