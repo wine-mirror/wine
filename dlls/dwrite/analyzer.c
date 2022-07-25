@@ -513,22 +513,21 @@ static DWRITE_SCRIPT_ANALYSIS get_char_sa(WCHAR c)
     return sa;
 }
 
-static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length, IDWriteTextAnalysisSink *sink)
+static HRESULT analyze_script(struct text_source_context *context, IDWriteTextAnalysisSink *sink)
 {
     DWRITE_SCRIPT_ANALYSIS sa;
-    UINT32 pos, i, seq_length;
+    UINT32 pos, seq_length;
 
-    if (!length)
-        return S_OK;
+    text_source_get_next_u32_char(context);
 
-    sa = get_char_sa(*text);
+    sa = get_char_sa(context->ch);
 
-    pos = position;
+    pos = context->position;
     seq_length = 1;
 
-    for (i = 1; i < length; i++)
+    while (!text_source_get_next_u32_char(context))
     {
-        DWRITE_SCRIPT_ANALYSIS cur_sa = get_char_sa(text[i]);
+        DWRITE_SCRIPT_ANALYSIS cur_sa = get_char_sa(context->ch);
 
         /* Unknown type is ignored when preceded or followed by another script */
         switch (sa.script) {
@@ -554,7 +553,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length,
 
             hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
             if (FAILED(hr)) return hr;
-            pos = position + i;
+            pos += seq_length;
             seq_length = 1;
             sa = cur_sa;
         }
@@ -1104,23 +1103,17 @@ static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 pos
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
-    WCHAR *buff = NULL;
-    const WCHAR *text;
+    struct text_source_context context;
     HRESULT hr;
 
     TRACE("%p, %u, %u, %p.\n", source, position, length, sink);
 
-    if (length == 0)
+    if (!length)
         return S_OK;
 
-    hr = get_text_source_ptr(source, position, length, &text, &buff);
-    if (FAILED(hr))
-        return hr;
+    if (FAILED(hr = text_source_context_init(&context, source, position, length))) return hr;
 
-    hr = analyze_script(text, position, length, sink);
-    free(buff);
-
-    return hr;
+    return analyze_script(&context, sink);
 }
 
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface,
