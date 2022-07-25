@@ -1271,8 +1271,8 @@
 @ stub NtUserSoundSentry
 @ stub NtUserStopAndEndInertia
 @ stub NtUserSwitchDesktop
-@ stdcall NtUserSystemParametersInfo(long long ptr long)
-@ stdcall NtUserSystemParametersInfoForDpi(long long ptr long long)
+@ stdcall -syscall NtUserSystemParametersInfo(long long ptr long)
+@ stdcall -syscall NtUserSystemParametersInfoForDpi(long long ptr long long)
 @ stub NtUserTestForInteractiveUser
 @ stdcall -syscall NtUserThunkedMenuInfo(long ptr)
 @ stdcall -syscall NtUserThunkedMenuItemInfo(long long long long ptr ptr)

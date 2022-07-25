@@ -268,6 +268,8 @@
     SYSCALL_ENTRY( NtUserShowScrollBar ) \
     SYSCALL_ENTRY( NtUserShowWindow ) \
     SYSCALL_ENTRY( NtUserShowWindowAsync ) \
+    SYSCALL_ENTRY( NtUserSystemParametersInfo ) \
+    SYSCALL_ENTRY( NtUserSystemParametersInfoForDpi ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
     SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserToUnicodeEx ) \

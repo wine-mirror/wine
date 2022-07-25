@@ -2286,6 +2286,116 @@ NTSTATUS WINAPI wow64_NtUserShowWindowAsync( UINT *args )
     return NtUserShowWindowAsync( hwnd, cmd );
 }
 
+NTSTATUS WINAPI wow64_NtUserSystemParametersInfo( UINT *args )
+{
+    UINT action = get_ulong( &args );
+    UINT val = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    UINT winini = get_ulong( &args );
+
+    switch (action)
+    {
+    case SPI_GETSERIALKEYS:
+        if (ptr)
+        {
+            struct
+            {
+                UINT  cbSize;
+                DWORD dwFlags;
+                ULONG lpszActivePort;
+                ULONG lpszPort;
+                UINT  iBaudRate;
+                UINT  iPortState;
+                UINT  iActive;
+            } *keys32 = ptr;
+            SERIALKEYSW keys;
+
+            if (keys32->cbSize != sizeof(*keys32)) return FALSE;
+            keys.cbSize = sizeof(keys);
+            if (!NtUserSystemParametersInfo( action, val, &keys, winini )) return FALSE;
+            keys32->dwFlags = keys.dwFlags;
+            keys32->lpszActivePort = PtrToUlong( keys.lpszActivePort );
+            keys32->lpszPort = PtrToUlong( keys.lpszPort );
+            keys32->iBaudRate = keys.iBaudRate;
+            keys32->iPortState = keys.iPortState;
+            keys32->iActive = keys.iActive;
+            return TRUE;
+        }
+        break;
+
+    case SPI_GETSOUNDSENTRY:
+        if (ptr)
+        {
+            struct
+            {
+                UINT  cbSize;
+                DWORD dwFlags;
+                DWORD iFSTextEffect;
+                DWORD iFSTextEffectMSec;
+                DWORD iFSTextEffectColorBits;
+                DWORD iFSGrafEffect;
+                DWORD iFSGrafEffectMSec;
+                DWORD iFSGrafEffectColor;
+                DWORD iWindowsEffect;
+                DWORD iWindowsEffectMSec;
+                ULONG lpszWindowsEffectDLL;
+                DWORD iWindowsEffectOrdinal;
+            } *entry32 = ptr;
+            SOUNDSENTRYW entry;
+
+            if (entry32->cbSize != sizeof(*entry32)) return FALSE;
+            entry.cbSize = sizeof(entry);
+            if (!NtUserSystemParametersInfo( action, val, &entry, winini )) return FALSE;
+            entry32->dwFlags = entry.dwFlags;
+            entry32->iFSTextEffect = entry.iFSTextEffect;
+            entry32->iFSTextEffectMSec = entry.iFSTextEffectMSec;
+            entry32->iFSTextEffectColorBits = entry.iFSTextEffectColorBits;
+            entry32->iFSGrafEffect = entry.iFSGrafEffect;
+            entry32->iFSGrafEffectMSec = entry.iFSGrafEffectMSec;
+            entry32->iFSGrafEffectColor = entry.iFSGrafEffectColor;
+            entry32->iWindowsEffect = entry.iWindowsEffect;
+            entry32->iWindowsEffectMSec = entry.iWindowsEffectMSec;
+            entry32->lpszWindowsEffectDLL = PtrToUlong( entry.lpszWindowsEffectDLL );
+            entry32->iWindowsEffectOrdinal = entry.iWindowsEffectOrdinal;
+            return TRUE;
+        }
+        break;
+
+    case SPI_GETHIGHCONTRAST:
+        if (ptr)
+        {
+            struct
+            {
+                UINT  cbSize;
+                DWORD dwFlags;
+                ULONG lpszDefaultScheme;
+            } *info32 = ptr;
+            HIGHCONTRASTW info;
+
+            if (info32->cbSize != sizeof(*info32)) return FALSE;
+            info.cbSize = sizeof(info);
+            if (!NtUserSystemParametersInfo( action, val, &info, winini )) return FALSE;
+            info32->dwFlags = info.dwFlags;
+            info32->lpszDefaultScheme = PtrToUlong( info.lpszDefaultScheme );
+            return TRUE;
+        }
+        break;
+    }
+
+    return NtUserSystemParametersInfo( action, val, ptr, winini );
+}
+
+NTSTATUS WINAPI wow64_NtUserSystemParametersInfoForDpi( UINT *args )
+{
+    UINT action = get_ulong( &args );
+    UINT val = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    UINT winini = get_ulong( &args );
+    UINT dpi = get_ulong( &args );
+
+    return NtUserSystemParametersInfoForDpi( action, val, ptr, winini, dpi );
+}
+
 NTSTATUS WINAPI wow64_NtUserThunkedMenuInfo( UINT *args )
 {
     HMENU menu = get_handle( &args );

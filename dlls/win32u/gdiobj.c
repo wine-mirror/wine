@@ -1143,8 +1143,6 @@ static struct unix_funcs unix_funcs =
     NtUserReleaseDC,
     NtUserScrollDC,
     NtUserSelectPalette,
-    NtUserSystemParametersInfo,
-    NtUserSystemParametersInfoForDpi,
     NtUserUpdateLayeredWindow,
 
     SetDIBits,

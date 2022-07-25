@@ -763,18 +763,6 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
-BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, PVOID ptr, UINT winini )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSystemParametersInfo( action, val, ptr, winini );
-}
-
-BOOL WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, UINT winini, UINT dpi )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserSystemParametersInfoForDpi( action, val, ptr, winini, dpi );
-}
-
 BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
                                        HDC hdc_src, const POINT *pts_src, COLORREF key,
                                        const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )

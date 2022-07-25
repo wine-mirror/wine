@@ -281,6 +281,8 @@ static void * const syscalls[] =
     NtUserShowScrollBar,
     NtUserShowWindow,
     NtUserShowWindowAsync,
+    NtUserSystemParametersInfo,
+    NtUserSystemParametersInfoForDpi,
     NtUserThunkedMenuInfo,
     NtUserThunkedMenuItemInfo,
     NtUserToUnicodeEx,
