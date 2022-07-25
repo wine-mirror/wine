@@ -1812,17 +1812,13 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
 }
 
 
-static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subheap, struct rtl_heap_entry *entry )
+static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subheap,
+                                  const struct block *block, struct rtl_heap_entry *entry )
 {
     const char *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap ), *end = base + subheap_size( subheap );
-    const struct block *block, *blocks = first_block( subheap );
-    char *data = entry->lpData;
+    const struct block *blocks = first_block( subheap );
 
     if (entry->lpData == commit_end) return STATUS_NO_MORE_ENTRIES;
-
-    if (entry->wFlags & RTL_HEAP_ENTRY_BUSY) block = (struct block *)data - 1;
-    else block = (struct block *)(data - sizeof(struct list)) - 1;
-
     if (entry->lpData == base) block = blocks;
     else if (!(block = next_block( subheap, block )))
     {
@@ -1859,21 +1855,26 @@ static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subhea
 
 static NTSTATUS heap_walk( const struct heap *heap, struct rtl_heap_entry *entry )
 {
-    const struct block *block = (struct block *)entry->lpData - 1;
+    const char *data = entry->lpData;
     const ARENA_LARGE *large = NULL;
+    const struct block *block;
     const struct list *next;
     const SUBHEAP *subheap;
     NTSTATUS status;
     char *base;
+
+    if (!data || entry->wFlags & RTL_HEAP_ENTRY_REGION) block = (struct block *)data;
+    else if (entry->wFlags & RTL_HEAP_ENTRY_BUSY) block = (struct block *)data - 1;
+    else block = (struct block *)(data - sizeof(struct list)) - 1;
 
     if (find_large_block( heap, block ))
     {
         large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         next = &large->entry;
     }
-    else if ((subheap = find_subheap( heap, entry->lpData, TRUE )))
+    else if ((subheap = find_subheap( heap, block, TRUE )))
     {
-        if (!(status = heap_walk_blocks( heap, subheap, entry ))) return STATUS_SUCCESS;
+        if (!(status = heap_walk_blocks( heap, subheap, block, entry ))) return STATUS_SUCCESS;
         else if (status != STATUS_NO_MORE_ENTRIES) return status;
         next = &subheap->entry;
     }
