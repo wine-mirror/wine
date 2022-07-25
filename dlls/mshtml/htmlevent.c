@@ -2514,8 +2514,10 @@ static HRESULT WINAPI DOMProgressEvent_get_lengthComputable(IDOMProgressEvent *i
 static HRESULT WINAPI DOMProgressEvent_get_loaded(IDOMProgressEvent *iface, ULONGLONG *p)
 {
     DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return map_nsresult(nsIDOMProgressEvent_GetLoaded(This->nsevent, p));
 }
 
 static HRESULT WINAPI DOMProgressEvent_get_total(IDOMProgressEvent *iface, ULONGLONG *p)

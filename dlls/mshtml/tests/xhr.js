@@ -48,6 +48,7 @@ function test_xhr() {
             for(var i = 0; i < props.length; i++)
                 ok(props[i] in e, props[i] + " not available in loadstart");
             ok(e.lengthComputable === false, "lengthComputable in loadstart = " + e.lengthComputable);
+            ok(e.loaded === 0, "loaded in loadstart = " + e.loaded);
             loadstart = true;
         };
         xhr.onloadend = function(e) {
@@ -57,6 +58,8 @@ function test_xhr() {
             for(var i = 0; i < props.length; i++)
                 ok(props[i] in e, props[i] + " not available in loadend");
             ok(e.lengthComputable === true, "lengthComputable in loadend = " + e.lengthComputable);
+            todo_wine.
+            ok(e.loaded === xml.length, "loaded in loadend = " + e.loaded);
             next_test();
         };
     }
@@ -175,6 +178,7 @@ function test_timeout() {
         }
         if(v >= 10) {
             ok(e.lengthComputable === false, "lengthComputable = " + e.lengthComputable);
+            ok(e.loaded === 0, "loaded = " + e.loaded);
         }
         next_test();
     }
