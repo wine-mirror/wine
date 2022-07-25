@@ -869,22 +869,22 @@ static struct block *realloc_large_block( struct heap *heap, DWORD flags, struct
 /***********************************************************************
  *           find_large_block
  */
-static ARENA_LARGE *find_large_block( const struct heap *heap, const void *ptr )
+static BOOL find_large_block( const struct heap *heap, const struct block *block )
 {
     ARENA_LARGE *arena;
 
     LIST_FOR_EACH_ENTRY( arena, &heap->large_list, ARENA_LARGE, entry )
-        if (ptr == arena + 1) return arena;
+        if (block == &arena->block) return TRUE;
 
-    return NULL;
+    return FALSE;
 }
 
-static BOOL validate_large_arena( const struct heap *heap, const ARENA_LARGE *arena )
+static BOOL validate_large_block( const struct heap *heap, const struct block *block )
 {
-    const struct block *block = &arena->block;
+    const ARENA_LARGE *arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
     const char *err = NULL;
 
-    if ((ULONG_PTR)arena & COMMIT_MASK)
+    if (ROUND_ADDR( block, COMMIT_MASK ) != arena)
         err = "invalid block alignment";
     else if (block_get_size( block ))
         err = "invalid block size";
@@ -1193,21 +1193,20 @@ static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap
 
 static BOOL heap_validate_ptr( const struct heap *heap, const void *ptr, SUBHEAP **subheap )
 {
-    const struct block *arena = (struct block *)ptr - 1;
-    const ARENA_LARGE *large_arena;
+    const struct block *block = (struct block *)ptr - 1;
 
-    if (!(*subheap = find_subheap( heap, arena, FALSE )))
+    if (!(*subheap = find_subheap( heap, block, FALSE )))
     {
-        if (!(large_arena = find_large_block( heap, ptr )))
+        if (!find_large_block( heap, block ))
         {
             if (WARN_ON(heap)) WARN("heap %p, ptr %p: block region not found\n", heap, ptr );
             return FALSE;
         }
 
-        return validate_large_arena( heap, large_arena );
+        return validate_large_block( heap, block );
     }
 
-    return validate_used_block( heap, *subheap, arena );
+    return validate_used_block( heap, *subheap, block );
 }
 
 static BOOL heap_validate( const struct heap *heap )
@@ -1239,7 +1238,7 @@ static BOOL heap_validate( const struct heap *heap )
     }
 
     LIST_FOR_EACH_ENTRY( large_arena, &heap->large_list, ARENA_LARGE, entry )
-        if (!validate_large_arena( heap, large_arena )) return FALSE;
+        if (!validate_large_block( heap, &large_arena->block )) return FALSE;
 
     return TRUE;
 }
@@ -1263,7 +1262,7 @@ static inline struct block *unsafe_block_from_ptr( const struct heap *heap, cons
 
     if (!*subheap)
     {
-        if (find_large_block( heap, ptr )) return block;
+        if (find_large_block( heap, block )) return block;
         err = "block region not found";
     }
     else if ((ULONG_PTR)ptr % ALIGNMENT)
@@ -1860,14 +1859,18 @@ static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subhea
 
 static NTSTATUS heap_walk( const struct heap *heap, struct rtl_heap_entry *entry )
 {
-    const ARENA_LARGE *large;
+    const struct block *block = (struct block *)entry->lpData - 1;
+    const ARENA_LARGE *large = NULL;
     const struct list *next;
     const SUBHEAP *subheap;
     NTSTATUS status;
     char *base;
 
-    if ((large = find_large_block( heap, entry->lpData )))
+    if (find_large_block( heap, block ))
+    {
+        large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         next = &large->entry;
+    }
     else if ((subheap = find_subheap( heap, entry->lpData, TRUE )))
     {
         if (!(status = heap_walk_blocks( heap, subheap, entry ))) return STATUS_SUCCESS;
