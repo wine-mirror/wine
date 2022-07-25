@@ -222,6 +222,28 @@ system_fallback_config[] =
     { "0000-007F, 0080-00FF, 0100-017F, 0180-024F, "
       "0250-02AF, 02B0-02FF, 0300-036F", L"Tahoma" },
 
+    { "0590-05FF, FB1D-FB4F",   L"Noto Sans Hebrew" },
+
+    { "0900-097F",              L"Noto Sans Devanagari" },
+    { "0980-09FF",              L"Noto Sans Bengali" },
+    { "0A00-0A7F",              L"Noto Sans Gurmukhi" },
+    { "0A80-0AFF",              L"Noto Sans Gujarati" },
+    { "0B00-0B7F",              L"Noto Sans Oriya" },
+    { "0B80-0BFF",              L"Noto Sans Tamil" },
+    { "0C00-0C7F",              L"Noto Sans Telugu" },
+    { "0C80-0CFF",              L"Noto Sans Kannada" },
+    { "0D00-0D7F",              L"Noto Sans Malayalam" },
+    { "0D80-0DFF",              L"Noto Sans Sinhala" },
+
+    { "0E00-0E7F",              L"Noto Sans Thai" },
+    { "0E80-0EFF",              L"Noto Sans Lao" },
+
+    { "1680-169F",              L"Noto Sans Ogham" },
+
+    { "16A0-16FF",              L"Noto Sans Runic" },
+
+    { "1800-18AF, 11660-1167F", L"Noto Sans Mongolian" },
+
     { "3000-30FF, 31F0-31FF, 4E00-9FFF", L"Meiryo" },
 };
 
