@@ -3306,6 +3306,20 @@ interface nsIDOMKeyEvent : nsIDOMUIEvent
 
 [
     object,
+    uuid(e0682338-4c3f-4d3a-9487-d7492ea76335),
+    local
+]
+interface nsIDOMProgressEvent : nsISupports
+{
+    nsresult GetLengthComputable(bool *aLengthComputable);
+    nsresult GetLoaded(uint64_t *aLoaded);
+    nsresult GetTotal(uint64_t *aTotal);
+    nsresult InitProgressEvent(const nsAString *typeArg, bool canBubbleArg, bool cancelableArg,
+             bool lengthComputableArg, uint64_t loadedArg, uint64_t totalArg);
+}
+
+[
+    object,
     uuid(5be16b03-36f9-4ca8-b2c5-0daadf3cd1b3),
     local
 ]

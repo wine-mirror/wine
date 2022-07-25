@@ -2299,6 +2299,7 @@ static void DOMMessageEvent_destroy(DOMEvent *event)
 typedef struct {
     DOMEvent event;
     IDOMProgressEvent IDOMProgressEvent_iface;
+    nsIDOMProgressEvent *nsevent;
 } DOMProgressEvent;
 
 static inline DOMProgressEvent *impl_from_IDOMProgressEvent(IDOMProgressEvent *iface)
@@ -2412,6 +2413,12 @@ static void *DOMProgressEvent_query_interface(DOMEvent *event, REFIID riid)
     return NULL;
 }
 
+static void DOMProgressEvent_destroy(DOMEvent *event)
+{
+    DOMProgressEvent *This = DOMProgressEvent_from_DOMEvent(event);
+    nsIDOMProgressEvent_Release(This->nsevent);
+}
+
 static const tid_t DOMEvent_iface_tids[] = {
     IDOMEvent_tid,
     0
@@ -2504,64 +2511,20 @@ dispex_static_data_t DOMProgressEvent_dispex = {
     DOMProgressEvent_iface_tids
 };
 
-static BOOL check_event_iface(nsIDOMEvent *event, REFIID riid)
+static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *(*query_interface)(DOMEvent*,REFIID),
+        void (*destroy)(DOMEvent*), nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    nsISupports *iface;
+    DOMEvent *event = heap_alloc_zero(size);
     nsresult nsres;
 
-    nsres = nsIDOMEvent_QueryInterface(event, riid, (void**)&iface);
-    if(NS_FAILED(nsres))
-        return FALSE;
-
-    nsISupports_Release(iface);
-    return TRUE;
-}
-
-static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, eventid_t event_id)
-{
-    dispex_static_data_t *dispex_data = &DOMEvent_dispex;
-    DOMEvent *event = NULL;
-    nsresult nsres;
-
-    if(check_event_iface(nsevent, &IID_nsIDOMCustomEvent)) {
-        DOMCustomEvent *custom_event = heap_alloc_zero(sizeof(*custom_event));
-        if(!custom_event)
-            return NULL;
-
-        custom_event->IDOMCustomEvent_iface.lpVtbl = &DOMCustomEventVtbl;
-        custom_event->event.query_interface = DOMCustomEvent_query_interface;
-        custom_event->event.destroy = DOMCustomEvent_destroy;
-        event = &custom_event->event;
-        dispex_data = &DOMCustomEvent_dispex;
-    }else if(event_id == EVENTID_MESSAGE) {
-        DOMMessageEvent *message_event = heap_alloc_zero(sizeof(*message_event));
-        if(!message_event)
-            return NULL;
-
-        message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;
-        message_event->event.query_interface = DOMMessageEvent_query_interface;
-        message_event->event.destroy = DOMMessageEvent_destroy;
-        event = &message_event->event;
-        dispex_data = &DOMMessageEvent_dispex;
-    }else if(event_info[event_id].type == EVENT_TYPE_PROGRESS && compat_mode >= COMPAT_MODE_IE10) {
-        DOMProgressEvent *progress_event = heap_alloc_zero(sizeof(*progress_event));
-        if(!progress_event)
-            return NULL;
-
-        progress_event->IDOMProgressEvent_iface.lpVtbl = &DOMProgressEventVtbl;
-        progress_event->event.query_interface = DOMProgressEvent_query_interface;
-        event = &progress_event->event;
-        dispex_data = &DOMProgressEvent_dispex;
-    }else {
-        event = heap_alloc_zero(sizeof(*event));
-        if(!event)
-            return NULL;
-    }
-
+    if(!event)
+        return NULL;
     event->IDOMEvent_iface.lpVtbl = &DOMEventVtbl;
     event->IDOMUIEvent_iface.lpVtbl = &DOMUIEventVtbl;
     event->IDOMMouseEvent_iface.lpVtbl = &DOMMouseEventVtbl;
     event->IDOMKeyboardEvent_iface.lpVtbl = &DOMKeyboardEventVtbl;
+    event->query_interface = query_interface;
+    event->destroy = destroy;
     event->ref = 1;
     event->event_id = event_id;
     if(event_id != EVENTID_LAST) {
@@ -2597,6 +2560,66 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
 
     init_dispatch(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data, compat_mode);
     return event;
+}
+
+static DOMEvent *custom_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+{
+    DOMCustomEvent *custom_event = event_ctor(sizeof(DOMCustomEvent), &DOMCustomEvent_dispex,
+            DOMCustomEvent_query_interface, DOMCustomEvent_destroy, nsevent, event_id, compat_mode);
+    if(!custom_event) return NULL;
+    custom_event->IDOMCustomEvent_iface.lpVtbl = &DOMCustomEventVtbl;
+    nsIDOMCustomEvent_Release(iface);
+    return &custom_event->event;
+}
+
+static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+{
+    DOMProgressEvent *progress_event;
+
+    if(compat_mode < COMPAT_MODE_IE10)
+        return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, NULL, NULL, nsevent, event_id, compat_mode);
+
+    if(!(progress_event = event_ctor(sizeof(DOMProgressEvent), &DOMProgressEvent_dispex,
+            DOMProgressEvent_query_interface, DOMProgressEvent_destroy, nsevent, event_id, compat_mode)))
+        return NULL;
+    progress_event->IDOMProgressEvent_iface.lpVtbl = &DOMProgressEventVtbl;
+    progress_event->nsevent = iface;
+    return &progress_event->event;
+}
+
+static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, eventid_t event_id)
+{
+    static const struct {
+        REFIID iid;
+        DOMEvent *(*ctor)(void *iface, nsIDOMEvent *nsevent, eventid_t, compat_mode_t);
+    } types_table[] = {
+        { &IID_nsIDOMCustomEvent,       custom_event_ctor },
+        { &IID_nsIDOMProgressEvent,     progress_event_ctor },
+    };
+    DOMEvent *event;
+    unsigned i;
+
+    if(event_id == EVENTID_MESSAGE) {
+        DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex,
+                DOMMessageEvent_query_interface, DOMMessageEvent_destroy, nsevent, event_id, compat_mode);
+        if(!message_event)
+            return NULL;
+        message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;
+        return &message_event->event;
+    }
+
+    for(i = 0; i < ARRAY_SIZE(types_table); i++) {
+        void *iface;
+        nsresult nsres = nsIDOMEvent_QueryInterface(nsevent, types_table[i].iid, &iface);
+        if(NS_SUCCEEDED(nsres)) {
+            /* Transfer the iface ownership to the ctor on success */
+            if(!(event = types_table[i].ctor(iface, nsevent, event_id, compat_mode)))
+                nsISupports_Release(iface);
+            return event;
+        }
+    }
+
+    return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, NULL, NULL, nsevent, event_id, compat_mode);
 }
 
 HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, compat_mode_t compat_mode, DOMEvent **ret_event)
