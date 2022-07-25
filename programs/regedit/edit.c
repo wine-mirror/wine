@@ -29,7 +29,6 @@
 
 #include "main.h"
 
-static const WCHAR* editValueName;
 static BOOL isDecimal;
 
 struct edit_params
@@ -150,6 +149,14 @@ static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
     return !ret;
 }
 
+static void set_dlgproc_value_name(HWND hwndDlg, struct edit_params *params)
+{
+    if (params->value_name)
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->value_name);
+    else
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
+}
+
 static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     struct edit_params *params;
@@ -160,7 +167,7 @@ static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpa
     case WM_INITDIALOG:
         params = (struct edit_params *)lparam;
         SetWindowLongPtrW(hwndDlg, DWLP_USER, (ULONG_PTR)params);
-        SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, editValueName);
+        set_dlgproc_value_name(hwndDlg, params);
         SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, params->data);
         return TRUE;
     case WM_COMMAND:
@@ -200,7 +207,7 @@ static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpar
     case WM_INITDIALOG:
         params = (struct edit_params *)lparam;
         SetWindowLongPtrW(hwndDlg, DWLP_USER, (ULONG_PTR)params);
-        SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, editValueName);
+        set_dlgproc_value_name(hwndDlg, params);
         SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, params->data);
         CheckRadioButton(hwndDlg, IDC_DWORD_HEX, IDC_DWORD_DEC, IDC_DWORD_HEX);
         isDecimal = FALSE;
@@ -237,10 +244,7 @@ static INT_PTR CALLBACK modify_binary_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wP
     case WM_INITDIALOG:
         params = (struct edit_params *)lParam;
         SetWindowLongPtrW(hwndDlg, DWLP_USER, (ULONG_PTR)params);
-        if (params->value_name)
-            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->value_name);
-        else
-            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
+        set_dlgproc_value_name(hwndDlg, params);
         SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->size, (LPARAM)params->data);
         SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, WM_SETFONT, (WPARAM) GetStockObject(ANSI_FIXED_FONT), TRUE);
         return TRUE;
@@ -379,8 +383,6 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 {
     struct edit_params params;
     BOOL result = FALSE;
-
-    editValueName = valueName ? valueName : g_pszDefaultValueName;
 
     if (RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &params.hkey))
     {
