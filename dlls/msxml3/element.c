@@ -455,7 +455,6 @@ static inline HRESULT variant_from_dt(XDR_DT dt, xmlChar* str, VARIANT* v)
 
     switch (dt)
     {
-    case DT_INVALID:
     case DT_STRING:
     case DT_NMTOKEN:
     case DT_NMTOKENS:
@@ -737,6 +736,13 @@ static HRESULT WINAPI domelem_get_nodeTypedValue(
     V_VT(v) = VT_NULL;
 
     dt = element_get_dt(get_element(This));
+
+    if (dt == DT_INVALID)
+    {
+        if (SUCCEEDED(hr = node_get_text(&This->node, &V_BSTR(v))))
+            V_VT(v) = VT_BSTR;
+        return hr;
+    }
     content = xmlNodeGetContent(get_element(This));
     hr = variant_from_dt(dt, content, v);
     xmlFree(content);
