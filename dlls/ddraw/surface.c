@@ -5998,6 +5998,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(DDSURFACEDESC2 *desc, struct
     draw_texture_desc = *wined3d_desc;
     draw_texture_desc.bind_flags = bind_flags;
     draw_texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+    draw_texture_desc.usage = WINED3DUSAGE_PRIVATE;
 
     if (FAILED(hr = wined3d_texture_create(wined3d_device, &draw_texture_desc, layers,
             levels, 0, NULL, texture, &ddraw_texture_wined3d_parent_ops, &draw_texture)))
