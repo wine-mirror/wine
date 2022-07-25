@@ -906,7 +906,11 @@ static const CHAR szTypeValueXML[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
 "<root xmlns:dt=\"urn:schemas-microsoft-com:datatypes\">\n"
 "   <string>Wine</string>\n"
-"   <string2 dt:dt=\"string\">String</string2>\n"
+"   <string2 dt:dt=\"string\">String </string2>\n"
+"   <string3> Wine Wine </string3>\n"
+"   <string4>\nWine Wine\t</string4>\n"
+"   <string5>   </string5>\n"
+"   <nested><s1> s1 </s1><s2>\ns2 s2\t</s2></nested>\n"
 "   <number dt:dt=\"number\">12.44</number>\n"
 "   <number2 dt:dt=\"NUMbEr\">-3.71e3</number2>\n"
 "   <int dt:dt=\"int\">-13</int>\n"
@@ -6994,11 +6998,16 @@ typedef struct _nodetypedvalue_t {
     const char *name;
     VARTYPE type;
     const char *value; /* value in string format */
+    BOOL no_type;
 } nodetypedvalue_t;
 
 static const nodetypedvalue_t get_nodetypedvalue[] = {
-    { "root/string",    VT_BSTR, "Wine" },
-    { "root/string2",   VT_BSTR, "String" },
+    { "root/string",    VT_BSTR, "Wine", TRUE },
+    { "root/string2",   VT_BSTR, "String " },
+    { "root/string3",   VT_BSTR, " Wine Wine ", TRUE },
+    { "root/string4",   VT_BSTR, "\nWine Wine\t", TRUE },
+    { "root/string5",   VT_BSTR, "", TRUE },
+    { "root/nested",    VT_BSTR, " s1 \ns2 s2\t", TRUE },
     { "root/number",    VT_BSTR, "12.44" },
     { "root/number2",   VT_BSTR, "-3.71e3" },
     { "root/int",       VT_I4,   "-13" },
@@ -7024,6 +7033,24 @@ static const nodetypedvalue_t get_nodetypedvalue[] = {
     { "root/binbase64_2", VT_ARRAY|VT_UI1, "base64 test" },
     { 0 }
 };
+
+static const char *strip_spaces(const char *str)
+{
+    static char buf[256];
+    const char *p;
+
+    while (isspace(*str))
+        ++str;
+
+    p = str + strlen(str);
+    while (p != str && isspace(p[-1]))
+        --p;
+
+    memcpy(buf, str, p - str);
+    buf[p - str] = 0;
+
+    return buf;
+}
 
 static void test_nodeTypedValue(void)
 {
@@ -7220,8 +7247,46 @@ static void test_nodeTypedValue(void)
                   "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
         }
         else
-           ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
-               "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
+        {
+           BSTR bstr, expected;
+
+           expected = entry->no_type ? _bstr_(strip_spaces(entry->value)) : _bstr_(entry->value);
+           ok(!wcscmp( V_BSTR(&value), expected ), "expected %s, got %s\n",
+                debugstr_w(expected), wine_dbgstr_w(V_BSTR(&value)));
+           if (entry->no_type)
+           {
+                VariantClear( &value );
+
+                hr = IXMLDOMDocument_get_preserveWhiteSpace(doc, &b);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+                ok(b == VARIANT_FALSE, "got %d\n", b);
+
+                hr = IXMLDOMNode_get_text(node, &bstr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                ok(!wcscmp( bstr, expected ), "expected %s, got %s\n",
+                        debugstr_w(expected), wine_dbgstr_w(bstr));
+                SysFreeString(bstr);
+
+                hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+                expected = _bstr_(entry->value);
+                hr = IXMLDOMNode_get_text(node, &bstr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                ok(!wcscmp( bstr, expected ), "expected %s, got %s\n",
+                        debugstr_w(expected), wine_dbgstr_w(bstr));
+                SysFreeString(bstr);
+
+                hr = IXMLDOMNode_get_nodeTypedValue(node, &value);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+                ok(V_VT(&value) == entry->type, "incorrect type, expected %d, got %d\n", entry->type, V_VT(&value));
+                ok(!wcscmp( V_BSTR(&value), expected ), "expected %s, got %s\n",
+                        debugstr_w(expected), wine_dbgstr_w(V_BSTR(&value)));
+
+                hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, VARIANT_FALSE);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+           }
+        }
 
         VariantClear( &value );
         IXMLDOMNode_Release(node);
