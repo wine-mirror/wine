@@ -156,7 +156,7 @@ DIRECT_CALL_FUNCTIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 10
+DRIVER_VERSION = 11
 
 class ThunkType(Enum):
     NONE = 1
@@ -3202,7 +3202,7 @@ class VkGenerator(object):
         f.write("    VkSurfaceKHR (*p_wine_get_native_surface)(VkSurfaceKHR);\n")
         f.write("};\n\n")
 
-        f.write("extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(UINT version);\n\n")
+        f.write("extern const struct vulkan_funcs * __wine_get_vulkan_driver(UINT version);\n\n")
 
         f.write("static inline void *get_vulkan_driver_device_proc_addr(\n")
         f.write("        const struct vulkan_funcs *vulkan_funcs, const char *name)\n{\n")

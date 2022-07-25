@@ -28,7 +28,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
 #include "wine/unixlib.h"
 
 #include "loader_thunks.h"

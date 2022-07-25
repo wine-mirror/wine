@@ -22,12 +22,14 @@
 #pragma makedep unix
 #endif
 
-#include "ntgdi_private.h"
+#include "win32u_private.h"
+#include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 
 /***********************************************************************
- *      __wine_get_vulkan_driver  (win32u.@)
+ *      __wine_get_vulkan_driver  (win32u.so)
  */
-const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version )
+const struct vulkan_funcs *__wine_get_vulkan_driver( UINT version )
 {
     return user_driver->pwine_get_vulkan_driver( version );
 }

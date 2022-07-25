@@ -339,6 +339,5 @@ extern void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT 
 #endif /* WINE_UNIX_LIB */
 
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
-extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version );
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */
