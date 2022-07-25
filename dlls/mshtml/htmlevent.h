@@ -67,14 +67,12 @@ typedef enum {
 typedef struct DOMEvent {
     DispatchEx dispex;
     IDOMEvent IDOMEvent_iface;
-    IDOMKeyboardEvent IDOMKeyboardEvent_iface;
 
     LONG ref;
     void *(*query_interface)(struct DOMEvent*,REFIID);
     void (*destroy)(struct DOMEvent*);
 
     nsIDOMEvent *nsevent;
-    nsIDOMKeyEvent *keyboard_event;
 
     eventid_t event_id;
     WCHAR *type;

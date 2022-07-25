@@ -419,6 +419,7 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
+    IDOMKeyboardEvent *keyboard_event;
     IDOMMouseEvent *mouse_event;
     cpp_bool ret = FALSE;
 
@@ -430,8 +431,11 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
         return hres;
     }
 
-    if(This->event && This->event->keyboard_event)
-        return IDOMKeyboardEvent_get_altKey(&This->event->IDOMKeyboardEvent_iface, p);
+    if(This->event && SUCCEEDED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMKeyboardEvent, (void**)&keyboard_event))) {
+        HRESULT hres = IDOMKeyboardEvent_get_altKey(keyboard_event, p);
+        IDOMKeyboardEvent_Release(keyboard_event);
+        return hres;
+    }
 
     *p = variant_bool(ret);
     return S_OK;
@@ -440,6 +444,7 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
 static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
+    IDOMKeyboardEvent *keyboard_event;
     IDOMMouseEvent *mouse_event;
     cpp_bool ret = FALSE;
 
@@ -451,8 +456,11 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
         return hres;
     }
 
-    if(This->event && This->event->keyboard_event)
-        return IDOMKeyboardEvent_get_ctrlKey(&This->event->IDOMKeyboardEvent_iface, p);
+    if(This->event && SUCCEEDED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMKeyboardEvent, (void**)&keyboard_event))) {
+        HRESULT hres = IDOMKeyboardEvent_get_ctrlKey(keyboard_event, p);
+        IDOMKeyboardEvent_Release(keyboard_event);
+        return hres;
+    }
 
     *p = variant_bool(ret);
     return S_OK;
@@ -461,6 +469,7 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
 static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
+    IDOMKeyboardEvent *keyboard_event;
     IDOMMouseEvent *mouse_event;
     cpp_bool ret = FALSE;
 
@@ -472,8 +481,11 @@ static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BO
         return hres;
     }
 
-    if(This->event && This->event->keyboard_event)
-        return IDOMKeyboardEvent_get_shiftKey(&This->event->IDOMKeyboardEvent_iface, p);
+    if(This->event && SUCCEEDED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMKeyboardEvent, (void**)&keyboard_event))) {
+        HRESULT hres = IDOMKeyboardEvent_get_shiftKey(keyboard_event, p);
+        IDOMKeyboardEvent_Release(keyboard_event);
+        return hres;
+    }
 
     *p = variant_bool(ret);
     return S_OK;
@@ -571,11 +583,15 @@ static HRESULT WINAPI HTMLEventObj_put_keyCode(IHTMLEventObj *iface, LONG v)
 static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
+    IDOMKeyboardEvent *keyboard_event;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event && This->event->keyboard_event)
-        return IDOMKeyboardEvent_get_keyCode(&This->event->IDOMKeyboardEvent_iface, p);
+    if(This->event && SUCCEEDED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMKeyboardEvent, (void**)&keyboard_event))) {
+        HRESULT hres = IDOMKeyboardEvent_get_keyCode(keyboard_event, p);
+        IDOMKeyboardEvent_Release(keyboard_event);
+        return hres;
+    }
 
     *p = 0;
     return S_OK;
@@ -896,8 +912,6 @@ static HRESULT WINAPI DOMEvent_QueryInterface(IDOMEvent *iface, REFIID riid, voi
         *ppv = &This->IDOMEvent_iface;
     else if(IsEqualGUID(&IID_IDOMEvent, riid))
         *ppv = &This->IDOMEvent_iface;
-    else if(This->keyboard_event && IsEqualGUID(&IID_IDOMKeyboardEvent, riid))
-        *ppv = &This->IDOMKeyboardEvent_iface;
     else if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
     else if(!This->query_interface || !(*ppv = This->query_interface(This, riid))) {
@@ -930,8 +944,6 @@ static ULONG WINAPI DOMEvent_Release(IDOMEvent *iface)
     if(!ref) {
         if(This->destroy)
             This->destroy(This);
-        if(This->keyboard_event)
-            nsIDOMKeyEvent_Release(This->keyboard_event);
         if(This->target)
             IEventTarget_Release(&This->target->IEventTarget_iface);
         nsIDOMEvent_Release(This->nsevent);
@@ -1888,47 +1900,53 @@ static void DOMMouseEvent_destroy(DOMEvent *event)
     nsIDOMMouseEvent_Release(This->nsevent);
 }
 
-static inline DOMEvent *impl_from_IDOMKeyboardEvent(IDOMKeyboardEvent *iface)
+typedef struct {
+    DOMUIEvent ui_event;
+    IDOMKeyboardEvent IDOMKeyboardEvent_iface;
+    nsIDOMKeyEvent *nsevent;
+} DOMKeyboardEvent;
+
+static inline DOMKeyboardEvent *impl_from_IDOMKeyboardEvent(IDOMKeyboardEvent *iface)
 {
-    return CONTAINING_RECORD(iface, DOMEvent, IDOMKeyboardEvent_iface);
+    return CONTAINING_RECORD(iface, DOMKeyboardEvent, IDOMKeyboardEvent_iface);
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_QueryInterface(IDOMKeyboardEvent *iface, REFIID riid, void **ppv)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDOMEvent_QueryInterface(&This->IDOMEvent_iface, riid, ppv);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDOMEvent_QueryInterface(&This->ui_event.event.IDOMEvent_iface, riid, ppv);
 }
 
 static ULONG WINAPI DOMKeyboardEvent_AddRef(IDOMKeyboardEvent *iface)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDOMEvent_AddRef(&This->IDOMEvent_iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDOMEvent_AddRef(&This->ui_event.event.IDOMEvent_iface);
 }
 
 static ULONG WINAPI DOMKeyboardEvent_Release(IDOMKeyboardEvent *iface)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDOMEvent_Release(&This->IDOMEvent_iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDOMEvent_Release(&This->ui_event.event.IDOMEvent_iface);
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_GetTypeInfoCount(IDOMKeyboardEvent *iface, UINT *pctinfo)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->ui_event.event.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_GetTypeInfo(IDOMKeyboardEvent *iface, UINT iTInfo,
                                                    LCID lcid, ITypeInfo **ppTInfo)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->ui_event.event.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_GetIDsOfNames(IDOMKeyboardEvent *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->ui_event.event.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -1936,14 +1954,14 @@ static HRESULT WINAPI DOMKeyboardEvent_Invoke(IDOMKeyboardEvent *iface, DISPID d
         REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    return IDispatchEx_Invoke(&This->ui_event.event.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_key(IDOMKeyboardEvent *iface, BSTR *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     nsAString key_str;
     nsresult nsres;
 
@@ -1951,19 +1969,19 @@ static HRESULT WINAPI DOMKeyboardEvent_get_key(IDOMKeyboardEvent *iface, BSTR *p
 
 
     nsAString_Init(&key_str, NULL);
-    nsres = nsIDOMKeyEvent_GetKey(This->keyboard_event, &key_str);
+    nsres = nsIDOMKeyEvent_GetKey(This->nsevent, &key_str);
     return return_nsstr(nsres, &key_str, p);
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_location(IDOMKeyboardEvent *iface, ULONG *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     UINT32 r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetLocation(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetLocation(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -1973,13 +1991,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_location(IDOMKeyboardEvent *iface, UL
 
 static HRESULT WINAPI DOMKeyboardEvent_get_ctrlKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     cpp_bool r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetCtrlKey(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetCtrlKey(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -1989,13 +2007,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_ctrlKey(IDOMKeyboardEvent *iface, VAR
 
 static HRESULT WINAPI DOMKeyboardEvent_get_shiftKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     cpp_bool r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetShiftKey(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetShiftKey(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2005,13 +2023,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_shiftKey(IDOMKeyboardEvent *iface, VA
 
 static HRESULT WINAPI DOMKeyboardEvent_get_altKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     cpp_bool r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetAltKey(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetAltKey(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2021,13 +2039,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_altKey(IDOMKeyboardEvent *iface, VARI
 
 static HRESULT WINAPI DOMKeyboardEvent_get_metaKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     cpp_bool r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetMetaKey(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetMetaKey(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2037,13 +2055,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_metaKey(IDOMKeyboardEvent *iface, VAR
 
 static HRESULT WINAPI DOMKeyboardEvent_get_repeat(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     cpp_bool r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetRepeat(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetRepeat(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2054,7 +2072,7 @@ static HRESULT WINAPI DOMKeyboardEvent_get_repeat(IDOMKeyboardEvent *iface, VARI
 static HRESULT WINAPI DOMKeyboardEvent_getModifierState(IDOMKeyboardEvent *iface, BSTR key,
         VARIANT_BOOL *state)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(key), state);
     return E_NOTIMPL;
 }
@@ -2063,7 +2081,7 @@ static HRESULT WINAPI DOMKeyboardEvent_initKeyboardEvent(IDOMKeyboardEvent *ifac
         VARIANT_BOOL can_bubble, VARIANT_BOOL cancelable, IHTMLWindow2 *view, BSTR key,
         ULONG location, BSTR modifiers_list, VARIANT_BOOL repeat, BSTR locale)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     FIXME("(%p)->(%s %x %x %p %s %lu %s %x %s)\n", This, debugstr_w(type), can_bubble,
           cancelable, view, debugstr_w(key), location, debugstr_w(modifiers_list),
           repeat, debugstr_w(locale));
@@ -2072,13 +2090,13 @@ static HRESULT WINAPI DOMKeyboardEvent_initKeyboardEvent(IDOMKeyboardEvent *ifac
 
 static HRESULT WINAPI DOMKeyboardEvent_get_keyCode(IDOMKeyboardEvent *iface, LONG *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     UINT32 r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetKeyCode(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetKeyCode(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2088,13 +2106,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_keyCode(IDOMKeyboardEvent *iface, LON
 
 static HRESULT WINAPI DOMKeyboardEvent_get_charCode(IDOMKeyboardEvent *iface, LONG *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     UINT32 r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetKeyCode(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetKeyCode(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2104,13 +2122,13 @@ static HRESULT WINAPI DOMKeyboardEvent_get_charCode(IDOMKeyboardEvent *iface, LO
 
 static HRESULT WINAPI DOMKeyboardEvent_get_which(IDOMKeyboardEvent *iface, LONG *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     UINT32 r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMKeyEvent_GetWhich(This->keyboard_event, &r);
+    nsres = nsIDOMKeyEvent_GetWhich(This->nsevent, &r);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2120,14 +2138,14 @@ static HRESULT WINAPI DOMKeyboardEvent_get_which(IDOMKeyboardEvent *iface, LONG 
 
 static HRESULT WINAPI DOMKeyboardEvent_get_char(IDOMKeyboardEvent *iface, VARIANT *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_locale(IDOMKeyboardEvent *iface, BSTR *p)
 {
-    DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
+    DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -2155,6 +2173,28 @@ static const IDOMKeyboardEventVtbl DOMKeyboardEventVtbl = {
     DOMKeyboardEvent_get_char,
     DOMKeyboardEvent_get_locale
 };
+
+static DOMKeyboardEvent *DOMKeyboardEvent_from_DOMEvent(DOMEvent *event)
+{
+    return CONTAINING_RECORD(event, DOMKeyboardEvent, ui_event.event);
+}
+
+static void *DOMKeyboardEvent_query_interface(DOMEvent *event, REFIID riid)
+{
+    DOMKeyboardEvent *This = DOMKeyboardEvent_from_DOMEvent(event);
+    if(IsEqualGUID(&IID_IDOMKeyboardEvent, riid))
+        return &This->IDOMKeyboardEvent_iface;
+    if(IsEqualGUID(&IID_IDOMUIEvent, riid))
+        return &This->ui_event.IDOMUIEvent_iface;
+    return NULL;
+}
+
+static void DOMKeyboardEvent_destroy(DOMEvent *event)
+{
+    DOMKeyboardEvent *This = DOMKeyboardEvent_from_DOMEvent(event);
+    DOMUIEvent_destroy(&This->ui_event.event);
+    nsIDOMKeyEvent_Release(This->nsevent);
+}
 
 typedef struct {
     DOMEvent event;
@@ -2615,12 +2655,10 @@ static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *
         void (*destroy)(DOMEvent*), nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
     DOMEvent *event = heap_alloc_zero(size);
-    nsresult nsres;
 
     if(!event)
         return NULL;
     event->IDOMEvent_iface.lpVtbl = &DOMEventVtbl;
-    event->IDOMKeyboardEvent_iface.lpVtbl = &DOMKeyboardEventVtbl;
     event->query_interface = query_interface;
     event->destroy = destroy;
     event->ref = 1;
@@ -2637,12 +2675,6 @@ static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *
     nsIDOMEvent_AddRef(event->nsevent = nsevent);
 
     event->time_stamp = get_time_stamp();
-
-    nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMKeyEvent, (void**)&event->keyboard_event);
-    if(NS_SUCCEEDED(nsres))
-        dispex_data = &DOMKeyboardEvent_dispex;
-    else
-        event->keyboard_event = NULL;
 
     init_dispatch(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data, compat_mode);
     return event;
@@ -2673,6 +2705,17 @@ static DOMEvent *mouse_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t e
     mouse_event->nsevent = iface;
     fill_parent_ui_event(nsevent, &mouse_event->ui_event);
     return &mouse_event->ui_event.event;
+}
+
+static DOMEvent *keyboard_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+{
+    DOMKeyboardEvent *keyboard_event = event_ctor(sizeof(DOMKeyboardEvent), &DOMKeyboardEvent_dispex,
+            DOMKeyboardEvent_query_interface, DOMKeyboardEvent_destroy, nsevent, event_id, compat_mode);
+    if(!keyboard_event) return NULL;
+    keyboard_event->IDOMKeyboardEvent_iface.lpVtbl = &DOMKeyboardEventVtbl;
+    keyboard_event->nsevent = iface;
+    fill_parent_ui_event(nsevent, &keyboard_event->ui_event);
+    return &keyboard_event->ui_event.event;
 }
 
 static DOMEvent *custom_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
@@ -2707,6 +2750,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
         DOMEvent *(*ctor)(void *iface, nsIDOMEvent *nsevent, eventid_t, compat_mode_t);
     } types_table[] = {
         { &IID_nsIDOMMouseEvent,        mouse_event_ctor },
+        { &IID_nsIDOMKeyEvent,          keyboard_event_ctor },
         { &IID_nsIDOMUIEvent,           ui_event_ctor },
         { &IID_nsIDOMCustomEvent,       custom_event_ctor },
         { &IID_nsIDOMProgressEvent,     progress_event_ctor },
