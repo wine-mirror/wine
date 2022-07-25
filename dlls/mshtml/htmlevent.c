@@ -2498,8 +2498,17 @@ static HRESULT WINAPI DOMProgressEvent_Invoke(IDOMProgressEvent *iface, DISPID d
 static HRESULT WINAPI DOMProgressEvent_get_lengthComputable(IDOMProgressEvent *iface, VARIANT_BOOL *p)
 {
     DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsresult nsres;
+    cpp_bool b;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMProgressEvent_GetLengthComputable(This->nsevent, &b);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    *p = b ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMProgressEvent_get_loaded(IDOMProgressEvent *iface, ULONGLONG *p)

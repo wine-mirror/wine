@@ -47,6 +47,7 @@ function test_xhr() {
             var props = [ "initProgressEvent", "lengthComputable", "loaded", "total" ];
             for(var i = 0; i < props.length; i++)
                 ok(props[i] in e, props[i] + " not available in loadstart");
+            ok(e.lengthComputable === false, "lengthComputable in loadstart = " + e.lengthComputable);
             loadstart = true;
         };
         xhr.onloadend = function(e) {
@@ -55,6 +56,7 @@ function test_xhr() {
             var props = [ "initProgressEvent", "lengthComputable", "loaded", "total" ];
             for(var i = 0; i < props.length; i++)
                 ok(props[i] in e, props[i] + " not available in loadend");
+            ok(e.lengthComputable === true, "lengthComputable in loadend = " + e.lengthComputable);
             next_test();
         };
     }
@@ -170,6 +172,9 @@ function test_timeout() {
                 ok(!(props[r] in e), props[r] + " is available");
             else
                 ok(props[r] in e, props[r] + " not available");
+        }
+        if(v >= 10) {
+            ok(e.lengthComputable === false, "lengthComputable = " + e.lengthComputable);
         }
         next_test();
     }
