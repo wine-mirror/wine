@@ -3579,13 +3579,25 @@ static void test_ITextRange_IsEqual(void)
   ITextSelection_Release(selection);
 }
 
+static int get_scroll_pos_y(HWND hwnd)
+{
+    POINT p = {-1, -1};
+    SendMessageA(hwnd, EM_GETSCROLLPOS, 0, (LPARAM)&p);
+    ok(p.x != -1 && p.y != -1, "p.x:%ld p.y:%ld\n", p.x, p.y);
+    return p.y;
+}
+
 static void test_Select(void)
 {
   static const CHAR test_text1[] = "TestSomeText";
+  static const CHAR test_text2[] = "text\nwith\nbreak\n"
+                                   "lines\ntest\ntest\n";
   IRichEditOle *reOle = NULL;
   ITextDocument *doc = NULL;
   ITextSelection *selection;
   ITextRange *range;
+  int scroll_pos1;
+  int scroll_pos2;
   LONG value;
   HRESULT hr;
   HWND hwnd;
@@ -3597,8 +3609,11 @@ static void test_Select(void)
   hr = ITextDocument_Range(doc, 0, 4, &range);
   ok(hr == S_OK, "got 0x%08lx\n", hr);
 
+  scroll_pos1 = get_scroll_pos_y(hwnd);
   hr = ITextRange_Select(range);
   ok(hr == S_OK, "got 0x%08lx\n", hr);
+  scroll_pos2 = get_scroll_pos_y(hwnd);
+  ok(scroll_pos1 == scroll_pos2, "%d != %d\n", scroll_pos1, scroll_pos2);
 
   value = 1;
   hr = ITextSelection_GetStart(selection, &value);
@@ -3610,6 +3625,16 @@ static void test_Select(void)
 
   hr = ITextSelection_Select(selection);
   ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text2);
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+  hr = ITextDocument_Range(doc, 10, 16, &range);
+  ok(hr == S_OK, "got 0x%08lx\n", hr);
+  scroll_pos1 = get_scroll_pos_y(hwnd);
+  hr = ITextRange_Select(range);
+  ok(hr == S_OK, "got 0x%08lx\n", hr);
+  scroll_pos2 = get_scroll_pos_y(hwnd);
+  ok(scroll_pos1 != scroll_pos2, "%d == %d\n", scroll_pos1, scroll_pos2);
 
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 
