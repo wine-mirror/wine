@@ -501,15 +501,31 @@ static inline UINT16 get_char_script(WCHAR c)
     return script == Script_Inherited ? Script_Unknown : script;
 }
 
-static DWRITE_SCRIPT_ANALYSIS get_char_sa(WCHAR c)
+static DWRITE_SCRIPT_ANALYSIS get_char_sa(UINT32 c)
 {
     DWRITE_SCRIPT_ANALYSIS sa;
-    WORD type;
 
-    GetStringTypeW(CT_CTYPE1, &c, 1, &type);
     sa.script = get_char_script(c);
-    sa.shapes = (type & C1_CNTRL) || c == 0x2028 /* LINE SEPARATOR */ || c == 0x2029 /* PARAGRAPH SEPARATOR */ ?
-        DWRITE_SCRIPT_SHAPES_NO_VISUAL : DWRITE_SCRIPT_SHAPES_DEFAULT;
+    sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+    if ((c >= 0x0001 && c <= 0x001f) ||
+            (c >= 0x007f && c <= 0x009f) ||
+            (c == 0x00ad) /* SOFT HYPHEN */ ||
+            (c >= 0x200b && c <= 0x200f) ||
+            (c >= 0x2028 && c <= 0x202e) ||
+            (c >= 0x2060 && c <= 0x2064) ||
+            (c >= 0x2066 && c <= 0x206f) ||
+            (c == 0xfeff) ||
+            (c == 0xfff9) ||
+            (c == 0xfffa) ||
+            (c == 0xfffb))
+    {
+        sa.shapes = DWRITE_SCRIPT_SHAPES_NO_VISUAL;
+    }
+    else
+    {
+        sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+    }
+
     return sa;
 }
 
