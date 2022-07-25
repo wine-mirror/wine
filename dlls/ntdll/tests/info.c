@@ -2773,6 +2773,7 @@ static void test_queryvirtualmemory(void)
     void *user_shared_data = (void *)0x7ffe0000;
     char buffer[1024];
     MEMORY_SECTION_NAME *name = (MEMORY_SECTION_NAME *)buffer;
+    SYSTEM_BASIC_INFORMATION sbi;
 
     module = GetModuleHandleA( "ntdll.dll" );
     status = pNtQueryVirtualMemory(NtCurrentProcess(), module, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
@@ -2849,9 +2850,20 @@ static void test_queryvirtualmemory(void)
     ok(mbi.Type == MEM_PRIVATE, "mbi.Type is 0x%lx, expected 0x%x\n", mbi.Type, MEM_PRIVATE);
     ok(mbi.RegionSize == 0x1000, "mbi.RegionSize is 0x%Ix, expected 0x%x\n", mbi.RegionSize, 0x1000);
 
-    /* check error code when addr is higher than working set limit */
+    /* check error code when addr is higher than user space limit */
+    status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), sbi.LowestUserAddress, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)sbi.LowestUserAddress-1, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), sbi.HighestUserAddress, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)sbi.HighestUserAddress+1, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08lx\n", status);
     status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)~0, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08lx\n", status);
+
     /* check error code when len is less than MEMORY_BASIC_INFORMATION size */
     status = pNtQueryVirtualMemory(NtCurrentProcess(), GetProcessHeap(), MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION) - 1, &readcount);
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
