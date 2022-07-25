@@ -36,7 +36,7 @@ sync_test("date_now", function() {
     var now = Date.now();
     var time = (new Date()).getTime();
 
-    ok(time >= now && time-now < 50, "unexpected Date.now() result " + now + " expected " + time);
+    ok(time >= now && time - now < 500, "unexpected Date.now() result " + now + " expected " + time);
 
     Date.now(1, 2, 3);
 });
