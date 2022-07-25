@@ -773,6 +773,17 @@ interface nsIChannelEventSink : nsISupports
 
 [
     object,
+    uuid(87d55fba-cb7e-4f38-84c1-5c6c2b2a55e9),
+    local
+]
+interface nsIProgressEventSink : nsISupports
+{
+    nsresult OnProgress(nsIRequest *aRequest, nsISupports *aContext, int64_t aProgress, int64_t aProgressMax);
+    nsresult OnStatus(nsIRequest *aRequest, nsISupports *aContext, nsresult aStatus, const char16_t *aStatusArg);
+}
+
+[
+    object,
     uuid(79de76e5-994e-4f6b-81aa-42d9adb6e67e),
     local
 ]

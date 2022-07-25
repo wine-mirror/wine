@@ -326,7 +326,7 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, 
     TRACE("%p)->(%lu %lu %lu %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
             debugstr_w(szStatusText));
 
-    return This->vtbl->on_progress(This, ulStatusCode, szStatusText);
+    return This->vtbl->on_progress(This, ulProgress, ulProgressMax, ulStatusCode, szStatusText);
 }
 
 static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *iface,
@@ -1067,6 +1067,37 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
     }
 }
 
+static void notify_progress(nsChannelBSC *This)
+{
+    nsChannel *nschannel = This->nschannel;
+    nsIProgressEventSink *sink = NULL;
+    nsresult nsres;
+
+    if(!nschannel)
+        return;
+
+    if(nschannel->notif_callback)
+        if(NS_FAILED(nsIInterfaceRequestor_GetInterface(nschannel->notif_callback, &IID_nsIProgressEventSink, (void**)&sink)))
+            sink = NULL;
+
+    if(!sink && nschannel->load_group) {
+        nsIRequestObserver *req_observer;
+
+        if(NS_SUCCEEDED(nsILoadGroup_GetGroupObserver(nschannel->load_group, &req_observer)) && req_observer) {
+            nsres = nsIRequestObserver_QueryInterface(req_observer, &IID_nsIProgressEventSink, (void**)&sink);
+            nsIRequestObserver_Release(req_observer);
+            if(NS_FAILED(nsres))
+                sink = NULL;
+        }
+    }
+
+    if(sink) {
+        nsIProgressEventSink_OnProgress(sink, (nsIRequest*)&nschannel->nsIHttpChannel_iface, This->nscontext,
+                                        This->progress, (This->total == ~0) ? -1 : This->total);
+        nsIProgressEventSink_Release(sink);
+    }
+}
+
 static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 {
     DWORD read;
@@ -1146,6 +1177,8 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
             if(FAILED(hres))
                 return hres;
         }
+
+        notify_progress(This);
 
         nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
                 (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
@@ -1656,7 +1689,7 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
     IUri_Release(uri);
 }
 
-static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
+static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG total, ULONG status_code, LPCWSTR status_text)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
@@ -1684,21 +1717,24 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
         DWORD status, size = sizeof(DWORD);
         HRESULT hres;
 
-        if(!This->bsc.binding)
-            break;
-
-        hres = IBinding_QueryInterface(This->bsc.binding, &IID_IWinInetHttpInfo, (void**)&http_info);
-        if(FAILED(hres))
-            break;
-
-        hres = IWinInetHttpInfo_QueryInfo(http_info,
-                HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL, NULL);
-        IWinInetHttpInfo_Release(http_info);
-        if(FAILED(hres) || status == HTTP_STATUS_OK)
-            break;
-
-        handle_navigation_error(This, status);
+        if(This->bsc.binding) {
+            hres = IBinding_QueryInterface(This->bsc.binding, &IID_IWinInetHttpInfo, (void**)&http_info);
+            if(SUCCEEDED(hres)) {
+                hres = IWinInetHttpInfo_QueryInfo(http_info,
+                        HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL, NULL);
+                IWinInetHttpInfo_Release(http_info);
+                if(SUCCEEDED(hres) && status != HTTP_STATUS_OK)
+                    handle_navigation_error(This, status);
+            }
+        }
+        /* fall through */
     }
+    case BINDSTATUS_DOWNLOADINGDATA:
+    case BINDSTATUS_ENDDOWNLOADDATA:
+        /* Defer it to just before calling OnDataAvailable, otherwise it can have wrong state */
+        This->progress = progress;
+        This->total = total;
+        break;
     }
 
     return S_OK;

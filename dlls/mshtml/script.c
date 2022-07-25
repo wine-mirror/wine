@@ -1053,7 +1053,7 @@ static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
     return S_OK;
 }
 
-static HRESULT ScriptBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
+static HRESULT ScriptBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG total, ULONG status_code, LPCWSTR status_text)
 {
     return S_OK;
 }
