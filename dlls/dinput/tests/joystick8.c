@@ -1327,6 +1327,11 @@ static void test_simple_joystick( DWORD version )
 
     send_hid_input( file, &injected_input[0], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[0], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
@@ -1353,6 +1358,11 @@ static void test_simple_joystick( DWORD version )
 
     send_hid_input( file, &injected_input[1], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[1], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 
@@ -1550,9 +1560,15 @@ static void test_simple_joystick( DWORD version )
 
     send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
     todo_wine
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
+
     send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
@@ -1565,6 +1581,10 @@ static void test_simple_joystick( DWORD version )
     ok( ((ULONG *)buffer)[2] == 0x7fff, "got %#lx, expected %#x\n", ((ULONG *)buffer)[2], 0x7fff );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
+    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_LOGICALRANGE returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
+    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_PHYSICALRANGE returned %#lx\n", hr );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
     ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
@@ -1573,8 +1593,14 @@ static void test_simple_joystick( DWORD version )
 
     send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
+
     send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
@@ -1614,15 +1640,6 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
         "SetProperty DIPROP_PHYSICALRANGE returned %#lx\n", hr );
-
-    hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
-    hr = IDirectInputDevice8_SetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_LOGICALRANGE returned %#lx\n", hr );
-    hr = IDirectInputDevice8_SetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_PHYSICALRANGE returned %#lx\n", hr );
-    hr = IDirectInputDevice8_Acquire( device );
-    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
 
     prop_range.diph.dwHow = DIPH_DEVICE;
     prop_range.diph.dwObj = 0;
@@ -1800,7 +1817,8 @@ static void test_simple_joystick( DWORD version )
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
 
         res = WaitForSingleObject( event, 100 );
-        if (i == 0 || i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        if (i == 0) ok( res == WAIT_TIMEOUT || broken( res == WAIT_OBJECT_0 ) /* w8 */, "WaitForSingleObject succeeded\n" );
+        else if (i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
         else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
         ResetEvent( event );
         winetest_pop_context();
@@ -1945,6 +1963,11 @@ static void test_simple_joystick( DWORD version )
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
 
         res = WaitForSingleObject( event, 100 );
+        if (i == 0 && res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+        {
+            send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+            res = WaitForSingleObject( event, 100 );
+        }
         if (i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
         else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
         ResetEvent( event );
