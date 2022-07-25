@@ -78,7 +78,7 @@ static const WCHAR *event_types[] = {
     L"MouseEvent",
     L"Event", /* FIXME */
     L"Event", /* FIXME */
-    L"Event", /* FIXME */
+    L"Event", /* We don't use Gecko's message events */
     L"ProgressEvent",
     L"Event"  /* FIXME */
 };
