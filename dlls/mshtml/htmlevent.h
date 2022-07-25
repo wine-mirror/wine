@@ -67,7 +67,6 @@ typedef enum {
 typedef struct DOMEvent {
     DispatchEx dispex;
     IDOMEvent IDOMEvent_iface;
-    IDOMUIEvent IDOMUIEvent_iface;
     IDOMMouseEvent IDOMMouseEvent_iface;
     IDOMKeyboardEvent IDOMKeyboardEvent_iface;
 
@@ -76,7 +75,6 @@ typedef struct DOMEvent {
     void (*destroy)(struct DOMEvent*);
 
     nsIDOMEvent *nsevent;
-    nsIDOMUIEvent *ui_event;
     nsIDOMMouseEvent *mouse_event;
     nsIDOMKeyEvent *keyboard_event;
 
