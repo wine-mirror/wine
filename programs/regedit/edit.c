@@ -143,9 +143,6 @@ static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
     ret = RegSetValueExW(params->hkey, params->value_name, 0, params->type, (BYTE *)params->data, params->size);
     if (ret) error_code_messagebox(hwndDlg, IDS_SET_VALUE_FAILED);
 
-    free(params->data);
-    params->data = NULL;
-
     return !ret;
 }
 
@@ -427,7 +424,6 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
         int index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
                                  MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
 
-        read_value(hwnd, &params);
         format_value_data(g_pChildWnd->hListWnd, index, params.type, params.data, params.size);
     }
 
