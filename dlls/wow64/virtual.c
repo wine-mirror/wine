@@ -381,7 +381,11 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
     switch (class)
     {
     case MemoryBasicInformation:  /* MEMORY_BASIC_INFORMATION */
-        if (len >= sizeof(MEMORY_BASIC_INFORMATION32))
+        if (len < sizeof(MEMORY_BASIC_INFORMATION32))
+            status = STATUS_INFO_LENGTH_MISMATCH;
+        else if ((ULONG_PTR)addr > highest_user_address)
+            status = STATUS_INVALID_PARAMETER;
+        else
         {
             MEMORY_BASIC_INFORMATION info;
             MEMORY_BASIC_INFORMATION32 *info32 = ptr;
@@ -397,7 +401,6 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
                 info32->Type = info.Type;
             }
         }
-        else status = STATUS_INFO_LENGTH_MISMATCH;
         res_len = sizeof(MEMORY_BASIC_INFORMATION32);
         break;
 
