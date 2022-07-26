@@ -539,6 +539,81 @@ static void test_NCryptIsAlgSupported(void)
     NCryptFreeObject(prov);
 }
 
+static UCHAR data_to_encrypt[12] = "Hello world";
+
+static void test_NCryptEncrypt(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+    BYTE *output_a;
+    BYTE *output_b;
+    DWORD output_size;
+
+    todo_wine {
+    NCryptOpenStorageProvider(&prov, NULL, 0);
+    NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+
+    /* Test encrypt with invalid key handle */
+    ret = NCryptEncrypt(prov, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0,
+                        &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(ret == NTE_INVALID_HANDLE, "got %lx\n", ret);
+
+    /* Test encrypt with a non finalized key */
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0,
+                        &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(ret == NTE_BAD_KEY_STATE, "got %lx\n", ret);
+
+    NCryptFinalizeKey(key, 0);
+
+    /* Test encrypt with invalid flags */
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0,
+                        &output_size, 51342);
+    ok(ret == NTE_BAD_FLAGS, "got %lx\n", ret);
+
+    /* Test no padding with RSA */
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0, &output_size,
+                        NCRYPT_NO_PADDING_FLAG);
+    ok(ret == ERROR_SUCCESS, "got %lx\n", ret);
+    ok(output_size == 128, "got %ld\n", output_size);
+
+    output_a = malloc(output_size);
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, output_a, output_size,
+                        &output_size, NCRYPT_NO_PADDING_FLAG);
+    ok(ret == NTE_INVALID_PARAMETER, "got %lx\n", ret);
+    free(output_a);
+
+    /* Test output RSA with PKCS1. PKCS1 should append a random padding to the data, so the output should be different
+     * with each call. */
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0,
+                        &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(ret == ERROR_SUCCESS, "got %lx\n", ret);
+    ok(output_size == 128, "got %ld\n", output_size);
+
+    output_a = malloc(output_size);
+    output_b = malloc(output_size);
+
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, output_a, 12,
+                        &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(ret == NTE_BUFFER_TOO_SMALL, "got %lx\n", ret);
+
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, output_a, output_size,
+                        &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(ret == ERROR_SUCCESS, "got %lx\n", ret);
+
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, output_b, output_size,
+                        &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(ret == ERROR_SUCCESS, "got %lx\n", ret);
+    ok(memcmp(output_a, output_b, 128), "expected to have different outputs.\n");
+
+    NCryptFreeObject(key);
+    free(output_a);
+    free(output_b);
+
+    NCryptFreeObject(prov);
+    }
+}
+
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
@@ -549,4 +624,5 @@ START_TEST(ncrypt)
     test_finalize_key();
     test_verify_signature();
     test_NCryptIsAlgSupported();
+    test_NCryptEncrypt();
 }
