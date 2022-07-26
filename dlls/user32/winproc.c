@@ -66,13 +66,6 @@ static inline void free_buffer( void *static_buffer, void *buffer )
     if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-/* return the window proc for a given handle, or NULL for an invalid handle,
- * or WINPROC_PROC16 for a handle to a 16-bit proc. */
-static inline WINDOWPROC *handle_to_proc( WNDPROC handle )
-{
-    return (WINDOWPROC *)NtUserCallOneParam( HandleToUlong(handle), NtUserGetWinProcPtr );
-}
-
 #ifdef __i386__
 /* Some window procedures modify registers they shouldn't, or are not
  * properly declared stdcall; so we need a small assembly wrapper to
@@ -1274,25 +1267,6 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
     }
     else dispatch_win_proc_params( params );
     return TRUE;
-}
-
-void get_winproc_params( struct win_proc_params *params )
-{
-    WINDOWPROC *proc = handle_to_proc( params->func );
-
-    if (!proc)
-    {
-        params->procW = params->procA = NULL;
-    }
-    else if (proc == WINPROC_PROC16)
-    {
-        params->procW = params->procA = WINPROC_PROC16;
-    }
-    else
-    {
-        params->procA = proc->procA;
-        params->procW = proc->procW;
-    }
 }
 
 BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size )

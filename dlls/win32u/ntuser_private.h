@@ -106,8 +106,8 @@ typedef struct tagWND
 #define WIN_CHILDREN_MOVED        0x0040 /* children may have moved, ignore stored positions */
 #define WIN_HAS_IME_WIN           0x0080 /* the window has been registered with imm32 */
 
-#define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
-#define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
+#define WND_OTHER_PROCESS ((WND *)1)  /* returned by get_win_ptr on unknown window handles */
+#define WND_DESKTOP       ((WND *)2)  /* returned by get_win_ptr on the desktop window */
 
 /* check if hwnd is a broadcast magic handle */
 static inline BOOL is_broadcast( HWND hwnd )
@@ -197,13 +197,6 @@ struct scroll_bar_win_data
     struct scroll_info info;
 };
 
-/* FIXME: make it private to class.c */
-typedef struct tagWINDOWPROC
-{
-    WNDPROC        procA;    /* ANSI window proc */
-    WNDPROC        procW;    /* Unicode window proc */
-} WINDOWPROC;
-
 #define WINPROC_HANDLE (~0u >> 16)
 #define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
 
@@ -243,7 +236,6 @@ extern void spy_exit_message( INT flag, HWND hwnd, UINT msg,
 /* class.c */
 extern HINSTANCE user32_module DECLSPEC_HIDDEN;
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
-WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
 BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
 DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;

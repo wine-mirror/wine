@@ -5031,9 +5031,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
 
-    case NtUserGetWinProcPtr:
-        return (UINT_PTR)get_winproc_ptr( UlongToHandle(arg) );
-
     case NtUserLock:
         switch( arg )
         {
@@ -5041,9 +5038,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         case 1: user_unlock(); return 0;
         default: user_check_not_lock(); return 0;
         }
-
-    case NtUserSpyGetVKeyName:
-        return (UINT_PTR)debugstr_vkey_name( arg );
 
     default:
         FIXME( "invalid code %u\n", code );

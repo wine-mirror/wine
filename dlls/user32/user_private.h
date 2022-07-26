@@ -77,7 +77,6 @@ extern HPEN SYSCOLOR_GetPen( INT index ) DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_Get55AABrush(void) DECLSPEC_HIDDEN;
 extern void SYSPARAMS_Init(void) DECLSPEC_HIDDEN;
 extern void USER_CheckNotLock(void) DECLSPEC_HIDDEN;
-extern BOOL USER_IsExitingThread( DWORD tid ) DECLSPEC_HIDDEN;
 
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );
@@ -90,7 +89,6 @@ extern INT_PTR WINPROC_CallDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 extern INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern void winproc_init(void) DECLSPEC_HIDDEN;
 extern void dispatch_win_proc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
-extern void get_winproc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
 
 extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
                             UNICODE_STRING *name_str, BOOL ansi ) DECLSPEC_HIDDEN;
@@ -107,7 +105,6 @@ BOOL WINAPI User32RegisterBuiltinClasses( const struct win_hook_params *params, 
 /* message spy definitions */
 
 extern const char *SPY_GetMsgName( UINT msg, HWND hWnd ) DECLSPEC_HIDDEN;
-extern const char *SPY_GetVKeyName(WPARAM wParam) DECLSPEC_HIDDEN;
 extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
                              LRESULT lReturn, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;

@@ -60,6 +60,12 @@ typedef struct tagCLASS
     struct client_menu_name menu_name; /* Default menu name */
 } CLASS;
 
+typedef struct tagWINDOWPROC
+{
+    WNDPROC  procA;    /* ANSI window proc */
+    WNDPROC  procW;    /* Unicode window proc */
+} WINDOWPROC;
+
 static WINDOWPROC winproc_array[MAX_WINPROCS];
 static UINT winproc_used = NB_BUILTIN_WINPROCS;
 static pthread_mutex_t winproc_lock = PTHREAD_MUTEX_INITIALIZER;
