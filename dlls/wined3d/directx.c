@@ -1228,43 +1228,78 @@ HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
      of the same bpp but different resolutions                                  */
 
-static bool mode_matches_filter(const DEVMODEW *mode, const struct wined3d_format *format,
-        enum wined3d_scanline_ordering scanline_ordering)
+static void wined3d_output_update_modes(struct wined3d_output *output)
 {
-    if (mode->dmFields & DM_DISPLAYFLAGS)
-    {
-        if (scanline_ordering == WINED3D_SCANLINE_ORDERING_PROGRESSIVE
-                && (mode->u2.dmDisplayFlags & DM_INTERLACED))
-            return false;
+    struct wined3d_display_mode *wined3d_mode;
+    DEVMODEW mode = {.dmSize = sizeof(mode)};
+    unsigned int i;
 
-        if (scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED
-                && !(mode->u2.dmDisplayFlags & DM_INTERLACED))
-            return false;
+    output->mode_count = 0;
+
+    for (i = 0; EnumDisplaySettingsExW(output->device_name, i, &mode, 0); ++i)
+    {
+        if (!wined3d_array_reserve((void **)&output->modes, &output->modes_size,
+                output->mode_count + 1, sizeof(*output->modes)))
+            return;
+
+        wined3d_mode = &output->modes[output->mode_count++];
+        wined3d_mode->width = mode.dmPelsWidth;
+        wined3d_mode->height = mode.dmPelsHeight;
+        wined3d_mode->format_id = pixelformat_for_depth(mode.dmBitsPerPel);
+
+        if (mode.dmFields & DM_DISPLAYFREQUENCY)
+            wined3d_mode->refresh_rate = mode.dmDisplayFrequency;
+        else
+            wined3d_mode->refresh_rate = DEFAULT_REFRESH_RATE;
+
+        if (mode.dmFields & DM_DISPLAYFLAGS)
+        {
+            if (mode.u2.dmDisplayFlags & DM_INTERLACED)
+                wined3d_mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
+            else
+                wined3d_mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
+        }
+        else
+        {
+            wined3d_mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        }
     }
+}
+
+static bool mode_matches_filter(const struct wined3d_adapter *adapter, const struct wined3d_display_mode *mode,
+        const struct wined3d_format *format, enum wined3d_scanline_ordering scanline_ordering)
+{
+    if (scanline_ordering != WINED3D_SCANLINE_ORDERING_UNKNOWN
+            && mode->scanline_ordering != WINED3D_SCANLINE_ORDERING_UNKNOWN
+            && scanline_ordering != mode->scanline_ordering)
+        return false;
 
     if (format->id == WINED3DFMT_UNKNOWN)
     {
         /* This is for d3d8, do not enumerate P8 here. */
-        if (mode->dmBitsPerPel != 32 && mode->dmBitsPerPel != 16)
+        if (mode->format_id != WINED3DFMT_B5G6R5_UNORM && mode->format_id != WINED3DFMT_B8G8R8X8_UNORM)
             return false;
     }
-    else if (mode->dmBitsPerPel != format->byte_count * CHAR_BIT)
+    else
     {
-        return false;
+        const struct wined3d_format *mode_format = wined3d_get_format(adapter,
+                mode->format_id, WINED3D_BIND_RENDER_TARGET);
+
+        if (format->byte_count != mode_format->byte_count)
+            return false;
     }
 
     return true;
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *output,
+unsigned int CDECL wined3d_output_get_mode_count(struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
-    unsigned int i = 0;
-    unsigned int j = 0;
-    DEVMODEW mode;
+    unsigned int count = 0;
+    SIZE_T i;
 
     TRACE("output %p, format %s, scanline_ordering %#x.\n",
             output, debug_d3dformat(format_id), scanline_ordering);
@@ -1272,30 +1307,27 @@ unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *ou
     adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
 
-    memset(&mode, 0, sizeof(mode));
-    mode.dmSize = sizeof(mode);
+    wined3d_output_update_modes(output);
 
-    while (EnumDisplaySettingsExW(output->device_name, j++, &mode, 0))
+    for (i = 0; i < output->mode_count; ++i)
     {
-        if (mode_matches_filter(&mode, format, scanline_ordering))
-            ++i;
+        if (mode_matches_filter(adapter, &output->modes[i], format, scanline_ordering))
+            ++count;
     }
 
-    TRACE("Returning %u matching modes (out of %u total) for output %p.\n", i, j, output);
+    TRACE("Returning %u matching modes (out of %Iu total).\n", count, output->mode_count);
 
-    return i;
+    return count;
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
+HRESULT CDECL wined3d_output_get_mode(struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
         unsigned int mode_idx, struct wined3d_display_mode *mode)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
-    DEVMODEW m;
-    UINT i = 0;
-    int j = 0;
+    SIZE_T i, match_idx = 0;
 
     TRACE("output %p, format %s, scanline_ordering %#x, mode_idx %u, mode %p.\n",
             output, debug_d3dformat(format_id), scanline_ordering, mode_idx, mode);
@@ -1306,46 +1338,30 @@ HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
     adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
 
-    memset(&m, 0, sizeof(m));
-    m.dmSize = sizeof(m);
+    wined3d_output_update_modes(output);
 
-    while (i <= mode_idx)
+    for (i = 0; i < output->mode_count; ++i)
     {
-        if (!EnumDisplaySettingsExW(output->device_name, j++, &m, 0))
-        {
-            WARN("Invalid mode_idx %u.\n", mode_idx);
-            return WINED3DERR_INVALIDCALL;
-        }
+        const struct wined3d_display_mode *wined3d_mode = &output->modes[i];
 
-        if (mode_matches_filter(&m, format, scanline_ordering))
-            ++i;
+        if (mode_matches_filter(adapter, wined3d_mode, format, scanline_ordering) && match_idx++ == mode_idx)
+        {
+            *mode = *wined3d_mode;
+            if (format_id != WINED3DFMT_UNKNOWN)
+                mode->format_id = format_id;
+
+            TRACE("%ux%u@%u %u bpp, %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
+                    wined3d_get_format(adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET)->byte_count * CHAR_BIT,
+                    debug_d3dformat(mode->format_id), mode->scanline_ordering);
+            return WINED3D_OK;
+        }
     }
 
-    mode->width = m.dmPelsWidth;
-    mode->height = m.dmPelsHeight;
-    mode->refresh_rate = DEFAULT_REFRESH_RATE;
-    if (m.dmFields & DM_DISPLAYFREQUENCY)
-        mode->refresh_rate = m.dmDisplayFrequency;
-
-    if (format_id == WINED3DFMT_UNKNOWN)
-        mode->format_id = pixelformat_for_depth(m.dmBitsPerPel);
-    else
-        mode->format_id = format_id;
-
-    if (!(m.dmFields & DM_DISPLAYFLAGS))
-        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-    else if (m.u2.dmDisplayFlags & DM_INTERLACED)
-        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_INTERLACED;
-    else
-        mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
-
-    TRACE("%ux%u@%u %u bpp, %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
-            m.dmBitsPerPel, debug_d3dformat(mode->format_id), mode->scanline_ordering);
-
-    return WINED3D_OK;
+    WARN("Invalid mode_idx %u.\n", mode_idx);
+    return WINED3DERR_INVALIDCALL;
 }
 
-HRESULT CDECL wined3d_output_find_closest_matching_mode(const struct wined3d_output *output,
+HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *output,
         struct wined3d_display_mode *mode)
 {
     unsigned int i, j, mode_count, matching_mode_count, closest;
@@ -2158,7 +2174,7 @@ HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d_output
 }
 
 HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
-        const struct wined3d_output *output, enum wined3d_device_type device_type,
+        struct wined3d_output *output, enum wined3d_device_type device_type,
         enum wined3d_format_id display_format, enum wined3d_format_id backbuffer_format,
         BOOL windowed)
 {

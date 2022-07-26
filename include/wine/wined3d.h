@@ -2346,7 +2346,7 @@ HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d_adapt
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         enum wined3d_multisample_type multisample_type, unsigned int *quality_levels);
 HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d,
-        const struct wined3d_output *output, enum wined3d_device_type device_type,
+        struct wined3d_output *output, enum wined3d_device_type device_type,
         enum wined3d_format_id display_format_id, enum wined3d_format_id backbuffer_format_id,
         BOOL windowed);
 struct wined3d * __cdecl wined3d_create(DWORD flags);
@@ -2586,17 +2586,17 @@ void __cdecl wined3d_device_context_update_sub_resource(struct wined3d_device_co
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         const void *data, unsigned int row_pitch, unsigned int depth_pitch, unsigned int flags);
 
-HRESULT __cdecl wined3d_output_find_closest_matching_mode(const struct wined3d_output *output,
+HRESULT __cdecl wined3d_output_find_closest_matching_mode(struct wined3d_output *output,
         struct wined3d_display_mode *mode);
 struct wined3d_adapter * __cdecl wined3d_output_get_adapter(const struct wined3d_output *output);
 HRESULT __cdecl wined3d_output_get_desc(const struct wined3d_output *output,
         struct wined3d_output_desc *desc);
 HRESULT __cdecl wined3d_output_get_display_mode(const struct wined3d_output *output,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);
-HRESULT __cdecl wined3d_output_get_mode(const struct wined3d_output *output,
+HRESULT __cdecl wined3d_output_get_mode(struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
         unsigned int mode_idx, struct wined3d_display_mode *mode);
-unsigned int __cdecl wined3d_output_get_mode_count(const struct wined3d_output *output,
+unsigned int __cdecl wined3d_output_get_mode_count(struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering);
 HRESULT __cdecl wined3d_output_get_raster_status(const struct wined3d_output *output,
         struct wined3d_raster_status *raster_status);

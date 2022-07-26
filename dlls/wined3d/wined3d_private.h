@@ -3502,6 +3502,9 @@ struct wined3d_output
 
     D3DKMT_HANDLE kmt_device;
     D3DDDI_VIDEO_PRESENT_SOURCE_ID vidpn_source_id;
+
+    struct wined3d_display_mode *modes;
+    SIZE_T mode_count, modes_size;
 };
 
 HRESULT wined3d_output_get_gamma_ramp(struct wined3d_output *output, struct wined3d_gamma_ramp *ramp) DECLSPEC_HIDDEN;
