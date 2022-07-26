@@ -4101,6 +4101,274 @@ done:
     cleanup_registry_keys();
 }
 
+static BOOL wm_input_device_change_count;
+static BOOL wm_input_count;
+static char wm_input_buf[1024];
+static UINT wm_input_len;
+
+static LRESULT CALLBACK rawinput_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    UINT size = sizeof(wm_input_buf);
+
+    if (msg == WM_INPUT_DEVICE_CHANGE) wm_input_device_change_count++;
+    if (msg == WM_INPUT)
+    {
+        wm_input_count++;
+        wm_input_len = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, (RAWINPUT *)wm_input_buf,
+                                        &size, sizeof(RAWINPUTHEADER) );
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void test_rawinput(void)
+{
+#include "psh_hid_macros.h"
+    static const unsigned char report_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 1),
+
+                USAGE(1, HID_USAGE_GENERIC_WHEEL),
+                USAGE(4, (0xff01u<<16)|(0x1234)),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_RUDDER),
+                USAGE(4, (HID_USAGE_PAGE_DIGITIZER<<16)|HID_USAGE_DIGITIZER_TIP_PRESSURE),
+                USAGE(4, (HID_USAGE_PAGE_CONSUMER<<16)|HID_USAGE_CONSUMER_VOLUME),
+                LOGICAL_MINIMUM(1, 0xe7),
+                LOGICAL_MAXIMUM(1, 0x38),
+                PHYSICAL_MINIMUM(1, 0xe7),
+                PHYSICAL_MAXIMUM(1, 0x38),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 7),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 4),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 2),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 4),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
+#include "pop_hid_macros.h"
+
+    struct hid_device_desc desc =
+    {
+        .use_report_id = TRUE,
+        .caps = { .InputReportByteLength = 9 },
+        .attributes = default_attributes,
+    };
+    struct hid_expect injected_input[] =
+    {
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x38,0x38,0x10,0x10,0x10,0xf8},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x80,0x80,0x10,0x10,0x10,0xff},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0x10,0xee,0x10,0x10,0x10,0x54},
+        },
+    };
+    WNDCLASSEXW class =
+    {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .hInstance = GetModuleHandleW( NULL ),
+        .lpszClassName = L"rawinput",
+        .lpfnWndProc = rawinput_wndproc,
+    };
+    RAWINPUT *rawinput = (RAWINPUT *)wm_input_buf;
+    RAWINPUTDEVICELIST raw_device_list[16];
+    RAWINPUTDEVICE raw_devices[16];
+    ULONG i, res, device_count;
+    WCHAR path[MAX_PATH] = {0};
+    HANDLE file;
+    UINT count;
+    HWND hwnd;
+    BOOL ret;
+    MSG msg;
+
+    RegisterClassExW( &class );
+
+    cleanup_registry_keys();
+
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
+
+    hwnd = CreateWindowW( class.lpszClassName, L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
+                          NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    count = ARRAY_SIZE(raw_devices);
+    res = GetRegisteredRawInputDevices( raw_devices, &count, sizeof(RAWINPUTDEVICE) );
+    ok( res == 0, "GetRegisteredRawInputDevices returned %lu\n", res );
+    todo_wine
+    ok( count == ARRAY_SIZE(raw_devices), "got count %u\n", count );
+
+    count = ARRAY_SIZE(raw_device_list);
+    res = GetRawInputDeviceList( raw_device_list, &count, sizeof(RAWINPUTDEVICELIST) );
+    ok( res >= 2, "GetRawInputDeviceList returned %lu\n", res );
+    ok( count == ARRAY_SIZE(raw_device_list), "got count %u\n", count );
+    device_count = res;
+
+    if (!hid_device_start( &desc )) goto done;
+
+    count = ARRAY_SIZE(raw_devices);
+    res = GetRegisteredRawInputDevices( raw_devices, &count, sizeof(RAWINPUTDEVICE) );
+    ok( res == 0, "GetRegisteredRawInputDevices returned %lu\n", res );
+    todo_wine
+    ok( count == ARRAY_SIZE(raw_devices), "got count %u\n", count );
+
+
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
+    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_GAMEPAD;
+    raw_devices[0].dwFlags = RIDEV_DEVNOTIFY;
+    raw_devices[0].hwndTarget = hwnd;
+    count = ARRAY_SIZE(raw_devices);
+    ret = RegisterRawInputDevices( raw_devices, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    hid_device_stop( &desc );
+
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
+    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_JOYSTICK;
+    raw_devices[0].dwFlags = RIDEV_DEVNOTIFY;
+    raw_devices[0].hwndTarget = hwnd;
+    count = ARRAY_SIZE(raw_devices);
+    ret = RegisterRawInputDevices( raw_devices, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    hid_device_start( &desc );
+
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    ok( wm_input_device_change_count == 1, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
+    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+    wm_input_device_change_count = 0;
+
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_JOYSTICK;
+    raw_devices[0].dwFlags = RIDEV_INPUTSINK;
+    raw_devices[0].hwndTarget = hwnd;
+    count = ARRAY_SIZE(raw_devices);
+    ret = RegisterRawInputDevices( raw_devices, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    hid_device_stop( &desc );
+    hid_device_start( &desc );
+
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
+    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+
+
+    count = ARRAY_SIZE(raw_device_list);
+    res = GetRawInputDeviceList( raw_device_list, &count, sizeof(RAWINPUTDEVICELIST) );
+    todo_wine
+    ok( res == device_count + 1, "GetRawInputDeviceList returned %lu\n", res );
+    ok( count == ARRAY_SIZE(raw_device_list), "got count %u\n", count );
+    device_count = res;
+
+    while (device_count--)
+    {
+        if (raw_device_list[device_count].dwType != RIM_TYPEHID) continue;
+
+        count = ARRAY_SIZE(path);
+        res = GetRawInputDeviceInfoW( raw_device_list[device_count].hDevice, RIDI_DEVICENAME, path, &count );
+        ok( res == wcslen( path ) + 1, "GetRawInputDeviceInfoW returned %lu\n", res );
+        todo_wine
+        ok( count == ARRAY_SIZE(path), "got count %u\n", count );
+
+        if (wcsstr( path, expect_vidpid_str )) break;
+    }
+
+    todo_wine
+    ok( !!wcsstr( path, expect_vidpid_str ), "got path %s\n", debugstr_w(path) );
+    if (!wcsstr( path, expect_vidpid_str )) goto done;
+
+
+    file = CreateFileW( path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
+    {
+        winetest_push_context( "state[%ld]", i );
+
+        send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
+        while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+
+        ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
+        todo_wine
+        ok( wm_input_count == 1, "got %u WM_INPUT\n", wm_input_count );
+        todo_wine
+        ok( wm_input_len == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength]),
+            "got wm_input_len %u\n", wm_input_len );
+        todo_wine
+        ok( !memcmp( rawinput->data.hid.bRawData, injected_input[i].report_buf, desc.caps.InputReportByteLength ),
+            "got unexpected report data\n" );
+        wm_input_count = 0;
+
+        winetest_pop_context();
+    }
+
+    CloseHandle( file );
+
+done:
+    hid_device_stop( &desc );
+    cleanup_registry_keys();
+
+    DestroyWindow( hwnd );
+    UnregisterClassW( class.lpszClassName, class.hInstance );
+}
+
 START_TEST( joystick8 )
 {
     dinput_test_init();
@@ -4121,6 +4389,7 @@ START_TEST( joystick8 )
 
         test_many_axes_joystick();
         test_driving_wheel_axes();
+        test_rawinput();
         test_windows_gaming_input();
     }
 
