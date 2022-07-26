@@ -206,7 +206,7 @@ struct device
 static struct device *rawinput_devices;
 static unsigned int rawinput_devices_count, rawinput_devices_max;
 
-static pthread_mutex_t rawinput_devices_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t rawinput_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static bool array_reserve( void **elements, unsigned int *capacity, unsigned int count, unsigned int size )
 {
@@ -461,8 +461,6 @@ static void rawinput_update_device_list(void)
 
     TRACE( "\n" );
 
-    pthread_mutex_lock( &rawinput_devices_mutex );
-
     /* destroy previous list */
     for (i = 0; i < rawinput_devices_count; ++i)
     {
@@ -475,8 +473,6 @@ static void rawinput_update_device_list(void)
     enumerate_devices( RIM_TYPEMOUSE, guid_devinterface_mouseW );
     enumerate_devices( RIM_TYPEKEYBOARD, guid_devinterface_keyboardW );
     enumerate_devices( RIM_TYPEHID, guid_devinterface_hidW );
-
-    pthread_mutex_unlock( &rawinput_devices_mutex );
 }
 
 static struct device *find_device_from_handle( HANDLE handle )
@@ -503,14 +499,19 @@ BOOL rawinput_device_get_usages( HANDLE handle, USAGE *usage_page, USAGE *usage 
 {
     struct device *device;
 
-    *usage_page = *usage = 0;
+    pthread_mutex_lock( &rawinput_mutex );
 
-    if (!(device = find_device_from_handle( handle ))) return FALSE;
-    if (device->info.dwType != RIM_TYPEHID) return FALSE;
+    if (!(device = find_device_from_handle( handle )) || device->info.dwType != RIM_TYPEHID)
+        *usage_page = *usage = 0;
+    else
+    {
+        *usage_page = device->info.hid.usUsagePage;
+        *usage = device->info.hid.usUsage;
+    }
 
-    *usage_page = device->info.hid.usUsagePage;
-    *usage = device->info.hid.usUsage;
-    return TRUE;
+    pthread_mutex_unlock( &rawinput_mutex );
+
+    return *usage_page || *usage;
 }
 
 /**********************************************************************
@@ -535,11 +536,15 @@ UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *devices, UINT *devi
         return ~0u;
     }
 
+    pthread_mutex_lock( &rawinput_mutex );
+
     if (ticks - last_check > 2000)
     {
         last_check = ticks;
         rawinput_update_device_list();
     }
+
+    pthread_mutex_unlock( &rawinput_mutex );
 
     if (!devices)
     {
@@ -580,13 +585,23 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
         SetLastError( ERROR_NOACCESS );
         return ~0u;
     }
+    if (command != RIDI_DEVICENAME && command != RIDI_DEVICEINFO && command != RIDI_PREPARSEDDATA)
+    {
+        FIXME( "Command %#x not implemented!\n", command );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ~0u;
+    }
+
+    pthread_mutex_lock( &rawinput_mutex );
+
     if (!(device = find_device_from_handle( handle )))
     {
+        pthread_mutex_unlock( &rawinput_mutex );
         SetLastError( ERROR_INVALID_HANDLE );
         return ~0u;
     }
 
-    data_len = *data_size;
+    len = data_len = *data_size;
     switch (command)
     {
     case RIDI_DEVICENAME:
@@ -612,12 +627,9 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
             memcpy( data, preparsed, len );
         *data_size = len;
         break;
-
-    default:
-        FIXME( "command %#x not supported\n", command );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return ~0u;
     }
+
+    pthread_mutex_unlock( &rawinput_mutex );
 
     if (!data)
         return 0;
@@ -796,7 +808,9 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
 
     if (msg->message == WM_INPUT_DEVICE_CHANGE)
     {
+        pthread_mutex_lock( &rawinput_mutex );
         rawinput_update_device_list();
+        pthread_mutex_unlock( &rawinput_mutex );
     }
     else
     {
