@@ -86,8 +86,8 @@ extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UIN
                                      WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg,
                                      enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 
-extern INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
-extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
+extern INT_PTR WINPROC_CallDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
+extern INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern void winproc_init(void) DECLSPEC_HIDDEN;
 extern void dispatch_win_proc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
 extern void get_winproc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;

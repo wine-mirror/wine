@@ -29,27 +29,6 @@
 #include "user_private.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dialog);
-
-
-/***********************************************************************
- *           DEFDLG_GetDlgProc
- */
-static DLGPROC DEFDLG_GetDlgProc( HWND hwnd )
-{
-    DLGPROC ret;
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (!wndPtr) return 0;
-    if (wndPtr == WND_OTHER_PROCESS)
-    {
-        ERR( "cannot get dlg proc %p from other process\n", hwnd );
-        return 0;
-    }
-    ret = *(DLGPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
-    WIN_ReleasePtr( wndPtr );
-    return ret;
-}
 
 /***********************************************************************
  *           DEFDLG_SetFocus
@@ -343,16 +322,14 @@ DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
 static LRESULT USER_DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
-    DLGPROC dlgproc;
-    LRESULT result = 0;
+    LRESULT result;
 
     /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return 0;
 
     SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );
 
-    if ((dlgproc = DEFDLG_GetDlgProc( hwnd ))) /* Call dialog procedure */
-        result = WINPROC_CallDlgProcA( dlgproc, hwnd, msg, wParam, lParam );
+    result = WINPROC_CallDlgProcA( hwnd, msg, wParam, lParam );
 
     if (!result && IsWindow(hwnd))
     {
@@ -397,16 +374,13 @@ static LRESULT USER_DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 static LRESULT USER_DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
-    DLGPROC dlgproc;
-    LRESULT result = 0;
+    LRESULT result;
 
     /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return 0;
 
     SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );
-
-    if ((dlgproc = DEFDLG_GetDlgProc( hwnd ))) /* Call dialog procedure */
-        result = WINPROC_CallDlgProcW( dlgproc, hwnd, msg, wParam, lParam );
+    result = WINPROC_CallDlgProcW( hwnd, msg, wParam, lParam );
 
     if (!result && IsWindow(hwnd))
     {

@@ -1038,19 +1038,10 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
 {
     while (GetWindowLongA(hwndDlg, GWL_STYLE) & DS_CONTROL)
     {
-        WND *pParent;
         HWND hParent = GetParent(hwndDlg);
-        if (!hParent) break;
 
-        pParent = WIN_GetPtr(hParent);
-        if (!pParent || pParent == WND_OTHER_PROCESS || pParent == WND_DESKTOP) break;
-
-        if (!pParent->dlgInfo)
-        {
-            WIN_ReleasePtr(pParent);
-            break;
-        }
-        WIN_ReleasePtr(pParent);
+        if (!hParent || !WIN_IsCurrentProcess( hParent )) break;
+        if (!NtUserGetDialogInfo( hParent )) break;
 
         hwndDlg = hParent;
     }
@@ -1183,14 +1174,8 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
         case VK_TAB:
             if (!(dlgCode & DLGC_WANTTAB))
             {
-                BOOL fIsDialog = TRUE;
-                WND *pWnd = WIN_GetPtr( hwndDlg );
-
-                if (pWnd && pWnd != WND_OTHER_PROCESS)
-                {
-                    fIsDialog = (pWnd->dlgInfo != NULL);
-                    WIN_ReleasePtr(pWnd);
-                }
+                BOOL fIsDialog = !WIN_IsCurrentProcess( hwndDlg ) ||
+                    NtUserGetDialogInfo( hwndDlg ) != NULL;
 
                 /* I am not sure under which circumstances the TAB is handled
                  * each way.  All I do know is that it does not always simply

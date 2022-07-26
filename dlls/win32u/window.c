@@ -5484,6 +5484,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_GetClientRect:
         return get_client_rect( hwnd, (RECT *)param );
 
+    case NtUserCallHwndParam_GetDialogProc:
+        return (ULONG_PTR)get_dialog_proc( hwnd, param );
+
     case NtUserCallHwndParam_GetScrollInfo:
         {
             struct get_scroll_info_params *params = (void *)param;

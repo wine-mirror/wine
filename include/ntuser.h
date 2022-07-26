@@ -1206,6 +1206,7 @@ enum
     NtUserCallHwndParam_GetClassLongPtrW,
     NtUserCallHwndParam_GetClassWord,
     NtUserCallHwndParam_GetClientRect,
+    NtUserCallHwndParam_GetDialogProc,
     NtUserCallHwndParam_GetScrollInfo,
     NtUserCallHwndParam_GetWindowInfo,
     NtUserCallHwndParam_GetWindowLongA,
@@ -1269,6 +1270,18 @@ static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
 static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect )
 {
     return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetClientRect );
+}
+
+enum dialog_proc_type
+{
+    DLGPROC_ANSI,
+    DLGPROC_UNICODE,
+    DLGPROC_WIN16,
+};
+
+static inline DLGPROC NtUserGetDialogProc( HWND hwnd, enum dialog_proc_type type )
+{
+    return (DLGPROC)NtUserCallHwndParam( hwnd, type, NtUserCallHwndParam_GetDialogProc );
 }
 
 struct get_scroll_info_params

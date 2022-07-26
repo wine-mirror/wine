@@ -1361,50 +1361,46 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam
 /**********************************************************************
  *		WINPROC_CallDlgProcA
  */
-INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+INT_PTR WINPROC_CallDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    WINDOWPROC *proc;
     LRESULT result;
-    INT_PTR ret;
+    DLGPROC func;
 
-    if (!func) return 0;
+    if (!(func = NtUserGetDialogProc( hwnd, DLGPROC_ANSI ))) return 0;
 
-    if (!(proc = handle_to_proc( (WNDPROC)func )))
-        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
-    else if (proc == WINPROC_PROC16)
+    if (func == WINPROC_PROC16)
     {
+        INT_PTR ret;
+        if (!(func = NtUserGetDialogProc( hwnd, DLGPROC_WIN16 ))) return 0;
         ret = wow_handlers.call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
+        return ret;
     }
-    else
-        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW ? proc->procW : proc->procA );
 
-    return ret;
+    return call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
 }
 
 
 /**********************************************************************
  *		WINPROC_CallDlgProcW
  */
-INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    WINDOWPROC *proc;
     LRESULT result;
-    INT_PTR ret;
+    DLGPROC func;
 
-    if (!func) return 0;
+    if (!(func = NtUserGetDialogProc( hwnd, DLGPROC_UNICODE ))) return 0;
 
-    if (!(proc = handle_to_proc( (WNDPROC)func )))
-        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
-    else if (proc == WINPROC_PROC16)
+    if (func == WINPROC_PROC16)
     {
+        INT_PTR ret;
+        if (!(func = NtUserGetDialogProc( hwnd, DLGPROC_WIN16 ))) return 0;
         ret = WINPROC_CallProcWtoA( wow_handlers.call_dialog_proc, hwnd, msg, wParam, lParam, &result, func );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
+        return ret;
     }
-    else
-        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW ? proc->procW : proc->procA );
 
-    return ret;
+    return call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
 }
 
 
