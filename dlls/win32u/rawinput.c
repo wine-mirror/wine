@@ -253,6 +253,8 @@ static struct device *add_device( HKEY key, DWORD type )
     NTSTATUS status;
     unsigned int i;
     UINT32 handle;
+    void *buffer;
+    SIZE_T size;
     HANDLE file;
 
     if (!query_reg_value( key, symbolic_linkW, value, sizeof(value_buffer) ))
@@ -327,9 +329,22 @@ static struct device *add_device( HKEY key, DWORD type )
             goto fail;
         }
 
-        status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
-                                        IOCTL_HID_GET_COLLECTION_DESCRIPTOR,
-                                        NULL, 0, preparsed, hid_info.DescriptorSize );
+        /* NtDeviceIoControlFile checks that the output buffer is writable using ntdll virtual
+         * memory protection information, we need an NtAllocateVirtualMemory allocated buffer.
+         */
+        buffer = NULL;
+        size = hid_info.DescriptorSize;
+        if (!(status = NtAllocateVirtualMemory( GetCurrentProcess(), &buffer, 0, &size,
+                                                MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE )))
+        {
+            size = 0;
+            status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+                                            IOCTL_HID_GET_COLLECTION_DESCRIPTOR,
+                                            NULL, 0, buffer, hid_info.DescriptorSize );
+            if (!status) memcpy( preparsed, buffer, hid_info.DescriptorSize );
+            NtFreeVirtualMemory( GetCurrentProcess(), &buffer, &size, MEM_RELEASE );
+        }
+
         if (status)
         {
             ERR( "Failed to get collection descriptor, status %#x.\n", status );

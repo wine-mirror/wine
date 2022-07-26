@@ -4308,7 +4308,12 @@ static void test_rawinput(void)
 
     count = ARRAY_SIZE(raw_device_list);
     res = GetRawInputDeviceList( raw_device_list, &count, sizeof(RAWINPUTDEVICELIST) );
-    todo_wine
+    if (!strcmp( winetest_platform, "wine" ) && res == device_count)
+    {
+        /* Wine refreshes its device list every 2s, but GetRawInputDeviceInfoW with an unknown handle will force it */
+        GetRawInputDeviceInfoW( (HANDLE)0xdeadbeef, RIDI_DEVICEINFO, NULL, &count );
+        res = GetRawInputDeviceList( raw_device_list, &count, sizeof(RAWINPUTDEVICELIST) );
+    }
     ok( res == device_count + 1, "GetRawInputDeviceList returned %lu\n", res );
     ok( count == ARRAY_SIZE(raw_device_list), "got count %u\n", count );
     device_count = res;
@@ -4326,9 +4331,7 @@ static void test_rawinput(void)
         if (wcsstr( path, expect_vidpid_str )) break;
     }
 
-    todo_wine
     ok( !!wcsstr( path, expect_vidpid_str ), "got path %s\n", debugstr_w(path) );
-    if (!wcsstr( path, expect_vidpid_str )) goto done;
 
 
     file = CreateFileW( path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
@@ -4346,12 +4349,9 @@ static void test_rawinput(void)
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
         ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
-        todo_wine
         ok( wm_input_count == 1, "got %u WM_INPUT\n", wm_input_count );
-        todo_wine
         ok( wm_input_len == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength]),
             "got wm_input_len %u\n", wm_input_len );
-        todo_wine
         ok( !memcmp( rawinput->data.hid.bRawData, injected_input[i].report_buf, desc.caps.InputReportByteLength ),
             "got unexpected report data\n" );
         wm_input_count = 0;
