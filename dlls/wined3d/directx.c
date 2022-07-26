@@ -1228,11 +1228,14 @@ HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
      of the same bpp but different resolutions                                  */
 
-static void wined3d_output_update_modes(struct wined3d_output *output)
+static void wined3d_output_update_modes(struct wined3d_output *output, bool cached)
 {
     struct wined3d_display_mode *wined3d_mode;
     DEVMODEW mode = {.dmSize = sizeof(mode)};
     unsigned int i;
+
+    if (output->modes_valid && cached)
+        return;
 
     output->mode_count = 0;
 
@@ -1264,6 +1267,8 @@ static void wined3d_output_update_modes(struct wined3d_output *output)
             wined3d_mode->scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
         }
     }
+
+    output->modes_valid = true;
 }
 
 static bool mode_matches_filter(const struct wined3d_adapter *adapter, const struct wined3d_display_mode *mode,
@@ -1294,7 +1299,7 @@ static bool mode_matches_filter(const struct wined3d_adapter *adapter, const str
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 unsigned int CDECL wined3d_output_get_mode_count(struct wined3d_output *output,
-        enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering)
+        enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering, bool cached)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
@@ -1307,7 +1312,7 @@ unsigned int CDECL wined3d_output_get_mode_count(struct wined3d_output *output,
     adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
 
-    wined3d_output_update_modes(output);
+    wined3d_output_update_modes(output, cached);
 
     for (i = 0; i < output->mode_count; ++i)
     {
@@ -1323,7 +1328,7 @@ unsigned int CDECL wined3d_output_get_mode_count(struct wined3d_output *output,
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 HRESULT CDECL wined3d_output_get_mode(struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
-        unsigned int mode_idx, struct wined3d_display_mode *mode)
+        unsigned int mode_idx, struct wined3d_display_mode *mode, bool cached)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
@@ -1338,7 +1343,7 @@ HRESULT CDECL wined3d_output_get_mode(struct wined3d_output *output,
     adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
 
-    wined3d_output_update_modes(output);
+    wined3d_output_update_modes(output, cached);
 
     for (i = 0; i < output->mode_count; ++i)
     {
@@ -1372,7 +1377,7 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
     TRACE("output %p, mode %p.\n", output, mode);
 
     if (!(mode_count = wined3d_output_get_mode_count(output, mode->format_id,
-            WINED3D_SCANLINE_ORDERING_UNKNOWN)))
+            WINED3D_SCANLINE_ORDERING_UNKNOWN, false)))
     {
         WARN("Output has 0 matching modes.\n");
         return E_FAIL;
@@ -1389,7 +1394,7 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
     for (i = 0; i < mode_count; ++i)
     {
         if (FAILED(hr = wined3d_output_get_mode(output, mode->format_id,
-                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i], false)))
         {
             heap_free(matching_modes);
             heap_free(modes);
@@ -2204,7 +2209,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
     {
         /* If the requested display format is not available, don't continue. */
         if (!wined3d_output_get_mode_count(output, display_format,
-                WINED3D_SCANLINE_ORDERING_UNKNOWN))
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, false))
         {
             TRACE("No available modes for display format %s.\n", debug_d3dformat(display_format));
             return WINED3DERR_NOTAVAILABLE;

@@ -2447,7 +2447,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     {
         modenum = 0;
         while (wined3d_output_get_mode(ddraw->wined3d_output, checkFormatList[fmt],
-                WINED3D_SCANLINE_ORDERING_UNKNOWN, modenum++, &mode) == WINED3D_OK)
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, modenum++, &mode, false) == WINED3D_OK)
         {
             BOOL found = FALSE;
             unsigned i;

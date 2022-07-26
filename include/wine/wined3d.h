@@ -2595,9 +2595,9 @@ HRESULT __cdecl wined3d_output_get_display_mode(const struct wined3d_output *out
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);
 HRESULT __cdecl wined3d_output_get_mode(struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
-        unsigned int mode_idx, struct wined3d_display_mode *mode);
+        unsigned int mode_idx, struct wined3d_display_mode *mode, bool cached);
 unsigned int __cdecl wined3d_output_get_mode_count(struct wined3d_output *output,
-        enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering);
+        enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering, bool cached);
 HRESULT __cdecl wined3d_output_get_raster_status(const struct wined3d_output *output,
         struct wined3d_raster_status *raster_status);
 void __cdecl wined3d_output_release_ownership(const struct wined3d_output *output);

@@ -178,7 +178,7 @@ static UINT WINAPI d3d9_GetAdapterModeCount(IDirect3D9Ex *iface, UINT adapter, D
 
     wined3d_mutex_lock();
     count = wined3d_output_get_mode_count(d3d9->wined3d_outputs[output_idx],
-            wined3dformat_from_d3dformat(format), WINED3D_SCANLINE_ORDERING_UNKNOWN);
+            wined3dformat_from_d3dformat(format), WINED3D_SCANLINE_ORDERING_UNKNOWN, true);
     wined3d_mutex_unlock();
 
     return count;
@@ -203,9 +203,8 @@ static HRESULT WINAPI d3d9_EnumAdapterModes(IDirect3D9Ex *iface, UINT adapter,
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_output_get_mode(d3d9->wined3d_outputs[output_idx],
-            wined3dformat_from_d3dformat(format), WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx,
-            &wined3d_mode);
+    hr = wined3d_output_get_mode(d3d9->wined3d_outputs[output_idx], wined3dformat_from_d3dformat(format),
+            WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx, &wined3d_mode, true);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
@@ -524,7 +523,7 @@ static UINT WINAPI d3d9_GetAdapterModeCountEx(IDirect3D9Ex *iface,
 
     wined3d_mutex_lock();
     count = wined3d_output_get_mode_count(d3d9->wined3d_outputs[output_idx],
-            wined3dformat_from_d3dformat(filter->Format), wined3d_scanline_ordering_from_d3d(filter->ScanLineOrdering));
+            wined3dformat_from_d3dformat(filter->Format), wined3d_scanline_ordering_from_d3d(filter->ScanLineOrdering), true);
     wined3d_mutex_unlock();
 
     return count;
@@ -550,7 +549,7 @@ static HRESULT WINAPI d3d9_EnumAdapterModesEx(IDirect3D9Ex *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_output_get_mode(d3d9->wined3d_outputs[output_idx], wined3dformat_from_d3dformat(filter->Format),
-            wined3d_scanline_ordering_from_d3d(filter->ScanLineOrdering), mode_idx, &wined3d_mode);
+            wined3d_scanline_ordering_from_d3d(filter->ScanLineOrdering), mode_idx, &wined3d_mode, true);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
