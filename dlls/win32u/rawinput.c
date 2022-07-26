@@ -244,9 +244,9 @@ static struct device *add_device( HKEY key, DWORD type )
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
     struct hid_preparsed_data *preparsed = NULL;
     HID_COLLECTION_INFORMATION hid_info;
-    struct device *device = NULL;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
+    struct device *device;
     RID_DEVICE_INFO info;
     IO_STATUS_BLOCK io;
     WCHAR *path, *pos;
@@ -290,6 +290,15 @@ static struct device *add_device( HKEY key, DWORD type )
     {
         ERR( "Failed to get raw input handle, status %#x.\n", status );
         goto fail;
+    }
+
+    for (i = 0; i < rawinput_devices_count; ++i)
+    {
+        if (rawinput_devices[i].handle == UlongToHandle(handle))
+        {
+            TRACE( "Ignoring already added device %#x / %s.\n", handle, debugstr_w(path) );
+            goto fail;
+        }
     }
 
     memset( &info, 0, sizeof(info) );
@@ -340,20 +349,7 @@ static struct device *add_device( HKEY key, DWORD type )
         break;
     }
 
-    for (i = 0; i < rawinput_devices_count && !device; ++i)
-    {
-        if (rawinput_devices[i].handle == UlongToHandle(handle))
-            device = rawinput_devices + i;
-    }
-
-    if (device)
-    {
-        TRACE( "Updating device %#x / %s.\n", handle, debugstr_w(path) );
-        free( device->data );
-        NtClose( device->file );
-        free( device->path );
-    }
-    else if (array_reserve( (void **)&rawinput_devices, &rawinput_devices_max,
+    if (array_reserve( (void **)&rawinput_devices, &rawinput_devices_max,
                             rawinput_devices_count + 1, sizeof(*rawinput_devices) ))
     {
         device = &rawinput_devices[rawinput_devices_count++];
@@ -461,9 +457,9 @@ static void rawinput_update_device_list(void)
     }
     rawinput_devices_count = 0;
 
-    enumerate_devices( RIM_TYPEHID, guid_devinterface_hidW );
     enumerate_devices( RIM_TYPEMOUSE, guid_devinterface_mouseW );
     enumerate_devices( RIM_TYPEKEYBOARD, guid_devinterface_keyboardW );
+    enumerate_devices( RIM_TYPEHID, guid_devinterface_hidW );
 
     pthread_mutex_unlock( &rawinput_devices_mutex );
 }
