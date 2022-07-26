@@ -2993,6 +2993,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_SAWTOOTH_DOWN:
         case PID_USAGE_ET_CONSTANT_FORCE:
         case PID_USAGE_ET_RAMP:
+            if (!(impl->flags & DIEP_ENVELOPE)) break;
             if (!(impl->modified & DIEP_ENVELOPE)) break;
 
             set_parameter_value( impl, impl->set_envelope_buf, set_envelope->attack_level_caps,
@@ -3100,7 +3101,7 @@ static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
             else hr = DIERR_INPUTLOST;
         }
 
-        impl->modified = impl->flags;
+        impl->modified = ~0;
         impl->index = 0;
         check_empty_force_feedback_state( joystick );
     }
@@ -3161,6 +3162,7 @@ static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectI
     impl->params.rgdwAxes = impl->axes;
     impl->params.rglDirection = impl->directions;
     impl->params.dwTriggerButton = -1;
+    impl->modified = ~0;
     impl->status = 0;
 
     *out = &impl->IDirectInputEffect_iface;

@@ -367,7 +367,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_id = 5,
             .report_len = 2,
             .report_buf = {0x05,0x00},
-            .todo = TRUE,
         },
         /* set envelope */
         {
@@ -375,7 +374,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_id = 6,
             .report_len = 7,
             .report_buf = {0x06,0x00,0x00,0x00,0x00,0x00,0x00},
-            .todo = TRUE,
         },
         /* update effect */
         {
@@ -393,7 +391,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_id = 5,
             .report_len = 2,
             .report_buf = {0x05,0x00},
-            .todo = TRUE,
         },
         /* update effect */
         {
