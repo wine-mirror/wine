@@ -19,7 +19,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libcups2-dev:amd64 libcups2-dev:i386 \
                        libdbus-1-dev:amd64 libdbus-1-dev:i386 \
                        libfontconfig-dev:amd64 libfontconfig-dev:i386 \
-                       libfreetype6-dev:amd64 libfreetype6-dev:i386 \
+                       libfreetype-dev:amd64 libfreetype-dev:i386 \
                        libgl1-mesa-dev:amd64 libgl1-mesa-dev:i386 \
                        libgnutls28-dev:amd64 libgnutls28-dev:i386 \
                        libgphoto2-dev:amd64 libgphoto2-dev:i386 \
