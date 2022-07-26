@@ -16,10 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import "unknwn.idl";
+import "strmif.idl";
 
 typedef float MP_DATA;
 typedef DWORD MP_CAPS;
+typedef DWORD MP_FLAGS;
 typedef DWORD MP_TIMEDATA;
 
 typedef enum _MP_Type
@@ -42,6 +43,28 @@ typedef struct _MP_PARAMINFO
     WCHAR szLabel[32];
 } MP_PARAMINFO;
 
+typedef enum _MP_CURVE_TYPE {
+    MP_CURVE_JUMP = 0x0001,
+    MP_CURVE_LINEAR = 0x0002,
+    MP_CURVE_SQUARE = 0x0004,
+    MP_CURVE_INVSQUARE = 0x0008,
+    MP_CURVE_SINE = 0x0010,
+} MP_CURVE_TYPE;
+
+const MP_FLAGS MPF_ENVLP_STANDARD = 0x0000;
+const MP_FLAGS MPF_ENVLP_BEGIN_CURRENTVAL = 0x0001;
+const MP_FLAGS MPF_ENVLP_BEGIN_NEUTRALVAL = 0x0002;
+
+typedef struct _MP_ENVELOPE_SEGMENT
+{
+    REFERENCE_TIME rtStart;
+    REFERENCE_TIME rtEnd;
+    MP_DATA valStart;
+    MP_DATA valEnd;
+    MP_CURVE_TYPE iCurve;
+    MP_FLAGS flags;
+} MP_ENVELOPE_SEGMENT;
+
 [
 object,
 uuid(6D6CBB60-A223-44AA-842F-A2F06750BE6D),
@@ -55,4 +78,18 @@ interface IMediaParamInfo : IUnknown
     HRESULT GetNumTimeFormats([out] DWORD *count);
     HRESULT GetSupportedTimeFormat([in] DWORD index, [out] GUID *guid);
     HRESULT GetCurrentTimeFormat([out] GUID *guid, [out] MP_TIMEDATA *time_data);
+}
+
+[
+object,
+uuid(6d6cbb61-a223-44aa-842f-a2f06750be6e),
+version(1.0)
+]
+interface IMediaParams : IUnknown
+{
+    HRESULT GetParam([in] DWORD index, [out] MP_DATA *data);
+    HRESULT SetParam([in] DWORD index, [in] MP_DATA data);
+    HRESULT AddEnvelope([in] DWORD index, [in] DWORD count, [in] MP_ENVELOPE_SEGMENT *segments);
+    HRESULT FlushEnvelope([in] DWORD index, [in] REFERENCE_TIME start, [in] REFERENCE_TIME end);
+    HRESULT SetTimeFormat([in] GUID guid, [in] MP_TIMEDATA time_data);
 }
