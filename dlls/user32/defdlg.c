@@ -237,15 +237,11 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_NCDESTROY:
             if (dlgInfo)
             {
-                WND *wndPtr;
-
                 if (dlgInfo->hUserFont) DeleteObject( dlgInfo->hUserFont );
                 if (dlgInfo->hMenu) NtUserDestroyMenu( dlgInfo->hMenu );
                 HeapFree( GetProcessHeap(), 0, dlgInfo );
 
-                wndPtr = WIN_GetPtr( hwnd );
-                wndPtr->dlgInfo = NULL;
-                WIN_ReleasePtr( wndPtr );
+                NtUserSetDialogInfo( hwnd, NULL );
             }
               /* Window clean-up */
             return DefWindowProcA( hwnd, msg, wParam, lParam );
@@ -323,22 +319,14 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 */
 DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
 {
-    WND* wndPtr;
     DIALOGINFO* dlgInfo;
 
-    wndPtr = WIN_GetPtr( hwnd );
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return NULL;
-    }
-
-    dlgInfo = wndPtr->dlgInfo;
+    dlgInfo = NtUserGetDialogInfo( hwnd );
 
     if (!dlgInfo && create)
     {
         if (!(dlgInfo = HeapAlloc( GetProcessHeap(), 0, sizeof(*dlgInfo) )))
-            goto out;
+            return NULL;
         dlgInfo->hwndFocus   = 0;
         dlgInfo->hUserFont   = 0;
         dlgInfo->hMenu       = 0;
@@ -346,11 +334,9 @@ DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
         dlgInfo->yBaseUnit   = 0;
         dlgInfo->idResult    = IDOK;
         dlgInfo->flags       = 0;
-        wndPtr->dlgInfo = dlgInfo;
+        NtUserSetDialogInfo( hwnd, dlgInfo );
     }
 
-out:
-    WIN_ReleasePtr( wndPtr );
     return dlgInfo;
 }
 

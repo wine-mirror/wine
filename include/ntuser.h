@@ -1101,6 +1101,7 @@ enum
     NtUserCallHwnd_ArrangeIconicWindows,
     NtUserCallHwnd_DrawMenuBar,
     NtUserCallHwnd_GetDefaultImeWindow,
+    NtUserCallHwnd_GetDialogInfo,
     NtUserCallHwnd_GetDpiForWindow,
     NtUserCallHwnd_GetParent,
     NtUserCallHwnd_GetWindowContextHelpId,
@@ -1136,6 +1137,11 @@ static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )
 static inline HWND NtUserGetDefaultImeWindow( HWND hwnd )
 {
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetDefaultImeWindow ));
+}
+
+static inline void *NtUserGetDialogInfo( HWND hwnd )
+{
+    return (void *)NtUserCallHwnd( hwnd, NtUserCallHwnd_GetDialogInfo );
 }
 
 static inline UINT NtUserGetDpiForWindow( HWND hwnd )
@@ -1216,6 +1222,7 @@ enum
     NtUserCallHwndParam_MirrorRgn,
     NtUserCallHwndParam_MonitorFromWindow,
     NtUserCallHwndParam_ScreenToClient,
+    NtUserCallHwndParam_SetDialogInfo,
     NtUserCallHwndParam_SetWindowContextHelpId,
     NtUserCallHwndParam_SetWindowPixelFormat,
     NtUserCallHwndParam_ShowOwnedPopups,
@@ -1363,6 +1370,11 @@ static inline HMONITOR NtUserMonitorFromWindow( HWND hwnd, DWORD flags )
 static inline BOOL NtUserScreenToClient( HWND hwnd, POINT *pt )
 {
     return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserCallHwndParam_ScreenToClient );
+}
+
+static inline void NtUserSetDialogInfo( HWND hwnd, void *info )
+{
+    NtUserCallHwndParam( hwnd, (UINT_PTR)info, NtUserCallHwndParam_SetDialogInfo );
 }
 
 static inline BOOL NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )
