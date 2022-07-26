@@ -6010,8 +6010,9 @@ cleanup:
 
 static void test_create_surface_pitch(void)
 {
-    IDirectDrawSurface *surface;
+    IDirectDrawSurface *surface, *primary;
     DDSURFACEDESC surface_desc;
+    DDCAPS caps1, caps2;
     IDirectDraw *ddraw;
     unsigned int i;
     ULONG refcount;
@@ -6070,16 +6071,19 @@ static void test_create_surface_pitch(void)
         {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
                 0,                              0,      DD_OK,
                 DDSD_PITCH,                     0x100,  0    },
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE,
+                0,                              0,      DD_OK,
+                DDSD_PITCH,                     0x100,  0    },
         {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
                 DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDCAPS,
                 0,                              0,      0    },
         {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN | DDSCAPS_ALLOCONLOAD,
                 0,                              0,      DDERR_INVALIDCAPS,
                 0,                              0,      0    },
+        /* 15 */
         {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
                 0,                              0,      DD_OK,
                 DDSD_PITCH,                     0x100,  0    },
-        /* 15 */
         {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
                 DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDPARAMS,
                 0,                              0,      0    },
@@ -6089,10 +6093,25 @@ static void test_create_surface_pitch(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
 
     mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((63 * 4) + 8) * 63);
+
+    /* We need a primary surface and exclusive mode for video memory accounting to work
+     * right on Windows. Otherwise it gives us junk data, like creating a video memory
+     * surface freeing up memory. */
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create a primary surface, hr %#lx.\n", hr);
+
+    memset(&caps1, 0, sizeof(caps1));
+    caps1.dwSize = sizeof(caps1);
+    hr = IDirectDraw_GetCaps(ddraw, &caps1, NULL);
+    ok(SUCCEEDED(hr), "Failed to get ddraw caps, hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
@@ -6143,7 +6162,34 @@ static void test_create_surface_pitch(void)
         }
         ok(!surface_desc.lpSurface, "Test %u: Got unexpected lpSurface %p.\n", i, surface_desc.lpSurface);
 
+        memset(&caps2, 0, sizeof(caps2));
+        caps2.dwSize = sizeof(caps2);
+        hr = IDirectDraw_GetCaps(ddraw, &caps2, NULL);
+        ok(SUCCEEDED(hr), "Failed to get ddraw caps, hr %#lx.\n", hr);
+        if (surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+        {
+            /* Star Trek Starfleet Academy cares about this bit here: That creating a system memory
+             * resource does not influence available video memory. */
+            ok(caps2.dwVidMemFree == caps1.dwVidMemFree, "Free video memory changed from %#lx to %#lx, test %u.\n",
+                    caps1.dwVidMemFree, caps2.dwVidMemFree, i);
+        }
+        else if (surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
+        {
+            /* DDSCAPS_ALLOCONLOAD does not seem to delay video memory allocation, at least not on
+             * modern Windows.
+             *
+             * The amount of video memory consumed is different from what dwHeight * lPitch would
+             * suggest, although not by much. */
+            ok(caps2.dwVidMemFree < caps1.dwVidMemFree,
+                    "Expected free video memory to change, but it did not, test %u.\n", i);
+        }
+
         IDirectDrawSurface_Release(surface);
+
+        hr = IDirectDraw_GetCaps(ddraw, &caps2, NULL);
+        ok(SUCCEEDED(hr), "Failed to get ddraw caps, hr %#lx.\n", hr);
+        ok(caps2.dwVidMemFree == caps1.dwVidMemFree, "Free video memory changed from %#lx to %#lx, test %u.\n",
+                caps1.dwVidMemFree, caps2.dwVidMemFree, i);
     }
 
     HeapFree(GetProcessHeap(), 0, mem);
