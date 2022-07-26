@@ -5408,6 +5408,16 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_SetForegroundWindow:
         return set_foreground_window( hwnd, FALSE );
 
+    /* temporary exports */
+    case NtUserGetFullWindowHandle:
+        return HandleToUlong( get_full_window_handle( hwnd ));
+
+    case NtUserIsCurrehtProcessWindow:
+        return HandleToUlong( is_current_process_window( hwnd ));
+
+    case NtUserIsCurrehtThreadWindow:
+        return HandleToUlong( is_current_thread_window( hwnd ));
+
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

@@ -1112,6 +1112,10 @@ enum
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
     NtUserCallHwnd_SetForegroundWindow,
+    /* temporary exports */
+    NtUserGetFullWindowHandle,
+    NtUserIsCurrehtProcessWindow,
+    NtUserIsCurrehtThreadWindow,
 };
 
 static inline UINT NtUserArrangeIconicWindows( HWND parent )

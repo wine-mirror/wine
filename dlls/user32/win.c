@@ -153,13 +153,7 @@ void WIN_ReleasePtr( WND *ptr )
  */
 HWND WIN_IsCurrentProcess( HWND hwnd )
 {
-    WND *ptr;
-    HWND ret;
-
-    if (!(ptr = WIN_GetPtr( hwnd )) || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
-    ret = ptr->obj.handle;
-    WIN_ReleasePtr( ptr );
-    return ret;
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrehtProcessWindow ));
 }
 
 
@@ -170,13 +164,7 @@ HWND WIN_IsCurrentProcess( HWND hwnd )
  */
 HWND WIN_IsCurrentThread( HWND hwnd )
 {
-    WND *ptr;
-    HWND ret = 0;
-
-    if (!(ptr = WIN_GetPtr( hwnd )) || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
-    if (ptr->tid == GetCurrentThreadId()) ret = ptr->obj.handle;
-    WIN_ReleasePtr( ptr );
-    return ret;
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrehtThreadWindow ));
 }
 
 
@@ -205,36 +193,7 @@ UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
  */
 HWND WIN_GetFullHandle( HWND hwnd )
 {
-    WND *ptr;
-
-    if (!hwnd || (ULONG_PTR)hwnd >> 16) return hwnd;
-    if (LOWORD(hwnd) <= 1 || LOWORD(hwnd) == 0xffff) return hwnd;
-    /* do sign extension for -2 and -3 */
-    if (LOWORD(hwnd) >= (WORD)-3) return (HWND)(LONG_PTR)(INT16)LOWORD(hwnd);
-
-    if (!(ptr = WIN_GetPtr( hwnd ))) return hwnd;
-
-    if (ptr == WND_DESKTOP)
-    {
-        if (LOWORD(hwnd) == LOWORD(GetDesktopWindow())) return GetDesktopWindow();
-        else return get_hwnd_message_parent();
-    }
-
-    if (ptr != WND_OTHER_PROCESS)
-    {
-        hwnd = ptr->obj.handle;
-        WIN_ReleasePtr( ptr );
-    }
-    else  /* may belong to another process */
-    {
-        SERVER_START_REQ( get_window_info )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) hwnd = wine_server_ptr_handle( reply->full_handle );
-        }
-        SERVER_END_REQ;
-    }
-    return hwnd;
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserGetFullWindowHandle ));
 }
 
 
