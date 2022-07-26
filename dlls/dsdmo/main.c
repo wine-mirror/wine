@@ -34,6 +34,7 @@ struct effect
 {
     IMediaObject IMediaObject_iface;
     IMediaObjectInPlace IMediaObjectInPlace_iface;
+    IMediaParams IMediaParams_iface;
     IMediaParamInfo IMediaParamInfo_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
@@ -68,6 +69,8 @@ static HRESULT WINAPI effect_inner_QueryInterface(IUnknown *iface, REFIID iid, v
         *out = &effect->IMediaObject_iface;
     else if (IsEqualGUID(iid, &IID_IMediaObjectInPlace))
         *out = &effect->IMediaObjectInPlace_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaParams))
+        *out = &effect->IMediaParams_iface;
     else if (IsEqualGUID(iid, &IID_IMediaParamInfo))
         *out = &effect->IMediaParamInfo_iface;
     else if (!(*out = effect->ops->query_interface(effect, iid)))
@@ -422,6 +425,75 @@ static const IMediaObjectInPlaceVtbl effect_inplace_vtbl =
     effect_inplace_GetLatency,
 };
 
+static struct effect *impl_from_IMediaParams(IMediaParams *iface)
+{
+    return CONTAINING_RECORD(iface, struct effect, IMediaParams_iface);
+}
+
+static HRESULT WINAPI effect_media_params_QueryInterface(IMediaParams *iface, REFIID iid, void **out)
+{
+    struct effect *effect = impl_from_IMediaParams(iface);
+    return IUnknown_QueryInterface(effect->outer_unk, iid, out);
+}
+
+static ULONG WINAPI effect_media_params_AddRef(IMediaParams *iface)
+{
+    struct effect *effect = impl_from_IMediaParams(iface);
+    return IUnknown_AddRef(effect->outer_unk);
+}
+
+static ULONG WINAPI effect_media_params_Release(IMediaParams *iface)
+{
+    struct effect *effect = impl_from_IMediaParams(iface);
+    return IUnknown_Release(effect->outer_unk);
+}
+
+static HRESULT WINAPI effect_media_params_GetParam(IMediaParams *iface, DWORD index, MP_DATA *data)
+{
+    FIXME("iface %p, index %lu, data %p, stub!\n", iface, index, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_params_SetParam(IMediaParams *iface, DWORD index, MP_DATA data)
+{
+    FIXME("iface %p, index %lu, data %f, stub!\n", iface, index, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_params_AddEnvelope(IMediaParams *iface, DWORD index, DWORD count,
+                                                      MP_ENVELOPE_SEGMENT *segments)
+{
+    FIXME("iface %p, index %lu, count %lu, segments %p, stub!\n", iface, index, count, segments);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_params_FlushEnvelope(IMediaParams *iface, DWORD index,
+                                                        REFERENCE_TIME start, REFERENCE_TIME end)
+{
+    FIXME("iface %p, index %lu, start %s, end %s, stub!\n", iface, index,
+          wine_dbgstr_longlong(start), wine_dbgstr_longlong(end));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_media_params_SetTimeFormat(IMediaParams *iface, GUID guid,
+                                                        MP_TIMEDATA time_data)
+{
+    FIXME("iface %p, guid %s, time_data %lx, stub!\n", iface, wine_dbgstr_guid(&guid), time_data);
+    return E_NOTIMPL;
+}
+
+static const IMediaParamsVtbl effect_media_params_vtbl =
+{
+    effect_media_params_QueryInterface,
+    effect_media_params_AddRef,
+    effect_media_params_Release,
+    effect_media_params_GetParam,
+    effect_media_params_SetParam,
+    effect_media_params_AddEnvelope,
+    effect_media_params_FlushEnvelope,
+    effect_media_params_SetTimeFormat,
+};
+
 static struct effect *impl_from_IMediaParamInfo(IMediaParamInfo *iface)
 {
     return CONTAINING_RECORD(iface, struct effect, IMediaParamInfo_iface);
@@ -501,6 +573,7 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
     effect->IUnknown_inner.lpVtbl = &effect_inner_vtbl;
     effect->IMediaObject_iface.lpVtbl = &effect_vtbl;
     effect->IMediaObjectInPlace_iface.lpVtbl = &effect_inplace_vtbl;
+    effect->IMediaParams_iface.lpVtbl = &effect_media_params_vtbl;
     effect->IMediaParamInfo_iface.lpVtbl = &effect_media_param_info_vtbl;
 
     InitializeCriticalSection(&effect->cs);

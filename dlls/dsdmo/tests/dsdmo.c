@@ -136,6 +136,7 @@ static void test_interfaces(const GUID *clsid, const GUID *iid)
     {
         &IID_IMediaObject,
         &IID_IMediaObjectInPlace,
+        &IID_IMediaParams,
         &IID_IMediaParamInfo,
     };
     IUnknown *unk, *unk2, *unk3;
