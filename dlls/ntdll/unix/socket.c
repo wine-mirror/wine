@@ -1434,7 +1434,7 @@ static void complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
     io->Information = information;
     if (event) NtSetEvent( event, NULL );
     if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
-    if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
+    else if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
 }
 
 
