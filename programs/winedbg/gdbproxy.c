@@ -2047,6 +2047,27 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_done;
         }
         break;
+    case 'G':
+        if (gdbctx->in_packet_len > 10 &&
+            strncmp(gdbctx->in_packet, "GetTIBAddr", 10) == 0 &&
+            gdbctx->in_packet[10] == ':')
+        {
+            unsigned    tid;
+            char*       end;
+            struct dbg_thread* thd;
+
+            tid = strtol(gdbctx->in_packet + 11, &end, 16);
+            if (end == NULL) break;
+
+            thd = dbg_get_thread(gdbctx->process, tid);
+            if (thd == NULL)
+                return packet_reply_error(gdbctx, HOST_EINVAL);
+            packet_reply_open(gdbctx);
+            packet_reply_val(gdbctx, (ULONG_PTR)thd->teb, sizeof(thd->teb));
+            packet_reply_close(gdbctx);
+            return packet_done;
+        }
+        break;
     case 'O':
         if (strncmp(gdbctx->in_packet, "Offsets", gdbctx->in_packet_len) == 0)
         {
