@@ -1228,6 +1228,34 @@ HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
      of the same bpp but different resolutions                                  */
 
+static bool mode_matches_filter(const DEVMODEW *mode, const struct wined3d_format *format,
+        enum wined3d_scanline_ordering scanline_ordering)
+{
+    if (mode->dmFields & DM_DISPLAYFLAGS)
+    {
+        if (scanline_ordering == WINED3D_SCANLINE_ORDERING_PROGRESSIVE
+                && (mode->u2.dmDisplayFlags & DM_INTERLACED))
+            return false;
+
+        if (scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED
+                && !(mode->u2.dmDisplayFlags & DM_INTERLACED))
+            return false;
+    }
+
+    if (format->id == WINED3DFMT_UNKNOWN)
+    {
+        /* This is for d3d8, do not enumerate P8 here. */
+        if (mode->dmBitsPerPel != 32 && mode->dmBitsPerPel != 16)
+            return false;
+    }
+    else if (mode->dmBitsPerPel != format->byte_count * CHAR_BIT)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering)
@@ -1236,7 +1264,6 @@ unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *ou
     const struct wined3d_format *format;
     unsigned int i = 0;
     unsigned int j = 0;
-    UINT format_bits;
     DEVMODEW mode;
 
     TRACE("output %p, format %s, scanline_ordering %#x.\n",
@@ -1244,33 +1271,14 @@ unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *ou
 
     adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
-    format_bits = format->byte_count * CHAR_BIT;
 
     memset(&mode, 0, sizeof(mode));
     mode.dmSize = sizeof(mode);
 
     while (EnumDisplaySettingsExW(output->device_name, j++, &mode, 0))
     {
-        if (mode.dmFields & DM_DISPLAYFLAGS)
-        {
-            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_PROGRESSIVE
-                    && (mode.u2.dmDisplayFlags & DM_INTERLACED))
-                continue;
-
-            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED
-                    && !(mode.u2.dmDisplayFlags & DM_INTERLACED))
-                continue;
-        }
-
-        if (format_id == WINED3DFMT_UNKNOWN)
-        {
-            /* This is for d3d8, do not enumerate P8 here. */
-            if (mode.dmBitsPerPel == 32 || mode.dmBitsPerPel == 16) ++i;
-        }
-        else if (mode.dmBitsPerPel == format_bits)
-        {
+        if (mode_matches_filter(&mode, format, scanline_ordering))
             ++i;
-        }
     }
 
     TRACE("Returning %u matching modes (out of %u total) for output %p.\n", i, j, output);
@@ -1285,7 +1293,6 @@ HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
-    UINT format_bits;
     DEVMODEW m;
     UINT i = 0;
     int j = 0;
@@ -1298,7 +1305,6 @@ HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
 
     adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
-    format_bits = format->byte_count * CHAR_BIT;
 
     memset(&m, 0, sizeof(m));
     m.dmSize = sizeof(m);
@@ -1311,26 +1317,8 @@ HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (m.dmFields & DM_DISPLAYFLAGS)
-        {
-            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_PROGRESSIVE
-                    && (m.u2.dmDisplayFlags & DM_INTERLACED))
-                continue;
-
-            if (scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED
-                    && !(m.u2.dmDisplayFlags & DM_INTERLACED))
-                continue;
-        }
-
-        if (format_id == WINED3DFMT_UNKNOWN)
-        {
-            /* This is for d3d8, do not enumerate P8 here. */
-            if (m.dmBitsPerPel == 32 || m.dmBitsPerPel == 16) ++i;
-        }
-        else if (m.dmBitsPerPel == format_bits)
-        {
+        if (mode_matches_filter(&m, format, scanline_ordering))
             ++i;
-        }
     }
 
     mode->width = m.dmPelsWidth;
