@@ -1413,20 +1413,17 @@ BOOL WINAPI DragDetect( HWND hwnd, POINT pt )
  */
 UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR module, UINT size )
 {
-    WND *win;
     HINSTANCE hinst;
 
     TRACE( "%p, %p, %u\n", hwnd, module, size );
 
-    win = WIN_GetPtr( hwnd );
-    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+    if (!WIN_IsCurrentProcess( hwnd ))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    hinst = win->hInstance;
-    WIN_ReleasePtr( win );
 
+    hinst = (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE );
     return GetModuleFileNameA( hinst, module, size );
 }
 
@@ -1435,20 +1432,17 @@ UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR module, UINT size )
  */
 UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
 {
-    WND *win;
     HINSTANCE hinst;
 
     TRACE( "%p, %p, %u\n", hwnd, module, size );
 
-    win = WIN_GetPtr( hwnd );
-    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+    if (!WIN_IsCurrentProcess( hwnd ))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    hinst = win->hInstance;
-    WIN_ReleasePtr( win );
 
+    hinst = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
     return GetModuleFileNameW( hinst, module, size );
 }
 
