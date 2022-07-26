@@ -104,11 +104,13 @@ static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
         params->size = sizeof(DWORD);
         params->data = malloc(params->size);
         swscanf(buf, isDecimal ? L"%lu" : L"%lx", params->data);
+        free(buf);
         break;
     case REG_QWORD:
         params->size = sizeof(UINT64);
         params->data = malloc(params->size);
         swscanf(buf, isDecimal ? L"%I64u" : L"%I64x", params->data);
+        free(buf);
         break;
     case REG_MULTI_SZ:
     {
