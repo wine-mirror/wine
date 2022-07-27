@@ -108,6 +108,7 @@ static HRESULT WINAPI effect_SetParameters( IRampForceEffect *iface, Vector3 sta
             .end_vector = end_vector,
             .duration = duration,
             .repeat_count = 1,
+            .gain = 1.,
         },
     };
     struct ramp_effect *impl = impl_from_IRampForceEffect( iface );

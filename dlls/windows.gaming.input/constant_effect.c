@@ -107,6 +107,7 @@ static HRESULT WINAPI effect_SetParameters( IConstantForceEffect *iface, Vector3
             .direction = direction,
             .duration = duration,
             .repeat_count = 1,
+            .gain = 1.,
         },
     };
     struct constant_effect *impl = impl_from_IConstantForceEffect( iface );
