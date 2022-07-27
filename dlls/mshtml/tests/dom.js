@@ -89,12 +89,15 @@ sync_test("textContent", function() {
 
 sync_test("ElementTraversal", function() {
     var div = document.createElement("div");
-    div.innerHTML = "abc<b>bold</b><script>/* */<script><div>text</div>def";
+    div.innerHTML = "abc<b>bold</b><script>/* */</script><div>text</div>def";
     ok(div.firstElementChild.outerHTML === "<b>bold</b>",
             "div.firstElementChild.outerHTML = " + div.firstElementChild.outerHTML);
+    ok(div.lastElementChild.outerHTML === "<div>text</div>",
+            "div.lastElementChild.outerHTML = " + div.lastElementChild.outerHTML);
 
     div.innerHTML = "abc";
     ok(div.firstElementChild === null, "div.firstElementChild = " + div.firstElementChild);
+    ok(div.lastElementChild === null, "div.lastElementChild = " + div.lastElementChild);
 
     ok(!("firstElementChild" in document), "firstElementChild found in document");
 });
