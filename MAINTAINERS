@@ -160,8 +160,8 @@ M:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/winegstreamer/
 
 HID support
-M:	Aric Stewart <aric@codeweavers.com>
-P:	Rémi Bernon <rbernon@codeweavers.com>
+M:	Rémi Bernon <rbernon@codeweavers.com>
+P:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/hid/
 F:	dlls/hidclass.sys/
 F:	dlls/hidparse.sys/
@@ -173,9 +173,10 @@ F:	dlls/httpapi/
 F:	dlls/http.sys/
 
 Input events
-P:	Rémi Bernon <rbernon@codeweavers.com>
+M:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/user32/input.c
-F:	dlls/user32/rawinput.c
+F:	dlls/win32u/input.c
+F:	dlls/win32u/rawinput.c
 F:	server/queue.c
 
 Input methods
@@ -193,6 +194,7 @@ F:	dlls/windows.gaming.input/
 F:	dlls/winebus.sys/
 F:	dlls/winexinput.sys/
 F:	dlls/xinput*/
+F:	dlls/winmm/joystick.c
 
 Media format conversion
 P:	Andrew Eikum <coldpie@fastmail.com>
