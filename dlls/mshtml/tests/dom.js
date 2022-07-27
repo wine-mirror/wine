@@ -98,6 +98,10 @@ sync_test("ElementTraversal", function() {
             "div.firstElementChild.nextElementSibling.outerHTML = " + div.firstElementChild.nextElementSibling.outerHTML);
     ok(div.lastElementChild.nextElementSibling === null,
             "div.lastElementChild.nextElementSibling = " + div.lastElementChild.nextElementSibling);
+    ok(div.lastElementChild.previousElementSibling.outerHTML === "<script>/* */</script>",
+            "div.lastElementChild.previousElementSibling.outerHTML = " + div.lastElementChild.previousElementSibling.outerHTML);
+    ok(div.firstElementChild.previousElementSibling === null,
+            "div.firstElementChild.previousElementSibling = " + div.firstElementChild.previousElementSibling);
 
     div.innerHTML = "abc";
     ok(div.firstElementChild === null, "div.firstElementChild = " + div.firstElementChild);
