@@ -184,15 +184,26 @@ static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpa
     return FALSE;
 }
 
-static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
+static void change_dword_base(HWND hwndDlg, BOOL toHex)
 {
-    WCHAR buf[128];
+    WCHAR buf[64];
+    unsigned int len;
     UINT64 val;
 
-    if (!GetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf, ARRAY_SIZE(buf))) return FALSE;
-    if (!swscanf(buf, toHex ? L"%I64u" : L"%I64x", &val)) return FALSE;
-    wsprintfW(buf, toHex ? L"%I64x" : L"%I64u", val);
-    return SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf);
+    len = GetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf, ARRAY_SIZE(buf));
+    if (!len) SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, L"0");
+
+    if ((isDecimal && !toHex) || (!isDecimal && toHex))
+        return;
+
+    if (len)
+    {
+        swscanf(buf, toHex ? L"%I64u" : L"%I64x", &val);
+        swprintf(buf, ARRAY_SIZE(buf), toHex ? L"%I64x" : L"%I64u", val);
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf);
+    }
+
+    isDecimal = !toHex;
 }
 
 static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -217,10 +228,10 @@ static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpar
         switch (LOWORD(wparam))
         {
         case IDC_DWORD_HEX:
-	    if (isDecimal && change_dword_base(hwndDlg, TRUE)) isDecimal = FALSE;
+	    change_dword_base(hwndDlg, TRUE);
             break;
         case IDC_DWORD_DEC:
-	    if (!isDecimal && change_dword_base(hwndDlg, FALSE)) isDecimal = TRUE;
+	    change_dword_base(hwndDlg, FALSE);
             break;
         case IDOK:
             params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
