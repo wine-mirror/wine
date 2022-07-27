@@ -103,15 +103,29 @@ static HRESULT WINAPI HTMLTitleElement_Invoke(IHTMLTitleElement *iface, DISPID d
 static HRESULT WINAPI HTMLTitleElement_put_text(IHTMLTitleElement *iface, BSTR v)
 {
     HTMLTitleElement *This = impl_from_IHTMLTitleElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString text;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&text, v);
+    nsres = nsIDOMNode_SetTextContent(This->element.node.nsnode, &text);
+    nsAString_Finish(&text);
+
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLTitleElement_get_text(IHTMLTitleElement *iface, BSTR *p)
 {
     HTMLTitleElement *This = impl_from_IHTMLTitleElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString text;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_InitDepend(&text, NULL);
+    nsres = nsIDOMNode_GetTextContent(This->element.node.nsnode, &text);
+    return return_nsstr(nsres, &text, p);
 }
 
 static const IHTMLTitleElementVtbl HTMLTitleElementVtbl = {

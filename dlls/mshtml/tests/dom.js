@@ -533,6 +533,24 @@ sync_test("title", function() {
     elem.title = "test";
     ok(elem.title === "test", "div.title = " + elem.title);
     ok(elem.getAttribute("title") === "test", "title attribute = " + elem.getAttribute("title"));
+
+    var orig = document.title;
+    document.title = "w i n e test";
+    var title = document.getElementsByTagName("title")[0];
+    ok(title.text === "w i n e test", "<title> element text = " + title.text);
+    title.text = "winetest";
+    ok(title.text === "winetest", "<title> element text after change = " + title.text);
+    ok(document.title === "winetest", "document.title after <title> change = " + document.title);
+
+    elem = document.createElement("title");
+    ok(elem.text === "", "detached <title> element text = " + elem.text);
+    elem.text = "foobar";
+    ok(elem.text === "foobar", "detached <title> element text after change = " + elem.text);
+    ok(document.title === "winetest", "document.title after detached <title> change = " + document.title);
+
+    title.parentNode.replaceChild(elem, title);
+    ok(document.title === "foobar", "document.title after <title> replaced = " + document.title);
+    document.title = orig;
 });
 
 sync_test("disabled", function() {
