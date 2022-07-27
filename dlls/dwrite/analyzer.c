@@ -224,6 +224,10 @@ system_fallback_config[] =
 
     { "0590-05FF, FB1D-FB4F",   L"Noto Sans Hebrew" },
 
+    { "0600-06FF, 0750-077F, "
+      "08A0-08FF, FB50-FDCF, "
+      "FDF0-FDFF, FE70-FEFE",   L"Noto Sans Arabic" },
+
     { "0900-097F",              L"Noto Sans Devanagari" },
     { "0980-09FF",              L"Noto Sans Bengali" },
     { "0A00-0A7F",              L"Noto Sans Gurmukhi" },
@@ -246,8 +250,6 @@ system_fallback_config[] =
 
     { "3000-30FF, 31F0-31FF, 4E00-9FFF", L"Meiryo" },
 };
-
-static struct fallback_data system_fallback;
 
 struct text_source_context
 {
@@ -435,6 +437,8 @@ struct dwrite_fontfallback_builder
     struct fallback_data data;
     size_t mappings_size;
 };
+
+static struct fallback_data system_fallback;
 
 static void release_fallback_mapping(struct fallback_mapping *mapping)
 {
