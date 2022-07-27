@@ -4925,8 +4925,28 @@ static HRESULT WINAPI HTMLElement6_setAttributeNodeNS(IHTMLElement6 *iface, IHTM
 static HRESULT WINAPI HTMLElement6_hasAttributeNS(IHTMLElement6 *iface, VARIANT *pvarNS, BSTR name, VARIANT_BOOL *pfHasAttribute)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(name), pfHasAttribute);
-    return E_NOTIMPL;
+    nsAString ns_str, name_str;
+    nsresult nsres;
+    HRESULT hres;
+    cpp_bool r;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(name), pfHasAttribute);
+
+    if(!This->dom_element) {
+        FIXME("No dom_element\n");
+        return E_NOTIMPL;
+    }
+
+    hres = variant_to_nsstr(pvarNS, FALSE, &ns_str);
+    if(FAILED(hres))
+        return hres;
+
+    nsAString_InitDepend(&name_str, name);
+    nsres = nsIDOMElement_HasAttributeNS(This->dom_element, &ns_str, &name_str, &r);
+    nsAString_Finish(&ns_str);
+    nsAString_Finish(&name_str);
+    *pfHasAttribute = variant_bool(NS_SUCCEEDED(nsres) && r);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement6_getAttribute(IHTMLElement6 *iface, BSTR strAttributeName, VARIANT *AttributeValue)
@@ -6868,6 +6888,35 @@ static IHTMLEventObj *HTMLElement_set_current_event(DispatchEx *dispex, IHTMLEve
     return default_set_current_event(This->node.doc->window, event);
 }
 
+static HRESULT IHTMLElement6_hasAttributeNS_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    VARIANT args[2];
+    HRESULT hres;
+    DISPPARAMS new_dp = { args, NULL, 2, 0 };
+
+    if(!(flags & DISPATCH_METHOD) || dp->cArgs < 2 || dp->cNamedArgs)
+        return S_FALSE;
+
+    switch(V_VT(&dp->rgvarg[dp->cArgs - 1])) {
+    case VT_EMPTY:
+    case VT_BSTR:
+    case VT_NULL:
+        return S_FALSE;
+    default:
+        break;
+    }
+
+    hres = change_type(&args[1], &dp->rgvarg[dp->cArgs - 1], VT_BSTR, caller);
+    if(FAILED(hres))
+        return hres;
+    args[0] = dp->rgvarg[dp->cArgs - 2];
+
+    hres = dispex_call_builtin(dispex, DISPID_IHTMLELEMENT6_HASATTRIBUTENS, &new_dp, res, ei, caller);
+    VariantClear(&args[1]);
+    return hres;
+}
+
 static HRESULT IHTMLElement6_getAttributeNS_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -7017,6 +7066,7 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_UNKNOWN}
     };
     static const dispex_hook_t elem6_ie10_hooks[] = {
+        {DISPID_IHTMLELEMENT6_HASATTRIBUTENS, IHTMLElement6_hasAttributeNS_hook},
         {DISPID_IHTMLELEMENT6_GETATTRIBUTENS, IHTMLElement6_getAttributeNS_hook},
         {DISPID_IHTMLELEMENT6_SETATTRIBUTENS, IHTMLElement6_setAttributeNS_hook},
         {DISPID_IHTMLELEMENT6_REMOVEATTRIBUTENS, IHTMLElement6_removeAttributeNS_hook},
