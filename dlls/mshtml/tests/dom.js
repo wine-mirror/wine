@@ -90,6 +90,7 @@ sync_test("textContent", function() {
 sync_test("ElementTraversal", function() {
     var div = document.createElement("div");
     div.innerHTML = "abc<b>bold</b><script>/* */</script><div>text</div>def";
+    ok(div.childElementCount === 3, "div.childElementCount = " + div.childElementCount);
     ok(div.firstElementChild.outerHTML === "<b>bold</b>",
             "div.firstElementChild.outerHTML = " + div.firstElementChild.outerHTML);
     ok(div.lastElementChild.outerHTML === "<div>text</div>",
@@ -104,9 +105,11 @@ sync_test("ElementTraversal", function() {
             "div.firstElementChild.previousElementSibling = " + div.firstElementChild.previousElementSibling);
 
     div.innerHTML = "abc";
+    ok(div.childElementCount === 0, "div.childElementCount = " + div.childElementCount);
     ok(div.firstElementChild === null, "div.firstElementChild = " + div.firstElementChild);
     ok(div.lastElementChild === null, "div.lastElementChild = " + div.lastElementChild);
 
+    ok(!("childElementCount" in document), "childElementCount found in document");
     ok(!("firstElementChild" in document), "firstElementChild found in document");
     ok(!("nextElementSibling" in document), "nextElementSibling found in document");
 });

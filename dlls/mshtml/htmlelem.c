@@ -6611,8 +6611,15 @@ static HRESULT WINAPI ElementTraversal_get_nextElementSibling(IElementTraversal 
 static HRESULT WINAPI ElementTraversal_get_childElementCount(IElementTraversal *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IElementTraversal(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    UINT32 count = 0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->dom_element)
+        nsIDOMElement_GetChildElementCount(This->dom_element, &count);
+
+    *p = count;
+    return S_OK;
 }
 
 static const IElementTraversalVtbl ElementTraversalVtbl = {
