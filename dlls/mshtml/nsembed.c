@@ -998,6 +998,7 @@ HRESULT variant_to_nsstr(VARIANT *v, BOOL hex_int, nsAString *nsstr)
     WCHAR buf[32];
 
     switch(V_VT(v)) {
+    case VT_EMPTY:
     case VT_NULL:
         nsAString_InitDepend(nsstr, NULL);
         return S_OK;
