@@ -4845,8 +4845,42 @@ static HRESULT WINAPI HTMLElement6_getAttributeNS(IHTMLElement6 *iface, VARIANT 
 static HRESULT WINAPI HTMLElement6_setAttributeNS(IHTMLElement6 *iface, VARIANT *pvarNS, BSTR strAttributeName, VARIANT *pvarAttributeValue)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%s %s %s)\n", This, debugstr_variant(pvarNS), debugstr_w(strAttributeName), debugstr_variant(pvarAttributeValue));
-    return E_NOTIMPL;
+    nsAString ns_str, name_str, value_str;
+    const PRUnichar *ns;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_variant(pvarNS), debugstr_w(strAttributeName), debugstr_variant(pvarAttributeValue));
+
+    hres = variant_to_nsstr(pvarNS, FALSE, &ns_str);
+    if(FAILED(hres))
+        return hres;
+    nsAString_GetData(&ns_str, &ns);
+    if((!ns || !ns[0]) && wcschr(strAttributeName, ':')) {
+        /* FIXME: Return NamespaceError */
+        return E_FAIL;
+    }
+
+    if(!This->dom_element) {
+        FIXME("No dom_element\n");
+        nsAString_Finish(&ns_str);
+        return E_NOTIMPL;
+    }
+
+    hres = variant_to_nsstr(pvarAttributeValue, FALSE, &value_str);
+    if(FAILED(hres)) {
+        nsAString_Finish(&ns_str);
+        return hres;
+    }
+
+    nsAString_InitDepend(&name_str, strAttributeName);
+    nsres = nsIDOMElement_SetAttributeNS(This->dom_element, &ns_str, &name_str, &value_str);
+    nsAString_Finish(&ns_str);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&value_str);
+    if(NS_FAILED(nsres))
+        WARN("SetAttributeNS failed: %08lx\n", nsres);
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLElement6_removeAttributeNS(IHTMLElement6 *iface, VARIANT *pvarNS, BSTR strAttributeName)
@@ -6845,6 +6879,61 @@ static HRESULT IHTMLElement6_getAttributeNS_hook(DispatchEx *dispex, WORD flags,
     return hres;
 }
 
+static HRESULT IHTMLElement6_setAttributeNS_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    BOOL ns_conv = FALSE, val_conv = FALSE;
+    VARIANT args[3];
+    HRESULT hres;
+    DISPPARAMS new_dp = { args, NULL, 3, 0 };
+
+    if(!(flags & DISPATCH_METHOD) || dp->cArgs < 3 || dp->cNamedArgs)
+        return S_FALSE;
+
+    if(dispex_compat_mode(dispex) < COMPAT_MODE_IE10)
+        args[2] = dp->rgvarg[dp->cArgs - 1];
+    else {
+        switch(V_VT(&dp->rgvarg[dp->cArgs - 1])) {
+        case VT_EMPTY:
+        case VT_BSTR:
+        case VT_NULL:
+            args[2] = dp->rgvarg[dp->cArgs - 1];
+            break;
+        default:
+            hres = change_type(&args[2], &dp->rgvarg[dp->cArgs - 1], VT_BSTR, caller);
+            if(FAILED(hres))
+                return hres;
+            ns_conv = TRUE;
+            break;
+        }
+    }
+
+    switch(V_VT(&dp->rgvarg[dp->cArgs - 3])) {
+    case VT_EMPTY:
+    case VT_BSTR:
+    case VT_NULL:
+        if(!ns_conv)
+            return S_FALSE;
+        args[0] = dp->rgvarg[dp->cArgs - 3];
+        break;
+    default:
+        hres = change_type(&args[0], &dp->rgvarg[dp->cArgs - 3], VT_BSTR, caller);
+        if(FAILED(hres)) {
+            if(ns_conv)
+                VariantClear(&args[2]);
+            return hres;
+        }
+        val_conv = TRUE;
+        break;
+    }
+
+    args[1] = dp->rgvarg[dp->cArgs - 2];
+    hres = dispex_call_builtin(dispex, DISPID_IHTMLELEMENT6_SETATTRIBUTENS, &new_dp, res, ei, caller);
+    if(ns_conv)  VariantClear(&args[2]);
+    if(val_conv) VariantClear(&args[0]);
+    return hres;
+}
+
 static HRESULT IHTMLElement6_setAttribute_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -6876,8 +6965,13 @@ static HRESULT IHTMLElement6_setAttribute_hook(DispatchEx *dispex, WORD flags, D
 
 void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
+    static const dispex_hook_t elem6_ie9_hooks[] = {
+        {DISPID_IHTMLELEMENT6_SETATTRIBUTENS, IHTMLElement6_setAttributeNS_hook},
+        {DISPID_UNKNOWN}
+    };
     static const dispex_hook_t elem6_ie10_hooks[] = {
         {DISPID_IHTMLELEMENT6_GETATTRIBUTENS, IHTMLElement6_getAttributeNS_hook},
+        {DISPID_IHTMLELEMENT6_SETATTRIBUTENS, IHTMLElement6_setAttributeNS_hook},
         {DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE, IHTMLElement6_setAttribute_hook},
         {DISPID_UNKNOWN}
     };
@@ -6895,7 +6989,7 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         dispex_info_add_interface(info, IElementSelector_tid, NULL);
 
     if(mode >= COMPAT_MODE_IE9) {
-        dispex_info_add_interface(info, IHTMLElement6_tid, mode >= COMPAT_MODE_IE10 ? elem6_ie10_hooks : NULL);
+        dispex_info_add_interface(info, IHTMLElement6_tid, mode >= COMPAT_MODE_IE10 ? elem6_ie10_hooks : elem6_ie9_hooks);
         dispex_info_add_interface(info, IElementTraversal_tid, NULL);
     }
 
