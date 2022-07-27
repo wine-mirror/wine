@@ -6560,8 +6560,30 @@ static HRESULT WINAPI ElementTraversal_get_previousElementSibling(IElementTraver
 static HRESULT WINAPI ElementTraversal_get_nextElementSibling(IElementTraversal *iface, IHTMLElement **p)
 {
     HTMLElement *This = impl_from_IElementTraversal(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMElement *nselem = NULL;
+    HTMLElement *elem;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->dom_element) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsIDOMElement_GetNextElementSibling(This->dom_element, &nselem);
+    if(!nselem) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = get_element(nselem, &elem);
+    nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &elem->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI ElementTraversal_get_childElementCount(IElementTraversal *iface, LONG *p)

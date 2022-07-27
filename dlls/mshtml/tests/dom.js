@@ -94,12 +94,17 @@ sync_test("ElementTraversal", function() {
             "div.firstElementChild.outerHTML = " + div.firstElementChild.outerHTML);
     ok(div.lastElementChild.outerHTML === "<div>text</div>",
             "div.lastElementChild.outerHTML = " + div.lastElementChild.outerHTML);
+    ok(div.firstElementChild.nextElementSibling.outerHTML === "<script>/* */</script>",
+            "div.firstElementChild.nextElementSibling.outerHTML = " + div.firstElementChild.nextElementSibling.outerHTML);
+    ok(div.lastElementChild.nextElementSibling === null,
+            "div.lastElementChild.nextElementSibling = " + div.lastElementChild.nextElementSibling);
 
     div.innerHTML = "abc";
     ok(div.firstElementChild === null, "div.firstElementChild = " + div.firstElementChild);
     ok(div.lastElementChild === null, "div.lastElementChild = " + div.lastElementChild);
 
     ok(!("firstElementChild" in document), "firstElementChild found in document");
+    ok(!("nextElementSibling" in document), "nextElementSibling found in document");
 });
 
 sync_test("head", function() {
