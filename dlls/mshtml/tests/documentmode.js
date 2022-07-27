@@ -1480,6 +1480,7 @@ sync_test("elem_attrNS", function() {
     ok(r === "", "specialspace spec:align (non-NS) = " + r);
     r = elem.getAttributeNS(specialspace_ns, "align");
     ok(r === "left", "specialspace align (non-NS) = " + r);
+    elem.removeAttributeNS(null, "spec:align");
 
     elem.setAttribute("emptynsattr", "none");
     elem.setAttributeNS("", "emptynsattr", "test");
@@ -1497,6 +1498,30 @@ sync_test("elem_attrNS", function() {
     ok(r === "wine", "emptynsattr null ns = " + r);
     r = elem.getAttributeNS(specialspace_ns, "emptynsattr");
     ok(r === "ns", "emptynsattr specialspace ns = " + r);
+
+    elem.removeAttributeNS("", "emptynsattr");
+    r = elem.getAttribute("emptynsattr");
+    ok(r === "ns", "emptynsattr without NS after remove = " + r);
+    r = elem.getAttributeNS(specialspace_ns, "emptynsattr");
+    ok(r === "ns", "emptynsattr specialspace ns after empty remove = " + r);
+    elem.setAttribute("emptynsattr", "test");
+    r = elem.getAttribute("emptynsattr");
+    ok(r === "test", "emptynsattr without NS after re-set = " + r);
+    r = elem.getAttributeNS(specialspace_ns, "emptynsattr");
+    ok(r === "test", "emptynsattr specialspace ns after empty re-set = " + r);
+
+    elem.removeAttribute("emptynsattr");
+    r = elem.getAttribute("emptynsattr");
+    ok(r === null, "emptynsattr without NS after non-NS remove = " + r);
+    r = elem.getAttributeNS(specialspace_ns, "emptynsattr");
+    ok(r === "", "emptynsattr specialspace ns after non-NS remove = " + r);
+
+    elem.setAttributeNS(specialspace_ns, "emptynsattr", "ns");
+    elem.removeAttributeNS(svg_ns, "emptynsattr");
+    r = elem.getAttributeNS(specialspace_ns, "emptynsattr");
+    ok(r === "ns", "emptynsattr specialspace ns after wrong NS remove = " + r);
+    r = elem.getAttributeNS(specialspace_ns, "emptynsattr");
+    ok(r === "ns", "emptynsattr specialspace ns after remove = " + r);
 
     var ns = {};
     ns.toString = function() { return "toString namespace"; }
@@ -1516,16 +1541,23 @@ sync_test("elem_attrNS", function() {
     r = elem.getAttributeNS(svg_ns, "testattr");
     ok(r === "3", "testattr = " + r);
     ok(elem.testattr === undefined, "elem.testattr = " + elem.testattr);
+    elem.removeAttributeNS(svg_ns, "testattr");
+    r = elem.getAttributeNS(svg_ns, "testattr");
+    ok(r === "", "testattr after remove = " + r);
 
     arr.toString = function() { return 42; }
     elem.setAttributeNS(svg_ns, "testattr", arr);
     r = elem.getAttributeNS(svg_ns, "testattr");
     ok(r === "42", "testattr with custom toString = " + r);
+    elem.removeAttributeNS(svg_ns, "testattr");
+    r = elem.getAttributeNS(svg_ns, "testattr");
+    ok(r === "", "testattr with custom toString after remove = " + r);
 
     arr.valueOf = function() { return "arrval"; }
     elem.setAttributeNS(svg_ns, "testattr", arr);
     r = elem.getAttributeNS(svg_ns, "testattr");
     ok(r === "42", "testattr with custom valueOf = " + r);
+    elem.removeAttributeNS(svg_ns, "testattr");
 
     elem.setAttributeNS(svg_ns, "boolattr", true);
     r = elem.getAttributeNS(svg_ns, "boolattr");
