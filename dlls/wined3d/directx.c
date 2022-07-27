@@ -1394,7 +1394,7 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
     for (i = 0; i < mode_count; ++i)
     {
         if (FAILED(hr = wined3d_output_get_mode(output, mode->format_id,
-                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i], false)))
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i], true)))
         {
             heap_free(matching_modes);
             heap_free(modes);
