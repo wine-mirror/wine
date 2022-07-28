@@ -245,10 +245,55 @@ function test_responseType() {
     xhr.send("responseType test");
 }
 
+function test_response() {
+    var xhr = new XMLHttpRequest(), i = 0;
+    if(!("response" in xhr)) { next_test(); return; }
+
+    var types = [
+        [ "text", "application/octet-stream", function() {
+            if(xhr.readyState < 3)
+                ok(xhr.response === "", "response for text with state " + state + " = " + xhr.response);
+            else if(xhr.readyState === 4)
+                ok(xhr.response === xml, "response for text = " + xhr.response);
+        }],
+        [ "arraybuffer", "image/png", function() {
+            if(xhr.readyState < 4)
+                ok(xhr.response === undefined, "response for arraybuffer with state " + state + " = " + xhr.response);
+        }],
+        [ "blob", "wine/test", function() {
+            if(xhr.readyState < 4)
+                ok(xhr.response === undefined, "response for blob with state " + state + " = " + xhr.response);
+        }]
+    ];
+
+    function onreadystatechange() {
+        types[i][2]();
+        if(xhr.readyState < 4)
+            return;
+        if(++i >= types.length) {
+            next_test();
+            return;
+        }
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", "echo.php?content-type=" + types[i][1], true);
+        xhr.onreadystatechange = onreadystatechange;
+        xhr.setRequestHeader("X-Test", "True");
+        xhr.responseType = types[i][0];
+        xhr.send(xml);
+    }
+
+    xhr.open("POST", "echo.php?content-type=" + types[i][1], true);
+    xhr.onreadystatechange = onreadystatechange;
+    xhr.setRequestHeader("X-Test", "True");
+    xhr.responseType = types[i][0];
+    xhr.send(xml);
+}
+
 var tests = [
     test_xhr,
     test_content_types,
     test_abort,
     test_timeout,
-    test_responseType
+    test_responseType,
+    test_response
 ];

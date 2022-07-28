@@ -938,10 +938,47 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_Invoke(IWineXMLHttpRequestPriva
 static HRESULT WINAPI HTMLXMLHttpRequest_private_get_response(IWineXMLHttpRequestPrivate *iface, VARIANT *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
+    HRESULT hres = S_OK;
+    nsresult nsres;
+    UINT16 state;
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    switch(This->response_type) {
+    case response_type_empty:
+    case response_type_text:
+        hres = IHTMLXMLHttpRequest_get_responseText(&This->IHTMLXMLHttpRequest_iface, &V_BSTR(p));
+        if(SUCCEEDED(hres))
+            V_VT(p) = VT_BSTR;
+        break;
+
+    case response_type_doc:
+        FIXME("response_type_doc\n");
+        return E_NOTIMPL;
+
+    case response_type_arraybuf:
+    case response_type_blob:
+        nsres = nsIXMLHttpRequest_GetReadyState(This->nsxhr, &state);
+        if(NS_FAILED(nsres) || state < 4) {
+            V_VT(p) = VT_EMPTY;
+            break;
+        }
+        if(This->response_type == response_type_arraybuf) {
+            FIXME("response_type_arraybuf\n");
+            return E_NOTIMPL;
+        }
+        FIXME("response_type_blob\n");
+        return E_NOTIMPL;
+
+    case response_type_stream:
+        FIXME("response_type_stream\n");
+        return E_NOTIMPL;
+
+    default:
+        assert(0);
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_put_responseType(IWineXMLHttpRequestPrivate *iface, BSTR v)
