@@ -817,10 +817,8 @@ found:
 static struct incl_file *add_generated_source( struct makefile *make,
                                                const char *name, const char *filename )
 {
-    struct incl_file *file;
+    struct incl_file *file = xmalloc( sizeof(*file) );
 
-    if ((file = find_src_file( make, name ))) return file;  /* we already have it */
-    file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->file = add_file( name );
     file->name = xstrdup( name );
@@ -1564,10 +1562,8 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
  */
 static struct incl_file *add_src_file( struct makefile *make, const char *name )
 {
-    struct incl_file *file;
+    struct incl_file *file = xmalloc( sizeof(*file) );
 
-    if ((file = find_src_file( make, name ))) return file;  /* we already have it */
-    file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
     file->use_msvcrt = make->use_msvcrt;
@@ -1744,7 +1740,7 @@ static struct makefile *parse_makefile( const char *path )
 static void add_generated_sources( struct makefile *make )
 {
     unsigned int i;
-    struct incl_file *source, *next, *file;
+    struct incl_file *source, *next, *file, *dlldata = NULL;
     struct strarray objs = get_expanded_make_var_array( make, "EXTRA_OBJS" );
 
     LIST_FOR_EACH_ENTRY_SAFE( source, next, &make->sources, struct incl_file, entry )
@@ -1772,10 +1768,13 @@ static void add_generated_sources( struct makefile *make )
         }
         if (source->file->flags & FLAG_IDL_PROXY)
         {
-            file = add_generated_source( make, "dlldata.o", "dlldata.c" );
-            add_dependency( file->file, "objbase.h", INCL_NORMAL );
-            add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
-            add_all_includes( make, file, file->file );
+            if (!dlldata)
+            {
+                dlldata = add_generated_source( make, "dlldata.o", "dlldata.c" );
+                add_dependency( dlldata->file, "objbase.h", INCL_NORMAL );
+                add_dependency( dlldata->file, "rpcproxy.h", INCL_NORMAL );
+                add_all_includes( make, dlldata, dlldata->file );
+            }
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_p.c" ), NULL );
             add_dependency( file->file, "objbase.h", INCL_NORMAL );
             add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );

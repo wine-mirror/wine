@@ -128,6 +128,7 @@ sub replace_makefile_variables($)
     my $make = $makefiles{$file};
     my $source_vars_regexp = join "|", @source_vars;
     my %replaced;
+    my %files;
     my $old;
     my $new;
 
@@ -177,6 +178,11 @@ sub replace_makefile_variables($)
                 $new .= $new_str;
             }
             $replaced{$var} = 1;
+            foreach my $val (@values)
+            {
+                die "$file.in: duplicate file $val" if defined $files{$val};
+                $files{$val} = 1;
+            }
             next;
         }
         $new .= $_;

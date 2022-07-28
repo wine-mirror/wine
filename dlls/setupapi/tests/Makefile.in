@@ -18,5 +18,3 @@ SOURCES = \
 	setupapi.rc \
 	setupcab.c \
 	stringtable.c
-
-RC_SRCS = setupapi.rc
