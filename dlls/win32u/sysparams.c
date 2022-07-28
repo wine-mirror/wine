@@ -448,8 +448,11 @@ static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *m
     set_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
     set_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
     set_mode_field( fixed_outputW, dmDisplayFixedOutput, DM_DISPLAYFIXEDOUTPUT );
-    set_mode_field( x_panningW, dmPosition.x, DM_POSITION );
-    set_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+    if (index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS)
+    {
+        set_mode_field( x_panningW, dmPosition.x, DM_POSITION );
+        set_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+    }
     ret = set_reg_value( hkey, driver_extraW, REG_BINARY, mode + 1, mode->dmDriverExtra );
 
 #undef set_mode_field
@@ -487,8 +490,11 @@ static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
     query_mode_field( y_resolutionW, dmPelsHeight, DM_PELSHEIGHT );
     query_mode_field( v_refreshW, dmDisplayFrequency, DM_DISPLAYFREQUENCY );
     query_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
-    query_mode_field( x_panningW, dmPosition.x, DM_POSITION );
-    query_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+    if (index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS)
+    {
+        query_mode_field( x_panningW, dmPosition.x, DM_POSITION );
+        query_mode_field( y_panningW, dmPosition.y, DM_POSITION );
+    }
     query_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
     query_mode_field( fixed_outputW, dmDisplayFixedOutput, 0 );
 
