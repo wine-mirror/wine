@@ -235,6 +235,8 @@ static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpar
             break;
         case IDOK:
             params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+            if (!SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, EM_LINELENGTH, 0, 0))
+                SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, L"0");
             ret = update_registry_value(hwndDlg, params);
             /* fall through */
         case IDCANCEL:
