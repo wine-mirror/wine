@@ -325,7 +325,8 @@ BOOL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, D
     devmode->dmPelsHeight = screen_height;
     devmode->dmBitsPerPel = screen_bpp;
     devmode->dmDisplayFrequency = 60;
-    devmode->dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+    devmode->dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
+                        DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
     TRACE( "mode %d -- %dx%d %d bpp @%d Hz\n", n,
            devmode->dmPelsWidth, devmode->dmPelsHeight,
            devmode->dmBitsPerPel, devmode->dmDisplayFrequency );
@@ -347,7 +348,8 @@ BOOL ANDROID_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW devmode )
     devmode->dmPelsHeight = screen_height;
     devmode->dmBitsPerPel = screen_bpp;
     devmode->dmDisplayFrequency = 60;
-    devmode->dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+    devmode->dmFields = DM_POSITION | DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT |
+                        DM_BITSPERPEL | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
     TRACE( "current mode -- %dx%d %d bpp @%d Hz\n",
            devmode->dmPelsWidth, devmode->dmPelsHeight,
            devmode->dmBitsPerPel, devmode->dmDisplayFrequency );
