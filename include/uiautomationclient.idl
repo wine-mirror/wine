@@ -72,6 +72,49 @@ library UIAutomationClient {
 
     /* FIXME: Uncomment when properly supported in widl
     [dllname("<no entry points>")]
+    module UIA_EventIds
+    {
+    */
+        const long UIA_ToolTipOpenedEventId = 20000;
+        const long UIA_ToolTipClosedEventId = 20001;
+        const long UIA_StructureChangedEventId = 20002;
+        const long UIA_MenuOpenedEventId = 20003;
+        const long UIA_AutomationPropertyChangedEventId = 20004;
+        const long UIA_AutomationFocusChangedEventId = 20005;
+        const long UIA_AsyncContentLoadedEventId = 20006;
+        const long UIA_MenuClosedEventId = 20007;
+        const long UIA_LayoutInvalidatedEventId = 20008;
+        const long UIA_Invoke_InvokedEventId = 20009;
+        const long UIA_SelectionItem_ElementAddedToSelectionEventId = 20010;
+        const long UIA_SelectionItem_ElementRemovedFromSelectionEventId = 20011;
+        const long UIA_SelectionItem_ElementSelectedEventId= 20012;
+        const long UIA_Selection_InvalidatedEventId = 20013;
+        const long UIA_Text_TextSelectionChangedEventId = 20014;
+        const long UIA_Text_TextChangedEventId = 20015;
+        const long UIA_Window_WindowOpenedEventId = 20016;
+        const long UIA_Window_WindowClosedEventId = 20017;
+        const long UIA_MenuModeStartEventId = 20018;
+        const long UIA_MenuModeEndEventId = 20019;
+        const long UIA_InputReachedTargetEventId = 20020;
+        const long UIA_InputReachedOtherElementEventId = 20021;
+        const long UIA_InputDiscardedEventId = 20022;
+        const long UIA_SystemAlertEventId = 20023;
+        const long UIA_LiveRegionChangedEventId = 20024;
+        const long UIA_HostedFragmentRootsInvalidatedEventId = 20025;
+        const long UIA_Drag_DragStartEventId = 20026;
+        const long UIA_Drag_DragCancelEventId = 20027;
+        const long UIA_Drag_DragCompleteEventId = 20028;
+        const long UIA_DropTarget_DragEnterEventId = 20029;
+        const long UIA_DropTarget_DragLeaveEventId = 20030;
+        const long UIA_DropTarget_DroppedEventId = 20031;
+        const long UIA_TextEdit_TextChangedEventId = 20032;
+        const long UIA_TextEdit_ConversionTargetChangedEventId = 20033;
+    /*
+    };
+    */
+
+    /* FIXME: Uncomment when properly supported in widl
+    [dllname("<no entry points>")]
     module UIA_PropertyIds
     {
     */
