@@ -1359,17 +1359,12 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
                 {
                     /* control menu is between the frame system menu and
                      * the first entry of menu bar */
-                    WND *wndPtr = WIN_GetPtr(hwnd);
-
-                    if( (wParam == VK_LEFT && GetMenu(hwnd) == next_menu->hmenuIn) ||
-                        (wParam == VK_RIGHT && GetSubMenu(wndPtr->hSysMenu, 0) == next_menu->hmenuIn) )
+                    if ((wParam == VK_LEFT && GetMenu(hwnd) == next_menu->hmenuIn) ||
+                        (wParam == VK_RIGHT && NtUserGetWindowSysSubMenu( hwnd ) == next_menu->hmenuIn))
                     {
-                        WIN_ReleasePtr(wndPtr);
-                        wndPtr = WIN_GetPtr(ci->hwndActiveChild);
-                        next_menu->hmenuNext = GetSubMenu(wndPtr->hSysMenu, 0);
+                        next_menu->hmenuNext = NtUserGetWindowSysSubMenu( ci->hwndActiveChild );
                         next_menu->hwndNext = ci->hwndActiveChild;
                     }
-                    WIN_ReleasePtr(wndPtr);
                 }
                 return 0;
             }
@@ -1551,9 +1546,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
 
             if( wParam == VK_LEFT )  /* switch to frame system menu */
             {
-                WND *wndPtr = WIN_GetPtr( parent );
-                next_menu->hmenuNext = GetSubMenu( wndPtr->hSysMenu, 0 );
-                WIN_ReleasePtr( wndPtr );
+                next_menu->hmenuNext = NtUserGetWindowSysSubMenu( parent );
             }
             if( wParam == VK_RIGHT )  /* to frame menu bar */
             {

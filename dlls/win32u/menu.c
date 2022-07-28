@@ -1619,6 +1619,17 @@ BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
     return TRUE;
 }
 
+HMENU get_window_sys_sub_menu( HWND hwnd )
+{
+    WND *win;
+    HMENU ret;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return 0;
+    ret = win->hSysMenu;
+    release_win_ptr( win );
+    return get_sub_menu( ret, 0 );
+}
+
 /**********************************************************************
  *           NtUserSetMenuDefaultItem    (win32u.@)
  */

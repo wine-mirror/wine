@@ -289,6 +289,7 @@ extern UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y ) D
 extern BOOL get_menu_info( HMENU handle, MENUINFO *info ) DECLSPEC_HIDDEN;
 extern INT get_menu_item_count( HMENU handle ) DECLSPEC_HIDDEN;
 extern UINT get_menu_state( HMENU handle, UINT item_id, UINT flags ) DECLSPEC_HIDDEN;
+extern HMENU get_window_sys_sub_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_menu( HMENU handle ) DECLSPEC_HIDDEN;
 extern HWND is_menu_active(void) DECLSPEC_HIDDEN;
 extern LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam,

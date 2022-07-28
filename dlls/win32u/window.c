@@ -5419,6 +5419,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_GetWindowInputContext:
         return HandleToUlong( get_window_input_context( hwnd ));
 
+    case NtUserCallHwnd_GetWindowSysSubMenu:
+        return HandleToUlong( get_window_sys_sub_menu( hwnd ));
+
     case NtUserCallHwnd_GetWindowTextLength:
         return get_server_window_text( hwnd, NULL, 0 );
 

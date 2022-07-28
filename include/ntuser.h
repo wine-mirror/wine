@@ -1105,6 +1105,7 @@ enum
     NtUserCallHwnd_GetWindowContextHelpId,
     NtUserCallHwnd_GetWindowDpiAwarenessContext,
     NtUserCallHwnd_GetWindowInputContext,
+    NtUserCallHwnd_GetWindowSysSubMenu,
     NtUserCallHwnd_GetWindowTextLength,
     NtUserCallHwnd_IsWindow,
     NtUserCallHwnd_IsWindowEnabled,
@@ -1161,6 +1162,11 @@ static inline DPI_AWARENESS_CONTEXT NtUserGetWindowDpiAwarenessContext( HWND hwn
 static inline HIMC NtUserGetWindowInputContext( HWND hwnd )
 {
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowInputContext ));
+}
+
+static inline HMENU NtUserGetWindowSysSubMenu( HWND hwnd )
+{
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowSysSubMenu ));
 }
 
 static inline INT NtUserGetWindowTextLength( HWND hwnd )
