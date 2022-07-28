@@ -191,9 +191,64 @@ function test_timeout() {
     xhr.send("Timeout Test");
 }
 
+function test_responseType() {
+    var i, xhr = new XMLHttpRequest();
+    if(!("responseType" in xhr)) { next_test(); return; }
+
+    ok(xhr.responseType === "", "default responseType = " + xhr.responseType);
+    try {
+        xhr.responseType = "";
+        ok(false, "setting responseType before open() did not throw exception");
+    }catch(ex) {
+        todo_wine.
+        ok(ex.name === "InvalidStateError", "setting responseType before open() threw " + ex.name);
+    }
+    try {
+        xhr.responseType = "invalid response type";
+        ok(false, "setting invalid responseType before open() did not throw exception");
+    }catch(ex) {
+        todo_wine.
+        ok(ex.name === "InvalidStateError", "setting invalid responseType before open() threw " + ex.name);
+    }
+
+    xhr.open("POST", "echo.php", true);
+    xhr.setRequestHeader("X-Test", "True");
+    ok(xhr.responseType === "", "default responseType after open() = " + xhr.responseType);
+
+    var types = [ "text", "", "document", "arraybuffer", "blob", "ms-stream" ];
+    for(i = 0; i < types.length; i++) {
+        xhr.responseType = types[i];
+        ok(xhr.responseType === types[i], "responseType = " + xhr.responseType + ", expected " + types[i]);
+    }
+
+    types = [ "json", "teXt", "Document", "moz-chunked-text", "moz-blob", null ];
+    for(i = 0; i < types.length; i++) {
+        xhr.responseType = types[i];
+        ok(xhr.responseType === "ms-stream", "responseType (after set to " + types[i] + ") = " + xhr.responseType);
+    }
+
+    xhr.responseType = "";
+    xhr.onreadystatechange = function() {
+        if(xhr.readyState < 3) {
+            xhr.responseType = "";
+            return;
+        }
+        try {
+            xhr.responseType = "";
+            ok(false, "setting responseType with state " + xhr.readyState + " did not throw exception");
+        }catch(ex) {
+            todo_wine.
+            ok(ex.name === "InvalidStateError", "setting responseType with state " + xhr.readyState + " threw " + ex.name);
+        }
+    }
+    xhr.onloadend = function() { next_test(); }
+    xhr.send("responseType test");
+}
+
 var tests = [
     test_xhr,
     test_content_types,
     test_abort,
-    test_timeout
+    test_timeout,
+    test_responseType
 ];

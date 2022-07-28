@@ -103,6 +103,27 @@ static const eventid_t events[] = {
     EVENTID_TIMEOUT,
 };
 
+typedef enum {
+    response_type_empty,
+    response_type_text,
+    response_type_doc,
+    response_type_arraybuf,
+    response_type_blob,
+    response_type_stream
+} response_type_t;
+
+static const struct {
+    const WCHAR *str;
+    const WCHAR *nsxhr_str;
+} response_type_desc[] = {
+    [response_type_empty]       = { L"",            L"" },
+    [response_type_text]        = { L"text",        L"" },
+    [response_type_doc]         = { L"document",    L"" }, /* FIXME */
+    [response_type_arraybuf]    = { L"arraybuffer", L"arraybuffer" },
+    [response_type_blob]        = { L"blob",        L"arraybuffer" },
+    [response_type_stream]      = { L"ms-stream",   L"arraybuffer" } /* FIXME */
+};
+
 typedef struct {
     nsIDOMEventListener nsIDOMEventListener_iface;
     LONG ref;
@@ -117,6 +138,7 @@ struct HTMLXMLHttpRequest {
     IWineXMLHttpRequestPrivate IWineXMLHttpRequestPrivate_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
     LONG ref;
+    response_type_t response_type;
     nsIXMLHttpRequest *nsxhr;
     XMLHttpReqEventListener *event_listener;
 };
@@ -925,19 +947,47 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_get_response(IWineXMLHttpReques
 static HRESULT WINAPI HTMLXMLHttpRequest_private_put_responseType(IWineXMLHttpRequestPrivate *iface, BSTR v)
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
+    unsigned i;
+    LONG state;
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return E_NOTIMPL;
+    hres = IHTMLXMLHttpRequest_get_readyState(&This->IHTMLXMLHttpRequest_iface, &state);
+    if(FAILED(hres))
+        return hres;
+
+    if(state < 1 || state > 2) {
+        /* FIXME: Return InvalidStateError */
+        return E_FAIL;
+    }
+
+    for(i = 0; i < ARRAY_SIZE(response_type_desc); i++)
+        if(!wcscmp(v, response_type_desc[i].str))
+            break;
+    if(i >= ARRAY_SIZE(response_type_desc))
+        return S_OK;
+
+    nsAString_InitDepend(&nsstr, response_type_desc[i].nsxhr_str);
+    nsres = nsIXMLHttpRequest_SetResponseType(This->nsxhr, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    This->response_type = i;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_get_responseType(IWineXMLHttpRequestPrivate *iface, BSTR *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    *p = SysAllocString(response_type_desc[This->response_type].str);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_get_upload(IWineXMLHttpRequestPrivate *iface, IDispatch **p)
