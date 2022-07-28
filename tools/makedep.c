@@ -66,6 +66,7 @@ struct file
 struct incl_file
 {
     struct list        entry;
+    struct list        hash_entry;
     struct file       *file;
     char              *name;
     char              *filename;
@@ -116,9 +117,10 @@ static const struct
     { FLAG_IDL_HEADER,     ".h" }
 };
 
-#define HASH_SIZE 997
+#define HASH_SIZE 197
 
 static struct list files[HASH_SIZE];
+static struct list global_includes[HASH_SIZE];
 
 enum install_rules { INSTALL_LIB, INSTALL_DEV, NB_INSTALL_RULES };
 
@@ -748,6 +750,15 @@ static struct incl_file *find_src_file( const struct makefile *make, const char 
 {
     struct incl_file *file;
 
+    if (make == include_makefile)
+    {
+        unsigned int hash = hash_filename( name );
+
+        LIST_FOR_EACH_ENTRY( file, &global_includes[hash], struct incl_file, hash_entry )
+            if (!strcmp( name, file->name )) return file;
+        return NULL;
+    }
+
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry )
         if (!strcmp( name, file->name )) return file;
     return NULL;
@@ -827,6 +838,11 @@ static struct incl_file *add_generated_source( struct makefile *make,
     file->file->flags = FLAG_GENERATED;
     file->use_msvcrt = make->use_msvcrt;
     list_add_tail( &make->sources, &file->entry );
+    if (make == include_makefile)
+    {
+        unsigned int hash = hash_filename( name );
+        list_add_tail( &global_includes[hash], &file->hash_entry );
+    }
     return file;
 }
 
@@ -1270,16 +1286,16 @@ static struct file *open_local_file( const struct makefile *make, const char *pa
 static struct file *open_local_generated_file( const struct makefile *make, struct incl_file *file,
                                                const char *ext, const char *src_ext )
 {
-    char *filename;
-    struct file *ret = NULL;
+    struct incl_file *include;
 
     if (strendswith( file->name, ext ) &&
-        (ret = open_local_file( make, replace_extension( file->name, ext, src_ext ), &filename )))
+        (include = find_src_file( make, replace_extension( file->name, ext, src_ext ) )))
     {
-        file->sourcename = filename;
+        file->sourcename = include->filename;
         file->filename = obj_dir_path( make, file->name );
+        return include->file;
     }
-    return ret;
+    return NULL;
 }
 
 
@@ -1288,7 +1304,7 @@ static struct file *open_local_generated_file( const struct makefile *make, stru
  *
  * Open a file in the top-level source directory.
  */
-static struct file *open_global_file( const struct makefile *make, const char *path, char **filename )
+static struct file *open_global_file( const char *path, char **filename )
 {
     char *src_path = root_src_dir_path( path );
     struct file *ret = load_file( src_path );
@@ -1303,10 +1319,13 @@ static struct file *open_global_file( const struct makefile *make, const char *p
  *
  * Open a file in the global include source directory.
  */
-static struct file *open_global_header( const struct makefile *make, const char *path, char **filename )
+static struct file *open_global_header( const char *path, char **filename )
 {
-    if (!strncmp( path, "../", 3 )) return NULL;
-    return open_global_file( make, strmake( "include/%s", path ), filename );
+    struct incl_file *include = find_src_file( include_makefile, path );
+
+    if (!include) return NULL;
+    *filename = include->filename;
+    return include->file;
 }
 
 
@@ -1318,16 +1337,16 @@ static struct file *open_global_header( const struct makefile *make, const char 
 static struct file *open_global_generated_file( const struct makefile *make, struct incl_file *file,
                                                 const char *ext, const char *src_ext )
 {
-    char *filename;
-    struct file *ret = NULL;
+    struct incl_file *include;
 
     if (strendswith( file->name, ext ) &&
-        (ret = open_global_header( make, replace_extension( file->name, ext, src_ext ), &filename )))
+        (include = find_src_file( include_makefile, replace_extension( file->name, ext, src_ext ) )))
     {
-        file->sourcename = filename;
+        file->sourcename = include->filename;
         file->filename = strmake( "include/%s", file->name );
+        return include->file;
     }
-    return ret;
+    return NULL;
 }
 
 
@@ -1407,11 +1426,11 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         (file = open_global_generated_file( make, pFile, ".h", ".x" ))) return file;
 
     /* check in global includes source dir */
-    if ((file = open_global_header( make, pFile->name, &pFile->filename ))) return file;
+    if ((file = open_global_header( pFile->name, &pFile->filename ))) return file;
 
     /* check in global msvcrt includes */
     if (pFile->use_msvcrt &&
-        (file = open_global_header( make, strmake( "msvcrt/%s", pFile->name ), &pFile->filename )))
+        (file = open_global_header( strmake( "msvcrt/%s", pFile->name ), &pFile->filename )))
         return file;
 
     /* now search in include paths */
@@ -1425,7 +1444,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
             if (!strncmp( dir, root_src_dir, len ) && (!dir[len] || dir[len] == '/'))
             {
                 while (dir[len] == '/') len++;
-                file = open_global_file( make, concat_paths( dir + len, pFile->name ), &pFile->filename );
+                file = open_global_file( concat_paths( dir + len, pFile->name ), &pFile->filename );
             }
         }
         else
@@ -1569,6 +1588,11 @@ static struct incl_file *add_src_file( struct makefile *make, const char *name )
     file->use_msvcrt = make->use_msvcrt;
     file->is_external = !!make->extlib;
     list_add_tail( &make->sources, &file->entry );
+    if (make == include_makefile)
+    {
+        unsigned int hash = hash_filename( name );
+        list_add_tail( &global_includes[hash], &file->hash_entry );
+    }
     parse_file( make, file, 1 );
     return file;
 }
@@ -4311,6 +4335,7 @@ int main( int argc, char *argv[] )
 #endif
 
     for (i = 0; i < HASH_SIZE; i++) list_init( &files[i] );
+    for (i = 0; i < HASH_SIZE; i++) list_init( &global_includes[i] );
 
     top_makefile = parse_makefile( NULL );
 
@@ -4372,7 +4397,9 @@ int main( int argc, char *argv[] )
     for (i = 0; i < subdirs.count; i++) submakes[i] = parse_makefile( subdirs.str[i] );
 
     load_sources( top_makefile );
-    for (i = 0; i < subdirs.count; i++) load_sources( submakes[i] );
+    load_sources( include_makefile );
+    for (i = 0; i < subdirs.count; i++)
+        if (submakes[i] != include_makefile) load_sources( submakes[i] );
 
     output_dependencies( top_makefile );
     for (i = 0; i < subdirs.count; i++) output_dependencies( submakes[i] );
