@@ -2078,7 +2078,7 @@ static void test_token(void)
     status = pNtOpenThreadToken( GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, (HANDLE *)0xdeadbee0 );
     ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %lx\n", status);
     handle = (HANDLE)0xdeadbeef;
-    status = NtOpenProcessToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, &handle );
+    status = pNtOpenProcessToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, &handle );
     ok( status == STATUS_INVALID_HANDLE, "NtOpenProcessToken failed: %lx\n", status);
     ok( !handle || broken(handle == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle );
     handle = (HANDLE)0xdeadbeef;
@@ -2526,7 +2526,7 @@ static void test_query_directory(void)
 
     RtlInitUnicodeString( &string, L"\\BaseNamedObjects\\winetest" );
     InitializeObjectAttributes( &attr, &string, 0, 0, NULL );
-    status = NtCreateDirectoryObject( &dir, DIRECTORY_QUERY, &attr );
+    status = pNtCreateDirectoryObject( &dir, DIRECTORY_QUERY, &attr );
     ok( !status, "got %#lx\n", status );
 
     context = 0xdeadbeef;
@@ -2717,9 +2717,9 @@ static void test_query_directory(void)
         ok( !memcmp( &info[1], &empty_info, sizeof(*info) ), "entry was not cleared\n" );
     }
 
-    NtClose( child1 );
-    NtClose( child2 );
-    NtClose( dir );
+    pNtClose( child1 );
+    pNtClose( child2 );
+    pNtClose( dir );
 }
 
 START_TEST(om)
