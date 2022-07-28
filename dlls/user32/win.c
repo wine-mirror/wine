@@ -128,7 +128,7 @@ BOOL is_desktop_window( HWND hwnd )
  * or WND_OTHER_PROCESS if handle may be valid in other process.
  * If ret value is a valid pointer, it must be released with WIN_ReleasePtr.
  */
-WND *WIN_GetPtr( HWND hwnd )
+static WND *WIN_GetPtr( HWND hwnd )
 {
     WND *ptr = (void *)NtUserCallTwoParam( HandleToUlong(hwnd), NTUSER_OBJ_WINDOW, NtUserGetHandlePtr );
     if (ptr == WND_OTHER_PROCESS && is_desktop_window( hwnd )) ptr = WND_DESKTOP;
@@ -139,7 +139,7 @@ WND *WIN_GetPtr( HWND hwnd )
 /***********************************************************************
  *           WIN_ReleasePtr
  */
-void WIN_ReleasePtr( WND *ptr )
+static void WIN_ReleasePtr( WND *ptr )
 {
     assert( ptr && ptr != OBJ_OTHER_PROCESS );
     NtUserCallOneParam( 1, NtUserLock );
@@ -165,24 +165,6 @@ HWND WIN_IsCurrentProcess( HWND hwnd )
 HWND WIN_IsCurrentThread( HWND hwnd )
 {
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrehtThreadWindow ));
-}
-
-
-/***********************************************************************
- *           win_set_flags
- *
- * Set the flags of a window and return the previous value.
- */
-UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
-{
-    UINT ret;
-    WND *ptr = WIN_GetPtr( hwnd );
-
-    if (!ptr || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
-    ret = ptr->flags;
-    ptr->flags = (ret & ~clear_mask) | set_mask;
-    WIN_ReleasePtr( ptr );
-    return ret;
 }
 
 
@@ -494,7 +476,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         POINT pos[2];
         UINT id = 0;
 
-        if (!(win_get_flags( cs->hwndParent ) & WIN_ISMDICLIENT))
+        if (!NtUserGetMDIClientInfo( cs->hwndParent ))
         {
             WARN("WS_EX_MDICHILD, but parent %p is not MDIClient\n", cs->hwndParent);
             return 0;

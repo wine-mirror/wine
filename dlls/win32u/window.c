@@ -5410,6 +5410,10 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_GetDialogInfo:
         return (ULONG_PTR)get_dialog_info( hwnd );
 
+    case NtUserCallHwnd_GetMDIClientInfo:
+        if (!(win_get_flags( hwnd ) & WIN_ISMDICLIENT)) return 0;
+        return get_window_long_ptr( hwnd, sizeof(void *), FALSE );
+
     case NtUserCallHwnd_GetWindowContextHelpId:
         return get_window_context_help_id( hwnd );
 
@@ -5547,6 +5551,10 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_SetDialogInfo:
         return set_dialog_info( hwnd, (void *)param );
+
+    case NtUserCallHwndParam_SetMDIClientInfo:
+        NtUserSetWindowLongPtr( hwnd, sizeof(void *), param, FALSE );
+        return win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
 
     case NtUserCallHwndParam_SetWindowContextHelpId:
         return set_window_context_help_id( hwnd, param );

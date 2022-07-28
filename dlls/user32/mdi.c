@@ -194,22 +194,7 @@ const struct builtin_class_descr MDICLIENT_builtin_class =
 
 static MDICLIENTINFO *get_client_info( HWND client )
 {
-    MDICLIENTINFO *ret = NULL;
-    WND *win = WIN_GetPtr( client );
-    if (win)
-    {
-        if (win == WND_OTHER_PROCESS || win == WND_DESKTOP)
-        {
-            if (IsWindow(client)) WARN( "client %p belongs to other process\n", client );
-            return NULL;
-        }
-        if (win->flags & WIN_ISMDICLIENT)
-            ret = ((MDICLIENTINFO **)win->wExtra)[1];
-        else
-            WARN( "%p is not an MDI client\n", client );
-        WIN_ReleasePtr( win );
-    }
-    return ret;
+    return NtUserGetMDIClientInfo( client );
 }
 
 static BOOL is_close_enabled(HWND hwnd, HMENU hSysMenu)
@@ -1038,8 +1023,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         if (message == WM_NCCREATE)
         {
             if (!(ci = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ci) ))) return 0;
-            SetWindowLongPtrW( hwnd, sizeof(void *), (ULONG_PTR)ci );
-            win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
+            NtUserSetMDIClientInfo( hwnd, ci );
         }
         return unicode ? DefWindowProcW( hwnd, message, wParam, lParam ) :
                          DefWindowProcA( hwnd, message, wParam, lParam );
