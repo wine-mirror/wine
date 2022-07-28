@@ -860,29 +860,27 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     registered_devices = realloc( registered_devices, size );
     if (registered_devices) for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
 
+    server_devices = malloc( registered_device_count * sizeof(*server_devices) );
+    if (server_devices) for (i = 0; i < registered_device_count; ++i)
+    {
+        server_devices[i].usage_page = registered_devices[i].usUsagePage;
+        server_devices[i].usage = registered_devices[i].usUsage;
+        server_devices[i].flags = registered_devices[i].dwFlags;
+        server_devices[i].target = wine_server_user_handle( registered_devices[i].hwndTarget );
+    }
+
     pthread_mutex_unlock( &rawinput_mutex );
 
-    if (!registered_devices)
+    if (!registered_devices || !server_devices)
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return FALSE;
     }
 
-    if (!(server_devices = malloc( device_count * sizeof(*server_devices) ))) return FALSE;
-
-    for (i = 0; i < device_count; ++i)
-    {
-
-        server_devices[i].usage_page = devices[i].usUsagePage;
-        server_devices[i].usage = devices[i].usUsage;
-        server_devices[i].flags = devices[i].dwFlags;
-        server_devices[i].target = wine_server_user_handle( devices[i].hwndTarget );
-    }
-
     SERVER_START_REQ( update_rawinput_devices )
     {
         wine_server_add_data( req, server_devices, device_count * sizeof(*server_devices) );
-        ret = !wine_server_call( req );
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 

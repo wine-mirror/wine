@@ -1532,38 +1532,17 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     return win;
 }
 
-static struct rawinput_device_entry *find_rawinput_device( struct process *process, unsigned short usage_page, unsigned short usage )
+static struct rawinput_device *find_rawinput_device( struct process *process, unsigned short usage_page, unsigned short usage )
 {
-    struct rawinput_device_entry *e;
+    struct rawinput_device *device, *end;
 
-    LIST_FOR_EACH_ENTRY( e, &process->rawinput_devices, struct rawinput_device_entry, entry )
+    for (device = process->rawinput_devices, end = device + process->rawinput_device_count; device != end; device++)
     {
-        if (e->device.usage_page != usage_page || e->device.usage != usage) continue;
-        return e;
+        if (device->usage_page != usage_page || device->usage != usage) continue;
+        return device;
     }
 
     return NULL;
-}
-
-static void update_rawinput_device(const struct rawinput_device *device)
-{
-    struct rawinput_device_entry *e;
-
-    if (!(e = find_rawinput_device( current->process, device->usage_page, device->usage )))
-    {
-        if (!(e = mem_alloc( sizeof(*e) ))) return;
-        list_add_tail( &current->process->rawinput_devices, &e->entry );
-    }
-
-    if (device->flags & RIDEV_REMOVE)
-    {
-        list_remove( &e->entry );
-        free( e );
-        return;
-    }
-
-    e->device = *device;
-    e->device.target = get_user_full_handle( e->device.target );
 }
 
 static void prepend_cursor_history( int x, int y, unsigned int time, lparam_t info )
@@ -1714,7 +1693,6 @@ struct rawinput_message
 static int queue_rawinput_message( struct process* process, void *arg )
 {
     const struct rawinput_message* raw_msg = arg;
-    const struct rawinput_device_entry *entry;
     const struct rawinput_device *device = NULL;
     struct desktop *target_desktop = NULL, *desktop = NULL;
     struct thread *target_thread = NULL, *foreground = NULL;
@@ -1726,8 +1704,8 @@ static int queue_rawinput_message( struct process* process, void *arg )
         device = process->rawinput_mouse;
     else if (raw_msg->data.rawinput.type == RIM_TYPEKEYBOARD)
         device = process->rawinput_kbd;
-    else if ((entry = find_rawinput_device( process, raw_msg->data.rawinput.hid.usage_page, raw_msg->data.rawinput.hid.usage )))
-        device = &entry->device;
+    else
+        device = find_rawinput_device( process, raw_msg->data.rawinput.hid.usage_page, raw_msg->data.rawinput.hid.usage );
     if (!device) return 0;
 
     if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && !(device->flags & RIDEV_DEVNOTIFY)) return 0;
@@ -3397,18 +3375,20 @@ DECL_HANDLER(get_rawinput_buffer)
 
 DECL_HANDLER(update_rawinput_devices)
 {
-    const struct rawinput_device *devices = get_req_data();
+    const struct rawinput_device *tmp, *devices = get_req_data();
     unsigned int device_count = get_req_data_size() / sizeof (*devices);
-    const struct rawinput_device_entry *e;
-    unsigned int i;
+    size_t size = device_count * sizeof(*devices);
+    struct process *process = current->process;
 
-    for (i = 0; i < device_count; ++i)
+    if (!(tmp = realloc( process->rawinput_devices, size )))
     {
-        update_rawinput_device(&devices[i]);
+        set_error( STATUS_NO_MEMORY );
+        return;
     }
+    process->rawinput_devices = (struct rawinput_device *)tmp;
+    process->rawinput_device_count = device_count;
+    memcpy( process->rawinput_devices, devices, size );
 
-    e = find_rawinput_device( current->process, 1, 2 );
-    current->process->rawinput_mouse = e ? &e->device : NULL;
-    e = find_rawinput_device( current->process, 1, 6 );
-    current->process->rawinput_kbd   = e ? &e->device : NULL;
+    process->rawinput_mouse = find_rawinput_device( process, 1, 2 );
+    process->rawinput_kbd = find_rawinput_device( process, 1, 6 );
 }
