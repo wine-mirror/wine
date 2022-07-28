@@ -256,7 +256,7 @@ static void dump_value( const struct key_value *value, FILE *f )
         if (((WCHAR *)value->data)[value->len / sizeof(WCHAR) - 1]) break;
         if (value->type != REG_SZ) fprintf( f, "str(%x):", value->type );
         fputc( '\"', f );
-        dump_strW( (WCHAR *)value->data, value->len, f, "\"\"" );
+        dump_strW( (WCHAR *)value->data, value->len - sizeof(WCHAR), f, "\"\"" );
         fprintf( f, "\"\n" );
         return;
 

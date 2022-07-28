@@ -219,7 +219,6 @@ int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] 
         }
         if (*str < 32)  /* octal or C escape */
         {
-            if (!*str && len == 1) continue;  /* do not output terminating NULL */
             if (escapes[*str] != '.')
                 pos += sprintf( pos, "\\%c", escapes[*str] );
             else if (len > 1 && str[1] >= '0' && str[1] <= '7')
