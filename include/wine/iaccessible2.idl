@@ -49,6 +49,10 @@
  *
  ************************************************************************/
 
+#if 0
+#pragma makedep header install
+#endif
+
 import "objidl.idl";
 import "oaidl.idl";
 import "oleacc.idl";

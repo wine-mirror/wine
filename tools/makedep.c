@@ -95,9 +95,10 @@ struct incl_file
 #define FLAG_IDL_REGTYPELIB 0x004000  /* generates a registered typelib (_t.res) file */
 #define FLAG_IDL_HEADER     0x008000  /* generates a header (.h) file */
 #define FLAG_RC_PO          0x010000  /* rc file contains translations */
-#define FLAG_C_IMPLIB       0x020000  /* file is part of an import library */
-#define FLAG_C_UNIX         0x040000  /* file is part of a Unix library */
-#define FLAG_SFD_FONTS      0x080000  /* sfd file generated bitmap fonts */
+#define FLAG_RC_HEADER      0x020000  /* rc file is a header */
+#define FLAG_C_IMPLIB       0x040000  /* file is part of an import library */
+#define FLAG_C_UNIX         0x080000  /* file is part of a Unix library */
+#define FLAG_SFD_FONTS      0x100000  /* sfd file generated bitmap fonts */
 
 static const struct
 {
@@ -228,6 +229,7 @@ struct makefile
 };
 
 static struct makefile *top_makefile;
+static struct makefile *include_makefile;
 static struct makefile **submakes;
 
 static const char separator[] = "### Dependencies";
@@ -884,7 +886,8 @@ static void parse_pragma_directive( struct file *source, char *str )
         }
         else if (strendswith( source->name, ".rc" ))
         {
-            if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
+            if (!strcmp( flag, "header" )) source->flags |= FLAG_RC_HEADER;
+            else if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
         }
         else if (strendswith( source->name, ".sfd" ))
         {
@@ -1718,6 +1721,7 @@ static struct makefile *parse_makefile( const char *path )
     memset( make, 0, sizeof(*make) );
     make->obj_dir = path;
     if (root_src_dir) make->src_dir = root_src_dir_path( make->obj_dir );
+    if (path && !strcmp( path, "include" )) include_makefile = make;
 
     file = open_input_makefile( make );
     while ((buffer = get_line( file )))
@@ -1797,6 +1801,8 @@ static void add_generated_sources( struct makefile *make )
         }
         if (!source->file->flags && strendswith( source->name, ".idl" ))
         {
+            if (!strncmp( source->name, "wine/", 5 )) continue;
+            source->file->flags = FLAG_IDL_HEADER | FLAG_INSTALL;
             add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL );
         }
         if (strendswith( source->name, ".x" ))
@@ -2630,7 +2636,7 @@ static void output_source_h( struct makefile *make, struct incl_file *source, co
 {
     if (source->file->flags & FLAG_GENERATED)
         strarray_add( &make->all_targets, source->name );
-    else
+    else if ((source->file->flags & FLAG_INSTALL) || strncmp( source->name, "wine/", 5 ))
         add_install_rule( make, source->name, source->name,
                           strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
 }
@@ -2645,6 +2651,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     const char *po_dir = NULL;
     unsigned int i;
 
+    if (source->file->flags & FLAG_RC_HEADER) return;
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = "po";
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
@@ -2721,8 +2728,8 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     char *dest;
     unsigned int i;
 
-    if (!source->file->flags) source->file->flags |= FLAG_IDL_HEADER | FLAG_INSTALL;
     if (find_include_file( make, strmake( "%s.h", obj ))) source->file->flags |= FLAG_IDL_HEADER;
+    if (!source->file->flags) return;
 
     for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
     {
@@ -2891,6 +2898,7 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
 {
     unsigned int i;
 
+    if (make == include_makefile) return;  /* ignore generated includes */
     if (strendswith( obj, ".man" ) && source->file->args)
     {
         struct strarray symlinks;

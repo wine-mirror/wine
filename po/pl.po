@@ -4019,11 +4019,11 @@ msgstr "'this' nie jest obiektem Map"
 msgid "Property cannot have both accessors and a value"
 msgstr "Własność nie może mieć zarówno akcesorów i wartości"
 
-#: include/wine/wine_common_ver.rc:129
+#: include/wine/wine_common_ver.rc:133
 msgid "Wine kernel DLL"
 msgstr "DLL jądra Wine"
 
-#: include/wine/wine_common_ver.rc:134 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:138 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"

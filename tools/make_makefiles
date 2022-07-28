@@ -38,20 +38,9 @@ my %modules16 =
   "wow32.dll" => 1,
 );
 
-my %exported_wine_headers = (
-    "wine/debug.h" => 1,
-    "wine/exception.h" => 1,
-    "wine/iaccessible2.idl" => 1,
-    "wine/itss.idl" => 1,
-    "wine/svcctl.idl" => 1,
-);
-
 my %ignored_source_files = (
     "dlls/wineps.drv/afm2c.c" => 1,
     "dlls/wineps.drv/mkagl.c" => 1,
-    "include/config.h.in" => 1,
-    "include/stamp-h.in" => 1,
-    "programs/winetest/dist.rc" => 1,
     "tools/makedep.c" => 1,
 );
 
@@ -342,8 +331,6 @@ sub assign_sources_to_makefiles(@)
 
         my $make = $makefiles{"$dir/Makefile"};
         my $name = substr( $file, length($dir) + 1 );
-
-        next if $file =~ /^include\/wine\// && !get_makedep_flags($file) && !$exported_wine_headers{$name};
 
         if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
         elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }

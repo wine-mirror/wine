@@ -84,6 +84,7 @@ SOURCES = \
 	compobj.h \
 	comsvcs.idl \
 	concurrencysal.h \
+	config.h.in \
 	consoleapi.h \
 	control.idl \
 	cor.idl \
@@ -699,6 +700,7 @@ SOURCES = \
 	srcrst.idl \
 	srrestoreptapi.h \
 	sspi.h \
+	stamp-h.in \
 	stgprop.h \
 	sti.h \
 	storage.h \
@@ -811,14 +813,52 @@ SOURCES = \
 	windows.ui.idl \
 	windowscontracts.idl \
 	windowsx.h \
+	wine/afd.h \
+	wine/asm.h \
+	wine/atsvc.idl \
+	wine/condrv.h \
+	wine/dcetypes.idl \
 	wine/debug.h \
+	wine/dplaysp.h \
+	wine/epm.idl \
 	wine/exception.h \
 	wine/fil_data.idl \
+	wine/gdi_driver.h \
+	wine/glu.h \
+	wine/heap.h \
+	wine/hid.h \
+	wine/http.h \
 	wine/iaccessible2.idl \
+	wine/irot.idl \
+	wine/irpcss.idl \
 	wine/itss.idl \
+	wine/list.h \
+	wine/mmsystem16.h \
+	wine/mscvpdb.h \
+	wine/mssign.h \
+	wine/nsi.h \
 	wine/orpc.idl \
+	wine/plugplay.idl \
+	wine/rbtree.h \
+	wine/schrpc.idl \
+	wine/server.h \
+	wine/server_protocol.h \
+	wine/strmbase.h \
 	wine/svcctl.idl \
+	wine/test.h \
+	wine/unixlib.h \
+	wine/vulkan.h \
+	wine/vulkan_driver.h \
+	wine/wgl.h \
+	wine/wgl_driver.h \
+	wine/winbase16.h \
+	wine/windef16.h \
+	wine/wine_common_ver.rc \
+	wine/wined3d.h \
 	wine/winedxgi.idl \
+	wine/wingdi16.h \
+	wine/winnet16.h \
+	wine/winuser16.h \
 	winerror.h \
 	winevt.h \
 	wingdi.h \

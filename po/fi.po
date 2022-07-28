@@ -3991,11 +3991,11 @@ msgstr "'this' ei ole |-objekti"
 msgid "Property cannot have both accessors and a value"
 msgstr "Ominaisuudella ei voi olla sekä hakufunktiota että arvoa"
 
-#: include/wine/wine_common_ver.rc:129
+#: include/wine/wine_common_ver.rc:133
 msgid "Wine kernel DLL"
 msgstr "Winen ydin-DLL"
 
-#: include/wine/wine_common_ver.rc:134 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:138 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"

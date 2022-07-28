@@ -3950,11 +3950,11 @@ msgstr "'this' 不是一個 | 物件"
 msgid "Property cannot have both accessors and a value"
 msgstr "屬性不可同時有存取子和值"
 
-#: include/wine/wine_common_ver.rc:129
+#: include/wine/wine_common_ver.rc:133
 msgid "Wine kernel DLL"
 msgstr "Wine 核心 DLL"
 
-#: include/wine/wine_common_ver.rc:134 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:138 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
