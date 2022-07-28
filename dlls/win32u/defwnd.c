@@ -1650,7 +1650,7 @@ BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT f
             nclm.cbSize = sizeof(NONCLIENTMETRICSW);
             NtUserSystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &nclm, 0 );
             lf = (flags & DC_SMALLCAP) ? &nclm.lfSmCaptionFont : &nclm.lfCaptionFont;
-            new_font = NtGdiHfontCreate( &lf, sizeof(lf), 0, 0, NULL );
+            new_font = NtGdiHfontCreate( lf, sizeof(*lf), 0, 0, NULL );
             prev_font = NtGdiSelectFont( hdc, new_font );
         }
 
