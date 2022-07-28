@@ -284,6 +284,12 @@ typedef struct _BCRYPT_PKCS1_PADDING_INFO
     LPCWSTR pszAlgId;
 } BCRYPT_PKCS1_PADDING_INFO;
 
+typedef struct _BCRYPT_OAEP_PADDING_INFO {
+    LPCWSTR pszAlgId;
+    PUCHAR  pbLabel;
+    ULONG   cbLabel;
+} BCRYPT_OAEP_PADDING_INFO;
+
 #define BCRYPT_PAD_NONE                     0x00000001
 #define BCRYPT_PAD_PKCS1                    0x00000002
 #define BCRYPT_PAD_OAEP                     0x00000004
