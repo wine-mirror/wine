@@ -184,7 +184,15 @@ static INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpa
     return FALSE;
 }
 
-static void change_dword_base(HWND hwndDlg, BOOL toHex)
+static void set_dword_edit_limit(HWND hwndDlg, DWORD type)
+{
+    if (isDecimal)
+        SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, EM_SETLIMITTEXT, type == REG_DWORD ? 10 : 20, 0);
+    else
+        SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, EM_SETLIMITTEXT, type == REG_DWORD ? 8 : 16, 0);
+}
+
+static void change_dword_base(HWND hwndDlg, BOOL toHex, DWORD type)
 {
     WCHAR buf[64];
     unsigned int len;
@@ -204,11 +212,13 @@ static void change_dword_base(HWND hwndDlg, BOOL toHex)
     }
 
     isDecimal = !toHex;
+
+    set_dword_edit_limit(hwndDlg, type);
 }
 
 static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    struct edit_params *params;
+    static struct edit_params *params;
     WCHAR buf[64];
     int ret = 0;
 
@@ -223,15 +233,16 @@ static INT_PTR CALLBACK modify_dword_dlgproc(HWND hwndDlg, UINT msg, WPARAM wpar
         isDecimal = FALSE;
         if (params->type == REG_QWORD && LoadStringW(GetModuleHandleW(0), IDS_EDIT_QWORD, buf, ARRAY_SIZE(buf)))
             SetWindowTextW(hwndDlg, buf);
+        set_dword_edit_limit(hwndDlg, params->type);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wparam))
         {
         case IDC_DWORD_HEX:
-	    change_dword_base(hwndDlg, TRUE);
+	    change_dword_base(hwndDlg, TRUE, params->type);
             break;
         case IDC_DWORD_DEC:
-	    change_dword_base(hwndDlg, FALSE);
+	    change_dword_base(hwndDlg, FALSE, params->type);
             break;
         case IDOK:
             params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
