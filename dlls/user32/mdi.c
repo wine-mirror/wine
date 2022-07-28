@@ -127,7 +127,6 @@ typedef struct
      * states it must keep coherency with USER32 on its own. This is true for
      * Windows as well.
      */
-    LONG      reserved;
     UINT      nActiveChildren;
     HWND      hwndChildMaximized;
     HWND      hwndActiveChild;
@@ -187,7 +186,7 @@ const struct builtin_class_descr MDICLIENT_builtin_class =
     L"MDIClient",           /* name */
     0,                      /* style */
     WINPROC_MDICLIENT,      /* proc */
-    sizeof(MDICLIENTINFO),  /* extra */
+    2 * sizeof(void *),     /* extra */
     IDC_ARROW,              /* cursor */
     (HBRUSH)(COLOR_APPWORKSPACE+1)    /* brush */
 };
@@ -205,7 +204,7 @@ static MDICLIENTINFO *get_client_info( HWND client )
             return NULL;
         }
         if (win->flags & WIN_ISMDICLIENT)
-            ret = (MDICLIENTINFO *)win->wExtra;
+            ret = ((MDICLIENTINFO **)win->wExtra)[1];
         else
             WARN( "%p is not an MDI client\n", client );
         WIN_ReleasePtr( win );
@@ -1036,7 +1035,12 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     if (!(ci = get_client_info( hwnd )))
     {
-        if (message == WM_NCCREATE) win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
+        if (message == WM_NCCREATE)
+        {
+            if (!(ci = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ci) ))) return 0;
+            SetWindowLongPtrW( hwnd, sizeof(void *), (ULONG_PTR)ci );
+            win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
+        }
         return unicode ? DefWindowProcW( hwnd, message, wParam, lParam ) :
                          DefWindowProcA( hwnd, message, wParam, lParam );
     }
@@ -1077,7 +1081,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
           HeapFree( GetProcessHeap(), 0, ci->child );
           HeapFree( GetProcessHeap(), 0, ci->frameTitle );
-
+          HeapFree( GetProcessHeap(), 0, ci );
           return 0;
       }
 
