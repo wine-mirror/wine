@@ -34,42 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-/***********************************************************************
- *           DEFWND_ControlColor
- *
- * Default colors for control painting.
- */
-HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
-{
-    if( ctlType == CTLCOLOR_SCROLLBAR)
-    {
-        HBRUSH hb = GetSysColorBrush(COLOR_SCROLLBAR);
-        COLORREF bk = GetSysColor(COLOR_3DHILIGHT);
-        SetTextColor( hDC, GetSysColor(COLOR_3DFACE));
-        SetBkColor( hDC, bk);
-
-        /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT
-         * we better use 0x55aa bitmap brush to make scrollbar's background
-         * look different from the window background.
-         */
-        if (bk == GetSysColor(COLOR_WINDOW))
-            return SYSCOLOR_Get55AABrush();
-
-        UnrealizeObject( hb );
-        return hb;
-    }
-
-    SetTextColor( hDC, GetSysColor(COLOR_WINDOWTEXT));
-
-    if ((ctlType == CTLCOLOR_EDIT) || (ctlType == CTLCOLOR_LISTBOX))
-        SetBkColor( hDC, GetSysColor(COLOR_WINDOW) );
-    else {
-        SetBkColor( hDC, GetSysColor(COLOR_3DFACE) );
-        return GetSysColorBrush(COLOR_3DFACE);
-    }
-    return GetSysColorBrush(COLOR_WINDOW);
-}
-
 
 /***********************************************************************
  *              DefWindowProcA (USER32.@)

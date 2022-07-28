@@ -97,18 +97,30 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
     HPEN hSavePen;
     HBRUSH hSaveBrush,hBrush;
 
-      /* Select the correct brush and pen */
-
-    /* Only scrollbar controls send WM_CTLCOLORSCROLLBAR.
-     * The window-owned scrollbars need to call DEFWND_ControlColor
-     * to correctly setup default scrollbar colors
-     */
-    if (nBar == SB_CTL) {
+    if (nBar == SB_CTL)
+    {
         hBrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
                                        (WPARAM)hdc,(LPARAM)hwnd);
-    } else {
-        hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR );
     }
+    else
+    {
+        COLORREF bk = GetSysColor( COLOR_3DHILIGHT );
+        SetTextColor( hdc, GetSysColor( COLOR_3DFACE ));
+        SetBkColor( hdc, bk );
+
+        /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT
+         * we better use 0x55aa bitmap brush to make scrollbar's background
+         * look different from the window background.
+         */
+        if (bk == GetSysColor( COLOR_WINDOW ))
+            hBrush = SYSCOLOR_Get55AABrush();
+        else
+        {
+            hBrush = GetSysColorBrush( COLOR_SCROLLBAR );
+            UnrealizeObject( hBrush );
+        }
+    }
+
     hSavePen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
     hSaveBrush = SelectObject( hdc, hBrush );
 
