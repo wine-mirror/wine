@@ -132,7 +132,7 @@ sub replace_makefile_variables($)
     my $old;
     my $new;
 
-    open OLD_FILE, "$file.in" or die "cannot open $file.in";
+    open OLD_FILE, $file or die "cannot open $file";
     while (<OLD_FILE>)
     {
         $old .= $_;
@@ -180,7 +180,7 @@ sub replace_makefile_variables($)
             $replaced{$var} = 1;
             foreach my $val (@values)
             {
-                die "$file.in: duplicate file $val" if defined $files{$val};
+                die "$file: duplicate file $val" if defined $files{$val};
                 $files{$val} = 1;
             }
             next;
@@ -201,7 +201,7 @@ sub replace_makefile_variables($)
         }
     }
     close OLD_FILE;
-    update_file("$file.in", $new) if $old ne $new;
+    update_file($file, $new) if $old ne $new;
 }
 
 # parse the specified makefile and load the variables
@@ -212,7 +212,7 @@ sub parse_makefile($)
 
     ($make{"=dir"} = $file) =~ s/[^\/]+$//;
 
-    open MAKE, "$file.in" or die "cannot open $file.in\n";
+    open MAKE, $file or die "cannot open $file\n";
 
     while (<MAKE>)
     {
@@ -223,7 +223,7 @@ sub parse_makefile($)
 
         if (/\@[A-Z_]+\@/)  # config.status substitution variable
         {
-            die "Configure substitution is not allowed in $file" unless $file eq "Makefile";
+            die "Configure substitution is not allowed in $file" unless $file eq "Makefile.in";
         }
         if (/^\s*(MODULE|IMPORTLIB|TESTDLL|STATICLIB|PARENTSRC|EXTRADLLFLAGS)\s*=\s*(.*)/)
         {
@@ -241,7 +241,7 @@ sub parse_makefile($)
         }
         if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
         {
-            die "Variable $1 in $file.in is obsolete";
+            die "Variable $1 in $file is obsolete";
         }
     }
 
@@ -293,13 +293,13 @@ sub get_parent_makefile($)
     my %make = %{$makefiles{$file}};
     my $reldir = $make{"PARENTSRC"} || "";
     return "" unless $reldir;
-    (my $path = $file) =~ s/\/Makefile$/\//;
+    (my $path = $file) =~ s/\/Makefile\.in$/\//;
     while ($reldir =~ /^\.\.\//)
     {
         $reldir =~ s/^\.\.\///;
         $path =~ s/[^\/]+\/$//;
     }
-    return "$path$reldir/Makefile";
+    return "$path$reldir/Makefile.in";
 }
 
 # preserve shared source files that are listed in the existing makefile
@@ -329,13 +329,13 @@ sub assign_sources_to_makefiles(@)
         my $dir = dirname( $file );
         my $subdir = $dir;
 
-        while ($dir && !defined $makefiles{"$dir/Makefile"}) { $dir = dirname( $dir ); }
+        while ($dir && !defined $makefiles{"$dir/Makefile.in"}) { $dir = dirname( $dir ); }
         $subdir =~ s/^$dir\/?//;
         next unless $dir;
 
-        die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile"};
+        die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile.in"};
 
-        my $make = $makefiles{"$dir/Makefile"};
+        my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
         if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
@@ -417,13 +417,13 @@ sub update_makefiles(@)
 
     foreach my $file (sort @_)
     {
-        next if $file eq "Makefile";
+        next if $file eq "Makefile.in";
         my %make = %{$makefiles{$file}};
-        (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
+        (my $dir = $file) =~ s/^(.*)\/Makefile\.in/$1/;
         my $args = "";
         if (defined($make{"TESTDLL"}))  # test
         {
-            die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile$/;
+            die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile\.in$/;
             die "MODULE should not be defined in $file" if defined $make{"MODULE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
         }
@@ -434,7 +434,7 @@ sub update_makefiles(@)
         }
         elsif (defined($make{"MODULE"}))  # dll or program
         {
-            (my $name = $file) =~ s/^(dlls|programs)\/(.*)\/Makefile/$2/;
+            (my $name = $file) =~ s/^(dlls|programs)\/(.*)\/Makefile\.in/$2/;
             my $dllflags = $make{"EXTRADLLFLAGS"} || "";
             die "invalid MODULE name" if $make{"MODULE"} =~ /\.a$/;
             die "MODULE should not be defined in $file" unless $file =~ /^(dlls|programs)\//;
@@ -457,7 +457,7 @@ sub update_makefiles(@)
             }
             $args = ",enable_win16" if $make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}};
         }
-        elsif ($file =~ /^tools.*\/Makefile$/)
+        elsif ($file =~ /^tools.*\/Makefile\.in$/)
         {
             die "MODULE should not be defined in $file" if defined $make{"MODULE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
@@ -489,7 +489,7 @@ die "needs to be run from a git checkout" unless -e $git_dir;
 
 my @all_files = split /\0/, `git ls-files -c -z`;
 map { $ignored_source_files{$_} = 1; } split /\0/, `git ls-files -d -z`;
-@makefiles = map { (my $ret = $_) =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
+@makefiles = grep /Makefile.in$/, @all_files;
 
 foreach my $file (sort @makefiles)
 {
