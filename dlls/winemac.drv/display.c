@@ -716,85 +716,14 @@ static BOOL is_detached_mode(const DEVMODEW *mode)
            mode->dmPelsHeight == 0;
 }
 
-/***********************************************************************
- *              ChangeDisplaySettingsEx  (MACDRV.@)
- *
- */
-LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
-                                    HWND hwnd, DWORD flags, LPVOID lpvoid)
+static CGDisplayModeRef find_best_display_mode(DEVMODEW *devmode, CFArrayRef display_modes, int bpp, struct display_mode_descriptor *desc)
 {
-    WCHAR primary_adapter[CCHDEVICENAME];
-    LONG ret = DISP_CHANGE_BADMODE;
-    DEVMODEW default_mode;
-    int bpp;
-    struct macdrv_display *displays;
-    int num_displays;
-    CFArrayRef display_modes;
-    struct display_mode_descriptor* desc;
     CFIndex count, i, best;
     CGDisplayModeRef best_display_mode;
     uint32_t best_io_flags;
-    BOOL best_is_original;
-
-    TRACE("%s %p %p 0x%08x %p\n", debugstr_w(devname), devmode, hwnd, flags, lpvoid);
-
-    init_original_display_mode();
-
-    if (!get_primary_adapter(primary_adapter))
-        return DISP_CHANGE_FAILED;
-
-    if (!devname && !devmode)
-    {
-        UNICODE_STRING str;
-        memset(&default_mode, 0, sizeof(default_mode));
-        default_mode.dmSize = sizeof(default_mode);
-        RtlInitUnicodeString(&str, primary_adapter);
-        if (!NtUserEnumDisplaySettings(&str, ENUM_REGISTRY_SETTINGS, &default_mode, 0))
-        {
-            ERR("Default mode not found for %s!\n", wine_dbgstr_w(primary_adapter));
-            return DISP_CHANGE_BADMODE;
-        }
-
-        devname = primary_adapter;
-        devmode = &default_mode;
-    }
-
-    if (is_detached_mode(devmode))
-    {
-        FIXME("Detaching adapters is currently unsupported.\n");
-        return DISP_CHANGE_SUCCESSFUL;
-    }
-
-    if (macdrv_get_displays(&displays, &num_displays))
-        return DISP_CHANGE_FAILED;
-
-    display_modes = copy_display_modes(displays[0].displayID, FALSE);
-    if (!display_modes)
-    {
-        macdrv_free_displays(displays);
-        return DISP_CHANGE_FAILED;
-    }
-
-    pthread_mutex_lock(&modes_mutex);
-    bpp = get_default_bpp();
-    pthread_mutex_unlock(&modes_mutex);
-    if ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel != bpp)
-        TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, devmode->dmBitsPerPel);
-
-    TRACE("looking for %dx%dx%dbpp @%d Hz",
-          (devmode->dmFields & DM_PELSWIDTH ? devmode->dmPelsWidth : 0),
-          (devmode->dmFields & DM_PELSHEIGHT ? devmode->dmPelsHeight : 0),
-          bpp,
-          (devmode->dmFields & DM_DISPLAYFREQUENCY ? devmode->dmDisplayFrequency : 0));
-    if (devmode->dmFields & DM_DISPLAYFIXEDOUTPUT)
-        TRACE(" %sstretched", devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un");
-    if (devmode->dmFields & DM_DISPLAYFLAGS)
-        TRACE(" %sinterlaced", devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
-    TRACE("\n");
-
-    desc = create_original_display_mode_descriptor(displays[0].displayID);
 
     best_display_mode = NULL;
+
     count = CFArrayGetCount(display_modes);
     for (i = 0; i < count; i++)
     {
@@ -866,14 +795,92 @@ better:
         best_display_mode = display_mode;
         best = i;
         best_io_flags = io_flags;
-        best_is_original = is_original;
     }
 
     if (best_display_mode)
-    {
-        /* we have a valid mode */
         TRACE("Requested display settings match mode %ld\n", best);
 
+    return best_display_mode;
+}
+
+/***********************************************************************
+ *              ChangeDisplaySettingsEx  (MACDRV.@)
+ *
+ */
+LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
+                                    HWND hwnd, DWORD flags, LPVOID lpvoid)
+{
+    WCHAR primary_adapter[CCHDEVICENAME];
+    LONG ret = DISP_CHANGE_BADMODE;
+    DEVMODEW default_mode;
+    int bpp;
+    struct macdrv_display *displays;
+    int num_displays;
+    CFArrayRef display_modes;
+    struct display_mode_descriptor *desc;
+    CGDisplayModeRef best_display_mode;
+
+    TRACE("%s %p %p 0x%08x %p\n", debugstr_w(devname), devmode, hwnd, flags, lpvoid);
+
+    init_original_display_mode();
+
+    if (!get_primary_adapter(primary_adapter))
+        return DISP_CHANGE_FAILED;
+
+    if (!devname && !devmode)
+    {
+        UNICODE_STRING str;
+        memset(&default_mode, 0, sizeof(default_mode));
+        default_mode.dmSize = sizeof(default_mode);
+        RtlInitUnicodeString(&str, primary_adapter);
+        if (!NtUserEnumDisplaySettings(&str, ENUM_REGISTRY_SETTINGS, &default_mode, 0))
+        {
+            ERR("Default mode not found for %s!\n", wine_dbgstr_w(primary_adapter));
+            return DISP_CHANGE_BADMODE;
+        }
+
+        devname = primary_adapter;
+        devmode = &default_mode;
+    }
+
+    if (is_detached_mode(devmode))
+    {
+        FIXME("Detaching adapters is currently unsupported.\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    if (macdrv_get_displays(&displays, &num_displays))
+        return DISP_CHANGE_FAILED;
+
+    display_modes = copy_display_modes(displays[0].displayID, FALSE);
+    if (!display_modes)
+    {
+        macdrv_free_displays(displays);
+        return DISP_CHANGE_FAILED;
+    }
+
+    pthread_mutex_lock(&modes_mutex);
+    bpp = get_default_bpp();
+    pthread_mutex_unlock(&modes_mutex);
+    if ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel != bpp)
+        TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, devmode->dmBitsPerPel);
+
+    TRACE("looking for %dx%dx%dbpp @%d Hz",
+          (devmode->dmFields & DM_PELSWIDTH ? devmode->dmPelsWidth : 0),
+          (devmode->dmFields & DM_PELSHEIGHT ? devmode->dmPelsHeight : 0),
+          bpp,
+          (devmode->dmFields & DM_DISPLAYFREQUENCY ? devmode->dmDisplayFrequency : 0));
+    if (devmode->dmFields & DM_DISPLAYFIXEDOUTPUT)
+        TRACE(" %sstretched", devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un");
+    if (devmode->dmFields & DM_DISPLAYFLAGS)
+        TRACE(" %sinterlaced", devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
+    TRACE("\n");
+
+    desc = create_original_display_mode_descriptor(displays[0].displayID);
+    best_display_mode = find_best_display_mode(devmode, display_modes, bpp, desc);
+
+    if (best_display_mode)
+    {
         if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
         else if (wcsicmp(primary_adapter, devname))
         {
@@ -888,7 +895,7 @@ better:
 
             macdrv_init_display_devices(TRUE);
 
-            if (best_is_original && retina_enabled)
+            if (retina_enabled && display_mode_matches_descriptor(best_display_mode, desc))
             {
                 width *= 2;
                 height *= 2;
