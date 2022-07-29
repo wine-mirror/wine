@@ -285,6 +285,8 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->source_start_line = -1;
     p->source_end_line = -1;
     p->data_model = NULL;
+    p->synthetized_types = NULL;
+    p->num_synthetized_types = 0;
 
     list_add_head(&dbg_process_list, &p->entry);
 
@@ -330,6 +332,7 @@ void dbg_del_process(struct dbg_process* p)
     if (p == dbg_curr_process) dbg_curr_process = NULL;
     if (p->event_on_first_exception) CloseHandle(p->event_on_first_exception);
     free((char*)p->imageName);
+    free(p->synthetized_types);
     free(p);
 }
 

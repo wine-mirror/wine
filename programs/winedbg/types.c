@@ -371,19 +371,56 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
 /******************************************************************
  *		types_find_pointer
  *
- * Should look up in module based at linear whether (typeid*) exists
- * Otherwise, we could create it locally
+ * There's no simple API in dbghelp for looking up the pointer type of a given type
+ * - SymEnumTypes would do, but it'll enumerate all types, which could be long
+ * - and more impacting, there's no guarantee such a type exists
+ * Hence, we synthetize inside Winedbg all needed pointer types.
+ * That's cumbersome as we end up with dbg_type in different modules between pointer
+ * and pointee types.
  */
 BOOL types_find_pointer(const struct dbg_type* type, struct dbg_type* outtype)
 {
     struct type_find_t  f;
+    unsigned i;
+    struct dbg_type* new;
 
+    if (!dbg_curr_process) return FALSE;
+
+    /* first lookup if pointer to type exists in module */
     f.type.id = dbg_itype_none;
     f.tag = SymTagPointerType;
     f.ptr_typeid = type->id;
-    if (!SymEnumTypes(dbg_curr_process->handle, type->module, types_cb, &f) || f.type.id == dbg_itype_none)
+    SymEnumTypes(dbg_curr_process->handle, type->module, types_cb, &f);
+    if (f.type.id != dbg_itype_none)
+    {
+        *outtype = f.type;
+        return TRUE;
+    }
+
+    /* then look up in synthetized types */
+    for (i = 0; i < dbg_curr_process->num_synthetized_types; i++)
+        if (!memcmp(type, &dbg_curr_process->synthetized_types[i], sizeof(*type)))
+        {
+            outtype->module = 0;
+            outtype->id = dbg_itype_synthetized + i;
+            return TRUE;
+        }
+    if (dbg_itype_synthetized + dbg_curr_process->num_synthetized_types >= dbg_itype_first)
+    {
+        /* for now, we don't reuse old slots... */
+        FIXME("overflow in pointer types\n");
         return FALSE;
-    *outtype = f.type;
+    }
+    /* otherwise, synthetize it */
+    new = realloc(dbg_curr_process->synthetized_types,
+                  (dbg_curr_process->num_synthetized_types + 1) * sizeof(*new));
+    if (!new) return FALSE;
+    dbg_curr_process->synthetized_types = new;
+    dbg_curr_process->synthetized_types[dbg_curr_process->num_synthetized_types] = *type;
+    outtype->module = 0;
+    outtype->id = dbg_itype_synthetized + dbg_curr_process->num_synthetized_types;
+    dbg_curr_process->num_synthetized_types++;
+
     return TRUE;
 }
 
@@ -1041,6 +1078,7 @@ static BOOL lookup_base_type_in_data_model(DWORD64 module, unsigned bt, unsigned
  * - module & type id on input are in dbg_type structure
  * - for TI_GET_TYPE a pointer to a dbg_type is expected for pInfo
  *   (instead of DWORD* for SymGetTypeInfo)
+ * - handles also internal types, and synthetized types.
  */
 BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
 {
@@ -1072,6 +1110,24 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
             return TRUE;
         }
         return SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
+    }
+
+    if (type->id >= dbg_itype_synthetized && type->id < dbg_itype_first)
+    {
+        unsigned i = type->id - dbg_itype_synthetized;
+        if (i >= dbg_curr_process->num_synthetized_types) return FALSE;
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:  X(DWORD)   = SymTagPointerType; break;
+        case TI_GET_LENGTH:  X(DWORD64) = ADDRSIZE; break;
+        case TI_GET_TYPE:    if (dbg_curr_process->synthetized_types[i].module == 0 &&
+                                 dbg_curr_process->synthetized_types[i].id == dbg_itype_none) return FALSE;
+
+                             X(struct dbg_type) = dbg_curr_process->synthetized_types[i];
+                             break;
+        default: WINE_FIXME("unsupported %u for pointer type %d\n", ti, i); return FALSE;
+        }
+        return TRUE;
     }
 
     assert(type->id >= dbg_itype_first);
@@ -1140,6 +1196,21 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
     }
 
 #undef X
+    return TRUE;
+}
+
+BOOL types_unload_module(DWORD_PTR linear)
+{
+    unsigned i;
+    if (!dbg_curr_process) return FALSE;
+    for (i = 0; i < dbg_curr_process->num_synthetized_types; i++)
+    {
+        if (dbg_curr_process->synthetized_types[i].module == linear)
+        {
+            dbg_curr_process->synthetized_types[i].module = 0;
+            dbg_curr_process->synthetized_types[i].id = dbg_itype_none;
+        }
+    }
     return TRUE;
 }
 
@@ -1299,7 +1370,7 @@ BOOL types_is_integral_type(const struct dbg_lvalue* lv)
     struct dbg_type type = lv->type;
     DWORD tag, bt;
     if (lv->bitlen) return TRUE;
-    if (!types_get_real_type(&type, &tag) ||
+    if (!types_get_real_type(&type, &tag) || tag != SymTagBaseType ||
         !types_get_info(&type, TI_GET_BASETYPE, &bt)) return FALSE;
     return is_basetype_integer(bt);
 }
@@ -1309,7 +1380,7 @@ BOOL types_is_float_type(const struct dbg_lvalue* lv)
     struct dbg_type type = lv->type;
     DWORD tag, bt;
     if (lv->bitlen) return FALSE;
-    if (!types_get_real_type(&type, &tag) ||
+    if (!types_get_real_type(&type, &tag) || tag != SymTagBaseType ||
         !types_get_info(&type, TI_GET_BASETYPE, &bt)) return FALSE;
     return bt == btFloat;
 }

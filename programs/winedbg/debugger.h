@@ -67,6 +67,8 @@ enum dbg_line_status
 
 enum dbg_internal_types
 {
+    /* types that we synthetize inside the debugger */
+    dbg_itype_synthetized       = 0xf0000000,
     /* order here must match types.c:basic_types_details table */
     dbg_itype_first             = 0xffffff00,
     dbg_itype_void              = dbg_itype_first,
@@ -282,6 +284,8 @@ struct dbg_process
     int                         source_start_line;
     int                         source_end_line;
     const struct data_model*    data_model;
+    struct dbg_type*            synthetized_types;
+    unsigned                    num_synthetized_types;
 };
 
 /* describes the way the debugger interacts with a given process */
@@ -499,6 +503,7 @@ extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
 extern BOOL             types_is_float_type(const struct dbg_lvalue*);
 extern BOOL             types_is_pointer_type(const struct dbg_lvalue*);
 extern BOOL             types_find_basic(const WCHAR*, const char*, struct dbg_type* type);
+extern BOOL             types_unload_module(DWORD_PTR linear);
 
   /* winedbg.c */
 #ifdef __GNUC__
