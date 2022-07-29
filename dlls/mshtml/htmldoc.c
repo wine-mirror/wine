@@ -146,6 +146,267 @@ UINT get_document_charset(HTMLDocumentNode *doc)
     return doc->charset = ret;
 }
 
+typedef struct {
+    HTMLDOMNode node;
+    IDOMDocumentType IDOMDocumentType_iface;
+} DocumentType;
+
+static inline DocumentType *impl_from_IDOMDocumentType(IDOMDocumentType *iface)
+{
+    return CONTAINING_RECORD(iface, DocumentType, IDOMDocumentType_iface);
+}
+
+static HRESULT WINAPI DocumentType_QueryInterface(IDOMDocumentType *iface, REFIID riid, void **ppv)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI DocumentType_AddRef(IDOMDocumentType *iface)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI DocumentType_Release(IDOMDocumentType *iface)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI DocumentType_GetTypeInfoCount(IDOMDocumentType *iface, UINT *pctinfo)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DocumentType_GetTypeInfo(IDOMDocumentType *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DocumentType_GetIDsOfNames(IDOMDocumentType *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames,
+                                     cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI DocumentType_Invoke(IDOMDocumentType *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+                              wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DocumentType_get_name(IDOMDocumentType *iface, BSTR *p)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocumentType_get_entities(IDOMDocumentType *iface, IDispatch **p)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocumentType_get_notations(IDOMDocumentType *iface, IDispatch **p)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocumentType_get_publicId(IDOMDocumentType *iface, VARIANT *p)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocumentType_get_systemId(IDOMDocumentType *iface, VARIANT *p)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocumentType_get_internalSubset(IDOMDocumentType *iface, VARIANT *p)
+{
+    DocumentType *This = impl_from_IDOMDocumentType(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static const IDOMDocumentTypeVtbl DocumentTypeVtbl = {
+    DocumentType_QueryInterface,
+    DocumentType_AddRef,
+    DocumentType_Release,
+    DocumentType_GetTypeInfoCount,
+    DocumentType_GetTypeInfo,
+    DocumentType_GetIDsOfNames,
+    DocumentType_Invoke,
+    DocumentType_get_name,
+    DocumentType_get_entities,
+    DocumentType_get_notations,
+    DocumentType_get_publicId,
+    DocumentType_get_systemId,
+    DocumentType_get_internalSubset
+};
+
+static inline DocumentType *DocumentType_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, DocumentType, node);
+}
+
+static inline DocumentType *DocumentType_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, DocumentType, node.event_target.dispex);
+}
+
+static HRESULT DocumentType_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IDOMDocumentType, riid))
+        *ppv = &This->IDOMDocumentType_iface;
+    else
+        return HTMLDOMNode_QI(&This->node, riid, ppv);
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static void DocumentType_destructor(HTMLDOMNode *iface)
+{
+    DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
+
+    HTMLDOMNode_destructor(&This->node);
+}
+
+static HRESULT DocumentType_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
+
+    return create_doctype_node(This->node.doc, nsnode, ret);
+}
+
+static const cpc_entry_t DocumentType_cpc[] = {{NULL}};
+
+static const NodeImplVtbl DocumentTypeImplVtbl = {
+    NULL,
+    DocumentType_QI,
+    DocumentType_destructor,
+    DocumentType_cpc,
+    DocumentType_clone
+};
+
+static nsISupports *DocumentType_get_gecko_target(DispatchEx *dispex)
+{
+    DocumentType *This = DocumentType_from_DispatchEx(dispex);
+    return (nsISupports*)This->node.nsnode;
+}
+
+static EventTarget *DocumentType_get_parent_event_target(DispatchEx *dispex)
+{
+    DocumentType *This = DocumentType_from_DispatchEx(dispex);
+    nsIDOMNode *nsnode;
+    HTMLDOMNode *node;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &nsnode);
+    assert(nsres == NS_OK);
+    if(!nsnode)
+        return NULL;
+
+    hres = get_node(nsnode, TRUE, &node);
+    nsIDOMNode_Release(nsnode);
+    if(FAILED(hres))
+        return NULL;
+
+    return &node->event_target;
+}
+
+static IHTMLEventObj *DocumentType_set_current_event(DispatchEx *dispex, IHTMLEventObj *event)
+{
+    DocumentType *This = DocumentType_from_DispatchEx(dispex);
+    return default_set_current_event(This->node.doc->window, event);
+}
+
+static event_target_vtbl_t DocumentType_event_target_vtbl = {
+    {
+        NULL,
+    },
+    DocumentType_get_gecko_target,
+    NULL,
+    DocumentType_get_parent_event_target,
+    NULL,
+    NULL,
+    DocumentType_set_current_event
+};
+
+static const tid_t DocumentType_iface_tids[] = {
+    IDOMDocumentType_tid,
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLDOMNode3_tid,
+    0
+};
+
+static dispex_static_data_t DocumentType_dispex = {
+    L"DocumentType",
+    &DocumentType_event_target_vtbl.dispex_vtbl,
+    DispDOMDocumentType_tid,
+    DocumentType_iface_tids
+};
+
+HRESULT create_doctype_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    nsIDOMDocumentType *nsdoctype;
+    DocumentType *doctype;
+    nsresult nsres;
+
+    if(!(doctype = heap_alloc_zero(sizeof(*doctype))))
+        return E_OUTOFMEMORY;
+
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMDocumentType, (void**)&nsdoctype);
+    assert(nsres == NS_OK);
+
+    doctype->node.vtbl = &DocumentTypeImplVtbl;
+    doctype->IDOMDocumentType_iface.lpVtbl = &DocumentTypeVtbl;
+    HTMLDOMNode_Init(doc, &doctype->node, (nsIDOMNode*)nsdoctype, &DocumentType_dispex);
+    nsIDOMDocumentType_Release(nsdoctype);
+
+    *ret = &doctype->node;
+    return S_OK;
+}
+
 static inline HTMLDocument *impl_from_IHTMLDocument2(IHTMLDocument2 *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDocument, IHTMLDocument2_iface);
@@ -2818,8 +3079,33 @@ static HRESULT WINAPI HTMLDocument5_get_onmousewheel(IHTMLDocument5 *iface, VARI
 static HRESULT WINAPI HTMLDocument5_get_doctype(IHTMLDocument5 *iface, IHTMLDOMNode **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLDocumentNode *doc_node = This->doc_node;
+    nsIDOMDocumentType *nsdoctype;
+    HTMLDOMNode *doctype_node;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(dispex_compat_mode(&doc_node->node.event_target.dispex) < COMPAT_MODE_IE9) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsres = nsIDOMHTMLDocument_GetDoctype(doc_node->nsdoc, &nsdoctype);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+    if(!nsdoctype) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = get_node((nsIDOMNode*)nsdoctype, TRUE, &doctype_node);
+    nsIDOMDocumentType_Release(nsdoctype);
+
+    if(SUCCEEDED(hres))
+        *p = &doctype_node->IHTMLDOMNode_iface;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument5_get_implementation(IHTMLDocument5 *iface, IHTMLDOMImplementation **p)

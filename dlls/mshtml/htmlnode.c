@@ -1506,8 +1506,15 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
         if(FAILED(hres))
             return hres;
         break;
-    /* doctype nodes are represented as comment nodes (at least in quirks mode) */
     case DOCUMENT_TYPE_NODE:
+        if(dispex_compat_mode(&doc->node.event_target.dispex) >= COMPAT_MODE_IE9) {
+            hres = create_doctype_node(doc, nsnode, ret);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+        /* doctype nodes are represented as comment nodes in quirks mode */
+        /* fall through */
     case COMMENT_NODE: {
         HTMLElement *comment;
         hres = HTMLCommentElement_Create(doc, nsnode, &comment);

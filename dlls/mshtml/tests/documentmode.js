@@ -242,6 +242,7 @@ sync_test("builtin_toString", function() {
     }
     if(v >= 9) {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
+        test("doctype", document.doctype, "DocumentType");
 
         test("Event", document.createEvent("Event"), "Event");
         test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
@@ -660,6 +661,15 @@ sync_test("doc_mode", function() {
         ok(document.compatMode === "CSS1Compat", "document.compatMode = " + document.compatMode);
     else
         ok(document.compatMode === "BackCompat", "document.compatMode = " + document.compatMode);
+});
+
+sync_test("doctype", function() {
+    var doctype = document.doctype;
+
+    if(document.documentMode < 9) {
+        ok(doctype === null, "doctype = " + document.doctype);
+        return;
+    }
 });
 
 async_test("iframe_doc_mode", function() {

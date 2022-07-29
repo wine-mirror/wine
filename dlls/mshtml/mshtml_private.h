@@ -91,6 +91,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispDOMMouseEvent) \
     XDIID(DispDOMProgressEvent) \
     XDIID(DispDOMUIEvent) \
+    XDIID(DispDOMDocumentType) \
     XDIID(DispHTMLAnchorElement) \
     XDIID(DispHTMLAreaElement) \
     XDIID(DispHTMLAttributeCollection) \
@@ -153,6 +154,7 @@ typedef struct EventTarget EventTarget;
     XIID(IDOMMouseEvent) \
     XIID(IDOMProgressEvent) \
     XIID(IDOMUIEvent) \
+    XIID(IDOMDocumentType) \
     XIID(IDocumentEvent) \
     XIID(IDocumentRange) \
     XIID(IDocumentSelector) \
@@ -929,6 +931,7 @@ HRESULT MHTMLDocument_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT create_document_node(nsIDOMHTMLDocument*,GeckoBrowser*,HTMLInnerWindow*,
                              compat_mode_t,HTMLDocumentNode**) DECLSPEC_HIDDEN;
+HRESULT create_doctype_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**) DECLSPEC_HIDDEN;
 
 HRESULT create_outer_window(GeckoBrowser*,mozIDOMWindowProxy*,HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HRESULT update_window_doc(HTMLInnerWindow*) DECLSPEC_HIDDEN;
