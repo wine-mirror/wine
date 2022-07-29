@@ -1296,7 +1296,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
             buffer, buffer->resource.size, buffer->resource.usage, buffer->resource.heap_memory);
 
     if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING
-            || wined3d_resource_access_is_managed(access))
+            || (desc->usage & WINED3DUSAGE_MANAGED))
     {
         /* SWvp and managed buffers always return the same pointer in buffer
          * maps and retain data in DISCARD maps. Keep a system memory copy of

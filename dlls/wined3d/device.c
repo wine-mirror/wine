@@ -5525,7 +5525,7 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     {
         TRACE("Checking resource %p for eviction.\n", resource);
 
-        if (wined3d_resource_access_is_managed(resource->access) && !resource->map_count)
+        if ((resource->usage & WINED3DUSAGE_MANAGED) && !resource->map_count)
         {
             TRACE("Evicting %p.\n", resource);
             wined3d_cs_emit_unload_resource(device->cs, resource);

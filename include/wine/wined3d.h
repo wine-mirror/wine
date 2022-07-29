@@ -953,6 +953,7 @@ enum wined3d_memory_segment_group
 #define WINED3DUSAGE_OWNDC                                      0x02000000
 #define WINED3DUSAGE_STATICDECL                                 0x04000000
 #define WINED3DUSAGE_OVERLAY                                    0x08000000
+#define WINED3DUSAGE_MANAGED                                    0x20000000
 
 #define WINED3DUSAGE_QUERY_GENMIPMAP                            0x00000400
 #define WINED3DUSAGE_QUERY_LEGACYBUMPMAP                        0x00008000

@@ -32,6 +32,7 @@ static void resource_check_usage(DWORD usage, unsigned int access)
             | WINED3DUSAGE_STATICDECL
             | WINED3DUSAGE_OVERLAY
             | WINED3DUSAGE_SCRATCH
+            | WINED3DUSAGE_MANAGED
             | WINED3DUSAGE_PRIVATE
             | WINED3DUSAGE_LEGACY_CUBEMAP
             | ~WINED3DUSAGE_MASK;
@@ -97,8 +98,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             return WINED3DERR_INVALIDCALL;
         }
 
-        /* Dynamic usage is incompatible with GPU writes. */
-        if (usage & WINED3DUSAGE_DYNAMIC)
+        /* Dynamic and managed usages are incompatible with GPU writes. */
+        if (usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_MANAGED))
         {
             WARN("Bind flags %s are incompatible with resource usage %s.\n",
                     wined3d_debug_bind_flags(bind_flags), debug_d3dusage(usage));
@@ -268,7 +269,7 @@ DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWO
 {
     DWORD prev;
 
-    if (!wined3d_resource_access_is_managed(resource->access))
+    if (!(resource->usage & WINED3DUSAGE_MANAGED))
     {
         WARN("Called on non-managed resource %p, ignoring.\n", resource);
         return 0;

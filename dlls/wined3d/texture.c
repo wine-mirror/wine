@@ -1736,7 +1736,7 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
     /* The d3d9:texture test shows that SetLOD is ignored on non-managed
      * textures. The call always returns 0, and GetLOD always returns 0. */
     resource = &texture->resource;
-    if (!wined3d_resource_access_is_managed(resource->access))
+    if (!(resource->usage & WINED3DUSAGE_MANAGED))
     {
         TRACE("Ignoring LOD on texture with resource access %s.\n",
                 wined3d_debug_resource_access(resource->access));
@@ -3872,11 +3872,9 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     }
     format = wined3d_get_format(device->adapter, desc->format, desc->bind_flags);
 
-    if (desc->usage & WINED3DUSAGE_DYNAMIC && (wined3d_resource_access_is_managed(desc->access)
-            || desc->usage & WINED3DUSAGE_SCRATCH))
+    if ((desc->usage & WINED3DUSAGE_DYNAMIC) && (desc->usage & (WINED3DUSAGE_MANAGED | WINED3DUSAGE_SCRATCH)))
     {
-        WARN("Attempted to create a dynamic texture with access %s and usage %s.\n",
-                wined3d_debug_resource_access(desc->access), debug_d3dusage(desc->usage));
+        WARN("Attempted to create a dynamic texture with usage %s.\n", debug_d3dusage(desc->usage));
         return WINED3DERR_INVALIDCALL;
     }
 

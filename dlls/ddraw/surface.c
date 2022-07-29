@@ -6441,6 +6441,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                     | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
             /* Managed textures have the system memory flag set. */
             desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+            wined3d_desc.usage |= WINED3DUSAGE_MANAGED;
         }
         else if (desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
         {

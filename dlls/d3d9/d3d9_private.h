@@ -318,6 +318,9 @@ static inline DWORD d3dusage_from_wined3dusage(unsigned int wined3d_usage, unsig
 
 static inline D3DPOOL d3dpool_from_wined3daccess(unsigned int access, unsigned int usage)
 {
+    if (usage & WINED3DUSAGE_MANAGED)
+        return D3DPOOL_MANAGED;
+
     switch (access & (WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU))
     {
         default:
@@ -378,6 +381,8 @@ static inline unsigned int wined3d_usage_from_d3d(D3DPOOL pool, DWORD usage)
     usage &= WINED3DUSAGE_MASK;
     if (pool == D3DPOOL_SCRATCH)
         usage |= WINED3DUSAGE_SCRATCH;
+    else if (pool == D3DPOOL_MANAGED)
+        usage |= WINED3DUSAGE_MANAGED;
     return usage;
 }
 
