@@ -1976,10 +1976,8 @@ static HRESULT WINAPI d3d9_device_CreateOffscreenPlainSurface(IDirect3DDevice9Ex
         }
     }
 
-    usage = 0;
-    if (pool == D3DPOOL_SCRATCH)
-        usage |= WINED3DUSAGE_SCRATCH;
-    access = wined3daccess_from_d3dpool(pool, usage)
+    usage = wined3d_usage_from_d3d(pool, 0);
+    access = wined3daccess_from_d3dpool(pool, 0)
             | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
 
     return d3d9_device_create_surface(device, 0, wined3dformat_from_d3dformat(format),

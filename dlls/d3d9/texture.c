@@ -1317,9 +1317,7 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     desc.format = wined3dformat_from_d3dformat(format);
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
-    desc.usage = wined3dusage_from_d3dusage(usage);
-    if (pool == D3DPOOL_SCRATCH)
-        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.usage = wined3d_usage_from_d3d(pool, usage);
     desc.bind_flags = wined3d_bind_flags_from_d3d9_usage(usage) | WINED3D_BIND_SHADER_RESOURCE;
     desc.access = wined3daccess_from_d3dpool(pool, usage);
     desc.width = width;
@@ -1414,10 +1412,7 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
     desc.format = wined3dformat_from_d3dformat(format);
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
-    desc.usage = wined3dusage_from_d3dusage(usage);
-    desc.usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
-    if (pool == D3DPOOL_SCRATCH)
-        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.usage = wined3d_usage_from_d3d(pool, usage) | WINED3DUSAGE_LEGACY_CUBEMAP;
     desc.bind_flags = wined3d_bind_flags_from_d3d9_usage(usage) | WINED3D_BIND_SHADER_RESOURCE;
     desc.access = wined3daccess_from_d3dpool(pool, usage);
     desc.width = edge_length;
@@ -1500,9 +1495,7 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
     desc.format = wined3dformat_from_d3dformat(format);
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
-    desc.usage = wined3dusage_from_d3dusage(usage);
-    if (pool == D3DPOOL_SCRATCH)
-        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.usage = wined3d_usage_from_d3d(pool, usage);
     desc.bind_flags = wined3d_bind_flags_from_d3d9_usage(usage) | WINED3D_BIND_SHADER_RESOURCE;
     desc.access = wined3daccess_from_d3dpool(pool, usage);
     desc.width = width;
