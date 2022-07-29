@@ -1608,7 +1608,7 @@ UINT get_win_monitor_dpi( HWND hwnd )
  */
 DPI_AWARENESS get_thread_dpi_awareness(void)
 {
-    struct user_thread_info *info = get_user_thread_info();
+    struct ntuser_thread_info *info = NtUserGetThreadInfo();
     ULONG_PTR context = info->dpi_awareness;
 
     if (!context) context = NtUserGetProcessDpiAwarenessContext( NULL );
@@ -1677,7 +1677,7 @@ static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CON
  */
 DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    struct user_thread_info *info = get_user_thread_info();
+    struct ntuser_thread_info *info = NtUserGetThreadInfo();
     DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( context );
 
     if (val == DPI_AWARENESS_INVALID)

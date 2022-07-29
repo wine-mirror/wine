@@ -888,7 +888,7 @@ UINT WINAPI GetDpiForSystem(void)
  */
 DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
 {
-    struct user_thread_info *info = get_user_thread_info();
+    struct ntuser_thread_info *info = NtUserGetThreadInfo();
 
     if (info->dpi_awareness) return ULongToHandle( info->dpi_awareness );
     return UlongToHandle( (NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3 ) | 0x10 );
@@ -899,7 +899,7 @@ DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
  */
 DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    struct user_thread_info *info = get_user_thread_info();
+    struct ntuser_thread_info *info = NtUserGetThreadInfo();
     DPI_AWARENESS prev, val = GetAwarenessFromDpiAwarenessContext( context );
 
     if (val == DPI_AWARENESS_INVALID)
