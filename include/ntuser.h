@@ -922,7 +922,6 @@ enum
     NtUserCallOneParam_SetProcessDefaultLayout,
     /* temporary exports */
     NtUserGetDeskPattern,
-    NtUserLock,
 };
 
 static inline HDWP NtUserBeginDeferWindowPos( INT count )

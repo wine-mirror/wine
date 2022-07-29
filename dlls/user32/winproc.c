@@ -147,8 +147,6 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     WNDPROC proc = arg;
     LRESULT ret;
 
-    USER_CheckNotLock();
-
     hwnd = WIN_GetFullHandle( hwnd );
     TRACE_(relay)( "\1Call dialog proc %p (hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );

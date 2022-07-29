@@ -41,16 +41,6 @@ HMODULE user32_module = 0;
 
 extern void WDML_NotifyThreadDetach(void);
 
-/***********************************************************************
- *           USER_CheckNotLock
- *
- * Make sure that we don't hold the user lock.
- */
-void USER_CheckNotLock(void)
-{
-    NtUserCallOneParam( 2, NtUserLock );
-}
-
 
 /***********************************************************************
  *             UserRealizePalette (USER32.@)

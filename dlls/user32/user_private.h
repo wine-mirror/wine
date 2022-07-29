@@ -73,7 +73,6 @@ extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping 
 extern HPEN SYSCOLOR_GetPen( INT index ) DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_Get55AABrush(void) DECLSPEC_HIDDEN;
 extern void SYSPARAMS_Init(void) DECLSPEC_HIDDEN;
-extern void USER_CheckNotLock(void) DECLSPEC_HIDDEN;
 
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );

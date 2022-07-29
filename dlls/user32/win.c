@@ -1034,8 +1034,6 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
     BOOL ret = TRUE;
     int i;
 
-    USER_CheckNotLock();
-
     /* We have to build a list of all windows first, to avoid */
     /* unpleasant side-effects, for instance if the callback */
     /* function changes the Z-order of the windows.          */
@@ -1064,8 +1062,6 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
     int i;
     BOOL ret = TRUE;
 
-    USER_CheckNotLock();
-
     if (!(list = list_window_children( 0, GetDesktopWindow(), NULL, id ))) return TRUE;
 
     /* Now call the callback function for every window */
@@ -1084,8 +1080,6 @@ BOOL WINAPI EnumDesktopWindows( HDESK desktop, WNDENUMPROC func, LPARAM lparam )
 {
     HWND *list;
     int i;
-
-    USER_CheckNotLock();
 
     if (!(list = list_window_children( desktop, 0, NULL, 0 ))) return TRUE;
 
@@ -1158,8 +1152,6 @@ BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func, LPARAM lParam )
 {
     HWND *list;
     BOOL ret;
-
-    USER_CheckNotLock();
 
     if (!(list = WIN_ListChildren( parent ))) return FALSE;
     ret = WIN_EnumChildWindows( list, func, lParam );
