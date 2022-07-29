@@ -233,7 +233,7 @@ static BOOL process_attach(void)
  */
 static void thread_detach(void)
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     NtUserCallNoParam( NtUserExitingThread );
 

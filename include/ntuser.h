@@ -70,6 +70,7 @@ struct ntuser_thread_info
     DPI_AWARENESS  dpi_awareness;     /* DPI awareness */
     HIMC           default_imc;       /* default input context */
     void          *client_imm;        /* client IMM thread info */
+    struct wm_char_mapping_data *wmchar_data; /* Data for WM_CHAR mappings */
 };
 
 static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
