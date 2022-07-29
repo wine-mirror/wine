@@ -101,7 +101,7 @@ struct surface_readback
     D3DLOCKED_RECT locked_rect;
 };
 
-static void get_rt_readback(IDirect3DSurface8 *surface, struct surface_readback *rb)
+static void get_surface_readback(IDirect3DSurface8 *surface, struct surface_readback *rb)
 {
     IDirect3DTexture8 *tex = NULL;
     IDirect3DDevice8 *device;
@@ -113,15 +113,24 @@ static void get_rt_readback(IDirect3DSurface8 *surface, struct surface_readback 
     ok(SUCCEEDED(hr), "Failed to get device, hr %#lx.\n", hr);
     hr = IDirect3DSurface8_GetDesc(surface, &desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
-    hr = IDirect3DDevice8_CreateTexture(device, desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &rb->surface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IDirect3DDevice8_CopyRects(device, surface, NULL, 0, rb->surface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (desc.Pool == D3DPOOL_DEFAULT || (desc.Usage & D3DUSAGE_WRITEONLY))
+    {
+        hr = IDirect3DDevice8_CreateTexture(device, desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &rb->surface);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_CopyRects(device, surface, NULL, 0, rb->surface, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        IDirect3DTexture8_Release(tex);
+    }
+    else
+    {
+        IDirect3DSurface8_AddRef(surface);
+        rb->surface = surface;
+    }
     hr = IDirect3DSurface8_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    IDirect3DTexture8_Release(tex);
     IDirect3DDevice8_Release(device);
 }
 
@@ -149,7 +158,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
     hr = IDirect3DDevice8_GetRenderTarget(device, &rt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    get_rt_readback(rt, &rb);
+    get_surface_readback(rt, &rb);
     /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
      * really important for these tests
      */
@@ -242,7 +251,7 @@ static void check_rt_color_(unsigned int line, IDirect3DSurface8 *rt, D3DCOLOR e
     hr = IDirect3DSurface8_GetDesc(rt, &desc);
     ok_(__FILE__, line)(hr == S_OK, "Failed to get surface desc, hr %#lx.\n", hr);
 
-    get_rt_readback(rt, &rb);
+    get_surface_readback(rt, &rb);
     for (y = 0; y < desc.Height; ++y)
     {
         for (x = 0; x < desc.Width; ++x)
@@ -3868,7 +3877,7 @@ static void intz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#lx.\n", hr);
 
-    get_rt_readback(original_rt, &rb);
+    get_surface_readback(original_rt, &rb);
     for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         unsigned int color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
@@ -3926,7 +3935,7 @@ static void intz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#lx.\n", hr);
 
-    get_rt_readback(original_rt, &rb);
+    get_surface_readback(original_rt, &rb);
     for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         unsigned int color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
@@ -3994,7 +4003,7 @@ static void intz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#lx.\n", hr);
 
-    get_rt_readback(original_rt, &rb);
+    get_surface_readback(original_rt, &rb);
     for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
         unsigned int color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
@@ -4210,7 +4219,7 @@ static void shadow_test(void)
         ok(SUCCEEDED(hr), "SetTexture failed, hr %#lx.\n", hr);
         IDirect3DTexture8_Release(texture);
 
-        get_rt_readback(original_rt, &rb);
+        get_surface_readback(original_rt, &rb);
         for (j = 0; j < ARRAY_SIZE(expected_colors); ++j)
         {
             unsigned int color = get_readback_color(&rb, expected_colors[j].x, expected_colors[j].y);
@@ -5175,7 +5184,7 @@ static void volume_dxtn_test(void)
         hr = IDirect3DDevice8_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
-        get_rt_readback(rt, &rb);
+        get_surface_readback(rt, &rb);
         for (j = 0; j < ARRAY_SIZE(dxt1_expected_colours); ++j)
         {
             colour = get_readback_color(&rb, 40 + 80 * j, 240);
@@ -7591,7 +7600,7 @@ static void test_pointsize(void)
             {
                 struct surface_readback rb;
 
-                get_rt_readback(rt, &rb);
+                get_surface_readback(rt, &rb);
                 color = get_readback_color(&rb, 64 - size / 2 + 1, 64 - size / 2 + 1);
                 ok(color_match(color, 0x00ff0000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
@@ -8686,7 +8695,7 @@ static void test_uninitialized_varyings(void)
         hr = IDirect3DDevice8_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
-        get_rt_readback(backbuffer, &rb);
+        get_surface_readback(backbuffer, &rb);
         color = get_readback_color(&rb, 320, 240);
         ok(color_match(color, tests[i].expected, 1)
                 || (tests[i].allow_zero_alpha && color_match(color, tests[i].expected & 0x00ffffff, 1))
@@ -8973,7 +8982,7 @@ static void test_multisample_init(void)
     hr = IDirect3DDevice8_CopyRects(device, multi, NULL, 0, back, NULL);
     ok(SUCCEEDED(hr), "CopyRects failed, hr %#lx.\n", hr);
 
-    get_rt_readback(back, &rb);
+    get_surface_readback(back, &rb);
     for (y = 0; y < 480; ++y)
     {
         for (x = 0; x < 640; ++x)
@@ -9543,7 +9552,7 @@ static void test_texture_blending(void)
         hr = IDirect3DDevice8_EndScene(device);
         ok(SUCCEEDED(hr), "Test %u: EndScene failed, hr %#lx.\n", i, hr);
 
-        get_rt_readback(backbuffer, &rb);
+        get_surface_readback(backbuffer, &rb);
         color = get_readback_color(&rb, 320, 240);
         ok(color_match(color, current_test->expected_color, 1),
                 "Test %u: Got color 0x%08x, expected 0x%08x.\n", i, color, current_test->expected_color);
@@ -10528,7 +10537,7 @@ static void test_viewport(void)
             hr = IDirect3DDevice8_EndScene(device);
             ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx (i %u, j %u).\n", hr, i, j);
 
-            get_rt_readback(rt, &rb);
+            get_surface_readback(rt, &rb);
             check_rect(&rb, tests[j].expected_rect, tests[j].message);
             release_surface_readback(&rb);
         }
@@ -11227,7 +11236,7 @@ static void test_sample_mask(void)
 
     hr = IDirect3DDevice8_CopyRects(device, ms_rt, NULL, 0, rt, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    get_rt_readback(rt, &rb);
+    get_surface_readback(rt, &rb);
     colour = get_readback_color(&rb, 64, 64);
     /* Multiple generations of Nvidia cards return broken results.
      * A mask with no bits or all bits set produce the expected results (0x00 / 0xff),
@@ -11781,7 +11790,7 @@ static void test_filling_convention(void)
             hr = IDirect3DDevice8_EndScene(device);
             ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-            get_rt_readback(cur, &rb);
+            get_surface_readback(cur, &rb);
             for (y = 0; y < 8; y++)
             {
                 for (x = 0; x < 8; x++)
