@@ -42,7 +42,7 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
         if (!types_get_info(type, TI_GET_SYMTAG, tag))
             return FALSE;
         if (*tag != SymTagTypedef) return TRUE;
-    } while (types_get_info(type, TI_GET_TYPE, &type->id));
+    } while (types_get_info(type, TI_GET_TYPE, type));
     return FALSE;
 }
 
@@ -199,8 +199,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, const struct
     DWORD       offset, bitoffset;
     DWORD64     length;
 
-    types_get_info(type, TI_GET_TYPE, &lvalue->type.id);
-    lvalue->type.module = type->module;
+    types_get_info(type, TI_GET_TYPE, &lvalue->type);
     if (!types_get_info(type, TI_GET_OFFSET, &offset)) return FALSE;
     lvalue->addr.Offset += offset;
 
@@ -306,8 +305,7 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
     /*
      * Get the base type, so we know how much to index by.
      */
-    if (!types_get_info(&type, TI_GET_TYPE, &result->type.id)) return FALSE;
-    result->type.module = type.module;
+    if (!types_get_info(&type, TI_GET_TYPE, &result->type)) return FALSE;
     if (index)
     {
         DWORD64             length;
@@ -342,8 +340,7 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
 {
     struct type_find_t* user = _user;
     BOOL                ret = TRUE;
-    struct dbg_type     type;
-    DWORD               type_id;
+    struct dbg_type     type, type_id;
 
     if (sym->Tag == user->tag)
     {
@@ -359,7 +356,7 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
         case SymTagPointerType:
             type.module = sym->ModBase;
             type.id = sym->TypeIndex;
-            if (types_get_info(&type, TI_GET_TYPE, &type_id) && type_id == user->ptr_typeid)
+            if (types_get_info(&type, TI_GET_TYPE, &type_id) && type_id.id == user->ptr_typeid)
             {
                 user->type = type;
                 ret = FALSE;
@@ -508,7 +505,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         types_get_info(&type, TI_GET_COUNT, &count);
         types_get_info(&type, TI_GET_LENGTH, &size);
         lvalue_field = *lvalue;
-        types_get_info(&lvalue_field.type, TI_GET_TYPE, &lvalue_field.type.id);
+        types_get_info(&lvalue_field.type, TI_GET_TYPE, &lvalue_field.type);
         types_get_real_type(&lvalue_field.type, &tag);
 
         if (size == count && tag == SymTagBaseType)
@@ -546,7 +543,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         break;
     case SymTagTypedef:
         lvalue_field = *lvalue;
-        types_get_info(&lvalue->type, TI_GET_TYPE, &lvalue_field.type.id);
+        types_get_info(&lvalue->type, TI_GET_TYPE, &lvalue_field.type);
         print_value(&lvalue_field, format, level);
         break;
     default:
@@ -615,8 +612,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         }
         break;
     case SymTagPointerType:
-        types_get_info(type, TI_GET_TYPE, &subtype.id);
-        subtype.module = type->module;
+        types_get_info(type, TI_GET_TYPE, &subtype);
         types_print_type(&subtype, FALSE);
         dbg_printf("*");
         break;
@@ -653,7 +649,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
                         if (!types_get_info(&type_elt, TI_GET_BITPOSITION, &bitoffset) ||
                             !types_get_info(&type_elt, TI_GET_LENGTH, &bitlen))
                             bitlen = ~(DWORD64)0;
-                        if (types_get_info(&type_elt, TI_GET_TYPE, &type_elt.id))
+                        if (types_get_info(&type_elt, TI_GET_TYPE, &type_elt))
                         {
                             /* print details of embedded UDT:s */
                             types_print_type(&type_elt, types_get_info(&type_elt, TI_GET_UDTKIND, &udt));
@@ -674,8 +670,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         }
         break;
     case SymTagArrayType:
-        types_get_info(type, TI_GET_TYPE, &subtype.id);
-        subtype.module = type->module;
+        types_get_info(type, TI_GET_TYPE, &subtype);
         types_print_type(&subtype, FALSE);
         if (types_get_info(type, TI_GET_COUNT, &count))
             dbg_printf(" %ls[%ld]", name, count);
@@ -731,11 +726,10 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         }
         break;
     case SymTagFunctionType:
-        types_get_info(type, TI_GET_TYPE, &subtype.id);
+        types_get_info(type, TI_GET_TYPE, &subtype);
         /* is the returned type the same object as function sig itself ? */
         if (subtype.id != type->id)
         {
-            subtype.module = type->module;
             types_print_type(&subtype, FALSE);
         }
         else
@@ -760,7 +754,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
                         subtype.id = fcp->ChildId[i];
-                        types_get_info(&subtype, TI_GET_TYPE, &subtype.id);
+                        types_get_info(&subtype, TI_GET_TYPE, &subtype);
                         types_print_type(&subtype, FALSE);
                         if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
                     }
@@ -772,10 +766,9 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         dbg_printf(")");
         break;
     case SymTagTypedef:
-        if (details && types_get_info(type, TI_GET_TYPE, &subtype.id))
+        if (details && types_get_info(type, TI_GET_TYPE, &subtype))
         {
             dbg_printf("typedef %ls => ", name);
-            subtype.module = type->module;
             types_print_type(&subtype, FALSE);
         }
         else dbg_printf("%ls", name);
@@ -1044,6 +1037,11 @@ static BOOL lookup_base_type_in_data_model(DWORD64 module, unsigned bt, unsigned
 /* helper to typecast pInfo to its expected type (_t) */
 #define X(_t) (*((_t*)pInfo))
 
+/* Wrapper around SymGetTypeInfo
+ * - module & type id on input are in dbg_type structure
+ * - for TI_GET_TYPE a pointer to a dbg_type is expected for pInfo
+ *   (instead of DWORD* for SymGetTypeInfo)
+ */
 BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
 {
     if (type->id == dbg_itype_none) return FALSE;
@@ -1064,6 +1062,14 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
                 X(WCHAR*) = name;
                 return TRUE;
             }
+        }
+        else if (ti == TI_GET_TYPE)
+        {
+            struct dbg_type* dt = (struct dbg_type*)pInfo;
+            if (!SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, &dt->id))
+                return FALSE;
+            dt->module = type->module;
+            return TRUE;
         }
         return SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
     }
@@ -1108,7 +1114,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagPointerType; break;
         case TI_GET_LENGTH:     X(DWORD64) = ADDRSIZE; break;
-        case TI_GET_TYPE:       X(DWORD)   = dbg_itype_char; break;
+        case TI_GET_TYPE:       { struct dbg_type* dt = pInfo; dt->id = dbg_itype_char; dt->module = type->module; break; }
         default: WINE_FIXME("unsupported %u for a string\n", ti); return FALSE;
         }
         break;
@@ -1130,7 +1136,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for XMM register\n", ti); return FALSE;
         }
         break;
-    default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
+    default: WINE_FIXME("unsupported type id 0x%lx\n", type->id); return FALSE;
     }
 
 #undef X
@@ -1184,8 +1190,8 @@ static BOOL types_compare_children(struct dbg_type type1, struct dbg_type type2,
                 if (ret && *equal)
                 {
                     /* compare type of member */
-                    ret = types_get_info(&type1, TI_GET_TYPE, &type1.id) &&
-                        types_get_info(&type2, TI_GET_TYPE, &type2.id);
+                    ret = types_get_info(&type1, TI_GET_TYPE, &type1) &&
+                        types_get_info(&type2, TI_GET_TYPE, &type2);
                     if (ret) ret = types_compare(type1, type2, equal);
                     /* FIXME should compare bitfield info when present */
                 }
@@ -1273,8 +1279,8 @@ BOOL types_compare(struct dbg_type type1, struct dbg_type type2, BOOL* equal)
             dbg_printf("Unsupported yet tag %ld\n", tag1);
             return FALSE;
         }
-    } while (types_get_info(&type1, TI_GET_TYPE, &type1.id) &&
-             types_get_info(&type2, TI_GET_TYPE, &type2.id));
+    } while (types_get_info(&type1, TI_GET_TYPE, &type1) &&
+             types_get_info(&type2, TI_GET_TYPE, &type2));
     return FALSE;
 }
 

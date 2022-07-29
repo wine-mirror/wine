@@ -443,7 +443,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         init_lvalue_in_debugger(&rtn, 0, dbg_itype_none, &exp->un.call.result);
         /* get return type from function signature type */
         /* FIXME rtn.type.module should be set to function's module... */
-        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type.id);
+        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type);
         break;
     case EXPR_TYPE_INTVAR:
         if (!(div = dbg_get_internal_var(exp->un.intvar.name)))
@@ -463,11 +463,11 @@ struct dbg_lvalue expr_eval(struct expr* exp)
 	case EXP_OP_ADD:
             if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp1.type, TI_GET_TYPE, &type1.id))
+                !types_get_info(&exp1.type, TI_GET_TYPE, &type1))
                 type1.id = dbg_itype_none;
             if (!types_get_info(&exp2.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp2.type, TI_GET_TYPE, &type2.id))
+                !types_get_info(&exp2.type, TI_GET_TYPE, &type2))
                 type2.id = dbg_itype_none;
             scale1 = 1;
             scale2 = 1;
@@ -489,11 +489,11 @@ struct dbg_lvalue expr_eval(struct expr* exp)
 	case EXP_OP_SUB:
             if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp1.type, TI_GET_TYPE, &type1.id))
+                !types_get_info(&exp1.type, TI_GET_TYPE, &type1))
                 type1.id = dbg_itype_none;
             if (!types_get_info(&exp2.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(&exp2.type, TI_GET_TYPE, &type2.id))
+                !types_get_info(&exp2.type, TI_GET_TYPE, &type2))
                 type2.id = dbg_itype_none;
             scale1 = 1;
             scale2 = 1;
