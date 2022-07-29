@@ -212,10 +212,14 @@ static HRESULT WINAPI DocumentType_Invoke(IDOMDocumentType *iface, DISPID dispId
 static HRESULT WINAPI DocumentType_get_name(IDOMDocumentType *iface, BSTR *p)
 {
     DocumentType *This = impl_from_IDOMDocumentType(iface);
+    nsAString nsstr;
+    nsresult nsres;
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMDocumentType_GetName((nsIDOMDocumentType*)This->node.nsnode, &nsstr);
+    return return_nsstr(nsres, &nsstr, p);
 }
 
 static HRESULT WINAPI DocumentType_get_entities(IDOMDocumentType *iface, IDispatch **p)

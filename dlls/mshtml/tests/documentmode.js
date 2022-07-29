@@ -670,6 +670,8 @@ sync_test("doctype", function() {
         ok(doctype === null, "doctype = " + document.doctype);
         return;
     }
+
+    ok(doctype.name === "html", "doctype.name = " + doctype.name);
 });
 
 async_test("iframe_doc_mode", function() {
