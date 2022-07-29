@@ -21,8 +21,7 @@
 #ifndef __WINE_CONTROLS_H
 #define __WINE_CONTROLS_H
 
-#include "winuser.h"
-#include "../win32u/ntuser_private.h"
+#include "ntuser.h"
 
 extern LRESULT WINAPI ImeWndProcA(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
 extern LRESULT WINAPI ImeWndProcW(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;

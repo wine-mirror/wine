@@ -21,14 +21,7 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
-#include <stdarg.h>
-#include <windef.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
-
 #include "user_private.h"
-#include "wine/server_protocol.h"
 
   /* Window functions */
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;

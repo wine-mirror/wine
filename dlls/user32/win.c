@@ -121,6 +121,13 @@ BOOL is_desktop_window( HWND hwnd )
 }
 
 
+/* check if hwnd is a broadcast magic handle */
+static inline BOOL is_broadcast( HWND hwnd )
+{
+    return hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST;
+}
+
+
 /***********************************************************************
  *           WIN_IsCurrentProcess
  *

@@ -39,6 +39,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 
 
+#define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
+
   /* Dialog control information */
 typedef struct
 {

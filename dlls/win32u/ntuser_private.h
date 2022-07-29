@@ -26,7 +26,6 @@
 #include "wine/list.h"
 
 
-#define WM_SYSTIMER         0x0118
 #define WM_POPUPSYSTEMMENU  0x0313
 
 enum system_timer_id
@@ -204,15 +203,6 @@ struct scroll_bar_win_data
 #define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
-
-/* message spy definitions */
-
-#define SPY_DISPATCHMESSAGE       0x0100
-#define SPY_SENDMESSAGE           0x0101
-#define SPY_DEFWNDPROC            0x0102
-
-#define SPY_RESULT_OK             0x0001
-#define SPY_RESULT_DEFWND         0x0002
 
 /* info about the message currently being received by the current thread */
 struct received_message_info

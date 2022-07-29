@@ -25,20 +25,13 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "../win32u/ntuser_private.h"
+#include "ntuser.h"
 #include "winreg.h"
-#include "winternl.h"
-#include "hidusage.h"
 #include "wine/heap.h"
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 #define GET_LONG(ptr) (*(const LONG *)(ptr))
-
-#define WINE_MOUSE_HANDLE       ((HANDLE)1)
-#define WINE_KEYBOARD_HANDLE    ((HANDLE)2)
-
-struct received_message_info;
 
 /* data to store state for A/W mappings of WM_CHAR */
 struct wm_char_mapping_data
@@ -46,11 +39,6 @@ struct wm_char_mapping_data
     BYTE lead_byte[WMCHAR_MAP_COUNT];
     MSG  get_msg;
 };
-
-static inline struct user_thread_info *get_user_thread_info(void)
-{
-    return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
-}
 
 extern HMODULE user32_module DECLSPEC_HIDDEN;
 
