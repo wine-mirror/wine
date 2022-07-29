@@ -8498,6 +8498,51 @@ interface IDOMDocumentType : IDispatch
 }
 
 /*****************************************************************************
+ *    DispDOMDocumentType dispinterface
+ */
+[
+    hidden,
+    uuid(30590098-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMDocumentType
+{
+properties:
+methods:
+    WINE_HTMLDOMNODE_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_NAME)]
+    BSTR name();
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_ENTITIES)]
+    IDispatch *entities();
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_NOTATIONS)]
+    IDispatch *notations();
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_PUBLICID)]
+    VARIANT publicId();
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_SYSTEMID)]
+    VARIANT systemId();
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_INTERNALSUBSET)]
+    VARIANT internalSubset();
+};
+
+[
+    noncreatable,
+    uuid(30510739-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass DOMDocumentType
+{
+    [default] dispinterface DispDOMDocumentType;
+    interface IHTMLDOMNode;
+    interface IHTMLDOMNode2;
+    interface IHTMLDOMNode3;
+    interface IDOMDocumentType;
+};
+
+/*****************************************************************************
  *    IHTMLDOMImplementation interface
  */
 [
