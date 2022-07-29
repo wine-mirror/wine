@@ -1688,7 +1688,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
             if (style & WS_VISIBLE)
             {
                 RECT rect;
-                WIN_GetRectangles( list[i], COORDS_PARENT, &rect, NULL );
+                NtUserGetChildRect( list[i], &rect );
                 UnionRect( &childRect, &rect, &childRect );
             }
         }

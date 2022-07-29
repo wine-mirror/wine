@@ -1047,7 +1047,6 @@ enum
     NtUserCallTwoParam_UnhookWindowsHook,
     /* temporary exports */
     NtUserAllocWinProc,
-    NtUserGetHandlePtr,
 };
 
 static inline BOOL NtUserGetMenuInfo( HMENU menu, MENUINFO *info )
@@ -1210,6 +1209,7 @@ enum
 {
     NtUserCallHwndParam_ClientToScreen,
     NtUserCallHwndParam_EnableWindow,
+    NtUserCallHwndParam_GetChildRect,
     NtUserCallHwndParam_GetClassLongA,
     NtUserCallHwndParam_GetClassLongW,
     NtUserCallHwndParam_GetClassLongPtrA,
@@ -1251,6 +1251,11 @@ static inline BOOL NtUserClientToScreen( HWND hwnd, POINT *pt )
 static inline BOOL NtUserEnableWindow( HWND hwnd, BOOL enable )
 {
     return NtUserCallHwndParam( hwnd, enable, NtUserCallHwndParam_EnableWindow );
+}
+
+static inline BOOL NtUserGetChildRect( HWND hwnd, RECT *rect )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetChildRect );
 }
 
 static inline DWORD NtUserGetClassLongA( HWND hwnd, INT offset )

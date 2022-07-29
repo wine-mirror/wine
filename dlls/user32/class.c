@@ -718,44 +718,6 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
 }
 
 
-#if 0  /* toolhelp is in kernel, so this cannot work */
-
-/***********************************************************************
- *		ClassFirst (TOOLHELP.69)
- */
-BOOL16 WINAPI ClassFirst16( CLASSENTRY *pClassEntry )
-{
-    TRACE("%p\n",pClassEntry);
-    pClassEntry->wNext = 1;
-    return ClassNext16( pClassEntry );
-}
-
-
-/***********************************************************************
- *		ClassNext (TOOLHELP.70)
- */
-BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
-{
-    int i;
-    CLASS *class = firstClass;
-
-    TRACE("%p\n",pClassEntry);
-
-    if (!pClassEntry->wNext) return FALSE;
-    for (i = 1; (i < pClassEntry->wNext) && class; i++) class = class->next;
-    if (!class)
-    {
-        pClassEntry->wNext = 0;
-        return FALSE;
-    }
-    pClassEntry->hInst = class->hInstance;
-    pClassEntry->wNext++;
-    GlobalGetAtomNameA( class->atomName, pClassEntry->szClassName,
-                          sizeof(pClassEntry->szClassName) );
-    return TRUE;
-}
-#endif
-
 #ifdef _WIN64
 
 /* 64bit versions */

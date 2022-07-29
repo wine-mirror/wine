@@ -5080,9 +5080,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );
 
-    case NtUserGetHandlePtr:
-        return (UINT_PTR)get_user_handle_ptr( UlongToHandle(arg1), arg2 );
-
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

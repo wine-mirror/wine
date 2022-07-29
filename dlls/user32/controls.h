@@ -101,8 +101,6 @@ extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HI
 extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
 
 /* Class functions */
-struct tagCLASS;  /* opaque structure */
-struct tagWND;
 extern ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 extern void register_desktop_class(void) DECLSPEC_HIDDEN;
 

@@ -5473,6 +5473,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_EnableWindow:
         return enable_window( hwnd, param );
 
+    case NtUserCallHwndParam_GetChildRect:
+        return get_window_rects( hwnd, COORDS_PARENT, (RECT *)param, NULL, get_thread_dpi() );
+
     case NtUserCallHwndParam_GetClassLongA:
         return get_class_long( hwnd, param, TRUE );
 

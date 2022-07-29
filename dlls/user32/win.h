@@ -30,9 +30,6 @@
 #include "user_private.h"
 #include "wine/server_protocol.h"
 
-struct tagCLASS;
-struct tagDIALOGINFO;
-
   /* Window functions */
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
@@ -40,7 +37,6 @@ extern HWND WIN_GetFullHandle( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentThread( HWND hwnd ) DECLSPEC_HIDDEN;
 extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DECLSPEC_HIDDEN;
-extern BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWindow, RECT *rectClient ) DECLSPEC_HIDDEN;
 extern HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode ) DECLSPEC_HIDDEN;
 extern HWND *WIN_ListChildren( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id ) DECLSPEC_HIDDEN;

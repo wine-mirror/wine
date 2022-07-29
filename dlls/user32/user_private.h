@@ -54,9 +54,6 @@ static inline struct user_thread_info *get_user_thread_info(void)
 
 extern HMODULE user32_module DECLSPEC_HIDDEN;
 
-struct dce;
-struct tagWND;
-
 extern BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                               DWORD type ) DECLSPEC_HIDDEN;
 extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
