@@ -1090,16 +1090,41 @@ static const struct wined3d_parent_ops d3d8_texture_wined3d_parent_ops =
     d3d8_texture_wined3d_object_destroyed,
 };
 
-HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
-        UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
+static HRESULT d3d8_texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
+        const struct wined3d_resource_desc *desc, D3DPOOL pool, unsigned int layer_count, unsigned int level_count)
 {
-    struct wined3d_resource_desc desc;
-    DWORD flags = 0;
+    unsigned int flags = 0;
     HRESULT hr;
 
-    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl;
     d3d8_resource_init(&texture->resource);
     list_init(&texture->rtv_list);
+
+    if (!level_count)
+        level_count = wined3d_log2i(max(max(desc->width, desc->height), desc->depth)) + 1;
+
+    if (pool == D3DPOOL_SYSTEMMEM)
+        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
+
+    wined3d_mutex_lock();
+    hr = wined3d_texture_create(device->wined3d_device, desc, layer_count, level_count, flags,
+            NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        return hr;
+    }
+
+    texture->parent_device = &device->IDirect3DDevice8_iface;
+    IDirect3DDevice8_AddRef(texture->parent_device);
+
+    return D3D_OK;
+}
+
+HRESULT d3d8_texture_2d_init(struct d3d8_texture *texture, struct d3d8_device *device, unsigned int width,
+        unsigned int height, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool)
+{
+    struct wined3d_resource_desc desc;
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1119,38 +1144,14 @@ HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
         return D3DERR_INVALIDCALL;
     }
 
-    if (!levels)
-        levels = wined3d_log2i(max(width, height)) + 1;
-
-    if (pool == D3DPOOL_SYSTEMMEM)
-        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
-
-    wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, flags,
-            NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
-    wined3d_mutex_unlock();
-    if (FAILED(hr))
-    {
-        WARN("Failed to create wined3d texture, hr %#x.\n", hr);
-        return hr;
-    }
-
-    texture->parent_device = &device->IDirect3DDevice8_iface;
-    IDirect3DDevice8_AddRef(texture->parent_device);
-
-    return D3D_OK;
+    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl;
+    return d3d8_texture_init(texture, device, &desc, pool, 1, level_count);
 }
 
-HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
-        UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
+HRESULT d3d8_texture_cube_init(struct d3d8_texture *texture, struct d3d8_device *device,
+        unsigned int edge_length, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     struct wined3d_resource_desc desc;
-    DWORD flags = 0;
-    HRESULT hr;
-
-    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DCubeTexture8_Vtbl;
-    d3d8_resource_init(&texture->resource);
-    list_init(&texture->rtv_list);
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1170,42 +1171,18 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *devic
         return D3DERR_INVALIDCALL;
     }
 
-    if (!levels)
-        levels = wined3d_log2i(edge_length) + 1;
-
-    if (pool == D3DPOOL_SYSTEMMEM)
-        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
-
-    wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, 6, levels, flags,
-            NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
-    wined3d_mutex_unlock();
-    if (FAILED(hr))
-    {
-        WARN("Failed to create wined3d cube texture, hr %#x.\n", hr);
-        return hr;
-    }
-
-    texture->parent_device = &device->IDirect3DDevice8_iface;
-    IDirect3DDevice8_AddRef(texture->parent_device);
-
-    return D3D_OK;
+    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DCubeTexture8_Vtbl;
+    return d3d8_texture_init(texture, device, &desc, pool, 6, level_count);
 }
 
-HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
-        UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
+HRESULT d3d8_texture_3d_init(struct d3d8_texture *texture, struct d3d8_device *device, unsigned int width,
+        unsigned int height, unsigned int depth, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     struct wined3d_resource_desc desc;
-    DWORD flags = 0;
-    HRESULT hr;
 
     /* In d3d8, 3D textures can't be used as rendertarget or depth/stencil buffer. */
     if (usage & (D3DUSAGE_RENDERTARGET | D3DUSAGE_DEPTHSTENCIL))
         return D3DERR_INVALIDCALL;
-
-    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl;
-    d3d8_resource_init(&texture->resource);
-    list_init(&texture->rtv_list);
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE_3D;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1225,24 +1202,6 @@ HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *dev
         return D3DERR_INVALIDCALL;
     }
 
-    if (!levels)
-        levels = wined3d_log2i(max(max(width, height), depth)) + 1;
-
-    if (pool == D3DPOOL_SYSTEMMEM)
-        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
-
-    wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, flags,
-            NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
-    wined3d_mutex_unlock();
-    if (FAILED(hr))
-    {
-        WARN("Failed to create wined3d volume texture, hr %#x.\n", hr);
-        return hr;
-    }
-
-    texture->parent_device = &device->IDirect3DDevice8_iface;
-    IDirect3DDevice8_AddRef(texture->parent_device);
-
-    return D3D_OK;
+    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl;
+    return d3d8_texture_init(texture, device, &desc, pool, 1, level_count);
 }

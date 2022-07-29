@@ -247,12 +247,13 @@ struct d3d8_texture
     struct list rtv_list;
 };
 
-HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
-        UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
-        UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *device,
-        UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
+HRESULT d3d8_texture_2d_init(struct d3d8_texture *texture, struct d3d8_device *device, unsigned int width,
+        unsigned int height, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+HRESULT d3d8_texture_3d_init(struct d3d8_texture *texture, struct d3d8_device *device, unsigned int width,
+        unsigned int height, unsigned int depth, unsigned int levels, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+HRESULT d3d8_texture_cube_init(struct d3d8_texture *texture, struct d3d8_device *device,
+        unsigned int edge_length, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+
 struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_vertex_declaration

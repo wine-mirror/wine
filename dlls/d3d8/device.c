@@ -1097,7 +1097,7 @@ static HRESULT WINAPI d3d8_device_CreateTexture(IDirect3DDevice8 *iface,
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
-    hr = texture_init(object, device, width, height, levels, usage, format, pool);
+    hr = d3d8_texture_2d_init(object, device, width, height, levels, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize texture, hr %#x.\n", hr);
@@ -1129,7 +1129,7 @@ static HRESULT WINAPI d3d8_device_CreateVolumeTexture(IDirect3DDevice8 *iface,
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
-    hr = volumetexture_init(object, device, width, height, depth, levels, usage, format, pool);
+    hr = d3d8_texture_3d_init(object, device, width, height, depth, levels, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize volume texture, hr %#x.\n", hr);
@@ -1160,7 +1160,7 @@ static HRESULT WINAPI d3d8_device_CreateCubeTexture(IDirect3DDevice8 *iface, UIN
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
-    hr = cubetexture_init(object, device, edge_length, levels, usage, format, pool);
+    hr = d3d8_texture_cube_init(object, device, edge_length, levels, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize cube texture, hr %#x.\n", hr);
