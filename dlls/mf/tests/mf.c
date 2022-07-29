@@ -4651,13 +4651,11 @@ if (SUCCEEDED(hr))
     hr = MFCreateMediaType(&mediatype);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
-    todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     init_media_type(mediatype, rate == 44100 ? input_type_desc_44100 : input_type_desc_48000, 2);
     for (int i = 1; i < (rate == 44100 ? ARRAY_SIZE(input_type_desc_44100) : ARRAY_SIZE(input_type_desc_48000)) - 1; ++i)
     {
         hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
-        todo_wine
         ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
         init_media_type(mediatype, rate == 44100 ? input_type_desc_44100 : input_type_desc_48000, i + 1);
     }
