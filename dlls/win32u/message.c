@@ -245,7 +245,7 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
 
 static BOOL dispatch_win_proc_params( struct win_proc_params *params, size_t size )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
     void *ret_ptr;
     ULONG ret_len;
 
@@ -1593,11 +1593,12 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
                                       HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
     DPI_AWARENESS_CONTEXT context;
     BOOL ret = FALSE;
 
-    get_user_thread_info()->msg_source.deviceType = msg_data->source.device;
-    get_user_thread_info()->msg_source.originId   = msg_data->source.origin;
+    thread_info->msg_source.deviceType = msg_data->source.device;
+    thread_info->msg_source.originId   = msg_data->source.origin;
 
     /* hardware messages are always in physical coords */
     context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
@@ -1625,7 +1626,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
 {
     LRESULT result;
     struct user_thread_info *thread_info = get_user_thread_info();
-    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info.msg_source;
     struct received_message_info info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
     void *buffer;
@@ -1643,7 +1644,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         const message_data_t *msg_data = buffer;
         BOOL needs_unpack = FALSE;
 
-        thread_info->msg_source = prev_source;
+        thread_info->client_info.msg_source = prev_source;
 
         SERVER_START_REQ( get_message )
         {
@@ -1854,7 +1855,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             thread_info->client_info.message_pos   = MAKELONG( msg->pt.x, msg->pt.y );
             thread_info->client_info.message_time  = info.msg.time;
             thread_info->client_info.message_extra = 0;
-            thread_info->msg_source = msg_source_unavailable;
+            thread_info->client_info.msg_source = msg_source_unavailable;
             free( buffer );
             call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
             return 1;
@@ -1863,7 +1864,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         /* if we get here, we have a sent message; call the window procedure */
         info.prev = thread_info->receive_info;
         thread_info->receive_info = &info;
-        thread_info->msg_source = msg_source_unavailable;
+        thread_info->client_info.msg_source = msg_source_unavailable;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
                                    info.msg.lParam, (info.type != MSG_ASCII), FALSE,
                                    WMCHAR_MAP_RECVMESSAGE, needs_unpack, buffer, size );
@@ -2619,7 +2620,7 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
  */
 static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr, BOOL ansi )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
     INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
     DWORD dest_pid;
     BOOL ret;

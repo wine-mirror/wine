@@ -123,13 +123,11 @@ struct user_thread_info
     HANDLE                        server_queue;           /* Handle to server-side queue */
     DWORD                         wake_mask;              /* Current queue wake mask */
     DWORD                         changed_mask;           /* Current queue changed mask */
-    WORD                          recursion_count;        /* SendMessage recursion counter */
     WORD                          message_count;          /* Get/PeekMessage loop counter */
     WORD                          hook_call_depth;        /* Number of recursively called hook procs */
     WORD                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
     UINT                          active_hooks;           /* Bitmap of active hooks */
-    INPUT_MESSAGE_SOURCE          msg_source;             /* Message source for current message */
     struct received_message_info *receive_info;           /* Message being currently received */
     struct user_key_state_info   *key_state;              /* Cache of global key state */
     struct imm_thread_data       *imm_thread_data;        /* IMM thread data */

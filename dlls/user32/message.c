@@ -585,7 +585,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
 static LRESULT dispatch_send_message( struct win_proc_params *params )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
     INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
     LRESULT retval = 0;
 
@@ -1031,7 +1031,7 @@ LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
  */
 BOOL WINAPI GetCurrentInputMessageSource( INPUT_MESSAGE_SOURCE *source )
 {
-    *source = get_user_thread_info()->msg_source;
+    *source = NtUserGetThreadInfo()->msg_source;
     return TRUE;
 }
 

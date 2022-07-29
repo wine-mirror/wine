@@ -65,6 +65,8 @@ struct ntuser_thread_info
     DWORD          message_time;      /* value for GetMessageTime */
     DWORD          message_pos;       /* value for GetMessagePos */
     ULONG_PTR      message_extra;     /* value for GetMessageExtraInfo */
+    INPUT_MESSAGE_SOURCE msg_source;  /* Message source for current message */
+    WORD           recursion_count;   /* SendMessage recursion counter */
     HWND           top_window;        /* desktop window */
     HWND           msg_window;        /* HWND_MESSAGE parent window */
     DPI_AWARENESS  dpi_awareness;     /* DPI awareness */
