@@ -877,7 +877,7 @@ static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSel
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMWindow_GetSelection(This->window->nswindow, &nsselection);
+    nsres = nsIDOMHTMLDocument_GetSelection(This->doc_node->nsdoc, &nsselection);
     if(NS_FAILED(nsres)) {
         ERR("GetSelection failed: %08lx\n", nsres);
         return E_FAIL;
@@ -896,7 +896,7 @@ static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p
     if(!p)
         return E_POINTER;
 
-    return get_readystate_string(This->window->readystate, p);
+    return get_readystate_string(This->window ? This->window->readystate : 0, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFramesCollection2 **p)
@@ -905,6 +905,10 @@ static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFrames
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->window) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
     return IHTMLWindow2_get_frames(&This->window->base.IHTMLWindow2_iface, p);
 }
 
@@ -1087,7 +1091,7 @@ static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", iface, p);
 
-    *p = SysAllocString(This->window->url ? This->window->url : L"about:blank");
+    *p = SysAllocString(This->window && This->window->url ? This->window->url : L"about:blank");
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -1143,6 +1147,9 @@ static HRESULT WINAPI HTMLDocument_put_cookie(IHTMLDocument2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
+    if(!This->window)
+        return S_OK;
+
     bret = InternetSetCookieExW(This->window->url, NULL, v, 0, 0);
     if(!bret) {
         FIXME("InternetSetCookieExW failed: %lu\n", GetLastError());
@@ -1159,6 +1166,11 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
     BOOL bret;
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->window) {
+        *p = NULL;
+        return S_OK;
+    }
 
     size = 0;
     bret = InternetGetCookieExW(This->window->url, NULL, NULL, &size, 0, NULL);
@@ -1379,6 +1391,11 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
 
     TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_w(url), debugstr_variant(&name),
           debugstr_variant(&features), debugstr_variant(&replace), pomWindowResult);
+
+    *pomWindowResult = NULL;
+
+    if(!This->window)
+        return E_FAIL;
 
     if(!This->doc_node->nsdoc) {
         ERR("!nsdoc\n");
@@ -2263,7 +2280,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->window->readystate == READYSTATE_UNINITIALIZED) {
+    if(This->window && This->window->readystate == READYSTATE_UNINITIALIZED) {
         *p = NULL;
         return S_OK;
     }

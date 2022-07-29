@@ -7322,10 +7322,14 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
     hres = IHTMLDOMImplementation_QueryInterface(dom_implementation, &IID_IHTMLDOMImplementation2,
                                                  (void**)&dom_implementation2);
     if(SUCCEEDED(hres)) {
+        IHTMLSelectionObject *selection;
+        IHTMLFramesCollection2 *frames;
         IHTMLDocument2 *new_document2;
+        IHTMLDocument3 *new_document3;
         IHTMLDocument7 *new_document;
         IHTMLLocation *location;
         IHTMLWindow2 *window;
+        IHTMLElement *elem;
         VARIANT v;
         IDispatch *disp;
 
@@ -7334,6 +7338,7 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         str = SysAllocString(L"test");
         hres = IHTMLDOMImplementation2_createHTMLDocument(dom_implementation2, str, &new_document);
         ok(hres == S_OK, "createHTMLDocument failed: %08lx\n", hres);
+        SysFreeString(str);
 
         test_disp((IUnknown*)new_document, &DIID_DispHTMLDocument, &CLSID_HTMLDocument, L"[object]");
         test_ifaces((IUnknown*)new_document, doc_node_iids);
@@ -7349,14 +7354,62 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         hres = IHTMLDocument7_QueryInterface(new_document, &IID_IHTMLDocument2, (void**)&new_document2);
         ok(hres == S_OK, "Could not get IHTMLDocument2 iface: %08lx\n", hres);
 
+        hres = IHTMLDocument7_QueryInterface(new_document, &IID_IHTMLDocument3, (void**)&new_document3);
+        ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08lx\n", hres);
+
         hres = IHTMLDocument2_get_parentWindow(new_document2, &window);
         ok(hres == E_FAIL, "get_parentWindow returned: %08lx\n", hres);
+
+        hres = IHTMLDocument2_get_readyState(new_document2, &str);
+        ok(hres == S_OK, "get_readyState returned: %08lx\n", hres);
+        ok(!lstrcmpW(str, L"uninitialized"), "readyState = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
 
         hres = IHTMLDocument2_get_Script(new_document2, &disp);
         ok(hres == E_PENDING, "get_Script returned: %08lx\n", hres);
 
+        str = SysAllocString(L"test=testval");
+        hres = IHTMLDocument2_put_cookie(new_document2, str);
+        ok(hres == S_OK, "put_cookie returned: %08lx\n", hres);
+        SysFreeString(str);
+
+        hres = IHTMLDocument2_get_cookie(doc, &str);
+        ok(hres == S_OK, "get_cookie returned: %08lx\n", hres);
+        ok(str == NULL, "cookie = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hres = IHTMLDocument3_get_documentElement(new_document3, &elem);
+        ok(hres == S_OK, "get_documentElement returned: %08lx\n", hres);
+        ok(elem != NULL, "documentElement = NULL\n");
+        IHTMLElement_Release(elem);
+
+        hres = IHTMLDocument2_get_frames(new_document2, &frames);
+        ok(hres == E_NOTIMPL, "get_frames returned: %08lx\n", hres);
+
         hres = IHTMLDocument2_get_location(new_document2, &location);
         ok(hres == E_UNEXPECTED, "get_location returned: %08lx\n", hres);
+
+        hres = IHTMLDocument2_get_selection(new_document2, &selection);
+        ok(hres == S_OK, "get_selection returned: %08lx\n", hres);
+        ok(selection != NULL, "selection = NULL\n");
+        hres = IHTMLSelectionObject_get_type(selection, &str);
+        ok(hres == S_OK, "selection get_type returned: %08lx\n", hres);
+        ok(!lstrcmpW(str, L"None"), "selection type = %s\n", wine_dbgstr_w(str));
+        IHTMLSelectionObject_Release(selection);
+        SysFreeString(str);
+
+        hres = IHTMLDocument2_get_URL(new_document2, &str);
+        ok(hres == S_OK, "get_URL returned: %08lx\n", hres);
+        ok(!lstrcmpW(str, L"about:blank"), "URL = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        str = SysAllocString(L"text/html");
+        V_VT(&v) = VT_ERROR;
+        disp = (IDispatch*)0xdeadbeef;
+        hres = IHTMLDocument2_open(new_document2, str, v, v, v, &disp);
+        ok(hres == E_FAIL, "open returned: %08lx\n", hres);
+        ok(disp == NULL, "disp = %p\n", disp);
+        SysFreeString(str);
 
         memset(&v, 0xcc, sizeof(v));
         hres = IHTMLDocument7_get_onmsthumbnailclick(new_document, &v);
@@ -7365,6 +7418,7 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         ok((DWORD)(DWORD_PTR)V_DISPATCH(&v) == 0xcccccccc, "got %p\n", V_DISPATCH(&v));
 
         IHTMLDocument2_Release(new_document2);
+        IHTMLDocument3_Release(new_document3);
         IHTMLDocument7_Release(new_document);
         IHTMLDOMImplementation2_Release(dom_implementation2);
     }else {
