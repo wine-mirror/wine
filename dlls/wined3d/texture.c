@@ -1670,7 +1670,6 @@ void wined3d_texture_load(struct wined3d_texture *texture,
             || (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY
             && !color_key_equal(&texture->async.gl_color_key, &texture->async.src_blt_color_key))))
     {
-        unsigned int sub_count = texture->level_count * texture->layer_count;
         unsigned int i;
 
         TRACE("Reloading because of color key value change.\n");
