@@ -97,6 +97,8 @@ static int (*pgnutls_privkey_import_ecc_raw)(gnutls_privkey_t, gnutls_ecc_curve_
                                              const gnutls_datum_t *, const gnutls_datum_t *);
 static int (*pgnutls_pubkey_verify_hash2)(gnutls_pubkey_t, gnutls_sign_algorithm_t, unsigned int,
                                           const gnutls_datum_t *, const gnutls_datum_t *);
+static int (*pgnutls_pubkey_encrypt_data)(gnutls_pubkey_t, unsigned int flags, const gnutls_datum_t *,
+                                          gnutls_datum_t *);
 
 /* Not present in gnutls version < 2.11.0 */
 static int (*pgnutls_pubkey_import_rsa_raw)(gnutls_pubkey_t, const gnutls_datum_t *, const gnutls_datum_t *);
@@ -105,6 +107,8 @@ static int (*pgnutls_pubkey_import_rsa_raw)(gnutls_pubkey_t, const gnutls_datum_
 static int (*pgnutls_pubkey_import_dsa_raw)(gnutls_pubkey_t, const gnutls_datum_t *, const gnutls_datum_t *,
                                             const gnutls_datum_t *, const gnutls_datum_t *);
 static int (*pgnutls_pubkey_import_privkey)(gnutls_pubkey_t, gnutls_privkey_t, unsigned int, unsigned int);
+static int (*pgnutls_privkey_decrypt_data)(gnutls_privkey_t, unsigned int flags, const gnutls_datum_t *,
+                                           gnutls_datum_t *);
 
 /* Not present in gnutls version < 3.3.0 */
 static int (*pgnutls_pubkey_export_dsa_raw)(gnutls_pubkey_t, gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *,
@@ -121,7 +125,6 @@ static int (*pgnutls_privkey_generate)(gnutls_privkey_t, gnutls_pk_algorithm_t, 
 static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datum_t *, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *);
-static int (*pgnutls_privkey_decrypt_data)(gnutls_privkey_t, unsigned int flags, const gnutls_datum_t *, gnutls_datum_t *);
 
 /* Not present in gnutls version < 3.6.0 */
 static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
@@ -143,6 +146,7 @@ MAKE_FUNCPTR(gnutls_privkey_import_dsa_raw);
 MAKE_FUNCPTR(gnutls_privkey_init);
 MAKE_FUNCPTR(gnutls_privkey_sign_hash);
 MAKE_FUNCPTR(gnutls_pubkey_deinit);
+MAKE_FUNCPTR(gnutls_pubkey_encrypt_data);
 MAKE_FUNCPTR(gnutls_pubkey_import_privkey);
 MAKE_FUNCPTR(gnutls_pubkey_init);
 #undef MAKE_FUNCPTR
@@ -253,6 +257,12 @@ static int compat_gnutls_privkey_decrypt_data(gnutls_privkey_t key, unsigned int
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_pubkey_encrypt_data(gnutls_pubkey_t key, unsigned int flags, const gnutls_datum_t *cipher_text,
+                                              gnutls_datum_t *plain_text)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -329,6 +339,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_decode_rs_value)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_decrypt_data)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_encrypt_data)
 #undef LOAD_FUNCPTR_OPT
 
     if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
@@ -1927,6 +1938,30 @@ static NTSTATUS key_asymmetric_decrypt( void *args )
     return status;
 }
 
+static NTSTATUS key_asymmetric_encrypt( void *args )
+{
+    const struct key_asymmetric_encrypt_params *params = args;
+    gnutls_datum_t d, e = { 0 };
+    NTSTATUS status = STATUS_SUCCESS;
+    int ret;
+
+    d.data = params->input;
+    d.size = params->input_len;
+    if ((ret = pgnutls_pubkey_encrypt_data(key_data(params->key)->a.pubkey, 0, &d, &e)))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    *params->ret_len = e.size;
+    if (params->output_len >= e.size) memcpy( params->output, e.data, *params->ret_len );
+    else if (params->output_len == 0) status = STATUS_SUCCESS;
+    else status = STATUS_BUFFER_TOO_SMALL;
+
+    free( e.data );
+    return status;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     gnutls_process_attach,
@@ -1939,6 +1974,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     key_symmetric_destroy,
     key_asymmetric_generate,
     key_asymmetric_decrypt,
+    key_asymmetric_encrypt,
     key_asymmetric_duplicate,
     key_asymmetric_sign,
     key_asymmetric_verify,
@@ -2188,6 +2224,36 @@ static NTSTATUS wow64_key_asymmetric_decrypt( void *args )
     return ret;
 }
 
+static NTSTATUS wow64_key_asymmetric_encrypt( void *args )
+{
+    struct
+    {
+        PTR32 key;
+        PTR32 input;
+        ULONG input_len;
+        PTR32 output;
+        ULONG output_len;
+        PTR32 ret_len;
+    } const *params32 = args;
+
+    NTSTATUS ret;
+    struct key key;
+    struct key32 *key32 = ULongToPtr( params32->key );
+    struct key_asymmetric_encrypt_params params =
+    {
+        get_asymmetric_key( key32, &key ),
+        ULongToPtr(params32->input),
+        params32->input_len,
+        ULongToPtr(params32->output),
+        params32->output_len,
+        ULongToPtr(params32->ret_len)
+    };
+
+    ret = key_asymmetric_encrypt( &params );
+    put_asymmetric_key32( &key, key32 );
+    return ret;
+}
+
 static NTSTATUS wow64_key_asymmetric_duplicate( void *args )
 {
     struct
@@ -2369,6 +2435,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_key_symmetric_destroy,
     wow64_key_asymmetric_generate,
     wow64_key_asymmetric_decrypt,
+    wow64_key_asymmetric_encrypt,
     wow64_key_asymmetric_duplicate,
     wow64_key_asymmetric_sign,
     wow64_key_asymmetric_verify,
