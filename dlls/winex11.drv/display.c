@@ -37,7 +37,6 @@ struct x11drv_display_setting
     ULONG_PTR id;
     BOOL placed;
     RECT new_rect;
-    RECT desired_rect;
     DEVMODEW desired_mode;
 };
 
@@ -519,11 +518,6 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
             displays[display_idx].desired_mode = current_mode;
         }
 
-        SetRect(&displays[display_idx].desired_rect,
-                displays[display_idx].desired_mode.dmPosition.x,
-                displays[display_idx].desired_mode.dmPosition.y,
-                displays[display_idx].desired_mode.dmPosition.x + displays[display_idx].desired_mode.dmPelsWidth,
-                displays[display_idx].desired_mode.dmPosition.y + displays[display_idx].desired_mode.dmPelsHeight);
         lstrcpyW(displays[display_idx].desired_mode.dmDeviceName, display_device.DeviceName);
     }
 
@@ -539,6 +533,11 @@ done:
 static INT offset_length(POINT offset)
 {
     return offset.x * offset.x + offset.y * offset.y;
+}
+
+static void set_rect_from_devmode(RECT *rect, const DEVMODEW *mode)
+{
+    SetRect(rect, mode->dmPosition.x, mode->dmPosition.y, mode->dmPosition.x + mode->dmPelsWidth, mode->dmPosition.y + mode->dmPelsHeight);
 }
 
 /* Check if a rect overlaps with placed display rects */
@@ -562,11 +561,13 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
     POINT points[8], left_top, offset, min_offset = {0, 0};
     INT display_idx, point_idx, point_count, vertex_idx;
     BOOL has_placed = FALSE, first = TRUE;
+    RECT desired_rect, rect;
     INT width, height;
-    RECT rect;
+
+    set_rect_from_devmode(&desired_rect, &displays[placing_idx].desired_mode);
 
     /* If the display to be placed is detached, no offset is needed to place it */
-    if (IsRectEmpty(&displays[placing_idx].desired_rect))
+    if (IsRectEmpty(&desired_rect))
         return min_offset;
 
     /* If there is no placed and attached display, place this display as it is */
@@ -584,8 +585,8 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
 
     /* Try to place this display with each of its four vertices at every vertex of the placed
      * displays and see which combination has the minimum offset length */
-    width = displays[placing_idx].desired_rect.right - displays[placing_idx].desired_rect.left;
-    height = displays[placing_idx].desired_rect.bottom - displays[placing_idx].desired_rect.top;
+    width = desired_rect.right - desired_rect.left;
+    height = desired_rect.bottom - desired_rect.top;
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
@@ -604,21 +605,21 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
         point_count = 4;
 
         /* Intersected points when moving the display to be placed horizontally */
-        if (displays[placing_idx].desired_rect.bottom >= displays[display_idx].new_rect.top &&
-            displays[placing_idx].desired_rect.top <= displays[display_idx].new_rect.bottom)
+        if (desired_rect.bottom >= displays[display_idx].new_rect.top &&
+            desired_rect.top <= displays[display_idx].new_rect.bottom)
         {
             points[point_count].x = displays[display_idx].new_rect.left;
-            points[point_count++].y = displays[placing_idx].desired_rect.top;
+            points[point_count++].y = desired_rect.top;
             points[point_count].x = displays[display_idx].new_rect.right;
-            points[point_count++].y = displays[placing_idx].desired_rect.top;
+            points[point_count++].y = desired_rect.top;
         }
         /* Intersected points when moving the display to be placed vertically */
-        if (displays[placing_idx].desired_rect.left <= displays[display_idx].new_rect.right &&
-            displays[placing_idx].desired_rect.right >= displays[display_idx].new_rect.left)
+        if (desired_rect.left <= displays[display_idx].new_rect.right &&
+            desired_rect.right >= displays[display_idx].new_rect.left)
         {
-            points[point_count].x = displays[placing_idx].desired_rect.left;
+            points[point_count].x = desired_rect.left;
             points[point_count++].y = displays[display_idx].new_rect.top;
-            points[point_count].x = displays[placing_idx].desired_rect.left;
+            points[point_count].x = desired_rect.left;
             points[point_count++].y = displays[display_idx].new_rect.bottom;
         }
 
@@ -651,9 +652,9 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
                     break;
                 }
 
-                offset.x = left_top.x - displays[placing_idx].desired_rect.left;
-                offset.y = left_top.y - displays[placing_idx].desired_rect.top;
-                rect = displays[placing_idx].desired_rect;
+                offset.x = left_top.x - desired_rect.left;
+                offset.y = left_top.y - desired_rect.top;
+                rect = desired_rect;
                 OffsetRect(&rect, offset.x, offset.y);
                 if (!overlap_placed_displays(&rect, displays, display_count))
                 {
@@ -702,7 +703,7 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
         if (placing_idx == -1)
             break;
 
-        displays[placing_idx].new_rect = displays[placing_idx].desired_rect;
+        set_rect_from_devmode(&displays[placing_idx].new_rect, &displays[placing_idx].desired_mode);
         OffsetRect(&displays[placing_idx].new_rect, min_offset.x, min_offset.y);
         displays[placing_idx].placed = TRUE;
     }
