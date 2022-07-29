@@ -39,13 +39,11 @@ extern const struct builtin_class_descr BUTTON_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr COMBO_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr COMBOLBOX_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr DIALOG_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr DESKTOP_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr EDIT_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr ICONTITLE_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr LISTBOX_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr MDICLIENT_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr MENU_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr MESSAGE_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr IME_builtin_class DECLSPEC_HIDDEN;
@@ -102,7 +100,6 @@ extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDE
 
 /* Class functions */
 extern ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
-extern void register_desktop_class(void) DECLSPEC_HIDDEN;
 
 /* desktop */
 extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern ) DECLSPEC_HIDDEN;

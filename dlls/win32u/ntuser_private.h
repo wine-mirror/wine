@@ -249,6 +249,7 @@ struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
 BOOL needs_ime_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void register_builtin_classes(void) DECLSPEC_HIDDEN;
+extern void register_desktop_class(void) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;

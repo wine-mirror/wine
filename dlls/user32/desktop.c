@@ -34,20 +34,6 @@ static SIZE bitmapSize;
 static BOOL fTileWallPaper;
 
 
-/*********************************************************************
- * desktop class descriptor
- */
-const struct builtin_class_descr DESKTOP_builtin_class =
-{
-    (LPCWSTR)DESKTOP_CLASS_ATOM, /* name */
-    CS_DBLCLKS,           /* style */
-    WINPROC_DESKTOP,      /* proc */
-    0,                    /* extra */
-    0,                    /* cursor */
-    (HBRUSH)(COLOR_BACKGROUND+1)    /* brush */
-};
-
-
 /***********************************************************************
  *           DESKTOP_LoadBitmap
  */

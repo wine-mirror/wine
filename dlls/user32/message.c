@@ -47,18 +47,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
 
-/* Message class descriptor */
-const struct builtin_class_descr MESSAGE_builtin_class =
-{
-    L"Message",           /* name */
-    0,                    /* style */
-    WINPROC_MESSAGE,      /* proc */
-    0,                    /* extra */
-    0,                    /* cursor */
-    0                     /* brush */
-};
-
-
 /* pack a pointer into a 32/64 portable format */
 static inline ULONGLONG pack_ptr( const void *ptr )
 {

@@ -333,16 +333,6 @@ BOOL WINAPI User32RegisterBuiltinClasses( const struct win_hook_params *params, 
 
 
 /***********************************************************************
- *           register_desktop_class
- */
-void register_desktop_class(void)
-{
-    register_builtin( &DESKTOP_builtin_class );
-    register_builtin( &MESSAGE_builtin_class );
-}
-
-
-/***********************************************************************
  *		RegisterClassA (USER32.@)
  *
  * Register a window class.

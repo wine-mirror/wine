@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "ntgdi_private.h"
+#include "ntuser_private.h"
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
@@ -318,6 +319,7 @@ static NTSTATUS init( void *dispatcher )
     if ((status = gdi_init())) return status;
     winstation_init();
     sysparams_init();
+    register_desktop_class();
     return STATUS_SUCCESS;
 }
 

@@ -60,6 +60,17 @@ typedef struct tagCLASS
     struct client_menu_name menu_name; /* Default menu name */
 } CLASS;
 
+/* Built-in class descriptor */
+struct builtin_class_descr
+{
+    const char *name;    /* class name */
+    UINT       style;    /* class style */
+    INT        extra;     /* window extra bytes */
+    ULONG_PTR  cursor;    /* cursor id */
+    HBRUSH     brush;     /* brush or system color */
+    enum builtin_winprocs proc;
+};
+
 typedef struct tagWINDOWPROC
 {
     WNDPROC  procA;    /* ANSI window proc */
@@ -1050,6 +1061,59 @@ BOOL needs_ime_window( HWND hwnd )
     return ret;
 }
 
+static const struct builtin_class_descr desktop_builtin_class =
+{
+    .name = MAKEINTRESOURCEA(DESKTOP_CLASS_ATOM),
+    .style = CS_DBLCLKS,
+    .proc = WINPROC_DESKTOP,
+    .brush = (HBRUSH)(COLOR_BACKGROUND + 1),
+};
+
+static const struct builtin_class_descr message_builtin_class =
+{
+    .name = "Message",
+    .proc = WINPROC_MESSAGE,
+};
+
+/***********************************************************************
+ *           register_builtin
+ *
+ * Register a builtin control class.
+ * This allows having both ANSI and Unicode winprocs for the same class.
+ */
+static void register_builtin( const struct builtin_class_descr *descr )
+{
+    UNICODE_STRING name, version = { .Length = 0 };
+    struct client_menu_name menu_name = { 0 };
+    WCHAR nameW[64];
+    WNDCLASSEXW class = {
+        .cbSize = sizeof(class),
+        .hInstance = user32_module,
+        .style = descr->style,
+        .cbWndExtra = descr->extra,
+        .hbrBackground = descr->brush,
+        .lpfnWndProc = BUILTIN_WINPROC( descr->proc ),
+    };
+
+    if (descr->cursor)
+        class.hCursor = LoadImageW( 0, (const WCHAR *)descr->cursor, IMAGE_CURSOR,
+                                    0, 0, LR_SHARED | LR_DEFAULTSIZE );
+
+    if (IS_INTRESOURCE( descr->name ))
+    {
+        name.Buffer = (WCHAR *)descr->name;
+        name.Length = name.MaximumLength = 0;
+    }
+    else
+    {
+        asciiz_to_unicode( nameW, descr->name );
+        RtlInitUnicodeString( &name, nameW );
+    }
+
+    if (!NtUserRegisterClassExWOW( &class, &name, &version, &menu_name, 1, 0, NULL ) && class.hCursor)
+        NtUserDestroyCursor( class.hCursor, 0 );
+}
+
 static void register_builtins(void)
 {
     void *ret_ptr;
@@ -1064,4 +1128,13 @@ void register_builtin_classes(void)
 {
     static pthread_once_t init_once = PTHREAD_ONCE_INIT;
     pthread_once( &init_once, register_builtins );
+}
+
+/***********************************************************************
+ *           register_desktop_class
+ */
+void register_desktop_class(void)
+{
+    register_builtin( &desktop_builtin_class );
+    register_builtin( &message_builtin_class );
 }

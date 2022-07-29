@@ -220,7 +220,6 @@ static BOOL process_attach(void)
 
     dpiaware_init();
     winproc_init();
-    register_desktop_class();
 
     /* Initialize system colors and metrics */
     SYSPARAMS_Init();
