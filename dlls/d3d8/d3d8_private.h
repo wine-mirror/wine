@@ -353,6 +353,14 @@ static inline unsigned int wined3daccess_from_d3dpool(D3DPOOL pool, unsigned int
     return access;
 }
 
+static inline unsigned int wined3d_usage_from_d3d(D3DPOOL pool, DWORD usage)
+{
+    usage &= WINED3DUSAGE_MASK;
+    if (pool == D3DPOOL_SCRATCH)
+        usage |= WINED3DUSAGE_SCRATCH;
+    return usage;
+}
+
 static inline unsigned int wined3d_bind_flags_from_d3d8_usage(DWORD usage)
 {
     unsigned int bind_flags = 0;

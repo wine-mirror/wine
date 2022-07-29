@@ -296,7 +296,7 @@ HRESULT vertexbuffer_init(struct d3d8_vertexbuffer *buffer, struct d3d8_device *
     buffer->usage = usage;
 
     desc.byte_width = size;
-    desc.usage = usage & WINED3DUSAGE_MASK;
+    desc.usage = wined3d_usage_from_d3d(pool, usage);
     desc.bind_flags = 0;
     desc.access = wined3daccess_from_d3dpool(pool, usage) | map_access_from_usage(usage);
     /* Buffers are always readable. */
@@ -600,7 +600,7 @@ HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *de
         return D3DERR_INVALIDCALL;
 
     desc.byte_width = size;
-    desc.usage = (usage & WINED3DUSAGE_MASK) | WINED3DUSAGE_STATICDECL;
+    desc.usage = wined3d_usage_from_d3d(pool, usage) | WINED3DUSAGE_STATICDECL;
     desc.bind_flags = 0;
     desc.access = wined3daccess_from_d3dpool(pool, usage) | map_access_from_usage(usage);
     /* Buffers are always readable. */
