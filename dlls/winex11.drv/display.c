@@ -144,7 +144,7 @@ static BOOL nores_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
     return TRUE;
 }
 
-static LONG nores_set_current_mode(ULONG_PTR id, DEVMODEW *mode)
+static LONG nores_set_current_mode(ULONG_PTR id, const DEVMODEW *mode)
 {
     WARN("NoRes settings handler, ignoring mode change request.\n");
     return DISP_CHANGE_SUCCESSFUL;

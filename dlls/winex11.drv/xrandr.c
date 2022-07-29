@@ -282,7 +282,7 @@ static BOOL xrandr10_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     return TRUE;
 }
 
-static LONG xrandr10_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
+static LONG xrandr10_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
 {
     XRRScreenConfiguration *screen_config;
     Rotation rotation;
@@ -1544,7 +1544,7 @@ done:
     return ret;
 }
 
-static LONG xrandr14_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
+static LONG xrandr14_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
 {
     unsigned int screen_width, screen_height;
     RROutput output = (RROutput)id, *outputs;

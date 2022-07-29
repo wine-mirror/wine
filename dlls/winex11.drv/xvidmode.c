@@ -215,7 +215,7 @@ static BOOL xf86vm_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
     return TRUE;
 }
 
-static LONG xf86vm_set_current_mode(ULONG_PTR id, DEVMODEW *mode)
+static LONG xf86vm_set_current_mode(ULONG_PTR id, const DEVMODEW *mode)
 {
     XF86VidModeModeInfo *xf86vm_mode;
     Bool ret;
