@@ -3328,11 +3328,16 @@ static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 
         if (x == -1 && y == -1) /* passed via VK_APPS press/release */
         {
+            POINT pt;
             RECT rc;
+
             /* Windows places the menu at the edit's center in this case */
-            WIN_GetRectangles( es->hwndSelf, COORDS_SCREEN, NULL, &rc );
-            x = rc.left + (rc.right - rc.left) / 2;
-            y = rc.top + (rc.bottom - rc.top) / 2;
+            GetClientRect( es->hwndSelf, &rc );
+            pt.x = rc.right / 2;
+            pt.y = rc.bottom / 2;
+            ClientToScreen( es->hwndSelf, &pt );
+            x = pt.x;
+            y = pt.y;
         }
 
 	if (!(es->flags & EF_FOCUSED))
