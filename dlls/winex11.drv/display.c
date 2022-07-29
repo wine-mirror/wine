@@ -32,11 +32,7 @@ static struct x11drv_display_device_handler host_handler;
 struct x11drv_display_device_handler desktop_handler;
 static struct x11drv_settings_handler settings_handler;
 
-struct x11drv_display_setting
-{
-    DEVMODEW mode;
-    ULONG_PTR extra;
-};
+#define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
 
 struct x11drv_display_depth
 {
@@ -452,11 +448,9 @@ static void free_full_mode(DEVMODEW *mode)
         free(mode);
 }
 
-static LONG get_display_settings(struct x11drv_display_setting **new_displays,
-        INT *new_display_count, const WCHAR *dev_name, DEVMODEW *dev_mode)
+static LONG get_display_settings(DEVMODEW **new_displays, const WCHAR *dev_name, DEVMODEW *dev_mode)
 {
-    struct x11drv_display_setting *displays;
-    DEVMODEW registry_mode, current_mode;
+    DEVMODEW registry_mode, current_mode, *mode, *displays;
     INT display_idx, display_count = 0;
     DISPLAY_DEVICEW display_device;
     LONG ret = DISP_CHANGE_FAILED;
@@ -466,13 +460,13 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
     for (display_idx = 0; !NtUserEnumDisplayDevices( NULL, display_idx, &display_device, 0 ); ++display_idx)
         ++display_count;
 
-    displays = calloc(display_count, sizeof(*displays));
-    if (!displays)
-        goto done;
+    /* use driver extra data to store an ULONG_PTR adapter id after each mode,
+     * and allocate an extra mode to make iteration easier */
+    if (!(displays = calloc(display_count + 1, sizeof(DEVMODEW) + sizeof(ULONG_PTR)))) goto done;
+    mode = displays;
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        DEVMODEW *mode = &displays[display_idx].mode;
         ULONG_PTR *id = (ULONG_PTR *)(mode + 1);
 
         if (NtUserEnumDisplayDevices( NULL, display_idx, &display_device, 0 ))
@@ -520,10 +514,10 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
         mode->dmSize = sizeof(DEVMODEW);
         lstrcpyW(mode->dmDeviceName, display_device.DeviceName);
         mode->dmDriverExtra = sizeof(ULONG_PTR);
+        mode = NEXT_DEVMODEW(mode);
     }
 
     *new_displays = displays;
-    *new_display_count = display_count;
     return DISP_CHANGE_SUCCESSFUL;
 
 done:
@@ -542,14 +536,13 @@ static void set_rect_from_devmode(RECT *rect, const DEVMODEW *mode)
 }
 
 /* Check if a rect overlaps with placed display rects */
-static BOOL overlap_placed_displays(const RECT *rect, const struct x11drv_display_setting *displays, INT display_count)
+static BOOL overlap_placed_displays(const RECT *rect, const DEVMODEW *displays)
 {
-    INT display_idx;
+    const DEVMODEW *mode;
     RECT intersect;
 
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
-        const DEVMODEW *mode = &displays[display_idx].mode;
         set_rect_from_devmode(&intersect, mode);
         if ((mode->dmFields & DM_POSITION) && intersect_rect(&intersect, &intersect, rect))
             return TRUE;
@@ -558,12 +551,13 @@ static BOOL overlap_placed_displays(const RECT *rect, const struct x11drv_displa
 }
 
 /* Get the offset with minimum length to place a display next to the placed displays with no spacing and overlaps */
-static POINT get_placement_offset(const struct x11drv_display_setting *displays, INT display_count, const DEVMODEW *placing)
+static POINT get_placement_offset(const DEVMODEW *displays, const DEVMODEW *placing)
 {
     POINT points[8], left_top, offset, min_offset = {0, 0};
-    INT display_idx, point_idx, point_count, vertex_idx;
+    INT point_idx, point_count, vertex_idx;
     BOOL has_placed = FALSE, first = TRUE;
     RECT desired_rect, rect;
+    const DEVMODEW *mode;
     INT width, height;
 
     set_rect_from_devmode(&desired_rect, placing);
@@ -573,10 +567,8 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
         return min_offset;
 
     /* If there is no placed and attached display, place this display as it is */
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
-        const DEVMODEW *mode = &displays[display_idx].mode;
-
         set_rect_from_devmode(&rect, mode);
         if ((mode->dmFields & DM_POSITION) && !IsRectEmpty(&rect))
         {
@@ -593,10 +585,8 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
     width = desired_rect.right - desired_rect.left;
     height = desired_rect.bottom - desired_rect.top;
 
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
-        const DEVMODEW *mode = &displays[display_idx].mode;
-
         set_rect_from_devmode(&rect, mode);
         if (!(mode->dmFields & DM_POSITION) || IsRectEmpty(&rect))
             continue;
@@ -664,7 +654,7 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
                 offset.y = left_top.y - desired_rect.top;
                 rect = desired_rect;
                 OffsetRect(&rect, offset.x, offset.y);
-                if (!overlap_placed_displays(&rect, displays, display_count))
+                if (!overlap_placed_displays(&rect, displays))
                 {
                     if (first)
                     {
@@ -683,31 +673,26 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
     return min_offset;
 }
 
-static void place_all_displays(struct x11drv_display_setting *displays, INT display_count)
+static void place_all_displays(DEVMODEW *displays)
 {
     INT left_most = INT_MAX, top_most = INT_MAX;
     POINT min_offset, offset;
-    DEVMODEW *placing;
-    INT display_idx;
+    DEVMODEW *mode, *placing;
 
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
-    {
-        DEVMODEW *mode = &displays[display_idx].mode;
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
         mode->dmFields &= ~DM_POSITION;
-    }
 
     /* Place all displays with no extra space between them and no overlapping */
     while (1)
     {
         /* Place the unplaced display with the minimum offset length first */
         placing = NULL;
-        for (display_idx = 0; display_idx < display_count; ++display_idx)
+        for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
         {
-            DEVMODEW *mode = &displays[display_idx].mode;
             if (mode->dmFields & DM_POSITION)
                 continue;
 
-            offset = get_placement_offset(displays, display_count, mode);
+            offset = get_placement_offset(displays, mode);
             if (!placing || offset_length(offset) < offset_length(min_offset))
             {
                 min_offset = offset;
@@ -728,24 +713,22 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
     }
 
     /* Convert virtual screen coordinates to root coordinates */
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
-        DEVMODEW *mode = &displays[display_idx].mode;
         mode->dmPosition.x -= left_most;
         mode->dmPosition.y -= top_most;
     }
 }
 
-static LONG apply_display_settings(struct x11drv_display_setting *displays, INT display_count, BOOL do_attach)
+static LONG apply_display_settings(DEVMODEW *displays, BOOL do_attach)
 {
     DEVMODEW *full_mode;
     BOOL attached_mode;
-    INT display_idx;
+    DEVMODEW *mode;
     LONG ret;
 
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
-        DEVMODEW *mode = &displays[display_idx].mode;
         ULONG_PTR *id = (ULONG_PTR *)(mode + 1);
 
         attached_mode = !is_detached_mode(mode);
@@ -774,13 +757,12 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
     return DISP_CHANGE_SUCCESSFUL;
 }
 
-static BOOL all_detached_settings(const struct x11drv_display_setting *displays, INT display_count)
+static BOOL all_detached_settings(const DEVMODEW *displays)
 {
-    INT display_idx;
+    const DEVMODEW *mode;
 
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
-        const DEVMODEW *mode = &displays[display_idx].mode;
         if (!is_detached_mode(mode))
             return FALSE;
     }
@@ -795,20 +777,17 @@ static BOOL all_detached_settings(const struct x11drv_display_setting *displays,
 LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    struct x11drv_display_setting *displays;
-    INT display_idx, display_count;
-    DEVMODEW *full_mode;
+    DEVMODEW *displays, *mode, *full_mode;
     LONG ret;
 
-    ret = get_display_settings(&displays, &display_count, devname, devmode);
+    ret = get_display_settings( &displays, devname, devmode );
     if (ret != DISP_CHANGE_SUCCESSFUL)
         return ret;
 
     if (flags & CDS_UPDATEREGISTRY && devname && devmode)
     {
-        for (display_idx = 0; display_idx < display_count; ++display_idx)
+        for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
         {
-            DEVMODEW *mode = &displays[display_idx].mode;
             ULONG_PTR *id = (ULONG_PTR *)(mode + 1);
 
             if (!wcsicmp(mode->dmDeviceName, devname))
@@ -833,19 +812,19 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         return DISP_CHANGE_SUCCESSFUL;
     }
 
-    if (all_detached_settings(displays, display_count))
+    if (all_detached_settings( displays ))
     {
         WARN("Detaching all displays is not permitted.\n");
         free(displays);
         return DISP_CHANGE_SUCCESSFUL;
     }
 
-    place_all_displays(displays, display_count);
+    place_all_displays( displays );
 
     /* Detach displays first to free up CRTCs */
-    ret = apply_display_settings(displays, display_count, FALSE);
+    ret = apply_display_settings( displays, FALSE );
     if (ret == DISP_CHANGE_SUCCESSFUL)
-        ret = apply_display_settings(displays, display_count, TRUE);
+        ret = apply_display_settings( displays, TRUE );
     if (ret == DISP_CHANGE_SUCCESSFUL)
         X11DRV_DisplayDevices_Update(TRUE);
     free(displays);
