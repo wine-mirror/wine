@@ -2816,7 +2816,8 @@ static void system_fallback_parse_ranges(const char *str, DWRITE_UNICODE_RANGE *
             str = end + 1;
             ranges[count].last = strtoul(str, &end, 16);
         }
-        if (*end == ',') str = end + 1;
+        str = end;
+        if (*str == ',') str++;
         count++;
     }
 
