@@ -35,7 +35,6 @@ static struct x11drv_settings_handler settings_handler;
 struct x11drv_display_setting
 {
     ULONG_PTR id;
-    BOOL placed;
     RECT new_rect;
     DEVMODEW desired_mode;
 };
@@ -548,7 +547,7 @@ static BOOL overlap_placed_displays(const RECT *rect, const struct x11drv_displa
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if (displays[display_idx].placed &&
+        if ((displays[display_idx].desired_mode.dmFields & DM_POSITION) &&
             intersect_rect(&intersect, &displays[display_idx].new_rect, rect))
             return TRUE;
     }
@@ -573,7 +572,7 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
     /* If there is no placed and attached display, place this display as it is */
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if (displays[display_idx].placed && !IsRectEmpty(&displays[display_idx].new_rect))
+        if ((displays[display_idx].desired_mode.dmFields & DM_POSITION) && !IsRectEmpty(&displays[display_idx].new_rect))
         {
             has_placed = TRUE;
             break;
@@ -590,7 +589,7 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if (!displays[display_idx].placed || IsRectEmpty(&displays[display_idx].new_rect))
+        if (!(displays[display_idx].desired_mode.dmFields & DM_POSITION) || IsRectEmpty(&displays[display_idx].new_rect))
             continue;
 
         /* Get four vertices of the placed display rectangle */
@@ -681,6 +680,9 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
     INT placing_idx, display_idx;
     POINT min_offset, offset;
 
+    for (display_idx = 0; display_idx < display_count; ++display_idx)
+        displays[display_idx].desired_mode.dmFields &= ~DM_POSITION;
+
     /* Place all displays with no extra space between them and no overlapping */
     while (1)
     {
@@ -688,7 +690,7 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
         placing_idx = -1;
         for (display_idx = 0; display_idx < display_count; ++display_idx)
         {
-            if (displays[display_idx].placed)
+            if (displays[display_idx].desired_mode.dmFields & DM_POSITION)
                 continue;
 
             offset = get_placement_offset(displays, display_count, display_idx);
@@ -705,7 +707,7 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
 
         set_rect_from_devmode(&displays[placing_idx].new_rect, &displays[placing_idx].desired_mode);
         OffsetRect(&displays[placing_idx].new_rect, min_offset.x, min_offset.y);
-        displays[placing_idx].placed = TRUE;
+        displays[placing_idx].desired_mode.dmFields |= DM_POSITION;
     }
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
