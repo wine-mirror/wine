@@ -4905,17 +4905,11 @@ HRESULT CDECL wined3d_device_context_copy_sub_resource_region(struct wined3d_dev
         unsigned int src_level = src_sub_resource_idx % src_texture->level_count;
         unsigned int src_row_block_count, src_row_count;
 
-        if (dst_sub_resource_idx >= dst_texture->level_count * dst_texture->layer_count)
-        {
-            WARN("Invalid destination sub-resource %u.\n", dst_sub_resource_idx);
+        if (!wined3d_texture_validate_sub_resource_idx(dst_texture, dst_sub_resource_idx))
             return WINED3DERR_INVALIDCALL;
-        }
 
-        if (src_sub_resource_idx >= src_texture->level_count * src_texture->layer_count)
-        {
-            WARN("Invalid source sub-resource %u.\n", src_sub_resource_idx);
+        if (!wined3d_texture_validate_sub_resource_idx(src_texture, src_sub_resource_idx))
             return WINED3DERR_INVALIDCALL;
-        }
 
         if (dst_texture->sub_resources[dst_sub_resource_idx].map_count)
         {
@@ -5369,7 +5363,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
     TRACE("device %p, x_hotspot %u, y_hotspot %u, texture %p, sub_resource_idx %u.\n",
             device, x_hotspot, y_hotspot, texture, sub_resource_idx);
 
-    if (sub_resource_idx >= texture->level_count * texture->layer_count
+    if (!wined3d_texture_validate_sub_resource_idx(texture, sub_resource_idx)
             || texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
         return WINED3DERR_INVALIDCALL;
 
