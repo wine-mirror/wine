@@ -8142,10 +8142,6 @@ interface IHTMLDOMNode2 : IDispatch
     [propget, id(DISPID_IHTMLDOMNODE2_OWNERDOCUMENT)]   \
     IDispatch *ownerDocument()
 
-#define WINE_HTMLDOMNODE_DISPINTERFACE_DECL     \
-    WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;       \
-    WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL
-
 /*****************************************************************************
  *    IHTMLDOMNode3 interface
  */
@@ -8233,6 +8229,69 @@ interface IHTMLDOMNode3 : IDispatch
         [in] VARIANT version,
         [out, retval] VARIANT_BOOL *pfisSupported);
 }
+
+#define WINE_IHTMLDOMNODE3_DISPINTERFACE_DECL                           \
+    [propput, id(DISPID_IHTMLDOMNODE3_PREFIX)]                          \
+    void prefix(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLDOMNODE3_PREFIX)]                          \
+    VARIANT prefix();                                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLDOMNODE3_LOCALNAME)]                       \
+    VARIANT localName();                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLDOMNODE3_NAMESPACEURI)]                    \
+    VARIANT namespaceURI();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLDOMNODE3_TEXTCONTENT)]                     \
+    void textContent(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLDOMNODE3_TEXTCONTENT)]                     \
+    VARIANT textContent();                                              \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_ISEQUALNODE)]                              \
+    VARIANT_BOOL isEqualNode([in] IHTMLDOMNode3 *otherNode);            \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_LOOKUPNAMESPACEURI)]                       \
+    VARIANT lookupNamespaceURI([in] VARIANT *pvarPrefix);               \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_LOOKUPPREFIX)]                             \
+    VARIANT lookupPrefix([in] VARIANT *pvarNamespaceURI);               \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_ISDEFAULTNAMESPACE)]                       \
+    VARIANT_BOOL isDefaultNamespace([in] VARIANT *pvarNamespace);       \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_IE9_APPENDCHILD)]                          \
+    IHTMLDOMNode *ie9_appendChild([in] IHTMLDOMNode *newChild);         \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_IE9_INSERTBEFORE)]                         \
+    IHTMLDOMNode *ie9_insertBefore(                                     \
+        [in] IHTMLDOMNode *newChild,                                    \
+        [in, optional] VARIANT refChild);                               \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_IE9_REMOVECHILD)]                          \
+    IHTMLDOMNode *ie9_removeChild([in] IHTMLDOMNode *oldChild);         \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_IE9_REPLACECHILD)]                         \
+    IHTMLDOMNode *ie9_replaceChild(                                     \
+        [in] IHTMLDOMNode *newChild,                                    \
+        [in] IHTMLDOMNode *oldChild);                                   \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_ISSAMENODE)]                               \
+    VARIANT_BOOL isSameNode([in] IHTMLDOMNode3 *otherNode);             \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_COMPAREDOCUMENTPOSITION)]                  \
+    USHORT compareDocumentPosition([in] IHTMLDOMNode *otherNode);       \
+                                                                        \
+    [id(DISPID_IHTMLDOMNODE3_ISSUPPORTED)]                              \
+    VARIANT_BOOL isSupported(                                           \
+        [in] BSTR feature,                                              \
+        [in] VARIANT version)                                           \
+
+#define WINE_HTMLDOMNODE_DISPINTERFACE_DECL     \
+    WINE_IHTMLDOMNODE_DISPINTERFACE_DECL;       \
+    WINE_IHTMLDOMNODE2_DISPINTERFACE_DECL;      \
+    WINE_IHTMLDOMNODE3_DISPINTERFACE_DECL
 
 /*****************************************************************************
  *    IHTMLDOMAttribute interface
