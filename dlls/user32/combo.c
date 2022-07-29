@@ -76,20 +76,6 @@ static UINT	CBitHeight, CBitWidth;
 static void CBCalcPlacement(HEADCOMBO *combo);
 static void CBResetPos(HEADCOMBO *combo, BOOL redraw);
 
-/*********************************************************************
- * combo class descriptor
- */
-const struct builtin_class_descr COMBO_builtin_class =
-{
-    L"ComboBox",          /* name */
-    CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW, /* style  */
-    WINPROC_COMBO,        /* proc */
-    sizeof(HEADCOMBO *),  /* extra */
-    IDC_ARROW,            /* cursor */
-    0                     /* brush */
-};
-
-
 /***********************************************************************
  *           COMBO_Init
  *

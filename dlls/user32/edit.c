@@ -5255,17 +5255,3 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 	return result;
 }
-
-
-/*********************************************************************
- * edit class descriptor
- */
-const struct builtin_class_descr EDIT_builtin_class =
-{
-    L"Edit",              /* name */
-    CS_DBLCLKS | CS_PARENTDC,   /* style */
-    WINPROC_EDIT,         /* proc */
-    sizeof(UINT64),       /* extra */
-    IDC_IBEAM,            /* cursor */
-    0                     /* brush */
-};

@@ -241,33 +241,6 @@ static void remove_item_data(LB_DESCR *descr, UINT index)
         memmove(p, p + size, (descr->nb_items - index) * size);
 }
 
-/*********************************************************************
- * listbox class descriptor
- */
-const struct builtin_class_descr LISTBOX_builtin_class =
-{
-    L"ListBox",           /* name */
-    CS_DBLCLKS /*| CS_PARENTDC*/,  /* style */
-    WINPROC_LISTBOX,      /* proc */
-    sizeof(LB_DESCR *),   /* extra */
-    IDC_ARROW,            /* cursor */
-    0                     /* brush */
-};
-
-
-/*********************************************************************
- * combolbox class descriptor
- */
-const struct builtin_class_descr COMBOLBOX_builtin_class =
-{
-    L"ComboLBox",         /* name */
-    CS_DBLCLKS | CS_SAVEBITS,  /* style */
-    WINPROC_LISTBOX,      /* proc */
-    sizeof(LB_DESCR *),   /* extra */
-    IDC_ARROW,            /* cursor */
-    0                     /* brush */
-};
-
 
 /***********************************************************************
  *           LISTBOX_GetCurrentPageSize

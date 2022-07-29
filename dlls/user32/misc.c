@@ -530,16 +530,6 @@ BOOL WINAPI GetPointerType(UINT32 id, POINTER_INPUT_TYPE *type)
     return TRUE;
 }
 
-const struct builtin_class_descr IME_builtin_class =
-{
-    L"IME",             /* name */
-    0,                  /* style  */
-    WINPROC_IME,        /* proc */
-    2*sizeof(LONG_PTR), /* extra */
-    IDC_ARROW,          /* cursor */
-    0                   /* brush */
-};
-
 LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     if (!imm_ime_wnd_proc) return DefWindowProcA(hwnd, msg, wParam, lParam);

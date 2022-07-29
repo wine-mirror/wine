@@ -178,20 +178,6 @@ static void MDI_PostUpdate(HWND hwnd, MDICLIENTINFO* ci, WORD recalc)
 }
 
 
-/*********************************************************************
- * MDIClient class descriptor
- */
-const struct builtin_class_descr MDICLIENT_builtin_class =
-{
-    L"MDIClient",           /* name */
-    0,                      /* style */
-    WINPROC_MDICLIENT,      /* proc */
-    2 * sizeof(void *),     /* extra */
-    IDC_ARROW,              /* cursor */
-    (HBRUSH)(COLOR_APPWORKSPACE+1)    /* brush */
-};
-
-
 static MDICLIENTINFO *get_client_info( HWND client )
 {
     return NtUserGetMDIClientInfo( client );

@@ -35,19 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(scroll);
   /* Overlap between arrows and thumb */
 #define SCROLL_ARROW_THUMB_OVERLAP 0
 
-/*********************************************************************
- * scrollbar class descriptor
- */
-const struct builtin_class_descr SCROLL_builtin_class =
-{
-    L"ScrollBar",           /* name */
-    CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    WINPROC_SCROLLBAR,      /* proc */
-    sizeof(struct scroll_bar_win_data), /* extra */
-    IDC_ARROW,              /* cursor */
-    0                       /* brush */
-};
-
 
 /***********************************************************************
  *           SCROLL_DrawArrows

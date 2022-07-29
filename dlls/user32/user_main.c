@@ -201,11 +201,11 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32FreeCachedClipboardData,
     User32ImmProcessKey,
     User32ImmTranslateMessage,
+    User32InitBuiltinClasses,
     User32LoadDriver,
     User32LoadImage,
     User32LoadSysMenu,
     User32PostDDEMessage,
-    User32RegisterBuiltinClasses,
     User32RenderSsynthesizedFormat,
     User32UnpackDDEMessage,
 };

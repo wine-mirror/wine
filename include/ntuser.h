@@ -39,11 +39,11 @@ enum
     NtUserFreeCachedClipboardData,
     NtUserImmProcessKey,
     NtUserImmTranslateMessage,
+    NtUserInitBuiltinClasses,
     NtUserLoadDriver,
     NtUserLoadImage,
     NtUserLoadSysMenu,
     NtUserPostDDEMessage,
-    NtUserRegisterBuiltinClasses,
     NtUserRenderSynthesizedFormat,
     NtUserUnpackDDEMessage,
     /* win16 hooks */

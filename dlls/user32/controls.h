@@ -24,30 +24,6 @@
 #include "winuser.h"
 #include "../win32u/ntuser_private.h"
 
-/* Built-in class descriptor */
-struct builtin_class_descr
-{
-    LPCWSTR   name;    /* class name */
-    UINT      style;   /* class style */
-    enum builtin_winprocs proc;
-    INT       extra;   /* window extra bytes */
-    ULONG_PTR cursor;  /* cursor id */
-    HBRUSH    brush;   /* brush or system color */
-};
-
-extern const struct builtin_class_descr BUTTON_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr COMBO_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr COMBOLBOX_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr DIALOG_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr EDIT_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr ICONTITLE_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr LISTBOX_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr MDICLIENT_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr MENU_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
-extern const struct builtin_class_descr IME_builtin_class DECLSPEC_HIDDEN;
-
 extern LRESULT WINAPI ImeWndProcA(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
 extern LRESULT WINAPI ImeWndProcW(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
 extern LRESULT WINAPI DesktopWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;

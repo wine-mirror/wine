@@ -68,19 +68,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(menu);
 #define STATE_MASK (~TYPE_MASK)
 #define MENUITEMINFO_STATE_MASK (STATE_MASK & ~(MF_BYPOSITION | MF_MOUSESELECT))
 
-/*********************************************************************
- * menu class descriptor
- */
-const struct builtin_class_descr MENU_builtin_class =
-{
-    (LPCWSTR)POPUPMENU_CLASS_ATOM,  /* name */
-    CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,  /* style */
-    WINPROC_MENU,                  /* proc */
-    sizeof(HMENU),                 /* extra */
-    IDC_ARROW,                     /* cursor */
-    (HBRUSH)(COLOR_MENU+1)         /* brush */
-};
-
 
 /**********************************************************************
  *         MENU_ParseResource

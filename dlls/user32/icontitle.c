@@ -32,19 +32,6 @@
 static BOOL bMultiLineTitle;
 static HFONT hIconTitleFont;
 
-/*********************************************************************
- * icon title class descriptor
- */
-const struct builtin_class_descr ICONTITLE_builtin_class =
-{
-    (LPCWSTR)ICONTITLE_CLASS_ATOM, /* name */
-    0,                    /* style */
-    WINPROC_ICONTITLE,    /* proc */
-    0,                    /* extra */
-    IDC_ARROW,            /* cursor */
-    0                     /* brush */
-};
-
 /***********************************************************************
  *           ICONTITLE_SetTitlePos
  */

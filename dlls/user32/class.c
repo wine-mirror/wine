@@ -264,32 +264,6 @@ static void get_versioned_name( const WCHAR *name, UNICODE_STRING *ret, UNICODE_
 }
 
 
-/***********************************************************************
- *           register_builtin
- *
- * Register a builtin control class.
- * This allows having both ANSI and Unicode winprocs for the same class.
- */
-static void register_builtin( const struct builtin_class_descr *descr )
-{
-    UNICODE_STRING name, version = { .Length = 0 };
-    struct client_menu_name menu_name = { 0 };
-    WNDCLASSEXW class = {
-        .cbSize = sizeof(class),
-        .hInstance = user32_module,
-        .style = descr->style,
-        .cbWndExtra = descr->extra,
-        .hbrBackground = descr->brush,
-        .lpfnWndProc = BUILTIN_WINPROC( descr->proc ),
-    };
-
-    if (descr->cursor) class.hCursor = LoadCursorA( 0, (LPSTR)descr->cursor );
-
-    init_class_name( &name, descr->name );
-    if (!NtUserRegisterClassExWOW( &class, &name, &version, &menu_name, 1, 0, NULL ) && class.hCursor)
-        DestroyCursor( class.hCursor );
-}
-
 static void load_uxtheme(void)
 {
     BOOL (WINAPI * pIsThemeActive)(void);
@@ -305,24 +279,11 @@ static void load_uxtheme(void)
 }
 
 /***********************************************************************
- *           User32RegisterBuiltinClasses
+ *           User32InitBuiltinClasses
  */
-BOOL WINAPI User32RegisterBuiltinClasses( const struct win_hook_params *params, ULONG size )
+BOOL WINAPI User32InitBuiltinClasses( const struct win_hook_params *params, ULONG size )
 {
     DWORD layout;
-
-    register_builtin( &BUTTON_builtin_class );
-    register_builtin( &COMBO_builtin_class );
-    register_builtin( &COMBOLBOX_builtin_class );
-    register_builtin( &DIALOG_builtin_class );
-    register_builtin( &EDIT_builtin_class );
-    register_builtin( &ICONTITLE_builtin_class );
-    register_builtin( &LISTBOX_builtin_class );
-    register_builtin( &MDICLIENT_builtin_class );
-    register_builtin( &MENU_builtin_class );
-    register_builtin( &SCROLL_builtin_class );
-    register_builtin( &STATIC_builtin_class );
-    register_builtin( &IME_builtin_class );
 
     GetProcessDefaultLayout( &layout ); /* make sure that process layout is initialized */
 

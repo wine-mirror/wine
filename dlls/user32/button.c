@@ -118,19 +118,6 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
     OB_Paint     /* BS_OWNERDRAW */
 };
 
-/*********************************************************************
- * button class descriptor
- */
-const struct builtin_class_descr BUTTON_builtin_class =
-{
-    L"Button",           /* name */
-    CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    WINPROC_BUTTON,      /* proc */
-    NB_EXTRA_BYTES,      /* extra */
-    IDC_ARROW,           /* cursor */
-    0                    /* brush */
-};
-
 
 static inline LONG get_button_state( HWND hwnd )
 {

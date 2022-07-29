@@ -52,7 +52,6 @@ static COLORREF color_3dshadow, color_3ddkshadow, color_3dhighlight;
 /* offsets for GetWindowLong for static private information */
 #define HFONT_GWL_OFFSET    0
 #define HICON_GWL_OFFSET    (sizeof(HFONT))
-#define STATIC_EXTRA_BYTES  (HICON_GWL_OFFSET + sizeof(HICON))
 
 typedef void (*pfPaint)( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style );
 
@@ -79,19 +78,6 @@ static const pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
 };
 
-
-/*********************************************************************
- * static class descriptor
- */
-const struct builtin_class_descr STATIC_builtin_class =
-{
-    L"Static",           /* name */
-    CS_DBLCLKS | CS_PARENTDC, /* style  */
-    WINPROC_STATIC,      /* proc */
-    STATIC_EXTRA_BYTES,  /* extra */
-    IDC_ARROW,           /* cursor */
-    0                    /* brush */
-};
 
 /***********************************************************************
  *           STATIC_SetIcon

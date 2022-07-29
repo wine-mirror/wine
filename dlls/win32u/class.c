@@ -1075,6 +1075,104 @@ static const struct builtin_class_descr message_builtin_class =
     .proc = WINPROC_MESSAGE,
 };
 
+static const struct builtin_class_descr builtin_classes[] =
+{
+    /* button */
+    {
+        .name = "Button",
+        .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
+        .proc = WINPROC_BUTTON,
+        .extra = sizeof(UINT) + 2 * sizeof(HANDLE),
+        .cursor = IDC_ARROW,
+    },
+    /* combo  */
+    {
+        .name = "ComboBox",
+        .style = CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW,
+        .proc = WINPROC_COMBO,
+        .extra = sizeof(void *),
+        .cursor = IDC_ARROW,
+    },
+    /* combolbox */
+    {
+        .name = "ComboLBox",
+        .style = CS_DBLCLKS | CS_SAVEBITS,
+        .proc = WINPROC_LISTBOX,
+        .extra = sizeof(void *),
+        .cursor = IDC_ARROW,
+    },
+    /* dialog */
+    {
+        .name = MAKEINTRESOURCEA(DIALOG_CLASS_ATOM),
+        .style = CS_SAVEBITS | CS_DBLCLKS,
+        .proc = WINPROC_DIALOG,
+        .extra = DLGWINDOWEXTRA,
+        .cursor = IDC_ARROW,
+    },
+    /* edit */
+    {
+        .name = "Edit",
+        .style = CS_DBLCLKS | CS_PARENTDC,
+        .proc = WINPROC_EDIT,
+        .extra = sizeof(UINT64),
+        .cursor = IDC_IBEAM,
+    },
+    /* icon title */
+    {
+        .name = MAKEINTRESOURCEA(ICONTITLE_CLASS_ATOM),
+        .proc = WINPROC_ICONTITLE,
+        .cursor = IDC_ARROW,
+    },
+    /* IME */
+    {
+        .name = "IME",
+        .proc = WINPROC_IME,
+        .extra = 2 * sizeof(LONG_PTR),
+        .cursor = IDC_ARROW,
+    },
+    /* listbox  */
+    {
+        .name = "ListBox",
+        .style = CS_DBLCLKS,
+        .proc = WINPROC_LISTBOX,
+        .extra = sizeof(void *),
+        .cursor = IDC_ARROW,
+    },
+    /* menu */
+    {
+        .name = MAKEINTRESOURCEA(POPUPMENU_CLASS_ATOM),
+        .style = CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,
+        .proc = WINPROC_MENU,
+        .extra = sizeof(HMENU),
+        .cursor = IDC_ARROW,
+        .brush = (HBRUSH)(COLOR_MENU + 1),
+    },
+    /* MDIClient */
+    {
+        .name = "MDIClient",
+        .proc = WINPROC_MDICLIENT,
+        .extra = 2 * sizeof(void *),
+        .cursor = IDC_ARROW,
+        .brush = (HBRUSH)(COLOR_APPWORKSPACE + 1),
+    },
+    /* scrollbar */
+    {
+        .name = "ScrollBar",
+        .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
+        .proc = WINPROC_SCROLLBAR,
+        .extra = sizeof(struct scroll_bar_win_data),
+        .cursor = IDC_ARROW,
+    },
+    /* static */
+    {
+        .name = "Static",
+        .style = CS_DBLCLKS | CS_PARENTDC,
+        .proc = WINPROC_STATIC,
+        .extra = 2 * sizeof(HANDLE),
+        .cursor = IDC_ARROW,
+    },
+};
+
 /***********************************************************************
  *           register_builtin
  *
@@ -1116,9 +1214,11 @@ static void register_builtin( const struct builtin_class_descr *descr )
 
 static void register_builtins(void)
 {
+    ULONG ret_len, i;
     void *ret_ptr;
-    ULONG ret_len;
-    KeUserModeCallback( NtUserRegisterBuiltinClasses, NULL, 0, &ret_ptr, &ret_len );
+
+    for (i = 0; i < ARRAYSIZE(builtin_classes); i++) register_builtin( &builtin_classes[i] );
+    KeUserModeCallback( NtUserInitBuiltinClasses, NULL, 0, &ret_ptr, &ret_len );
 }
 
 /***********************************************************************
