@@ -35,7 +35,6 @@ static struct x11drv_settings_handler settings_handler;
 struct x11drv_display_setting
 {
     ULONG_PTR id;
-    RECT new_rect;
     DEVMODEW desired_mode;
 };
 
@@ -547,8 +546,9 @@ static BOOL overlap_placed_displays(const RECT *rect, const struct x11drv_displa
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
+        set_rect_from_devmode(&intersect, &displays[display_idx].desired_mode);
         if ((displays[display_idx].desired_mode.dmFields & DM_POSITION) &&
-            intersect_rect(&intersect, &displays[display_idx].new_rect, rect))
+            intersect_rect(&intersect, &intersect, rect))
             return TRUE;
     }
     return FALSE;
@@ -572,7 +572,8 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
     /* If there is no placed and attached display, place this display as it is */
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if ((displays[display_idx].desired_mode.dmFields & DM_POSITION) && !IsRectEmpty(&displays[display_idx].new_rect))
+        set_rect_from_devmode(&rect, &displays[display_idx].desired_mode);
+        if ((displays[display_idx].desired_mode.dmFields & DM_POSITION) && !IsRectEmpty(&rect))
         {
             has_placed = TRUE;
             break;
@@ -589,37 +590,38 @@ static POINT get_placement_offset(const struct x11drv_display_setting *displays,
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if (!(displays[display_idx].desired_mode.dmFields & DM_POSITION) || IsRectEmpty(&displays[display_idx].new_rect))
+        set_rect_from_devmode(&rect, &displays[display_idx].desired_mode);
+        if (!(displays[display_idx].desired_mode.dmFields & DM_POSITION) || IsRectEmpty(&rect))
             continue;
 
         /* Get four vertices of the placed display rectangle */
-        points[0].x = displays[display_idx].new_rect.left;
-        points[0].y = displays[display_idx].new_rect.top;
-        points[1].x = displays[display_idx].new_rect.left;
-        points[1].y = displays[display_idx].new_rect.bottom;
-        points[2].x = displays[display_idx].new_rect.right;
-        points[2].y = displays[display_idx].new_rect.top;
-        points[3].x = displays[display_idx].new_rect.right;
-        points[3].y = displays[display_idx].new_rect.bottom;
+        points[0].x = rect.left;
+        points[0].y = rect.top;
+        points[1].x = rect.left;
+        points[1].y = rect.bottom;
+        points[2].x = rect.right;
+        points[2].y = rect.top;
+        points[3].x = rect.right;
+        points[3].y = rect.bottom;
         point_count = 4;
 
         /* Intersected points when moving the display to be placed horizontally */
-        if (desired_rect.bottom >= displays[display_idx].new_rect.top &&
-            desired_rect.top <= displays[display_idx].new_rect.bottom)
+        if (desired_rect.bottom >= rect.top &&
+            desired_rect.top <= rect.bottom)
         {
-            points[point_count].x = displays[display_idx].new_rect.left;
+            points[point_count].x = rect.left;
             points[point_count++].y = desired_rect.top;
-            points[point_count].x = displays[display_idx].new_rect.right;
+            points[point_count].x = rect.right;
             points[point_count++].y = desired_rect.top;
         }
         /* Intersected points when moving the display to be placed vertically */
-        if (desired_rect.left <= displays[display_idx].new_rect.right &&
-            desired_rect.right >= displays[display_idx].new_rect.left)
+        if (desired_rect.left <= rect.right &&
+            desired_rect.right >= rect.left)
         {
             points[point_count].x = desired_rect.left;
-            points[point_count++].y = displays[display_idx].new_rect.top;
+            points[point_count++].y = rect.top;
             points[point_count].x = desired_rect.left;
-            points[point_count++].y = displays[display_idx].new_rect.bottom;
+            points[point_count++].y = rect.bottom;
         }
 
         /* Try moving each vertex of the display rectangle to each points */
@@ -705,17 +707,12 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
         if (placing_idx == -1)
             break;
 
-        set_rect_from_devmode(&displays[placing_idx].new_rect, &displays[placing_idx].desired_mode);
-        OffsetRect(&displays[placing_idx].new_rect, min_offset.x, min_offset.y);
+        displays[placing_idx].desired_mode.dmPosition.x += min_offset.x;
+        displays[placing_idx].desired_mode.dmPosition.y += min_offset.y;
         displays[placing_idx].desired_mode.dmFields |= DM_POSITION;
-    }
 
-    for (display_idx = 0; display_idx < display_count; ++display_idx)
-    {
-        displays[display_idx].desired_mode.dmPosition.x = displays[display_idx].new_rect.left;
-        displays[display_idx].desired_mode.dmPosition.y = displays[display_idx].new_rect.top;
-        left_most = min(left_most, displays[display_idx].new_rect.left);
-        top_most = min(top_most, displays[display_idx].new_rect.top);
+        left_most = min(left_most, displays[placing_idx].desired_mode.dmPosition.x);
+        top_most = min(top_most, displays[placing_idx].desired_mode.dmPosition.y);
     }
 
     /* Convert virtual screen coordinates to root coordinates */
