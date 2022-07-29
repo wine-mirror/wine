@@ -380,12 +380,6 @@ static void test_choosepixelformat(void)
     pfd.cDepthBits = 0;
     pfd.cStencilBits = 0;
 
-    pfd.cDepthBits = 32;
-    ok( test_pfd(&pfd, &ret_fmt), "depth 32, stencil 8 failed.\n" );
-    ok( ret_fmt.cDepthBits >= 24, "Got unexpected cDepthBits %u.\n", ret_fmt.cDepthBits );
-    ok( !ret_fmt.cStencilBits, "Got unexpected cStencilBits %u.\n", ret_fmt.cStencilBits );
-    pfd.cDepthBits = 0;
-
     pfd.cStencilBits = 8;
     ok( test_pfd(&pfd, &ret_fmt), "depth 32, stencil 8 failed.\n" );
     ok( ret_fmt.cStencilBits == 8, "Got unexpected cStencilBits %u.\n", ret_fmt.cStencilBits );
