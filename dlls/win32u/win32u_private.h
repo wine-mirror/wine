@@ -494,6 +494,15 @@ static inline BOOL is_win9x(void)
     return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
 }
 
+static inline ULONG_PTR zero_bits(void)
+{
+#ifdef _WIN64
+    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
+#else
+    return 0;
+#endif
+}
+
 static inline const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";

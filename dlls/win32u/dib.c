@@ -1548,8 +1548,8 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
     {
         SIZE_T size = bmp->dib.dsBmih.biSizeImage;
         offset = 0;
-        if (NtAllocateVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, 0, &size,
-                                     MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE ))
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, zero_bits(),
+                                     &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE ))
             goto error;
     }
     bmp->dib.dshSection = section;
