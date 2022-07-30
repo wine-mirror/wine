@@ -899,7 +899,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     IUnknown *parent;
 
     wined3d_resource_get_desc(resource, &desc);
-    if (desc.access & WINED3D_RESOURCE_ACCESS_CPU)
+    if ((desc.access & WINED3D_RESOURCE_ACCESS_CPU) || (desc.usage & WINED3DUSAGE_MANAGED))
         return D3D_OK;
 
     if (desc.resource_type != WINED3D_RTYPE_TEXTURE_2D)
@@ -1431,6 +1431,12 @@ static HRESULT WINAPI d3d8_device_UpdateTexture(IDirect3DDevice8 *iface,
 
     src_impl = unsafe_impl_from_IDirect3DBaseTexture8(src_texture);
     dst_impl = unsafe_impl_from_IDirect3DBaseTexture8(dst_texture);
+
+    if (src_impl->draw_texture || dst_impl->draw_texture)
+    {
+        WARN("Source or destination is managed; returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
+    }
 
     wined3d_mutex_lock();
     hr = wined3d_device_update_texture(device->wined3d_device,
@@ -2249,7 +2255,7 @@ static HRESULT WINAPI d3d8_device_SetTexture(IDirect3DDevice8 *iface, DWORD stag
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_texture(device->update_state, stage,
-            texture_impl ? texture_impl->wined3d_texture : NULL);
+            texture_impl ? d3d8_texture_get_draw_texture(texture_impl) : NULL);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -2487,6 +2493,25 @@ static HRESULT d3d8_device_upload_sysmem_index_buffer(struct d3d8_device *device
     return S_OK;
 }
 
+static void d3d8_device_upload_managed_textures(struct d3d8_device *device)
+{
+    const struct wined3d_stateblock_state *state = device->stateblock_state;
+    unsigned int i;
+
+    for (i = 0; i < WINED3D_MAX_FRAGMENT_SAMPLERS; ++i)
+    {
+        struct wined3d_texture *wined3d_texture = state->textures[i];
+        struct d3d8_texture *d3d8_texture;
+
+        if (!wined3d_texture)
+            continue;
+        d3d8_texture = wined3d_texture_get_parent(wined3d_texture);
+        if (d3d8_texture->draw_texture)
+            wined3d_device_update_texture(device->wined3d_device,
+                    d3d8_texture->wined3d_texture, d3d8_texture->draw_texture);
+    }
+}
+
 static HRESULT WINAPI d3d8_device_DrawPrimitive(IDirect3DDevice8 *iface,
         D3DPRIMITIVETYPE primitive_type, UINT start_vertex, UINT primitive_count)
 {
@@ -2498,6 +2523,7 @@ static HRESULT WINAPI d3d8_device_DrawPrimitive(IDirect3DDevice8 *iface,
 
     vertex_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     wined3d_mutex_lock();
+    d3d8_device_upload_managed_textures(device);
     d3d8_device_upload_sysmem_vertex_buffers(device, start_vertex, vertex_count);
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
@@ -2529,6 +2555,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
         return D3D_OK;
     }
     base_vertex_index = device->stateblock_state->base_vertex_index;
+    d3d8_device_upload_managed_textures(device);
     d3d8_device_upload_sysmem_vertex_buffers(device, base_vertex_index + min_vertex_idx, vertex_count);
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
@@ -2574,6 +2601,7 @@ static HRESULT WINAPI d3d8_device_DrawPrimitiveUP(IDirect3DDevice8 *iface,
     if (FAILED(hr))
         goto done;
 
+    d3d8_device_upload_managed_textures(device);
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
@@ -2628,6 +2656,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
     base_vertex_idx = vb_pos / vertex_stride - min_vertex_idx;
     wined3d_stateblock_set_base_vertex_index(device->state, base_vertex_idx);
 
+    d3d8_device_upload_managed_textures(device);
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
