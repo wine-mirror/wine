@@ -32,6 +32,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 typedef struct
 {
+    DWORD cbSize;
+    DWORD fMask;
+    DWORD dwStyle;
+    UINT  cyMax;
+    ULONG hbrBack;
+    DWORD dwContextHelpID;
+    ULONG dwMenuData;
+} MENUINFO32;
+
+typedef struct
+{
     UINT    cbSize;
     UINT    fMask;
     UINT    fType;
@@ -505,8 +516,41 @@ NTSTATUS WINAPI wow64_NtUserCallHwndParam( UINT *args )
     DWORD_PTR param = get_ulong( &args );
     DWORD code = get_ulong( &args );
 
-    FIXME( "%p %Ix %lu\n", hwnd, param, code );
-    return 0;
+    switch (code)
+    {
+    case NtUserCallHwndParam_GetScrollInfo:
+        {
+            struct
+            {
+                int bar;
+                ULONG info;
+            } *info32 = UlongToPtr( param );
+            struct get_scroll_info_params info;
+
+            info.bar = info32->bar;
+            info.info = UlongToPtr( info32->info );
+            return NtUserCallHwndParam( hwnd, (UINT_PTR)&info, code );
+        }
+
+    case NtUserCallHwndParam_MapWindowPoints:
+        {
+            struct
+            {
+                ULONG hwnd_to;
+                ULONG points;
+                UINT count;
+            } *params32 = UlongToPtr( param );
+            struct map_window_points_params params;
+
+            params.hwnd_to = UlongToHandle( params32->hwnd_to );
+            params.points = UlongToPtr( params32->points );
+            params.count = params32->count;
+            return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
+        }
+
+    default:
+        return NtUserCallHwndParam( hwnd, param, code );
+    }
 }
 
 NTSTATUS WINAPI wow64_NtUserCallMsgFilter( UINT *args )
@@ -543,8 +587,7 @@ NTSTATUS WINAPI wow64_NtUserCallOneParam( UINT *args )
     ULONG_PTR arg = get_ulong( &args );
     ULONG code = get_ulong( &args );
 
-    FIXME( "%Ix %lu\n", arg, code );
-    return 0;
+    return NtUserCallOneParam( arg, code );
 }
 
 NTSTATUS WINAPI wow64_NtUserCallTwoParam( UINT *args )
@@ -553,8 +596,33 @@ NTSTATUS WINAPI wow64_NtUserCallTwoParam( UINT *args )
     ULONG_PTR arg2 = get_ulong( &args );
     ULONG code = get_ulong( &args );
 
-    FIXME( "%Ix %Ix %lu\n", arg1, arg2, code );
-    return 0;
+    switch (code)
+    {
+    case NtUserCallTwoParam_GetMenuInfo:
+        {
+            MENUINFO32 *info32 = UlongToPtr( arg2 );
+            MENUINFO info;
+
+            if (!info32 || info32->cbSize != sizeof(*info32))
+            {
+                set_last_error32( ERROR_INVALID_PARAMETER );
+                return FALSE;
+            }
+
+            info.cbSize = sizeof(info);
+            info.fMask = info32->fMask;
+            if (!NtUserCallTwoParam( arg1, (UINT_PTR)&info, code )) return FALSE;
+            if (info.fMask & MIM_BACKGROUND) info32->hbrBack = HandleToUlong( info.hbrBack );
+            if (info.fMask & MIM_HELPID)     info32->dwContextHelpID = info.dwContextHelpID;
+            if (info.fMask & MIM_MAXHEIGHT)  info32->cyMax = info.cyMax;
+            if (info.fMask & MIM_MENUDATA)   info32->dwMenuData = info.dwMenuData;
+            if (info.fMask & MIM_STYLE)      info32->dwStyle = info.dwStyle;
+            return TRUE;
+        }
+
+    default:
+        return NtUserCallTwoParam( arg1, arg2, code );
+    }
 }
 
 NTSTATUS WINAPI wow64_NtUserChangeClipboardChain( UINT *args )
@@ -1767,10 +1835,57 @@ NTSTATUS WINAPI wow64_NtUserHiliteMenuItem( UINT *args )
     return NtUserHiliteMenuItem( hwnd, handle, item, hilite );
 }
 
+struct user_client_procs32
+{
+    ULONG pButtonWndProc;
+    ULONG pComboWndProc;
+    ULONG pDefWindowProc;
+    ULONG pDefDlgProc;
+    ULONG pEditWndProc;
+    ULONG pListBoxWndProc;
+    ULONG pMDIClientWndProc;
+    ULONG pScrollBarWndProc;
+    ULONG pStaticWndProc;
+    ULONG pImeWndProc;
+    ULONG pDesktopWndProc;
+    ULONG pIconTitleWndProc;
+    ULONG pPopupMenuWndProc;
+    ULONG pMessageWndProc;
+};
+
+static struct user_client_procs *user_client_procs_32to64( struct user_client_procs *procs,
+                                                           const struct user_client_procs32 *procs32 )
+{
+    if (!procs32) return NULL;
+
+    procs->pButtonWndProc    = UlongToPtr( procs32->pButtonWndProc );
+    procs->pComboWndProc     = UlongToPtr( procs32->pComboWndProc );
+    procs->pDefWindowProc    = UlongToPtr( procs32->pDefWindowProc );
+    procs->pDefDlgProc       = UlongToPtr( procs32->pDefDlgProc );
+    procs->pEditWndProc      = UlongToPtr( procs32->pEditWndProc );
+    procs->pListBoxWndProc   = UlongToPtr( procs32->pListBoxWndProc );
+    procs->pMDIClientWndProc = UlongToPtr( procs32->pMDIClientWndProc );
+    procs->pScrollBarWndProc = UlongToPtr( procs32->pScrollBarWndProc );
+    procs->pStaticWndProc    = UlongToPtr( procs32->pStaticWndProc );
+    procs->pImeWndProc       = UlongToPtr( procs32->pImeWndProc );
+    procs->pDesktopWndProc   = UlongToPtr( procs32->pDesktopWndProc );
+    procs->pIconTitleWndProc = UlongToPtr( procs32->pIconTitleWndProc );
+    procs->pPopupMenuWndProc = UlongToPtr( procs32->pPopupMenuWndProc );
+    procs->pMessageWndProc   = UlongToPtr( procs32->pMessageWndProc );
+    return procs;
+}
+
 NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
 {
-    FIXME( "\n" );
-    return STATUS_NOT_SUPPORTED;
+    const struct user_client_procs32 *procsA32 = get_ptr( &args );
+    const struct user_client_procs32 *procsW32 = get_ptr( &args );
+    void *workers = get_ptr( &args );
+    HINSTANCE user_module = get_ptr( &args );
+
+    struct user_client_procs procsA, procsW;
+    return NtUserInitializeClientPfnArrays( user_client_procs_32to64( &procsA, procsA32 ),
+                                            user_client_procs_32to64( &procsW, procsW32 ),
+                                            workers, user_module );
 }
 
 NTSTATUS WINAPI wow64_NtUserInternalGetWindowIcon( UINT *args )
@@ -2209,10 +2324,53 @@ NTSTATUS WINAPI wow64_NtUserSetCursorIconData( UINT *args )
     HCURSOR cursor = get_handle( &args );
     UNICODE_STRING32 *module32 = get_ptr( &args );
     UNICODE_STRING32 *res_name32 = get_ptr( &args );
-    void *desc = get_ptr( &args );
+    struct
+    {
+        UINT  flags;
+        UINT  num_steps;
+        UINT  num_frames;
+        UINT  delay;
+        ULONG frames;
+        ULONG frame_seq;
+        ULONG frame_rates;
+        ULONG rsrc;
+    } *desc32 = get_ptr( &args );
+    struct
+    {
+        UINT  width;
+        UINT  height;
+        ULONG color;
+        ULONG alpha;
+        ULONG mask;
+        POINT hotspot;
+    } *frames32 = UlongToPtr( desc32->frames );
 
-    FIXME( "%p %p %p %p\n", cursor, module32, res_name32, desc );
-    return 0;
+    UNICODE_STRING module, res_name;
+    struct cursoricon_desc desc;
+    UINT i, num_frames;
+
+    num_frames = max( desc32->num_frames, 1 );
+    if (!(desc.frames = Wow64AllocateTemp( num_frames * sizeof(*desc.frames) ))) return FALSE;
+    desc.flags = desc32->flags;
+    desc.num_steps = desc32->num_steps;
+    desc.num_frames = desc32->num_frames;
+    desc.delay = desc32->delay;
+    desc.frame_seq = UlongToPtr( desc32->frame_seq );
+    desc.frame_rates = UlongToPtr( desc32->frame_rates );
+    desc.rsrc = UlongToPtr( desc32->rsrc );
+
+    for (i = 0; i < num_frames; i++)
+    {
+        desc.frames[i].width = frames32[i].width;
+        desc.frames[i].height = frames32[i].height;
+        desc.frames[i].color = UlongToHandle( frames32[i].color );
+        desc.frames[i].alpha = UlongToHandle( frames32[i].alpha );
+        desc.frames[i].mask = UlongToHandle( frames32[i].mask );
+        desc.frames[i].hotspot = frames32[i].hotspot;
+    }
+
+    return NtUserSetCursorIconData( cursor, unicode_str_32to64( &module, module32 ),
+                                    unicode_str_32to64( &res_name, res_name32), &desc );
 }
 
 NTSTATUS WINAPI wow64_NtUserSetCursorPos( UINT *args )
@@ -2625,16 +2783,7 @@ NTSTATUS WINAPI wow64_NtUserSystemParametersInfoForDpi( UINT *args )
 NTSTATUS WINAPI wow64_NtUserThunkedMenuInfo( UINT *args )
 {
     HMENU menu = get_handle( &args );
-    const struct
-    {
-        DWORD cbSize;
-        DWORD fMask;
-        DWORD dwStyle;
-        UINT  cyMax;
-        ULONG hbrBack;
-        DWORD dwContextHelpID;
-        ULONG dwMenuData;
-    } *info32 = get_ptr( &args );
+    MENUINFO32 *info32 = get_ptr( &args );
     MENUINFO info;
 
     if (info32)
