@@ -20,6 +20,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
+static void d3d8_texture_preload(struct d3d8_texture *texture)
+{
+    wined3d_mutex_lock();
+    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
+    wined3d_mutex_unlock();
+}
+
 static inline struct d3d8_texture *impl_from_IDirect3DTexture8(IDirect3DTexture8 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d8_texture, IDirect3DBaseTexture8_iface);
@@ -185,9 +192,7 @@ static void WINAPI d3d8_texture_2d_PreLoad(IDirect3DTexture8 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
-    wined3d_mutex_unlock();
+    d3d8_texture_preload(texture);
 }
 
 static D3DRESOURCETYPE WINAPI d3d8_texture_2d_GetType(IDirect3DTexture8 *iface)
@@ -526,9 +531,7 @@ static void WINAPI d3d8_texture_cube_PreLoad(IDirect3DCubeTexture8 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
-    wined3d_mutex_unlock();
+    d3d8_texture_preload(texture);
 }
 
 static D3DRESOURCETYPE WINAPI d3d8_texture_cube_GetType(IDirect3DCubeTexture8 *iface)
@@ -877,9 +880,7 @@ static void WINAPI d3d8_texture_3d_PreLoad(IDirect3DVolumeTexture8 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
-    wined3d_mutex_unlock();
+    d3d8_texture_preload(texture);
 }
 
 static D3DRESOURCETYPE WINAPI d3d8_texture_3d_GetType(IDirect3DVolumeTexture8 *iface)
