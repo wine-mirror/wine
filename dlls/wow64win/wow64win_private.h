@@ -124,4 +124,11 @@ static inline OBJECT_ATTRIBUTES *objattr_32to64( struct object_attr64 *out, cons
     return &out->attr;
 }
 
+static inline void set_last_error32( DWORD err )
+{
+    TEB *teb = NtCurrentTeb();
+    TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+    teb32->LastErrorValue = err;
+}
+
 #endif /* __WOW64WIN_PRIVATE_H */

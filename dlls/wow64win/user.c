@@ -722,13 +722,13 @@ NTSTATUS WINAPI wow64_NtUserFlashWindowEx( UINT *args )
 
     if (!info32)
     {
-        SetLastError( ERROR_NOACCESS );
+        set_last_error32( ERROR_NOACCESS );
         return FALSE;
     }
 
     if (info32->cbSize != sizeof(*info32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -962,7 +962,7 @@ NTSTATUS WINAPI wow64_NtUserGetGUIThreadInfo( UINT *args )
 
     if (info32->cbSize != sizeof(*info32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -1104,7 +1104,7 @@ NTSTATUS WINAPI wow64_NtUserGetMenuBarInfo( UINT *args )
 
     if (info32->cbSize != sizeof(*info32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -1210,7 +1210,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputBuffer( UINT *args )
 
     if (header_size != sizeof(RAWINPUTHEADER32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -1230,7 +1230,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputData( UINT *args )
 
     if (header_size != sizeof(RAWINPUTHEADER32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -1246,7 +1246,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputData( UINT *args )
             data_size64 = *data_size + sizeof(RAWINPUTHEADER);
             if (!(data64 = Wow64AllocateTemp( data_size64 )))
             {
-                SetLastError( STATUS_NO_MEMORY );
+                set_last_error32( STATUS_NO_MEMORY );
                 return ~0u;
             }
 
@@ -1256,7 +1256,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputData( UINT *args )
             body_size = ret - sizeof(RAWINPUTHEADER);
             if (*data_size < sizeof(RAWINPUTHEADER32) + body_size)
             {
-                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                set_last_error32( ERROR_INSUFFICIENT_BUFFER );
                 return ~0u;
             }
 
@@ -1292,7 +1292,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputData( UINT *args )
 
         if (*data_size < sizeof(RAWINPUTHEADER32))
         {
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            set_last_error32( ERROR_INSUFFICIENT_BUFFER );
             return ~0u;
         }
 
@@ -1306,7 +1306,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputData( UINT *args )
     }
 
     default:
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 }
@@ -1329,7 +1329,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
 
     if (size != sizeof(RAWINPUTDEVICELIST32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -1340,7 +1340,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
 
         if (!(devices64 = Wow64AllocateTemp( (*count) * sizeof(*devices64) )))
         {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            set_last_error32( ERROR_NOT_ENOUGH_MEMORY );
             return ~0u;
         }
 
@@ -1376,7 +1376,7 @@ NTSTATUS WINAPI wow64_NtUserRegisterClassExWOW( UINT *args )
 
     if (wc32->cbSize != sizeof(*wc32))
     {
-         SetLastError( ERROR_INVALID_PARAMETER );
+         set_last_error32( ERROR_INVALID_PARAMETER );
          return 0;
     }
 
@@ -1408,7 +1408,7 @@ NTSTATUS WINAPI wow64_NtUserGetRegisteredRawInputDevices( UINT *args )
 
     if (size != sizeof(RAWINPUTDEVICE32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -1419,7 +1419,7 @@ NTSTATUS WINAPI wow64_NtUserGetRegisteredRawInputDevices( UINT *args )
 
         if (!(devices64 = Wow64AllocateTemp( (*count) * sizeof(*devices64) )))
         {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            set_last_error32( ERROR_NOT_ENOUGH_MEMORY );
             return ~0u;
         }
 
@@ -1662,7 +1662,7 @@ NTSTATUS WINAPI wow64_NtUserMsgWaitForMultipleObjectsEx( UINT *args )
 
     if (count > ARRAYSIZE(handles))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return WAIT_FAILED;
     }
     for (i = 0; i < count; i++) handles[i] = UlongToHandle( handles32[i] );
@@ -1794,13 +1794,13 @@ NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
 
     if (size != sizeof(RAWINPUTDEVICE32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
     if (!(devices64 = Wow64AllocateTemp( count * sizeof(*devices64) )))
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        set_last_error32( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
@@ -1864,7 +1864,7 @@ NTSTATUS WINAPI wow64_NtUserSendInput( UINT *args )
 
     if (size != sizeof(*inputs32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -2489,7 +2489,7 @@ NTSTATUS WINAPI wow64_NtUserTrackMouseEvent( UINT *args )
 
     if (info32->cbSize != sizeof(*info32))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
