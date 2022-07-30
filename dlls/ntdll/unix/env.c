@@ -2390,3 +2390,19 @@ ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 
     return map_status( status );
 }
+
+/**********************************************************************
+ *      RtlSetLastWin32Error  (ntdll.so)
+ */
+void WINAPI RtlSetLastWin32Error( DWORD err )
+{
+    TEB *teb = NtCurrentTeb();
+#ifdef _WIN64
+    if (teb->WowTebOffset)
+    {
+        TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+        teb32->LastErrorValue = err;
+    }
+#endif
+    teb->LastErrorValue = err;
+}
