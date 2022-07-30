@@ -297,8 +297,9 @@ enum
     /* Wine-specific exports */
     NtUserClipboardWindowProc = 0x0300,
     NtUserGetDispatchParams   = 0x3001,
-    NtUserSpyEnter            = 0x0302,
-    NtUserSpyExit             = 0x0303,
+    NtUserSpyGetMsgName       = 0x3002,
+    NtUserSpyEnter            = 0x0303,
+    NtUserSpyExit             = 0x0304,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -1261,7 +1262,6 @@ enum
     NtUserCallHwndParam_ShowOwnedPopups,
     /* temporary exports */
     NtUserSetWindowStyle,
-    NtUserSpyGetMsgName,
 };
 
 static inline BOOL NtUserClientToScreen( HWND hwnd, POINT *pt )

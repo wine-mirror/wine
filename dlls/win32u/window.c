@@ -5578,9 +5578,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
             return set_window_style( hwnd, style->styleNew, style->styleOld );
         }
 
-    case NtUserSpyGetMsgName:
-        return (UINT_PTR)debugstr_msg_name( param, hwnd );
-
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

@@ -2960,7 +2960,7 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
 
     case NtUserSendMessageCallback:
-        return send_message_callback( hwnd, msg, wparam, lparam, (void *)result_info, ansi );
+        return send_message_callback( hwnd, msg, wparam, lparam, result_info, ansi );
 
     case NtUserClipboardWindowProc:
         return user_driver->pClipboardWindowProc( hwnd, msg, wparam, lparam );
@@ -2976,6 +2976,10 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     case NtUserSpyEnter:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
+        return 0;
+
+    case NtUserSpyGetMsgName:
+        lstrcpynA( result_info, debugstr_msg_name( msg, hwnd ), wparam );
         return 0;
 
     case NtUserSpyExit:

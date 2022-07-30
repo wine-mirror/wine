@@ -352,7 +352,9 @@ BOOL WINAPI ShutdownBlockReasonDestroy(HWND hwnd)
 
 const char *SPY_GetMsgName( UINT msg, HWND hwnd )
 {
-    return (const char *)NtUserCallHwndParam( hwnd, msg, NtUserSpyGetMsgName );
+    char buf[128];
+    NtUserMessageCall( hwnd, msg, ARRAYSIZE(buf), 0, buf, NtUserSpyGetMsgName, FALSE );
+    return wine_dbg_sprintf( "%s", buf );
 }
 
 void SPY_EnterMessage( INT flag, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
