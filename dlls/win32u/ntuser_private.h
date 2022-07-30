@@ -138,6 +138,11 @@ struct user_thread_info
 
 C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );
 
+static inline struct user_thread_info *get_user_thread_info(void)
+{
+    return CONTAINING_RECORD( NtUserGetThreadInfo(), struct user_thread_info, client_info );
+}
+
 struct user_key_state_info
 {
     UINT  time;          /* Time of last key state refresh */

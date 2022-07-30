@@ -78,6 +78,13 @@ struct ntuser_thread_info
 
 static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
 {
+#ifndef _WIN64
+    if (NtCurrentTeb()->GdiBatchCount)
+    {
+        TEB64 *teb64 = (TEB64 *)(UINT_PTR)NtCurrentTeb()->GdiBatchCount;
+        return (struct ntuser_thread_info *)teb64->Win32ClientInfo;
+    }
+#endif
     return (struct ntuser_thread_info *)NtCurrentTeb()->Win32ClientInfo;
 }
 

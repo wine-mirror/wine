@@ -432,11 +432,6 @@ extern void reg_delete_value( HKEY hkey, const WCHAR *name ) DECLSPEC_HIDDEN;
 
 extern HKEY hkcu_key DECLSPEC_HIDDEN;
 
-static inline struct user_thread_info *get_user_thread_info(void)
-{
-    return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
-}
-
 extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
 
 static inline BOOL set_ntstatus( NTSTATUS status )
