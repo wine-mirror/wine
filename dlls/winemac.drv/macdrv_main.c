@@ -536,7 +536,7 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
     macdrv_compute_keyboard_layout(data);
 
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
-    NtUserGetThreadInfo()->driver_data = data;
+    NtUserGetThreadInfo()->driver_data = (UINT_PTR)data;
 
     NtUserActivateKeyboardLayout(data->active_keyboard_layout, 0);
     return data;

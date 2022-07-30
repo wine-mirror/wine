@@ -393,7 +393,7 @@ extern struct x11drv_thread_data *x11drv_init_thread_data(void) DECLSPEC_HIDDEN;
 
 static inline struct x11drv_thread_data *x11drv_thread_data(void)
 {
-    return NtUserGetThreadInfo()->driver_data;
+    return (struct x11drv_thread_data *)(UINT_PTR)NtUserGetThreadInfo()->driver_data;
 }
 
 /* retrieve the thread display, or NULL if not created yet */

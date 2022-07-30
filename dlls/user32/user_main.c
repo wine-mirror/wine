@@ -240,7 +240,7 @@ static void thread_detach(void)
     WDML_NotifyThreadDetach();
 
     NtUserCallNoParam( NtUserThreadDetach );
-    HeapFree( GetProcessHeap(), 0, thread_info->wmchar_data );
+    HeapFree( GetProcessHeap(), 0, (void *)(UINT_PTR)thread_info->wmchar_data );
 }
 
 

@@ -245,7 +245,7 @@ static inline BOOL is_in_desktop_process(void)
 
 static inline DWORD current_client_id(void)
 {
-    DWORD client_id = PtrToUlong( NtUserGetThreadInfo()->driver_data );
+    DWORD client_id = NtUserGetThreadInfo()->driver_data;
     return client_id ? client_id : GetCurrentProcessId();
 }
 
@@ -1137,7 +1137,7 @@ NTSTATUS android_dispatch_ioctl( void *arg )
         if (in_size >= sizeof(*header))
         {
             irp->IoStatus.Information = 0;
-            NtUserGetThreadInfo()->driver_data = UlongToHandle( params->client_id );
+            NtUserGetThreadInfo()->driver_data = params->client_id;
             irp->IoStatus.u.Status = func( irp->AssociatedIrp.SystemBuffer, in_size,
                                            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                            &irp->IoStatus.Information );

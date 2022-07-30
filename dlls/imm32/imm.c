@@ -235,7 +235,7 @@ static DWORD convert_candidatelist_AtoW(
 
 static struct coinit_spy *get_thread_coinit_spy(void)
 {
-    return NtUserGetThreadInfo()->client_imm;
+    return (struct coinit_spy *)(UINT_PTR)NtUserGetThreadInfo()->client_imm;
 }
 
 static void imm_couninit_thread(BOOL cleanup)
@@ -299,7 +299,7 @@ static ULONG WINAPI InitializeSpy_Release(IInitializeSpy *iface)
     if (!ref)
     {
         HeapFree(GetProcessHeap(), 0, spy);
-        NtUserGetThreadInfo()->client_imm = NULL;
+        NtUserGetThreadInfo()->client_imm = 0;
     }
     return ref;
 }
@@ -373,7 +373,7 @@ static void imm_coinit_thread(void)
         spy->ref = 1;
         spy->cookie.QuadPart = 0;
         spy->apt_flags = 0;
-        NtUserGetThreadInfo()->client_imm = spy;
+        NtUserGetThreadInfo()->client_imm = (UINT_PTR)spy;
 
     }
 
@@ -440,7 +440,7 @@ static void IMM_FreeThreadData(void)
 {
     struct coinit_spy *spy;
 
-    free_input_context_data(NtUserGetThreadInfo()->default_imc);
+    free_input_context_data(UlongToHandle(NtUserGetThreadInfo()->default_imc));
     if ((spy = get_thread_coinit_spy()))
         IInitializeSpy_Release(&spy->IInitializeSpy_iface);
 }

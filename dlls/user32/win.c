@@ -95,7 +95,7 @@ HWND get_hwnd_message_parent(void)
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!thread_info->msg_window) GetDesktopWindow();  /* trigger creation */
-    return thread_info->msg_window;
+    return UlongToHandle( thread_info->msg_window );
 }
 
 
@@ -109,8 +109,8 @@ BOOL is_desktop_window( HWND hwnd )
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!hwnd) return FALSE;
-    if (hwnd == thread_info->top_window) return TRUE;
-    if (hwnd == thread_info->msg_window) return TRUE;
+    if (hwnd == UlongToHandle( thread_info->top_window )) return TRUE;
+    if (hwnd == UlongToHandle( thread_info->msg_window )) return TRUE;
 
     if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
     {
@@ -582,7 +582,7 @@ HWND WINAPI GetDesktopWindow(void)
 {
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
-    if (thread_info->top_window) return thread_info->top_window;
+    if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
     return NtUserGetDesktopWindow();
 }
 

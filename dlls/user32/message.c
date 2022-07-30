@@ -60,10 +60,15 @@ static inline void *unpack_ptr( ULONGLONG ptr64 )
     return (void *)(ULONG_PTR)ptr64;
 }
 
+static struct wm_char_mapping_data *get_wmchar_data(void)
+{
+    return (struct wm_char_mapping_data *)(UINT_PTR)NtUserGetThreadInfo()->wmchar_data;
+}
+
 /* check for pending WM_CHAR message with DBCS trailing byte */
 static inline BOOL get_pending_wmchar( MSG *msg, UINT first, UINT last, BOOL remove )
 {
-    struct wm_char_mapping_data *data = NtUserGetThreadInfo()->wmchar_data;
+    struct wm_char_mapping_data *data = get_wmchar_data();
 
     if (!data || !data->get_msg.message) return FALSE;
     if ((first || last) && (first > WM_CHAR || last < WM_CHAR)) return FALSE;
@@ -119,7 +124,7 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
          */
         if (mapping != WMCHAR_MAP_NOMAPPING)
         {
-            struct wm_char_mapping_data *data = NtUserGetThreadInfo()->wmchar_data;
+            struct wm_char_mapping_data *data = get_wmchar_data();
             BYTE low = LOBYTE(*wparam);
             cp = get_input_codepage();
 
@@ -152,7 +157,7 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
                 {
                     if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )))
                         return FALSE;
-                    NtUserGetThreadInfo()->wmchar_data = data;
+                    NtUserGetThreadInfo()->wmchar_data = (UINT_PTR)data;
                 }
                 TRACE( "storing lead byte %02x mapping %u\n", low, mapping );
                 data->lead_byte[mapping] = low;
@@ -210,11 +215,11 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
             len = WideCharToMultiByte( cp, 0, wch, 1, (LPSTR)ch, 2, NULL, NULL );
             if (len == 2)  /* DBCS char */
             {
-                struct wm_char_mapping_data *data = NtUserGetThreadInfo()->wmchar_data;
+                struct wm_char_mapping_data *data = get_wmchar_data();
                 if (!data)
                 {
                     if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return;
-                    NtUserGetThreadInfo()->wmchar_data = data;
+                    NtUserGetThreadInfo()->wmchar_data = (UINT_PTR)data;
                 }
                 if (remove)
                 {

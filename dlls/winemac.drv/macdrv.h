@@ -117,7 +117,7 @@ extern struct macdrv_thread_data *macdrv_init_thread_data(void) DECLSPEC_HIDDEN;
 
 static inline struct macdrv_thread_data *macdrv_thread_data(void)
 {
-    return NtUserGetThreadInfo()->driver_data;
+    return (struct macdrv_thread_data *)(UINT_PTR)NtUserGetThreadInfo()->driver_data;
 }
 
 

@@ -173,7 +173,7 @@ HWND get_hwnd_message_parent(void)
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!thread_info->msg_window) get_desktop_window(); /* trigger creation */
-    return thread_info->msg_window;
+    return UlongToHandle( thread_info->msg_window );
 }
 
 /***********************************************************************
@@ -225,8 +225,8 @@ BOOL is_desktop_window( HWND hwnd )
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!hwnd) return FALSE;
-    if (hwnd == thread_info->top_window) return TRUE;
-    if (hwnd == thread_info->msg_window) return TRUE;
+    if (hwnd == UlongToHandle( thread_info->top_window )) return TRUE;
+    if (hwnd == UlongToHandle( thread_info->msg_window )) return TRUE;
 
     if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
     {
@@ -4930,15 +4930,18 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
         if (name->Buffer == (const WCHAR *)DESKTOP_CLASS_ATOM)
         {
-            if (!thread_info->top_window) thread_info->top_window = full_parent ? full_parent : handle;
-            else assert( full_parent == thread_info->top_window );
-            if (full_parent && !user_driver->pCreateDesktopWindow( thread_info->top_window ))
+            if (!thread_info->top_window)
+                thread_info->top_window = HandleToUlong( full_parent ? full_parent : handle );
+            else assert( full_parent == UlongToHandle( thread_info->top_window ));
+            if (full_parent &&
+                !user_driver->pCreateDesktopWindow( UlongToHandle( thread_info->top_window )))
                 ERR( "failed to create desktop window\n" );
             register_builtin_classes();
         }
         else  /* HWND_MESSAGE parent */
         {
-            if (!thread_info->msg_window && !full_parent) thread_info->msg_window = handle;
+            if (!thread_info->msg_window && !full_parent)
+                thread_info->msg_window = HandleToUlong( handle );
         }
     }
 

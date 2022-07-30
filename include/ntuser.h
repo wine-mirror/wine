@@ -61,19 +61,19 @@ enum
 /* TEB thread info, not compatible with Windows */
 struct ntuser_thread_info
 {
-    void          *driver_data;       /* driver-specific data */
+    UINT64         driver_data;       /* driver-specific data */
     DWORD          message_time;      /* value for GetMessageTime */
     DWORD          message_pos;       /* value for GetMessagePos */
-    ULONG_PTR      message_extra;     /* value for GetMessageExtraInfo */
+    UINT64         message_extra;     /* value for GetMessageExtraInfo */
     INPUT_MESSAGE_SOURCE msg_source;  /* Message source for current message */
     WORD           recursion_count;   /* SendMessage recursion counter */
     UINT           receive_flags;     /* currently received message flags */
-    HWND           top_window;        /* desktop window */
-    HWND           msg_window;        /* HWND_MESSAGE parent window */
+    UINT           top_window;        /* desktop window */
+    UINT           msg_window;        /* HWND_MESSAGE parent window */
     DPI_AWARENESS  dpi_awareness;     /* DPI awareness */
-    HIMC           default_imc;       /* default input context */
-    void          *client_imm;        /* client IMM thread info */
-    struct wm_char_mapping_data *wmchar_data; /* Data for WM_CHAR mappings */
+    UINT           default_imc;       /* default input context */
+    UINT64         client_imm;        /* client IMM thread info */
+    UINT64         wmchar_data;       /* client data for WM_CHAR mappings */
 };
 
 static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)

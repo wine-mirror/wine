@@ -734,7 +734,7 @@ void X11DRV_ThreadDetach(void)
         XCloseDisplay( data->display );
         free( data );
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
-        NtUserGetThreadInfo()->driver_data = NULL;
+        NtUserGetThreadInfo()->driver_data = 0;
     }
 }
 
@@ -795,7 +795,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
 
     set_queue_display_fd( data->display );
-    NtUserGetThreadInfo()->driver_data = data;
+    NtUserGetThreadInfo()->driver_data = (UINT_PTR)data;
 
     if (use_xim) X11DRV_SetupXIM();
 

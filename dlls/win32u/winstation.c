@@ -399,7 +399,7 @@ HWND get_desktop_window(void)
 {
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
-    if (thread_info->top_window) return thread_info->top_window;
+    if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
 
 
     SERVER_START_REQ( get_desktop_window )
@@ -407,8 +407,8 @@ HWND get_desktop_window(void)
         req->force = 0;
         if (!wine_server_call( req ))
         {
-            thread_info->top_window = wine_server_ptr_handle( reply->top_window );
-            thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
+            thread_info->top_window = reply->top_window;
+            thread_info->msg_window = reply->msg_window;
         }
     }
     SERVER_END_REQ;
@@ -489,18 +489,19 @@ HWND get_desktop_window(void)
             req->force = 1;
             if (!wine_server_call( req ))
             {
-                thread_info->top_window = wine_server_ptr_handle( reply->top_window );
-                thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
+                thread_info->top_window = reply->top_window;
+                thread_info->msg_window = reply->msg_window;
             }
         }
         SERVER_END_REQ;
     }
 
-    if (!thread_info->top_window || !user_driver->pCreateDesktopWindow( thread_info->top_window ))
+    if (!thread_info->top_window ||
+        !user_driver->pCreateDesktopWindow( UlongToHandle( thread_info->top_window )))
         ERR_(win)( "failed to create desktop window\n" );
 
     register_builtin_classes();
-    return thread_info->top_window;
+    return UlongToHandle( thread_info->top_window );
 }
 
 static HANDLE get_winstations_dir_handle(void)
