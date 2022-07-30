@@ -1346,9 +1346,6 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, src_surface, src_rects, rect_count, dst_surface, dst_points);
 
-    /* Check that the source texture is in WINED3D_POOL_SYSTEM_MEM and the
-     * destination texture is in WINED3D_POOL_DEFAULT. */
-
     wined3d_mutex_lock();
     wined3d_texture_get_sub_resource_desc(src->wined3d_texture, src->sub_resource_idx, &wined3d_desc);
     if (wined3d_desc.bind_flags & WINED3D_BIND_DEPTH_STENCIL)
