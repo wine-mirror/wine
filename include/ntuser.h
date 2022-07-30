@@ -67,6 +67,7 @@ struct ntuser_thread_info
     ULONG_PTR      message_extra;     /* value for GetMessageExtraInfo */
     INPUT_MESSAGE_SOURCE msg_source;  /* Message source for current message */
     WORD           recursion_count;   /* SendMessage recursion counter */
+    UINT           receive_flags;     /* currently received message flags */
     HWND           top_window;        /* desktop window */
     HWND           msg_window;        /* HWND_MESSAGE parent window */
     DPI_AWARENESS  dpi_awareness;     /* DPI awareness */

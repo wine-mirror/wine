@@ -713,10 +713,7 @@ BOOL WINAPI InSendMessage(void)
  */
 DWORD WINAPI InSendMessageEx( LPVOID reserved )
 {
-    struct received_message_info *info = get_user_thread_info()->receive_info;
-
-    if (info) return info->flags;
-    return ISMEX_NOSEND;
+    return NtUserGetThreadInfo()->receive_flags;
 }
 
 
