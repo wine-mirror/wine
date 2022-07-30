@@ -22,6 +22,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
+static ULONG d3d9_texture_incref(struct d3d9_texture *texture)
+{
+    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
+
+    TRACE("%p increasing refcount to %u.\n", texture, ref);
+
+    if (ref == 1)
+    {
+        struct d3d9_surface *surface;
+
+        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
+        wined3d_mutex_lock();
+        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
+        {
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
+        }
+        wined3d_texture_incref(texture->wined3d_texture);
+        wined3d_mutex_unlock();
+    }
+
+    return ref;
+}
+
+static ULONG d3d9_texture_decref(struct d3d9_texture *texture)
+{
+    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", texture, ref);
+
+    if (!ref)
+    {
+        IDirect3DDevice9Ex *parent_device = &texture->parent_device->IDirect3DDevice9Ex_iface;
+        struct d3d9_surface *surface;
+
+        wined3d_mutex_lock();
+        if (texture->wined3d_srv)
+            wined3d_shader_resource_view_decref(texture->wined3d_srv);
+        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
+            wined3d_rendertarget_view_decref(surface->wined3d_rtv);
+        wined3d_texture_decref(texture->wined3d_texture);
+        wined3d_mutex_unlock();
+
+        /* Release the device last, as it may cause the device to be destroyed. */
+        IDirect3DDevice9Ex_Release(parent_device);
+    }
+    return ref;
+}
+
 static void d3d9_texture_preload(struct d3d9_texture *texture)
 {
     wined3d_mutex_lock();
@@ -84,23 +132,6 @@ static struct wined3d_shader_resource_view *d3d9_texture_acquire_shader_resource
     return texture->wined3d_srv;
 }
 
-static void d3d9_texture_cleanup(struct d3d9_texture *texture)
-{
-    IDirect3DDevice9Ex *parent_device = &texture->parent_device->IDirect3DDevice9Ex_iface;
-    struct d3d9_surface *surface;
-
-    wined3d_mutex_lock();
-    if (texture->wined3d_srv)
-        wined3d_shader_resource_view_decref(texture->wined3d_srv);
-    LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
-        wined3d_rendertarget_view_decref(surface->wined3d_rtv);
-    wined3d_texture_decref(texture->wined3d_texture);
-    wined3d_mutex_unlock();
-
-    /* Release the device last, as it may cause the device to be destroyed. */
-    IDirect3DDevice9Ex_Release(parent_device);
-}
-
 /* wined3d critical section must be taken by the caller. */
 void d3d9_texture_gen_auto_mipmap(struct d3d9_texture *texture)
 {
@@ -140,37 +171,15 @@ static HRESULT WINAPI d3d9_texture_2d_QueryInterface(IDirect3DTexture9 *iface, R
 static ULONG WINAPI d3d9_texture_2d_AddRef(IDirect3DTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
-    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, ref);
-
-    if (ref == 1)
-    {
-        struct d3d9_surface *surface;
-
-        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
-        wined3d_mutex_lock();
-        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
-        {
-            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
-        }
-        wined3d_texture_incref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
-    }
-
-    return ref;
+    return d3d9_texture_incref(texture);
 }
 
 static ULONG WINAPI d3d9_texture_2d_Release(IDirect3DTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
-    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, ref);
-
-    if (!ref)
-        d3d9_texture_cleanup(texture);
-    return ref;
+    return d3d9_texture_decref(texture);
 }
 
 static HRESULT WINAPI d3d9_texture_2d_GetDevice(IDirect3DTexture9 *iface, IDirect3DDevice9 **device)
@@ -536,37 +545,15 @@ static HRESULT WINAPI d3d9_texture_cube_QueryInterface(IDirect3DCubeTexture9 *if
 static ULONG WINAPI d3d9_texture_cube_AddRef(IDirect3DCubeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
-    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, ref);
-
-    if (ref == 1)
-    {
-        struct d3d9_surface *surface;
-
-        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
-        wined3d_mutex_lock();
-        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
-        {
-            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
-        }
-        wined3d_texture_incref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
-    }
-
-    return ref;
+    return d3d9_texture_incref(texture);
 }
 
 static ULONG WINAPI d3d9_texture_cube_Release(IDirect3DCubeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
-    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, ref);
-
-    if (!ref)
-        d3d9_texture_cleanup(texture);
-    return ref;
+    return d3d9_texture_decref(texture);
 }
 
 static HRESULT WINAPI d3d9_texture_cube_GetDevice(IDirect3DCubeTexture9 *iface, IDirect3DDevice9 **device)
@@ -958,31 +945,15 @@ static HRESULT WINAPI d3d9_texture_3d_QueryInterface(IDirect3DVolumeTexture9 *if
 static ULONG WINAPI d3d9_texture_3d_AddRef(IDirect3DVolumeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DVolumeTexture9(iface);
-    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, ref);
-
-    if (ref == 1)
-    {
-        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
-        wined3d_mutex_lock();
-        wined3d_texture_incref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
-    }
-
-    return ref;
+    return d3d9_texture_incref(texture);
 }
 
 static ULONG WINAPI d3d9_texture_3d_Release(IDirect3DVolumeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DVolumeTexture9(iface);
-    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, ref);
-
-    if (!ref)
-        d3d9_texture_cleanup(texture);
-    return ref;
+    return d3d9_texture_decref(texture);
 }
 
 static HRESULT WINAPI d3d9_texture_3d_GetDevice(IDirect3DVolumeTexture9 *iface, IDirect3DDevice9 **device)
