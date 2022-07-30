@@ -9469,13 +9469,7 @@ static void test_command_list(BOOL d3d11)
     device_context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-    if (FAILED(hr))
-    {
-        release_test_context(&ctx);
-        return;
-    }
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)command_list);
     ID2D1DeviceContext_BeginDraw(device_context);
@@ -9497,6 +9491,7 @@ static void test_command_list(BOOL d3d11)
     ID2D1RenderTarget_DrawBitmap(rt, bitmap, NULL, 0.25f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
 
     refcount = ID2D1Bitmap_Release(bitmap);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Solid color brush. */
@@ -9524,6 +9519,7 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Bitmap_Release(bitmap);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Linear gradient brush. */
@@ -9547,9 +9543,11 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Geometry_Release(geometry);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1GradientStopCollection_Release(gradient);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Radial gradient brush. */
@@ -9575,9 +9573,11 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Geometry_Release(geometry);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1GradientStopCollection_Release(gradient);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Geometry. */
@@ -9595,6 +9595,7 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Geometry_Release(geometry);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Stroke style. */
@@ -9621,20 +9622,26 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1StrokeStyle_Release(stroke_style);
+    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Close on attached list. */
     ID2D1DeviceContext_GetTarget(device_context, &target);
+    todo_wine
     ok(target == (ID2D1Image *)command_list, "Unexpected context target.\n");
     ID2D1Image_Release(target);
 
     hr = ID2D1CommandList_Close(command_list);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1DeviceContext_GetTarget(device_context, &target);
+    todo_wine
     ok(target == NULL, "Unexpected context target.\n");
+    if (target) ID2D1Image_Release(target);
 
     hr = ID2D1CommandList_Close(command_list);
+    todo_wine
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1CommandList_Release(command_list);
@@ -9644,6 +9651,7 @@ static void test_command_list(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1CommandList_Close(command_list);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1CommandList_Release(command_list);

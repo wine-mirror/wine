@@ -2004,9 +2004,16 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBit
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCommandList(ID2D1DeviceContext1 *iface,
         ID2D1CommandList **command_list)
 {
-    FIXME("iface %p, command_list %p stub!\n", iface, command_list);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_command_list *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, command_list %p.\n", iface, command_list);
+
+    if (SUCCEEDED(hr = d2d_command_list_create(context->factory, &object)))
+        *command_list = &object->ID2D1CommandList_iface;
+
+    return hr;
 }
 
 static BOOL STDMETHODCALLTYPE d2d_device_context_IsDxgiFormatSupported(ID2D1DeviceContext1 *iface, DXGI_FORMAT format)

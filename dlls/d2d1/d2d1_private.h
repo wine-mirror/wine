@@ -689,6 +689,16 @@ struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
         const struct d2d_effect_properties *properties, const WCHAR *name) DECLSPEC_HIDDEN;
 void d2d_effect_properties_cleanup(struct d2d_effect_properties *props) DECLSPEC_HIDDEN;
 
+struct d2d_command_list
+{
+    ID2D1CommandList ID2D1CommandList_iface;
+    LONG refcount;
+
+    ID2D1Factory *factory;
+};
+
+HRESULT d2d_command_list_create(ID2D1Factory *factory, struct d2d_command_list **command_list) DECLSPEC_HIDDEN;
+
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
     size_t new_capacity, max_capacity;
