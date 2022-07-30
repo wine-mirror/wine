@@ -5521,8 +5521,23 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
 
         if ((resource->usage & WINED3DUSAGE_MANAGED) && !resource->map_count)
         {
-            TRACE("Evicting %p.\n", resource);
-            wined3d_cs_emit_unload_resource(device->cs, resource);
+            if (resource->access & WINED3D_RESOURCE_ACCESS_GPU)
+            {
+                TRACE("Evicting %p.\n", resource);
+                wined3d_cs_emit_unload_resource(device->cs, resource);
+            }
+
+            if (resource->type != WINED3D_RTYPE_BUFFER)
+            {
+                struct wined3d_texture *texture = texture_from_resource(resource);
+                unsigned int i;
+
+                if (texture->dirty_regions)
+                {
+                    for (i = 0; i < texture->layer_count; ++i)
+                        wined3d_texture_add_dirty_region(texture, i, NULL);
+                }
+            }
         }
     }
 }
