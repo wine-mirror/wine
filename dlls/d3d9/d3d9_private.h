@@ -228,12 +228,13 @@ struct d3d9_texture
     D3DTEXTUREFILTERTYPE autogen_filter_type;
 };
 
-HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *device,
-        UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
-        UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *device,
-        UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
+HRESULT d3d9_texture_2d_init(struct d3d9_texture *texture, struct d3d9_device *device, unsigned int width,
+        unsigned int height, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+HRESULT d3d9_texture_3d_init(struct d3d9_texture *texture, struct d3d9_device *device, unsigned int width,
+        unsigned int height, unsigned int depth, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+HRESULT d3d9_texture_cube_init(struct d3d9_texture *texture, struct d3d9_device *device,
+        unsigned int edge_length, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+
 struct d3d9_texture *unsafe_impl_from_IDirect3DBaseTexture9(IDirect3DBaseTexture9 *iface) DECLSPEC_HIDDEN;
 void d3d9_texture_flag_auto_gen_mipmap(struct d3d9_texture *texture) DECLSPEC_HIDDEN;
 void d3d9_texture_gen_auto_mipmap(struct d3d9_texture *texture) DECLSPEC_HIDDEN;
