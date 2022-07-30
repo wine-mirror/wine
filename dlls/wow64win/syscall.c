@@ -53,6 +53,8 @@ SYSTEM_SERVICE_TABLE sdwhwin32 =
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
 {
-    if (reason == DLL_PROCESS_ATTACH) LdrDisableThreadCalloutsForDll( inst );
+    if (reason != DLL_PROCESS_ATTACH) return TRUE;
+    LdrDisableThreadCalloutsForDll( inst );
+    NtCurrentTeb()->Peb->KernelCallbackTable = user_callbacks;
     return TRUE;
 }

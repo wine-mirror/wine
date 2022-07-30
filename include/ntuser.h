@@ -54,7 +54,7 @@ enum
     NtUserCallVulkanDebugUtilsCallback,
     /* Driver-specific callbacks */
     NtUserDriverCallbackFirst,
-    NtUserDriverCallbackLast = NtUserDriverCallbackFirst + 10,
+    NtUserDriverCallbackLast = NtUserDriverCallbackFirst + 9,
     NtUserCallCount
 };
 
