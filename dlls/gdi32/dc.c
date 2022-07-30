@@ -2154,6 +2154,7 @@ BOOL WINAPI CancelDC(HDC hdc)
 INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 {
     DC_ATTR *dc_attr;
+    ABORTPROC proc;
 
     TRACE("DocName %s, Output %s, Datatype %s, fwType %#lx\n",
           debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
@@ -2161,7 +2162,8 @@ INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 
     if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
 
-    if (dc_attr->abort_proc && !dc_attr->abort_proc( hdc, 0 )) return 0;
+    proc = (ABORTPROC)(UINT_PTR)dc_attr->abort_proc;
+    if (proc && !proc( hdc, 0 )) return 0;
     return NtGdiStartDoc( hdc, doc, NULL, 0 );
 }
 
@@ -2247,7 +2249,7 @@ INT WINAPI SetAbortProc( HDC hdc, ABORTPROC abrtprc )
     DC_ATTR *dc_attr;
 
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    dc_attr->abort_proc = abrtprc;
+    dc_attr->abort_proc = (UINT_PTR)abrtprc;
     return TRUE;
 }
 

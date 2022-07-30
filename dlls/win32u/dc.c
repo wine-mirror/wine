@@ -230,7 +230,8 @@ DC *alloc_dc_ptr( DWORD magic )
         free( dc );
         return NULL;
     }
-    dc->attr->hdc = dc->nulldrv.hdc = dc->hSelf;
+    dc->nulldrv.hdc = dc->hSelf;
+    dc->attr->hdc = HandleToUlong( dc->hSelf );
     set_gdi_client_ptr( dc->hSelf, dc->attr );
 
     if (!font_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL ))

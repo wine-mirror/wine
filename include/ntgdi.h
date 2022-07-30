@@ -165,7 +165,7 @@ enum
 
 typedef struct DC_ATTR
 {
-    HDC       hdc;                 /* handle to self */
+    UINT      hdc;                 /* handle to self */
     LONG      disabled;            /* disabled flag, controlled by DCHF_(DISABLE|ENABLE)DC */
     int       save_level;
     COLORREF  background_color;
@@ -196,8 +196,8 @@ typedef struct DC_ATTR
     SIZE      virtual_size;
     UINT      font_code_page;
     RECTL     emf_bounds;
-    void     *emf;
-    ABORTPROC abort_proc;          /* AbortProc for printing */
+    UINT64    emf;                 /* client EMF record pointer */
+    UINT64    abort_proc;          /* AbortProc for printing */
 } DC_ATTR;
 
 struct font_enum_entry
