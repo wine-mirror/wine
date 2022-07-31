@@ -413,7 +413,7 @@
 @ stub NtGdiEngTransparentBlt
 @ stub NtGdiEngUnlockSurface
 @ stub NtGdiEnsureDpiDepDefaultGuiFontForPlateau
-@ stdcall NtGdiEnumFonts(long long long long wstr long ptr ptr)
+@ stdcall -syscall NtGdiEnumFonts(long long long long wstr long ptr ptr)
 @ stub NtGdiEnumObjects
 @ stdcall -syscall NtGdiEqualRgn(long long)
 @ stub NtGdiEudcLoadUnloadLink
@@ -424,7 +424,7 @@
 @ stdcall -syscall NtGdiExtFloodFill(long long long long long)
 @ stdcall -syscall NtGdiExtGetObjectW(long long ptr)
 @ stdcall NtGdiExtSelectClipRgn(long long long)
-@ stdcall NtGdiExtTextOutW(long long long long ptr ptr long ptr long)
+@ stdcall -syscall NtGdiExtTextOutW(long long long long ptr ptr long ptr long)
 @ stub NtGdiFONTOBJ_cGetAllGlyphHandles
 @ stub NtGdiFONTOBJ_cGetGlyphs
 @ stub NtGdiFONTOBJ_pQueryGlyphAttrs
@@ -453,10 +453,10 @@
 @ stub NtGdiGetCertificateByHandle
 @ stub NtGdiGetCertificateSize
 @ stub NtGdiGetCertificateSizeByHandle
-@ stdcall NtGdiGetCharABCWidthsW(long long long ptr long ptr)
+@ stdcall -syscall NtGdiGetCharABCWidthsW(long long long ptr long ptr)
 @ stub NtGdiGetCharSet
-@ stdcall NtGdiGetCharWidthInfo(long ptr)
-@ stdcall NtGdiGetCharWidthW(long long long ptr long ptr)
+@ stdcall -syscall NtGdiGetCharWidthInfo(long ptr)
+@ stdcall -syscall NtGdiGetCharWidthW(long long long ptr long ptr)
 @ stub NtGdiGetCharacterPlacementW
 @ stdcall -syscall NtGdiGetColorAdjustment(long ptr)
 @ stub NtGdiGetColorSpaceforBitmap
@@ -496,7 +496,7 @@
 @ stub NtGdiGetOPMInformation
 @ stub NtGdiGetOPMRandomNumber
 @ stub NtGdiGetObjectBitmapHandle
-@ stdcall NtGdiGetOutlineTextMetricsInternalW(long long ptr long)
+@ stdcall -syscall NtGdiGetOutlineTextMetricsInternalW(long long ptr long)
 @ stdcall -syscall NtGdiGetPath(long ptr ptr long)
 @ stub NtGdiGetPerBandInfo
 @ stub NtGdiGetPhysicalMonitorDescription
@@ -515,11 +515,11 @@
 @ stub NtGdiGetStringBitmapW
 @ stub NtGdiGetSuggestedOPMProtectedOutputArraySize
 @ stdcall -syscall NtGdiGetSystemPaletteUse(long)
-@ stdcall NtGdiGetTextCharsetInfo(long ptr long)
+@ stdcall -syscall NtGdiGetTextCharsetInfo(long ptr long)
 @ stub NtGdiGetTextExtent
-@ stdcall NtGdiGetTextExtentExW(long wstr long long ptr ptr ptr long)
-@ stdcall NtGdiGetTextFaceW(long long ptr long)
-@ stdcall NtGdiGetTextMetricsW(long ptr long)
+@ stdcall -syscall NtGdiGetTextExtentExW(long wstr long long ptr ptr ptr long)
+@ stdcall -syscall NtGdiGetTextFaceW(long long ptr long)
+@ stdcall -syscall NtGdiGetTextMetricsW(long ptr long)
 @ stdcall -syscall NtGdiGetTransform(long long ptr)
 @ stub NtGdiGetUFI
 @ stub NtGdiGetUFIPathname

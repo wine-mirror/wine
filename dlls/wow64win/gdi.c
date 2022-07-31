@@ -49,6 +49,42 @@ typedef struct
     DWORD    elpStyleEntry[1];
 } EXTLOGPEN32;
 
+typedef struct
+{
+    UINT          otmSize;
+    TEXTMETRICW   otmTextMetrics;
+    BYTE          otmFiller;
+    PANOSE        otmPanoseNumber;
+    UINT          otmfsSelection;
+    UINT          otmfsType;
+    INT           otmsCharSlopeRise;
+    INT           otmsCharSlopeRun;
+    INT           otmItalicAngle;
+    UINT          otmEMSquare;
+    INT           otmAscent;
+    INT           otmDescent;
+    UINT          otmLineGap;
+    UINT          otmsCapEmHeight;
+    UINT          otmsXHeight;
+    RECT          otmrcFontBox;
+    INT           otmMacAscent;
+    INT           otmMacDescent;
+    UINT          otmMacLineGap;
+    UINT          otmusMinimumPPEM;
+    POINT         otmptSubscriptSize;
+    POINT         otmptSubscriptOffset;
+    POINT         otmptSuperscriptSize;
+    POINT         otmptSuperscriptOffset;
+    UINT          otmsStrikeoutSize;
+    INT           otmsStrikeoutPosition;
+    INT           otmsUnderscoreSize;
+    INT           otmsUnderscorePosition;
+    ULONG         otmpFamilyName;
+    ULONG         otmpFaceName;
+    ULONG         otmpStyleName;
+    ULONG         otmpFullName;
+} OUTLINETEXTMETRIC32;
+
 
 static DWORD gdi_handle_type( HGDIOBJ obj )
 {
@@ -680,6 +716,20 @@ NTSTATUS WINAPI wow64_NtGdiEndPath( UINT *args )
     return NtGdiEndPath( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiEnumFonts( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    ULONG type = get_ulong( &args );
+    ULONG win32_compat = get_ulong( &args );
+    ULONG face_name_len = get_ulong( &args );
+    const WCHAR *face_name = get_ptr( &args );
+    ULONG charset = get_ulong( &args );
+    ULONG *count = get_ptr( &args );
+    void *buf = get_ptr( &args );
+
+    return NtGdiEnumFonts( hdc, type, win32_compat, face_name_len, face_name, charset, count, buf );
+}
+
 NTSTATUS WINAPI wow64_NtGdiEqualRgn( UINT *args )
 {
     HRGN hrgn1 = get_handle( &args );
@@ -820,6 +870,21 @@ NTSTATUS WINAPI wow64_NtGdiExtGetObjectW( UINT *args )
     }
 }
 
+NTSTATUS WINAPI wow64_NtGdiExtTextOutW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+    const RECT *rect = get_ptr( &args );
+    const WCHAR *str = get_ptr( &args );
+    UINT count = get_ulong( &args );
+    const INT *dx = get_ptr( &args );
+    DWORD cp = get_ulong( &args );
+
+    return NtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, cp );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFillPath( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -874,6 +939,38 @@ NTSTATUS WINAPI wow64_NtGdiGetBitmapDimension( UINT *args )
     SIZE *size = get_ptr( &args );
 
     return NtGdiGetBitmapDimension( bitmap, size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetCharABCWidthsW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT first = get_ulong( &args );
+    UINT last = get_ulong( &args );
+    WCHAR *chars = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+
+    return NtGdiGetCharABCWidthsW( hdc, first, last, chars, flags, buffer );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetCharWidthW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT first_char = get_ulong( &args );
+    UINT last_char = get_ulong( &args );
+    WCHAR *chars = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+
+    return NtGdiGetCharWidthW( hdc, first_char, last_char, chars, flags, buffer );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetCharWidthInfo( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    struct char_width_info *info = get_ptr( &args );
+
+    return NtGdiGetCharWidthInfo( hdc, info );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetColorAdjustment( UINT *args )
@@ -961,6 +1058,61 @@ NTSTATUS WINAPI wow64_NtGdiGetNearestPaletteIndex( UINT *args )
     return NtGdiGetNearestPaletteIndex( hpalette, color );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetOutlineTextMetricsInternalW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT size = get_ulong( &args );
+    OUTLINETEXTMETRIC32 *otm32 = get_ptr( &args );
+    ULONG opts = get_ulong( &args );
+
+    OUTLINETEXTMETRICW *otm, otm_buf;
+    UINT ret, size64;
+    static const size_t otm_size_diff = sizeof(*otm) - sizeof(*otm32);
+
+    if (!otm32)
+    {
+        size64 = 0;
+        otm = NULL;
+    }
+    else if (size <= sizeof(*otm32))
+    {
+        size64 = sizeof(otm_buf);
+        otm = &otm_buf;
+    }
+    else
+    {
+        size64 = size + otm_size_diff;
+        if (!(otm = Wow64AllocateTemp( size64 ))) return 0;
+    }
+
+    if (!(ret = NtGdiGetOutlineTextMetricsInternalW( hdc, size64, otm, opts ))) return 0;
+
+    if (otm32)
+    {
+        OUTLINETEXTMETRIC32 out;
+
+        memcpy( &out, otm, FIELD_OFFSET( OUTLINETEXTMETRIC32, otmpFamilyName ));
+        if (out.otmSize >= sizeof(*otm)) out.otmSize -= otm_size_diff;
+
+        if (!otm->otmpFamilyName) out.otmpFamilyName = 0;
+        else out.otmpFamilyName = PtrToUlong( otm->otmpFamilyName ) - otm_size_diff;
+
+        if (!otm->otmpFaceName) out.otmpFaceName = 0;
+        else out.otmpFaceName = PtrToUlong( otm->otmpFaceName ) - otm_size_diff;
+
+        if (!otm->otmpStyleName) out.otmpStyleName = 0;
+        else out.otmpStyleName = PtrToUlong( otm->otmpStyleName ) - otm_size_diff;
+
+        if (!otm->otmpFullName) out.otmpFullName = 0;
+        else out.otmpFullName = PtrToUlong( otm->otmpFullName ) - otm_size_diff;
+
+        memcpy( otm32, &out, min( size, sizeof(out) ));
+        if (ret > sizeof(*otm)) memcpy( otm32 + 1, otm + 1, ret - sizeof(*otm) );
+    }
+
+    return ret >= sizeof(*otm) ? ret - otm_size_diff : ret;
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetPath( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -978,6 +1130,48 @@ NTSTATUS WINAPI wow64_NtGdiGetPixel( UINT *args )
     INT y = get_ulong( &args );
 
     return NtGdiGetPixel( hdc, x, y );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetTextCharsetInfo( UINT *args )
+{
+    HDC hdc = get_ptr( &args );
+    FONTSIGNATURE *fs = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+
+    return NtGdiGetTextCharsetInfo( hdc, fs, flags );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetTextExtentExW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const WCHAR *str = get_ptr( &args );
+    INT count = get_ulong( &args );
+    INT max_ext = get_ulong( &args );
+    INT *nfit = get_ptr( &args );
+    INT *dxs = get_ptr( &args );
+    SIZE *size = get_ptr( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtGdiGetTextExtentExW( hdc, str, count, max_ext, nfit, dxs, size, flags );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetTextFaceW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT count = get_ulong( &args );
+    WCHAR *name = get_ptr( &args );
+    BOOL alias_name = get_ulong( &args );
+
+    return NtGdiGetTextFaceW( hdc, count, name, alias_name );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetTextMetricsW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    TEXTMETRICW *metrics = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+
+    return NtGdiGetTextMetricsW( hdc, metrics, flags );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGradientFill( UINT *args )

@@ -73,11 +73,13 @@
     SYSCALL_ENTRY( NtGdiEndDoc ) \
     SYSCALL_ENTRY( NtGdiEndPage ) \
     SYSCALL_ENTRY( NtGdiEndPath ) \
+    SYSCALL_ENTRY( NtGdiEnumFonts ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiExtFloodFill ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
+    SYSCALL_ENTRY( NtGdiExtTextOutW ) \
     SYSCALL_ENTRY( NtGdiFillPath ) \
     SYSCALL_ENTRY( NtGdiFillRgn ) \
     SYSCALL_ENTRY( NtGdiFlattenPath ) \
@@ -85,6 +87,9 @@
     SYSCALL_ENTRY( NtGdiFrameRgn ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiGetCharABCWidthsW ) \
+    SYSCALL_ENTRY( NtGdiGetCharWidthInfo ) \
+    SYSCALL_ENTRY( NtGdiGetCharWidthW ) \
     SYSCALL_ENTRY( NtGdiGetColorAdjustment ) \
     SYSCALL_ENTRY( NtGdiGetDCDword ) \
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
@@ -93,12 +98,17 @@
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
+    SYSCALL_ENTRY( NtGdiGetOutlineTextMetricsInternalW ) \
     SYSCALL_ENTRY( NtGdiGetPath ) \
     SYSCALL_ENTRY( NtGdiGetPixel ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
     SYSCALL_ENTRY( NtGdiGetSpoolMessage ) \
     SYSCALL_ENTRY( NtGdiGetSystemPaletteUse ) \
+    SYSCALL_ENTRY( NtGdiGetTextCharsetInfo ) \
+    SYSCALL_ENTRY( NtGdiGetTextExtentExW ) \
+    SYSCALL_ENTRY( NtGdiGetTextFaceW ) \
+    SYSCALL_ENTRY( NtGdiGetTextMetricsW ) \
     SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiGradientFill ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \

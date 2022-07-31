@@ -37,23 +37,14 @@ struct unix_funcs
     /* win32u functions */
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
-    BOOL     (WINAPI *pNtGdiEnumFonts)( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
-                                        const WCHAR *face_name, ULONG charset, ULONG *count, void *buf );
     INT      (WINAPI *pNtGdiExcludeClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     INT      (WINAPI *pNtGdiExtEscape)( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
                                         const char *input, INT output_size, char *output );
-    BOOL     (WINAPI *pNtGdiExtTextOutW)( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
-                                          const WCHAR *str, UINT count, const INT *dx, DWORD cp );
     INT      (WINAPI *pNtGdiExtSelectClipRgn)( HDC hdc, HRGN region, INT mode );
     BOOL     (WINAPI *pNtGdiFontIsLinked)( HDC hdc );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
     INT      (WINAPI *pNtGdiGetAppClipBox)( HDC hdc, RECT *rect );
     UINT     (WINAPI *pNtGdiGetBoundsRect)( HDC hdc, RECT *rect, UINT flags );
-    BOOL     (WINAPI *pNtGdiGetCharABCWidthsW)( HDC hdc, UINT first, UINT last, WCHAR *chars,
-                                                ULONG flags, void *buffer );
-    BOOL     (WINAPI *pNtGdiGetCharWidthW)( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
-                                            ULONG flags, void *buffer );
-    BOOL     (WINAPI *pNtGdiGetCharWidthInfo)( HDC hdc, struct char_width_info *info );
     INT      (WINAPI *pNtGdiGetDeviceCaps)( HDC hdc, INT cap );
     BOOL     (WINAPI *pNtGdiGetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiGetFontData)( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length );
@@ -65,16 +56,9 @@ struct unix_funcs
                                               BOOL ignore_rotation );
     DWORD    (WINAPI *pNtGdiGetKerningPairs)( HDC hdc, DWORD count, KERNINGPAIR *kern_pair );
     COLORREF (WINAPI *pNtGdiGetNearestColor)( HDC hdc, COLORREF color );
-    UINT     (WINAPI *pNtGdiGetOutlineTextMetricsInternalW)( HDC hdc, UINT cbData,
-                                                             OUTLINETEXTMETRICW *otm, ULONG opts );
     INT      (WINAPI *pNtGdiGetRandomRgn)( HDC hdc, HRGN region, INT code );
     BOOL     (WINAPI *pNtGdiGetRasterizerCaps)( RASTERIZER_STATUS *status, UINT size );
     BOOL     (WINAPI *pNtGdiGetRealizationInfo)( HDC hdc, struct font_realization_info *info );
-    UINT     (WINAPI *pNtGdiGetTextCharsetInfo)( HDC hdc, FONTSIGNATURE *fs, DWORD flags );
-    BOOL     (WINAPI *pNtGdiGetTextExtentExW)( HDC hdc, const WCHAR *str, INT count, INT max_ext,
-                                               INT *nfit, INT *dxs, SIZE *size, UINT flags );
-    INT      (WINAPI *pNtGdiGetTextFaceW)( HDC hdc, INT count, WCHAR *name, BOOL alias_name );
-    BOOL     (WINAPI *pNtGdiGetTextMetricsW)( HDC hdc, TEXTMETRICW *metrics, ULONG flags );
     INT      (WINAPI *pNtGdiIntersectClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     INT      (WINAPI *pNtGdiOffsetClipRgn)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );

@@ -37,14 +37,6 @@ BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
     return unix_funcs->pNtUserEndPaint( hwnd, ps );
 }
 
-BOOL WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
-                            const WCHAR *face_name, ULONG charset, ULONG *count, void *buf )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiEnumFonts( hdc, type, win32_compat, face_name_len, face_name,
-                                        charset, count, buf );
-}
-
 INT WINAPI NtGdiExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     if (!unix_funcs) return ERROR;
@@ -57,13 +49,6 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, IN
     if (!unix_funcs) return 0;
     return unix_funcs->pNtGdiExtEscape( hdc, driver, driver_id, escape, input_size, input,
                                         output_size, output );
-}
-
-BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
-                              const WCHAR *str, UINT count, const INT *dx, DWORD cp )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, cp );
 }
 
 INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode )
@@ -94,26 +79,6 @@ UINT WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtGdiGetBoundsRect( hdc, rect, flags );
-}
-
-BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars,
-                                    ULONG flags, void *buffer )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetCharABCWidthsW( hdc, first, last, chars, flags, buffer );
-}
-
-BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
-                                ULONG flags, void *buffer )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetCharWidthW( hdc, first_char, last_char, chars, flags, buffer );
-}
-
-BOOL WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetCharWidthInfo( hdc, info );
 }
 
 INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
@@ -167,13 +132,6 @@ COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color )
     return unix_funcs->pNtGdiGetNearestColor( hdc, color );
 }
 
-UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
-                                                 OUTLINETEXTMETRICW *otm, ULONG opts )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetOutlineTextMetricsInternalW( hdc, cbData, otm, opts );
-}
-
 INT WINAPI NtGdiGetRandomRgn( HDC hdc, HRGN region, INT code )
 {
     if (!unix_funcs) return -1;
@@ -190,31 +148,6 @@ BOOL WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiGetRealizationInfo( hdc, info );
-}
-
-UINT WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags )
-{
-    if (!unix_funcs) return DEFAULT_CHARSET;
-    return unix_funcs->pNtGdiGetTextCharsetInfo( hdc, fs, flags );
-}
-
-BOOL WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max_ext,
-                                   INT *nfit, INT *dxs, SIZE *size, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetTextExtentExW( hdc, str, count, max_ext, nfit, dxs, size, flags );
-}
-
-INT WINAPI NtGdiGetTextFaceW( HDC hdc, INT count, WCHAR *name, BOOL alias_name )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetTextFaceW( hdc, count, name, alias_name );
-}
-
-BOOL WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics, ULONG flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetTextMetricsW( hdc, metrics, flags );
 }
 
 INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
