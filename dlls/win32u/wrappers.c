@@ -24,18 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiCreateCompatibleDC( hdc );
-}
-
-HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiCreateMetafileDC( hdc );
-}
-
 BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
 {
     if (!unix_funcs) return FALSE;
@@ -259,23 +247,10 @@ BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
     return unix_funcs->pNtGdiRectVisible( hdc, rect );
 }
 
-BOOL WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
-                          DRIVER_INFO_2W *driver_info, void *dev )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiResetDC( hdc, devmode, banding, driver_info, dev );
-}
-
 BOOL WINAPI NtGdiResizePalette( HPALETTE palette, UINT count )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiResizePalette( palette, count );
-}
-
-BOOL WINAPI NtGdiRestoreDC( HDC hdc, INT level )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiRestoreDC( hdc, level );
 }
 
 HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
@@ -324,12 +299,6 @@ BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiUnrealizeObject( obj );
-}
-
-BOOL WINAPI NtGdiUpdateColors( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiUpdateColors( hdc );
 }
 
 BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,

@@ -35,8 +35,6 @@
 struct unix_funcs
 {
     /* win32u functions */
-    HDC      (WINAPI *pNtGdiCreateCompatibleDC)( HDC hdc );
-    HDC      (WINAPI *pNtGdiCreateMetafileDC)( HDC hdc );
     BOOL     (WINAPI *pNtGdiDeleteObjectApp)( HGDIOBJ obj );
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
@@ -82,10 +80,7 @@ struct unix_funcs
     INT      (WINAPI *pNtGdiOffsetClipRgn)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiRectVisible)( HDC hdc, const RECT *rect );
-    BOOL     (WINAPI *pNtGdiResetDC)( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
-                                      DRIVER_INFO_2W *driver_info, void *dev );
     BOOL     (WINAPI *pNtGdiResizePalette)( HPALETTE palette, UINT count );
-    BOOL     (WINAPI *pNtGdiRestoreDC)( HDC hdc, INT level );
     HGDIOBJ  (WINAPI *pNtGdiSelectBrush)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectFont)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectPen)( HDC hdc, HGDIOBJ handle );
@@ -94,7 +89,6 @@ struct unix_funcs
     DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
-    BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                                HICON icon, const WCHAR *str, UINT flags );
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );

@@ -216,6 +216,13 @@ NTSTATUS WINAPI wow64_NtGdiCreateCompatibleBitmap( UINT *args )
     return HandleToUlong( NtGdiCreateCompatibleBitmap( hdc, width, height ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiCreateCompatibleDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return HandleToUlong( NtGdiCreateCompatibleDC( hdc ));
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateDIBBrush( UINT *args )
 {
     const void *data = get_ptr( &args );
@@ -292,6 +299,13 @@ NTSTATUS WINAPI wow64_NtGdiCreateHatchBrushInternal( UINT *args )
     BOOL pen = get_ulong( &args );
 
     return HandleToULong( NtGdiCreateHatchBrushInternal( style, color, pen ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiCreateMetafileDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return HandleToUlong( NtGdiCreateMetafileDC( hdc ));
 }
 
 NTSTATUS WINAPI wow64_NtGdiCreatePaletteInternal( UINT *args )
@@ -1068,6 +1082,25 @@ NTSTATUS WINAPI wow64_NtGdiGetRegionData( UINT *args )
     return NtGdiGetRegionData( hrgn, count, data );
 }
 
+NTSTATUS WINAPI wow64_NtGdiResetDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const DEVMODEW *devmode = get_ptr( &args );
+    BOOL *banding = get_ptr( &args );
+    DRIVER_INFO_2W *driver_info = get_ptr( &args );
+    void *dev = get_ptr( &args );
+
+    return NtGdiResetDC( hdc, devmode, banding, driver_info, dev );
+}
+
+NTSTATUS WINAPI wow64_NtGdiRestoreDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT level = get_ulong( &args );
+
+    return NtGdiRestoreDC( hdc, level );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetRgnBox( UINT *args )
 {
     HRGN hrgn = get_handle( &args );
@@ -1526,6 +1559,13 @@ NTSTATUS WINAPI wow64_NtGdiTransformPoints( UINT *args )
     UINT mode = get_ulong( &args );
 
     return NtGdiTransformPoints( hdc, points_in, points_out, count, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiUpdateColors( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiUpdateColors( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiWidenPath( UINT *args )

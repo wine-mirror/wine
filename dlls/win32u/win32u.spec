@@ -146,14 +146,14 @@
 @ stub NtGdiCreateColorSpace
 @ stub NtGdiCreateColorTransform
 @ stdcall -syscall NtGdiCreateCompatibleBitmap(long long long)
-@ stdcall NtGdiCreateCompatibleDC(long)
+@ stdcall -syscall NtGdiCreateCompatibleDC(long)
 @ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
 @ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
 @ stdcall -syscall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
 @ stdcall -syscall NtGdiCreateEllipticRgn(long long long long)
 @ stdcall -syscall NtGdiCreateHalftonePalette(long)
 @ stdcall -syscall NtGdiCreateHatchBrushInternal(long long long)
-@ stdcall NtGdiCreateMetafileDC(long)
+@ stdcall -syscall NtGdiCreateMetafileDC(long)
 @ stub NtGdiCreateOPMProtectedOutput
 @ stub NtGdiCreateOPMProtectedOutputs
 @ stdcall -syscall NtGdiCreatePaletteInternal(ptr long)
@@ -570,9 +570,9 @@
 @ stdcall -syscall NtGdiRemoveFontMemResourceEx(long)
 @ stdcall -syscall NtGdiRemoveFontResourceW(wstr long long long long ptr)
 @ stub NtGdiRemoveMergeFont
-@ stdcall NtGdiResetDC(long ptr ptr ptr ptr)
+@ stdcall -syscall NtGdiResetDC(long ptr ptr ptr ptr)
 @ stdcall NtGdiResizePalette(long long)
-@ stdcall NtGdiRestoreDC(long long)
+@ stdcall -syscall NtGdiRestoreDC(long long)
 @ stdcall -syscall NtGdiRoundRect(long long long long long long long)
 @ stub NtGdiSTROBJ_bEnum
 @ stub NtGdiSTROBJ_bEnumPositionsOnly
@@ -631,7 +631,7 @@
 @ stub NtGdiUnloadPrinterDriver
 @ stub NtGdiUnmapMemFont
 @ stdcall NtGdiUnrealizeObject(long)
-@ stdcall NtGdiUpdateColors(long)
+@ stdcall -syscall NtGdiUpdateColors(long)
 @ stub NtGdiUpdateTransform
 @ stdcall -syscall NtGdiWidenPath(long)
 @ stub NtGdiXFORMOBJ_bApplyXform

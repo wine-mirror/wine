@@ -37,12 +37,14 @@
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateClientObj ) \
     SYSCALL_ENTRY( NtGdiCreateCompatibleBitmap ) \
+    SYSCALL_ENTRY( NtGdiCreateCompatibleDC ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
     SYSCALL_ENTRY( NtGdiCreateDIBSection ) \
     SYSCALL_ENTRY( NtGdiCreateDIBitmapInternal ) \
     SYSCALL_ENTRY( NtGdiCreateEllipticRgn ) \
     SYSCALL_ENTRY( NtGdiCreateHalftonePalette ) \
     SYSCALL_ENTRY( NtGdiCreateHatchBrushInternal ) \
+    SYSCALL_ENTRY( NtGdiCreateMetafileDC ) \
     SYSCALL_ENTRY( NtGdiCreatePaletteInternal ) \
     SYSCALL_ENTRY( NtGdiCreatePatternBrushInternal ) \
     SYSCALL_ENTRY( NtGdiCreatePen ) \
@@ -117,6 +119,8 @@
     SYSCALL_ENTRY( NtGdiRectangle ) \
     SYSCALL_ENTRY( NtGdiRemoveFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
+    SYSCALL_ENTRY( NtGdiResetDC ) \
+    SYSCALL_ENTRY( NtGdiRestoreDC ) \
     SYSCALL_ENTRY( NtGdiRoundRect ) \
     SYSCALL_ENTRY( NtGdiSaveDC ) \
     SYSCALL_ENTRY( NtGdiScaleViewportExtEx ) \
@@ -144,6 +148,7 @@
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
     SYSCALL_ENTRY( NtGdiTransparentBlt ) \
+    SYSCALL_ENTRY( NtGdiUpdateColors ) \
     SYSCALL_ENTRY( NtGdiWidenPath ) \
     SYSCALL_ENTRY( NtUserActivateKeyboardLayout ) \
     SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \
