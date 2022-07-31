@@ -333,6 +333,55 @@ NTSTATUS WINAPI wow64_NtGdiCreateSolidBrush( UINT *args )
     return HandleToUlong( NtGdiCreateSolidBrush( color, brush ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDICheckVidPnExclusiveOwnership( UINT *args )
+{
+    const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc = get_ptr( &args );
+
+    return NtGdiDdDDICheckVidPnExclusiveOwnership( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICloseAdapter( UINT *args )
+{
+    const D3DKMT_CLOSEADAPTER *desc = get_ptr( &args );
+
+    return NtGdiDdDDICloseAdapter( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateDCFromMemory( UINT *args )
+{
+    struct _D3DKMT_CREATEDCFROMMEMORY
+    {
+        ULONG pMemory;
+        D3DDDIFORMAT Format;
+        UINT Width;
+        UINT Height;
+        UINT Pitch;
+        ULONG hDeviceDc;
+        ULONG pColorTable;
+        ULONG hDc;
+        ULONG hBitmap;
+    } *desc32 = get_ptr( &args );
+
+    D3DKMT_CREATEDCFROMMEMORY desc;
+    NTSTATUS status;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.pMemory = UlongToPtr( desc32->pMemory );
+    desc.Format = desc32->Format;
+    desc.Width = desc32->Width;
+    desc.Height = desc32->Height;
+    desc.Pitch = desc32->Pitch;
+    desc.hDeviceDc = UlongToHandle( desc32->hDeviceDc );
+    desc.pColorTable = UlongToPtr( desc32->pColorTable );
+
+    if (!(status = NtGdiDdDDICreateDCFromMemory( &desc )))
+    {
+        desc32->hDc = HandleToUlong( desc.hDc );
+        desc32->hBitmap = HandleToUlong( desc.hBitmap );
+    }
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
 {
     struct
@@ -365,6 +414,77 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyDCFromMemory( UINT *args )
+{
+    const struct
+    {
+        ULONG hDc;
+        ULONG hBitmap;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_DESTROYDCFROMMEMORY desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDc = UlongToHandle( desc32->hDc );
+    desc.hBitmap = UlongToHandle( desc32->hBitmap );
+
+    return NtGdiDdDDIDestroyDCFromMemory( &desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyDevice( UINT *args )
+{
+    const D3DKMT_DESTROYDEVICE *desc = get_ptr( &args );
+
+    return NtGdiDdDDIDestroyDevice( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIEscape( UINT *args )
+{
+    const struct
+    {
+        D3DKMT_HANDLE      hAdapter;
+        D3DKMT_HANDLE      hDevice;
+        D3DKMT_ESCAPETYPE  Type;
+        D3DDDI_ESCAPEFLAGS Flags;
+        ULONG              pPrivateDriverData;
+        UINT               PrivateDriverDataSize;
+        D3DKMT_HANDLE      hContext;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_ESCAPE desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hAdapter = desc32->hAdapter;
+    desc.hDevice = desc32->hDevice;
+    desc.Type = desc32->Type;
+    desc.Flags = desc32->Flags;
+    desc.pPrivateDriverData = UlongToPtr( desc32->pPrivateDriverData );
+    desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
+    desc.hContext = desc32->hContext;
+
+    return NtGdiDdDDIEscape( &desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromDeviceName( UINT *args )
+{
+    struct _D3DKMT_OPENADAPTERFROMDEVICENAME
+    {
+        ULONG pDeviceName;
+        D3DKMT_HANDLE hAdapter;
+        LUID AdapterLuid;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENADAPTERFROMDEVICENAME desc;
+    NTSTATUS status;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.pDeviceName = UlongToPtr( desc32->pDeviceName );
+
+    if (!(status = NtGdiDdDDIOpenAdapterFromDeviceName( &desc )))
+    {
+        desc32->hAdapter = desc.hAdapter;
+        desc32->AdapterLuid = desc.AdapterLuid;
+    }
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
 {
     struct
@@ -375,9 +495,11 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
         D3DDDI_VIDEO_PRESENT_SOURCE_ID VidPnSourceId;
     } *desc32 = get_ptr( &args );
 
-    D3DKMT_OPENADAPTERFROMHDC desc = { UlongToHandle( desc32->hDc ) };
+    D3DKMT_OPENADAPTERFROMHDC desc;
     NTSTATUS status;
 
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDc = UlongToHandle( desc32->hDc );
     if (!(status = NtGdiDdDDIOpenAdapterFromHdc( &desc )))
     {
         desc32->hAdapter = desc.hAdapter;
@@ -387,6 +509,13 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromLuid( UINT *args )
+{
+    D3DKMT_OPENADAPTERFROMLUID *desc = get_ptr( &args );
+
+    return NtGdiDdDDIOpenAdapterFromLuid( desc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIQueryStatistics( UINT *args )
 {
     D3DKMT_QUERYSTATISTICS *stats = get_ptr( &args );
@@ -394,11 +523,63 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIQueryStatistics( UINT *args )
     return NtGdiDdDDIQueryStatistics( stats );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIQueryVideoMemoryInfo( UINT *args )
+{
+    struct _D3DKMT_QUERYVIDEOMEMORYINFO
+    {
+        ULONG                       hProcess;
+        D3DKMT_HANDLE               hAdapter;
+        D3DKMT_MEMORY_SEGMENT_GROUP MemorySegmentGroup;
+        UINT64                      Budget;
+        UINT64                      CurrentUsage;
+        UINT64                      CurrentReservation;
+        UINT64                      AvailableForReservation;
+        UINT                        PhysicalAdapterIndex;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_QUERYVIDEOMEMORYINFO desc;
+    NTSTATUS status;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hProcess = LongToHandle( desc32->hProcess );
+    desc.hAdapter = desc32->hAdapter;
+    desc.MemorySegmentGroup = desc32->MemorySegmentGroup;
+    desc.PhysicalAdapterIndex = desc32->PhysicalAdapterIndex;
+
+    if (!(status = NtGdiDdDDIQueryVideoMemoryInfo( &desc )))
+    {
+        desc32->Budget = desc.Budget;
+        desc32->CurrentUsage = desc.CurrentUsage;
+        desc32->CurrentReservation = desc.CurrentReservation;
+        desc32->AvailableForReservation = desc.AvailableForReservation;
+    }
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDISetQueuedLimit( UINT *args )
 {
     D3DKMT_SETQUEUEDLIMIT *desc = get_ptr( &args );
 
     return NtGdiDdDDISetQueuedLimit( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDISetVidPnSourceOwner( UINT *args )
+{
+    const struct
+    {
+        D3DKMT_HANDLE hDevice;
+        ULONG pType;
+        ULONG pVidPnSourceId;
+        UINT VidPnSourceCount;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_SETVIDPNSOURCEOWNER desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDevice = desc32->hDevice;
+    desc.pType = UlongToPtr( desc32->pType );
+    desc.pVidPnSourceId = UlongToPtr( desc32->pVidPnSourceId );
+    desc.VidPnSourceCount = desc32->VidPnSourceCount;
+
+    return NtGdiDdDDISetVidPnSourceOwner( &desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDeleteClientObj( UINT *args )

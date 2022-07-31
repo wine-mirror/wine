@@ -48,10 +48,20 @@
     SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
+    SYSCALL_ENTRY( NtGdiDdDDICheckVidPnExclusiveOwnership ) \
+    SYSCALL_ENTRY( NtGdiDdDDICloseAdapter ) \
+    SYSCALL_ENTRY( NtGdiDdDDICreateDCFromMemory ) \
     SYSCALL_ENTRY( NtGdiDdDDICreateDevice ) \
+    SYSCALL_ENTRY( NtGdiDdDDIDestroyDCFromMemory ) \
+    SYSCALL_ENTRY( NtGdiDdDDIDestroyDevice ) \
+    SYSCALL_ENTRY( NtGdiDdDDIEscape ) \
+    SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromDeviceName ) \
     SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromHdc ) \
+    SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromLuid ) \
     SYSCALL_ENTRY( NtGdiDdDDIQueryStatistics ) \
+    SYSCALL_ENTRY( NtGdiDdDDIQueryVideoMemoryInfo ) \
     SYSCALL_ENTRY( NtGdiDdDDISetQueuedLimit ) \
+    SYSCALL_ENTRY( NtGdiDdDDISetVidPnSourceOwner ) \
     SYSCALL_ENTRY( NtGdiDeleteClientObj ) \
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \

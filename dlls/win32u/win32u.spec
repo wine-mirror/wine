@@ -186,14 +186,14 @@
 @ stub NtGdiDdDDICheckMultiPlaneOverlaySupport3
 @ stub NtGdiDdDDICheckOcclusion
 @ stub NtGdiDdDDICheckSharedResourceAccess
-@ stdcall NtGdiDdDDICheckVidPnExclusiveOwnership(ptr)
-@ stdcall NtGdiDdDDICloseAdapter(ptr)
+@ stdcall -syscall NtGdiDdDDICheckVidPnExclusiveOwnership(ptr)
+@ stdcall -syscall NtGdiDdDDICloseAdapter(ptr)
 @ stub NtGdiDdDDIConfigureSharedResource
 @ stub NtGdiDdDDICreateAllocation
 @ stub NtGdiDdDDICreateBundleObject
 @ stub NtGdiDdDDICreateContext
 @ stub NtGdiDdDDICreateContextVirtual
-@ stdcall NtGdiDdDDICreateDCFromMemory(ptr)
+@ stdcall -syscall NtGdiDdDDICreateDCFromMemory(ptr)
 @ stdcall -syscall NtGdiDdDDICreateDevice(ptr)
 @ stub NtGdiDdDDICreateHwContext
 @ stub NtGdiDdDDICreateHwQueue
@@ -209,8 +209,8 @@
 @ stub NtGdiDdDDIDestroyAllocation
 @ stub NtGdiDdDDIDestroyAllocation2
 @ stub NtGdiDdDDIDestroyContext
-@ stdcall NtGdiDdDDIDestroyDCFromMemory(ptr)
-@ stdcall NtGdiDdDDIDestroyDevice(ptr)
+@ stdcall -syscall NtGdiDdDDIDestroyDCFromMemory(ptr)
+@ stdcall -syscall NtGdiDdDDIDestroyDevice(ptr)
 @ stub NtGdiDdDDIDestroyHwContext
 @ stub NtGdiDdDDIDestroyHwQueue
 @ stub NtGdiDdDDIDestroyKeyedMutex
@@ -224,7 +224,7 @@
 @ stub NtGdiDdDDIDispMgrTargetOperation
 @ stub NtGdiDdDDIEnumAdapters
 @ stub NtGdiDdDDIEnumAdapters2
-@ stdcall NtGdiDdDDIEscape(ptr)
+@ stdcall -syscall NtGdiDdDDIEscape(ptr)
 @ stub NtGdiDdDDIEvict
 @ stub NtGdiDdDDIExtractBundleObject
 @ stub NtGdiDdDDIFlipOverlay
@@ -268,9 +268,9 @@
 @ stub NtGdiDdDDINetDispStartMiracastDisplayDevice
 @ stub NtGdiDdDDINetDispStopMiracastDisplayDevice
 @ stub NtGdiDdDDIOfferAllocations
-@ stdcall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
 @ stdcall -syscall NtGdiDdDDIOpenAdapterFromHdc(ptr)
-@ stdcall NtGdiDdDDIOpenAdapterFromLuid(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenAdapterFromLuid(ptr)
 @ stub NtGdiDdDDIOpenBundleObjectNtHandleFromName
 @ stub NtGdiDdDDIOpenKeyedMutex
 @ stub NtGdiDdDDIOpenKeyedMutex2
@@ -307,7 +307,7 @@
 @ stub NtGdiDdDDIQueryResourceInfoFromNtHandle
 @ stdcall -syscall NtGdiDdDDIQueryStatistics(ptr)
 @ stub NtGdiDdDDIQueryVidPnExclusiveOwnership
-@ stdcall NtGdiDdDDIQueryVideoMemoryInfo(ptr)
+@ stdcall -syscall NtGdiDdDDIQueryVideoMemoryInfo(ptr)
 @ stub NtGdiDdDDIReclaimAllocations
 @ stub NtGdiDdDDIReclaimAllocations2
 @ stub NtGdiDdDDIReleaseKeyedMutex
@@ -335,7 +335,7 @@
 @ stub NtGdiDdDDISetStereoEnabled
 @ stub NtGdiDdDDISetSyncRefreshCountWaitTarget
 @ stub NtGdiDdDDISetVidPnSourceHwProtection
-@ stdcall NtGdiDdDDISetVidPnSourceOwner(ptr)
+@ stdcall -syscall NtGdiDdDDISetVidPnSourceOwner(ptr)
 @ stub NtGdiDdDDISetYieldPercentage
 @ stub NtGdiDdDDIShareObjects
 @ stub NtGdiDdDDISharedPrimaryLockNotification
