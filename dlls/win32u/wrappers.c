@@ -30,16 +30,6 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
     return unix_funcs->pNtGdiCreateCompatibleDC( hdc );
 }
 
-HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWORD init,
-                                            const void *bits, const BITMAPINFO *data,
-                                            UINT coloruse, UINT max_info, UINT max_bits,
-                                            ULONG flags, HANDLE xform )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiCreateDIBitmapInternal( hdc, width, height, init, bits, data,
-                                                     coloruse, max_info, max_bits, flags, xform );
-}
-
 HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
 {
     if (!unix_funcs) return 0;
@@ -142,15 +132,6 @@ BOOL WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiGetCharWidthInfo( hdc, info );
-}
-
-INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
-                                   void *bits, BITMAPINFO *info, UINT coloruse,
-                                   UINT max_bits, UINT max_info )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetDIBitsInternal( hdc, hbitmap, startscan, lines, bits, info, coloruse,
-                                                max_bits, max_info );
 }
 
 INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
@@ -321,18 +302,6 @@ UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
     return unix_funcs->pNtGdiSetBoundsRect( hdc, rect, flags );
 }
 
-INT WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
-                                           DWORD cy, INT x_src, INT y_src, UINT startscan,
-                                           UINT lines, const void *bits, const BITMAPINFO *bmi,
-                                           UINT coloruse, UINT max_bits, UINT max_info,
-                                           BOOL xform_coords, HANDLE xform )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiSetDIBitsToDeviceInternal( hdc, x_dst, y_dst, cx, cy, x_src, y_src,
-                                                        startscan, lines, bits, bmi, coloruse,
-                                                        max_bits, max_info, xform_coords, xform );
-}
-
 BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
 {
     if (!unix_funcs) return FALSE;
@@ -349,18 +318,6 @@ UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
 {
     if (!unix_funcs) return SYSPAL_ERROR;
     return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
-}
-
-INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT width_dst,
-                                       INT height_dst, INT x_src, INT y_src, INT width_src,
-                                       INT height_src, const void *bits, const BITMAPINFO *bmi,
-                                       UINT coloruse, DWORD rop, UINT max_info, UINT max_bits,
-                                       HANDLE xform )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiStretchDIBitsInternal( hdc, x_dst, y_dst, width_dst, height_dst,
-                                                    x_src, y_src, width_src, height_src, bits, bmi,
-                                                    coloruse, rop, max_info, max_bits, xform );
 }
 
 BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )

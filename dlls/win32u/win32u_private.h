@@ -36,10 +36,6 @@ struct unix_funcs
 {
     /* win32u functions */
     HDC      (WINAPI *pNtGdiCreateCompatibleDC)( HDC hdc );
-    HBITMAP  (WINAPI *pNtGdiCreateDIBitmapInternal)( HDC hdc, INT width, INT height, DWORD init,
-                                                     const void *bits, const BITMAPINFO *data,
-                                                     UINT coloruse, UINT max_info, UINT max_bits,
-                                                     ULONG flags, HANDLE xform );
     HDC      (WINAPI *pNtGdiCreateMetafileDC)( HDC hdc );
     BOOL     (WINAPI *pNtGdiDeleteObjectApp)( HGDIOBJ obj );
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
@@ -61,9 +57,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiGetCharWidthW)( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
                                             ULONG flags, void *buffer );
     BOOL     (WINAPI *pNtGdiGetCharWidthInfo)( HDC hdc, struct char_width_info *info );
-    INT      (WINAPI *pNtGdiGetDIBitsInternal)( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
-                                                void *bits, BITMAPINFO *info, UINT coloruse,
-                                                UINT max_bits, UINT max_info );
     INT      (WINAPI *pNtGdiGetDeviceCaps)( HDC hdc, INT cap );
     BOOL     (WINAPI *pNtGdiGetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiGetFontData)( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length );
@@ -97,19 +90,9 @@ struct unix_funcs
     HGDIOBJ  (WINAPI *pNtGdiSelectFont)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectPen)( HDC hdc, HGDIOBJ handle );
     UINT     (WINAPI *pNtGdiSetBoundsRect)( HDC hdc, const RECT *rect, UINT flags );
-    INT      (WINAPI *pNtGdiSetDIBitsToDeviceInternal)( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
-                                                        DWORD cy, INT x_src, INT y_src, UINT startscan,
-                                                        UINT lines, const void *bits, const BITMAPINFO *bmi,
-                                                        UINT coloruse, UINT max_bits, UINT max_info,
-                                                        BOOL xform_coords, HANDLE xform );
     BOOL     (WINAPI *pNtGdiSetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
-    INT      (WINAPI *pNtGdiStretchDIBitsInternal)( HDC hdc, INT x_dst, INT y_dst, INT width_dst,
-                                                    INT height_dst, INT x_src, INT y_src, INT width_src,
-                                                    INT height_src, const void *bits, const BITMAPINFO *bmi,
-                                                    UINT coloruse, DWORD rop, UINT max_info, UINT max_bits,
-                                                    HANDLE xform );
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,

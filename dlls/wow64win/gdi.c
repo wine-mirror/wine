@@ -249,6 +249,25 @@ NTSTATUS WINAPI wow64_NtGdiCreateDIBSection( UINT *args )
     return HandleToUlong( ret );
 }
 
+NTSTATUS WINAPI wow64_NtGdiCreateDIBitmapInternal( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+    DWORD init = get_ulong( &args );
+    const void *bits = get_ptr( &args );
+    const BITMAPINFO *data = get_ptr( &args );
+    UINT coloruse = get_ulong( &args );
+    UINT max_info = get_ulong( &args );
+    UINT max_bits = get_ulong( &args );
+    ULONG flags = get_ulong( &args );
+    HANDLE xform = get_handle( &args );
+
+    HBITMAP ret = NtGdiCreateDIBitmapInternal( hdc, width, height, init, bits, data,
+                                               coloruse, max_info, max_bits, flags, xform );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateEllipticRgn( UINT *args )
 {
     INT left = get_ulong( &args );
@@ -870,6 +889,22 @@ NTSTATUS WINAPI wow64_NtGdiGetDCPoint( UINT *args )
     return NtGdiGetDCPoint( hdc, method, result );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetDIBitsInternal( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HBITMAP hbitmap = get_handle( &args );
+    UINT startscan = get_ulong( &args );
+    UINT lines = get_ulong( &args );
+    void *bits = get_ptr( &args );
+    BITMAPINFO *info = get_ptr( &args );
+    UINT coloruse = get_ulong( &args );
+    UINT max_bits = get_ulong( &args );
+    UINT max_info = get_ulong( &args );
+
+    return NtGdiGetDIBitsInternal( hdc, hbitmap, startscan, lines, bits, info, coloruse,
+                                   max_bits, max_info );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetFontFileData( UINT *args )
 {
     DWORD instance_id = get_ulong( &args );
@@ -1280,6 +1315,30 @@ NTSTATUS WINAPI wow64_NtGdiSetColorAdjustment( UINT *args )
     return NtGdiSetColorAdjustment( hdc, ca );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSetDIBitsToDeviceInternal( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x_dst = get_ulong( &args );
+    INT y_dst = get_ulong( &args );
+    DWORD cx = get_ulong( &args );
+    DWORD cy = get_ulong( &args );
+    INT x_src = get_ulong( &args );
+    INT y_src = get_ulong( &args );
+    UINT startscan = get_ulong( &args );
+    UINT lines = get_ulong( &args );
+    const void *bits = get_ptr( &args );
+    const BITMAPINFO *bmi = get_ptr( &args );
+    UINT coloruse = get_ulong( &args );
+    UINT max_bits = get_ulong( &args );
+    UINT max_info = get_ulong( &args );
+    BOOL xform_coords = get_ulong( &args );
+    HANDLE xform = get_handle( &args );
+
+    return NtGdiSetDIBitsToDeviceInternal( hdc, x_dst, y_dst, cx, cy, x_src, y_src,
+                                           startscan, lines, bits, bmi, coloruse,
+                                           max_bits, max_info, xform_coords, xform );
+}
+
 NTSTATUS WINAPI wow64_NtGdiSetMagicColors( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1393,6 +1452,30 @@ NTSTATUS WINAPI wow64_NtGdiStretchBlt( UINT *args )
 
     return NtGdiStretchBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
                             x_src, y_src, width_src, height_src, rop, bk_color );
+}
+
+NTSTATUS WINAPI wow64_NtGdiStretchDIBitsInternal( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x_dst = get_ulong( &args );
+    INT y_dst = get_ulong( &args );
+    INT width_dst = get_ulong( &args );
+    INT height_dst = get_ulong( &args );
+    INT x_src = get_ulong( &args );
+    INT y_src = get_ulong( &args );
+    INT width_src = get_ulong( &args );
+    INT height_src = get_ulong( &args );
+    const void *bits = get_ptr( &args );
+    const BITMAPINFO *bmi = get_ptr( &args );
+    UINT coloruse = get_ulong( &args );
+    DWORD rop = get_ulong( &args );
+    UINT max_info = get_ulong( &args );
+    UINT max_bits = get_ulong( &args );
+    HANDLE xform = get_handle( &args );
+
+    return NtGdiStretchDIBitsInternal( hdc, x_dst, y_dst, width_dst, height_dst,
+                                       x_src, y_src, width_src, height_src, bits, bmi,
+                                       coloruse, rop, max_info, max_bits, xform );
 }
 
 NTSTATUS WINAPI wow64_NtGdiStrokeAndFillPath( UINT *args )

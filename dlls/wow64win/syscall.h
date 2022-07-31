@@ -39,6 +39,7 @@
     SYSCALL_ENTRY( NtGdiCreateCompatibleBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
     SYSCALL_ENTRY( NtGdiCreateDIBSection ) \
+    SYSCALL_ENTRY( NtGdiCreateDIBitmapInternal ) \
     SYSCALL_ENTRY( NtGdiCreateEllipticRgn ) \
     SYSCALL_ENTRY( NtGdiCreateHalftonePalette ) \
     SYSCALL_ENTRY( NtGdiCreateHatchBrushInternal ) \
@@ -85,6 +86,7 @@
     SYSCALL_ENTRY( NtGdiGetDCDword ) \
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
     SYSCALL_ENTRY( NtGdiGetDCPoint ) \
+    SYSCALL_ENTRY( NtGdiGetDIBitsInternal ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
@@ -125,6 +127,7 @@
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
     SYSCALL_ENTRY( NtGdiSetColorAdjustment ) \
+    SYSCALL_ENTRY( NtGdiSetDIBitsToDeviceInternal ) \
     SYSCALL_ENTRY( NtGdiSetMagicColors ) \
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
     SYSCALL_ENTRY( NtGdiSetPixel ) \
@@ -135,6 +138,7 @@
     SYSCALL_ENTRY( NtGdiStartDoc ) \
     SYSCALL_ENTRY( NtGdiStartPage ) \
     SYSCALL_ENTRY( NtGdiStretchBlt ) \
+    SYSCALL_ENTRY( NtGdiStretchDIBitsInternal ) \
     SYSCALL_ENTRY( NtGdiStrokeAndFillPath ) \
     SYSCALL_ENTRY( NtGdiStrokePath ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \

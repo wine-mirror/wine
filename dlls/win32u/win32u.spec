@@ -149,7 +149,7 @@
 @ stdcall NtGdiCreateCompatibleDC(long)
 @ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
 @ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
-@ stdcall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
+@ stdcall -syscall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
 @ stdcall -syscall NtGdiCreateEllipticRgn(long long long long)
 @ stdcall -syscall NtGdiCreateHalftonePalette(long)
 @ stdcall -syscall NtGdiCreateHatchBrushInternal(long long long)
@@ -466,7 +466,7 @@
 @ stdcall -syscall NtGdiGetDCObject(long long)
 @ stdcall -syscall NtGdiGetDCPoint(long long ptr)
 @ stub NtGdiGetDCforBitmap
-@ stdcall NtGdiGetDIBitsInternal(long long long long ptr ptr long long long)
+@ stdcall -syscall NtGdiGetDIBitsInternal(long long long long ptr ptr long long long)
 @ stdcall NtGdiGetDeviceCaps(long long)
 @ stub NtGdiGetDeviceCapsAll
 @ stdcall NtGdiGetDeviceGammaRamp(long ptr)
@@ -597,7 +597,7 @@
 @ stdcall -syscall NtGdiSetBrushOrg(long long long ptr)
 @ stdcall -syscall NtGdiSetColorAdjustment(long ptr)
 @ stub NtGdiSetColorSpace
-@ stdcall NtGdiSetDIBitsToDeviceInternal(long long long long long long long long long ptr ptr long long long long long)
+@ stdcall -syscall NtGdiSetDIBitsToDeviceInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall NtGdiSetDeviceGammaRamp(ptr ptr)
 @ stub NtGdiSetFontEnumeration
 @ stub NtGdiSetFontXform
@@ -621,7 +621,7 @@
 @ stdcall -syscall NtGdiStartDoc(long ptr ptr long)
 @ stdcall -syscall NtGdiStartPage(long)
 @ stdcall -syscall NtGdiStretchBlt(long long long long long long long long long long long long)
-@ stdcall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
+@ stdcall -syscall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall -syscall NtGdiStrokeAndFillPath(long)
 @ stdcall -syscall NtGdiStrokePath(long)
 @ stdcall -syscall NtGdiSwapBuffers(long)
