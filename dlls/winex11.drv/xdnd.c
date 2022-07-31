@@ -177,7 +177,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     HRESULT hr;
 
     XDNDxy = params->point;
-    targetWindow = window_from_point_dnd( params->hwnd, XDNDxy );
+    targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), XDNDxy );
 
     if (!XDNDAccepted || XDNDLastTargetWnd != targetWindow)
     {

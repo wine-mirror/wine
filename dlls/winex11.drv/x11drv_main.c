@@ -714,7 +714,7 @@ static NTSTATUS x11drv_init( void *arg )
 
     init_user_driver();
     X11DRV_DisplayDevices_Init(FALSE);
-    params->show_systray = show_systray;
+    *params->show_systray = show_systray;
     return STATUS_SUCCESS;
 }
 
@@ -1337,3 +1337,108 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
+
+#ifdef _WIN64
+
+static NTSTATUS x11drv_wow64_init( void *arg )
+{
+    struct
+    {
+        ULONG foreign_window_proc;
+        ULONG show_systray;
+    } *params32 = arg;
+    struct init_params params;
+
+    params.foreign_window_proc = UlongToPtr( params32->foreign_window_proc );
+    params.show_systray = UlongToPtr( params32->show_systray );
+    return x11drv_init( &params );
+}
+
+static NTSTATUS x11drv_wow64_systray_clear( void *arg )
+{
+    HWND hwnd = UlongToPtr( *(ULONG *)arg );
+    return x11drv_systray_clear( &hwnd );
+}
+
+static NTSTATUS x11drv_wow64_systray_dock( void *arg )
+{
+    struct
+    {
+        UINT64 event_handle;
+        ULONG icon;
+        int cx;
+        int cy;
+        ULONG layered;
+    } *params32 = arg;
+    struct systray_dock_params params;
+
+    params.event_handle = params32->event_handle;
+    params.icon = UlongToPtr( params32->icon );
+    params.cx = params32->cx;
+    params.cy = params32->cy;
+    params.layered = UlongToPtr( params32->layered );
+    return x11drv_systray_dock( &params );
+}
+
+static NTSTATUS x11drv_wow64_systray_hide( void *arg )
+{
+    HWND hwnd = UlongToPtr( *(ULONG *)arg );
+    return x11drv_systray_hide( &hwnd );
+}
+
+static NTSTATUS x11drv_wow64_tablet_get_packet( void *arg )
+{
+    FIXME( "%p\n", arg );
+    return 0;
+}
+
+static NTSTATUS x11drv_wow64_tablet_info( void *arg )
+{
+    struct
+    {
+        UINT category;
+        UINT index;
+        ULONG output;
+    } *params32 = arg;
+    struct tablet_info_params params;
+
+    params.category = params32->category;
+    params.index = params32->index;
+    params.output = UlongToPtr( params32->output );
+    return x11drv_tablet_info( &params );
+}
+
+static NTSTATUS x11drv_wow64_xim_preedit_state( void *arg )
+{
+    struct
+    {
+        ULONG hwnd;
+        BOOL open;
+    } *params32 = arg;
+    struct xim_preedit_state_params params;
+
+    params.hwnd = UlongToHandle( params32->hwnd );
+    params.open = params32->open;
+    return x11drv_xim_preedit_state( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    x11drv_create_desktop,
+    x11drv_wow64_init,
+    x11drv_wow64_systray_clear,
+    x11drv_wow64_systray_dock,
+    x11drv_wow64_systray_hide,
+    x11drv_systray_init,
+    x11drv_tablet_attach_queue,
+    x11drv_wow64_tablet_get_packet,
+    x11drv_wow64_tablet_info,
+    x11drv_tablet_load_info,
+    x11drv_wow64_xim_preedit_state,
+    x11drv_xim_reset,
+};
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
+
+#endif /* _WIN64 */

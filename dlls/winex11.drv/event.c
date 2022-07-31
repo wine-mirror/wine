@@ -1802,7 +1802,7 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
     XClientMessageEvent e;
     DWORD effect;
 
-    params.hwnd = hwnd;
+    params.hwnd = HandleToUlong( hwnd );
     params.point = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
     params.effect = effect = xdnd_action_to_drop_effect( event->data.l[4] );
 

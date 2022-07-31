@@ -50,7 +50,7 @@ struct create_desktop_params
 struct init_params
 {
     WNDPROC foreign_window_proc;
-    BOOL show_systray;
+    BOOL *show_systray;
 };
 
 struct systray_dock_params
@@ -123,7 +123,7 @@ struct format_entry
 /* x11drv_dnd_position_event params */
 struct dnd_position_event_params
 {
-    HWND  hwnd;
+    ULONG hwnd;
     POINT point;
     DWORD effect;
 };

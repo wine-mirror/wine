@@ -67,6 +67,7 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     struct init_params params =
     {
         foreign_window_proc,
+        &show_systray,
     };
 
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
@@ -81,8 +82,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     memcpy( callback_table + NtUserDriverCallbackFirst, kernel_callbacks, sizeof(kernel_callbacks) );
-
-    show_systray = params.show_systray;
     return TRUE;
 }
 
