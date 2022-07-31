@@ -1509,7 +1509,7 @@ static void test_video_window(void)
     err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
     ok(!err, "Got %s.\n", dbg_mcierr(err));
 
-    todo_wine ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+    ok(IsWindowVisible(video_window), "Video window should be visible.\n");
 
     err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
     ok(!err, "Got %s.\n", dbg_mcierr(err));
@@ -1519,7 +1519,7 @@ static void test_video_window(void)
     err = mciSendCommandW(id, MCI_SEEK, MCI_SEEK_TO_START, (DWORD_PTR)&parm);
     ok(!err, "Got %s.\n", dbg_mcierr(err));
 
-    todo_wine ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+    ok(IsWindowVisible(video_window), "Video window should be visible.\n");
 
     err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
     ok(!err, "Got %s.\n", dbg_mcierr(err));

@@ -528,9 +528,6 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
         wma->thread = NULL;
     }
 
-    if (!wma->parent)
-        IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
-
     return 0;
 }
 
