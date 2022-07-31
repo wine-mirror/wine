@@ -152,6 +152,13 @@ enum d2d_device_context_sampler_limits
     D2D_SAMPLER_EXTEND_MODE_COUNT = 3,
 };
 
+enum d2d_device_context_target_type
+{
+    D2D_TARGET_UNKNOWN = 0,
+    D2D_TARGET_BITMAP,
+    D2D_TARGET_COMMAND_LIST,
+};
+
 struct d2d_device_context
 {
     ID2D1DeviceContext1 ID2D1DeviceContext1_iface;
@@ -167,7 +174,16 @@ struct d2d_device_context
     ID2D1Device *device;
     ID3D11Device1 *d3d_device;
     ID3DDeviceContextState *d3d_state;
-    struct d2d_bitmap *target;
+    struct
+    {
+        ID2D1Image *object;
+        enum d2d_device_context_target_type type;
+        union
+        {
+            struct d2d_bitmap *bitmap;
+            struct d2d_command_list *command_list;
+        };
+    } target;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
     ID3D11Buffer *vs_cb;
     ID3D11PixelShader *ps;
@@ -698,6 +714,7 @@ struct d2d_command_list
 };
 
 HRESULT d2d_command_list_create(ID2D1Factory *factory, struct d2d_command_list **command_list) DECLSPEC_HIDDEN;
+struct d2d_command_list *unsafe_impl_from_ID2D1CommandList(ID2D1CommandList *iface) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

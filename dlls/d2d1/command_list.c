@@ -117,3 +117,11 @@ HRESULT d2d_command_list_create(ID2D1Factory *factory, struct d2d_command_list *
 
     return S_OK;
 }
+
+struct d2d_command_list *unsafe_impl_from_ID2D1CommandList(ID2D1CommandList *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (ID2D1CommandListVtbl *)&d2d_command_list_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_command_list, ID2D1CommandList_iface);
+}

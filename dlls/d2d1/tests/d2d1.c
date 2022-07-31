@@ -9444,6 +9444,7 @@ static void test_command_list(BOOL d3d11)
     ID2D1StrokeStyle *stroke_style;
     ID2D1CommandList *command_list;
     struct d2d1_test_context ctx;
+    D2D1_PIXEL_FORMAT format;
     ID2D1Geometry *geometry;
     ID2D1RenderTarget *rt;
     D2D1_POINT_2F p0, p1;
@@ -9472,6 +9473,15 @@ static void test_command_list(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)command_list);
+
+    size = ID2D1DeviceContext_GetPixelSize(device_context);
+    ok(!size.width, "Got unexpected width %u.\n", size.width);
+    ok(!size.height, "Got unexpected height %u.\n", size.height);
+
+    format = ID2D1DeviceContext_GetPixelFormat(device_context);
+    ok(format.format == DXGI_FORMAT_UNKNOWN && format.alphaMode == D2D1_ALPHA_MODE_UNKNOWN,
+            "Unexpected format %u, alpha mode %u.\n", format.format, format.alphaMode);
+
     ID2D1DeviceContext_BeginDraw(device_context);
 
     hr = ID2D1DeviceContext_QueryInterface(device_context, &IID_ID2D1RenderTarget, (void **)&rt);
@@ -9627,7 +9637,6 @@ static void test_command_list(BOOL d3d11)
 
     /* Close on attached list. */
     ID2D1DeviceContext_GetTarget(device_context, &target);
-    todo_wine
     ok(target == (ID2D1Image *)command_list, "Unexpected context target.\n");
     ID2D1Image_Release(target);
 
@@ -9665,7 +9674,9 @@ static void test_command_list(BOOL d3d11)
 
     ID2D1DeviceContext_SetTarget(device_context2, (ID2D1Image *)command_list);
     ID2D1DeviceContext_GetTarget(device_context2, &target);
+    todo_wine
     ok(target == NULL, "Unexpected target.\n");
+    if (target) ID2D1Image_Release(target);
 
     ID2D1CommandList_Release(command_list);
     ID2D1DeviceContext_Release(device_context2);
