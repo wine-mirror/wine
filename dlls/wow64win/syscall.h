@@ -24,6 +24,7 @@
 #define ALL_WIN32_SYSCALLS \
     SYSCALL_ENTRY( NtGdiAddFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
+    SYSCALL_ENTRY( NtGdiArcInternal ) \
     SYSCALL_ENTRY( NtGdiCombineRgn ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateClientObj ) \
@@ -45,6 +46,7 @@
     SYSCALL_ENTRY( NtGdiDeleteClientObj ) \
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \
+    SYSCALL_ENTRY( NtGdiEllipse ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
@@ -61,6 +63,7 @@
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
     SYSCALL_ENTRY( NtGdiGetPath ) \
+    SYSCALL_ENTRY( NtGdiGetPixel ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
     SYSCALL_ENTRY( NtGdiGetSpoolMessage ) \
@@ -68,13 +71,17 @@
     SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiInitSpool ) \
+    SYSCALL_ENTRY( NtGdiLineTo ) \
+    SYSCALL_ENTRY( NtGdiMoveTo ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiOpenDCW ) \
     SYSCALL_ENTRY( NtGdiPathToRegion ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \
+    SYSCALL_ENTRY( NtGdiRectangle ) \
     SYSCALL_ENTRY( NtGdiRemoveFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
+    SYSCALL_ENTRY( NtGdiRoundRect ) \
     SYSCALL_ENTRY( NtGdiSaveDC ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
@@ -82,6 +89,7 @@
     SYSCALL_ENTRY( NtGdiSetColorAdjustment ) \
     SYSCALL_ENTRY( NtGdiSetMagicColors ) \
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
+    SYSCALL_ENTRY( NtGdiSetPixel ) \
     SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \
     SYSCALL_ENTRY( NtGdiSetTextJustification ) \

@@ -79,6 +79,22 @@ NTSTATUS WINAPI wow64_NtGdiAddFontResourceW( UINT *args )
     return NtGdiAddFontResourceW( str, size, files, flags, tid, dv );
 }
 
+NTSTATUS WINAPI wow64_NtGdiArcInternal( UINT *args )
+{
+    UINT type = get_ulong( &args );
+    HDC hdc = get_handle( &args );
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+    INT xstart = get_ulong( &args );
+    INT ystart = get_ulong( &args );
+    INT xend = get_ulong( &args );
+    INT yend = get_ulong( &args );
+
+    return NtGdiArcInternal( type, hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+}
+
 NTSTATUS WINAPI wow64_NtGdiCombineRgn( UINT *args )
 {
     HRGN dest = get_handle( &args );
@@ -318,6 +334,17 @@ NTSTATUS WINAPI wow64_NtGdiDrawStream( UINT *args )
     return NtGdiDrawStream( hdc, in, pvin );
 }
 
+NTSTATUS WINAPI wow64_NtGdiEllipse( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+
+    return NtGdiEllipse( hdc, left, top, right, bottom );
+}
+
 NTSTATUS WINAPI wow64_NtGdiEqualRgn( UINT *args )
 {
     HRGN hrgn1 = get_handle( &args );
@@ -555,6 +582,45 @@ NTSTATUS WINAPI wow64_NtGdiGetPath( UINT *args )
     return NtGdiGetPath( hdc, points, types, size );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetPixel( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+
+    return NtGdiGetPixel( hdc, x, y );
+}
+
+NTSTATUS WINAPI wow64_NtGdiLineTo( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+
+    return NtGdiLineTo( hdc, x, y );
+}
+
+NTSTATUS WINAPI wow64_NtGdiMoveTo( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    POINT *pt = get_ptr( &args );
+
+    return NtGdiMoveTo( hdc, x, y, pt );
+}
+
+NTSTATUS WINAPI wow64_NtGdiRectangle( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+
+    return NtGdiRectangle( hdc, left, top, right, bottom );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetRegionData( UINT *args )
 {
     HRGN hrgn = get_ptr( &args );
@@ -570,6 +636,19 @@ NTSTATUS WINAPI wow64_NtGdiGetRgnBox( UINT *args )
     RECT *rect = get_ptr( &args );
 
     return NtGdiGetRgnBox( hrgn, rect );
+}
+
+NTSTATUS WINAPI wow64_NtGdiRoundRect( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+    INT ell_width = get_ulong( &args );
+    INT ell_height = get_ulong( &args );
+
+    return NtGdiRoundRect( hdc, left, top, right, bottom, ell_width, ell_height );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetSpoolMessage( UINT *args )
@@ -742,6 +821,16 @@ NTSTATUS WINAPI wow64_NtGdiSetMetaRgn( UINT *args )
     HDC hdc = get_handle( &args );
 
     return NtGdiSetMetaRgn( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetPixel( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    COLORREF color = get_ulong( &args );
+
+    return NtGdiSetPixel( hdc, x, y, color );
 }
 
 NTSTATUS WINAPI wow64_NtGdiSetPixelFormat( UINT *args )

@@ -42,8 +42,6 @@ struct unix_funcs
                                          BLENDFUNCTION blend_function, HANDLE xform );
     BOOL     (WINAPI *pNtGdiAngleArc)( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angle,
                                        DWORD sweep_angle );
-    BOOL     (WINAPI *pNtGdiArcInternal)( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,
-                                          INT xstart, INT ystart, INT xend, INT yend );
     BOOL     (WINAPI *pNtGdiBeginPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiBitBlt)( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
                                      INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl );
@@ -69,7 +67,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiDeleteObjectApp)( HGDIOBJ obj );
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
-    BOOL     (WINAPI *pNtGdiEllipse)( HDC hdc, INT left, INT top, INT right, INT bottom );
     INT      (WINAPI *pNtGdiEndDoc)(HDC hdc);
     BOOL     (WINAPI *pNtGdiEndPath)( HDC hdc );
     INT      (WINAPI *pNtGdiEndPage)( HDC hdc );
@@ -110,7 +107,6 @@ struct unix_funcs
     COLORREF (WINAPI *pNtGdiGetNearestColor)( HDC hdc, COLORREF color );
     UINT     (WINAPI *pNtGdiGetOutlineTextMetricsInternalW)( HDC hdc, UINT cbData,
                                                              OUTLINETEXTMETRICW *otm, ULONG opts );
-    COLORREF (WINAPI *pNtGdiGetPixel)( HDC hdc, INT x, INT y );
     INT      (WINAPI *pNtGdiGetRandomRgn)( HDC hdc, HRGN region, INT code );
     BOOL     (WINAPI *pNtGdiGetRasterizerCaps)( RASTERIZER_STATUS *status, UINT size );
     BOOL     (WINAPI *pNtGdiGetRealizationInfo)( HDC hdc, struct font_realization_info *info );
@@ -123,12 +119,10 @@ struct unix_funcs
                                            void *grad_array, ULONG ngrad, ULONG mode );
     INT      (WINAPI *pNtGdiIntersectClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     BOOL     (WINAPI *pNtGdiInvertRgn)( HDC hdc, HRGN hrgn );
-    BOOL     (WINAPI *pNtGdiLineTo)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiMaskBlt)( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                       HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
                                       INT x_mask, INT y_mask, DWORD rop, DWORD bk_color );
     BOOL     (WINAPI *pNtGdiModifyWorldTransform)( HDC hdc, const XFORM *xform, DWORD mode );
-    BOOL     (WINAPI *pNtGdiMoveTo)( HDC hdc, INT x, INT y, POINT *pt );
     INT      (WINAPI *pNtGdiOffsetClipRgn)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiPatBlt)( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop );
     BOOL     (WINAPI *pNtGdiPlgBlt)( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
@@ -139,13 +133,10 @@ struct unix_funcs
                                            DWORD count, UINT function );
     BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiRectVisible)( HDC hdc, const RECT *rect );
-    BOOL     (WINAPI *pNtGdiRectangle)( HDC hdc, INT left, INT top, INT right, INT bottom );
     BOOL     (WINAPI *pNtGdiResetDC)( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
                                       DRIVER_INFO_2W *driver_info, void *dev );
     BOOL     (WINAPI *pNtGdiResizePalette)( HPALETTE palette, UINT count );
     BOOL     (WINAPI *pNtGdiRestoreDC)( HDC hdc, INT level );
-    BOOL     (WINAPI *pNtGdiRoundRect)( HDC hdc, INT left, INT top, INT right,
-                                        INT bottom, INT ell_width, INT ell_height );
     BOOL     (WINAPI *pNtGdiScaleViewportExtEx)( HDC hdc, INT x_num, INT x_denom,
                                                  INT y_num, INT y_denom, SIZE *size );
     BOOL     (WINAPI *pNtGdiScaleWindowExtEx)( HDC hdc, INT x_num, INT x_denom,
@@ -163,7 +154,6 @@ struct unix_funcs
                                                         BOOL xform_coords, HANDLE xform );
     BOOL     (WINAPI *pNtGdiSetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
-    COLORREF (WINAPI *pNtGdiSetPixel)( HDC hdc, INT x, INT y, COLORREF color );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
     INT      (WINAPI *pNtGdiStartDoc)( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job );
     INT      (WINAPI *pNtGdiStartPage)( HDC hdc );

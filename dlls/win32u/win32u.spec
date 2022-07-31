@@ -115,7 +115,7 @@
 @ stdcall NtGdiAlphaBlend(long long long long long long long long long long long ptr)
 @ stdcall NtGdiAngleArc(long long long long long long)
 @ stub NtGdiAnyLinkedFonts
-@ stdcall NtGdiArcInternal(long long long long long long long long long long)
+@ stdcall -syscall NtGdiArcInternal(long long long long long long long long long long)
 @ stub NtGdiBRUSHOBJ_DeleteRbrush
 @ stub NtGdiBRUSHOBJ_hGetColorTransform
 @ stub NtGdiBRUSHOBJ_pvAllocRbrush
@@ -376,7 +376,7 @@
 @ stub NtGdiDrawEscape
 @ stdcall -syscall NtGdiDrawStream(long long ptr)
 @ stub NtGdiDwmCreatedBitmapRemotingOutput
-@ stdcall NtGdiEllipse(long long long long long)
+@ stdcall -syscall NtGdiEllipse(long long long long long)
 @ stub NtGdiEnableEudc
 @ stdcall NtGdiEndDoc(long)
 @ stub NtGdiEndGdiRendering
@@ -501,7 +501,7 @@
 @ stub NtGdiGetPerBandInfo
 @ stub NtGdiGetPhysicalMonitorDescription
 @ stub NtGdiGetPhysicalMonitors
-@ stdcall NtGdiGetPixel(long long long)
+@ stdcall -syscall NtGdiGetPixel(long long long)
 @ stub NtGdiGetProcessSessionFonts
 @ stub NtGdiGetPublicFontTableChangeCookie
 @ stdcall NtGdiGetRandomRgn(long long long)
@@ -535,7 +535,7 @@
 @ stdcall -syscall NtGdiInitSpool()
 @ stdcall NtGdiIntersectClipRect(long long long long long)
 @ stdcall NtGdiInvertRgn(long long)
-@ stdcall NtGdiLineTo(long long long)
+@ stdcall -syscall NtGdiLineTo(long long long)
 @ stub NtGdiMakeFontDir
 @ stub NtGdiMakeInfoDC
 @ stub NtGdiMakeObjectUnXferable
@@ -544,7 +544,7 @@
 @ stub NtGdiMirrorWindowOrg
 @ stdcall NtGdiModifyWorldTransform(long ptr long)
 @ stub NtGdiMonoBitmap
-@ stdcall NtGdiMoveTo(long long long ptr)
+@ stdcall -syscall NtGdiMoveTo(long long long ptr)
 @ stdcall NtGdiOffsetClipRgn(long long long)
 @ stdcall -syscall NtGdiOffsetRgn(long long long)
 @ stdcall -syscall NtGdiOpenDCW(ptr ptr ptr long long ptr ptr ptr)
@@ -566,14 +566,14 @@
 @ stub NtGdiQueryFonts
 @ stdcall -syscall NtGdiRectInRegion(long ptr)
 @ stdcall NtGdiRectVisible(long ptr)
-@ stdcall NtGdiRectangle(long long long long long)
+@ stdcall -syscall NtGdiRectangle(long long long long long)
 @ stdcall -syscall NtGdiRemoveFontMemResourceEx(long)
 @ stdcall -syscall NtGdiRemoveFontResourceW(wstr long long long long ptr)
 @ stub NtGdiRemoveMergeFont
 @ stdcall NtGdiResetDC(long ptr ptr ptr ptr)
 @ stdcall NtGdiResizePalette(long long)
 @ stdcall NtGdiRestoreDC(long long)
-@ stdcall NtGdiRoundRect(long long long long long long long)
+@ stdcall -syscall NtGdiRoundRect(long long long long long long long)
 @ stub NtGdiSTROBJ_bEnum
 @ stub NtGdiSTROBJ_bEnumPositionsOnly
 @ stub NtGdiSTROBJ_bGetAdvanceWidths
@@ -609,7 +609,7 @@
 @ stub NtGdiSetMiterLimit
 @ stub NtGdiSetOPMSigningKeyAndSequenceNumbers
 @ stub NtGdiSetPUMPDOBJ
-@ stdcall NtGdiSetPixel(long long long long)
+@ stdcall -syscall NtGdiSetPixel(long long long long)
 @ stdcall -syscall NtGdiSetPixelFormat(long long)
 @ stub NtGdiSetPrivateDeviceGammaRamp
 @ stdcall -syscall NtGdiSetRectRgn(long long long long long)

@@ -51,13 +51,6 @@ BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, DWORD start_angl
     return unix_funcs->pNtGdiAngleArc( hdc, x, y, radius, start_angle, sweep_angle );
 }
 
-BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,
-                              INT xstart, INT ystart, INT xend, INT yend )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiArcInternal( type, hdc, left, top, right, bottom, xstart, ystart, xend, yend );
-}
-
 BOOL WINAPI NtGdiBeginPath( HDC hdc )
 {
     if (!unix_funcs) return FALSE;
@@ -123,12 +116,6 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtGdiDoPalette( handle, start, count, entries, func, inbound );
-}
-
-BOOL WINAPI NtGdiEllipse( HDC hdc, INT left, INT top, INT right, INT bottom )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiEllipse( hdc, left, top, right, bottom );
 }
 
 INT WINAPI NtGdiEndDoc( HDC hdc )
@@ -325,12 +312,6 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
     return unix_funcs->pNtGdiGetOutlineTextMetricsInternalW( hdc, cbData, otm, opts );
 }
 
-COLORREF WINAPI NtGdiGetPixel( HDC hdc, INT x, INT y )
-{
-    if (!unix_funcs) return CLR_INVALID;
-    return unix_funcs->pNtGdiGetPixel( hdc, x, y );
-}
-
 INT WINAPI NtGdiGetRandomRgn( HDC hdc, HRGN region, INT code )
 {
     if (!unix_funcs) return -1;
@@ -393,12 +374,6 @@ BOOL WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn )
     return unix_funcs->pNtGdiInvertRgn( hdc, hrgn );
 }
 
-BOOL WINAPI NtGdiLineTo( HDC hdc, INT x, INT y )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiLineTo( hdc, x, y );
-}
-
 BOOL WINAPI NtGdiMaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                           HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
                           INT x_mask, INT y_mask, DWORD rop, DWORD bk_color )
@@ -412,12 +387,6 @@ BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiModifyWorldTransform( hdc, xform, mode );
-}
-
-BOOL WINAPI NtGdiMoveTo( HDC hdc, INT x, INT y, POINT *pt )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiMoveTo( hdc, x, y, pt );
 }
 
 INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
@@ -466,12 +435,6 @@ BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
     return unix_funcs->pNtGdiRectVisible( hdc, rect );
 }
 
-BOOL WINAPI NtGdiRectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiRectangle( hdc, left, top, right, bottom );
-}
-
 BOOL WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
                           DRIVER_INFO_2W *driver_info, void *dev )
 {
@@ -489,13 +452,6 @@ BOOL WINAPI NtGdiRestoreDC( HDC hdc, INT level )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiRestoreDC( hdc, level );
-}
-
-BOOL WINAPI NtGdiRoundRect( HDC hdc, INT left, INT top, INT right,
-                            INT bottom, INT ell_width, INT ell_height )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiRoundRect( hdc, left, top, right, bottom, ell_width, ell_height );
 }
 
 BOOL WINAPI NtGdiScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom,
@@ -570,12 +526,6 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
 {
     if (!unix_funcs) return GDI_ERROR;
     return unix_funcs->pNtGdiSetLayout( hdc, wox, layout );
-}
-
-COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
-{
-    if (!unix_funcs) return CLR_INVALID;
-    return unix_funcs->pNtGdiSetPixel( hdc, x, y, color );
 }
 
 UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
