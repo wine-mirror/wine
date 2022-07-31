@@ -214,7 +214,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
         }
     }
 
-    if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+    if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL,
             OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
     {
         WARN("Failed to open file %s, error %lu.\n", debugstr_w(filename), GetLastError());
@@ -464,7 +464,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
     /* open file */
     /* FIXME: check the sharing values that native uses */
-    hFile = CreateFileW(pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    hFile = CreateFileW(pszFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
