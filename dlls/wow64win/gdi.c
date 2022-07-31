@@ -63,6 +63,13 @@ NTSTATUS WINAPI wow64_NtGdiAbortDoc( UINT *args )
     return NtGdiAbortDoc( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiAbortPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiAbortPath( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiAddFontMemResourceEx( UINT *args )
 {
     void *ptr = get_ptr( &args );
@@ -112,6 +119,20 @@ NTSTATUS WINAPI wow64_NtGdiArcInternal( UINT *args )
     INT yend = get_ulong( &args );
 
     return NtGdiArcInternal( type, hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+}
+
+NTSTATUS WINAPI wow64_NtGdiBeginPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiBeginPath( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiCloseFigure( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiCloseFigure( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiCombineRgn( UINT *args )
@@ -378,6 +399,13 @@ NTSTATUS WINAPI wow64_NtGdiEndPage( UINT *args )
     return NtGdiEndPage( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiEndPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiEndPath( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiEqualRgn( UINT *args )
 {
     HRGN hrgn1 = get_handle( &args );
@@ -516,6 +544,13 @@ NTSTATUS WINAPI wow64_NtGdiExtGetObjectW( UINT *args )
     default:
         return NtGdiExtGetObjectW( handle, count, buffer );
     }
+}
+
+NTSTATUS WINAPI wow64_NtGdiFillPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiFillPath( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiFillRgn( UINT *args )
@@ -875,6 +910,14 @@ NTSTATUS WINAPI wow64_NtGdiSaveDC( UINT *args )
     return NtGdiSaveDC( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSelectClipPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT mode = get_ulong( &args );
+
+    return NtGdiSelectClipPath( hdc, mode );
+}
+
 NTSTATUS WINAPI wow64_NtGdiSetBitmapBits( UINT *args )
 {
     HBITMAP hbitmap = get_handle( &args );
@@ -1008,6 +1051,20 @@ NTSTATUS WINAPI wow64_NtGdiStartPage( UINT *args )
     return NtGdiStartPage( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiStrokeAndFillPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiStrokeAndFillPath( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiStrokePath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiStrokePath( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiSwapBuffers( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1024,4 +1081,11 @@ NTSTATUS WINAPI wow64_NtGdiTransformPoints( UINT *args )
     UINT mode = get_ulong( &args );
 
     return NtGdiTransformPoints( hdc, points_in, points_out, count, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiWidenPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiWidenPath( hdc );
 }

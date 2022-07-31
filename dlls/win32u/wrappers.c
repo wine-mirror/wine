@@ -24,12 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-BOOL WINAPI NtGdiAbortPath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiAbortPath( hdc );
-}
-
 BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                              HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                              BLENDFUNCTION blend_function, HANDLE xform )
@@ -39,24 +33,12 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, i
                                          x_src, y_src, width_src, height_src, blend_function, xform );
 }
 
-BOOL WINAPI NtGdiBeginPath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiBeginPath( hdc );
-}
-
 BOOL WINAPI NtGdiBitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
                          INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiBitBlt( hdc_dst, x_dst, y_dst, width, height, hdc_src, x_src, y_src,
                                      rop, bk_color, fl );
-}
-
-BOOL WINAPI NtGdiCloseFigure( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiCloseFigure( hdc );
 }
 
 BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
@@ -106,12 +88,6 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
     return unix_funcs->pNtGdiDoPalette( handle, start, count, entries, func, inbound );
 }
 
-BOOL WINAPI NtGdiEndPath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiEndPath( hdc );
-}
-
 BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
 {
     if (!unix_funcs) return FALSE;
@@ -151,12 +127,6 @@ INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode )
 {
     if (!unix_funcs) return ERROR;
     return unix_funcs->pNtGdiExtSelectClipRgn( hdc, region, mode );
-}
-
-BOOL WINAPI NtGdiFillPath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiFillPath( hdc );
 }
 
 BOOL WINAPI NtGdiFontIsLinked( HDC hdc )
@@ -412,12 +382,6 @@ HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
     return unix_funcs->pNtGdiSelectBrush( hdc, handle );
 }
 
-BOOL WINAPI NtGdiSelectClipPath( HDC hdc, INT mode )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiSelectClipPath( hdc, mode );
-}
-
 HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
 {
     if (!unix_funcs) return 0;
@@ -487,18 +451,6 @@ INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT width_
                                                     coloruse, rop, max_info, max_bits, xform );
 }
 
-BOOL WINAPI NtGdiStrokeAndFillPath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiStrokeAndFillPath( hdc );
-}
-
-BOOL WINAPI NtGdiStrokePath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiStrokePath( hdc );
-}
-
 BOOL WINAPI NtGdiTransparentBlt( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
                                  HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                  UINT color )
@@ -518,12 +470,6 @@ BOOL WINAPI NtGdiUpdateColors( HDC hdc )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiUpdateColors( hdc );
-}
-
-BOOL WINAPI NtGdiWidenPath( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiWidenPath( hdc );
 }
 
 NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )

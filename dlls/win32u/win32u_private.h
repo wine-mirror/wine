@@ -35,14 +35,11 @@
 struct unix_funcs
 {
     /* win32u functions */
-    BOOL     (WINAPI *pNtGdiAbortPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiAlphaBlend)( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                          HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                          BLENDFUNCTION blend_function, HANDLE xform );
-    BOOL     (WINAPI *pNtGdiBeginPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiBitBlt)( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
                                      INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl );
-    BOOL     (WINAPI *pNtGdiCloseFigure)( HDC hdc );
     BOOL     (WINAPI *pNtGdiComputeXformCoefficients)( HDC hdc );
     HBITMAP  (WINAPI *pNtGdiCreateCompatibleBitmap)( HDC hdc, INT width, INT height );
     HDC      (WINAPI *pNtGdiCreateCompatibleDC)( HDC hdc );
@@ -64,7 +61,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiDeleteObjectApp)( HGDIOBJ obj );
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
-    BOOL     (WINAPI *pNtGdiEndPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiEnumFonts)( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
                                         const WCHAR *face_name, ULONG charset, ULONG *count, void *buf );
     INT      (WINAPI *pNtGdiExcludeClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
@@ -73,7 +69,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiExtTextOutW)( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
                                           const WCHAR *str, UINT count, const INT *dx, DWORD cp );
     INT      (WINAPI *pNtGdiExtSelectClipRgn)( HDC hdc, HRGN region, INT mode );
-    BOOL     (WINAPI *pNtGdiFillPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiFontIsLinked)( HDC hdc );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
     INT      (WINAPI *pNtGdiGetAppClipBox)( HDC hdc, RECT *rect );
@@ -129,7 +124,6 @@ struct unix_funcs
                                                INT y_num, INT y_denom, SIZE *size );
     HGDIOBJ  (WINAPI *pNtGdiSelectBitmap)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectBrush)( HDC hdc, HGDIOBJ handle );
-    BOOL     (WINAPI *pNtGdiSelectClipPath)( HDC hdc, INT mode );
     HGDIOBJ  (WINAPI *pNtGdiSelectFont)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectPen)( HDC hdc, HGDIOBJ handle );
     UINT     (WINAPI *pNtGdiSetBoundsRect)( HDC hdc, const RECT *rect, UINT flags );
@@ -149,14 +143,11 @@ struct unix_funcs
                                                     INT height_src, const void *bits, const BITMAPINFO *bmi,
                                                     UINT coloruse, DWORD rop, UINT max_info, UINT max_bits,
                                                     HANDLE xform );
-    BOOL     (WINAPI *pNtGdiStrokeAndFillPath)( HDC hdc );
-    BOOL     (WINAPI *pNtGdiStrokePath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiTransparentBlt)( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
                                              HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                              UINT color );
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
-    BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                                HICON icon, const WCHAR *str, UINT flags );
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );

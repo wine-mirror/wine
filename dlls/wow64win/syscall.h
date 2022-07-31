@@ -23,10 +23,13 @@
 
 #define ALL_WIN32_SYSCALLS \
     SYSCALL_ENTRY( NtGdiAbortDoc ) \
+    SYSCALL_ENTRY( NtGdiAbortPath ) \
     SYSCALL_ENTRY( NtGdiAddFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
     SYSCALL_ENTRY( NtGdiAngleArc ) \
     SYSCALL_ENTRY( NtGdiArcInternal ) \
+    SYSCALL_ENTRY( NtGdiBeginPath ) \
+    SYSCALL_ENTRY( NtGdiCloseFigure ) \
     SYSCALL_ENTRY( NtGdiCombineRgn ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateClientObj ) \
@@ -51,11 +54,13 @@
     SYSCALL_ENTRY( NtGdiEllipse ) \
     SYSCALL_ENTRY( NtGdiEndDoc ) \
     SYSCALL_ENTRY( NtGdiEndPage ) \
+    SYSCALL_ENTRY( NtGdiEndPath ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiExtFloodFill ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
+    SYSCALL_ENTRY( NtGdiFillPath ) \
     SYSCALL_ENTRY( NtGdiFillRgn ) \
     SYSCALL_ENTRY( NtGdiFlattenPath ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
@@ -94,6 +99,7 @@
     SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
     SYSCALL_ENTRY( NtGdiRoundRect ) \
     SYSCALL_ENTRY( NtGdiSaveDC ) \
+    SYSCALL_ENTRY( NtGdiSelectClipPath ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
@@ -107,8 +113,11 @@
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
     SYSCALL_ENTRY( NtGdiStartDoc ) \
     SYSCALL_ENTRY( NtGdiStartPage ) \
+    SYSCALL_ENTRY( NtGdiStrokeAndFillPath ) \
+    SYSCALL_ENTRY( NtGdiStrokePath ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
+    SYSCALL_ENTRY( NtGdiWidenPath ) \
     SYSCALL_ENTRY( NtUserActivateKeyboardLayout ) \
     SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserAssociateInputContext ) \

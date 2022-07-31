@@ -105,7 +105,7 @@
 @ stub NtFlipObjectSetContent
 @ stub NtFlipObjectSetMaximumBackchannelQueueDepth
 @ stdcall -syscall NtGdiAbortDoc(long)
-@ stdcall NtGdiAbortPath(long)
+@ stdcall -syscall NtGdiAbortPath(long)
 @ stub NtGdiAddEmbFontToDC
 @ stdcall -syscall NtGdiAddFontMemResourceEx(ptr long ptr long ptr)
 @ stdcall -syscall NtGdiAddFontResourceW(wstr long long long long ptr)
@@ -122,7 +122,7 @@
 @ stub NtGdiBRUSHOBJ_pvGetRbrush
 @ stub NtGdiBRUSHOBJ_ulGetBrushColor
 @ stub NtGdiBeginGdiRendering
-@ stdcall NtGdiBeginPath(long)
+@ stdcall -syscall NtGdiBeginPath(long)
 @ stdcall NtGdiBitBlt(long long long long long long long long long long long)
 @ stub NtGdiCLIPOBJ_bEnum
 @ stub NtGdiCLIPOBJ_cEnumStart
@@ -132,7 +132,7 @@
 @ stub NtGdiCheckBitmapBits
 @ stub NtGdiClearBitmapAttributes
 @ stub NtGdiClearBrushAttributes
-@ stdcall NtGdiCloseFigure(long)
+@ stdcall -syscall NtGdiCloseFigure(long)
 @ stub NtGdiColorCorrectPalette
 @ stdcall -syscall NtGdiCombineRgn(long long long long)
 @ stub NtGdiCombineTransform
@@ -381,7 +381,7 @@
 @ stdcall -syscall NtGdiEndDoc(long)
 @ stub NtGdiEndGdiRendering
 @ stdcall -syscall NtGdiEndPage(long)
-@ stdcall NtGdiEndPath(long)
+@ stdcall -syscall NtGdiEndPath(long)
 @ stub NtGdiEngAlphaBlend
 @ stub NtGdiEngAssociateSurface
 @ stub NtGdiEngBitBlt
@@ -433,7 +433,7 @@
 @ stub NtGdiFONTOBJ_pvTrueTypeFontFile
 @ stub NtGdiFONTOBJ_pxoGetXform
 @ stub NtGdiFONTOBJ_vGetInfo
-@ stdcall NtGdiFillPath(long)
+@ stdcall -syscall NtGdiFillPath(long)
 @ stdcall -syscall NtGdiFillRgn(long long long)
 @ stdcall -syscall NtGdiFlattenPath(long)
 @ stdcall -syscall NtGdiFlush()
@@ -586,7 +586,7 @@
 @ stdcall NtGdiScaleWindowExtEx(long long long long long ptr)
 @ stdcall NtGdiSelectBitmap(long long)
 @ stdcall NtGdiSelectBrush(long long)
-@ stdcall NtGdiSelectClipPath(long long)
+@ stdcall -syscall NtGdiSelectClipPath(long long)
 @ stdcall NtGdiSelectFont(long long)
 @ stdcall NtGdiSelectPen(long long)
 @ stub NtGdiSetBitmapAttributes
@@ -622,8 +622,8 @@
 @ stdcall -syscall NtGdiStartPage(long)
 @ stdcall NtGdiStretchBlt(long long long long long long long long long long long long)
 @ stdcall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
-@ stdcall NtGdiStrokeAndFillPath(long)
-@ stdcall NtGdiStrokePath(long)
+@ stdcall -syscall NtGdiStrokeAndFillPath(long)
+@ stdcall -syscall NtGdiStrokePath(long)
 @ stdcall -syscall NtGdiSwapBuffers(long)
 @ stdcall -syscall NtGdiTransformPoints(long ptr ptr long long)
 @ stdcall NtGdiTransparentBlt(long long long long long long long long long long long)
@@ -633,7 +633,7 @@
 @ stdcall NtGdiUnrealizeObject(long)
 @ stdcall NtGdiUpdateColors(long)
 @ stub NtGdiUpdateTransform
-@ stdcall NtGdiWidenPath(long)
+@ stdcall -syscall NtGdiWidenPath(long)
 @ stub NtGdiXFORMOBJ_bApplyXform
 @ stub NtGdiXFORMOBJ_iGetXform
 @ stub NtGdiXLATEOBJ_cGetPalette
