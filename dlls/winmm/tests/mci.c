@@ -1664,7 +1664,7 @@ static void test_video_window(void)
         /* destination size is reset to the source video size */
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
+        ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
                 wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&src_rc));
 
         /* destination size isn't reset unless the destination window is changed */
@@ -1699,7 +1699,7 @@ static void test_video_window(void)
 
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
+        ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
                 wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&src_rc));
 
         err = mciSendCommandW(id, MCI_CLOSE, 0, 0);

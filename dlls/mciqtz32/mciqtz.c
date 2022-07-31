@@ -998,9 +998,18 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
     if (dwFlags & MCI_DGV_WINDOW_HWND && (IsWindow(lpParms->hWnd) || !lpParms->hWnd)) {
         HWND hwnd = lpParms->hWnd ? lpParms->hWnd : wma->window;
         TRACE("Setting parent window to %p.\n", hwnd);
-        IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)hwnd);
-        IVideoWindow_put_Owner(wma->vidwin, (OAHWND)hwnd);
-        wma->parent = hwnd;
+        if (wma->parent != hwnd)
+        {
+            LONG width, height;
+
+            IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)hwnd);
+            IVideoWindow_put_Owner(wma->vidwin, (OAHWND)hwnd);
+
+            IBasicVideo_GetVideoSize(wma->vidbasic, &width, &height);
+            IVideoWindow_SetWindowPosition(wma->vidwin, 0, 0, width, height);
+
+            wma->parent = hwnd;
+        }
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
         TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);
