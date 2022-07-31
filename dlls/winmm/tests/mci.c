@@ -1624,9 +1624,8 @@ static void test_video_window(void)
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         win_rc.right -= win_rc.left;
         win_rc.bottom -= win_rc.top;
-        todo_wine_if (!(style & WS_CHILD))
-            ok(EqualRect(&win_rc, &parm.where.rc), "Got rect %s, expected %s.\n",
-                    wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&win_rc));
+        ok(EqualRect(&win_rc, &parm.where.rc), "Got rect %s, expected %s.\n",
+                wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&win_rc));
 
         err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
