@@ -622,6 +622,13 @@ NTSTATUS WINAPI wow64_NtGdiDeleteClientObj( UINT *args )
     return NtGdiDeleteClientObj( obj );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDeleteObjectApp( UINT *args )
+{
+    HGDIOBJ obj = get_handle( &args );
+
+    return NtGdiDeleteObjectApp( obj );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDescribePixelFormat( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1303,12 +1310,36 @@ NTSTATUS WINAPI wow64_NtGdiSelectBitmap( UINT *args )
     return HandleToUlong( NtGdiSelectBitmap( hdc, handle ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiSelectBrush( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HGDIOBJ handle = get_handle( &args );
+
+    return HandleToUlong( NtGdiSelectBrush( hdc, handle ));
+}
+
 NTSTATUS WINAPI wow64_NtGdiSelectClipPath( UINT *args )
 {
     HDC hdc = get_handle( &args );
     INT mode = get_ulong( &args );
 
     return NtGdiSelectClipPath( hdc, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSelectFont( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HGDIOBJ handle = get_handle( &args );
+
+    return HandleToUlong( NtGdiSelectFont( hdc, handle ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiSelectPen( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HGDIOBJ handle = get_handle( &args );
+
+    return HandleToUlong( NtGdiSelectPen( hdc, handle ));
 }
 
 NTSTATUS WINAPI wow64_NtGdiSetBitmapBits( UINT *args )
@@ -1559,6 +1590,13 @@ NTSTATUS WINAPI wow64_NtGdiTransformPoints( UINT *args )
     UINT mode = get_ulong( &args );
 
     return NtGdiTransformPoints( hdc, points_in, points_out, count, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiUnrealizeObject( UINT *args )
+{
+    HGDIOBJ obj = get_handle( &args );
+
+    return NtGdiUnrealizeObject( obj );
 }
 
 NTSTATUS WINAPI wow64_NtGdiUpdateColors( UINT *args )

@@ -66,6 +66,7 @@
     SYSCALL_ENTRY( NtGdiDdDDISetQueuedLimit ) \
     SYSCALL_ENTRY( NtGdiDdDDISetVidPnSourceOwner ) \
     SYSCALL_ENTRY( NtGdiDeleteClientObj ) \
+    SYSCALL_ENTRY( NtGdiDeleteObjectApp ) \
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \
     SYSCALL_ENTRY( NtGdiEllipse ) \
@@ -126,7 +127,10 @@
     SYSCALL_ENTRY( NtGdiScaleViewportExtEx ) \
     SYSCALL_ENTRY( NtGdiScaleWindowExtEx ) \
     SYSCALL_ENTRY( NtGdiSelectBitmap ) \
+    SYSCALL_ENTRY( NtGdiSelectBrush ) \
     SYSCALL_ENTRY( NtGdiSelectClipPath ) \
+    SYSCALL_ENTRY( NtGdiSelectFont ) \
+    SYSCALL_ENTRY( NtGdiSelectPen ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
@@ -148,6 +152,7 @@
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
     SYSCALL_ENTRY( NtGdiTransparentBlt ) \
+    SYSCALL_ENTRY( NtGdiUnrealizeObject ) \
     SYSCALL_ENTRY( NtGdiUpdateColors ) \
     SYSCALL_ENTRY( NtGdiWidenPath ) \
     SYSCALL_ENTRY( NtUserActivateKeyboardLayout ) \

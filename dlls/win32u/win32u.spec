@@ -367,7 +367,7 @@
 @ stdcall -syscall NtGdiDeleteClientObj(long)
 @ stub NtGdiDeleteColorSpace
 @ stub NtGdiDeleteColorTransform
-@ stdcall NtGdiDeleteObjectApp(long )
+@ stdcall -syscall NtGdiDeleteObjectApp(long )
 @ stdcall -syscall NtGdiDescribePixelFormat(long long long ptr)
 @ stub NtGdiDestroyOPMProtectedOutput
 @ stub NtGdiDestroyPhysicalMonitor
@@ -585,10 +585,10 @@
 @ stdcall -syscall NtGdiScaleViewportExtEx(long long long long long ptr)
 @ stdcall -syscall NtGdiScaleWindowExtEx(long long long long long ptr)
 @ stdcall -syscall NtGdiSelectBitmap(long long)
-@ stdcall NtGdiSelectBrush(long long)
+@ stdcall -syscall NtGdiSelectBrush(long long)
 @ stdcall -syscall NtGdiSelectClipPath(long long)
-@ stdcall NtGdiSelectFont(long long)
-@ stdcall NtGdiSelectPen(long long)
+@ stdcall -syscall NtGdiSelectFont(long long)
+@ stdcall -syscall NtGdiSelectPen(long long)
 @ stub NtGdiSetBitmapAttributes
 @ stdcall -syscall NtGdiSetBitmapBits(long long ptr)
 @ stdcall -syscall NtGdiSetBitmapDimension(long long long ptr)
@@ -630,7 +630,7 @@
 @ stub NtGdiUMPDEngFreeUserMem
 @ stub NtGdiUnloadPrinterDriver
 @ stub NtGdiUnmapMemFont
-@ stdcall NtGdiUnrealizeObject(long)
+@ stdcall -syscall NtGdiUnrealizeObject(long)
 @ stdcall -syscall NtGdiUpdateColors(long)
 @ stub NtGdiUpdateTransform
 @ stdcall -syscall NtGdiWidenPath(long)

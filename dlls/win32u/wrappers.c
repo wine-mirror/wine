@@ -24,12 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiDeleteObjectApp( obj );
-}
-
 LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entries,
                             DWORD func, BOOL inbound )
 {
@@ -253,24 +247,6 @@ BOOL WINAPI NtGdiResizePalette( HPALETTE palette, UINT count )
     return unix_funcs->pNtGdiResizePalette( palette, count );
 }
 
-HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiSelectBrush( hdc, handle );
-}
-
-HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiSelectFont( hdc, handle );
-}
-
-HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiSelectPen( hdc, handle );
-}
-
 UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
 {
     if (!unix_funcs) return 0;
@@ -293,12 +269,6 @@ UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
 {
     if (!unix_funcs) return SYSPAL_ERROR;
     return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
-}
-
-BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiUnrealizeObject( obj );
 }
 
 BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
