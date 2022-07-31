@@ -12,3 +12,6 @@ C_SRCS = \
 	mmio.c \
 	timer.c \
 	wave.c
+
+RC_SRCS = \
+	rsrc.rc

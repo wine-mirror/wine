@@ -23,6 +23,7 @@
 #include "windows.h"
 #include "mmsystem.h"
 #include "mmreg.h"
+#include "digitalv.h"
 #include "wine/test.h"
 
 /* The tests use the MCI's own save capability to create the tempfile.wav to play.
@@ -37,6 +38,7 @@ typedef union {
       MCI_GETDEVCAPS_PARMS caps;
       MCI_SYSINFO_PARMSA  sys;
       MCI_SEEK_PARMS      seek;
+      MCI_DGV_OPEN_PARMSW dgv_open;
       MCI_GENERIC_PARMS   gen;
     } MCI_PARMS_UNION;
 
@@ -137,6 +139,31 @@ static BOOL spurious_message(LPMSG msg)
     return TRUE;
   }
   return FALSE;
+}
+
+static WCHAR *load_resource(const WCHAR *name)
+{
+    static WCHAR pathW[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    wcscat(pathW, name);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %lu.\n",
+            wine_dbgstr_w(pathW), GetLastError());
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(!!res, "Failed to load resource, error %lu.\n", GetLastError());
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource.\n");
+    CloseHandle(file);
+
+    return pathW;
 }
 
 /* A single ok() in each code path allows us to prefix this with todo_wine */
@@ -1439,6 +1466,68 @@ static void test_threads(void)
     ok(mr == 0, "close gave: 0x%lx\n", mr);
 }
 
+static BOOL CALLBACK my_visible_window_proc(HWND hwnd, LPARAM param)
+{
+    HWND *ret = (HWND *)param;
+    DWORD pid;
+
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid != GetCurrentProcessId())
+        return TRUE;
+
+    if (GetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE)
+    {
+        *ret = hwnd;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void test_video_window(void)
+{
+    const WCHAR *filename = load_resource(L"test.mpg");
+    MCI_PARMS_UNION parm;
+    HWND video_window;
+    MCIDEVICEID id;
+    MCIERROR err;
+    BOOL ret;
+
+    parm.dgv_open.lpstrDeviceType = (WCHAR *)L"MPEGVideo";
+    parm.dgv_open.lpstrElementName = (WCHAR *)filename;
+    err = mciSendCommandW(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE, (DWORD_PTR)&parm);
+    ok(!err, "Got %s.\n", dbg_mcierr(err));
+    id = parm.dgv_open.wDeviceID;
+
+    err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
+    ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+    video_window = NULL;
+    EnumWindows(my_visible_window_proc, (LPARAM)&video_window);
+    ok(video_window != NULL, "Video window should be shown.\n");
+
+    err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
+    ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+    todo_wine ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+
+    err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
+    ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+    ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+
+    err = mciSendCommandW(id, MCI_SEEK, MCI_SEEK_TO_START, (DWORD_PTR)&parm);
+    ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+    todo_wine ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+
+    err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
+    ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
+}
+
 START_TEST(mci)
 {
     char curdir[MAX_PATH], tmpdir[MAX_PATH];
@@ -1463,6 +1552,9 @@ START_TEST(mci)
         test_asyncWaveTypeMpegvideo(hwnd);
     }else
         skip("No output devices available, skipping all output tests\n");
+
+    test_video_window();
+
     /* Win9X hangs when exiting with something still open. */
     err = mciSendStringA("close all", NULL, 0, hwnd);
     ok(!err,"final close all returned %s\n", dbg_mcierr(err));
