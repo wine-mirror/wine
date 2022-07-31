@@ -1010,6 +1010,8 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
 
             if (wma->parent == wma->window)
                 ShowWindow(wma->window, SW_HIDE);
+            else if (hwnd == wma->window)
+                ShowWindow(wma->window, SW_SHOW);
 
             wma->parent = hwnd;
         }
