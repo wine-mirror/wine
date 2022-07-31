@@ -36,6 +36,7 @@
     SYSCALL_ENTRY( NtGdiComputeXformCoefficients ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateClientObj ) \
+    SYSCALL_ENTRY( NtGdiCreateCompatibleBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
     SYSCALL_ENTRY( NtGdiCreateDIBSection ) \
     SYSCALL_ENTRY( NtGdiCreateEllipticRgn ) \
@@ -108,6 +109,7 @@
     SYSCALL_ENTRY( NtGdiSaveDC ) \
     SYSCALL_ENTRY( NtGdiScaleViewportExtEx ) \
     SYSCALL_ENTRY( NtGdiScaleWindowExtEx ) \
+    SYSCALL_ENTRY( NtGdiSelectBitmap ) \
     SYSCALL_ENTRY( NtGdiSelectClipPath ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \

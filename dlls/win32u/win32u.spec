@@ -145,7 +145,7 @@
 @ stdcall -syscall NtGdiCreateClientObj(long)
 @ stub NtGdiCreateColorSpace
 @ stub NtGdiCreateColorTransform
-@ stdcall NtGdiCreateCompatibleBitmap(long long long)
+@ stdcall -syscall NtGdiCreateCompatibleBitmap(long long long)
 @ stdcall NtGdiCreateCompatibleDC(long)
 @ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
 @ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
@@ -584,7 +584,7 @@
 @ stub NtGdiScaleValues
 @ stdcall -syscall NtGdiScaleViewportExtEx(long long long long long ptr)
 @ stdcall -syscall NtGdiScaleWindowExtEx(long long long long long ptr)
-@ stdcall NtGdiSelectBitmap(long long)
+@ stdcall -syscall NtGdiSelectBitmap(long long)
 @ stdcall NtGdiSelectBrush(long long)
 @ stdcall -syscall NtGdiSelectClipPath(long long)
 @ stdcall NtGdiSelectFont(long long)

@@ -207,6 +207,15 @@ NTSTATUS WINAPI wow64_NtGdiCreateClientObj( UINT *args )
     return HandleToUlong( NtGdiCreateClientObj( type ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiCreateCompatibleBitmap( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+
+    return HandleToUlong( NtGdiCreateCompatibleBitmap( hdc, width, height ));
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateDIBBrush( UINT *args )
 {
     const void *data = get_ptr( &args );
@@ -1035,6 +1044,14 @@ NTSTATUS WINAPI wow64_NtGdiScaleWindowExtEx( UINT *args )
     SIZE *size = get_ptr( &args );
 
     return NtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSelectBitmap( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HGDIOBJ handle = get_handle( &args );
+
+    return HandleToUlong( NtGdiSelectBitmap( hdc, handle ));
 }
 
 NTSTATUS WINAPI wow64_NtGdiSelectClipPath( UINT *args )

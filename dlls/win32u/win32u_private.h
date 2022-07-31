@@ -35,7 +35,6 @@
 struct unix_funcs
 {
     /* win32u functions */
-    HBITMAP  (WINAPI *pNtGdiCreateCompatibleBitmap)( HDC hdc, INT width, INT height );
     HDC      (WINAPI *pNtGdiCreateCompatibleDC)( HDC hdc );
     HBITMAP  (WINAPI *pNtGdiCreateDIBitmapInternal)( HDC hdc, INT width, INT height, DWORD init,
                                                      const void *bits, const BITMAPINFO *data,
@@ -104,7 +103,6 @@ struct unix_funcs
                                       DRIVER_INFO_2W *driver_info, void *dev );
     BOOL     (WINAPI *pNtGdiResizePalette)( HPALETTE palette, UINT count );
     BOOL     (WINAPI *pNtGdiRestoreDC)( HDC hdc, INT level );
-    HGDIOBJ  (WINAPI *pNtGdiSelectBitmap)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectBrush)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectFont)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectPen)( HDC hdc, HGDIOBJ handle );

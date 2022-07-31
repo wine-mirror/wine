@@ -24,12 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiCreateCompatibleBitmap( hdc, width, height );
-}
-
 HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
 {
     if (!unix_funcs) return 0;
@@ -301,12 +295,6 @@ BOOL WINAPI NtGdiRestoreDC( HDC hdc, INT level )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiRestoreDC( hdc, level );
-}
-
-HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiSelectBitmap( hdc, handle );
 }
 
 HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
