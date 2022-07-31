@@ -417,13 +417,13 @@
 @ stub NtGdiEnumObjects
 @ stdcall -syscall NtGdiEqualRgn(long long)
 @ stub NtGdiEudcLoadUnloadLink
-@ stdcall NtGdiExcludeClipRect(long long long long long)
+@ stdcall -syscall NtGdiExcludeClipRect(long long long long long)
 @ stdcall -syscall NtGdiExtCreatePen(long long long long long long long ptr long long long)
 @ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
 @ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
 @ stdcall -syscall NtGdiExtFloodFill(long long long long long)
 @ stdcall -syscall NtGdiExtGetObjectW(long long ptr)
-@ stdcall NtGdiExtSelectClipRgn(long long long)
+@ stdcall -syscall NtGdiExtSelectClipRgn(long long long)
 @ stdcall -syscall NtGdiExtTextOutW(long long long long ptr ptr long ptr long)
 @ stub NtGdiFONTOBJ_cGetAllGlyphHandles
 @ stub NtGdiFONTOBJ_cGetGlyphs
@@ -442,12 +442,12 @@
 @ stdcall -syscall NtGdiFrameRgn(long long long long long)
 @ stub NtGdiFullscreenControl
 @ stdcall NtGdiGetAndSetDCDword(long long long ptr)
-@ stdcall NtGdiGetAppClipBox(long ptr)
+@ stdcall -syscall NtGdiGetAppClipBox(long ptr)
 @ stub NtGdiGetAppliedDeviceGammaRamp
 @ stdcall -syscall NtGdiGetBitmapBits(long long ptr)
 @ stdcall -syscall NtGdiGetBitmapDimension(long ptr)
 @ stub NtGdiGetBitmapDpiScaleValue
-@ stdcall NtGdiGetBoundsRect(long ptr long)
+@ stdcall -syscall NtGdiGetBoundsRect(long ptr long)
 @ stub NtGdiGetCOPPCompatibleOPMInformation
 @ stub NtGdiGetCertificate
 @ stub NtGdiGetCertificateByHandle
@@ -504,7 +504,7 @@
 @ stdcall -syscall NtGdiGetPixel(long long long)
 @ stub NtGdiGetProcessSessionFonts
 @ stub NtGdiGetPublicFontTableChangeCookie
-@ stdcall NtGdiGetRandomRgn(long long long)
+@ stdcall -syscall NtGdiGetRandomRgn(long long long)
 @ stdcall NtGdiGetRasterizerCaps(ptr long)
 @ stdcall -syscall NtGdiGetRealizationInfo(long ptr)
 @ stdcall -syscall NtGdiGetRegionData(long long ptr)
@@ -533,7 +533,7 @@
 @ stub NtGdiIcmBrushInfo
 @ stub NtGdiInit
 @ stdcall -syscall NtGdiInitSpool()
-@ stdcall NtGdiIntersectClipRect(long long long long long)
+@ stdcall -syscall NtGdiIntersectClipRect(long long long long long)
 @ stdcall -syscall NtGdiInvertRgn(long long)
 @ stdcall -syscall NtGdiLineTo(long long long)
 @ stub NtGdiMakeFontDir
@@ -545,7 +545,7 @@
 @ stdcall -syscall NtGdiModifyWorldTransform(long ptr long)
 @ stub NtGdiMonoBitmap
 @ stdcall -syscall NtGdiMoveTo(long long long ptr)
-@ stdcall NtGdiOffsetClipRgn(long long long)
+@ stdcall -syscall NtGdiOffsetClipRgn(long long long)
 @ stdcall -syscall NtGdiOffsetRgn(long long long)
 @ stdcall -syscall NtGdiOpenDCW(ptr ptr ptr long long ptr ptr ptr)
 @ stub NtGdiPATHOBJ_bEnum
@@ -561,11 +561,11 @@
 @ stdcall -syscall NtGdiPolyPolyDraw(long ptr ptr long long)
 @ stub NtGdiPolyTextOutW
 @ stdcall -syscall NtGdiPtInRegion(long long long)
-@ stdcall NtGdiPtVisible(long long long)
+@ stdcall -syscall NtGdiPtVisible(long long long)
 @ stub NtGdiQueryFontAssocInfo
 @ stub NtGdiQueryFonts
 @ stdcall -syscall NtGdiRectInRegion(long ptr)
-@ stdcall NtGdiRectVisible(long ptr)
+@ stdcall -syscall NtGdiRectVisible(long ptr)
 @ stdcall -syscall NtGdiRectangle(long long long long long)
 @ stdcall -syscall NtGdiRemoveFontMemResourceEx(long)
 @ stdcall -syscall NtGdiRemoveFontResourceW(wstr long long long long ptr)
@@ -592,7 +592,7 @@
 @ stub NtGdiSetBitmapAttributes
 @ stdcall -syscall NtGdiSetBitmapBits(long long ptr)
 @ stdcall -syscall NtGdiSetBitmapDimension(long long long ptr)
-@ stdcall NtGdiSetBoundsRect(long ptr long)
+@ stdcall -syscall NtGdiSetBoundsRect(long ptr long)
 @ stub NtGdiSetBrushAttributes
 @ stdcall -syscall NtGdiSetBrushOrg(long long long ptr)
 @ stdcall -syscall NtGdiSetColorAdjustment(long ptr)

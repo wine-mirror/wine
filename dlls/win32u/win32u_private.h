@@ -37,24 +37,14 @@ struct unix_funcs
     /* win32u functions */
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
-    INT      (WINAPI *pNtGdiExcludeClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     INT      (WINAPI *pNtGdiExtEscape)( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
                                         const char *input, INT output_size, char *output );
-    INT      (WINAPI *pNtGdiExtSelectClipRgn)( HDC hdc, HRGN region, INT mode );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
-    INT      (WINAPI *pNtGdiGetAppClipBox)( HDC hdc, RECT *rect );
-    UINT     (WINAPI *pNtGdiGetBoundsRect)( HDC hdc, RECT *rect, UINT flags );
     INT      (WINAPI *pNtGdiGetDeviceCaps)( HDC hdc, INT cap );
     BOOL     (WINAPI *pNtGdiGetDeviceGammaRamp)( HDC hdc, void *ptr );
     COLORREF (WINAPI *pNtGdiGetNearestColor)( HDC hdc, COLORREF color );
-    INT      (WINAPI *pNtGdiGetRandomRgn)( HDC hdc, HRGN region, INT code );
     BOOL     (WINAPI *pNtGdiGetRasterizerCaps)( RASTERIZER_STATUS *status, UINT size );
-    INT      (WINAPI *pNtGdiIntersectClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
-    INT      (WINAPI *pNtGdiOffsetClipRgn)( HDC hdc, INT x, INT y );
-    BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );
-    BOOL     (WINAPI *pNtGdiRectVisible)( HDC hdc, const RECT *rect );
     BOOL     (WINAPI *pNtGdiResizePalette)( HPALETTE palette, UINT count );
-    UINT     (WINAPI *pNtGdiSetBoundsRect)( HDC hdc, const RECT *rect, UINT flags );
     BOOL     (WINAPI *pNtGdiSetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );

@@ -75,10 +75,12 @@
     SYSCALL_ENTRY( NtGdiEndPath ) \
     SYSCALL_ENTRY( NtGdiEnumFonts ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
+    SYSCALL_ENTRY( NtGdiExcludeClipRect ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiExtFloodFill ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
+    SYSCALL_ENTRY( NtGdiExtSelectClipRgn ) \
     SYSCALL_ENTRY( NtGdiExtTextOutW ) \
     SYSCALL_ENTRY( NtGdiFillPath ) \
     SYSCALL_ENTRY( NtGdiFillRgn ) \
@@ -86,8 +88,10 @@
     SYSCALL_ENTRY( NtGdiFlush ) \
     SYSCALL_ENTRY( NtGdiFontIsLinked ) \
     SYSCALL_ENTRY( NtGdiFrameRgn ) \
+    SYSCALL_ENTRY( NtGdiGetAppClipBox ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiGetBoundsRect ) \
     SYSCALL_ENTRY( NtGdiGetCharABCWidthsW ) \
     SYSCALL_ENTRY( NtGdiGetCharWidthInfo ) \
     SYSCALL_ENTRY( NtGdiGetCharWidthW ) \
@@ -107,6 +111,7 @@
     SYSCALL_ENTRY( NtGdiGetOutlineTextMetricsInternalW ) \
     SYSCALL_ENTRY( NtGdiGetPath ) \
     SYSCALL_ENTRY( NtGdiGetPixel ) \
+    SYSCALL_ENTRY( NtGdiGetRandomRgn ) \
     SYSCALL_ENTRY( NtGdiGetRealizationInfo ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
@@ -120,11 +125,13 @@
     SYSCALL_ENTRY( NtGdiGradientFill ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiInitSpool ) \
+    SYSCALL_ENTRY( NtGdiIntersectClipRect ) \
     SYSCALL_ENTRY( NtGdiInvertRgn ) \
     SYSCALL_ENTRY( NtGdiLineTo ) \
     SYSCALL_ENTRY( NtGdiMaskBlt ) \
     SYSCALL_ENTRY( NtGdiModifyWorldTransform ) \
     SYSCALL_ENTRY( NtGdiMoveTo ) \
+    SYSCALL_ENTRY( NtGdiOffsetClipRgn ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiOpenDCW ) \
     SYSCALL_ENTRY( NtGdiPatBlt ) \
@@ -133,7 +140,9 @@
     SYSCALL_ENTRY( NtGdiPolyDraw ) \
     SYSCALL_ENTRY( NtGdiPolyPolyDraw ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
+    SYSCALL_ENTRY( NtGdiPtVisible ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \
+    SYSCALL_ENTRY( NtGdiRectVisible ) \
     SYSCALL_ENTRY( NtGdiRectangle ) \
     SYSCALL_ENTRY( NtGdiRemoveFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
@@ -150,6 +159,7 @@
     SYSCALL_ENTRY( NtGdiSelectPen ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiSetBoundsRect ) \
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
     SYSCALL_ENTRY( NtGdiSetColorAdjustment ) \
     SYSCALL_ENTRY( NtGdiSetDIBitsToDeviceInternal ) \

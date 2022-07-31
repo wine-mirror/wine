@@ -37,12 +37,6 @@ BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
     return unix_funcs->pNtUserEndPaint( hwnd, ps );
 }
 
-INT WINAPI NtGdiExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
-{
-    if (!unix_funcs) return ERROR;
-    return unix_funcs->pNtGdiExcludeClipRect( hdc, left, top, right, bottom );
-}
-
 INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
                            const char *input, INT output_size, char *output )
 {
@@ -51,28 +45,10 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, IN
                                         output_size, output );
 }
 
-INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode )
-{
-    if (!unix_funcs) return ERROR;
-    return unix_funcs->pNtGdiExtSelectClipRgn( hdc, region, mode );
-}
-
 BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *result )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiGetAndSetDCDword( hdc, method, value, result );
-}
-
-INT WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect )
-{
-    if (!unix_funcs) return ERROR;
-    return unix_funcs->pNtGdiGetAppClipBox( hdc, rect );
-}
-
-UINT WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetBoundsRect( hdc, rect, flags );
 }
 
 INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
@@ -93,52 +69,16 @@ COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color )
     return unix_funcs->pNtGdiGetNearestColor( hdc, color );
 }
 
-INT WINAPI NtGdiGetRandomRgn( HDC hdc, HRGN region, INT code )
-{
-    if (!unix_funcs) return -1;
-    return unix_funcs->pNtGdiGetRandomRgn( hdc, region, code );
-}
-
 BOOL WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiGetRasterizerCaps( status, size );
 }
 
-INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
-{
-    if (!unix_funcs) return ERROR;
-    return unix_funcs->pNtGdiIntersectClipRect( hdc, left, top, right, bottom );
-}
-
-INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
-{
-    if (!unix_funcs) return ERROR;
-    return unix_funcs->pNtGdiOffsetClipRgn( hdc, x, y );
-}
-
-BOOL WINAPI NtGdiPtVisible( HDC hdc, INT x, INT y )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiPtVisible( hdc, x, y );
-}
-
-BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiRectVisible( hdc, rect );
-}
-
 BOOL WINAPI NtGdiResizePalette( HPALETTE palette, UINT count )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiResizePalette( palette, count );
-}
-
-UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiSetBoundsRect( hdc, rect, flags );
 }
 
 BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
