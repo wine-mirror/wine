@@ -130,9 +130,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiModifyWorldTransform)( HDC hdc, const XFORM *xform, DWORD mode );
     BOOL     (WINAPI *pNtGdiMoveTo)( HDC hdc, INT x, INT y, POINT *pt );
     INT      (WINAPI *pNtGdiOffsetClipRgn)( HDC hdc, INT x, INT y );
-    HDC      (WINAPI *pNtGdiOpenDCW)( UNICODE_STRING *device, const DEVMODEW *devmode,
-                                      UNICODE_STRING *output, ULONG type, BOOL is_display,
-                                      HANDLE hspool, DRIVER_INFO_2W *driver_info, void *pdev );
     BOOL     (WINAPI *pNtGdiPatBlt)( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop );
     BOOL     (WINAPI *pNtGdiPlgBlt)( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
                                      INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask,

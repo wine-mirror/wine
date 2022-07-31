@@ -623,6 +623,24 @@ NTSTATUS WINAPI wow64_NtGdiOffsetRgn( UINT *args )
     return NtGdiOffsetRgn( hrgn, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtGdiOpenDCW( UINT *args )
+{
+    UNICODE_STRING32 *device32 = get_ptr( &args );
+    const DEVMODEW *devmode = get_ptr( &args );
+    UNICODE_STRING32 *output32 = get_ptr( &args );
+    ULONG type = get_ulong( &args );
+    BOOL is_display = get_ulong( &args );
+    HANDLE hspool = get_handle( &args );
+    DRIVER_INFO_2W *driver_info = get_ptr( &args );
+    void *pdev = get_ptr( &args );
+
+    UNICODE_STRING device, output;
+    HDC ret = NtGdiOpenDCW( unicode_str_32to64( &device, device32 ), devmode,
+                            unicode_str_32to64( &output, output32 ), type,
+                            is_display, hspool, driver_info, pdev );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtGdiPathToRegion( UINT *args )
 {
     HDC hdc = get_handle( &args );

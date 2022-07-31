@@ -426,15 +426,6 @@ INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
     return unix_funcs->pNtGdiOffsetClipRgn( hdc, x, y );
 }
 
-HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode,
-                         UNICODE_STRING *output, ULONG type, BOOL is_display,
-                         HANDLE hspool, DRIVER_INFO_2W *driver_info, void *pdev )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiOpenDCW( device, devmode, output, type, is_display,
-                                      hspool, driver_info, pdev );
-}
-
 BOOL WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )
 {
     if (!unix_funcs) return FALSE;

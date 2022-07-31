@@ -1101,7 +1101,6 @@ static struct unix_funcs unix_funcs =
     NtGdiModifyWorldTransform,
     NtGdiMoveTo,
     NtGdiOffsetClipRgn,
-    NtGdiOpenDCW,
     NtGdiPatBlt,
     NtGdiPlgBlt,
     NtGdiPolyDraw,

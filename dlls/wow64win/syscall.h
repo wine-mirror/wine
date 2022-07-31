@@ -69,6 +69,7 @@
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiInitSpool ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
+    SYSCALL_ENTRY( NtGdiOpenDCW ) \
     SYSCALL_ENTRY( NtGdiPathToRegion ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \

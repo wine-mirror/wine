@@ -83,6 +83,7 @@ static void * const syscalls[] =
     NtGdiHfontCreate,
     NtGdiInitSpool,
     NtGdiOffsetRgn,
+    NtGdiOpenDCW,
     NtGdiPathToRegion,
     NtGdiPtInRegion,
     NtGdiRectInRegion,

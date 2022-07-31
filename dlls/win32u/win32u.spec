@@ -547,7 +547,7 @@
 @ stdcall NtGdiMoveTo(long long long ptr)
 @ stdcall NtGdiOffsetClipRgn(long long long)
 @ stdcall -syscall NtGdiOffsetRgn(long long long)
-@ stdcall NtGdiOpenDCW(ptr ptr ptr long long ptr ptr ptr)
+@ stdcall -syscall NtGdiOpenDCW(ptr ptr ptr long long ptr ptr ptr)
 @ stub NtGdiPATHOBJ_bEnum
 @ stub NtGdiPATHOBJ_bEnumClipLines
 @ stub NtGdiPATHOBJ_vEnumStart
