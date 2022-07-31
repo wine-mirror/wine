@@ -437,7 +437,7 @@
 @ stdcall -syscall NtGdiFillRgn(long long long)
 @ stdcall -syscall NtGdiFlattenPath(long)
 @ stdcall -syscall NtGdiFlush()
-@ stdcall NtGdiFontIsLinked(long)
+@ stdcall -syscall NtGdiFontIsLinked(long)
 @ stub NtGdiForceUFIMapping
 @ stdcall -syscall NtGdiFrameRgn(long long long long long)
 @ stub NtGdiFullscreenControl
@@ -477,16 +477,16 @@
 @ stub NtGdiGetEmbedFonts
 @ stub NtGdiGetEntry
 @ stub NtGdiGetEudcTimeStampEx
-@ stdcall NtGdiGetFontData(long long long ptr long)
+@ stdcall -syscall NtGdiGetFontData(long long long ptr long)
 @ stdcall -syscall NtGdiGetFontFileData(long long ptr ptr long)
 @ stdcall -syscall NtGdiGetFontFileInfo(long long ptr long ptr)
 @ stub NtGdiGetFontResourceInfoInternalW
-@ stdcall NtGdiGetFontUnicodeRanges(long ptr)
+@ stdcall -syscall NtGdiGetFontUnicodeRanges(long ptr)
 @ stub NtGdiGetGammaRampCapability
-@ stdcall NtGdiGetGlyphIndicesW(long wstr long ptr long)
+@ stdcall -syscall NtGdiGetGlyphIndicesW(long wstr long ptr long)
 @ stub NtGdiGetGlyphIndicesWInternal
-@ stdcall NtGdiGetGlyphOutline(long long long ptr long ptr ptr long)
-@ stdcall NtGdiGetKerningPairs(long long ptr)
+@ stdcall -syscall NtGdiGetGlyphOutline(long long long ptr long ptr ptr long)
+@ stdcall -syscall NtGdiGetKerningPairs(long long ptr)
 @ stub NtGdiGetLinkedUFIs
 @ stub NtGdiGetMiterLimit
 @ stub NtGdiGetMonitorID
@@ -506,7 +506,7 @@
 @ stub NtGdiGetPublicFontTableChangeCookie
 @ stdcall NtGdiGetRandomRgn(long long long)
 @ stdcall NtGdiGetRasterizerCaps(ptr long)
-@ stdcall NtGdiGetRealizationInfo(long ptr)
+@ stdcall -syscall NtGdiGetRealizationInfo(long ptr)
 @ stdcall -syscall NtGdiGetRegionData(long long ptr)
 @ stdcall -syscall NtGdiGetRgnBox(long ptr)
 @ stub NtGdiGetServerMetaFileBits

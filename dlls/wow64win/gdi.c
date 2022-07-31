@@ -913,6 +913,13 @@ NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
     return NtGdiFlush();
 }
 
+NTSTATUS WINAPI wow64_NtGdiFontIsLinked( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiFontIsLinked( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFrameRgn( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1023,6 +1030,17 @@ NTSTATUS WINAPI wow64_NtGdiGetDIBitsInternal( UINT *args )
                                    max_bits, max_info );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetFontData( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    DWORD table = get_ulong( &args );
+    DWORD offset = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+    DWORD length = get_ulong( &args );
+
+    return NtGdiGetFontData( hdc, table, offset, buffer, length );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetFontFileData( UINT *args )
 {
     DWORD instance_id = get_ulong( &args );
@@ -1048,6 +1066,48 @@ NTSTATUS WINAPI wow64_NtGdiGetFontFileInfo( UINT *args )
     ret = NtGdiGetFontFileInfo( instance_id, file_index, info, size, size_32to64( &needed, needed32 ));
     put_size( needed32, needed );
     return ret;
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetFontUnicodeRanges( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    GLYPHSET *lpgs = get_ptr( &args );
+
+    return NtGdiGetFontUnicodeRanges( hdc, lpgs );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetGlyphIndicesW( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const WCHAR *str = get_ptr( &args );
+    INT count = get_ulong( &args );
+    WORD *indices = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+
+    return NtGdiGetGlyphIndicesW( hdc, str, count, indices, flags );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetGlyphOutline( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT ch = get_ulong( &args );
+    UINT format = get_ulong( &args );
+    GLYPHMETRICS *metrics = get_ptr( &args );
+    DWORD size = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+    const MAT2 *mat2 = get_ptr( &args );
+    BOOL ignore_rotation = get_ulong( &args );
+
+    return NtGdiGetGlyphOutline( hdc, ch, format, metrics, size, buffer, mat2, ignore_rotation );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetKerningPairs( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    DWORD count = get_ulong( &args );
+    KERNINGPAIR *kern_pair = get_ptr( &args );
+
+    return NtGdiGetKerningPairs( hdc, count, kern_pair );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetNearestPaletteIndex( UINT *args )
@@ -1130,6 +1190,14 @@ NTSTATUS WINAPI wow64_NtGdiGetPixel( UINT *args )
     INT y = get_ulong( &args );
 
     return NtGdiGetPixel( hdc, x, y );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetRealizationInfo( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    struct font_realization_info *info = get_ptr( &args );
+
+    return NtGdiGetRealizationInfo( hdc, info );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetTextCharsetInfo( UINT *args )

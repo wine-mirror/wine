@@ -57,12 +57,6 @@ INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode )
     return unix_funcs->pNtGdiExtSelectClipRgn( hdc, region, mode );
 }
 
-BOOL WINAPI NtGdiFontIsLinked( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiFontIsLinked( hdc );
-}
-
 BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *result )
 {
     if (!unix_funcs) return FALSE;
@@ -93,39 +87,6 @@ BOOL WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr )
     return unix_funcs->pNtGdiGetDeviceGammaRamp( hdc, ptr );
 }
 
-DWORD WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length )
-{
-    if (!unix_funcs) return GDI_ERROR;
-    return unix_funcs->pNtGdiGetFontData( hdc, table, offset, buffer, length );
-}
-
-DWORD WINAPI NtGdiGetFontUnicodeRanges( HDC hdc, GLYPHSET *lpgs )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetFontUnicodeRanges( hdc, lpgs );
-}
-
-DWORD WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
-                                    WORD *indices, DWORD flags )
-{
-    if (!unix_funcs) return GDI_ERROR;
-    return unix_funcs->pNtGdiGetGlyphIndicesW( hdc, str, count, indices, flags );
-}
-
-DWORD WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
-                                   DWORD size, void *buffer, const MAT2 *mat2,
-                                   BOOL ignore_rotation )
-{
-    if (!unix_funcs) return GDI_ERROR;
-    return unix_funcs->pNtGdiGetGlyphOutline( hdc, ch, format, metrics, size, buffer, mat2, ignore_rotation );
-}
-
-DWORD WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetKerningPairs( hdc, count, kern_pair );
-}
-
 COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color )
 {
     if (!unix_funcs) return CLR_INVALID;
@@ -142,12 +103,6 @@ BOOL WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiGetRasterizerCaps( status, size );
-}
-
-BOOL WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetRealizationInfo( hdc, info );
 }
 
 INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )

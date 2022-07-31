@@ -84,6 +84,7 @@
     SYSCALL_ENTRY( NtGdiFillRgn ) \
     SYSCALL_ENTRY( NtGdiFlattenPath ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
+    SYSCALL_ENTRY( NtGdiFontIsLinked ) \
     SYSCALL_ENTRY( NtGdiFrameRgn ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
@@ -95,12 +96,18 @@
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
     SYSCALL_ENTRY( NtGdiGetDCPoint ) \
     SYSCALL_ENTRY( NtGdiGetDIBitsInternal ) \
+    SYSCALL_ENTRY( NtGdiGetFontData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
+    SYSCALL_ENTRY( NtGdiGetFontUnicodeRanges ) \
+    SYSCALL_ENTRY( NtGdiGetGlyphIndicesW ) \
+    SYSCALL_ENTRY( NtGdiGetGlyphOutline ) \
+    SYSCALL_ENTRY( NtGdiGetKerningPairs ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
     SYSCALL_ENTRY( NtGdiGetOutlineTextMetricsInternalW ) \
     SYSCALL_ENTRY( NtGdiGetPath ) \
     SYSCALL_ENTRY( NtGdiGetPixel ) \
+    SYSCALL_ENTRY( NtGdiGetRealizationInfo ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
     SYSCALL_ENTRY( NtGdiGetSpoolMessage ) \
