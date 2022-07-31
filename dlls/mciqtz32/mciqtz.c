@@ -1008,6 +1008,9 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
             IBasicVideo_GetVideoSize(wma->vidbasic, &width, &height);
             IVideoWindow_SetWindowPosition(wma->vidwin, 0, 0, width, height);
 
+            if (wma->parent == wma->window)
+                ShowWindow(wma->window, SW_HIDE);
+
             wma->parent = hwnd;
         }
     }

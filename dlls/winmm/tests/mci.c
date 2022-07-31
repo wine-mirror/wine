@@ -1658,7 +1658,7 @@ static void test_video_window(void)
 
         style = GetWindowLongW(video_window, GWL_STYLE);
         expected = testcase[i].expected_style;
-        todo_wine ok(style == expected, "Video window %p: got style %#lx, expected %#lx.\n",
+        ok(style == expected, "Video window %p: got style %#lx, expected %#lx.\n",
                 video_window, style, expected);
 
         /* destination size is reset to the source video size */
@@ -1688,14 +1688,14 @@ static void test_video_window(void)
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         ok(IsWindowVisible(main_window), "Main window should be shown.\n");
         ok(IsWindow(video_window), "Video window should exist.\n");
-        todo_wine ok(!IsWindowVisible(video_window), "Video window should be hidden.\n");
+        ok(!IsWindowVisible(video_window), "Video window should be hidden.\n");
 
         /* video window is reset to the default window, which is visible again */
         parm.win.hWnd = NULL;
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         ok(IsWindowVisible(main_window), "Main window should be shown.\n");
-        ok(IsWindowVisible(video_window), "Video window should be shown.\n");
+        todo_wine ok(IsWindowVisible(video_window), "Video window should be shown.\n");
 
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
