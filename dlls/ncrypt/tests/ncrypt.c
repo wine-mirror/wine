@@ -550,7 +550,6 @@ static void test_NCryptEncrypt(void)
     BYTE *output_b;
     DWORD output_size;
 
-    todo_wine {
     NCryptOpenStorageProvider(&prov, NULL, 0);
     NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
 
@@ -562,6 +561,7 @@ static void test_NCryptEncrypt(void)
     /* Test encrypt with a non finalized key */
     ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0,
                         &output_size, NCRYPT_PAD_PKCS1_FLAG);
+    todo_wine
     ok(ret == NTE_BAD_KEY_STATE, "got %lx\n", ret);
 
     NCryptFinalizeKey(key, 0);
@@ -572,6 +572,8 @@ static void test_NCryptEncrypt(void)
     ok(ret == NTE_BAD_FLAGS, "got %lx\n", ret);
 
     /* Test no padding with RSA */
+    todo_wine
+    {
     ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0, &output_size,
                         NCRYPT_NO_PADDING_FLAG);
     ok(ret == ERROR_SUCCESS, "got %lx\n", ret);
@@ -582,6 +584,7 @@ static void test_NCryptEncrypt(void)
                         &output_size, NCRYPT_NO_PADDING_FLAG);
     ok(ret == NTE_INVALID_PARAMETER, "got %lx\n", ret);
     free(output_a);
+    }
 
     /* Test output RSA with PKCS1. PKCS1 should append a random padding to the data, so the output should be different
      * with each call. */
@@ -611,7 +614,6 @@ static void test_NCryptEncrypt(void)
     free(output_b);
 
     NCryptFreeObject(prov);
-    }
 }
 
 START_TEST(ncrypt)
