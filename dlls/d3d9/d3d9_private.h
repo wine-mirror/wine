@@ -125,6 +125,7 @@ struct d3d9_device
 HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,
         UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
+void d3d9_device_upload_managed_textures(struct d3d9_device *device);
 
 struct d3d9_resource
 {
@@ -219,7 +220,7 @@ struct d3d9_texture
 {
     IDirect3DBaseTexture9 IDirect3DBaseTexture9_iface;
     struct d3d9_resource resource;
-    struct wined3d_texture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture, *draw_texture;
     struct d3d9_device *parent_device;
     struct list rtv_list;
     DWORD usage;
@@ -234,6 +235,11 @@ HRESULT d3d9_texture_3d_init(struct d3d9_texture *texture, struct d3d9_device *d
         unsigned int height, unsigned int depth, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
 HRESULT d3d9_texture_cube_init(struct d3d9_texture *texture, struct d3d9_device *device,
         unsigned int edge_length, unsigned int level_count, DWORD usage, D3DFORMAT format, D3DPOOL pool);
+
+static inline struct wined3d_texture *d3d9_texture_get_draw_texture(struct d3d9_texture *texture)
+{
+    return texture->draw_texture ? texture->draw_texture : texture->wined3d_texture;
+}
 
 struct d3d9_texture *unsafe_impl_from_IDirect3DBaseTexture9(IDirect3DBaseTexture9 *iface) DECLSPEC_HIDDEN;
 void d3d9_texture_flag_auto_gen_mipmap(struct d3d9_texture *texture) DECLSPEC_HIDDEN;
