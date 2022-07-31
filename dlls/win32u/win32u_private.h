@@ -35,19 +35,6 @@
 struct unix_funcs
 {
     /* win32u functions */
-    LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
-                                        DWORD func, BOOL inbound );
-    INT      (WINAPI *pNtGdiExtEscape)( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
-                                        const char *input, INT output_size, char *output );
-    BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
-    INT      (WINAPI *pNtGdiGetDeviceCaps)( HDC hdc, INT cap );
-    BOOL     (WINAPI *pNtGdiGetDeviceGammaRamp)( HDC hdc, void *ptr );
-    COLORREF (WINAPI *pNtGdiGetNearestColor)( HDC hdc, COLORREF color );
-    BOOL     (WINAPI *pNtGdiGetRasterizerCaps)( RASTERIZER_STATUS *status, UINT size );
-    BOOL     (WINAPI *pNtGdiResizePalette)( HPALETTE palette, UINT count );
-    BOOL     (WINAPI *pNtGdiSetDeviceGammaRamp)( HDC hdc, void *ptr );
-    DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
-    UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
     BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                                HICON icon, const WCHAR *str, UINT flags );
     DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );

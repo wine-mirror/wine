@@ -24,79 +24,10 @@
 
 static const struct unix_funcs *unix_funcs;
 
-LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entries,
-                            DWORD func, BOOL inbound )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiDoPalette( handle, start, count, entries, func, inbound );
-}
-
 BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserEndPaint( hwnd, ps );
-}
-
-INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
-                           const char *input, INT output_size, char *output )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiExtEscape( hdc, driver, driver_id, escape, input_size, input,
-                                        output_size, output );
-}
-
-BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *result )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetAndSetDCDword( hdc, method, value, result );
-}
-
-INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiGetDeviceCaps( hdc, cap );
-}
-
-BOOL WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetDeviceGammaRamp( hdc, ptr );
-}
-
-COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color )
-{
-    if (!unix_funcs) return CLR_INVALID;
-    return unix_funcs->pNtGdiGetNearestColor( hdc, color );
-}
-
-BOOL WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiGetRasterizerCaps( status, size );
-}
-
-BOOL WINAPI NtGdiResizePalette( HPALETTE palette, UINT count )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiResizePalette( palette, count );
-}
-
-BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiSetDeviceGammaRamp( hdc, ptr );
-}
-
-DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
-{
-    if (!unix_funcs) return GDI_ERROR;
-    return unix_funcs->pNtGdiSetLayout( hdc, wox, layout );
-}
-
-UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
-{
-    if (!unix_funcs) return SYSPAL_ERROR;
-    return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
 }
 
 BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,

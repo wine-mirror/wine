@@ -1030,17 +1030,6 @@ BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
 
 static struct unix_funcs unix_funcs =
 {
-    NtGdiDoPalette,
-    NtGdiExtEscape,
-    NtGdiGetAndSetDCDword,
-    NtGdiGetDeviceCaps,
-    NtGdiGetDeviceGammaRamp,
-    NtGdiGetNearestColor,
-    NtGdiGetRasterizerCaps,
-    NtGdiResizePalette,
-    NtGdiSetDeviceGammaRamp,
-    NtGdiSetLayout,
-    NtGdiSetSystemPaletteUse,
     NtUserDrawCaptionTemp,
     NtUserDrawMenuBarTemp,
     NtUserEndPaint,

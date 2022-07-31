@@ -675,6 +675,18 @@ NTSTATUS WINAPI wow64_NtGdiDescribePixelFormat( UINT *args )
     return NtGdiDescribePixelFormat( hdc, format, size, descr );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDoPalette( UINT *args )
+{
+    HGDIOBJ handle = get_handle( &args );
+    WORD start = get_ulong( &args );
+    WORD count = get_ulong( &args );
+    void *entries = get_ptr( &args );
+    DWORD func = get_ulong( &args );
+    BOOL inbound = get_ulong( &args );
+
+    return NtGdiDoPalette( handle, start, count, entries, func, inbound );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDrawStream( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -775,6 +787,20 @@ NTSTATUS WINAPI wow64_NtGdiExtCreateRegion( UINT *args )
     const RGNDATA *data = get_ptr( &args );
 
     return HandleToUlong( NtGdiExtCreateRegion( xform, count, data ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiExtEscape( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    WCHAR *driver = get_ptr( &args );
+    INT driver_id = get_ulong( &args );
+    INT escape = get_ulong( &args );
+    INT input_size = get_ulong( &args );
+    const char *input = get_ptr( &args );
+    INT output_size = get_ulong( &args );
+    char *output = get_ptr( &args );
+
+    return NtGdiExtEscape( hdc, driver, driver_id, escape, input_size, input, output_size, output );
 }
 
 NTSTATUS WINAPI wow64_NtGdiExtFloodFill( UINT *args )
@@ -951,6 +977,16 @@ NTSTATUS WINAPI wow64_NtGdiFrameRgn( UINT *args )
     return NtGdiFrameRgn( hdc, hrgn, brush, width, height );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetAndSetDCDword( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT method = get_ulong( &args );
+    DWORD value = get_ulong( &args );
+    DWORD *result = get_ptr( &args );
+
+    return NtGdiGetAndSetDCDword( hdc, method, value, result );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetAppClipBox( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1067,6 +1103,22 @@ NTSTATUS WINAPI wow64_NtGdiGetDIBitsInternal( UINT *args )
                                    max_bits, max_info );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetDeviceCaps( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT cap = get_ulong( &args );
+
+    return NtGdiGetDeviceCaps( hdc, cap );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetDeviceGammaRamp( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    void *ptr = get_ptr( &args );
+
+    return NtGdiGetDeviceGammaRamp( hdc, ptr );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetFontData( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1145,6 +1197,14 @@ NTSTATUS WINAPI wow64_NtGdiGetKerningPairs( UINT *args )
     KERNINGPAIR *kern_pair = get_ptr( &args );
 
     return NtGdiGetKerningPairs( hdc, count, kern_pair );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetNearestColor( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    COLORREF color = get_ulong( &args );
+
+    return NtGdiGetNearestColor( hdc, color );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetNearestPaletteIndex( UINT *args )
@@ -1238,12 +1298,29 @@ NTSTATUS WINAPI wow64_NtGdiGetRandomRgn( UINT *args )
     return NtGdiGetRandomRgn( hdc, region, code );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetRasterizerCaps( UINT *args )
+{
+    RASTERIZER_STATUS *status = get_ptr( &args );
+    UINT size = get_ulong( &args );
+
+    return NtGdiGetRasterizerCaps( status, size );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetRealizationInfo( UINT *args )
 {
     HDC hdc = get_handle( &args );
     struct font_realization_info *info = get_ptr( &args );
 
     return NtGdiGetRealizationInfo( hdc, info );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetRegionData( UINT *args )
+{
+    HRGN hrgn = get_ptr( &args );
+    DWORD count = get_ulong( &args );
+    RGNDATA *data = get_ptr( &args );
+
+    return NtGdiGetRegionData( hrgn, count, data );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetTextCharsetInfo( UINT *args )
@@ -1388,15 +1465,6 @@ NTSTATUS WINAPI wow64_NtGdiRectangle( UINT *args )
     return NtGdiRectangle( hdc, left, top, right, bottom );
 }
 
-NTSTATUS WINAPI wow64_NtGdiGetRegionData( UINT *args )
-{
-    HRGN hrgn = get_ptr( &args );
-    DWORD count = get_ulong( &args );
-    RGNDATA *data = get_ptr( &args );
-
-    return NtGdiGetRegionData( hrgn, count, data );
-}
-
 NTSTATUS WINAPI wow64_NtGdiResetDC( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1406,6 +1474,14 @@ NTSTATUS WINAPI wow64_NtGdiResetDC( UINT *args )
     void *dev = get_ptr( &args );
 
     return NtGdiResetDC( hdc, devmode, banding, driver_info, dev );
+}
+
+NTSTATUS WINAPI wow64_NtGdiResizePalette( UINT *args )
+{
+    HPALETTE palette = get_handle( &args );
+    UINT count = get_ulong( &args );
+
+    return NtGdiResizePalette( palette, count );
 }
 
 NTSTATUS WINAPI wow64_NtGdiRestoreDC( UINT *args )
@@ -1757,6 +1833,23 @@ NTSTATUS WINAPI wow64_NtGdiSetDIBitsToDeviceInternal( UINT *args )
                                            max_bits, max_info, xform_coords, xform );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSetDeviceGammaRamp( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    void *ptr = get_ptr( &args );
+
+    return NtGdiSetDeviceGammaRamp( hdc, ptr );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetLayout( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    LONG wox = get_ulong( &args );
+    DWORD layout = get_ulong( &args );
+
+    return NtGdiSetLayout( hdc, wox, layout );
+}
+
 NTSTATUS WINAPI wow64_NtGdiSetMagicColors( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1800,6 +1893,14 @@ NTSTATUS WINAPI wow64_NtGdiSetRectRgn( UINT *args )
     INT bottom = get_ulong( &args );
 
     return NtGdiSetRectRgn( hrgn, left, top, right, bottom );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetSystemPaletteUse( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT use = get_ulong( &args );
+
+    return NtGdiSetSystemPaletteUse( hdc, use );
 }
 
 NTSTATUS WINAPI wow64_NtGdiSetTextJustification( UINT *args )

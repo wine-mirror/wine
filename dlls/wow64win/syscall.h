@@ -68,6 +68,7 @@
     SYSCALL_ENTRY( NtGdiDeleteClientObj ) \
     SYSCALL_ENTRY( NtGdiDeleteObjectApp ) \
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
+    SYSCALL_ENTRY( NtGdiDoPalette ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \
     SYSCALL_ENTRY( NtGdiEllipse ) \
     SYSCALL_ENTRY( NtGdiEndDoc ) \
@@ -78,6 +79,7 @@
     SYSCALL_ENTRY( NtGdiExcludeClipRect ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
+    SYSCALL_ENTRY( NtGdiExtEscape ) \
     SYSCALL_ENTRY( NtGdiExtFloodFill ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
     SYSCALL_ENTRY( NtGdiExtSelectClipRgn ) \
@@ -88,6 +90,7 @@
     SYSCALL_ENTRY( NtGdiFlush ) \
     SYSCALL_ENTRY( NtGdiFontIsLinked ) \
     SYSCALL_ENTRY( NtGdiFrameRgn ) \
+    SYSCALL_ENTRY( NtGdiGetAndSetDCDword ) \
     SYSCALL_ENTRY( NtGdiGetAppClipBox ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
@@ -100,6 +103,8 @@
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
     SYSCALL_ENTRY( NtGdiGetDCPoint ) \
     SYSCALL_ENTRY( NtGdiGetDIBitsInternal ) \
+    SYSCALL_ENTRY( NtGdiGetDeviceCaps ) \
+    SYSCALL_ENTRY( NtGdiGetDeviceGammaRamp ) \
     SYSCALL_ENTRY( NtGdiGetFontData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
@@ -107,11 +112,13 @@
     SYSCALL_ENTRY( NtGdiGetGlyphIndicesW ) \
     SYSCALL_ENTRY( NtGdiGetGlyphOutline ) \
     SYSCALL_ENTRY( NtGdiGetKerningPairs ) \
+    SYSCALL_ENTRY( NtGdiGetNearestColor ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
     SYSCALL_ENTRY( NtGdiGetOutlineTextMetricsInternalW ) \
     SYSCALL_ENTRY( NtGdiGetPath ) \
     SYSCALL_ENTRY( NtGdiGetPixel ) \
     SYSCALL_ENTRY( NtGdiGetRandomRgn ) \
+    SYSCALL_ENTRY( NtGdiGetRasterizerCaps ) \
     SYSCALL_ENTRY( NtGdiGetRealizationInfo ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
@@ -147,6 +154,7 @@
     SYSCALL_ENTRY( NtGdiRemoveFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
     SYSCALL_ENTRY( NtGdiResetDC ) \
+    SYSCALL_ENTRY( NtGdiResizePalette ) \
     SYSCALL_ENTRY( NtGdiRestoreDC ) \
     SYSCALL_ENTRY( NtGdiRoundRect ) \
     SYSCALL_ENTRY( NtGdiSaveDC ) \
@@ -163,11 +171,14 @@
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
     SYSCALL_ENTRY( NtGdiSetColorAdjustment ) \
     SYSCALL_ENTRY( NtGdiSetDIBitsToDeviceInternal ) \
+    SYSCALL_ENTRY( NtGdiSetDeviceGammaRamp ) \
+    SYSCALL_ENTRY( NtGdiSetLayout ) \
     SYSCALL_ENTRY( NtGdiSetMagicColors ) \
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
     SYSCALL_ENTRY( NtGdiSetPixel ) \
     SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \
+    SYSCALL_ENTRY( NtGdiSetSystemPaletteUse ) \
     SYSCALL_ENTRY( NtGdiSetTextJustification ) \
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
     SYSCALL_ENTRY( NtGdiStartDoc ) \

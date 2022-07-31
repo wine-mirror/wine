@@ -372,7 +372,7 @@
 @ stub NtGdiDestroyOPMProtectedOutput
 @ stub NtGdiDestroyPhysicalMonitor
 @ stub NtGdiDoBanding
-@ stdcall NtGdiDoPalette(long long long ptr long long)
+@ stdcall -syscall NtGdiDoPalette(long long long ptr long long)
 @ stub NtGdiDrawEscape
 @ stdcall -syscall NtGdiDrawStream(long long ptr)
 @ stub NtGdiDwmCreatedBitmapRemotingOutput
@@ -420,7 +420,7 @@
 @ stdcall -syscall NtGdiExcludeClipRect(long long long long long)
 @ stdcall -syscall NtGdiExtCreatePen(long long long long long long long ptr long long long)
 @ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
-@ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
+@ stdcall -syscall NtGdiExtEscape(long wstr long long long ptr long ptr)
 @ stdcall -syscall NtGdiExtFloodFill(long long long long long)
 @ stdcall -syscall NtGdiExtGetObjectW(long long ptr)
 @ stdcall -syscall NtGdiExtSelectClipRgn(long long long)
@@ -441,7 +441,7 @@
 @ stub NtGdiForceUFIMapping
 @ stdcall -syscall NtGdiFrameRgn(long long long long long)
 @ stub NtGdiFullscreenControl
-@ stdcall NtGdiGetAndSetDCDword(long long long ptr)
+@ stdcall -syscall NtGdiGetAndSetDCDword(long long long ptr)
 @ stdcall -syscall NtGdiGetAppClipBox(long ptr)
 @ stub NtGdiGetAppliedDeviceGammaRamp
 @ stdcall -syscall NtGdiGetBitmapBits(long long ptr)
@@ -467,9 +467,9 @@
 @ stdcall -syscall NtGdiGetDCPoint(long long ptr)
 @ stub NtGdiGetDCforBitmap
 @ stdcall -syscall NtGdiGetDIBitsInternal(long long long long ptr ptr long long long)
-@ stdcall NtGdiGetDeviceCaps(long long)
+@ stdcall -syscall NtGdiGetDeviceCaps(long long)
 @ stub NtGdiGetDeviceCapsAll
-@ stdcall NtGdiGetDeviceGammaRamp(long ptr)
+@ stdcall -syscall NtGdiGetDeviceGammaRamp(long ptr)
 @ stub NtGdiGetDeviceWidth
 @ stub NtGdiGetDhpdev
 @ stub NtGdiGetETM
@@ -490,7 +490,7 @@
 @ stub NtGdiGetLinkedUFIs
 @ stub NtGdiGetMiterLimit
 @ stub NtGdiGetMonitorID
-@ stdcall NtGdiGetNearestColor(long long)
+@ stdcall -syscall NtGdiGetNearestColor(long long)
 @ stdcall -syscall NtGdiGetNearestPaletteIndex(long long)
 @ stub NtGdiGetNumberOfPhysicalMonitors
 @ stub NtGdiGetOPMInformation
@@ -505,7 +505,7 @@
 @ stub NtGdiGetProcessSessionFonts
 @ stub NtGdiGetPublicFontTableChangeCookie
 @ stdcall -syscall NtGdiGetRandomRgn(long long long)
-@ stdcall NtGdiGetRasterizerCaps(ptr long)
+@ stdcall -syscall NtGdiGetRasterizerCaps(ptr long)
 @ stdcall -syscall NtGdiGetRealizationInfo(long ptr)
 @ stdcall -syscall NtGdiGetRegionData(long long ptr)
 @ stdcall -syscall NtGdiGetRgnBox(long ptr)
@@ -571,7 +571,7 @@
 @ stdcall -syscall NtGdiRemoveFontResourceW(wstr long long long long ptr)
 @ stub NtGdiRemoveMergeFont
 @ stdcall -syscall NtGdiResetDC(long ptr ptr ptr ptr)
-@ stdcall NtGdiResizePalette(long long)
+@ stdcall -syscall NtGdiResizePalette(long long)
 @ stdcall -syscall NtGdiRestoreDC(long long)
 @ stdcall -syscall NtGdiRoundRect(long long long long long long long)
 @ stub NtGdiSTROBJ_bEnum
@@ -598,11 +598,11 @@
 @ stdcall -syscall NtGdiSetColorAdjustment(long ptr)
 @ stub NtGdiSetColorSpace
 @ stdcall -syscall NtGdiSetDIBitsToDeviceInternal(long long long long long long long long long ptr ptr long long long long long)
-@ stdcall NtGdiSetDeviceGammaRamp(ptr ptr)
+@ stdcall -syscall NtGdiSetDeviceGammaRamp(ptr ptr)
 @ stub NtGdiSetFontEnumeration
 @ stub NtGdiSetFontXform
 @ stub NtGdiSetIcmMode
-@ stdcall NtGdiSetLayout(long long long)
+@ stdcall -syscall NtGdiSetLayout(long long long)
 @ stub NtGdiSetLinkedUFIs
 @ stdcall -syscall NtGdiSetMagicColors(long long long)
 @ stdcall -syscall NtGdiSetMetaRgn(long)
@@ -614,7 +614,7 @@
 @ stub NtGdiSetPrivateDeviceGammaRamp
 @ stdcall -syscall NtGdiSetRectRgn(long long long long long)
 @ stub NtGdiSetSizeDevice
-@ stdcall NtGdiSetSystemPaletteUse(long long)
+@ stdcall -syscall NtGdiSetSystemPaletteUse(long long)
 @ stdcall -syscall NtGdiSetTextJustification(long long long)
 @ stub NtGdiSetUMPDSandboxState
 @ stdcall -syscall NtGdiSetVirtualResolution(long long long long long)
