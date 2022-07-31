@@ -112,7 +112,7 @@
 @ stub NtGdiAddInitialFonts
 @ stub NtGdiAddRemoteFontToDC
 @ stub NtGdiAddRemoteMMInstanceToDC
-@ stdcall NtGdiAlphaBlend(long long long long long long long long long long long ptr)
+@ stdcall -syscall NtGdiAlphaBlend(long long long long long long long long long long long ptr)
 @ stdcall -syscall NtGdiAngleArc(long long long long long long)
 @ stub NtGdiAnyLinkedFonts
 @ stdcall -syscall NtGdiArcInternal(long long long long long long long long long long)
@@ -123,7 +123,7 @@
 @ stub NtGdiBRUSHOBJ_ulGetBrushColor
 @ stub NtGdiBeginGdiRendering
 @ stdcall -syscall NtGdiBeginPath(long)
-@ stdcall NtGdiBitBlt(long long long long long long long long long long long)
+@ stdcall -syscall NtGdiBitBlt(long long long long long long long long long long long)
 @ stub NtGdiCLIPOBJ_bEnum
 @ stub NtGdiCLIPOBJ_cEnumStart
 @ stub NtGdiCLIPOBJ_ppoGetPath
@@ -136,7 +136,7 @@
 @ stub NtGdiColorCorrectPalette
 @ stdcall -syscall NtGdiCombineRgn(long long long long)
 @ stub NtGdiCombineTransform
-@ stdcall NtGdiComputeXformCoefficients(long)
+@ stdcall -syscall NtGdiComputeXformCoefficients(long)
 @ stub NtGdiConfigureOPMProtectedOutput
 @ stub NtGdiConvertMetafileRect
 @ stdcall -syscall NtGdiCreateBitmap(long long long long ptr)
@@ -540,9 +540,9 @@
 @ stub NtGdiMakeInfoDC
 @ stub NtGdiMakeObjectUnXferable
 @ stub NtGdiMakeObjectXferable
-@ stdcall NtGdiMaskBlt(long long long long long long long long long long long long long)
+@ stdcall -syscall NtGdiMaskBlt(long long long long long long long long long long long long long)
 @ stub NtGdiMirrorWindowOrg
-@ stdcall NtGdiModifyWorldTransform(long ptr long)
+@ stdcall -syscall NtGdiModifyWorldTransform(long ptr long)
 @ stub NtGdiMonoBitmap
 @ stdcall -syscall NtGdiMoveTo(long long long ptr)
 @ stdcall NtGdiOffsetClipRgn(long long long)
@@ -553,9 +553,9 @@
 @ stub NtGdiPATHOBJ_vEnumStart
 @ stub NtGdiPATHOBJ_vEnumStartClipLines
 @ stub NtGdiPATHOBJ_vGetBounds
-@ stdcall NtGdiPatBlt(long long long long long long)
+@ stdcall -syscall NtGdiPatBlt(long long long long long long)
 @ stdcall -syscall NtGdiPathToRegion(long)
-@ stdcall NtGdiPlgBlt(long ptr long long long long long long long long long)
+@ stdcall -syscall NtGdiPlgBlt(long ptr long long long long long long long long long)
 @ stdcall -syscall NtGdiPolyDraw(long ptr ptr long)
 @ stub NtGdiPolyPatBlt
 @ stdcall -syscall NtGdiPolyPolyDraw(long ptr ptr long long)
@@ -582,8 +582,8 @@
 @ stdcall -syscall NtGdiSaveDC(long)
 @ stub NtGdiScaleRgn
 @ stub NtGdiScaleValues
-@ stdcall NtGdiScaleViewportExtEx(long long long long long ptr)
-@ stdcall NtGdiScaleWindowExtEx(long long long long long ptr)
+@ stdcall -syscall NtGdiScaleViewportExtEx(long long long long long ptr)
+@ stdcall -syscall NtGdiScaleWindowExtEx(long long long long long ptr)
 @ stdcall NtGdiSelectBitmap(long long)
 @ stdcall NtGdiSelectBrush(long long)
 @ stdcall -syscall NtGdiSelectClipPath(long long)
@@ -620,13 +620,13 @@
 @ stdcall -syscall NtGdiSetVirtualResolution(long long long long long)
 @ stdcall -syscall NtGdiStartDoc(long ptr ptr long)
 @ stdcall -syscall NtGdiStartPage(long)
-@ stdcall NtGdiStretchBlt(long long long long long long long long long long long long)
+@ stdcall -syscall NtGdiStretchBlt(long long long long long long long long long long long long)
 @ stdcall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall -syscall NtGdiStrokeAndFillPath(long)
 @ stdcall -syscall NtGdiStrokePath(long)
 @ stdcall -syscall NtGdiSwapBuffers(long)
 @ stdcall -syscall NtGdiTransformPoints(long ptr ptr long long)
-@ stdcall NtGdiTransparentBlt(long long long long long long long long long long long)
+@ stdcall -syscall NtGdiTransparentBlt(long long long long long long long long long long long)
 @ stub NtGdiUMPDEngFreeUserMem
 @ stub NtGdiUnloadPrinterDriver
 @ stub NtGdiUnmapMemFont

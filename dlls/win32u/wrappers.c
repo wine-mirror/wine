@@ -24,29 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
-                             HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
-                             DWORD blend_function, HANDLE xform )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiAlphaBlend( hdc_dst, x_dst, y_dst, width_dst, height_dst, hdc_src,
-                                         x_src, y_src, width_src, height_src, blend_function, xform );
-}
-
-BOOL WINAPI NtGdiBitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
-                         INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiBitBlt( hdc_dst, x_dst, y_dst, width, height, hdc_src, x_src, y_src,
-                                     rop, bk_color, fl );
-}
-
-BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiComputeXformCoefficients( hdc );
-}
-
 HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
 {
     if (!unix_funcs) return 0;
@@ -289,40 +266,10 @@ INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bo
     return unix_funcs->pNtGdiIntersectClipRect( hdc, left, top, right, bottom );
 }
 
-BOOL WINAPI NtGdiMaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
-                          HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
-                          INT x_mask, INT y_mask, DWORD rop, DWORD bk_color )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiMaskBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
-                                      x_src, y_src, mask, x_mask, y_mask, rop, bk_color );
-}
-
-BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiModifyWorldTransform( hdc, xform, mode );
-}
-
 INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
 {
     if (!unix_funcs) return ERROR;
     return unix_funcs->pNtGdiOffsetClipRgn( hdc, x, y );
-}
-
-BOOL WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiPatBlt( hdc, left, top, width, height, rop );
-}
-
-BOOL WINAPI NtGdiPlgBlt( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
-                         INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask,
-                         DWORD bk_color )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiPlgBlt( hdc, point, hdc_src, x_src, y_src, width, height, mask,
-                                     x_mask, y_mask, bk_color );
 }
 
 BOOL WINAPI NtGdiPtVisible( HDC hdc, INT x, INT y )
@@ -354,20 +301,6 @@ BOOL WINAPI NtGdiRestoreDC( HDC hdc, INT level )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiRestoreDC( hdc, level );
-}
-
-BOOL WINAPI NtGdiScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom,
-                                     INT y_num, INT y_denom, SIZE *size )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiScaleViewportExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
-}
-
-BOOL WINAPI NtGdiScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
-                                   INT y_num, INT y_denom, SIZE *size )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
 }
 
 HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
@@ -430,15 +363,6 @@ UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
     return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
 }
 
-BOOL WINAPI NtGdiStretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
-                             HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
-                             DWORD rop, COLORREF bk_color )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiStretchBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
-                                         x_src, y_src, width_src, height_src, rop, bk_color );
-}
-
 INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT width_dst,
                                        INT height_dst, INT x_src, INT y_src, INT width_src,
                                        INT height_src, const void *bits, const BITMAPINFO *bmi,
@@ -449,15 +373,6 @@ INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT width_
     return unix_funcs->pNtGdiStretchDIBitsInternal( hdc, x_dst, y_dst, width_dst, height_dst,
                                                     x_src, y_src, width_src, height_src, bits, bmi,
                                                     coloruse, rop, max_info, max_bits, xform );
-}
-
-BOOL WINAPI NtGdiTransparentBlt( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
-                                 HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
-                                 UINT color )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtGdiTransparentBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
-                                             x_src, y_src, width_src, height_src, color );
 }
 
 BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )

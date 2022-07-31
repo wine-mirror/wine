@@ -26,11 +26,14 @@
     SYSCALL_ENTRY( NtGdiAbortPath ) \
     SYSCALL_ENTRY( NtGdiAddFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
+    SYSCALL_ENTRY( NtGdiAlphaBlend ) \
     SYSCALL_ENTRY( NtGdiAngleArc ) \
     SYSCALL_ENTRY( NtGdiArcInternal ) \
     SYSCALL_ENTRY( NtGdiBeginPath ) \
+    SYSCALL_ENTRY( NtGdiBitBlt ) \
     SYSCALL_ENTRY( NtGdiCloseFigure ) \
     SYSCALL_ENTRY( NtGdiCombineRgn ) \
+    SYSCALL_ENTRY( NtGdiComputeXformCoefficients ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateClientObj ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
@@ -86,10 +89,14 @@
     SYSCALL_ENTRY( NtGdiInitSpool ) \
     SYSCALL_ENTRY( NtGdiInvertRgn ) \
     SYSCALL_ENTRY( NtGdiLineTo ) \
+    SYSCALL_ENTRY( NtGdiMaskBlt ) \
+    SYSCALL_ENTRY( NtGdiModifyWorldTransform ) \
     SYSCALL_ENTRY( NtGdiMoveTo ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiOpenDCW ) \
+    SYSCALL_ENTRY( NtGdiPatBlt ) \
     SYSCALL_ENTRY( NtGdiPathToRegion ) \
+    SYSCALL_ENTRY( NtGdiPlgBlt ) \
     SYSCALL_ENTRY( NtGdiPolyDraw ) \
     SYSCALL_ENTRY( NtGdiPolyPolyDraw ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
@@ -99,6 +106,8 @@
     SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
     SYSCALL_ENTRY( NtGdiRoundRect ) \
     SYSCALL_ENTRY( NtGdiSaveDC ) \
+    SYSCALL_ENTRY( NtGdiScaleViewportExtEx ) \
+    SYSCALL_ENTRY( NtGdiScaleWindowExtEx ) \
     SYSCALL_ENTRY( NtGdiSelectClipPath ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
@@ -113,10 +122,12 @@
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
     SYSCALL_ENTRY( NtGdiStartDoc ) \
     SYSCALL_ENTRY( NtGdiStartPage ) \
+    SYSCALL_ENTRY( NtGdiStretchBlt ) \
     SYSCALL_ENTRY( NtGdiStrokeAndFillPath ) \
     SYSCALL_ENTRY( NtGdiStrokePath ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
+    SYSCALL_ENTRY( NtGdiTransparentBlt ) \
     SYSCALL_ENTRY( NtGdiWidenPath ) \
     SYSCALL_ENTRY( NtUserActivateKeyboardLayout ) \
     SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \

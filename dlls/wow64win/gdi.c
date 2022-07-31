@@ -93,6 +93,25 @@ NTSTATUS WINAPI wow64_NtGdiAddFontResourceW( UINT *args )
     return NtGdiAddFontResourceW( str, size, files, flags, tid, dv );
 }
 
+NTSTATUS WINAPI wow64_NtGdiAlphaBlend( UINT *args )
+{
+    HDC hdc_dst = get_handle( &args );
+    int x_dst = get_ulong( &args );
+    int y_dst = get_ulong( &args );
+    int width_dst = get_ulong( &args );
+    int height_dst = get_ulong( &args );
+    HDC hdc_src = get_handle( &args );
+    int x_src = get_ulong( &args );
+    int y_src = get_ulong( &args );
+    int width_src = get_ulong( &args );
+    int height_src = get_ulong( &args );
+    DWORD blend_function = get_ulong( &args );
+    HANDLE xform = get_handle( &args );
+
+    return NtGdiAlphaBlend( hdc_dst, x_dst, y_dst, width_dst, height_dst, hdc_src,
+                            x_src, y_src, width_src, height_src, blend_function, xform );
+}
+
 NTSTATUS WINAPI wow64_NtGdiAngleArc( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -128,6 +147,24 @@ NTSTATUS WINAPI wow64_NtGdiBeginPath( UINT *args )
     return NtGdiBeginPath( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiBitBlt( UINT *args )
+{
+    HDC hdc_dst = get_handle( &args );
+    INT x_dst = get_ulong( &args );
+    INT y_dst = get_ulong( &args );
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+    HDC hdc_src = get_handle( &args );
+    INT x_src = get_ulong( &args );
+    INT y_src = get_ulong( &args );
+    DWORD rop = get_ulong( &args );
+    DWORD bk_color = get_ulong( &args );
+    FLONG fl = get_ulong( &args );
+
+    return NtGdiBitBlt( hdc_dst, x_dst, y_dst, width, height, hdc_src,
+                        x_src, y_src, rop, bk_color, fl );
+}
+
 NTSTATUS WINAPI wow64_NtGdiCloseFigure( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -143,6 +180,13 @@ NTSTATUS WINAPI wow64_NtGdiCombineRgn( UINT *args )
     INT mode = get_ulong( &args );
 
     return NtGdiCombineRgn( dest, src1, src2, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiComputeXformCoefficients( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiComputeXformCoefficients( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiCreateBitmap( UINT *args )
@@ -719,6 +763,35 @@ NTSTATUS WINAPI wow64_NtGdiLineTo( UINT *args )
     return NtGdiLineTo( hdc, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtGdiMaskBlt( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x_dst = get_ulong( &args );
+    INT y_dst = get_ulong( &args );
+    INT width_dst = get_ulong( &args );
+    INT height_dst = get_ulong( &args );
+    HDC hdc_src = get_handle( &args );
+    INT x_src = get_ulong( &args );
+    INT y_src = get_ulong( &args );
+    HBITMAP mask = get_handle( &args );
+    INT x_mask = get_ulong( &args );
+    INT y_mask = get_ulong( &args );
+    DWORD rop = get_ulong( &args );
+    DWORD bk_color = get_ulong( &args );
+
+    return NtGdiMaskBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
+                         x_src, y_src, mask, x_mask, y_mask, rop, bk_color );
+}
+
+NTSTATUS WINAPI wow64_NtGdiModifyWorldTransform( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const XFORM *xform = get_ptr( &args );
+    DWORD mode = get_ulong( &args );
+
+    return NtGdiModifyWorldTransform( hdc, xform, mode );
+}
+
 NTSTATUS WINAPI wow64_NtGdiMoveTo( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -860,11 +933,41 @@ NTSTATUS WINAPI wow64_NtGdiOpenDCW( UINT *args )
     return HandleToUlong( ret );
 }
 
+NTSTATUS WINAPI wow64_NtGdiPatBlt( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+    DWORD rop = get_ulong( &args );
+
+    return NtGdiPatBlt( hdc, left, top, width, height, rop );
+}
+
 NTSTATUS WINAPI wow64_NtGdiPathToRegion( UINT *args )
 {
     HDC hdc = get_handle( &args );
 
     return HandleToUlong( NtGdiPathToRegion( hdc ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiPlgBlt( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const POINT *point = get_ptr( &args );
+    HDC hdc_src = get_handle( &args );
+    INT x_src = get_ulong( &args );
+    INT y_src = get_ulong( &args );
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+    HBITMAP mask = get_handle( &args );
+    INT x_mask = get_ulong( &args );
+    INT y_mask = get_ulong( &args );
+    DWORD bk_color = get_ulong( &args );
+
+    return NtGdiPlgBlt( hdc, point, hdc_src, x_src, y_src, width, height,
+                        mask, x_mask, y_mask, bk_color );
 }
 
 NTSTATUS WINAPI wow64_NtGdiPtInRegion( UINT *args )
@@ -908,6 +1011,30 @@ NTSTATUS WINAPI wow64_NtGdiSaveDC( UINT *args )
     HDC hdc = get_handle( &args );
 
     return NtGdiSaveDC( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiScaleViewportExtEx( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x_num = get_ulong( &args );
+    INT x_denom = get_ulong( &args );
+    INT y_num = get_ulong( &args );
+    INT y_denom = get_ulong( &args );
+    SIZE *size = get_ptr( &args );
+
+    return NtGdiScaleViewportExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiScaleWindowExtEx( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x_num = get_ulong( &args );
+    INT x_denom = get_ulong( &args );
+    INT y_num = get_ulong( &args );
+    INT y_denom = get_ulong( &args );
+    SIZE *size = get_ptr( &args );
+
+    return NtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
 }
 
 NTSTATUS WINAPI wow64_NtGdiSelectClipPath( UINT *args )
@@ -1051,6 +1178,25 @@ NTSTATUS WINAPI wow64_NtGdiStartPage( UINT *args )
     return NtGdiStartPage( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiStretchBlt( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x_dst = get_ulong( &args );
+    INT y_dst = get_ulong( &args );
+    INT width_dst = get_ulong( &args );
+    INT height_dst = get_ulong( &args );
+    HDC hdc_src = get_handle( &args );
+    INT x_src = get_ulong( &args );
+    INT y_src = get_ulong( &args );
+    INT width_src = get_ulong( &args );
+    INT height_src = get_ulong( &args );
+    DWORD rop = get_ulong( &args );
+    COLORREF bk_color = get_ulong( &args );
+
+    return NtGdiStretchBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
+                            x_src, y_src, width_src, height_src, rop, bk_color );
+}
+
 NTSTATUS WINAPI wow64_NtGdiStrokeAndFillPath( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1070,6 +1216,24 @@ NTSTATUS WINAPI wow64_NtGdiSwapBuffers( UINT *args )
     HDC hdc = get_handle( &args );
 
     return NtGdiSwapBuffers( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiTransparentBlt( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    int x_dst = get_ulong( &args );
+    int y_dst = get_ulong( &args );
+    int width_dst = get_ulong( &args );
+    int height_dst = get_ulong( &args );
+    HDC hdc_src = get_handle( &args );
+    int x_src = get_ulong( &args );
+    int y_src = get_ulong( &args );
+    int width_src = get_ulong( &args );
+    int height_src = get_ulong( &args );
+    UINT color = get_ulong( &args );
+
+    return NtGdiTransparentBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
+                                x_src, y_src, width_src, height_src, color );
 }
 
 NTSTATUS WINAPI wow64_NtGdiTransformPoints( UINT *args )
