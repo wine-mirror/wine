@@ -208,6 +208,24 @@ static void test_notifications(void)
     hr = IXACT3Engine_Initialize(engine, &params);
     ok(hr == S_OK, "Cannot initialize engine, hr %#lx\n", hr);
 
+    notification_desc.type = 0;
+    notification_desc.flags = 0;
+    notification_desc.pvContext = &prepared_data;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT + 1;
+    notification_desc.flags = 0;
+    notification_desc.pvContext = &prepared_data;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
     prepared_data.type = XACTNOTIFICATIONTYPE_WAVEBANKPREPARED;
     prepared_data.thread_id = GetCurrentThreadId();
     notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKPREPARED;

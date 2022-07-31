@@ -1517,6 +1517,10 @@ static HRESULT WINAPI IXACT3EngineImpl_RegisterNotification(IXACT3Engine *iface,
 
     TRACE("(%p)->(%p)\n", This, pNotificationDesc);
 
+    if (pNotificationDesc->type < XACTNOTIFICATIONTYPE_CUEPREPARED ||
+        pNotificationDesc->type > XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT)
+        return E_INVALIDARG;
+
     unwrap_notificationdesc(&fdesc, pNotificationDesc);
     This->contexts[pNotificationDesc->type] = pNotificationDesc->pvContext;
     fdesc.pvContext = This;
@@ -1530,6 +1534,10 @@ static HRESULT WINAPI IXACT3EngineImpl_UnRegisterNotification(IXACT3Engine *ifac
     FACTNotificationDescription fdesc;
 
     TRACE("(%p)->(%p)\n", This, pNotificationDesc);
+
+    if (pNotificationDesc->type < XACTNOTIFICATIONTYPE_CUEPREPARED ||
+        pNotificationDesc->type > XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT)
+        return S_OK;
 
     unwrap_notificationdesc(&fdesc, pNotificationDesc);
     fdesc.pvContext = This;
