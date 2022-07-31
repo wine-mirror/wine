@@ -35,7 +35,6 @@
 struct unix_funcs
 {
     /* win32u functions */
-    INT      (WINAPI *pNtGdiAbortDoc)( HDC hdc );
     BOOL     (WINAPI *pNtGdiAbortPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiAlphaBlend)( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                          HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
@@ -65,9 +64,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiDeleteObjectApp)( HGDIOBJ obj );
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
-    INT      (WINAPI *pNtGdiEndDoc)(HDC hdc);
     BOOL     (WINAPI *pNtGdiEndPath)( HDC hdc );
-    INT      (WINAPI *pNtGdiEndPage)( HDC hdc );
     BOOL     (WINAPI *pNtGdiEnumFonts)( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
                                         const WCHAR *face_name, ULONG charset, ULONG *count, void *buf );
     INT      (WINAPI *pNtGdiExcludeClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
@@ -144,8 +141,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiSetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
-    INT      (WINAPI *pNtGdiStartDoc)( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job );
-    INT      (WINAPI *pNtGdiStartPage)( HDC hdc );
     BOOL     (WINAPI *pNtGdiStretchBlt)( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                          HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                                          DWORD rop, COLORREF bk_color );

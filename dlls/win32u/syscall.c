@@ -36,6 +36,7 @@
 
 static void * const syscalls[] =
 {
+    NtGdiAbortDoc,
     NtGdiAddFontMemResourceEx,
     NtGdiAddFontResourceW,
     NtGdiAngleArc,
@@ -62,6 +63,8 @@ static void * const syscalls[] =
     NtGdiDescribePixelFormat,
     NtGdiDrawStream,
     NtGdiEllipse,
+    NtGdiEndDoc,
+    NtGdiEndPage,
     NtGdiEqualRgn,
     NtGdiExtCreatePen,
     NtGdiExtCreateRegion,
@@ -116,6 +119,8 @@ static void * const syscalls[] =
     NtGdiSetRectRgn,
     NtGdiSetTextJustification,
     NtGdiSetVirtualResolution,
+    NtGdiStartDoc,
+    NtGdiStartPage,
     NtGdiSwapBuffers,
     NtGdiTransformPoints,
     NtUserActivateKeyboardLayout,

@@ -56,6 +56,13 @@ static DWORD gdi_handle_type( HGDIOBJ obj )
     return handle & NTGDI_HANDLE_TYPE_MASK;
 }
 
+NTSTATUS WINAPI wow64_NtGdiAbortDoc( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiAbortDoc( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiAddFontMemResourceEx( UINT *args )
 {
     void *ptr = get_ptr( &args );
@@ -355,6 +362,20 @@ NTSTATUS WINAPI wow64_NtGdiEllipse( UINT *args )
     INT bottom = get_ulong( &args );
 
     return NtGdiEllipse( hdc, left, top, right, bottom );
+}
+
+NTSTATUS WINAPI wow64_NtGdiEndDoc( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiEndDoc( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiEndPage( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiEndPage( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiEqualRgn( UINT *args )
@@ -954,6 +975,37 @@ NTSTATUS WINAPI wow64_NtGdiSetVirtualResolution( UINT *args )
     DWORD vert_size = get_ulong( &args );
 
     return NtGdiSetVirtualResolution( hdc, horz_res, vert_res, horz_size, vert_size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiStartDoc( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const struct
+    {
+        INT   cbSize;
+        ULONG lpszDocName;
+        ULONG lpszOutput;
+        ULONG lpszDatatype;
+        DWORD fwType;
+    } *doc32 = get_ptr( &args );
+    BOOL *banding = get_ptr( &args );
+    INT job = get_ulong( &args );
+
+    DOCINFOW doc;
+    doc.cbSize = sizeof(doc);
+    doc.lpszDocName = UlongToPtr( doc32->lpszDocName );
+    doc.lpszOutput = UlongToPtr( doc32->lpszOutput );
+    doc.lpszDatatype = UlongToPtr( doc32->lpszDatatype );
+    doc.fwType = doc32->fwType;
+
+    return NtGdiStartDoc( hdc, &doc, banding, job );
+}
+
+NTSTATUS WINAPI wow64_NtGdiStartPage( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiStartPage( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiSwapBuffers( UINT *args )

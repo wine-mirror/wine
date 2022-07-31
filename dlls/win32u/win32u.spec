@@ -104,7 +104,7 @@
 @ stub NtFlipObjectRemovePoolBuffer
 @ stub NtFlipObjectSetContent
 @ stub NtFlipObjectSetMaximumBackchannelQueueDepth
-@ stdcall NtGdiAbortDoc(long)
+@ stdcall -syscall NtGdiAbortDoc(long)
 @ stdcall NtGdiAbortPath(long)
 @ stub NtGdiAddEmbFontToDC
 @ stdcall -syscall NtGdiAddFontMemResourceEx(ptr long ptr long ptr)
@@ -378,9 +378,9 @@
 @ stub NtGdiDwmCreatedBitmapRemotingOutput
 @ stdcall -syscall NtGdiEllipse(long long long long long)
 @ stub NtGdiEnableEudc
-@ stdcall NtGdiEndDoc(long)
+@ stdcall -syscall NtGdiEndDoc(long)
 @ stub NtGdiEndGdiRendering
-@ stdcall NtGdiEndPage(long)
+@ stdcall -syscall NtGdiEndPage(long)
 @ stdcall NtGdiEndPath(long)
 @ stub NtGdiEngAlphaBlend
 @ stub NtGdiEngAssociateSurface
@@ -618,8 +618,8 @@
 @ stdcall -syscall NtGdiSetTextJustification(long long long)
 @ stub NtGdiSetUMPDSandboxState
 @ stdcall -syscall NtGdiSetVirtualResolution(long long long long long)
-@ stdcall NtGdiStartDoc(long ptr ptr long)
-@ stdcall NtGdiStartPage(long)
+@ stdcall -syscall NtGdiStartDoc(long ptr ptr long)
+@ stdcall -syscall NtGdiStartPage(long)
 @ stdcall NtGdiStretchBlt(long long long long long long long long long long long long)
 @ stdcall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall NtGdiStrokeAndFillPath(long)

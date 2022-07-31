@@ -1030,7 +1030,6 @@ BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
 
 static struct unix_funcs unix_funcs =
 {
-    NtGdiAbortDoc,
     NtGdiAbortPath,
     NtGdiAlphaBlend,
     NtGdiBeginPath,
@@ -1053,9 +1052,7 @@ static struct unix_funcs unix_funcs =
     NtGdiDdDDISetVidPnSourceOwner,
     NtGdiDeleteObjectApp,
     NtGdiDoPalette,
-    NtGdiEndDoc,
     NtGdiEndPath,
-    NtGdiEndPage,
     NtGdiEnumFonts,
     NtGdiExcludeClipRect,
     NtGdiExtEscape,
@@ -1109,8 +1106,6 @@ static struct unix_funcs unix_funcs =
     NtGdiSetDeviceGammaRamp,
     NtGdiSetLayout,
     NtGdiSetSystemPaletteUse,
-    NtGdiStartDoc,
-    NtGdiStartPage,
     NtGdiStretchBlt,
     NtGdiStretchDIBitsInternal,
     NtGdiStrokeAndFillPath,

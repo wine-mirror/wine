@@ -24,12 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-INT WINAPI NtGdiAbortDoc( HDC hdc )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtGdiAbortDoc( hdc );
-}
-
 BOOL WINAPI NtGdiAbortPath( HDC hdc )
 {
     if (!unix_funcs) return FALSE;
@@ -112,22 +106,10 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
     return unix_funcs->pNtGdiDoPalette( handle, start, count, entries, func, inbound );
 }
 
-INT WINAPI NtGdiEndDoc( HDC hdc )
-{
-    if (!unix_funcs) return SP_ERROR;
-    return unix_funcs->pNtGdiEndDoc( hdc );
-}
-
 BOOL WINAPI NtGdiEndPath( HDC hdc )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtGdiEndPath( hdc );
-}
-
-INT WINAPI NtGdiEndPage( HDC hdc )
-{
-    if (!unix_funcs) return SP_ERROR;
-    return unix_funcs->pNtGdiEndPage( hdc );
 }
 
 BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
@@ -482,18 +464,6 @@ UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
 {
     if (!unix_funcs) return SYSPAL_ERROR;
     return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
-}
-
-INT WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job )
-{
-    if (!unix_funcs) return SP_ERROR;
-    return unix_funcs->pNtGdiStartDoc( hdc, doc, banding, job );
-}
-
-INT WINAPI NtGdiStartPage( HDC hdc )
-{
-    if (!unix_funcs) return SP_ERROR;
-    return unix_funcs->pNtGdiStartPage( hdc );
 }
 
 BOOL WINAPI NtGdiStretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,

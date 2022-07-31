@@ -22,6 +22,7 @@
 #define __WOW64WIN_SYSCALL_H
 
 #define ALL_WIN32_SYSCALLS \
+    SYSCALL_ENTRY( NtGdiAbortDoc ) \
     SYSCALL_ENTRY( NtGdiAddFontMemResourceEx ) \
     SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
     SYSCALL_ENTRY( NtGdiAngleArc ) \
@@ -48,6 +49,8 @@
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \
     SYSCALL_ENTRY( NtGdiEllipse ) \
+    SYSCALL_ENTRY( NtGdiEndDoc ) \
+    SYSCALL_ENTRY( NtGdiEndPage ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
@@ -102,6 +105,8 @@
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \
     SYSCALL_ENTRY( NtGdiSetTextJustification ) \
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
+    SYSCALL_ENTRY( NtGdiStartDoc ) \
+    SYSCALL_ENTRY( NtGdiStartPage ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
     SYSCALL_ENTRY( NtUserActivateKeyboardLayout ) \
