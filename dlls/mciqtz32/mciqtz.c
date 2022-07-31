@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <math.h>
 #include "windef.h"
 #include "winbase.h"
@@ -30,6 +31,8 @@
 #include "wownt32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciqtz);
+
+static const WCHAR mciqtz_class[] = L"MCIQTZ_Window";
 
 static DWORD MCIQTZ_mciClose(UINT, DWORD, LPMCI_GENERIC_PARMS);
 static DWORD MCIQTZ_mciStop(UINT, DWORD, LPMCI_GENERIC_PARMS);
@@ -68,6 +71,24 @@ static WINE_MCIQTZ* MCIQTZ_mciGetOpenDev(UINT wDevID)
     return wma;
 }
 
+static void unregister_class(void)
+{
+    UnregisterClassW(mciqtz_class, MCIQTZ_hInstance);
+}
+
+static bool register_class(void)
+{
+    WNDCLASSW class = {0};
+
+    class.lpfnWndProc = DefWindowProcW;
+    class.cbWndExtra = sizeof(MCIDEVICEID);
+    class.hInstance = MCIQTZ_hInstance;
+    class.hCursor = LoadCursorW(0, (const WCHAR *)IDC_ARROW);
+    class.lpszClassName = mciqtz_class;
+
+    return RegisterClassW(&class) || GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
+}
+
 /**************************************************************************
  *                              MCIQTZ_drvOpen                  [internal]
  */
@@ -80,6 +101,9 @@ static DWORD MCIQTZ_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     /* session instance */
     if (!modp)
         return 0xFFFFFFFF;
+
+    if (!register_class())
+        return 0;
 
     wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIQTZ));
     if (!wma)
@@ -109,6 +133,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
         /* finish all outstanding things */
         MCIQTZ_mciClose(dwDevID, MCI_WAIT, NULL);
 
+        unregister_class();
         mciFreeCommandResource(wma->command_table);
         mciSetDriverData(dwDevID, 0);
         CloseHandle(wma->stop_event);
@@ -139,6 +164,64 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
     return 1;
 }
 
+static bool create_window(WINE_MCIQTZ *wma, DWORD flags, const MCI_DGV_OPEN_PARMSW *params)
+{
+    DWORD style = (WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN) & ~WS_MAXIMIZEBOX;
+    LONG width, height, min_width;
+    HWND parent = NULL;
+    HRESULT hr;
+    RECT rc;
+
+    if (flags & MCI_DGV_OPEN_PARENT)
+        parent = params->hWndParent;
+    if (flags & MCI_DGV_OPEN_WS)
+        style = params->dwStyle;
+
+    hr = IBasicVideo_GetVideoSize(wma->vidbasic, &width, &height);
+    if (hr == E_NOINTERFACE)
+        return true; /* audio file */
+    else if (FAILED(hr))
+    {
+        ERR("Failed to get video size, hr %#lx.\n", hr);
+        return false;
+    }
+
+    /* Native always assumes an overlapped window
+     * when calculating default video window size. */
+    SetRect(&rc, 0, 0, width, height);
+    AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+    min_width = GetSystemMetrics(SM_CXMIN);
+    width = max(rc.right - rc.left, min_width);
+    height = rc.bottom - rc.top;
+
+    wma->window = CreateWindowW(mciqtz_class, params->lpstrElementName, style,
+            CW_USEDEFAULT, CW_USEDEFAULT, width, height, parent, NULL, MCIQTZ_hInstance, NULL);
+
+    TRACE("device %#x, flags %#lx, style %#lx, parent %p, dimensions %ldx%ld, created window %p.\n",
+            wma->wDevID, flags, style, parent, width, height, wma->window);
+
+    if (!wma->window)
+    {
+        ERR("Failed to create window, error %lu.\n", GetLastError());
+        return false;
+    }
+
+    IVideoWindow_put_AutoShow(wma->vidwin, OAFALSE);
+    IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)wma->window);
+    IVideoWindow_put_Owner(wma->vidwin, (OAHWND)wma->window);
+    IVideoWindow_put_WindowStyle(wma->vidwin, WS_CHILD); /* reset window style */
+
+    GetClientRect(wma->window, &rc);
+    width = rc.right;
+    height = rc.bottom;
+
+    IVideoWindow_SetWindowPosition(wma->vidwin, 0, 0, width, height);
+    IVideoWindow_put_Visible(wma->vidwin, OATRUE);
+    wma->parent = wma->window;
+
+    return true;
+}
+
 /**************************************************************************
  *                              MCIQTZ_mciNotify                [internal]
  *
@@ -161,8 +244,6 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 {
     WINE_MCIQTZ* wma;
     HRESULT hr;
-    DWORD style = 0;
-    RECT rc = { 0, 0, 0, 0 };
 
     TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpOpenParms);
 
@@ -238,22 +319,8 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
-    IVideoWindow_put_AutoShow(wma->vidwin, OAFALSE);
-    IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
-    if (dwFlags & MCI_DGV_OPEN_WS)
-        style = lpOpenParms->dwStyle;
-    if (dwFlags & MCI_DGV_OPEN_PARENT) {
-        IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)lpOpenParms->hWndParent);
-        IVideoWindow_put_WindowState(wma->vidwin, SW_HIDE);
-        IVideoWindow_put_WindowStyle(wma->vidwin, style|WS_CHILD);
-        IVideoWindow_put_Owner(wma->vidwin, (OAHWND)lpOpenParms->hWndParent);
-        GetClientRect(lpOpenParms->hWndParent, &rc);
-        IVideoWindow_SetWindowPosition(wma->vidwin, rc.left, rc.top, rc.right - rc.top, rc.bottom - rc.top);
-        wma->parent = (HWND)lpOpenParms->hWndParent;
-    }
-    else if (style)
-        IVideoWindow_put_WindowStyle(wma->vidwin, style);
-    IBasicVideo_GetVideoSize(wma->vidbasic, &rc.right, &rc.bottom);
+    if (!create_window(wma, dwFlags, lpOpenParms))
+        goto err;
     wma->opened = TRUE;
 
     if (dwFlags & MCI_NOTIFY)
@@ -307,6 +374,13 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (wma->opened) {
+        if (wma->window)
+        {
+            IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)NULL);
+            IVideoWindow_put_Owner(wma->vidwin, (OAHWND)NULL);
+            DestroyWindow(wma->window);
+            wma->window = NULL;
+        }
         IVideoWindow_Release(wma->vidwin);
         IBasicVideo_Release(wma->vidbasic);
         IBasicAudio_Release(wma->audio);
@@ -447,7 +521,8 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         return MCIERR_INTERNAL;
     }
 
-    IVideoWindow_put_Visible(wma->vidwin, OATRUE);
+    if (wma->parent)
+        ShowWindow(wma->parent, SW_SHOW);
 
     if (!wma->thread)
     {
@@ -919,21 +994,11 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
         return 0;
 
     if (dwFlags & MCI_DGV_WINDOW_HWND && (IsWindow(lpParms->hWnd) || !lpParms->hWnd)) {
-        LONG visible = OATRUE;
-        LONG style = 0;
-        TRACE("Setting hWnd to %p\n", lpParms->hWnd);
-        IVideoWindow_get_Visible(wma->vidwin, &visible);
-        IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
-        IVideoWindow_get_WindowStyle(wma->vidwin, &style);
-        style &= ~WS_CHILD;
-        if (lpParms->hWnd)
-            IVideoWindow_put_WindowStyle(wma->vidwin, style|WS_CHILD);
-        else
-            IVideoWindow_put_WindowStyle(wma->vidwin, style);
-        IVideoWindow_put_Owner(wma->vidwin, (OAHWND)lpParms->hWnd);
-        IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)lpParms->hWnd);
-        IVideoWindow_put_Visible(wma->vidwin, visible);
-        wma->parent = lpParms->hWnd;
+        HWND hwnd = lpParms->hWnd ? lpParms->hWnd : wma->window;
+        TRACE("Setting parent window to %p.\n", hwnd);
+        IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)hwnd);
+        IVideoWindow_put_Owner(wma->vidwin, (OAHWND)hwnd);
+        wma->parent = hwnd;
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
         TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);

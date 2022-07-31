@@ -1566,15 +1566,10 @@ static void test_video_window(void)
         {
             video_window = NULL;
             EnumWindows(my_visible_window_proc, (LPARAM)&video_window);
-            todo_wine_if (testcase[i].open_flags & MCI_DGV_OPEN_PARENT)
-                ok(video_window != NULL, "Video window should be shown.\n");
-
-            /* FIXME: Remove once Wine is fixed */
-            if (!video_window) goto next;
+            ok(video_window != NULL, "Video window should be shown.\n");
 
             hwnd = GetWindow(video_window, GW_OWNER);
-            todo_wine_if (testcase[i].open_flags & MCI_DGV_OPEN_PARENT)
-                ok(hwnd == parent_window, "Got owner %p, expected %p.\n", hwnd, parent_window);
+            ok(hwnd == parent_window, "Got owner %p, expected %p.\n", hwnd, parent_window);
         }
         else
         {
@@ -1588,8 +1583,7 @@ static void test_video_window(void)
 
         expected = testcase[i].expected_style | WS_VISIBLE;
         style = GetWindowLongW(video_window, GWL_STYLE);
-        todo_wine_if (i != 3)
-            ok(style == expected, "Got style %#lx for window %p, expected %#lx.\n", style, video_window, expected);
+        ok(style == expected, "Got style %#lx for window %p, expected %#lx.\n", style, video_window, expected);
 
         /* Get the source video size. */
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_SOURCE, (DWORD_PTR)&parm);
@@ -1623,16 +1617,16 @@ static void test_video_window(void)
 
         GetWindowRect(video_window, &win_rc);
         OffsetRect(&rc, win_rc.left, win_rc.top);
-        todo_wine_if (testcase[i].style & WS_CHILD)
-            ok(EqualRect(&rc, &win_rc), "Got window rect %s, expected %s.\n",
-                    wine_dbgstr_rect(&win_rc), wine_dbgstr_rect(&rc));
+        ok(EqualRect(&rc, &win_rc), "Got window rect %s, expected %s.\n",
+                wine_dbgstr_rect(&win_rc), wine_dbgstr_rect(&rc));
 
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_WINDOW, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         win_rc.right -= win_rc.left;
         win_rc.bottom -= win_rc.top;
-        ok(EqualRect(&win_rc, &parm.where.rc), "Got rect %s, expected %s.\n",
-                wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&win_rc));
+        todo_wine_if (!(style & WS_CHILD))
+            ok(EqualRect(&win_rc, &parm.where.rc), "Got rect %s, expected %s.\n",
+                    wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&win_rc));
 
         err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
@@ -1656,11 +1650,11 @@ static void test_video_window(void)
         ok(!IsWindowVisible(main_window), "Main window should be hidden.\n");
 
         hwnd = GetWindow(main_window, GW_CHILD);
-        todo_wine ok(hwnd != video_window,
-                "Video window (%p) and child window (%p) should be different.\n", video_window, hwnd);
+        ok(hwnd != video_window, "Video window (%p) and child window (%p) should be different.\n",
+                video_window, hwnd);
         style = GetWindowLongW(hwnd, GWL_STYLE);
         expected = WS_CHILD | WS_VISIBLE;
-        todo_wine ok(style == expected, "Child window %p: got style %#lx, expected %#lx.\n",
+        ok(style == expected, "Child window %p: got style %#lx, expected %#lx.\n",
                 hwnd, style, expected);
 
         style = GetWindowLongW(video_window, GWL_STYLE);
@@ -1687,30 +1681,28 @@ static void test_video_window(void)
 
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine_if ((testcase[i].style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-            ok(EqualRect(&parm.where.rc, &rc), "Got destination rect %s, expected %s.\n",
-                    wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&rc));
+        ok(EqualRect(&parm.where.rc, &rc), "Got destination rect %s, expected %s.\n",
+                wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&rc));
 
         /* MCI_PLAY shows current video window */
         err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(IsWindowVisible(main_window), "Main window should be shown.\n");
+        ok(IsWindowVisible(main_window), "Main window should be shown.\n");
         ok(IsWindow(video_window), "Video window should exist.\n");
-        ok(!IsWindowVisible(video_window), "Video window should be hidden.\n");
+        todo_wine ok(!IsWindowVisible(video_window), "Video window should be hidden.\n");
 
         /* video window is reset to the default window, which is visible again */
         parm.win.hWnd = NULL;
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(IsWindowVisible(main_window), "Main window should be shown.\n");
-        todo_wine ok(IsWindowVisible(video_window), "Video window should be shown.\n");
+        ok(IsWindowVisible(main_window), "Main window should be shown.\n");
+        ok(IsWindowVisible(video_window), "Video window should be shown.\n");
 
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         todo_wine ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
                 wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&src_rc));
 
-next:
         err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
 
