@@ -31,6 +31,7 @@ enum d2d_command_type
     D2D_COMMAND_CLEAR,
     D2D_COMMAND_DRAW_LINE,
     D2D_COMMAND_DRAW_GEOMETRY,
+    D2D_COMMAND_DRAW_RECTANGLE,
     D2D_COMMAND_PUSH_CLIP,
     D2D_COMMAND_POP_CLIP,
 };
@@ -103,6 +104,15 @@ struct d2d_command_draw_geometry
 {
     struct d2d_command c;
     ID2D1Geometry *geometry;
+    ID2D1Brush *brush;
+    float stroke_width;
+    ID2D1StrokeStyle *stroke_style;
+};
+
+struct d2d_command_draw_rectangle
+{
+    struct d2d_command c;
+    D2D1_RECT_F rect;
     ID2D1Brush *brush;
     float stroke_width;
     ID2D1StrokeStyle *stroke_style;
@@ -247,6 +257,13 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             {
                 const struct d2d_command_draw_geometry *c = data;
                 hr = ID2D1CommandSink_DrawGeometry(sink, c->geometry, c->brush, c->stroke_width,
+                        c->stroke_style);
+                break;
+            }
+            case D2D_COMMAND_DRAW_RECTANGLE:
+            {
+                const struct d2d_command_draw_rectangle *c = data;
+                hr = ID2D1CommandSink_DrawRectangle(sink, &c->rect, c->brush, c->stroke_width,
                         c->stroke_style);
                 break;
             }
@@ -566,6 +583,28 @@ void d2d_command_list_draw_geometry(struct d2d_command_list *command_list,
 
     command = d2d_command_list_require_space(command_list, sizeof(*command));
     command->c.op = D2D_COMMAND_DRAW_GEOMETRY;
+    command->brush = brush;
+    command->stroke_width = stroke_width;
+    command->stroke_style = stroke_style;
+}
+
+void d2d_command_list_draw_rectangle(struct d2d_command_list *command_list, const struct d2d_device_context *context,
+        const D2D1_RECT_F *rect, ID2D1Brush *orig_brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
+{
+    struct d2d_command_draw_rectangle *command;
+    ID2D1Brush *brush;
+
+    if (FAILED(d2d_command_list_create_brush(command_list, context, orig_brush, &brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        return;
+    }
+
+    d2d_command_list_reference_object(command_list, stroke_style);
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_DRAW_RECTANGLE;
+    command->rect = *rect;
     command->brush = brush;
     command->stroke_width = stroke_width;
     command->stroke_style = stroke_style;
