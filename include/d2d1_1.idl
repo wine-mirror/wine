@@ -575,7 +575,7 @@ interface ID2D1CommandSink : IUnknown
         [in] IDWriteRenderingParams *text_rendering_params
     );
     HRESULT SetTransform(
-        [in] D2D1_MATRIX_3X2_F *transform
+        [in] const D2D1_MATRIX_3X2_F *transform
     );
     HRESULT SetPrimitiveBlend(
         [in] D2D1_PRIMITIVE_BLEND primitive_blend
