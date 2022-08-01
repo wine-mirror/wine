@@ -25,6 +25,7 @@ enum d2d_command_type
     D2D_COMMAND_SET_ANTIALIAS_MODE,
     D2D_COMMAND_SET_TAGS,
     D2D_COMMAND_SET_TEXT_ANTIALIAS_MODE,
+    D2D_COMMAND_SET_TEXT_RENDERING_PARAMS,
     D2D_COMMAND_SET_TRANSFORM,
     D2D_COMMAND_SET_PRIMITIVE_BLEND,
     D2D_COMMAND_SET_UNIT_MODE,
@@ -60,6 +61,12 @@ struct d2d_command_set_text_antialias_mode
 {
     struct d2d_command c;
     D2D1_TEXT_ANTIALIAS_MODE mode;
+};
+
+struct d2d_command_set_text_rendering_params
+{
+    struct d2d_command c;
+    IDWriteRenderingParams *params;
 };
 
 struct d2d_command_set_transform
@@ -237,6 +244,12 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             {
                 const struct d2d_command_set_text_antialias_mode *c = data;
                 hr = ID2D1CommandSink_SetTextAntialiasMode(sink, c->mode);
+                break;
+            }
+            case D2D_COMMAND_SET_TEXT_RENDERING_PARAMS:
+            {
+                const struct d2d_command_set_text_rendering_params *c = data;
+                hr = ID2D1CommandSink_SetTextRenderingParams(sink, c->params);
                 break;
             }
             case D2D_COMMAND_SET_TRANSFORM:
@@ -537,6 +550,7 @@ void d2d_command_list_begin_draw(struct d2d_command_list *command_list,
     d2d_command_list_set_text_antialias_mode(command_list, context->drawing_state.textAntialiasMode);
     d2d_command_list_set_tags(command_list, context->drawing_state.tag1, context->drawing_state.tag2);
     d2d_command_list_set_transform(command_list, &context->drawing_state.transform);
+    d2d_command_list_set_text_rendering_params(command_list, context->text_rendering_params);
 
     command_list->state = D2D_COMMAND_LIST_STATE_OPEN;
 }
@@ -685,4 +699,18 @@ void d2d_command_list_fill_rectangle(struct d2d_command_list *command_list,
     command->c.op = D2D_COMMAND_FILL_RECTANGLE;
     command->rect = *rect;
     command->brush = brush;
+}
+
+void d2d_command_list_set_text_rendering_params(struct d2d_command_list *command_list,
+        IDWriteRenderingParams *params)
+{
+    struct d2d_command_set_text_rendering_params *command;
+
+    if (!params) return;
+
+    d2d_command_list_reference_object(command_list, params);
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_SET_TEXT_RENDERING_PARAMS;
+    command->params = params;
 }

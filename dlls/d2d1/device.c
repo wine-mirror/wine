@@ -1539,10 +1539,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTextRenderingParams(ID2D1Dev
     TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_set_text_rendering_params(context->target.command_list, text_rendering_params);
 
     if (text_rendering_params)
         IDWriteRenderingParams_AddRef(text_rendering_params);
