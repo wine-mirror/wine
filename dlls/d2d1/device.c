@@ -1474,10 +1474,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTransform(ID2D1DeviceContext
     TRACE("iface %p, transform %p.\n", iface, transform);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_set_transform(context->target.command_list, transform);
 
     context->drawing_state.transform = *transform;
 }
@@ -1500,10 +1497,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetAntialiasMode(ID2D1DeviceCon
     TRACE("iface %p, antialias_mode %#x stub!\n", iface, antialias_mode);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_set_antialias_mode(context->target.command_list, antialias_mode);
 
     context->drawing_state.antialiasMode = antialias_mode;
 }
@@ -1525,10 +1519,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTextAntialiasMode(ID2D1Devic
     TRACE("iface %p, antialias_mode %#x.\n", iface, antialias_mode);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_set_text_antialias_mode(context->target.command_list, antialias_mode);
 
     context->drawing_state.textAntialiasMode = antialias_mode;
 }
@@ -1580,10 +1571,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTags(ID2D1DeviceContext1 *if
     TRACE("iface %p, tag1 %s, tag2 %s.\n", iface, wine_dbgstr_longlong(tag1), wine_dbgstr_longlong(tag2));
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_set_tags(context->target.command_list, tag1, tag2);
 
     context->drawing_state.tag1 = tag1;
     context->drawing_state.tag2 = tag2;
@@ -1791,10 +1779,7 @@ static void STDMETHODCALLTYPE d2d_device_context_BeginDraw(ID2D1DeviceContext1 *
     TRACE("iface %p.\n", iface);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_begin_draw(context->target.command_list, context);
 
     memset(&context->error, 0, sizeof(context->error));
 }
@@ -2351,17 +2336,14 @@ static void STDMETHODCALLTYPE d2d_device_context_SetUnitMode(ID2D1DeviceContext1
 
     TRACE("iface %p, unit_mode %#x.\n", iface, unit_mode);
 
-    if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
-
     if (unit_mode != D2D1_UNIT_MODE_DIPS && unit_mode != D2D1_UNIT_MODE_PIXELS)
     {
         WARN("Unknown unit mode %#x.\n", unit_mode);
         return;
     }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_unit_mode(context->target.command_list, unit_mode);
 
     context->drawing_state.unitMode = unit_mode;
 }

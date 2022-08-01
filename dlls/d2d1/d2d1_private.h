@@ -705,16 +705,39 @@ struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
         const struct d2d_effect_properties *properties, const WCHAR *name) DECLSPEC_HIDDEN;
 void d2d_effect_properties_cleanup(struct d2d_effect_properties *props) DECLSPEC_HIDDEN;
 
+enum d2d_command_list_state
+{
+    D2D_COMMAND_LIST_STATE_INITIAL = 0,
+    D2D_COMMAND_LIST_STATE_ERROR,
+    D2D_COMMAND_LIST_STATE_OPEN,
+    D2D_COMMAND_LIST_STATE_CLOSED,
+};
+
 struct d2d_command_list
 {
     ID2D1CommandList ID2D1CommandList_iface;
     LONG refcount;
 
     ID2D1Factory *factory;
+    enum d2d_command_list_state state;
+
+    size_t size;
+    size_t capacity;
+    void *data;
 };
 
 HRESULT d2d_command_list_create(ID2D1Factory *factory, struct d2d_command_list **command_list) DECLSPEC_HIDDEN;
 struct d2d_command_list *unsafe_impl_from_ID2D1CommandList(ID2D1CommandList *iface) DECLSPEC_HIDDEN;
+void d2d_command_list_begin_draw(struct d2d_command_list *command_list, const struct d2d_device_context *context) DECLSPEC_HIDDEN;
+void d2d_command_list_set_antialias_mode(struct d2d_command_list *command_list, D2D1_ANTIALIAS_MODE mode) DECLSPEC_HIDDEN;
+void d2d_command_list_set_primitive_blend(struct d2d_command_list *command_list,
+        D2D1_PRIMITIVE_BLEND primitive_blend) DECLSPEC_HIDDEN;
+void d2d_command_list_set_unit_mode(struct d2d_command_list *command_list, D2D1_UNIT_MODE mode) DECLSPEC_HIDDEN;
+void d2d_command_list_set_text_antialias_mode(struct d2d_command_list *command_list,
+        D2D1_TEXT_ANTIALIAS_MODE mode) DECLSPEC_HIDDEN;
+void d2d_command_list_set_tags(struct d2d_command_list *command_list, D2D1_TAG tag1, D2D1_TAG tag2) DECLSPEC_HIDDEN;
+void d2d_command_list_set_transform(struct d2d_command_list *command_list,
+        const D2D1_MATRIX_3X2_F *transform) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
