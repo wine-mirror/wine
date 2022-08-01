@@ -250,7 +250,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
     if (IsEqualGUID(&input_info.guidMajorType, &MFMediaType_Audio))
         category = decoder ? MFT_CATEGORY_AUDIO_DECODER : MFT_CATEGORY_AUDIO_EFFECT;
     else if (IsEqualGUID(&input_info.guidMajorType, &MFMediaType_Video))
-        category = decoder ? MFT_CATEGORY_VIDEO_DECODER : MFT_CATEGORY_VIDEO_EFFECT;
+        category = decoder ? MFT_CATEGORY_VIDEO_DECODER : MFT_CATEGORY_VIDEO_PROCESSOR;
     else
         return MF_E_INVALIDMEDIATYPE;
 
@@ -293,6 +293,8 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         IMFActivate_Release(activates[i]);
     CoTaskMemFree(activates);
 
+    if (!count)
+        return MF_E_TOPO_CODEC_NOT_FOUND;
     return hr;
 }
 
