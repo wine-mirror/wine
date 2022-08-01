@@ -40,17 +40,69 @@ enum ProviderOptions {
     ProviderOptions_UseClientCoordinates   = 0x0100,
 };
 
+enum StructureChangeType {
+    StructureChangeType_ChildAdded          = 0x0000,
+    StructureChangeType_ChildRemoved        = 0x0001,
+    StructureChangeType_ChildrenInvalidated = 0x0002,
+    StructureChangeType_ChildrenBulkAdded   = 0x0003,
+    StructureChangeType_ChildrenBulkRemoved = 0x0004,
+    StructureChangeType_ChildrenReordered   = 0x0005,
+};
+
+enum TextEditChangeType {
+    TextEditChangeType_None                 = 0x0000,
+    TextEditChangeType_AutoCorrect          = 0x0001,
+    TextEditChangeType_Composition          = 0x0002,
+    TextEditChangeType_CompositionFinalized = 0x0003,
+    TextEditChangeType_AutoComplete         = 0x0004,
+};
+
+enum OrientationType {
+    OrientationType_None       = 0x0000,
+    OrientationType_Horizontal = 0x0001,
+    OrientationType_Vertical   = 0x0002,
+};
+
+enum WindowVisualState {
+    WindowVisualState_Normal    = 0x0000,
+    WindowVisualState_Maximized = 0x0001,
+    WindowVisualState_Minimized = 0x0002,
+};
+
+enum WindowInteractionState {
+    WindowInteractionState_Running                 = 0x0000,
+    WindowInteractionState_Closing                 = 0x0001,
+    WindowInteractionState_ReadyForUserInteraction = 0x0002,
+    WindowInteractionState_BlockedByModalWindow    = 0x0003,
+    WindowInteractionState_NotResponding           = 0x0004,
+};
+
+enum LiveSetting {
+    Off       = 0x0000,
+    Polite    = 0x0001,
+    Assertive = 0x0002,
+};
+
 typedef int PROPERTYID;
 typedef int PATTERNID;
 typedef int EVENTID;
 typedef int TEXTATTRIBUTEID;
 typedef int CONTROLTYPEID;
+typedef int LANDMARKTYPEID;
+typedef int METADATAID;
+typedef int HEADINGLEVELID;
 
 struct UiaRect {
     double left;
     double top;
     double width;
     double height;
+};
+
+struct UiaChangeInfo {
+    int     uiaId;
+    VARIANT payload;
+    VARIANT extraInfo;
 };
 
 [

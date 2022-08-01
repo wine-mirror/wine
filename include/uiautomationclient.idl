@@ -19,6 +19,53 @@
 #define DO_NO_IMPORTS
 import "uiautomationcore.idl";
 
+cpp_quote( "#ifndef _INC_UIAUTOMATIONCOREAPI" )
+
+enum TreeScope {
+    TreeScope_Element     = 0x01,
+    TreeScope_Children    = 0x02,
+    TreeScope_Descendants = 0x04,
+    TreeScope_Parent      = 0x08,
+    TreeScope_Ancestors   = 0x10,
+    TreeScope_SubTree     = TreeScope_Element | TreeScope_Children | TreeScope_Descendants,
+};
+
+enum PropertyConditionFlags {
+    PropertyConditionFlags_None       = 0x00,
+    PropertyConditionFlags_IgnoreCase = 0x01,
+};
+
+enum AutomationElementMode {
+    AutomationElementMode_None = 0x00,
+    AutomationElementMode_Full = 0x01,
+};
+
+enum TreeTraversalOptions {
+    TreeTraversalOptions_Default          = 0x00,
+    TreeTraversalOptions_PostOrder        = 0x01,
+    TreeTraversalOptions_LastToFirstOrder = 0x02,
+};
+
+enum ConnectionRecoveryBehaviorOptions {
+    ConnectionRecoveryBehaviorOptions_Disabled = 0x00,
+    ConnectionRecoveryBehaviorOptions_Enabled  = 0x01,
+};
+
+enum CoalesceEventsOptions {
+    CoalesceEventsOptions_Disabled = 0x00,
+    CoalesceEventsOptions_Enabled  = 0x01,
+};
+
+cpp_quote( "#endif" )
+
+struct ExtendedProperty
+{
+    BSTR PropertyName;
+    BSTR PropertyValue;
+};
+
+typedef void * UIA_HWND;
+
 [
     uuid(944de083-8fb8-45cf-bcb7-c477acb2f897),
     lcid(0),
@@ -345,4 +392,1016 @@ library UIAutomationClient {
     /*
     };
     */
+
+    interface IUIAutomationElement;
+    interface IUIAutomationElementArray;
+
+    [
+        object,
+        uuid(352ffba8-0973-437c-a61f-f64cafd81df9),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationCondition : IUnknown
+    {
+    }
+
+    [
+        object,
+        uuid(1b4e1f2e-75eb-4d0b-8952-5a69988e2307),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationBoolCondition : IUIAutomationCondition
+    {
+        [propget] HRESULT BooleanValue([out, retval] BOOL *boolVal);
+    }
+
+    [
+        object,
+        uuid(99ebf2cb-5578-4267-9ad4-afd6ea77e94b),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationPropertyCondition : IUIAutomationCondition
+    {
+        [propget] HRESULT PropertyId([out, retval] PROPERTYID *propertyId);
+        [propget] HRESULT PropertyValue([out, retval] VARIANT *propertyValue);
+        [propget] HRESULT PropertyConditionFlags([out, retval] enum PropertyConditionFlags *flags);
+    }
+
+    [
+        object,
+        uuid(a7d0af36-b912-45fe-9855-091ddc174aec),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationAndCondition : IUIAutomationCondition
+    {
+        [propget] HRESULT ChildCount([out, retval] int *childCount);
+
+        HRESULT GetChildrenAsNativeArray(
+                [out, size_is( ,*childArrayCount)] IUIAutomationCondition ***childArray,
+                [out] int *childArrayCount);
+
+        HRESULT GetChildren([out, retval] SAFEARRAY(IUIAutomationCondition) *childArray);
+    }
+
+    [
+        object,
+        uuid(8753f032-3db1-47b5-a1fc-6e34a266c712),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationOrCondition : IUIAutomationCondition
+    {
+        [propget] HRESULT ChildCount([out, retval] int *childCount);
+
+        HRESULT GetChildrenAsNativeArray(
+                [out, size_is( ,*childArrayCount)] IUIAutomationCondition ***childArray,
+                [out] int *childArrayCount);
+
+        HRESULT GetChildren([out, retval] SAFEARRAY(IUIAutomationCondition) *childArray);
+    }
+
+    [
+        object,
+        uuid(f528b657-847b-498c-8896-d52b565407a1),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationNotCondition : IUIAutomationCondition
+    {
+        HRESULT GetChild([out, retval] IUIAutomationCondition **condition);
+    }
+
+    [
+        object,
+        uuid(b32a92b5-bc25-4078-9c08-d7ee95c48e03),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationCacheRequest : IUnknown
+    {
+        HRESULT AddProperty([in] PROPERTYID propertyId);
+        HRESULT AddPattern([in] PATTERNID patternId);
+        HRESULT Clone([out, retval] IUIAutomationCacheRequest **clonedRequest);
+
+        [propget] HRESULT TreeScope([out, retval] enum TreeScope *scope);
+        [propput] HRESULT TreeScope([in] enum TreeScope scope);
+        [propget] HRESULT TreeFilter([out, retval] IUIAutomationCondition **filter);
+        [propput] HRESULT TreeFilter([in] IUIAutomationCondition *filter);
+        [propget] HRESULT AutomationElementMode([out, retval] enum AutomationElementMode *mode);
+        [propput] HRESULT AutomationElementMode([in] enum AutomationElementMode mode);
+    }
+
+    [
+        object,
+        uuid(4042c624-389c-4afc-a630-9df854a541fc),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationTreeWalker : IUnknown
+    {
+        HRESULT GetParentElement(
+                [in] IUIAutomationElement *element,
+                [out, retval] IUIAutomationElement **parent);
+        HRESULT GetFirstChildElement(
+                [in] IUIAutomationElement *element,
+                [out, retval] IUIAutomationElement **first);
+        HRESULT GetLastChildElement(
+                [in] IUIAutomationElement *element,
+                [out, retval] IUIAutomationElement **last);
+        HRESULT GetNextSiblingElement(
+                [in] IUIAutomationElement *element,
+                [out, retval] IUIAutomationElement **next);
+        HRESULT GetPreviousSiblingElement(
+                [in] IUIAutomationElement *element,
+                [out, retval] IUIAutomationElement **previous);
+        HRESULT NormalizeElement(
+                [in] IUIAutomationElement *element,
+                [out, retval] IUIAutomationElement **normalized);
+
+        HRESULT GetParentElementBuildCache(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **parent);
+        HRESULT GetFirstChildElementBuildCache(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **first);
+        HRESULT GetLastChildElementBuildCache(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **last);
+        HRESULT GetNextSiblingElementBuildCache(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **next);
+        HRESULT GetPreviousSiblingElementBuildCache(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **previous);
+        HRESULT NormalizeElementBuildCache(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **normalized);
+
+        [propget] HRESULT Condition([out, retval] IUIAutomationCondition **condition);
+    }
+
+    [
+        object,
+        uuid(146c3c17-f12e-4e22-8c27-f894b9b79c69),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationEventHandler : IUnknown
+    {
+        HRESULT HandleAutomationEvent(
+                [in] IUIAutomationElement *sender,
+                [in] EVENTID eventId);
+    }
+
+    [
+        object,
+        uuid(40cd37d4-c756-4b0c-8c6f-bddfeeb13b50),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationPropertyChangedEventHandler : IUnknown
+    {
+        HRESULT HandlePropertyChangedEvent(
+                [in] IUIAutomationElement *sender,
+                [in] PROPERTYID propertyId,
+                [in] VARIANT newValue);
+    }
+
+    [
+        object,
+        uuid(e81d1b4e-11c5-42f8-9754-e7036c79f054),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationStructureChangedEventHandler : IUnknown
+    {
+        HRESULT HandleStructureChangedEvent(
+                [in] IUIAutomationElement *sender,
+                [in] enum StructureChangeType changeType,
+                [in] SAFEARRAY(int) runtimeId);
+    }
+
+    [
+        object,
+        uuid(c270f6b5-5c69-4290-9745-7a7f97169468),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationFocusChangedEventHandler : IUnknown
+    {
+        HRESULT HandleFocusChangedEvent([in] IUIAutomationElement *sender);
+    }
+
+    [
+        object,
+        uuid(92faa680-e704-4156-931a-e32d5bb38f3f),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationTextEditTextChangedEventHandler : IUnknown
+    {
+        HRESULT HandleTextEditTextChangedEvent(
+                [in] IUIAutomationElement *sender,
+                [in] enum TextEditChangeType textEditChangeType,
+                [in] SAFEARRAY(BSTR) eventStrings);
+    }
+
+    [
+        object,
+        uuid(58edca55-2c3e-4980-b1b9-56c17f27a2a0),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationChangesEventHandler : IUnknown
+    {
+        HRESULT HandleChangesEvent(
+                [in] IUIAutomationElement *sender,
+                [in, size_is(changesCount)] struct UiaChangeInfo *uiaChanges,
+                [in] int changesCount);
+    }
+
+    interface IUIAutomationNotificationEventHandler;
+
+    interface IUIAutomationInvokePattern;
+    interface IUIAutomationDockPattern;
+    interface IUIAutomationExpandCollapsePattern;
+    interface IUIAutomationGridPattern;
+    interface IUIAutomationGridItemPattern;
+    interface IUIAutomationMultipleViewPattern;
+    interface IUIAutomationObjectModelPattern;
+    interface IUIAutomationRangeValuePattern;
+    interface IUIAutomationScrollPattern;
+    interface IUIAutomationScrollItemPattern;
+    interface IUIAutomationSelectionPattern;
+    interface IUIAutomationSelectionItemPattern;
+    interface IUIAutomationSynchronizedInputPattern;
+    interface IUIAutomationTablePattern;
+    interface IUIAutomationTableItemPattern;
+    interface IUIAutomationTogglePattern;
+    interface IUIAutomationTransformPattern;
+
+    [
+        object,
+        uuid(a94cd8b1-0844-4cd6-9d2d-640537ab39e9),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationValuePattern : IUnknown
+    {
+        HRESULT SetValue([in] BSTR val);
+
+        [propget] HRESULT CurrentValue([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentIsReadOnly([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedValue([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedIsReadOnly([out, retval] BOOL *retVal);
+    }
+
+    [
+        object,
+        uuid(0faef453-9208-43ef-bbb2-3b485177864f),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationWindowPattern : IUnknown
+    {
+        HRESULT Close();
+
+        HRESULT WaitForInputIdle(
+                [in] int milliseconds,
+                [out, retval] BOOL *success);
+        HRESULT SetWindowVisualState([in] enum WindowVisualState state);
+
+        [propget] HRESULT CurrentCanMaximize([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentCanMinimize([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentIsModal([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentIsTopmost([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentWindowVisualState([out, retval] enum WindowVisualState *retVal);
+        [propget] HRESULT CurrentWindowInteractionState([out, retval] enum WindowInteractionState *retVal);
+        [propget] HRESULT CachedCanMaximize([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedCanMinimize([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsModal([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsTopmost([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedWindowVisualState([out, retval] enum WindowVisualState *retVal);
+        [propget] HRESULT CachedWindowInteractionState([out, retval] enum WindowInteractionState *retVal);
+    }
+
+    interface IUIAutomationTextRange;
+    interface IUIAutomationTextRange2;
+    interface IUIAutomationTextRangeArray;
+    interface IUIAutomationTextPattern;
+    interface IUIAutomationTextPattern2;
+    interface IUIAutomationTextEditPattern;
+    interface IUIAutomationCustomNavigationPattern;
+    interface IUIAutomationActiveTextPositionChangedEventHandler;
+
+    [
+        object,
+        uuid(828055ad-355b-4435-86d5-3b51c14a9b1b),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationLegacyIAccessiblePattern: IUnknown
+    {
+        HRESULT Select(long flagsSelect);
+        HRESULT DoDefaultAction();
+        HRESULT SetValue(LPCWSTR szValue);
+
+        [propget] HRESULT CurrentChildId([out, retval] int *pRetVal);
+        [propget] HRESULT CurrentName([out, retval] BSTR *pszName);
+        [propget] HRESULT CurrentValue([out, retval] BSTR *pszValue);
+        [propget] HRESULT CurrentDescription([out, retval] BSTR *pszDescription);
+        [propget] HRESULT CurrentRole([out, retval] DWORD *pdwRole);
+        [propget] HRESULT CurrentState([out, retval] DWORD *pdwState);
+        [propget] HRESULT CurrentHelp([out, retval] BSTR *pszHelp);
+        [propget] HRESULT CurrentKeyboardShortcut([out, retval] BSTR *pszKeyboardShortcut);
+        HRESULT GetCurrentSelection([out, retval] IUIAutomationElementArray **pvarSelectedChildren);
+        [propget] HRESULT CurrentDefaultAction([out, retval] BSTR *pszDefaultAction);
+
+        [propget] HRESULT CachedChildId([out, retval] int *pRetVal);
+        [propget] HRESULT CachedName([out, retval] BSTR *pszName);
+        [propget] HRESULT CachedValue([out, retval] BSTR *pszValue);
+        [propget] HRESULT CachedDescription([out, retval] BSTR *pszDescription);
+        [propget] HRESULT CachedRole([out, retval] DWORD *pdwRole);
+        [propget] HRESULT CachedState([out, retval] DWORD *pdwState);
+        [propget] HRESULT CachedHelp([out, retval] BSTR *pszHelp);
+        [propget] HRESULT CachedKeyboardShortcut([out, retval] BSTR *pszKeyboardShortcut);
+        HRESULT GetCachedSelection([out, retval] IUIAutomationElementArray **pvarSelectedChildren);
+        [propget] HRESULT CachedDefaultAction([out, retval] BSTR *pszDefaultAction);
+
+        HRESULT GetIAccessible([out, retval] IAccessible **ppAccessible);
+    };
+
+    interface IUIAutomationItemContainerPattern;
+    interface IUIAutomationVirtualizedItemPattern;
+    interface IUIAutomationAnnotationPattern;
+    interface IUIAutomationStylesPattern;
+    interface IUIAutomationSpreadsheetPattern;
+    interface IUIAutomationSpreadsheetItemPattern;
+    interface IUIAutomationTransformPattern2;
+    interface IUIAutomationTextChildPattern;
+    interface IUIAutomationDragPattern;
+    interface IUIAutomationDropTargetPattern;
+
+    [
+        object,
+        uuid(d22108aa-8ac5-49a5-837b-37bbb3d7591e),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement : IUnknown
+    {
+        HRESULT SetFocus();
+        HRESULT GetRuntimeId([out, retval] SAFEARRAY(int) *runtimeId);
+
+        HRESULT FindFirst(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [out, retval] IUIAutomationElement **found);
+        HRESULT FindAll(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [out, retval] IUIAutomationElementArray **found);
+
+        HRESULT FindFirstBuildCache(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **found);
+        HRESULT FindAllBuildCache(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElementArray **found);
+
+        HRESULT BuildUpdatedCache(
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **updatedElement);
+
+        HRESULT GetCurrentPropertyValue(
+                [in] PROPERTYID propertyId,
+                [out, retval] VARIANT *retVal);
+        HRESULT GetCurrentPropertyValueEx(
+                [in] PROPERTYID propertyId,
+                [in] BOOL ignoreDefaultValue,
+                [out, retval] VARIANT *retVal);
+
+        HRESULT GetCachedPropertyValue(
+                [in] PROPERTYID propertyId,
+                [out, retval] VARIANT *retVal);
+        HRESULT GetCachedPropertyValueEx(
+                [in] PROPERTYID propertyId,
+                [in] BOOL ignoreDefaultValue,
+                [out, retval] VARIANT *retVal);
+
+        HRESULT GetCurrentPatternAs(
+                [in] PATTERNID patternId,
+                [in] REFIID riid,
+                [out, iid_is(riid), retval] void **patternObject);
+        HRESULT GetCachedPatternAs(
+                [in] PATTERNID patternId,
+                [in] REFIID riid,
+                [out, iid_is(riid), retval] void **patternObject);
+
+        HRESULT GetCurrentPattern(
+                [in] PATTERNID patternId,
+                [out, retval] IUnknown **patternObject);
+        HRESULT GetCachedPattern(
+                [in] PATTERNID patternId,
+                [out, retval] IUnknown **patternObject);
+
+        HRESULT GetCachedParent([out, retval] IUIAutomationElement **parent);
+        HRESULT GetCachedChildren([out, retval] IUIAutomationElementArray **children);
+
+        [propget] HRESULT CurrentProcessId([out, retval] int *retVal);
+        [propget] HRESULT CurrentControlType([out, retval] CONTROLTYPEID *retVal);
+        [propget] HRESULT CurrentLocalizedControlType([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentName([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentAcceleratorKey([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentAccessKey([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentHasKeyboardFocus([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentIsKeyboardFocusable([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentIsEnabled([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentAutomationId([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentClassName([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentHelpText([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentCulture([out, retval] int *retVal);
+        [propget] HRESULT CurrentIsControlElement([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentIsContentElement([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentIsPassword([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentNativeWindowHandle([out, retval] UIA_HWND *retVal);
+        [propget] HRESULT CurrentItemType([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentIsOffscreen([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentOrientation([out, retval] enum OrientationType *retVal);
+        [propget] HRESULT CurrentFrameworkId([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentIsRequiredForForm([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentItemStatus([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentBoundingRectangle([out, retval] RECT *retVal);
+        [propget] HRESULT CurrentLabeledBy([out, retval] IUIAutomationElement **retVal);
+        [propget] HRESULT CurrentAriaRole([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentAriaProperties([out, retval] BSTR *retVal);
+        [propget] HRESULT CurrentIsDataValidForForm([out, retval] BOOL *retVal);
+        [propget] HRESULT CurrentControllerFor([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CurrentDescribedBy([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CurrentFlowsTo([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CurrentProviderDescription([out, retval] BSTR *retVal);
+
+        [propget] HRESULT CachedProcessId([out, retval] int *retVal);
+        [propget] HRESULT CachedControlType([out, retval] CONTROLTYPEID *retVal);
+        [propget] HRESULT CachedLocalizedControlType([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedName([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedAcceleratorKey([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedAccessKey([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedHasKeyboardFocus([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsKeyboardFocusable([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsEnabled([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedAutomationId([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedClassName([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedHelpText([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedCulture([out, retval] int *retVal);
+        [propget] HRESULT CachedIsControlElement([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsContentElement([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsPassword([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedNativeWindowHandle([out, retval] UIA_HWND *retVal);
+        [propget] HRESULT CachedItemType([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedIsOffscreen([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedOrientation([out, retval] enum OrientationType *retVal);
+        [propget] HRESULT CachedFrameworkId([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedIsRequiredForForm([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedItemStatus([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedBoundingRectangle([out, retval] RECT *retVal);
+        [propget] HRESULT CachedLabeledBy([out, retval] IUIAutomationElement **retVal);
+        [propget] HRESULT CachedAriaRole([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedAriaProperties([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedIsDataValidForForm([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedControllerFor([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CachedDescribedBy([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CachedFlowsTo([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CachedProviderDescription([out, retval] BSTR *retVal);
+
+        HRESULT GetClickablePoint(
+                [out] POINT *clickable,
+                [out, retval] BOOL *gotClickable);
+    }
+
+    [
+        object,
+        uuid(6749c683-f70d-4487-a698-5f79d55290d6),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement2 : IUIAutomationElement
+    {
+        [propget] HRESULT CurrentOptimizeForVisualContent([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedOptimizeForVisualContent([out, retval] BOOL *retVal);
+
+        [propget] HRESULT CurrentLiveSetting([out, retval] enum LiveSetting *retVal);
+        [propget] HRESULT CachedLiveSetting([out, retval] enum LiveSetting *retVal);
+
+        [propget] HRESULT CurrentFlowsFrom([out, retval] IUIAutomationElementArray **retVal);
+        [propget] HRESULT CachedFlowsFrom([out, retval] IUIAutomationElementArray **retVal);
+    }
+
+    [
+        object,
+        uuid(8471df34-aee0-4a01-a7de-7db9af12c296),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement3 : IUIAutomationElement2
+    {
+        HRESULT ShowContextMenu();
+
+        [propget] HRESULT CurrentIsPeripheral([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsPeripheral([out, retval] BOOL *retVal);
+    }
+
+    [
+        object,
+        uuid(3b6e233c-52fb-4063-a4c9-77c075c2a06b),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement4 : IUIAutomationElement3
+    {
+        [propget] HRESULT CurrentPositionInSet([out, retval] int *retVal);
+        [propget] HRESULT CurrentSizeOfSet([out, retval] int *retVal);
+        [propget] HRESULT CurrentLevel([out, retval] int *retVal);
+        [propget] HRESULT CurrentAnnotationTypes([out, retval] SAFEARRAY(int) *retVal);
+        [propget] HRESULT CurrentAnnotationObjects([out, retval] IUIAutomationElementArray **retVal);
+
+        [propget] HRESULT CachedPositionInSet([out, retval] int *retVal);
+        [propget] HRESULT CachedSizeOfSet([out, retval] int *retVal);
+        [propget] HRESULT CachedLevel([out, retval] int *retVal);
+        [propget] HRESULT CachedAnnotationTypes([out, retval] SAFEARRAY(int) *retVal);
+        [propget] HRESULT CachedAnnotationObjects([out, retval] IUIAutomationElementArray **retVal);
+    }
+
+    [
+        object,
+        uuid(98141c1d-0d0e-4175-bbe2-6bff455842a7),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement5 : IUIAutomationElement4
+    {
+        [propget] HRESULT CurrentLandmarkType([out, retval] LANDMARKTYPEID *retVal);
+        [propget] HRESULT CurrentLocalizedLandmarkType([out, retval] BSTR *retVal);
+
+        [propget] HRESULT CachedLandmarkType([out, retval] LANDMARKTYPEID *retVal);
+        [propget] HRESULT CachedLocalizedLandmarkType([out, retval] BSTR *retVal);
+    }
+
+    [
+        object,
+        uuid(4780d450-8bca-4977-afa5-a4a517f555e3),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement6 : IUIAutomationElement5
+    {
+        [propget] HRESULT CurrentFullDescription([out, retval] BSTR *retVal);
+        [propget] HRESULT CachedFullDescription([out, retval] BSTR *retVal);
+    }
+
+    [
+        object,
+        uuid(204e8572-cfc3-4c11-b0c8-7da7420750b7),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement7 : IUIAutomationElement6
+    {
+        HRESULT FindFirstWithOptions(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [in] enum TreeTraversalOptions traversalOptions,
+                [in] IUIAutomationElement *root,
+                [out, retval] IUIAutomationElement **found);
+        HRESULT FindAllWithOptions(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [in] enum TreeTraversalOptions traversalOptions,
+                [in] IUIAutomationElement *root,
+                [out, retval] IUIAutomationElementArray **found);
+
+        HRESULT FindFirstWithOptionsBuildCache(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] enum TreeTraversalOptions traversalOptions,
+                [in] IUIAutomationElement *root,
+                [out, retval] IUIAutomationElement **found);
+        HRESULT FindAllWithOptionsBuildCache(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCondition *condition,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] enum TreeTraversalOptions traversalOptions,
+                [in] IUIAutomationElement *root,
+                [out, retval] IUIAutomationElementArray **found);
+
+        HRESULT GetCurrentMetadataValue(
+                [in] int targetId,
+                [in] METADATAID metadataId,
+                [out, retval] VARIANT *returnVal);
+    }
+
+    [
+        object,
+        uuid(8c60217d-5411-4cde-bcc0-1ceda223830c),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement8 : IUIAutomationElement7
+    {
+        [propget] HRESULT CurrentHeadingLevel([out, retval] HEADINGLEVELID *retVal);
+        [propget] HRESULT CachedHeadingLevel([out, retval] HEADINGLEVELID *retVal);
+    }
+
+    [
+        object,
+        uuid(39325fac-039d-440e-a3a3-5eb81a5cecc3),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElement9 : IUIAutomationElement8
+    {
+        [propget] HRESULT CurrentIsDialog([out, retval] BOOL *retVal);
+        [propget] HRESULT CachedIsDialog([out, retval] BOOL *retVal);
+    }
+
+    [
+        object,
+        uuid(14314595-b4bc-4055-95f2-58f2e42c9855),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationElementArray : IUnknown
+    {
+        [propget] HRESULT Length([out, retval] int *length);
+
+        HRESULT GetElement(
+                [in] int index,
+                [out, retval] IUIAutomationElement **element);
+    }
+
+    interface IUIAutomationProxyFactory;
+    interface IUIAutomationProxyFactoryEntry;
+    interface IUIAutomationProxyFactoryMapping;
+
+    [
+        object,
+        uuid(c9ee12f2-c13b-4408-997c-639914377f4e),
+        pointer_default(unique)
+    ]
+    interface IUIAutomationEventHandlerGroup : IUnknown
+    {
+        HRESULT AddActiveTextPositionChangedEventHandler(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationActiveTextPositionChangedEventHandler *handler);
+        HRESULT AddAutomationEventHandler(
+                [in] EVENTID eventId,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationEventHandler *handler);
+        HRESULT AddChangesEventHandler(
+                [in] enum TreeScope scope,
+                [in, size_is(changesCount)] int *changeTypes,
+                [in] int changesCount,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationChangesEventHandler *handler);
+        HRESULT AddNotificationEventHandler(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationNotificationEventHandler *handler);
+        HRESULT AddPropertyChangedEventHandler(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationPropertyChangedEventHandler *handler,
+                [in, size_is(propertyCount)] PROPERTYID *propertyArray,
+                [in] int propertyCount);
+        HRESULT AddStructureChangedEventHandler(
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationStructureChangedEventHandler *handler);
+        HRESULT AddTextEditTextChangedEventHandler(
+                [in] enum TreeScope scope,
+                [in] enum TextEditChangeType textEditChangeType,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationTextEditTextChangedEventHandler *handler);
+    }
+
+    [
+        object,
+        uuid(30cbe57d-d9d0-452a-ab13-7ac5ac4825ee),
+        pointer_default(unique)
+    ]
+    interface IUIAutomation : IUnknown
+    {
+        HRESULT CompareElements(
+                [in] IUIAutomationElement *el1,
+                [in] IUIAutomationElement *el2,
+                [out, retval] BOOL *areSame);
+        HRESULT CompareRuntimeIds(
+                [in] SAFEARRAY(int) runtimeId1,
+                [in] SAFEARRAY(int) runtimeId2,
+                [out, retval] BOOL *areSame);
+
+        HRESULT GetRootElement([out, retval] IUIAutomationElement **root);
+        HRESULT ElementFromHandle(
+                [in] UIA_HWND hwnd,
+                [out, retval] IUIAutomationElement **element);
+        HRESULT ElementFromPoint(
+                [in] POINT pt,
+                [out, retval] IUIAutomationElement **element);
+        HRESULT GetFocusedElement([out, retval] IUIAutomationElement **element);
+
+        HRESULT GetRootElementBuildCache(
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **root);
+        HRESULT ElementFromHandleBuildCache(
+                [in] UIA_HWND hwnd,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **element);
+        HRESULT ElementFromPointBuildCache(
+                [in] POINT pt,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **element);
+        HRESULT GetFocusedElementBuildCache(
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **element);
+
+        HRESULT CreateTreeWalker(
+                [in] IUIAutomationCondition *pCondition,
+                [out, retval] IUIAutomationTreeWalker **walker);
+
+        [propget] HRESULT ControlViewWalker([out, retval] IUIAutomationTreeWalker **walker);
+        [propget] HRESULT ContentViewWalker([out, retval] IUIAutomationTreeWalker **walker);
+        [propget] HRESULT RawViewWalker([out, retval] IUIAutomationTreeWalker **walker);
+
+        [propget] HRESULT RawViewCondition([out, retval] IUIAutomationCondition **condition);
+        [propget] HRESULT ControlViewCondition([out, retval] IUIAutomationCondition **condition);
+        [propget] HRESULT ContentViewCondition([out, retval] IUIAutomationCondition **condition);
+
+        HRESULT CreateCacheRequest([out, retval] IUIAutomationCacheRequest **cacheRequest);
+
+        HRESULT CreateTrueCondition([out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreateFalseCondition([out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreatePropertyCondition(
+                [in] PROPERTYID propertyId,
+                [in] VARIANT value,
+                [out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreatePropertyConditionEx(
+                [in] PROPERTYID propertyId,
+                [in] VARIANT value,
+                [in] enum PropertyConditionFlags flags,
+                [out, retval] IUIAutomationCondition **newCondition);
+
+        HRESULT CreateAndCondition(
+                [in] IUIAutomationCondition *condition1,
+                [in] IUIAutomationCondition *condition2,
+                [out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreateAndConditionFromArray(
+                [in] SAFEARRAY(IUIAutomationCondition) conditions,
+                [out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreateAndConditionFromNativeArray(
+                [in, size_is(conditionCount)] IUIAutomationCondition **conditions,
+                [in] int conditionCount,
+                [out, retval] IUIAutomationCondition **newCondition);
+
+        HRESULT CreateOrCondition(
+                [in] IUIAutomationCondition *condition1,
+                [in] IUIAutomationCondition *condition2,
+                [out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreateOrConditionFromArray(
+                [in] SAFEARRAY(IUIAutomationCondition) conditions,
+                [out, retval] IUIAutomationCondition **newCondition);
+        HRESULT CreateOrConditionFromNativeArray(
+                [in, size_is(conditionCount)] IUIAutomationCondition **conditions,
+                [in] int conditionCount,
+                [out, retval] IUIAutomationCondition **newCondition);
+
+        HRESULT CreateNotCondition(
+                [in] IUIAutomationCondition *condition,
+                [out, retval] IUIAutomationCondition **newCondition);
+
+        HRESULT AddAutomationEventHandler(
+                [in] EVENTID eventId,
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationEventHandler *handler);
+        HRESULT RemoveAutomationEventHandler(
+                [in] EVENTID eventId,
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationEventHandler *handler);
+
+        HRESULT AddPropertyChangedEventHandlerNativeArray(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationPropertyChangedEventHandler *handler,
+                [in, size_is(propertyCount)] PROPERTYID *propertyArray,
+                [in] int propertyCount);
+        HRESULT AddPropertyChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationPropertyChangedEventHandler *handler,
+                [in] SAFEARRAY(PROPERTYID) propertyArray);
+        HRESULT RemovePropertyChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationPropertyChangedEventHandler *handler);
+
+        HRESULT AddStructureChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationStructureChangedEventHandler *handler);
+        HRESULT RemoveStructureChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationStructureChangedEventHandler *handler);
+
+        HRESULT AddFocusChangedEventHandler(
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationFocusChangedEventHandler *handler);
+        HRESULT RemoveFocusChangedEventHandler([in] IUIAutomationFocusChangedEventHandler *handler);
+
+        HRESULT RemoveAllEventHandlers();
+
+        HRESULT IntNativeArrayToSafeArray(
+                [in, size_is(arrayCount)] int *array,
+                [in] int arrayCount,
+                [out, retval] SAFEARRAY(int) *safeArray);
+        HRESULT IntSafeArrayToNativeArray(
+                [in] SAFEARRAY(int) intArray,
+                [out, size_is( ,*arrayCount)] int **array,
+                [out, retval] int *arrayCount);
+
+        HRESULT RectToVariant(
+                [in] RECT rc,
+                [out, retval] VARIANT *var);
+        HRESULT VariantToRect(
+                [in] VARIANT var,
+                [out, retval] RECT *rc);
+        HRESULT SafeArrayToRectNativeArray(
+                [in] SAFEARRAY(double) rects,
+                [out, size_is( ,*rectArrayCount)] RECT **rectArray,
+                [out, retval] int *rectArrayCount);
+
+        HRESULT CreateProxyFactoryEntry(
+                [in] IUIAutomationProxyFactory *factory,
+                [out, retval] IUIAutomationProxyFactoryEntry **factoryEntry);
+        [propget] HRESULT ProxyFactoryMapping([out, retval] IUIAutomationProxyFactoryMapping **factoryMapping);
+
+        HRESULT GetPropertyProgrammaticName(
+                [in] PROPERTYID property,
+                [out, retval] BSTR *name);
+        HRESULT GetPatternProgrammaticName(
+                [in] PATTERNID pattern,
+                [out, retval] BSTR *name);
+
+        HRESULT PollForPotentialSupportedPatterns(
+                [in] IUIAutomationElement *pElement,
+                [out] SAFEARRAY(int) *patternIds,
+                [out] SAFEARRAY(BSTR) *patternNames);
+        HRESULT PollForPotentialSupportedProperties(
+                [in] IUIAutomationElement *pElement,
+                [out] SAFEARRAY(int) *propertyIds,
+                [out] SAFEARRAY(BSTR) *propertyNames);
+
+        HRESULT CheckNotSupported(
+                [in] VARIANT value,
+                [out, retval] BOOL *isNotSupported);
+
+        [propget] HRESULT ReservedNotSupportedValue([out, retval] IUnknown **notSupportedValue);
+        [propget] HRESULT ReservedMixedAttributeValue([out, retval] IUnknown **mixedAttributeValue);
+
+        HRESULT ElementFromIAccessible(
+                [in] IAccessible *accessible,
+                [in] int childId,
+                [out, retval] IUIAutomationElement **element);
+        HRESULT ElementFromIAccessibleBuildCache(
+                [in] IAccessible *accessible,
+                [in] int childId,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [out, retval] IUIAutomationElement **element);
+    }
+
+    [
+        object,
+        uuid(34723aff-0c9d-49d0-9896-7ab52df8cd8a),
+        pointer_default(unique)
+    ]
+    interface IUIAutomation2 : IUIAutomation
+    {
+        [propget] HRESULT AutoSetFocus([out, retval] BOOL *autoSetFocus);
+        [propput] HRESULT AutoSetFocus([in] BOOL autoSetFocus);
+
+        [propget] HRESULT ConnectionTimeout([out, retval] DWORD *timeout);
+        [propput] HRESULT ConnectionTimeout([in] DWORD timeout);
+
+        [propget] HRESULT TransactionTimeout([out, retval] DWORD *timeout);
+        [propput] HRESULT TransactionTimeout([in] DWORD timeout);
+    }
+
+    [
+        object,
+        uuid(73d768da-9b51-4b89-936e-c209290973e7),
+        pointer_default(unique)
+    ]
+    interface IUIAutomation3 : IUIAutomation2
+    {
+        HRESULT AddTextEditTextChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] enum TextEditChangeType textEditChangeType,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationTextEditTextChangedEventHandler *handler);
+        HRESULT RemoveTextEditTextChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationTextEditTextChangedEventHandler *handler);
+    }
+
+    [
+        object,
+        uuid(1189c02a-05f8-4319-8e21-e817e3db2860),
+        pointer_default(unique)
+    ]
+    interface IUIAutomation4 : IUIAutomation3
+    {
+        HRESULT AddChangesEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in, size_is(changesCount)] int *changeTypes,
+                [in] int changesCount,
+                [in] IUIAutomationCacheRequest *pCacheRequest,
+                [in] IUIAutomationChangesEventHandler *handler);
+        HRESULT RemoveChangesEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationChangesEventHandler *handler);
+    }
+
+    [
+        object,
+        uuid(25f700c8-d816-4057-a9dc-3cbdee77e256),
+        pointer_default(unique)
+    ]
+    interface IUIAutomation5 : IUIAutomation4
+    {
+        HRESULT AddNotificationEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationNotificationEventHandler *handler);
+        HRESULT RemoveNotificationEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationNotificationEventHandler *handler);
+    }
+
+    [
+        object,
+        uuid(aae072da-29e3-413d-87a7-192dbf81ed10),
+        pointer_default(unique)
+    ]
+    interface IUIAutomation6 : IUIAutomation5
+    {
+        HRESULT CreateEventHandlerGroup([out] IUIAutomationEventHandlerGroup **handlerGroup);
+        HRESULT AddEventHandlerGroup(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationEventHandlerGroup *handlerGroup);
+        HRESULT RemoveEventHandlerGroup(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationEventHandlerGroup *handlerGroup);
+
+        [propget] HRESULT ConnectionRecoveryBehavior(
+                          [out, retval] enum ConnectionRecoveryBehaviorOptions *connectionRecoveryBehaviorOptions);
+        [propput] HRESULT ConnectionRecoveryBehavior(
+                          [in] enum ConnectionRecoveryBehaviorOptions connectionRecoveryBehaviorOptions);
+
+        [propget] HRESULT CoalesceEvents([out, retval] enum CoalesceEventsOptions *coalesceEventsOptions);
+        [propput] HRESULT CoalesceEvents([in] enum CoalesceEventsOptions coalesceEventsOptions);
+
+        HRESULT AddActiveTextPositionChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] enum TreeScope scope,
+                [in] IUIAutomationCacheRequest *cacheRequest,
+                [in] IUIAutomationActiveTextPositionChangedEventHandler *handler);
+        HRESULT RemoveActiveTextPositionChangedEventHandler(
+                [in] IUIAutomationElement *element,
+                [in] IUIAutomationActiveTextPositionChangedEventHandler *handler);
+    }
+
+    [
+        uuid(ff48dba4-60ef-4201-aa87-54103eef594e),
+        version(1.0),
+        threading(both)
+    ]
+    coclass CUIAutomation
+    {
+        [default] interface IUIAutomation;
+    }
+
+    [
+        uuid(e22ad333-b25f-460c-83d0-0581107395c9),
+        version(1.0),
+        threading(both)
+    ]
+    coclass CUIAutomation8
+    {
+        [default] interface IUIAutomation2;
+        interface IUIAutomation3;
+        interface IUIAutomation4;
+        interface IUIAutomation5;
+        interface IUIAutomation6;
+    }
 }
