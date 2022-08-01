@@ -30,6 +30,7 @@ enum d2d_command_type
     D2D_COMMAND_SET_PRIMITIVE_BLEND,
     D2D_COMMAND_SET_UNIT_MODE,
     D2D_COMMAND_CLEAR,
+    D2D_COMMAND_DRAW_GLYPH_RUN,
     D2D_COMMAND_DRAW_LINE,
     D2D_COMMAND_DRAW_GEOMETRY,
     D2D_COMMAND_DRAW_RECTANGLE,
@@ -140,6 +141,16 @@ struct d2d_command_fill_rectangle
     struct d2d_command c;
     D2D1_RECT_F rect;
     ID2D1Brush *brush;
+};
+
+struct d2d_command_draw_glyph_run
+{
+    struct d2d_command c;
+    D2D1_POINT_2F origin;
+    DWRITE_MEASURING_MODE measuring_mode;
+    ID2D1Brush *brush;
+    DWRITE_GLYPH_RUN run;
+    DWRITE_GLYPH_RUN_DESCRIPTION *run_desc;
 };
 
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
@@ -274,6 +285,12 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             {
                 const struct d2d_command_clear *c = data;
                 hr = ID2D1CommandSink_Clear(sink, &c->color);
+                break;
+            }
+            case D2D_COMMAND_DRAW_GLYPH_RUN:
+            {
+                const struct d2d_command_draw_glyph_run *c = data;
+                hr = ID2D1CommandSink_DrawGlyphRun(sink, c->origin, &c->run, c->run_desc, c->brush, c->measuring_mode);
                 break;
             }
             case D2D_COMMAND_DRAW_LINE:
@@ -713,4 +730,92 @@ void d2d_command_list_set_text_rendering_params(struct d2d_command_list *command
     command = d2d_command_list_require_space(command_list, sizeof(*command));
     command->c.op = D2D_COMMAND_SET_TEXT_RENDERING_PARAMS;
     command->params = params;
+}
+
+static inline void d2d_command_list_write_field(BYTE **data, void *dst, const void *src, size_t size)
+{
+    void **ptr = dst;
+
+    if (!src)
+    {
+        *ptr = NULL;
+        return;
+    }
+
+    *ptr = *data;
+    memcpy(*data, src, size);
+    *data = *data + size;
+}
+
+void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
+        const struct d2d_device_context *context, D2D1_POINT_2F origin, const DWRITE_GLYPH_RUN *run,
+        const DWRITE_GLYPH_RUN_DESCRIPTION *run_desc, ID2D1Brush *orig_brush,
+        DWRITE_MEASURING_MODE measuring_mode)
+{
+    struct d2d_command_draw_glyph_run *command;
+    DWRITE_GLYPH_RUN_DESCRIPTION *d;
+    DWRITE_GLYPH_RUN *r;
+    UINT32 glyph_count;
+    ID2D1Brush *brush;
+    size_t size;
+    BYTE *data;
+
+    if (FAILED(d2d_command_list_create_brush(command_list, context, orig_brush, &brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        return;
+    }
+
+    /* Get combined size of variable data. */
+
+    glyph_count = run->glyphCount;
+    size = sizeof(*command);
+    if (run->glyphIndices) size += glyph_count * sizeof(*run->glyphIndices);
+    if (run->glyphAdvances) size += glyph_count * sizeof(*run->glyphAdvances);
+    if (run->glyphOffsets) size += glyph_count * sizeof(*run->glyphOffsets);
+    if (run_desc)
+    {
+        size += sizeof(*run_desc);
+        if (run_desc->localeName) size += (wcslen(run_desc->localeName) + 1) * sizeof(*run_desc->localeName);
+        if (run_desc->string) size += run_desc->stringLength * sizeof(*run_desc->string);
+        if (run_desc->clusterMap) size += run_desc->stringLength * sizeof(*run_desc->clusterMap);
+        size += sizeof(run_desc->stringLength);
+        size += sizeof(run_desc->textPosition);
+    }
+
+    d2d_command_list_reference_object(command_list, run->fontFace);
+
+    command = d2d_command_list_require_space(command_list, size);
+    command->c.op = D2D_COMMAND_DRAW_GLYPH_RUN;
+    r = &command->run;
+
+    r->fontFace = run->fontFace;
+    r->fontEmSize = run->fontEmSize;
+    r->glyphCount = run->glyphCount;
+    r->isSideways = run->isSideways;
+    r->bidiLevel = run->bidiLevel;
+
+    data = (BYTE *)(command + 1);
+
+    d2d_command_list_write_field(&data, &r->glyphIndices, run->glyphIndices, glyph_count * sizeof(*r->glyphIndices));
+    d2d_command_list_write_field(&data, &r->glyphAdvances, run->glyphAdvances, glyph_count * sizeof(*r->glyphAdvances));
+    d2d_command_list_write_field(&data, &r->glyphOffsets, run->glyphOffsets, glyph_count * sizeof(*r->glyphOffsets));
+
+    command->run_desc = NULL;
+    if (run_desc)
+    {
+        d = command->run_desc = (DWRITE_GLYPH_RUN_DESCRIPTION *)data;
+        memset(d, 0, sizeof(*d));
+        data += sizeof(*d);
+
+        d2d_command_list_write_field(&data, &d->localeName, run_desc->localeName, (wcslen(run_desc->localeName) + 1) * sizeof(*run_desc->localeName));
+        d2d_command_list_write_field(&data, &d->string, run_desc->string, run_desc->stringLength * sizeof(*run_desc->string));
+        d->stringLength = run_desc->stringLength;
+        d2d_command_list_write_field(&data, &d->clusterMap, run_desc->clusterMap, run_desc->stringLength * sizeof(*run_desc->clusterMap));
+        d->textPosition = run_desc->textPosition;
+    }
+
+    command->brush = brush;
+    command->origin = origin;
+    command->measuring_mode = measuring_mode;
 }

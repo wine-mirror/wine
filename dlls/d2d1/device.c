@@ -1450,16 +1450,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
         DWRITE_MEASURING_MODE measuring_mode)
 {
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-
     TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
             iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
-
-    if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
 
     ID2D1DeviceContext1_DrawGlyphRun(iface, baseline_origin, glyph_run, NULL, brush, measuring_mode);
 }
@@ -2373,14 +2365,15 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawGlyphRun
     TRACE("iface %p, baseline_origin %s, glyph_run %p, glyph_run_desc %p, brush %p, measuring_mode %#x.\n",
             iface, debug_d2d_point_2f(&baseline_origin), glyph_run, glyph_run_desc, brush, measuring_mode);
 
-    if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
-
     if (FAILED(context->error.code))
         return;
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_glyph_run(context->target.command_list, context, baseline_origin, glyph_run,
+                glyph_run_desc, brush, measuring_mode);
+        return;
+    }
 
     rendering_params = context->text_rendering_params ? context->text_rendering_params
             : context->default_text_rendering_params;
