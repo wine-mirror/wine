@@ -215,6 +215,30 @@ static HRESULT topology_node_list_branches(IMFTopologyNode *node, struct list *b
     return hr;
 }
 
+static HRESULT topology_branch_fill_media_type(IMFMediaType *up_type, IMFMediaType *down_type)
+{
+    HRESULT hr = S_OK;
+    PROPVARIANT value;
+    UINT32 count;
+    GUID key;
+
+    if (FAILED(hr = IMFMediaType_GetCount(up_type, &count)))
+        return hr;
+
+    while (count--)
+    {
+        PropVariantInit(&value);
+        hr = IMFMediaType_GetItemByIndex(up_type, count, &key, &value);
+        if (SUCCEEDED(hr) && FAILED(IMFMediaType_GetItem(down_type, &key, NULL)))
+            hr = IMFMediaType_SetItem(down_type, &key, &value);
+        PropVariantClear(&value);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return hr;
+}
+
 static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
         struct topology_branch *branch);
 static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
@@ -276,6 +300,8 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
             IMFTopologyNode_SetGUID(node, &MF_TOPONODE_TRANSFORM_OBJECTID, &guid);
 
         hr = topology_branch_connect_down(topology, MF_CONNECT_DIRECT, &up_branch, up_type);
+        if (SUCCEEDED(hr))
+            hr = topology_branch_fill_media_type(up_type, down_type);
         if (SUCCEEDED(hr))
             hr = IMFTransform_SetOutputType(transform, 0, down_type, 0);
         IMFTransform_Release(transform);
