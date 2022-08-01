@@ -1315,6 +1315,8 @@ h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
 4:3.14,%B
 5:3,14
 6:14,
+a
+a b c
 ------------ Testing del ------------
 deleting 'file'
 errorlevel is 0, good

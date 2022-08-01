@@ -1957,6 +1957,9 @@ FOR /F "delims=. tokens=1*" %%A IN (testfile) DO @echo 5:%%A,%%B
 FOR /F "delims=. tokens=2*" %%A IN (testfile) DO @echo 6:%%A,%%B
 FOR /F "delims=. tokens=3*" %%A IN (testfile) DO @echo 7:%%A,%%B
 del testfile
+rem file contains NUL, created by the .exe
+for /f %%A in (nul_test_file) DO echo %%A
+for /f "tokens=*" %%A in (nul_test_file) DO echo %%A
 
 echo ------------ Testing del ------------
 echo abc > file
