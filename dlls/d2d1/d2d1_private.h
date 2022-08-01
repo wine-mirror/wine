@@ -741,6 +741,7 @@ void d2d_command_list_set_transform(struct d2d_command_list *command_list,
 void d2d_command_list_push_clip(struct d2d_command_list *command_list, const D2D1_RECT_F *rect,
         D2D1_ANTIALIAS_MODE antialias_mode) DECLSPEC_HIDDEN;
 void d2d_command_list_pop_clip(struct d2d_command_list *command_list) DECLSPEC_HIDDEN;
+void d2d_command_list_clear(struct d2d_command_list *command_list, const D2D1_COLOR_F *color) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

@@ -1703,7 +1703,7 @@ static void STDMETHODCALLTYPE d2d_device_context_Clear(ID2D1DeviceContext1 *ifac
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
+        d2d_command_list_clear(context->target.command_list, colour);
         return;
     }
 

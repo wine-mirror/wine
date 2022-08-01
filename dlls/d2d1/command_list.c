@@ -28,6 +28,7 @@ enum d2d_command_type
     D2D_COMMAND_SET_TRANSFORM,
     D2D_COMMAND_SET_PRIMITIVE_BLEND,
     D2D_COMMAND_SET_UNIT_MODE,
+    D2D_COMMAND_CLEAR,
     D2D_COMMAND_PUSH_CLIP,
     D2D_COMMAND_POP_CLIP,
 };
@@ -72,6 +73,12 @@ struct d2d_command_set_unit_mode
 {
     struct d2d_command c;
     D2D1_UNIT_MODE mode;
+};
+
+struct d2d_command_clear
+{
+    struct d2d_command c;
+    D2D1_COLOR_F color;
 };
 
 struct d2d_command_push_clip
@@ -197,6 +204,12 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             {
                 const struct d2d_command_set_unit_mode *c = data;
                 hr = ID2D1CommandSink_SetUnitMode(sink, c->mode);
+                break;
+            }
+            case D2D_COMMAND_CLEAR:
+            {
+                const struct d2d_command_clear *c = data;
+                hr = ID2D1CommandSink_Clear(sink, &c->color);
                 break;
             }
             case D2D_COMMAND_PUSH_CLIP:
@@ -379,4 +392,14 @@ void d2d_command_list_pop_clip(struct d2d_command_list *command_list)
 
     command = d2d_command_list_require_space(command_list, sizeof(*command));
     command->op = D2D_COMMAND_POP_CLIP;
+}
+
+void d2d_command_list_clear(struct d2d_command_list *command_list, const D2D1_COLOR_F *color)
+{
+    struct d2d_command_clear *command;
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_CLEAR;
+    if (color) command->color = *color;
+    else memset(&command->color, 0, sizeof(command->color));
 }
