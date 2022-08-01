@@ -9553,11 +9553,9 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Geometry_Release(geometry);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1GradientStopCollection_Release(gradient);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Radial gradient brush. */
@@ -9583,11 +9581,9 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Geometry_Release(geometry);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1GradientStopCollection_Release(gradient);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Geometry. */
@@ -9605,7 +9601,6 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1Geometry_Release(geometry);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Stroke style. */

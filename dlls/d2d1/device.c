@@ -1066,12 +1066,6 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
 
     TRACE("iface %p, geometry %p, brush %p, opacity_brush %p.\n", iface, geometry, brush, opacity_brush);
 
-    if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
-
     if (FAILED(context->error.code))
         return;
 
@@ -1081,7 +1075,10 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
         return;
     }
 
-    d2d_device_context_fill_geometry(context, geometry_impl, brush_impl, opacity_brush_impl);
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_geometry(context->target.command_list, context, geometry, brush, opacity_brush);
+    else
+        d2d_device_context_fill_geometry(context, geometry_impl, brush_impl, opacity_brush_impl);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_FillMesh(ID2D1DeviceContext1 *iface,

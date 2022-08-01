@@ -32,6 +32,7 @@ enum d2d_command_type
     D2D_COMMAND_DRAW_LINE,
     D2D_COMMAND_DRAW_GEOMETRY,
     D2D_COMMAND_DRAW_RECTANGLE,
+    D2D_COMMAND_FILL_GEOMETRY,
     D2D_COMMAND_PUSH_CLIP,
     D2D_COMMAND_POP_CLIP,
 };
@@ -116,6 +117,14 @@ struct d2d_command_draw_rectangle
     ID2D1Brush *brush;
     float stroke_width;
     ID2D1StrokeStyle *stroke_style;
+};
+
+struct d2d_command_fill_geometry
+{
+    struct d2d_command c;
+    ID2D1Geometry *geometry;
+    ID2D1Brush *brush;
+    ID2D1Brush *opacity_brush;
 };
 
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
@@ -265,6 +274,12 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
                 const struct d2d_command_draw_rectangle *c = data;
                 hr = ID2D1CommandSink_DrawRectangle(sink, &c->rect, c->brush, c->stroke_width,
                         c->stroke_style);
+                break;
+            }
+            case D2D_COMMAND_FILL_GEOMETRY:
+            {
+                const struct d2d_command_fill_geometry *c = data;
+                hr = ID2D1CommandSink_FillGeometry(sink, c->geometry, c->brush, c->opacity_brush);
                 break;
             }
             case D2D_COMMAND_PUSH_CLIP:
@@ -608,4 +623,34 @@ void d2d_command_list_draw_rectangle(struct d2d_command_list *command_list, cons
     command->brush = brush;
     command->stroke_width = stroke_width;
     command->stroke_style = stroke_style;
+}
+
+void d2d_command_list_fill_geometry(struct d2d_command_list *command_list,
+        const struct d2d_device_context *context, ID2D1Geometry *geometry, ID2D1Brush *orig_brush,
+        ID2D1Brush *orig_opacity_brush)
+{
+    ID2D1Brush *brush, *opacity_brush = NULL;
+    struct d2d_command_fill_geometry *command;
+
+    if (FAILED(d2d_command_list_create_brush(command_list, context, orig_brush, &brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        return;
+    }
+
+    if (orig_opacity_brush && FAILED(d2d_command_list_create_brush(command_list, context,
+            orig_opacity_brush, &opacity_brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        ID2D1Brush_Release(brush);
+        return;
+    }
+
+    d2d_command_list_reference_object(command_list, geometry);
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_FILL_GEOMETRY;
+    command->geometry = geometry;
+    command->brush = brush;
+    command->opacity_brush = opacity_brush;
 }
