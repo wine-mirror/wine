@@ -724,6 +724,10 @@ struct d2d_command_list
     size_t size;
     size_t capacity;
     void *data;
+
+    size_t objects_count;
+    size_t objects_capacity;
+    IUnknown **objects;
 };
 
 HRESULT d2d_command_list_create(ID2D1Factory *factory, struct d2d_command_list **command_list) DECLSPEC_HIDDEN;
@@ -742,6 +746,9 @@ void d2d_command_list_push_clip(struct d2d_command_list *command_list, const D2D
         D2D1_ANTIALIAS_MODE antialias_mode) DECLSPEC_HIDDEN;
 void d2d_command_list_pop_clip(struct d2d_command_list *command_list) DECLSPEC_HIDDEN;
 void d2d_command_list_clear(struct d2d_command_list *command_list, const D2D1_COLOR_F *color) DECLSPEC_HIDDEN;
+void d2d_command_list_draw_line(struct d2d_command_list *command_list, const struct d2d_device_context *context,
+        D2D1_POINT_2F p0, D2D1_POINT_2F p1, ID2D1Brush *orig_brush, float stroke_width,
+        ID2D1StrokeStyle *stroke_style) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

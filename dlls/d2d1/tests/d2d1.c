@@ -9632,7 +9632,6 @@ static void test_command_list(BOOL d3d11)
     ok(refcount == 0, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID2D1StrokeStyle_Release(stroke_style);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Close on attached list. */

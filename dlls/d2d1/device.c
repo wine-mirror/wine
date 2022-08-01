@@ -576,7 +576,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext1 *i
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
+        d2d_command_list_draw_line(context->target.command_list, context, p0, p1, brush, stroke_width, stroke_style);
         return;
     }
 

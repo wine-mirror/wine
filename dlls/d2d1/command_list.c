@@ -29,6 +29,7 @@ enum d2d_command_type
     D2D_COMMAND_SET_PRIMITIVE_BLEND,
     D2D_COMMAND_SET_UNIT_MODE,
     D2D_COMMAND_CLEAR,
+    D2D_COMMAND_DRAW_LINE,
     D2D_COMMAND_PUSH_CLIP,
     D2D_COMMAND_POP_CLIP,
 };
@@ -88,6 +89,15 @@ struct d2d_command_push_clip
     D2D1_ANTIALIAS_MODE mode;
 };
 
+struct d2d_command_draw_line
+{
+    struct d2d_command c;
+    D2D1_POINT_2F p0, p1;
+    ID2D1Brush *brush;
+    float stroke_width;
+    ID2D1StrokeStyle *stroke_style;
+};
+
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_command_list, ID2D1CommandList_iface);
@@ -127,12 +137,16 @@ static ULONG STDMETHODCALLTYPE d2d_command_list_Release(ID2D1CommandList *iface)
 {
     struct d2d_command_list *command_list = impl_from_ID2D1CommandList(iface);
     ULONG refcount = InterlockedDecrement(&command_list->refcount);
+    size_t i;
 
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
         ID2D1Factory_Release(command_list->factory);
+        for (i = 0; i < command_list->objects_count; ++i)
+            IUnknown_Release(command_list->objects[i]);
+        free(command_list->objects);
         free(command_list->data);
         free(command_list);
     }
@@ -210,6 +224,13 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             {
                 const struct d2d_command_clear *c = data;
                 hr = ID2D1CommandSink_Clear(sink, &c->color);
+                break;
+            }
+            case D2D_COMMAND_DRAW_LINE:
+            {
+                const struct d2d_command_draw_line *c = data;
+                hr = ID2D1CommandSink_DrawLine(sink, c->p0, c->p1, c->brush, c->stroke_width,
+                        c->stroke_style);
                 break;
             }
             case D2D_COMMAND_PUSH_CLIP:
@@ -295,6 +316,88 @@ static void * d2d_command_list_require_space(struct d2d_command_list *command_li
     command_list->size += size;
 
     return command;
+}
+
+static void d2d_command_list_reference_object(struct d2d_command_list *command_list, void *object)
+{
+    IUnknown *obj = object;
+
+    if (!obj) return;
+
+    if (!d2d_array_reserve((void **)&command_list->objects, &command_list->objects_capacity,
+            command_list->objects_count + 1, sizeof(*command_list->objects)))
+    {
+        return;
+    }
+
+    command_list->objects[command_list->objects_count++] = obj;
+    IUnknown_AddRef(obj);
+}
+
+static HRESULT d2d_command_list_create_brush(struct d2d_command_list *command_list,
+        const struct d2d_device_context *ctx, ID2D1Brush *orig_brush, ID2D1Brush **ret)
+{
+    ID2D1DeviceContext *context = (ID2D1DeviceContext *)&ctx->ID2D1DeviceContext1_iface;
+    struct d2d_brush *brush = unsafe_impl_from_ID2D1Brush(orig_brush);
+    D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES linear_properties;
+    D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radial_properties;
+    D2D1_BITMAP_BRUSH_PROPERTIES1 bitmap_properties;
+    D2D1_IMAGE_BRUSH_PROPERTIES image_properties;
+    D2D1_BRUSH_PROPERTIES properties;
+    HRESULT hr;
+
+    properties.opacity = brush->opacity;
+    properties.transform = brush->transform;
+
+    switch (brush->type)
+    {
+        case D2D_BRUSH_TYPE_SOLID:
+            hr = ID2D1DeviceContext_CreateSolidColorBrush(context, &brush->u.solid.color,
+                    &properties, (ID2D1SolidColorBrush **)ret);
+            break;
+        case D2D_BRUSH_TYPE_LINEAR:
+            linear_properties.startPoint = brush->u.linear.start;
+            linear_properties.endPoint = brush->u.linear.end;
+            hr = ID2D1DeviceContext_CreateLinearGradientBrush(context, &linear_properties,
+                    &properties, &brush->u.linear.gradient->ID2D1GradientStopCollection_iface,
+                    (ID2D1LinearGradientBrush **)ret);
+            break;
+        case D2D_BRUSH_TYPE_RADIAL:
+            radial_properties.center = brush->u.radial.centre;
+            radial_properties.gradientOriginOffset = brush->u.radial.offset;
+            radial_properties.radiusX = brush->u.radial.radius.x;
+            radial_properties.radiusY = brush->u.radial.radius.y;
+            hr = ID2D1DeviceContext_CreateRadialGradientBrush(context, &radial_properties,
+                    &properties, &brush->u.radial.gradient->ID2D1GradientStopCollection_iface,
+                    (ID2D1RadialGradientBrush **)ret);
+            break;
+        case D2D_BRUSH_TYPE_BITMAP:
+            bitmap_properties.extendModeX = brush->u.bitmap.extend_mode_x;
+            bitmap_properties.extendModeY = brush->u.bitmap.extend_mode_y;
+            bitmap_properties.interpolationMode = brush->u.bitmap.interpolation_mode;
+            hr = ID2D1DeviceContext_CreateBitmapBrush(context, (ID2D1Bitmap *)&brush->u.bitmap.bitmap->ID2D1Bitmap1_iface,
+                    &bitmap_properties, &properties, (ID2D1BitmapBrush1 **)ret);
+            break;
+        case D2D_BRUSH_TYPE_IMAGE:
+            image_properties.sourceRectangle = brush->u.image.source_rect;
+            image_properties.extendModeX = brush->u.image.extend_mode_x;
+            image_properties.extendModeY = brush->u.image.extend_mode_y;
+            image_properties.interpolationMode = brush->u.image.interpolation_mode;
+            hr = ID2D1DeviceContext_CreateImageBrush(context, brush->u.image.image,
+                    &image_properties, &properties, (ID2D1ImageBrush **)ret);
+            break;
+        default:
+            FIXME("Unsupported brush type %u.\n", brush->type);
+            return E_UNEXPECTED;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        d2d_command_list_reference_object(command_list, *ret);
+        ID2D1Brush_Release(*ret);
+    }
+
+    return hr;
 }
 
 void d2d_command_list_set_antialias_mode(struct d2d_command_list *command_list,
@@ -402,4 +505,28 @@ void d2d_command_list_clear(struct d2d_command_list *command_list, const D2D1_CO
     command->c.op = D2D_COMMAND_CLEAR;
     if (color) command->color = *color;
     else memset(&command->color, 0, sizeof(command->color));
+}
+
+void d2d_command_list_draw_line(struct d2d_command_list *command_list,
+        const struct d2d_device_context *context, D2D1_POINT_2F p0, D2D1_POINT_2F p1,
+        ID2D1Brush *orig_brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
+{
+    struct d2d_command_draw_line *command;
+    ID2D1Brush *brush;
+
+    if (FAILED(d2d_command_list_create_brush(command_list, context, orig_brush, &brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        return;
+    }
+
+    d2d_command_list_reference_object(command_list, stroke_style);
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_DRAW_LINE;
+    command->p0 = p0;
+    command->p1 = p1;
+    command->brush = brush;
+    command->stroke_width = stroke_width;
+    command->stroke_style = stroke_style;
 }
