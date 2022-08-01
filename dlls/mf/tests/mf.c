@@ -2121,6 +2121,29 @@ static void test_topology_loader(void)
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
     };
+    static const media_type_desc video_i420_1280 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+    };
+    static const media_type_desc video_color_convert_1280_rgb32 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, DMOVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+    };
+    static const media_type_desc video_video_processor_1280_rgb32 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+    };
+    static const media_type_desc video_video_processor_rgb32 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+    };
 
     const struct loader_test
     {
@@ -2242,6 +2265,25 @@ static void test_topology_loader(void)
             .current_input = &audio_mp3_44100,
             .expected_result = S_OK,
             .flags = LOADER_EXPECTED_DECODER | LOADER_TODO,
+        },
+
+        {
+            /* I420 -> RGB32, Color Convert media type */
+            .input_type = &video_i420_1280, .output_type = &video_color_convert_1280_rgb32, .sink_method = -1, .source_method = -1,
+            .expected_result = MF_E_TOPO_CODEC_NOT_FOUND,
+            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+        },
+        {
+            /* I420 -> RGB32, Video Processor media type */
+            .input_type = &video_i420_1280, .output_type = &video_video_processor_1280_rgb32, .sink_method = -1, .source_method = -1,
+            .expected_result = S_OK,
+            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+        },
+        {
+            /* I420 -> RGB32, Video Processor media type without frame size */
+            .input_type = &video_i420_1280, .output_type = &video_video_processor_rgb32, .sink_method = -1, .source_method = -1,
+            .expected_result = S_OK,
+            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
     };
 
