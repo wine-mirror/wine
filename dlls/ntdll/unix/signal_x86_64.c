@@ -2078,10 +2078,12 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
     if (flags & CONTEXT_I386_EXTENDED_REGISTERS)
     {
         memcpy( &frame->xsave, context->ExtendedRegisters, sizeof(frame->xsave) );
+        frame->restore_flags |= CONTEXT_FLOATING_POINT;
     }
     else if (flags & CONTEXT_I386_FLOATING_POINT)
     {
         fpu_to_fpux( &frame->xsave, &context->FloatSave );
+        frame->restore_flags |= CONTEXT_FLOATING_POINT;
     }
     if (flags & CONTEXT_I386_XSTATE)
     {
