@@ -1653,10 +1653,7 @@ static void STDMETHODCALLTYPE d2d_device_context_PushAxisAlignedClip(ID2D1Device
     TRACE("iface %p, clip_rect %s, antialias_mode %#x.\n", iface, debug_d2d_rect_f(clip_rect), antialias_mode);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_push_clip(context->target.command_list, clip_rect, antialias_mode);
 
     if (antialias_mode != D2D1_ANTIALIAS_MODE_ALIASED)
         FIXME("Ignoring antialias_mode %#x.\n", antialias_mode);
@@ -1687,10 +1684,7 @@ static void STDMETHODCALLTYPE d2d_device_context_PopAxisAlignedClip(ID2D1DeviceC
     TRACE("iface %p.\n", iface);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-    {
-        FIXME("Unimplemented for command list target.\n");
-        return;
-    }
+        d2d_command_list_pop_clip(context->target.command_list);
 
     d2d_clip_stack_pop(&context->clip_stack);
 }

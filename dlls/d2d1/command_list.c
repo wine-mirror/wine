@@ -28,6 +28,8 @@ enum d2d_command_type
     D2D_COMMAND_SET_TRANSFORM,
     D2D_COMMAND_SET_PRIMITIVE_BLEND,
     D2D_COMMAND_SET_UNIT_MODE,
+    D2D_COMMAND_PUSH_CLIP,
+    D2D_COMMAND_POP_CLIP,
 };
 
 struct d2d_command
@@ -70,6 +72,13 @@ struct d2d_command_set_unit_mode
 {
     struct d2d_command c;
     D2D1_UNIT_MODE mode;
+};
+
+struct d2d_command_push_clip
+{
+    struct d2d_command c;
+    D2D1_RECT_F rect;
+    D2D1_ANTIALIAS_MODE mode;
 };
 
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
@@ -190,6 +199,15 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
                 hr = ID2D1CommandSink_SetUnitMode(sink, c->mode);
                 break;
             }
+            case D2D_COMMAND_PUSH_CLIP:
+            {
+                const struct d2d_command_push_clip *c = data;
+                hr = ID2D1CommandSink_PushAxisAlignedClip(sink, &c->rect, c->mode);
+                break;
+            }
+            case D2D_COMMAND_POP_CLIP:
+                hr = ID2D1CommandSink_PopAxisAlignedClip(sink);
+                break;
             default:
                 FIXME("Unhandled command %u.\n", command->op);
                 hr = E_UNEXPECTED;
@@ -342,4 +360,23 @@ void d2d_command_list_begin_draw(struct d2d_command_list *command_list,
     d2d_command_list_set_transform(command_list, &context->drawing_state.transform);
 
     command_list->state = D2D_COMMAND_LIST_STATE_OPEN;
+}
+
+void d2d_command_list_push_clip(struct d2d_command_list *command_list, const D2D1_RECT_F *rect,
+        D2D1_ANTIALIAS_MODE mode)
+{
+    struct d2d_command_push_clip *command;
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_PUSH_CLIP;
+    command->rect = *rect;
+    command->mode = mode;
+}
+
+void d2d_command_list_pop_clip(struct d2d_command_list *command_list)
+{
+    struct d2d_command *command;
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->op = D2D_COMMAND_POP_CLIP;
 }

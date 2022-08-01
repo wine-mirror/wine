@@ -738,6 +738,9 @@ void d2d_command_list_set_text_antialias_mode(struct d2d_command_list *command_l
 void d2d_command_list_set_tags(struct d2d_command_list *command_list, D2D1_TAG tag1, D2D1_TAG tag2) DECLSPEC_HIDDEN;
 void d2d_command_list_set_transform(struct d2d_command_list *command_list,
         const D2D1_MATRIX_3X2_F *transform) DECLSPEC_HIDDEN;
+void d2d_command_list_push_clip(struct d2d_command_list *command_list, const D2D1_RECT_F *rect,
+        D2D1_ANTIALIAS_MODE antialias_mode) DECLSPEC_HIDDEN;
+void d2d_command_list_pop_clip(struct d2d_command_list *command_list) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
