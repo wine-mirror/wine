@@ -1625,16 +1625,30 @@ static void STDMETHODCALLTYPE d2d_device_context_RestoreDrawingState(ID2D1Device
         ID2D1DrawingStateBlock *state_block)
 {
     struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
 
     TRACE("iface %p, state_block %p.\n", iface, state_block);
 
-    render_target->drawing_state = state_block_impl->drawing_state;
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        struct d2d_command_list *command_list = context->target.command_list;
+
+        if (context->drawing_state.antialiasMode != state_block_impl->drawing_state.antialiasMode)
+            d2d_command_list_set_antialias_mode(command_list, state_block_impl->drawing_state.antialiasMode);
+        d2d_command_list_set_text_antialias_mode(command_list, state_block_impl->drawing_state.textAntialiasMode);
+        d2d_command_list_set_tags(command_list, state_block_impl->drawing_state.tag1, state_block_impl->drawing_state.tag2);
+        d2d_command_list_set_transform(command_list, &state_block_impl->drawing_state.transform);
+        d2d_command_list_set_primitive_blend(command_list, state_block_impl->drawing_state.primitiveBlend);
+        d2d_command_list_set_unit_mode(command_list, state_block_impl->drawing_state.unitMode);
+        d2d_command_list_set_text_rendering_params(command_list, state_block_impl->text_rendering_params);
+    }
+
+    context->drawing_state = state_block_impl->drawing_state;
     if (state_block_impl->text_rendering_params)
         IDWriteRenderingParams_AddRef(state_block_impl->text_rendering_params);
-    if (render_target->text_rendering_params)
-        IDWriteRenderingParams_Release(render_target->text_rendering_params);
-    render_target->text_rendering_params = state_block_impl->text_rendering_params;
+    if (context->text_rendering_params)
+        IDWriteRenderingParams_Release(context->text_rendering_params);
+    context->text_rendering_params = state_block_impl->text_rendering_params;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_PushAxisAlignedClip(ID2D1DeviceContext1 *iface,
