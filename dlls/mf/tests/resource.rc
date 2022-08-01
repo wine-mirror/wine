@@ -52,3 +52,7 @@ i420frame.bin RCDATA i420frame.bin
 /* Generated from running the tests on Windows */
 /* @makedep: rgb32frame.bin */
 rgb32frame.bin RCDATA rgb32frame.bin
+
+/* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-vp.bin */
+rgb32frame-vp.bin RCDATA rgb32frame-vp.bin
