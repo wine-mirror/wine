@@ -2645,3 +2645,190 @@ void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret)
 
     *ret = &obj->IWineMSHTMLConsole_iface;
 }
+
+struct media_query_list {
+    DispatchEx dispex;
+    IWineMSHTMLMediaQueryList IWineMSHTMLMediaQueryList_iface;
+    LONG ref;
+    nsIDOMMediaQueryList *nsquerylist;
+};
+
+static inline struct media_query_list *impl_from_IWineMSHTMLMediaQueryList(IWineMSHTMLMediaQueryList *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_query_list, IWineMSHTMLMediaQueryList_iface);
+}
+
+static HRESULT WINAPI media_query_list_QueryInterface(IWineMSHTMLMediaQueryList *iface, REFIID riid, void **ppv)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    TRACE("(%p)->(%s %p)\n", media_query_list, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWineMSHTMLMediaQueryList, riid)) {
+        *ppv = &media_query_list->IWineMSHTMLMediaQueryList_iface;
+    }else if(dispex_query_interface(&media_query_list->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI media_query_list_AddRef(IWineMSHTMLMediaQueryList *iface)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+    LONG ref = InterlockedIncrement(&media_query_list->ref);
+
+    TRACE("(%p) ref=%ld\n", media_query_list, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI media_query_list_Release(IWineMSHTMLMediaQueryList *iface)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+    LONG ref = InterlockedDecrement(&media_query_list->ref);
+
+    TRACE("(%p) ref=%ld\n", media_query_list, ref);
+
+    if(!ref) {
+        nsIDOMMediaQueryList_Release(media_query_list->nsquerylist);
+        release_dispex(&media_query_list->dispex);
+        heap_free(media_query_list);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI media_query_list_GetTypeInfoCount(IWineMSHTMLMediaQueryList *iface, UINT *pctinfo)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    TRACE("(%p)->(%p)\n", media_query_list, pctinfo);
+
+    return IDispatchEx_GetTypeInfoCount(&media_query_list->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI media_query_list_GetTypeInfo(IWineMSHTMLMediaQueryList *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    return IDispatchEx_GetTypeInfo(&media_query_list->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI media_query_list_GetIDsOfNames(IWineMSHTMLMediaQueryList *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    return IDispatchEx_GetIDsOfNames(&media_query_list->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI media_query_list_Invoke(IWineMSHTMLMediaQueryList *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    return IDispatchEx_Invoke(&media_query_list->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI media_query_list_get_media(IWineMSHTMLMediaQueryList *iface, BSTR *p)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    FIXME("(%p)->(%p)\n", media_query_list, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_query_list_get_matches(IWineMSHTMLMediaQueryList *iface, VARIANT_BOOL *p)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    FIXME("(%p)->(%p)\n", media_query_list, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_query_list_addListener(IWineMSHTMLMediaQueryList *iface, VARIANT *listener)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    FIXME("(%p)->(%s)", media_query_list, debugstr_variant(listener));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_query_list_removeListener(IWineMSHTMLMediaQueryList *iface, VARIANT *listener)
+{
+    struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+
+    FIXME("(%p)->(%s)", media_query_list, debugstr_variant(listener));
+
+    return E_NOTIMPL;
+}
+
+static const IWineMSHTMLMediaQueryListVtbl media_query_list_vtbl = {
+    media_query_list_QueryInterface,
+    media_query_list_AddRef,
+    media_query_list_Release,
+    media_query_list_GetTypeInfoCount,
+    media_query_list_GetTypeInfo,
+    media_query_list_GetIDsOfNames,
+    media_query_list_Invoke,
+    media_query_list_get_media,
+    media_query_list_get_matches,
+    media_query_list_addListener,
+    media_query_list_removeListener
+};
+
+static const tid_t media_query_list_iface_tids[] = {
+    IWineMSHTMLMediaQueryList_tid,
+    0
+};
+static dispex_static_data_t media_query_list_dispex = {
+    L"MediaQueryList",
+    NULL,
+    IWineMSHTMLMediaQueryList_tid,
+    media_query_list_iface_tids
+};
+
+HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch **ret)
+{
+    struct media_query_list *media_query_list;
+    nsISupports *nsunk;
+    nsAString nsstr;
+    nsresult nsres;
+
+    if(!media_query || !media_query[0])
+        return E_INVALIDARG;
+
+    if(!(media_query_list = heap_alloc(sizeof(*media_query_list))))
+        return E_OUTOFMEMORY;
+
+    nsAString_InitDepend(&nsstr, media_query);
+    nsres = nsIDOMWindow_MatchMedia(window->outer_window->nswindow, &nsstr, &nsunk);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        heap_free(media_query_list);
+        return map_nsresult(nsres);
+    }
+    nsres = nsISupports_QueryInterface(nsunk, &IID_nsIDOMMediaQueryList, (void**)&media_query_list->nsquerylist);
+    assert(NS_SUCCEEDED(nsres));
+    nsISupports_Release(nsunk);
+
+    media_query_list->IWineMSHTMLMediaQueryList_iface.lpVtbl = &media_query_list_vtbl;
+    media_query_list->ref = 1;
+    init_dispatch(&media_query_list->dispex, (IUnknown*)&media_query_list->IWineMSHTMLMediaQueryList_iface,
+                  &media_query_list_dispex, dispex_compat_mode(&window->inner_window->event_target.dispex));
+
+    *ret = (IDispatch*)&media_query_list->IWineMSHTMLMediaQueryList_iface;
+    return S_OK;
+}

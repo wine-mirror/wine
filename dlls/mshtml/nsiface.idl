@@ -902,6 +902,17 @@ interface nsIDOMStyleSheetList : nsISupports
 
 [
     object,
+    uuid(e0e49c52-915b-40f9-9cba-6026305cdf3e),
+    local
+]
+interface nsIDOMMediaQueryList : nsISupports
+{
+    nsresult GetMedia(nsAString *aMedia);
+    nsresult GetMatches(bool *_retval);
+}
+
+[
+    object,
     uuid(450cf0ba-de90-4f86-85bf-e10cc8b8713f),
     local
 ]

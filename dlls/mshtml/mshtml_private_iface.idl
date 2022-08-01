@@ -81,6 +81,25 @@ interface IWineMSHTMLConsole : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(fd55b4b6-2813-4fb4-829d-380099474ab0)
+]
+interface IWineMSHTMLMediaQueryList : IDispatch
+{
+    [propget, id(1)]
+    HRESULT media([retval, out] BSTR *p);
+    [propget, id(2)]
+    HRESULT matches([retval, out] VARIANT_BOOL *p);
+    [id(3)]
+    HRESULT addListener([in] VARIANT *listener);
+    [id(4)]
+    HRESULT removeListener([in] VARIANT *listener);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(1b5939fc-8f84-43f3-8d89-f9a92069fad7)
 ]
 interface IWineHTMLWindowPrivate : IDispatch
@@ -91,6 +110,8 @@ interface IWineHTMLWindowPrivate : IDispatch
     HRESULT cancelAnimationFrame([in] VARIANT timer_id);
     [propget, id(52)]
     HRESULT console([retval, out] IDispatch **console);
+    [id(53)]
+    HRESULT matchMedia([in] BSTR media_query, [retval, out] IDispatch **media_query_list);
 }
 
 [

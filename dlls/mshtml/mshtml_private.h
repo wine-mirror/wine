@@ -285,7 +285,8 @@ typedef struct EventTarget EventTarget;
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineHTMLWindowCompatPrivate) \
     XIID(IWineXMLHttpRequestPrivate) \
-    XIID(IWineMSHTMLConsole)
+    XIID(IWineMSHTMLConsole) \
+    XIID(IWineMSHTMLMediaQueryList)
 
 typedef enum {
 #define XIID(iface) iface ## _tid,
@@ -1432,3 +1433,4 @@ IInternetSecurityManager *get_security_manager(void) DECLSPEC_HIDDEN;
 
 extern HINSTANCE hInst DECLSPEC_HIDDEN;
 void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret) DECLSPEC_HIDDEN;
+HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch **ret) DECLSPEC_HIDDEN;

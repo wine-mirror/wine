@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var E_INVALIDARG = 0x80070057;
 var JS_E_PROP_DESC_MISMATCH = 0x800a01bd;
 var JS_E_NUMBER_EXPECTED = 0x800a1389;
 var JS_E_FUNCTION_EXPECTED = 0x800a138a;
@@ -2015,4 +2016,15 @@ sync_test("console", function() {
         except = true;
     }
     ok(except, "console.timeLog: expected exception");
+});
+
+sync_test("matchMedia", function() {
+    var mql;
+
+    try {
+        mql = window.matchMedia("");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === E_INVALIDARG, "matchMedia('') threw " + n);
+    }
 });

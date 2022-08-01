@@ -3166,6 +3166,15 @@ static HRESULT WINAPI window_private_cancelAnimationFrame(IWineHTMLWindowPrivate
     return S_OK;
 }
 
+static HRESULT WINAPI window_private_matchMedia(IWineHTMLWindowPrivate *iface, BSTR media_query, IDispatch **media_query_list)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
+
+    TRACE("iface %p, media_query %s\n", iface, debugstr_w(media_query));
+
+    return create_media_query_list(This, media_query, media_query_list);
+}
+
 static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, IDispatch **console)
 {
     HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
@@ -3192,6 +3201,7 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_requestAnimationFrame,
     window_private_cancelAnimationFrame,
     window_private_get_console,
+    window_private_matchMedia,
 };
 
 static inline HTMLWindow *impl_from_IWineHTMLWindowCompatPrivateVtbl(IWineHTMLWindowCompatPrivate *iface)

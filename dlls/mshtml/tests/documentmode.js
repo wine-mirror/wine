@@ -253,6 +253,7 @@ sync_test("builtin_toString", function() {
     if(v >= 10) {
         test("classList", e.classList, "DOMTokenList", "testclass    another ");
         test("console", window.console, "Console");
+        test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
     if(v >= 9) {
         document.body.innerHTML = "<!--...-->";
@@ -364,6 +365,7 @@ sync_test("window_props", function() {
     test_exposed("Set", v >= 11);
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
+    test_exposed("matchMedia", v >= 10);
 });
 
 sync_test("domimpl_props", function() {
