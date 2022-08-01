@@ -2037,5 +2037,8 @@ sync_test("matchMedia", function() {
         mql = window.matchMedia(r[i][0]);
         todo_wine_if(r[i][0] !== 42).
         ok(mql.media === r[i][1], r[i][0] + " media = " + mql.media);
+        ok(mql.matches === false, r[i][0] + " matches");
     }
+    mql = window.matchMedia("(max-width: 1000px)");
+    ok(mql.matches === true, "(max-width: 1000px) does not match");
 });

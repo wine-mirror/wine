@@ -2753,10 +2753,16 @@ static HRESULT WINAPI media_query_list_get_media(IWineMSHTMLMediaQueryList *ifac
 static HRESULT WINAPI media_query_list_get_matches(IWineMSHTMLMediaQueryList *iface, VARIANT_BOOL *p)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+    nsresult nsres;
+    cpp_bool b;
 
-    FIXME("(%p)->(%p)\n", media_query_list, p);
+    TRACE("(%p)->(%p)\n", media_query_list, p);
 
-    return E_NOTIMPL;
+    nsres = nsIDOMMediaQueryList_GetMatches(media_query_list->nsquerylist, &b);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+    *p = b ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_query_list_addListener(IWineMSHTMLMediaQueryList *iface, VARIANT *listener)
