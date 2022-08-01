@@ -2019,12 +2019,23 @@ sync_test("console", function() {
 });
 
 sync_test("matchMedia", function() {
-    var mql;
+    var i, r, mql;
 
     try {
         mql = window.matchMedia("");
     }catch(ex) {
         var n = ex.number >>> 0;
         ok(n === E_INVALIDARG, "matchMedia('') threw " + n);
+    }
+    r = [
+        [ undefined, "unknown" ],
+        [ null,      "unknown" ],
+        [ 42,        "not all" ],
+        [{ toString: function() { return "(max-width: 0px)"; }}, "all and (max-width:0px)" ]
+    ];
+    for(i = 0; i < r.length; i++) {
+        mql = window.matchMedia(r[i][0]);
+        todo_wine_if(r[i][0] !== 42).
+        ok(mql.media === r[i][1], r[i][0] + " media = " + mql.media);
     }
 });

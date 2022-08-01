@@ -2742,10 +2742,12 @@ static HRESULT WINAPI media_query_list_Invoke(IWineMSHTMLMediaQueryList *iface, 
 static HRESULT WINAPI media_query_list_get_media(IWineMSHTMLMediaQueryList *iface, BSTR *p)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
+    nsAString nsstr;
 
-    FIXME("(%p)->(%p)\n", media_query_list, p);
+    TRACE("(%p)->(%p)\n", media_query_list, p);
 
-    return E_NOTIMPL;
+    nsAString_InitDepend(&nsstr, NULL);
+    return return_nsstr(nsIDOMMediaQueryList_GetMedia(media_query_list->nsquerylist, &nsstr), &nsstr, p);
 }
 
 static HRESULT WINAPI media_query_list_get_matches(IWineMSHTMLMediaQueryList *iface, VARIANT_BOOL *p)
