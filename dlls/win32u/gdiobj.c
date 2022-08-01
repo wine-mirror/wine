@@ -1030,15 +1030,6 @@ BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
 
 static struct unix_funcs unix_funcs =
 {
-    NtUserDrawCaptionTemp,
-    NtUserDrawMenuBarTemp,
-    NtUserEndPaint,
-    NtUserExcludeUpdateRgn,
-    NtUserReleaseDC,
-    NtUserScrollDC,
-    NtUserSelectPalette,
-    NtUserUpdateLayeredWindow,
-
     SetDIBits,
     __wine_get_brush_bitmap_info,
     __wine_get_file_outline_text_metric,

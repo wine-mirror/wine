@@ -1616,6 +1616,19 @@ NTSTATUS WINAPI wow64_NtUserDragObject( UINT *args )
     return NtUserDragObject( parent, hwnd, fmt, data, hcursor );
 }
 
+NTSTATUS WINAPI wow64_NtUserDrawCaptionTemp( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HDC hdc = get_handle( &args );
+    const RECT *rect = get_ptr( &args );
+    HFONT font = get_handle( &args );
+    HICON icon = get_handle( &args );
+    const WCHAR *str = get_ptr( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserDrawCaptionTemp( hwnd, hdc, rect, font, icon, str, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserDrawIconEx( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -1629,6 +1642,17 @@ NTSTATUS WINAPI wow64_NtUserDrawIconEx( UINT *args )
     UINT flags = get_ulong( &args );
 
     return NtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
+}
+
+NTSTATUS WINAPI wow64_NtUserDrawMenuBarTemp( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HDC hdc = get_handle( &args );
+    RECT *rect = get_ptr( &args );
+    HMENU handle = get_handle( &args );
+    HFONT font = get_handle( &args );
+
+    return NtUserDrawMenuBarTemp( hwnd, hdc, rect, handle, font );
 }
 
 NTSTATUS WINAPI wow64_NtUserEmptyClipboard( UINT *args )
@@ -1674,6 +1698,15 @@ NTSTATUS WINAPI wow64_NtUserEndMenu( UINT *args )
     return NtUserEndMenu();
 }
 
+NTSTATUS WINAPI wow64_NtUserEndPaint( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const PAINTSTRUCT32 *ps32 = get_ptr( &args );
+    PAINTSTRUCT ps;
+
+    return NtUserEndPaint( hwnd, paintstruct_32to64( &ps, ps32 ));
+}
+
 NTSTATUS WINAPI wow64_NtUserEnumDisplayDevices( UINT *args )
 {
     UNICODE_STRING32 *device32 = get_ptr( &args );
@@ -1707,6 +1740,14 @@ NTSTATUS WINAPI wow64_NtUserEnumDisplaySettings( UINT *args )
 
     return NtUserEnumDisplaySettings( unicode_str_32to64( &device, device32 ),
                                       mode, dev_mode, flags );
+}
+
+NTSTATUS WINAPI wow64_NtUserExcludeUpdateRgn( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HWND hwnd = get_handle( &args );
+
+    return NtUserExcludeUpdateRgn( hdc, hwnd );
 }
 
 NTSTATUS WINAPI wow64_NtUserFindExistingCursorIcon( UINT *args )
@@ -3337,6 +3378,14 @@ NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
     return NtUserRegisterRawInputDevices( devices64, count, sizeof(*devices64) );
 }
 
+NTSTATUS WINAPI wow64_NtUserReleaseDC( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HDC hdc = get_handle( &args );
+
+    return NtUserReleaseDC( hwnd, hdc );
+}
+
 NTSTATUS WINAPI wow64_NtUserRemoveClipboardFormatListener( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -3361,6 +3410,19 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
 }
 
+NTSTATUS WINAPI wow64_NtUserScrollDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT dx = get_ulong( &args );
+    INT dy = get_ulong( &args );
+    const RECT *scroll = get_ptr( &args );
+    const RECT *clip = get_ptr( &args );
+    HRGN ret_update_rgn = get_handle( &args );
+    RECT *update_rect = get_ptr( &args );
+
+    return NtUserScrollDC( hdc, dx, dy, scroll, clip, ret_update_rgn, update_rect );
+}
+
 NTSTATUS WINAPI wow64_NtUserScrollWindowEx( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -3373,6 +3435,15 @@ NTSTATUS WINAPI wow64_NtUserScrollWindowEx( UINT *args )
     UINT flags = get_ulong( &args );
 
     return NtUserScrollWindowEx( hwnd, dx, dy, rect, clip_rect, update_rgn, update_rect, flags );
+}
+
+NTSTATUS WINAPI wow64_NtUserSelectPalette( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HPALETTE hpal = get_handle( &args );
+    WORD bkg = get_ulong( &args );
+
+    return HandleToUlong( NtUserSelectPalette( hdc, hpal, bkg ));
 }
 
 NTSTATUS WINAPI wow64_NtUserSendInput( UINT *args )
@@ -4201,6 +4272,23 @@ NTSTATUS WINAPI wow64_NtUserUpdateInputContext( UINT *args )
     UINT_PTR value = get_ulong( &args );
 
     return NtUserUpdateInputContext( handle, attr, value );
+}
+
+NTSTATUS WINAPI wow64_NtUserUpdateLayeredWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HDC hdc_dst = get_handle( &args );
+    const POINT *pts_dst = get_ptr( &args );
+    const SIZE *size = get_ptr( &args );
+    HDC hdc_src = get_handle( &args );
+    const POINT *pts_src = get_ptr( &args );
+    COLORREF key = get_ulong( &args );
+    const BLENDFUNCTION *blend = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+    const RECT *dirty = get_ptr( &args );
+
+    return NtUserUpdateLayeredWindow( hwnd, hdc_dst, pts_dst, size, hdc_src, pts_src,
+                                      key, blend, flags, dirty );
 }
 
 NTSTATUS WINAPI wow64_NtUserValidateRect( UINT *args )

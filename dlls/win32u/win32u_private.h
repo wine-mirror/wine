@@ -34,21 +34,6 @@
 
 struct unix_funcs
 {
-    /* win32u functions */
-    BOOL     (WINAPI *pNtUserDrawCaptionTemp)( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
-                                               HICON icon, const WCHAR *str, UINT flags );
-    DWORD    (WINAPI *pNtUserDrawMenuBarTemp)( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
-    BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
-    INT      (WINAPI *pNtUserExcludeUpdateRgn)( HDC hdc, HWND hwnd );
-    INT      (WINAPI *pNtUserReleaseDC)( HWND hwnd, HDC hdc );
-    BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
-                                        HRGN ret_update_rgn, RECT *update_rect );
-    HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
-    BOOL     (WINAPI *pNtUserUpdateLayeredWindow)( HWND hwnd, HDC hdc_dst, const POINT *pts_dst,
-                                                   const SIZE *size, HDC hdc_src, const POINT *pts_src,
-                                                   COLORREF key, const BLENDFUNCTION *blend,
-                                                   DWORD flags, const RECT *dirty );
-
     /* Wine-specific functions */
     INT (WINAPI *pSetDIBits)( HDC hdc, HBITMAP hbitmap, UINT startscan,
                               UINT lines, const void *bits, const BITMAPINFO *info,

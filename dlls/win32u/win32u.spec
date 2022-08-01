@@ -849,9 +849,9 @@
 @ stdcall -syscall NtUserDragObject(long long long long long)
 @ stub NtUserDrawAnimatedRects
 @ stub NtUserDrawCaption
-@ stdcall NtUserDrawCaptionTemp(long long ptr long long wstr long)
+@ stdcall -syscall NtUserDrawCaptionTemp(long long ptr long long wstr long)
 @ stdcall -syscall NtUserDrawIconEx(long long long long long long long long long)
-@ stdcall NtUserDrawMenuBarTemp(long long ptr long long)
+@ stdcall -syscall NtUserDrawMenuBarTemp(long long ptr long long)
 @ stub NtUserDwmGetRemoteSessionOcclusionEvent
 @ stub NtUserDwmGetRemoteSessionOcclusionState
 @ stub NtUserDwmKernelShutdown
@@ -874,12 +874,12 @@
 @ stub NtUserEnableWindowResizeOptimization
 @ stdcall -syscall NtUserEndDeferWindowPosEx(long long)
 @ stdcall -syscall NtUserEndMenu()
-@ stdcall NtUserEndPaint(long ptr)
+@ stdcall -syscall NtUserEndPaint(long ptr)
 @ stdcall -syscall NtUserEnumDisplayDevices(ptr long ptr long)
 @ stdcall -syscall NtUserEnumDisplayMonitors(long ptr ptr long)
 @ stdcall -syscall NtUserEnumDisplaySettings(ptr long ptr long)
 @ stub NtUserEvent
-@ stdcall NtUserExcludeUpdateRgn(long long)
+@ stdcall -syscall NtUserExcludeUpdateRgn(long long)
 @ stub NtUserFillWindow
 @ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
 @ stdcall -syscall NtUserFindWindowEx(long long ptr ptr long)
@@ -1139,7 +1139,7 @@
 @ stub NtUserRegisterTouchPadCapable
 @ stub NtUserRegisterUserApiHook
 @ stub NtUserRegisterWindowMessage
-@ stdcall NtUserReleaseDC(long long)
+@ stdcall -syscall NtUserReleaseDC(long long)
 @ stub NtUserReleaseDwmHitTestWaiters
 @ stub NtUserRemoteConnect
 @ stub NtUserRemoteRedrawRectangle
@@ -1155,9 +1155,9 @@
 @ stub NtUserResolveDesktopForWOW
 @ stub NtUserRestoreWindowDpiChanges
 @ stub NtUserSBGetParms
-@ stdcall NtUserScrollDC(long long long ptr ptr long ptr)
+@ stdcall -syscall NtUserScrollDC(long long long ptr ptr long ptr)
 @ stdcall -syscall NtUserScrollWindowEx(long long long ptr ptr long ptr long)
-@ stdcall NtUserSelectPalette(long long long)
+@ stdcall -syscall NtUserSelectPalette(long long long)
 @ stub NtUserSendEventMessage
 @ stdcall -syscall NtUserSendInput(long ptr long)
 @ stub NtUserSendInteracsetiveControlHapticsReport
@@ -1295,7 +1295,7 @@
 @ stub NtUserUpdateDefaultDesktopThumbnail
 @ stdcall -syscall NtUserUpdateInputContext(long long ptr)
 @ stub NtUserUpdateInstance
-@ stdcall NtUserUpdateLayeredWindow(long long ptr ptr long ptr long ptr long ptr)
+@ stdcall -syscall NtUserUpdateLayeredWindow(long long ptr ptr long ptr long ptr long ptr)
 @ stub NtUserUpdatePerUserSystemParameters
 @ stub NtUserUpdateWindowInputSinkHints
 @ stub NtUserUpdateWindowTrackingInfo

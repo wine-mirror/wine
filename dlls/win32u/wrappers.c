@@ -24,59 +24,6 @@
 
 static const struct unix_funcs *unix_funcs;
 
-BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserEndPaint( hwnd, ps );
-}
-
-BOOL WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
-                                   HICON icon, const WCHAR *str, UINT flags )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserDrawCaptionTemp( hwnd, hdc, rect, font, icon, str, flags );
-}
-
-DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserDrawMenuBarTemp( hwnd, hdc, rect, handle, font );
-}
-
-INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
-{
-    if (!unix_funcs) return ERROR;
-    return unix_funcs->pNtUserExcludeUpdateRgn( hdc, hwnd );
-}
-
-INT WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserReleaseDC( hwnd, hdc );
-}
-
-BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
-                            HRGN ret_update_rgn, RECT *update_rect )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserScrollDC( hdc, dx, dy, scroll, clip, ret_update_rgn, update_rect );
-}
-
-HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
-{
-    if (!unix_funcs) return 0;
-    return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
-}
-
-BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
-                                       HDC hdc_src, const POINT *pts_src, COLORREF key,
-                                       const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pNtUserUpdateLayeredWindow( hwnd, hdc_dst, pts_dst, size, hdc_src, pts_src,
-                                                   key, blend, flags, dirty );
-}
-
 INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
                       UINT lines, const void *bits, const BITMAPINFO *info,
                       UINT coloruse )
