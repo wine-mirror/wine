@@ -435,6 +435,7 @@ static IMFMediaType *mf_media_type_from_wg_format_audio(const struct wg_format *
         }
     }
 
+    FIXME("Unknown audio format %#x.\n", format->u.audio.format);
     return NULL;
 }
 
@@ -478,6 +479,7 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
         }
     }
 
+    FIXME("Unknown video format %#x.\n", format->u.video.format);
     return NULL;
 }
 
