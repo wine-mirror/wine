@@ -641,7 +641,7 @@ static void STDMETHODCALLTYPE d2d_device_context_FillRectangle(ID2D1DeviceContex
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
+        d2d_command_list_fill_rectangle(context->target.command_list, context, rect, brush);
         return;
     }
 
