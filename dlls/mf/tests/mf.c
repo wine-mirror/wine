@@ -8603,14 +8603,12 @@ todo_wine {
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetInputStatus(transform, 0, &flags);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetOutputStatus(transform, &flags);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
@@ -8622,38 +8620,30 @@ todo_wine {
     IMFAttributes_Release(attributes2);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 1, &media_type);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFTransform_GetInputStreamInfo(transform, 1, &input_info);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
     memset(&input_info, 0xcc, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-todo_wine {
     ok(hr == S_OK, "Failed to get stream info, hr %#lx.\n", hr);
     ok(input_info.dwFlags == 0, "Unexpected flag %#lx.\n", input_info.dwFlags);
     ok(input_info.cbSize == 0, "Unexpected size %lu.\n", input_info.cbSize);
     ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %lu.\n", input_info.cbMaxLookahead);
     ok(input_info.cbAlignment == 0, "Unexpected alignment %lu.\n", input_info.cbAlignment);
-}
     hr = MFCreateMediaEvent(MEUnknown, &GUID_NULL, S_OK, NULL, &event);
     ok(hr == S_OK, "Failed to create event object, hr %#lx.\n", hr);
     hr = IMFTransform_ProcessEvent(transform, 0, event);
@@ -8668,7 +8658,6 @@ todo_wine {
     {
         if (FAILED(hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type)))
         {
-            todo_wine
             ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
             break;
         }
@@ -8751,22 +8740,18 @@ todo_wine {
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
 
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == S_OK, "Failed to set input type, hr %#lx.\n", hr);
 
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
 
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == S_OK, "Failed to set output type, hr %#lx.\n", hr);
 
     memset(&output_info, 0, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "Failed to get stream info, hr %#lx.\n", hr);
     ok(output_info.dwFlags == 0, "Unexpected flags %#lx.\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize > 0, "Unexpected size %lu.\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "Unexpected alignment %lu.\n", output_info.cbAlignment);
 
@@ -8862,43 +8847,30 @@ todo_wine {
 
     memset(&input_info, 0xcd, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    todo_wine
     ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
-    todo_wine
     ok(input_info.dwFlags == 0, "got dwFlags %#lx\n", input_info.dwFlags);
-    todo_wine
     ok(input_info.cbSize == 0, "got cbSize %#lx\n", input_info.cbSize);
-    todo_wine
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
-    todo_wine
     ok(input_info.cbAlignment == 0, "got cbAlignment %#lx\n", input_info.cbAlignment);
 
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize == 0, "got cbSize %#lx\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
 
     hr = IMFTransform_GetInputAvailableType(transform, 0, 23, &media_type);
-    todo_wine
     ok(hr == S_OK || hr == MF_E_NO_MORE_TYPES /* w8 */, "GetOutputAvailableType returned %#lx\n", hr);
     if (hr == MF_E_NO_MORE_TYPES)
         expect_available_inputs = expect_available_inputs_w8;
     else
     {
         hr = IMFTransform_GetInputAvailableType(transform, 0, 27, &media_type);
-        todo_wine
         ok(hr == S_OK || broken(hr == MF_E_NO_MORE_TYPES) /* w1064v1507 */, "GetOutputAvailableType returned %#lx\n", hr);
         if (hr == MF_E_NO_MORE_TYPES)
             expect_available_inputs = expect_available_inputs_w10 + 3;
@@ -8943,6 +8915,7 @@ todo_wine {
         ok(hr == S_OK, "GetOutputAvailableType returned %#lx.\n", hr);
         hr = IMFMediaType_IsEqual(media_type, media_type2, &flags);
         ok(hr == S_OK, "IsEqual returned %#lx.\n", hr);
+        IMFMediaType_Release(media_type2);
 
         ret = IMFMediaType_Release(media_type);
         ok(ret == 1, "Release returned %lu\n", ret);
@@ -8970,9 +8943,7 @@ todo_wine {
 
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    todo_wine
     ok(i == 22 || i == 30 || broken(i == 26) /* w1064v1507 */, "%lu input media types\n", i);
 
     /* check required input media type attributes */
@@ -8980,25 +8951,20 @@ todo_wine {
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
     init_media_type(media_type, input_type_desc, 1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
     init_media_type(media_type, input_type_desc, 2);
     for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
     {
         hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        todo_wine
         ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
         init_media_type(media_type, input_type_desc, i + 1);
     }
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
-    todo_wine
     ok(ret == 1, "Release returned %lu\n", ret);
 
     /* check required output media type attributes */
@@ -9006,51 +8972,36 @@ todo_wine {
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
     init_media_type(media_type, output_type_desc, 1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
     init_media_type(media_type, output_type_desc, 2);
     for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
     {
         hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        todo_wine
         ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
         init_media_type(media_type, output_type_desc, i + 1);
     }
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
-    todo_wine
     ok(ret == 1, "Release returned %lu\n", ret);
 
     memset(&input_info, 0xcd, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    todo_wine
     ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
-    todo_wine
     ok(input_info.dwFlags == 0, "got dwFlags %#lx\n", input_info.dwFlags);
-    todo_wine
     ok(input_info.cbSize == actual_width * actual_height * 3 / 2, "got cbSize %#lx\n", input_info.cbSize);
-    todo_wine
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
-    todo_wine
     ok(input_info.cbAlignment == 0, "got cbAlignment %#lx\n", input_info.cbAlignment);
 
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize == actual_width * actual_height * 4, "got cbSize %#lx\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     resource = FindResourceW(NULL, L"nv12frame.bin", (const WCHAR *)RT_RCDATA);
@@ -9065,13 +9016,10 @@ todo_wine {
     hr = IMFSample_SetSampleDuration(sample, 10000000);
     ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-    todo_wine
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
@@ -9080,7 +9028,6 @@ todo_wine {
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
     rgb32_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
     rgb32_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
-    todo_wine
     ok(rgb32_data_len == output_info.cbSize, "got length %lu\n", rgb32_data_len);
 
     /* and generate a new one as well in a temporary directory */
@@ -9094,11 +9041,9 @@ todo_wine {
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
     if (hr != S_OK)
     {
-        todo_wine
         win_skip("ProcessOutput returned MF_E_SHUTDOWN, skipping tests.\n");
         CloseHandle(output_file);
         goto skip_output;
@@ -9127,10 +9072,11 @@ todo_wine {
     IMFMediaBuffer_Release(buffer);
 
     /* w1064v1809 ignores MF_MT_MINIMUM_DISPLAY_APERTURE and resizes the frame */
+    todo_wine
     ok(tmp == 0xcd || broken(tmp == 0x00), "got %#x\n", tmp);
     if (tmp == 0x00)
         win_skip("Frame got resized, skipping output comparison\n");
-    else
+    else if (tmp == 0xcd) /* Wine doesn't flip the frame, yet */
         check_sample_rgb32(sample, rgb32_data, output_file);
     rgb32_data_len -= output_info.cbSize;
     rgb32_data += output_info.cbSize;
