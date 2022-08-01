@@ -749,6 +749,9 @@ void d2d_command_list_clear(struct d2d_command_list *command_list, const D2D1_CO
 void d2d_command_list_draw_line(struct d2d_command_list *command_list, const struct d2d_device_context *context,
         D2D1_POINT_2F p0, D2D1_POINT_2F p1, ID2D1Brush *orig_brush, float stroke_width,
         ID2D1StrokeStyle *stroke_style) DECLSPEC_HIDDEN;
+void d2d_command_list_draw_geometry(struct d2d_command_list *command_list,
+        const struct d2d_device_context *context, ID2D1Geometry *geometry, ID2D1Brush *orig_brush,
+        float stroke_width, ID2D1StrokeStyle *stroke_style) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

@@ -950,7 +950,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
+        d2d_command_list_draw_geometry(context->target.command_list, context, geometry, brush,
+                stroke_width, stroke_style);
         return;
     }
 
