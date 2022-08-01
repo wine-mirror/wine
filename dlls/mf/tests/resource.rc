@@ -32,14 +32,23 @@ wmaencdata.bin RCDATA wmaencdata.bin
 /* @makedep: wmadecdata.bin */
 wmadecdata.bin RCDATA wmadecdata.bin
 
+/* Generated with:
+ *  gst-launch-1.0 videotestsrc num-buffers=60 pattern=smpte100 ! \
+ *      video/x-raw,format=I420,width=84,height=82,framerate=30000/1001 ! \
+ *      videoflip method=clockwise ! videoconvert ! \
+ *      x264enc ! filesink location=dlls/mf/tests/h264data.bin
+ */
 /* @makedep: h264data.bin */
 h264data.bin RCDATA h264data.bin
 
+/* Generated from running the tests on Windows */
 /* @makedep: nv12frame.bin */
 nv12frame.bin RCDATA nv12frame.bin
 
+/* Generated from running the tests on Windows */
 /* @makedep: i420frame.bin */
 i420frame.bin RCDATA i420frame.bin
 
+/* Generated from running the tests on Windows */
 /* @makedep: rgb32frame.bin */
 rgb32frame.bin RCDATA rgb32frame.bin
