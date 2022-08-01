@@ -1775,6 +1775,7 @@ struct test_callback
 
     HANDLE event;
     IMFMediaEvent *media_event;
+    BOOL check_media_event;
 };
 
 static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -1835,15 +1836,18 @@ static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResul
     if (callback->media_event)
         IMFMediaEvent_Release(callback->media_event);
 
-    hr = IMFAsyncResult_GetObject(result, &object);
-    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    if (callback->check_media_event)
+    {
+        hr = IMFAsyncResult_GetObject(result, &object);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFAsyncResult_GetState(result, &object);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaEventGenerator_EndGetEvent((IMFMediaEventGenerator *)object,
-            result, &callback->media_event);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IUnknown_Release(object);
+        hr = IMFAsyncResult_GetState(result, &object);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaEventGenerator_EndGetEvent((IMFMediaEventGenerator *)object,
+                result, &callback->media_event);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IUnknown_Release(object);
+    }
 
     SetEvent(callback->event);
 
@@ -1859,7 +1863,7 @@ static const IMFAsyncCallbackVtbl testcallbackvtbl =
     testcallback_Invoke,
 };
 
-static IMFAsyncCallback *create_test_callback(void)
+static IMFAsyncCallback *create_test_callback(BOOL check_media_event)
 {
     struct test_callback *callback;
 
@@ -1867,6 +1871,7 @@ static IMFAsyncCallback *create_test_callback(void)
         return NULL;
 
     callback->refcount = 1;
+    callback->check_media_event = check_media_event;
     callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
     callback->event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!callback->event, "CreateEventW failed, error %lu\n", GetLastError());
@@ -2000,8 +2005,8 @@ static void test_media_session_events(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
 
-    callback = create_test_callback();
-    callback2 = create_test_callback();
+    callback = create_test_callback(TRUE);
+    callback2 = create_test_callback(TRUE);
 
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Failed to create media session, hr %#lx.\n", hr);
@@ -2056,7 +2061,7 @@ static void test_media_session_events(void)
     IMFAsyncCallback_Release(callback2);
 
 
-    callback = create_test_callback();
+    callback = create_test_callback(TRUE);
 
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3810,15 +3815,20 @@ static void test_presentation_clock(void)
     };
     IMFClockStateSink test_sink = { &test_clock_sink_vtbl };
     IMFPresentationTimeSource *time_source;
+    struct test_callback *timer_callback;
     MFCLOCK_PROPERTIES props, props2;
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
+    IMFAsyncCallback *callback;
+    IUnknown *timer_cancel_key;
     MFSHUTDOWN_STATUS status;
     IMFShutdown *shutdown;
     MFTIME systime, time;
     LONGLONG clock_time;
     MFCLOCK_STATE state;
+    IMFTimer *timer;
     unsigned int i;
+    DWORD t1, t2;
     DWORD value;
     float rate;
     HRESULT hr;
@@ -4041,6 +4051,31 @@ static void test_presentation_clock(void)
     ok(!thin, "Unexpected thinning.\n");
 
     IMFRateControl_Release(rate_control);
+
+
+    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFPresentationClock_Start(clock, 200000);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &time, &systime);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    callback = create_test_callback(FALSE);
+    timer_callback = impl_from_IMFAsyncCallback(callback);
+    hr = IMFTimer_SetTimer(timer, 0, 100000, callback, NULL, &timer_cancel_key);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    t1 = GetTickCount();
+    ok(WaitForSingleObject(timer_callback->event, 4000) == WAIT_OBJECT_0, "WaitForSingleObject failed.\n");
+    t2 = GetTickCount();
+
+    ok(t2 - t1 < 200, "unexpected time difference %lu.\n", t2 - t1);
+
+    IUnknown_Release(timer_cancel_key);
+    IMFTimer_Release(timer);
+    IMFAsyncCallback_Release(callback);
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFShutdown, (void **)&shutdown);
     ok(hr == S_OK, "Failed to get shutdown interface, hr %#lx.\n", hr);
@@ -4693,7 +4728,7 @@ static void test_sample_grabber_orientation(GUID subtype)
         return;
     }
 
-    callback = create_test_callback();
+    callback = create_test_callback(TRUE);
     grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
 
     grabber_callback->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);

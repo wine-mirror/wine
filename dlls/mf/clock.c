@@ -819,7 +819,10 @@ static HRESULT present_clock_schedule_timer(struct presentation_clock *clock, DW
             WARN("Failed to get clock time, hr %#lx.\n", hr);
             return hr;
         }
-        time -= clocktime;
+        if (time > clocktime)
+            time -= clocktime;
+        else
+            time = 0;
     }
 
     frequency = clock->frequency / 1000;
