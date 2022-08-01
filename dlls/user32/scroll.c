@@ -259,6 +259,14 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
     case WM_KEYDOWN:
     case WM_KEYUP:
     case WM_ENABLE:
+    case WM_LBUTTONDBLCLK:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_NCMOUSEMOVE:
+    case WM_NCMOUSELEAVE:
+    case WM_MOUSEMOVE:
+    case WM_MOUSELEAVE:
+    case WM_SYSTIMER:
     case WM_SETFOCUS:
     case WM_KILLFOCUS:
     case WM_CREATE:
