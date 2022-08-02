@@ -88,7 +88,9 @@ static DWORD WINAPI stream_thread(void *arg)
 
     while (reader->running)
     {
+        LeaveCriticalSection(&reader->stream_cs);
         hr = wm_reader_get_stream_sample(&reader->reader, callback_advanced, 0, &sample, &pts, &duration, &flags, &stream_number);
+        EnterCriticalSection(&reader->stream_cs);
         if (hr != S_OK)
             break;
 
