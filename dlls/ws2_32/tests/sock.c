@@ -9416,6 +9416,26 @@ static void test_shutdown(void)
     closesocket(client);
     closesocket(server);
 
+    /* Send data to a peer which is closed. */
+
+    tcp_socketpair(&client, &server);
+
+    WSASetLastError(0xdeadbeef);
+    ret = shutdown(client, SD_SEND);
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
+    closesocket(client);
+
+    ret = send(server, "test", 5, 0);
+    ok(ret == 5, "got %d\n", ret);
+
+    WSASetLastError(0xdeadbeef);
+    ret = recv(server, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAECONNABORTED, "got error %u\n", WSAGetLastError());
+
+    closesocket(server);
+
     /* Test shutting down with async I/O pending. */
 
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
