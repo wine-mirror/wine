@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include <float.h>
+#include <assert.h>
 
 #include "mfidl.h"
 #include "mf_private.h"
@@ -58,6 +59,8 @@ struct scheduled_item
     } u;
 };
 
+#define MAX_SAMPLE_QUEUE_LENGTH 4
+
 struct sample_grabber
 {
     IMFMediaSink IMFMediaSink_iface;
@@ -86,6 +89,8 @@ struct sample_grabber
     float rate;
     enum sink_state state;
     CRITICAL_SECTION cs;
+    UINT32 sample_count;
+    IMFSample *samples[MAX_SAMPLE_QUEUE_LENGTH];
 };
 
 static IMFSampleGrabberSinkCallback *sample_grabber_get_callback(const struct sample_grabber *sink)
@@ -441,6 +446,14 @@ static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, 
             }
             else
                 hr = stream_queue_sample(grabber, sample);
+        }
+    }
+    else if (grabber->state == SINK_STATE_PAUSED)
+    {
+        if (grabber->sample_count < MAX_SAMPLE_QUEUE_LENGTH)
+        {
+            IMFSample_AddRef(sample);
+            grabber->samples[grabber->sample_count++] = sample;
         }
     }
 
@@ -827,6 +840,20 @@ static void sample_grabber_release_pending_items(struct sample_grabber *grabber)
     }
 }
 
+static void release_samples(struct sample_grabber *grabber)
+{
+    unsigned int i;
+
+    for (i = 0; i < MAX_SAMPLE_QUEUE_LENGTH; ++i)
+    {
+        if (grabber->samples[i])
+        {
+            IMFSample_Release(grabber->samples[i]);
+            grabber->samples[i] = NULL;
+        }
+    }
+}
+
 static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
 {
     struct sample_grabber *grabber = impl_from_IMFMediaSink(iface);
@@ -858,6 +885,7 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
         if (grabber->sample_attributes)
             IMFAttributes_Release(grabber->sample_attributes);
         sample_grabber_release_pending_items(grabber);
+        release_samples(grabber);
         DeleteCriticalSection(&grabber->cs);
         free(grabber);
     }
@@ -1129,14 +1157,31 @@ static HRESULT sample_grabber_set_state(struct sample_grabber *grabber, enum sin
         else
         {
             if (state == SINK_STATE_STOPPED)
+            {
                 sample_grabber_cancel_timer(grabber);
+                release_samples(grabber);
+                grabber->sample_count = MAX_SAMPLE_QUEUE_LENGTH;
+            }
 
-            if (state == SINK_STATE_RUNNING && grabber->state == SINK_STATE_STOPPED)
+            if (state == SINK_STATE_RUNNING && grabber->state != SINK_STATE_RUNNING)
             {
                 /* Every transition to running state sends a bunch requests to build up initial queue. */
-                for (i = 0; i < 4; ++i)
-                    sample_grabber_stream_request_sample(grabber);
+                for (i = 0; i < grabber->sample_count; ++i)
+                {
+                    if (grabber->state == SINK_STATE_PAUSED && offset == PRESENTATION_CURRENT_POSITION)
+                    {
+                        assert(grabber->samples[i]);
+                        stream_queue_sample(grabber, grabber->samples[i]);
+                    }
+                    else
+                    {
+                        sample_grabber_stream_request_sample(grabber);
+                    }
+                }
+                release_samples(grabber);
+                grabber->sample_count = 0;
             }
+
             do_callback = state != grabber->state || state != SINK_STATE_PAUSED;
             if (do_callback)
             {
@@ -1442,6 +1487,7 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     object->IMFStreamSink_iface.lpVtbl = &sample_grabber_stream_vtbl;
     object->IMFMediaTypeHandler_iface.lpVtbl = &sample_grabber_stream_type_handler_vtbl;
     object->timer_callback.lpVtbl = &sample_grabber_stream_timer_callback_vtbl;
+    object->sample_count = MAX_SAMPLE_QUEUE_LENGTH;
     object->refcount = 1;
     object->rate = 1.0f;
     if (FAILED(IMFSampleGrabberSinkCallback_QueryInterface(context->callback, &IID_IMFSampleGrabberSinkCallback2,
