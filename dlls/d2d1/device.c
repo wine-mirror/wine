@@ -1084,7 +1084,12 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
 static void STDMETHODCALLTYPE d2d_device_context_FillMesh(ID2D1DeviceContext1 *iface,
         ID2D1Mesh *mesh, ID2D1Brush *brush)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, mesh %p, brush %p stub!\n", iface, mesh, brush);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_mesh(context->target.command_list, context, mesh, brush);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceContext1 *iface,

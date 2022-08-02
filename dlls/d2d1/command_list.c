@@ -35,6 +35,7 @@ enum d2d_command_type
     D2D_COMMAND_DRAW_GEOMETRY,
     D2D_COMMAND_DRAW_RECTANGLE,
     D2D_COMMAND_DRAW_BITMAP,
+    D2D_COMMAND_FILL_MESH,
     D2D_COMMAND_FILL_GEOMETRY,
     D2D_COMMAND_FILL_RECTANGLE,
     D2D_COMMAND_PUSH_CLIP,
@@ -127,6 +128,13 @@ struct d2d_command_draw_rectangle
     ID2D1Brush *brush;
     float stroke_width;
     ID2D1StrokeStyle *stroke_style;
+};
+
+struct d2d_command_fill_mesh
+{
+    struct d2d_command c;
+    ID2D1Mesh *mesh;
+    ID2D1Brush *brush;
 };
 
 struct d2d_command_fill_geometry
@@ -331,6 +339,12 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
                 const struct d2d_command_draw_bitmap *c = data;
                 hr = ID2D1CommandSink_DrawBitmap(sink, c->bitmap, c->dst_rect, c->opacity,
                         c->interpolation_mode, c->src_rect, c->perspective_transform);
+                break;
+            }
+            case D2D_COMMAND_FILL_MESH:
+            {
+                const struct d2d_command_fill_mesh *c = data;
+                hr = ID2D1CommandSink_FillMesh(sink, c->mesh, c->brush);
                 break;
             }
             case D2D_COMMAND_FILL_GEOMETRY:
@@ -865,4 +879,24 @@ void d2d_command_list_draw_bitmap(struct d2d_command_list *command_list, ID2D1Bi
     d2d_command_list_write_field(&data, &command->dst_rect, dst_rect, sizeof(*dst_rect));
     d2d_command_list_write_field(&data, &command->src_rect, src_rect, sizeof(*src_rect));
     d2d_command_list_write_field(&data, &command->perspective_transform, perspective_transform, sizeof(*perspective_transform));
+}
+
+void d2d_command_list_fill_mesh(struct d2d_command_list *command_list, const struct d2d_device_context *context,
+        ID2D1Mesh *mesh, ID2D1Brush *orig_brush)
+{
+    struct d2d_command_fill_mesh *command;
+    ID2D1Brush *brush;
+
+    if (FAILED(d2d_command_list_create_brush(command_list, context, orig_brush, &brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        return;
+    }
+
+    d2d_command_list_reference_object(command_list, mesh);
+
+    command = d2d_command_list_require_space(command_list, sizeof(*command));
+    command->c.op = D2D_COMMAND_FILL_MESH;
+    command->mesh = mesh;
+    command->brush = brush;
 }
