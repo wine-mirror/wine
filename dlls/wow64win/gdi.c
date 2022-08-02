@@ -136,7 +136,7 @@ NTSTATUS WINAPI wow64_NtGdiCreateDIBSection( UINT *args )
 
     ret = NtGdiCreateDIBSection( hdc, section, offset, bmi, usage, header_size,
                                  flags, color_space, addr_32to64( &bits, bits32 ));
-    if (ret) put_addr( bits32, bits );
+    put_addr( bits32, bits );
     return HandleToUlong( ret );
 }
 
