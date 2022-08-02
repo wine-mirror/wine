@@ -48,6 +48,57 @@ struct asf_reader
     struct asf_stream streams[16];
 };
 
+static inline struct asf_stream *impl_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct asf_stream, source.pin);
+}
+
+static inline struct asf_reader *asf_reader_from_asf_stream(struct asf_stream *stream)
+{
+    return CONTAINING_RECORD(stream, struct asf_reader, streams[stream->index]);
+}
+
+static HRESULT asf_stream_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *media_type)
+{
+    struct asf_stream *stream = impl_from_strmbase_pin(iface);
+    struct asf_reader *filter = asf_reader_from_asf_stream(stream);
+    IWMOutputMediaProps *props;
+    WM_MEDIA_TYPE *mt;
+    DWORD size, i = 0;
+    HRESULT hr;
+
+    TRACE("iface %p, media_type %p.\n", iface, media_type);
+
+    if (FAILED(hr = IWMReader_GetOutputFormat(filter->reader, stream->index, i, &props)))
+        return hr;
+    if (FAILED(hr = IWMOutputMediaProps_GetMediaType(props, NULL, &size)))
+    {
+        IWMOutputMediaProps_Release(props);
+        return hr;
+    }
+    if (!(mt = malloc(size)))
+    {
+        IWMOutputMediaProps_Release(props);
+        return E_OUTOFMEMORY;
+    }
+
+    do
+    {
+        if (SUCCEEDED(hr = IWMOutputMediaProps_GetMediaType(props, mt, &size))
+                && IsEqualGUID(&mt->majortype, &media_type->majortype)
+                && IsEqualGUID(&mt->subtype, &media_type->subtype))
+        {
+            IWMOutputMediaProps_Release(props);
+            break;
+        }
+
+        IWMOutputMediaProps_Release(props);
+    } while (SUCCEEDED(hr = IWMReader_GetOutputFormat(filter->reader, stream->index, ++i, &props)));
+
+    free(mt);
+    return hr;
+}
+
 static inline struct asf_reader *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct asf_reader, filter);
@@ -120,6 +171,7 @@ static HRESULT WINAPI asf_reader_DecideBufferSize(struct strmbase_source *iface,
 
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_query_accept = asf_stream_query_accept,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = asf_reader_DecideBufferSize,
