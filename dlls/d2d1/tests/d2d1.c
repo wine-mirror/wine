@@ -9501,7 +9501,6 @@ static void test_command_list(BOOL d3d11)
     ID2D1RenderTarget_DrawBitmap(rt, bitmap, NULL, 0.25f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
 
     refcount = ID2D1Bitmap_Release(bitmap);
-    todo_wine
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* Solid color brush. */

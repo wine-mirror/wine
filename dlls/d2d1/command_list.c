@@ -34,6 +34,7 @@ enum d2d_command_type
     D2D_COMMAND_DRAW_LINE,
     D2D_COMMAND_DRAW_GEOMETRY,
     D2D_COMMAND_DRAW_RECTANGLE,
+    D2D_COMMAND_DRAW_BITMAP,
     D2D_COMMAND_FILL_GEOMETRY,
     D2D_COMMAND_FILL_RECTANGLE,
     D2D_COMMAND_PUSH_CLIP,
@@ -151,6 +152,17 @@ struct d2d_command_draw_glyph_run
     ID2D1Brush *brush;
     DWRITE_GLYPH_RUN run;
     DWRITE_GLYPH_RUN_DESCRIPTION *run_desc;
+};
+
+struct d2d_command_draw_bitmap
+{
+    struct d2d_command c;
+    float opacity;
+    D2D1_INTERPOLATION_MODE interpolation_mode;
+    ID2D1Bitmap *bitmap;
+    D2D1_RECT_F *dst_rect;
+    D2D1_RECT_F *src_rect;
+    D2D1_MATRIX_4X4_F *perspective_transform;
 };
 
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
@@ -312,6 +324,13 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
                 const struct d2d_command_draw_rectangle *c = data;
                 hr = ID2D1CommandSink_DrawRectangle(sink, &c->rect, c->brush, c->stroke_width,
                         c->stroke_style);
+                break;
+            }
+            case D2D_COMMAND_DRAW_BITMAP:
+            {
+                const struct d2d_command_draw_bitmap *c = data;
+                hr = ID2D1CommandSink_DrawBitmap(sink, c->bitmap, c->dst_rect, c->opacity,
+                        c->interpolation_mode, c->src_rect, c->perspective_transform);
                 break;
             }
             case D2D_COMMAND_FILL_GEOMETRY:
@@ -818,4 +837,32 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
     command->brush = brush;
     command->origin = origin;
     command->measuring_mode = measuring_mode;
+}
+
+void d2d_command_list_draw_bitmap(struct d2d_command_list *command_list, ID2D1Bitmap *bitmap,
+        const D2D1_RECT_F *dst_rect, float opacity, D2D1_INTERPOLATION_MODE interpolation_mode,
+        const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform)
+{
+    struct d2d_command_draw_bitmap *command;
+    size_t size;
+    BYTE *data;
+
+    size = sizeof(*command);
+    if (dst_rect) size += sizeof(*dst_rect);
+    if (src_rect) size += sizeof(*src_rect);
+    if (perspective_transform) size += sizeof(*perspective_transform);
+
+    d2d_command_list_reference_object(command_list, bitmap);
+
+    command = d2d_command_list_require_space(command_list, size);
+    command->c.op = D2D_COMMAND_DRAW_BITMAP;
+    command->bitmap = bitmap;
+    command->opacity = opacity;
+    command->interpolation_mode = interpolation_mode;
+
+    data = (BYTE *)(command + 1);
+
+    d2d_command_list_write_field(&data, &command->dst_rect, dst_rect, sizeof(*dst_rect));
+    d2d_command_list_write_field(&data, &command->src_rect, src_rect, sizeof(*src_rect));
+    d2d_command_list_write_field(&data, &command->perspective_transform, perspective_transform, sizeof(*perspective_transform));
 }

@@ -1181,12 +1181,14 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext1 
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
-        return;
+        d2d_command_list_draw_bitmap(context->target.command_list, bitmap, dst_rect, opacity,
+                d2d1_1_interp_mode_from_d2d1(interpolation_mode), src_rect, NULL);
     }
-
-    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, d2d1_1_interp_mode_from_d2d1(interpolation_mode),
-            src_rect, NULL, NULL);
+    else
+    {
+        d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity,
+                d2d1_1_interp_mode_from_d2d1(interpolation_mode), src_rect, NULL, NULL);
+    }
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext1 *iface,
@@ -2498,12 +2500,14 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(I
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
-        return;
+        d2d_command_list_draw_bitmap(context->target.command_list, bitmap, dst_rect, opacity, interpolation_mode,
+                src_rect, perspective_transform);
     }
-
-    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect,
-            NULL, perspective_transform);
+    else
+    {
+        d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect,
+                NULL, perspective_transform);
+    }
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID2D1DeviceContext1 *iface,
