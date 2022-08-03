@@ -531,6 +531,7 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
         case MODE_ID_ECB: str = BCRYPT_CHAIN_MODE_ECB; break;
         case MODE_ID_CBC: str = BCRYPT_CHAIN_MODE_CBC; break;
         case MODE_ID_GCM: str = BCRYPT_CHAIN_MODE_GCM; break;
+        case MODE_ID_CFB: str = BCRYPT_CHAIN_MODE_CFB; break;
         default: return STATUS_NOT_IMPLEMENTED;
         }
 
@@ -660,6 +661,11 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
             else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
             {
                 alg->mode = MODE_ID_GCM;
+                return STATUS_SUCCESS;
+            }
+            else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CFB ))
+            {
+                alg->mode = MODE_ID_CFB;
                 return STATUS_SUCCESS;
             }
             else

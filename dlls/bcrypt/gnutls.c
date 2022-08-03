@@ -506,6 +506,11 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
             if (key->u.s.secret_len == 24) return GNUTLS_CIPHER_AES_192_CBC;
             if (key->u.s.secret_len == 32) return GNUTLS_CIPHER_AES_256_CBC;
             break;
+        case MODE_ID_CFB:
+            if (key->u.s.secret_len == 16) return GNUTLS_CIPHER_AES_128_CFB8;
+            if (key->u.s.secret_len == 24) return GNUTLS_CIPHER_AES_192_CFB8;
+            if (key->u.s.secret_len == 32) return GNUTLS_CIPHER_AES_256_CFB8;
+            break;
         default:
             break;
         }
