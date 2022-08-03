@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2014-2021 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2022 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -723,10 +723,13 @@ HRESULT create_text_format(const WCHAR *family_name, IDWriteFontCollection *coll
     if (size <= 0.0f)
         return E_INVALIDARG;
 
-    if (((UINT32)weight > DWRITE_FONT_WEIGHT_ULTRA_BLACK) ||
-        ((UINT32)stretch > DWRITE_FONT_STRETCH_ULTRA_EXPANDED) ||
-        ((UINT32)style > DWRITE_FONT_STYLE_ITALIC))
+    if ((UINT32)weight > DWRITE_FONT_WEIGHT_ULTRA_BLACK
+        || stretch == DWRITE_FONT_STRETCH_UNDEFINED
+        || (UINT32)stretch > DWRITE_FONT_STRETCH_ULTRA_EXPANDED
+        || (UINT32)style > DWRITE_FONT_STYLE_ITALIC)
+    {
         return E_INVALIDARG;
+    }
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;

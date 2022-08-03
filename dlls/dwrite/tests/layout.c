@@ -1196,6 +1196,10 @@ static void test_CreateTextFormat(void)
             10, 10.0f, L"en-us", &format);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_ITALIC,
+            DWRITE_FONT_STRETCH_UNDEFINED, 10.0f, L"en-us", &format);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     /* empty family name */
     hr = IDWriteFactory_CreateTextFormat(factory, L"", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
