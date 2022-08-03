@@ -33,6 +33,10 @@ typedef struct IDirectMusicSegment8Impl {
     DMUS_IO_SEGMENT_HEADER header;
     IDirectMusicGraph *pGraph;
     struct list Tracks;
+
+    PCMWAVEFORMAT wave_format;
+    void *wave_data;
+    int data_size;
 } IDirectMusicSegment8Impl;
 
 IDirectMusicSegment8Impl *create_segment(void);
@@ -86,6 +90,9 @@ static ULONG WINAPI IDirectMusicSegment8Impl_Release(IDirectMusicSegment8 *iface
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
+        if (This->wave_data)
+            free(This->wave_data);
+
         HeapFree(GetProcessHeap(), 0, This);
         DMIME_UnlockModule();
     }
@@ -818,6 +825,52 @@ static inline IDirectMusicSegment8Impl *impl_from_IPersistStream(IPersistStream 
     return CONTAINING_RECORD(iface, IDirectMusicSegment8Impl, dmobj.IPersistStream_iface);
 }
 
+static HRESULT parse_wave_form(IDirectMusicSegment8Impl *This, IStream *stream, const struct chunk_entry *riff)
+{
+    HRESULT hr;
+    struct chunk_entry chunk = {.parent = riff};
+
+    TRACE("Parsing segment wave in %p: %s\n", stream, debugstr_chunk(riff));
+
+     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
+        switch (chunk.id) {
+            case mmioFOURCC('f','m','t',' '): {
+                if (FAILED(hr = stream_chunk_get_data(stream, &chunk, &This->wave_format,
+                                                      sizeof(This->wave_format))) )
+                    return hr;
+                TRACE("Wave Format tag %d\n", This->wave_format.wf.wFormatTag);
+                break;
+            }
+            case mmioFOURCC('d','a','t','a'): {
+                TRACE("Wave Data size %lu\n", chunk.size);
+                if (This->wave_data)
+                    ERR("Multiple data streams detected\n");
+                This->wave_data = malloc(chunk.size);
+                This->data_size = chunk.size;
+                if (!This->wave_data)
+                    return E_OUTOFMEMORY;
+                if (FAILED(hr = stream_chunk_get_data(stream, &chunk, This->wave_data, chunk.size)))
+                    return hr;
+                break;
+            }
+            case FOURCC_LIST: {
+                FIXME("Skipping LIST tag\n");
+                break;
+            }
+            case mmioFOURCC('I','S','F','T'): {
+                FIXME("Skipping ISFT tag\n");
+                break;
+            }
+            case mmioFOURCC('f','a','c','t'): {
+                FIXME("Skipping fact tag\n");
+                break;
+            }
+        }
+    }
+
+    return SUCCEEDED(hr) ? S_OK : hr;
+}
+
 static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
     IDirectMusicSegment8Impl *This = impl_from_IPersistStream(iface);
@@ -847,8 +900,10 @@ static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *st
 
     if (riff.type == DMUS_FOURCC_SEGMENT_FORM)
         hr = parse_segment_form(This, stream, &riff);
+    else if(riff.type == mmioFOURCC('W','A','V','E'))
+        hr = parse_wave_form(This, stream, &riff);
     else {
-        FIXME("WAVE form loading not implemented\n");
+        FIXME("Unknown type %s\n", debugstr_chunk(&riff));
         hr = S_OK;
     }
 
