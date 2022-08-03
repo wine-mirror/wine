@@ -1042,6 +1042,8 @@ HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *des
                            WS_HEAP *heap, void *value, ULONG size, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
+    WS_ELEMENT_DESCRIPTION tmp;
+    WS_FAULT_DESCRIPTION fault_desc;
     HRESULT hr;
 
     TRACE( "%p %p %u %p %p %lu %p\n", handle, desc, option, heap, value, size, error );
@@ -1058,7 +1060,23 @@ HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *des
     }
 
     if (msg->state != WS_MESSAGE_STATE_READING) hr = WS_E_INVALID_OPERATION;
-    else hr = WsReadElement( msg->reader_body, desc, option, heap, value, size, NULL );
+    else
+    {
+        if (!desc->typeDescription)
+        {
+            if (desc->type == WS_FAULT_TYPE)
+            {
+                memcpy( &tmp, desc, sizeof(*desc) );
+                fault_desc.envelopeVersion = msg->version_env;
+                tmp.typeDescription = &fault_desc;
+                desc = &tmp;
+            }
+            else if (desc->type == WS_ENDPOINT_ADDRESS_TYPE)
+                FIXME( "!desc->typeDescription with WS_ENDPOINT_ADDRESS_TYPE\n" );
+        }
+
+        hr = WsReadElement( msg->reader_body, desc, option, heap, value, size, NULL );
+    }
 
     LeaveCriticalSection( &msg->cs );
     TRACE( "returning %#lx\n", hr );
