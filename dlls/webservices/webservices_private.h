@@ -168,6 +168,7 @@ HRESULT message_map_http_response_headers( WS_MESSAGE *, HINTERNET, const WS_HTT
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT channel_receive_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT channel_get_reader( WS_CHANNEL *, WS_XML_READER ** ) DECLSPEC_HIDDEN;
+HRESULT channel_address_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 
 HRESULT parse_url( const WS_STRING *, WS_URL_SCHEME_TYPE *, WCHAR **, USHORT * ) DECLSPEC_HIDDEN;
 

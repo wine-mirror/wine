@@ -3041,3 +3041,9 @@ HRESULT channel_accept_udp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNE
     LeaveCriticalSection( &channel->cs );
     return hr;
 }
+
+HRESULT channel_address_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
+{
+    struct channel *channel = (struct channel *)handle;
+    return WsAddressMessage( msg, &channel->addr, NULL );
+}

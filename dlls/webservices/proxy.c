@@ -426,6 +426,7 @@ static HRESULT send_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE_DE
     WS_XML_WRITER *writer;
     HRESULT hr;
 
+    if ((hr = channel_address_message( channel, msg )) != S_OK) return hr;
     if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
     if ((hr = WsCreateWriter( NULL, 0, &writer, NULL )) != S_OK) return hr;
     if ((hr = set_output( writer )) != S_OK) goto done;
