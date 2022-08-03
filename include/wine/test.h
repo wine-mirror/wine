@@ -23,6 +23,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <io.h>
 #include <windef.h>
 #include <winbase.h>
 #include <wine/debug.h>
@@ -676,7 +677,8 @@ int main( int argc, char **argv )
     else if (running_under_wine())
         winetest_platform = "wine";
 
-    if (GetEnvironmentVariableA( "WINETEST_COLOR", p, sizeof(p) )) winetest_color = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_COLOR", p, sizeof(p) ))
+        winetest_color = !strcasecmp(p, "auto") ? isatty(fileno(stdout)) : atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
