@@ -170,7 +170,7 @@ static const WCHAR emptyW[] = {0};
 
 static BOOL stopped_binding = FALSE, stopped_obj_binding = FALSE, emulate_protocol = FALSE,
     data_available = FALSE, http_is_first = TRUE, bind_to_object = FALSE, filedwl_api, post_test;
-static DWORD read = 0, bindf = 0, prot_state = 0, thread_id, tymed, security_problem;
+static DWORD nread = 0, bindf = 0, prot_state = 0, thread_id, tymed, security_problem;
 static const WCHAR *reported_url;
 static CHAR mime_type[512];
 static IInternetProtocolSink *protocol_sink = NULL;
@@ -580,7 +580,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     CHECK_EXPECT(Start);
 
-    read = 0;
+    nread = 0;
 
     reported_url = szUrl;
     if(!filedwl_api) /* FIXME */
@@ -1128,7 +1128,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
             }else {
                 memset(pv, '?', cb);
                 *pcbRead = cb;
-                read++;
+                nread++;
                 return S_OK;
             }
         case 3:
@@ -1150,7 +1150,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
         }
     }
 
-    if(read) {
+    if(nread) {
         *pcbRead = 0;
         return S_FALSE;
     }
@@ -1163,7 +1163,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     }
 
     ok(*pcbRead == 0, "*pcbRead=%ld, expected 0\n", *pcbRead);
-    read += *pcbRead = sizeof(data)-1;
+    nread += *pcbRead = sizeof(data)-1;
     memcpy(pv, data, sizeof(data));
     return S_OK;
 }
