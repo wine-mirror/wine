@@ -30,12 +30,7 @@ static HRESULT (WINAPI *pAssocQueryStringA)(ASSOCF,ASSOCSTR,LPCSTR,LPCSTR,LPSTR,
 static HRESULT (WINAPI *pAssocQueryStringW)(ASSOCF,ASSOCSTR,LPCWSTR,LPCWSTR,LPWSTR,LPDWORD) = NULL;
 static HRESULT (WINAPI *pAssocCreate)(CLSID, REFIID, void **) = NULL;
 
-/* Every version of Windows with IE should have this association? */
-static const WCHAR dotHtml[] = { '.','h','t','m','l',0 };
-static const WCHAR badBad[] = { 'b','a','d','b','a','d',0 };
-static const WCHAR dotBad[] = { '.','b','a','d',0 };
-static const WCHAR open[] = { 'o','p','e','n',0 };
-static const WCHAR invalid[] = { 'i','n','v','a','l','i','d',0 };
+/* Should every version of Windows with IE have .html association? */
 
 static void test_getstring_bad(void)
 {
@@ -51,19 +46,19 @@ static void test_getstring_bad(void)
     }
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, L"open", NULL, &len);
     expect_hr(E_INVALIDARG, hr);
     ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, badBad, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, L"badbad", L"open", NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08lx\n", hr);
     ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = ARRAY_SIZE(buf);
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotBad, open, buf, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, L".bad", L"open", buf, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */ ||
        hr == S_OK /* Win8 */,
@@ -75,31 +70,31 @@ static void test_getstring_bad(void)
     }
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, invalid, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, L".html", L"invalid", NULL, &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08lx\n", hr);
     ok(len == 0xdeadbeef, "got %lu\n", len);
 
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, NULL);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, L".html", L"open", NULL, NULL);
     ok(hr == E_UNEXPECTED ||
        hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08lx\n", hr);
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, L"open", NULL, &len);
     expect_hr(E_INVALIDARG, hr);
     ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, badBad, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, L"badbad", L"open", NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08lx\n", hr);
     ok(len == 0xdeadbeef, "got %lu\n", len);
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, L".bad", L"open", NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */ ||
        hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND) /* Win8 */ ||
@@ -109,14 +104,14 @@ static void test_getstring_bad(void)
        "got hr=%08lx and len=%lu\n", hr, len);
 
     len = 0xdeadbeef;
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, L".html", L"invalid", NULL, &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) || /* W2K/Vista/W2K8 */
        hr == E_FAIL, /* Win9x/WinMe/NT4 */
        "Unexpected result : %08lx\n", hr);
     ok(len == 0xdeadbeef, "got %lu\n", len);
 
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL, NULL);
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, L".html", L"open", NULL, NULL);
     ok(hr == E_UNEXPECTED ||
        hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08lx\n", hr);
@@ -135,7 +130,7 @@ static void test_getstring_basic(void)
         return;
     }
 
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, L".html", L"open", NULL, &len);
     expect_hr(S_FALSE, hr);
     if (hr != S_FALSE)
     {
@@ -152,14 +147,14 @@ static void test_getstring_basic(void)
     }
 
     len2 = len;
-    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open,
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, L".html", L"open",
                            executableName, &len2);
     expect_hr(S_OK, hr);
     slen = lstrlenW(executableName) + 1;
     expect(len, len2);
     expect(len, slen);
 
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, L".html", L"open", NULL,
                            &len);
     ok(hr == S_FALSE ||
        hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* Win9x/NT4 */ ||
@@ -182,7 +177,7 @@ static void test_getstring_basic(void)
     }
 
     len2 = len;
-    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, L".html", L"open",
                            friendlyName, &len2);
     expect_hr(S_OK, hr);
     slen = lstrlenW(friendlyName) + 1;
