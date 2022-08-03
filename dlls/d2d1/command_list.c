@@ -297,7 +297,38 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             case D2D_COMMAND_SET_PRIMITIVE_BLEND:
             {
                 const struct d2d_command_set_primitive_blend *c = data;
-                hr = ID2D1CommandSink_SetPrimitiveBlend(sink, c->primitive_blend);
+                ID2D1CommandSink1 *sink1;
+                ID2D1CommandSink4 *sink4;
+
+                switch (c->primitive_blend)
+                {
+                    case D2D1_PRIMITIVE_BLEND_SOURCE_OVER:
+                    case D2D1_PRIMITIVE_BLEND_COPY:
+                        hr = ID2D1CommandSink_SetPrimitiveBlend(sink, c->primitive_blend);
+                        break;
+                    case D2D1_PRIMITIVE_BLEND_MIN:
+                    case D2D1_PRIMITIVE_BLEND_ADD:
+                        if (SUCCEEDED(ID2D1CommandSink_QueryInterface(sink, &IID_ID2D1CommandSink1, (void **)&sink1)))
+                        {
+                            hr = ID2D1CommandSink1_SetPrimitiveBlend1(sink1, c->primitive_blend);
+                            ID2D1CommandSink1_Release(sink1);
+                        }
+                        else
+                            hr = ID2D1CommandSink_SetPrimitiveBlend(sink, D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+                        break;
+                    case D2D1_PRIMITIVE_BLEND_MAX:
+                        if (SUCCEEDED(ID2D1CommandSink_QueryInterface(sink, &IID_ID2D1CommandSink4, (void **)&sink4)))
+                        {
+                            hr = ID2D1CommandSink4_SetPrimitiveBlend2(sink4, c->primitive_blend);
+                            ID2D1CommandSink4_Release(sink4);
+                        }
+                        else
+                            hr = ID2D1CommandSink_SetPrimitiveBlend(sink, D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+                        break;
+                    default:
+                        FIXME("Unexpected blend mode %u.\n", c->primitive_blend);
+                        hr = E_UNEXPECTED;
+                }
                 break;
             }
             case D2D_COMMAND_SET_UNIT_MODE:
