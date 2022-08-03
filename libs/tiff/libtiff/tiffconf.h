@@ -58,7 +58,7 @@
 #define CCITT_SUPPORT 1
 
 /* Support JPEG compression (requires IJG JPEG library) */
-#define JPEG_SUPPORT 1
+/* #undef JPEG_SUPPORT */
 
 /* Support JBIG compression (requires JBIG-KIT library) */
 /* #undef JBIG_SUPPORT */

@@ -327,6 +327,20 @@ Fax3Decode2D(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 }
 #undef SWAP
 
+# define FILL(n, cp)                              \
+    for (int32_t ifill = 0; ifill < (n); ++ifill) \
+    {                                             \
+        (cp)[ifill] = 0xff;                       \
+    }                                             \
+    (cp) += (n);
+
+# define ZERO(n, cp)                              \
+    for (int32_t izero = 0; izero < (n); ++izero) \
+    {                                             \
+        (cp)[izero] = 0;                          \
+    }                                             \
+    (cp) += (n);
+
 /*
  * Bit-fill a row according to the white/black
  * runs generated during G3/G4 decoding.
@@ -338,7 +352,8 @@ _TIFFFax3fillruns(unsigned char* buf, uint32_t* runs, uint32_t* erun, uint32_t l
 	    { 0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 	unsigned char* cp;
 	uint32_t x, bx, run;
-	int32_t n;
+	int32_t n, nw;
+	int64_t* lp;
 
 	if ((erun-runs)&1)
 	    *erun++ = 0;
@@ -356,8 +371,21 @@ _TIFFFax3fillruns(unsigned char* buf, uint32_t* runs, uint32_t* erun, uint32_t l
 			run -= 8-bx;
 		    }
 		    if( (n = run >> 3) != 0 ) {	/* multiple bytes to fill */
-			memset( cp, 0, n );
-			cp += n;
+			if ((n/sizeof (int64_t)) > 1) {
+			    /*
+			     * Align to int64_tword boundary and fill.
+			     */
+			    for (; n && !isAligned(cp, int64_t); n--)
+				    *cp++ = 0x00;
+			    lp = (int64_t*) cp;
+			    nw = (int32_t)(n / sizeof (int64_t));
+			    n -= nw * sizeof (int64_t);
+			    do {
+				    *lp++ = 0L;
+			    } while (--nw);
+			    cp = (unsigned char*) lp;
+			}
+			ZERO(n, cp);
 			run &= 7;
 		    }
 		    if (run)
@@ -378,8 +406,21 @@ _TIFFFax3fillruns(unsigned char* buf, uint32_t* runs, uint32_t* erun, uint32_t l
 			run -= 8-bx;
 		    }
 		    if( (n = run>>3) != 0 ) {	/* multiple bytes to fill */
-			memset( cp, 0xff, n );
-			cp += n;
+			if ((n/sizeof (int64_t)) > 1) {
+			    /*
+			     * Align to int64_t boundary and fill.
+			     */
+			    for (; n && !isAligned(cp, int64_t); n--)
+				*cp++ = 0xff;
+			    lp = (int64_t*) cp;
+			    nw = (int32_t)(n / sizeof (int64_t));
+			    n -= nw * sizeof (int64_t);
+			    do {
+				*lp++ = -1L;
+			    } while (--nw);
+			    cp = (unsigned char*) lp;
+			}
+			FILL(n, cp);
 			run &= 7;
 		    }
                     /* Explicit 0xff masking to make icc -check=conversions happy */

@@ -2,23 +2,23 @@
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -43,7 +43,7 @@
 #ifdef HAVE_ASSERT_H
 # include <assert.h>
 #else
-# define assert(x) 
+# define assert(x)
 #endif
 
 #include "tiffio.h"
@@ -117,6 +117,7 @@ struct tiff {
         #define TIFF_CHOPPEDUPARRAYS 0x4000000U /* set when allocChoppedUpStripArrays() has modified strip array */
 	uint64_t               tif_diroff;       /* file offset of current directory */
 	uint64_t               tif_nextdiroff;   /* file offset of following directory */
+	uint64_t               tif_lastdiroff;   /* file offset of last directory written so far */
 	uint64_t*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */
 	uint16_t               tif_dirlistsize;  /* number of entries in offset list */
 	uint16_t               tif_dirnumber;    /* number of already seen directories */
@@ -132,6 +133,7 @@ struct tiff {
 	uint16_t               tif_curdir;       /* current directory (index) */
 	uint32_t               tif_curstrip;     /* current strip for read/write */
 	uint64_t               tif_curoff;       /* current offset for read/write */
+	uint64_t               tif_lastvalidoff; /* last valid offset allowed for rewrite in place. Used only by TIFFAppendToStrip() */
 	uint64_t               tif_dataoff;      /* current offset for writing dir */
 	/* SubIFD support */
 	uint16_t               tif_nsubifd;      /* remaining subifds to write */
@@ -337,17 +339,12 @@ extern int TIFFSetCompressionScheme(TIFF* tif, int scheme);
 extern int TIFFSetDefaultCompressionState(TIFF* tif);
 extern uint32_t _TIFFDefaultStripSize(TIFF* tif, uint32_t s);
 extern void _TIFFDefaultTileSize(TIFF* tif, uint32_t* tw, uint32_t* th);
-extern int _TIFFDataSize(TIFFDataType type);
 
-/*--: Rational2Double: Return size of TIFFSetGetFieldType in bytes. */
-extern int _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype);
-
-extern void _TIFFsetByteArray(void**, void*, uint32_t);
-extern void _TIFFsetString(char**, char*);
-extern void _TIFFsetShortArray(uint16_t**, uint16_t*, uint32_t);
-extern void _TIFFsetLongArray(uint32_t**, uint32_t*, uint32_t);
-extern void _TIFFsetFloatArray(float**, float*, uint32_t);
-extern void _TIFFsetDoubleArray(double**, double*, uint32_t);
+extern void _TIFFsetByteArray(void**, const void*, uint32_t);
+extern void _TIFFsetShortArray(uint16_t**, const uint16_t*, uint32_t);
+extern void _TIFFsetLongArray(uint32_t**, const uint32_t*, uint32_t);
+extern void _TIFFsetFloatArray(float**, const float*, uint32_t);
+extern void _TIFFsetDoubleArray(double**, const double*, uint32_t);
 
 extern void _TIFFprintAscii(FILE*, const char*);
 extern void _TIFFprintAsciiTag(FILE*, const char*, const char*);

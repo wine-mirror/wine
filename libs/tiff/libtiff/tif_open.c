@@ -96,7 +96,6 @@ TIFFClientOpen(
 	assert(sizeof(int32_t) == 4);
 	assert(sizeof(uint64_t) == 8);
 	assert(sizeof(int64_t) == 8);
-	assert(sizeof(tmsize_t)==sizeof(void*));
 	{
 		union{
 			uint8_t a8[2];
@@ -354,6 +353,7 @@ TIFFClientOpen(
 		if (!TIFFDefaultDirectory(tif))
 			goto bad;
 		tif->tif_diroff = 0;
+		tif->tif_lastdiroff = 0;
 		tif->tif_dirlist = NULL;
 		tif->tif_dirlistsize = 0;
 		tif->tif_dirnumber = 0;
@@ -481,8 +481,6 @@ TIFFClientOpen(
 			 * Setup initial directory.
 			 */
 			if (TIFFReadDirectory(tif)) {
-				tif->tif_rawcc = (tmsize_t)-1;
-				tif->tif_flags |= TIFF_BUFFERSETUP;
 				return (tif);
 			}
 			break;
@@ -667,6 +665,15 @@ int
 TIFFIsBigEndian(TIFF* tif)
 {
 	return (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN);
+}
+
+/*
+ * Return nonzero if given file is BigTIFF style.
+ */
+int
+TIFFIsBigTIFF(TIFF *tif)
+{
+	return (tif->tif_header.common.tiff_version == TIFF_VERSION_BIG);
 }
 
 /*

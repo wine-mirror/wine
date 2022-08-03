@@ -149,7 +149,7 @@ tiffFields[] = {
 	{ TIFFTAG_COPYRIGHT, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "Copyright", NULL },
 	/* end Pixar tags */
 	{ TIFFTAG_RICHTIFFIPTC, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "RichTIFFIPTC", NULL },
-	{ TIFFTAG_PHOTOSHOP, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Photoshop", NULL },
+	{ TIFFTAG_PHOTOSHOP, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "Photoshop", NULL },
 	/*--: EXIFIFD and GPSIFD specified as TIFF_LONG by Aware-Systems and not TIFF_IFD8 as in original LibTiff.
 	 *    However, for IFD-like tags, libtiff uses the data type TIFF_IFD8 in tiffFields[]-tag definition combined with
 	 *    a special handling procedure in order to write either a 32-bit value and the TIFF_IFD type-id into ClassicTIFF files 
@@ -162,6 +162,7 @@ tiffFields[] = {
 	{ TIFFTAG_FAXRECVTIME, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UINT32, FIELD_CUSTOM, TRUE, FALSE, "FaxRecvTime", NULL },
 	{ TIFFTAG_FAXDCS, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_ASCII, FIELD_CUSTOM, TRUE, FALSE, "FaxDcs", NULL },
 	{ TIFFTAG_STONITS, 1, 1, TIFF_DOUBLE, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "StoNits", NULL },
+	{ TIFFTAG_IMAGESOURCEDATA, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "Adobe Photoshop Document Data Block", NULL },
 	{ TIFFTAG_INTEROPERABILITYIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "InteroperabilityIFDOffset", NULL },
 	/* begin DNG tags */
 	{ TIFFTAG_DNGVERSION, 4, 4, TIFF_BYTE, 0, TIFF_SETGET_C0_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "DNGVersion", NULL },
@@ -419,11 +420,16 @@ _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 
 		for (i = 0; i < tif->tif_nfields; i++) {
 			TIFFField *fld = tif->tif_fields[i];
-			if (fld->field_bit == FIELD_CUSTOM &&
-				strncmp("Tag ", fld->field_name, 4) == 0) {
+			if (fld->field_name != NULL) {
+				if (fld->field_bit == FIELD_CUSTOM &&
+					TIFFFieldIsAnonymous(fld)) {
 					_TIFFfree(fld->field_name);
+					/* caution: tif_fields[i] must not be the beginning of a fields-array. 
+					 *          Otherwise the following tags are also freed with the first free().
+					 */
 					_TIFFfree(fld);
 				}
+			}
 		}
 
 		_TIFFfree(tif->tif_fields);
@@ -530,7 +536,7 @@ _TIFFPrintFieldInfo(TIFF* tif, FILE* fd)
 }
 
 /*
- * Return size of TIFFDataType in bytes
+ * Return size of TIFFDataType within TIFF-file in bytes
  */
 int
 TIFFDataWidth(TIFFDataType type)
@@ -563,55 +569,29 @@ TIFFDataWidth(TIFFDataType type)
 	}
 }
 
-/*
- * Return size of TIFFDataType in bytes.
- *
- * XXX: We need a separate function to determine the space needed
- * to store the value. For TIFF_RATIONAL values TIFFDataWidth() returns 8,
- * but we use 4-byte float to represent rationals.
- */
-int
-_TIFFDataSize(TIFFDataType type)
-{
-	switch (type)
-	{
-		case TIFF_BYTE:
-		case TIFF_SBYTE:
-		case TIFF_ASCII:
-		case TIFF_UNDEFINED:
-		    return 1;
-		case TIFF_SHORT:
-		case TIFF_SSHORT:
-		    return 2;
-		case TIFF_LONG:
-		case TIFF_SLONG:
-		case TIFF_FLOAT:
-		case TIFF_IFD:
-		case TIFF_RATIONAL:
-		case TIFF_SRATIONAL:
-		    return 4;
-		case TIFF_DOUBLE:
-		case TIFF_LONG8:
-		case TIFF_SLONG8:
-		case TIFF_IFD8:
-		    return 8;
-		default:
-		    return 0;
-	}
-}
 
-/*
- * Rational2Double: 
- * Return size of TIFFSetGetFieldType in bytes.
- *
- * XXX: TIFF_RATIONAL values for FIELD_CUSTOM are stored internally as 4-byte float.
- * However, some of them should be stored internally as 8-byte double. 
- * This is now managed by the SetGetField of the tag-definition!
+/* 
+ * Return internal storage size of TIFFSetGetFieldType in bytes.
+ * TIFFSetField() and TIFFGetField() have to provide the parameter accordingly.
+ * Replaces internal functions _TIFFDataSize() and _TIFFSetGetFieldSize() 
+ * with now extern available function TIFFFieldSetGetSize().
  */
-int
-_TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
+int 
+TIFFFieldSetGetSize(const TIFFField* fip)
 {
-	switch (setgettype)
+/*
+ * TIFFSetField() and TIFFGetField() must provide the parameter accordingly to
+ * the definition of "set_field_type" of the tag definition in dir_info.c.
+ * This function returns the data size for that purpose.
+ * 
+ * Furthermore, this data size is also used for the internal storage,
+ * even for TIFF_RATIONAL values for FIELD_CUSTOM, which are stored internally as 4-byte float,
+ * but some of them should be stored internally as 8-byte double,
+ * depending on the "set_field_type" _FLOAT_ or _DOUBLE_.
+*/
+	if (fip == NULL) return 0;
+
+	switch (fip->set_field_type)
 	{
 		case TIFF_SETGET_UNDEFINED:
 		case TIFF_SETGET_ASCII:
@@ -619,7 +599,7 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 		case TIFF_SETGET_C16_ASCII:
 		case TIFF_SETGET_C32_ASCII:
 		case TIFF_SETGET_OTHER:
-		    return 0;
+		    return 1;
 		case TIFF_SETGET_UINT8:
 		case TIFF_SETGET_SINT8:
 		case TIFF_SETGET_C0_UINT8:
@@ -673,7 +653,48 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 		default:
 		    return 0;
 	}
-} /*-- _TIFFSetGetFieldSize --- */
+} /*-- TIFFFieldSetGetSize() --- */
+
+/*
+ * Return size of count parameter of TIFFSetField() and TIFFGetField()
+ * and also if it is required:  0=none, 2=uint16_t, 4=uint32_t 
+ */
+int
+TIFFFieldSetGetCountSize(const TIFFField* fip)
+{
+	if (fip == NULL) return 0;
+
+	switch (fip->set_field_type) {
+		case TIFF_SETGET_C16_ASCII:
+		case TIFF_SETGET_C16_UINT8:
+		case TIFF_SETGET_C16_SINT8:
+		case TIFF_SETGET_C16_UINT16:
+		case TIFF_SETGET_C16_SINT16:
+		case TIFF_SETGET_C16_UINT32:
+		case TIFF_SETGET_C16_SINT32:
+		case TIFF_SETGET_C16_FLOAT:
+		case TIFF_SETGET_C16_UINT64:
+		case TIFF_SETGET_C16_SINT64:
+		case TIFF_SETGET_C16_DOUBLE:
+		case TIFF_SETGET_C16_IFD8:
+			return 2;
+		case TIFF_SETGET_C32_ASCII:
+		case TIFF_SETGET_C32_UINT8:
+		case TIFF_SETGET_C32_SINT8:
+		case TIFF_SETGET_C32_UINT16:
+		case TIFF_SETGET_C32_SINT16:
+		case TIFF_SETGET_C32_UINT32:
+		case TIFF_SETGET_C32_SINT32:
+		case TIFF_SETGET_C32_FLOAT:
+		case TIFF_SETGET_C32_UINT64:
+		case TIFF_SETGET_C32_SINT64:
+		case TIFF_SETGET_C32_DOUBLE:
+		case TIFF_SETGET_C32_IFD8:
+			return 4;
+		default:
+			return 0;
+	}
+} /*-- TIFFFieldSetGetCountSize() --- */
 
 
 const TIFFField*
@@ -788,6 +809,12 @@ TIFFFieldWriteCount(const TIFFField* fip)
 	return fip->field_writecount;
 }
 
+int
+TIFFFieldIsAnonymous(const TIFFField *fip)
+{
+	return fip->field_anonymous;
+}
+
 const TIFFField*
 _TIFFFindOrRegisterField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 
@@ -819,7 +846,7 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	fld->field_readcount = TIFF_VARIABLE2;
 	fld->field_writecount = TIFF_VARIABLE2;
 	fld->field_type = field_type;
-	fld->reserved = 0;
+	fld->field_anonymous = 1;    /* indicate that this is an anonymous / unknown tag */
 	switch (field_type)
 	{
 		case TIFF_BYTE:
@@ -892,6 +919,8 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	/* 
 	 * note that this name is a special sign to TIFFClose() and
 	 * _TIFFSetupFields() to free the field
+	 * Update:
+	 *   This special sign is replaced by fld->field_anonymous  flag.
 	 */
 	(void) snprintf(fld->field_name, 32, "Tag %d", (int) tag);
 
@@ -1102,7 +1131,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 		tp->field_readcount = info[i].field_readcount;
 		tp->field_writecount = info[i].field_writecount;
 		tp->field_type = info[i].field_type;
-		tp->reserved = 0;
+		tp->field_anonymous = 0;
 		tp->set_field_type =
 		     _TIFFSetGetType(info[i].field_type,
 				info[i].field_readcount,
@@ -1114,6 +1143,11 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 		tp->field_bit = info[i].field_bit;
 		tp->field_oktochange = info[i].field_oktochange;
 		tp->field_passcount = info[i].field_passcount;
+		if (info[i].field_name == NULL) {
+			TIFFErrorExt(tif->tif_clientdata, module,
+				"Field_name of %d.th allocation tag %d is NULL", i, info[i].field_tag);
+			return -1;
+		}
 		tp->field_name = info[i].field_name;
 		tp->field_subfields = NULL;
 		tp++;
