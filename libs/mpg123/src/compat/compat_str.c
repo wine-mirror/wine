@@ -14,7 +14,7 @@
 /* Win32 is only supported with unicode now. These headers also cover
    module stuff. The WANT_WIN32_UNICODE macro is synonymous with
    "want windows-specific API, and only the unicode variants of which". */
-#ifdef WANT_WIN32_UNICODE
+#if defined (_WIN32) || defined (__CYGWIN__)
 #include <wchar.h>
 #include <windows.h>
 #include <winnls.h>
@@ -63,25 +63,36 @@ char* compat_strdup(const char *src)
 }
 
 /* Windows Unicode stuff */
-
-#ifdef WANT_WIN32_UNICODE
-int win32_wide_utf8(const wchar_t * const wptr, char **mbptr, size_t * buflen)
+/* Provided unconditionally, since WASAPI needs it to configure the audio device */
+#if defined (_WIN32) || defined (__CYGWIN__)
+static
+int win32_wide_common(const wchar_t * const wptr, char **mbptr, size_t * buflen, UINT cp)
 {
   size_t len;
   char *buf;
   int ret = 0;
 
-  len = WideCharToMultiByte(CP_UTF8, 0, wptr, -1, NULL, 0, NULL, NULL); /* Get utf-8 string length */
+  len = WideCharToMultiByte(cp, 0, wptr, -1, NULL, 0, NULL, NULL); /* Get utf-8 string length */
   buf = calloc(len + 1, sizeof (char)); /* Can we assume sizeof char always = 1? */
 
   if(!buf) len = 0;
   else {
-    if (len != 0) ret = WideCharToMultiByte(CP_UTF8, 0, wptr, -1, buf, len, NULL, NULL); /*Do actual conversion*/
+    if (len != 0) ret = WideCharToMultiByte(cp, 0, wptr, -1, buf, len, NULL, NULL); /*Do actual conversion*/
     buf[len] = '0'; /* Must terminate */
   }
   *mbptr = buf; /* Set string pointer to allocated buffer */
   if(buflen != NULL) *buflen = (len) * sizeof (char); /* Give length of allocated memory if needed. */
   return ret;
+}
+
+int win32_wide_utf8(const wchar_t * const wptr, char **mbptr, size_t * buflen)
+{
+  return win32_wide_common(wptr, mbptr, buflen, CP_UTF8);
+}
+
+int win32_wide_utf7(const wchar_t * const wptr, char **mbptr, size_t * buflen)
+{
+  return win32_wide_common(wptr, mbptr, buflen, CP_UTF7);
 }
 
 int win32_utf8_wide(const char *const mbptr, wchar_t **wptr, size_t *buflen)

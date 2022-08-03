@@ -17,6 +17,7 @@
 #define compat_close INT123_compat_close
 #define compat_fclose INT123_compat_fclose
 #define win32_wide_utf8 INT123_win32_wide_utf8
+#define win32_wide_utf7 INT123_win32_wide_utf7
 #define win32_utf8_wide INT123_win32_utf8_wide
 #define compat_catpath INT123_compat_catpath
 #define compat_isdir INT123_compat_isdir

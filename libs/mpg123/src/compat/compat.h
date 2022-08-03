@@ -67,6 +67,19 @@
 #define ULONG_MAX ((unsigned long)-1)
 #endif
 
+#ifndef OFF_MAX
+#if SIZEOF_OFF_T == 4
+#define OFF_MAX ((uint32_t)-1/2)
+#elif SIZEOF_OFF_T == 8
+#define OFF_MAX ((uint64_t)-1/2)
+#else
+#error "Unexpected width of off_t."
+#endif
+#endif
+
+// Add two values (themselves assumed to be < limit), saturating to given limit.
+#define SATURATE_ADD(inout, add, limit) inout = (limit-add >= inout) ? inout+add : limit;
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -74,7 +87,7 @@
 #include <strings.h>
 #endif
 
-#ifdef OS2
+#ifdef __OS2__
 #include <float.h>
 #endif
 
@@ -182,9 +195,17 @@ FILE* compat_fdopen(int fd, const char *mode);
 int compat_close(int infd);
 int compat_fclose(FILE* stream);
 
+
+/**
+ * Setting binary mode on a descriptor, where necessary.
+ * We do not bother with errors. This has to work.
+ * You can enable or disable binary mode.
+ */
+void compat_binmode(int fd, int enable);
+
 /* Those do make sense in a separate file, but I chose to include them in compat.c because that's the one source whose object is shared between mpg123 and libmpg123 -- and both need the functionality internally. */
 
-#ifdef WANT_WIN32_UNICODE
+#if defined (_WIN32) || defined (__CYGWIN__)
 /**
  * win32_uni2mbc
  * Converts a null terminated UCS-2 string to a multibyte (UTF-8) equivalent.
@@ -197,6 +218,19 @@ int compat_fclose(FILE* stream);
  * WideCharToMultiByte - http://msdn.microsoft.com/en-us/library/dd374130(VS.85).aspx
  */
 int win32_wide_utf8(const wchar_t * const wptr, char **mbptr, size_t * buflen);
+
+/**
+ * win32_uni2mbc
+ * Converts a null terminated UCS-2 string to a multibyte (UTF-7) equivalent.
+ * Caller is supposed to free allocated buffer.
+ * @param[in] wptr Pointer to wide string.
+ * @param[out] mbptr Pointer to multibyte string.
+ * @param[out] buflen Optional parameter for length of allocated buffer.
+ * @return status of WideCharToMultiByte conversion.
+ *
+ * WideCharToMultiByte - http://msdn.microsoft.com/en-us/library/dd374130(VS.85).aspx
+ */
+int win32_wide_utf7(const wchar_t * const wptr, char **mbptr, size_t * buflen);
 
 /**
  * win32_mbc2uni
@@ -280,11 +314,6 @@ void  compat_dlclose(void *handle);
 size_t unintr_write(int fd, void const *buffer, size_t bytes);
 size_t unintr_read (int fd, void *buffer, size_t bytes);
 size_t unintr_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
-
-/* That one comes from Tellie on OS/2, needed in resolver. */
-#ifdef __KLIBC__
-typedef int socklen_t;
-#endif
 
 /* OSX SDK defines an enum with "normal" as value. That clashes with
    optimize.h */

@@ -454,8 +454,8 @@ int attribute_align_arg mpg123_getstate2(mpg123_handle *mh, int key, long *val, 
 
 int attribute_align_arg mpg123_eq(mpg123_handle *mh, enum mpg123_channels channel, int band, double val)
 {
-#ifndef NO_EQUALIZER
 	if(mh == NULL) return MPG123_BAD_HANDLE;
+#ifndef NO_EQUALIZER
 	if(band < 0 || band > 31){ mh->err = MPG123_BAD_BAND; return MPG123_ERR; }
 	switch(channel)
 	{
@@ -478,9 +478,42 @@ int attribute_align_arg mpg123_eq2(mpg123_handle *mh, int channel, int band, dou
 	return mpg123_eq(mh, channel, band, val);
 }
 
+int attribute_align_arg mpg123_eq_bands(mpg123_handle *mh, int channel, int a, int b, double factor)
+{
+	if(mh == NULL) return MPG123_BAD_HANDLE;
+#ifndef NO_EQUALIZER
+	int ret;
+	// Always count up.
+	if(a>b){ int s=a; a=b; b=s; }
+	for(int n=a; n<=b; ++n)
+		if( (ret=mpg123_eq(mh, channel, n, factor)) != MPG123_OK )
+			return ret;
+#endif
+	return MPG123_OK;
+}
+
+int attribute_align_arg mpg123_eq_change(mpg123_handle *mh, int channel, int a, int b, double db)
+{
+	if(mh == NULL) return MPG123_BAD_HANDLE;
+#ifndef NO_EQUALIZER
+	// Always count up.
+	if(a>b){ int s=a; a=b; b=s; }
+	for(int band=a; band<=b; ++band)
+	{
+		if(band < 0 || band > 31){ mh->err = MPG123_BAD_BAND; return MPG123_ERR; }
+		if(channel & MPG123_LEFT)
+			mh->equalizer[0][band] = DOUBLE_TO_REAL(dbchange(REAL_TO_DOUBLE(mh->equalizer[0][band]), db));
+		if(channel & MPG123_RIGHT)
+			mh->equalizer[1][band] = DOUBLE_TO_REAL(dbchange(REAL_TO_DOUBLE(mh->equalizer[1][band]), db));;
+		mh->have_eq_settings = TRUE;
+	}
+#endif
+	return MPG123_OK;
+}
+
 double attribute_align_arg mpg123_geteq(mpg123_handle *mh, enum mpg123_channels channel, int band)
 {
-	double ret = 0.;
+	double ret = 1.;
 #ifndef NO_EQUALIZER
 
 	/* Handle this gracefully. When there is no band, it has no volume. */

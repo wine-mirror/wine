@@ -339,4 +339,16 @@ int open_fixed_post(mpg123_handle *mh, int channels, int encoding);
 #define TIMEOUT_READ
 #endif
 
+// Change a given linear factor by the given dB value, bounded
+// to +/- 60 dB.
+static inline double dbchange(double base_factor, double db)
+{
+	double nscale = base_factor * pow(10, db/20);
+	if(nscale < 0.001) // -60 dB
+		nscale = 0.001;
+	if(nscale > 1000)
+		nscale = 1000; // +60 dB
+	return nscale;
+}
+
 #endif

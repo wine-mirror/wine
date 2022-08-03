@@ -1,5 +1,5 @@
 /*
-	libmpg123: MPEG Audio Decoder library (version 1.29.1)
+	libmpg123: MPEG Audio Decoder library (version 1.30.2)
 
 	copyright 1995-2015 by the mpg123 project
 	free software under the terms of the LGPL 2.1
@@ -18,7 +18,7 @@
  * to the header.
  */
 #ifndef MPG123_API_VERSION
-#define MPG123_API_VERSION 46
+#define MPG123_API_VERSION 47
 #endif
 
 #ifndef MPG123_EXPORT
@@ -1093,6 +1093,28 @@ MPG123_EXPORT int mpg123_eq( mpg123_handle *mh
 MPG123_EXPORT int mpg123_eq2( mpg123_handle *mh
 ,	int channel, int band, double val );
 
+/** Set a range of equalizer bands
+ *  \param channel Can be #MPG123_LEFT, #MPG123_RIGHT or
+ *    #MPG123_LEFT|#MPG123_RIGHT for both.
+ *  \param a The first equalizer band to set (from 0 to 31)
+ *  \param b The last equalizer band to set (from 0 to 31)
+ *  \param factor The (linear) adjustment factor, 1 being neutral.
+ *  \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_eq_bands( mpg123_handle *mh
+,	int channel, int a, int b, double factor );
+
+/** Change a range of equalizer bands
+ *  \param channel Can be #MPG123_LEFT, #MPG123_RIGHT or
+ *    #MPG123_LEFT|#MPG123_RIGHT for both.
+ *  \param a The first equalizer band to change (from 0 to 31)
+ *  \param b The last equalizer band to change (from 0 to 31)
+ *  \param db The adjustment in dB (limited to +/- 60 dB).
+ *  \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_eq_change( mpg123_handle *mh
+,	int channel, int a, int b, double db );
+
 #ifdef MPG123_ENUM_API
 /** Get the 32 Band Audio Equalizer settings.
  *
@@ -1140,6 +1162,13 @@ MPG123_EXPORT int mpg123_volume(mpg123_handle *mh, double vol);
  *  \return MPG123_OK on success
  */
 MPG123_EXPORT int mpg123_volume_change(mpg123_handle *mh, double change);
+
+/** Adjust output volume including the RVA setting by chosen amount
+ *  \param mh handle
+ *  \param change volume adjustment in decibels (limited to +/- 60 dB)
+ *  \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_volume_change_db(mpg123_handle *mh, double db);
 
 /** Return current volume setting, the actual value due to RVA, and the RVA 
  *  adjustment itself. It's all as double float value to abstract the sample 
@@ -1741,7 +1770,7 @@ MPG123_EXPORT int mpg123_id3( mpg123_handle *mh
 ,	mpg123_id3v1 **v1, mpg123_id3v2 **v2 );
 
 /** Return pointers to and size of stored raw ID3 data if storage has
- *  been configured with MPG123_RAW_ID3 and stream parsing passed the
+ *  been configured with MPG123_STORE_RAW_ID3 and stream parsing passed the
  *  metadata already. Null value with zero size is a possibility!
  *  The storage can change at any next API call.
  *

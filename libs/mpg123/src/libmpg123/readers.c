@@ -129,7 +129,8 @@ static ssize_t icy_fullread(mpg123_handle *fr, unsigned char *buf, ssize_t count
 					return READER_ERROR;
 				}
 
-				if(!(fr->rdat.flags & READER_BUFFERED)) fr->rdat.filepos += ret;
+				if(!(fr->rdat.flags & READER_BUFFERED))
+					SATURATE_ADD(fr->rdat.filepos, ret, OFF_MAX);
 				cnt += ret;
 				fr->icy.next -= ret;
 				if(fr->icy.next > 0)
@@ -147,7 +148,8 @@ static ssize_t icy_fullread(mpg123_handle *fr, unsigned char *buf, ssize_t count
 			if(ret == 0) break;
 
 			debug2("got meta-size byte: %u, at filepos %li", temp_buff, (long)fr->rdat.filepos );
-			if(!(fr->rdat.flags & READER_BUFFERED)) fr->rdat.filepos += ret; /* 1... */
+			if(!(fr->rdat.flags & READER_BUFFERED))
+				SATURATE_ADD(fr->rdat.filepos, ret, OFF_MAX); /* 1... */
 
 			if((meta_size = ((size_t) temp_buff) * 16))
 			{
@@ -166,7 +168,8 @@ static ssize_t icy_fullread(mpg123_handle *fr, unsigned char *buf, ssize_t count
 						left -= ret;
 					}
 					meta_buff[meta_size] = 0; /* string paranoia */
-					if(!(fr->rdat.flags & READER_BUFFERED)) fr->rdat.filepos += ret;
+					if(!(fr->rdat.flags & READER_BUFFERED))
+						SATURATE_ADD(fr->rdat.filepos, ret, OFF_MAX);
 
 					if(fr->icy.data) free(fr->icy.data);
 					fr->icy.data = meta_buff;
@@ -218,7 +221,8 @@ static ssize_t plain_fullread(mpg123_handle *fr,unsigned char *buf, ssize_t coun
 		ret = fr->rdat.fdread(fr,buf+cnt,count-cnt);
 		if(ret < 0) return READER_ERROR;
 		if(ret == 0) break;
-		if(!(fr->rdat.flags & READER_BUFFERED)) fr->rdat.filepos += ret;
+		if(!(fr->rdat.flags & READER_BUFFERED))
+			SATURATE_ADD(fr->rdat.filepos, ret, OFF_MAX);
 		cnt += ret;
 	}
 	return cnt;
@@ -396,7 +400,10 @@ static off_t generic_tell(mpg123_handle *fr)
 {
 #ifndef NO_FEEDER
 	if(fr->rdat.flags & READER_BUFFERED)
-	fr->rdat.filepos = fr->rdat.buffer.fileoff+fr->rdat.buffer.pos;
+	{
+		fr->rdat.filepos = fr->rdat.buffer.fileoff;
+		SATURATE_ADD(fr->rdat.filepos, fr->rdat.buffer.pos, OFF_MAX);
+	}
 #endif
 
 	return fr->rdat.filepos;
@@ -458,6 +465,7 @@ static off_t get_fileinfo(mpg123_handle *fr)
 		debug("cannot seek back");
 		return -1;
 	}
+	fr->rdat.filepos = 0; // un-do our seeking here
 
 	debug1("returning length: %"OFF_P, (off_p)len);
 	return len;
@@ -816,7 +824,8 @@ static int feed_seek_frame(mpg123_handle *fr, off_t num){ return READER_ERROR; }
 static void buffered_forget(mpg123_handle *fr)
 {
 	bc_forget(&fr->rdat.buffer);
-	fr->rdat.filepos = fr->rdat.buffer.fileoff + fr->rdat.buffer.pos;
+	fr->rdat.filepos = fr->rdat.buffer.fileoff;
+	SATURATE_ADD(fr->rdat.filepos, fr->rdat.buffer.pos, OFF_MAX);
 }
 
 off_t feed_set_pos(mpg123_handle *fr, off_t pos)
@@ -1064,8 +1073,8 @@ static int default_init(mpg123_handle *fr)
 	if(fr->p.icy_interval > 0) fr->rdat.lseek = nix_lseek;
 #endif
 
-	fr->rdat.filelen = fr->p.flags & MPG123_NO_PEEK_END ? -1 : get_fileinfo(fr);
 	fr->rdat.filepos = 0;
+	fr->rdat.filelen = fr->p.flags & MPG123_NO_PEEK_END ? -1 : get_fileinfo(fr);
 	if(fr->p.flags & MPG123_FORCE_SEEKABLE)
 		fr->rdat.flags |= READER_SEEKABLE;
 	/*

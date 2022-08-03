@@ -984,6 +984,12 @@ int attribute_align_arg mpg123_volume_change(mpg123_handle *mh, double change)
 	return mpg123_volume(mh, change + (double) mh->p.outscale);
 }
 
+int attribute_align_arg mpg123_volume_change_db(mpg123_handle *mh, double change)
+{
+	if(mh == NULL) return MPG123_ERR;
+	return mpg123_volume(mh, dbchange(mh->p.outscale, change));
+}
+
 int attribute_align_arg mpg123_volume(mpg123_handle *mh, double vol)
 {
 	if(mh == NULL) return MPG123_ERR;
