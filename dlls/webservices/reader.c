@@ -4312,7 +4312,7 @@ static BOOL match_element( const struct node *node, const WS_XML_STRING *localna
     const WS_XML_ELEMENT_NODE *elem = (const WS_XML_ELEMENT_NODE *)node;
     if (node_type( node ) != WS_XML_NODE_TYPE_ELEMENT) return FALSE;
     return WsXmlStringEquals( localname, elem->localName, NULL ) == S_OK &&
-           WsXmlStringEquals( ns, elem->ns, NULL ) == S_OK;
+          (!ns || WsXmlStringEquals( ns, elem->ns, NULL ) == S_OK);
 }
 
 static HRESULT read_next_node( struct reader *reader )
@@ -6507,6 +6507,164 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT read_type_fault( struct reader *reader, WS_TYPE_MAPPING mapping, const WS_XML_STRING *localname,
+                                const WS_XML_STRING *ns, const WS_FAULT_DESCRIPTION *desc, WS_READ_OPTION option,
+                                WS_HEAP *heap, void *ret, ULONG size, BOOL *found )
+{
+    static const WS_XML_STRING faultcode = {9, (BYTE *)"faultcode"}, faultstring = {11, (BYTE *)"faultstring"};
+    static const WS_XML_STRING faultactor = {10, (BYTE *)"faultactor"}, detail = {6, (BYTE *)"detail"};
+
+    const struct node *root = reader->current;
+    WS_FAULT *fault;
+    HRESULT hr = S_OK;
+
+    if (mapping != WS_ELEMENT_TYPE_MAPPING || !desc || !ret)
+        return E_INVALIDARG;
+    if (desc->envelopeVersion < WS_ENVELOPE_VERSION_SOAP_1_1 || desc->envelopeVersion >= WS_ENVELOPE_VERSION_NONE)
+        return E_INVALIDARG;
+    else if (desc->envelopeVersion != WS_ENVELOPE_VERSION_SOAP_1_1)
+    {
+        FIXME( "unhandled envelopeVersion %u\n", desc->envelopeVersion );
+        return E_NOTIMPL;
+    }
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (size != sizeof(*fault))
+            return E_INVALIDARG;
+        fault = ret;
+        memset( fault, 0, sizeof(*fault) );
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+    case WS_READ_OPTIONAL_POINTER:
+    case WS_READ_NILLABLE_POINTER:
+        if (size != sizeof(void *))
+            return E_INVALIDARG;
+        if (!(fault = ws_alloc_zero( heap, sizeof(*fault) )))
+            return WS_E_QUOTA_EXCEEDED;
+        break;
+
+    case WS_READ_NILLABLE_VALUE:
+        return E_INVALIDARG;
+
+    default:
+        FIXME( "unhandled read option %u\n", option );
+        return E_NOTIMPL;
+    }
+
+    if ((hr = read_type_next_node( reader )) != S_OK) goto done;
+    for (;;)
+    {
+        if (node_type( reader->current ) == WS_XML_NODE_TYPE_END_ELEMENT && reader->current->parent == root)
+            break;
+
+        if (match_element( reader->current, &faultcode, ns ))
+        {
+            if (fault->code)
+            {
+                hr = WS_E_INVALID_FORMAT;
+                break;
+            }
+            if (!(fault->code = ws_alloc_zero( heap, sizeof(*fault->code) )))
+            {
+                hr = WS_E_QUOTA_EXCEEDED;
+                break;
+            }
+            if ((hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, WS_XML_QNAME_TYPE, NULL, NULL,
+                                 NULL, WS_READ_REQUIRED_VALUE, heap, &fault->code->value,
+                                 sizeof(fault->code->value), found )) != S_OK)
+                break;
+
+        }
+        else if (match_element( reader->current, &faultstring, ns ))
+        {
+            if (fault->reasons)
+            {
+                hr = WS_E_INVALID_FORMAT;
+                break;
+            }
+            if (!(fault->reasons = ws_alloc_zero( heap, sizeof(*fault->reasons) )))
+            {
+                hr = WS_E_QUOTA_EXCEEDED;
+                break;
+            }
+            fault->reasonCount = 1;
+            /* FIXME: parse optional xml:lang attribute */
+            if ((hr = read_next_node( reader )) != S_OK ||
+                (hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRING_TYPE, NULL, NULL,
+                                 NULL, WS_READ_REQUIRED_VALUE, heap, &fault->reasons->text,
+                                 sizeof(fault->reasons->text), found )) != S_OK)
+                break;
+        }
+        else if (match_element( reader->current, &faultactor, ns ))
+        {
+            if (fault->actor.length > 0)
+            {
+                hr = WS_E_INVALID_FORMAT;
+                break;
+            }
+            if ((hr = read_next_node( reader )) != S_OK ||
+                (hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRING_TYPE, NULL, NULL,
+                                 NULL, WS_READ_REQUIRED_VALUE, heap, &fault->actor,
+                                 sizeof(fault->actor), found )) != S_OK)
+                break;
+        }
+        else if (match_element( reader->current, &detail, ns ))
+        {
+            if (fault->detail)
+            {
+                hr = WS_E_INVALID_FORMAT;
+                break;
+            }
+            if ((hr = WsReadXmlBuffer( (WS_XML_READER *)reader, heap, &fault->detail, NULL )) != S_OK)
+                break;
+        }
+        else if ((hr = read_type_next_node( reader )) != S_OK)
+            break;
+    }
+
+done:
+    if ((!fault->code || !fault->reasons) && hr == S_OK)
+        hr = WS_E_INVALID_FORMAT;
+
+    if (hr != S_OK)
+    {
+        free_fault_fields( heap, fault );
+
+        switch (option)
+        {
+        case WS_READ_REQUIRED_VALUE:
+        case WS_READ_REQUIRED_POINTER:
+            memset( fault, 0, sizeof(*fault) );
+            break;
+
+        case WS_READ_OPTIONAL_POINTER:
+        case WS_READ_NILLABLE_POINTER:
+            if (hr == WS_E_INVALID_FORMAT && is_nil_value( (const char *)fault, sizeof(*fault) ))
+            {
+                ws_free( heap, fault, sizeof(*fault) );
+                fault = NULL;
+                hr = S_OK;
+            }
+            else
+                memset( fault, 0, sizeof(*fault) );
+            break;
+
+        default:
+            ERR( "unhandled option %u\n", option );
+            return E_NOTIMPL;
+        }
+    }
+
+    if (option != WS_READ_REQUIRED_VALUE)
+        *(WS_FAULT **)ret = fault;
+
+    *found = TRUE;
+    return hr;
+}
+
 static HRESULT start_mapping( struct reader *reader, WS_TYPE_MAPPING mapping, const WS_XML_STRING *localname,
                               const WS_XML_STRING *ns )
 {
@@ -6696,6 +6854,10 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_STRUCT_TYPE:
         hr = read_type_struct( reader, mapping, localname, ns, desc, option, heap, value, size, found );
+        break;
+
+    case WS_FAULT_TYPE:
+        hr = read_type_fault( reader, mapping, localname, ns, desc, option, heap, value, size, found );
         break;
 
     case WS_ENUM_TYPE:

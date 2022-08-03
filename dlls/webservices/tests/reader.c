@@ -1355,6 +1355,40 @@ static void test_WsReadNode(void)
     WsFreeReader( reader );
 }
 
+static HRESULT set_output( WS_XML_WRITER *writer )
+{
+    WS_XML_WRITER_TEXT_ENCODING text = {{WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
+    WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
+    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
+}
+
+static void check_output_buffer( WS_XML_BUFFER *buffer, const char *expected, unsigned int line )
+{
+    WS_XML_WRITER *writer;
+    WS_BYTES bytes;
+    ULONG size = sizeof(bytes);
+    int len = strlen(expected);
+    HRESULT hr;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsWriteXmlBuffer( writer, buffer, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    memset( &bytes, 0, sizeof(bytes) );
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+    ok( hr == S_OK, "%u: got %#lx\n", line, hr );
+    ok( bytes.length == len, "%u: got %lu expected %d\n", line, bytes.length, len );
+    if (bytes.length != len) return;
+    ok( !memcmp( bytes.bytes, expected, len ), "%u: got %s expected %s\n", line, bytes.bytes, expected );
+
+    WsFreeWriter( writer );
+}
+
 static void prepare_type_test( WS_XML_READER *reader, const char *data, ULONG size )
 {
     HRESULT hr;
@@ -1373,6 +1407,15 @@ static void test_WsReadType(void)
 {
     static const GUID guid = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
     static const char utf8[] = {'<','t','>',0xe2,0x80,0x99,'<','/','t','>'};
+    static const char faultxml[] =
+        "<s:Body xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Fault>"
+        "<faultcode>s:Client</faultcode><faultstring>Example Fault</faultstring>"
+        "<faultactor>http://example.com/fault</faultactor>"
+        "<detail><ErrorCode>1030</ErrorCode></detail></s:Fault></s:Body>";
+    static const char faultcode[] = "Client";
+    static const WCHAR faultstring[] = L"Example Fault";
+    static const WCHAR faultactor[] = L"http://example.com/fault";
+    static const char faultdetail[] = "<detail><ErrorCode>1030</ErrorCode></detail>";
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
@@ -1396,6 +1439,8 @@ static void test_WsReadType(void)
     WS_STRING val_string, *ptr_string;
     WS_UNIQUE_ID val_id, *ptr_id;
     WS_XML_QNAME val_qname, *ptr_qname;
+    WS_FAULT_DESCRIPTION fault_desc;
+    WS_FAULT fault;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
@@ -1919,6 +1964,33 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_XML_QNAME_TYPE, NULL,
                      WS_READ_REQUIRED_POINTER, heap, &ptr_qname, sizeof(ptr_qname), NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %#lx\n", hr );
+
+    prepare_type_test( reader, faultxml, sizeof(faultxml) - 1 );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    memset( &fault, 0, sizeof(fault) );
+
+    fault_desc.envelopeVersion = WS_ENVELOPE_VERSION_SOAP_1_1;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_FAULT_TYPE, &fault_desc,
+                     WS_READ_REQUIRED_VALUE, heap, &fault, sizeof(fault), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( fault.code->value.localName.length == sizeof(faultcode) - 1, "got %lu\n", fault.code->value.localName.length );
+    ok( !memcmp( fault.code->value.localName.bytes, faultcode, sizeof(faultcode) - 1 ), "wrong fault code\n" );
+    ok( !fault.code->subCode, "subcode is not NULL\n" );
+    ok( fault.reasonCount == 1, "got %lu\n", fault.reasonCount );
+    ok( fault.reasons[0].text.length == ARRAY_SIZE(faultstring) - 1, "got %lu\n", fault.reasons[0].text.length );
+    ok( !memcmp( fault.reasons[0].text.chars, faultstring, (ARRAY_SIZE(faultstring) - 1) * sizeof(WCHAR) ),
+        "wrong fault string\n" );
+    ok( fault.actor.length == ARRAY_SIZE(faultactor) - 1, "got %lu\n", fault.actor.length  );
+    ok( !memcmp( fault.actor.chars, faultactor, ARRAY_SIZE(faultactor) - 1 ), "wrong fault actor\n" );
+    ok( !fault.node.length, "fault node not empty\n" );
+    ok( fault.detail != NULL, "fault detail not set\n" );
+    check_output_buffer( fault.detail, faultdetail, __LINE__ );
+
+    fault_desc.envelopeVersion = WS_ENVELOPE_VERSION_NONE;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_FAULT_TYPE, &fault_desc,
+                     WS_READ_REQUIRED_VALUE, heap, &fault, sizeof(fault), NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
@@ -6233,40 +6305,6 @@ static void test_dictionary(void)
     ok( !memcmp( dict2->strings[0].bytes, "mustUnderstand", 14 ), "wrong data\n" );
 
     WsFreeReader( reader );
-}
-
-static HRESULT set_output( WS_XML_WRITER *writer )
-{
-    WS_XML_WRITER_TEXT_ENCODING text = {{WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
-    WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
-    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
-}
-
-static void check_output_buffer( WS_XML_BUFFER *buffer, const char *expected, unsigned int line )
-{
-    WS_XML_WRITER *writer;
-    WS_BYTES bytes;
-    ULONG size = sizeof(bytes);
-    int len = strlen(expected);
-    HRESULT hr;
-
-    hr = WsCreateWriter( NULL, 0, &writer, NULL );
-    ok( hr == S_OK, "got %#lx\n", hr );
-
-    hr = set_output( writer );
-    ok( hr == S_OK, "got %#lx\n", hr );
-
-    hr = WsWriteXmlBuffer( writer, buffer, NULL );
-    ok( hr == S_OK, "got %#lx\n", hr );
-
-    memset( &bytes, 0, sizeof(bytes) );
-    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
-    ok( hr == S_OK, "%u: got %#lx\n", line, hr );
-    ok( bytes.length == len, "%u: got %lu expected %d\n", line, bytes.length, len );
-    if (bytes.length != len) return;
-    ok( !memcmp( bytes.bytes, expected, len ), "%u: got %s expected %s\n", line, bytes.bytes, expected );
-
-    WsFreeWriter( writer );
 }
 
 static HRESULT prepare_xml_buffer_test( WS_XML_READER *reader, WS_HEAP *heap )
