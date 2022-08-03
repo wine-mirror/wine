@@ -2414,14 +2414,29 @@ static void STDMETHODCALLTYPE d2d_device_context_GetRenderingControls(ID2D1Devic
 static void STDMETHODCALLTYPE d2d_device_context_SetPrimitiveBlend(ID2D1DeviceContext1 *iface,
         D2D1_PRIMITIVE_BLEND primitive_blend)
 {
-    FIXME("iface %p, primitive_blend %#x stub!\n", iface, primitive_blend);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, primitive_blend %u.\n", iface, primitive_blend);
+
+    if (primitive_blend > D2D1_PRIMITIVE_BLEND_MAX)
+    {
+        WARN("Unknown blend mode %u.\n", primitive_blend);
+        return;
+    }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_primitive_blend(context->target.command_list, primitive_blend);
+
+    context->drawing_state.primitiveBlend = primitive_blend;
 }
 
 static D2D1_PRIMITIVE_BLEND STDMETHODCALLTYPE d2d_device_context_GetPrimitiveBlend(ID2D1DeviceContext1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
 
-    return D2D1_PRIMITIVE_BLEND_SOURCE_OVER;
+    TRACE("iface %p.\n", iface);
+
+    return context->drawing_state.primitiveBlend;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_SetUnitMode(ID2D1DeviceContext1 *iface, D2D1_UNIT_MODE unit_mode)
