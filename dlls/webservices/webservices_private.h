@@ -164,6 +164,7 @@ void message_do_send_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
 void message_do_receive_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
 HRESULT message_map_http_response_headers( WS_MESSAGE *, HINTERNET, const WS_HTTP_MESSAGE_MAPPING * ) DECLSPEC_HIDDEN;
+HRESULT message_read_fault( WS_MESSAGE *, WS_HEAP *, WS_ERROR * ) DECLSPEC_HIDDEN;
 
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT channel_receive_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;

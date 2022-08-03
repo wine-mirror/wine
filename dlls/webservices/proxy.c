@@ -440,17 +440,19 @@ done:
 
 static HRESULT read_message( WS_MESSAGE *msg, WS_XML_READER *reader, WS_HEAP *heap,
                              const WS_ELEMENT_DESCRIPTION *desc, const WS_PARAMETER_DESCRIPTION *params,
-                             ULONG count, const void **args )
+                             ULONG count, const void **args, WS_ERROR *error )
 {
     HRESULT hr;
     if ((hr = WsReadEnvelopeStart( msg, reader, NULL, NULL, NULL )) != S_OK) return hr;
     message_do_receive_callback( msg );
+    if ((hr = message_read_fault( msg, heap, error )) != S_OK) return hr;
     if ((hr = read_output_params( reader, heap, desc, params, count, args )) != S_OK) return hr;
     return WsReadEnvelopeEnd( msg, NULL );
 }
 
 static HRESULT receive_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE_DESCRIPTION *desc,
-                                WS_PARAMETER_DESCRIPTION *params, ULONG count, WS_HEAP *heap, const void **args )
+                                WS_PARAMETER_DESCRIPTION *params, ULONG count,
+                                WS_HEAP *heap, const void **args, WS_ERROR *error )
 {
     WS_XML_READER *reader;
     HRESULT hr;
@@ -458,7 +460,7 @@ static HRESULT receive_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE
     if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
     if ((hr = channel_receive_message( channel, msg )) != S_OK) return hr;
     if ((hr = channel_get_reader( channel, &reader )) != S_OK) return hr;
-    return read_message( msg, reader, heap, desc->bodyElementDescription, params, count, args );
+    return read_message( msg, reader, heap, desc->bodyElementDescription, params, count, args, error );
 }
 
 static HRESULT create_input_message( WS_CHANNEL *channel, const WS_CALL_PROPERTY *properties,
@@ -507,7 +509,6 @@ HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION 
     ULONG i;
 
     TRACE( "%p %p %p %p %p %lu %p %p\n", handle, desc, args, heap, properties, count, ctx, error );
-    if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
     for (i = 0; i < count; i++)
     {
@@ -532,13 +533,12 @@ HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION 
     if ((hr = create_input_message( proxy->channel, properties, count, &msg )) != S_OK) goto done;
     if ((hr = send_message( proxy->channel, msg, desc->inputMessageDescription, desc->parameterDescription,
                             desc->parameterCount, args )) != S_OK) goto done;
-
     WsFreeMessage( msg );
     msg = NULL;
 
     if ((hr = create_output_message( proxy->channel, properties, count, &msg )) != S_OK) goto done;
     hr = receive_message( proxy->channel, msg, desc->outputMessageDescription, desc->parameterDescription,
-                          desc->parameterCount, heap, args );
+                          desc->parameterCount, heap, args, error );
 
 done:
     WsFreeMessage( msg );

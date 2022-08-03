@@ -2259,3 +2259,44 @@ HRESULT message_set_request_id( WS_MESSAGE *handle, const GUID *id )
     LeaveCriticalSection( &msg->cs );
     return hr;
 }
+
+/* Attempt to read a fault message. If the message is a fault, WS_E_ENDPOINT_FAULT_RECEIVED will be returned. */
+HRESULT message_read_fault( WS_MESSAGE *handle, WS_HEAP *heap, WS_ERROR *error )
+{
+    static const WS_ELEMENT_DESCRIPTION desc = { NULL, NULL, WS_FAULT_TYPE, NULL };
+    BOOL isfault;
+    WS_FAULT fault = {0};
+    WS_XML_STRING action;
+    HRESULT hr;
+
+    if ((hr = WsGetMessageProperty( handle, WS_MESSAGE_PROPERTY_IS_FAULT, &isfault, sizeof(isfault), NULL )) != S_OK)
+        return hr;
+    if (!isfault)
+        return S_OK;
+
+    if ((hr = WsReadBody( handle, &desc, WS_READ_REQUIRED_VALUE, heap, &fault, sizeof(fault), NULL )) != S_OK ||
+        (hr = WsReadEnvelopeEnd( handle, NULL )) != S_OK)
+        goto done;
+
+    if (!error) goto done;
+
+    if ((hr = WsSetFaultErrorProperty( error, WS_FAULT_ERROR_PROPERTY_FAULT, &fault, sizeof(fault) )) != S_OK)
+        goto done;
+
+    if ((hr = WsGetHeader( handle, WS_ACTION_HEADER, WS_XML_STRING_TYPE, WS_READ_REQUIRED_VALUE,
+                           heap, &action, sizeof(action), NULL )) != S_OK)
+    {
+        if (hr == WS_E_INVALID_FORMAT)
+        {
+            memset( &action, 0, sizeof(action) );
+            hr = S_OK;
+        }
+        else
+            goto done;
+    }
+    hr = WsSetFaultErrorProperty( error, WS_FAULT_ERROR_PROPERTY_ACTION, &action, sizeof(action) );
+
+done:
+    free_fault_fields( heap, &fault );
+    return hr != S_OK ? hr : WS_E_ENDPOINT_FAULT_RECEIVED;
+}
