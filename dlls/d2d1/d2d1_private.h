@@ -720,6 +720,7 @@ struct d2d_command_list
 
     ID2D1Factory *factory;
     enum d2d_command_list_state state;
+    unsigned int flags;
 
     size_t size;
     size_t capacity;

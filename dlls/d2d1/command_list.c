@@ -20,6 +20,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+enum d2d_command_list_flags
+{
+    D2D_COMMAND_LIST_HAS_NULL_TEXT_RENDERING_PARAMS = 0x1,
+};
+
 enum d2d_command_type
 {
     D2D_COMMAND_SET_ANTIALIAS_MODE,
@@ -751,18 +756,35 @@ void d2d_command_list_fill_rectangle(struct d2d_command_list *command_list,
     command->brush = brush;
 }
 
-void d2d_command_list_set_text_rendering_params(struct d2d_command_list *command_list,
-        IDWriteRenderingParams *params)
+static void d2d_command_list_set_text_rendering_params_internal(struct d2d_command_list *command_list,
+        BOOL allow_null, IDWriteRenderingParams *params)
 {
     struct d2d_command_set_text_rendering_params *command;
 
-    if (!params) return;
+    if (!params && !allow_null) return;
+
+    if ((command_list->flags & D2D_COMMAND_LIST_HAS_NULL_TEXT_RENDERING_PARAMS)
+            && !params)
+    {
+        return;
+    }
 
     d2d_command_list_reference_object(command_list, params);
+
+    if (params)
+        command_list->flags &= ~D2D_COMMAND_LIST_HAS_NULL_TEXT_RENDERING_PARAMS;
+    else
+        command_list->flags |= D2D_COMMAND_LIST_HAS_NULL_TEXT_RENDERING_PARAMS;
 
     command = d2d_command_list_require_space(command_list, sizeof(*command));
     command->c.op = D2D_COMMAND_SET_TEXT_RENDERING_PARAMS;
     command->params = params;
+}
+
+void d2d_command_list_set_text_rendering_params(struct d2d_command_list *command_list,
+        IDWriteRenderingParams *params)
+{
+    d2d_command_list_set_text_rendering_params_internal(command_list, FALSE, params);
 }
 
 static inline void d2d_command_list_write_field(BYTE **data, void *dst, const void *src, size_t size)
@@ -798,6 +820,13 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
         command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
         return;
     }
+
+    /* Set rendering parameters automatically. Explicitly set null parameters are not recorded,
+       either separately or as a part of a restored state block. Forcing parameters update on
+       DrawGlyphRun() ensures that state is reset correctly. */
+
+    d2d_command_list_set_text_rendering_params_internal(command_list, TRUE,
+            context->text_rendering_params);
 
     /* Get combined size of variable data. */
 
