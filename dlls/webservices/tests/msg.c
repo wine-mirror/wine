@@ -1071,10 +1071,14 @@ static void test_WsReadEnvelopeStart(void)
 {
     static const char xml[] =
         "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body/></s:Envelope>";
-    WS_MESSAGE *msg, *msg2;
+    static const char faultxml[] =
+        "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
+        "<s:Fault/></s:Body></s:Envelope>";
+    WS_MESSAGE *msg, *msg2, *msg3;
     WS_XML_READER *reader;
     WS_MESSAGE_STATE state;
     const WS_XML_NODE *node;
+    BOOL isfault;
     HRESULT hr;
 
     hr = WsReadEnvelopeStart( NULL, NULL, NULL, NULL, NULL );
@@ -1127,8 +1131,23 @@ static void test_WsReadEnvelopeStart(void)
     ok( hr == S_OK, "got %#lx\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg3, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = set_input( reader, faultxml, strlen(faultxml) );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsReadEnvelopeStart( msg3, reader, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    isfault = FALSE;
+    hr = WsGetMessageProperty( msg3, WS_MESSAGE_PROPERTY_IS_FAULT, &isfault, sizeof(isfault), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( isfault, "isfault == FALSE\n" );
+
     WsFreeMessage( msg );
     WsFreeMessage( msg2 );
+    WsFreeMessage( msg3 );
     WsFreeReader( reader );
 }
 

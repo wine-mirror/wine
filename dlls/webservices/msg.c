@@ -42,6 +42,10 @@ static const struct prop_desc msg_props[] =
     { sizeof(WS_XML_READER *), TRUE },          /* WS_MESSAGE_PROPERTY_BODY_READER */
     { sizeof(WS_XML_WRITER *), TRUE },          /* WS_MESSAGE_PROPERTY_BODY_WRITER */
     { sizeof(BOOL), TRUE },                     /* WS_MESSAGE_PROPERTY_IS_ADDRESSED */
+    { sizeof(WS_HEAP_PROPERTIES), TRUE },       /* WS_MESSAGE_PROPERTY_HEAP_PROPERTIES */
+    { sizeof(WS_XML_READER_PROPERTIES), TRUE }, /* WS_MESSAGE_PROPERTY_XML_READER_PROPERTIES */
+    { sizeof(WS_XML_WRITER_PROPERTIES), TRUE }, /* WS_MESSAGE_PROPERTY_XML_WRITER_PROPERTIES */
+    { sizeof(BOOL), FALSE },                    /* WS_MESSAGE_PROPERTY_IS_FAULT */
 };
 
 struct header
@@ -122,6 +126,7 @@ static void free_header( struct header *header )
 
 static void reset_msg( struct msg *msg )
 {
+    BOOL isfault = FALSE;
     ULONG i;
 
     msg->state         = WS_MESSAGE_STATE_EMPTY;
@@ -150,6 +155,8 @@ static void reset_msg( struct msg *msg )
 
     memset( &msg->ctx_send, 0, sizeof(msg->ctx_send) );
     memset( &msg->ctx_receive, 0, sizeof(msg->ctx_receive) );
+
+    prop_set( msg->prop, msg->prop_count, WS_MESSAGE_PROPERTY_IS_FAULT, &isfault, sizeof(isfault) );
 }
 
 static void free_msg( struct msg *msg )
@@ -373,6 +380,13 @@ HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     case WS_MESSAGE_PROPERTY_IS_ADDRESSED:
         if (msg->state < WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
         else *(BOOL *)buf = msg->is_addressed;
+        break;
+
+    case WS_MESSAGE_PROPERTY_HEAP_PROPERTIES:
+    case WS_MESSAGE_PROPERTY_XML_READER_PROPERTIES:
+    case WS_MESSAGE_PROPERTY_XML_WRITER_PROPERTIES:
+        FIXME( "property %u not supported\n", id );
+        hr = E_NOTIMPL;
         break;
 
     default:
@@ -877,6 +891,18 @@ static BOOL match_current_element( WS_XML_READER *reader, const WS_XML_STRING *l
     return WsXmlStringEquals( elem->localName, localname, NULL ) == S_OK;
 }
 
+static BOOL match_current_element_with_ns( WS_XML_READER *reader, const WS_XML_STRING *localname, const WS_XML_STRING *ns )
+{
+    const WS_XML_NODE *node;
+    const WS_XML_ELEMENT_NODE *elem;
+
+    if (WsGetReaderNode( reader, &node, NULL ) != S_OK) return FALSE;
+    if (node->nodeType != WS_XML_NODE_TYPE_ELEMENT) return FALSE;
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    return WsXmlStringEquals( elem->localName, localname, NULL ) == S_OK &&
+           WsXmlStringEquals( elem->ns, ns, NULL ) == S_OK;
+}
+
 static HRESULT read_message_id( WS_XML_READER *reader, GUID *ret )
 {
     const WS_XML_NODE *node;
@@ -914,6 +940,9 @@ static HRESULT read_envelope_start( struct msg *msg, WS_XML_READER *reader )
 {
     static const WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, body = {4, (BYTE *)"Body"};
     static const WS_XML_STRING header = {6, (BYTE *)"Header"}, msgid = {9, (BYTE *)"MessageID"};
+    static const WS_XML_STRING fault = {5, (BYTE *)"Fault"};
+    const WS_XML_STRING *ns_env = get_env_namespace( msg->version_env );
+    BOOL isfault;
     HRESULT hr;
 
     if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
@@ -930,7 +959,10 @@ static HRESULT read_envelope_start( struct msg *msg, WS_XML_READER *reader )
         }
     }
     if (!match_current_element( reader, &body )) return WS_E_INVALID_FORMAT;
-    return WsReadNode( reader, NULL );
+    if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+
+    isfault = match_current_element_with_ns( reader, &fault, ns_env );
+    return prop_set( msg->prop, msg->prop_count, WS_MESSAGE_PROPERTY_IS_FAULT, &isfault, sizeof(isfault) );
 }
 
 /**************************************************************************

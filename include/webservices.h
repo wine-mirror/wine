@@ -113,6 +113,11 @@ typedef struct _WS_HEAP_PROPERTY {
     ULONG               valueSize;
 } WS_HEAP_PROPERTY;
 
+typedef struct _WS_HEAP_PROPERTIES {
+    WS_HEAP_PROPERTY *properties;
+    ULONG             propertyCount;
+} WS_HEAP_PROPERTIES;
+
 typedef ULONG WS_XML_BUFFER_PROPERTY_ID;
 
 typedef struct _WS_XML_BUFFER_PROPERTY {
@@ -145,6 +150,11 @@ typedef struct _WS_XML_READER_PROPERTY {
     ULONG                     valueSize;
 } WS_XML_READER_PROPERTY;
 
+typedef struct _WS_XML_READER_PROPERTIES {
+    WS_XML_READER_PROPERTY *properties;
+    ULONG                   propertyCount;
+} WS_XML_READER_PROPERTIES;
+
 typedef enum {
     WS_XML_WRITER_PROPERTY_MAX_DEPTH,
     WS_XML_WRITER_PROPERTY_ALLOW_FRAGMENT,
@@ -172,6 +182,11 @@ typedef struct _WS_XML_WRITER_PROPERTY {
     void                     *value;
     ULONG                     valueSize;
 } WS_XML_WRITER_PROPERTY;
+
+typedef struct _WS_XML_WRITER_PROPERTIES {
+    WS_XML_WRITER_PROPERTY *properties;
+    ULONG                   propertyCount;
+} WS_XML_WRITER_PROPERTIES;
 
 typedef struct _WS_BYTES {
     ULONG length;
