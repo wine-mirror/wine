@@ -1202,19 +1202,27 @@ static void test_WsReadBody(void)
     static const char xml[] =
         "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
         "<u xmlns=\"ns\"><val>1</val></u></s:Body></s:Envelope>";
+    static const char faultxml[] =
+        "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
+        "<s:Fault><faultcode>s:Client</faultcode><faultstring>OLS Exception</faultstring></s:Fault>"
+        "</s:Body></s:Envelope>";
+    static const WS_XML_STRING faultcode = { 6, (BYTE *)"Client" };
+    static const WS_STRING faultstring = { 13, (WCHAR *)L"OLS Exception" };
     WS_HEAP *heap;
-    WS_MESSAGE *msg, *msg2;
+    WS_MESSAGE *msg, *msg2, *msg3;
     WS_XML_READER *reader;
     WS_MESSAGE_STATE state;
+    BOOL isfault;
     WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"};
     WS_XML_STRING val = {3, (BYTE *)"val"}, ns = {2, (BYTE *)"ns"};
-    WS_ELEMENT_DESCRIPTION desc;
+    WS_ELEMENT_DESCRIPTION desc, faultdesc;
     WS_STRUCT_DESCRIPTION s;
     WS_FIELD_DESCRIPTION f, *fields[1];
     struct test
     {
         UINT32 val;
     } test;
+    WS_FAULT fault;
     HRESULT hr;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
@@ -1280,8 +1288,43 @@ static void test_WsReadBody(void)
     hr = WsReadEnvelopeEnd( msg2, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
 
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg3, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = set_input( reader, faultxml, strlen(faultxml) );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsReadEnvelopeStart( msg3, reader, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    isfault = FALSE;
+    hr = WsGetMessageProperty( msg3, WS_MESSAGE_PROPERTY_IS_FAULT, &isfault, sizeof(isfault), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( isfault, "isfault == FALSE\n" );
+
+    faultdesc.elementLocalName = NULL;
+    faultdesc.elementNs        = NULL;
+    faultdesc.type             = WS_FAULT_TYPE;
+    faultdesc.typeDescription  = NULL;
+
+    memset( &fault, 0, sizeof(fault) );
+    hr = WsReadBody( msg3, &faultdesc, WS_READ_REQUIRED_VALUE, heap, &fault, sizeof(fault), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( fault.code->value.localName.length == faultcode.length, "got %lu\n", fault.code->value.localName.length );
+    ok( !memcmp( fault.code->value.localName.bytes, faultcode.bytes, faultcode.length ), "wrong fault code\n" );
+    ok( !fault.code->subCode, "subcode is not NULL\n" );
+    ok( fault.reasonCount == 1, "got %lu\n", fault.reasonCount );
+    ok( fault.reasons[0].text.length == faultstring.length, "got %lu\n", fault.reasons[0].text.length );
+    ok( !memcmp( fault.reasons[0].text.chars, faultstring.chars, faultstring.length * sizeof(WCHAR) ),
+        "wrong fault string\n" );
+
+    hr = WsReadEnvelopeEnd( msg3, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+
     WsFreeMessage( msg );
     WsFreeMessage( msg2 );
+    WsFreeMessage( msg3 );
     WsFreeReader( reader );
     WsFreeHeap( heap );
 }
