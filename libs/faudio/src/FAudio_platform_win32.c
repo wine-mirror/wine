@@ -582,7 +582,7 @@ FAudioThread FAudio_PlatformCreateThread(
 void FAudio_PlatformWaitThread(FAudioThread thread, int32_t *retval)
 {
 	WaitForSingleObject(thread, INFINITE);
-	GetExitCodeThread(thread, (DWORD *)retval);
+	if (retval != NULL) GetExitCodeThread(thread, (DWORD *)retval);
 }
 
 void FAudio_PlatformThreadPriority(FAudioThreadPriority priority)
