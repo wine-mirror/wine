@@ -1097,11 +1097,6 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
     if (!display_mode)
         goto failed;
 
-    /* We currently only report modes for the primary display, so it's at (0, 0). */
-    devmode->dmPosition.x = 0;
-    devmode->dmPosition.y = 0;
-    devmode->dmFields |= DM_POSITION;
-
     display_mode_to_devmode(displays[0].displayID, display_mode, devmode);
     devmode->dmBitsPerPel = display_mode_bpp;
     if (devmode->dmBitsPerPel)
