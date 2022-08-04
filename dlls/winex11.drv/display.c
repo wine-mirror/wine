@@ -326,19 +326,6 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     UINT mode_count;
     ULONG_PTR id;
 
-    if (n == ENUM_CURRENT_SETTINGS)
-    {
-        if (!settings_handler.get_id( name, &id ) || !settings_handler.get_current_mode( id, &mode ))
-        {
-            ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
-            return FALSE;
-        }
-
-        memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
-        if (!is_detached_mode( devmode )) devmode->dmBitsPerPel = get_display_depth( id );
-        return TRUE;
-    }
-
     pthread_mutex_lock( &settings_mutex );
     if (n == 0 || wcsicmp(cached_device_name, name) || cached_flags != flags)
     {
@@ -371,6 +358,26 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     pthread_mutex_unlock( &settings_mutex );
 
     memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
+    return TRUE;
+}
+
+/***********************************************************************
+ *      GetCurrentDisplaySettings  (X11DRV.@)
+ *
+ */
+BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW devmode )
+{
+    DEVMODEW mode;
+    ULONG_PTR id;
+
+    if (!settings_handler.get_id( name, &id ) || !settings_handler.get_current_mode( id, &mode ))
+    {
+        ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
+        return FALSE;
+    }
+
+    memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
+    if (!is_detached_mode( devmode )) devmode->dmBitsPerPel = get_display_depth( id );
     return TRUE;
 }
 
