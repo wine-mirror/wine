@@ -1096,8 +1096,25 @@ static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceCont
         ID2D1Bitmap *mask, ID2D1Brush *brush, D2D1_OPACITY_MASK_CONTENT content,
         const D2D1_RECT_F *dst_rect, const D2D1_RECT_F *src_rect)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, mask %p, brush %p, content %#x, dst_rect %s, src_rect %s stub!\n",
             iface, mask, brush, content, debug_d2d_rect_f(dst_rect), debug_d2d_rect_f(src_rect));
+
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->drawing_state.antialiasMode != D2D1_ANTIALIAS_MODE_ALIASED)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
+    if ((unsigned int)content > D2D1_OPACITY_MASK_CONTENT_TEXT_GDI_COMPATIBLE)
+    {
+        d2d_device_context_set_error(context, E_INVALIDARG);
+        return;
+    }
 }
 
 static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, ID2D1Bitmap *bitmap,
@@ -2584,8 +2601,19 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectRequiredInputRectan
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_FillOpacityMask(ID2D1DeviceContext1 *iface,
         ID2D1Bitmap *mask, ID2D1Brush *brush, const D2D1_RECT_F *dst_rect, const D2D1_RECT_F *src_rect)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, mask %p, brush %p, dst_rect %s, src_rect %s stub!\n",
             iface, mask, brush, debug_d2d_rect_f(dst_rect), debug_d2d_rect_f(src_rect));
+
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->drawing_state.antialiasMode != D2D1_ANTIALIAS_MODE_ALIASED)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateFilledGeometryRealization(ID2D1DeviceContext1 *iface,
