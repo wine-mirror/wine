@@ -2046,12 +2046,13 @@ static DEVMODEW *validate_display_settings( const WCHAR *adapter_path, const WCH
             devmode = NULL;
     }
 
-    if (!devmode)
+    if (devmode) memcpy( temp_mode, devmode, devmode->dmSize );
+    else
     {
         if (!read_registry_settings( adapter_path, temp_mode )) return NULL;
         TRACE( "Return to original display mode\n" );
-        devmode = temp_mode;
     }
+    devmode = temp_mode;
 
     if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
     {
