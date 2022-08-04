@@ -719,7 +719,6 @@ static CGDisplayModeRef find_best_display_mode(DEVMODEW *devmode, CFArrayRef dis
 {
     CFIndex count, i, best;
     CGDisplayModeRef best_display_mode;
-    uint32_t best_io_flags;
 
     best_display_mode = NULL;
 
@@ -732,6 +731,9 @@ static CGDisplayModeRef find_best_display_mode(DEVMODEW *devmode, CFArrayRef dis
         int mode_bpp = display_mode_bits_per_pixel(display_mode);
         size_t width = CGDisplayModeGetWidth(display_mode);
         size_t height = CGDisplayModeGetHeight(display_mode);
+        double refresh_rate = CGDisplayModeGetRefreshRate(display_mode);
+        if (!refresh_rate)
+            refresh_rate = 60;
 
         if (is_original && retina_enabled)
         {
@@ -742,58 +744,22 @@ static CGDisplayModeRef find_best_display_mode(DEVMODEW *devmode, CFArrayRef dis
         if (bpp != mode_bpp)
             continue;
 
-        if (devmode->dmFields & DM_PELSWIDTH)
-        {
-            if (devmode->dmPelsWidth != width)
-                continue;
-        }
-        if (devmode->dmFields & DM_PELSHEIGHT)
-        {
-            if (devmode->dmPelsHeight != height)
-                continue;
-        }
-        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) &&
-            devmode->dmDisplayFrequency != 0 &&
-            devmode->dmDisplayFrequency != 1)
-        {
-            double refresh_rate = CGDisplayModeGetRefreshRate(display_mode);
-            if (!refresh_rate)
-                refresh_rate = 60;
-            if (devmode->dmDisplayFrequency != (DWORD)refresh_rate)
-                continue;
-        }
-        if (devmode->dmFields & DM_DISPLAYFLAGS)
-        {
-            if (!(devmode->dmDisplayFlags & DM_INTERLACED) != !(io_flags & kDisplayModeInterlacedFlag))
-                continue;
-        }
-        else if (best_display_mode)
-        {
-            if (io_flags & kDisplayModeInterlacedFlag && !(best_io_flags & kDisplayModeInterlacedFlag))
-                continue;
-            else if (!(io_flags & kDisplayModeInterlacedFlag) && best_io_flags & kDisplayModeInterlacedFlag)
-                goto better;
-        }
-        if (devmode->dmFields & DM_DISPLAYFIXEDOUTPUT)
-        {
-            if (!(devmode->dmDisplayFixedOutput == DMDFO_STRETCH) != !(io_flags & kDisplayModeStretchedFlag))
-                continue;
-        }
-        else if (best_display_mode)
-        {
-            if (io_flags & kDisplayModeStretchedFlag && !(best_io_flags & kDisplayModeStretchedFlag))
-                continue;
-            else if (!(io_flags & kDisplayModeStretchedFlag) && best_io_flags & kDisplayModeStretchedFlag)
-                goto better;
-        }
+        if (devmode->dmPelsWidth != width)
+            continue;
+        if (devmode->dmPelsHeight != height)
+            continue;
+        if (devmode->dmDisplayFrequency != (DWORD)refresh_rate)
+            continue;
+        if (!(devmode->dmDisplayFlags & DM_INTERLACED) != !(io_flags & kDisplayModeInterlacedFlag))
+            continue;
+        if (!(devmode->dmDisplayFixedOutput == DMDFO_STRETCH) != !(io_flags & kDisplayModeStretchedFlag))
+            continue;
 
         if (best_display_mode)
             continue;
 
-better:
         best_display_mode = display_mode;
         best = i;
-        best_io_flags = io_flags;
     }
 
     if (best_display_mode)
@@ -866,18 +832,13 @@ LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     pthread_mutex_lock(&cached_modes_mutex);
     bpp = get_default_bpp();
     pthread_mutex_unlock(&cached_modes_mutex);
-    if ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel != bpp)
+    if (devmode->dmBitsPerPel != bpp)
         TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, devmode->dmBitsPerPel);
 
-    TRACE("looking for %dx%dx%dbpp @%d Hz",
-          (devmode->dmFields & DM_PELSWIDTH ? devmode->dmPelsWidth : 0),
-          (devmode->dmFields & DM_PELSHEIGHT ? devmode->dmPelsHeight : 0),
-          bpp,
-          (devmode->dmFields & DM_DISPLAYFREQUENCY ? devmode->dmDisplayFrequency : 0));
-    if (devmode->dmFields & DM_DISPLAYFIXEDOUTPUT)
-        TRACE(" %sstretched", devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un");
-    if (devmode->dmFields & DM_DISPLAYFLAGS)
-        TRACE(" %sinterlaced", devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
+    TRACE("looking for %dx%dx%dbpp @%d Hz", devmode->dmPelsWidth, devmode->dmPelsHeight,
+          bpp, devmode->dmDisplayFrequency);
+    TRACE(" %sstretched", devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un");
+    TRACE(" %sinterlaced", devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
     TRACE("\n");
 
     desc = create_original_display_mode_descriptor(displays[0].displayID);
