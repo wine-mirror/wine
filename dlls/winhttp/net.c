@@ -752,18 +752,51 @@ static DWORD resolve_hostname( const WCHAR *name, INTERNET_PORT port, struct soc
 
 struct async_resolve
 {
-    const WCHAR             *hostname;
+    LONG                     ref;
+    WCHAR                   *hostname;
     INTERNET_PORT            port;
-    struct sockaddr_storage *addr;
+    struct sockaddr_storage  addr;
     DWORD                    result;
     HANDLE                   done;
 };
 
+static struct async_resolve *create_async_resolve( const WCHAR *hostname, INTERNET_PORT port )
+{
+    struct async_resolve *ret;
+
+    if (!(ret = malloc(sizeof(*ret))))
+    {
+        ERR( "No memory.\n" );
+        return NULL;
+    }
+    ret->ref = 1;
+    ret->hostname = strdupW( hostname );
+    ret->port     = port;
+    if (!(ret->done = CreateEventW( NULL, FALSE, FALSE, NULL )))
+    {
+        free( ret->hostname );
+        free( ret );
+        return NULL;
+    }
+    return ret;
+}
+
+static void async_resolve_release( struct async_resolve *async )
+{
+    if (InterlockedDecrement( &async->ref )) return;
+
+    free( async->hostname );
+    CloseHandle( async->done );
+    free( async );
+}
+
 static void CALLBACK resolve_proc( TP_CALLBACK_INSTANCE *instance, void *ctx )
 {
     struct async_resolve *async = ctx;
-    async->result = resolve_hostname( async->hostname, async->port, async->addr );
+
+    async->result = resolve_hostname( async->hostname, async->port, &async->addr );
     SetEvent( async->done );
+    async_resolve_release( async );
 }
 
 DWORD netconn_resolve( WCHAR *hostname, INTERNET_PORT port, struct sockaddr_storage *addr, int timeout )
@@ -773,20 +806,25 @@ DWORD netconn_resolve( WCHAR *hostname, INTERNET_PORT port, struct sockaddr_stor
     if (!timeout) ret = resolve_hostname( hostname, port, addr );
     else
     {
-        struct async_resolve async;
+        struct async_resolve *async;
 
-        async.hostname = hostname;
-        async.port     = port;
-        async.addr     = addr;
-        if (!(async.done = CreateEventW( NULL, FALSE, FALSE, NULL ))) return GetLastError();
-        if (!TrySubmitThreadpoolCallback( resolve_proc, &async, NULL ))
+        if (!(async = create_async_resolve( hostname, port )))
+            return ERROR_OUTOFMEMORY;
+
+        InterlockedIncrement( &async->ref );
+        if (!TrySubmitThreadpoolCallback( resolve_proc, async, NULL ))
         {
-            CloseHandle( async.done );
+            InterlockedDecrement( &async->ref );
+            async_resolve_release( async );
             return GetLastError();
         }
-        if (WaitForSingleObject( async.done, timeout ) != WAIT_OBJECT_0) ret = ERROR_WINHTTP_TIMEOUT;
-        else ret = async.result;
-        CloseHandle( async.done );
+        if (WaitForSingleObject( async->done, timeout ) != WAIT_OBJECT_0) ret = ERROR_WINHTTP_TIMEOUT;
+        else
+        {
+            *addr = async->addr;
+            ret = async->result;
+        }
+        async_resolve_release( async );
     }
 
     return ret;
