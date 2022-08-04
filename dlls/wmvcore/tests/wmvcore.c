@@ -1295,12 +1295,10 @@ static void test_sync_reader_types(void)
                 debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
         hr = IWMOutputMediaProps_SetMediaType(output_props, NULL);
-        todo_wine
         ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
         memset(mt2_buffer, 0, sizeof(mt2_buffer));
         hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-        todo_wine
         ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
@@ -1309,22 +1307,18 @@ static void test_sync_reader_types(void)
 
             init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels * 2, format->nSamplesPerSec);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
-            todo_wine
             ok(hr == NS_E_AUDIO_CODEC_NOT_INSTALLED, "Got hr %#lx.\n", hr);
 
             init_audio_type(mt2, &MEDIASUBTYPE_PCM, 8, 1, 11025);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels, format->nSamplesPerSec / 4);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1336,14 +1330,12 @@ static void test_sync_reader_types(void)
 
             init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             init_video_type(mt2, &MEDIASUBTYPE_NV12, 12, MAKEFOURCC('N','V','1','2'), &rect);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
             todo_wine
@@ -1353,15 +1345,12 @@ static void test_sync_reader_types(void)
 
             init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
-            todo_wine
             ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
         }
 
         hr = IWMOutputMediaProps_SetMediaType(output_props, mt);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2578,12 +2567,10 @@ static void test_async_reader_types(void)
                 debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
         hr = IWMOutputMediaProps_SetMediaType(output_props, NULL);
-        todo_wine
         ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
         memset(mt2_buffer, 0, sizeof(mt2_buffer));
         hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-        todo_wine
         ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
@@ -2592,22 +2579,18 @@ static void test_async_reader_types(void)
 
             init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels * 2, format->nSamplesPerSec);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
-            todo_wine
             ok(hr == NS_E_AUDIO_CODEC_NOT_INSTALLED, "Got hr %#lx.\n", hr);
 
             init_audio_type(mt2, &MEDIASUBTYPE_PCM, 8, 1, 11025);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             init_audio_type(mt2, &MEDIASUBTYPE_IEEE_FLOAT, 32, format->nChannels, format->nSamplesPerSec / 4);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2619,14 +2602,12 @@ static void test_async_reader_types(void)
 
             init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             init_video_type(mt2, &MEDIASUBTYPE_NV12, 12, MAKEFOURCC('N','V','1','2'), &rect);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
             todo_wine
@@ -2636,15 +2617,12 @@ static void test_async_reader_types(void)
 
             init_video_type(mt2, &MEDIASUBTYPE_RGB32, 32, BI_RGB, &rect);
             hr = IWMOutputMediaProps_SetMediaType(output_props, mt2);
-            todo_wine
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
-            todo_wine
             ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#lx.\n", hr);
         }
 
         hr = IWMOutputMediaProps_SetMediaType(output_props, mt);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         hr = IWMReader_SetOutputProps(reader, output_number, output_props);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);

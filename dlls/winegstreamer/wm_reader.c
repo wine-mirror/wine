@@ -116,8 +116,18 @@ static HRESULT WINAPI output_props_GetMediaType(IWMOutputMediaProps *iface, WM_M
 
 static HRESULT WINAPI output_props_SetMediaType(IWMOutputMediaProps *iface, WM_MEDIA_TYPE *mt)
 {
-    FIXME("iface %p, mt %p, stub!\n", iface, mt);
-    return E_NOTIMPL;
+    const struct output_props *props = impl_from_IWMOutputMediaProps(iface);
+
+    TRACE("iface %p, mt %p.\n", iface, mt);
+
+    if (!mt)
+        return E_POINTER;
+
+    if (!IsEqualGUID(&props->mt.majortype, &mt->majortype))
+        return E_FAIL;
+
+    FreeMediaType((AM_MEDIA_TYPE *)&props->mt);
+    return CopyMediaType((AM_MEDIA_TYPE *)&props->mt, (AM_MEDIA_TYPE *)mt);
 }
 
 static HRESULT WINAPI output_props_GetStreamGroupName(IWMOutputMediaProps *iface, WCHAR *name, WORD *len)
@@ -1754,6 +1764,7 @@ HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
     struct output_props *props = unsafe_impl_from_IWMOutputMediaProps(props_iface);
     struct wg_format format, pref_format;
     struct wm_stream *stream;
+    int i;
 
     strmbase_dump_media_type(&props->mt);
 
@@ -1778,6 +1789,32 @@ HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
         LeaveCriticalSection(&reader->cs);
         WARN("Major types don't match; returning NS_E_INCOMPATIBLE_FORMAT.\n");
         return NS_E_INCOMPATIBLE_FORMAT;
+    }
+
+    switch (pref_format.major_type)
+    {
+        case WG_MAJOR_TYPE_AUDIO:
+            if (format.u.audio.format == WG_AUDIO_FORMAT_UNKNOWN)
+                return NS_E_AUDIO_CODEC_NOT_INSTALLED;
+            if (format.u.audio.channels > pref_format.u.audio.channels)
+                return NS_E_AUDIO_CODEC_NOT_INSTALLED;
+            break;
+
+        case WG_MAJOR_TYPE_VIDEO:
+            for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
+                if (format.u.video.format == video_formats[i])
+                    break;
+            if (i == ARRAY_SIZE(video_formats))
+                return NS_E_INVALID_OUTPUT_FORMAT;
+
+            if (pref_format.u.video.width != format.u.video.width)
+                return NS_E_INVALID_OUTPUT_FORMAT;
+            if (pref_format.u.video.height != format.u.video.height)
+                return NS_E_INVALID_OUTPUT_FORMAT;
+            break;
+
+        default:
+            return NS_E_INCOMPATIBLE_FORMAT;
     }
 
     stream->format = format;
