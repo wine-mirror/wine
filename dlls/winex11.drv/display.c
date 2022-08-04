@@ -498,16 +498,6 @@ static LONG get_display_settings(DEVMODEW **new_displays, const WCHAR *dev_name,
         else if (!wcsicmp(dev_name, display_device.DeviceName))
         {
             *mode = *dev_mode;
-            if (!(dev_mode->dmFields & DM_POSITION))
-            {
-                memset(&current_mode, 0, sizeof(current_mode));
-                current_mode.dmSize = sizeof(current_mode);
-                if (!NtUserEnumDisplaySettings( &device_name, ENUM_CURRENT_SETTINGS, &current_mode, 0 ))
-                    goto done;
-
-                mode->dmFields |= DM_POSITION;
-                mode->dmPosition = current_mode.dmPosition;
-            }
         }
         else
         {

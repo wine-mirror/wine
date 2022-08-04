@@ -2060,12 +2060,17 @@ static DEVMODEW *validate_display_settings( const WCHAR *adapter_path, const WCH
         return NULL;
     }
 
-    if (!is_detached_mode( devmode ) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight))
+    if (!is_detached_mode( devmode ) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight || !(devmode->dmFields & DM_POSITION)))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
         if (!user_driver->pGetCurrentDisplaySettings( device_name, &current_mode )) return NULL;
         if (!devmode->dmPelsWidth) devmode->dmPelsWidth = current_mode.dmPelsWidth;
         if (!devmode->dmPelsHeight) devmode->dmPelsHeight = current_mode.dmPelsHeight;
+        if (!(devmode->dmFields & DM_POSITION))
+        {
+            devmode->dmPosition = current_mode.dmPosition;
+            devmode->dmFields |= DM_POSITION;
+        }
     }
 
     return devmode;
