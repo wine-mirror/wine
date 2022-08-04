@@ -249,6 +249,9 @@ system_fallback_config[] =
     { "1800-18AF, 11660-1167F", L"Noto Sans Mongolian" },
 
     { "3000-30FF, 31F0-31FF, 4E00-9FFF", L"Meiryo" },
+
+    /* Halfwidth and Fullwidth Forms */
+    { "FF00-FFEF",              L"Noto Sans CJK JP" },
 };
 
 struct text_source_context
