@@ -2804,8 +2804,6 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
             iface, ctx, baseline_origin_x, baseline_origin_y,
             measuring_mode, glyph_run, glyph_run_desc, effect);
 
-    if (glyph_run_desc)
-        WARN("Ignoring glyph run description %p.\n", glyph_run_desc);
     if (context->options & ~(D2D1_DRAW_TEXT_OPTIONS_NO_SNAP | D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT))
         FIXME("Ignoring options %#x.\n", context->options);
 
