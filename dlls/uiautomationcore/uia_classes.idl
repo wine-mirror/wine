@@ -23,6 +23,7 @@ import "oaidl.idl";
 struct uia_prop_info {
     const GUID *guid;
     int prop_id;
+    int prop_type;
     int type;
 };
 

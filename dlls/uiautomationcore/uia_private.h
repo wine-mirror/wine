@@ -21,4 +21,10 @@
 #include "uiautomation.h"
 #include "uia_classes.h"
 
+enum uia_prop_type {
+    PROP_TYPE_UNKNOWN,
+    PROP_TYPE_ELEM_PROP,
+    PROP_TYPE_SPECIAL,
+};
+
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;

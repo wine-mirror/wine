@@ -4570,20 +4570,20 @@ static void test_UiaGetPropertyValue(void)
 }
 
 static const struct prov_method_sequence get_runtime_id1[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
     { 0 }
 };
 
 static const struct prov_method_sequence get_runtime_id2[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
-    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT },
     { 0 }
 };
 
 static const struct prov_method_sequence get_runtime_id3[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
-    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
-    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     /* Not called on Windows 7. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     /* Only called on Win8+. */
@@ -4595,9 +4595,9 @@ static const struct prov_method_sequence get_runtime_id3[] = {
 };
 
 static const struct prov_method_sequence get_runtime_id4[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
-    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
-    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     /* Not called on Windows 7. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     /* These methods are only called on Win8+. */
@@ -4608,10 +4608,10 @@ static const struct prov_method_sequence get_runtime_id4[] = {
 };
 
 static const struct prov_method_sequence get_runtime_id5[] = {
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
-    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
-    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { 0 }
 };
 
@@ -4620,6 +4620,7 @@ static void test_UiaGetRuntimeId(void)
     const int root_prov_opts[] = { ProviderOptions_ServerSideProvider, ProviderOptions_ServerSideProvider | ProviderOptions_OverrideProvider,
                                    ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider };
     int rt_id[4], tmp, i;
+    IUnknown *unk_ns;
     SAFEARRAY *sa;
     WNDCLASSA cls;
     HUIANODE node;
@@ -4644,6 +4645,9 @@ static void test_UiaGetRuntimeId(void)
     hwnd = CreateWindowA("UiaGetRuntimeId class", "Test window", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
 
+    hr = UiaGetReservedNotSupportedValue(&unk_ns);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     Provider.prov_opts = Provider2.prov_opts = Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
     Provider.hwnd = Provider2.hwnd = Provider_child.hwnd = NULL;
@@ -4666,7 +4670,7 @@ static void test_UiaGetRuntimeId(void)
     Provider_child.runtime_id[0] = Provider_child.runtime_id[1] = 0;
     sa = (void *)0xdeadbeef;
     hr = UiaGetRuntimeId(node, &sa);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!sa, "sa != NULL\n");
     ok_method_sequence(get_runtime_id1, "get_runtime_id1");
 
@@ -4675,10 +4679,9 @@ static void test_UiaGetRuntimeId(void)
     Provider_child.runtime_id[1] = rt_id[1] = 2;
     sa = (void *)0xdeadbeef;
     hr = UiaGetRuntimeId(node, &sa);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!sa, "sa == NULL\n");
-    if (sa)
-        check_runtime_id(rt_id, 2, sa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!sa, "sa == NULL\n");
+    check_runtime_id(rt_id, 2, sa);
     SafeArrayDestroy(sa);
     ok_method_sequence(get_runtime_id1, "get_runtime_id1");
 
@@ -4702,8 +4705,19 @@ static void test_UiaGetRuntimeId(void)
     /* Provider_child has no fragment root for UiaAppendRuntimeId. */
     hr = UiaGetRuntimeId(node, &sa);
     /* Windows 7 returns S_OK. */
-    todo_wine ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
     ok(!sa, "sa != NULL\n");
+    ok_method_sequence(get_runtime_id2, "get_runtime_id2");
+
+    /*
+     * UIA_RuntimeIdPropertyId won't return a failure code from
+     * UiaGetPropertyValue.
+     */
+    hr = UiaGetPropertyValue(node, UIA_RuntimeIdPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+    VariantClear(&v);
     ok_method_sequence(get_runtime_id2, "get_runtime_id2");
 
     /*
@@ -4722,7 +4736,7 @@ static void test_UiaGetRuntimeId(void)
     sa = (void *)0xdeadbeef;
     hr = UiaGetRuntimeId(node, &sa);
     /* Windows 7 returns S_OK. */
-    todo_wine ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
     ok(!sa, "sa != NULL\n");
     ok_method_sequence(get_runtime_id3, "get_runtime_id3");
 
@@ -4735,9 +4749,9 @@ static void test_UiaGetRuntimeId(void)
     Provider_child.runtime_id[1] = rt_id[3] = 2;
     sa = NULL;
     hr = UiaGetRuntimeId(node, &sa);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* Windows 7 returns a NULL RuntimeId due to no fragment recursion. */
-    todo_wine ok(!!sa || broken(!sa), "sa == NULL\n");
+    ok(!!sa || broken(!sa), "sa == NULL\n");
     SafeArrayDestroy(sa);
 
     ok_method_sequence(get_runtime_id4, "get_runtime_id4");
@@ -4756,21 +4770,21 @@ static void test_UiaGetRuntimeId(void)
         Provider.prov_opts = root_prov_opts[i];
         sa = NULL;
         hr = UiaGetRuntimeId(node, &sa);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine ok(!!sa, "sa == NULL\n");
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!sa, "sa == NULL\n");
 
         hr = SafeArrayGetLBound(sa, 1, &lbound);
-        todo_wine ok(hr == S_OK, "Failed to get LBound with hr %#lx\n", hr);
+        ok(hr == S_OK, "Failed to get LBound with hr %#lx\n", hr);
 
         lbound = lbound + 2;
         hr = SafeArrayGetElement(sa, &lbound, &tmp);
-        todo_wine ok(hr == S_OK, "Failed to get element with hr %#lx\n", hr);
-        if (i && SUCCEEDED(hr))
+        ok(hr == S_OK, "Failed to get element with hr %#lx\n", hr);
+        if (i)
             ok(rt_id[2] != tmp, "Expected different runtime id value from previous\n");
 
         rt_id[2] = tmp;
-        if (sa)
-            check_runtime_id(rt_id, 4, sa);
+        check_runtime_id(rt_id, 4, sa);
+
         SafeArrayDestroy(sa);
         ok_method_sequence(get_runtime_id5, "get_runtime_id5");
     }
