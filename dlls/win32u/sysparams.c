@@ -2031,7 +2031,7 @@ static BOOL is_detached_mode( const DEVMODEW *mode )
            mode->dmPelsHeight == 0;
 }
 
-static DEVMODEW *validate_display_settings( DEVMODEW *default_mode, DEVMODEW *current_mode, DEVMODEW *devmode )
+static DEVMODEW *validate_display_settings( const WCHAR *adapter_path, const WCHAR *device_name, DEVMODEW *devmode, DEVMODEW *temp_mode )
 {
     if (devmode)
     {
@@ -2048,9 +2048,9 @@ static DEVMODEW *validate_display_settings( DEVMODEW *default_mode, DEVMODEW *cu
 
     if (!devmode)
     {
-        if (!default_mode->dmSize) return NULL;
+        if (!read_registry_settings( adapter_path, temp_mode )) return NULL;
         TRACE( "Return to original display mode\n" );
-        devmode = default_mode;
+        devmode = temp_mode;
     }
 
     if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
@@ -2061,9 +2061,10 @@ static DEVMODEW *validate_display_settings( DEVMODEW *default_mode, DEVMODEW *cu
 
     if (!is_detached_mode( devmode ) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight))
     {
-        if (!current_mode->dmSize) return NULL;
-        if (!devmode->dmPelsWidth) devmode->dmPelsWidth = current_mode->dmPelsWidth;
-        if (!devmode->dmPelsHeight) devmode->dmPelsHeight = current_mode->dmPelsHeight;
+        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+        if (!user_driver->pGetCurrentDisplaySettings( device_name, &current_mode )) return NULL;
+        if (!devmode->dmPelsWidth) devmode->dmPelsWidth = current_mode.dmPelsWidth;
+        if (!devmode->dmPelsHeight) devmode->dmPelsHeight = current_mode.dmPelsHeight;
     }
 
     return devmode;
@@ -2075,8 +2076,8 @@ static DEVMODEW *validate_display_settings( DEVMODEW *default_mode, DEVMODEW *cu
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
-    DEVMODEW default_mode = {.dmSize = sizeof(DEVMODEW)}, current_mode = {.dmSize = sizeof(DEVMODEW)};
     WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
+    DEVMODEW temp_mode = {.dmSize = sizeof(DEVMODEW)};
     LONG ret = DISP_CHANGE_SUCCESSFUL;
     struct adapter *adapter;
 
@@ -2104,10 +2105,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
         return DISP_CHANGE_BADPARAM;
     }
 
-    if (!read_registry_settings( adapter_path, &default_mode )) default_mode.dmSize = 0;
-    if (!NtUserEnumDisplaySettings( devname, ENUM_CURRENT_SETTINGS, &current_mode, 0 )) current_mode.dmSize = 0;
-
-    if (!(devmode = validate_display_settings( &default_mode, &current_mode, devmode ))) ret = DISP_CHANGE_BADMODE;
+    if (!(devmode = validate_display_settings( adapter_path, device_name, devmode, &temp_mode ))) ret = DISP_CHANGE_BADMODE;
     else if (user_driver->pChangeDisplaySettingsEx( device_name, devmode, hwnd, flags | CDS_TEST, lparam )) ret = DISP_CHANGE_BADMODE;
     else if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings( adapter_path, devmode )) ret = DISP_CHANGE_NOTUPDATED;
     else if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
