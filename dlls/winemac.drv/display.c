@@ -885,8 +885,7 @@ LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
 
     if (best_display_mode)
     {
-        if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
-        else if (macdrv_set_display_mode(&displays[0], best_display_mode))
+        if (macdrv_set_display_mode(&displays[0], best_display_mode))
         {
             int mode_bpp = display_mode_bits_per_pixel(best_display_mode);
             size_t width = CGDisplayModeGetWidth(best_display_mode);

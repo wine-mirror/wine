@@ -773,40 +773,12 @@ static BOOL all_detached_settings(const DEVMODEW *displays)
 LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    DEVMODEW *displays, *mode, *full_mode;
+    DEVMODEW *displays;
     LONG ret;
 
     ret = get_display_settings( &displays, devname, devmode );
     if (ret != DISP_CHANGE_SUCCESSFUL)
         return ret;
-
-    if (flags & CDS_UPDATEREGISTRY && devname && devmode)
-    {
-        for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
-        {
-            ULONG_PTR *id = (ULONG_PTR *)(mode + 1);
-
-            if (!wcsicmp(mode->dmDeviceName, devname))
-            {
-                full_mode = get_full_mode(*id, mode);
-                if (!full_mode)
-                {
-                    free(displays);
-                    return DISP_CHANGE_BADMODE;
-                }
-
-                memcpy( &devmode->dmFields, &full_mode->dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
-                free_full_mode(full_mode);
-                break;
-            }
-        }
-    }
-
-    if (flags & (CDS_TEST | CDS_NORESET))
-    {
-        free(displays);
-        return DISP_CHANGE_SUCCESSFUL;
-    }
 
     if (all_detached_settings( displays ))
     {
