@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "Building $(git log -1)"
+echo "---"
+
+set -Eeuxo pipefail
+
+./tools/make_requests
+./tools/make_makefiles
+autoreconf
+
+cd build64
+../configure -C --enable-win64 --enable-werror --with-mingw
+make -s -j$(nproc)
+cd ..
+
+cd build32
+../configure -C --enable-werror --with-mingw
+make -s -j$(nproc)
+cd ..
+
+git reset --hard

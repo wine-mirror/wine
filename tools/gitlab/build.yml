@@ -30,15 +30,7 @@ build-all:
       - build64/config.log
       - build32/config.log
   script:
-    - ./tools/make_requests
-    - ./tools/make_makefiles
-    - autoreconf
-    - cd build64
-    - ../configure -C --enable-win64 --enable-werror --with-mingw
-    - make -s -j$(nproc)
-    - cd ../build32
-    - ../configure -C --enable-werror --with-mingw
-    - make -s -j$(nproc)
+    - ./tools/gitlab/build-all
 
 build-winetest:
   extends: .wine-build
