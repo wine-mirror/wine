@@ -5018,6 +5018,56 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_FEATURES_QCOM:
+        {
+            const VkPhysicalDeviceImageProcessingFeaturesQCOM *in = (const VkPhysicalDeviceImageProcessingFeaturesQCOM *)in_header;
+            VkPhysicalDeviceImageProcessingFeaturesQCOM *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->textureSampleWeighted = in->textureSampleWeighted;
+            out->textureBoxFilter = in->textureBoxFilter;
+            out->textureBlockMatch = in->textureBlockMatch;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM:
+        {
+            const VkPhysicalDeviceTilePropertiesFeaturesQCOM *in = (const VkPhysicalDeviceTilePropertiesFeaturesQCOM *)in_header;
+            VkPhysicalDeviceTilePropertiesFeaturesQCOM *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->tileProperties = in->tileProperties;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *in = (const VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *)in_header;
+            VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->attachmentFeedbackLoopLayout = in->attachmentFeedbackLoopLayout;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         default:
             FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
         }
@@ -8600,6 +8650,25 @@ static NTSTATUS wine_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(void *args)
     return params->device->funcs.p_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(params->device->device, params->renderpass, params->pMaxWorkgroupSize);
 }
 
+static NTSTATUS wine_vkGetDynamicRenderingTilePropertiesQCOM(void *args)
+{
+    struct vkGetDynamicRenderingTilePropertiesQCOM_params *params = args;
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkRenderingInfo_host pRenderingInfo_host;
+    TRACE("%p, %p, %p\n", params->device, params->pRenderingInfo, params->pProperties);
+
+    convert_VkRenderingInfo_win_to_host(params->pRenderingInfo, &pRenderingInfo_host);
+    result = params->device->funcs.p_vkGetDynamicRenderingTilePropertiesQCOM(params->device->device, &pRenderingInfo_host, params->pProperties);
+
+    free_VkRenderingInfo(&pRenderingInfo_host);
+    return result;
+#else
+    TRACE("%p, %p, %p\n", params->device, params->pRenderingInfo, params->pProperties);
+    return params->device->funcs.p_vkGetDynamicRenderingTilePropertiesQCOM(params->device->device, params->pRenderingInfo, params->pProperties);
+#endif
+}
+
 static NTSTATUS wine_vkGetEventStatus(void *args)
 {
     struct vkGetEventStatus_params *params = args;
@@ -8612,6 +8681,13 @@ static NTSTATUS wine_vkGetFenceStatus(void *args)
     struct vkGetFenceStatus_params *params = args;
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->fence));
     return params->device->funcs.p_vkGetFenceStatus(params->device->device, params->fence);
+}
+
+static NTSTATUS wine_vkGetFramebufferTilePropertiesQCOM(void *args)
+{
+    struct vkGetFramebufferTilePropertiesQCOM_params *params = args;
+    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->framebuffer), params->pPropertiesCount, params->pProperties);
+    return params->device->funcs.p_vkGetFramebufferTilePropertiesQCOM(params->device->device, params->framebuffer, params->pPropertiesCount, params->pProperties);
 }
 
 static NTSTATUS wine_vkGetGeneratedCommandsMemoryRequirementsNV(void *args)
@@ -9933,6 +10009,7 @@ static const char * const vk_device_extensions[] =
     "VK_ARM_rasterization_order_attachment_access",
     "VK_EXT_4444_formats",
     "VK_EXT_astc_decode_mode",
+    "VK_EXT_attachment_feedback_loop_layout",
     "VK_EXT_blend_operation_advanced",
     "VK_EXT_border_color_swizzle",
     "VK_EXT_buffer_device_address",
@@ -10118,10 +10195,12 @@ static const char * const vk_device_extensions[] =
     "VK_NV_viewport_array2",
     "VK_NV_viewport_swizzle",
     "VK_QCOM_fragment_density_map_offset",
+    "VK_QCOM_image_processing",
     "VK_QCOM_render_pass_shader_resolve",
     "VK_QCOM_render_pass_store_ops",
     "VK_QCOM_render_pass_transform",
     "VK_QCOM_rotated_copy_commands",
+    "VK_QCOM_tile_properties",
     "VK_VALVE_descriptor_set_host_mapping",
     "VK_VALVE_mutable_descriptor_type",
 };
@@ -10540,8 +10619,10 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkGetDeviceQueue,
     wine_vkGetDeviceQueue2,
     wine_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI,
+    wine_vkGetDynamicRenderingTilePropertiesQCOM,
     wine_vkGetEventStatus,
     wine_vkGetFenceStatus,
+    wine_vkGetFramebufferTilePropertiesQCOM,
     wine_vkGetGeneratedCommandsMemoryRequirementsNV,
     wine_vkGetImageMemoryRequirements,
     wine_vkGetImageMemoryRequirements2,

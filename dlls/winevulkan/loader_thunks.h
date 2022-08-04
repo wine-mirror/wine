@@ -345,8 +345,10 @@ enum unix_call
     unix_vkGetDeviceQueue,
     unix_vkGetDeviceQueue2,
     unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI,
+    unix_vkGetDynamicRenderingTilePropertiesQCOM,
     unix_vkGetEventStatus,
     unix_vkGetFenceStatus,
+    unix_vkGetFramebufferTilePropertiesQCOM,
     unix_vkGetGeneratedCommandsMemoryRequirementsNV,
     unix_vkGetImageMemoryRequirements,
     unix_vkGetImageMemoryRequirements2,
@@ -2981,6 +2983,13 @@ struct vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI_params
     VkExtent2D *pMaxWorkgroupSize;
 };
 
+struct vkGetDynamicRenderingTilePropertiesQCOM_params
+{
+    VkDevice device;
+    const VkRenderingInfo *pRenderingInfo;
+    VkTilePropertiesQCOM *pProperties;
+};
+
 struct vkGetEventStatus_params
 {
     VkDevice device;
@@ -2991,6 +3000,14 @@ struct vkGetFenceStatus_params
 {
     VkDevice device;
     VkFence fence;
+};
+
+struct vkGetFramebufferTilePropertiesQCOM_params
+{
+    VkDevice device;
+    VkFramebuffer framebuffer;
+    uint32_t *pPropertiesCount;
+    VkTilePropertiesQCOM *pProperties;
 };
 
 struct vkGetGeneratedCommandsMemoryRequirementsNV_params

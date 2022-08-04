@@ -3154,6 +3154,15 @@ VkResult WINAPI vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(VkDevice device,
     return vk_unix_call(unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI, &params);
 }
 
+VkResult WINAPI vkGetDynamicRenderingTilePropertiesQCOM(VkDevice device, const VkRenderingInfo *pRenderingInfo, VkTilePropertiesQCOM *pProperties)
+{
+    struct vkGetDynamicRenderingTilePropertiesQCOM_params params;
+    params.device = device;
+    params.pRenderingInfo = pRenderingInfo;
+    params.pProperties = pProperties;
+    return vk_unix_call(unix_vkGetDynamicRenderingTilePropertiesQCOM, &params);
+}
+
 VkResult WINAPI vkGetEventStatus(VkDevice device, VkEvent event)
 {
     struct vkGetEventStatus_params params;
@@ -3168,6 +3177,16 @@ VkResult WINAPI vkGetFenceStatus(VkDevice device, VkFence fence)
     params.device = device;
     params.fence = fence;
     return vk_unix_call(unix_vkGetFenceStatus, &params);
+}
+
+VkResult WINAPI vkGetFramebufferTilePropertiesQCOM(VkDevice device, VkFramebuffer framebuffer, uint32_t *pPropertiesCount, VkTilePropertiesQCOM *pProperties)
+{
+    struct vkGetFramebufferTilePropertiesQCOM_params params;
+    params.device = device;
+    params.framebuffer = framebuffer;
+    params.pPropertiesCount = pPropertiesCount;
+    params.pProperties = pProperties;
+    return vk_unix_call(unix_vkGetFramebufferTilePropertiesQCOM, &params);
 }
 
 void WINAPI vkGetGeneratedCommandsMemoryRequirementsNV(VkDevice device, const VkGeneratedCommandsMemoryRequirementsInfoNV *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
@@ -4620,8 +4639,10 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetDeviceQueue", vkGetDeviceQueue},
     {"vkGetDeviceQueue2", vkGetDeviceQueue2},
     {"vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI", vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI},
+    {"vkGetDynamicRenderingTilePropertiesQCOM", vkGetDynamicRenderingTilePropertiesQCOM},
     {"vkGetEventStatus", vkGetEventStatus},
     {"vkGetFenceStatus", vkGetFenceStatus},
+    {"vkGetFramebufferTilePropertiesQCOM", vkGetFramebufferTilePropertiesQCOM},
     {"vkGetGeneratedCommandsMemoryRequirementsNV", vkGetGeneratedCommandsMemoryRequirementsNV},
     {"vkGetImageMemoryRequirements", vkGetImageMemoryRequirements},
     {"vkGetImageMemoryRequirements2", vkGetImageMemoryRequirements2},
