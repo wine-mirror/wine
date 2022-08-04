@@ -407,22 +407,15 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     {
         found_mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * mode_idx);
 
-        if (dev_mode->dmFields & DM_BITSPERPEL &&
-            dev_mode->dmBitsPerPel &&
-            found_mode->dmBitsPerPel != dev_mode->dmBitsPerPel)
+        if (found_mode->dmBitsPerPel != dev_mode->dmBitsPerPel)
             continue;
-        if (dev_mode->dmFields & DM_PELSWIDTH && found_mode->dmPelsWidth != dev_mode->dmPelsWidth)
+        if (found_mode->dmPelsWidth != dev_mode->dmPelsWidth)
             continue;
-        if (dev_mode->dmFields & DM_PELSHEIGHT && found_mode->dmPelsHeight != dev_mode->dmPelsHeight)
+        if (found_mode->dmPelsHeight != dev_mode->dmPelsHeight)
             continue;
-        if (dev_mode->dmFields & DM_DISPLAYFREQUENCY &&
-            dev_mode->dmDisplayFrequency &&
-            found_mode->dmDisplayFrequency &&
-            dev_mode->dmDisplayFrequency != 1 &&
-            dev_mode->dmDisplayFrequency != found_mode->dmDisplayFrequency)
+        if (found_mode->dmDisplayFrequency != dev_mode->dmDisplayFrequency)
             continue;
-        if (dev_mode->dmFields & DM_DISPLAYORIENTATION &&
-            found_mode->dmDisplayOrientation != dev_mode->dmDisplayOrientation)
+        if (found_mode->dmDisplayOrientation != dev_mode->dmDisplayOrientation)
             continue;
 
         break;
