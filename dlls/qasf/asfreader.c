@@ -197,11 +197,63 @@ static HRESULT asf_reader_query_interface(struct strmbase_filter *iface, REFIID 
     return E_NOINTERFACE;
 }
 
+static HRESULT asf_reader_init_stream(struct strmbase_filter *iface)
+{
+    struct asf_reader *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr = S_OK;
+    int i;
+
+    TRACE("iface %p\n", iface);
+
+    for (i = 0; i < filter->stream_count; ++i)
+    {
+        struct asf_stream *stream = filter->streams + i;
+
+        if (!stream->source.pin.peer)
+            continue;
+
+        if (FAILED(hr = IMemAllocator_Commit(stream->source.pAllocator)))
+        {
+            WARN("Failed to commit stream %u allocator, hr %#lx\n", i, hr);
+            break;
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT asf_reader_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct asf_reader *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr = S_OK;
+    int i;
+
+    TRACE("iface %p\n", iface);
+
+    for (i = 0; i < filter->stream_count; ++i)
+    {
+        struct asf_stream *stream = filter->streams + i;
+
+        if (!stream->source.pin.peer)
+            continue;
+
+        if (FAILED(hr = IMemAllocator_Decommit(stream->source.pAllocator)))
+        {
+            WARN("Failed to decommit stream %u allocator, hr %#lx\n", i, hr);
+            break;
+        }
+    }
+
+    return hr;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = asf_reader_get_pin,
     .filter_destroy = asf_reader_destroy,
     .filter_query_interface = asf_reader_query_interface,
+    .filter_init_stream = asf_reader_init_stream,
+    .filter_cleanup_stream = asf_reader_cleanup_stream,
 };
 
 static HRESULT WINAPI asf_reader_DecideBufferSize(struct strmbase_source *iface,
