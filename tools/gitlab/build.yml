@@ -30,7 +30,8 @@ build-all:
       - build64/config.log
       - build32/config.log
   script:
-    - ./tools/gitlab/build-all
+    - rm -fr .git/rebase-merge  # in case a previous CI run failed in git rebase
+    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-all
 
 build-winetest:
   extends: .wine-build
