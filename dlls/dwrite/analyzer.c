@@ -465,11 +465,24 @@ static void release_fallback_data(struct fallback_data *data)
     fallback_locale_list_destroy(&data->locales);
 }
 
+static BOOL fallback_mapping_contains_character(const struct fallback_mapping *mapping, UINT32 ch)
+{
+    size_t i;
+
+    for (i = 0; i < mapping->ranges_count; ++i)
+    {
+        const DWRITE_UNICODE_RANGE *range = &mapping->ranges[i];
+        if (range->first <= ch && range->last >= ch) return TRUE;
+    }
+
+    return FALSE;
+}
+
 static const struct fallback_mapping * find_fallback_mapping(const struct fallback_data *fallback,
         const struct fallback_locale *locale, UINT32 ch)
 {
     const struct fallback_mapping *mapping;
-    size_t i, j, r;
+    size_t i, j;
 
     for (i = 0; i < locale->ranges.count; i += 2)
     {
@@ -477,11 +490,7 @@ static const struct fallback_mapping * find_fallback_mapping(const struct fallba
         for (j = start; j <= end; ++j)
         {
             mapping = &fallback->mappings[j];
-            for (r = 0; r < mapping->ranges_count; ++r)
-            {
-                const DWRITE_UNICODE_RANGE *range = &mapping->ranges[r];
-                if (range->first <= ch && range->last >= ch) return mapping;
-            }
+            if (fallback_mapping_contains_character(mapping, ch)) return mapping;
         }
     }
 
@@ -2255,8 +2264,8 @@ static ULONG WINAPI fontfallback_Release(IDWriteFontFallback1 *iface)
     return IDWriteFactory7_Release(fallback->factory);
 }
 
-static UINT32 fallback_font_get_supported_length(IDWriteFont3 *font, IDWriteTextAnalysisSource *source, UINT32 position,
-        UINT32 length)
+static UINT32 fallback_font_get_supported_length(IDWriteFont3 *font, const struct fallback_mapping *mapping,
+        IDWriteTextAnalysisSource *source, UINT32 position, UINT32 length)
 {
     struct text_source_context context;
     UINT32 mapped = 0;
@@ -2264,6 +2273,7 @@ static UINT32 fallback_font_get_supported_length(IDWriteFont3 *font, IDWriteText
     text_source_context_init(&context, source, position, length);
     while (!text_source_get_next_u32_char(&context))
     {
+        if (mapping && !fallback_mapping_contains_character(mapping, context.ch)) break;
         if (!IDWriteFont3_HasCharacter(font, context.ch)) break;
         mapped += context.ch > 0xffff ? 2 : 1;
     }
@@ -2321,7 +2331,7 @@ static HRESULT fallback_map_characters(const struct dwrite_fontfallback *fallbac
         if (SUCCEEDED(create_matching_font(mapping->collection ? mapping->collection : fallback->systemcollection,
                 mapping->families[i], weight, style, stretch, &IID_IDWriteFont3, (void **)&font)))
         {
-            if (!(mapped = fallback_font_get_supported_length(font, source, position, length)))
+            if (!(mapped = fallback_font_get_supported_length(font, mapping, source, position, length)))
             {
                 IDWriteFont3_Release(font);
                 continue;
@@ -2405,7 +2415,7 @@ static HRESULT WINAPI fontfallback_MapCharacters(IDWriteFontFallback1 *iface, ID
         if (SUCCEEDED(create_matching_font(basecollection, basefamily, weight, style, stretch,
                 &IID_IDWriteFont, (void **)&font)))
         {
-            if ((*mapped_length = fallback_font_get_supported_length(font, source, position, length)))
+            if ((*mapped_length = fallback_font_get_supported_length(font, NULL, source, position, length)))
             {
                 *ret_font = (IDWriteFont *)font;
                 *scale = 1.0f;
