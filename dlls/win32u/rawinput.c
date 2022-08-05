@@ -856,6 +856,12 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
 
     pthread_mutex_lock( &rawinput_mutex );
 
+    if (!registered_device_count && !device_count)
+    {
+        pthread_mutex_unlock( &rawinput_mutex );
+        return TRUE;
+    }
+
     size = (SIZE_T)device_size * (registered_device_count + device_count);
     registered_devices = realloc( registered_devices, size );
     if (registered_devices) for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
