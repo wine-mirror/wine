@@ -41,6 +41,7 @@ enum d2d_command_type
     D2D_COMMAND_DRAW_RECTANGLE,
     D2D_COMMAND_DRAW_BITMAP,
     D2D_COMMAND_FILL_MESH,
+    D2D_COMMAND_FILL_OPACITY_MASK,
     D2D_COMMAND_FILL_GEOMETRY,
     D2D_COMMAND_FILL_RECTANGLE,
     D2D_COMMAND_PUSH_CLIP,
@@ -140,6 +141,15 @@ struct d2d_command_fill_mesh
     struct d2d_command c;
     ID2D1Mesh *mesh;
     ID2D1Brush *brush;
+};
+
+struct d2d_command_fill_opacity_mask
+{
+    struct d2d_command c;
+    ID2D1Bitmap *bitmap;
+    ID2D1Brush *brush;
+    D2D1_RECT_F *dst_rect;
+    D2D1_RECT_F *src_rect;
 };
 
 struct d2d_command_fill_geometry
@@ -381,6 +391,12 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             {
                 const struct d2d_command_fill_mesh *c = data;
                 hr = ID2D1CommandSink_FillMesh(sink, c->mesh, c->brush);
+                break;
+            }
+            case D2D_COMMAND_FILL_OPACITY_MASK:
+            {
+                const struct d2d_command_fill_opacity_mask *c = data;
+                hr = ID2D1CommandSink_FillOpacityMask(sink, c->bitmap, c->brush, c->dst_rect, c->src_rect);
                 break;
             }
             case D2D_COMMAND_FILL_GEOMETRY:
@@ -959,4 +975,35 @@ void d2d_command_list_fill_mesh(struct d2d_command_list *command_list, const str
     command->c.op = D2D_COMMAND_FILL_MESH;
     command->mesh = mesh;
     command->brush = brush;
+}
+
+void d2d_command_list_fill_opacity_mask(struct d2d_command_list *command_list, const struct d2d_device_context *context,
+        ID2D1Bitmap *bitmap, ID2D1Brush *orig_brush, const D2D1_RECT_F *dst_rect, const D2D1_RECT_F *src_rect)
+{
+    struct d2d_command_fill_opacity_mask *command;
+    ID2D1Brush *brush;
+    size_t size;
+    BYTE *data;
+
+    if (FAILED(d2d_command_list_create_brush(command_list, context, orig_brush, &brush)))
+    {
+        command_list->state = D2D_COMMAND_LIST_STATE_ERROR;
+        return;
+    }
+
+    size = sizeof(*command);
+    if (dst_rect) size += sizeof(*dst_rect);
+    if (src_rect) size += sizeof(*src_rect);
+
+    d2d_command_list_reference_object(command_list, bitmap);
+
+    command = d2d_command_list_require_space(command_list, size);
+    command->c.op = D2D_COMMAND_FILL_OPACITY_MASK;
+    command->bitmap = bitmap;
+    command->brush = brush;
+
+    data = (BYTE *)(command + 1);
+
+    d2d_command_list_write_field(&data, &command->dst_rect, dst_rect, sizeof(*dst_rect));
+    d2d_command_list_write_field(&data, &command->src_rect, src_rect, sizeof(*src_rect));
 }

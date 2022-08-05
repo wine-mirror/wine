@@ -1115,6 +1115,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceCont
         d2d_device_context_set_error(context, E_INVALIDARG);
         return;
     }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_opacity_mask(context->target.command_list, context, mask, brush, dst_rect, src_rect);
 }
 
 static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, ID2D1Bitmap *bitmap,
@@ -2614,6 +2617,9 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_FillOpacityM
         d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
         return;
     }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_opacity_mask(context->target.command_list, context, mask, brush, dst_rect, src_rect);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateFilledGeometryRealization(ID2D1DeviceContext1 *iface,
