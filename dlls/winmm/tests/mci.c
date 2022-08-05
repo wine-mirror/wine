@@ -39,6 +39,7 @@ typedef union {
       MCI_SYSINFO_PARMSA  sys;
       MCI_SEEK_PARMS      seek;
       MCI_DGV_OPEN_PARMSW dgv_open;
+      MCI_DGV_WHERE_PARMS where;
       MCI_GENERIC_PARMS   gen;
     } MCI_PARMS_UNION;
 
@@ -1537,6 +1538,7 @@ static void test_video_window(void)
     {
         HWND parent_window = NULL, hwnd, video_window;
         DWORD style, expected;
+        RECT rc, src_rc, win_rc;
 
         winetest_push_context("%u", i);
 
@@ -1584,6 +1586,49 @@ static void test_video_window(void)
         style = GetWindowLongW(video_window, GWL_STYLE);
         todo_wine_if (i != 3)
             ok(style == expected, "Got style %#lx for window %p, expected %#lx.\n", style, video_window, expected);
+
+        /* Get the source video size. */
+        err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_SOURCE, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        SetRect(&rc, 0, 0, 32, 24);
+        ok(EqualRect(&parm.where.rc, &rc), "Got source rect %s, expected %s.\n",
+                wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&rc));
+        src_rc = parm.where.rc;
+
+        /* Test the default video destination size. */
+        err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        if (style & (WS_POPUP | WS_CHILD))
+            rc = src_rc;
+        else
+            /* The video destination is stretched to fit the window,
+             * in particular if the video width is less than SM_CXMIN. */
+            GetClientRect(video_window, &rc);
+
+        todo_wine_if (style & (WS_POPUP | WS_CHILD))
+            ok(EqualRect(&parm.where.rc, &rc), "Got destination rect %s, expected %s.\n",
+                    wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&rc));
+
+        /* Test the default video window size. */
+        rc = src_rc;
+        /* Windows is broken and always uses WS_OVERLAPPEDWINDOW regardless of
+         * the window's actual style. */
+        AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+        OffsetRect(&rc, -rc.left, -rc.top);
+        rc.right = max(rc.right, GetSystemMetrics(SM_CXMIN));
+
+        GetWindowRect(video_window, &win_rc);
+        OffsetRect(&rc, win_rc.left, win_rc.top);
+        todo_wine_if (testcase[i].style & WS_CHILD)
+            ok(EqualRect(&rc, &win_rc), "Got window rect %s, expected %s.\n",
+                    wine_dbgstr_rect(&win_rc), wine_dbgstr_rect(&rc));
+
+        err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_WINDOW, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        win_rc.right -= win_rc.left;
+        win_rc.bottom -= win_rc.top;
+        ok(EqualRect(&win_rc, &parm.where.rc), "Got rect %s, expected %s.\n",
+                wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&win_rc));
 
         err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
