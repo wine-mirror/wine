@@ -3,7 +3,7 @@
 build-image:
   stage: image
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'push' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == 'push' && $CI_PROJECT_PATH == "wine/wine" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - tools/gitlab/image.yml
         - tools/gitlab/image.docker
