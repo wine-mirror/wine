@@ -375,7 +375,7 @@ union sysparam_all_entry
 
 static UINT system_dpi;
 static RECT work_area;
-DWORD process_layout = ~0u;
+static DWORD process_layout = ~0u;
 
 static HDC display_dc;
 static pthread_mutex_t display_dc_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -1629,6 +1629,11 @@ DPI_AWARENESS get_thread_dpi_awareness(void)
     default:
         return DPI_AWARENESS_INVALID;
     }
+}
+
+DWORD get_process_layout(void)
+{
+    return process_layout == ~0u ? 0 : process_layout;
 }
 
 /**********************************************************************

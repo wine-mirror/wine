@@ -5094,7 +5094,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
             (class_name->Length != sizeof(messageW) ||
              wcsnicmp( class_name->Buffer, messageW, ARRAYSIZE(messageW) )))
         {
-            if (process_layout & LAYOUT_RTL) cs.dwExStyle |= WS_EX_LAYOUTRTL;
+            if (get_process_layout() & LAYOUT_RTL) cs.dwExStyle |= WS_EX_LAYOUTRTL;
             parent = get_desktop_window();
         }
     }
