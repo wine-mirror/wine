@@ -3380,6 +3380,14 @@ DECL_HANDLER(update_rawinput_devices)
     size_t size = device_count * sizeof(*devices);
     struct process *process = current->process;
 
+    if (!size)
+    {
+        process->rawinput_device_count = 0;
+        process->rawinput_mouse = NULL;
+        process->rawinput_kbd = NULL;
+        return;
+    }
+
     if (!(tmp = realloc( process->rawinput_devices, size )))
     {
         set_error( STATUS_NO_MEMORY );
