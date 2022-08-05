@@ -1296,6 +1296,16 @@ library SpeechLib
     };
 
     [
+        uuid(ab1890a0-e91f-11d2-bb91-00c04f8ee6c0),
+        restricted,
+        hidden
+    ]
+    coclass SpMMAudioEnum
+    {
+        interface IEnumSpObjectTokens;
+    };
+
+    [
         uuid(cf3d2e50-53f2-11d2-960c-00c04f8ee628)
     ]
     coclass SpMMAudioIn
