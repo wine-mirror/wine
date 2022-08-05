@@ -866,21 +866,20 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     registered_devices = realloc( registered_devices, size );
     if (registered_devices) for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
 
-    server_devices = malloc( registered_device_count * sizeof(*server_devices) );
-    if (server_devices) for (i = 0; i < registered_device_count; ++i)
+    if (!(device_count = registered_device_count)) server_devices = NULL;
+    else if (!(server_devices = malloc( device_count * sizeof(*server_devices) )))
+    {
+        pthread_mutex_unlock( &rawinput_mutex );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+
+    for (i = 0; i < device_count; ++i)
     {
         server_devices[i].usage_page = registered_devices[i].usUsagePage;
         server_devices[i].usage = registered_devices[i].usUsage;
         server_devices[i].flags = registered_devices[i].dwFlags;
         server_devices[i].target = wine_server_user_handle( registered_devices[i].hwndTarget );
-    }
-
-    pthread_mutex_unlock( &rawinput_mutex );
-
-    if (!registered_devices || !server_devices)
-    {
-        SetLastError( ERROR_OUTOFMEMORY );
-        return FALSE;
     }
 
     SERVER_START_REQ( update_rawinput_devices )
@@ -891,6 +890,14 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     SERVER_END_REQ;
 
     free( server_devices );
+
+    pthread_mutex_unlock( &rawinput_mutex );
+
+    if (!registered_devices)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
 
     return ret;
 }
