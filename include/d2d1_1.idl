@@ -623,7 +623,7 @@ interface ID2D1CommandSink : IUnknown
     HRESULT DrawImage(
         [in] ID2D1Image *image,
         [in] const D2D1_POINT_2F *target_offset,
-        [in] const D2D1_POINT_2F *image_rect,
+        [in] const D2D1_RECT_F *image_rect,
         [in] D2D1_INTERPOLATION_MODE interpolation_mode,
         [in] D2D1_COMPOSITE_MODE composite_mode
     );
