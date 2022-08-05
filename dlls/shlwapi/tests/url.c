@@ -407,7 +407,19 @@ static struct {
     {"file://%24%25foobar", "file://$%foobar"}
 };
 
-/* ################ */
+static struct
+{
+    const WCHAR *url;
+    const WCHAR *expect;
+    DWORD flags;
+} TEST_URL_UNESCAPEW[] =
+{
+    { L"file://foo/bar", L"file://foo/bar" },
+    { L"file://fo%20o%5Ca/bar", L"file://fo o\\a/bar" },
+    { L"file://%24%25foobar", L"file://$%foobar" },
+    { L"file:///C:/Program Files", L"file:///C:/Program Files" },
+    { L"file:///C:/Program%20Files", L"file:///C:/Program Files" },
+};
 
 static const  struct {
     const char *path;
@@ -1391,17 +1403,14 @@ static void test_UrlIs(void)
 
 static void test_UrlUnescape(void)
 {
+    WCHAR urlW[INTERNET_MAX_URL_LENGTH], bufferW[INTERNET_MAX_URL_LENGTH];
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
-    WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
-    WCHAR *urlW, *expected_urlW;
-    DWORD dwEscaped;
-    size_t i;
+    DWORD dwEscaped, unescaped;
     static char inplace[] = "file:///C:/Program%20Files";
     static char another_inplace[] = "file:///C:/Program%20Files";
     static const char expected[] = "file:///C:/Program Files";
-    static WCHAR inplaceW[] = L"file:///C:/Program Files";
-    static WCHAR another_inplaceW[] = L"file:///C:/Program%20Files";
     HRESULT res;
+    int i;
 
     for (i = 0; i < ARRAY_SIZE(TEST_URL_UNESCAPE); i++) {
         dwEscaped=INTERNET_MAX_URL_LENGTH;
@@ -1418,21 +1427,30 @@ static void test_UrlUnescape(void)
             "UrlUnescapeA returned 0x%lx (expected E_INVALIDARG) for \"%s\"\n",
             res, TEST_URL_UNESCAPE[i].url);
         ok(strcmp(szReturnUrl,"")==0, "Expected empty string\n");
+    }
 
-        dwEscaped = INTERNET_MAX_URL_LENGTH;
-        urlW = GetWideString(TEST_URL_UNESCAPE[i].url);
-        expected_urlW = GetWideString(TEST_URL_UNESCAPE[i].expect);
-        res = UrlUnescapeW(urlW, ret_urlW, &dwEscaped, 0);
-        ok(res == S_OK,
-            "UrlUnescapeW returned 0x%lx (expected S_OK) for \"%s\"\n",
-            res, TEST_URL_UNESCAPE[i].url);
+    for (i = 0; i < ARRAYSIZE(TEST_URL_UNESCAPEW); i++)
+    {
+        lstrcpyW(urlW, TEST_URL_UNESCAPEW[i].url);
 
-        WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
-        ok(lstrcmpW(ret_urlW, expected_urlW)==0,
-            "Expected \"%s\", but got \"%s\" from \"%s\" flags %08lx\n",
-            TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url, 0L);
-        FreeWideString(urlW);
-        FreeWideString(expected_urlW);
+        memset(bufferW, 0xff, sizeof(bufferW));
+        unescaped = INTERNET_MAX_URL_LENGTH;
+        res = UrlUnescapeW(urlW, bufferW, &unescaped, TEST_URL_UNESCAPEW[i].flags);
+        ok(res == S_OK, "[%d]: returned %#lx.\n", i, res);
+        ok(unescaped == wcslen(TEST_URL_UNESCAPEW[i].expect), "[%d]: got unescaped %ld.\n", i, unescaped);
+        ok(!wcscmp(bufferW, TEST_URL_UNESCAPEW[i].expect), "[%d]: got result %s.\n", i, debugstr_w(bufferW));
+
+        /* Test with URL_UNESCAPE_INPLACE */
+        unescaped = INTERNET_MAX_URL_LENGTH;
+        res = UrlUnescapeW(urlW, NULL, &unescaped, TEST_URL_UNESCAPEW[i].flags | URL_UNESCAPE_INPLACE);
+        ok(res == S_OK, "[%d]: returned %#lx.\n", i, res);
+        ok(unescaped == INTERNET_MAX_URL_LENGTH, "[%d]: got unescaped %ld.\n", i, unescaped);
+        ok(!wcscmp(urlW, TEST_URL_UNESCAPEW[i].expect), "[%d]: got result %s.\n", i, debugstr_w(urlW));
+
+        lstrcpyW(urlW, TEST_URL_UNESCAPEW[i].url);
+        unescaped = wcslen(TEST_URL_UNESCAPEW[i].expect) - 1;
+        res = UrlUnescapeW(urlW, bufferW, &unescaped, TEST_URL_UNESCAPEW[i].flags);
+        ok(res == E_POINTER, "[%d]: returned %#lx.\n", i, res);
     }
 
     dwEscaped = sizeof(inplace);
@@ -1445,17 +1463,6 @@ static void test_UrlUnescape(void)
     res = UrlUnescapeA(another_inplace, NULL, NULL, URL_UNESCAPE_INPLACE);
     ok(res == S_OK, "UrlUnescapeA returned 0x%lx (expected S_OK)\n", res);
     ok(!strcmp(another_inplace, expected), "got %s expected %s\n", another_inplace, expected);
-
-    dwEscaped = sizeof(inplaceW);
-    res = UrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE);
-    ok(res == S_OK, "UrlUnescapeW returned 0x%lx (expected S_OK)\n", res);
-    ok(dwEscaped == 50, "got %ld expected 50\n", dwEscaped);
-
-    /* if we set the buffer pointer to NULL, the string apparently still gets converted (Google Lively does this) */
-    res = UrlUnescapeW(another_inplaceW, NULL, NULL, URL_UNESCAPE_INPLACE);
-    ok(res == S_OK, "UrlUnescapeW returned 0x%lx (expected S_OK)\n", res);
-
-    ok(lstrlenW(another_inplaceW) == 24, "got %d expected 24\n", lstrlenW(another_inplaceW));
 }
 
 static const struct parse_url_test_t {
