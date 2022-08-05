@@ -2511,7 +2511,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext1 *
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
-        FIXME("Unimplemented for command list target.\n");
+        d2d_command_list_draw_image(context->target.command_list, image, target_offset, image_rect,
+                interpolation_mode, composite_mode);
         return;
     }
 
