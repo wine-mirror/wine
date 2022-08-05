@@ -2265,7 +2265,7 @@ static UINT32 fallback_font_get_supported_length(IDWriteFont3 *font, IDWriteText
     while (!text_source_get_next_u32_char(&context))
     {
         if (!IDWriteFont3_HasCharacter(font, context.ch)) break;
-        mapped++;
+        mapped += context.ch > 0xffff ? 2 : 1;
     }
 
     return mapped;
