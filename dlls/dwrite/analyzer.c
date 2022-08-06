@@ -248,9 +248,49 @@ system_fallback_config[] =
 
     { "1800-18AF, 11660-1167F", L"Noto Sans Mongolian" },
 
-    { "3000-30FF, 31F0-31FF, 4E00-9FFF", L"Meiryo" },
+    /* CJK Symbols and Punctuation - 3000-303F
+       Hiragana                    - 3040-309F
+       Katakana                    - 30A0-30FF
+       Katakana Phonetic Ext.      - 31F0-31FF */
+
+    { "3000-30FF, 31F0-31FF",   L"Noto Sans CJK SC", L"zh-Hans" },
+    { "3000-30FF, 31F0-31FF",   L"Noto Sans CJK TC", L"zh-Hant" },
+    { "3000-30FF, 31F0-31FF",   L"Noto Sans CJK KR", L"ko" },
+    { "3000-30FF, 31F0-31FF",   L"Noto Sans CJK JP" },
+
+    /* CJK Unified Ext A - 3400-4DBF
+       CJK Unified       - 4E00-9FFF */
+
+    { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK SC", L"zh-Hans" },
+    { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK TC", L"zh-Hant" },
+    { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK KR", L"ko" },
+    { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK JP" },
+
+    /* CJK Compatibility Ideographs - F900-FAFF */
+
+    { "F900-FAFF",              L"Noto Sans CJK SC", L"zh-Hans" },
+    { "F900-FAFF",              L"Noto Sans CJK TC", L"zh-Hant" },
+    { "F900-FAFF",              L"Noto Sans CJK KR", L"ko" },
+    { "F900-FAFF",              L"Noto Sans CJK JP" },
+
+    /* Vertical Forms - FE10-FE1F */
+
+    { "FE10-FE1F",              L"Noto Sans CJK SC", L"zh-Hans" },
+    { "FE10-FE1F",              L"Noto Sans CJK KR", L"ko" },
+    { "FE10-FE1F",              L"Noto Sans CJK TC" },
+
+    /* CJK Compatibility Forms - FE30-FE4F
+       Small Form Variants     - FE50-FE6F */
+
+    { "FE30-FE6F",              L"Noto Sans CJK SC", L"zh-Hans" },
+    { "FE30-FE6F",              L"Noto Sans CJK KR", L"ko" },
+    { "FE30-FE6F",              L"Noto Sans CJK JP", L"ja" },
+    { "FE30-FE6F",              L"Noto Sans CJK TC" },
 
     /* Halfwidth and Fullwidth Forms */
+    { "FF00-FFEF",              L"Noto Sans CJK SC", L"zh-Hans" },
+    { "FF00-FFEF",              L"Noto Sans CJK TC", L"zh-Hant" },
+    { "FF00-FFEF",              L"Noto Sans CJK KR", L"ko" },
     { "FF00-FFEF",              L"Noto Sans CJK JP" },
 };
 
