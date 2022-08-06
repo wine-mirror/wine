@@ -34,6 +34,20 @@
 
 static IDWriteFactory *factory;
 
+static void * create_text_analyzer(REFIID riid)
+{
+    IDWriteTextAnalyzer *analyzer;
+    void *ret = NULL;
+
+    if (SUCCEEDED(IDWriteFactory_CreateTextAnalyzer(factory, &analyzer)))
+    {
+        IDWriteTextAnalyzer_QueryInterface(analyzer, riid, &ret);
+        IDWriteTextAnalyzer_Release(analyzer);
+    }
+
+    return ret;
+}
+
 #define LRE 0x202a
 #define RLE 0x202b
 #define PDF 0x202c
@@ -1040,14 +1054,17 @@ static void get_script_analysis(const WCHAR *str, DWRITE_SCRIPT_ANALYSIS *sa)
     HRESULT hr;
 
     init_textsource(&analysissource, str, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
         lstrlenW(analysissource.text), &analysissink2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     *sa = g_sa;
+
+    IDWriteTextAnalyzer_Release(analyzer);
 }
 
 static void test_AnalyzeScript(void)
@@ -1056,8 +1073,8 @@ static void test_AnalyzeScript(void)
     IDWriteTextAnalyzer *analyzer;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     while (*ptr->string)
     {
@@ -1168,8 +1185,8 @@ static void test_AnalyzeLineBreakpoints(void)
     UINT32 i = 0;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     init_textsource(&analysissource, L"", DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0, 0,
@@ -1205,34 +1222,30 @@ static void test_AnalyzeLineBreakpoints(void)
 
 static void test_GetScriptProperties(void)
 {
-    IDWriteTextAnalyzer1 *analyzer1;
-    IDWriteTextAnalyzer *analyzer;
-    DWRITE_SCRIPT_ANALYSIS sa;
+    IDWriteTextAnalyzer1 *analyzer;
     DWRITE_SCRIPT_PROPERTIES props;
+    DWRITE_SCRIPT_ANALYSIS sa;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
-    IDWriteTextAnalyzer_Release(analyzer);
-    if (hr != S_OK) {
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer1);
+    if (!analyzer)
+    {
         win_skip("GetScriptProperties() is not supported.\n");
         return;
     }
 
     sa.script = 1000;
-    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
+    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer, sa, &props);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    if (0) /* crashes on native */
-        hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, NULL);
+    if (0) /* Crashes on Windows */
+        hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer, sa, NULL);
 
     sa.script = 0;
-    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
+    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer, sa, &props);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    IDWriteTextAnalyzer1_Release(analyzer1);
+    IDWriteTextAnalyzer1_Release(analyzer);
 }
 
 struct textcomplexity_test {
@@ -1267,8 +1280,7 @@ static const struct textcomplexity_test textcomplexity_tests[] = {
 
 static void test_GetTextComplexity(void)
 {
-    IDWriteTextAnalyzer1 *analyzer1;
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer1 *analyzer;
     IDWriteFontFace *fontface;
     UINT16 indices[10];
     BOOL simple;
@@ -1276,27 +1288,24 @@ static void test_GetTextComplexity(void)
     UINT32 len;
     int i;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
-    IDWriteTextAnalyzer_Release(analyzer);
-    if (hr != S_OK) {
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer1);
+    if (!analyzer)
+    {
         win_skip("GetTextComplexity() is not supported.\n");
         return;
     }
 
 if (0) { /* crashes on native */
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, NULL, NULL, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, NULL, &len, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, NULL, NULL, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, NULL, &len, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, &simple, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, NULL, 0, NULL, NULL, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, NULL, 0, NULL, NULL, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, L"ABC", 3, NULL, NULL, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, L"ABC", 3, NULL, NULL, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, L"ABC", 3, NULL, &simple, NULL, NULL);
 }
 
     len = 1;
     simple = TRUE;
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, &simple, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, NULL, 0, NULL, &simple, &len, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(len == 0, "got %d\n", len);
     ok(simple == FALSE, "got %d\n", simple);
@@ -1304,7 +1313,7 @@ if (0) { /* crashes on native */
     len = 1;
     simple = TRUE;
     indices[0] = 1;
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, &simple, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, L"ABC", 3, NULL, &simple, &len, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(len == 0, "got %d\n", len);
     ok(simple == FALSE, "got %d\n", simple);
@@ -1312,12 +1321,13 @@ if (0) { /* crashes on native */
 
     fontface = create_fontface();
 
-    for (i = 0; i < ARRAY_SIZE(textcomplexity_tests); i++) {
+    for (i = 0; i < ARRAY_SIZE(textcomplexity_tests); ++i)
+    {
        const struct textcomplexity_test *ptr = &textcomplexity_tests[i];
        len = 1;
        simple = !ptr->simple;
        indices[0] = 0;
-       hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, ptr->text, ptr->length, fontface, &simple, &len, indices);
+       hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer, ptr->text, ptr->length, fontface, &simple, &len, indices);
        ok(hr == S_OK, "%d: Unexpected hr %#lx.\n", i, hr);
        ok(len == ptr->len_read, "%d: read length: got %d, expected %d\n", i, len, ptr->len_read);
        ok(simple == ptr->simple, "%d: simple: got %d, expected %d\n", i, simple, ptr->simple);
@@ -1328,7 +1338,7 @@ if (0) { /* crashes on native */
     }
 
     IDWriteFontFace_Release(fontface);
-    IDWriteTextAnalyzer1_Release(analyzer1);
+    IDWriteTextAnalyzer1_Release(analyzer);
 }
 
 static void test_numbersubstitution(void)
@@ -1630,8 +1640,8 @@ static void test_GetGlyphs(void)
     unsigned int i, j;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     fontface = create_fontface();
 
@@ -1807,19 +1817,15 @@ static void test_GetTypographicFeatures(void)
 {
     static const WCHAR arabicW[] = {0x064a,0x064f,0x0633,0};
     DWRITE_FONT_FEATURE_TAG tags[20];
-    IDWriteTextAnalyzer2 *analyzer2;
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer2 *analyzer;
     IDWriteFontFace *fontface;
     DWRITE_SCRIPT_ANALYSIS sa;
     UINT32 count;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer2, (void**)&analyzer2);
-    IDWriteTextAnalyzer_Release(analyzer);
-    if (hr != S_OK) {
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer2);
+    if (!analyzer)
+    {
         win_skip("GetTypographicFeatures() is not supported.\n");
         return;
     }
@@ -1828,14 +1834,14 @@ static void test_GetTypographicFeatures(void)
 
     get_script_analysis(L"abc", &sa);
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, 0, &count, NULL);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer, fontface, sa, NULL, 0, &count, NULL);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     /* invalid locale name is ignored */
     get_script_analysis(L"abc", &sa);
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, L"cadabra", 0, &count, NULL);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer, fontface, sa, L"cadabra", 0, &count, NULL);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
@@ -1844,19 +1850,19 @@ static void test_GetTypographicFeatures(void)
     get_script_analysis(arabicW, &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     get_script_analysis(L"abc", &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
 
     IDWriteFontFace_Release(fontface);
-    IDWriteTextAnalyzer2_Release(analyzer2);
+    IDWriteTextAnalyzer2_Release(analyzer);
 }
 
 static void test_GetGlyphPlacements(void)
@@ -1874,8 +1880,8 @@ static void test_GetGlyphPlacements(void)
     WCHAR *path;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     path = create_testfontfile(L"wine_test_font.ttf");
     fontface = create_testfontface(path);
@@ -2153,18 +2159,14 @@ static const struct spacing_test spacing_tests[] =
 static void test_ApplyCharacterSpacing(void)
 {
     DWRITE_SHAPING_GLYPH_PROPERTIES props[3];
-    IDWriteTextAnalyzer1 *analyzer1;
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer1 *analyzer;
     UINT16 clustermap[2];
     HRESULT hr;
     int i;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
-    IDWriteTextAnalyzer_Release(analyzer);
-    if (hr != S_OK) {
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer1);
+    if (!analyzer)
+    {
         win_skip("ApplyCharacterSpacing() is not supported.\n");
         return;
     }
@@ -2204,7 +2206,7 @@ static void test_ApplyCharacterSpacing(void)
 
         winetest_push_context("Test %u", i);
 
-        hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer1,
+        hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer,
             ptr->leading,
             ptr->trailing,
             ptr->min_advance,
@@ -2258,7 +2260,7 @@ static void test_ApplyCharacterSpacing(void)
         offsets[1].ascenderOffset = 32.0f;
         offsets[2].ascenderOffset = 31.0f;
 
-        hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer1,
+        hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer,
             ptr->leading,
             ptr->trailing,
             ptr->min_advance,
@@ -2307,7 +2309,7 @@ static void test_ApplyCharacterSpacing(void)
         winetest_pop_context();
     }
 
-    IDWriteTextAnalyzer1_Release(analyzer1);
+    IDWriteTextAnalyzer1_Release(analyzer);
 }
 
 struct orientation_transf_test {
@@ -2338,41 +2340,40 @@ static inline const char *dbgstr_matrix(const DWRITE_MATRIX *m)
 static void test_GetGlyphOrientationTransform(void)
 {
     IDWriteTextAnalyzer2 *analyzer2;
-    IDWriteTextAnalyzer1 *analyzer1;
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer1 *analyzer;
     FLOAT originx, originy;
     DWRITE_MATRIX m;
     HRESULT hr;
     int i;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
-    IDWriteTextAnalyzer_Release(analyzer);
-    if (hr != S_OK) {
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer1);
+    if (!analyzer)
+    {
         win_skip("GetGlyphOrientationTransform() is not supported.\n");
         return;
     }
 
     /* invalid angle value */
     memset(&m, 0xcc, sizeof(m));
-    hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer1,
+    hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer,
         DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES + 1, FALSE, &m);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(m.m11 == 0.0, "got %.2f\n", m.m11);
 
-    for (i = 0; i < ARRAY_SIZE(ot_tests); i++) {
+    for (i = 0; i < ARRAY_SIZE(ot_tests); ++i)
+    {
         memset(&m, 0, sizeof(m));
-        hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer1, ot_tests[i].angle,
+        hr = IDWriteTextAnalyzer1_GetGlyphOrientationTransform(analyzer, ot_tests[i].angle,
             ot_tests[i].is_sideways, &m);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!memcmp(&ot_tests[i].m, &m, sizeof(m)), "%d: wrong matrix %s\n", i, dbgstr_matrix(&m));
     }
 
-    hr = IDWriteTextAnalyzer1_QueryInterface(analyzer1, &IID_IDWriteTextAnalyzer2, (void**)&analyzer2);
-    IDWriteTextAnalyzer1_Release(analyzer1);
-    if (hr != S_OK) {
+    IDWriteTextAnalyzer1_Release(analyzer);
+
+    analyzer2 = create_text_analyzer(&IID_IDWriteTextAnalyzer2);
+    if (!analyzer2)
+    {
         win_skip("IDWriteTextAnalyzer2::GetGlyphOrientationTransform() is not supported.\n");
         return;
     }
@@ -2456,19 +2457,15 @@ static void test_GetGlyphOrientationTransform(void)
 static void test_GetBaseline(void)
 {
     DWRITE_SCRIPT_ANALYSIS sa = { 0 };
-    IDWriteTextAnalyzer1 *analyzer1;
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer1 *analyzer;
     IDWriteFontFace *fontface;
     INT32 baseline;
     BOOL exists;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
-    IDWriteTextAnalyzer_Release(analyzer);
-    if (hr != S_OK) {
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer1);
+    if (!analyzer)
+    {
         win_skip("GetBaseline() is not supported.\n");
         return;
     }
@@ -2479,7 +2476,7 @@ static void test_GetBaseline(void)
 
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
            TRUE, sa, NULL, &baseline, &exists);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
@@ -2487,7 +2484,7 @@ static void test_GetBaseline(void)
 
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
            FALSE, sa, NULL, &baseline, &exists);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
@@ -2495,7 +2492,7 @@ static void test_GetBaseline(void)
 
     exists = TRUE;
     baseline = 0;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
            TRUE, sa, NULL, &baseline, &exists);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(baseline != 0, "Unexpected baseline %d.\n", baseline);
@@ -2503,7 +2500,7 @@ static void test_GetBaseline(void)
 
     exists = TRUE;
     baseline = 0;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
            FALSE, sa, NULL, &baseline, &exists);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
@@ -2511,14 +2508,14 @@ static void test_GetBaseline(void)
 
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT + 100, FALSE,
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer, fontface, DWRITE_BASELINE_DEFAULT + 100, FALSE,
            TRUE, sa, NULL, &baseline, &exists);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(!baseline, "Unexpected baseline %d.\n", baseline);
     ok(!exists, "Unexpected flag %d.\n", exists);
 
     IDWriteFontFace_Release(fontface);
-    IDWriteTextAnalyzer1_Release(analyzer1);
+    IDWriteTextAnalyzer1_Release(analyzer);
 }
 
 static inline BOOL float_eq(FLOAT left, FLOAT right)
@@ -2550,8 +2547,8 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
     DWRITE_FONT_METRICS fontmetrics;
     float emsize;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     fontface = create_fontface();
 
@@ -2782,8 +2779,8 @@ static void test_AnalyzeBidi(void)
     UINT32 i = 0;
     HRESULT hr;
 
-    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
 
     while (*ptr->text)
     {
