@@ -1696,12 +1696,28 @@ static void STDMETHODCALLTYPE d2d_device_context_GetTags(ID2D1DeviceContext1 *if
 static void STDMETHODCALLTYPE d2d_device_context_PushLayer(ID2D1DeviceContext1 *iface,
         const D2D1_LAYER_PARAMETERS *layer_parameters, ID2D1Layer *layer)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, layer_parameters %p, layer %p stub!\n", iface, layer_parameters, layer);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        D2D1_LAYER_PARAMETERS1 parameters;
+
+        memcpy(&parameters, layer_parameters, sizeof(*layer_parameters));
+        parameters.layerOptions = D2D1_LAYER_OPTIONS1_NONE;
+        d2d_command_list_push_layer(context->target.command_list, context, &parameters, layer);
+    }
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_PopLayer(ID2D1DeviceContext1 *iface)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p stub!\n", iface);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_pop_layer(context->target.command_list);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_Flush(ID2D1DeviceContext1 *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
@@ -2564,7 +2580,12 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(I
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID2D1DeviceContext1 *iface,
         const D2D1_LAYER_PARAMETERS1 *layer_parameters, ID2D1Layer *layer)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, layer_parameters %p, layer %p stub!\n", iface, layer_parameters, layer);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_push_layer(context->target.command_list, context, layer_parameters, layer);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_InvalidateEffectInputRectangle(ID2D1DeviceContext1 *iface,
