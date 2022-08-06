@@ -821,6 +821,7 @@ static void register_rawinput_device( const RAWINPUTDEVICE *device )
 BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT device_size )
 {
     struct rawinput_device *server_devices;
+    RAWINPUTDEVICE *new_registered_devices;
     SIZE_T size;
     BOOL ret;
     UINT i;
@@ -863,8 +864,15 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     }
 
     size = (SIZE_T)device_size * (registered_device_count + device_count);
-    registered_devices = realloc( registered_devices, size );
-    if (registered_devices) for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
+    if (!(new_registered_devices = realloc( registered_devices, size )))
+    {
+        pthread_mutex_unlock( &rawinput_mutex );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+
+    registered_devices = new_registered_devices;
+    for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
 
     if (!(device_count = registered_device_count)) server_devices = NULL;
     else if (!(server_devices = malloc( device_count * sizeof(*server_devices) )))
@@ -892,12 +900,6 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     free( server_devices );
 
     pthread_mutex_unlock( &rawinput_mutex );
-
-    if (!registered_devices)
-    {
-        SetLastError( ERROR_OUTOFMEMORY );
-        return FALSE;
-    }
 
     return ret;
 }
