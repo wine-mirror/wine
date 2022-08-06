@@ -1488,41 +1488,130 @@ static void test_video_window(void)
 {
     const WCHAR *filename = load_resource(L"test.mpg");
     MCI_PARMS_UNION parm;
-    HWND video_window;
+    unsigned int i;
     MCIDEVICEID id;
     MCIERROR err;
     BOOL ret;
 
-    parm.dgv_open.lpstrDeviceType = (WCHAR *)L"MPEGVideo";
-    parm.dgv_open.lpstrElementName = (WCHAR *)filename;
-    err = mciSendCommandW(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE, (DWORD_PTR)&parm);
-    ok(!err, "Got %s.\n", dbg_mcierr(err));
-    id = parm.dgv_open.wDeviceID;
+    static const struct
+    {
+        DWORD open_flags;
+        DWORD style;
+        DWORD expected_style;
+    }
+    testcase[] =
+    {
+        {
+            0,
+            0,
+            (WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS) & ~WS_MAXIMIZEBOX,
+        },
+        {
+            MCI_DGV_OPEN_PARENT,
+            0,
+            (WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS) & ~WS_MAXIMIZEBOX,
+        },
+        {
+            MCI_DGV_OPEN_WS,
+            0,
+            WS_BORDER | WS_CLIPSIBLINGS | WS_BORDER | WS_DLGFRAME,
+        },
+        {
+            MCI_DGV_OPEN_WS,
+            WS_POPUPWINDOW,
+            WS_POPUPWINDOW | WS_CLIPSIBLINGS,
+        },
+        {
+            MCI_DGV_OPEN_PARENT | MCI_DGV_OPEN_WS,
+            WS_OVERLAPPEDWINDOW,
+            WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS,
+        },
+        {
+            MCI_DGV_OPEN_PARENT | MCI_DGV_OPEN_WS,
+            WS_CHILDWINDOW,
+            WS_CHILD,
+        },
+    };
 
-    err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
-    ok(!err, "Got %s.\n", dbg_mcierr(err));
+    for (i = 0; i < ARRAY_SIZE(testcase); ++i)
+    {
+        HWND parent_window = NULL, hwnd, video_window;
+        DWORD style, expected;
 
-    video_window = NULL;
-    EnumWindows(my_visible_window_proc, (LPARAM)&video_window);
-    ok(video_window != NULL, "Video window should be shown.\n");
+        winetest_push_context("%u", i);
 
-    err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
-    ok(!err, "Got %s.\n", dbg_mcierr(err));
+        if (testcase[i].open_flags & MCI_DGV_OPEN_PARENT)
+            parent_window = CreateWindowExA(0, "static", "parent",
+                    WS_POPUPWINDOW, 0, 0, 100, 100, 0, 0, 0, NULL);
 
-    ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+        parm.dgv_open.lpstrDeviceType = (WCHAR *)L"MPEGVideo";
+        parm.dgv_open.lpstrElementName = (WCHAR *)filename;
+        parm.dgv_open.hWndParent = parent_window;
+        parm.dgv_open.dwStyle = testcase[i].style;
+        err = mciSendCommandW(0, MCI_OPEN,
+                MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | testcase[i].open_flags, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        id = parm.dgv_open.wDeviceID;
 
-    err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
-    ok(!err, "Got %s.\n", dbg_mcierr(err));
+        err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
 
-    ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+        if (!(testcase[i].style & WS_CHILD))
+        {
+            video_window = NULL;
+            EnumWindows(my_visible_window_proc, (LPARAM)&video_window);
+            todo_wine_if (testcase[i].open_flags & MCI_DGV_OPEN_PARENT)
+                ok(video_window != NULL, "Video window should be shown.\n");
 
-    err = mciSendCommandW(id, MCI_SEEK, MCI_SEEK_TO_START, (DWORD_PTR)&parm);
-    ok(!err, "Got %s.\n", dbg_mcierr(err));
+            /* FIXME: Remove once Wine is fixed */
+            if (!video_window) goto next;
 
-    ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+            hwnd = GetWindow(video_window, GW_OWNER);
+            todo_wine_if (testcase[i].open_flags & MCI_DGV_OPEN_PARENT)
+                ok(hwnd == parent_window, "Got owner %p, expected %p.\n", hwnd, parent_window);
+        }
+        else
+        {
+            ok(!IsWindowVisible(parent_window), "Parent window should be hidden.\n");
+            ShowWindow(parent_window, SW_SHOWNA);
 
-    err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
-    ok(!err, "Got %s.\n", dbg_mcierr(err));
+            hwnd = GetWindow(parent_window, GW_CHILD);
+            ok(hwnd != NULL, "Child video window should be shown.\n");
+            video_window = hwnd;
+        }
+
+        expected = testcase[i].expected_style | WS_VISIBLE;
+        style = GetWindowLongW(video_window, GWL_STYLE);
+        todo_wine_if (i != 3)
+            ok(style == expected, "Got style %#lx for window %p, expected %#lx.\n", style, video_window, expected);
+
+        err = mciSendCommandW(id, MCI_STOP, 0, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+        ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+
+        err = mciSendCommandW(id, MCI_PLAY, 0, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+        ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+
+        err = mciSendCommandW(id, MCI_SEEK, MCI_SEEK_TO_START, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+        ok(IsWindowVisible(video_window), "Video window should be visible.\n");
+
+next:
+        err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+
+        if (parent_window)
+        {
+            ret = DestroyWindow(parent_window);
+            ok(ret, "Failed to destroy parent window\n");
+        }
+
+        winetest_pop_context();
+    }
 
     ret = DeleteFileW(filename);
     ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
