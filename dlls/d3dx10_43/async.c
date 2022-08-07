@@ -600,18 +600,6 @@ HRESULT WINAPI D3DX10CreateAsyncTextureProcessor(ID3D10Device *device,
     return S_OK;
 }
 
-HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_size, const char *filename,
-        const D3D10_SHADER_MACRO *defines, ID3DInclude *include, ID3DX10ThreadPump *pump, ID3D10Blob **shader_text,
-        ID3D10Blob **errors, HRESULT *hresult)
-{
-    FIXME("data %s, data_size %Iu, filename %s, defines %p, include %p, pump %p, shader_text %p, "
-            "errors %p, hresult %p stub!\n",
-            debugstr_an(data, data_size), data_size, debugstr_a(filename), defines, include, pump,
-            shader_text, errors, hresult);
-
-    return E_NOTIMPL;
-}
-
 struct work_item
 {
     struct list entry;

@@ -183,3 +183,26 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *reso
     free(filename);
     return hr;
 }
+
+HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_size, const char *filename,
+        const D3D10_SHADER_MACRO *defines, ID3DInclude *include, ID3DX10ThreadPump *pump, ID3D10Blob **shader_text,
+        ID3D10Blob **errors, HRESULT *hresult)
+{
+    HRESULT hr;
+
+    TRACE("data %s, data_size %Iu, filename %s, defines %p, include %p, pump %p, shader_text %p, "
+            "errors %p, hresult %p.\n",
+            debugstr_an(data, data_size), data_size, debugstr_a(filename), defines, include, pump,
+            shader_text, errors, hresult);
+
+    if (!data)
+        return E_FAIL;
+
+    if (pump)
+        FIXME("Unimplemented ID3DX10ThreadPump handling.\n");
+
+    hr = D3DPreprocess(data, data_size, filename, defines, include, shader_text, errors);
+    if (hresult)
+        *hresult = hr;
+    return hr;
+}
