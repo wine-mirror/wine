@@ -974,6 +974,7 @@ NTSTATUS sock_read( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
     async->addr = NULL;
     async->addr_len = NULL;
     async->ret_flags = NULL;
+    async->icmp_over_dgram = is_icmp_over_dgram( fd );
 
     return sock_recv( handle, event, apc, apc_user, io, fd, async, 1 );
 }
