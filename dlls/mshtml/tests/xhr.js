@@ -101,7 +101,7 @@ function test_content_types() {
         if(v < 10 || types === xml_types)
             ok(xhr.responseXML !== null, "unexpected null responseXML for " + types[i]);
         else
-            ok(xhr.responseXML === null, "unexpected non-null responseXML for " + (override ? "overriden " : "") + types[i]);
+            ok(xhr.responseXML === null, "unexpected non-null responseXML for " + (override ? "overridden " : "") + types[i]);
 
         if(("overrideMimeType" in xhr) && !override) {
             override = true;
