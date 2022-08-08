@@ -2930,7 +2930,6 @@ static void test_EventLog(void)
     else
     {
         ok(status.dwCurrentState == SERVICE_RUNNING, "got %#lx\n", status.dwCurrentState);
-        todo_wine
         ok(status.dwControlsAccepted == SERVICE_ACCEPT_SHUTDOWN /* XP */ ||
            status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN) /* 2008 */ ||
            status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_TIMECHANGE | SERVICE_ACCEPT_SHUTDOWN),
