@@ -3052,7 +3052,10 @@ static void *mac_thread_gsbase(void)
     unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
     static int gsbase_offset = -1;
 
-    kern_return_t kr = thread_info(mach_thread_self(), THREAD_IDENTIFIER_INFO, (thread_info_t) &tiinfo, &info_count);
+    mach_port_t self = mach_thread_self();
+    kern_return_t kr = thread_info(self, THREAD_IDENTIFIER_INFO, (thread_info_t) &tiinfo, &info_count);
+    mach_port_deallocate(mach_task_self(), self);
+
     if (kr == KERN_SUCCESS) return (void*)tiinfo.thread_handle;
 
     if (gsbase_offset < 0)
