@@ -333,7 +333,23 @@ static void ifinfo_fill_dynamic( struct if_entry *entry, struct nsi_ndis_ifinfo_
     data->flags.unk = 0;
     data->flags.not_media_conn = 0;
     data->flags.unk2 = 0;
+#ifdef __linux__
+    {
+        char filename[64];
+        FILE *fp;
+
+        sprintf( filename, "/sys/class/net/%s/carrier", entry->if_unix_name );
+        if (!(fp = fopen( filename, "r" ))) data->media_conn_state = MediaConnectStateUnknown;
+        else
+        {
+            if (fgetc( fp ) == '1') data->media_conn_state = MediaConnectStateConnected;
+            else data->media_conn_state = MediaConnectStateDisconnected;
+            fclose( fp );
+        }
+    }
+#else
     data->media_conn_state = MediaConnectStateConnected;
+#endif
     data->unk = 0;
 
     if (!ioctl( fd, SIOCGIFMTU, &req )) data->mtu = req.ifr_mtu;
