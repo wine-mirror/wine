@@ -999,7 +999,7 @@ struct wined3d_output * CDECL wined3d_adapter_get_output(const struct wined3d_ad
 
 unsigned int CDECL wined3d_adapter_get_output_count(const struct wined3d_adapter *adapter)
 {
-    TRACE("adapter %p, reporting %u outputs.\n", adapter, adapter->output_count);
+    TRACE("adapter %p, reporting %Iu outputs.\n", adapter, adapter->output_count);
 
     return adapter->output_count;
 }
@@ -3409,21 +3409,11 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
 
 static BOOL wined3d_adapter_create_output(struct wined3d_adapter *adapter, const WCHAR *output_name)
 {
-    struct wined3d_output *outputs;
     HRESULT hr;
 
-    if (!adapter->outputs && !(adapter->outputs = heap_calloc(1, sizeof(*adapter->outputs))))
-    {
+    if (!wined3d_array_reserve((void **)&adapter->outputs, &adapter->outputs_size,
+            adapter->output_count + 1, sizeof(*adapter->outputs)))
         return FALSE;
-    }
-    else
-    {
-        if (!(outputs = heap_realloc(adapter->outputs,
-                sizeof(*adapter->outputs) * (adapter->output_count + 1))))
-            return FALSE;
-
-        adapter->outputs = outputs;
-    }
 
     if (FAILED(hr = wined3d_output_init(&adapter->outputs[adapter->output_count],
             adapter->output_count, adapter, output_name)))
@@ -3483,7 +3473,7 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         if (!wined3d_adapter_create_output(adapter, display_device.DeviceName))
             goto done;
     }
-    TRACE("Initialised %d outputs for adapter %p.\n", adapter->output_count, adapter);
+    TRACE("Initialised %Iu outputs for adapter %p.\n", adapter->output_count, adapter);
 
     /* Make the primary output first */
     if (primary_idx)
