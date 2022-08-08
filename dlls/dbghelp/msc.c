@@ -2579,8 +2579,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
         case S_LOCAL:
             /* FIXME: don't store global/static variables accessed through registers... we don't support that
-             * in locals... anyway, global data record should be present as well (so variable will be avaible
-             * through global defintion, but potentially not updated)
+             * in locals... anyway, global data record should be present as well (so the variable will be available
+             * through the global definition, but potentially not updated)
              */
             if (!sym->local_v3.varflags.enreg_global && !sym->local_v3.varflags.enreg_static)
             {
