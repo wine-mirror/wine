@@ -281,7 +281,6 @@ static void schedsvc_update_status(DWORD state)
     status.dwServiceSpecificExitCode = 0;
     status.dwCheckPoint = 0;
     status.dwWaitHint = 0;
-    status.dwControlsAccepted = 0;
     status.dwCurrentState = state;
 
     SetServiceStatus(schedsvc_handle, &status);
