@@ -1403,6 +1403,7 @@ enable_spoolss
 enable_sppc
 enable_srclient
 enable_srvcli
+enable_srvsvc
 enable_sspicli
 enable_stdole2_tlb
 enable_stdole32_tlb
@@ -21664,6 +21665,7 @@ wine_fn_config_makefile dlls/spoolss/tests enable_tests
 wine_fn_config_makefile dlls/sppc enable_sppc
 wine_fn_config_makefile dlls/srclient enable_srclient
 wine_fn_config_makefile dlls/srvcli enable_srvcli
+wine_fn_config_makefile dlls/srvsvc enable_srvsvc
 wine_fn_config_makefile dlls/sspicli enable_sspicli
 wine_fn_config_makefile dlls/stdole2.tlb enable_stdole2_tlb
 wine_fn_config_makefile dlls/stdole32.tlb enable_stdole32_tlb
