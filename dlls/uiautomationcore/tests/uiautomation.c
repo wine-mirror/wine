@@ -4835,6 +4835,95 @@ static void test_UiaGetRuntimeId(void)
     CoUninitialize();
 }
 
+static LONG Object_ref = 1;
+static HRESULT WINAPI Object_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Object_AddRef(IUnknown *iface)
+{
+    return InterlockedIncrement(&Object_ref);
+}
+
+static ULONG WINAPI Object_Release(IUnknown *iface)
+{
+    return InterlockedDecrement(&Object_ref);
+}
+
+static IUnknownVtbl ObjectVtbl = {
+    Object_QueryInterface,
+    Object_AddRef,
+    Object_Release
+};
+
+static IUnknown Object = {&ObjectVtbl};
+static void test_UiaHUiaNodeFromVariant(void)
+{
+    HUIANODE node;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = UiaHUiaNodeFromVariant(NULL, &node);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = UiaHUiaNodeFromVariant(&v, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    node = (void *)0xdeadbeef;
+    V_VT(&v) = VT_R8;
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "node != NULL\n");
+
+    node = (void *)0xdeadbeef;
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = &Object;
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node == (void *)&Object, "node != NULL\n");
+    ok(Object_ref == 2, "Unexpected Object_ref %ld\n", Object_ref);
+    VariantClear(&v);
+
+#ifdef _WIN64
+    node = (void *)0xdeadbeef;
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0xbeefdead;
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "node != NULL\n");
+
+    node = (void *)0xdeadbeef;
+    V_VT(&v) = VT_I8;
+    V_I8(&v) = 0xbeefdead;
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node == (void *)V_I8(&v), "node != V_I8\n");
+#else
+    node = (void *)0xdeadbeef;
+    V_VT(&v) = VT_I8;
+    V_I8(&v) = 0xbeefdead;
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "node != NULL\n");
+
+    node = (void *)0xdeadbeef;
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0xbeefdead;
+    hr = UiaHUiaNodeFromVariant(&v, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node == (void *)V_I4(&v), "node != V_I8\n");
+#endif
+}
+
 START_TEST(uiautomation)
 {
     HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
@@ -4857,6 +4946,7 @@ START_TEST(uiautomation)
     test_UiaNodeFromProvider();
     test_UiaGetPropertyValue();
     test_UiaGetRuntimeId();
+    test_UiaHUiaNodeFromVariant();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");

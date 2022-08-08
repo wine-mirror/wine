@@ -979,3 +979,40 @@ HRESULT WINAPI UiaGetRuntimeId(HUIANODE huianode, SAFEARRAY **runtime_id)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *          UiaHUiaNodeFromVariant (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaHUiaNodeFromVariant(VARIANT *in_val, HUIANODE *huianode)
+{
+    const VARTYPE expected_vt = sizeof(void *) == 8 ? VT_I8 : VT_I4;
+
+    TRACE("(%p, %p)\n", in_val, huianode);
+
+    if (!in_val || !huianode)
+        return E_INVALIDARG;
+
+    *huianode = NULL;
+    if ((V_VT(in_val) != expected_vt) && (V_VT(in_val) != VT_UNKNOWN))
+    {
+        WARN("Invalid vt %d\n", V_VT(in_val));
+        return E_INVALIDARG;
+    }
+
+    if (V_VT(in_val) == VT_UNKNOWN)
+    {
+        if (V_UNKNOWN(in_val))
+            IUnknown_AddRef(V_UNKNOWN(in_val));
+        *huianode = (HUIANODE)V_UNKNOWN(in_val);
+    }
+    else
+    {
+#ifdef _WIN64
+        *huianode = (HUIANODE)V_I8(in_val);
+#else
+        *huianode = (HUIANODE)V_I4(in_val);
+#endif
+    }
+
+    return S_OK;
+}
