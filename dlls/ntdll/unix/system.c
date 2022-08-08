@@ -2624,8 +2624,9 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         {
             processor_cpu_load_info_data_t *pinfo;
             mach_msg_type_number_t info_count;
+            host_name_port_t host = mach_host_self ();
 
-            if (host_processor_info( mach_host_self (),
+            if (host_processor_info( host,
                                      PROCESSOR_CPU_LOAD_INFO,
                                      &cpus,
                                      (processor_info_array_t*)&pinfo,
@@ -2641,6 +2642,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 }
                 vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
             }
+
+            mach_port_deallocate (mach_task_self (), host);
         }
 #elif defined(linux)
         {
