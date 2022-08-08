@@ -57,7 +57,7 @@ static inline struct windows_devices_enumeration *impl_from_IActivationFactory(I
     return CONTAINING_RECORD(iface, struct windows_devices_enumeration, IActivationFactory_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE windows_devices_enumeration_QueryInterface(
+static HRESULT WINAPI windows_devices_enumeration_QueryInterface(
         IActivationFactory *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
@@ -77,7 +77,7 @@ static HRESULT STDMETHODCALLTYPE windows_devices_enumeration_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE windows_devices_enumeration_AddRef(
+static ULONG WINAPI windows_devices_enumeration_AddRef(
         IActivationFactory *iface)
 {
     struct windows_devices_enumeration *impl = impl_from_IActivationFactory(iface);
@@ -86,7 +86,7 @@ static ULONG STDMETHODCALLTYPE windows_devices_enumeration_AddRef(
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE windows_devices_enumeration_Release(
+static ULONG WINAPI windows_devices_enumeration_Release(
         IActivationFactory *iface)
 {
     struct windows_devices_enumeration *impl = impl_from_IActivationFactory(iface);
@@ -95,28 +95,28 @@ static ULONG STDMETHODCALLTYPE windows_devices_enumeration_Release(
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_devices_enumeration_GetIids(
+static HRESULT WINAPI windows_devices_enumeration_GetIids(
         IActivationFactory *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_devices_enumeration_GetRuntimeClassName(
+static HRESULT WINAPI windows_devices_enumeration_GetRuntimeClassName(
         IActivationFactory *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub!\n", iface, class_name);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_devices_enumeration_GetTrustLevel(
+static HRESULT WINAPI windows_devices_enumeration_GetTrustLevel(
         IActivationFactory *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE windows_devices_enumeration_ActivateInstance(
+static HRESULT WINAPI windows_devices_enumeration_ActivateInstance(
         IActivationFactory *iface, IInspectable **instance)
 {
     FIXME("iface %p, instance %p stub!\n", iface, instance);
