@@ -69,6 +69,12 @@ typedef enum
 } gnutls_ecc_curve_t;
 #endif
 
+#if GNUTLS_VERSION_MAJOR < 3 || (GNUTLS_VERSION_MAJOR == 3 && GNUTLS_VERSION_MINOR < 6)
+#define GNUTLS_CIPHER_AES_128_CFB8 29
+#define GNUTLS_CIPHER_AES_192_CFB8 30
+#define GNUTLS_CIPHER_AES_256_CFB8 31
+#endif
+
 union key_data
 {
     gnutls_cipher_hd_t cipher;
