@@ -2350,7 +2350,8 @@ static void convert_directions_from_spherical( const DIEFFECT *in, DIEFFECT *out
             tmp = cos( in->rglDirection[i - 1] * M_PI / 18000 ) * 10000;
             for (j = 0; j < i; ++j)
                 out->rglDirection[j] = round( out->rglDirection[j] * tmp / 10000.0 );
-            out->rglDirection[i] = sin( in->rglDirection[i - 1] * M_PI / 18000 ) * 10000;
+            if (i < in->cAxes)
+                out->rglDirection[i] = sin( in->rglDirection[i - 1] * M_PI / 18000 ) * 10000;
         }
         out->cAxes = in->cAxes;
         break;
