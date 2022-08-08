@@ -5265,11 +5265,7 @@ const struct builtin_class_descr EDIT_builtin_class =
     L"Edit",              /* name */
     CS_DBLCLKS | CS_PARENTDC,   /* style */
     WINPROC_EDIT,         /* proc */
-#ifdef __i386__
-    sizeof(EDITSTATE *) + sizeof(WORD), /* extra */
-#else
-    sizeof(EDITSTATE *),  /* extra */
-#endif
+    sizeof(UINT64),       /* extra */
     IDC_IBEAM,            /* cursor */
     0                     /* brush */
 };

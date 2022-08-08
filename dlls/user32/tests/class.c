@@ -957,15 +957,11 @@ static const struct
 {
     const char name[9];
     int value;
-    int badvalue;
+    int value64; /* 64-bit Windows use 64-bit size also for 32-bit applications */
 } extra_values[] =
 {
     {"#32770",30,30}, /* Dialog */
-#ifdef _WIN64
-    {"Edit",8,8},
-#else
-    {"Edit",6,8},     /* Windows XP 64-bit returns 8 also to 32-bit applications */
-#endif
+    {"Edit",6,8},
 };
 
 static void test_extra_values(void)
@@ -978,7 +974,7 @@ static void test_extra_values(void)
 
         ok( ret, "GetClassInfo (0) failed for global class %s\n", extra_values[i].name);
         if (!ret) continue;
-        ok(extra_values[i].value == wcx.cbWndExtra || broken(extra_values[i].badvalue == wcx.cbWndExtra),
+        ok(extra_values[i].value == wcx.cbWndExtra || extra_values[i].value64 == wcx.cbWndExtra,
            "expected %d, got %d\n", extra_values[i].value, wcx.cbWndExtra);
     }
 }
