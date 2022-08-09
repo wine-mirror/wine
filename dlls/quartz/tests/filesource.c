@@ -1476,6 +1476,24 @@ static void test_connect_pin(void)
     ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
 }
 
+static void test_file_share_delete(void)
+{
+    const WCHAR *filename = load_resource(L"test.avi");
+    IBaseFilter *filter = create_file_source();
+    ULONG ref;
+    BOOL ret;
+
+    load_file(filter, filename);
+
+    /* Test that we can delete the file while it's open. */
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
+
 START_TEST(filesource)
 {
     CoInitialize(NULL);
@@ -1490,6 +1508,7 @@ START_TEST(filesource)
     test_async_reader();
     test_enum_media_types();
     test_connect_pin();
+    test_file_share_delete();
 
     CoUninitialize();
 }
