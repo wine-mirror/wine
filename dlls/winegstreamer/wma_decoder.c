@@ -591,12 +591,9 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return MF_E_BUFFERTOOSMALL;
     }
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, wg_sample, NULL)))
-    {
-        if (wg_sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
-            samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_INCOMPLETE;
+    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, wg_sample, NULL,
+            &samples[0].dwStatus)))
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
-    }
 
     wg_sample_release(wg_sample);
 

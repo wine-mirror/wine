@@ -571,8 +571,10 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         return MF_E_BUFFERTOOSMALL;
     }
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, wg_sample, NULL)))
+    if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, wg_sample, NULL,
+            &samples[0].dwStatus)))
         wg_sample_queue_flush(impl->wg_sample_queue, false);
+
     wg_sample_release(wg_sample);
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
