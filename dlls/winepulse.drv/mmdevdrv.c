@@ -2021,7 +2021,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
 
         params.stream = client->pulse_stream;
         pulse_call(is_started, &params);
-        if (params.started) {
+        if (params.result == S_OK) {
             *state = AudioSessionStateActive;
             goto out;
         }

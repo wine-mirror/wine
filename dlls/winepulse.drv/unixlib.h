@@ -214,7 +214,7 @@ struct test_connect_params
 struct is_started_params
 {
     stream_handle stream;
-    BOOL started;
+    HRESULT result;
 };
 
 struct get_prop_value_params

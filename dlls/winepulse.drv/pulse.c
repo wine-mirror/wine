@@ -2258,7 +2258,7 @@ static NTSTATUS pulse_is_started(void *args)
     struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
-    params->started = pulse_stream_valid(stream) && stream->started;
+    params->result = pulse_stream_valid(stream) && stream->started ? S_OK : S_FALSE;
     pulse_unlock();
 
     return STATUS_SUCCESS;
