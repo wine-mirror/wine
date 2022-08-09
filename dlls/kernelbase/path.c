@@ -2907,11 +2907,26 @@ HRESULT WINAPI UrlUnescapeA(char *url, char *unescaped, DWORD *unescaped_len, DW
     return hr;
 }
 
+static int get_utf8_len(unsigned char code)
+{
+    if (code < 0x80)
+        return 1;
+    else if ((code & 0xe0) == 0xc0)
+        return 2;
+    else if ((code & 0xf0) == 0xe0)
+        return 3;
+    else if ((code & 0xf8) == 0xf0)
+        return 4;
+    return 0;
+}
+
 HRESULT WINAPI UrlUnescapeW(WCHAR *url, WCHAR *unescaped, DWORD *unescaped_len, DWORD flags)
 {
+    WCHAR *dst, next, utf16_buf[4];
     BOOL stop_unescaping = FALSE;
+    int utf8_len, utf16_len, i;
     const WCHAR *src;
-    WCHAR *dst, next;
+    char utf8_buf[4];
     DWORD needed;
     HRESULT hr;
 
@@ -2930,6 +2945,7 @@ HRESULT WINAPI UrlUnescapeW(WCHAR *url, WCHAR *unescaped, DWORD *unescaped_len, 
 
     for (src = url, needed = 0; *src; src++, needed++)
     {
+        utf16_len = 0;
         if (flags & URL_DONT_UNESCAPE_EXTRA_INFO && (*src == '#' || *src == '?'))
         {
             stop_unescaping = TRUE;
@@ -2939,17 +2955,53 @@ HRESULT WINAPI UrlUnescapeW(WCHAR *url, WCHAR *unescaped, DWORD *unescaped_len, 
         {
             INT ih;
             WCHAR buf[5] = L"0x";
+
             memcpy(buf + 2, src + 1, 2*sizeof(WCHAR));
             buf[4] = 0;
             StrToIntExW(buf, STIF_SUPPORT_HEX, &ih);
-            next = (WCHAR) ih;
             src += 2; /* Advance to end of escape */
+
+            if (flags & URL_UNESCAPE_AS_UTF8)
+            {
+                utf8_buf[0] = ih;
+                utf8_len = get_utf8_len(ih);
+                for (i = 1; i < utf8_len && *(src + 1) == '%' && *(src + 2) &&  *(src + 3); i++)
+                {
+                    memcpy(buf + 2, src + 2, 2 * sizeof(WCHAR));
+                    StrToIntExW(buf, STIF_SUPPORT_HEX, &ih);
+                    /* Check if it is a valid continuation byte. */
+                    if ((ih & 0xc0) == 0x80)
+                    {
+                        utf8_buf[i] = ih;
+                        src += 3;
+                    }
+                    else
+                        break;
+                }
+
+                utf16_len = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                        utf8_buf, i, utf16_buf, ARRAYSIZE(utf16_buf));
+                if (utf16_len)
+                    needed += utf16_len - 1;
+                else
+                    next = 0xfffd;
+            }
+            else
+                next = (WCHAR) ih;
         }
         else
             next = *src;
 
         if (flags & URL_UNESCAPE_INPLACE || needed < *unescaped_len)
-            *dst++ = next;
+        {
+            if (utf16_len)
+            {
+                memcpy(dst, utf16_buf, utf16_len * sizeof(*utf16_buf));
+                dst += utf16_len;
+            }
+            else
+                *dst++ = next;
+        }
     }
 
     if (flags & URL_UNESCAPE_INPLACE || needed < *unescaped_len)
