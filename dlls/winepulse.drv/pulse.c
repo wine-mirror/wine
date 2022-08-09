@@ -2055,7 +2055,7 @@ static NTSTATUS pulse_get_mix_format(void *args)
     PhysDevice *dev;
 
     LIST_FOR_EACH_ENTRY(dev, list, PhysDevice, entry) {
-        if (strcmp(params->pulse_name, dev->pulse_name))
+        if (strcmp(params->device, dev->pulse_name))
             continue;
 
         *params->fmt = dev->fmt;
@@ -2518,14 +2518,14 @@ static NTSTATUS pulse_wow64_get_mix_format(void *args)
 {
     struct
     {
-        PTR32 pulse_name;
+        PTR32 device;
         EDataFlow flow;
         PTR32 fmt;
         HRESULT result;
     } *params32 = args;
     struct get_mix_format_params params =
     {
-        .pulse_name = ULongToPtr(params32->pulse_name),
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .fmt = ULongToPtr(params32->fmt),
     };

@@ -131,7 +131,7 @@ struct release_capture_buffer_params
 
 struct get_mix_format_params
 {
-    const char *pulse_name;
+    const char *device;
     EDataFlow flow;
     WAVEFORMATEXTENSIBLE *fmt;
     HRESULT result;
