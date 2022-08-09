@@ -18691,12 +18691,57 @@ static void test_sm5_swapc_instruction(void)
     release_test_context(&test_context);
 }
 
+static BOOL is_vs_sysval_semantic(const char *name)
+{
+    return !strcmp(name, "SV_InstanceID") || !strcmp(name, "SV_VertexID");
+}
+
+static void check_layout_element_exclusion(ID3D11Device *device, const D3D11_INPUT_ELEMENT_DESC *elements,
+        unsigned int element_count, const DWORD *shader_code, unsigned int shader_code_size, BOOL is_cs,
+        const char *test_context)
+{
+    D3D11_INPUT_ELEMENT_DESC elements_temp[32];
+    ID3D11InputLayout *layout;
+    unsigned int i;
+    HRESULT hr;
+
+    winetest_push_context(test_context);
+
+    hr = ID3D11Device_CreateInputLayout(device, elements, element_count, shader_code, shader_code_size, &layout);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11InputLayout_Release(layout);
+
+    for (i = 0; i < element_count; ++i)
+    {
+        winetest_push_context("%s excluded", elements[i].SemanticName);
+        memcpy(elements_temp, elements, sizeof(*elements_temp) * i);
+        memcpy(elements_temp + i, elements + i + 1, sizeof(*elements_temp) * (element_count - i - 1));
+        hr = ID3D11Device_CreateInputLayout(device, elements_temp, element_count - 1,
+                shader_code, shader_code_size, &layout);
+        if (is_cs || is_vs_sysval_semantic(elements[i].SemanticName))
+        {
+            /* sysval semantic. */
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ID3D11InputLayout_Release(layout);
+        }
+        else
+        {
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        }
+        winetest_pop_context();
+    }
+
+    winetest_pop_context();
+}
+
 static void test_create_input_layout(void)
 {
     D3D11_INPUT_ELEMENT_DESC layout_desc[] =
     {
         {"POSITION", 0, DXGI_FORMAT_UNKNOWN, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
+
     ULONG refcount, expected_refcount;
     ID3D11InputLayout *input_layout;
     ID3D11Device *device;
@@ -18719,6 +18764,109 @@ static void test_create_input_layout(void)
         0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
         0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
+
+    static D3D11_INPUT_ELEMENT_DESC vs2_layout_desc[] =
+    {
+        {"CUSTOMDATA", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_ClipDistance", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_InstanceID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_VertexID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+    };
+#if 0
+    float4 main(float4 d : CUSTOMDATA, float4 p1 : POSITION, float4 p2 : SV_Position, float4 c : COLOR,
+                float cd : SV_ClipDistance, uint iid : SV_InstanceID, uint vid : SV_VertexID) : SV_POSITION
+    {
+        return p1;
+    }
+#endif
+    static const DWORD vs2_code[] =
+    {
+        0x43425844, 0x3e9b7242, 0x048c7a6e, 0x31fd9fc7, 0x1105dc32, 0x00000001, 0x000001ac, 0x00000003,
+        0x0000002c, 0x00000134, 0x00000168, 0x4e475349, 0x00000100, 0x00000007, 0x00000008, 0x000000b0,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x000000bb, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x000000c4, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
+        0x0000000f, 0x000000d0, 0x00000000, 0x00000000, 0x00000003, 0x00000003, 0x0000000f, 0x000000d6,
+        0x00000000, 0x00000000, 0x00000003, 0x00000004, 0x00000001, 0x000000e6, 0x00000000, 0x00000008,
+        0x00000001, 0x00000005, 0x00000001, 0x000000f4, 0x00000000, 0x00000006, 0x00000001, 0x00000006,
+        0x00000001, 0x54535543, 0x41444d4f, 0x50004154, 0x5449534f, 0x004e4f49, 0x505f5653, 0x7469736f,
+        0x006e6f69, 0x4f4c4f43, 0x56530052, 0x696c435f, 0x73694470, 0x636e6174, 0x56530065, 0x736e495f,
+        0x636e6174, 0x00444965, 0x565f5653, 0x65747265, 0x00444978, 0x4e47534f, 0x0000002c, 0x00000001,
+        0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653,
+        0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040, 0x0000000f, 0x0300005f, 0x001010f2,
+        0x00000001, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x05000036, 0x001020f2, 0x00000000,
+        0x00101e46, 0x00000001, 0x0100003e
+    };
+
+#if 0
+float4 main() : SV_POSITION
+{
+    return float4(0, 0, 0, 1);
+}
+#endif
+    static const DWORD vs3_code[] =
+    {
+        0x43425844, 0xcf477c49, 0x343fc59b, 0x52dff555, 0x73ebaa82, 0x00000001, 0x000000b4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000,
+        0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040, 0x0000000f,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x08000036, 0x001020f2, 0x00000000, 0x00004002,
+        0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e,
+    };
+
+    static D3D11_INPUT_ELEMENT_DESC cs_layout_desc[] =
+    {
+        {"SV_GroupID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"SV_GroupThreadID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"SV_DispatchThreadID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"SV_GroupIndex", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+#if 0
+    [numthreads(256, 1, 1)]
+    void main(uint p1 : SV_GroupID, uint p2 : SV_GroupThreadID, uint p3 : SV_DispatchThreadID, uint p4 : SV_GroupIndex)
+    {
+    }
+#endif
+    static const DWORD cs_code[] =
+    {
+        0x43425844, 0x4ea5ca3f, 0xc6e47bfe, 0x5409d22b, 0xff4f75b7, 0x00000001, 0x00000074, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000020, 0x00050040, 0x00000008, 0x0100086a,
+        0x0400009b, 0x00000100, 0x00000001, 0x00000001, 0x0100003e,
+    };
+
+    static D3D11_INPUT_ELEMENT_DESC ps_layout_desc[] =
+    {
+        {"CUSTOMDATA", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_InstanceID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+    float4 main(float4 d : CUSTOMDATA, float4 p1 : POSITION, float4 p2 : SV_Position, float4 c : COLOR,
+                uint iid : SV_InstanceID) : SV_Target
+    {
+        return c;
+    }
+#endif
+        0x43425844, 0x0138f525, 0x4a391fec, 0xaf43a6b1, 0xab08068f, 0x00000001, 0x0000015c, 0x00000003,
+        0x0000002c, 0x000000e8, 0x0000011c, 0x4e475349, 0x000000b4, 0x00000005, 0x00000008, 0x00000080,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x0000008b, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x0000000f, 0x00000094, 0x00000000, 0x00000001, 0x00000003, 0x00000002,
+        0x0000000f, 0x000000a0, 0x00000000, 0x00000000, 0x00000003, 0x00000003, 0x00000f0f, 0x000000a6,
+        0x00000000, 0x00000000, 0x00000001, 0x00000004, 0x00000001, 0x54535543, 0x41444d4f, 0x50004154,
+        0x5449534f, 0x004e4f49, 0x505f5653, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0x56530052, 0x736e495f,
+        0x636e6174, 0x00444965, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000,
+        0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853,
+        0x00000038, 0x00000040, 0x0000000e, 0x03001062, 0x001010f2, 0x00000003, 0x03000065, 0x001020f2,
+        0x00000000, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000003, 0x0100003e,
+    };
+
     static const DXGI_FORMAT vertex_formats[] =
     {
         DXGI_FORMAT_R32G32_FLOAT,
@@ -18757,6 +18905,52 @@ static void test_create_input_layout(void)
                 vertex_formats[i], refcount, expected_refcount);
         ID3D11InputLayout_Release(input_layout);
     }
+
+    layout_desc[0].Format = vertex_formats[0];
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, 0, vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, 0, vs3_code, sizeof(vs3_code), &input_layout);
+    ID3D11InputLayout_Release(input_layout);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, NULL, 0, vs3_code, sizeof(vs3_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    layout_desc->SemanticIndex = 1;
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    layout_desc->SemanticIndex = 0;
+
+    layout_desc->InputSlotClass = D3D11_INPUT_PER_INSTANCE_DATA;
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11InputLayout_Release(input_layout);
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, 1, vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11InputLayout_Release(input_layout);
+    layout_desc->InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+    layout_desc->SemanticName = "SV_POSITION";
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    layout_desc->SemanticName = "POSITION2";
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    check_layout_element_exclusion(device, vs2_layout_desc, ARRAY_SIZE(vs2_layout_desc), vs2_code,
+            sizeof(vs2_code), FALSE, "vs2");
+    check_layout_element_exclusion(device, cs_layout_desc, ARRAY_SIZE(cs_layout_desc), cs_code,
+            sizeof(cs_code), TRUE, "cs");
+    check_layout_element_exclusion(device, ps_layout_desc, ARRAY_SIZE(ps_layout_desc), ps_code,
+            sizeof(ps_code), FALSE, "ps");
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);

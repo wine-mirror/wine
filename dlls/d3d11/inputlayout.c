@@ -22,20 +22,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static struct wined3d_shader_signature_element *shader_find_signature_element(const struct wined3d_shader_signature *s,
-        const char *semantic_name, unsigned int semantic_idx, unsigned int stream_idx)
+static BOOL is_vs_sysval_semantic(const struct wined3d_shader_signature_element *e)
 {
-    struct wined3d_shader_signature_element *e = s->elements;
+    return !stricmp(e->semantic_name, "sv_instanceid") || !stricmp(e->semantic_name, "sv_vertexid");
+}
+
+static unsigned int find_input_element(const D3D11_INPUT_ELEMENT_DESC *element_descs, unsigned int element_count,
+        struct wined3d_shader_signature_element *ise)
+{
+    const D3D11_INPUT_ELEMENT_DESC *f;
     unsigned int i;
 
-    for (i = 0; i < s->element_count; ++i)
-    {
-        if (!stricmp(e[i].semantic_name, semantic_name) && e[i].semantic_idx == semantic_idx
-                && e[i].stream_idx == stream_idx)
-            return &e[i];
-    }
+    if (ise->stream_idx)
+        return element_count;
 
-    return NULL;
+    for (i = 0; i < element_count; ++i)
+    {
+        f = &element_descs[i];
+        if (!stricmp(ise->semantic_name, f->SemanticName) && ise->semantic_idx == f->SemanticIndex)
+            return i;
+    }
+    return element_count;
 }
 
 static enum wined3d_input_classification wined3d_input_classification_from_d3d11(D3D11_INPUT_CLASSIFICATION slot_class)
@@ -47,8 +54,10 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
         struct wined3d_vertex_element **wined3d_elements)
 {
+    struct wined3d_shader_signature_element *ise;
     struct wined3d_shader_signature is;
-    unsigned int i;
+    const D3D11_INPUT_ELEMENT_DESC *f;
+    unsigned int i, index;
     HRESULT hr;
 
     if (FAILED(hr = wined3d_extract_shader_input_signature_from_dxbc(&is, shader_byte_code, shader_byte_code_length)))
@@ -67,8 +76,8 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
     for (i = 0; i < element_count; ++i)
     {
         struct wined3d_vertex_element *e = &(*wined3d_elements)[i];
-        const D3D11_INPUT_ELEMENT_DESC *f = &element_descs[i];
-        struct wined3d_shader_signature_element *element;
+
+        f = &element_descs[i];
 
         e->format = wined3dformat_from_dxgi_format(f->Format);
         e->input_slot = f->InputSlot;
@@ -79,11 +88,23 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         e->method = WINED3D_DECL_METHOD_DEFAULT;
         e->usage = 0;
         e->usage_idx = 0;
+    }
 
-        if ((element = shader_find_signature_element(&is, f->SemanticName, f->SemanticIndex, 0)))
-            e->output_slot = element->register_idx;
-        else
-            WARN("Unused input element %u.\n", i);
+    ise = is.elements;
+
+    for (i = 0; i < is.element_count; ++i)
+    {
+        if ((index = find_input_element(element_descs, element_count, &ise[i])) < element_count)
+        {
+            (*wined3d_elements)[index].output_slot = ise[i].register_idx;
+        }
+        else if (!is_vs_sysval_semantic(&ise[i]))
+        {
+            WARN("Input element %s%u not found in shader signature.\n", ise[i].semantic_name, ise[i].semantic_idx);
+            free(*wined3d_elements);
+            free(is.elements);
+            return E_INVALIDARG;
+        }
     }
 
     free(is.elements);
@@ -366,6 +387,8 @@ HRESULT d3d_input_layout_create(struct d3d_device *device,
 {
     struct d3d_input_layout *object;
     HRESULT hr;
+
+    if (!element_descs) return E_INVALIDARG;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
