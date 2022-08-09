@@ -29,6 +29,7 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/unixlib.h"
 
 #include "ole2.h"
 #include "mimeole.h"
@@ -45,11 +46,13 @@
 #include "endpointvolume.h"
 #include "audiopolicy.h"
 
-#include "unixlib.h"
+#include "../mmdevapi/unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
 static unixlib_handle_t pulse_handle;
+
+#define MAX_PULSE_NAME_LEN 256
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 

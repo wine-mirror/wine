@@ -38,11 +38,19 @@
 #include "initguid.h"
 #include "audioclient.h"
 
-#include "unixlib.h"
-
 #include "wine/debug.h"
+#include "wine/list.h"
+#include "wine/unixlib.h"
+
+#include "../mmdevapi/unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
+
+enum phys_device_bus_type {
+    phys_device_bus_invalid = -1,
+    phys_device_bus_pci,
+    phys_device_bus_usb
+};
 
 struct pulse_stream
 {
@@ -2367,6 +2375,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_release_render_buffer,
     pulse_get_capture_buffer,
     pulse_release_capture_buffer,
+    NULL,
     pulse_get_mix_format,
     pulse_get_device_period,
     pulse_get_buffer_size,
@@ -2380,6 +2389,10 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_test_connect,
     pulse_is_started,
     pulse_get_prop_value,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 #ifdef _WIN64
@@ -2805,6 +2818,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_release_render_buffer,
     pulse_wow64_get_capture_buffer,
     pulse_release_capture_buffer,
+    NULL,
     pulse_wow64_get_mix_format,
     pulse_wow64_get_device_period,
     pulse_wow64_get_buffer_size,
@@ -2818,6 +2832,10 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_test_connect,
     pulse_is_started,
     pulse_wow64_get_prop_value,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 #endif /* _WIN64 */
