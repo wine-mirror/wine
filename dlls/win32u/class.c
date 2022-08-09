@@ -321,11 +321,11 @@ static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
         /* modifying classes in other processes is not allowed */
         if (ptr == WND_DESKTOP || is_window( hwnd ))
         {
-            SetLastError( ERROR_ACCESS_DENIED );
+            RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
             return NULL;
         }
     }
-    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
 }
 
@@ -411,7 +411,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
         (!is_builtin && wc->hInstance == user32_module))  /* we can't register a class for user32 */
     {
-         SetLastError( ERROR_INVALID_PARAMETER );
+         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
          return 0;
     }
     if (!(instance = wc->hInstance)) instance = NtCurrentTeb()->Peb->ImageBaseAddress;
@@ -586,7 +586,7 @@ ULONG WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name )
 
     if (name->MaximumLength < sizeof(WCHAR))
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return 0;
     }
 
@@ -608,7 +608,7 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
 
     if (name->MaximumLength <= sizeof(WCHAR))
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return 0;
     }
 
@@ -823,10 +823,10 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
         }
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         break;
     default:
-        SetLastError( ERROR_INVALID_INDEX );
+        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
         break;
     }
     release_class_ptr( class );
@@ -906,7 +906,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
                 case GCLP_WNDPROC:
                 case GCLP_MENUNAME:
                     FIXME( "offset %d not supported on other process window %p\n", offset, hwnd );
-                    SetLastError( ERROR_INVALID_HANDLE );
+                    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
                     break;
                 case GCL_STYLE:
                     retvalue = reply->old_style;
@@ -936,7 +936,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
                             memcpy( &retvalue, &reply->old_extra_value,
                                     sizeof(ULONG_PTR) );
                     }
-                    else SetLastError( ERROR_INVALID_INDEX );
+                    else RtlSetLastWin32Error( ERROR_INVALID_INDEX );
                     break;
                 }
             }
@@ -959,7 +959,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
                 memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(ULONG_PTR) );
         }
         else
-            SetLastError( ERROR_INVALID_INDEX );
+            RtlSetLastWin32Error( ERROR_INVALID_INDEX );
         release_class_ptr( class );
         return retvalue;
     }
@@ -1000,7 +1000,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         retvalue = class->atomName;
         break;
     default:
-        SetLastError( ERROR_INVALID_INDEX );
+        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
         break;
     }
     release_class_ptr( class );
@@ -1044,7 +1044,7 @@ WORD get_class_word( HWND hwnd, INT offset )
     if (offset <= class->cbClsExtra - sizeof(WORD))
         memcpy( &retvalue, (char *)(class + 1) + offset, sizeof(retvalue) );
     else
-        SetLastError( ERROR_INVALID_INDEX );
+        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
     release_class_ptr( class );
     return retvalue;
 }

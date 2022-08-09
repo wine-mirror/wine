@@ -1682,7 +1682,7 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
 
     if (val == DPI_AWARENESS_INVALID)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     if (!(prev = info->dpi_awareness))
@@ -2303,7 +2303,7 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
 
     unlock_display_devices();
     WARN( "invalid handle %p\n", handle );
-    SetLastError( ERROR_INVALID_MONITOR_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_MONITOR_HANDLE );
     return FALSE;
 }
 
@@ -2422,12 +2422,12 @@ BOOL WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *
 {
     if (type > 2)
     {
-        SetLastError( ERROR_BAD_ARGUMENTS );
+        RtlSetLastWin32Error( ERROR_BAD_ARGUMENTS );
         return FALSE;
     }
     if (!x || !y)
     {
-        SetLastError( ERROR_INVALID_ADDRESS );
+        RtlSetLastWin32Error( ERROR_INVALID_ADDRESS );
         return FALSE;
     }
     switch (get_thread_dpi_awareness())
@@ -3538,7 +3538,7 @@ BOOL WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, 
 	break;
     }
     default:
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         break;
     }
     return ret;
@@ -3580,7 +3580,7 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
                 FIXME( "Unimplemented action: %u (%s)\n", x, #x ); \
             } \
         } \
-        SetLastError( ERROR_INVALID_SPI_VALUE ); \
+        RtlSetLastWin32Error( ERROR_INVALID_SPI_VALUE ); \
         ret = FALSE; \
         break
 #define WINE_SPI_WARN(x) \
@@ -4387,7 +4387,7 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
     }
     default:
 	FIXME( "Unknown action: %u\n", action );
-	SetLastError( ERROR_INVALID_SPI_VALUE );
+	RtlSetLastWin32Error( ERROR_INVALID_SPI_VALUE );
 	ret = FALSE;
 	break;
     }
@@ -4863,7 +4863,7 @@ BOOL WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown 
     case NTUSER_DPI_PER_UNAWARE_GDISCALED:
         break;
     default:
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 

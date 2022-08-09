@@ -436,7 +436,7 @@ extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
 
 static inline BOOL set_ntstatus( NTSTATUS status )
 {
-    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    if (status) RtlSetLastWin32Error( RtlNtStatusToDosError( status ));
     return !status;
 }
 

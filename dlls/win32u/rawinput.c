@@ -485,13 +485,13 @@ UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *device_list, UINT *
 
     if (size != sizeof(*device_list))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
     if (!device_count)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return ~0u;
     }
 
@@ -521,7 +521,7 @@ UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *device_list, UINT *
 
     if (*device_count < count)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         *device_count = count;
         return ~0u;
     }
@@ -543,13 +543,13 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
 
     if (!data_size)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return ~0u;
     }
     if (command != RIDI_DEVICENAME && command != RIDI_DEVICEINFO && command != RIDI_PREPARSEDDATA)
     {
         FIXME( "Command %#x not implemented!\n", command );
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -558,7 +558,7 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
     if (!(device = find_device_from_handle( handle )))
     {
         pthread_mutex_unlock( &rawinput_mutex );
-        SetLastError( ERROR_INVALID_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return ~0u;
     }
 
@@ -597,7 +597,7 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
 
     if (data_len < len)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return ~0u;
     }
 
@@ -624,13 +624,13 @@ UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT heade
     if (header_size != sizeof(RAWINPUTHEADER))
     {
         WARN( "Invalid structure size %u.\n", header_size );
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
     if (!data_size)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -690,7 +690,7 @@ UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT heade
 
     if (next_size && *data_size <= next_size)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         *data_size = next_size;
         count = ~0u;
     }
@@ -713,20 +713,20 @@ UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data,
 
     if (!(thread_data = get_rawinput_thread_data()))
     {
-        SetLastError( ERROR_OUTOFMEMORY );
+        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
         return ~0u;
     }
 
     if (!rawinput || thread_data->hw_id != (UINT_PTR)rawinput)
     {
-        SetLastError( ERROR_INVALID_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return ~0u;
     }
 
     if (header_size != sizeof(RAWINPUTHEADER))
     {
         WARN( "Invalid structure size %u.\n", header_size );
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -741,7 +741,7 @@ UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data,
         break;
 
     default:
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -753,7 +753,7 @@ UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data,
 
     if (*data_size < size)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return ~0u;
     }
     memcpy( data, thread_data->buffer, size );
@@ -830,7 +830,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
 
     if (device_size != sizeof(RAWINPUTDEVICE))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -841,13 +841,13 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
 
         if ((devices[i].dwFlags & RIDEV_INPUTSINK) && !devices[i].hwndTarget)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
 
         if ((devices[i].dwFlags & RIDEV_REMOVE) && devices[i].hwndTarget)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
 
@@ -867,7 +867,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     if (!(new_registered_devices = realloc( registered_devices, size )))
     {
         pthread_mutex_unlock( &rawinput_mutex );
-        SetLastError( ERROR_OUTOFMEMORY );
+        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
         return FALSE;
     }
 
@@ -878,7 +878,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     else if (!(server_devices = malloc( device_count * sizeof(*server_devices) )))
     {
         pthread_mutex_unlock( &rawinput_mutex );
-        SetLastError( ERROR_OUTOFMEMORY );
+        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
         return FALSE;
     }
 
@@ -915,7 +915,7 @@ UINT WINAPI NtUserGetRegisteredRawInputDevices( RAWINPUTDEVICE *devices, UINT *d
 
     if (device_size != sizeof(RAWINPUTDEVICE) || !device_count || (devices && !*device_count))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ~0u;
     }
 
@@ -932,7 +932,7 @@ UINT WINAPI NtUserGetRegisteredRawInputDevices( RAWINPUTDEVICE *devices, UINT *d
 
     if (capacity < size)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return ~0u;
     }
 

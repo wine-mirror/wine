@@ -1060,7 +1060,7 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
     {
         if (!(data = malloc( sizeof(*data) + size - 1 )))
         {
-            SetLastError( ERROR_OUTOFMEMORY );
+            RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
             return 0;
         }
 
@@ -1087,7 +1087,7 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
         free( data );
     } while (status == STATUS_BUFFER_OVERFLOW);
 
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    if (status) RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
     return hrgn;
 }
 
@@ -1582,7 +1582,7 @@ BOOL WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
     if (!hwnd)
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return FALSE;
     }
 

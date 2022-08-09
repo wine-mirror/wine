@@ -1147,7 +1147,7 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
 
     if (info->cbSize != sizeof(*info))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -1692,7 +1692,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             }
             if (res != STATUS_BUFFER_OVERFLOW)
             {
-                SetLastError( RtlNtStatusToDosError(res) );
+                RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
                 return -1;
             }
             if (!(buffer = malloc( buffer_size ))) return -1;
@@ -1959,7 +1959,7 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
                                                      mask, flags );
     if (HIWORD(ret))  /* is it an error code? */
     {
-        SetLastError( RtlNtStatusToDosError(ret) );
+        RtlSetLastWin32Error( RtlNtStatusToDosError(ret) );
         ret = WAIT_FAILED;
     }
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
@@ -2029,7 +2029,7 @@ DWORD WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handl
 
     if (count > MAXIMUM_WAIT_OBJECTS-1)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return WAIT_FAILED;
     }
 
@@ -2123,7 +2123,7 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
      * (back to the program) inside the message handling itself. */
     if (!msg_out)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return FALSE;
     }
     *msg_out = msg;
@@ -2242,9 +2242,9 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         {
             if (res == STATUS_INVALID_PARAMETER)
                 /* FIXME: find a STATUS_ value for this one */
-                SetLastError( ERROR_INVALID_THREAD_ID );
+                RtlSetLastWin32Error( ERROR_INVALID_THREAD_ID );
             else
-                SetLastError( RtlNtStatusToDosError(res) );
+                RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
         }
     }
     SERVER_END_REQ;
@@ -2326,7 +2326,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
            info->lparam, *result, status );
 
     /* MSDN states that last error is 0 on timeout, but at least NT4 returns ERROR_TIMEOUT */
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    if (status) RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
     return !status;
 }
 
@@ -2547,8 +2547,8 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
     if (init_window_call_params( &params, msg->hwnd, msg->message, msg->wParam, msg->lParam,
                                  &retval, FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
         dispatch_win_proc_params( &params, sizeof(params) );
-    else if (!is_window( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-    else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+    else if (!is_window( msg->hwnd )) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+    else RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
 
     spy_exit_message( SPY_RESULT_OK, msg->hwnd, msg->message, retval, msg->wParam, msg->lParam );
 
@@ -2821,7 +2821,7 @@ static BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
     if (is_pointer_message( msg, wparam ))
     {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
 
@@ -2845,7 +2845,7 @@ static BOOL send_message_callback( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 
     if (is_pointer_message( msg, wparam ))
     {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
 
@@ -2872,7 +2872,7 @@ BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 
     if (is_pointer_message( msg, wparam ))
     {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
 
@@ -2907,7 +2907,7 @@ BOOL WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPAR
 
     if (is_pointer_message( msg, wparam ))
     {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
     if (is_exiting_thread( thread )) return TRUE;
@@ -2970,8 +2970,8 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         if (init_window_call_params( result_info, hwnd, msg, wparam, lparam,
                                      NULL, ansi, WMCHAR_MAP_DISPATCHMESSAGE ))
             return TRUE;
-        if (!is_window( hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        if (!is_window( hwnd )) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        else RtlSetLastWin32Error( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
 
     case NtUserSpyEnter:

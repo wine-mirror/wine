@@ -134,19 +134,19 @@ UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
 
     if (size != sizeof(INPUT))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
     if (!count)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
     if (!inputs)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return 0;
     }
 
@@ -163,13 +163,13 @@ UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
             status = send_hardware_message( 0, &input, NULL, SEND_HWMSG_INJECTED );
             break;
         case INPUT_HARDWARE:
-            SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+            RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
             return 0;
         }
 
         if (status)
         {
-            SetLastError( RtlNtStatusToDosError(status) );
+            RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
             break;
         }
     }
@@ -340,7 +340,7 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
 
     if (flags & ~(QS_ALLINPUT | QS_ALLPOSTMESSAGE | QS_SMRESULT))
     {
-        SetLastError( ERROR_INVALID_FLAGS );
+        RtlSetLastWin32Error( ERROR_INVALID_FLAGS );
         return 0;
     }
 
@@ -908,7 +908,7 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
 
     if (layout == (HKL)HKL_NEXT || layout == (HKL)HKL_PREV)
     {
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
         FIXME_(keyboard)( "HKL_NEXT and HKL_PREV not supported\n" );
         return 0;
     }
@@ -1002,7 +1002,7 @@ BOOL WINAPI NtUserGetKeyboardLayoutName( WCHAR *name )
 
     if (!name)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return FALSE;
     }
 
@@ -1127,20 +1127,20 @@ int WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOV
 
     if ((size != sizeof(MOUSEMOVEPOINT)) || (count < 0) || (count > ARRAY_SIZE( positions )))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return -1;
     }
 
     if (!ptin || (!ptout && count))
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return -1;
     }
 
     if (resolution != GMMP_USE_DISPLAY_POINTS)
     {
         FIXME( "only GMMP_USE_DISPLAY_POINTS is supported for now\n" );
-        SetLastError( ERROR_POINT_NOT_FOUND );
+        RtlSetLastWin32Error( ERROR_POINT_NOT_FOUND );
         return -1;
     }
 
@@ -1160,7 +1160,7 @@ int WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOV
 
     if (i == ARRAY_SIZE( positions ))
     {
-        SetLastError( ERROR_POINT_NOT_FOUND );
+        RtlSetLastWin32Error( ERROR_POINT_NOT_FOUND );
         return -1;
     }
 
@@ -1320,7 +1320,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     if (info->cbSize != sizeof(TRACKMOUSEEVENT))
     {
         WARN( "wrong size %u\n", info->cbSize );
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -1333,7 +1333,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 
     if (!is_window( info->hwndTrack ))
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return FALSE;
     }
 
@@ -1713,7 +1713,7 @@ HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
         hwnd = get_full_window_handle( hwnd );
         if (!is_window( hwnd ))
         {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
 
@@ -1742,7 +1742,7 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
         hwnd = get_full_window_handle( hwnd );
         if (!is_window( hwnd ))
         {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
         if (hwnd == previous) return previous;  /* nothing to do */

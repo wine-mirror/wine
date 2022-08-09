@@ -2221,7 +2221,7 @@ const char *debugstr_msg_name( UINT msg, HWND hWnd )
     ext_sp_e.wParam = 0;
     ext_sp_e.wnd_class[0] = 0;
     SPY_GetMsgStuff(&ext_sp_e);
-    SetLastError( save_error );
+    RtlSetLastWin32Error( save_error );
     return wine_dbg_sprintf("%s", ext_sp_e.msg_name);
 }
 
@@ -2506,7 +2506,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                         /* save and restore error code over the next call */
                         save_error = GetLastError();
                         NtUserGetClassName( pnmh->hwndFrom, FALSE, &str );
-                        SetLastError(save_error);
+                        RtlSetLastWin32Error(save_error);
                         if (wcscmp(TOOLBARCLASSNAMEW, from_class) == 0)
                             dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
                     } else if ( pnmh->code >= HDN_ENDDRAG
@@ -2640,7 +2640,7 @@ void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         break;
     }
     set_indent_level( indent + SPY_INDENT_UNIT );
-    SetLastError( save_error );
+    RtlSetLastWin32Error( save_error );
 }
 
 
@@ -2685,5 +2685,5 @@ void spy_exit_message( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
         SPY_DumpStructure(&sp_e, FALSE);
         break;
     }
-    SetLastError( save_error );
+    RtlSetLastWin32Error( save_error );
 }

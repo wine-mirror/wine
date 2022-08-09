@@ -58,7 +58,7 @@ static const char *debugstr_format( UINT id )
     WCHAR buffer[256];
     DWORD le = GetLastError();
     BOOL r = NtUserGetClipboardFormatName( id, buffer, ARRAYSIZE(buffer) );
-    SetLastError(le);
+    RtlSetLastWin32Error(le);
 
     if (r)
         return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
@@ -304,7 +304,7 @@ BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *ou
 
     if (!out_size)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return FALSE;
     }
 
@@ -319,7 +319,7 @@ BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *ou
     SERVER_END_REQ;
 
     TRACE( "%p %u returning %u formats, ret %u\n", formats, size, *out_size, ret );
-    if (!ret && !formats && *out_size) SetLastError( ERROR_NOACCESS );
+    if (!ret && !formats && *out_size) RtlSetLastWin32Error( ERROR_NOACCESS );
     return ret;
 }
 
@@ -354,7 +354,7 @@ INT WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen 
     if (format < MAXINTATOM || format > 0xffff) return 0;
     if (maxlen <= 0)
     {
-        SetLastError( ERROR_MORE_DATA );
+        RtlSetLastWin32Error( ERROR_MORE_DATA );
         return 0;
     }
     if (!set_ntstatus( NtQueryInformationAtom( format, AtomBasicInformation,
@@ -449,7 +449,7 @@ BOOL WINAPI NtUserChangeClipboardChain( HWND hwnd, HWND next )
     if (status == STATUS_PENDING)
         return !send_message( viewer, WM_CHANGECBCHAIN, (WPARAM)hwnd, (LPARAM)next );
 
-    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    if (status) RtlSetLastWin32Error( RtlNtStatusToDosError( status ));
     return !status;
 }
 
@@ -498,7 +498,7 @@ UINT enum_clipboard_formats( UINT format )
         if (!wine_server_call_err( req ))
         {
             ret = reply->format;
-            SetLastError( ERROR_SUCCESS );
+            RtlSetLastWin32Error( ERROR_SUCCESS );
         }
     }
     SERVER_END_REQ;
@@ -721,7 +721,7 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
         if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0; /* no such format */
         if (status)
         {
-            SetLastError( RtlNtStatusToDosError( status ));
+            RtlSetLastWin32Error( RtlNtStatusToDosError( status ));
             TRACE( "%s error %08x\n", debugstr_format( format ), status );
             return 0;
         }

@@ -78,7 +78,7 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
 
     if (!proc)
     {
-        SetLastError( ERROR_INVALID_FILTER_PROC );
+        RtlSetLastWin32Error( ERROR_INVALID_FILTER_PROC );
         return 0;
     }
 
@@ -91,7 +91,7 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
             id == WH_SYSMSGFILTER)
         {
             /* these can only be global */
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return 0;
         }
     }
@@ -100,7 +100,7 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
         if (id == WH_KEYBOARD_LL || id == WH_MOUSE_LL) inst = 0;
         else if (!inst)
         {
-            SetLastError( ERROR_HOOK_NEEDS_HMOD );
+            RtlSetLastWin32Error( ERROR_HOOK_NEEDS_HMOD );
             return 0;
         }
     }
@@ -148,7 +148,7 @@ BOOL WINAPI NtUserUnhookWindowsHookEx( HHOOK handle )
         if (!status) get_user_thread_info()->active_hooks = reply->active_hooks;
     }
     SERVER_END_REQ;
-    if (status == STATUS_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
+    if (status == STATUS_INVALID_HANDLE) RtlSetLastWin32Error( ERROR_INVALID_HOOK_HANDLE );
     return !status;
 }
 
@@ -168,7 +168,7 @@ BOOL unhook_windows_hook( INT id, HOOKPROC proc )
         if (!status) get_user_thread_info()->active_hooks = reply->active_hooks;
     }
     SERVER_END_REQ;
-    if (status == STATUS_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
+    if (status == STATUS_INVALID_HANDLE) RtlSetLastWin32Error( ERROR_INVALID_HOOK_HANDLE );
     return !status;
 }
 
@@ -395,13 +395,13 @@ HWINEVENTHOOK WINAPI NtUserSetWinEventHook( DWORD event_min, DWORD event_max, HM
 
     if ((flags & WINEVENT_INCONTEXT) && !inst)
     {
-        SetLastError(ERROR_HOOK_NEEDS_HMOD);
+        RtlSetLastWin32Error(ERROR_HOOK_NEEDS_HMOD);
         return 0;
     }
 
     if (event_min > event_max)
     {
-        SetLastError(ERROR_INVALID_HOOK_FILTER);
+        RtlSetLastWin32Error(ERROR_INVALID_HOOK_FILTER);
         return 0;
     }
 
@@ -471,7 +471,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
 
     if (!hwnd)
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return;
     }
 

@@ -625,7 +625,7 @@ INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT xDst, INT yDst, INT widthDst
     if (!bits) return 0;
     if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse, TRUE ))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -677,7 +677,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ) || coloruse > DIB_PAL_COLORS)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     if (src_info->bmiHeader.biCompression == BI_BITFIELDS)
@@ -685,7 +685,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         DWORD *masks = (DWORD *)src_info->bmiColors;
         if (!masks[0] || !masks[1] || !masks[2])
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return 0;
         }
     }
@@ -900,7 +900,7 @@ INT WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT xDest, INT yDest, DWORD 
     if (!bits) return 0;
     if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse, TRUE ))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -1227,7 +1227,7 @@ INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UIN
 
     if (!(dc = get_dc_ptr( hdc )))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     update_dc( dc );

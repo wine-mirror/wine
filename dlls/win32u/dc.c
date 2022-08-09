@@ -79,7 +79,7 @@ static inline DC *get_dc_obj( HDC hdc )
         return dc;
     default:
         GDI_ReleaseObj( hdc );
-        SetLastError( ERROR_INVALID_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return NULL;
     }
 }
@@ -1246,7 +1246,7 @@ BOOL WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr )
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
             ret = physdev->funcs->pGetDeviceGammaRamp( physdev, ptr );
         }
-        else SetLastError( ERROR_INVALID_PARAMETER );
+        else RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
 	release_dc_ptr( dc );
     }
     return ret;
@@ -1348,7 +1348,7 @@ BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
             if (check_gamma_ramps(ptr))
                 ret = physdev->funcs->pSetDeviceGammaRamp( physdev, ptr );
         }
-        else SetLastError( ERROR_INVALID_PARAMETER );
+        else RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
 	release_dc_ptr( dc );
     }
     return ret;

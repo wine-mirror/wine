@@ -104,7 +104,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
 
     if (width > 0x7ffffff || height > 0x7ffffff)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -119,7 +119,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     if (planes != 1)
     {
         FIXME("planes = %d\n", planes);
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return NULL;
     }
 
@@ -133,7 +133,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     else
     {
         WARN("Invalid bmBitsPixel %d, returning ERROR_INVALID_PARAMETER\n", bpp);
-        SetLastError(ERROR_INVALID_PARAMETER);
+        RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
         return NULL;
     }
 
@@ -142,14 +142,14 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     /* Check for overflow (dib_stride itself must be ok because of the constraint on bm.bmWidth above). */
     if (dib_stride != size / height)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
     /* Create the BITMAPOBJ */
     if (!(bmpobj = calloc( 1, sizeof(*bmpobj) )))
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
 
@@ -163,7 +163,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     if (!bmpobj->dib.dsBm.bmBits)
     {
         free( bmpobj );
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
 

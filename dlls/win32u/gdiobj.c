@@ -943,7 +943,7 @@ INT WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer )
     if (funcs && funcs->pGetObjectW)
     {
         if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
-            SetLastError( ERROR_NOACCESS );
+            RtlSetLastWin32Error( ERROR_NOACCESS );
         else
             result = funcs->pGetObjectW( handle, count, buffer );
     }

@@ -156,7 +156,7 @@ HPEN WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, ULONG brush_style, ULON
         break;
 
     default:
-        SetLastError(ERROR_INVALID_PARAMETER);
+        RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
         return 0;
     }
 
@@ -196,7 +196,7 @@ HPEN WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, ULONG brush_style, ULON
 
 invalid:
     free( penPtr );
-    SetLastError( ERROR_INVALID_PARAMETER );
+    RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
     return 0;
 }
 

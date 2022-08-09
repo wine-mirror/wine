@@ -360,7 +360,7 @@ BOOL CDECL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     if (bits.free) bits.free( &bits );
 done:
-    if (err) SetLastError( err );
+    if (err) RtlSetLastWin32Error( err );
     return !err;
 }
 
@@ -997,14 +997,14 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdcDst, int xDst, int yDst, int widthDst, int h
               src.height > dcSrc->device_rect.bottom - dcSrc->attr->vis_rect.top - src.y)))
         {
             WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src.x, src.y, src.width, src.height );
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             ret = FALSE;
         }
         else if (dst.log_width < 0 || dst.log_height < 0)
         {
             WARN( "Invalid dst coords: (%d,%d), size %dx%d\n",
                   dst.log_x, dst.log_y, dst.log_width, dst.log_height );
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             ret = FALSE;
         }
         else if (dcSrc == dcDst && src.x + src.width > dst.x && src.x < dst.x + dst.width &&
@@ -1012,7 +1012,7 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdcDst, int xDst, int yDst, int widthDst, int h
         {
             WARN( "Overlapping coords: (%d,%d), %dx%d and (%d,%d), %dx%d\n",
                   src.x, src.y, src.width, src.height, dst.x, dst.y, dst.width, dst.height );
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             ret = FALSE;
         }
         else if (!ret)

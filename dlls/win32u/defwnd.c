@@ -2973,14 +2973,14 @@ BOOL WINAPI NtUserGetTitleBarInfo( HWND hwnd, TITLEBARINFO *info )
 
     if (!info)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return FALSE;
     }
 
     if (info->cbSize != sizeof(TITLEBARINFO))
     {
         TRACE( "Invalid TITLEBARINFO size: %d\n", info->cbSize );
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 

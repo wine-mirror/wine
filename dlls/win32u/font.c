@@ -1914,7 +1914,7 @@ static struct gdi_font *get_font_from_handle( DWORD handle )
     struct font_handle_entry *entry = handle_entry( handle );
 
     if (entry) return entry->font;
-    SetLastError( ERROR_INVALID_PARAMETER );
+    RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
     return NULL;
 }
 
@@ -4524,7 +4524,7 @@ HFONT WINAPI NtGdiHfontCreate( const void *logfont, ULONG size, ULONG type,
     }
     else if (size != sizeof(LOGFONTW))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     else plf = logfont;
@@ -5870,7 +5870,7 @@ BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTME
 
 done:
     if (font) free_gdi_font( font );
-    SetLastError( ERROR_INVALID_PARAMETER );
+    RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
 
@@ -5887,7 +5887,7 @@ DWORD WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair 
 
     if (!count && kern_pair)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -5912,7 +5912,7 @@ DWORD WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair 
  *
  * NOTES
  *
- * Calls SetLastError()
+ * Calls RtlSetLastWin32Error()
  *
  */
 DWORD WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length )
@@ -6382,7 +6382,7 @@ HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG 
 
     if (!ptr || !size || !count)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
         return NULL;
     }
     if (!font_funcs) return NULL;
@@ -6537,7 +6537,7 @@ BOOL WINAPI NtGdiGetFontFileData( DWORD instance_id, DWORD file_index, UINT64 *o
         if (size != GDI_ERROR && size >= buff_size && *offset <= size - buff_size)
             ret = font_funcs->get_font_data( font, tag, *offset, buff, buff_size ) != GDI_ERROR;
         else
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
     }
     pthread_mutex_unlock( &font_lock );
     return ret;
@@ -6565,7 +6565,7 @@ BOOL WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struct fo
             lstrcpyW( info->path, font->file );
             ret = TRUE;
         }
-        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        else RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
     }
 
     pthread_mutex_unlock( &font_lock );

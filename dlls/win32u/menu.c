@@ -200,7 +200,7 @@ HACCEL WINAPI NtUserCreateAcceleratorTable( ACCEL *table, INT count )
 
     if (count < 1)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     accel = malloc( FIELD_OFFSET( struct accelerator, table[count] ));
@@ -344,7 +344,7 @@ BOOL is_menu( HMENU handle )
     is_menu = menu != NULL;
     release_menu_ptr( menu );
 
-    if (!is_menu) SetLastError( ERROR_INVALID_MENU_HANDLE );
+    if (!is_menu) RtlSetLastWin32Error( ERROR_INVALID_MENU_HANDLE );
     return is_menu;
 }
 
@@ -861,13 +861,13 @@ BOOL WINAPI NtUserThunkedMenuInfo( HMENU menu, const MENUINFO *info )
 
     if (!info)
     {
-        SetLastError( ERROR_NOACCESS );
+        RtlSetLastWin32Error( ERROR_NOACCESS );
         return FALSE;
     }
 
     if (!set_menu_info( menu, info ))
     {
-        SetLastError( ERROR_INVALID_MENU_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_MENU_HANDLE );
         return FALSE;
     }
 
@@ -889,7 +889,7 @@ BOOL get_menu_info( HMENU handle, MENUINFO *info )
 
     if (!info || info->cbSize != sizeof(MENUINFO) || !(menu = grab_menu_ptr( handle )))
     {
-        SetLastError( ERROR_INVALID_PARAMETER);
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -970,7 +970,7 @@ static BOOL set_menu_item_info( struct menu_item *menu, const MENUITEMINFOW *inf
             struct menu *submenu = grab_menu_ptr( menu->hSubMenu );
             if (!submenu)
             {
-                SetLastError( ERROR_INVALID_PARAMETER);
+                RtlSetLastWin32Error( ERROR_INVALID_PARAMETER);
                 return FALSE;
             }
             if (menu_depth( submenu, 0 ) > MAXMENUDEPTH)
@@ -1045,7 +1045,7 @@ static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW
 
     if (!info || info->cbSize != sizeof(*info))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -1054,7 +1054,7 @@ static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW
     TRACE( "%s\n", debugstr_menuitem( item ));
     if (!menu)
     {
-        SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
+        RtlSetLastWin32Error( ERROR_MENU_ITEM_NOT_FOUND);
         return FALSE;
     }
 
@@ -1065,7 +1065,7 @@ static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW
             release_menu_ptr( menu );
             WARN( "invalid combination of fMask bits used\n" );
             /* this does not happen on Win9x/ME */
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
 
@@ -1290,7 +1290,7 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
     case NtUserInsertMenuItem:
         if (!info || info->cbSize != sizeof(*info))
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
 
@@ -1309,7 +1309,7 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
     case NtUserSetMenuItemInfo:
         if (!info || info->cbSize != sizeof(*info))
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
 
@@ -3315,7 +3315,7 @@ static BOOL init_popup( HWND owner, HMENU hmenu, UINT flags )
     /* store the owner for DrawItem */
     if (!is_window( owner ))
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return FALSE;
     }
     menu->hwndOwner = owner;
@@ -4087,7 +4087,7 @@ static BOOL track_menu( HMENU hmenu, UINT flags, int x, int y, HWND hwnd, const 
     if (!(menu = unsafe_menu_ptr( hmenu )))
     {
         WARN( "Invalid menu handle %p\n", hmenu );
-        SetLastError( ERROR_INVALID_MENU_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_MENU_HANDLE );
         return FALSE;
     }
 
@@ -4338,7 +4338,7 @@ static BOOL track_menu( HMENU hmenu, UINT flags, int x, int y, HWND hwnd, const 
         }
     }
 
-    SetLastError( ERROR_SUCCESS );
+    RtlSetLastWin32Error( ERROR_SUCCESS );
     /* The return value is only used by NtUserTrackPopupMenuEx */
     if (!(flags & TPM_RETURNCMD)) return TRUE;
     if (executed_menu_id == -1) executed_menu_id = 0;
@@ -4486,13 +4486,13 @@ BOOL WINAPI NtUserTrackPopupMenuEx( HMENU handle, UINT flags, INT x, INT y, HWND
 
     if (!(menu = unsafe_menu_ptr( handle )))
     {
-        SetLastError( ERROR_INVALID_MENU_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_MENU_HANDLE );
         return FALSE;
     }
 
     if (is_window(menu->hWnd))
     {
-        SetLastError( ERROR_POPUP_ALREADY_ACTIVE );
+        RtlSetLastWin32Error( ERROR_POPUP_ALREADY_ACTIVE );
         return FALSE;
     }
 
@@ -4522,7 +4522,7 @@ BOOL WINAPI NtUserTrackPopupMenuEx( HMENU handle, UINT flags, INT x, INT y, HWND
                 send_message( hwnd, WM_UNINITMENUPOPUP, (WPARAM)handle,
                               MAKELPARAM( 0, IS_SYSTEM_MENU( menu )));
         }
-        SetLastError( 0 );
+        RtlSetLastWin32Error( 0 );
     }
 
     return ret;
@@ -4574,7 +4574,7 @@ BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *in
         if (class_atom != POPUPMENU_CLASS_ATOM)
         {
             WARN("called on invalid window: %d\n", class_atom);
-            SetLastError(ERROR_INVALID_MENU_HANDLE);
+            RtlSetLastWin32Error(ERROR_INVALID_MENU_HANDLE);
             return FALSE;
         }
 
@@ -4595,7 +4595,7 @@ BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *in
 
     if (info->cbSize != sizeof(MENUBARINFO))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 

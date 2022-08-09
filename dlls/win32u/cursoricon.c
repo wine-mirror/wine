@@ -334,7 +334,7 @@ BOOL WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, UNI
     {
         /* already initialized */
         release_user_handle_ptr( obj );
-        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_CURSOR_HANDLE );
         return FALSE;
     }
 
@@ -454,7 +454,7 @@ BOOL WINAPI NtUserGetIconSize( HICON handle, UINT step, LONG *width, LONG *heigh
 
     if (!(obj = get_icon_frame_ptr( handle, step )))
     {
-        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_CURSOR_HANDLE );
         return FALSE;
     }
 
@@ -559,7 +559,7 @@ BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *modul
 
     if (!(obj = get_icon_ptr( icon )))
     {
-        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_CURSOR_HANDLE );
         return FALSE;
     }
     if (!(frame_obj = get_icon_frame_ptr( icon, 0 )))

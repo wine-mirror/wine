@@ -312,7 +312,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 
 static BOOL CDECL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
-    SetLastError( ERROR_INVALID_PARAMETER );
+    RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
 
@@ -516,7 +516,7 @@ static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 
 static BOOL CDECL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
-    SetLastError( ERROR_INVALID_PARAMETER );
+    RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
 

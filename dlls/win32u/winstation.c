@@ -50,7 +50,7 @@ HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK a
 
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
 
@@ -145,12 +145,12 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
 
     if ((device && device->Length) || devmode)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
     SERVER_START_REQ( create_desktop )
@@ -174,7 +174,7 @@ HDESK WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MAS
     HANDLE ret = 0;
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
     SERVER_START_REQ( open_desktop )
@@ -289,7 +289,7 @@ BOOL WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
             if (needed) *needed = sizeof(*obj_flags);
             if (len < sizeof(*obj_flags))
             {
-                SetLastError( ERROR_BUFFER_OVERFLOW );
+                RtlSetLastWin32Error( ERROR_BUFFER_OVERFLOW );
                 return FALSE;
             }
             SERVER_START_REQ( set_user_object_info )
@@ -319,7 +319,7 @@ BOOL WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
                 if (needed) *needed = size;
                 if (len < size)
                 {
-                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                    RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
                     ret = FALSE;
                 }
                 else memcpy( info, reply->is_desktop ? desktopW : window_stationW, size );
@@ -345,7 +345,7 @@ BOOL WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
                     if (needed) *needed = size;
                     if (len < size)
                     {
-                        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
                         ret = FALSE;
                     }
                     else memcpy( info, buffer, size );
@@ -359,7 +359,7 @@ BOOL WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
         FIXME( "not supported index %d\n", index );
         /* fall through */
     default:
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 }
@@ -374,7 +374,7 @@ BOOL WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DW
 
     if (index != UOI_FLAGS || !info || len < sizeof(*obj_flags))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     /* FIXME: inherit flag */

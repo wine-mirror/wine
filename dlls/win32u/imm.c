@@ -58,7 +58,7 @@ static struct imc *get_imc_ptr( HIMC handle )
     struct imc *imc = get_user_handle_ptr( handle, NTUSER_OBJ_IMC );
     if (imc && imc != OBJ_OTHER_PROCESS) return imc;
     WARN( "invalid handle %p\n", handle );
-    SetLastError( ERROR_INVALID_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
     return NULL;
 }
 
@@ -224,7 +224,7 @@ HIMC get_window_input_context( HWND hwnd )
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
 
