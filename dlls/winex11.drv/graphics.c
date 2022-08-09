@@ -1736,7 +1736,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     if (*size < required)
     {
         *size = required;
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return FALSE;
     }
     if (filename)

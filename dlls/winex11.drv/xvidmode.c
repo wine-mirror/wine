@@ -140,7 +140,7 @@ static BOOL xf86vm_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UI
     ptr = calloc(1, size);
     if (!ptr)
     {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 

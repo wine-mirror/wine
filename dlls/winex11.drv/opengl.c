@@ -1739,7 +1739,7 @@ static struct wgl_context * WINAPI glxdrv_wglCreateContext( HDC hdc )
 
     if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
-        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return NULL;
     }
 
@@ -1833,7 +1833,7 @@ static BOOL WINAPI glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         if (ctx->fmt != gl->format)
         {
             WARN( "mismatched pixel format hdc %p %p ctx %p %p\n", hdc, gl->format, ctx, ctx->fmt );
-            SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+            RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
             goto done;
         }
 
@@ -1854,7 +1854,7 @@ static BOOL WINAPI glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         }
         pthread_mutex_unlock( &context_mutex );
     }
-    SetLastError( ERROR_INVALID_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 
 done:
     release_gl_drawable( gl );
@@ -1900,7 +1900,7 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         }
         pthread_mutex_unlock( &context_mutex );
     }
-    SetLastError( ERROR_INVALID_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 done:
     release_gl_drawable( read_gl );
     release_gl_drawable( draw_gl );
@@ -2027,7 +2027,7 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
 
     if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
-        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return NULL;
     }
 
@@ -2143,13 +2143,13 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
     fmt = get_pixel_format(gdi_display, iPixelFormat, TRUE /* Offscreen */);
     if(!fmt) {
         ERR("(%p): invalid pixel format %d\n", hdc, iPixelFormat);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
 
     object = calloc( 1, sizeof(*object) );
     if (NULL == object) {
-        SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
         return NULL;
     }
     object->width = iWidth;
@@ -2177,7 +2177,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                     object->use_render_texture = 0;
                 } else {
                     if (!use_render_texture_emulation) {
-                        SetLastError(ERROR_INVALID_DATA);
+                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
                         goto create_failed;
                     }
                     switch (attr_v) {
@@ -2221,7 +2221,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                             break;
                         default:
                             ERR("Unknown texture format: %x\n", attr_v);
-                            SetLastError(ERROR_INVALID_DATA);
+                            RtlSetLastWin32Error(ERROR_INVALID_DATA);
                             goto create_failed;
                     }
                 }
@@ -2236,13 +2236,13 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                     object->texture_target = 0;
                 } else {
                     if (!use_render_texture_emulation) {
-                        SetLastError(ERROR_INVALID_DATA);
+                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
                         goto create_failed;
                     }
                     switch (attr_v) {
                         case WGL_TEXTURE_CUBE_MAP_ARB: {
                             if (iWidth != iHeight) {
-                                SetLastError(ERROR_INVALID_DATA);
+                                RtlSetLastWin32Error(ERROR_INVALID_DATA);
                                 goto create_failed;
                             }
                             object->texture_target = GL_TEXTURE_CUBE_MAP;
@@ -2251,7 +2251,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                         }
                         case WGL_TEXTURE_1D_ARB: {
                             if (1 != iHeight) {
-                                SetLastError(ERROR_INVALID_DATA);
+                                RtlSetLastWin32Error(ERROR_INVALID_DATA);
                                 goto create_failed;
                             }
                             object->texture_target = GL_TEXTURE_1D;
@@ -2270,7 +2270,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                         }
                         default:
                             ERR("Unknown texture target: %x\n", attr_v);
-                            SetLastError(ERROR_INVALID_DATA);
+                            RtlSetLastWin32Error(ERROR_INVALID_DATA);
                             goto create_failed;
                     }
                 }
@@ -2282,7 +2282,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                 attr_v = *piAttribList;
                 TRACE("WGL_render_texture Attribute: WGL_MIPMAP_TEXTURE_ARB as %x\n", attr_v);
                 if (!use_render_texture_emulation) {
-                    SetLastError(ERROR_INVALID_DATA);
+                    RtlSetLastWin32Error(ERROR_INVALID_DATA);
                     goto create_failed;
                 }
                 break;
@@ -2294,7 +2294,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
     PUSH1(attribs, None);
     if (!(object->gl = calloc( 1, sizeof(*object->gl) )))
     {
-        SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
         goto create_failed;
     }
     object->gl->type = DC_GL_PBUFFER;
@@ -2305,7 +2305,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
     TRACE("new Pbuffer drawable as %p (%lx)\n", object->gl, object->gl->drawable);
     if (!object->gl->drawable) {
         free( object->gl );
-        SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
         goto create_failed; /* unexpected error */
     }
     pthread_mutex_lock( &context_mutex );
@@ -2400,7 +2400,7 @@ static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribut
                 *piValue = WGL_NO_TEXTURE_ARB;
             } else {
                 if (!use_render_texture_emulation) {
-                    SetLastError(ERROR_INVALID_HANDLE);
+                    RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
                     return GL_FALSE;
                 }
                 switch(object->use_render_texture) {
@@ -2434,7 +2434,7 @@ static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribut
                 *piValue = WGL_NO_TEXTURE_ARB;
             } else {
                 if (!use_render_texture_emulation) {
-                    SetLastError(ERROR_INVALID_DATA);
+                    RtlSetLastWin32Error(ERROR_INVALID_DATA);
                     return GL_FALSE;
                 }
                 switch (object->texture_target) {
@@ -2496,7 +2496,7 @@ static BOOL X11DRV_wglSetPbufferAttribARB( struct wgl_pbuffer *object, const int
     WARN("(%p, %p): alpha-testing, report any problem\n", object, piAttribList);
 
     if (!object->use_render_texture) {
-        SetLastError(ERROR_INVALID_HANDLE);
+        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
     if (use_render_texture_emulation) {
@@ -2976,7 +2976,7 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
     TRACE("(%p, %d)\n", object, iBuffer);
 
     if (!object->use_render_texture) {
-        SetLastError(ERROR_INVALID_HANDLE);
+        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
 
@@ -3036,7 +3036,7 @@ static BOOL X11DRV_wglReleaseTexImageARB( struct wgl_pbuffer *object, int iBuffe
     TRACE("(%p, %d)\n", object, iBuffer);
 
     if (!object->use_render_texture) {
-        SetLastError(ERROR_INVALID_HANDLE);
+        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
     if (use_render_texture_emulation) {
@@ -3102,13 +3102,13 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
      */
     if (interval < 0 && !has_swap_control_tear)
     {
-        SetLastError(ERROR_INVALID_DATA);
+        RtlSetLastWin32Error(ERROR_INVALID_DATA);
         return FALSE;
     }
 
     if (!(gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), ctx->hdc )))
     {
-        SetLastError(ERROR_DC_NOT_FOUND);
+        RtlSetLastWin32Error(ERROR_DC_NOT_FOUND);
         return FALSE;
     }
 
@@ -3118,7 +3118,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
     if (ret)
         gl->swap_interval = interval;
     else
-        SetLastError(ERROR_DC_NOT_FOUND);
+        RtlSetLastWin32Error(ERROR_DC_NOT_FOUND);
 
     pthread_mutex_unlock( &context_mutex );
     release_gl_drawable(gl);
@@ -3334,7 +3334,7 @@ static BOOL WINAPI glxdrv_wglSwapBuffers( HDC hdc )
 
     if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
-        SetLastError( ERROR_INVALID_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
 

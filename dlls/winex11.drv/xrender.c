@@ -1941,7 +1941,7 @@ static BOOL CDECL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *
 
     if ((blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->format != WXR_FORMAT_A8R8G8B8)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 

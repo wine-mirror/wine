@@ -91,7 +91,7 @@ static BOOL nores_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UIN
     modes = calloc(1, sizeof(*modes));
     if (!modes)
     {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
@@ -350,7 +350,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     {
         pthread_mutex_unlock( &settings_mutex );
         WARN("handler:%s device:%s mode index:%#x not found.\n", settings_handler.name, wine_dbgstr_w(name), n);
-        SetLastError(ERROR_NO_MORE_FILES);
+        RtlSetLastWin32Error( ERROR_NO_MORE_FILES );
         return FALSE;
     }
 

@@ -162,7 +162,7 @@ static BOOL X11DRV_desktop_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_
     /* Allocate memory for modes in different color depths */
     if (!(modes = calloc( (ARRAY_SIZE(screen_sizes) + 2) * DEPTH_COUNT, sizeof(*modes))) )
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 

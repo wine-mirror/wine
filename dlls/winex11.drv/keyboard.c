@@ -1857,14 +1857,14 @@ BOOL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 
     if (flags & KLF_SETFORPROCESS)
     {
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
         FIXME("KLF_SETFORPROCESS not supported\n");
         return FALSE;
     }
 
     if (!match_x11_keyboard_layout(hkl))
     {
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
         FIXME("setting keyboard of different locales not supported\n");
         return FALSE;
     }

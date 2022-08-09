@@ -204,7 +204,7 @@ static BOOL xrandr10_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes,
     modes = calloc( mode_count * DEPTH_COUNT, sizeof(*modes) + sizeof(SizeID) );
     if (!modes)
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
