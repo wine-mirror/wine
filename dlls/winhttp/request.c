@@ -286,7 +286,7 @@ static BOOL valid_token_char( WCHAR c )
     }
 }
 
-static struct header *parse_header( const WCHAR *string )
+static struct header *parse_header( const WCHAR *string, size_t string_len )
 {
     const WCHAR *p, *q;
     struct header *header;
@@ -324,7 +324,7 @@ static struct header *parse_header( const WCHAR *string )
 
     q++; /* skip past colon */
     while (*q == ' ') q++;
-    len = lstrlenW( q );
+    len = (string + string_len) - q;
 
     if (!(header->value = malloc( (len + 1) * sizeof(WCHAR) )))
     {
@@ -467,15 +467,17 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
     p = buffer;
     do
     {
+        const WCHAR *end;
+
         if (!*p) break;
 
         for (q = p; *q && *q != '\r' && *q != '\n'; ++q)
             ;
-        *q++ = 0;
+        end = q;
         while (*q == '\r' || *q == '\n')
             ++q;
 
-        if ((header = parse_header( p )))
+        if ((header = parse_header( p, end - p )))
         {
             ret = process_header( request, header->field, header->value, flags, TRUE );
             free_header( header );
@@ -2559,6 +2561,7 @@ static DWORD read_reply( struct request *request )
     for (;;)
     {
         struct header *header;
+        int lenW;
 
         buflen = MAX_REPLY_LEN;
         if (read_line( request, buffer, &buflen )) return ERROR_SUCCESS;
@@ -2576,9 +2579,9 @@ static DWORD read_reply( struct request *request )
             memcpy( raw_headers + offset, L"\r\n", sizeof(L"\r\n") );
             break;
         }
-        MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
+        lenW = MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
 
-        if (!(header = parse_header( raw_headers + offset ))) break;
+        if (!(header = parse_header( raw_headers + offset, lenW - 1 ))) break;
         if ((ret = process_header( request, header->field, header->value, WINHTTP_ADDREQ_FLAG_ADD, FALSE )))
         {
             free_header( header );
