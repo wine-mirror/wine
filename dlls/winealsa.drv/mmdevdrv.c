@@ -746,7 +746,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     dump_fmt(fmt);
 
-    params.alsa_name = This->alsa_name;
+    params.device = This->alsa_name;
     params.flow = This->dataflow;
     params.share = mode;
     params.flags = flags;
@@ -870,7 +870,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
     if(fmt) dump_fmt(fmt);
 
-    params.alsa_name = This->alsa_name;
+    params.device = This->alsa_name;
     params.flow = This->dataflow;
     params.share = mode;
     params.fmt_in = fmt;
@@ -903,7 +903,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
-    params.alsa_name = This->alsa_name;
+    params.device = This->alsa_name;
     params.flow = This->dataflow;
     params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
     if(!params.fmt)
@@ -2455,7 +2455,7 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
         return E_NOINTERFACE;
     }
 
-    params.alsa_name = name;
+    params.device = name;
     params.flow = flow;
     params.guid = guid;
     params.prop = prop;

@@ -468,7 +468,7 @@ static WCHAR *alsa_get_card_name(int card)
     return ret;
 }
 
-static NTSTATUS get_endpoint_ids(void *args)
+static NTSTATUS alsa_get_endpoint_ids(void *args)
 {
     static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
     struct get_endpoint_ids_params *params = args;
@@ -775,7 +775,7 @@ static ULONG_PTR zero_bits(void)
 #endif
 }
 
-static NTSTATUS create_stream(void *args)
+static NTSTATUS alsa_create_stream(void *args)
 {
     struct create_stream_params *params = args;
     struct alsa_stream *stream;
@@ -792,7 +792,7 @@ static NTSTATUS create_stream(void *args)
         return STATUS_SUCCESS;
     }
 
-    params->result = alsa_open_device(params->alsa_name, params->flow, &stream->pcm_handle, &stream->hw_params);
+    params->result = alsa_open_device(params->device, params->flow, &stream->pcm_handle, &stream->hw_params);
     if(FAILED(params->result)){
         free(stream);
         return STATUS_SUCCESS;
@@ -1009,7 +1009,7 @@ exit:
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS release_stream(void *args)
+static NTSTATUS alsa_release_stream(void *args)
 {
     struct release_stream_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1505,7 +1505,7 @@ static int alsa_rewind_best_effort(struct alsa_stream *stream)
     return len;
 }
 
-static NTSTATUS start(void *args)
+static NTSTATUS alsa_start(void *args)
 {
     struct start_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1551,7 +1551,7 @@ static NTSTATUS start(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS stop(void *args)
+static NTSTATUS alsa_stop(void *args)
 {
     struct stop_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1569,7 +1569,7 @@ static NTSTATUS stop(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS reset(void *args)
+static NTSTATUS alsa_reset(void *args)
 {
     struct reset_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1604,7 +1604,7 @@ static NTSTATUS reset(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS timer_loop(void *args)
+static NTSTATUS alsa_timer_loop(void *args)
 {
     struct timer_loop_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1642,7 +1642,7 @@ static NTSTATUS timer_loop(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_render_buffer(void *args)
+static NTSTATUS alsa_get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1706,7 +1706,7 @@ static void alsa_wrap_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 wr
     }
 }
 
-static NTSTATUS release_render_buffer(void *args)
+static NTSTATUS alsa_release_render_buffer(void *args)
 {
     struct release_render_buffer_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1746,7 +1746,7 @@ static NTSTATUS release_render_buffer(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_capture_buffer(void *args)
+static NTSTATUS alsa_get_capture_buffer(void *args)
 {
     struct get_capture_buffer_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1807,7 +1807,7 @@ static NTSTATUS get_capture_buffer(void *args)
     return alsa_unlock_result(stream, &params->result, *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY);
 }
 
-static NTSTATUS release_capture_buffer(void *args)
+static NTSTATUS alsa_release_capture_buffer(void *args)
 {
     struct release_capture_buffer_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -1835,7 +1835,7 @@ static NTSTATUS release_capture_buffer(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS is_format_supported(void *args)
+static NTSTATUS alsa_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
     const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)params->fmt_in;
@@ -1869,7 +1869,7 @@ static NTSTATUS is_format_supported(void *args)
         return STATUS_SUCCESS;
     }
 
-    params->result = alsa_open_device(params->alsa_name, params->flow, &pcm_handle, &hw_params);
+    params->result = alsa_open_device(params->device, params->flow, &pcm_handle, &hw_params);
     if(FAILED(params->result))
         return STATUS_SUCCESS;
 
@@ -1974,7 +1974,7 @@ exit:
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_mix_format(void *args)
+static NTSTATUS alsa_get_mix_format(void *args)
 {
     struct get_mix_format_params *params = args;
     WAVEFORMATEXTENSIBLE *fmt = params->fmt;
@@ -1984,7 +1984,7 @@ static NTSTATUS get_mix_format(void *args)
     unsigned int max_rate, max_channels;
     int err;
 
-    params->result = alsa_open_device(params->alsa_name, params->flow, &pcm_handle, &hw_params);
+    params->result = alsa_open_device(params->device, params->flow, &pcm_handle, &hw_params);
     if(FAILED(params->result))
         return STATUS_SUCCESS;
 
@@ -2091,7 +2091,7 @@ exit:
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_buffer_size(void *args)
+static NTSTATUS alsa_get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2103,7 +2103,7 @@ static NTSTATUS get_buffer_size(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_latency(void *args)
+static NTSTATUS alsa_get_latency(void *args)
 {
     struct get_latency_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2124,7 +2124,7 @@ static NTSTATUS get_latency(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_current_padding(void *args)
+static NTSTATUS alsa_get_current_padding(void *args)
 {
     struct get_current_padding_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2137,7 +2137,7 @@ static NTSTATUS get_current_padding(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_next_packet_size(void *args)
+static NTSTATUS alsa_get_next_packet_size(void *args)
 {
     struct get_next_packet_size_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2149,7 +2149,7 @@ static NTSTATUS get_next_packet_size(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_frequency(void *args)
+static NTSTATUS alsa_get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2165,7 +2165,7 @@ static NTSTATUS get_frequency(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_position(void *args)
+static NTSTATUS alsa_get_position(void *args)
 {
     struct get_position_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2217,7 +2217,7 @@ static NTSTATUS get_position(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS set_volumes(void *args)
+static NTSTATUS alsa_set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2229,7 +2229,7 @@ static NTSTATUS set_volumes(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_event_handle(void *args)
+static NTSTATUS alsa_set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2249,7 +2249,7 @@ static NTSTATUS set_event_handle(void *args)
     return alsa_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS is_started(void *args)
+static NTSTATUS alsa_is_started(void *args)
 {
     struct is_started_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
@@ -2304,10 +2304,10 @@ enum AudioDeviceConnectionType {
     AudioDeviceConnectionType_USB
 };
 
-static NTSTATUS get_prop_value(void *args)
+static NTSTATUS alsa_get_prop_value(void *args)
 {
     struct get_prop_value_params *params = args;
-    const char *name = params->alsa_name;
+    const char *name = params->device;
     EDataFlow flow = params->flow;
     const GUID *guid = params->guid;
     const PROPERTYKEY *prop = params->prop;
@@ -2431,40 +2431,40 @@ static NTSTATUS get_prop_value(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    get_endpoint_ids,
-    create_stream,
-    release_stream,
-    start,
-    stop,
-    reset,
-    timer_loop,
-    get_render_buffer,
-    release_render_buffer,
-    get_capture_buffer,
-    release_capture_buffer,
-    is_format_supported,
-    get_mix_format,
-    get_buffer_size,
-    get_latency,
-    get_current_padding,
-    get_next_packet_size,
-    get_frequency,
-    get_position,
-    set_volumes,
-    set_event_handle,
-    is_started,
-    get_prop_value,
-    midi_release,
-    midi_out_message,
-    midi_in_message,
-    midi_notify_wait,
+    alsa_get_endpoint_ids,
+    alsa_create_stream,
+    alsa_release_stream,
+    alsa_start,
+    alsa_stop,
+    alsa_reset,
+    alsa_timer_loop,
+    alsa_get_render_buffer,
+    alsa_release_render_buffer,
+    alsa_get_capture_buffer,
+    alsa_release_capture_buffer,
+    alsa_is_format_supported,
+    alsa_get_mix_format,
+    alsa_get_buffer_size,
+    alsa_get_latency,
+    alsa_get_current_padding,
+    alsa_get_next_packet_size,
+    alsa_get_frequency,
+    alsa_get_position,
+    alsa_set_volumes,
+    alsa_set_event_handle,
+    alsa_is_started,
+    alsa_get_prop_value,
+    alsa_midi_release,
+    alsa_midi_out_message,
+    alsa_midi_in_message,
+    alsa_midi_notify_wait,
 };
 
 #ifdef _WIN64
 
 typedef UINT PTR32;
 
-static NTSTATUS wow64_get_endpoint_ids(void *args)
+static NTSTATUS alsa_wow64_get_endpoint_ids(void *args)
 {
     struct
     {
@@ -2481,7 +2481,7 @@ static NTSTATUS wow64_get_endpoint_ids(void *args)
         .endpoints = ULongToPtr(params32->endpoints),
         .size = params32->size
     };
-    get_endpoint_ids(&params);
+    alsa_get_endpoint_ids(&params);
     params32->size = params.size;
     params32->result = params.result;
     params32->num = params.num;
@@ -2489,11 +2489,11 @@ static NTSTATUS wow64_get_endpoint_ids(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_create_stream(void *args)
+static NTSTATUS alsa_wow64_create_stream(void *args)
 {
     struct
     {
-        PTR32 alsa_name;
+        PTR32 device;
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         DWORD flags;
@@ -2505,7 +2505,7 @@ static NTSTATUS wow64_create_stream(void *args)
     } *params32 = args;
     struct create_stream_params params =
     {
-        .alsa_name = ULongToPtr(params32->alsa_name),
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .share = params32->share,
         .flags = params32->flags,
@@ -2514,12 +2514,12 @@ static NTSTATUS wow64_create_stream(void *args)
         .fmt = ULongToPtr(params32->fmt),
         .stream = ULongToPtr(params32->stream)
     };
-    create_stream(&params);
+    alsa_create_stream(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_release_stream(void *args)
+static NTSTATUS alsa_wow64_release_stream(void *args)
 {
     struct
     {
@@ -2532,12 +2532,12 @@ static NTSTATUS wow64_release_stream(void *args)
         .stream = params32->stream,
         .timer_thread = ULongToHandle(params32->timer_thread)
     };
-    release_stream(&params);
+    alsa_release_stream(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_render_buffer(void *args)
+static NTSTATUS alsa_wow64_get_render_buffer(void *args)
 {
     struct
     {
@@ -2553,13 +2553,13 @@ static NTSTATUS wow64_get_render_buffer(void *args)
         .frames = params32->frames,
         .data = &data
     };
-    get_render_buffer(&params);
+    alsa_get_render_buffer(&params);
     params32->result = params.result;
     *(unsigned int *)ULongToPtr(params32->data) = PtrToUlong(data);
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_capture_buffer(void *args)
+static NTSTATUS alsa_wow64_get_capture_buffer(void *args)
 {
     struct
     {
@@ -2581,17 +2581,17 @@ static NTSTATUS wow64_get_capture_buffer(void *args)
         .devpos = ULongToPtr(params32->devpos),
         .qpcpos = ULongToPtr(params32->qpcpos)
     };
-    get_capture_buffer(&params);
+    alsa_get_capture_buffer(&params);
     params32->result = params.result;
     *(unsigned int *)ULongToPtr(params32->data) = PtrToUlong(data);
     return STATUS_SUCCESS;
 };
 
-static NTSTATUS wow64_is_format_supported(void *args)
+static NTSTATUS alsa_wow64_is_format_supported(void *args)
 {
     struct
     {
-        PTR32 alsa_name;
+        PTR32 device;
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
@@ -2600,38 +2600,38 @@ static NTSTATUS wow64_is_format_supported(void *args)
     } *params32 = args;
     struct is_format_supported_params params =
     {
-        .alsa_name = ULongToPtr(params32->alsa_name),
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
         .fmt_out = ULongToPtr(params32->fmt_out)
     };
-    is_format_supported(&params);
+    alsa_is_format_supported(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_mix_format(void *args)
+static NTSTATUS alsa_wow64_get_mix_format(void *args)
 {
     struct
     {
-        PTR32 alsa_name;
+        PTR32 device;
         EDataFlow flow;
         PTR32 fmt;
         HRESULT result;
     } *params32 = args;
     struct get_mix_format_params params =
     {
-        .alsa_name = ULongToPtr(params32->alsa_name),
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .fmt = ULongToPtr(params32->fmt)
     };
-    get_mix_format(&params);
+    alsa_get_mix_format(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_buffer_size(void *args)
+static NTSTATUS alsa_wow64_get_buffer_size(void *args)
 {
     struct
     {
@@ -2644,12 +2644,12 @@ static NTSTATUS wow64_get_buffer_size(void *args)
         .stream = params32->stream,
         .size = ULongToPtr(params32->size)
     };
-    get_buffer_size(&params);
+    alsa_get_buffer_size(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_latency(void *args)
+static NTSTATUS alsa_wow64_get_latency(void *args)
 {
     struct
     {
@@ -2662,12 +2662,12 @@ static NTSTATUS wow64_get_latency(void *args)
         .stream = params32->stream,
         .latency = ULongToPtr(params32->latency)
     };
-    get_latency(&params);
+    alsa_get_latency(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_current_padding(void *args)
+static NTSTATUS alsa_wow64_get_current_padding(void *args)
 {
     struct
     {
@@ -2680,12 +2680,12 @@ static NTSTATUS wow64_get_current_padding(void *args)
         .stream = params32->stream,
         .padding = ULongToPtr(params32->padding)
     };
-    get_current_padding(&params);
+    alsa_get_current_padding(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_next_packet_size(void *args)
+static NTSTATUS alsa_wow64_get_next_packet_size(void *args)
 {
     struct
     {
@@ -2698,12 +2698,12 @@ static NTSTATUS wow64_get_next_packet_size(void *args)
         .stream = params32->stream,
         .frames = ULongToPtr(params32->frames)
     };
-    get_next_packet_size(&params);
+    alsa_get_next_packet_size(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_frequency(void *args)
+static NTSTATUS alsa_wow64_get_frequency(void *args)
 {
     struct
     {
@@ -2716,12 +2716,12 @@ static NTSTATUS wow64_get_frequency(void *args)
         .stream = params32->stream,
         .freq = ULongToPtr(params32->freq)
     };
-    get_frequency(&params);
+    alsa_get_frequency(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_position(void *args)
+static NTSTATUS alsa_wow64_get_position(void *args)
 {
     struct
     {
@@ -2736,12 +2736,12 @@ static NTSTATUS wow64_get_position(void *args)
         .pos = ULongToPtr(params32->pos),
         .qpctime = ULongToPtr(params32->qpctime)
     };
-    get_position(&params);
+    alsa_get_position(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_set_volumes(void *args)
+static NTSTATUS alsa_wow64_set_volumes(void *args)
 {
     struct
     {
@@ -2757,10 +2757,10 @@ static NTSTATUS wow64_set_volumes(void *args)
         .volumes = ULongToPtr(params32->volumes),
         .session_volumes = ULongToPtr(params32->session_volumes)
     };
-    return set_volumes(&params);
+    return alsa_set_volumes(&params);
 }
 
-static NTSTATUS wow64_set_event_handle(void *args)
+static NTSTATUS alsa_wow64_set_event_handle(void *args)
 {
     struct
     {
@@ -2774,12 +2774,12 @@ static NTSTATUS wow64_set_event_handle(void *args)
         .event = ULongToHandle(params32->event)
     };
 
-    set_event_handle(&params);
+    alsa_set_event_handle(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_prop_value(void *args)
+static NTSTATUS alsa_wow64_get_prop_value(void *args)
 {
     struct propvariant32
     {
@@ -2794,7 +2794,7 @@ static NTSTATUS wow64_get_prop_value(void *args)
     } *value32;
     struct
     {
-        PTR32 alsa_name;
+        PTR32 device;
         EDataFlow flow;
         PTR32 guid;
         PTR32 prop;
@@ -2806,7 +2806,7 @@ static NTSTATUS wow64_get_prop_value(void *args)
     PROPVARIANT value;
     struct get_prop_value_params params =
     {
-        .alsa_name = ULongToPtr(params32->alsa_name),
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .guid = ULongToPtr(params32->guid),
         .prop = ULongToPtr(params32->prop),
@@ -2814,7 +2814,7 @@ static NTSTATUS wow64_get_prop_value(void *args)
         .buffer = ULongToPtr(params32->buffer),
         .buffer_size = ULongToPtr(params32->buffer_size)
     };
-    get_prop_value(&params);
+    alsa_get_prop_value(&params);
     params32->result = params.result;
     if (SUCCEEDED(params.result))
     {
@@ -2837,33 +2837,33 @@ static NTSTATUS wow64_get_prop_value(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    wow64_get_endpoint_ids,
-    wow64_create_stream,
-    wow64_release_stream,
-    start,
-    stop,
-    reset,
-    timer_loop,
-    wow64_get_render_buffer,
-    release_render_buffer,
-    wow64_get_capture_buffer,
-    release_capture_buffer,
-    wow64_is_format_supported,
-    wow64_get_mix_format,
-    wow64_get_buffer_size,
-    wow64_get_latency,
-    wow64_get_current_padding,
-    wow64_get_next_packet_size,
-    wow64_get_frequency,
-    wow64_get_position,
-    wow64_set_volumes,
-    wow64_set_event_handle,
-    is_started,
-    wow64_get_prop_value,
-    midi_release,
-    wow64_midi_out_message,
-    wow64_midi_in_message,
-    wow64_midi_notify_wait,
+    alsa_wow64_get_endpoint_ids,
+    alsa_wow64_create_stream,
+    alsa_wow64_release_stream,
+    alsa_start,
+    alsa_stop,
+    alsa_reset,
+    alsa_timer_loop,
+    alsa_wow64_get_render_buffer,
+    alsa_release_render_buffer,
+    alsa_wow64_get_capture_buffer,
+    alsa_release_capture_buffer,
+    alsa_wow64_is_format_supported,
+    alsa_wow64_get_mix_format,
+    alsa_wow64_get_buffer_size,
+    alsa_wow64_get_latency,
+    alsa_wow64_get_current_padding,
+    alsa_wow64_get_next_packet_size,
+    alsa_wow64_get_frequency,
+    alsa_wow64_get_position,
+    alsa_wow64_set_volumes,
+    alsa_wow64_set_event_handle,
+    alsa_is_started,
+    alsa_wow64_get_prop_value,
+    alsa_midi_release,
+    alsa_wow64_midi_out_message,
+    alsa_wow64_midi_in_message,
+    alsa_wow64_midi_notify_wait,
 };
 
 #endif /* _WIN64 */

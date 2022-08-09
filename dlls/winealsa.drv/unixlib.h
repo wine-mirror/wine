@@ -38,7 +38,7 @@ struct get_endpoint_ids_params
 
 struct create_stream_params
 {
-    const char *alsa_name;
+    const char *device;
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
     DWORD flags;
@@ -115,7 +115,7 @@ struct release_capture_buffer_params
 
 struct is_format_supported_params
 {
-    const char *alsa_name;
+    const char *device;
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
     const WAVEFORMATEX *fmt_in;
@@ -125,7 +125,7 @@ struct is_format_supported_params
 
 struct get_mix_format_params
 {
-    const char *alsa_name;
+    const char *device;
     EDataFlow flow;
     WAVEFORMATEXTENSIBLE *fmt;
     HRESULT result;
@@ -197,7 +197,7 @@ struct is_started_params
 
 struct get_prop_value_params
 {
-    const char *alsa_name;
+    const char *device;
     EDataFlow flow;
     const GUID *guid;
     const PROPERTYKEY *prop;
@@ -248,48 +248,48 @@ struct midi_notify_wait_params
     struct notify_context *notify;
 };
 
-enum alsa_funcs
+enum unix_funcs
 {
-    alsa_get_endpoint_ids,
-    alsa_create_stream,
-    alsa_release_stream,
-    alsa_start,
-    alsa_stop,
-    alsa_reset,
-    alsa_timer_loop,
-    alsa_get_render_buffer,
-    alsa_release_render_buffer,
-    alsa_get_capture_buffer,
-    alsa_release_capture_buffer,
-    alsa_is_format_supported,
-    alsa_get_mix_format,
-    alsa_get_buffer_size,
-    alsa_get_latency,
-    alsa_get_current_padding,
-    alsa_get_next_packet_size,
-    alsa_get_frequency,
-    alsa_get_position,
-    alsa_set_volumes,
-    alsa_set_event_handle,
-    alsa_is_started,
-    alsa_get_prop_value,
-    alsa_midi_release,
-    alsa_midi_out_message,
-    alsa_midi_in_message,
-    alsa_midi_notify_wait,
+    get_endpoint_ids,
+    create_stream,
+    release_stream,
+    start,
+    stop,
+    reset,
+    timer_loop,
+    get_render_buffer,
+    release_render_buffer,
+    get_capture_buffer,
+    release_capture_buffer,
+    is_format_supported,
+    get_mix_format,
+    get_buffer_size,
+    get_latency,
+    get_current_padding,
+    get_next_packet_size,
+    get_frequency,
+    get_position,
+    set_volumes,
+    set_event_handle,
+    is_started,
+    get_prop_value,
+    midi_release,
+    midi_out_message,
+    midi_in_message,
+    midi_notify_wait,
 };
 
-NTSTATUS midi_release(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_midi_release(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 
 #ifdef _WIN64
-NTSTATUS wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 #endif
 
 extern unixlib_handle_t alsa_handle;
 
-#define ALSA_CALL(func, params) __wine_unix_call(alsa_handle, alsa_ ## func, params)
+#define ALSA_CALL(func, params) __wine_unix_call(alsa_handle, func, params)
