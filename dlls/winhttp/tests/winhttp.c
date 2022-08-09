@@ -2529,6 +2529,18 @@ static DWORD CALLBACK server_thread(LPVOID param)
             send(c, page1, sizeof page1 - 1, 0);
             last_request = 1;
         }
+        if (strstr(buffer, "POST /bad_headers"))
+        {
+            ok(!!strstr(buffer, "Content-Type: text/html\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            todo_wine ok(!!strstr(buffer, "Test1: Value1\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            todo_wine ok(!!strstr(buffer, "Test2: Value2\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Test3: Value3\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Test4: Value4\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Test5: Value5\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Test6: Value6\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Cookie: 111\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            send(c, okmsg, sizeof(okmsg) - 1, 0);
+        }
         shutdown(c, 2);
         closesocket(c);
         c = -1;
@@ -3597,7 +3609,31 @@ static void test_bad_header( int port )
     WCHAR buffer[32];
     HINTERNET ses, con, req;
     DWORD index, len;
+    unsigned int i;
     BOOL ret;
+
+    static const WCHAR bad_headers[] =
+        L"Content-Type: text/html\n\r"
+        L"Test1: Value1\n"
+        L"Test2: Value2\n\n\n"
+        L"Test3: Value3\r\r\r"
+        L"Test4: Value4\r\n\r\n"
+        L"Cookie: 111";
+
+    static const struct
+    {
+        const WCHAR *header;
+        const WCHAR *value;
+    }
+    header_tests[] =
+    {
+        {L"Content-Type", L"text/html"},
+        {L"Test1", L"Value1"},
+        {L"Test2", L"Value2"},
+        {L"Test3", L"Value3"},
+        {L"Test4", L"Value4"},
+        {L"Cookie", L"111"},
+    };
 
     ses = WinHttpOpen( L"winetest", WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
     ok( ses != NULL, "failed to open session %lu\n", GetLastError() );
@@ -3605,29 +3641,33 @@ static void test_bad_header( int port )
     con = WinHttpConnect( ses, L"localhost", port, 0 );
     ok( con != NULL, "failed to open a connection %lu\n", GetLastError() );
 
-    req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, L"POST", L"/bad_headers", NULL, NULL, NULL, 0 );
     ok( req != NULL, "failed to open a request %lu\n", GetLastError() );
 
-    ret = WinHttpAddRequestHeaders( req, L"Content-Type: text/html\n\rContent-Length:6\rCookie:111", ~0u, WINHTTP_ADDREQ_FLAG_ADD );
+    ret = WinHttpAddRequestHeaders( req, bad_headers, ~0u, WINHTTP_ADDREQ_FLAG_ADD );
     ok( ret, "failed to add header %lu\n", GetLastError() );
 
-    index = 0;
-    buffer[0] = 0;
-    len = sizeof(buffer);
-    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM|WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
-                               L"Content-Type", buffer, &len, &index );
-    ok( ret, "failed to query headers %lu\n", GetLastError() );
-    ok( !lstrcmpW( buffer, L"text/html" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( index == 1, "index = %lu\n", index );
+    for (i = 0; i < ARRAY_SIZE(header_tests); ++i)
+    {
+        index = 0;
+        buffer[0] = 0;
+        len = sizeof(buffer);
+        ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                                   header_tests[i].header, buffer, &len, &index );
+        todo_wine_if (i >= 1 && i <= 3)
+        {
+            ok( ret, "header %s: failed to query headers %lu\n", debugstr_w(header_tests[i].header), GetLastError() );
+            ok( !wcscmp( buffer, header_tests[i].value ), "header %s: got %s\n",
+                debugstr_w(header_tests[i].header), debugstr_w(buffer) );
+            ok( index == 1, "header %s: index = %lu\n", debugstr_w(header_tests[i].header), index );
+        }
+    }
 
-    index = 0;
-    buffer[0] = 0;
-    len = sizeof(buffer);
-    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM|WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
-                               L"Cookie", buffer, &len, &index );
-    ok( ret, "failed to query headers %lu\n", GetLastError() );
-    ok( !lstrcmpW( buffer, L"111" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( index == 1, "index = %lu\n", index );
+    ret = WinHttpSendRequest( req, L"Test5: Value5\rTest6: Value6", ~0u, NULL, 0, 0, 0 );
+    ok( ret, "failed to send request %lu\n", GetLastError() );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "failed to receive response %lu\n", GetLastError() );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
