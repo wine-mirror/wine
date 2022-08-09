@@ -1573,9 +1573,9 @@ BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
     TRACE_(key)("keyc 0x%04x modifiers 0x%08x -> %d\n", keyc, modifiers, ret);
 
     if (ret == MACDRV_HOTKEY_ALREADY_REGISTERED)
-        SetLastError(ERROR_HOTKEY_ALREADY_REGISTERED);
+        RtlSetLastWin32Error(ERROR_HOTKEY_ALREADY_REGISTERED);
     else if (ret != MACDRV_HOTKEY_SUCCESS)
-        SetLastError(ERROR_GEN_FAILURE);
+        RtlSetLastWin32Error(ERROR_GEN_FAILURE);
 
     return ret == MACDRV_HOTKEY_SUCCESS;
 }

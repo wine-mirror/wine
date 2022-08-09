@@ -1133,7 +1133,7 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
 failed:
     TRACE("mode %d -- not present\n", mode);
     if (displays) macdrv_free_displays(displays);
-    SetLastError(ERROR_NO_MORE_FILES);
+    RtlSetLastWin32Error(ERROR_NO_MORE_FILES);
     return FALSE;
 }
 

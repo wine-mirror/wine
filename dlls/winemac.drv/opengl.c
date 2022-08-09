@@ -1384,7 +1384,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     if (!pf)
     {
         ERR("Invalid pixel format %d, expect problems!\n", context->format);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
         return FALSE;
     }
 
@@ -1474,7 +1474,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     if (err != kCGLNoError || !pix)
     {
         WARN("CGLChoosePixelFormat() failed with error %d %s\n", err, CGLErrorString(err));
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return FALSE;
     }
 
@@ -1484,7 +1484,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     {
         context->cglcontext = NULL;
         WARN("CGLCreateContext() failed with error %d %s\n", err, CGLErrorString(err));
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return FALSE;
     }
 
@@ -1508,7 +1508,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     if (!context->context)
     {
         WARN("macdrv_create_opengl_context() failed\n");
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return FALSE;
     }
     context->major = major;
@@ -2319,7 +2319,7 @@ static BOOL macdrv_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffer)
 
     if (pbuffer->no_texture)
     {
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return GL_FALSE;
     }
 
@@ -2358,12 +2358,12 @@ static BOOL macdrv_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffer)
         case WGL_AUX8_ARB:
         case WGL_AUX9_ARB:
             FIXME("unsupported source buffer 0x%x\n", iBuffer);
-            SetLastError(ERROR_INVALID_DATA);
+            RtlSetLastWin32Error(ERROR_INVALID_DATA);
             return GL_FALSE;
 
         default:
             WARN("unknown source buffer 0x%x\n", iBuffer);
-            SetLastError(ERROR_INVALID_DATA);
+            RtlSetLastWin32Error(ERROR_INVALID_DATA);
             return GL_FALSE;
     }
 
@@ -2371,7 +2371,7 @@ static BOOL macdrv_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffer)
     if (err != kCGLNoError)
     {
         WARN("CGLTexImagePBuffer failed with err %d %s\n", err, CGLErrorString(err));
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return GL_FALSE;
     }
 
@@ -2724,7 +2724,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
     if (!is_valid_pixel_format(format))
     {
         ERR("Invalid pixel format %d, expect problems!\n", format);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
 
@@ -2761,7 +2761,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
                     value != WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
                 {
                     WARN("WGL_CONTEXT_PROFILE_MASK_ARB bits %#x invalid\n", value);
-                    SetLastError(ERROR_INVALID_PROFILE_ARB);
+                    RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
                     return NULL;
                 }
                 profile = value;
@@ -2777,7 +2777,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
                 if (err != kCGLNoError)
                 {
                     WARN("CGLQueryRendererInfo failed: %d %s\n", err, CGLErrorString(err));
-                    SetLastError(ERROR_GEN_FAILURE);
+                    RtlSetLastWin32Error(ERROR_GEN_FAILURE);
                     return NULL;
                 }
 
@@ -2787,7 +2787,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
                 {
                     WARN("WGL_RENDERER_ID_WINE renderer %d exceeds count (%d)\n", value, renderer_count);
                     CGLDestroyRendererInfo(renderer_info);
-                    SetLastError(ERROR_INVALID_PARAMETER);
+                    RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
                     return NULL;
                 }
 
@@ -2795,7 +2795,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
                 {
                     WARN("WGL_RENDERER_ID_WINE failed to get ID of renderer %d\n", value);
                     CGLDestroyRendererInfo(renderer_info);
-                    SetLastError(ERROR_GEN_FAILURE);
+                    RtlSetLastWin32Error(ERROR_GEN_FAILURE);
                     return NULL;
                 }
 
@@ -2804,7 +2804,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
                 if (renderer_id && temp != renderer_id)
                 {
                     WARN("WGL_RENDERER_ID_WINE requested two different renderers (0x%08x vs. 0x%08x)\n", renderer_id, temp);
-                    SetLastError(ERROR_INVALID_PARAMETER);
+                    RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
                     return NULL;
                 }
                 renderer_id = temp;
@@ -2813,7 +2813,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
 
             default:
                 WARN("Unknown attribute %s.\n", debugstr_attrib(attr, value));
-                SetLastError(ERROR_INVALID_PARAMETER);
+                RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
                 return NULL;
         }
     }
@@ -2824,13 +2824,13 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
         if (!(flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
         {
             WARN("OS X only supports forward-compatible 3.2+ contexts\n");
-            SetLastError(ERROR_INVALID_VERSION_ARB);
+            RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
             return NULL;
         }
         if (profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
         {
             WARN("Compatibility profiles for GL version >= 3.2 not supported\n");
-            SetLastError(ERROR_INVALID_PROFILE_ARB);
+            RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
             return NULL;
         }
         if (major > gl_info.max_major ||
@@ -2838,7 +2838,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
         {
             WARN("This GL implementation does not support the requested GL version %u.%u\n",
                  major, minor);
-            SetLastError(ERROR_INVALID_PROFILE_ARB);
+            RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
             return NULL;
         }
         core = TRUE;
@@ -2846,20 +2846,20 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
     else if (major >= 3)
     {
         WARN("Profile version %u.%u not supported\n", major, minor);
-        SetLastError(ERROR_INVALID_VERSION_ARB);
+        RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
         return NULL;
     }
     else if (major < 1 || (major == 1 && (minor < 0 || minor > 5)) ||
              (major == 2 && (minor < 0 || minor > 1)))
     {
         WARN("Invalid GL version requested\n");
-        SetLastError(ERROR_INVALID_VERSION_ARB);
+        RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
         return NULL;
     }
     if (!core && flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
     {
         WARN("Forward compatible context requested for GL version < 3\n");
-        SetLastError(ERROR_INVALID_VERSION_ARB);
+        RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
         return NULL;
     }
 
@@ -2900,7 +2900,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
     if (!is_valid_pixel_format(iPixelFormat) || !pixel_formats[iPixelFormat - 1].pbuffer)
     {
         WARN("invalid pixel format %d\n", iPixelFormat);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
 
@@ -2935,7 +2935,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
                         break;
                     default:
                         WARN("unknown WGL_TEXTURE_FORMAT_ARB value 0x%x\n", value);
-                        SetLastError(ERROR_INVALID_DATA);
+                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
                         goto done;
                 }
                 break;
@@ -2955,7 +2955,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
                         break;
                     case WGL_TEXTURE_1D_ARB:
                         FIXME("WGL_TEXTURE_TARGET_ARB: WGL_TEXTURE_1D_ARB; not supported\n");
-                        SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+                        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
                         goto done;
                     case WGL_TEXTURE_2D_ARB:
                         TRACE("WGL_TEXTURE_TARGET_ARB: WGL_TEXTURE_2D_ARB\n");
@@ -2967,7 +2967,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
                         break;
                     default:
                         WARN("unknown WGL_TEXTURE_TARGET_ARB value 0x%x\n", value);
-                        SetLastError(ERROR_INVALID_DATA);
+                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
                         goto done;
                 }
                 break;
@@ -2988,7 +2988,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
 
             default:
                 WARN("unknown attribute 0x%x\n", attr);
-                SetLastError(ERROR_INVALID_DATA);
+                RtlSetLastWin32Error(ERROR_INVALID_DATA);
                 goto done;
         }
     }
@@ -3007,9 +3007,9 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
         WARN("CGLCreatePBuffer failed; err %d %s\n", err, CGLErrorString(err));
         pbuffer->pbuffer = NULL;
         if (err == kCGLBadAlloc)
-            SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+            RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
         else
-            SetLastError(ERROR_INVALID_DATA);
+            RtlSetLastWin32Error(ERROR_INVALID_DATA);
     }
 
 done:
@@ -3120,7 +3120,7 @@ static BOOL macdrv_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int i
     if (!pf)
     {
         WARN("invalid pixel format %d\n", iPixelFormat);
-        SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
         return GL_FALSE;
     }
 
@@ -3501,14 +3501,14 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         {
             WARN("no pixel format set\n");
             release_win_data(data);
-            SetLastError(ERROR_INVALID_HANDLE);
+            RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
             return FALSE;
         }
         if (context->format != data->pixel_format)
         {
             WARN("mismatched pixel format draw_hdc %p %u context %p %u\n", draw_hdc, data->pixel_format, context, context->format);
             release_win_data(data);
-            SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+            RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
             return FALSE;
         }
 
@@ -3534,7 +3534,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
             {
                 WARN("mismatched pixel format draw_hdc %p %u context %p %u\n", draw_hdc, pbuffer->format, context, context->format);
                 pthread_mutex_unlock(&dc_pbuffers_mutex);
-                SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+                RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
                 return FALSE;
             }
 
@@ -3545,7 +3545,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         {
             WARN("no window or pbuffer for DC\n");
             pthread_mutex_unlock(&dc_pbuffers_mutex);
-            SetLastError(ERROR_INVALID_HANDLE);
+            RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
             return FALSE;
         }
 
@@ -3730,7 +3730,7 @@ static BOOL macdrv_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int iAttribut
     if (err != kCGLNoError)
     {
         WARN("CGLDescribePBuffer failed; error %d %s\n", err, CGLErrorString(err));
-        SetLastError(ERROR_INVALID_HANDLE);
+        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
 
@@ -3809,7 +3809,7 @@ static BOOL macdrv_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int iAttribut
             break;
         default:
             WARN("invalid attribute 0x%x\n", iAttribute);
-            SetLastError(ERROR_INVALID_DATA);
+            RtlSetLastWin32Error(ERROR_INVALID_DATA);
             return GL_FALSE;
     }
 
@@ -3954,7 +3954,7 @@ static BOOL macdrv_wglReleaseTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffe
 
     if (pbuffer->no_texture)
     {
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return GL_FALSE;
     }
 
@@ -3962,7 +3962,7 @@ static BOOL macdrv_wglReleaseTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffe
     if (err != kCGLNoError)
     {
         WARN("CGLTexImagePBuffer failed with err %d %s\n", err, CGLErrorString(err));
-        SetLastError(ERROR_INVALID_OPERATION);
+        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
         return GL_FALSE;
     }
 
@@ -4020,13 +4020,13 @@ static BOOL macdrv_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const int
                         break;
                     default:
                         WARN("unknown WGL_CUBE_MAP_FACE_ARB value 0x%x\n", value);
-                        SetLastError(ERROR_INVALID_DATA);
+                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
                         return GL_FALSE;
                 }
                 break;
             default:
                 WARN("invalid attribute 0x%x\n", attr);
-                SetLastError(ERROR_INVALID_DATA);
+                RtlSetLastWin32Error(ERROR_INVALID_DATA);
                 return GL_FALSE;
         }
     }
@@ -4063,7 +4063,7 @@ static BOOL macdrv_wglSwapIntervalEXT(int interval)
 
     if (interval < 0)
     {
-        SetLastError(ERROR_INVALID_DATA);
+        RtlSetLastWin32Error(ERROR_INVALID_DATA);
         return FALSE;
     }
     if (interval > 1)
@@ -4089,7 +4089,7 @@ static BOOL macdrv_wglSwapIntervalEXT(int interval)
     InterlockedExchange(&context->update_swap_interval, FALSE);
     if (!set_swap_interval(context, interval))
     {
-        SetLastError(ERROR_GEN_FAILURE);
+        RtlSetLastWin32Error(ERROR_GEN_FAILURE);
         return FALSE;
     }
 
@@ -4554,7 +4554,7 @@ static BOOL WINAPI macdrv_wglSwapBuffers(HDC hdc)
 
         if (!(data = get_win_data(hwnd)))
         {
-            SetLastError(ERROR_INVALID_HANDLE);
+            RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
             return FALSE;
         }
 
@@ -4573,7 +4573,7 @@ static BOOL WINAPI macdrv_wglSwapBuffers(HDC hdc)
 
         if (!pbuffer)
         {
-            SetLastError(ERROR_INVALID_HANDLE);
+            RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
             return FALSE;
         }
 
