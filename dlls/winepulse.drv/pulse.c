@@ -1203,10 +1203,10 @@ static NTSTATUS pulse_release_stream(void *args)
     struct pulse_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
-    if(params->timer) {
+    if(params->timer_thread) {
         stream->please_quit = TRUE;
-        NtWaitForSingleObject(params->timer, FALSE, NULL);
-        NtClose(params->timer);
+        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
+        NtClose(params->timer_thread);
     }
 
     pulse_lock();
@@ -2451,13 +2451,13 @@ static NTSTATUS pulse_wow64_release_stream(void *args)
     struct
     {
         stream_handle stream;
-        PTR32 timer;
+        PTR32 timer_thread;
         HRESULT result;
     } *params32 = args;
     struct release_stream_params params =
     {
         .stream = params32->stream,
-        .timer = ULongToHandle(params32->timer)
+        .timer_thread = ULongToHandle(params32->timer_thread)
     };
     pulse_release_stream(&params);
     params32->result = params.result;

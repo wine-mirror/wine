@@ -229,8 +229,8 @@ static void pulse_call(enum unix_funcs code, void *params)
 static void pulse_release_stream(stream_handle stream, HANDLE timer)
 {
     struct release_stream_params params;
-    params.stream = stream;
-    params.timer  = timer;
+    params.stream       = stream;
+    params.timer_thread = timer;
     pulse_call(release_stream, &params);
 }
 

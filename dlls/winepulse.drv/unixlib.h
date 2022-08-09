@@ -68,7 +68,7 @@ struct create_stream_params
 struct release_stream_params
 {
     stream_handle stream;
-    HANDLE timer;
+    HANDLE timer_thread;
     HRESULT result;
 };
 
