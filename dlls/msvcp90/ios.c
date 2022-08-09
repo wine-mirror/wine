@@ -3262,8 +3262,13 @@ FILE* __cdecl _Fiopen(const char *name, int mode, int prot)
 
     TRACE("(%s %d %d)\n", name, mode, prot);
 
+#if _MSVCP_VER >= 71 && _MSVCP_VER <= 90
     if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
         return NULL;
+#else
+    if(!MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, FILENAME_MAX-1))
+        return NULL;
+#endif
     return _Fiopen_wchar(nameW, mode, prot);
 }
 
