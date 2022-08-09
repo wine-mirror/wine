@@ -28,6 +28,7 @@
 #include "shlwapi.h"
 #include "wininet.h"
 #include "intshcut.h"
+#include "winternl.h"
 
 static const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
@@ -418,7 +419,20 @@ static struct
     { L"file://fo%20o%5Ca/bar", L"file://fo o\\a/bar" },
     { L"file://%24%25foobar", L"file://$%foobar" },
     { L"file:///C:/Program Files", L"file:///C:/Program Files" },
+    { L"file:///C:/Program Files", L"file:///C:/Program Files", URL_UNESCAPE_AS_UTF8 },
     { L"file:///C:/Program%20Files", L"file:///C:/Program Files" },
+    { L"file:///C:/Program%20Files", L"file:///C:/Program Files", URL_UNESCAPE_AS_UTF8 },
+    { L"file://foo/%E4%B8%AD%E6%96%87/bar", L"file://foo/\xe4\xb8\xad\xe6\x96\x87/bar" }, /* with 3 btyes utf-8 */
+    { L"file://foo/%E4%B8%AD%E6%96%87/bar", L"file://foo/\x4e2d\x6587/bar", URL_UNESCAPE_AS_UTF8 },
+    /* mix corrupt and good utf-8 */
+    { L"file://foo/%E4%AD%E6%96%87/bar", L"file://foo/\xfffd\x6587/bar", URL_UNESCAPE_AS_UTF8 },
+    { L"file://foo/%F0%9F%8D%B7/bar", L"file://foo/\xf0\x9f\x8d\xb7/bar" }, /* with 4 btyes utf-8 */
+    { L"file://foo/%F0%9F%8D%B7/bar", L"file://foo/\xd83c\xdf77/bar", URL_UNESCAPE_AS_UTF8 },
+    /* non-escaped chars between multi-byte escaped chars */
+    { L"file://foo/%E4%B8%ADabc%E6%96%87/bar", L"file://foo/\x4e2d""abc""\x6587/bar", URL_UNESCAPE_AS_UTF8 },
+    { L"file://foo/%E4B8%AD/bar", L"file://foo/\xfffd""B8\xfffd/bar", URL_UNESCAPE_AS_UTF8 },
+    { L"file://foo/%E4%G8%AD/bar", L"file://foo/\xfffd""%G8\xfffd/bar", URL_UNESCAPE_AS_UTF8 },
+    { L"file://foo/%G4%B8%AD/bar", L"file://foo/%G4\xfffd\xfffd/bar", URL_UNESCAPE_AS_UTF8 },
 };
 
 static const  struct {
@@ -1406,6 +1420,7 @@ static void test_UrlUnescape(void)
     WCHAR urlW[INTERNET_MAX_URL_LENGTH], bufferW[INTERNET_MAX_URL_LENGTH];
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     DWORD dwEscaped, unescaped;
+    BOOL utf8_support = TRUE;
     static char inplace[] = "file:///C:/Program%20Files";
     static char another_inplace[] = "file:///C:/Program%20Files";
     static const char expected[] = "file:///C:/Program Files";
@@ -1429,8 +1444,21 @@ static void test_UrlUnescape(void)
         ok(strcmp(szReturnUrl,"")==0, "Expected empty string\n");
     }
 
+    unescaped = INTERNET_MAX_URL_LENGTH;
+    lstrcpyW(urlW, L"%F0%9F%8D%B7");
+    res = UrlUnescapeW(urlW, NULL, &unescaped, URL_UNESCAPE_AS_UTF8 | URL_UNESCAPE_INPLACE);
+    ok(res == S_OK, "Got %#lx.\n", res);
+    if (!wcscmp(urlW, L"\xf0\x9f\x8d\xb7"))
+    {
+        utf8_support = FALSE;
+        win_skip("Skip URL_UNESCAPE_AS_UTF8 tests for pre-win7 systems.\n");
+    }
+
     for (i = 0; i < ARRAYSIZE(TEST_URL_UNESCAPEW); i++)
     {
+        if (TEST_URL_UNESCAPEW[i].flags & URL_UNESCAPE_AS_UTF8 && !utf8_support)
+            continue;
+
         lstrcpyW(urlW, TEST_URL_UNESCAPEW[i].url);
 
         memset(bufferW, 0xff, sizeof(bufferW));
