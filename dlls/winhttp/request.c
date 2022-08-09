@@ -455,23 +455,20 @@ DWORD process_header( struct request *request, const WCHAR *field, const WCHAR *
 DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD len, DWORD flags )
 {
     DWORD ret = ERROR_WINHTTP_INVALID_HEADER;
-    WCHAR *buffer, *p, *q;
     struct header *header;
+    const WCHAR *p, *q;
 
     if (len == ~0u) len = lstrlenW( headers );
     if (!len) return ERROR_SUCCESS;
-    if (!(buffer = malloc( (len + 1) * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-    memcpy( buffer, headers, len * sizeof(WCHAR) );
-    buffer[len] = 0;
 
-    p = buffer;
+    p = headers;
     do
     {
         const WCHAR *end;
 
-        if (!*p) break;
+        if (p >= headers + len) break;
 
-        for (q = p; *q && *q != '\r' && *q != '\n'; ++q)
+        for (q = p; q < headers + len && *q != '\r' && *q != '\n'; ++q)
             ;
         end = q;
         while (*q == '\r' || *q == '\n')
@@ -485,7 +482,6 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
         p = q;
     } while (!ret);
 
-    free( buffer );
     return ret;
 }
 
