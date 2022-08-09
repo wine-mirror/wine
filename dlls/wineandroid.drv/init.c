@@ -312,7 +312,7 @@ BOOL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, D
     if (n > 0)
     {
         TRACE( "mode %d -- not present\n", n );
-        SetLastError( ERROR_NO_MORE_FILES );
+        RtlSetLastWin32Error( ERROR_NO_MORE_FILES );
         return FALSE;
     }
 

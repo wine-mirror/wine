@@ -363,7 +363,7 @@ static BOOL android_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct
             goto done;
         }
     }
-    SetLastError( ERROR_INVALID_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 
 done:
     release_gl_drawable( read_gl );
@@ -382,7 +382,7 @@ static BOOL android_wglSwapIntervalEXT( int interval )
 
     if (interval < 0)
     {
-        SetLastError(ERROR_INVALID_DATA);
+        RtlSetLastWin32Error( ERROR_INVALID_DATA );
         return FALSE;
     }
 
@@ -391,7 +391,7 @@ static BOOL android_wglSwapIntervalEXT( int interval )
     if (ret)
         swap_interval = interval;
     else
-        SetLastError( ERROR_DC_NOT_FOUND );
+        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
 
     return ret;
 }
@@ -553,7 +553,7 @@ static BOOL WINAPI android_wglMakeCurrent( HDC hdc, struct wgl_context *ctx )
             goto done;
         }
     }
-    SetLastError( ERROR_INVALID_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 
 done:
     release_gl_drawable( gl );
