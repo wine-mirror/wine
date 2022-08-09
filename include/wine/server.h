@@ -57,7 +57,7 @@ extern NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int acce
 static inline unsigned int wine_server_call_err( void *req_ptr )
 {
     unsigned int res = wine_server_call( req_ptr );
-    if (res) SetLastError( RtlNtStatusToDosError(res) );
+    if (res) RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
     return res;
 }
 
