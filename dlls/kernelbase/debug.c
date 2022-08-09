@@ -1575,7 +1575,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryFullProcessImageNameW( HANDLE process, DWORD 
 
     if (status) goto cleanup;
 
-    if (flags & PROCESS_NAME_NATIVE)
+    if (flags & PROCESS_NAME_NATIVE && result->Length > 2 * sizeof(WCHAR))
     {
         WCHAR drive[3];
         WCHAR device[1024];
