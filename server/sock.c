@@ -3468,11 +3468,19 @@ DECL_HANDLER(recv_socket)
          * asyncs will not consume all available data; if there's no data
          * available, the current request won't be immediately satiable.
          */
-        if (check_fd_events( sock->fd, req->oob && !is_oobinline( sock ) ? POLLPRI : POLLIN ))
+        if ((!req->force_async && sock->nonblocking) ||
+            check_fd_events( sock->fd, req->oob && !is_oobinline( sock ) ? POLLPRI : POLLIN ))
         {
             /* Give the client opportunity to complete synchronously.
              * If it turns out that the I/O request is not actually immediately satiable,
-             * the client may then choose to re-queue the async (with STATUS_PENDING). */
+             * the client may then choose to re-queue the async (with STATUS_PENDING).
+             *
+             * Note: If the nonblocking flag is set, we don't poll the socket
+             * here and always opt for synchronous completion first.  This is
+             * because the application has probably seen POLLIN already from a
+             * preceding select()/poll() call before it requested to receive
+             * data.
+             */
             status = STATUS_ALERTED;
         }
     }
@@ -3564,11 +3572,27 @@ DECL_HANDLER(send_socket)
          * asyncs will not consume all available space; if there's no space
          * available, the current request won't be immediately satiable.
          */
-        if (check_fd_events( sock->fd, POLLOUT ))
+        if ((!req->force_async && sock->nonblocking) || check_fd_events( sock->fd, POLLOUT ))
         {
             /* Give the client opportunity to complete synchronously.
              * If it turns out that the I/O request is not actually immediately satiable,
-             * the client may then choose to re-queue the async (with STATUS_PENDING). */
+             * the client may then choose to re-queue the async (with STATUS_PENDING).
+             *
+             * Note: If the nonblocking flag is set, we don't poll the socket
+             * here and always opt for synchronous completion first.  This is
+             * because the application has probably seen POLLOUT already from a
+             * preceding select()/poll() call before it requested to send data.
+             *
+             * Furthermore, some applications expect that any send() call on a
+             * socket that has indicated POLLOUT beforehand never fails with
+             * WSAEWOULDBLOCK.  It's possible that Linux poll() may yield
+             * POLLOUT on the first call but not the second, even if no send()
+             * call has been made in the meanwhile.  This can happen for a
+             * number of reasons; for example, TCP fragmentation may consume
+             * extra buffer space for each packet that has been split out, or
+             * the TCP/IP networking stack may decide to shrink the send buffer
+             * due to memory pressure.
+             */
             status = STATUS_ALERTED;
         }
     }
