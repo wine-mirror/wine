@@ -3470,7 +3470,7 @@ DECL_HANDLER(recv_socket)
          */
         struct pollfd pollfd;
         pollfd.fd = get_unix_fd( sock->fd );
-        pollfd.events = req->oob ? POLLPRI : POLLIN;
+        pollfd.events = req->oob && !is_oobinline( sock ) ? POLLPRI : POLLIN;
         pollfd.revents = 0;
         if (poll(&pollfd, 1, 0) >= 0 && pollfd.revents)
         {
