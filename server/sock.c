@@ -3468,11 +3468,7 @@ DECL_HANDLER(recv_socket)
          * asyncs will not consume all available data; if there's no data
          * available, the current request won't be immediately satiable.
          */
-        struct pollfd pollfd;
-        pollfd.fd = get_unix_fd( sock->fd );
-        pollfd.events = req->oob && !is_oobinline( sock ) ? POLLPRI : POLLIN;
-        pollfd.revents = 0;
-        if (poll(&pollfd, 1, 0) >= 0 && pollfd.revents)
+        if (check_fd_events( sock->fd, req->oob && !is_oobinline( sock ) ? POLLPRI : POLLIN ))
         {
             /* Give the client opportunity to complete synchronously.
              * If it turns out that the I/O request is not actually immediately satiable,
@@ -3568,11 +3564,7 @@ DECL_HANDLER(send_socket)
          * asyncs will not consume all available space; if there's no space
          * available, the current request won't be immediately satiable.
          */
-        struct pollfd pollfd;
-        pollfd.fd = get_unix_fd( sock->fd );
-        pollfd.events = POLLOUT;
-        pollfd.revents = 0;
-        if (poll(&pollfd, 1, 0) >= 0 && pollfd.revents)
+        if (check_fd_events( sock->fd, POLLOUT ))
         {
             /* Give the client opportunity to complete synchronously.
              * If it turns out that the I/O request is not actually immediately satiable,
