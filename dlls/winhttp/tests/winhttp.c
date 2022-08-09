@@ -2532,8 +2532,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "POST /bad_headers"))
         {
             ok(!!strstr(buffer, "Content-Type: text/html\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
-            todo_wine ok(!!strstr(buffer, "Test1: Value1\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
-            todo_wine ok(!!strstr(buffer, "Test2: Value2\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Test1: Value1\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            ok(!!strstr(buffer, "Test2: Value2\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             ok(!!strstr(buffer, "Test3: Value3\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             ok(!!strstr(buffer, "Test4: Value4\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             ok(!!strstr(buffer, "Test5: Value5\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
@@ -3654,13 +3654,10 @@ static void test_bad_header( int port )
         len = sizeof(buffer);
         ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
                                    header_tests[i].header, buffer, &len, &index );
-        todo_wine_if (i >= 1 && i <= 3)
-        {
-            ok( ret, "header %s: failed to query headers %lu\n", debugstr_w(header_tests[i].header), GetLastError() );
-            ok( !wcscmp( buffer, header_tests[i].value ), "header %s: got %s\n",
-                debugstr_w(header_tests[i].header), debugstr_w(buffer) );
-            ok( index == 1, "header %s: index = %lu\n", debugstr_w(header_tests[i].header), index );
-        }
+        ok( ret, "header %s: failed to query headers %lu\n", debugstr_w(header_tests[i].header), GetLastError() );
+        ok( !wcscmp( buffer, header_tests[i].value ), "header %s: got %s\n",
+            debugstr_w(header_tests[i].header), debugstr_w(buffer) );
+        ok( index == 1, "header %s: index = %lu\n", debugstr_w(header_tests[i].header), index );
     }
 
     ret = WinHttpSendRequest( req, L"Test5: Value5\rTest6: Value6", ~0u, NULL, 0, 0, 0 );

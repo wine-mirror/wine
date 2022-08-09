@@ -467,26 +467,14 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
     p = buffer;
     do
     {
-        q = p;
-        while (*q)
-        {
-            if (q[0] == '\n' && q[1] == '\r')
-            {
-                q[0] = '\r';
-                q[1] = '\n';
-            }
-            if (q[0] == '\r') break;
-            q++;
-        }
         if (!*p) break;
-        if (*q == '\r')
-        {
-            *q = 0;
-            if (q[1] == '\n')
-                q += 2; /* jump over \r\n */
-            else
-                q++; /* jump over \r */
-        }
+
+        for (q = p; *q && *q != '\r' && *q != '\n'; ++q)
+            ;
+        *q++ = 0;
+        while (*q == '\r' || *q == '\n')
+            ++q;
+
         if ((header = parse_header( p )))
         {
             ret = process_header( request, header->field, header->value, flags, TRUE );
