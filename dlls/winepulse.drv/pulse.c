@@ -2,6 +2,7 @@
  * Copyright 2011-2012 Maarten Lankhorst
  * Copyright 2010-2011 Maarten Lankhorst for CodeWeavers
  * Copyright 2011 Andrew Eikum for CodeWeavers
+ * Copyright 2022 Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2267,6 +2268,7 @@ static NTSTATUS pulse_is_started(void *args)
 static BOOL get_device_path(PhysDevice *dev, struct get_prop_value_params *params)
 {
     const GUID *guid = params->guid;
+    PROPVARIANT *out = params->value;
     UINT serial_number;
     char path[128];
     int len;
@@ -2288,9 +2290,19 @@ static BOOL get_device_path(PhysDevice *dev, struct get_prop_value_params *param
         break;
     }
 
-    ntdll_umbstowcs(path, len + 1, params->wstr, ARRAY_SIZE(params->wstr));
+    if (*params->buffer_size < ++len * sizeof(WCHAR)) {
+        params->result = E_NOT_SUFFICIENT_BUFFER;
+        *params->buffer_size = len * sizeof(WCHAR);
+        return FALSE;
+    }
 
-    params->vt = VT_LPWSTR;
+    out->vt = VT_LPWSTR;
+    out->pwszVal = params->buffer;
+
+    ntdll_umbstowcs(path, len, out->pwszVal, len);
+
+    params->result = S_OK;
+
     return TRUE;
 }
 
@@ -2308,7 +2320,7 @@ static NTSTATUS pulse_get_prop_value(void *args)
 
     params->result = S_OK;
     LIST_FOR_EACH_ENTRY(dev, list, PhysDevice, entry) {
-        if (strcmp(params->pulse_name, dev->pulse_name))
+        if (strcmp(params->device, dev->pulse_name))
             continue;
         if (IsEqualPropertyKey(*params->prop, devicepath_key)) {
             if (!get_device_path(dev, params))
@@ -2317,20 +2329,20 @@ static NTSTATUS pulse_get_prop_value(void *args)
         } else if (IsEqualGUID(&params->prop->fmtid, &PKEY_AudioEndpoint_GUID)) {
             switch (params->prop->pid) {
             case 0:   /* FormFactor */
-                params->vt = VT_UI4;
-                params->ulVal = dev->form;
+                params->value->vt = VT_UI4;
+                params->value->ulVal = dev->form;
                 return STATUS_SUCCESS;
             case 3:   /* PhysicalSpeakers */
                 if (!dev->channel_mask)
                     goto fail;
-                params->vt = VT_UI4;
-                params->ulVal = dev->channel_mask;
+                params->value->vt = VT_UI4;
+                params->value->ulVal = dev->channel_mask;
                 return STATUS_SUCCESS;
             default:
-                break;
+                params->result = E_NOTIMPL;
             }
         }
-        params->result = E_NOTIMPL;
+
         return STATUS_SUCCESS;
     }
 
@@ -2723,42 +2735,55 @@ static NTSTATUS pulse_wow64_test_connect(void *args)
 
 static NTSTATUS pulse_wow64_get_prop_value(void *args)
 {
-    struct
+    struct propvariant32
     {
-        PTR32 pulse_name;
-        PTR32 guid;
-        PTR32 prop;
-        EDataFlow flow;
-        HRESULT result;
-        VARTYPE vt;
+        WORD vt;
+        WORD pad1, pad2, pad3;
         union
         {
-            WCHAR wstr[128];
             ULONG ulVal;
+            PTR32 ptr;
+            ULARGE_INTEGER uhVal;
         };
+    } *value32;
+    struct
+    {
+        PTR32 device;
+        EDataFlow flow;
+        PTR32 guid;
+        PTR32 prop;
+        HRESULT result;
+        PTR32 value;
+        PTR32 buffer; /* caller allocated buffer to hold value's strings */
+        PTR32 buffer_size;
     } *params32 = args;
+    PROPVARIANT value;
     struct get_prop_value_params params =
     {
-        .pulse_name = ULongToPtr(params32->pulse_name),
+        .device = ULongToPtr(params32->device),
+        .flow = params32->flow,
         .guid = ULongToPtr(params32->guid),
         .prop = ULongToPtr(params32->prop),
-        .flow = params32->flow,
+        .value = &value,
+        .buffer = ULongToPtr(params32->buffer),
+        .buffer_size = ULongToPtr(params32->buffer_size)
     };
     pulse_get_prop_value(&params);
     params32->result = params.result;
-    params32->vt = params.vt;
     if (SUCCEEDED(params.result))
     {
-        switch (params.vt)
+        value32 = UlongToPtr(params32->value);
+        value32->vt = value.vt;
+        switch (value.vt)
         {
         case VT_UI4:
-            params32->ulVal = params.ulVal;
+            value32->ulVal = value.ulVal;
             break;
         case VT_LPWSTR:
-            wcscpy(params32->wstr, params.wstr);
+            value32->ptr = params32->buffer;
             break;
         default:
-            FIXME("Unhandled vt %04x\n", params.vt);
+            FIXME("Unhandled vt %04x\n", value.vt);
         }
     }
     return STATUS_SUCCESS;

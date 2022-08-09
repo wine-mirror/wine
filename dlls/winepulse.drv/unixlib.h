@@ -219,17 +219,14 @@ struct is_started_params
 
 struct get_prop_value_params
 {
-    const char *pulse_name;
+    const char *device;
+    EDataFlow flow;
     const GUID *guid;
     const PROPERTYKEY *prop;
-    EDataFlow flow;
     HRESULT result;
-    VARTYPE vt;
-    union
-    {
-        WCHAR wstr[128];
-        ULONG ulVal;
-    };
+    PROPVARIANT *value;
+    void *buffer; /* caller allocated buffer to hold value's strings */
+    unsigned int *buffer_size;
 };
 
 enum unix_funcs
