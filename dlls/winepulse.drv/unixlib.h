@@ -32,7 +32,7 @@ enum phys_device_bus_type {
 struct endpoint
 {
     unsigned int name;
-    unsigned int pulse_name;
+    unsigned int device;
 };
 
 struct main_loop_params

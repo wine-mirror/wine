@@ -268,7 +268,7 @@ static NTSTATUS pulse_get_endpoint_ids(void *args)
             endpoint->name = offset;
             memcpy((char *)params->endpoints + offset, dev->name, name_len * sizeof(WCHAR));
             offset += name_len * sizeof(WCHAR);
-            endpoint->pulse_name = offset;
+            endpoint->device = offset;
             memcpy((char *)params->endpoints + offset, dev->pulse_name, len);
             offset += (len + 1) & ~1;
             endpoint++;
