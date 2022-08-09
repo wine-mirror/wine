@@ -26,6 +26,7 @@
 #include "msvcp.h"
 #include "windef.h"
 #include "winbase.h"
+#include "windows.h"
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
@@ -2128,7 +2129,7 @@ FILE* __cdecl ___Fiopen(const char *name, int mode)
 
     TRACE("(%p %d)\n", name, mode);
 
-    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+    if(!MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, FILENAME_MAX-1))
         return NULL;
     return _Fiopen_wchar(nameW, mode, _SH_DENYNO);
 }
