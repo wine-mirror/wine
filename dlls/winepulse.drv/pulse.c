@@ -2072,7 +2072,7 @@ static NTSTATUS pulse_get_device_period(void *args)
 {
     struct get_device_period_params *params = args;
 
-    params->result = get_device_period_helper(params->flow, params->pulse_name, params->def_period, params->min_period);
+    params->result = get_device_period_helper(params->flow, params->device, params->def_period, params->min_period);
     return STATUS_SUCCESS;
 }
 
@@ -2538,7 +2538,7 @@ static NTSTATUS pulse_wow64_get_device_period(void *args)
 {
     struct
     {
-        PTR32 pulse_name;
+        PTR32 device;
         EDataFlow flow;
         HRESULT result;
         PTR32 def_period;
@@ -2546,7 +2546,7 @@ static NTSTATUS pulse_wow64_get_device_period(void *args)
     } *params32 = args;
     struct get_device_period_params params =
     {
-        .pulse_name = ULongToPtr(params32->pulse_name),
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .def_period = ULongToPtr(params32->def_period),
         .min_period = ULongToPtr(params32->min_period),

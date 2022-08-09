@@ -1172,7 +1172,7 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
         return E_POINTER;
 
     params.flow = This->dataflow;
-    params.pulse_name = This->pulse_name;
+    params.device = This->pulse_name;
     params.def_period = defperiod;
     params.min_period = minperiod;
 

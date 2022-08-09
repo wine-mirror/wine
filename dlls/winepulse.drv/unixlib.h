@@ -139,7 +139,7 @@ struct get_mix_format_params
 
 struct get_device_period_params
 {
-    const char *pulse_name;
+    const char *device;
     EDataFlow flow;
     HRESULT result;
     REFERENCE_TIME *def_period;
