@@ -117,7 +117,7 @@ struct get_capture_buffer_params
     HRESULT result;
     BYTE **data;
     UINT32 *frames;
-    DWORD *flags;
+    UINT *flags;
     UINT64 *devpos;
     UINT64 *qpcpos;
 };
