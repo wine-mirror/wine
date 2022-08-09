@@ -107,7 +107,7 @@ struct release_render_buffer_params
 {
     stream_handle stream;
     UINT32 written_frames;
-    DWORD flags;
+    UINT flags;
     HRESULT result;
 };
 
