@@ -228,6 +228,12 @@ system_fallback_config[] =
       "08A0-08FF, FB50-FDCF, "
       "FDF0-FDFF, FE70-FEFE",   L"Noto Sans Arabic" },
 
+    { "0700-074F",              L"Noto Sans Syriac" },
+    { "0780-07BF",              L"Noto Sans Thaana" },
+    { "07C0-07FF",              L"Noto Sans NKo" },
+    { "0800-083F",              L"Noto Sans Samaritan" },
+    { "0840-085F",              L"Noto Sans Mandaic" },
+
     { "0900-097F",              L"Noto Sans Devanagari" },
     { "0980-09FF",              L"Noto Sans Bengali" },
     { "0A00-0A7F",              L"Noto Sans Gurmukhi" },
@@ -242,11 +248,52 @@ system_fallback_config[] =
     { "0E00-0E7F",              L"Noto Sans Thai" },
     { "0E80-0EFF",              L"Noto Sans Lao" },
 
+    { "0F00-0FFF",              L"Noto Serif Tibetan" },
+
+    { "1000-109F, A9E0-A9FF, AA60-AA7F", L"Noto Sans Myanmar" },
+
+    /* Hangul Jamo               - 1100-11FF
+       Hangul Compatibility Jamo - 3130-318F
+       Enc. CJK (Paren Hangul)   - 3200-321F
+       Enc. CJK (Circled Hangul) - 3260-327F
+       Hangul Jamo Extended-A    - A960-A97F
+       Hangul Syllables          - AC00-D7AF
+       Hangul Jamo Extended-B    - D7B0-D7FF */
+
+    { "1100-11FF, 3130-318F, "
+      "3200-321F, 3260-327F, "
+      "A960-A97F, AC00-D7FF, "
+      "D7B0-D7FF",              L"Noto Sans CJK KR" },
+
     { "1680-169F",              L"Noto Sans Ogham" },
 
     { "16A0-16FF",              L"Noto Sans Runic" },
 
+    { "1700-171F",              L"Noto Sans Tagalog" },
+    { "1720-173F",              L"Noto Sans Hanunoo" },
+    { "1740-175F",              L"Noto Sans Buhid" },
+    { "1760-177F",              L"Noto Sans Tagbanwa" },
     { "1800-18AF, 11660-1167F", L"Noto Sans Mongolian" },
+
+    { "1900-194F",              L"Noto Sans Limbu" },
+    { "1950-197F",              L"Noto Sans Tai Le" },
+    { "1980-19DF",              L"Noto Sans New Tai Lue" },
+    { "1A00-1A1F",              L"Noto Sans Buginese" },
+    { "1A20-1AAF",              L"Noto Sans Tai Tham" },
+    { "1B00-1B7F",              L"Noto Sans Balinese" },
+    { "1B80-1BBF, 1CC0-1CCF",   L"Noto Sans Sundanes" },
+    { "1BC0-1BFF",              L"Noto Sans Batak" },
+    { "1C00-1C4F",              L"Noto Sans Lepcha" },
+    { "1C50-1C7F",              L"Noto Sans Ol Chiki" },
+
+    { "2C80-2CFF",              L"Noto Sans Coptic" },
+    { "2D30-2D7F",              L"Noto Sans Tifinagh" },
+
+    /* CJK Radicals Supplement - 2E80-2EFF */
+
+    { "2E80-2EFF",              L"Noto Sans CJK SC", L"zh-Hans" },
+    { "2E80-2EFF",              L"Noto Sans CJK TC", L"zh-Hant" },
+    { "2E80-2EFF",              L"Noto Sans CJK KR", L"ko" },
 
     /* CJK Symbols and Punctuation - 3000-303F
        Hiragana                    - 3040-309F
@@ -265,6 +312,18 @@ system_fallback_config[] =
     { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK TC", L"zh-Hant" },
     { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK KR", L"ko" },
     { "3400-4DBF, 4E00-9FFF",   L"Noto Sans CJK JP" },
+
+    { "A000-A4CF",              L"Noto Sans Yi" },
+    { "A4D0-A4FF",              L"Noto Sans Lisu" },
+    { "A500-A63F",              L"Noto Sans Vai" },
+    { "A6A0-A6FF",              L"Noto Sans Bamum" },
+    { "A800-A82F",              L"Noto Sans Syloti Nagri" },
+    { "A840-A87F",              L"Noto Sans PhagsPa" },
+    { "A880-A8DF",              L"Noto Sans Saurashtra" },
+    { "A900-A92F",              L"Noto Sans Kayah Li" },
+    { "A930-A95F",              L"Noto Sans Rejang" },
+    { "A980-A9DF",              L"Noto Sans Javanese" },
+    { "AA00-AA5F",              L"Noto Sans Cham" },
 
     /* CJK Compatibility Ideographs - F900-FAFF */
 
