@@ -3959,7 +3959,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
                 | D3D11_FORMAT_SUPPORT_MULTISAMPLE_LOAD;
     }
 
-    return S_OK;
+    return *format_support ? S_OK : E_FAIL;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CheckMultisampleQualityLevels(ID3D11Device2 *iface,

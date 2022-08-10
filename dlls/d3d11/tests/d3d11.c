@@ -21062,15 +21062,18 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
     memset(format_support, 0, sizeof(format_support));
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
     {
+        winetest_push_context("format %#x", format);
+
         hr = ID3D11Device_CheckFormatSupport(device, format, &format_support[format]);
-        ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
-                "Got unexpected result for format %#x: hr %#lx, format_support %#x.\n",
-                format, hr, format_support[format]);
+        ok((hr == S_OK && format_support[format]) || (hr == E_FAIL && !format_support[format]),
+                "Got unexpected hr %#lx, format_support %#x.\n", hr, format_support[format]);
         if (format_support[format] & D3D11_FORMAT_SUPPORT_MIP_AUTOGEN)
         {
             ok(format_support[format] & D3D11_FORMAT_SUPPORT_TEXTURE2D,
-                    "Got unexpected format support %#x for format %#x", format_support[format], format);
+                    "Got unexpected format support %#x", format);
         }
+
+        winetest_pop_context();
     }
 
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
