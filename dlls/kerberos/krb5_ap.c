@@ -477,7 +477,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 {
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
                                    ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE |
-                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION;
+                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE;
     char *target = NULL;
     NTSTATUS status;
     ULONG exptime;
