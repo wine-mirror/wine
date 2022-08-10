@@ -2314,7 +2314,7 @@ static void DOMCustomEvent_destroy(DOMEvent *event)
 typedef struct {
     DOMEvent event;
     IDOMMessageEvent IDOMMessageEvent_iface;
-    WCHAR *data;
+    VARIANT data;
 } DOMMessageEvent;
 
 static inline DOMMessageEvent *impl_from_IDOMMessageEvent(IDOMMessageEvent *iface)
@@ -2376,7 +2376,26 @@ static HRESULT WINAPI DOMMessageEvent_get_data(IDOMMessageEvent *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return (*p = SysAllocString(This->data)) ? S_OK : E_OUTOFMEMORY;
+    if(V_VT(&This->data) != VT_BSTR) {
+        FIXME("non-string data\n");
+        return E_NOTIMPL;
+    }
+
+    return (*p = SysAllocString(V_BSTR(&This->data))) ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT DOMMessageEvent_get_data_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp, VARIANT *res,
+        EXCEPINFO *ei, IServiceProvider *caller)
+{
+    DOMMessageEvent *This = CONTAINING_RECORD(dispex, DOMMessageEvent, event.dispex);
+
+    if(!(flags & DISPATCH_PROPERTYGET) || !res)
+        return S_FALSE;
+
+    TRACE("(%p)->(%p)\n", This, res);
+
+    V_VT(res) = VT_EMPTY;
+    return VariantCopy(res, &This->data);
 }
 
 static HRESULT WINAPI DOMMessageEvent_get_origin(IDOMMessageEvent *iface, BSTR *p)
@@ -2433,7 +2452,16 @@ static void *DOMMessageEvent_query_interface(DOMEvent *event, REFIID riid)
 static void DOMMessageEvent_destroy(DOMEvent *event)
 {
     DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(event);
-    heap_free(message_event->data);
+    VariantClear(&message_event->data);
+}
+
+static void DOMMessageEvent_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
+{
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IDOMMESSAGEEVENT_DATA, DOMMessageEvent_get_data_hook},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IDOMMessageEvent_tid, compat_mode >= COMPAT_MODE_IE10 ? hooks : NULL);
 }
 
 typedef struct {
@@ -2646,7 +2674,6 @@ static dispex_static_data_t DOMCustomEvent_dispex = {
 
 static const tid_t DOMMessageEvent_iface_tids[] = {
     IDOMEvent_tid,
-    IDOMMessageEvent_tid,
     0
 };
 
@@ -2654,7 +2681,8 @@ dispex_static_data_t DOMMessageEvent_dispex = {
     L"MessageEvent",
     NULL,
     DispDOMMessageEvent_tid,
-    DOMMessageEvent_iface_tids
+    DOMMessageEvent_iface_tids,
+    DOMMessageEvent_init_dispex_info
 };
 
 static const tid_t DOMProgressEvent_iface_tids[] = {
@@ -2878,7 +2906,7 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
     return S_OK;
 }
 
-HRESULT create_message_event(HTMLDocumentNode *doc, BSTR data, DOMEvent **ret)
+HRESULT create_message_event(HTMLDocumentNode *doc, VARIANT *data, DOMEvent **ret)
 {
     DOMMessageEvent *message_event;
     DOMEvent *event;
@@ -2889,9 +2917,11 @@ HRESULT create_message_event(HTMLDocumentNode *doc, BSTR data, DOMEvent **ret)
         return hres;
     message_event = DOMMessageEvent_from_DOMEvent(event);
 
-    if(!(message_event->data = heap_strdupW(data))) {
+    V_VT(&message_event->data) = VT_EMPTY;
+    hres = VariantCopy(&message_event->data, data);
+    if(FAILED(hres)) {
         IDOMEvent_Release(&event->IDOMEvent_iface);
-        return E_OUTOFMEMORY;
+        return hres;
     }
 
     *ret = event;

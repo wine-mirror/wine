@@ -2078,10 +2078,14 @@ sync_test("__defineSetter__", function() {
 async_test("postMessage", function() {
     var v = document.documentMode;
     var onmessage_called = false;
-    window.onmessage = function() {
+    window.onmessage = function(e) {
         onmessage_called = true;
+        if(v < 9)
+            ok(e === undefined, "e = " + e);
+        else
+            ok(e.data === (v < 10 ? "10" : 10), "e.data = " + e.data);
         next_test();
     }
-    window.postMessage("test", "*");
+    window.postMessage(10, "*");
     ok(onmessage_called == (v < 9 ? true : false), "onmessage not called");
 });

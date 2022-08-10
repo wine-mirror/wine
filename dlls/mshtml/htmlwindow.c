@@ -2216,37 +2216,17 @@ static void post_message_destr(task_t *_task)
 static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VARIANT targetOrigin)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
-    DOMEvent *event;
-    HRESULT hres;
+    VARIANT var, transfer;
 
     FIXME("(%p)->(%s %s) semi-stub\n", This, debugstr_w(msg), debugstr_variant(&targetOrigin));
 
-    if(!This->inner_window->doc) {
-        FIXME("No document\n");
-        return E_FAIL;
-    }
+    if(V_VT(&targetOrigin) != VT_BSTR)
+        return E_INVALIDARG;
 
-    hres = create_message_event(This->inner_window->doc, msg, &event);
-    if(FAILED(hres))
-        return hres;
-
-    if(dispex_compat_mode(&This->inner_window->event_target.dispex) >= COMPAT_MODE_IE9) {
-        struct post_message_task *task;
-        if(!(task = heap_alloc(sizeof(*task)))) {
-            IDOMEvent_Release(&event->IDOMEvent_iface);
-            return E_OUTOFMEMORY;
-        }
-
-        task->event = event;
-        task->window = This->inner_window;
-        IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
-        return push_task(&task->header, post_message_proc, post_message_destr,
-                         This->inner_window->task_magic);
-    }
-
-    dispatch_event(&This->inner_window->event_target, event);
-    IDOMEvent_Release(&event->IDOMEvent_iface);
-    return S_OK;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = msg;
+    V_VT(&transfer) = VT_EMPTY;
+    return IWineHTMLWindowPrivate_postMessage(&This->IWineHTMLWindowPrivate_iface, var, V_BSTR(&targetOrigin), transfer);
 }
 
 static HRESULT WINAPI HTMLWindow6_toStaticHTML(IHTMLWindow6 *iface, BSTR bstrHTML, BSTR *pbstrStaticHTML)
@@ -3175,6 +3155,77 @@ static HRESULT WINAPI window_private_matchMedia(IWineHTMLWindowPrivate *iface, B
     return create_media_query_list(This, media_query, media_query_list);
 }
 
+static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, VARIANT msg, BSTR targetOrigin, VARIANT transfer)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
+    HTMLInnerWindow *window = This->inner_window;
+    DOMEvent *event;
+    HRESULT hres;
+
+    TRACE("iface %p, msg %s, targetOrigin %s, transfer %s\n", iface, debugstr_variant(&msg),
+          debugstr_w(targetOrigin), debugstr_variant(&transfer));
+
+    if(V_VT(&transfer) != VT_EMPTY)
+        FIXME("transfer not implemented, ignoring\n");
+
+    switch(V_VT(&msg)) {
+        case VT_EMPTY:
+        case VT_NULL:
+        case VT_VOID:
+        case VT_I1:
+        case VT_I2:
+        case VT_I4:
+        case VT_I8:
+        case VT_UI1:
+        case VT_UI2:
+        case VT_UI4:
+        case VT_UI8:
+        case VT_INT:
+        case VT_UINT:
+        case VT_R4:
+        case VT_R8:
+        case VT_BOOL:
+        case VT_BSTR:
+        case VT_CY:
+        case VT_DATE:
+        case VT_DECIMAL:
+        case VT_HRESULT:
+            break;
+        case VT_ERROR:
+            V_VT(&msg) = VT_EMPTY;
+            break;
+        default:
+            FIXME("Unsupported vt %d\n", V_VT(&msg));
+            return E_NOTIMPL;
+    }
+
+    if(!window->doc) {
+        FIXME("No document\n");
+        return E_FAIL;
+    }
+
+    hres = create_message_event(window->doc, &msg, &event);
+    if(FAILED(hres))
+        return hres;
+
+    if(dispex_compat_mode(&window->event_target.dispex) >= COMPAT_MODE_IE9) {
+        struct post_message_task *task;
+        if(!(task = heap_alloc(sizeof(*task)))) {
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            return E_OUTOFMEMORY;
+        }
+
+        task->event = event;
+        task->window = window;
+        IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
+        return push_task(&task->header, post_message_proc, post_message_destr, window->task_magic);
+    }
+
+    dispatch_event(&window->event_target, event);
+    IDOMEvent_Release(&event->IDOMEvent_iface);
+    return S_OK;
+}
+
 static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, IDispatch **console)
 {
     HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
@@ -3202,6 +3253,7 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_cancelAnimationFrame,
     window_private_get_console,
     window_private_matchMedia,
+    window_private_postMessage,
 };
 
 static inline HTMLWindow *impl_from_IWineHTMLWindowCompatPrivateVtbl(IWineHTMLWindowCompatPrivate *iface)
