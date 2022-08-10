@@ -25,6 +25,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "mshtmdid.h"
+#include "wininet.h"
 #include "shlguid.h"
 #include "shobjidl.h"
 #include "exdispid.h"
@@ -2218,7 +2219,7 @@ static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VAR
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
     VARIANT var, transfer;
 
-    FIXME("(%p)->(%s %s) semi-stub\n", This, debugstr_w(msg), debugstr_variant(&targetOrigin));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(msg), debugstr_variant(&targetOrigin));
 
     if(V_VT(&targetOrigin) != VT_BSTR)
         return E_INVALIDARG;
@@ -3155,6 +3156,69 @@ static HRESULT WINAPI window_private_matchMedia(IWineHTMLWindowPrivate *iface, B
     return create_media_query_list(This, media_query, media_query_list);
 }
 
+static HRESULT check_target_origin(HTMLInnerWindow *window, const WCHAR *target_origin)
+{
+    IUri *uri, *target;
+    DWORD port, port2;
+    BSTR bstr, bstr2;
+    HRESULT hres;
+
+    if(!target_origin)
+        return E_INVALIDARG;
+
+    if(!wcscmp(target_origin, L"*"))
+        return S_OK;
+
+    hres = create_uri(target_origin, Uri_CREATE_NOFRAG | Uri_CREATE_NO_DECODE_EXTRA_INFO, &target);
+    if(FAILED(hres))
+        return hres;
+
+    if(!(uri = window->base.outer_window->uri)) {
+        FIXME("window with no URI\n");
+        hres = S_FALSE;
+        goto done;
+    }
+
+    hres = IUri_GetSchemeName(uri, &bstr);
+    if(FAILED(hres))
+        goto done;
+    hres = IUri_GetSchemeName(target, &bstr2);
+    if(SUCCEEDED(hres)) {
+        hres = !wcsicmp(bstr, bstr2) ? S_OK : S_FALSE;
+        SysFreeString(bstr2);
+    }
+    SysFreeString(bstr);
+    if(hres != S_OK)
+        goto done;
+
+    hres = IUri_GetHost(uri, &bstr);
+    if(FAILED(hres))
+        goto done;
+    hres = IUri_GetHost(target, &bstr2);
+    if(SUCCEEDED(hres)) {
+        hres = !wcsicmp(bstr, bstr2) ? S_OK : S_FALSE;
+        SysFreeString(bstr2);
+    }
+    SysFreeString(bstr);
+    if(hres != S_OK)
+        goto done;
+
+    /* Legacy modes ignore port */
+    if(dispex_compat_mode(&window->event_target.dispex) < COMPAT_MODE_IE9)
+        goto done;
+
+    hres = IUri_GetPort(uri, &port);
+    if(FAILED(hres))
+        goto done;
+    hres = IUri_GetPort(target, &port2);
+    if(SUCCEEDED(hres))
+        hres = (port == port2) ? S_OK : S_FALSE;
+
+done:
+    IUri_Release(target);
+    return hres;
+}
+
 static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, VARIANT msg, BSTR targetOrigin, VARIANT transfer)
 {
     HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
@@ -3167,6 +3231,10 @@ static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, 
 
     if(V_VT(&transfer) != VT_EMPTY)
         FIXME("transfer not implemented, ignoring\n");
+
+    hres = check_target_origin(window, targetOrigin);
+    if(hres != S_OK)
+        return SUCCEEDED(hres) ? S_OK : hres;
 
     switch(V_VT(&msg)) {
         case VT_EMPTY:

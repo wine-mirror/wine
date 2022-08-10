@@ -2082,10 +2082,57 @@ async_test("postMessage", function() {
         onmessage_called = true;
         if(v < 9)
             ok(e === undefined, "e = " + e);
-        else
+        else {
             ok(e.data === (v < 10 ? "10" : 10), "e.data = " + e.data);
-        next_test();
+            next_test();
+        }
     }
-    window.postMessage(10, "*");
+
+    var invalid = [
+        v < 10 ? { toString: function() { return "http://winetest.example.org"; } } : null,
+        (function() { return "http://winetest.example.org"; }),
+        "winetest.example.org",
+        "example.org",
+        undefined
+    ];
+    for(var i = 0; i < invalid.length; i++) {
+        try {
+            window.postMessage("invalid " + i, invalid[i]);
+            ok(false, "expected exception with targetOrigin " + invalid[i]);
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            todo_wine_if(v >= 10).
+            ok(n === (v < 10 ? 0x80070057 : 0), "postMessage with targetOrigin " + invalid[i] + " threw " + n);
+            if(v >= 10)
+                todo_wine.
+                ok(ex.name === "SyntaxError", "postMessage with targetOrigin " + invalid[i] + " threw " + ex.name);
+        }
+    }
+    try {
+        window.postMessage("invalid empty", "");
+        ok(false, "expected exception with empty targetOrigin");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === 0x80070057, "postMessage with empty targetOrigin threw " + n);
+    }
+
+    window.postMessage("wrong port", "http://winetest.example.org:1234");
+    ok(onmessage_called == (v < 9 ? true : false), "onmessage not called with wrong port");
+    onmessage_called = false;
+
+    var not_sent = [
+        "http://winetest.example.com",
+        "ftp://winetest.example.org",
+        "http://wine.example.org",
+        "http://example.org"
+    ];
+    for(var i = 0; i < not_sent.length; i++) {
+        window.postMessage("not_sent " + i, not_sent[i]);
+        ok(onmessage_called == false, "onmessage called with targetOrigin " + not_sent[i]);
+        onmessage_called = false;
+    }
+
+    window.postMessage(10, (v < 10 ? "*" : { toString: function() { return "*"; } }));
     ok(onmessage_called == (v < 9 ? true : false), "onmessage not called");
+    if(v < 9) next_test();
 });
