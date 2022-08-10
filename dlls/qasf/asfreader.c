@@ -200,15 +200,24 @@ static HRESULT asf_reader_query_interface(struct strmbase_filter *iface, REFIID 
 static HRESULT asf_reader_init_stream(struct strmbase_filter *iface)
 {
     struct asf_reader *filter = impl_from_strmbase_filter(iface);
+    WMT_STREAM_SELECTION selections[ARRAY_SIZE(filter->streams)];
+    WORD stream_numbers[ARRAY_SIZE(filter->streams)];
+    IWMReaderAdvanced *reader_advanced;
     HRESULT hr = S_OK;
     int i;
 
     TRACE("iface %p\n", iface);
 
+    if (FAILED(hr = IWMReader_QueryInterface(filter->reader, &IID_IWMReaderAdvanced, (void **)&reader_advanced)))
+        return hr;
+
     for (i = 0; i < filter->stream_count; ++i)
     {
         struct asf_stream *stream = filter->streams + i;
         IWMOutputMediaProps *props;
+
+        stream_numbers[i] = i + 1;
+        selections[i] = WMT_OFF;
 
         if (!stream->source.pin.peer)
             continue;
@@ -240,7 +249,15 @@ static HRESULT asf_reader_init_stream(struct strmbase_filter *iface)
             WARN("Failed to start stream %u new segment, hr %#lx\n", i, hr);
             break;
         }
+
+        selections[i] = WMT_ON;
     }
+
+    if (SUCCEEDED(hr) && FAILED(hr = IWMReaderAdvanced_SetStreamsSelected(reader_advanced,
+            filter->stream_count, stream_numbers, selections)))
+        WARN("Failed to set reader %p stream selection, hr %#lx\n", filter->reader, hr);
+
+    IWMReaderAdvanced_Release(reader_advanced);
 
     if (FAILED(hr))
         return hr;
