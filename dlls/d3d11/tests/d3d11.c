@@ -158,9 +158,15 @@ static void queue_test(void (*test)(void))
 static void run_mt_test(const struct test_entry *t)
 {
     if (t->fl)
+    {
+        winetest_push_context("Feature level %#x", t->fl);
         t->u.test_fl(t->fl);
+        winetest_pop_context();
+    }
     else
+    {
         t->u.test();
+    }
 }
 
 static DWORD WINAPI thread_func(void *ctx)
@@ -2214,7 +2220,7 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -2250,7 +2256,7 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = D3D11_CREATE_DEVICE_DEBUG;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create debug device for feature level %#x.\n", feature_level);
+        skip("Failed to create debug device.\n");
         return;
     }
 
@@ -4913,21 +4919,21 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
     /* level_9 shaders */
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_0, sizeof(ps_4_0_level_9_0), NULL, &ps);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_1, sizeof(ps_4_0_level_9_1), NULL, &ps);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_3, sizeof(ps_4_0_level_9_3), NULL, &ps);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11PixelShader_Release(ps);
 
     ps = (void *)0xdeadbeef;
@@ -4938,25 +4944,25 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     /* vertex shader */
     vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);
-    ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(!vs, "Unexpected pointer %p.\n", vs);
 
     vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, vs_3_0, sizeof(vs_3_0), NULL, &vs);
-    ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(!vs, "Unexpected pointer %p.\n", vs);
 
     vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, ps_4_0, sizeof(ps_4_0), NULL, &vs);
-    ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     ok(!vs, "Unexpected pointer %p.\n", vs);
 
     expected_refcount = get_refcount(device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
     hr = ID3D11Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), NULL, &vs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
     else
-        ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     refcount = get_refcount(device);
     ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n",
@@ -4982,14 +4988,14 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     hr = ID3D11Device_CreateVertexShader(device, vs_4_1, sizeof(vs_4_1), NULL, &vs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_1)
     {
-        ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         refcount = ID3D11VertexShader_Release(vs);
         ok(!refcount, "Vertex shader has %lu references left.\n", refcount);
     }
     else
     {
         todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11VertexShader_Release(vs);
     }
@@ -4998,9 +5004,9 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     expected_refcount = get_refcount(device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
     else
-        ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     refcount = get_refcount(device);
     ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n",
@@ -5026,14 +5032,14 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     hr = ID3D11Device_CreatePixelShader(device, ps_4_1, sizeof(ps_4_1), NULL, &ps);
     if (feature_level >= D3D_FEATURE_LEVEL_10_1)
     {
-        ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         refcount = ID3D11PixelShader_Release(ps);
         ok(!refcount, "Pixel shader has %lu references left.\n", refcount);
     }
     else
     {
         todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11PixelShader_Release(ps);
     }
@@ -5042,9 +5048,9 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     expected_refcount = get_refcount(device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
     hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
     else
-        ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     refcount = get_refcount(device);
     ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n",
@@ -5070,14 +5076,14 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     hr = ID3D11Device_CreateGeometryShader(device, gs_4_1, sizeof(gs_4_1), NULL, &gs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_1)
     {
-        ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         refcount = ID3D11GeometryShader_Release(gs);
         ok(!refcount, "Geometry shader has %lu references left.\n", refcount);
     }
     else
     {
         todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11GeometryShader_Release(gs);
     }
@@ -6748,7 +6754,7 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -15263,7 +15269,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
     ID3D11Device_GetImmediateContext(device, &context);
@@ -15574,7 +15580,7 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -15589,8 +15595,7 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
 
     swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx for typeless format (feature level %#x).\n",
-            hr, feature_level);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         IDXGISwapChain_Release(swapchain);
 
@@ -15621,8 +15626,8 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
         todo_wine_if(todo)
             ok(hr == expected_hr || broken(hr == E_OUTOFMEMORY),
-                    "Got hr %#lx, expected %#lx (feature level %#x, format %#x).\n",
-                    hr, expected_hr, feature_level, format);
+                    "Got hr %#lx, expected %#lx (format %#x).\n",
+                    hr, expected_hr, format);
         if (FAILED(hr))
             continue;
         refcount = IDXGISwapChain_Release(swapchain);
@@ -20967,22 +20972,21 @@ static void check_format_support(ID3D11Device *device, const unsigned int *forma
         {
             todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
                 ok(supported || broken(is_warp_device(device)),
-                        "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
-                        format, feature_name, feature_level, format_support[format]);
+                        "Format %#x - %s not supported, format support %#x.\n",
+                        format, feature_name, format_support[format]);
             continue;
         }
 
         if (formats[i].fl_optional && formats[i].fl_optional <= feature_level)
         {
             if (supported)
-                trace("Optional format %#x - %s supported, feature level %#x.\n",
-                        format, feature_name, feature_level);
+                trace("Optional format %#x - %s supported.\n", format, feature_name);
             continue;
         }
 
         todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY)
-            ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
-                    format, feature_name, feature_level, format_support[format]);
+            ok(!supported, "Format %#x - %s supported, format support %#x.\n",
+                    format, feature_name, format_support[format]);
     }
 }
 
@@ -21046,7 +21050,7 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -21075,20 +21079,16 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
         {
             /* SHADER_SAMPLE_COMPARISON is never advertised as supported on feature level 9. */
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON),
-                    "Unexpected SHADER_SAMPLE_COMPARISON for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected SHADER_SAMPLE_COMPARISON for format %#x.\n", format);
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_BUFFER),
-                    "Unexpected BUFFER for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected BUFFER for format %#x.\n", format);
         }
         if (feature_level < D3D_FEATURE_LEVEL_10_1)
         {
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_GATHER),
-                    "Unexpected SHADER_GATHER for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected SHADER_GATHER for format %#x.\n", format);
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON),
-                    "Unexpected SHADER_GATHER_COMPARISON for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected SHADER_GATHER_COMPARISON for format %#x.\n", format);
         }
     }
 
@@ -21206,12 +21206,12 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     resource_data.SysMemPitch = sizeof(texture_data);
     resource_data.SysMemSlicePitch = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0x7f0000ff, 1);
@@ -21221,7 +21221,7 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     todo_wine check_texture_color(test_context.backbuffer, 0xff004c33, 1);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_texture_code, sizeof(ps_texture_code), NULL, &ps);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
     draw_quad(&test_context);
@@ -24663,7 +24663,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     if (feature_level < D3D_FEATURE_LEVEL_11_0 && !check_compute_shaders_via_sm4_support(device))
     {
         hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-        todo_wine ok(hr == E_INVALIDARG, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11PixelShader_Release(ps);
         skip("Raw buffers are not supported.\n");
@@ -24682,7 +24682,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     memset(&offset, 0, sizeof(offset));
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(offset), &offset.x);
@@ -24690,9 +24690,9 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
@@ -24705,7 +24705,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     resource_data.SysMemPitch = 0;
     resource_data.SysMemSlicePitch = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &raw_buffer);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     srv_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
@@ -24713,7 +24713,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     U(srv_desc).BufferEx.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
     U(srv_desc).BufferEx.Flags = D3D11_BUFFEREX_SRV_FLAG_RAW;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)raw_buffer, &srv_desc, &srv);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
@@ -24766,7 +24766,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     ID3D11Buffer_Release(raw_buffer);
     buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &raw_buffer);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -24774,10 +24774,10 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)raw_buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
-    ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
@@ -29235,7 +29235,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
 
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
     ID3D11Device_GetImmediateContext(device, &context);
