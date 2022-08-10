@@ -746,6 +746,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     dump_fmt(fmt);
 
+    params.name = NULL;
     params.device = This->alsa_name;
     params.flow = This->dataflow;
     params.share = mode;
@@ -753,6 +754,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
+    params.channel_count = NULL;
     params.stream = &stream;
 
     ALSA_CALL(create_stream, &params);

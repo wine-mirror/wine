@@ -2431,6 +2431,9 @@ static NTSTATUS alsa_get_prop_value(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    NULL,
+    NULL,
+    NULL,
     alsa_get_endpoint_ids,
     alsa_create_stream,
     alsa_release_stream,
@@ -2444,6 +2447,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     alsa_release_capture_buffer,
     alsa_is_format_supported,
     alsa_get_mix_format,
+    NULL,
     alsa_get_buffer_size,
     alsa_get_latency,
     alsa_get_current_padding,
@@ -2452,6 +2456,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     alsa_get_position,
     alsa_set_volumes,
     alsa_set_event_handle,
+    NULL,
     alsa_is_started,
     alsa_get_prop_value,
     alsa_midi_release,
@@ -2493,6 +2498,7 @@ static NTSTATUS alsa_wow64_create_stream(void *args)
 {
     struct
     {
+        PTR32 name;
         PTR32 device;
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
@@ -2501,10 +2507,12 @@ static NTSTATUS alsa_wow64_create_stream(void *args)
         REFERENCE_TIME period;
         PTR32 fmt;
         HRESULT result;
+        PTR32 channel_count;
         PTR32 stream;
     } *params32 = args;
     struct create_stream_params params =
     {
+        .name = ULongToPtr(params32->name),
         .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .share = params32->share,
@@ -2512,6 +2520,7 @@ static NTSTATUS alsa_wow64_create_stream(void *args)
         .duration = params32->duration,
         .period = params32->period,
         .fmt = ULongToPtr(params32->fmt),
+        .channel_count = ULongToPtr(params32->channel_count),
         .stream = ULongToPtr(params32->stream)
     };
     alsa_create_stream(&params);
@@ -2837,6 +2846,9 @@ static NTSTATUS alsa_wow64_get_prop_value(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
+    NULL,
+    NULL,
+    NULL,
     alsa_wow64_get_endpoint_ids,
     alsa_wow64_create_stream,
     alsa_wow64_release_stream,
@@ -2850,6 +2862,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     alsa_release_capture_buffer,
     alsa_wow64_is_format_supported,
     alsa_wow64_get_mix_format,
+    NULL,
     alsa_wow64_get_buffer_size,
     alsa_wow64_get_latency,
     alsa_wow64_get_current_padding,
@@ -2858,6 +2871,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     alsa_wow64_get_position,
     alsa_wow64_set_volumes,
     alsa_wow64_set_event_handle,
+    NULL,
     alsa_is_started,
     alsa_wow64_get_prop_value,
     alsa_midi_release,

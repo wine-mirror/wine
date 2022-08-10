@@ -1,4 +1,5 @@
 /*
+ * Copyright 2021 Jacek Caban for CodeWeavers
  * Copyright 2022 Huw Davies
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +28,11 @@ struct endpoint
     unsigned int device;
 };
 
+struct main_loop_params
+{
+    HANDLE event;
+};
+
 struct get_endpoint_ids_params
 {
     EDataFlow flow;
@@ -39,6 +45,7 @@ struct get_endpoint_ids_params
 
 struct create_stream_params
 {
+    const char *name;
     const char *device;
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
@@ -47,6 +54,7 @@ struct create_stream_params
     REFERENCE_TIME period;
     const WAVEFORMATEX *fmt;
     HRESULT result;
+    UINT32 *channel_count;
     stream_handle *stream;
 };
 
@@ -110,7 +118,7 @@ struct get_capture_buffer_params
 struct release_capture_buffer_params
 {
     stream_handle stream;
-    UINT32 done;
+    BOOL done;
     HRESULT result;
 };
 
@@ -130,6 +138,15 @@ struct get_mix_format_params
     EDataFlow flow;
     WAVEFORMATEXTENSIBLE *fmt;
     HRESULT result;
+};
+
+struct get_device_period_params
+{
+    const char *device;
+    EDataFlow flow;
+    HRESULT result;
+    REFERENCE_TIME *def_period;
+    REFERENCE_TIME *min_period;
 };
 
 struct get_buffer_size_params
@@ -170,6 +187,7 @@ struct get_frequency_params
 struct get_position_params
 {
     stream_handle stream;
+    BOOL device;
     HRESULT result;
     UINT64 *pos;
     UINT64 *qpctime;
@@ -187,6 +205,12 @@ struct set_event_handle_params
 {
     stream_handle stream;
     HANDLE event;
+    HRESULT result;
+};
+
+struct test_connect_params
+{
+    const char *name;
     HRESULT result;
 };
 
@@ -251,6 +275,9 @@ struct midi_notify_wait_params
 
 enum unix_funcs
 {
+    process_attach,
+    process_detach,
+    main_loop,
     get_endpoint_ids,
     create_stream,
     release_stream,
@@ -264,6 +291,7 @@ enum unix_funcs
     release_capture_buffer,
     is_format_supported,
     get_mix_format,
+    get_device_period,
     get_buffer_size,
     get_latency,
     get_current_padding,
@@ -272,6 +300,7 @@ enum unix_funcs
     get_position,
     set_volumes,
     set_event_handle,
+    test_connect,
     is_started,
     get_prop_value,
     midi_release,
