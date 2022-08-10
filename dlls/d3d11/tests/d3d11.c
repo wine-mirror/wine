@@ -20993,6 +20993,7 @@ static void check_format_support(ID3D11Device *device, const unsigned int *forma
 static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
 {
     unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
+    D3D11_FEATURE_DATA_FORMAT_SUPPORT feature_data;
     struct device_desc device_desc;
     ID3D11Device *device;
     DXGI_FORMAT format;
@@ -21054,10 +21055,31 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
         return;
     }
 
+    feature_data.InFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, NULL, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) - 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) / 2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) + 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) * 2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
     support = 0xdeadbeef;
     hr = ID3D11Device_CheckFormatSupport(device, ~0u, &support);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!support, "Got unexpected format support %#x.\n", support);
+
+    feature_data.InFormat = ~0u;
+    feature_data.OutFormatSupport = 0xdeadbeef;
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data));
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(!feature_data.OutFormatSupport, "Got unexpected format support %#x.\n", feature_data.OutFormatSupport);
 
     memset(format_support, 0, sizeof(format_support));
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
@@ -21072,6 +21094,14 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
             ok(format_support[format] & D3D11_FORMAT_SUPPORT_TEXTURE2D,
                     "Got unexpected format support %#x", format);
         }
+
+        feature_data.InFormat = format;
+        hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT,
+                &feature_data, sizeof(feature_data));
+        ok((hr == S_OK && feature_data.OutFormatSupport) || (hr == E_FAIL && !feature_data.OutFormatSupport),
+                "Got unexpected hr %#lx, format_support %#x.\n", hr, feature_data.OutFormatSupport);
+        ok(feature_data.OutFormatSupport == format_support[format], "Expected format support %#x, got %#x.\n",
+                format_support[format], feature_data.OutFormatSupport);
 
         winetest_pop_context();
     }

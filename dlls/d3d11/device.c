@@ -4198,6 +4198,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             return S_OK;
         }
 
+        case D3D11_FEATURE_FORMAT_SUPPORT:
+        {
+            D3D11_FEATURE_DATA_FORMAT_SUPPORT *data = feature_support_data;
+            if (feature_support_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u for D3D11_FEATURE_FORMAT_SUPPORT.\n", feature_support_data_size);
+                return E_INVALIDARG;
+            }
+
+            return d3d11_device_CheckFormatSupport(iface, data->InFormat, &data->OutFormatSupport);
+        }
+
         default:
             FIXME("Unhandled feature %#x.\n", feature);
             return E_NOTIMPL;
