@@ -27,6 +27,129 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+struct buffer
+{
+    INSSBuffer INSSBuffer_iface;
+    LONG refcount;
+    IMediaSample *sample;
+};
+
+static struct buffer *impl_from_INSSBuffer(INSSBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct buffer, INSSBuffer_iface);
+}
+
+static HRESULT WINAPI buffer_QueryInterface(INSSBuffer *iface, REFIID iid, void **out)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_INSSBuffer))
+        *out = &impl->INSSBuffer_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI buffer_AddRef(INSSBuffer *iface)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    ULONG ref = InterlockedIncrement(&impl->refcount);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI buffer_Release(INSSBuffer *iface)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    ULONG ref = InterlockedDecrement(&impl->refcount);
+
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        IMediaSample_Release(impl->sample);
+        free(impl);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI buffer_GetLength(INSSBuffer *iface, DWORD *size)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    TRACE("iface %p, size %p.\n", iface, size);
+    *size = IMediaSample_GetActualDataLength(impl->sample);
+    return S_OK;
+}
+
+static HRESULT WINAPI buffer_SetLength(INSSBuffer *iface, DWORD size)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    TRACE("iface %p, size %lu.\n", iface, size);
+    return IMediaSample_SetActualDataLength(impl->sample, size);
+}
+
+static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    TRACE("iface %p, size %p.\n", iface, size);
+    *size = IMediaSample_GetSize(impl->sample);
+    return S_OK;
+}
+
+static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    TRACE("iface %p, data %p.\n", iface, data);
+    return IMediaSample_GetPointer(impl->sample, data);
+}
+
+static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, DWORD *size)
+{
+    struct buffer *impl = impl_from_INSSBuffer(iface);
+    TRACE("iface %p, data %p, size %p.\n", iface, data, size);
+    *size = IMediaSample_GetSize(impl->sample);
+    return IMediaSample_GetPointer(impl->sample, data);
+}
+
+static const INSSBufferVtbl buffer_vtbl =
+{
+    buffer_QueryInterface,
+    buffer_AddRef,
+    buffer_Release,
+    buffer_GetLength,
+    buffer_SetLength,
+    buffer_GetMaxLength,
+    buffer_GetBuffer,
+    buffer_GetBufferAndLength,
+};
+
+static HRESULT buffer_create(IMediaSample *sample, INSSBuffer **out)
+{
+    struct buffer *buffer;
+
+    if (!(buffer = calloc(1, sizeof(struct buffer))))
+        return E_OUTOFMEMORY;
+
+    buffer->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+    buffer->refcount = 1;
+    buffer->sample = sample;
+
+    *out = &buffer->INSSBuffer_iface;
+    TRACE("Created buffer %p for sample %p\n", *out, sample);
+
+    return S_OK;
+}
+
 struct asf_stream
 {
     struct strmbase_source source;
@@ -225,6 +348,12 @@ static HRESULT asf_reader_init_stream(struct strmbase_filter *iface)
         if (FAILED(hr = IMemAllocator_Commit(stream->source.pAllocator)))
         {
             WARN("Failed to commit stream %u allocator, hr %#lx\n", i, hr);
+            break;
+        }
+
+        if (FAILED(hr = IWMReaderAdvanced_SetAllocateForOutput(reader_advanced, i, TRUE)))
+        {
+            WARN("Failed to enable allocation for stream %u, hr %#lx\n", i, hr);
             break;
         }
 
@@ -693,8 +822,32 @@ static HRESULT WINAPI reader_callback_advanced_AllocateForStream(IWMReaderCallba
 static HRESULT WINAPI reader_callback_advanced_AllocateForOutput(IWMReaderCallbackAdvanced *iface,
         DWORD output, DWORD size, INSSBuffer **out, void *context)
 {
-    FIXME("iface %p, output %lu, size %lu, out %p, context %p stub!\n", iface, output, size, out, context);
-    return E_NOTIMPL;
+    struct asf_reader *filter = impl_from_IWMReaderCallbackAdvanced(iface)->filter;
+    struct asf_stream *stream = filter->streams + output;
+    IMediaSample *sample;
+    HRESULT hr;
+
+    TRACE("iface %p, output %lu, size %lu, out %p, context %p.\n", iface, output, size, out, context);
+
+    *out = NULL;
+
+    if (!stream->source.pin.peer)
+        return VFW_E_NOT_CONNECTED;
+
+    if (FAILED(hr = IMemAllocator_GetBuffer(stream->source.pAllocator, &sample, NULL, NULL, 0)))
+    {
+        WARN("Failed to get a sample, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (size > IMediaSample_GetSize(sample))
+    {
+        WARN("Allocated media sample is too small, size %lu.\n", size);
+        IMediaSample_Release(sample);
+        return VFW_E_BUFFER_OVERFLOW;
+    }
+
+    return buffer_create(sample, out);
 }
 
 static const IWMReaderCallbackAdvancedVtbl reader_callback_advanced_vtbl =
