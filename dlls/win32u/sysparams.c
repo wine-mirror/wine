@@ -178,7 +178,6 @@ static const WCHAR x_panningW[] = {'X','P','a','n','n','i','n','g',0};
 static const WCHAR y_panningW[] = {'Y','P','a','n','n','i','n','g',0};
 static const WCHAR orientationW[] = {'O','r','i','e','n','t','a','t','i','o','n',0};
 static const WCHAR fixed_outputW[] = {'F','i','x','e','d','O','u','t','p','u','t',0};
-static const WCHAR driver_extraW[] = {'D','r','i','v','e','r','E','x','t','r','a',0};
 static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
@@ -453,7 +452,6 @@ static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *m
         set_mode_field( x_panningW, dmPosition.x, DM_POSITION );
         set_mode_field( y_panningW, dmPosition.y, DM_POSITION );
     }
-    ret = set_reg_value( hkey, driver_extraW, REG_BINARY, mode + 1, mode->dmDriverExtra );
 
 #undef set_mode_field
 
@@ -499,11 +497,6 @@ static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
     query_mode_field( fixed_outputW, dmDisplayFixedOutput, 0 );
 
 #undef query_mode_field
-
-    ret = query_reg_value( hkey, driver_extraW, value, sizeof(value_buf) ) &&
-          value->Type == REG_BINARY;
-    if (ret && value->DataLength <= mode->dmDriverExtra)
-        memcpy( mode + 1, value->Data, mode->dmDriverExtra );
 
 done:
     NtClose( hkey );
@@ -555,8 +548,8 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     WCHAR *value_str = (WCHAR *)value->Data;
-    DWORD i, driver_extra = 0, size;
     DEVMODEW *mode;
+    DWORD i, size;
     HKEY hkey;
 
     if (!enum_key && !(enum_key = reg_open_key( NULL, enum_keyW, sizeof(enum_keyW) )))
@@ -596,19 +589,16 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     /* Interface name */
     info->dev.interface_name[0] = 0;
 
-    /* ModeCount / DriverExtra */
+    /* ModeCount */
     if (query_reg_value( hkey, mode_countW, value, sizeof(buffer) ) && value->Type == REG_DWORD)
         info->mode_count = *(const DWORD *)value->Data;
-    if (query_reg_value( hkey, driver_extraW, value, sizeof(buffer) ) && value->Type == REG_DWORD)
-        driver_extra = *(const DWORD *)value->Data;
 
     /* Modes */
-    if ((info->modes = calloc( info->mode_count, sizeof(DEVMODEW) + driver_extra )))
+    if ((info->modes = calloc( info->mode_count, sizeof(DEVMODEW) )))
     {
         for (i = 0, mode = info->modes; i < info->mode_count; i++)
         {
             mode->dmSize = offsetof(DEVMODEW, dmICMMethod);
-            mode->dmDriverExtra = driver_extra;
             if (!read_adapter_mode( hkey, i, mode )) break;
             mode = NEXT_DEVMODEW(mode);
         }
@@ -1349,8 +1339,7 @@ static void add_mode( const DEVMODEW *mode, void *param )
 
     if (write_adapter_mode( ctx->adapter_key, ctx->mode_count, mode ))
     {
-        if (!ctx->mode_count++) set_reg_value( ctx->adapter_key, driver_extraW, REG_DWORD,
-                                               &mode->dmDriverExtra, sizeof(mode->dmDriverExtra) );
+        ctx->mode_count++;
         set_reg_value( ctx->adapter_key, mode_countW, REG_DWORD, &ctx->mode_count, sizeof(ctx->mode_count) );
     }
 }
