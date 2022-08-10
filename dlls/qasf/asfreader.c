@@ -208,6 +208,7 @@ static HRESULT asf_reader_init_stream(struct strmbase_filter *iface)
     for (i = 0; i < filter->stream_count; ++i)
     {
         struct asf_stream *stream = filter->streams + i;
+        IWMOutputMediaProps *props;
 
         if (!stream->source.pin.peer)
             continue;
@@ -215,6 +216,22 @@ static HRESULT asf_reader_init_stream(struct strmbase_filter *iface)
         if (FAILED(hr = IMemAllocator_Commit(stream->source.pAllocator)))
         {
             WARN("Failed to commit stream %u allocator, hr %#lx\n", i, hr);
+            break;
+        }
+
+        if (FAILED(hr = IWMReader_GetOutputFormat(filter->reader, stream->index, 0, &props)))
+        {
+            WARN("Failed to get stream %u output format, hr %#lx\n", i, hr);
+            break;
+        }
+
+        hr = IWMOutputMediaProps_SetMediaType(props, (WM_MEDIA_TYPE *)&stream->source.pin.mt);
+        if (SUCCEEDED(hr))
+            hr = IWMReader_SetOutputProps(filter->reader, stream->index, props);
+        IWMOutputMediaProps_Release(props);
+        if (FAILED(hr))
+        {
+            WARN("Failed to set stream %u output format, hr %#lx\n", i, hr);
             break;
         }
 
