@@ -1291,6 +1291,18 @@ done:
     DestroyWindow(window);
 }
 
+static void test_sink_writer(void)
+{
+    IMFSinkWriter *writer;
+    HRESULT hr;
+
+    hr = MFCreateSinkWriterFromURL(NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateSinkWriterFromURL(NULL, NULL, NULL, &writer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -1304,6 +1316,7 @@ START_TEST(mfplat)
     test_source_reader();
     test_source_reader_from_media_source();
     test_reader_d3d9();
+    test_sink_writer();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

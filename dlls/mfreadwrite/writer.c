@@ -289,6 +289,9 @@ HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *bytestream,
     CLSID clsid;
     HRESULT hr;
 
+    if (!url && !bytestream)
+        return E_INVALIDARG;
+
     if (FAILED(hr = sink_writer_get_sink_factory_class(url, attributes, &clsid))) return hr;
 
     if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFSinkClassFactory, (void **)&factory)))
@@ -297,8 +300,18 @@ HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *bytestream,
         return hr;
     }
 
+    if (bytestream)
+        IMFByteStream_AddRef(bytestream);
+    else if (FAILED(hr = MFCreateFile(MF_ACCESSMODE_WRITE, MF_OPENMODE_DELETE_IF_EXIST, 0, url, &bytestream)))
+    {
+        WARN("Failed to create output file stream, hr %#lx.\n", hr);
+        IMFSinkClassFactory_Release(factory);
+        return hr;
+    }
+
     hr = IMFSinkClassFactory_CreateMediaSink(factory, bytestream, NULL, NULL, &sink);
     IMFSinkClassFactory_Release(factory);
+    IMFByteStream_Release(bytestream);
     if (FAILED(hr))
     {
         WARN("Failed to create a sink, hr %#lx.\n", hr);
