@@ -1066,8 +1066,8 @@ static uint32_t vkd3d_spirv_get_op_type_sampler(struct vkd3d_spirv_builder *buil
 
 /* Access qualifiers are not supported. */
 static uint32_t vkd3d_spirv_build_op_type_image(struct vkd3d_spirv_builder *builder,
-        uint32_t sampled_type_id, SpvDim dim, uint32_t depth, uint32_t arrayed,
-        uint32_t ms, uint32_t sampled, SpvImageFormat format)
+        uint32_t sampled_type_id, uint32_t dim, uint32_t depth, uint32_t arrayed,
+        uint32_t ms, uint32_t sampled, uint32_t format)
 {
     uint32_t operands[] = {sampled_type_id, dim, depth, arrayed, ms, sampled, format};
     return vkd3d_spirv_build_op_rv(builder, &builder->global_stream,
