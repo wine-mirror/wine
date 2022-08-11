@@ -2210,6 +2210,16 @@ static void test_topology_loader(void)
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
     };
+    static const media_type_desc audio_float_48000 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 8 * 48000),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+    };
     static const media_type_desc audio_mp3_44100 =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
@@ -2333,6 +2343,13 @@ static void test_topology_loader(void)
             .flags = LOADER_EXPECTED_CONVERTER,
         },
         {
+            /* PCM -> PCM, different enumerated bps, same current type, sink allow converter, force enumerate */
+            .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_ALLOW_CONVERTER, .source_method = -1,
+            .current_input = &audio_pcm_48000,
+            .expected_result = S_OK,
+            .flags = LOADER_EXPECTED_CONVERTER | LOADER_SET_ENUMERATE_SOURCE_TYPES | LOADER_TODO,
+        },
+        {
             /* PCM -> PCM, different enumerated bps, no current type, sink allow decoder */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = MF_CONNECT_DIRECT,
             .expected_result = S_OK,
@@ -2376,6 +2393,13 @@ static void test_topology_loader(void)
             .current_input = &audio_mp3_44100,
             .expected_result = S_OK,
             .flags = LOADER_EXPECTED_DECODER | LOADER_TODO,
+        },
+        {
+            /* MP3 -> PCM, need both decoder and converter */
+            .input_type = &audio_mp3_44100, .output_type = &audio_float_48000, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = -1,
+            .current_input = &audio_mp3_44100,
+            .expected_result = S_OK,
+            .flags = LOADER_EXPECTED_DECODER | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
 
         {
