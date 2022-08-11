@@ -1300,6 +1300,123 @@ static void test_sequencer_source(void)
     ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
 }
 
+struct test_handler
+{
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+    IMFMediaType *current_type;
+    IMFMediaType *invalid_type;
+};
+
+static struct test_handler *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_handler, IMFMediaTypeHandler_iface);
+}
+
+static HRESULT WINAPI test_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFMediaTypeHandler)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        IMFMediaTypeHandler_AddRef((*obj = iface));
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_handler_Release(IMFMediaTypeHandler *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
+        IMFMediaType **out_type)
+{
+    struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
+    BOOL result;
+
+    if (out_type)
+        *out_type = NULL;
+
+    if (impl->invalid_type && IMFMediaType_Compare(impl->invalid_type, (IMFAttributes *)in_type,
+            MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result) == S_OK && result)
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (!impl->current_type)
+        return S_OK;
+
+    if (IMFMediaType_Compare(impl->current_type, (IMFAttributes *)in_type,
+            MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result) == S_OK && result)
+        return S_OK;
+
+    return MF_E_INVALIDMEDIATYPE;
+}
+
+static HRESULT WINAPI test_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **type)
+{
+    todo_wine
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *media_type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **media_type)
+{
+    struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr;
+
+    if (!impl->current_type)
+        return E_NOTIMPL;
+
+    if (FAILED(hr = MFCreateMediaType(media_type)))
+        return hr;
+
+    hr = IMFMediaType_CopyAllItems(impl->current_type, (IMFAttributes *)*media_type);
+    if (FAILED(hr))
+        IMFMediaType_Release(*media_type);
+
+    return hr;
+}
+
+static HRESULT WINAPI test_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMFMediaTypeHandlerVtbl test_handler_vtbl =
+{
+    test_handler_QueryInterface,
+    test_handler_AddRef,
+    test_handler_Release,
+    test_handler_IsMediaTypeSupported,
+    test_handler_GetMediaTypeCount,
+    test_handler_GetMediaTypeByIndex,
+    test_handler_SetCurrentMediaType,
+    test_handler_GetCurrentMediaType,
+    test_handler_GetMajorType,
+};
+
+static const struct test_handler test_handler = {.IMFMediaTypeHandler_iface.lpVtbl = &test_handler_vtbl};
+
 struct test_stream_sink
 {
     IMFStreamSink IMFStreamSink_iface;
@@ -2043,27 +2160,15 @@ static void init_source_node(IMFMediaSource *source, MF_CONNECT_METHOD method, I
     IMFStreamDescriptor_Release(sd);
 }
 
-static void init_sink_node(IMFActivate *sink_activate, MF_CONNECT_METHOD method, IMFTopologyNode *node)
+static void init_sink_node(IMFStreamSink *stream_sink, MF_CONNECT_METHOD method, IMFTopologyNode *node)
 {
-    IMFStreamSink *stream_sink;
-    IMFMediaSink *sink;
     HRESULT hr;
 
     hr = IMFTopologyNode_DeleteAllItems(node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFActivate_ActivateObject(sink_activate, &IID_IMFMediaSink, (void **)&sink);
-    ok(hr == S_OK, "Failed to activate, hr %#lx.\n", hr);
-
-    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    IMFMediaSink_Release(sink);
-
     hr = IMFTopologyNode_SetObject(node, (IUnknown *)stream_sink);
     ok(hr == S_OK, "Failed to set object, hr %#lx.\n", hr);
-
-    IMFStreamSink_Release(stream_sink);
 
     if (method != -1)
     {
@@ -2079,6 +2184,8 @@ enum loader_test_flags
     LOADER_TODO = 0x4,
     LOADER_NEEDS_VIDEO_PROCESSOR = 0x8,
     LOADER_SET_ENUMERATE_SOURCE_TYPES = 0x10,
+    LOADER_NO_CURRENT_OUTPUT = 0x20,
+    LOADER_SET_INVALID_INPUT = 0x40,
 };
 
 static void test_topology_loader(void)
@@ -2143,6 +2250,10 @@ static void test_topology_loader(void)
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+    };
+    static const media_type_desc video_dummy =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
     };
 
     const struct loader_test
@@ -2219,19 +2330,19 @@ static void test_topology_loader(void)
             /* PCM -> PCM, different enumerated bps, no current type, sink allow converter */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_ALLOW_CONVERTER, .source_method = MF_CONNECT_DIRECT,
             .expected_result = S_OK,
-            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER,
+            .flags = LOADER_EXPECTED_CONVERTER,
         },
         {
             /* PCM -> PCM, different enumerated bps, no current type, sink allow decoder */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = MF_CONNECT_DIRECT,
             .expected_result = S_OK,
-            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER,
+            .flags = LOADER_EXPECTED_CONVERTER,
         },
         {
             /* PCM -> PCM, different enumerated bps, no current type, default methods */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = -1, .source_method = -1,
             .expected_result = S_OK,
-            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER,
+            .flags = LOADER_EXPECTED_CONVERTER,
         },
         {
             /* PCM -> PCM, different enumerated bps, no current type, source allow converter */
@@ -2257,7 +2368,7 @@ static void test_topology_loader(void)
             .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .sink_method = MF_CONNECT_ALLOW_CONVERTER, .source_method = -1,
             .current_input = &audio_mp3_44100,
             .expected_result = MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION,
-            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_TODO,
+            .flags = LOADER_TODO,
         },
         {
             /* MP3 -> PCM */
@@ -2277,20 +2388,34 @@ static void test_topology_loader(void)
             /* I420 -> RGB32, Video Processor media type */
             .input_type = &video_i420_1280, .output_type = &video_video_processor_1280_rgb32, .sink_method = -1, .source_method = -1,
             .expected_result = S_OK,
-            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER,
+            .flags = LOADER_EXPECTED_CONVERTER,
         },
         {
             /* I420 -> RGB32, Video Processor media type without frame size */
             .input_type = &video_i420_1280, .output_type = &video_video_processor_rgb32, .sink_method = -1, .source_method = -1,
             .expected_result = S_OK,
-            .flags = LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER,
+            .flags = LOADER_EXPECTED_CONVERTER,
+        },
+        {
+            /* RGB32 -> Any Video, no current output type */
+            .input_type = &video_i420_1280, .output_type = &video_dummy, .sink_method = -1, .source_method = -1,
+            .expected_result = S_OK,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_TODO,
+        },
+        {
+            /* RGB32 -> Any Video, no current output type, refuse input type */
+            .input_type = &video_i420_1280, .output_type = &video_dummy, .sink_method = -1, .source_method = -1,
+            .expected_result = S_OK,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
     };
 
     IMFSampleGrabberSinkCallback test_grabber_callback = { &test_grabber_callback_vtbl };
     IMFTopologyNode *src_node, *sink_node, *src_node2, *sink_node2, *mft_node;
-    IMFTopology *topology, *topology2, *full_topology;
+    struct test_stream_sink stream_sink = test_stream_sink;
     IMFMediaType *media_type, *input_type, *output_type;
+    IMFTopology *topology, *topology2, *full_topology;
+    struct test_handler handler = test_handler;
     IMFPresentationDescriptor *pd;
     unsigned int i, count, value;
     IMFActivate *sink_activate;
@@ -2306,6 +2431,8 @@ static void test_topology_loader(void)
     HRESULT hr;
     BOOL ret;
     LONG ref;
+
+    stream_sink.handler = &handler.IMFMediaTypeHandler_iface;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
@@ -2412,11 +2539,21 @@ static void test_topology_loader(void)
         init_media_type(input_type, *test->input_type, -1);
         init_media_type(output_type, *test->output_type, -1);
 
+        if (test->flags & LOADER_NO_CURRENT_OUTPUT)
+            handler.current_type = NULL;
+        else
+            handler.current_type = output_type;
+
+        if (test->flags & LOADER_SET_INVALID_INPUT)
+            handler.invalid_type = input_type;
+        else
+            handler.invalid_type = NULL;
+
         hr = MFCreateSampleGrabberSinkActivate(output_type, &test_grabber_callback, &sink_activate);
         ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
 
         init_source_node(source, test->source_method, src_node, 1, &input_type, test->current_input);
-        init_sink_node(sink_activate, test->sink_method, sink_node);
+        init_sink_node(&stream_sink.IMFStreamSink_iface, test->sink_method, sink_node);
 
         hr = IMFTopology_GetCount(topology, &count);
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
@@ -2597,10 +2734,8 @@ todo_wine {
 
     ref = IMFMediaType_Release(input_type);
     ok(ref == 0, "Release returned %ld\n", ref);
-    /* FIXME: is native really leaking refs here, or are we? */
     ref = IMFMediaType_Release(output_type);
-    todo_wine
-    ok(ref != 0, "Release returned %ld\n", ref);
+    ok(ref == 0, "Release returned %ld\n", ref);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
