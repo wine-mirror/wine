@@ -1374,8 +1374,10 @@ static HRESULT WINAPI test_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *ifac
 
 static HRESULT WINAPI test_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *media_type)
 {
+    /* FIXME: Wine sets downstream media type when resolving topology, native doesn't */
+    todo_wine
     ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI test_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **media_type)
@@ -2424,7 +2426,7 @@ static void test_topology_loader(void)
             /* RGB32 -> Any Video, no current output type */
             .input_type = &video_i420_1280, .output_type = &video_dummy, .sink_method = -1, .source_method = -1,
             .expected_result = S_OK,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT,
         },
         {
             /* RGB32 -> Any Video, no current output type, refuse input type */

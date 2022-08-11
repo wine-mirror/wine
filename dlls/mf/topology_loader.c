@@ -253,7 +253,6 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
     IMFTopologyNode *node;
     unsigned int i, count;
     GUID category, guid;
-    DWORD flags;
     HRESULT hr;
 
     TRACE("topology %p, method_mask %#x, branch %s, up_type %p, down_type %p.\n",
@@ -263,13 +262,15 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         return hr;
     if (FAILED(hr = IMFMediaType_GetGUID(up_type, &MF_MT_SUBTYPE, &input_info.guidSubtype)))
         return hr;
-    if (FAILED(hr = IMFMediaType_GetMajorType(down_type, &output_info.guidMajorType)))
-        return hr;
-    if (FAILED(hr = IMFMediaType_GetGUID(down_type, &MF_MT_SUBTYPE, &output_info.guidSubtype)))
-        return hr;
-    if (FAILED(hr = IMFMediaType_IsEqual(up_type, down_type, &flags))
-            || !(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES))
-        return MF_E_INVALIDMEDIATYPE;
+    if (!down_type)
+        output_info = input_info;
+    else
+    {
+        if (FAILED(hr = IMFMediaType_GetMajorType(down_type, &output_info.guidMajorType)))
+            return hr;
+        if (FAILED(hr = IMFMediaType_GetGUID(down_type, &MF_MT_SUBTYPE, &output_info.guidSubtype)))
+            return hr;
+    }
 
     if (IsEqualGUID(&input_info.guidMajorType, &MFMediaType_Audio))
         category = decoder ? MFT_CATEGORY_AUDIO_DECODER : MFT_CATEGORY_AUDIO_EFFECT;
@@ -300,10 +301,13 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
             IMFTopologyNode_SetGUID(node, &MF_TOPONODE_TRANSFORM_OBJECTID, &guid);
 
         hr = topology_branch_connect_down(topology, MF_CONNECT_DIRECT, &up_branch, up_type);
-        if (SUCCEEDED(hr))
-            hr = topology_branch_fill_media_type(up_type, down_type);
-        if (SUCCEEDED(hr))
-            hr = IMFTransform_SetOutputType(transform, 0, down_type, 0);
+        if (down_type)
+        {
+            if (SUCCEEDED(hr))
+                hr = topology_branch_fill_media_type(up_type, down_type);
+            if (SUCCEEDED(hr))
+                hr = IMFTransform_SetOutputType(transform, 0, down_type, 0);
+        }
         IMFTransform_Release(transform);
 
         if (SUCCEEDED(hr))
@@ -328,8 +332,8 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
         struct topology_branch *branch, IMFMediaType *up_type)
 {
     IMFMediaTypeHandler *down_handler;
+    IMFMediaType *down_type = NULL;
     MF_CONNECT_METHOD method;
-    IMFMediaType *down_type;
     DWORD flags;
     HRESULT hr;
 
@@ -346,26 +350,17 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
             && IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
     {
         TRACE("Connecting branch %s with current type %p.\n", debugstr_topology_branch(branch), up_type);
-        IMFMediaTypeHandler_Release(down_handler);
-        IMFMediaType_Release(down_type);
-
-        return IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+        hr = IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+        goto done;
     }
-
-    if (FAILED(hr) && FAILED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(down_handler, 0, &down_type)))
-        return hr;
 
     if (SUCCEEDED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(down_handler, up_type, NULL))
             && SUCCEEDED(hr = IMFMediaTypeHandler_SetCurrentMediaType(down_handler, up_type)))
     {
         TRACE("Connected branch %s with upstream type %p.\n", debugstr_topology_branch(branch), up_type);
-        IMFMediaTypeHandler_Release(down_handler);
-        IMFMediaType_Release(down_type);
-
-        return IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+        hr = IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+        goto done;
     }
-
-    IMFMediaTypeHandler_Release(down_handler);
 
     if (FAILED(hr) && (method & method_mask & MF_CONNECT_ALLOW_CONVERTER) == MF_CONNECT_ALLOW_CONVERTER)
         hr = topology_branch_connect_indirect(topology, MF_CONNECT_ALLOW_CONVERTER,
@@ -375,7 +370,11 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
         hr = topology_branch_connect_indirect(topology, MF_CONNECT_ALLOW_DECODER,
                 branch, up_type, down_type);
 
-    IMFMediaType_Release(down_type);
+done:
+    if (down_type)
+        IMFMediaType_Release(down_type);
+    IMFMediaTypeHandler_Release(down_handler);
+
     return hr;
 }
 
