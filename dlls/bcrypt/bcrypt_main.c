@@ -714,6 +714,11 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
             key->u.s.mode = MODE_ID_GCM;
             return STATUS_SUCCESS;
         }
+        else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CFB ))
+        {
+            key->u.s.mode = MODE_ID_CFB;
+            return STATUS_SUCCESS;
+        }
         else
         {
             FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
