@@ -30,6 +30,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/mfinternal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -1383,6 +1384,9 @@ static const IMFMediaTypeHandlerVtbl simple_type_handler_vtbl =
     simple_type_handler_GetMajorType,
 };
 
+/*******************************************************************************
+ *      MFCreateSimpleTypeHandler (mf.@)
+ */
 HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler)
 {
     struct simple_type_handler *object;
@@ -1401,6 +1405,9 @@ HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler)
     return S_OK;
 }
 
+/*******************************************************************************
+ *      MFRequireProtectedEnvironment (mf.@)
+ */
 HRESULT WINAPI MFRequireProtectedEnvironment(IMFPresentationDescriptor *pd)
 {
     BOOL selected, protected = FALSE;
@@ -1418,4 +1425,82 @@ HRESULT WINAPI MFRequireProtectedEnvironment(IMFPresentationDescriptor *pd)
     }
 
     return protected ? S_OK : S_FALSE;
+}
+
+static HRESULT create_media_sink(const CLSID *clsid, IMFByteStream *stream, IMFMediaType *video_type,
+        IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    IMFSinkClassFactory *factory;
+    HRESULT hr;
+
+    if (FAILED(hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFSinkClassFactory, (void **)&factory)))
+        return hr;
+
+    hr = IMFSinkClassFactory_CreateMediaSink(factory, stream, video_type, audio_type, sink);
+    IMFSinkClassFactory_Release(factory);
+
+    return hr;
+}
+
+/*******************************************************************************
+ *      MFCreate3GPMediaSink (mf.@)
+ */
+HRESULT WINAPI MFCreate3GPMediaSink(IMFByteStream *stream, IMFMediaType *video_type,
+         IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    TRACE("%p, %p, %p, %p.\n", stream, video_type, audio_type, sink);
+
+    return create_media_sink(&CLSID_MF3GPSinkClassFactory, stream, video_type, audio_type, sink);
+}
+
+/*******************************************************************************
+ *      MFCreateAC3MediaSink (mf.@)
+ */
+HRESULT WINAPI MFCreateAC3MediaSink(IMFByteStream *stream, IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    TRACE("%p, %p, %p.\n", stream, audio_type, sink);
+
+    return create_media_sink(&CLSID_MFAC3SinkClassFactory, stream, NULL, audio_type, sink);
+}
+
+/*******************************************************************************
+ *      MFCreateADTSMediaSink (mf.@)
+ */
+HRESULT WINAPI MFCreateADTSMediaSink(IMFByteStream *stream, IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    TRACE("%p, %p, %p.\n", stream, audio_type, sink);
+
+    return create_media_sink(&CLSID_MFADTSSinkClassFactory, stream, NULL, audio_type, sink);
+}
+
+/*******************************************************************************
+ *      MFCreateMP3MediaSink (mf.@)
+ */
+HRESULT WINAPI MFCreateMP3MediaSink(IMFByteStream *stream, IMFMediaSink **sink)
+{
+    TRACE("%p, %p.\n", stream, sink);
+
+    return create_media_sink(&CLSID_MFMP3SinkClassFactory, stream, NULL, NULL, sink);
+}
+
+/*******************************************************************************
+ *      MFCreateMPEG4MediaSink (mf.@)
+ */
+HRESULT WINAPI MFCreateMPEG4MediaSink(IMFByteStream *stream, IMFMediaType *video_type,
+         IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    TRACE("%p, %p, %p, %p.\n", stream, video_type, audio_type, sink);
+
+    return create_media_sink(&CLSID_MFMPEG4SinkClassFactory, stream, video_type, audio_type, sink);
+}
+
+/*******************************************************************************
+ *      MFCreateFMPEG4MediaSink (mf.@)
+ */
+HRESULT WINAPI MFCreateFMPEG4MediaSink(IMFByteStream *stream, IMFMediaType *video_type,
+         IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    TRACE("%p, %p, %p, %p.\n", stream, video_type, audio_type, sink);
+
+    return create_media_sink(&CLSID_MFFMPEG4SinkClassFactory, stream, video_type, audio_type, sink);
 }

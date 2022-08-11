@@ -833,6 +833,7 @@ SOURCES = \
 	wine/irpcss.idl \
 	wine/itss.idl \
 	wine/list.h \
+	wine/mfinternal.idl \
 	wine/mmsystem16.h \
 	wine/mscvpdb.h \
 	wine/mssign.h \
