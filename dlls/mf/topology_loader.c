@@ -240,7 +240,7 @@ static HRESULT topology_branch_fill_media_type(IMFMediaType *up_type, IMFMediaTy
 }
 
 static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
-        struct topology_branch *branch);
+        struct topology_branch *branch, BOOL enumerate_source_types);
 static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
         struct topology_branch *branch, IMFMediaType *up_type);
 static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
@@ -318,7 +318,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         IMFTransform_Release(transform);
 
         if (SUCCEEDED(hr))
-            hr = topology_branch_connect(topology, method_mask, &down_branch);
+            hr = topology_branch_connect(topology, method_mask, &down_branch, !down_type);
         if (SUCCEEDED(hr))
             hr = IMFTopology_AddNode(topology, node);
         if (SUCCEEDED(hr))
@@ -411,9 +411,8 @@ static HRESULT topology_branch_foreach_up_types(IMFTopology *topology, MF_CONNEC
 }
 
 static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
-        struct topology_branch *branch)
+        struct topology_branch *branch, BOOL enumerate_source_types)
 {
-    UINT32 enumerate_source_types;
     MF_CONNECT_METHOD method;
     HRESULT hr;
 
@@ -422,8 +421,7 @@ static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD 
     if (FAILED(IMFTopologyNode_GetUINT32(branch->up.node, &MF_TOPONODE_CONNECT_METHOD, &method)))
         method = MF_CONNECT_DIRECT;
 
-    if (SUCCEEDED(IMFTopology_GetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, &enumerate_source_types))
-            && enumerate_source_types)
+    if (enumerate_source_types)
     {
         if (method & MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES)
             hr = topology_branch_foreach_up_types(topology, method_mask & MF_CONNECT_ALLOW_DECODER, branch);
@@ -456,7 +454,8 @@ static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD 
     return hr;
 }
 
-static HRESULT topology_loader_resolve_branches(struct topoloader_context *context, struct list *branches)
+static HRESULT topology_loader_resolve_branches(struct topoloader_context *context, struct list *branches,
+        BOOL enumerate_source_types)
 {
     struct list new_branches = LIST_INIT(new_branches);
     struct topology_branch *branch, *next;
@@ -474,7 +473,8 @@ static HRESULT topology_loader_resolve_branches(struct topoloader_context *conte
         else if (FAILED(hr = topology_branch_clone_nodes(context, branch)))
             WARN("Failed to clone nodes for branch %s\n", debugstr_topology_branch(branch));
         else
-            hr = topology_branch_connect(context->output_topology, MF_CONNECT_ALLOW_DECODER, branch);
+            hr = topology_branch_connect(context->output_topology, MF_CONNECT_ALLOW_DECODER,
+                    branch, enumerate_source_types);
 
         topology_branch_destroy(branch);
         if (FAILED(hr))
@@ -639,6 +639,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     struct list branches = LIST_INIT(branches);
     struct topoloader_context context = { 0 };
     struct topology_branch *branch, *next;
+    UINT32 enumerate_source_types;
     IMFTopology *output_topology;
     MF_TOPOLOGY_TYPE node_type;
     IMFTopologyNode *node;
@@ -705,8 +706,12 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     if (SUCCEEDED(hr) && list_empty(&branches))
         hr = MF_E_TOPO_UNSUPPORTED;
 
+    if (FAILED(IMFTopology_GetUINT32(input_topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES,
+            &enumerate_source_types)))
+        enumerate_source_types = 0;
+
     while (SUCCEEDED(hr) && !list_empty(&branches))
-        hr = topology_loader_resolve_branches(&context, &branches);
+        hr = topology_loader_resolve_branches(&context, &branches, enumerate_source_types);
 
     LIST_FOR_EACH_ENTRY_SAFE(branch, next, &branches, struct topology_branch, entry)
     {

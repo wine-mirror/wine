@@ -2349,7 +2349,7 @@ static void test_topology_loader(void)
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_ALLOW_CONVERTER, .source_method = -1,
             .current_input = &audio_pcm_48000,
             .expected_result = S_OK,
-            .flags = LOADER_EXPECTED_CONVERTER | LOADER_SET_ENUMERATE_SOURCE_TYPES | LOADER_TODO,
+            .flags = LOADER_EXPECTED_CONVERTER | LOADER_SET_ENUMERATE_SOURCE_TYPES,
         },
         {
             /* PCM -> PCM, different enumerated bps, no current type, sink allow decoder */
@@ -2432,7 +2432,7 @@ static void test_topology_loader(void)
             /* RGB32 -> Any Video, no current output type, refuse input type */
             .input_type = &video_i420_1280, .output_type = &video_dummy, .sink_method = -1, .source_method = -1,
             .expected_result = S_OK,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_EXPECTED_CONVERTER,
         },
     };
 
