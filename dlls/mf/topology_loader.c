@@ -281,8 +281,13 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
 
     if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node)))
         return hr;
-    if (decoder)
+    if (!decoder)
+        method_mask = MF_CONNECT_DIRECT;
+    else
+    {
         IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_DECODER, 1);
+        method_mask = MF_CONNECT_ALLOW_CONVERTER;
+    }
 
     if (FAILED(hr = MFTEnumEx(category, MFT_ENUM_FLAG_ALL, &input_info, decoder ? NULL : &output_info, &activates, &count)))
         return hr;
@@ -307,11 +312,13 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
                 hr = topology_branch_fill_media_type(up_type, down_type);
             if (SUCCEEDED(hr))
                 hr = IMFTransform_SetOutputType(transform, 0, down_type, 0);
+            if (SUCCEEDED(hr))
+                method_mask = MF_CONNECT_DIRECT;
         }
         IMFTransform_Release(transform);
 
         if (SUCCEEDED(hr))
-            hr = topology_branch_connect(topology, decoder ? MF_CONNECT_ALLOW_CONVERTER : MF_CONNECT_DIRECT, &down_branch);
+            hr = topology_branch_connect(topology, method_mask, &down_branch);
         if (SUCCEEDED(hr))
             hr = IMFTopology_AddNode(topology, node);
         if (SUCCEEDED(hr))
