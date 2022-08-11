@@ -1329,7 +1329,7 @@ static WCHAR *split_command( BSTR cmd, WCHAR **params )
     return ret;
 }
 
-static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style, VARIANT *wait, DWORD *exit_code)
+static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style, VARIANT *wait, int *exit_code)
 {
     SHELLEXECUTEINFOW info;
     int waitforprocess;
@@ -1384,9 +1384,11 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
     {
         if (waitforprocess)
         {
+            DWORD code;
             WaitForSingleObject(info.hProcess, INFINITE);
-            GetExitCodeProcess(info.hProcess, exit_code);
+            GetExitCodeProcess(info.hProcess, &code);
             CloseHandle(info.hProcess);
+            *exit_code = code;
         }
         else
             *exit_code = 0;
