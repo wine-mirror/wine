@@ -1100,7 +1100,7 @@ static BOOL search_family_names_callback( LANGID langid, struct opentype_name *n
     else if (data->primary_langid == langid)
     {
         data->primary_seen = TRUE;
-        if (!data->second_name.bytes) data->second_name = data->family_name;
+        if (data->family_name.bytes) data->second_name = data->family_name;
         data->family_name = *name;
     }
     else if (!data->second_name.bytes) data->second_name = *name;
