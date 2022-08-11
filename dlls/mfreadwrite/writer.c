@@ -22,6 +22,8 @@
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"
+#include "pathcch.h"
+#include "wine/mfinternal.h"
 #include "mf_private.h"
 
 #include "wine/debug.h"
@@ -196,24 +198,6 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     return hr;
 }
 
-HRESULT create_sink_writer_from_stream(IMFByteStream *stream, IMFAttributes *attributes,
-        REFIID riid, void **out)
-{
-    struct sink_writer *object;
-    HRESULT hr;
-
-    object = malloc(sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    object->IMFSinkWriter_iface.lpVtbl = &sink_writer_vtbl;
-    object->refcount = 1;
-
-    hr = IMFSinkWriter_QueryInterface(&object->IMFSinkWriter_iface, riid, out);
-    IMFSinkWriter_Release(&object->IMFSinkWriter_iface);
-    return hr;
-}
-
 /***********************************************************************
  *      MFCreateSinkWriterFromMediaSink (mfreadwrite.@)
  */
@@ -224,13 +208,116 @@ HRESULT WINAPI MFCreateSinkWriterFromMediaSink(IMFMediaSink *sink, IMFAttributes
     return create_sink_writer_from_sink(sink, attributes, &IID_IMFSinkWriter, (void **)writer);
 }
 
+static HRESULT sink_writer_get_sink_factory_class(const WCHAR *url, IMFAttributes *attributes, CLSID *clsid)
+{
+    static const struct extension_map
+    {
+        const WCHAR *ext;
+        const GUID *guid;
+    } ext_map[] =
+    {
+        { L".mp4", &MFTranscodeContainerType_MPEG4 },
+        { L".mp3", &MFTranscodeContainerType_MP3 },
+        { L".wav", &MFTranscodeContainerType_WAVE },
+        { L".avi", &MFTranscodeContainerType_AVI },
+    };
+    static const struct
+    {
+        const GUID *container;
+        const CLSID *clsid;
+    } class_map[] =
+    {
+        { &MFTranscodeContainerType_MPEG4, &CLSID_MFMPEG4SinkClassFactory },
+        { &MFTranscodeContainerType_MP3, &CLSID_MFMP3SinkClassFactory },
+        { &MFTranscodeContainerType_WAVE, &CLSID_MFWAVESinkClassFactory },
+        { &MFTranscodeContainerType_AVI, &CLSID_MFAVISinkClassFactory },
+    };
+    const WCHAR *extension;
+    GUID container;
+    unsigned int i;
+
+    if (url)
+    {
+        if (!attributes || FAILED(IMFAttributes_GetGUID(attributes, &MF_TRANSCODE_CONTAINERTYPE, &container)))
+        {
+            const struct extension_map *map = NULL;
+
+            if (FAILED(PathCchFindExtension(url, PATHCCH_MAX_CCH, &extension))) return E_INVALIDARG;
+            if (!extension || !*extension) return E_INVALIDARG;
+
+            for (i = 0; i < ARRAY_SIZE(ext_map); ++i)
+            {
+                map = &ext_map[i];
+
+                if (!wcsicmp(map->ext, extension))
+                    break;
+            }
+
+            if (!map)
+            {
+                WARN("Couldn't find container type for extension %s.\n", debugstr_w(extension));
+                return E_INVALIDARG;
+            }
+
+            container = *map->guid;
+        }
+    }
+    else
+    {
+        if (!attributes) return E_INVALIDARG;
+        if (FAILED(IMFAttributes_GetGUID(attributes, &MF_TRANSCODE_CONTAINERTYPE, &container))) return E_INVALIDARG;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(class_map); ++i)
+    {
+        if (IsEqualGUID(&container, &class_map[i].container))
+        {
+            *clsid = *class_map[i].clsid;
+            return S_OK;
+        }
+    }
+
+    WARN("Couldn't find factory class for container %s.\n", debugstr_guid(&container));
+    return E_INVALIDARG;
+}
+
+HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *bytestream, IMFAttributes *attributes,
+        REFIID riid, void **out)
+{
+    IMFSinkClassFactory *factory;
+    IMFMediaSink *sink;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (FAILED(hr = sink_writer_get_sink_factory_class(url, attributes, &clsid))) return hr;
+
+    if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFSinkClassFactory, (void **)&factory)))
+    {
+        WARN("Failed to create a sink factory, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    hr = IMFSinkClassFactory_CreateMediaSink(factory, bytestream, NULL, NULL, &sink);
+    IMFSinkClassFactory_Release(factory);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create a sink, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    hr = create_sink_writer_from_sink(sink, attributes, riid, out);
+    IMFMediaSink_Release(sink);
+
+    return hr;
+}
+
 /***********************************************************************
  *      MFCreateSinkWriterFromURL (mfreadwrite.@)
  */
 HRESULT WINAPI MFCreateSinkWriterFromURL(const WCHAR *url, IMFByteStream *bytestream, IMFAttributes *attributes,
         IMFSinkWriter **writer)
 {
-    FIXME("%s, %p, %p, %p.\n", debugstr_w(url), bytestream, attributes, writer);
+    TRACE("%s, %p, %p, %p.\n", debugstr_w(url), bytestream, attributes, writer);
 
-    return E_NOTIMPL;
+    return create_sink_writer_from_url(url, bytestream, attributes, &IID_IMFSinkWriter, (void **)writer);
 }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-extern HRESULT create_sink_writer_from_stream(IMFByteStream *stream, IMFAttributes *attributes,
-        REFIID riid, void **out) DECLSPEC_HIDDEN;
+extern HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *stream,
+        IMFAttributes *attributes, REFIID riid, void **out) DECLSPEC_HIDDEN;
 extern HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attributes,
         REFIID riid, void **out) DECLSPEC_HIDDEN;

@@ -2594,6 +2594,10 @@ static HRESULT WINAPI readwrite_factory_CreateInstanceFromURL(IMFReadWriteClassF
     {
         return create_source_reader_from_url(url, attributes, &IID_IMFSourceReader, out);
     }
+    else if (IsEqualGUID(clsid, &CLSID_MFSinkWriter))
+    {
+        return create_sink_writer_from_url(url, NULL, attributes, riid, out);
+    }
 
     FIXME("Unsupported %s.\n", debugstr_guid(clsid));
 
@@ -2621,7 +2625,7 @@ static HRESULT WINAPI readwrite_factory_CreateInstanceFromObject(IMFReadWriteCla
             hr = IUnknown_QueryInterface(unk, &IID_IMFMediaSink, (void **)&sink);
 
         if (stream)
-            hr = create_sink_writer_from_stream(stream, attributes, riid, out);
+            hr = create_sink_writer_from_url(NULL, stream, attributes, riid, out);
         else if (sink)
             hr = create_sink_writer_from_sink(sink, attributes, riid, out);
 
