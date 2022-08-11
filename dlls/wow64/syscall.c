@@ -865,13 +865,14 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
     {
     case IMAGE_FILE_MACHINE_I386:
         {
-            I386_CONTEXT orig_ctx, ctx = { CONTEXT_I386_FULL };
+            I386_CONTEXT orig_ctx, *ctx;
             void *args_data;
             ULONG *stack;
 
-            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+            RtlWow64GetCurrentCpuArea( NULL, (void **)&ctx, NULL );
+            orig_ctx = *ctx;
 
-            stack = args_data = ULongToPtr( (ctx.Esp - len) & ~15 );
+            stack = args_data = ULongToPtr( (ctx->Esp - len) & ~15 );
             memcpy( args_data, args, len );
             *(--stack) = 0;
             *(--stack) = len;
@@ -879,16 +880,13 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
             *(--stack) = id;
             *(--stack) = 0xdeadbabe;
 
-            orig_ctx = ctx;
-            ctx.Esp = PtrToUlong( stack );
-            ctx.Eip = pLdrSystemDllInitBlock->pKiUserCallbackDispatcher;
-            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+            ctx->Esp = PtrToUlong( stack );
+            ctx->Eip = pLdrSystemDllInitBlock->pKiUserCallbackDispatcher;
 
             if (!__wine_setjmpex( &frame.jmpbuf, NULL ))
                 cpu_simulate();
             else
-                NtSetInformationThread( GetCurrentThread(), ThreadWow64Context,
-                                        &orig_ctx, sizeof(orig_ctx) );
+                *ctx = orig_ctx;
         }
         break;
 
