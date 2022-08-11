@@ -222,6 +222,8 @@ system_fallback_config[] =
     { "0000-007F, 0080-00FF, 0100-017F, 0180-024F, "
       "0250-02AF, 02B0-02FF, 0300-036F", L"Tahoma" },
 
+    { "0530-058F, FB10-FB1C",   L"Noto Sans Armenian" },
+
     { "0590-05FF, FB1D-FB4F",   L"Noto Sans Hebrew" },
 
     { "0600-06FF, 0750-077F, "
@@ -251,6 +253,8 @@ system_fallback_config[] =
     { "0F00-0FFF",              L"Noto Serif Tibetan" },
 
     { "1000-109F, A9E0-A9FF, AA60-AA7F", L"Noto Sans Myanmar" },
+
+    { "10A0-10FF, 2D00-2D2F",   L"Noto Sans Georgian" },
 
     /* Hangul Jamo               - 1100-11FF
        Hangul Compatibility Jamo - 3130-318F
