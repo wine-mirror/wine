@@ -12105,6 +12105,218 @@ static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, L
     return ret;
 }
 
+static const struct message edit_wm_ime_composition_seq[] =
+{
+    {WM_IME_STARTCOMPOSITION, sent},
+    {WM_IME_COMPOSITION, sent | wparam, 'W'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'W'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'i'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'n'},
+    {WM_IME_CHAR, sent | wparam | defwinproc, 'e'},
+    {WM_IME_ENDCOMPOSITION, sent},
+    {WM_CHAR, sent | wparam, 'W'},
+    {WM_CHAR, sent | wparam, 'i'},
+    {WM_CHAR, sent | wparam, 'n'},
+    {WM_CHAR, sent | wparam, 'e'},
+    {0}
+};
+
+static const struct message edit_wm_ime_char_seq[] =
+{
+    {WM_IME_CHAR, sent | wparam, '0'},
+    {WM_CHAR, sent | wparam, '0'},
+    {0}
+};
+
+static const struct message edit_eimes_getcompstratonce_seq[] =
+{
+    {WM_IME_STARTCOMPOSITION, sent},
+    {WM_IME_COMPOSITION, sent | wparam, 'W'},
+    {WM_IME_ENDCOMPOSITION, sent},
+    {0}
+};
+
+static LRESULT CALLBACK edit_ime_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    struct recvd_message msg = {0};
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wParam;
+
+    if (message < 0xc000 &&
+        message != WM_GETTEXTLENGTH &&
+        message != WM_GETTEXT &&
+        message != WM_GETFONT &&
+        message != WM_GETICON &&
+        message != WM_IME_SETCONTEXT &&
+        message != WM_IME_NOTIFY &&
+        message != WM_CTLCOLOREDIT &&
+        message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCHITTEST &&
+        message != WM_SETCURSOR &&
+        message != WM_MOUSEMOVE &&
+        message != WM_MOUSEACTIVATE &&
+        message != WM_KEYUP &&
+        (message < EM_GETSEL || message > EM_GETIMESTATUS))
+    {
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    if (IsWindowUnicode(hwnd))
+        ret = CallWindowProcW(oldproc, hwnd, message, wParam, lParam);
+    else
+        ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static DWORD WINAPI test_edit_ime_messages(void *unused_arg)
+{
+    WNDPROC old_proc;
+    LRESULT lr;
+    HIMC himc;
+    HWND hwnd;
+    BOOL ret;
+    MSG msg;
+
+    hwnd = CreateWindowA(WC_EDITA, "Test", WS_POPUP | WS_VISIBLE, 10, 10, 300, 300, NULL, NULL,
+                         NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed.\n");
+
+    /* Test EM_{GET|SET}IMESTATUS */
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    ok(lr == 0, "Got unexpected lr %#Ix.\n", lr);
+
+    /* Note that EM_SETIMESTATUS always return 1, which is contrary to what MSDN says about
+     * returning the previous LPARAM value */
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == EIMES_GETCOMPSTRATONCE, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_CANCELCOMPSTRINFOCUS);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == EIMES_CANCELCOMPSTRINFOCUS, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_COMPLETECOMPSTRKILLFOCUS);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == EIMES_COMPLETECOMPSTRKILLFOCUS, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE
+                      | EIMES_CANCELCOMPSTRINFOCUS | EIMES_COMPLETECOMPSTRKILLFOCUS);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == (EIMES_GETCOMPSTRATONCE | EIMES_CANCELCOMPSTRINFOCUS | EIMES_COMPLETECOMPSTRKILLFOCUS),
+       "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    ok(lr == 0, "Got unexpected lr %#Ix.\n", lr);
+
+    /* Invalid EM_{GET|SET}IMESTATUS status types and flags */
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, 0, 0);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING + 1, 0);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, 0, EIMES_GETCOMPSTRATONCE);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    ok(lr == 0, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING + 1, EIMES_GETCOMPSTRATONCE);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    ok(lr == 0, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0xFFFFFFFF);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == 0xFFFF, "Got unexpected lr %#Ix.\n", lr);
+
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    ok(lr == 0, "Got unexpected lr %#Ix.\n", lr);
+
+    /* Test IME messages when EIMES_GETCOMPSTRATONCE is not set */
+    old_proc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)edit_ime_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)old_proc);
+
+    himc = ImmGetContext(hwnd);
+    ret = ImmSetCompositionStringA(himc, SCS_SETSTR, "Wine", 4, NULL, 0);
+    ok(ret, "ImmSetCompositionStringA failed.\n");
+    flush_sequence();
+    ret = ImmNotifyIME(himc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
+    ok(ret, "ImmNotifyIME failed.\n");
+    /* Note that the following message loop is necessary to get the WM_CHAR messages because they
+     * are posted. Same for the later message loops in this function. */
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(edit_wm_ime_composition_seq, "WM_IME_COMPOSITION", TRUE);
+
+    /* Test that WM_IME_CHAR is passed to DefWindowProc() to get WM_CHAR */
+    flush_sequence();
+    SendMessageA(hwnd, WM_IME_CHAR, '0', 1);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(edit_wm_ime_char_seq, "WM_IME_CHAR", TRUE);
+
+    /* Test IME messages when EIMES_GETCOMPSTRATONCE is set */
+    lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE);
+    todo_wine
+    ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
+    lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
+    todo_wine
+    ok(lr == EIMES_GETCOMPSTRATONCE, "Got unexpected lr %#Ix.\n", lr);
+
+    ret = ImmSetCompositionStringA(himc, SCS_SETSTR, "Wine", 4, NULL, 0);
+    ok(ret, "ImmSetCompositionStringA failed.\n");
+    flush_sequence();
+    ret = ImmNotifyIME(himc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
+    ok(ret, "ImmNotifyIME failed.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(edit_eimes_getcompstratonce_seq,
+                "WM_IME_COMPOSITION with EIMES_GETCOMPSTRATONCE", TRUE);
+
+    /* Test that WM_IME_CHAR is passed to DefWindowProc() to get WM_CHAR with EIMES_GETCOMPSTRATONCE */
+    flush_sequence();
+    SendMessageA(hwnd, WM_IME_CHAR, '0', 1);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(edit_wm_ime_char_seq, "WM_IME_CHAR", TRUE);
+
+    ImmReleaseContext(hwnd, himc);
+    DestroyWindow(hwnd);
+    return 0;
+}
+
 static void subclass_edit(void)
 {
     WNDCLASSA cls;
@@ -12124,6 +12336,7 @@ static void test_edit_messages(void)
 {
     HWND hwnd, parent;
     DWORD dlg_code;
+    HANDLE thread;
 
     subclass_edit();
     log_all_parent_messages++;
@@ -12215,6 +12428,11 @@ static void test_edit_messages(void)
     DestroyWindow(parent);
 
     log_all_parent_messages--;
+
+    /* Test IME messages in another thread because IME is disabled in the current thread */
+    thread = CreateThread(NULL, 0, test_edit_ime_messages, NULL, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
 }
 
 /**************************** End of Edit test ******************************/
