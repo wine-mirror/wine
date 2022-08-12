@@ -3458,7 +3458,7 @@ static void test_change_focus(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SetFocus(hwnd);
     ok_sequence(sequences, COMBINED_SEQ_INDEX, setfocus_sent_only_combined_seq,
-                "Set focus sent only", TRUE);
+                "Set focus sent only", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SetFocus(parent_wnd);
