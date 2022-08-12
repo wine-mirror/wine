@@ -3684,7 +3684,7 @@ static void EDIT_WM_NCPaint(HWND hwnd, HRGN region)
  */
 static void EDIT_WM_SetFocus(HTHEME theme, EDITSTATE *es)
 {
-    UINT flags = RDW_INVALIDATE | RDW_UPDATENOW;
+    UINT flags = RDW_INVALIDATE;
 
     es->flags |= EF_FOCUSED;
 
