@@ -533,6 +533,12 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
         handler->register_event_handlers();
 }
 
+/* Report whether a display device handler supports detecting dynamic device changes */
+BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
+{
+    return !!host_handler.register_event_handlers;
+}
+
 static BOOL force_display_devices_refresh;
 
 BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )

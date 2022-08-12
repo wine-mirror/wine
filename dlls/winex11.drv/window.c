@@ -970,6 +970,46 @@ void update_user_time( Time time )
     XUnlockDisplay( gdi_display );
 }
 
+/* Update _NET_WM_FULLSCREEN_MONITORS when _NET_WM_STATE_FULLSCREEN is set to support fullscreen
+ * windows spanning multiple monitors */
+static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
+{
+    long monitors[4];
+    XEvent xev;
+
+    if (!(data->net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop())
+        return;
+
+    /* If the current display device handler can not detect dynamic device changes, do not use
+     * _NET_WM_FULLSCREEN_MONITORS because xinerama_get_fullscreen_monitors() may report wrong
+     * indices because of stale xinerama monitor information */
+    if (!X11DRV_DisplayDevices_SupportEventHandlers())
+        return;
+
+    if (!xinerama_get_fullscreen_monitors( &data->whole_rect, monitors ))
+        return;
+
+    if (!data->mapped)
+    {
+        XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
+                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors, 4 );
+    }
+    else
+    {
+        xev.xclient.type = ClientMessage;
+        xev.xclient.window = data->whole_window;
+        xev.xclient.message_type = x11drv_atom(_NET_WM_FULLSCREEN_MONITORS);
+        xev.xclient.serial = 0;
+        xev.xclient.display = data->display;
+        xev.xclient.send_event = True;
+        xev.xclient.format = 32;
+        xev.xclient.data.l[4] = 1;
+        memcpy( xev.xclient.data.l, monitors, sizeof(monitors) );
+        XSendEvent( data->display, root_window, False,
+                    SubstructureRedirectMask | SubstructureNotifyMask, &xev );
+    }
+}
+
 /***********************************************************************
  *     update_net_wm_states
  */
@@ -1051,6 +1091,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
         }
     }
     data->net_wm_state = new_state;
+    update_net_wm_fullscreen_monitors( data );
 }
 
 /***********************************************************************
@@ -1143,6 +1184,7 @@ static void map_window( HWND hwnd, DWORD new_style )
 
         data->mapped = TRUE;
         data->iconic = (new_style & WS_MINIMIZE) != 0;
+        update_net_wm_fullscreen_monitors( data );
     }
     release_win_data( data );
 }
