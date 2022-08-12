@@ -835,6 +835,8 @@ static void test_CloseThemeData(void)
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
     hRes = CloseThemeData(INVALID_HANDLE_VALUE);
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
+    hRes = CloseThemeData((HTHEME)0xdeadbeef);
+    ok(hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
 }
 
 static void test_buffer_dc_props(HDC hdc, const RECT *rect)

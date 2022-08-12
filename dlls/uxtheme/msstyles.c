@@ -32,6 +32,7 @@
 
 #include "msstyles.h"
 
+#include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -48,6 +49,8 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
 static HRESULT MSSTYLES_GetFont (LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LOGFONTW* logfont);
 
 #define MSSTYLES_VERSION 0x0003
+
+#define THEME_CLASS_SIGNATURE 0x12bc6d83
 
 static PTHEME_FILE tfActiveTheme;
 
@@ -204,6 +207,7 @@ void MSSTYLES_CloseThemeFile(PTHEME_FILE tf)
                         pcls->partstate = ps->next;
                         heap_free(ps);
                     }
+                    pcls->signature = 0;
                     heap_free(pcls);
                 }
             }
@@ -442,6 +446,7 @@ static PTHEME_CLASS MSSTYLES_AddClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWST
     if(cur) return cur;
 
     cur = heap_alloc(sizeof(*cur));
+    cur->signature = THEME_CLASS_SIGNATURE;
     cur->hTheme = tf->hTheme;
     lstrcpyW(cur->szAppName, pszAppName);
     lstrcpyW(cur->szClassName, pszClassName);
@@ -1075,6 +1080,23 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
  */
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc)
 {
+    __TRY
+    {
+        if (tc->signature != THEME_CLASS_SIGNATURE)
+            tc = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        tc = NULL;
+    }
+    __ENDTRY
+
+    if (!tc)
+    {
+        WARN("Invalid theme class handle\n");
+        return E_HANDLE;
+    }
+
     MSSTYLES_CloseThemeFile (tc->tf);
     return S_OK;
 }
