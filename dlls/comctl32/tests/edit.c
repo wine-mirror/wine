@@ -900,6 +900,10 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, 
         message != WM_GETMINMAXINFO &&
         message != WM_PAINT &&
         message != WM_CTLCOLOREDIT &&
+        message != WM_WINDOWPOSCHANGING &&
+        message != WM_WINDOWPOSCHANGED &&
+        message != WM_MOVE &&
+        message != WM_MOUSEACTIVATE &&
         message < 0xc000)
     {
         add_message(sequences, COMBINED_SEQ_INDEX, &msg);
@@ -3451,7 +3455,7 @@ static void test_change_focus(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SetFocus(parent_wnd);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_combined_seq, "Kill focus", TRUE);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_combined_seq, "Kill focus", FALSE);
 
     /* Test message sequences without waiting for posted messages */
     SetFocus(parent_wnd);
@@ -3463,7 +3467,7 @@ static void test_change_focus(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SetFocus(parent_wnd);
     ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_sent_only_combined_seq,
-                "Kill focus sent only", TRUE);
+                "Kill focus sent only", FALSE);
 
     SetCursorPos(orig_pos.x, orig_pos.y);
 

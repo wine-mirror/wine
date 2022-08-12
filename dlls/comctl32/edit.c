@@ -3402,7 +3402,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
  */
 static LRESULT EDIT_WM_KillFocus(HTHEME theme, EDITSTATE *es)
 {
-    UINT flags = RDW_INVALIDATE | RDW_UPDATENOW;
+    UINT flags = RDW_INVALIDATE;
 
     es->flags &= ~EF_FOCUSED;
     DestroyCaret();
