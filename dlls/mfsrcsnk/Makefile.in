@@ -1,0 +1,7 @@
+MODULE    = mfsrcsnk.dll
+IMPORTLIB = mfsrcsnk
+
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+C_SRCS = \
+	wave.c
