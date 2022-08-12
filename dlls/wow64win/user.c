@@ -210,14 +210,42 @@ static NTSTATUS dispatch_callback( ULONG id, void *args, ULONG len )
 
 static NTSTATUS WINAPI wow64_NtUserCallEnumDisplayMonitor( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct enum_display_monitor_params *params = arg;
+    struct
+    {
+        ULONG proc;
+        ULONG monitor;
+        ULONG hdc;
+        RECT rect;
+        ULONG lparam;
+    } params32;
+
+    params32.proc = PtrToUlong( params->proc );
+    params32.monitor = HandleToUlong( params->monitor );
+    params32.hdc = HandleToUlong( params->hdc );
+    params32.rect = params->rect;
+    params32.lparam = params->lparam;
+    return dispatch_callback( NtUserCallEnumDisplayMonitor, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallSendAsyncCallback( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct send_async_params *params = arg;
+    struct
+    {
+        ULONG callback;
+        ULONG hwnd;
+        UINT msg;
+        ULONG data;
+        ULONG result;
+    } params32;
+
+    params32.callback = PtrToUlong( params->callback );
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.msg = params->msg;
+    params32.data = params->data;
+    params32.result = params->result;
+    return dispatch_callback( NtUserCallSendAsyncCallback, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallWinEventHook( void *arg, ULONG size )
@@ -240,14 +268,71 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserCopyImage( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct copy_image_params *params = arg;
+    struct
+    {
+        ULONG hwnd;
+        UINT type;
+        INT dx;
+        INT dy;
+        UINT flags;
+    } params32;
+
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.type = params->type;
+    params32.dx = params->dx;
+    params32.dy = params->dy;
+    params32.flags = params->flags;
+    return dispatch_callback( NtUserCopyImage, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserDrawScrollBar( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct draw_scroll_bar_params *params = arg;
+    struct
+    {
+        ULONG hwnd;
+        ULONG hdc;
+        INT bar;
+        UINT hit_test;
+        struct
+        {
+            ULONG win;
+            INT bar;
+            INT thumb_pos;
+            INT thumb_val;
+            BOOL vertical;
+            enum SCROLL_HITTEST hit_test;
+        } tracking_info;
+        BOOL arrows;
+        BOOL interior;
+        RECT rect;
+        UINT enable_flags;
+        INT arrow_size;
+        INT thumb_pos;
+        INT thumb_size;
+        BOOL vertical;
+    } params32;
+
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.hdc = HandleToUlong( params->hdc );
+    params32.bar = params->bar;
+    params32.hit_test = params->hit_test;
+    params32.tracking_info.win = HandleToUlong( params->tracking_info.win );
+    params32.tracking_info.bar = params->tracking_info.bar;
+    params32.tracking_info.thumb_pos = params->tracking_info.thumb_pos;
+    params32.tracking_info.thumb_val = params->tracking_info.thumb_val;
+    params32.tracking_info.vertical = params->tracking_info.vertical;
+    params32.tracking_info.hit_test = params->tracking_info.hit_test;
+    params32.arrows = params->arrows;
+    params32.interior = params->interior;
+    params32.rect = params->rect;
+    params32.enable_flags = params->enable_flags;
+    params32.arrow_size = params->arrow_size;
+    params32.thumb_pos = params->thumb_pos;
+    params32.thumb_size = params->thumb_size;
+    params32.vertical = params->vertical;
+    return dispatch_callback( NtUserDrawScrollBar, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserDrawText( void *arg, ULONG size )
@@ -258,14 +343,34 @@ static NTSTATUS WINAPI wow64_NtUserDrawText( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserFreeCachedClipboardData( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct free_cached_data_params *params = arg;
+    struct
+    {
+        UINT format;
+        ULONG handle;
+    } params32;
+
+    params32.format = params->format;
+    params32.handle = HandleToUlong( params->handle );
+    return dispatch_callback( NtUserFreeCachedClipboardData, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserImmProcessKey( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct imm_process_key_params *params = arg;
+    struct
+    {
+        ULONG hwnd;
+        ULONG hkl;
+        UINT  vkey;
+        ULONG key_data;
+    } params32;
+
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.hkl = HandleToUlong( params->hkl );
+    params32.vkey = params->vkey;
+    params32.key_data = params->key_data;
+    return dispatch_callback( NtUserImmProcessKey, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserImmTranslateMessage( void *arg, ULONG size )
@@ -286,8 +391,24 @@ static NTSTATUS WINAPI wow64_NtUserLoadDriver( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserLoadImage( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct load_image_params *params = arg;
+    struct
+    {
+        ULONG hinst;
+        ULONG name;
+        UINT type;
+        INT dx;
+        INT dy;
+        UINT flags;
+    } params32;
+
+    params32.hinst = PtrToUlong( params->hinst );
+    params32.name = PtrToUlong( params->name );
+    params32.type = params->type;
+    params32.dx = params->dx;
+    params32.dy = params->dy;
+    params32.flags = params->flags;
+    return dispatch_callback( NtUserLoadImage, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserLoadSysMenu( void *arg, ULONG size )
@@ -297,8 +418,24 @@ static NTSTATUS WINAPI wow64_NtUserLoadSysMenu( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserPostDDEMessage( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct post_dde_message_params *params = arg;
+    struct
+    {
+        ULONG hwnd;
+        UINT msg;
+        LONG wparam;
+        LONG lparam;
+        DWORD dest_tid;
+        DWORD type;
+    } params32;
+
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.msg = params->msg;
+    params32.wparam = params->wparam;
+    params32.lparam = params->lparam;
+    params32.dest_tid = params->dest_tid;
+    params32.type = params->type;
+    return dispatch_callback( NtUserPostDDEMessage, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserRenderSynthesizedFormat( void *arg, ULONG size )
