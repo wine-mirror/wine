@@ -1,5 +1,5 @@
 TESTDLL   = comctl32.dll
-IMPORTS   = ole32 user32 gdi32 advapi32
+IMPORTS   = ole32 user32 gdi32 advapi32 imm32
 
 C_SRCS = \
 	animate.c \
