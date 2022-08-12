@@ -233,6 +233,25 @@ static void test_ReadAndWriteProperties(void)
         ok(hr == S_OK, "Failed to commit properties, hr=0x%lx\n", hr);
 
         pPropStgWrite->lpVtbl->Release(pPropStgWrite);
+
+        /* Test with STGM_WRITE */
+        hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_WRITE, &pPropStgWrite);
+        todo_wine ok(hr == S_OK, "Unable to get an IPropertyStorage for writing, hr=0x%lx\n", hr);
+
+        if (hr == S_OK)
+        {
+            memset(pvread, 0, sizeof(pvread));
+            hr = IPropertyStorage_ReadMultiple(pPropStgWrite, 2, ps, pvread);
+            ok(hr == S_OK, "Unable to read properties, hr=0x%lx\n", hr);
+            ok(pvread[1].vt == VT_I4, "got %d\n", pvread[1].vt);
+            ok(U(pvread[1]).lVal == iconIndex, "Read wrong icon index: %d\n", U(pvread[1]).iVal);
+            ok(pvread[0].vt == VT_LPWSTR, "got %d\n", pvread[0].vt);
+            ok(lstrcmpW(U(pvread[0]).pwszVal, iconPath) == 0, "Wrong icon path read: %s\n", wine_dbgstr_w(U(pvread[0]).pwszVal));
+            PropVariantClear(&pvread[0]);
+            PropVariantClear(&pvread[1]);
+
+            IPropertyStorage_Release(pPropStgWrite);
+        }
         urlA->lpVtbl->Release(urlA);
         IPropertySetStorage_Release(pPropSetStg);
     }
