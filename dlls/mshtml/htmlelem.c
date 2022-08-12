@@ -1124,7 +1124,7 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
         nsres = nsIDOMClientRectList_Item(This->rect_list, id - MSHTML_DISPID_CUSTOM_MIN, &rect);
         if(NS_FAILED(nsres) || !rect) {
             WARN("Unknown item\n");
-            return DISP_E_UNKNOWNNAME;
+            return DISP_E_MEMBERNOTFOUND;
         }
 
         hres = create_html_rect(rect, dispex_compat_mode(&This->dispex), &html_rect);

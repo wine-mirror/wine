@@ -2542,12 +2542,10 @@ static void test_timeout(IHTMLDocument2 *doc)
     V_VT(&var) = VT_EMPTY;
     hres = IDispatch_Invoke(disp, DISPID_IHTMLWINDOW2_SETINTERVAL, &IID_NULL, LOCALE_USER_DEFAULT,
                             DISPATCH_METHOD, &dp, &var, NULL, &argerr);
-    todo_wine
     ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke(DISPID_IHTMLWINDOW2_SETINTERVAL) returned: %08lx\n", hres);
 
     hres = IDispatch_Invoke(disp, DISPID_IHTMLWINDOW2_SETTIMEOUT, &IID_NULL, LOCALE_USER_DEFAULT,
                             DISPATCH_METHOD, &dp, &var, NULL, &argerr);
-    todo_wine
     ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke(DISPID_IHTMLWINDOW2_SETTIMEOUT) returned: %08lx\n", hres);
     SysFreeString(V_BSTR(&args[1]));
     IDispatch_Release(disp);

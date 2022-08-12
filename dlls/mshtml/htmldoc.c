@@ -5843,7 +5843,7 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     i = id - MSHTML_DISPID_CUSTOM_MIN;
 
     if(!This->nsdoc || i >= This->elem_vars_cnt)
-        return DISP_E_UNKNOWNNAME;
+        return DISP_E_MEMBERNOTFOUND;
 
     nsAString_InitDepend(&name_str, This->elem_vars[i]);
     nsres = nsIDOMHTMLDocument_GetElementsByName(This->nsdoc, &name_str, &node_list);
@@ -5854,7 +5854,7 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     nsres = nsIDOMNodeList_Item(node_list, 0, &nsnode);
     nsIDOMNodeList_Release(node_list);
     if(NS_FAILED(nsres) || !nsnode)
-        return DISP_E_UNKNOWNNAME;
+        return DISP_E_MEMBERNOTFOUND;
 
     hres = get_node(nsnode, TRUE, &node);
     if(FAILED(hres))

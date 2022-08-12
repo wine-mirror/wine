@@ -591,7 +591,7 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 
     idx = id - DISPID_ELEMCOL_0;
     if(idx >= This->len)
-        return DISP_E_UNKNOWNNAME;
+        return DISP_E_MEMBERNOTFOUND;
 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
