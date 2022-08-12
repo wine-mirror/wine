@@ -3606,7 +3606,7 @@ static void test_ime(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SendMessageA(hwnd, WM_IME_CHAR, '0', 1);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_char_seq, "WM_IME_CHAR", TRUE);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_char_seq, "WM_IME_CHAR", FALSE);
 
     /* Test IME messages when EIMES_GETCOMPSTRATONCE is set */
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE);
@@ -3627,7 +3627,7 @@ static void test_ime(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SendMessageA(hwnd, WM_IME_CHAR, '0', 1);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_char_seq, "WM_IME_CHAR", TRUE);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, wm_ime_char_seq, "WM_IME_CHAR", FALSE);
 
     ImmReleaseContext(hwnd, himc);
     DestroyWindow(hwnd);
