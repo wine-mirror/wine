@@ -71,7 +71,7 @@ typedef struct _THEME_IMAGE {
 } THEME_IMAGE, *PTHEME_IMAGE;
 
 typedef struct _THEME_FILE {
-    DWORD dwRefCount;
+    LONG refcount;
     HMODULE hTheme;
     WCHAR szThemeFile[MAX_PATH];
     LPWSTR pszAvailColors;
