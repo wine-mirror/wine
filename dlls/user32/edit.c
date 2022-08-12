@@ -21,7 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * TODO:
- *   - EM_GETIMESTATUS
  *   - EN_ALIGN_LTR_EC
  *   - EN_ALIGN_RTL_EC
  *   - ES_OEMCONVERT
@@ -4934,6 +4933,10 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
                 es->ime_status = lParam & 0xFFFF;
 
             result = 1;
+            break;
+
+        case EM_GETIMESTATUS:
+            result = wParam == EMSIS_COMPOSITIONSTRING ? es->ime_status : 1;
             break;
 
         /* End of the EM_ messages which were in numerical order; what order
