@@ -1565,10 +1565,11 @@ NTSTATUS WINAPI wow64_NtUserGetMessage( UINT *args )
     UINT first = get_ulong( &args );
     UINT last = get_ulong( &args );
     MSG msg;
+    int ret;
 
-    if (!NtUserGetMessage( &msg, hwnd, first, last )) return FALSE;
-    msg_64to32( &msg, msg32 );
-    return TRUE;
+    ret = NtUserGetMessage( &msg, hwnd, first, last );
+    if (ret != -1) msg_64to32( &msg, msg32 );
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
