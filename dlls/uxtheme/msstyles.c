@@ -447,6 +447,7 @@ static PTHEME_CLASS MSSTYLES_AddClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWST
 
     cur = heap_alloc(sizeof(*cur));
     cur->signature = THEME_CLASS_SIGNATURE;
+    cur->refcount = 0;
     cur->hTheme = tf->hTheme;
     lstrcpyW(cur->szAppName, pszAppName);
     lstrcpyW(cur->szClassName, pszClassName);
@@ -1061,6 +1062,7 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
         TRACE("Opened app %s, class %s from list %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName), debugstr_w(pszClassList));
 	cls->tf = tfActiveTheme;
 	cls->tf->dwRefCount++;
+        InterlockedIncrement(&cls->refcount);
         cls->dpi = dpi;
     }
     return cls;
@@ -1080,6 +1082,8 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
  */
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc)
 {
+    LONG refcount;
+
     __TRY
     {
         if (tc->signature != THEME_CLASS_SIGNATURE)
@@ -1097,7 +1101,10 @@ HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc)
         return E_HANDLE;
     }
 
-    MSSTYLES_CloseThemeFile (tc->tf);
+    refcount = InterlockedDecrement(&tc->refcount);
+    /* Some buggy apps may double free HTHEME handles */
+    if (refcount >= 0)
+        MSSTYLES_CloseThemeFile(tc->tf);
     return S_OK;
 }
 

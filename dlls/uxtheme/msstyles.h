@@ -50,6 +50,7 @@ struct _THEME_FILE;
 
 typedef struct _THEME_CLASS {
     DWORD signature;
+    LONG refcount;
     HMODULE hTheme;
     struct _THEME_FILE* tf;
     WCHAR szAppName[MAX_THEME_APP_NAME];
