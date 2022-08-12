@@ -4102,7 +4102,10 @@ static INT CALLBACK enum_truetype_font_proc(const LOGFONTA *lf, const TEXTMETRIC
 
 static void test_GetTextMetrics(void)
 {
+    HFONT old_hf, hf;
+    TEXTMETRICA tm;
     LOGFONTA lf;
+    BOOL ret;
     HDC hdc;
     INT enumed;
 
@@ -4112,6 +4115,19 @@ static void test_GetTextMetrics(void)
     lf.lfCharSet = DEFAULT_CHARSET;
     enumed = 0;
     EnumFontFamiliesExA(hdc, &lf, enum_truetype_font_proc, (LPARAM)&enumed, 0);
+
+    /* Test a bug triggered by rounding up FreeType ppem */
+    hf = CreateFontA(20, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+                     OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
+                     "Tahoma");
+    ok(hf != NULL, "CreateFontA failed, error %lu\n", GetLastError());
+    old_hf = SelectObject(hdc, hf);
+    ret = GetTextMetricsA(hdc, &tm);
+    ok(ret, "GetTextMetricsA failed, error %lu\n", GetLastError());
+    todo_wine
+    ok(tm.tmHeight <= 20, "Got unexpected tmHeight %ld\n", tm.tmHeight);
+    SelectObject(hdc, old_hf);
+    DeleteObject(hf);
 
     ReleaseDC(0, hdc);
 }
