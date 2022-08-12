@@ -4032,7 +4032,6 @@ static void test_GetTextMetrics(void)
     old_hf = SelectObject(hdc, hf);
     ret = GetTextMetricsA(hdc, &tm);
     ok(ret, "GetTextMetricsA failed, error %u\n", GetLastError());
-    todo_wine
     ok(tm.tmHeight <= 20, "Got unexpected tmHeight %d\n", tm.tmHeight);
     SelectObject(hdc, old_hf);
     DeleteObject(hf);

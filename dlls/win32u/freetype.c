@@ -1975,10 +1975,18 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
 
     if(height > 0) {
         USHORT windescent = get_fixed_windescent(pOS2->usWinDescent);
+        LONG units;
+
         if(pOS2->usWinAscent + windescent == 0)
-            ppem = pFT_MulDiv(ft_face->units_per_EM, height, pHori->Ascender - pHori->Descender);
+            units = pHori->Ascender - pHori->Descender;
         else
-            ppem = pFT_MulDiv(ft_face->units_per_EM, height, pOS2->usWinAscent + windescent);
+            units = pOS2->usWinAscent + windescent;
+        ppem = pFT_MulDiv(ft_face->units_per_EM, height, units);
+
+        /* If rounding ends up getting a font exceeding height, choose a smaller ppem */
+        if(ppem > 1 && pFT_MulDiv(units, ppem, ft_face->units_per_EM) > height)
+            --ppem;
+
         if(ppem > MAX_PPEM) {
             WARN("Ignoring too large height %d, ppem %d\n", height, ppem);
             ppem = 1;
