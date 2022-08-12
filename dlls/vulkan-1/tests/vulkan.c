@@ -212,11 +212,16 @@ static void test_enumerate_physical_device2(void)
             trace("Device '%s', device UUID: %s, driver UUID: %s, device LUID: %08lx:%08lx.\n",
                   properties2.properties.deviceName, wine_dbgstr_guid((const GUID *)id.deviceUUID),
                   wine_dbgstr_guid((const GUID *)id.driverUUID), luid->HighPart, luid->LowPart);
+            todo_wine_if(!id.deviceLUIDValid && strstr(properties2.properties.deviceName, "llvmpipe"))
             ok(id.deviceLUIDValid == VK_TRUE, "Expected valid device LUID.\n");
-            /* If deviceLUIDValid is VK_TRUE, deviceNodeMask must contain exactly one bit according
-             * to the Vulkan specification */
-            ok(id.deviceNodeMask && !(id.deviceNodeMask & (id.deviceNodeMask - 1)),
-               "Expect deviceNodeMask to have only one bit set, got %#x.\n", id.deviceNodeMask);
+            if (id.deviceLUIDValid == VK_TRUE)
+            {
+                /* If deviceLUIDValid is VK_TRUE, deviceNodeMask must contain exactly one bit
+                 * according to the Vulkan specification */
+                ok(id.deviceNodeMask && !(id.deviceNodeMask & (id.deviceNodeMask - 1)),
+                        "Expect deviceNodeMask to have only one bit set, got %#x.\n",
+                        id.deviceNodeMask);
+            }
         }
     }
 
