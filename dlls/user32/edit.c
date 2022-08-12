@@ -5198,6 +5198,12 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		break;
 
 	case WM_IME_COMPOSITION:
+                if (lParam & GCS_RESULTSTR && !(es->ime_status & EIMES_GETCOMPSTRATONCE))
+                {
+                    DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
+                    break;
+                }
+
                 EDIT_ImeComposition(hwnd, lParam, es);
 		break;
 
