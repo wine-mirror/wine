@@ -236,7 +236,7 @@ static void test_ReadAndWriteProperties(void)
 
         /* Test with STGM_WRITE */
         hr = IPropertySetStorage_Open(pPropSetStg, &FMTID_Intshcut, STGM_WRITE, &pPropStgWrite);
-        todo_wine ok(hr == S_OK, "Unable to get an IPropertyStorage for writing, hr=0x%lx\n", hr);
+        ok(hr == S_OK, "Unable to get an IPropertyStorage for writing, hr=0x%lx\n", hr);
 
         if (hr == S_OK)
         {

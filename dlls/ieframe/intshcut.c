@@ -718,8 +718,13 @@ static HRESULT WINAPI PropertySetStorage_Open(
         DWORD grfMode,
         IPropertyStorage **ppprstg)
 {
+    const DWORD STGM_ACCESS_MASK = 0x0000000f;
     InternetShortcut *This = impl_from_IPropertySetStorage(iface);
     TRACE("(%s, 0x%lx, %p)\n", debugstr_guid(rfmtid), grfMode, ppprstg);
+
+    /* ole32 doesn't like STGM_WRITE */
+    if ((grfMode & STGM_ACCESS_MASK) == STGM_WRITE)
+        grfMode = (grfMode & ~STGM_ACCESS_MASK) | STGM_READWRITE;
 
     /* Note:  The |STGM_SHARE_EXCLUSIVE is to cope with a bug in the implementation.  Should be fixed in ole32. */
     return IPropertySetStorage_Open(This->property_set_storage,
