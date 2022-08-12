@@ -759,7 +759,7 @@ static HRESULT WINAPI netfw_rules_Add(
     fw_rules *This = impl_from_INetFwRules( iface );
 
     FIXME("%p, %p\n", This, rule);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI netfw_rules_Remove(
@@ -769,7 +769,7 @@ static HRESULT WINAPI netfw_rules_Remove(
     fw_rules *This = impl_from_INetFwRules( iface );
 
     FIXME("%p, %s\n", This, debugstr_w(name));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI netfw_rules_Item(
