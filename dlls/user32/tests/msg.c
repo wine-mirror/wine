@@ -32,6 +32,7 @@
 #include "winnls.h"
 #include "dbt.h"
 #include "commctrl.h"
+#include "imm.h"
 
 #include "wine/test.h"
 
@@ -18794,8 +18795,6 @@ START_TEST(msg)
     char **test_argv;
     BOOL ret;
     BOOL (WINAPI *pIsWinEventHookInstalled)(DWORD)= 0;/*GetProcAddress(user32, "IsWinEventHookInstalled");*/
-    HMODULE hModuleImm32;
-    BOOL (WINAPI *pImmDisableIME)(DWORD);
     int argc;
 
     argc = winetest_get_mainargs( &test_argv );
@@ -18810,15 +18809,7 @@ START_TEST(msg)
 
     InitializeCriticalSection( &sequence_cs );
     init_procs();
-
-    hModuleImm32 = LoadLibraryA("imm32.dll");
-    if (hModuleImm32) {
-        pImmDisableIME = (void *)GetProcAddress(hModuleImm32, "ImmDisableIME");
-        if (pImmDisableIME)
-            pImmDisableIME(0);
-    }
-    pImmDisableIME = NULL;
-    FreeLibrary(hModuleImm32);
+    ImmDisableIME(0);
 
     if (!RegisterWindowClasses()) assert(0);
 
