@@ -4912,20 +4912,8 @@ static HRESULT WINAPI DocDispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMemb
     TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    switch(dispIdMember) {
-    case DISPID_READYSTATE:
-        TRACE("DISPID_READYSTATE\n");
-
-        if(!(wFlags & DISPATCH_PROPERTYGET))
-            return E_INVALIDARG;
-
-        V_VT(pVarResult) = VT_I4;
-        V_I4(pVarResult) = This->window->readystate;
-        return S_OK;
-    }
-
-    return IDispatchEx_Invoke(This->dispex, dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags, pDispParams,
+            pVarResult, pExcepInfo, NULL);
 }
 
 static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
@@ -4945,10 +4933,26 @@ static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID
 {
     HTMLDocument *This = impl_from_IDispatchEx(iface);
 
-    if(This->window && id == DISPID_IHTMLDOCUMENT2_LOCATION && (wFlags & DISPATCH_PROPERTYPUT))
-        return IDispatchEx_InvokeEx(&This->window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
-                lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    if(This->window) {
+        switch(id) {
+        case DISPID_READYSTATE:
+            TRACE("DISPID_READYSTATE\n");
 
+            if(!(wFlags & DISPATCH_PROPERTYGET))
+                return E_INVALIDARG;
+
+            V_VT(pvarRes) = VT_I4;
+            V_I4(pvarRes) = This->window->readystate;
+            return S_OK;
+        case DISPID_IHTMLDOCUMENT2_LOCATION:
+            if(!(wFlags & DISPATCH_PROPERTYPUT))
+                break;
+            return IDispatchEx_InvokeEx(&This->window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
+                    lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        default:
+            break;
+        }
+    }
 
     return IDispatchEx_InvokeEx(This->dispex, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 }

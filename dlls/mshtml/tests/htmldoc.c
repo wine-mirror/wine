@@ -5364,6 +5364,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
 {
     IHTMLDocument2 *htmldoc;
     DISPPARAMS dispparams;
+    IDispatchEx *dispex;
     IHTMLElement *elem;
     BSTR state;
     VARIANT out;
@@ -5433,6 +5434,15 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     hres = IHTMLDocument2_Invoke(htmldoc, DISPID_READYSTATE, &IID_NULL, 0, DISPATCH_PROPERTYGET,
                                  &dispparams, &out, NULL, NULL);
     ok(hres == S_OK, "Invoke(DISPID_READYSTATE) failed: %08lx\n", hres);
+
+    ok_(__FILE__,line) (V_VT(&out) == VT_I4, "V_VT(out)=%d\n", V_VT(&out));
+    ok_(__FILE__,line) (V_I4(&out) == load_state%5, "VT_I4(out)=%ld, expected %d\n", V_I4(&out), load_state%5);
+
+    hres = IHTMLDocument2_QueryInterface(htmldoc, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "QueryInterface(IID_IDispatchEx) failed: %08lx\n", hres);
+    hres = IDispatchEx_InvokeEx(dispex, DISPID_READYSTATE, 0, DISPATCH_PROPERTYGET, &dispparams, &out, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx(DISPID_READYSTATE) failed: %08lx\n", hres);
+    IDispatchEx_Release(dispex);
 
     ok_(__FILE__,line) (V_VT(&out) == VT_I4, "V_VT(out)=%d\n", V_VT(&out));
     ok_(__FILE__,line) (V_I4(&out) == load_state%5, "VT_I4(out)=%ld, expected %d\n", V_I4(&out), load_state%5);
