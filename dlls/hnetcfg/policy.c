@@ -55,6 +55,560 @@ static inline fw_policy2 *impl_from_INetFwPolicy2( INetFwPolicy2 *iface )
     return CONTAINING_RECORD(iface, fw_policy2, INetFwPolicy2_iface);
 }
 
+typedef struct fw_rule
+{
+    INetFwRule INetFwRule_iface;
+    LONG refs;
+} fw_rule;
+
+static inline fw_rule *impl_from_INetFwRule( INetFwRule *iface )
+{
+    return CONTAINING_RECORD(iface, fw_rule, INetFwRule_iface);
+}
+
+static HRESULT WINAPI netfw_rule_QueryInterface(
+    INetFwRule *iface,
+    REFIID riid,
+    void **object)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), object );
+
+    if ( IsEqualGUID( riid, &IID_INetFwRule ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *object = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    INetFwRule_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI netfw_rule_AddRef(
+    INetFwRule *iface )
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+    return InterlockedIncrement( &This->refs );
+}
+
+static ULONG WINAPI netfw_rule_Release(
+    INetFwRule *iface )
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+    LONG refs = InterlockedDecrement( &This->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", This);
+        free( This );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI netfw_rule_GetTypeInfoCount(
+    INetFwRule *iface,
+    UINT *pctinfo )
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    TRACE("%p %p\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_GetTypeInfo(
+    INetFwRule *iface,
+    UINT iTInfo,
+    LCID lcid,
+    ITypeInfo **ppTInfo)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    TRACE("%p %u %lu %p\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo( INetFwRule_tid, ppTInfo );
+}
+
+static HRESULT WINAPI netfw_rule_GetIDsOfNames(
+    INetFwRule *iface,
+    REFIID riid,
+    LPOLESTR *rgszNames,
+    UINT cNames,
+    LCID lcid,
+    DISPID *rgDispId)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p %s %p %u %lu %p\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo( INetFwRule_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, rgszNames, cNames, rgDispId );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI netfw_rule_Invoke(
+    INetFwRule *iface,
+    DISPID dispIdMember,
+    REFIID riid,
+    LCID lcid,
+    WORD wFlags,
+    DISPPARAMS *pDispParams,
+    VARIANT *pVarResult,
+    EXCEPINFO *pExcepInfo,
+    UINT *puArgErr)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p %ld %s %ld %d %p %p %p %p\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo( INetFwRule_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &This->INetFwRule_iface, dispIdMember,
+                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI netfw_rule_get_Name(
+    INetFwRule *iface,
+    BSTR *name)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Name(
+    INetFwRule *iface,
+    BSTR name)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(name));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Description(
+    INetFwRule *iface,
+    BSTR *desc)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, desc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Description(
+    INetFwRule *iface,
+    BSTR desc)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(desc));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_ApplicationName(
+    INetFwRule *iface,
+    BSTR *app)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, app);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_ApplicationName(
+    INetFwRule *iface,
+    BSTR app)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(app));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_ServiceName(
+    INetFwRule *iface,
+    BSTR *service)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, service);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_ServiceName(
+    INetFwRule *iface,
+    BSTR service)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(service));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Protocol(
+    INetFwRule *iface,
+    LONG *protocol)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, protocol);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Protocol(
+    INetFwRule *iface,
+    LONG protocol)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %ld\n", This, protocol);
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_LocalPorts(
+    INetFwRule *iface,
+    BSTR *ports)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, ports);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_LocalPorts(
+    INetFwRule *iface,
+    BSTR ports)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(ports));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_RemotePorts(
+    INetFwRule *iface,
+    BSTR *ports)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, ports);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_RemotePorts(
+    INetFwRule *iface,
+    BSTR ports)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(ports));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_LocalAddresses(
+    INetFwRule *iface,
+    BSTR *addresses)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, addresses);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_LocalAddresses(
+    INetFwRule *iface,
+    BSTR addresses)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(addresses));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_RemoteAddresses(
+    INetFwRule *iface,
+    BSTR *addresses)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, addresses);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_RemoteAddresses(
+    INetFwRule *iface,
+    BSTR addresses)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(addresses));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_IcmpTypesAndCodes(
+    INetFwRule *iface,
+    BSTR *codes)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, codes);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_IcmpTypesAndCodes(
+    INetFwRule *iface,
+    BSTR codes)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(codes));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Direction(
+    INetFwRule *iface,
+    NET_FW_RULE_DIRECTION *dir)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, dir);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Direction(
+    INetFwRule *iface,
+    NET_FW_RULE_DIRECTION dir)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %u\n", This, dir);
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Interfaces(
+    INetFwRule *iface,
+    VARIANT *interfaces)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, interfaces);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Interfaces(
+    INetFwRule *iface,
+    VARIANT interfaces)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_variant(&interfaces));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_InterfaceTypes(
+    INetFwRule *iface,
+    BSTR *types)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, types);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_InterfaceTypes(
+    INetFwRule *iface,
+    BSTR types)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(types));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Enabled(
+    INetFwRule *iface,
+    VARIANT_BOOL *enabled)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, enabled);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Enabled(
+    INetFwRule *iface,
+    VARIANT_BOOL enabled)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %#x\n", This, enabled);
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Grouping(
+    INetFwRule *iface,
+    BSTR *grouping)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, grouping);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Grouping(
+    INetFwRule *iface,
+    BSTR grouping)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %s\n", This, debugstr_w(grouping));
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Profiles(
+    INetFwRule *iface,
+    LONG *profiles)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, profiles);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Profiles(
+    INetFwRule *iface,
+    LONG profiles)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %#lx\n", This, profiles);
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_EdgeTraversal(
+    INetFwRule *iface,
+    VARIANT_BOOL *enabled)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, enabled);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_EdgeTraversal(
+    INetFwRule *iface,
+    VARIANT_BOOL enabled)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %#x\n", This, enabled);
+    return S_OK;
+}
+
+static HRESULT WINAPI netfw_rule_get_Action(
+    INetFwRule *iface,
+    NET_FW_ACTION *action)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %p\n", This, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI netfw_rule_put_Action(
+    INetFwRule *iface,
+    NET_FW_ACTION action)
+{
+    fw_rule *This = impl_from_INetFwRule( iface );
+
+    FIXME("%p, %u\n", This, action);
+    return S_OK;
+}
+
+static const struct INetFwRuleVtbl fw_rule_vtbl =
+{
+    netfw_rule_QueryInterface,
+    netfw_rule_AddRef,
+    netfw_rule_Release,
+    netfw_rule_GetTypeInfoCount,
+    netfw_rule_GetTypeInfo,
+    netfw_rule_GetIDsOfNames,
+    netfw_rule_Invoke,
+    netfw_rule_get_Name,
+    netfw_rule_put_Name,
+    netfw_rule_get_Description,
+    netfw_rule_put_Description,
+    netfw_rule_get_ApplicationName,
+    netfw_rule_put_ApplicationName,
+    netfw_rule_get_ServiceName,
+    netfw_rule_put_ServiceName,
+    netfw_rule_get_Protocol,
+    netfw_rule_put_Protocol,
+    netfw_rule_get_LocalPorts,
+    netfw_rule_put_LocalPorts,
+    netfw_rule_get_RemotePorts,
+    netfw_rule_put_RemotePorts,
+    netfw_rule_get_LocalAddresses,
+    netfw_rule_put_LocalAddresses,
+    netfw_rule_get_RemoteAddresses,
+    netfw_rule_put_RemoteAddresses,
+    netfw_rule_get_IcmpTypesAndCodes,
+    netfw_rule_put_IcmpTypesAndCodes,
+    netfw_rule_get_Direction,
+    netfw_rule_put_Direction,
+    netfw_rule_get_Interfaces,
+    netfw_rule_put_Interfaces,
+    netfw_rule_get_InterfaceTypes,
+    netfw_rule_put_InterfaceTypes,
+    netfw_rule_get_Enabled,
+    netfw_rule_put_Enabled,
+    netfw_rule_get_Grouping,
+    netfw_rule_put_Grouping,
+    netfw_rule_get_Profiles,
+    netfw_rule_put_Profiles,
+    netfw_rule_get_EdgeTraversal,
+    netfw_rule_put_EdgeTraversal,
+    netfw_rule_get_Action,
+    netfw_rule_put_Action,
+};
+
+HRESULT NetFwRule_create( IUnknown *outer, void **obj )
+{
+    fw_rule *rule;
+
+    TRACE("(%p)\n", obj);
+
+    rule = malloc( sizeof(*rule) );
+    if (!rule) return E_OUTOFMEMORY;
+
+    rule->INetFwRule_iface.lpVtbl = &fw_rule_vtbl;
+    rule->refs = 1;
+
+    *obj = &rule->INetFwRule_iface;
+
+    TRACE("returning iface %p\n", *obj);
+    return S_OK;
+}
+
 typedef struct fw_rules
 {
     INetFwRules INetFwRules_iface;
