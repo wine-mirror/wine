@@ -1,5 +1,6 @@
 MODULE    = mfsrcsnk.dll
 IMPORTLIB = mfsrcsnk
+IMPORTS   = mfplat mfuuid uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

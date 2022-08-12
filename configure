@@ -21602,6 +21602,7 @@ wine_fn_config_makefile dlls/mfplay/tests enable_tests
 wine_fn_config_makefile dlls/mfreadwrite enable_mfreadwrite
 wine_fn_config_makefile dlls/mfreadwrite/tests enable_tests
 wine_fn_config_makefile dlls/mfsrcsnk enable_mfsrcsnk
+wine_fn_config_makefile dlls/mfsrcsnk/tests enable_tests
 wine_fn_config_makefile dlls/mgmtapi enable_mgmtapi
 wine_fn_config_makefile dlls/midimap enable_midimap
 wine_fn_config_makefile dlls/mlang enable_mlang
