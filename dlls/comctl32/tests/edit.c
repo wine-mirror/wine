@@ -3536,26 +3536,22 @@ static void test_ime(void)
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE);
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
-    todo_wine
     ok(lr == EIMES_GETCOMPSTRATONCE, "Got unexpected lr %#Ix.\n", lr);
 
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_CANCELCOMPSTRINFOCUS);
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
-    todo_wine
     ok(lr == EIMES_CANCELCOMPSTRINFOCUS, "Got unexpected lr %#Ix.\n", lr);
 
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_COMPLETECOMPSTRKILLFOCUS);
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
-    todo_wine
     ok(lr == EIMES_COMPLETECOMPSTRKILLFOCUS, "Got unexpected lr %#Ix.\n", lr);
 
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE
                       | EIMES_CANCELCOMPSTRINFOCUS | EIMES_COMPLETECOMPSTRKILLFOCUS);
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
-    todo_wine
     ok(lr == (EIMES_GETCOMPSTRATONCE | EIMES_CANCELCOMPSTRINFOCUS | EIMES_COMPLETECOMPSTRKILLFOCUS),
        "Got unexpected lr %#Ix.\n", lr);
 
@@ -3566,11 +3562,9 @@ static void test_ime(void)
 
     /* Invalid EM_{GET|SET}IMESTATUS status types and flags */
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, 0, 0);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
 
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING + 1, 0);
-    todo_wine
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
 
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, 0, EIMES_GETCOMPSTRATONCE);
@@ -3586,7 +3580,6 @@ static void test_ime(void)
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0xFFFFFFFF);
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
-    todo_wine
     ok(lr == 0xFFFF, "Got unexpected lr %#Ix.\n", lr);
 
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
@@ -3619,7 +3612,6 @@ static void test_ime(void)
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE);
     ok(lr == 1, "Got unexpected lr %#Ix.\n", lr);
     lr = SendMessageA(hwnd, EM_GETIMESTATUS, EMSIS_COMPOSITIONSTRING, 0);
-    todo_wine
     ok(lr == EIMES_GETCOMPSTRATONCE, "Got unexpected lr %#Ix.\n", lr);
 
     ret = ImmSetCompositionStringA(himc, SCS_SETSTR, "Wine", 4, NULL, 0);

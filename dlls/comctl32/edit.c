@@ -25,7 +25,6 @@
  *   - EDITBALLOONTIP structure
  *   - EM_HIDEBALLOONTIP/Edit_HideBalloonTip
  *   - EM_SHOWBALLOONTIP/Edit_ShowBalloonTip
- *   - EM_GETIMESTATUS
  *   - EN_ALIGN_LTR_EC
  *   - EN_ALIGN_RTL_EC
  *   - ES_OEMCONVERT
@@ -4816,6 +4815,10 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             es->ime_status = lParam & 0xFFFF;
 
         result = 1;
+        break;
+
+    case EM_GETIMESTATUS:
+        result = wParam == EMSIS_COMPOSITIONSTRING ? es->ime_status : 1;
         break;
 
     /* End of the EM_ messages which were in numerical order; what order
