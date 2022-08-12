@@ -1236,7 +1236,6 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         char stack_buffer[128];
         void *buffer;
         LRESULT result;
-        MSG msg;
 
         if (size > sizeof(*params))
         {
@@ -1253,13 +1252,11 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
             return 0;
         params->result = &result;
 
-        msg.hwnd    = params->hwnd;
-        msg.message = params->msg;
-        msg.wParam  = params->wparam;
-        msg.lParam  = params->lparam;
+
         dispatch_win_proc_params( params );
 
-        NtUserReplyMessage( result, &msg );
+        NtUserMessageCall( params->hwnd, params->msg, params->wparam, params->lparam,
+                           (void *)result, NtUserWinProcResult, FALSE );
         if (buffer != stack_buffer && buffer != params + 1)
             HeapFree( GetProcessHeap(), 0, buffer );
     }

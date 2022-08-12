@@ -300,6 +300,7 @@ enum
     NtUserSpyGetMsgName       = 0x3002,
     NtUserSpyEnter            = 0x0303,
     NtUserSpyExit             = 0x0304,
+    NtUserWinProcResult       = 0x0305,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -941,6 +942,7 @@ enum
     NtUserCallOneParam_IsWindowRectFullScreen,
     NtUserCallOneParam_MessageBeep,
     NtUserCallOneParam_RealizePalette,
+    NtUserCallOneParam_ReplyMessage,
     NtUserCallOneParam_SetCaretBlinkTime,
     NtUserCallOneParam_SetProcessDefaultLayout,
     /* temporary exports */
@@ -1051,6 +1053,11 @@ static inline UINT NtUserRealizePalette( HDC hdc )
     return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_RealizePalette );
 }
 
+static inline BOOL NtUserReplyMessage( LRESULT result )
+{
+    return NtUserCallOneParam( result, NtUserCallOneParam_ReplyMessage );
+}
+
 static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )
 {
     return NtUserCallOneParam( layout, NtUserCallOneParam_SetProcessDefaultLayout );
@@ -1063,7 +1070,6 @@ enum
     NtUserCallTwoParam_GetMonitorInfo,
     NtUserCallTwoParam_GetSystemMetricsForDpi,
     NtUserCallTwoParam_MonitorFromRect,
-    NtUserCallTwoParam_ReplyMessage,
     NtUserCallTwoParam_SetCaretPos,
     NtUserCallTwoParam_SetIconParam,
     NtUserCallTwoParam_UnhookWindowsHook,
@@ -1092,11 +1098,6 @@ static inline HMONITOR NtUserMonitorFromRect( const RECT *rect, DWORD flags )
 {
     ULONG ret = NtUserCallTwoParam( (LONG_PTR)rect, flags, NtUserCallTwoParam_MonitorFromRect );
     return UlongToHandle( ret );
-}
-
-static inline BOOL NtUserReplyMessage( LRESULT result, MSG *msg )
-{
-    return NtUserCallTwoParam( result, (UINT_PTR)msg, NtUserCallTwoParam_ReplyMessage );
 }
 
 static inline BOOL NtUserSetCaretPos( int x, int y )

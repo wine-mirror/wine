@@ -1069,18 +1069,37 @@ static void reply_message( struct received_message_info *info, LRESULT result, M
  *
  * Send a reply to a sent message and update thread receive info.
  */
-BOOL reply_message_result( LRESULT result, MSG *msg )
+BOOL reply_message_result( LRESULT result )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info *info = thread_info->receive_info;
 
     if (!info) return FALSE;
-    reply_message( info, result, msg );
-    if (msg)
-    {
-        thread_info->receive_info = info->prev;
-        thread_info->client_info.receive_flags = info->prev ? info->prev->flags : ISMEX_NOSEND;
-    }
+    reply_message( info, result, NULL );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           reply_winproc_result
+ *
+ * Send a reply to a sent message and update thread receive info.
+ */
+static BOOL reply_winproc_result( LRESULT result, HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct received_message_info *info = thread_info->receive_info;
+    MSG msg;
+
+    if (!info) return FALSE;
+
+    msg.hwnd = hwnd;
+    msg.message = message;
+    msg.wParam = wparam;
+    msg.lParam = lparam;
+    reply_message( info, result, &msg );
+
+    thread_info->receive_info = info->prev;
+    thread_info->client_info.receive_flags = info->prev ? info->prev->flags : ISMEX_NOSEND;
     return TRUE;
 }
 
@@ -1877,7 +1896,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                                    info.msg.lParam, (info.type != MSG_ASCII), FALSE,
                                    WMCHAR_MAP_RECVMESSAGE, needs_unpack, buffer, size );
         if (thread_info->receive_info == &info)
-            reply_message_result( result, &info.msg );
+            reply_winproc_result( result, info.msg.hwnd, info.msg.message,
+                                  info.msg.wParam, info.msg.lParam );
 
         /* if some PM_QS* flags were specified, only handle sent messages from now on */
         if (HIWORD(flags) && !changed_mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
@@ -2964,6 +2984,9 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     case NtUserClipboardWindowProc:
         return user_driver->pClipboardWindowProc( hwnd, msg, wparam, lparam );
+
+    case NtUserWinProcResult:
+        return reply_winproc_result( (LRESULT)result_info, hwnd, msg, wparam, lparam );
 
     case NtUserGetDispatchParams:
         if (!hwnd) return FALSE;
