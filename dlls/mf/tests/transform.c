@@ -1918,13 +1918,10 @@ static void test_aac_decoder(void)
 
     check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, FALSE);
-    todo_wine
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
-    todo_wine
     check_mft_get_output_stream_info(transform, S_OK, &output_info);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#lx\n", hr);
 
     i = -1;
@@ -1938,14 +1935,10 @@ static void test_aac_decoder(void)
         ok(ret <= 1, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    todo_wine
     ok(i == ARRAY_SIZE(expect_available_inputs)
             || broken(i == 2) /* w7 */ || broken(i == 4) /* w8 */,
             "%lu input media types\n", i);
-    if (hr == E_NOTIMPL)
-        goto skip_tests;
 
     /* setting output media type first doesn't work */
     check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
@@ -2023,6 +2016,7 @@ static void test_aac_decoder(void)
     ok(i == 1, "got %lu output samples\n", i);
 
     ret = check_mf_sample_collection(output_samples, output_sample_desc, L"aacdecdata.bin");
+    todo_wine_if(ret <= 5)
     ok(ret == 0, "got %lu%% diff\n", ret);
     IMFCollection_Release(output_samples);
 
@@ -2038,7 +2032,6 @@ static void test_aac_decoder(void)
 
     ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-skip_tests:
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
 
