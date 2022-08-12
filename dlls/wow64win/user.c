@@ -2209,7 +2209,7 @@ NTSTATUS WINAPI wow64_NtUserPeekMessage( UINT *args )
     UINT flags = get_ulong( &args );
     MSG msg;
 
-    if (!NtUserPeekMessage( &msg, hwnd, first, last, flags )) return FALSE;
+    if (!NtUserPeekMessage( msg32 ? &msg : NULL, hwnd, first, last, flags )) return FALSE;
     msg_64to32( &msg, msg32 );
     return TRUE;
 }
