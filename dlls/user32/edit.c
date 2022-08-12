@@ -4976,20 +4976,6 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
                 }
 		break;
 
-        case WM_IME_CHAR:
-            if (!unicode)
-            {
-                WCHAR charW;
-                CHAR  strng[2];
-
-                strng[0] = wParam >> 8;
-                strng[1] = wParam & 0xff;
-                if (strng[0]) MultiByteToWideChar(CP_ACP, 0, strng, 2, &charW, 1);
-                else MultiByteToWideChar(CP_ACP, 0, &strng[1], 1, &charW, 1);
-		result = EDIT_WM_Char(es, charW);
-		break;
-            }
-            /* fall through */
 	case WM_CHAR:
 	{
 		WCHAR charW;

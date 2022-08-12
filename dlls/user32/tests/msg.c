@@ -12271,7 +12271,7 @@ static DWORD WINAPI test_edit_ime_messages(void *unused_arg)
     flush_sequence();
     SendMessageA(hwnd, WM_IME_CHAR, '0', 1);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(edit_wm_ime_char_seq, "WM_IME_CHAR", TRUE);
+    ok_sequence(edit_wm_ime_char_seq, "WM_IME_CHAR", FALSE);
 
     /* Test IME messages when EIMES_GETCOMPSTRATONCE is set */
     lr = SendMessageA(hwnd, EM_SETIMESTATUS, EMSIS_COMPOSITIONSTRING, EIMES_GETCOMPSTRATONCE);
@@ -12292,7 +12292,7 @@ static DWORD WINAPI test_edit_ime_messages(void *unused_arg)
     flush_sequence();
     SendMessageA(hwnd, WM_IME_CHAR, '0', 1);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(edit_wm_ime_char_seq, "WM_IME_CHAR", TRUE);
+    ok_sequence(edit_wm_ime_char_seq, "WM_IME_CHAR", FALSE);
 
     ImmReleaseContext(hwnd, himc);
     DestroyWindow(hwnd);
