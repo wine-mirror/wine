@@ -2523,10 +2523,34 @@ static void test_submit(IHTMLDocument2 *doc)
 
 static void test_timeout(IHTMLDocument2 *doc)
 {
+    VARIANT expr, var, args[2];
+    DISPPARAMS dp = { args, NULL, 2, 0 };
     IHTMLWindow3 *win3;
-    VARIANT expr, var;
+    IDispatch *disp;
+    UINT argerr;
     LONG id;
     HRESULT hres;
+
+    /* First try the IHTMLWindow2 DISPIDs via IDispatch, since they're not exposed */
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatch, (void**)&disp);
+    ok(hres == S_OK, "Could not get IDispatch iface: %08lx\n", hres);
+
+    V_VT(&args[1]) = VT_BSTR;
+    V_BSTR(&args[1]) = SysAllocString(L"");
+    V_VT(&args[0]) = VT_I4;
+    V_I4(&args[0]) = 1;
+    V_VT(&var) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_IHTMLWINDOW2_SETINTERVAL, &IID_NULL, LOCALE_USER_DEFAULT,
+                            DISPATCH_METHOD, &dp, &var, NULL, &argerr);
+    todo_wine
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke(DISPID_IHTMLWINDOW2_SETINTERVAL) returned: %08lx\n", hres);
+
+    hres = IDispatch_Invoke(disp, DISPID_IHTMLWINDOW2_SETTIMEOUT, &IID_NULL, LOCALE_USER_DEFAULT,
+                            DISPATCH_METHOD, &dp, &var, NULL, &argerr);
+    todo_wine
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke(DISPID_IHTMLWINDOW2_SETTIMEOUT) returned: %08lx\n", hres);
+    SysFreeString(V_BSTR(&args[1]));
+    IDispatch_Release(disp);
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow3, (void**)&win3);
     ok(hres == S_OK, "Could not get IHTMLWindow3 iface: %08lx\n", hres);
