@@ -36,6 +36,7 @@ DEFINE_GUID(DMOVideoFormat_RGB24,D3DFMT_R8G8B8,0x524f,0x11ce,0x9f,0x53,0x00,0x20
 DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_RAW_AAC,WAVE_FORMAT_RAW_AAC1);
 
 struct class_factory
 {
@@ -124,6 +125,7 @@ class_objects[] =
 {
     { &CLSID_VideoProcessorMFT, &video_processor_create },
     { &CLSID_GStreamerByteStreamHandler, &winegstreamer_stream_handler_create },
+    { &CLSID_MSAACDecMFT, &aac_decoder_create },
     { &CLSID_MSH264DecoderMFT, &h264_decoder_create },
 };
 
@@ -159,6 +161,18 @@ HRESULT mfplat_DllRegisterServer(void)
     {
         {MFMediaType_Audio, MFAudioFormat_PCM},
         {MFMediaType_Audio, MFAudioFormat_Float},
+    };
+
+    MFT_REGISTER_TYPE_INFO aac_decoder_input_types[] =
+    {
+        {MFMediaType_Audio, MFAudioFormat_AAC},
+        {MFMediaType_Audio, MFAudioFormat_RAW_AAC},
+        {MFMediaType_Audio, MFAudioFormat_ADTS},
+    };
+    MFT_REGISTER_TYPE_INFO aac_decoder_output_types[] =
+    {
+        {MFMediaType_Audio, MFAudioFormat_Float},
+        {MFMediaType_Audio, MFAudioFormat_PCM},
     };
 
     MFT_REGISTER_TYPE_INFO wma_decoder_input_types[] =
@@ -294,6 +308,16 @@ HRESULT mfplat_DllRegisterServer(void)
     }
     mfts[] =
     {
+        {
+            CLSID_MSAACDecMFT,
+            MFT_CATEGORY_AUDIO_DECODER,
+            L"Microsoft AAC Audio Decoder MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(aac_decoder_input_types),
+            aac_decoder_input_types,
+            ARRAY_SIZE(aac_decoder_output_types),
+            aac_decoder_output_types,
+        },
         {
             CLSID_WMADecMediaObject,
             MFT_CATEGORY_AUDIO_DECODER,

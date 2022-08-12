@@ -140,6 +140,7 @@ HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sampl
 
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
 
+HRESULT aac_decoder_create(REFIID riid, void **ret);
 HRESULT h264_decoder_create(REFIID riid, void **ret);
 HRESULT video_processor_create(REFIID riid, void **ret);
 

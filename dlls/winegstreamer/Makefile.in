@@ -7,6 +7,7 @@ UNIX_CFLAGS  = $(GSTREAMER_CFLAGS)
 UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
 C_SRCS = \
+	aac_decoder.c \
 	color_convert.c \
 	h264_decoder.c \
 	main.c \
