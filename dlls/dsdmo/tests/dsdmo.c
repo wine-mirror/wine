@@ -377,12 +377,14 @@ static void test_echo_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_ECHO, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXEcho, (void **)&echo);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXEcho_GetAllParameters(echo, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK)
+        return;
     ok(params.fWetDryMix == 50.0f, "Got %.8e%% wetness.\n", params.fWetDryMix);
     ok(params.fFeedback == 50.0f, "Got %.8e%% feedback.\n", params.fFeedback);
     ok(params.fLeftDelay == 500.0f, "Got left delay %.8e ms.\n", params.fLeftDelay);
@@ -537,7 +539,7 @@ START_TEST(dsdmo)
         {&GUID_DSFX_STANDARD_CHORUS,        &IID_IDirectSoundFXChorus, TRUE},
         {&GUID_DSFX_STANDARD_COMPRESSOR,    &IID_IDirectSoundFXCompressor, TRUE},
         {&GUID_DSFX_STANDARD_DISTORTION,    &IID_IDirectSoundFXDistortion, TRUE},
-        {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho, TRUE},
+        {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho},
         {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger, TRUE},
         {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
         {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb},
