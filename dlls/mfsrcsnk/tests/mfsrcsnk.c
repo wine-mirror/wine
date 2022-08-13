@@ -46,6 +46,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_wave_sink(void)
 {
+    IMFPresentationClock *clock;
     IMFStreamSink *stream_sink;
     IMFMediaSink *sink, *sink2;
     IMFByteStream *bytestream;
@@ -101,6 +102,19 @@ static void test_wave_sink(void)
 
     check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
     check_interface(sink, &IID_IMFFinalizableMediaSink, TRUE);
+    check_interface(sink, &IID_IMFClockStateSink, TRUE);
+
+    /* Clock */
+    hr = MFCreatePresentationClock(&clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFPresentationClock_Release(clock);
 
     /* Stream tests */
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);

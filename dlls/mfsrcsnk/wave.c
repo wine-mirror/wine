@@ -26,6 +26,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+static inline const char *debugstr_time(LONGLONG time)
+{
+    ULONGLONG abstime = time >= 0 ? time : -time;
+    unsigned int i = 0, j = 0;
+    char buffer[23], rev[23];
+
+    while (abstime || i <= 8)
+    {
+        buffer[i++] = '0' + (abstime % 10);
+        abstime /= 10;
+        if (i == 7) buffer[i++] = '.';
+    }
+    if (time < 0) buffer[i++] = '-';
+
+    while (i--) rev[j++] = buffer[i];
+    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
+    rev[j] = 0;
+
+    return wine_dbg_sprintf("%s", rev);
+}
+
 enum wave_sink_flags
 {
     SINK_SHUT_DOWN = 0x1,
@@ -35,11 +56,13 @@ struct wave_sink
 {
     IMFFinalizableMediaSink IMFFinalizableMediaSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
+    IMFClockStateSink IMFClockStateSink_iface;
     IMFStreamSink IMFStreamSink_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
     IMFMediaEventQueue *stream_event_queue;
+    IMFPresentationClock *clock;
 
     IMFByteStream *bytestream;
 
@@ -62,6 +85,11 @@ static struct wave_sink *impl_from_IMFStreamSink(IMFStreamSink *iface)
     return CONTAINING_RECORD(iface, struct wave_sink, IMFStreamSink_iface);
 }
 
+static struct wave_sink *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct wave_sink, IMFClockStateSink_iface);
+}
+
 static HRESULT WINAPI wave_sink_QueryInterface(IMFFinalizableMediaSink *iface, REFIID riid, void **obj)
 {
     struct wave_sink *sink = impl_from_IMFFinalizableMediaSink(iface);
@@ -77,6 +105,10 @@ static HRESULT WINAPI wave_sink_QueryInterface(IMFFinalizableMediaSink *iface, R
     else if (IsEqualIID(riid, &IID_IMFMediaEventGenerator))
     {
         *obj = &sink->IMFMediaEventGenerator_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFClockStateSink))
+    {
+        *obj = &sink->IMFClockStateSink_iface;
     }
     else
     {
@@ -219,18 +251,65 @@ static HRESULT WINAPI wave_sink_GetStreamSinkById(IMFFinalizableMediaSink *iface
     return hr;
 }
 
+static void wave_sink_set_presentation_clock(struct wave_sink *sink, IMFPresentationClock *clock)
+{
+    if (sink->clock)
+    {
+        IMFPresentationClock_RemoveClockStateSink(sink->clock, &sink->IMFClockStateSink_iface);
+        IMFPresentationClock_Release(sink->clock);
+    }
+    sink->clock = clock;
+    if (sink->clock)
+    {
+        IMFPresentationClock_AddRef(sink->clock);
+        IMFPresentationClock_AddClockStateSink(sink->clock, &sink->IMFClockStateSink_iface);
+    }
+}
+
 static HRESULT WINAPI wave_sink_SetPresentationClock(IMFFinalizableMediaSink *iface, IMFPresentationClock *clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct wave_sink *sink = impl_from_IMFFinalizableMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    EnterCriticalSection(&sink->cs);
+
+    if (sink->flags & SINK_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        wave_sink_set_presentation_clock(sink, clock);
+
+    LeaveCriticalSection(&sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI wave_sink_GetPresentationClock(IMFFinalizableMediaSink *iface, IMFPresentationClock **clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct wave_sink *sink = impl_from_IMFFinalizableMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    EnterCriticalSection(&sink->cs);
+
+    if (sink->flags & SINK_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (sink->clock)
+    {
+        *clock = sink->clock;
+        IMFPresentationClock_AddRef(*clock);
+    }
+    else
+        hr = MF_E_NO_CLOCK;
+
+    LeaveCriticalSection(&sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI wave_sink_Shutdown(IMFFinalizableMediaSink *iface)
@@ -249,6 +328,7 @@ static HRESULT WINAPI wave_sink_Shutdown(IMFFinalizableMediaSink *iface)
         sink->flags |= SINK_SHUT_DOWN;
         IMFMediaEventQueue_Shutdown(sink->event_queue);
         IMFMediaEventQueue_Shutdown(sink->stream_event_queue);
+        wave_sink_set_presentation_clock(sink, NULL);
     }
 
     LeaveCriticalSection(&sink->cs);
@@ -518,6 +598,79 @@ static const IMFStreamSinkVtbl wave_stream_sink_vtbl =
     wave_stream_sink_Flush,
 };
 
+static HRESULT WINAPI wave_sink_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+    return IMFFinalizableMediaSink_QueryInterface(&sink->IMFFinalizableMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI wave_sink_clock_sink_AddRef(IMFClockStateSink *iface)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+    return IMFFinalizableMediaSink_AddRef(&sink->IMFFinalizableMediaSink_iface);
+}
+
+static ULONG WINAPI wave_sink_clock_sink_Release(IMFClockStateSink *iface)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+    return IMFFinalizableMediaSink_Release(&sink->IMFFinalizableMediaSink_iface);
+}
+
+static HRESULT WINAPI wave_sink_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
+
+    return IMFMediaEventQueue_QueueEventParamVar(sink->stream_event_queue, MEStreamSinkStarted, &GUID_NULL, S_OK, NULL);
+}
+
+static HRESULT WINAPI wave_sink_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    return IMFMediaEventQueue_QueueEventParamVar(sink->stream_event_queue, MEStreamSinkStopped, &GUID_NULL, S_OK, NULL);
+}
+
+static HRESULT WINAPI wave_sink_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    return IMFMediaEventQueue_QueueEventParamVar(sink->stream_event_queue, MEStreamSinkPaused, &GUID_NULL, S_OK, NULL);
+}
+
+static HRESULT WINAPI wave_sink_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
+{
+    struct wave_sink *sink = impl_from_IMFClockStateSink(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    return IMFMediaEventQueue_QueueEventParamVar(sink->stream_event_queue, MEStreamSinkStarted, &GUID_NULL, S_OK, NULL);
+}
+
+static HRESULT WINAPI wave_sink_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
+{
+    FIXME("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFClockStateSinkVtbl wave_sink_clock_sink_vtbl =
+{
+    wave_sink_clock_sink_QueryInterface,
+    wave_sink_clock_sink_AddRef,
+    wave_sink_clock_sink_Release,
+    wave_sink_clock_sink_OnClockStart,
+    wave_sink_clock_sink_OnClockStop,
+    wave_sink_clock_sink_OnClockPause,
+    wave_sink_clock_sink_OnClockRestart,
+    wave_sink_clock_sink_OnClockSetRate,
+};
+
 /***********************************************************************
  *      MFCreateWAVEMediaSink (mfsrcsnk.@)
  */
@@ -544,6 +697,7 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
     object->IMFFinalizableMediaSink_iface.lpVtbl = &wave_sink_vtbl;
     object->IMFMediaEventGenerator_iface.lpVtbl = &wave_sink_events_vtbl;
     object->IMFStreamSink_iface.lpVtbl = &wave_stream_sink_vtbl;
+    object->IMFClockStateSink_iface.lpVtbl = &wave_sink_clock_sink_vtbl;
     object->refcount = 1;
     IMFByteStream_AddRef((object->bytestream = bytestream));
     InitializeCriticalSection(&object->cs);
