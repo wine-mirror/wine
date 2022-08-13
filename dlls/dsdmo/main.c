@@ -893,6 +893,102 @@ static HRESULT echo_create(IUnknown *outer, IUnknown **out)
     return S_OK;
 }
 
+struct dmo_compressorfx
+{
+    struct effect effect;
+    IDirectSoundFXCompressor IDirectSoundFXCompressor_iface;
+};
+
+static inline struct dmo_compressorfx *impl_from_IDirectSoundFXCompressor(IDirectSoundFXCompressor *iface)
+{
+    return CONTAINING_RECORD(iface, struct dmo_compressorfx, IDirectSoundFXCompressor_iface);
+}
+
+static HRESULT WINAPI compressorfx_QueryInterface(IDirectSoundFXCompressor *iface, REFIID iid, void **out)
+{
+    struct dmo_compressorfx *effect = impl_from_IDirectSoundFXCompressor(iface);
+    return IUnknown_QueryInterface(effect->effect.outer_unk, iid, out);
+}
+
+static ULONG WINAPI compressorfx_AddRef(IDirectSoundFXCompressor *iface)
+{
+    struct dmo_compressorfx *effect = impl_from_IDirectSoundFXCompressor(iface);
+    return IUnknown_AddRef(effect->effect.outer_unk);
+}
+
+static ULONG WINAPI compressorfx_Release(IDirectSoundFXCompressor *iface)
+{
+    struct dmo_compressorfx *effect = impl_from_IDirectSoundFXCompressor(iface);
+    return IUnknown_Release(effect->effect.outer_unk);
+}
+
+static HRESULT WINAPI compressorfx_SetAllParameters(IDirectSoundFXCompressor *iface, const DSFXCompressor *compressor)
+{
+    struct dmo_compressorfx *This = impl_from_IDirectSoundFXCompressor(iface);
+    FIXME("(%p) %p\n", This, compressor);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI compressorfx_GetAllParameters(IDirectSoundFXCompressor *iface, DSFXCompressor *compressor)
+{
+    struct dmo_compressorfx *This = impl_from_IDirectSoundFXCompressor(iface);
+    FIXME("(%p) %p\n", This, compressor);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDirectSoundFXCompressorVtbl compressor_vtbl =
+{
+    compressorfx_QueryInterface,
+    compressorfx_AddRef,
+    compressorfx_Release,
+    compressorfx_SetAllParameters,
+    compressorfx_GetAllParameters
+};
+
+static struct dmo_compressorfx *impl_compressor_from_effect(struct effect *iface)
+{
+    return CONTAINING_RECORD(iface, struct dmo_compressorfx, effect);
+}
+
+static void *compressor_query_interface(struct effect *iface, REFIID iid)
+{
+    struct dmo_compressorfx *effect = impl_compressor_from_effect(iface);
+
+    if (IsEqualGUID(iid, &IID_IDirectSoundFXCompressor))
+        return &effect->IDirectSoundFXCompressor_iface;
+    return NULL;
+}
+
+static void compressor_destroy(struct effect *iface)
+{
+    struct dmo_compressorfx *effect = impl_compressor_from_effect(iface);
+
+    free(effect);
+}
+
+static const struct effect_ops compressor_ops =
+{
+    .destroy = compressor_destroy,
+    .query_interface = compressor_query_interface,
+};
+
+static HRESULT compressor_create(IUnknown *outer, IUnknown **out)
+{
+    struct dmo_compressorfx *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    effect_init(&object->effect, outer, &compressor_ops);
+    object->IDirectSoundFXCompressor_iface.lpVtbl = &compressor_vtbl;
+
+    TRACE("Created compressor effect %p.\n", object);
+    *out = &object->effect.IUnknown_inner;
+    return S_OK;
+}
+
 struct class_factory
 {
     IClassFactory IClassFactory_iface;
@@ -978,6 +1074,7 @@ class_factories[] =
     {&GUID_DSFX_STANDARD_PARAMEQ,       {{&class_factory_vtbl}, eq_create}},
     {&GUID_DSFX_WAVES_REVERB,           {{&class_factory_vtbl}, waves_reverb_create}},
     {&GUID_DSFX_STANDARD_ECHO,          {{&class_factory_vtbl}, echo_create}},
+    {&GUID_DSFX_STANDARD_COMPRESSOR,    {{&class_factory_vtbl}, compressor_create}},
 };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
