@@ -149,24 +149,20 @@ print NEW "----------------------------------------------------------------\n\n"
 printf NEW "Bugs fixed in %s (total %u):\n\n", $new, scalar( keys %bugs );
 foreach my $id (sort {$a <=> $b} keys %bugs)
 {
-    printf NEW " %6d  %s\n", $id, unescape( $bugs{$id} );
+    printf NEW " - #%-6d %s\n", $id, unescape( $bugs{$id} );
 }
 
 print NEW "\n----------------------------------------------------------------\n\n";
-print NEW "Changes since $old:\n\n";
+print NEW "Changes since $old:\n";
 
 open LOG, "-|" or exec "git", "shortlog", "wine-$old..HEAD" or die "cannot run git shortlog";
 while (<LOG>)
 {
-    if (/^(\S.*)\s\(\d+\):$/) { $authors{$1} = 1; }
+    next if /^$/;
+    if (/^(\S.*)\s\(\d+\):$/) { $authors{$1} = 1; print NEW "\n"; }
     print NEW $_;
 }
 close LOG;
-
-while (<ANNOUNCE>) { last if /^--$/; }
-print NEW "--\n";
-while (<ANNOUNCE>) { print NEW $_; }
-
 close ANNOUNCE;
 close NEW;
 update_file( "ANNOUNCE" );

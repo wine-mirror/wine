@@ -13,7 +13,6 @@ create-release:
       sed -e '/^The source/,/^----------/d
       /^----------/,$d
       /^Bugs fixed/i--------
-      s/^  *\([0-9][0-9]*\) /  - #\1/
       s/^\*\*\*/###/' ANNOUNCE >announce.md
     - release-cli create
         --name "Wine $VERSION"
