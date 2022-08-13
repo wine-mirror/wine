@@ -64,6 +64,7 @@ struct wave_sink
     IMFMediaEventQueue *stream_event_queue;
     IMFPresentationClock *clock;
 
+    WAVEFORMATEX *fmt;
     IMFByteStream *bytestream;
 
     unsigned int flags;
@@ -144,6 +145,7 @@ static ULONG WINAPI wave_sink_Release(IMFFinalizableMediaSink *iface)
         if (sink->stream_event_queue)
             IMFMediaEventQueue_Release(sink->stream_event_queue);
         IMFByteStream_Release(sink->bytestream);
+        CoTaskMemFree(sink->fmt);
         DeleteCriticalSection(&sink->cs);
         free(sink);
     }
@@ -679,6 +681,7 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
 {
     struct wave_sink *object;
     DWORD flags = 0;
+    UINT32 size;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", bytestream, media_type, sink);
@@ -689,10 +692,16 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
     if (FAILED(hr = IMFByteStream_GetCapabilities(bytestream, &flags))) return hr;
     if (!(flags & MFBYTESTREAM_IS_WRITABLE)) return E_INVALIDARG;
 
-    /* FIXME: do basic media type validation */
-
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
+
+    /* FIXME: do basic media type validation */
+
+    if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType(media_type, &object->fmt, &size, 0)))
+    {
+        WARN("Failed to produce WAVEFORMATEX representation, hr %#lx.\n", hr);
+        goto failed;
+    }
 
     object->IMFFinalizableMediaSink_iface.lpVtbl = &wave_sink_vtbl;
     object->IMFMediaEventGenerator_iface.lpVtbl = &wave_sink_events_vtbl;
