@@ -146,6 +146,8 @@ Kysymyksiä:
 
 Wiki:	Wine Wiki on osoitteessa https://wiki.winehq.org/.
 
+Gitlab: Winen kehitykseen voi osallistua sivustolla https://gitlab.winehq.org
+
 Postituslistat:
 	Winen käyttäjille ja kehittäjille on joitakin postituslistoja,
 	sivulla https://www.winehq.org/forums kerrotaan niistä lisää.
@@ -156,14 +158,6 @@ Virheet:
 	ilmoitettu jo aiemmin.
 
 IRC:	Online-apua voi saada kanavalta #WineHQ palvelimella irc.libera.chat.
-
-Git:	Winen tämänhetkinen kehitysversio on jaossa Git-järjestelmän kautta.
-	Sivulla https://www.winehq.org/git kerrotaan tästä lisää.
-
-
-Jos lisäät jotain tai korjaat jonkin virheen, lähetä toki muutoksesi
-(mieluiten komennon git-format-patch avulla) listalle wine-devel@winehq.org,
-jotta se voidaan lisätä Winen seuraavaan versioon.
 
 --
 Alkuperäisen version tekstistä on kirjoittanut
