@@ -1928,34 +1928,43 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
                                ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     struct key_asymmetric_decrypt_params params;
+    NTSTATUS ret;
     struct key *key = handle;
 
     TRACE( "%p, %p, %lu, %p, %p, %lu, %p, %lu, %p, %#lx\n", handle, input, input_len, padding, iv, iv_len, output,
            output_len, ret_len, flags );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
-    if (flags & ~BCRYPT_BLOCK_PADDING)
-    {
-        FIXME( "flags %#lx not supported\n", flags );
-        return STATUS_NOT_IMPLEMENTED;
-    }
 
     if (key_is_symmetric( key ))
     {
-        NTSTATUS ret;
+        if (flags & ~BCRYPT_BLOCK_PADDING)
+        {
+            FIXME( "flags %#lx not supported\n", flags );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+
         EnterCriticalSection( &key->u.s.cs );
         ret = key_symmetric_decrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
         LeaveCriticalSection( &key->u.s.cs );
-        return ret;
+    }
+    else
+    {
+        if (flags & BCRYPT_PAD_NONE || flags & BCRYPT_PAD_OAEP)
+        {
+            FIXME( "flags %#lx not implemented\n", flags );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+        params.key = key;
+        params.input = input;
+        params.input_len = input_len;
+        params.output = output;
+        params.output_len = output_len;
+        params.ret_len = ret_len;
+        ret = UNIX_CALL(key_asymmetric_decrypt, &params);
     }
 
-    params.key        = key;
-    params.input      = input;
-    params.input_len  = input_len;
-    params.output     = output;
-    params.output_len = output_len;
-    params.ret_len    = ret_len;
-    return UNIX_CALL( key_asymmetric_decrypt, &params );
+    return ret;
 }
 
 NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )

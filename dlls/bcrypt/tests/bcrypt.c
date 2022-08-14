@@ -2258,13 +2258,14 @@ static void test_rsa_encrypt(void)
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs are the same\n");
 
-    todo_wine {
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_PKCS1);
+    ok(decrypted_size == sizeof(input), "got size of %ld\n", decrypted_size);
     decrypted = malloc(decrypted_size);
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, decrypted, decrypted_size, &decrypted_size, BCRYPT_PAD_PKCS1);
     ok(!memcmp(decrypted, input, sizeof(input)), "Decrypted output it's not what expected\n");
     free(decrypted);
 
+    todo_wine {
     encrypted_size = 60;
     /*  OAEP Padding  */
     ret = BCryptEncrypt(key, input, sizeof(input), &oaep_pad, NULL, 0, NULL, 0, &encrypted_size, BCRYPT_PAD_OAEP);
