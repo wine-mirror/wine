@@ -264,7 +264,7 @@ static HRESULT WINAPI WshExec_get_StdErr(IWshExec *iface, ITextStream **stream)
     return S_OK;
 }
 
-static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, DWORD *pid)
+static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, int *pid)
 {
     WshExecImpl *This = impl_from_IWshExec(iface);
 
