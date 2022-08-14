@@ -300,9 +300,9 @@ static BOOL is_default_coord( int x )
  */
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
+    UNICODE_STRING class, window_name;
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
-    UNICODE_STRING class;
     CBT_CREATEWNDW cbtc;
     WNDCLASSEXW info;
     HMENU menu;
@@ -399,15 +399,21 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         }
     }
 
+    if (unicode || !cs->lpszName)
+        RtlInitUnicodeString( &window_name, cs->lpszName );
+    else if (!RtlCreateUnicodeStringFromAsciiz( &window_name, (const char *)cs->lpszName ))
+        return 0;
+
     menu = cs->hMenu;
     if (!menu && info.lpszMenuName && (cs->style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
         menu = LoadMenuW( cs->hInstance, info.lpszMenuName );
 
     cbtc.lpcs = cs;
-    hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, NULL, cs->style, cs->x, cs->y,
-                                 cs->cx, cs->cy, cs->hwndParent, menu, module,
+    hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, &window_name, cs->style,
+                                 cs->x, cs->y, cs->cx, cs->cy, cs->hwndParent, menu, module,
                                  cs->lpCreateParams, 0, &cbtc, 0, !unicode );
     if (!hwnd && menu && menu != cs->hMenu) NtUserDestroyMenu( menu );
+    if (!unicode) RtlFreeUnicodeString( &window_name );
     return hwnd;
 }
 
