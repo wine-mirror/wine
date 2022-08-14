@@ -235,7 +235,7 @@ WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
 DLGPROC get_dialog_proc( HWND hwnd, enum dialog_proc_type type ) DECLSPEC_HIDDEN;
 ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
-void get_winproc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
+void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst ) DECLSPEC_HIDDEN;
 struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
 BOOL needs_ime_window( HWND hwnd ) DECLSPEC_HIDDEN;

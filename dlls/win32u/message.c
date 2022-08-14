@@ -202,11 +202,10 @@ static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UIN
     params->wparam = wparam;
     params->lparam = lparam;
     params->ansi = params->ansi_dst = ansi;
-    params->is_dialog = FALSE;
     params->needs_unpack = FALSE;
     params->mapping = WMCHAR_MAP_CALLWINDOWPROC;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
-    get_winproc_params( params );
+    get_winproc_params( params, TRUE );
     return TRUE;
 }
 
@@ -214,6 +213,7 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
                                      LPARAM lParam, LRESULT *result, BOOL ansi,
                                      enum wm_char_mapping mapping )
 {
+    BOOL is_dialog;
     WND *win;
 
     user_check_not_lock();
@@ -227,11 +227,10 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     }
     params->func = win->winproc;
     params->ansi_dst = !(win->flags & WIN_ISUNICODE);
-    params->is_dialog = win->dlgInfo != NULL;
+    is_dialog = win->dlgInfo != NULL;
     release_win_ptr( win );
 
     params->hwnd = get_full_window_handle( hwnd );
-    get_winproc_params( params );
     params->msg = msg;
     params->wparam = wParam;
     params->lparam = lParam;
@@ -240,6 +239,7 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     params->needs_unpack = FALSE;
     params->mapping = mapping;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
+    get_winproc_params( params, !is_dialog );
     return TRUE;
 }
 

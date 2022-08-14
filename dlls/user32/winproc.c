@@ -719,78 +719,24 @@ void dispatch_win_proc_params( struct win_proc_params *params )
         if (params->procW == WINPROC_PROC16)
             WINPROC_CallProcWtoA( wow_handlers.call_window_proc, params->hwnd, params->msg, params->wparam,
                                   params->lparam, params->result, params->func );
-        else if (params->is_dialog)
-        {
-            if (!params->ansi_dst)
-            {
-                if (params->procW)
-                    call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                                      params->result, params->procW );
-                else
-                    call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                                      params->result, params->func );
-            }
-            else
-            {
-                if (params->procA)
-                    WINPROC_CallProcWtoA( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                          params->lparam, params->result, params->procA );
-                else
-                    WINPROC_CallProcWtoA( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                          params->lparam, params->result, params->func );
-            }
-        }
-        else if (params->procW)
-            call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                              params->result, params->procW );
-        else if (params->procA)
-            WINPROC_CallProcWtoA( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->procA );
         else if (!params->ansi_dst)
             call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                              params->result, params->func );
+                              params->result, params->procW );
         else
             WINPROC_CallProcWtoA( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->func );
+                                  params->lparam, params->result, params->procA );
     }
     else
     {
         if (params->procA == WINPROC_PROC16)
             wow_handlers.call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
                                            params->result, params->func );
-        else if (params->is_dialog)
-        {
-            if (!params->ansi_dst)
-            {
-                if (params->procW)
-                    WINPROC_CallProcAtoW( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                          params->lparam, params->result, params->procW, params->mapping );
-                else
-                    WINPROC_CallProcAtoW( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                          params->lparam, params->result, params->func, params->mapping );
-            }
-            else
-            {
-                if (params->procA)
-                    call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                                      params->result, params->procA );
-                else
-                    call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                                      params->result, params->func );
-            }
-        }
-        else if (params->procA)
-            call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                              params->result, params->procA );
-        else if (params->procW)
-            WINPROC_CallProcAtoW( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->procW, params->mapping );
         else if (!params->ansi_dst)
             WINPROC_CallProcAtoW( call_window_proc, params->hwnd, params->msg, params->wparam,
-                                  params->lparam, params->result, params->func, params->mapping );
+                                  params->lparam, params->result, params->procW, params->mapping );
         else
             call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
-                              params->result, params->func );
+                              params->result, params->procA );
     }
 
     SetThreadDpiAwarenessContext( context );

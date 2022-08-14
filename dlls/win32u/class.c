@@ -201,7 +201,7 @@ BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val )
     return ptr->procW != NULL;
 }
 
-void get_winproc_params( struct win_proc_params *params )
+void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst )
 {
     WINDOWPROC *proc = get_winproc_ptr( params->func );
 
@@ -217,7 +217,24 @@ void get_winproc_params( struct win_proc_params *params )
     {
         params->procA = proc->procA;
         params->procW = proc->procW;
+
+        if (fixup_ansi_dst)
+        {
+            if (params->ansi)
+            {
+                if (params->procA) params->ansi_dst = TRUE;
+                else if (params->procW) params->ansi_dst = FALSE;
+            }
+            else
+            {
+                if (params->procW) params->ansi_dst = FALSE;
+                else if (params->procA) params->ansi_dst = TRUE;
+            }
+        }
     }
+
+    if (!params->procA) params->procA = params->func;
+    if (!params->procW) params->procW = params->func;
 }
 
 DLGPROC get_dialog_proc( HWND hwnd, enum dialog_proc_type type )
