@@ -232,8 +232,8 @@ BOOL WINAPI NtUserEmptyClipboard(void)
 
     TRACE( "owner %p\n", owner );
 
-    if (owner) send_message_timeout( owner, WM_DESTROYCLIPBOARD, 0, 0, SMTO_ABORTIFHUNG,
-                                     5000, NULL, FALSE );
+    if (owner)
+        send_message_timeout( owner, WM_DESTROYCLIPBOARD, 0, 0, SMTO_ABORTIFHUNG, 5000, FALSE );
 
     pthread_mutex_lock( &clipboard_mutex );
 

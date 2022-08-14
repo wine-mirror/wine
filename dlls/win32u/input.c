@@ -1636,7 +1636,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
         /* send palette messages */
         if (send_message( hwnd, WM_QUERYNEWPALETTE, 0, 0 ))
             send_message_timeout( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hwnd, 0,
-                                  SMTO_ABORTIFHUNG, 2000, NULL, FALSE );
+                                  SMTO_ABORTIFHUNG, 2000, FALSE );
         if (!is_window(hwnd)) return FALSE;
     }
 

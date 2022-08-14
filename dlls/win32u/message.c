@@ -2609,11 +2609,11 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
             {
             case MSG_UNICODE:
                 send_message_timeout( list[i], info->msg, info->wparam, info->lparam,
-                                      info->flags, info->timeout, NULL, FALSE );
+                                      info->flags, info->timeout, FALSE );
                 break;
             case MSG_ASCII:
                 send_message_timeout( list[i], info->msg, info->wparam, info->lparam,
-                                      info->flags, info->timeout, NULL, TRUE );
+                                      info->flags, info->timeout, TRUE );
                 break;
             case MSG_NOTIFY:
                 NtUserMessageCall( list[i], info->msg, info->wparam, info->lparam,
@@ -2810,8 +2810,8 @@ static LRESULT send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 }
 
 /* see SendMessageTimeoutW */
-LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                              UINT flags, UINT timeout, DWORD_PTR *res_ptr, BOOL ansi )
+static LRESULT send_client_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                    UINT flags, UINT timeout, DWORD_PTR *res_ptr, BOOL ansi )
 {
     struct send_message_info info;
 
@@ -2828,10 +2828,18 @@ LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
     return process_message( &info, res_ptr, ansi );
 }
 
+LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                              UINT flags, UINT timeout, BOOL ansi )
+{
+    DWORD_PTR res = 0;
+    send_client_message( hwnd, msg, wparam, lparam, flags, timeout, &res, ansi );
+    return res;
+}
+
 /* see SendMessageW */
 LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return send_window_message( hwnd, msg, wparam, lparam, NULL, FALSE );
+    return send_message_timeout( hwnd, msg, wparam, lparam, SMTO_NORMAL, 0, FALSE );
 }
 
 /* see SendNotifyMessageW */
@@ -2971,8 +2979,8 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         {
             struct send_message_timeout_params *params = (void *)result_info;
             DWORD_PTR res = 0;
-            params->result = send_message_timeout( hwnd, msg, wparam, lparam, params->flags,
-                                                   params->timeout, &res, ansi );
+            params->result = send_client_message( hwnd, msg, wparam, lparam, params->flags,
+                                                  params->timeout, &res, ansi );
             return res;
         }
 
