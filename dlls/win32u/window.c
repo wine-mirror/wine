@@ -5050,41 +5050,27 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   UNICODE_STRING *version, UNICODE_STRING *window_name,
                                   DWORD style, INT x, INT y, INT cx, INT cy,
                                   HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                  DWORD flags, CBT_CREATEWNDW *cbtc, DWORD unk, BOOL ansi )
+                                  DWORD flags, CBT_CREATEWNDW *client_cbtc, DWORD unk, BOOL ansi )
 {
-    CREATESTRUCTW cs, *client_cs, cs_buf;
     UINT win_dpi, thread_dpi = get_thread_dpi();
     DPI_AWARENESS_CONTEXT context;
-    CBT_CREATEWNDW cbtc_buf;
+    CBT_CREATEWNDW cbtc;
     HWND hwnd, owner = 0;
+    CREATESTRUCTW cs;
     INT sw = SW_SHOW;
     RECT rect;
     WND *win;
 
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
 
-    /* FIXME: We should pass a packed struct to client instead of using client_cs */
-    if (cbtc)
-    {
-        client_cs = cbtc->lpcs;
-        cs.lpszName  = client_cs->lpszName;
-        cs.lpszClass = client_cs->lpszClass;
-        cs.hInstance = client_cs->hInstance; /* may be different than instance for win16 */
-    }
-    else
-    {
-        cbtc = &cbtc_buf;
-        client_cs = cbtc->lpcs = &cs_buf;
-        cs.lpszName = window_name ? window_name->Buffer : NULL;
-        cs.lpszClass = class_name->Buffer;
-        cs.hInstance = instance;
-    }
-
     cs.lpCreateParams = params;
+    cs.hInstance  = instance;
     cs.hMenu      = menu;
     cs.hwndParent = parent;
     cs.style      = style;
     cs.dwExStyle  = ex_style;
+    cs.lpszName   = window_name ? window_name->Buffer : NULL;
+    cs.lpszClass  = class_name ? class_name->Buffer : NULL;
     cs.x  = x;
     cs.y  = y;
     cs.cx = cx;
@@ -5166,9 +5152,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     /* call the WH_CBT hook */
 
     release_win_ptr( win );
-    *client_cs = cs;
-    cbtc->hwndInsertAfter = HWND_TOP;
-    if (call_hooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)cbtc, !ansi ))
+    cbtc.hwndInsertAfter = HWND_TOP;
+    cbtc.lpcs = &cs;
+    if (call_hooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, TRUE ))
     {
         free_window_handle( hwnd );
         return 0;
@@ -5250,8 +5236,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     /* send WM_NCCREATE */
 
     TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs.x, cs.y, cs.cx, cs.cy, wine_dbgstr_rect(&rect) );
-    *client_cs = cs;
-    if (!NtUserMessageCall( hwnd, WM_NCCREATE, 0, (LPARAM)client_cs, NULL, NtUserSendMessage, ansi ))
+    if (!send_message_timeout( hwnd, WM_NCCREATE, 0, (LPARAM)&cs, SMTO_NORMAL, 0, ansi ))
     {
         WARN( "%p: aborted by WM_NCCREATE\n", hwnd );
         goto failed;
@@ -5283,9 +5268,8 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     else goto failed;
 
     /* send WM_CREATE */
-    if (NtUserMessageCall( hwnd, WM_CREATE, 0, (LPARAM)client_cs, 0, NtUserSendMessage, ansi ) == -1)
+    if (send_message_timeout( hwnd, WM_CREATE, 0, (LPARAM)&cs, SMTO_NORMAL, 0, ansi ) == -1)
         goto failed;
-    cs = *client_cs;
 
     /* call the driver */
 

@@ -303,7 +303,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     UNICODE_STRING class, window_name;
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
-    CBT_CREATEWNDW cbtc;
     WNDCLASSEXW info;
     HMENU menu;
 
@@ -408,10 +407,9 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     if (!menu && info.lpszMenuName && (cs->style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
         menu = LoadMenuW( cs->hInstance, info.lpszMenuName );
 
-    cbtc.lpcs = cs;
     hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, &window_name, cs->style,
                                  cs->x, cs->y, cs->cx, cs->cy, cs->hwndParent, menu, module,
-                                 cs->lpCreateParams, 0, &cbtc, 0, !unicode );
+                                 cs->lpCreateParams, 0, NULL, 0, !unicode );
     if (!hwnd && menu && menu != cs->hMenu) NtUserDestroyMenu( menu );
     if (!unicode) RtlFreeUnicodeString( &window_name );
     return hwnd;
