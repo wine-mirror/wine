@@ -50,6 +50,9 @@ static inline const char *debugstr_time(LONGLONG time)
 enum wave_sink_flags
 {
     SINK_SHUT_DOWN = 0x1,
+    SINK_HEADER_WRITTEN = 0x2,
+    SINK_DATA_CHUNK_STARTED = 0x4,
+    SINK_DATA_FINALIZED = 0x8,
 };
 
 struct wave_sink
@@ -66,6 +69,10 @@ struct wave_sink
 
     WAVEFORMATEX *fmt;
     IMFByteStream *bytestream;
+    QWORD data_size_offset;
+    QWORD riff_size_offset;
+    DWORD data_length;
+    DWORD full_length;
 
     unsigned int flags;
     CRITICAL_SECTION cs;
@@ -338,18 +345,133 @@ static HRESULT WINAPI wave_sink_Shutdown(IMFFinalizableMediaSink *iface)
     return hr;
 }
 
+static void wave_sink_write_raw(struct wave_sink *sink, const void *data, DWORD length, HRESULT *hr)
+{
+    DWORD written_length;
+
+    if (FAILED(*hr)) return;
+    if (SUCCEEDED(*hr = IMFByteStream_Write(sink->bytestream, data, length, &written_length)))
+        sink->full_length += length;
+}
+
+static void wave_sink_write_pad(struct wave_sink *sink, DWORD size, HRESULT *hr)
+{
+    DWORD i, len = size / 4, zero = 0;
+
+    for (i = 0; i < len; ++i)
+        wave_sink_write_raw(sink, &zero, 4, hr);
+    if ((len = size % 4))
+        wave_sink_write_raw(sink, &zero, len, hr);
+}
+
+static void wave_sink_write_junk(struct wave_sink *sink, DWORD size, HRESULT *hr)
+{
+    wave_sink_write_raw(sink, "JUNK", 4, hr);
+    wave_sink_write_raw(sink, &size, 4, hr);
+    wave_sink_write_pad(sink, size, hr);
+}
+
+static HRESULT wave_sink_write_header(struct wave_sink *sink)
+{
+    HRESULT hr = S_OK;
+    DWORD size = 0;
+
+    wave_sink_write_raw(sink, "RIFF", 4, &hr);
+    if (SUCCEEDED(hr))
+        hr = IMFByteStream_GetCurrentPosition(sink->bytestream, &sink->riff_size_offset);
+    wave_sink_write_raw(sink, &size, sizeof(size), &hr);
+    wave_sink_write_raw(sink, "WAVE", 4, &hr);
+    wave_sink_write_junk(sink, 28, &hr);
+
+    /* Format chunk */
+    wave_sink_write_raw(sink, "fmt ", 4, &hr);
+    size = sizeof(*sink->fmt);
+    wave_sink_write_raw(sink, &size, sizeof(size), &hr);
+    wave_sink_write_raw(sink, sink->fmt, size, &hr);
+
+    sink->flags |= SINK_HEADER_WRITTEN;
+
+    return hr;
+}
+
+static HRESULT wave_sink_start_data_chunk(struct wave_sink *sink)
+{
+    HRESULT hr = S_OK;
+
+    wave_sink_write_raw(sink, "data", 4, &hr);
+    if (SUCCEEDED(hr))
+        hr = IMFByteStream_GetCurrentPosition(sink->bytestream, &sink->data_size_offset);
+    wave_sink_write_pad(sink, 4, &hr);
+    sink->flags |= SINK_DATA_CHUNK_STARTED;
+
+    return hr;
+}
+
+static HRESULT wave_sink_write_data(struct wave_sink *sink, const BYTE *data, DWORD length)
+{
+    HRESULT hr = S_OK;
+
+    wave_sink_write_raw(sink, data, length, &hr);
+    if (SUCCEEDED(hr))
+        sink->data_length += length;
+
+    return hr;
+}
+
+static void wave_sink_write_at(struct wave_sink *sink, const void *data, DWORD length, QWORD offset, HRESULT *hr)
+{
+    QWORD position;
+
+    if (FAILED(*hr)) return;
+
+    if (FAILED(*hr = IMFByteStream_GetCurrentPosition(sink->bytestream, &position))) return;
+    if (FAILED(*hr = IMFByteStream_SetCurrentPosition(sink->bytestream, offset))) return;
+    wave_sink_write_raw(sink, data, length, hr);
+    IMFByteStream_SetCurrentPosition(sink->bytestream, position);
+}
+
 static HRESULT WINAPI wave_sink_BeginFinalize(IMFFinalizableMediaSink *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
-    FIXME("%p, %p, %p.\n", iface, callback, state);
+    struct wave_sink *sink = impl_from_IMFFinalizableMediaSink(iface);
+    HRESULT hr = S_OK, status;
+    IMFAsyncResult *result;
+    DWORD size;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, callback, state);
+
+    EnterCriticalSection(&sink->cs);
+
+    if (!(sink->flags & SINK_DATA_FINALIZED))
+    {
+        size = sink->full_length - 8 /* RIFF chunk header size */;
+        wave_sink_write_at(sink, &size, 4, sink->riff_size_offset, &hr);
+        wave_sink_write_at(sink, &sink->data_length, 4, sink->data_size_offset, &hr);
+        sink->flags |= SINK_DATA_FINALIZED;
+        status = hr;
+    }
+    else
+        status = E_INVALIDARG;
+
+    if (callback)
+    {
+        if (SUCCEEDED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+        {
+            IMFAsyncResult_SetStatus(result, status);
+            hr = MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_STANDARD, result);
+            IMFAsyncResult_Release(result);
+        }
+    }
+
+    LeaveCriticalSection(&sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI wave_sink_EndFinalize(IMFFinalizableMediaSink *iface, IMFAsyncResult *result)
 {
-    FIXME("%p, %p.\n", iface, result);
+    TRACE("%p, %p.\n", iface, result);
 
-    return E_NOTIMPL;
+    return result ? IMFAsyncResult_GetStatus(result) : E_INVALIDARG;
 }
 
 static const IMFFinalizableMediaSinkVtbl wave_sink_vtbl =
@@ -563,9 +685,45 @@ static HRESULT WINAPI wave_stream_sink_GetMediaTypeHandler(IMFStreamSink *iface,
 
 static HRESULT WINAPI wave_stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
-    FIXME("%p, %p.\n", iface, sample);
+    struct wave_sink *sink = impl_from_IMFStreamSink(iface);
+    DWORD max_length, length;
+    IMFMediaBuffer *buffer;
+    HRESULT hr = S_OK;
+    BYTE *data;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, sample);
+
+    EnterCriticalSection(&sink->cs);
+
+    if (sink->flags & SINK_SHUT_DOWN)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
+    {
+        if (!(sink->flags & SINK_HEADER_WRITTEN))
+            hr = wave_sink_write_header(sink);
+
+        if (SUCCEEDED(hr) && !(sink->flags & SINK_DATA_CHUNK_STARTED))
+            hr = wave_sink_start_data_chunk(sink);
+
+        if (SUCCEEDED(hr))
+            hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer);
+
+        if (SUCCEEDED(hr))
+        {
+            if (SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &length)))
+            {
+                hr = wave_sink_write_data(sink, data, length);
+                IMFMediaBuffer_Unlock(buffer);
+            }
+        }
+
+        if (buffer)
+            IMFMediaBuffer_Release(buffer);
+    }
+
+    LeaveCriticalSection(&sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI wave_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
@@ -702,6 +860,10 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
         WARN("Failed to produce WAVEFORMATEX representation, hr %#lx.\n", hr);
         goto failed;
     }
+
+    /* Update derived fields. */
+    object->fmt->nAvgBytesPerSec = object->fmt->nSamplesPerSec * object->fmt->nChannels * object->fmt->wBitsPerSample / 8;
+    object->fmt->nBlockAlign = object->fmt->nChannels * object->fmt->wBitsPerSample / 8;
 
     object->IMFFinalizableMediaSink_iface.lpVtbl = &wave_sink_vtbl;
     object->IMFMediaEventGenerator_iface.lpVtbl = &wave_sink_events_vtbl;
