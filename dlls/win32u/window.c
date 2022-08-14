@@ -4040,7 +4040,7 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
     wpl.length = sizeof(wpl);
     NtUserGetWindowPlacement( hwnd, &wpl );
 
-    if (call_hooks( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd, TRUE ))
+    if (call_hooks( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd ))
         return SWP_NOSIZE | SWP_NOMOVE;
 
     if (is_iconic( hwnd ))
@@ -4752,7 +4752,7 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
 
     TRACE( "(%p)\n", hwnd );
 
-    if (call_hooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
+    if (call_hooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0 )) return FALSE;
 
     if (is_menu_active() == hwnd) NtUserEndMenu();
 
@@ -4765,7 +4765,7 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
     }
     else if (!get_window_relative( hwnd, GW_OWNER ))
     {
-        call_hooks( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L, TRUE );
+        call_hooks( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0 );
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
@@ -5154,7 +5154,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     release_win_ptr( win );
     cbtc.hwndInsertAfter = HWND_TOP;
     cbtc.lpcs = &cs;
-    if (call_hooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, TRUE ))
+    if (call_hooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc ))
     {
         free_window_handle( hwnd );
         return 0;
@@ -5334,7 +5334,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     /* Call WH_SHELL hook */
 
     if (!(get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) && !get_window_relative( hwnd, GW_OWNER ))
-        call_hooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0, TRUE );
+        call_hooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0 );
 
     TRACE( "created window %p\n", hwnd );
     SetThreadDpiAwarenessContext( context );

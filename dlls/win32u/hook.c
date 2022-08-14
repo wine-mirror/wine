@@ -179,8 +179,8 @@ BOOL WINAPI NtUserCallMsgFilter( MSG *msg, INT code )
 {
     /* FIXME: We should use NtCallbackReturn instead of passing (potentially kernel) pointer
      * like that, but we need to consequently use syscall thunks first for that to work. */
-    if (call_hooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg, TRUE )) return TRUE;
-    return call_hooks( WH_MSGFILTER, code, 0, (LPARAM)msg, TRUE );
+    if (call_hooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
+    return call_hooks( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
 
 static UINT get_ll_hook_timeout(void)
@@ -333,7 +333,7 @@ LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
     return call_hook( &info );
 }
 
-LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
+LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     struct win_hook_params info;
@@ -348,7 +348,7 @@ LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode
     }
 
     memset( &info, 0, sizeof(info) - sizeof(info.module) );
-    info.prev_unicode = unicode;
+    info.prev_unicode = TRUE;
     info.id = id;
 
     SERVER_START_REQ( start_hook_chain )
