@@ -152,6 +152,23 @@ struct client_menu_name32
     ULONG nameUS;
 };
 
+struct win_proc_params32
+{
+    ULONG func;
+    ULONG hwnd;
+    UINT msg;
+    ULONG wparam;
+    ULONG lparam;
+    ULONG result;
+    BOOL ansi;
+    BOOL ansi_dst;
+    BOOL needs_unpack;
+    enum wm_char_mapping mapping;
+    ULONG dpi_awareness;
+    ULONG procA;
+    ULONG procW;
+};
+
 static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -198,6 +215,24 @@ static struct client_menu_name32 *client_menu_name_64to32( const struct client_m
         name32->nameUS = PtrToUlong( name->nameUS );
     }
     return name32;
+}
+
+static void win_proc_params_64to32( const struct win_proc_params *src, struct win_proc_params32 *dst,
+                                    ULONG *result )
+{
+    dst->func = PtrToUlong( src->func );
+    dst->hwnd = HandleToUlong( src->hwnd );
+    dst->msg = src->msg;
+    dst->wparam = src->wparam;
+    dst->lparam = src->lparam;
+    dst->result = PtrToUlong( result );
+    dst->ansi = src->ansi;
+    dst->ansi_dst = src->ansi_dst;
+    dst->needs_unpack = src->needs_unpack;
+    dst->mapping = src->mapping;
+    dst->dpi_awareness = HandleToUlong( src->dpi_awareness );
+    dst->procA = PtrToUlong( src->procA );
+    dst->procW = PtrToUlong( src->procW );
 }
 
 static NTSTATUS dispatch_callback( ULONG id, void *args, ULONG len )
@@ -256,8 +291,34 @@ static NTSTATUS WINAPI wow64_NtUserCallWinEventHook( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct win_proc_params *params = arg;
+    struct win_proc_params32 params32_buf, *params32 = &params32_buf;
+    LONG result32 = 0;
+    LRESULT result;
+    void *ret_ptr;
+    ULONG ret_len;
+    NTSTATUS status;
+
+    if (size > sizeof(*params))
+    {
+        if (!(params32 = Wow64AllocateTemp( size - sizeof(*params) + sizeof(*params32) )))
+            return 0;
+        memcpy( params32 + 1, params + 1, size - sizeof(*params) );
+    }
+    win_proc_params_64to32( params, params32, NULL );
+
+    status = Wow64KiUserCallbackDispatcher( NtUserCallWinProc, params32,
+                                            size - sizeof(*params) + sizeof(*params32),
+                                            &ret_ptr, &ret_len );
+    if (ret_len == sizeof(result32)) result32 = *(LONG *)ret_ptr;
+    result = result32;
+
+    if (params->result)
+    {
+        *params->result = result;
+        return status;
+    }
+    return NtCallbackReturn( &result, sizeof(result), status );
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )

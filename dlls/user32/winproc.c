@@ -1176,12 +1176,13 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
 
 BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
 {
+    LRESULT result, *result_ptr = params->result;
+    params->result = &result;
 
     if (params->needs_unpack)
     {
         char stack_buffer[128];
         void *buffer;
-        LRESULT result;
 
         if (size > sizeof(*params))
         {
@@ -1196,8 +1197,6 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         if (!unpack_message( params->hwnd, params->msg, &params->wparam,
                              &params->lparam, &buffer, size ))
             return 0;
-        params->result = &result;
-
 
         dispatch_win_proc_params( params );
 
@@ -1206,7 +1205,16 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         if (buffer != stack_buffer && buffer != params + 1)
             HeapFree( GetProcessHeap(), 0, buffer );
     }
-    else dispatch_win_proc_params( params );
+    else
+    {
+        dispatch_win_proc_params( params );
+        if (result_ptr)
+        {
+            *result_ptr = result;
+            return TRUE;
+        }
+        NtCallbackReturn( &result, sizeof(result), TRUE );
+    }
     return TRUE;
 }
 

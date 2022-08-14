@@ -265,6 +265,7 @@ static BOOL dispatch_win_proc_params( struct win_proc_params *params, size_t siz
     thread_info->recursion_count++;
 
     KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
+    if (ret_len == sizeof(*params->result)) *params->result = *(LRESULT *)ret_ptr;
 
     thread_info->recursion_count--;
     return TRUE;
