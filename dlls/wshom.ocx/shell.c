@@ -277,7 +277,7 @@ static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, int *pid)
     return S_OK;
 }
 
-static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, DWORD *code)
+static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, int *code)
 {
     WshExecImpl *This = impl_from_IWshExec(iface);
 

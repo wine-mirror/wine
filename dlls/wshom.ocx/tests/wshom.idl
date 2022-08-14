@@ -439,7 +439,7 @@ library IWshRuntimeLibrary
         HRESULT ProcessID([out, retval] int *pid);
 
         [id(0x0007), propget]
-        HRESULT ExitCode([out, retval] DWORD *code);
+        HRESULT ExitCode([out, retval] int *code);
 
         [id(0x0008)]
         HRESULT Terminate();
