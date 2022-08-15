@@ -425,7 +425,7 @@ static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, 
 
     if (grabber->is_shut_down)
         hr = MF_E_STREAMSINK_REMOVED;
-    else if (grabber->state == SINK_STATE_RUNNING)
+    else if (grabber->state == SINK_STATE_RUNNING || (grabber->state == SINK_STATE_PAUSED && grabber->ignore_clock))
     {
         hr = IMFSample_GetSampleTime(sample, &sampletime);
 
