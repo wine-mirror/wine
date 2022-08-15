@@ -4089,11 +4089,30 @@ static HRESULT WINAPI bytestream_EndRead(IMFByteStream *iface, IMFAsyncResult *r
     return bytestream_complete_io_request(stream, ASYNC_STREAM_OP_READ, result, byte_read);
 }
 
-static HRESULT WINAPI bytestream_file_Write(IMFByteStream *iface, const BYTE *data, ULONG count, ULONG *written)
+static HRESULT WINAPI bytestream_file_Write(IMFByteStream *iface, const BYTE *data, ULONG size, ULONG *written)
 {
-    FIXME("%p, %p, %lu, %p\n", iface, data, count, written);
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+    LARGE_INTEGER position;
+    HRESULT hr = S_OK;
+    BOOL ret;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %lu, %p\n", iface, data, size, written);
+
+    EnterCriticalSection(&stream->cs);
+
+    position.QuadPart = stream->position;
+    if ((ret = SetFilePointerEx(stream->hfile, position, NULL, FILE_BEGIN)))
+    {
+        if ((ret = WriteFile(stream->hfile, data, size, written, NULL)))
+            stream->position += *written;
+    }
+
+    if (!ret)
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI bytestream_BeginWrite(IMFByteStream *iface, const BYTE *data, ULONG size,
