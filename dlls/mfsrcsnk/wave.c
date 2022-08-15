@@ -62,6 +62,7 @@ struct wave_sink
     IMFFinalizableMediaSink IMFFinalizableMediaSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     IMFClockStateSink IMFClockStateSink_iface;
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     IMFStreamSink IMFStreamSink_iface;
     LONG refcount;
 
@@ -98,6 +99,11 @@ static struct wave_sink *impl_from_IMFStreamSink(IMFStreamSink *iface)
 static struct wave_sink *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
 {
     return CONTAINING_RECORD(iface, struct wave_sink, IMFClockStateSink_iface);
+}
+
+static struct wave_sink *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct wave_sink, IMFMediaTypeHandler_iface);
 }
 
 static HRESULT WINAPI wave_sink_QueryInterface(IMFFinalizableMediaSink *iface, REFIID riid, void **obj)
@@ -574,6 +580,10 @@ static HRESULT WINAPI wave_stream_sink_QueryInterface(IMFStreamSink *iface, REFI
     {
         *obj = &sink->IMFStreamSink_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFMediaTypeHandler))
+    {
+        *obj = &sink->IMFMediaTypeHandler_iface;
+    }
     else
     {
         WARN("Unsupported %s.\n", debugstr_guid(riid));
@@ -680,9 +690,17 @@ static HRESULT WINAPI wave_stream_sink_GetIdentifier(IMFStreamSink *iface, DWORD
 
 static HRESULT WINAPI wave_stream_sink_GetMediaTypeHandler(IMFStreamSink *iface, IMFMediaTypeHandler **handler)
 {
-    FIXME("%p, %p.\n", iface, handler);
+    struct wave_sink *sink = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, handler);
+
+    if (sink->flags & SINK_SHUT_DOWN)
+        return MF_E_STREAMSINK_REMOVED;
+
+    *handler = &sink->IMFMediaTypeHandler_iface;
+    IMFMediaTypeHandler_AddRef(*handler);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
@@ -833,6 +851,95 @@ static const IMFClockStateSinkVtbl wave_sink_clock_sink_vtbl =
     wave_sink_clock_sink_OnClockSetRate,
 };
 
+static HRESULT WINAPI wave_sink_type_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid,
+        void **obj)
+{
+    struct wave_sink *sink = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_QueryInterface(&sink->IMFStreamSink_iface, riid, obj);
+}
+
+static ULONG WINAPI wave_sink_type_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    struct wave_sink *sink = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_AddRef(&sink->IMFStreamSink_iface);
+}
+
+static ULONG WINAPI wave_sink_type_handler_Release(IMFMediaTypeHandler *iface)
+{
+    struct wave_sink *sink = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_Release(&sink->IMFStreamSink_iface);
+}
+
+static HRESULT WINAPI wave_sink_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
+        IMFMediaType *in_type, IMFMediaType **out_type)
+{
+    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wave_sink_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    TRACE("%p, %p.\n", iface, count);
+
+    *count = 1;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI wave_sink_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **media_type)
+{
+    FIXME("%p, %lu, %p.\n", iface, index, media_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wave_sink_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface,
+        IMFMediaType *media_type)
+{
+    FIXME("%p, %p.\n", iface, media_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wave_sink_type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface,
+        IMFMediaType **media_type)
+{
+    FIXME("%p, %p.\n", iface, media_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wave_sink_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    struct wave_sink *sink = impl_from_IMFMediaTypeHandler(iface);
+
+    TRACE("%p, %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+
+    if (sink->flags & SINK_SHUT_DOWN)
+        return MF_E_STREAMSINK_REMOVED;
+
+    memcpy(type, &MFMediaType_Audio, sizeof(*type));
+    return S_OK;
+}
+
+static const IMFMediaTypeHandlerVtbl wave_sink_type_handler_vtbl =
+{
+    wave_sink_type_handler_QueryInterface,
+    wave_sink_type_handler_AddRef,
+    wave_sink_type_handler_Release,
+    wave_sink_type_handler_IsMediaTypeSupported,
+    wave_sink_type_handler_GetMediaTypeCount,
+    wave_sink_type_handler_GetMediaTypeByIndex,
+    wave_sink_type_handler_SetCurrentMediaType,
+    wave_sink_type_handler_GetCurrentMediaType,
+    wave_sink_type_handler_GetMajorType,
+};
+
 /***********************************************************************
  *      MFCreateWAVEMediaSink (mfsrcsnk.@)
  */
@@ -871,6 +978,7 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
     object->IMFMediaEventGenerator_iface.lpVtbl = &wave_sink_events_vtbl;
     object->IMFStreamSink_iface.lpVtbl = &wave_stream_sink_vtbl;
     object->IMFClockStateSink_iface.lpVtbl = &wave_sink_clock_sink_vtbl;
+    object->IMFMediaTypeHandler_iface.lpVtbl = &wave_sink_type_handler_vtbl;
     object->refcount = 1;
     IMFByteStream_AddRef((object->bytestream = bytestream));
     InitializeCriticalSection(&object->cs);

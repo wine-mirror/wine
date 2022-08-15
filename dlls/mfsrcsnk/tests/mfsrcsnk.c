@@ -46,13 +46,15 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_wave_sink(void)
 {
+    IMFMediaType *media_type, *media_type2;
+    IMFMediaTypeHandler *type_handler;
     IMFPresentationClock *clock;
     IMFStreamSink *stream_sink;
     IMFMediaSink *sink, *sink2;
     IMFByteStream *bytestream;
-    IMFMediaType *media_type;
     DWORD id, count, flags;
     HRESULT hr;
+    GUID guid;
 
     hr = MFCreateWAVEMediaSink(NULL, NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
@@ -133,6 +135,39 @@ static void test_wave_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaSink_Release(sink2);
 
+    check_interface(stream_sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(stream_sink, &IID_IMFMediaTypeHandler, TRUE);
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %lu.\n", count);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IMFMediaType_SetUINT32(media_type2, &MF_MT_AUDIO_NUM_CHANNELS, 1);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, NULL);
+        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        IMFMediaType_Release(media_type2);
+    }
+
     /* Shutdown state */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -144,6 +179,11 @@ static void test_wave_sink(void)
     ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
     ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#lx.\n", hr);
 
     IMFStreamSink_Release(stream_sink);
@@ -159,6 +199,7 @@ static void test_wave_sink(void)
 
     IMFMediaSink_Release(sink);
 
+    IMFMediaTypeHandler_Release(type_handler);
     IMFMediaType_Release(media_type);
     IMFByteStream_Release(bytestream);
 }
