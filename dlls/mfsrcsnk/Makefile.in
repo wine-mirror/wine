@@ -5,4 +5,7 @@ IMPORTS   = ole32 mfplat mfuuid uuid
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
+	factory.c \
 	wave.c
+
+IDL_SRCS = mfsrcsnk.idl

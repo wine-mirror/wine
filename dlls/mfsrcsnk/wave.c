@@ -22,6 +22,8 @@
 #include "mfidl.h"
 #include "mferror.h"
 
+#include "mfsrcsnk_private.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
@@ -888,4 +890,51 @@ failed:
     IMFFinalizableMediaSink_Release(&object->IMFFinalizableMediaSink_iface);
 
     return hr;
+}
+
+static HRESULT WINAPI sink_class_factory_QueryInterface(IMFSinkClassFactory *iface, REFIID riid, void **out)
+{
+    if (IsEqualIID(riid, &IID_IMFSinkClassFactory)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFSinkClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sink_class_factory_AddRef(IMFSinkClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI sink_class_factory_Release(IMFSinkClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI sink_class_factory_CreateMediaSink(IMFSinkClassFactory *iface, IMFByteStream *stream,
+        IMFMediaType *video_type, IMFMediaType *audio_type, IMFMediaSink **sink)
+{
+    TRACE("%p, %p, %p, %p.\n", stream, video_type, audio_type, sink);
+
+    return MFCreateWAVEMediaSink(stream, audio_type, sink);
+}
+
+static const IMFSinkClassFactoryVtbl wave_sink_factory_vtbl =
+{
+    sink_class_factory_QueryInterface,
+    sink_class_factory_AddRef,
+    sink_class_factory_Release,
+    sink_class_factory_CreateMediaSink,
+};
+
+static IMFSinkClassFactory wave_sink_factory = { &wave_sink_factory_vtbl };
+
+HRESULT wave_sink_factory_create(REFIID riid, void **out)
+{
+    return IMFSinkClassFactory_QueryInterface(&wave_sink_factory, riid, out);
 }
