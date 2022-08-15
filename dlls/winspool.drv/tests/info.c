@@ -2679,6 +2679,7 @@ static void test_DocumentProperties(void)
     LONG dm_size, ret;
     DEVMODEA *dm;
     char empty_str[] = "";
+    char non_existing_str[] = "non existing printer";
 
     if (!default_printer)
     {
@@ -2705,6 +2706,9 @@ static void test_DocumentProperties(void)
     ok(ret == IDOK, "DocumentPropertiesA ret value %ld != expected IDOK\n", ret);
 
     ret = DocumentPropertiesA(0, hprn, empty_str, dm, dm, DM_OUT_BUFFER);
+    ok(ret == IDOK, "DocumentPropertiesA ret value %ld != expected IDOK\n", ret);
+
+    ret = DocumentPropertiesA(0, hprn, non_existing_str, dm, dm, DM_OUT_BUFFER);
     ok(ret == IDOK, "DocumentPropertiesA ret value %ld != expected IDOK\n", ret);
 
     test_DEVMODEA(dm, dm_size, default_printer);

@@ -1889,7 +1889,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
     TRACE("(%p,%p,%s,%p,%p,%ld)\n",
           hWnd, hPrinter, debugstr_w(pDeviceName), pDevModeOutput, pDevModeInput, fMode);
 
-    device = pDeviceName && pDeviceName[0] ? pDeviceName : get_opened_printer_name(hPrinter);
+    device = hPrinter ? get_opened_printer_name(hPrinter) : pDeviceName;
     if (!device) {
         ERR("no device name\n");
         return -1;
