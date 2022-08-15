@@ -2996,15 +2996,26 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         X11DRV_resize_desktop( (BOOL)lp );
         return 0;
     case WM_X11DRV_SET_CURSOR:
+    {
+        Window win = 0;
+
         if ((data = get_win_data( hwnd )))
         {
-            Window win = data->whole_window;
+            win = data->whole_window;
             release_win_data( data );
-            if (win) set_window_cursor( win, (HCURSOR)lp );
         }
         else if (hwnd == x11drv_thread_data()->clip_hwnd)
-            set_window_cursor( x11drv_thread_data()->clip_window, (HCURSOR)lp );
+            win = x11drv_thread_data()->clip_window;
+
+        if (win)
+        {
+            if (wp == GetCurrentThreadId())
+                set_window_cursor( win, (HCURSOR)lp );
+            else
+                sync_window_cursor( win );
+        }
         return 0;
+    }
     case WM_X11DRV_CLIP_CURSOR_NOTIFY:
         return clip_cursor_notify( hwnd, (HWND)wp, (HWND)lp );
     case WM_X11DRV_CLIP_CURSOR_REQUEST:
