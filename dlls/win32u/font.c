@@ -3393,7 +3393,7 @@ static DWORD get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
     ret = font_funcs->get_glyph_outline( font, index, format, &gm, &abc, buflen, buf, mat, tategaki );
     if (ret == GDI_ERROR) return ret;
 
-    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) && !mat)
+    if (format == GGO_METRICS && !mat)
         set_gdi_font_glyph_metrics( font, index, &gm, &abc );
 
 done:
