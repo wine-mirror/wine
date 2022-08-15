@@ -374,6 +374,30 @@ static HKEY WINSPOOL_OpenDriverReg(const void *pEnvironment)
     return retval;
 }
 
+enum printers_key
+{
+    system_printers_key,
+    user_printers_key,
+    user_ports_key,
+    user_default_key,
+};
+
+static DWORD create_printers_reg_key( enum printers_key type, HKEY *key )
+{
+    switch( type )
+    {
+    case system_printers_key:
+        return RegCreateKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Print\\Printers", key );
+    case user_printers_key:
+        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices", key );
+    case user_ports_key:
+        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\PrinterPorts", key );
+    case user_default_key:
+        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows", key );
+    }
+    return ERROR_PATH_NOT_FOUND;
+}
+
 static CRITICAL_SECTION config_modules_cs;
 static CRITICAL_SECTION_DEBUG config_modules_cs_debug =
 {
@@ -400,13 +424,13 @@ static void release_config_module(config_module_t *config_module)
 
 static config_module_t *get_config_module(const WCHAR *device, BOOL grab)
 {
-    WCHAR driver[MAX_PATH];
+    WCHAR driver_name[100], driver[MAX_PATH];
     DWORD size, len;
-    HKEY driver_key, device_key;
+    HKEY printers_key, printer_key, drivers_key, driver_key;
     HMODULE driver_module;
     config_module_t *ret = NULL;
     struct wine_rb_entry *entry;
-    DWORD type;
+    DWORD r, type;
     LSTATUS res;
 
     EnterCriticalSection(&config_modules_cs);
@@ -418,12 +442,35 @@ static config_module_t *get_config_module(const WCHAR *device, BOOL grab)
     }
     if (!grab) goto ret;
 
-    if (!(driver_key = WINSPOOL_OpenDriverReg(NULL))) goto ret;
+    if (create_printers_reg_key(system_printers_key, &printers_key))
+    {
+        ERR("Can't create Printers key\n");
+        goto ret;
+    }
 
-    res = RegOpenKeyW(driver_key, device, &device_key);
-    RegCloseKey(driver_key);
-    if (res) {
+    r = RegOpenKeyW(printers_key, device, &printer_key);
+    RegCloseKey(printers_key);
+    if (r)
+    {
         WARN("Device %s key not found\n", debugstr_w(device));
+        goto ret;
+    }
+
+    size = sizeof(driver_name);
+    r = RegQueryValueExW(printer_key, L"Printer Driver", 0, &type, (BYTE *)driver_name, &size);
+    RegCloseKey(printer_key);
+    if (r || type != REG_SZ)
+    {
+        WARN("Can't get Printer Driver name\n");
+        goto ret;
+    }
+
+    if (!(drivers_key = WINSPOOL_OpenDriverReg(NULL))) goto ret;
+
+    res = RegOpenKeyW(drivers_key, driver_name, &driver_key);
+    RegCloseKey(drivers_key);
+    if (res) {
+        WARN("Driver %s key not found\n", debugstr_w(driver_name));
         goto ret;
     }
 
@@ -435,9 +482,9 @@ static config_module_t *get_config_module(const WCHAR *device, BOOL grab)
     driver[len++] = '3';
     driver[len++] = '\\';
     size = sizeof(driver) - len * sizeof(WCHAR);
-    res = RegQueryValueExW( device_key, L"Configuration File", NULL, &type,
+    res = RegQueryValueExW( driver_key, L"Configuration File", NULL, &type,
                             (BYTE *)(driver + len), &size );
-    RegCloseKey(device_key);
+    RegCloseKey(driver_key);
     if (res || type != REG_SZ) {
         WARN("no configuration file: %lu\n", res);
         goto ret;
@@ -551,30 +598,6 @@ static HANDLE get_backend_handle( HANDLE hprn )
     opened_printer_t *printer = get_opened_printer( hprn );
     if (!printer) return NULL;
     return printer->backend_printer;
-}
-
-enum printers_key
-{
-    system_printers_key,
-    user_printers_key,
-    user_ports_key,
-    user_default_key,
-};
-
-static DWORD create_printers_reg_key( enum printers_key type, HKEY *key )
-{
-    switch( type )
-    {
-    case system_printers_key:
-        return RegCreateKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Print\\Printers", key );
-    case user_printers_key:
-        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices", key );
-    case user_ports_key:
-        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\PrinterPorts", key );
-    case user_default_key:
-        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows", key );
-    }
-    return ERROR_PATH_NOT_FOUND;
 }
 
 static DWORD open_printer_reg_key( const WCHAR *name, HKEY *key )
