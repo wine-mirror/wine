@@ -155,6 +155,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_NULL_DISP      0x300008
 #define DISPID_EXTERNAL_IS_ENGLISH     0x300009
 #define DISPID_EXTERNAL_LIST_SEP       0x30000A
+#define DISPID_EXTERNAL_TEST_VARS      0x30000B
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -196,6 +197,95 @@ static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
     RegCloseKey(hkey);
 
     return res == ERROR_SUCCESS;
+}
+
+static void test_script_vars(unsigned argc, VARIANTARG *argv)
+{
+    static const WCHAR *const jsobj_names[] = { L"abc", L"foO", L"bar", L"TostRing", L"hasownpropERty" };
+    IHTMLBodyElement *body;
+    IDispatchEx *disp;
+    DISPID id, id2;
+    HRESULT hres;
+    unsigned i;
+    BSTR bstr;
+
+    ok(argc == 2, "argc = %d\n", argc);
+    ok(V_VT(&argv[0]) == VT_DISPATCH, "VT = %d\n", V_VT(&argv[0]));
+    ok(V_VT(&argv[1]) == VT_DISPATCH, "VT = %d\n", V_VT(&argv[1]));
+
+    /* JS object disp */
+    hres = IDispatch_QueryInterface(V_DISPATCH(&argv[0]), &IID_IDispatchEx, (void**)&disp);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+
+    hres = IDispatchEx_QueryInterface(disp, &IID_IHTMLBodyElement, (void**)&body);
+    ok(hres == E_NOINTERFACE, "Got IHTMLBodyElement iface on JS object? %08lx\n", hres);
+
+    for(i = 0; i < ARRAY_SIZE(jsobj_names); i++) {
+        bstr = SysAllocString(jsobj_names[i]);
+        hres = IDispatchEx_GetIDsOfNames(disp, &IID_NULL, &bstr, 1, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames(%s) returned %08lx, expected %08lx\n", debugstr_w(bstr), hres, DISP_E_UNKNOWNNAME);
+
+        hres = IDispatchEx_GetDispID(disp, bstr, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08lx, expected %08lx\n", debugstr_w(bstr), hres, DISP_E_UNKNOWNNAME);
+
+        hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id);
+        ok(hres == S_OK, "GetDispID(%s) with fdexNameCaseInsensitive failed: %08lx\n", debugstr_w(bstr), hres);
+        ok(id > 0, "Unexpected DISPID for %s: %ld\n", debugstr_w(bstr), id);
+        SysFreeString(bstr);
+    }
+
+    bstr = SysAllocString(L"foo");
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    /* Native picks one "arbitrarily" here, depending how it's laid out, so can't compare exact id */
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    hres = IDispatchEx_GetIDsOfNames(disp, &IID_NULL, &bstr, 1, 0, &id2);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    ok(id == id2, "id != id2\n");
+
+    hres = IDispatchEx_DeleteMemberByName(disp, bstr, fdexNameCaseInsensitive);
+    ok(hres == S_OK, "DeleteMemberByName failed: %08lx\n", hres);
+
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(id == id2, "id != id2\n");
+
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive | fdexNameEnsure, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(id == id2, "id != id2\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"fOo");
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(id == id2, "id != id2\n");
+
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive | fdexNameEnsure, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(id == id2, "id != id2\n");
+
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameEnsure, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    ok(id != id2, "id == id2\n");
+
+    hres = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive | fdexNameEnsure, &id2);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    IDispatchEx_Release(disp);
+
+    /* Body element disp */
+    hres = IDispatch_QueryInterface(V_DISPATCH(&argv[1]), &IID_IDispatchEx, (void**)&disp);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+
+    hres = IDispatchEx_QueryInterface(disp, &IID_IHTMLBodyElement, (void**)&body);
+    ok(hres == S_OK, "Could not get IHTMLBodyElement iface: %08lx\n", hres);
+    IHTMLBodyElement_Release(body);
+
+    IDispatchEx_Release(disp);
 }
 
 static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
@@ -609,6 +699,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         *pid = DISPID_EXTERNAL_LIST_SEP;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"testVars")) {
+        *pid = DISPID_EXTERNAL_TEST_VARS;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -832,6 +926,15 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         V_BSTR(pvarRes) = SysAllocStringLen(buf, len);
         return S_OK;
     }
+
+    case DISPID_EXTERNAL_TEST_VARS:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pei != NULL, "pei == NULL\n");
+        test_script_vars(pdp->cArgs, pdp->rgvarg);
+        return S_OK;
 
     default:
         ok(0, "unexpected call\n");

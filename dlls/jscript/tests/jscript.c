@@ -930,6 +930,124 @@ static void test_aggregation(void)
     ok(!unk || broken(unk != NULL), "unk = %p\n", unk);
 }
 
+static void test_case_sens(void)
+{
+    static const WCHAR *const names[] = { L"abc", L"foo", L"bar", L"mAth", L"evaL" };
+    DISPPARAMS dp = { NULL, NULL, 0, 0 };
+    IActiveScriptParse *parser;
+    IActiveScript *script;
+    EXCEPINFO ei = { 0 };
+    IDispatchEx *disp;
+    DISPID id, id2;
+    unsigned i;
+    HRESULT hr;
+    VARIANT v;
+    BSTR bstr;
+
+    script = create_jscript();
+
+    hr = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hr == S_OK, "Could not get IActiveScriptParse iface: %08lx\n", hr);
+
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08lx\n", hr);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScriptParse_InitNew(parser);
+    ok(hr == S_OK, "InitNew failed: %08lx\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08lx\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    parse_script(parser, L"var aBc; var abC; function Foo() { }\nFoo.prototype.foo = 13; var Bar = new Foo(); Bar.Foo = 42;");
+    disp = get_script_dispatch(script, NULL);
+
+    for(i = 0; i < ARRAY_SIZE(names); i++) {
+        bstr = SysAllocString(names[i]);
+        hr = IDispatchEx_GetIDsOfNames(disp, &IID_NULL, &bstr, 1, 0, &id);
+        ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames(%s) returned %08lx, expected %08lx\n", debugstr_w(bstr), hr, DISP_E_UNKNOWNNAME);
+
+        hr = IDispatchEx_GetDispID(disp, bstr, 0, &id);
+        ok(hr == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08lx, expected %08lx\n", debugstr_w(bstr), hr, DISP_E_UNKNOWNNAME);
+
+        hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id);
+        ok(hr == S_OK, "GetDispID(%s) with fdexNameCaseInsensitive failed: %08lx\n", debugstr_w(bstr), hr);
+        ok(id > 0, "Unexpected DISPID for %s: %ld\n", debugstr_w(bstr), id);
+        SysFreeString(bstr);
+    }
+
+    get_disp_id(disp, L"Bar", S_OK, &id);
+    hr = IDispatchEx_InvokeEx(disp, id, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+    ok(hr == S_OK, "InvokeEx failed: %08lx\n", hr);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(v) = NULL\n");
+    IDispatchEx_Release(disp);
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&disp);
+    ok(hr == S_OK, "Could not get IDispatchEx iface: %08lx\n", hr);
+    VariantClear(&v);
+
+    bstr = SysAllocString(L"foo");
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseSensitive, &id);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+
+    /* Native picks one "arbitrarily" here, depending how it's laid out, so can't compare exact id */
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+
+    hr = IDispatchEx_GetIDsOfNames(disp, &IID_NULL, &bstr, 1, 0, &id2);
+    ok(hr == S_OK, "GetIDsOfNames failed: %08lx\n", hr);
+    ok(id == id2, "id != id2\n");
+
+    hr = IDispatchEx_DeleteMemberByName(disp, bstr, fdexNameCaseInsensitive);
+    ok(hr == S_OK, "DeleteMemberByName failed: %08lx\n", hr);
+
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+    ok(id == id2, "id != id2\n");
+
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive | fdexNameEnsure, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+    ok(id == id2, "id != id2\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"fOo");
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+    ok(id == id2, "id != id2\n");
+
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive | fdexNameEnsure, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+    ok(id == id2, "id != id2\n");
+
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameEnsure, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+    ok(id != id2, "id == id2\n");
+
+    hr = IDispatchEx_GetDispID(disp, bstr, fdexNameCaseInsensitive | fdexNameEnsure, &id2);
+    ok(hr == S_OK, "GetDispID failed: %08lx\n", hr);
+    SysFreeString(bstr);
+
+    IDispatchEx_Release(disp);
+    IActiveScriptParse_Release(parser);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hr = IActiveScript_Close(script);
+    ok(hr == S_OK, "Close failed: %08lx\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    IActiveScript_Release(script);
+}
+
 static void test_param_ids(void)
 {
     static const WCHAR *const names1[] = { L"test", L"c", L"foo", L"b", L"a" };
@@ -2324,6 +2442,7 @@ START_TEST(jscript)
         test_jscript2();
         test_jscript_uninitializing();
         test_aggregation();
+        test_case_sens();
         test_param_ids();
         test_code_persistence();
         test_named_items();

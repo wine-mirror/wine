@@ -33,6 +33,18 @@ var JS_E_WRONG_THIS = 0x800a13fc;
 
 var tests = [];
 
+sync_test("script vars", function() {
+    function foo() { }
+    foo.prototype.foo = 13;
+    var obj = new foo();
+    obj.Foo = 42;
+    obj.aBc = 1;
+    obj.abC = 2;
+    obj.Bar = 3;
+    document.body.foobar = 42;
+    external.testVars(document.body, obj);
+});
+
 sync_test("date_now", function() {
     var now = Date.now();
     var time = (new Date()).getTime();
