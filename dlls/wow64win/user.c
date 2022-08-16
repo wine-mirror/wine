@@ -1759,11 +1759,12 @@ NTSTATUS WINAPI wow64_NtUserGetClassInfoEx( UINT *args )
     struct client_menu_name client_name;
     UNICODE_STRING name;
     WNDCLASSEXW wc;
+    ATOM ret;
 
     wc.cbSize = sizeof(wc);
-    if (!NtUserGetClassInfoEx( instance, unicode_str_32to64( &name, name32 ), &wc,
-                               &client_name, ansi ))
-        return FALSE;
+    if (!(ret = NtUserGetClassInfoEx( instance, unicode_str_32to64( &name, name32 ), &wc,
+                                      &client_name, ansi )))
+        return 0;
 
     wc32->style = wc.style;
     wc32->lpfnWndProc = PtrToUlong( wc.lpfnWndProc );
@@ -1777,7 +1778,7 @@ NTSTATUS WINAPI wow64_NtUserGetClassInfoEx( UINT *args )
     wc32->lpszClassName = PtrToUlong( wc.lpszClassName );
     wc32->hIconSm = HandleToUlong( wc.hIconSm );
     client_menu_name_64to32( &client_name, client_name32 );
-    return TRUE;
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserGetClassName( UINT *args )
