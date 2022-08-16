@@ -147,6 +147,15 @@ typedef struct
 
 typedef struct
 {
+    LONG  lResult;
+    LONG  lParam;
+    LONG  wParam;
+    DWORD message;
+    ULONG hwnd;
+} CWPRETSTRUCT32;
+
+typedef struct
+{
     ULONG hwnd;
     ULONG hwndInsertAfter;
     INT   x;
@@ -178,6 +187,56 @@ typedef struct
     RECT  rcItem;
     ULONG itemData;
 } DRAWITEMSTRUCT32;
+
+typedef struct
+{
+    ULONG lParam;
+    ULONG wParam;
+    UINT  message;
+    ULONG hwnd;
+} CWPSTRUCT32;
+
+typedef struct
+{
+    POINT pt;
+    ULONG hwnd;
+    UINT  wHitTestCode;
+    ULONG dwExtraInfo;
+    DWORD mouseData;
+} MOUSEHOOKSTRUCTEX32;
+
+typedef struct
+{
+    POINT pt;
+    DWORD mouseData;
+    DWORD flags;
+    DWORD time;
+    ULONG dwExtraInfo;
+} MSLLHOOKSTRUCT32;
+
+typedef struct
+{
+    DWORD  vkCode;
+    DWORD  scanCode;
+    DWORD  flags;
+    DWORD  time;
+    ULONG  dwExtraInfo;
+} KBDLLHOOKSTRUCT32;
+
+typedef struct
+{
+    UINT  message;
+    UINT  paramL;
+    UINT  paramH;
+    DWORD time;
+    ULONG hwnd;
+} EVENTMSG32;
+
+typedef struct
+{
+    BOOL  fMouse;
+    ULONG hWndActive;
+} CBTACTIVATESTRUCT32;
 
 typedef struct
 {
@@ -241,7 +300,7 @@ static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
     return msg;
 }
 
-static MSG32 *msg_64to32( MSG *msg, MSG32 *msg32 )
+static MSG32 *msg_64to32( const MSG *msg, MSG32 *msg32 )
 {
     if (!msg32) return NULL;
 
@@ -358,6 +417,19 @@ static PAINTSTRUCT *paintstruct_32to64( PAINTSTRUCT *ps, const PAINTSTRUCT32 *ps
     return ps;
 }
 
+static MOUSEHOOKSTRUCTEX32 *mousehookstruct_64to32( const MOUSEHOOKSTRUCTEX *hook,
+                                                    MOUSEHOOKSTRUCTEX32 *hook32 )
+{
+    if (!hook) return NULL;
+
+    hook32->pt           = hook->pt;
+    hook32->hwnd         = HandleToUlong( hook->hwnd );
+    hook32->wHitTestCode = hook->wHitTestCode;
+    hook32->dwExtraInfo  = hook->dwExtraInfo;
+    hook32->mouseData    = hook->mouseData;
+    return hook32;
+}
+
 static NTSTATUS dispatch_callback( ULONG id, void *args, ULONG len )
 {
     void *ret_ptr;
@@ -444,10 +516,183 @@ static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
     return NtCallbackReturn( &result, sizeof(result), status );
 }
 
+static UINT hook_lparam_64to32( struct win_hook_params *params, const void *lp, void *lp32 )
+{
+    if (!params->lparam_size) return 0;
+
+    switch (params->id)
+    {
+    case WH_SYSMSGFILTER:
+    case WH_MSGFILTER:
+    case WH_GETMESSAGE:
+        msg_64to32( lp, lp32 );
+        return sizeof(MSG32);
+
+    case WH_CBT:
+        switch (params->code)
+        {
+        case HCBT_CREATEWND:
+            if (lp)
+            {
+                const CREATESTRUCTW *cs = lp;
+                CREATESTRUCT32 *cs32 = lp32;
+                createstruct_64to32( cs, cs32 );
+                cs32->lpszName  = PtrToUlong( cs->lpszName );
+                cs32->lpszClass = PtrToUlong( cs->lpszClass );
+            }
+            return sizeof(CREATESTRUCT32);
+
+        case HCBT_ACTIVATE:
+            if (lp)
+            {
+                const CBTACTIVATESTRUCT *cbt = lp;
+                CBTACTIVATESTRUCT32 *cbt32 = lp32;
+                cbt32->fMouse     = cbt->fMouse;
+                cbt32->hWndActive = HandleToUlong( cbt->hWndActive );
+            }
+            return sizeof(CBTACTIVATESTRUCT32);
+
+        case HCBT_CLICKSKIPPED:
+            mousehookstruct_64to32( lp, lp32 );
+            return sizeof(MOUSEHOOKSTRUCTEX32);
+        }
+        break;
+
+    case WH_CALLWNDPROC:
+        if (lp)
+        {
+            const CWPSTRUCT *cwp = lp;
+            CWPSTRUCT32 *cwp32 = lp32;
+            cwp32->lParam  = cwp->lParam;
+            cwp32->wParam  = cwp->wParam;
+            cwp32->message = cwp->message;
+            cwp32->hwnd    = HandleToUlong( cwp->hwnd );
+        }
+        return sizeof(CWPSTRUCT32);
+
+    case WH_CALLWNDPROCRET:
+        if (lp)
+        {
+            const CWPRETSTRUCT *cwpret = lp;
+            CWPRETSTRUCT32 *cwpret32 = lp32;
+            cwpret32->lResult = cwpret->lResult;
+            cwpret32->lParam  = cwpret->lParam;
+            cwpret32->wParam  = cwpret->wParam;
+            cwpret32->message = cwpret->message;
+            cwpret32->hwnd    = HandleToUlong( cwpret->hwnd );
+        }
+        return sizeof(CWPRETSTRUCT32);
+
+    case WH_MOUSE:
+        mousehookstruct_64to32( lp, lp32 );
+        return sizeof(MOUSEHOOKSTRUCTEX32);
+
+    case WH_MOUSE_LL:
+        if (lp)
+        {
+            const MSLLHOOKSTRUCT *hook = lp;
+            MSLLHOOKSTRUCT32 *hook32 = lp32;
+            hook32->pt          = hook->pt;
+            hook32->mouseData   = hook->mouseData;
+            hook32->flags       = hook->flags;
+            hook32->time        = hook->time;
+            hook32->dwExtraInfo = hook->dwExtraInfo;
+        }
+        return sizeof(MSLLHOOKSTRUCT32);
+
+    case WH_KEYBOARD_LL:
+        if (lp)
+        {
+            const KBDLLHOOKSTRUCT *hook = lp;
+            KBDLLHOOKSTRUCT32 *hook32 = lp32;
+            hook32->vkCode      = hook->vkCode;
+            hook32->scanCode    = hook->scanCode;
+            hook32->flags       = hook->flags;
+            hook32->time        = hook->time;
+            hook32->dwExtraInfo = hook->dwExtraInfo;
+        }
+        return sizeof(KBDLLHOOKSTRUCT32);
+
+    case WH_JOURNALRECORD:
+        if (lp)
+        {
+            const EVENTMSG *event = lp;
+            EVENTMSG32 *event32 = lp32;
+
+            event32->message = event->message;
+            event32->paramL = event->paramL;
+            event32->paramH = event->paramH;
+            event32->time = event->time;
+            event32->hwnd = HandleToUlong( event->hwnd );
+        }
+        return sizeof(EVENTMSG32);
+    }
+
+    if (lp) memcpy( lp32, lp, params->lparam_size );
+    return params->lparam_size;
+}
+
 static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct win_hook_params *params = arg;
+    struct
+    {
+        ULONG proc;
+        ULONG handle;
+        DWORD pid;
+        DWORD tid;
+        int id;
+        int code;
+        ULONG wparam;
+        ULONG lparam;
+        UINT lparam_size;
+        BOOL prev_unicode;
+        BOOL next_unicode;
+    } *params32;
+    void *ret_lparam = (void *)params->lparam;
+    UINT lparam32_size = 0, module_size, size32;
+    void *ret_ptr;
+    ULONG ret_len;
+    NTSTATUS ret;
+
+    lparam32_size = hook_lparam_64to32( params, NULL, NULL );
+    module_size = size - params->lparam_size - sizeof(*params);
+
+    size32 = sizeof(*params32) + lparam32_size + module_size;
+    if (!(params32 = Wow64AllocateTemp( size32 ))) return 0;
+    params32->proc = (UINT_PTR)params->proc;
+    params32->handle = HandleToUlong( params->handle );
+    params32->pid = params->pid;
+    params32->tid = params->tid;
+    params32->id = params->id;
+    params32->code = params->code;
+    params32->wparam = params->wparam;
+    params32->lparam = params->lparam_size ? 0 : params->lparam;
+    params32->lparam_size = lparam32_size;
+    params32->prev_unicode = params->prev_unicode;
+    params32->next_unicode = params->next_unicode;
+    if (lparam32_size) hook_lparam_64to32( params, params + 1, params32 + 1 );
+    if (module_size)
+        memcpy( (char *)(params32 + 1) + params32->lparam_size,
+                (const char *)params + size - module_size, module_size );
+
+    ret = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, params32, size32, &ret_ptr, &ret_len );
+
+    switch (params->id)
+    {
+    case WH_SYSMSGFILTER:
+    case WH_MSGFILTER:
+    case WH_GETMESSAGE:
+        msg_32to64( (MSG *)(params + 1), (const MSG32 *)(params32 + 1) );
+        if (ret_lparam)
+        {
+            memcpy( ret_lparam, params + 1, params->lparam_size );
+            return ret;
+        }
+        return NtCallbackReturn( params + 1, params->lparam_size, ret );
+    }
+
+    return ret;
 }
 
 static NTSTATUS WINAPI wow64_NtUserCopyImage( void *arg, ULONG size )
