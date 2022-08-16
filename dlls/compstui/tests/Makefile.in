@@ -1,0 +1,7 @@
+TESTDLL   = compstui.dll
+IMPORTS   = comctl32 compstui user32
+
+C_SRCS = \
+	compstui.c
+
+RC_SRCS = rsrc.rc

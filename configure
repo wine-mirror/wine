@@ -21296,6 +21296,7 @@ wine_fn_config_makefile dlls/comm.drv16 enable_win16
 wine_fn_config_makefile dlls/commdlg.dll16 enable_win16
 wine_fn_config_makefile dlls/compobj.dll16 enable_win16
 wine_fn_config_makefile dlls/compstui enable_compstui
+wine_fn_config_makefile dlls/compstui/tests enable_tests
 wine_fn_config_makefile dlls/comsvcs enable_comsvcs
 wine_fn_config_makefile dlls/comsvcs/tests enable_tests
 wine_fn_config_makefile dlls/concrt140 enable_concrt140
