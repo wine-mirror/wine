@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 enum writer_state
 {
     SINK_WRITER_STATE_INITIAL = 0,
+    SINK_WRITER_STATE_WRITING,
 };
 
 struct stream
@@ -43,6 +44,7 @@ struct stream
 struct sink_writer
 {
     IMFSinkWriter IMFSinkWriter_iface;
+    IMFAsyncCallback events_callback;
     LONG refcount;
 
     struct
@@ -53,6 +55,7 @@ struct sink_writer
         DWORD next_id;
     } streams;
 
+    IMFPresentationClock *clock;
     IMFMediaSink *sink;
     enum writer_state state;
 
@@ -62,6 +65,11 @@ struct sink_writer
 static struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
 {
     return CONTAINING_RECORD(iface, struct sink_writer, IMFSinkWriter_iface);
+}
+
+static struct sink_writer *impl_from_events_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct sink_writer, events_callback);
 }
 
 static HRESULT WINAPI sink_writer_QueryInterface(IMFSinkWriter *iface, REFIID riid, void **out)
@@ -101,6 +109,8 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
 
     if (!refcount)
     {
+        if (writer->clock)
+            IMFPresentationClock_Release(writer->clock);
         if (writer->sink)
             IMFMediaSink_Release(writer->sink);
         for (i = 0; i < writer->streams.count; ++i)
@@ -179,11 +189,60 @@ static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriter *iface, DWORD 
     return E_NOTIMPL;
 }
 
+static HRESULT sink_writer_set_presentation_clock(struct sink_writer *writer)
+{
+    IMFPresentationTimeSource *time_source = NULL;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreatePresentationClock(&writer->clock))) return hr;
+
+    if (FAILED(IMFMediaSink_QueryInterface(writer->sink, &IID_IMFPresentationTimeSource, (void **)&time_source)))
+        hr = MFCreateSystemTimeSource(&time_source);
+
+    if (SUCCEEDED(hr = IMFPresentationClock_SetTimeSource(writer->clock, time_source)))
+        hr = IMFMediaSink_SetPresentationClock(writer->sink, writer->clock);
+
+    if (time_source)
+        IMFPresentationTimeSource_Release(time_source);
+
+    return hr;
+}
+
 static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
 {
-    FIXME("%p.\n", iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    HRESULT hr = S_OK;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&writer->cs);
+
+    if (!writer->streams.count)
+        hr = MF_E_INVALIDREQUEST;
+    else if (writer->state != SINK_WRITER_STATE_INITIAL)
+        hr = MF_E_INVALIDREQUEST;
+    else if (SUCCEEDED(hr = sink_writer_set_presentation_clock(writer)))
+    {
+        for (i = 0; i < writer->streams.count; ++i)
+        {
+            struct stream *stream = &writer->streams.items[i];
+
+            if (FAILED(hr = IMFStreamSink_BeginGetEvent(stream->stream_sink, &writer->events_callback,
+                    (IUnknown *)stream->stream_sink)))
+            {
+                WARN("Failed to subscribe to events for steam %u, hr %#lx.\n", i, hr);
+            }
+
+            /* FIXME: notify the encoder */
+        }
+
+        writer->state = SINK_WRITER_STATE_WRITING;
+    }
+
+    LeaveCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriter *iface, DWORD index, IMFSample *sample)
@@ -261,6 +320,74 @@ static const IMFSinkWriterVtbl sink_writer_vtbl =
     sink_writer_GetStatistics,
 };
 
+static HRESULT WINAPI sink_writer_callback_QueryInterface(IMFAsyncCallback *iface,
+        REFIID riid, void **out)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sink_writer_events_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct sink_writer *writer = impl_from_events_callback_IMFAsyncCallback(iface);
+    return IMFSinkWriter_AddRef(&writer->IMFSinkWriter_iface);
+}
+
+static ULONG WINAPI sink_writer_events_callback_Release(IMFAsyncCallback *iface)
+{
+    struct sink_writer *writer = impl_from_events_callback_IMFAsyncCallback(iface);
+    return IMFSinkWriter_Release(&writer->IMFSinkWriter_iface);
+}
+
+static HRESULT WINAPI sink_writer_callback_GetParameters(IMFAsyncCallback *iface,
+        DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    IMFStreamSink *stream_sink;
+    MediaEventType event_type;
+    IMFMediaEvent *event;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, result);
+
+    stream_sink = (IMFStreamSink *)IMFAsyncResult_GetStateNoAddRef(result);
+
+    if (FAILED(hr = IMFStreamSink_EndGetEvent(stream_sink, result, &event)))
+        return hr;
+
+    IMFMediaEvent_GetType(event, &event_type);
+
+    TRACE("Got event %lu.\n", event_type);
+
+    IMFMediaEvent_Release(event);
+
+    IMFStreamSink_BeginGetEvent(stream_sink, iface, (IUnknown *)stream_sink);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl sink_writer_events_callback_vtbl =
+{
+    sink_writer_callback_QueryInterface,
+    sink_writer_events_callback_AddRef,
+    sink_writer_events_callback_Release,
+    sink_writer_callback_GetParameters,
+    sink_writer_events_callback_Invoke,
+};
+
 static HRESULT sink_writer_initialize_existing_streams(struct sink_writer *writer, IMFMediaSink *sink)
 {
     IMFStreamSink *stream_sink;
@@ -296,6 +423,7 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
         return E_OUTOFMEMORY;
 
     object->IMFSinkWriter_iface.lpVtbl = &sink_writer_vtbl;
+    object->events_callback.lpVtbl = &sink_writer_events_callback_vtbl;
     object->refcount = 1;
     object->sink = sink;
     IMFMediaSink_AddRef(sink);
