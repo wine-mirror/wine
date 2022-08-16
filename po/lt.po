@@ -1323,6 +1323,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Savybės"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Parinktys"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Numatytosios reikšmės"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Naudotojo vardas:"
@@ -3412,11 +3427,6 @@ msgstr "Į pradžią"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Sinchronizuoti"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Parinktys"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -9839,10 +9849,6 @@ msgstr "Naujas &aplankas"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Nauja &nuoroda"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Savybės"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

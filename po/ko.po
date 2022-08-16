@@ -1320,6 +1320,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "속성"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "옵션"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "기본값"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "사용자 이름(&U):"
@@ -3393,11 +3408,6 @@ msgstr "홈"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "동기화"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "옵션"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -9814,10 +9824,6 @@ msgstr "새 폴더(&F)"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "새 링크(&L)"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "속성"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

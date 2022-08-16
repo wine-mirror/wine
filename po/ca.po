@@ -1326,6 +1326,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Propietats"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Opcions"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Per defecte"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Nom d'usuari:"
@@ -3426,11 +3441,6 @@ msgstr "Inici"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Sincronitza"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Opcions"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -9876,10 +9886,6 @@ msgstr "&Carpeta nova"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "En&llaç nou"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Propietats"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

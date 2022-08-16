@@ -1351,6 +1351,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Tulajdonságok"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Opciók"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Alapértékek"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Felhasználónév:"
@@ -3467,11 +3482,6 @@ msgstr "Kezdőlap"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Szink."
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Opciók"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -10363,10 +10373,6 @@ msgstr "Új ma&ppa"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Új &link"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Tulajdonságok"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

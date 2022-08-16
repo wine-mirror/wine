@@ -1329,6 +1329,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Özellikler"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Seçenekler"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Varsayılanlar"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Kullanıcı adı:"
@@ -3416,11 +3431,6 @@ msgstr "Ev"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Eşitle"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Seçenekler"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -9971,10 +9981,6 @@ msgstr "Yeni Kl&asör"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Yeni &Kısayol"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Özellikler"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

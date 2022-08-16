@@ -1322,6 +1322,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "мм"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Властивості"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Параметри"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Типове"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Користувач:"
@@ -3413,11 +3428,6 @@ msgstr "Додому"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Синхронізувати"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Параметри"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -10032,10 +10042,6 @@ msgstr "Нова &Тека"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Нове &Посилання"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Властивості"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

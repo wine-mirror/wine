@@ -1308,6 +1308,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "毫米"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "属性"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "选项"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "默认值"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "用户名(&U):"
@@ -3362,11 +3377,6 @@ msgstr "首页"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "同步"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "选项"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -9791,10 +9801,6 @@ msgstr "新建文件夹(&F)"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "新建快捷方式(&L)"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "属性"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

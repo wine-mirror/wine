@@ -1336,6 +1336,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Svojstva"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Postavke"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Podrazumijevano"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Korisničko ime:"
@@ -3427,11 +3442,6 @@ msgstr "Početna"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Uskladi"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Postavke"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -10325,10 +10335,6 @@ msgstr "Nova &mapa"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Nova &veza"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Svojstva"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

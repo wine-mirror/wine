@@ -1337,6 +1337,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "&Vlastnosti"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Volby"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Výchozí nastavení"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Uživatelské jméno:"
@@ -3371,11 +3386,6 @@ msgstr "Domů"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Synchronizovat"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Volby"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -10173,10 +10183,6 @@ msgstr "Nová &složka"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Nový &odkaz"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "&Vlastnosti"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

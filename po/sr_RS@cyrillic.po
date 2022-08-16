@@ -1350,6 +1350,20 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "мм"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Својства"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Опције"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+msgid "Default"
+msgstr "Подразумевано"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Корисничко име:"
@@ -3447,11 +3461,6 @@ msgstr "Почетна"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Усклади"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Опције"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 #, fuzzy
@@ -10370,10 +10379,6 @@ msgstr "Нова &фасцикла"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Нова &веза"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Својства"
 
 #: dlls/shell32/shell32.rc:85
 #, fuzzy

@@ -1347,6 +1347,20 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "מ״מ"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "מאפיינים"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "אפשרויות"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+msgid "Default"
+msgstr "הגדרת &בררות מחדל"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&שם המשתמש:"
@@ -3427,11 +3441,6 @@ msgstr "דף הבית"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "סנכרון"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "אפשרויות"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -10345,10 +10354,6 @@ msgstr "&תיקייה חדשה"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "&קישור חדש"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "מאפיינים"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

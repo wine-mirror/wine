@@ -1350,6 +1350,26 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+#, fuzzy
+msgid "Properties"
+msgstr ""
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Vlastnosti\n"
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Properties"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Voľby"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "Predvolené"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Užívateľské meno:"
@@ -3386,11 +3406,6 @@ msgstr "Domov"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Synchronizovať"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Voľby"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -10151,15 +10166,6 @@ msgstr ""
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr ""
-
-#: dlls/shell32/shell32.rc:74
-#, fuzzy
-msgid "Properties"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
 
 #: dlls/shell32/shell32.rc:85
 #, fuzzy

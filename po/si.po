@@ -1334,6 +1334,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "ගුණාංග"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "විකල්ප"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+#| msgid "Defaults"
+msgid "Default"
+msgstr "පෙරනිමි"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "පරිශීලක නම (&U):"
@@ -3358,11 +3373,6 @@ msgstr "මුල"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "සමමුහුර්ත කරන්න"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "විකල්ප"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
@@ -9960,10 +9970,6 @@ msgstr "අලුත් ෆෝල්ඩරයක් (&F)"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "අලුත් සබැඳියක් (&L)"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "ගුණාංග"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"

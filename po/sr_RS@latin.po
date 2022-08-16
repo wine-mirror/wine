@@ -1421,6 +1421,24 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+msgid "Properties"
+msgstr "Svojstva"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr "Opcije"
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+msgid "Default"
+msgstr ""
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Podrazumevano\n"
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Osnovno"
+
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
 msgstr "&Korisničko ime:"
@@ -3529,11 +3547,6 @@ msgstr "Početna"
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
 msgstr "Uskladi"
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
-msgstr "Opcije"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
 #, fuzzy
@@ -10496,10 +10509,6 @@ msgstr "Nova &fascikla"
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr "Nova &veza"
-
-#: dlls/shell32/shell32.rc:74
-msgid "Properties"
-msgstr "Svojstva"
 
 #: dlls/shell32/shell32.rc:85
 #, fuzzy

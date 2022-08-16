@@ -1317,6 +1317,21 @@ msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "มม."
 
+#: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
+#, fuzzy
+msgid "Properties"
+msgstr "ปรับแต่งนาฬิกา"
+
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
+msgid "Options"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:31
+#, fuzzy
+msgid "Default"
+msgstr "เครื่องพิมพ์ปกติ; "
+
 #: dlls/credui/credui.rc:45
 #, fuzzy
 msgid "&User name:"
@@ -3375,11 +3390,6 @@ msgstr ""
 
 #: dlls/hhctrl.ocx/hhctrl.rc:48
 msgid "Sync"
-msgstr ""
-
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wordpad/wordpad.rc:166
-msgid "Options"
 msgstr ""
 
 #: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
@@ -9972,11 +9982,6 @@ msgstr ""
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
 msgstr ""
-
-#: dlls/shell32/shell32.rc:74
-#, fuzzy
-msgid "Properties"
-msgstr "ปรับแต่งนาฬิกา"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"
