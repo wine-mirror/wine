@@ -121,6 +121,14 @@ typedef struct
 
 typedef struct
 {
+    int x;
+    int y;
+    DWORD time;
+    ULONG dwExtraInfo;
+} MOUSEMOVEPOINT32;
+
+typedef struct
+{
     UINT32 hdc;
     BOOL   fErase;
     RECT   rcPaint;
@@ -2107,12 +2115,45 @@ NTSTATUS WINAPI wow64_NtUserGetMessage( UINT *args )
 NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
 {
     UINT size = get_ulong( &args );
-    MOUSEMOVEPOINT *ptin = get_ptr( &args );
-    MOUSEMOVEPOINT *ptout = get_ptr( &args );
+    MOUSEMOVEPOINT32 *ptin32 = get_ptr( &args );
+    MOUSEMOVEPOINT32 *ptout32 = get_ptr( &args );
     int count = get_ulong( &args );
     DWORD resolution = get_ulong( &args );
 
-    return NtUserGetMouseMovePointsEx( size, ptin, ptout, count, resolution );
+    MOUSEMOVEPOINT ptin[64], ptout[64];
+    int ret, i;
+
+    if (size != sizeof(MOUSEMOVEPOINT32) || count < 0 || count > ARRAYSIZE( ptin ))
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return -1;
+    }
+
+    if (!ptin32 || (!ptout32 && count))
+    {
+        set_last_error32( ERROR_NOACCESS );
+        return -1;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        ptin[i].x = ptin32[i].x;
+        ptin[i].y = ptin32[i].y;
+        ptin[i].time = ptin32[i].time;
+        ptin[i].dwExtraInfo = ptin32[i].dwExtraInfo;
+    }
+
+    ret = NtUserGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), ptin, ptout, count, resolution );
+
+    for (i = 0; i < ret; i++)
+    {
+        ptout32[i].x = ptout[i].x;
+        ptout32[i].y = ptout[i].y;
+        ptout32[i].time = ptout[i].time;
+        ptout32[i].dwExtraInfo = ptout[i].dwExtraInfo;
+    }
+
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserGetObjectInformation( UINT *args )
