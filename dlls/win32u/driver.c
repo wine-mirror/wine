@@ -753,8 +753,8 @@ static void nulldrv_UpdateClipboard(void)
 {
 }
 
-static LONG nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
-                                             DWORD flags, LPVOID lparam )
+static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd,
+                                           DWORD flags, LPVOID lparam )
 {
     return DISP_CHANGE_FAILED;
 }
@@ -1071,10 +1071,10 @@ static SHORT loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
-static LONG loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
-                                                     DWORD flags, LPVOID lparam )
+static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd,
+                                             DWORD flags, LPVOID lparam )
 {
-    return load_driver()->pChangeDisplaySettingsEx( name, mode, hwnd, flags, lparam );
+    return load_driver()->pChangeDisplaySettings( displays, hwnd, flags, lparam );
 }
 
 static BOOL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
@@ -1187,7 +1187,7 @@ static const struct user_driver_funcs lazy_load_driver =
     nulldrv_ClipboardWindowProc,
     loaderdrv_UpdateClipboard,
     /* display modes */
-    loaderdrv_ChangeDisplaySettingsEx,
+    loaderdrv_ChangeDisplaySettings,
     loaderdrv_EnumDisplaySettingsEx,
     loaderdrv_GetCurrentDisplaySettings,
     loaderdrv_UpdateDisplayDevices,
@@ -1263,7 +1263,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ClipCursor);
     SET_USER_FUNC(ClipboardWindowProc);
     SET_USER_FUNC(UpdateClipboard);
-    SET_USER_FUNC(ChangeDisplaySettingsEx);
+    SET_USER_FUNC(ChangeDisplaySettings);
     SET_USER_FUNC(EnumDisplaySettingsEx);
     SET_USER_FUNC(GetCurrentDisplaySettings);
     SET_USER_FUNC(UpdateDisplayDevices);

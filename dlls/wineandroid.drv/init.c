@@ -260,12 +260,11 @@ static BOOL CDECL ANDROID_DeleteDC( PHYSDEV dev )
 
 
 /***********************************************************************
- *           ANDROID_ChangeDisplaySettingsEx
+ *           ANDROID_ChangeDisplaySettings
  */
-LONG ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
-                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG ANDROID_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    FIXME( "(%s,%p,%p,0x%08x,%p)\n", debugstr_w( devname ), devmode, hwnd, flags, lpvoid );
+    FIXME( "(%p,%p,0x%08x,%p)\n", displays, hwnd, flags, lpvoid );
     return DISP_CHANGE_SUCCESSFUL;
 }
 
@@ -377,7 +376,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pMapVirtualKeyEx = ANDROID_MapVirtualKeyEx,
     .pVkKeyScanEx = ANDROID_VkKeyScanEx,
     .pSetCursor = ANDROID_SetCursor,
-    .pChangeDisplaySettingsEx = ANDROID_ChangeDisplaySettingsEx,
+    .pChangeDisplaySettings = ANDROID_ChangeDisplaySettings,
     .pEnumDisplaySettingsEx = ANDROID_EnumDisplaySettingsEx,
     .pGetCurrentDisplaySettings = ANDROID_GetCurrentDisplaySettings,
     .pUpdateDisplayDevices = ANDROID_UpdateDisplayDevices,

@@ -123,8 +123,7 @@ static inline struct macdrv_thread_data *macdrv_thread_data(void)
 
 extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags) DECLSPEC_HIDDEN;
 extern void macdrv_Beep(void) DECLSPEC_HIDDEN;
-extern LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
-                                           HWND hwnd, DWORD flags, LPVOID lpvoid) DECLSPEC_HIDDEN;
+extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, HWND hwnd, DWORD flags, LPVOID lpvoid) DECLSPEC_HIDDEN;
 extern BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
                                          LPDEVMODEW devmode, DWORD flags) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, LPDEVMODEW devmode) DECLSPEC_HIDDEN;

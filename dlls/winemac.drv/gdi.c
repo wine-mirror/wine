@@ -268,7 +268,7 @@ static const struct user_driver_funcs macdrv_funcs =
 
     .pActivateKeyboardLayout = macdrv_ActivateKeyboardLayout,
     .pBeep = macdrv_Beep,
-    .pChangeDisplaySettingsEx = macdrv_ChangeDisplaySettingsEx,
+    .pChangeDisplaySettings = macdrv_ChangeDisplaySettings,
     .pClipCursor = macdrv_ClipCursor,
     .pClipboardWindowProc = macdrv_ClipboardWindowProc,
     .pCreateDesktopWindow = macdrv_CreateDesktopWindow,
