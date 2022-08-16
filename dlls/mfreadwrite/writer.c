@@ -237,6 +237,9 @@ static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
             /* FIXME: notify the encoder */
         }
 
+        if (SUCCEEDED(hr))
+            hr = IMFPresentationClock_Start(writer->clock, 0);
+
         writer->state = SINK_WRITER_STATE_WRITING;
     }
 
