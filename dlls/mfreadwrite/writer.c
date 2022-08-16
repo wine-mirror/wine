@@ -39,6 +39,7 @@ enum writer_state
 struct stream
 {
     IMFStreamSink *stream_sink;
+    IMFTransform *encoder;
 };
 
 struct sink_writer
@@ -119,6 +120,8 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
 
             if (stream->stream_sink)
                 IMFStreamSink_Release(stream->stream_sink);
+            if (stream->encoder)
+                IMFTransform_Release(stream->encoder);
         }
         DeleteCriticalSection(&writer->cs);
         free(writer);
@@ -248,6 +251,12 @@ static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
     return hr;
 }
 
+static struct stream * sink_writer_get_stream(const struct sink_writer *writer, DWORD index)
+{
+    if (index >= writer->streams.count) return NULL;
+    return &writer->streams.items[index];
+}
+
 static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriter *iface, DWORD index, IMFSample *sample)
 {
     FIXME("%p, %lu, %p.\n", iface, index, sample);
@@ -290,12 +299,51 @@ static HRESULT WINAPI sink_writer_Finalize(IMFSinkWriter *iface)
     return E_NOTIMPL;
 }
 
+static HRESULT sink_writer_get_service(void *object, REFGUID service, REFIID riid, void **ret)
+{
+    IUnknown *iface = object;
+    IMFGetService *gs;
+    HRESULT hr;
+
+    if (!iface) return MF_E_UNSUPPORTED_SERVICE;
+
+    if (IsEqualGUID(service, &GUID_NULL))
+        return IUnknown_QueryInterface(iface, riid, ret);
+
+    if (FAILED(hr = IUnknown_QueryInterface(iface, &IID_IMFGetService, (void **)&gs)))
+        return hr;
+
+    hr = IMFGetService_GetService(gs, service, riid, ret);
+    IMFGetService_Release(gs);
+    return hr;
+}
+
 static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriter *iface, DWORD index, REFGUID service,
         REFIID riid, void **object)
 {
-    FIXME("%p, %lu, %s, %s, %p.\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    HRESULT hr = E_UNEXPECTED;
+    struct stream *stream;
 
-    return E_NOTIMPL;
+    TRACE("%p, %lu, %s, %s, %p.\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
+
+    EnterCriticalSection(&writer->cs);
+
+    if (index == MF_SINK_WRITER_MEDIASINK)
+        hr = sink_writer_get_service(writer->sink, service, riid, object);
+    else if ((stream = sink_writer_get_stream(writer, index)))
+    {
+        if (stream->encoder)
+            hr = sink_writer_get_service(stream->encoder, service, riid, object);
+        if (FAILED(hr))
+            hr = sink_writer_get_service(stream->stream_sink, service, riid, object);
+    }
+    else
+        hr = MF_E_INVALIDSTREAMNUMBER;
+
+    LeaveCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriter *iface, DWORD index, MF_SINK_WRITER_STATISTICS *stats)
