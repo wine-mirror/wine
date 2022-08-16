@@ -30,10 +30,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+enum writer_state
+{
+    SINK_WRITER_STATE_INITIAL = 0,
+};
+
+struct stream
+{
+    IMFStreamSink *stream_sink;
+};
+
 struct sink_writer
 {
     IMFSinkWriter IMFSinkWriter_iface;
     LONG refcount;
+
+    struct
+    {
+        struct stream *items;
+        size_t count;
+        size_t capacity;
+        DWORD next_id;
+    } streams;
+
+    IMFMediaSink *sink;
+    enum writer_state state;
+
+    CRITICAL_SECTION cs;
 };
 
 static struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
@@ -72,22 +95,80 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
 {
     struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
     ULONG refcount = InterlockedDecrement(&writer->refcount);
+    unsigned int i;
 
     TRACE("%p, %lu.\n", iface, refcount);
 
     if (!refcount)
     {
+        if (writer->sink)
+            IMFMediaSink_Release(writer->sink);
+        for (i = 0; i < writer->streams.count; ++i)
+        {
+            struct stream *stream = &writer->streams.items[i];
+
+            if (stream->stream_sink)
+                IMFStreamSink_Release(stream->stream_sink);
+        }
+        DeleteCriticalSection(&writer->cs);
         free(writer);
     }
 
     return refcount;
 }
 
-static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriter *iface, IMFMediaType *type, DWORD *index)
+static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink *stream_sink, DWORD *index)
 {
-    FIXME("%p, %p, %p.\n", iface, type, index);
+    DWORD id = 0;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    if (!mf_array_reserve((void **)&writer->streams.items, &writer->streams.capacity, writer->streams.count + 1,
+            sizeof(*writer->streams.items)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr = IMFStreamSink_GetIdentifier(stream_sink, &id))) return hr;
+
+    *index = writer->streams.count++;
+
+    writer->streams.items[*index].stream_sink = stream_sink;
+    IMFStreamSink_AddRef(stream_sink);
+    writer->streams.next_id = max(writer->streams.next_id, id);
+
+    return hr;
+}
+
+static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriter *iface, IMFMediaType *media_type, DWORD *index)
+{
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    HRESULT hr = MF_E_INVALIDREQUEST;
+    IMFStreamSink *stream_sink;
+    DWORD id;
+
+    TRACE("%p, %p, %p.\n", iface, media_type, index);
+
+    if (!media_type)
+        return E_INVALIDARG;
+
+    if (!index)
+        return E_POINTER;
+
+    EnterCriticalSection(&writer->cs);
+
+    if (writer->state == SINK_WRITER_STATE_INITIAL)
+    {
+        id = writer->streams.next_id + 1;
+        if (SUCCEEDED(hr = IMFMediaSink_AddStreamSink(writer->sink, id, media_type, &stream_sink)))
+        {
+            if (FAILED(hr = sink_writer_add_stream(writer, stream_sink, index)))
+                IMFMediaSink_RemoveStreamSink(writer->sink, id);
+        }
+    }
+
+    LeaveCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriter *iface, DWORD index, IMFMediaType *type,
@@ -180,6 +261,26 @@ static const IMFSinkWriterVtbl sink_writer_vtbl =
     sink_writer_GetStatistics,
 };
 
+static HRESULT sink_writer_initialize_existing_streams(struct sink_writer *writer, IMFMediaSink *sink)
+{
+    IMFStreamSink *stream_sink;
+    DWORD count = 0, i, index;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaSink_GetStreamSinkCount(sink, &count))) return hr;
+    if (!count) return S_OK;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (FAILED(hr = IMFMediaSink_GetStreamSinkByIndex(sink, i, &stream_sink))) break;
+        hr = sink_writer_add_stream(writer, stream_sink, &index);
+        IMFStreamSink_Release(stream_sink);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
 HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attributes,
         REFIID riid, void **out)
 {
@@ -191,12 +292,20 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     if (!sink)
         return E_INVALIDARG;
 
-    object = malloc(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFSinkWriter_iface.lpVtbl = &sink_writer_vtbl;
     object->refcount = 1;
+    object->sink = sink;
+    IMFMediaSink_AddRef(sink);
+    InitializeCriticalSection(&object->cs);
+
+    if (FAILED(hr = sink_writer_initialize_existing_streams(object, sink)))
+    {
+        IMFSinkWriter_Release(&object->IMFSinkWriter_iface);
+        return hr;
+    }
 
     hr = IMFSinkWriter_QueryInterface(&object->IMFSinkWriter_iface, riid, out);
     IMFSinkWriter_Release(&object->IMFSinkWriter_iface);

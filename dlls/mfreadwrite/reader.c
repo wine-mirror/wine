@@ -30,7 +30,6 @@
 #undef INITGUID
 #include <guiddef.h>
 #include "mfapi.h"
-#include "mferror.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"
 #include "d3d9.h"
