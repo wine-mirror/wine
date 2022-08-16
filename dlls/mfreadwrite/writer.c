@@ -40,6 +40,7 @@ struct stream
 {
     IMFStreamSink *stream_sink;
     IMFTransform *encoder;
+    MF_SINK_WRITER_STATISTICS stats;
 };
 
 struct sink_writer
@@ -59,6 +60,7 @@ struct sink_writer
     IMFPresentationClock *clock;
     IMFMediaSink *sink;
     enum writer_state state;
+    MF_SINK_WRITER_STATISTICS stats;
 
     CRITICAL_SECTION cs;
 };
@@ -132,6 +134,7 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
 
 static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink *stream_sink, DWORD *index)
 {
+    struct stream *stream;
     DWORD id = 0;
     HRESULT hr;
 
@@ -144,9 +147,12 @@ static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink 
     if (FAILED(hr = IMFStreamSink_GetIdentifier(stream_sink, &id))) return hr;
 
     *index = writer->streams.count++;
+    stream = &writer->streams.items[*index];
 
-    writer->streams.items[*index].stream_sink = stream_sink;
+    stream->stream_sink = stream_sink;
     IMFStreamSink_AddRef(stream_sink);
+    memset(&stream->stats, 0, sizeof(stream->stats));
+    stream->stats.cb = sizeof(stream->stats);
     writer->streams.next_id = max(writer->streams.next_id, id);
 
     return hr;
@@ -258,11 +264,61 @@ static struct stream * sink_writer_get_stream(const struct sink_writer *writer, 
     return &writer->streams.items[index];
 }
 
+static HRESULT sink_writer_get_buffer_length(IMFSample *sample, LONGLONG *timestamp, DWORD *length)
+{
+    IMFMediaBuffer *buffer;
+    HRESULT hr;
+
+    *timestamp = 0;
+    *length = 0;
+
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer))) return hr;
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, length);
+    IMFMediaBuffer_Release(buffer);
+    if (FAILED(hr)) return hr;
+    if (!*length) return E_INVALIDARG;
+    IMFSample_GetSampleTime(sample, timestamp);
+
+    return hr;
+}
+
 static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriter *iface, DWORD index, IMFSample *sample)
 {
-    FIXME("%p, %lu, %p.\n", iface, index, sample);
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct stream *stream;
+    LONGLONG timestamp;
+    DWORD length;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %lu, %p.\n", iface, index, sample);
+
+    if (!sample)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&writer->cs);
+
+    if (writer->state != SINK_WRITER_STATE_WRITING)
+        hr = MF_E_INVALIDREQUEST;
+    else if (!(stream = sink_writer_get_stream(writer, index)))
+    {
+        hr = MF_E_INVALIDSTREAMNUMBER;
+    }
+    else if (SUCCEEDED(hr = sink_writer_get_buffer_length(sample, &timestamp, &length)))
+    {
+        /* FIXME: queue sample */
+
+        stream->stats.llLastTimestampReceived = timestamp;
+        stream->stats.qwNumSamplesReceived++;
+        stream->stats.dwByteCountQueued += length;
+
+        writer->stats.llLastTimestampReceived = timestamp;
+        writer->stats.qwNumSamplesReceived++;
+        writer->stats.dwByteCountQueued += length;
+    }
+
+    EnterCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sink_writer_SendStreamTick(IMFSinkWriter *iface, DWORD index, LONGLONG timestamp)
@@ -349,9 +405,30 @@ static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriter *iface, DWOR
 
 static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriter *iface, DWORD index, MF_SINK_WRITER_STATISTICS *stats)
 {
-    FIXME("%p, %lu, %p.\n", iface, index, stats);
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct stream *stream;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %lu, %p.\n", iface, index, stats);
+
+    if (!stats)
+        return E_POINTER;
+
+    if (stats->cb != sizeof(*stats))
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&writer->cs);
+
+    if (index == MF_SINK_WRITER_ALL_STREAMS)
+        *stats = writer->stats;
+    else if ((stream = sink_writer_get_stream(writer, index)))
+        *stats = stream->stats;
+    else
+        hr = MF_E_INVALIDSTREAMNUMBER;
+
+    LeaveCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static const IMFSinkWriterVtbl sink_writer_vtbl =
@@ -479,6 +556,7 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     object->refcount = 1;
     object->sink = sink;
     IMFMediaSink_AddRef(sink);
+    object->stats.cb = sizeof(object->stats);
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = sink_writer_initialize_existing_streams(object, sink)))
