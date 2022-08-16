@@ -1476,7 +1476,7 @@ int __cdecl main( int argc, char *argv[] )
         if (nb_filters && !exclude_tests)
         {
             run_tests( logname, outdir );
-            exit(0);
+            exit( failures ? 3 : 0 );
         }
 
         while (!tag) {
@@ -1534,5 +1534,5 @@ int __cdecl main( int argc, char *argv[] )
         }
         ExitWindowsEx(EWX_SHUTDOWN | EWX_POWEROFF | EWX_FORCEIFHUNG, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER);
     }
-    exit (0);
+    exit( failures ? 3 : 0 );
 }
