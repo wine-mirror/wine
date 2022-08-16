@@ -117,25 +117,22 @@ static char * get_file_version(char * file_name)
 
     size = GetFileVersionInfoSizeA(file_name, &handle);
     if (size) {
-        char * data = heap_alloc(size);
-        if (data) {
-            if (GetFileVersionInfoA(file_name, handle, size, data)) {
-                static const char backslash[] = "\\";
-                VS_FIXEDFILEINFO *pFixedVersionInfo;
-                UINT len;
-                if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
-                    sprintf(version, "%ld.%ld.%ld.%ld",
-                            pFixedVersionInfo->dwFileVersionMS >> 16,
-                            pFixedVersionInfo->dwFileVersionMS & 0xffff,
-                            pFixedVersionInfo->dwFileVersionLS >> 16,
-                            pFixedVersionInfo->dwFileVersionLS & 0xffff);
-                } else
-                    sprintf(version, "version not found");
+        char * data = xalloc(size);
+        if (GetFileVersionInfoA(file_name, handle, size, data)) {
+            static const char backslash[] = "\\";
+            VS_FIXEDFILEINFO *pFixedVersionInfo;
+            UINT len;
+            if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
+                sprintf(version, "%ld.%ld.%ld.%ld",
+                        pFixedVersionInfo->dwFileVersionMS >> 16,
+                        pFixedVersionInfo->dwFileVersionMS & 0xffff,
+                        pFixedVersionInfo->dwFileVersionLS >> 16,
+                        pFixedVersionInfo->dwFileVersionLS & 0xffff);
             } else
-                sprintf(version, "version error %lu", GetLastError());
-            heap_free(data);
+                sprintf(version, "version not found");
         } else
-            sprintf(version, "version error %u", ERROR_OUTOFMEMORY);
+            sprintf(version, "version error %lu", GetLastError());
+        free(data);
     } else if (GetLastError() == ERROR_FILE_NOT_FOUND)
         sprintf(version, "dll is missing");
     else
@@ -237,16 +234,10 @@ static int running_as_admin (void)
     /* Get the group info from the token */
     groups_size = 0;
     GetTokenInformation(token, TokenGroups, NULL, 0, &groups_size);
-    groups = heap_alloc(groups_size);
-    if (groups == NULL)
-    {
-        CloseHandle(token);
-        FreeSid(administrators);
-        return -1;
-    }
+    groups = xalloc(groups_size);
     if (! GetTokenInformation(token, TokenGroups, groups, groups_size, &groups_size))
     {
-        heap_free(groups);
+        free(groups);
         CloseHandle(token);
         FreeSid(administrators);
         return -1;
@@ -258,14 +249,14 @@ static int running_as_admin (void)
     {
         if (EqualSid(groups->Groups[group_index].Sid, administrators))
         {
-            heap_free(groups);
+            free(groups);
             FreeSid(administrators);
             return 1;
         }
     }
 
     /* If we end up here we didn't find the Administrators group */
-    heap_free(groups);
+    free(groups);
     FreeSid(administrators);
     return 0;
 }
@@ -326,9 +317,7 @@ static BOOL is_stub_dll(const char *filename)
     size = GetFileVersionInfoSizeA(filename, &ver);
     if (!size) return FALSE;
 
-    data = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!data) return FALSE;
-
+    data = xalloc(size);
     if (GetFileVersionInfoA(filename, ver, size, data))
     {
         char buf[256];
@@ -337,7 +326,7 @@ static BOOL is_stub_dll(const char *filename)
         if (VerQueryValueA(data, buf, (void**)&p, &size))
             isstub = !lstrcmpiA("wcodstub.dll", p);
     }
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     return isstub;
 }
@@ -561,12 +550,12 @@ extract_test (struct wine_test *test, const char *dir, LPSTR res_name)
     code = extract_rcdata (res_name, "TESTRES", &size);
     if (!code) report (R_FATAL, "Can't find test resource %s: %d",
                        res_name, GetLastError ());
-    test->name = heap_strdup( res_name );
+    test->name = xstrdup( res_name );
     test->exename = strmake (NULL, "%s\\%s", dir, test->name);
     exepos = strstr (test->name, testexe);
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
     *exepos = 0;
-    test->name = heap_realloc (test->name, exepos - test->name + 1);
+    test->name = xrealloc(test->name, exepos - test->name + 1);
     report (R_STEP, "Extracting: %s", test->name);
 
     hfile = CreateFileA(test->exename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -597,15 +586,9 @@ static DWORD wait_process( HANDLE process, DWORD timeout )
 
 static void append_path( const char *path)
 {
-    char *newpath;
-
-    newpath = heap_alloc(strlen(curpath) + 1 + strlen(path) + 1);
-    strcpy(newpath, curpath);
-    strcat(newpath, ";");
-    strcat(newpath, path);
+    char *newpath = strmake( NULL, "%s;%s", curpath, path );
     SetEnvironmentVariableA("PATH", newpath);
-
-    heap_free(newpath);
+    free(newpath);
 }
 
 /* Run a command for MS milliseconds.  If OUT != NULL, also redirect
@@ -740,7 +723,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
         /* Restore PATH again */
         SetEnvironmentVariableA("PATH", curpath);
     }
-    heap_free (cmd);
+    free(cmd);
 
     if (status)
     {
@@ -773,19 +756,17 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     index += sizeof header;
 
     allocated = 10;
-    test->subtests = heap_alloc (allocated * sizeof(char*));
+    test->subtests = xalloc(allocated * sizeof(char*));
     index = strtok (index, whitespace);
     while (index) {
         if (test->subtest_count == allocated) {
             allocated *= 2;
-            test->subtests = heap_realloc (test->subtests,
-                                           allocated * sizeof(char*));
+            test->subtests = xrealloc(test->subtests, allocated * sizeof(char*));
         }
-        test->subtests[test->subtest_count++] = heap_strdup(index);
+        test->subtests[test->subtest_count++] = xstrdup(index);
         index = strtok (NULL, whitespace);
     }
-    test->subtests = heap_realloc (test->subtests,
-                                   test->subtest_count * sizeof(char*));
+    test->subtests = xrealloc(test->subtests, test->subtest_count * sizeof(char*));
     err = 0;
 
  quit:
@@ -815,7 +796,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         xprintf ("%s:%s start %s\n", test->name, subtest, file);
         status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
         if (status == -2) status = -GetLastError();
-        heap_free (cmd);
+        free(cmd);
         xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
         if (status) failures++;
     }
@@ -882,7 +863,7 @@ static HMODULE load_com_dll(const char *name, char **path, char *filename)
                 strcpy( filename, dllname );
                 p = strrchr(dllname, '\\');
                 if (p) *p = 0;
-                *path = heap_strdup( dllname );
+                *path = xstrdup( dllname );
             }
         }
         RegCloseKey(hkey);
@@ -898,7 +879,7 @@ static void get_dll_path(HMODULE dll, char **path, char *filename)
     GetModuleFileNameA(dll, dllpath, MAX_PATH);
     strcpy(filename, dllpath);
     *strrchr(dllpath, '\\') = '\0';
-    *path = heap_strdup( dllpath );
+    *path = xstrdup( dllpath );
 }
 
 static BOOL CALLBACK
@@ -1033,7 +1014,7 @@ run_tests (char *logname, char *outdir)
 
     /* Get the current PATH only once */
     needed = GetEnvironmentVariableA("PATH", NULL, 0);
-    curpath = heap_alloc(needed);
+    curpath = xalloc(needed);
     GetEnvironmentVariableA("PATH", curpath, needed);
 
     SetErrorMode (SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
@@ -1120,7 +1101,7 @@ run_tests (char *logname, char *outdir)
     if (!EnumResourceNamesA (NULL, "TESTRES", EnumTestFileProc, (LPARAM)&nr_of_files))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
-    wine_tests = heap_alloc (nr_of_files * sizeof wine_tests[0]);
+    wine_tests = xalloc(nr_of_files * sizeof wine_tests[0]);
 
     /* Do this only once during extraction (and version checking) */
     hmscoree = LoadLibraryA("mscoree.dll");
@@ -1183,8 +1164,8 @@ run_tests (char *logname, char *outdir)
     logfile = 0;
     if (newdir)
         remove_dir (tempdir);
-    heap_free(wine_tests);
-    heap_free(curpath);
+    free(wine_tests);
+    free(curpath);
 
     return logname;
 }
@@ -1230,7 +1211,7 @@ static void extract_only (const char *target_dir)
     if (!EnumResourceNamesA(NULL, "TESTRES", EnumTestFileProc, (LPARAM)&nr_of_files))
         report (R_FATAL, "Can't enumerate test files: %d", GetLastError ());
 
-    wine_tests = heap_alloc (nr_of_files * sizeof wine_tests[0] );
+    wine_tests = xalloc(nr_of_files * sizeof wine_tests[0] );
 
     report (R_STATUS, "Extracting tests");
     report (R_PROGRESS, 0, nr_of_files);

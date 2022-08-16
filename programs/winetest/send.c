@@ -113,9 +113,8 @@ static int WINAPIV send_str (SOCKET s, ...)
     va_start (ap, s);
     p = vstrmake (&len, ap);
     va_end (ap);
-    if (!p) return 1;
     ret = send_buf (s, p, len);
-    heap_free (p);
+    free(p);
     return ret;
 }
 
@@ -168,7 +167,7 @@ send_file_direct (const char * url, const char *name)
     str = strmake (&total, body1, name);
     ret = send_str (s, head, filesize + total + sizeof body2 - 1) ||
         send_buf (s, str, total);
-    heap_free (str);
+    free(str);
     if (ret) {
         report (R_WARNING, "Error sending header: %d, %d",
                 errno, WSAGetLastError ());
@@ -222,7 +221,7 @@ send_file_direct (const char * url, const char *name)
     str = strmake (&count, "Received %s (%d bytes).\n",
                    name, filesize);
     ret = total < count || memcmp (str, buffer + total - count, count) != 0;
-    heap_free (str);
+    free(str);
     if (ret) {
         buffer[total] = 0;
         str = strstr (buffer, "\r\n\r\n");
@@ -291,12 +290,12 @@ send_file_wininet (const char *url, const char *name)
         uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUserNameLength =
             uc.dwPasswordLength = uc.dwUrlPathLength = uc.dwExtraInfoLength =
             strlen(url) + 1;
-        uc.lpszScheme = heap_alloc (uc.dwSchemeLength);
-        uc.lpszHostName = heap_alloc (uc.dwHostNameLength);
-        uc.lpszUserName = heap_alloc (uc.dwUserNameLength);
-        uc.lpszPassword = heap_alloc (uc.dwPasswordLength);
-        uc.lpszUrlPath = heap_alloc (uc.dwUrlPathLength);
-        uc.lpszExtraInfo = heap_alloc (uc.dwExtraInfoLength);
+        uc.lpszScheme = xalloc(uc.dwSchemeLength);
+        uc.lpszHostName = xalloc(uc.dwHostNameLength);
+        uc.lpszUserName = xalloc(uc.dwUserNameLength);
+        uc.lpszPassword = xalloc(uc.dwPasswordLength);
+        uc.lpszUrlPath = xalloc(uc.dwUrlPathLength);
+        uc.lpszExtraInfo = xalloc(uc.dwExtraInfoLength);
         if (!pInternetCrackUrlA(url, 0, 0, &uc)) {
             report (R_WARNING, "Can't parse submit URL '%s'", url);
             goto done;
@@ -308,11 +307,11 @@ send_file_wininet (const char *url, const char *name)
 
     } else {
         uc.nScheme = INTERNET_SCHEME_HTTP;
-        uc.lpszHostName = heap_strdup (SERVER_NAME);
+        uc.lpszHostName = xstrdup(SERVER_NAME);
         uc.nPort = INTERNET_DEFAULT_HTTP_PORT;
-        uc.lpszUserName = heap_strdup ("");
-        uc.lpszPassword = heap_strdup ("");
-        uc.lpszUrlPath = heap_strdup (URL_PATH);
+        uc.lpszUserName = xstrdup("");
+        uc.lpszPassword = xstrdup("");
+        uc.lpszUrlPath = xstrdup(URL_PATH);
     }
 
     ret = 1;
@@ -412,7 +411,7 @@ send_file_wininet (const char *url, const char *name)
     }
     while (bytes_read != 0);
 
-    heap_free (str);
+    free(str);
     str = strmake (&count, "Received %s (%d bytes).\n",
                    name, filesize);
     if (total < count || memcmp (str, buffer + total - count, count) != 0) {
@@ -422,14 +421,14 @@ send_file_wininet (const char *url, const char *name)
     }
 
  done:
-    heap_free (uc.lpszScheme);
-    heap_free (uc.lpszHostName);
-    heap_free (uc.lpszUserName);
-    heap_free (uc.lpszPassword);
-    heap_free (uc.lpszUrlPath);
-    heap_free (uc.lpszExtraInfo);
-    heap_free((void *)buffers_in.lpcszHeader);
-    heap_free(str);
+    free(uc.lpszScheme);
+    free(uc.lpszHostName);
+    free(uc.lpszUserName);
+    free(uc.lpszPassword);
+    free(uc.lpszUrlPath);
+    free(uc.lpszExtraInfo);
+    free((void *)buffers_in.lpcszHeader);
+    free(str);
     if (pInternetCloseHandle != NULL && request != NULL)
         pInternetCloseHandle (request);
     if (pInternetCloseHandle != NULL && connection != NULL)

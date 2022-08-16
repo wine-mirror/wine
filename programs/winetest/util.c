@@ -27,55 +27,42 @@
 
 HANDLE logfile = 0;
 
-void *heap_alloc (size_t len)
+void *xalloc (size_t len)
 {
-    void *p = HeapAlloc(GetProcessHeap(), 0, len);
+    void *p = malloc( len );
 
     if (!p) report (R_FATAL, "Out of memory.");
     return p;
 }
 
-void *heap_realloc (void *op, size_t len)
+void *xrealloc (void *op, size_t len)
 {
-    void *p = HeapReAlloc(GetProcessHeap(), 0, op, len);
+    void *p = realloc(op, len);
 
     if (len && !p) report (R_FATAL, "Out of memory.");
     return p;
 }
 
-char *heap_strdup( const char *str )
+char *xstrdup( const char *str )
 {
-    int len = strlen(str) + 1;
-    char* res = HeapAlloc(GetProcessHeap(), 0, len);
+    char* res = strdup( str );
     if (!res) report (R_FATAL, "Out of memory.");
-    memcpy(res, str, len);
     return res;
-}
-
-void heap_free (void *op)
-{
-    HeapFree(GetProcessHeap(), 0, op);
 }
 
 static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
 {
     size_t size = 1000;
-    char *p, *q;
+    char *p;
     int n;
 
-    p = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!p) return NULL;
+    p = xalloc(size);
     while (1) {
         n = vsnprintf (p, size, fmt, ap);
         if (n < 0) size *= 2;   /* Windows */
         else if ((unsigned)n >= size) size = n+1; /* glibc */
         else break;
-        q = HeapReAlloc(GetProcessHeap(), 0, p, size);
-        if (!q) {
-          heap_free (p);
-          return NULL;
-       }
-       p = q;
+        p = xrealloc(p, size);
     }
     if (lenp) *lenp = n;
     return p;
@@ -96,7 +83,6 @@ char * WINAPIV strmake (size_t *lenp, ...)
 
     va_start (ap, lenp);
     p = vstrmake (lenp, ap);
-    if (!p) report (R_FATAL, "Out of memory.");
     va_end (ap);
     return p;
 }
@@ -118,7 +104,7 @@ void WINAPIV xprintf (const char *fmt, ...)
         head += written;
         size -= written;
     }
-    heap_free (buffer);
+    free(buffer);
 }
 
 int

@@ -66,7 +66,7 @@ textStatus (va_list ap)
 
     fputs (str, stderr);
     fputc ('\n', stderr);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -78,7 +78,7 @@ guiStatus (va_list ap)
 
     if (len > 128) str[129] = 0;
     SetDlgItemTextA (dialog, IDC_SB, str);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -121,7 +121,7 @@ textStep (va_list ap)
     progressCurr++;
     fputs (str, stderr);
     fprintf (stderr, " (%d of %d)\n", progressCurr, progressMax);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -135,7 +135,7 @@ guiStep (va_list ap)
     SetDlgItemTextA (dialog, pgID, str);
     SendDlgItemMessageA(dialog, pgID+1, PBM_SETPOS,
                         progressScale * progressCurr, 0);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -149,7 +149,7 @@ textDelta (va_list ap)
     progressCurr += inc;
     fputs (str, stderr);
     fprintf (stderr, " (%d of %d)\n", progressCurr, progressMax);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -164,7 +164,7 @@ guiDelta (va_list ap)
     SetDlgItemTextA (dialog, pgID, str);
     SendDlgItemMessageA(dialog, pgID+1, PBM_SETPOS,
                         progressScale * progressCurr, 0);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -194,7 +194,7 @@ textDir (va_list ap)
     fputs ("Temporary directory: ", stderr);
     fputs (str, stderr);
     fputc ('\n', stderr);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -204,7 +204,7 @@ guiDir (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     SetDlgItemTextA (dialog, IDC_DIR, str);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -217,7 +217,7 @@ textOut (va_list ap)
     fputs ("Log file: ", stderr);
     fputs (str, stderr);
     fputc ('\n', stderr);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -227,7 +227,7 @@ guiOut (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     SetDlgItemTextA (dialog, IDC_OUT, str);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -246,7 +246,7 @@ guiWarning (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     MessageBoxA (dialog, str, "Warning", MB_ICONWARNING | MB_OK);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -265,7 +265,7 @@ guiError (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     MessageBoxA (dialog, str, "Error", MB_ICONERROR | MB_OK);
-    heap_free (str);
+    free(str);
     return 0;
 }
 
@@ -296,7 +296,7 @@ textAsk (va_list ap)
 
     fprintf (stderr, "Question of type %d: %s\n"
              "Returning default: %d\n", uType, str, ret);
-    heap_free (str);
+    free(str);
     return ret;
 }
 
@@ -307,7 +307,7 @@ guiAsk (va_list ap)
     char *str = vstrmake (NULL, ap);
     int ret = MessageBoxA (dialog, str, "Question", MB_ICONQUESTION | uType);
 
-    heap_free (str);
+    free(str);
     return ret;
 }
 
@@ -342,7 +342,7 @@ AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                report (R_WARNING, "You must enter a tag to continue");
                return FALSE;
             }
-            tag = heap_alloc (len+1);
+            tag = xalloc(len+1);
             GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
             EndDialog (hwnd, IDOK);
             return TRUE;
@@ -375,7 +375,7 @@ AskEmailProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                report (R_WARNING, "You must enter an email address to continue");
                return FALSE;
             }
-            email = heap_alloc (len+1);
+            email = xalloc(len+1);
             GetDlgItemTextA (hwnd, IDC_EMAIL, email, len+1);
             EndDialog (hwnd, IDOK);
             return TRUE;

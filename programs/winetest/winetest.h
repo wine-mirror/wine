@@ -45,10 +45,9 @@ extern HANDLE logfile;
 #ifndef __WINE_ALLOC_SIZE
 #define __WINE_ALLOC_SIZE(x)
 #endif
-void *heap_alloc (size_t len) __WINE_ALLOC_SIZE(1);
-void *heap_realloc (void *op, size_t len) __WINE_ALLOC_SIZE(2);
-char *heap_strdup( const char *str );
-void heap_free (void *op);
+void *xalloc (size_t len) __WINE_ALLOC_SIZE(1);
+void *xrealloc (void *op, size_t len) __WINE_ALLOC_SIZE(2);
+char *xstrdup( const char *str );
 
 enum report_type {
     R_STATUS = 0,
