@@ -371,12 +371,8 @@ static void test_GetWindowSubclass(void)
     todo_wine
     ok(data == 0, "Got unexpected data %#Ix.\n", data);
 
-    /* Crash on Wine */
-    if (strcmp(winetest_platform, "wine"))
-    {
     ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 2, NULL);
     ok(ret, "GetWindowSubclass failed.\n");
-    }
 
     data = 0xdeadbeef;
     ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 2, &data);
