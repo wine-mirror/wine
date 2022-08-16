@@ -362,6 +362,34 @@ static BOOL is_stub_dll(const char *filename)
     return isstub;
 }
 
+static int disable_crash_dialog(void)
+{
+    HKEY key;
+    DWORD type, data, size;
+    int ret = 0;
+
+    if (RegCreateKeyA( HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &key )) return 0;
+    size = sizeof(data);
+    if (RegQueryValueExA( key, "ShowCrashDialog", NULL, &type, (BYTE *)&data, &size )) ret = 1;
+    else if (type != REG_DWORD || data) ret = 2;
+    data = 0;
+    RegSetValueExA( key, "ShowCrashDialog", 0, REG_DWORD, (BYTE *)&data, sizeof(data) );
+    RegCloseKey( key );
+    return ret;
+}
+
+static void restore_crash_dialog( int prev )
+{
+    HKEY key;
+    DWORD data = 1;
+
+    if (!prev) return;
+    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &key )) return;
+    if (prev == 1) RegDeleteKeyValueA( key, NULL, "ShowCrashDialog" );
+    else RegSetValueExA( key, "ShowCrashDialog", 0, REG_DWORD, (BYTE *)&data, sizeof(data) );
+    RegCloseKey( key );
+}
+
 static void print_version (void)
 {
 #ifdef __i386__
@@ -1286,6 +1314,7 @@ int __cdecl main( int argc, char *argv[] )
     int reset_env = 1;
     int poweroff = 0;
     int interactive = 1;
+    int prev_crash_dialog = 0;
     int i;
 
     InitCommonControls();
@@ -1430,6 +1459,8 @@ int __cdecl main( int argc, char *argv[] )
 
             if (!check_display_driver())
                 report (R_FATAL, "Unable to create a window, the display driver is not working.");
+
+            if (!interactive) prev_crash_dialog = disable_crash_dialog();
         }
 
         SetConsoleCtrlHandler(ctrl_handler, TRUE);
@@ -1485,6 +1516,7 @@ int __cdecl main( int argc, char *argv[] )
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
         } else run_tests (logname, outdir);
         report (R_STATUS, "Finished - %u failures", failures);
+        if (prev_crash_dialog) restore_crash_dialog( prev_crash_dialog );
     }
     if (poweroff)
     {
