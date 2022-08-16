@@ -186,6 +186,11 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     struct sink_writer *object;
     HRESULT hr;
 
+    *out = NULL;
+
+    if (!sink)
+        return E_INVALIDARG;
+
     object = malloc(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
@@ -204,6 +209,9 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
 HRESULT WINAPI MFCreateSinkWriterFromMediaSink(IMFMediaSink *sink, IMFAttributes *attributes, IMFSinkWriter **writer)
 {
     TRACE("%p, %p, %p.\n", sink, attributes, writer);
+
+    if (!writer)
+        return E_INVALIDARG;
 
     return create_sink_writer_from_sink(sink, attributes, &IID_IMFSinkWriter, (void **)writer);
 }
@@ -289,6 +297,8 @@ HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *bytestream,
     CLSID clsid;
     HRESULT hr;
 
+    *out = NULL;
+
     if (!url && !bytestream)
         return E_INVALIDARG;
 
@@ -331,6 +341,9 @@ HRESULT WINAPI MFCreateSinkWriterFromURL(const WCHAR *url, IMFByteStream *bytest
         IMFSinkWriter **writer)
 {
     TRACE("%s, %p, %p, %p.\n", debugstr_w(url), bytestream, attributes, writer);
+
+    if (!writer)
+        return E_INVALIDARG;
 
     return create_sink_writer_from_url(url, bytestream, attributes, &IID_IMFSinkWriter, (void **)writer);
 }

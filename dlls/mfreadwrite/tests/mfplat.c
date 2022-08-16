@@ -1299,8 +1299,18 @@ static void test_sink_writer(void)
     hr = MFCreateSinkWriterFromURL(NULL, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    writer = (void *)0xdeadbeef;
     hr = MFCreateSinkWriterFromURL(NULL, NULL, NULL, &writer);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!writer, "Unexpected pointer %p.\n", writer);
+
+    hr = MFCreateSinkWriterFromMediaSink(NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    writer = (void *)0xdeadbeef;
+    hr = MFCreateSinkWriterFromMediaSink(NULL, NULL, &writer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!writer, "Unexpected pointer %p.\n", writer);
 }
 
 START_TEST(mfplat)
