@@ -10274,11 +10274,14 @@ static void test_vb_writeonly(void)
 
 static void test_lost_device(void)
 {
+    IDirectDrawSurface4 *surface, *back_buffer, *back_buffer2, *ds;
     IDirectDrawSurface4 *sysmem_surface, *vidmem_surface;
-    IDirectDrawSurface4 *surface, *back_buffer;
     DDSURFACEDESC2 surface_desc;
     HWND window1, window2;
     IDirectDraw4 *ddraw;
+    DDPIXELFORMAT z_fmt;
+    IDirect3D3 *d3d;
+
     ULONG refcount;
     DDSCAPS2 caps;
     HRESULT hr;
@@ -10503,10 +10506,39 @@ static void test_lost_device(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 1;
+    U5(surface_desc).dwBackBufferCount = 2;
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
+
+    ds = NULL;
+    hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d);
+    if (hr == S_OK)
+    {
+        memset(&z_fmt, 0, sizeof(z_fmt));
+        hr = IDirect3D3_EnumZBufferFormats(d3d, &IID_IDirect3DHALDevice, enum_z_fmt, &z_fmt);
+        if (FAILED(hr) || !z_fmt.dwSize)
+        {
+            skip("No depth buffer formats available, skipping Z buffer restore test.\n");
+        }
+        else
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &surface_desc);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+            surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+            U4(surface_desc).ddpfPixelFormat = z_fmt;
+            hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
+            ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+        IDirect3D3_Release(d3d);
+    }
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window1, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirectDraw4_TestCooperativeLevel(ddraw);
@@ -10613,9 +10645,29 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirectDrawSurface4_GetAttachedSurface(surface, &caps, &back_buffer);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(back_buffer != surface, "Got the same surface.\n");
     hr = IDirectDrawSurface4_IsLost(back_buffer);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     IDirectDrawSurface4_Release(back_buffer);
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(back_buffer, &caps, &back_buffer2);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(back_buffer2 != back_buffer, "Got the same surface.\n");
+    ok(back_buffer2 != surface, "Got the same surface.\n");
+    hr = IDirectDrawSurface4_IsLost(back_buffer2);
+    todo_wine ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    IDirectDrawSurface4_Release(back_buffer2);
+
+    if (ds)
+    {
+        hr = IDirectDrawSurface4_IsLost(ds);
+        ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#lx.\n", hr);
+        hr = IDirectDrawSurface4_Restore(ds);
+        ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IDirectDrawSurface4_IsLost(ds);
+        ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+        IDirectDrawSurface4_Release(ds);
+    }
 
     if (vidmem_surface)
         IDirectDrawSurface4_Release(vidmem_surface);
