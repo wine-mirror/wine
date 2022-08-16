@@ -66,8 +66,9 @@ static BOOL is_wow64;
 static int failures;
 
 /* filters for running only specific tests */
-static char *filters[64];
-static unsigned int nb_filters = 0;
+static char **filters;
+static unsigned int nb_filters;
+static unsigned int alloc_filters;
 static BOOL exclude_tests = FALSE;
 
 /* Needed to check for .NET dlls */
@@ -107,6 +108,36 @@ static BOOL test_filtered_out( LPCSTR module, LPCSTR testname )
         }
     }
     return !exclude_tests;
+}
+
+static void add_filter( const char *name )
+{
+    if (name[0] == '@')
+    {
+        char *p, *str, buffer[256];
+        FILE *f = fopen( name + 1, "rt" );
+        if (!f) return;
+
+        while (fgets( buffer, sizeof(buffer), f ))
+        {
+            p = buffer;
+            while (*p == ' ' || *p == '\t') p++;
+            if (*p == '#') continue;
+            str = p;
+            while (*p && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') p++;
+            *p = 0;
+            add_filter( str );
+        }
+        fclose( f );
+        return;
+    }
+
+    if (nb_filters >= alloc_filters)
+    {
+        alloc_filters = max( alloc_filters * 2, 64 );
+        filters = xrealloc( filters, alloc_filters * sizeof(*filters) );
+    }
+    filters[nb_filters++] = xstrdup(name);
 }
 
 static char * get_file_version(char * file_name)
@@ -1275,12 +1306,7 @@ int __cdecl main( int argc, char *argv[] )
             exit (0);
         }
         else if ((argv[i][0] != '-' && argv[i][0] != '/') || argv[i][2]) {
-            if (nb_filters == ARRAY_SIZE(filters))
-            {
-                report (R_ERROR, "Too many test filters specified");
-                exit (2);
-            }
-            filters[nb_filters++] = argv[i];
+            add_filter( argv[i] );
         }
         else switch (argv[i][1]) {
         case 'c':
