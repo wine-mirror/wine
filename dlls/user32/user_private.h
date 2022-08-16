@@ -83,7 +83,7 @@ BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *pa
 BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size );
 BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, ULONG size );
 BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size );
-BOOL WINAPI User32CallWindowsHook( const struct win_hook_params *params, ULONG size );
+BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size );
 BOOL WINAPI User32InitBuiltinClasses( const struct win_hook_params *params, ULONG size );
 
 /* message spy definitions */

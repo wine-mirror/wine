@@ -618,7 +618,6 @@ static void test_message_filter(void)
     msg.lParam = 20;
     ret = NtUserCallMsgFilter( &msg, 100 );
     ok( !ret, "CallMsgFilterW returned: %x\n", ret );
-    todo_wine
     ok( msg_ptr != &msg, "our ptr was passed directly to hook\n" );
 
     if (sizeof(void *) == 8) /* on some Windows versions, msg is not modified on wow64 */

@@ -164,9 +164,9 @@ struct win_hook_params
     int code;
     WPARAM wparam;
     LPARAM lparam;
+    UINT lparam_size;
     BOOL prev_unicode;
     BOOL next_unicode;
-    WCHAR module[MAX_PATH];
 };
 
 /* NtUserCopyImage params */

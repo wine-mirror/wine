@@ -1611,7 +1611,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
     /* call CBT hook chain */
     cbt.fMouse     = mouse;
     cbt.hWndActive = previous;
-    if (call_hooks( WH_CBT, HCBT_ACTIVATE, (WPARAM)hwnd, (LPARAM)&cbt )) return FALSE;
+    if (call_hooks( WH_CBT, HCBT_ACTIVATE, (WPARAM)hwnd, (LPARAM)&cbt, sizeof(cbt) )) return FALSE;
 
     if (is_window( previous ))
     {
@@ -1763,7 +1763,7 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
         }
 
         /* call hooks */
-        if (call_hooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)previous )) return 0;
+        if (call_hooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)previous, 0 )) return 0;
 
         /* activate hwndTop if needed. */
         if (hwndTop != get_active_window())
@@ -1778,7 +1778,7 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
     else /* NULL hwnd passed in */
     {
         if (!previous) return 0;  /* nothing to do */
-        if (call_hooks( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)previous )) return 0;
+        if (call_hooks( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)previous, 0 )) return 0;
     }
 
     /* change focus and send messages */

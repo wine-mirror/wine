@@ -1365,7 +1365,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwp.wParam  = wparam;
     cwp.message = msg;
     cwp.hwnd    = params->hwnd;
-    call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp );
+    call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp) );
 
     dispatch_win_proc_params( params, sizeof(*params) + size );
     if (params != &p) free( params );
@@ -1376,7 +1376,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwpret.wParam  = wparam;
     cwpret.message = msg;
     cwpret.hwnd    = params->hwnd;
-    call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret );
+    call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, sizeof(cwpret) );
     return result;
 }
 
@@ -1483,7 +1483,7 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     event.paramL  = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
     event.paramH  = msg->lParam & 0x7FFF;
     if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
-    call_hooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
+    call_hooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, sizeof(event) );
 
     /* check message filters */
     if (msg->message < first || msg->message > last) return FALSE;
@@ -1516,10 +1516,10 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     }
 
     if (call_hooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
-                    LOWORD(msg->wParam), msg->lParam ))
+                    LOWORD(msg->wParam), msg->lParam, 0 ))
     {
         /* skip this message */
-        call_hooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam );
+        call_hooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, 0 );
         accept_hardware_message( hw_id );
         return FALSE;
     }
@@ -1591,7 +1591,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     event.hwnd    = msg->hwnd;
     event.paramL  = msg->pt.x;
     event.paramH  = msg->pt.y;
-    call_hooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
+    call_hooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, sizeof(event) );
 
     if (!check_hwnd_filter( msg, hwnd_filter )) return FALSE;
 
@@ -1665,14 +1665,14 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     hook.wHitTestCode = hittest;
     hook.dwExtraInfo  = extra_info;
     hook.mouseData    = msg->wParam;
-    if (call_hooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE, message, (LPARAM)&hook ))
+    if (call_hooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE, message, (LPARAM)&hook, sizeof(hook) ))
     {
         hook.pt           = msg->pt;
         hook.hwnd         = msg->hwnd;
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
         hook.mouseData    = msg->wParam;
-        call_hooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook );
+        call_hooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, sizeof(hook) );
         accept_hardware_message( hw_id );
         return FALSE;
     }
@@ -1896,7 +1896,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                     memcpy( params.module, &msg_data->winevent + 1, size );
                 }
                 params.module[size / sizeof(WCHAR)] = 0;
-                size = FIELD_OFFSET( struct win_hook_params, module[size / sizeof(WCHAR) + 1] );
+                size = FIELD_OFFSET( struct win_event_hook_params, module[size / sizeof(WCHAR) + 1] );
 
                 params.handle    = wine_server_ptr_handle( msg_data->winevent.hook );
                 params.event     = info.msg.message;
@@ -1923,7 +1923,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 hook.dwExtraInfo = msg_data->hardware.info;
                 TRACE( "calling keyboard LL hook vk %x scan %x flags %x time %u info %lx\n",
                        hook.vkCode, hook.scanCode, hook.flags, hook.time, hook.dwExtraInfo );
-                result = call_hooks( WH_KEYBOARD_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook );
+                result = call_hooks( WH_KEYBOARD_LL, HC_ACTION, info.msg.wParam,
+                                     (LPARAM)&hook, sizeof(hook) );
             }
             else if (info.msg.message == WH_MOUSE_LL && size >= sizeof(msg_data->hardware))
             {
@@ -1936,7 +1937,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 hook.dwExtraInfo = msg_data->hardware.info;
                 TRACE( "calling mouse LL hook pos %d,%d data %x flags %x time %u info %lx\n",
                        hook.pt.x, hook.pt.y, hook.mouseData, hook.flags, hook.time, hook.dwExtraInfo );
-                result = call_hooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook );
+                result = call_hooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam,
+                                     (LPARAM)&hook, sizeof(hook) );
             }
             reply_message( &info, result, &info.msg );
             continue;
@@ -1966,7 +1968,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 thread_info->client_info.message_time  = info.msg.time;
                 thread_info->client_info.message_extra = msg_data->hardware.info;
                 free( buffer );
-                call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg );
+                call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, sizeof(*msg) );
                 return 1;
             }
             continue;
@@ -2019,7 +2021,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             thread_info->client_info.message_extra = 0;
             thread_info->client_info.msg_source = msg_source_unavailable;
             free( buffer );
-            call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg );
+            call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, sizeof(*msg) );
             return 1;
         }
 

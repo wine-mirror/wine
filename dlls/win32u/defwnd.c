@@ -883,7 +883,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     NtUserReleaseDC( parent, hdc );
     if (parent) map_window_points( 0, parent, (POINT *)&sizing_rect, 2, get_thread_dpi() );
 
-    if (call_hooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizing_rect ))
+    if (call_hooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizing_rect, sizeof(sizing_rect) ))
         moved = FALSE;
 
     send_message( hwnd, WM_EXITSIZEMOVE, 0, 0 );
@@ -950,7 +950,7 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
     if (!is_window_enabled( hwnd )) return 0;
 
-    if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam ))
+    if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam, 0 ))
         return 0;
 
     if (!user_driver->pSysCommand( hwnd, wparam, lparam ))
@@ -2811,7 +2811,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         {
             HWND parent = get_parent( hwnd );
             if (!parent)
-                call_hooks( WH_SHELL, HSHELL_APPCOMMAND, wparam, lparam );
+                call_hooks( WH_SHELL, HSHELL_APPCOMMAND, wparam, lparam, 0 );
             else
                 send_message( parent, msg, wparam, lparam );
             break;
