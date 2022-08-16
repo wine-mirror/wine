@@ -8241,7 +8241,7 @@ static void test_lost_device(void)
     ok(back_buffer2 != back_buffer, "Got the same surface.\n");
     ok(back_buffer2 != surface, "Got the same surface.\n");
     hr = IDirectDrawSurface_IsLost(back_buffer2);
-    todo_wine ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     IDirectDrawSurface_Release(back_buffer2);
 
     if (ds)

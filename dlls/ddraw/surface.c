@@ -3787,6 +3787,7 @@ static HRESULT WINAPI ddraw_surface1_IsLost(IDirectDrawSurface *iface)
 static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_surface *attachment;
     unsigned int i;
 
     TRACE("iface %p.\n", iface);
@@ -3832,10 +3833,17 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
         return DDERR_WRONGMODE;
 
     surface->is_lost = FALSE;
+
     for(i = 0; i < MAX_COMPLEX_ATTACHED; i++)
     {
-        if (surface->complex_array[i])
-            surface->complex_array[i]->is_lost = FALSE;
+        attachment = surface->complex_array[i];
+        while (attachment)
+        {
+            attachment->is_lost = FALSE;
+            attachment = attachment->complex_array[0];
+            if (attachment == surface->complex_array[i])
+                break;
+        }
     }
 
     return DD_OK;
