@@ -237,7 +237,8 @@ static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
                 WARN("Failed to subscribe to events for steam %u, hr %#lx.\n", i, hr);
             }
 
-            /* FIXME: notify the encoder */
+            if (stream->encoder)
+                IMFTransform_ProcessMessage(stream->encoder, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
         }
 
         if (SUCCEEDED(hr))
