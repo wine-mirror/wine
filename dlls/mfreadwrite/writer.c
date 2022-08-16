@@ -60,6 +60,7 @@ struct sink_writer
     IMFPresentationClock *clock;
     IMFMediaSink *sink;
     enum writer_state state;
+    HRESULT status;
     MF_SINK_WRITER_STATISTICS stats;
 
     CRITICAL_SECTION cs;
@@ -419,7 +420,9 @@ static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriter *iface, DWORD inde
 
     EnterCriticalSection(&writer->cs);
 
-    if (index == MF_SINK_WRITER_ALL_STREAMS)
+    if (FAILED(writer->status))
+        hr = writer->status;
+    else if (index == MF_SINK_WRITER_ALL_STREAMS)
         *stats = writer->stats;
     else if ((stream = sink_writer_get_stream(writer, index)))
         *stats = stream->stats;
@@ -483,12 +486,28 @@ static HRESULT WINAPI sink_writer_callback_GetParameters(IMFAsyncCallback *iface
     return E_NOTIMPL;
 }
 
+static struct stream *sink_writer_get_stream_for_stream_sink(struct sink_writer *writer, IMFStreamSink *stream_sink)
+{
+    size_t i;
+
+    for (i = 0; i < writer->streams.count; ++i)
+    {
+        if (writer->streams.items[i].stream_sink == stream_sink)
+            return &writer->streams.items[i];
+    }
+
+    return NULL;
+}
+
 static HRESULT WINAPI sink_writer_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
+    struct sink_writer *writer = impl_from_events_callback_IMFAsyncCallback(iface);
     IMFStreamSink *stream_sink;
     MediaEventType event_type;
+    struct stream *stream;
     IMFMediaEvent *event;
-    HRESULT hr;
+    LONGLONG timestamp;
+    HRESULT status, hr;
 
     TRACE("%p, %p.\n", iface, result);
 
@@ -498,8 +517,35 @@ static HRESULT WINAPI sink_writer_events_callback_Invoke(IMFAsyncCallback *iface
         return hr;
 
     IMFMediaEvent_GetType(event, &event_type);
+    IMFMediaEvent_GetStatus(event, &status);
 
     TRACE("Got event %lu.\n", event_type);
+
+    EnterCriticalSection(&writer->cs);
+
+    if (writer->status == S_OK && FAILED(status))
+        writer->status = status;
+
+    if (writer->status == S_OK && (stream = sink_writer_get_stream_for_stream_sink(writer, stream_sink)))
+    {
+        switch (event_type)
+        {
+            case MEStreamSinkRequestSample:
+
+                timestamp = MFGetSystemTime();
+
+                writer->stats.llLastSinkSampleRequest = timestamp;
+                writer->stats.dwNumOutstandingSinkSampleRequests++;
+                stream->stats.llLastSinkSampleRequest = timestamp;
+                stream->stats.dwNumOutstandingSinkSampleRequests++;
+
+                break;
+            default:
+                ;
+        }
+    }
+
+    LeaveCriticalSection(&writer->cs);
 
     IMFMediaEvent_Release(event);
 
