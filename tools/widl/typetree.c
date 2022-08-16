@@ -168,7 +168,8 @@ static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t 
     switch (type->type_type)
     {
     case TYPE_INTERFACE:
-        if (type->signature) n += strappend(buf, len, pos + n, "%s", type->signature);
+        if (!strcmp(type->name, "IInspectable")) n += strappend(buf, len, pos + n, "cinterface(IInspectable)");
+        else if (type->signature) n += strappend(buf, len, pos + n, "%s", type->signature);
         else
         {
             if (!(uuid = get_attrp(type->attrs, ATTR_UUID)))
