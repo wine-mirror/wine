@@ -356,19 +356,16 @@ static void test_GetWindowSubclass(void)
     data = 0xdeadbeef;
     ret = pGetWindowSubclass(NULL, wnd_proc_sub, 2, &data);
     ok(!ret, "GetWindowSubclass succeeded.\n");
-    todo_wine
     ok(data == 0, "Got unexpected data %#Ix.\n", data);
 
     data = 0xdeadbeef;
     ret = pGetWindowSubclass(hwnd, NULL, 2, &data);
     ok(!ret, "GetWindowSubclass succeeded.\n");
-    todo_wine
     ok(data == 0, "Got unexpected data %#Ix.\n", data);
 
     data = 0xdeadbeef;
     ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 0, &data);
     ok(!ret, "GetWindowSubclass succeeded.\n");
-    todo_wine
     ok(data == 0, "Got unexpected data %#Ix.\n", data);
 
     ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 2, NULL);
