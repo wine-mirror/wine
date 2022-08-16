@@ -287,6 +287,39 @@ struct win_proc_params32
     ULONG procW;
 };
 
+struct win_event_hook_params32
+{
+    DWORD event;
+    ULONG hwnd;
+    LONG object_id;
+    LONG child_id;
+    ULONG handle;
+    DWORD tid;
+    DWORD time;
+    ULONG proc;
+    WCHAR module[MAX_PATH];
+};
+
+struct draw_text_params32
+{
+    ULONG hdc;
+    int count;
+    RECT rect;
+    ULONG ret_rect;
+    UINT flags;
+    WCHAR str[1];
+};
+
+struct unpack_dde_message_params32
+{
+    ULONG result;
+    ULONG hwnd;
+    UINT message;
+    LONG wparam;
+    LONG lparam;
+    char data[1];
+};
+
 static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -480,8 +513,22 @@ static NTSTATUS WINAPI wow64_NtUserCallSendAsyncCallback( void *arg, ULONG size 
 
 static NTSTATUS WINAPI wow64_NtUserCallWinEventHook( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct win_event_hook_params *params = arg;
+    struct win_event_hook_params32 params32;
+
+    params32.event = params->event;
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.object_id = params->object_id;
+    params32.child_id = params->child_id;
+    params32.handle = HandleToUlong( params->handle );
+    params32.tid = params->tid;
+    params32.time = params->time;
+    params32.proc = PtrToUlong( params->proc );
+
+    size -= FIELD_OFFSET( struct win_event_hook_params, module );
+    if (size) memcpy( params32.module, params->module, size );
+    return dispatch_callback( NtUserCallWinEventHook, &params32,
+                              FIELD_OFFSET( struct win_event_hook_params32, module ) + size);
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallWinProc( void *arg, ULONG size )
@@ -766,8 +813,31 @@ static NTSTATUS WINAPI wow64_NtUserDrawScrollBar( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserDrawText( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct draw_text_params *params = arg;
+    struct draw_text_params32 *params32;
+    RECT *rect_ptr = params->ret_rect;
+    ULONG ret_len, len;
+    void *ret_ptr;
+    NTSTATUS ret;
+
+    len = (size - FIELD_OFFSET( struct draw_text_params, str )) / sizeof(WCHAR);
+    if (!(params32 = Wow64AllocateTemp( FIELD_OFFSET( struct draw_text_params32, str[len] ))))
+        return 0;
+
+    params32->hdc = HandleToUlong( params->hdc );
+    params32->count = params->count;
+    params32->rect = params->rect;
+    params32->ret_rect = 0;
+    params32->flags = params->flags;
+    if (len) memcpy( params32->str, params->str, len * sizeof(WCHAR) );
+
+    ret = Wow64KiUserCallbackDispatcher( NtUserDrawText, params, size, &ret_ptr, &ret_len );
+    if (ret_len == sizeof(RECT) && rect_ptr)
+    {
+        *rect_ptr = *(const RECT *)ret_ptr;
+        return ret;
+    }
+    return NtCallbackReturn( ret_ptr, ret_len, ret );
 }
 
 static NTSTATUS WINAPI wow64_NtUserFreeCachedClipboardData( void *arg, ULONG size )
@@ -874,8 +944,41 @@ static NTSTATUS WINAPI wow64_NtUserRenderSynthesizedFormat( void *arg, ULONG siz
 
 static NTSTATUS WINAPI wow64_NtUserUnpackDDEMessage( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct unpack_dde_message_params *params = arg;
+    struct unpack_dde_message_params32 *params32;
+    struct unpack_dde_message_result result;
+    struct
+    {
+        LONG wparam;
+        LONG lparam;
+    } *result32;
+    void *ret_ptr;
+    ULONG ret_len;
+
+    size -= FIELD_OFFSET( struct unpack_dde_message_params, data );
+    if (!(params32 = Wow64AllocateTemp( FIELD_OFFSET( struct unpack_dde_message_params32, data[size] ))))
+        return 0;
+
+    params32->result = 0;
+    params32->hwnd = HandleToUlong( params->hwnd );
+    params32->message = params->message;
+    params32->wparam = params->wparam;
+    params32->lparam = params->lparam;
+    if (size) memcpy( params32->data, params->data, size );
+    size = FIELD_OFFSET( struct unpack_dde_message_params32, data[size] );
+
+    if (!Wow64KiUserCallbackDispatcher( NtUserUnpackDDEMessage, params32, size, &ret_ptr, &ret_len ))
+        return FALSE;
+    if (ret_len == sizeof(*result32))
+    {
+        result32 = ret_ptr;
+        result.wparam = result32->wparam;
+        result.lparam = result32->lparam;
+    }
+
+    if (!params->result) NtCallbackReturn( &result, sizeof(result), TRUE );
+    *params->result = result;
+    return TRUE;
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallFreeIcon( void *arg, ULONG size )

@@ -125,8 +125,17 @@ static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params 
 
 static NTSTATUS WINAPI User32DrawText( const struct draw_text_params *params, ULONG size )
 {
+    RECT rect = params->rect;
+    int ret;
+
     size -= FIELD_OFFSET( struct draw_text_params, str );
-    return DrawTextW( params->hdc, params->str, size / sizeof(WCHAR), params->rect, params->flags );
+    ret = DrawTextW( params->hdc, params->str, size / sizeof(WCHAR), &rect, params->flags );
+    if (params->ret_rect)
+    {
+        *params->ret_rect = rect;
+        return ret;
+    }
+    return NtCallbackReturn( &rect, sizeof(rect), ret );
 }
 
 static NTSTATUS WINAPI User32ImmProcessKey( const struct imm_process_key_params *params, ULONG size )
@@ -180,12 +189,16 @@ static BOOL WINAPI User32LoadDriver( const WCHAR *path, ULONG size )
 
 static NTSTATUS WINAPI User32UnpackDDEMessage( const struct unpack_dde_message_params *params, ULONG size )
 {
-    struct unpack_dde_message_result *result = params->result;
-    result->wparam = params->wparam;
-    result->lparam = params->lparam;
+    struct unpack_dde_message_result result = { .wparam = params->wparam, .lparam = params->lparam };
+
     size -= FIELD_OFFSET( struct unpack_dde_message_params, data );
-    return unpack_dde_message( params->hwnd, params->message, &result->wparam, &result->lparam,
-                               params->data, size );
+    if (!unpack_dde_message( params->hwnd, params->message, &result.wparam, &result.lparam,
+                             params->data, size ))
+        return FALSE;
+
+    if (params->result) *params->result = result;
+    else NtCallbackReturn( &result, sizeof(result), TRUE );
+    return TRUE;
 }
 
 static const void *kernel_callback_table[NtUserCallCount] =

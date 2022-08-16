@@ -6610,10 +6610,12 @@ INT WINAPI DrawTextW( HDC hdc, const WCHAR *str, INT count, RECT *rect, UINT fla
     size = FIELD_OFFSET( struct draw_text_params, str[count] );
     if (!(params = malloc( size ))) return 0;
     params->hdc = hdc;
-    params->rect = rect;
+    params->rect = *rect;
+    params->ret_rect = rect;
     params->flags = flags;
     if (count) memcpy( params->str, str, count * sizeof(WCHAR) );
     ret = KeUserModeCallback( NtUserDrawText, params, size, &ret_ptr, &ret_len );
+    if (ret_len == sizeof(*rect)) *rect = *(const RECT *)ret_ptr;
     free( params );
     return ret;
 }

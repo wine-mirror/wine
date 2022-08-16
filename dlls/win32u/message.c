@@ -2009,6 +2009,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 params->lparam  = info.msg.lParam;
                 if (size) memcpy( params->data, buffer, size );
                 ret = KeUserModeCallback( NtUserUnpackDDEMessage, params, len, &ret_ptr, &len );
+                if (len == sizeof(result)) result = *(struct unpack_dde_message_result *)ret_ptr;
                 free( params );
                 if (!ret) continue; /* ignore it */
                 info.msg.wParam = result.wparam;
