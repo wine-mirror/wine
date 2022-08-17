@@ -2746,7 +2746,6 @@ todo_wine {
 
                 hr = IMFMediaType_Compare(output_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
                 ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
-                todo_wine_if(test->flags & LOADER_SET_MEDIA_TYPES)
                 ok(ret, "Output type of last transform doesn't match sink node type.\n");
 
                 IMFTopologyNode_Release(mft_node);
@@ -2776,7 +2775,6 @@ todo_wine {
         ok(!count, "Unexpected count %u.\n", count);
 
         if (test->flags & LOADER_SET_MEDIA_TYPES)
-            todo_wine
             ok(handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
         else
             ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);

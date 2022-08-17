@@ -335,6 +335,30 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
     return hr;
 }
 
+static HRESULT topology_branch_get_current_type(IMFMediaTypeHandler *handler, IMFMediaType **type)
+{
+    IMFMediaType *media_type;
+    HRESULT hr;
+    DWORD i;
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, type);
+    if (hr != MF_E_NOT_INITIALIZED)
+        return hr;
+
+    for (i = 0; SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, i, &media_type)); i++)
+    {
+        if (SUCCEEDED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, NULL)))
+        {
+            *type = media_type;
+            return hr;
+        }
+
+        IMFMediaType_Release(media_type);
+    }
+
+    return hr;
+}
+
 static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
         struct topology_branch *branch, IMFMediaType *up_type)
 {
@@ -353,7 +377,7 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
     if (FAILED(hr = topology_node_get_type_handler(branch->down.node, branch->down.stream, FALSE, &down_handler)))
         return hr;
 
-    if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(down_handler, &down_type))
+    if (SUCCEEDED(hr = topology_branch_get_current_type(down_handler, &down_type))
             && IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
     {
         TRACE("Connecting branch %s with current type %p.\n", debugstr_topology_branch(branch), up_type);
