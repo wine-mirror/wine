@@ -300,6 +300,230 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
     return TRUE;
 }
 
+static void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc, ULONG limit)
+{
+    HRESULT hr;
+    ULONG i;
+
+    hr = IMFMediaType_DeleteAllItems(mediatype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < limit && desc[i].key; ++i)
+    {
+        hr = IMFMediaType_SetItem(mediatype, desc[i].key, &desc[i].value);
+        ok(hr == S_OK, "SetItem %s returned %#lx\n", debugstr_a(desc[i].name), hr);
+    }
+}
+
+static void create_descriptors(UINT enum_types_count, IMFMediaType **enum_types, const media_type_desc *current_desc,
+        IMFPresentationDescriptor **pd, IMFStreamDescriptor **sd)
+{
+    HRESULT hr;
+
+    hr = MFCreateStreamDescriptor(0, enum_types_count, enum_types, sd);
+    ok(hr == S_OK, "Failed to create stream descriptor, hr %#lx.\n", hr);
+
+    hr = MFCreatePresentationDescriptor(1, sd, pd);
+    ok(hr == S_OK, "Failed to create presentation descriptor, hr %#lx.\n", hr);
+
+    if (current_desc)
+    {
+        IMFMediaTypeHandler *handler;
+        IMFMediaType *type;
+
+        hr = MFCreateMediaType(&type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(type, *current_desc, -1);
+
+        hr = IMFStreamDescriptor_GetMediaTypeHandler(*sd, &handler);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        IMFMediaTypeHandler_Release(handler);
+        IMFMediaType_Release(type);
+    }
+}
+
+static void init_source_node(IMFMediaSource *source, MF_CONNECT_METHOD method, IMFTopologyNode *node,
+        IMFPresentationDescriptor *pd, IMFStreamDescriptor *sd)
+{
+    HRESULT hr;
+
+    hr = IMFTopologyNode_DeleteAllItems(node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)pd);
+    ok(hr == S_OK, "Failed to set node pd, hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+    ok(hr == S_OK, "Failed to set node sd, hr %#lx.\n", hr);
+
+    if (method != -1)
+    {
+        hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, method);
+        ok(hr == S_OK, "Failed to set connect method, hr %#lx.\n", hr);
+    }
+
+    if (source)
+    {
+        hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+}
+
+static void init_sink_node(IMFStreamSink *stream_sink, MF_CONNECT_METHOD method, IMFTopologyNode *node)
+{
+    HRESULT hr;
+
+    hr = IMFTopologyNode_DeleteAllItems(node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTopologyNode_SetObject(node, (IUnknown *)stream_sink);
+    ok(hr == S_OK, "Failed to set object, hr %#lx.\n", hr);
+
+    if (method != -1)
+    {
+        hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, method);
+        ok(hr == S_OK, "Failed to set connect method, hr %#lx.\n", hr);
+    }
+}
+
+struct test_source
+{
+    IMFMediaSource IMFMediaSource_iface;
+    LONG refcount;
+};
+
+static struct test_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_source, IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI test_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
+{
+    if (IsEqualIID(riid, &IID_IMFMediaSource)
+            || IsEqualIID(riid, &IID_IMFMediaEventGenerator)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+    }
+    else
+    {
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IMFMediaSource_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI test_source_AddRef(IMFMediaSource *iface)
+{
+    struct test_source *source = impl_from_IMFMediaSource(iface);
+    return InterlockedIncrement(&source->refcount);
+}
+
+static ULONG WINAPI test_source_Release(IMFMediaSource *iface)
+{
+    struct test_source *source = impl_from_IMFMediaSource(iface);
+    ULONG refcount = InterlockedDecrement(&source->refcount);
+
+    if (!refcount)
+        free(source);
+
+    return refcount;
+}
+
+static HRESULT WINAPI test_source_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
+        HRESULT hr, const PROPVARIANT *value)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_GetCharacteristics(IMFMediaSource *iface, DWORD *flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **pd)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *pd, const GUID *time_format,
+        const PROPVARIANT *start_position)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_Stop(IMFMediaSource *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_Pause(IMFMediaSource *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_source_Shutdown(IMFMediaSource *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMFMediaSourceVtbl test_source_vtbl =
+{
+    test_source_QueryInterface,
+    test_source_AddRef,
+    test_source_Release,
+    test_source_GetEvent,
+    test_source_BeginGetEvent,
+    test_source_EndGetEvent,
+    test_source_QueueEvent,
+    test_source_GetCharacteristics,
+    test_source_CreatePresentationDescriptor,
+    test_source_Start,
+    test_source_Stop,
+    test_source_Pause,
+    test_source_Shutdown,
+};
+
+static IMFMediaSource *create_test_source(void)
+{
+    struct test_source *source;
+
+    source = calloc(1, sizeof(*source));
+    source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
+    source->refcount = 1;
+
+    return &source->IMFMediaSource_iface;
+}
+
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -1970,231 +2194,6 @@ static const IMFSampleGrabberSinkCallbackVtbl test_grabber_callback_vtbl =
     test_grabber_callback_OnShutdown,
 };
 
-struct test_source
-{
-    IMFMediaSource IMFMediaSource_iface;
-    LONG refcount;
-};
-
-static struct test_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
-{
-    return CONTAINING_RECORD(iface, struct test_source, IMFMediaSource_iface);
-}
-
-static HRESULT WINAPI test_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
-{
-    if (IsEqualIID(riid, &IID_IMFMediaSource)
-            || IsEqualIID(riid, &IID_IMFMediaEventGenerator)
-            || IsEqualIID(riid, &IID_IUnknown))
-    {
-        *out = iface;
-    }
-    else
-    {
-        *out = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IMFMediaSource_AddRef(iface);
-    return S_OK;
-}
-
-static ULONG WINAPI test_source_AddRef(IMFMediaSource *iface)
-{
-    struct test_source *source = impl_from_IMFMediaSource(iface);
-    return InterlockedIncrement(&source->refcount);
-}
-
-static ULONG WINAPI test_source_Release(IMFMediaSource *iface)
-{
-    struct test_source *source = impl_from_IMFMediaSource(iface);
-    ULONG refcount = InterlockedDecrement(&source->refcount);
-
-    if (!refcount)
-        free(source);
-
-    return refcount;
-}
-
-static HRESULT WINAPI test_source_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
-        HRESULT hr, const PROPVARIANT *value)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_GetCharacteristics(IMFMediaSource *iface, DWORD *flags)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **pd)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *pd, const GUID *time_format,
-        const PROPVARIANT *start_position)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_Stop(IMFMediaSource *iface)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_Pause(IMFMediaSource *iface)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI test_source_Shutdown(IMFMediaSource *iface)
-{
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
-}
-
-static const IMFMediaSourceVtbl test_source_vtbl =
-{
-    test_source_QueryInterface,
-    test_source_AddRef,
-    test_source_Release,
-    test_source_GetEvent,
-    test_source_BeginGetEvent,
-    test_source_EndGetEvent,
-    test_source_QueueEvent,
-    test_source_GetCharacteristics,
-    test_source_CreatePresentationDescriptor,
-    test_source_Start,
-    test_source_Stop,
-    test_source_Pause,
-    test_source_Shutdown,
-};
-
-static IMFMediaSource *create_test_source(void)
-{
-    struct test_source *source;
-
-    source = calloc(1, sizeof(*source));
-    source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
-    source->refcount = 1;
-
-    return &source->IMFMediaSource_iface;
-}
-
-static void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc, ULONG limit)
-{
-    HRESULT hr;
-    ULONG i;
-
-    hr = IMFMediaType_DeleteAllItems(mediatype);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    for (i = 0; i < limit && desc[i].key; ++i)
-    {
-        hr = IMFMediaType_SetItem(mediatype, desc[i].key, &desc[i].value);
-        ok(hr == S_OK, "SetItem %s returned %#lx\n", debugstr_a(desc[i].name), hr);
-    }
-}
-
-static void init_source_node(IMFMediaSource *source, MF_CONNECT_METHOD method, IMFTopologyNode *node,
-        UINT enum_types_count, IMFMediaType **enum_types, const media_type_desc *current_desc)
-{
-    IMFPresentationDescriptor *pd;
-    IMFStreamDescriptor *sd;
-    HRESULT hr;
-
-    hr = IMFTopologyNode_DeleteAllItems(node);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = MFCreateStreamDescriptor(0, enum_types_count, enum_types, &sd);
-    ok(hr == S_OK, "Failed to create stream descriptor, hr %#lx.\n", hr);
-
-    hr = MFCreatePresentationDescriptor(1, &sd, &pd);
-    ok(hr == S_OK, "Failed to create presentation descriptor, hr %#lx.\n", hr);
-
-    hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)pd);
-    ok(hr == S_OK, "Failed to set node pd, hr %#lx.\n", hr);
-
-    IMFPresentationDescriptor_Release(pd);
-
-    hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
-    ok(hr == S_OK, "Failed to set node sd, hr %#lx.\n", hr);
-
-    if (method != -1)
-    {
-        hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, method);
-        ok(hr == S_OK, "Failed to set connect method, hr %#lx.\n", hr);
-    }
-
-    if (source)
-    {
-        hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    }
-
-    if (current_desc)
-    {
-        IMFMediaTypeHandler *handler;
-        IMFMediaType *type;
-
-        hr = MFCreateMediaType(&type);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        init_media_type(type, *current_desc, -1);
-
-        hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, type);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-        IMFMediaTypeHandler_Release(handler);
-        IMFMediaType_Release(type);
-    }
-
-    IMFStreamDescriptor_Release(sd);
-}
-
-static void init_sink_node(IMFStreamSink *stream_sink, MF_CONNECT_METHOD method, IMFTopologyNode *node)
-{
-    HRESULT hr;
-
-    hr = IMFTopologyNode_DeleteAllItems(node);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTopologyNode_SetObject(node, (IUnknown *)stream_sink);
-    ok(hr == S_OK, "Failed to set object, hr %#lx.\n", hr);
-
-    if (method != -1)
-    {
-        hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, method);
-        ok(hr == S_OK, "Failed to set connect method, hr %#lx.\n", hr);
-    }
-}
-
 enum loader_test_flags
 {
     LOADER_EXPECTED_DECODER = 0x1,
@@ -2581,6 +2580,15 @@ static void test_topology_loader(void)
     ref = IMFActivate_Release(sink_activate);
     ok(ref == 0, "Release returned %ld\n", ref);
 
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ref = IMFPresentationDescriptor_Release(pd);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFStreamDescriptor_Release(sd);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
 
     hr = MFCreateMediaType(&input_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
@@ -2619,7 +2627,11 @@ static void test_topology_loader(void)
             handler.media_types = NULL;
         }
 
-        init_source_node(source, test->source_method, src_node, 1, &input_type, test->current_input);
+        create_descriptors(1, &input_type, test->current_input, &pd, &sd);
+        init_source_node(source, test->source_method, src_node, pd, sd);
+        IMFPresentationDescriptor_Release(pd);
+        IMFStreamDescriptor_Release(sd);
+
         init_sink_node(&stream_sink.IMFStreamSink_iface, test->sink_method, sink_node);
 
         hr = IMFTopology_GetCount(topology, &count);
@@ -2794,11 +2806,6 @@ todo_wine {
     ref = IMFMediaSource_Release(source);
     ok(ref == 0, "Release returned %ld\n", ref);
 
-    ref = IMFPresentationDescriptor_Release(pd);
-    ok(ref == 0, "Release returned %ld\n", ref);
-    ref = IMFStreamDescriptor_Release(sd);
-    ok(ref == 0, "Release returned %ld\n", ref);
-
     ref = IMFMediaType_Release(input_type);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaType_Release(output_type);
@@ -2820,10 +2827,12 @@ static void test_topology_loader_evr(void)
     };
     IMFTopologyNode *node, *source_node, *evr_node;
     IMFTopology *topology, *full_topology;
+    IMFPresentationDescriptor *pd;
     IMFMediaTypeHandler *handler;
     unsigned int i, count, value;
     IMFStreamSink *stream_sink;
     IMFMediaType *media_type;
+    IMFStreamDescriptor *sd;
     IMFActivate *activate;
     IMFTopoLoader *loader;
     IMFMediaSink *sink;
@@ -2846,7 +2855,11 @@ static void test_topology_loader_evr(void)
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
     init_media_type(media_type, media_type_desc, -1);
-    init_source_node(NULL, -1, source_node, 1, &media_type, &media_type_desc);
+
+    create_descriptors(1, &media_type, &media_type_desc, &pd, &sd);
+    init_source_node(NULL, -1, source_node, pd, sd);
+    IMFPresentationDescriptor_Release(pd);
+    IMFStreamDescriptor_Release(sd);
 
     /* EVR sink node. */
     window = create_window();
