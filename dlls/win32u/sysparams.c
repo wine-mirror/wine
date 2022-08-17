@@ -546,6 +546,53 @@ static BOOL write_registry_settings( const WCHAR *adapter_path, const DEVMODEW *
     return ret;
 }
 
+static int mode_compare(const void *p1, const void *p2)
+{
+    DWORD a_width, a_height, b_width, b_height;
+    const DEVMODEW *a = p1, *b = p2;
+    int ret;
+
+    /* Depth in descending order */
+    if ((ret = b->dmBitsPerPel - a->dmBitsPerPel)) return ret;
+
+    /* Use the width and height in landscape mode for comparison */
+    if (a->dmDisplayOrientation == DMDO_DEFAULT || a->dmDisplayOrientation == DMDO_180)
+    {
+        a_width = a->dmPelsWidth;
+        a_height = a->dmPelsHeight;
+    }
+    else
+    {
+        a_width = a->dmPelsHeight;
+        a_height = a->dmPelsWidth;
+    }
+
+    if (b->dmDisplayOrientation == DMDO_DEFAULT || b->dmDisplayOrientation == DMDO_180)
+    {
+        b_width = b->dmPelsWidth;
+        b_height = b->dmPelsHeight;
+    }
+    else
+    {
+        b_width = b->dmPelsHeight;
+        b_height = b->dmPelsWidth;
+    }
+
+    /* Width in ascending order */
+    if ((ret = a_width - b_width)) return ret;
+
+    /* Height in ascending order */
+    if ((ret = a_height - b_height)) return ret;
+
+    /* Frequency in descending order */
+    if ((ret = b->dmDisplayFrequency - a->dmDisplayFrequency)) return ret;
+
+    /* Orientation in ascending order */
+    if ((ret = a->dmDisplayOrientation - b->dmDisplayOrientation)) return ret;
+
+    return 0;
+}
+
 static BOOL read_display_adapter_settings( unsigned int index, struct adapter *info )
 {
     char buffer[4096];
@@ -606,6 +653,8 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
             mode = NEXT_DEVMODEW(mode);
         }
         info->mode_count = i;
+
+        qsort(info->modes, info->mode_count, sizeof(*info->modes) + info->modes->dmDriverExtra, mode_compare);
     }
 
     /* DeviceID */

@@ -403,7 +403,6 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     if (!settings_handler.get_modes(id, EDS_ROTATEDMODE, &modes, &mode_count))
         return NULL;
 
-    qsort(modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare);
     for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
     {
         found_mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * mode_idx);
@@ -1061,8 +1060,6 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
             if (!settings_handler.get_modes( adapters[adapter].id, EDS_ROTATEDMODE, &modes, &mode_count ))
                 continue;
-
-            qsort( modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare );
 
             for (mode = modes; mode_count; mode_count--)
             {
