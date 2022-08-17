@@ -22039,6 +22039,7 @@ wine_fn_config_makefile dlls/win87em.dll16 enable_win16
 wine_fn_config_makefile dlls/winaspi.dll16 enable_win16
 wine_fn_config_makefile dlls/windebug.dll16 enable_win16
 wine_fn_config_makefile dlls/windows.devices.enumeration enable_windows_devices_enumeration
+wine_fn_config_makefile dlls/windows.devices.enumeration/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.input enable_windows_gaming_input
 wine_fn_config_makefile dlls/windows.gaming.input/tests enable_tests
 wine_fn_config_makefile dlls/windows.globalization enable_windows_globalization
