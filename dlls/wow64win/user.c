@@ -3845,6 +3845,7 @@ NTSTATUS WINAPI wow64_NtUserThunkedMenuItemInfo( UINT *args )
     UNICODE_STRING32 *str32 = get_ptr( &args );
     MENUITEMINFOW info = { sizeof(info) }, *info_ptr;
     UNICODE_STRING str;
+    UINT ret;
 
     if (info32)
     {
@@ -3858,19 +3859,58 @@ NTSTATUS WINAPI wow64_NtUserThunkedMenuItemInfo( UINT *args )
             info.fState = info32->fState;
             info.wID = info32->wID;
             info.hSubMenu = UlongToHandle( info32->hSubMenu );
-            info.hbmpChecked = UlongToHandle( info32->hbmpUnchecked );
+            info.hbmpChecked = UlongToHandle( info32->hbmpChecked );
+            info.hbmpUnchecked = UlongToHandle( info32->hbmpUnchecked );
             info.dwItemData = info32->dwItemData;
             info.dwTypeData = UlongToPtr( info32->dwTypeData );
             info.cch = info32->cch;
             info.hbmpItem = UlongToHandle( info32->hbmpItem );
+            break;
+        case NtUserCheckMenuRadioItem:
+            info.cch = info32->cch;
+            break;
+        case NtUserGetMenuItemInfoA:
+        case NtUserGetMenuItemInfoW:
+            info.dwTypeData = UlongToPtr( info32->dwTypeData );
+            info.cch = info32->cch;
             break;
         }
         info_ptr = &info;
     }
     else info_ptr = NULL;
 
-    return NtUserThunkedMenuItemInfo( handle, pos, flags, method, info_ptr,
-                                      unicode_str_32to64( &str, str32 ));
+    ret = NtUserThunkedMenuItemInfo( handle, pos, flags, method, info_ptr,
+                                     unicode_str_32to64( &str, str32 ));
+
+    if (info_ptr)
+    {
+        switch (method)
+        {
+        case NtUserGetMenuItemInfoA:
+        case NtUserGetMenuItemInfoW:
+            if (info.fMask & (MIIM_TYPE | MIIM_STRING | MIIM_FTYPE))
+                info32->fType = info.fType;
+            if (info.fMask & (MIIM_TYPE | MIIM_BITMAP))
+                info32->hbmpItem = HandleToUlong( info.hbmpItem );
+            if (info.fMask & (MIIM_TYPE | MIIM_STRING))
+            {
+                info32->dwTypeData = (UINT_PTR)info.dwTypeData;
+                info32->cch = info.cch;
+            }
+            if (info.fMask & MIIM_STATE) info32->fState = info.fState;
+            if (info.fMask & MIIM_ID) info32->wID = info.wID;
+            info32->hSubMenu = HandleToUlong( info.hSubMenu );
+            if (info.fMask & MIIM_CHECKMARKS)
+            {
+                info32->hbmpChecked = HandleToUlong( info.hbmpChecked );
+                info32->hbmpUnchecked = HandleToUlong( info.hbmpUnchecked );
+            }
+            if (info.fMask & MIIM_DATA) info32->dwItemData = info.dwItemData;
+            break;
+        }
+    }
+
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserToUnicodeEx( UINT *args )
