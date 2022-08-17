@@ -314,13 +314,7 @@ static SYSTEM_SERVICE_TABLE syscall_table =
 
 static NTSTATUS init( void *dispatcher )
 {
-    NTSTATUS status;
-    if ((status = ntdll_init_syscalls( 1, &syscall_table, dispatcher ))) return status;
-    if ((status = gdi_init())) return status;
-    winstation_init();
-    sysparams_init();
-    register_desktop_class();
-    return STATUS_SUCCESS;
+    return ntdll_init_syscalls( 1, &syscall_table, dispatcher );
 }
 
 unixlib_entry_t __wine_unix_call_funcs[] =

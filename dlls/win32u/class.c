@@ -246,6 +246,14 @@ DLGPROC get_dialog_proc( DLGPROC ret, BOOL ansi )
     return ansi ? proc->procA : proc->procW;
 }
 
+static void init_user(void)
+{
+    gdi_init();
+    winstation_init();
+    sysparams_init();
+    register_desktop_class();
+}
+
 /***********************************************************************
  *	     NtUserInitializeClientPfnArrays   (win32u.@)
  */
@@ -253,6 +261,8 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
                                                  const struct user_client_procs *client_procsW,
                                                  const void *client_workers, HINSTANCE user_module )
 {
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+
     winproc_array[WINPROC_BUTTON].procA = client_procsA->pButtonWndProc;
     winproc_array[WINPROC_BUTTON].procW = client_procsW->pButtonWndProc;
     winproc_array[WINPROC_COMBO].procA = client_procsA->pComboWndProc;
@@ -283,6 +293,8 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
     winproc_array[WINPROC_MESSAGE].procW = client_procsW->pMessageWndProc;
 
     user32_module = user_module;
+
+    pthread_once( &init_once, init_user );
     return STATUS_SUCCESS;
 }
 

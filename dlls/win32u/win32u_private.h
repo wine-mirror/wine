@@ -411,7 +411,7 @@ static inline void release_win_ptr( struct tagWND *ptr )
 }
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
-extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;
+extern void gdi_init(void) DECLSPEC_HIDDEN;
 extern NTSTATUS callbacks_init( void *args ) DECLSPEC_HIDDEN;
 extern void winstation_init(void) DECLSPEC_HIDDEN;
 extern void sysparams_init(void) DECLSPEC_HIDDEN;
