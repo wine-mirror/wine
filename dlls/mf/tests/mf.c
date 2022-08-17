@@ -2550,6 +2550,15 @@ static void test_topology_loader(void)
     hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
     ok(hr == MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED, "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFTopologyNode_SetObject(sink_node, NULL);
+    ok(hr == S_OK, "Failed to set object, hr %#lx.\n", hr);
+
+    hr = IMFActivate_ShutdownObject(sink_activate);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ref = IMFActivate_Release(sink_activate);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
     hr = MFCreateMediaType(&input_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
 
@@ -2574,9 +2583,6 @@ static void test_topology_loader(void)
             handler.invalid_type = input_type;
         else
             handler.invalid_type = NULL;
-
-        hr = MFCreateSampleGrabberSinkActivate(output_type, &test_grabber_callback, &sink_activate);
-        ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
 
         init_source_node(source, test->source_method, src_node, 1, &input_type, test->current_input);
         init_sink_node(&stream_sink.IMFStreamSink_iface, test->sink_method, sink_node);
@@ -2732,11 +2738,6 @@ todo_wine {
         hr = IMFTopology_GetCount(topology, &count);
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
         ok(!count, "Unexpected count %u.\n", count);
-
-        hr = IMFActivate_ShutdownObject(sink_activate);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ref = IMFActivate_Release(sink_activate);
-        ok(ref == 0, "Release returned %ld\n", ref);
 
         winetest_pop_context();
     }
