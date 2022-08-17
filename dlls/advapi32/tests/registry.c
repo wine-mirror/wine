@@ -1600,7 +1600,82 @@ static void test_reg_unload_key(void)
     DeleteFileA("saved_key.LOG");
 }
 
-/* tests that show that RegConnectRegistry and 
+/* Helper function to wait for a file blocked by the registry to be available */
+static void wait_file_available(char *path)
+{
+    int attempts = 0;
+    HANDLE file = NULL;
+
+    while (((file = CreateFileA(path, GENERIC_READ, 0, NULL,
+                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE)
+            && attempts++ < 10)
+    {
+        Sleep(200);
+    }
+    ok(file != INVALID_HANDLE_VALUE, "couldn't open file %s after 10 attempts error %ld.\n", path, GetLastError());
+    CloseHandle(file);
+}
+
+static void test_reg_load_app_key(void)
+{
+    DWORD ret, size;
+    char temppath[MAX_PATH], hivefilepath[MAX_PATH];
+    const BYTE test_data[] = "Hello World";
+    BYTE output[sizeof(test_data)];
+    HKEY appkey = NULL;
+
+    GetTempPathA(sizeof(temppath), temppath);
+    GetTempFileNameA(temppath, "key", 0, hivefilepath);
+    DeleteFileA(hivefilepath);
+
+    if (!set_privileges(SE_BACKUP_NAME, TRUE) ||
+        !set_privileges(SE_RESTORE_NAME, FALSE))
+    {
+        win_skip("Failed to set SE_BACKUP_NAME privileges, skipping tests\n");
+        return;
+    }
+
+    ret = RegSaveKeyA(hkey_main, hivefilepath, NULL);
+    if (ret != ERROR_SUCCESS)
+    {
+        win_skip("Failed to save test key 0x%lx\n", ret);
+        return;
+    }
+
+    set_privileges(SE_BACKUP_NAME, FALSE);
+    set_privileges(SE_RESTORE_NAME, FALSE);
+
+    /* Test simple key load */
+    /* Check if the changes are saved */
+    ret = RegLoadAppKeyA(hivefilepath, &appkey, KEY_READ | KEY_WRITE, 0, 0);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(appkey != NULL, "got a null key\n");
+
+    ret = RegSetValueExA(appkey, "testkey", 0, REG_BINARY, test_data, sizeof(test_data));
+    todo_wine ok(ret == ERROR_SUCCESS, "couldn't set key value %lx\n", ret);
+    RegCloseKey(appkey);
+
+    wait_file_available(hivefilepath);
+
+    appkey = NULL;
+    ret = RegLoadAppKeyA(hivefilepath, &appkey, KEY_READ, 0, 0);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(appkey != NULL, "got a null key\n");
+
+    size = sizeof(test_data);
+    memset(output, 0xff, sizeof(output));
+    ret = RegGetValueA(appkey, NULL, "testkey", RRF_RT_REG_BINARY, NULL, output, &size);
+    todo_wine ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    ok(size == sizeof(test_data), "size doesn't match %ld != %ld\n", size, (DWORD)sizeof(test_data));
+    todo_wine ok(!memcmp(test_data, output, sizeof(test_data)), "output is not what expected\n");
+
+    RegCloseKey(appkey);
+
+    wait_file_available(hivefilepath);
+    ok(DeleteFileA(hivefilepath), "couldn't delete hive file %ld\n", GetLastError());
+}
+
+/* tests that show that RegConnectRegistry and
    OpenSCManager accept computer names without the
    \\ prefix (what MSDN says).   */
 static void test_regconnectregistry( void)
@@ -4486,6 +4561,7 @@ START_TEST(registry)
     test_reg_save_key();
     test_reg_load_key();
     test_reg_unload_key();
+    test_reg_load_app_key();
     test_reg_copy_tree();
     test_reg_delete_tree();
     test_rw_order();
