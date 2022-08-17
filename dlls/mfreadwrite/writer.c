@@ -83,6 +83,8 @@ struct sink_writer
     HRESULT status;
     MF_SINK_WRITER_STATISTICS stats;
 
+    IMFSinkWriterCallback *callback;
+
     CRITICAL_SECTION cs;
 };
 
@@ -215,6 +217,8 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
             IMFPresentationClock_Release(writer->clock);
         if (writer->sink)
             IMFMediaSink_Release(writer->sink);
+        if (writer->callback)
+            IMFSinkWriterCallback_Release(writer->callback);
         for (i = 0; i < writer->streams.count; ++i)
         {
             struct stream *stream = &writer->streams.items[i];
@@ -884,6 +888,12 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     IMFMediaSink_AddRef(sink);
     object->stats.cb = sizeof(object->stats);
     InitializeCriticalSection(&object->cs);
+
+    if (attributes)
+    {
+        IMFAttributes_GetUnknown(attributes, &MF_SINK_WRITER_ASYNC_CALLBACK,
+                &IID_IMFSinkWriterCallback, (void **)&object->callback);
+    }
 
     if (FAILED(hr = sink_writer_initialize_existing_streams(object, sink)))
     {
