@@ -1305,6 +1305,10 @@ struct test_handler
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     IMFMediaType *current_type;
     IMFMediaType *invalid_type;
+
+    ULONG enum_count;
+    ULONG media_types_count;
+    IMFMediaType **media_types;
 };
 
 static struct test_handler *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
@@ -1367,7 +1371,19 @@ static HRESULT WINAPI test_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface,
 static HRESULT WINAPI test_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
         IMFMediaType **type)
 {
-    todo_wine
+    struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
+
+    if (impl->media_types)
+    {
+        impl->enum_count++;
+
+        if (index >= impl->media_types_count)
+            return MF_E_NO_MORE_TYPES;
+
+        IMFMediaType_AddRef((*type = impl->media_types[index]));
+        return S_OK;
+    }
+
     ok(0, "Unexpected call.\n");
     return E_NOTIMPL;
 }
@@ -1386,7 +1402,7 @@ static HRESULT WINAPI test_handler_GetCurrentMediaType(IMFMediaTypeHandler *ifac
     HRESULT hr;
 
     if (!impl->current_type)
-        return E_NOTIMPL;
+        return impl->media_types ? MF_E_NOT_INITIALIZED : E_FAIL;
 
     if (FAILED(hr = MFCreateMediaType(media_type)))
         return hr;
@@ -2188,6 +2204,7 @@ enum loader_test_flags
     LOADER_SET_ENUMERATE_SOURCE_TYPES = 0x10,
     LOADER_NO_CURRENT_OUTPUT = 0x20,
     LOADER_SET_INVALID_INPUT = 0x40,
+    LOADER_SET_MEDIA_TYPES = 0x80,
 };
 
 static void test_topology_loader(void)
@@ -2434,6 +2451,12 @@ static void test_topology_loader(void)
             .expected_result = S_OK,
             .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_EXPECTED_CONVERTER,
         },
+        {
+            /* RGB32 -> Any Video, no current output type, refuse input type */
+            .input_type = &video_i420_1280, .output_type = &video_video_processor_rgb32, .sink_method = -1, .source_method = -1,
+            .expected_result = S_OK,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECTED_CONVERTER,
+        },
     };
 
     IMFSampleGrabberSinkCallback test_grabber_callback = { &test_grabber_callback_vtbl };
@@ -2584,6 +2607,18 @@ static void test_topology_loader(void)
         else
             handler.invalid_type = NULL;
 
+        handler.enum_count = 0;
+        if (test->flags & LOADER_SET_MEDIA_TYPES)
+        {
+            handler.media_types_count = 1;
+            handler.media_types = &output_type;
+        }
+        else
+        {
+            handler.media_types_count = 0;
+            handler.media_types = NULL;
+        }
+
         init_source_node(source, test->source_method, src_node, 1, &input_type, test->current_input);
         init_sink_node(&stream_sink.IMFStreamSink_iface, test->sink_method, sink_node);
 
@@ -2711,6 +2746,7 @@ todo_wine {
 
                 hr = IMFMediaType_Compare(output_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
                 ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
+                todo_wine_if(test->flags & LOADER_SET_MEDIA_TYPES)
                 ok(ret, "Output type of last transform doesn't match sink node type.\n");
 
                 IMFTopologyNode_Release(mft_node);
@@ -2738,6 +2774,12 @@ todo_wine {
         hr = IMFTopology_GetCount(topology, &count);
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
         ok(!count, "Unexpected count %u.\n", count);
+
+        if (test->flags & LOADER_SET_MEDIA_TYPES)
+            todo_wine
+            ok(handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
+        else
+            ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
 
         winetest_pop_context();
     }
@@ -4457,6 +4499,9 @@ if (SUCCEEDED(hr))
 
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, count, &mediatype);
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &mediatype);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
