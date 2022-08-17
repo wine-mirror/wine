@@ -548,6 +548,7 @@ static BOOL write_registry_settings( const WCHAR *adapter_path, const DEVMODEW *
 
 static int mode_compare(const void *p1, const void *p2)
 {
+    BOOL a_interlaced, b_interlaced, a_stretched, b_stretched;
     DWORD a_width, a_height, b_width, b_height;
     const DEVMODEW *a = p1, *b = p2;
     int ret;
@@ -589,6 +590,22 @@ static int mode_compare(const void *p1, const void *p2)
 
     /* Orientation in ascending order */
     if ((ret = a->dmDisplayOrientation - b->dmDisplayOrientation)) return ret;
+
+    if (!(a->dmFields & DM_DISPLAYFLAGS)) a_interlaced = FALSE;
+    else a_interlaced = !!(a->dmDisplayFlags & DM_INTERLACED);
+    if (!(b->dmFields & DM_DISPLAYFLAGS)) b_interlaced = FALSE;
+    else b_interlaced = !!(b->dmDisplayFlags & DM_INTERLACED);
+
+    /* Interlaced in ascending order */
+    if ((ret = a_interlaced - b_interlaced)) return ret;
+
+    if (!(a->dmFields & DM_DISPLAYFIXEDOUTPUT)) a_stretched = FALSE;
+    else a_stretched = a->dmDisplayFixedOutput == DMDFO_STRETCH;
+    if (!(b->dmFields & DM_DISPLAYFIXEDOUTPUT)) b_stretched = FALSE;
+    else b_stretched = b->dmDisplayFixedOutput == DMDFO_STRETCH;
+
+    /* Stretched in ascending order */
+    if ((ret = a_stretched - b_stretched)) return ret;
 
     return 0;
 }
