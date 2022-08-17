@@ -239,23 +239,20 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
         UINT PatchLocationListSize;
     } *desc32 = get_ptr( &args );
 
-    D3DKMT_CREATEDEVICE desc =
-    {
-        { desc32->hAdapter },
-        desc32->Flags
-    };
+    D3DKMT_CREATEDEVICE desc;
     NTSTATUS status;
 
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hAdapter = desc32->hAdapter;
+    desc.Flags = desc32->Flags;
+    desc.pCommandBuffer = UlongToPtr( desc32->pCommandBuffer );
+    desc.CommandBufferSize = desc32->CommandBufferSize;
+    desc.pAllocationList = UlongToPtr( desc32->pAllocationList );
+    desc.AllocationListSize = desc32->AllocationListSize;
+    desc.pPatchLocationList = UlongToPtr( desc32->pPatchLocationList );
+    desc.PatchLocationListSize = desc32->PatchLocationListSize;
     if (!(status = NtGdiDdDDICreateDevice( &desc )))
-    {
         desc32->hDevice = desc.hDevice;
-        desc32->pCommandBuffer = PtrToUlong( desc.pCommandBuffer );
-        desc32->CommandBufferSize = desc.CommandBufferSize;
-        desc32->pAllocationList = PtrToUlong( desc.pAllocationList );
-        desc32->AllocationListSize = desc.AllocationListSize;
-        desc32->pPatchLocationList = PtrToUlong( desc.pPatchLocationList );
-        desc32->PatchLocationListSize = desc.PatchLocationListSize;
-    }
     return status;
 }
 
