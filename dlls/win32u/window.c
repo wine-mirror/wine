@@ -1056,10 +1056,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
             return 0;
         }
         retval = get_win_data( (char *)win->wExtra + offset, size );
-
-        /* Special case for dialog window procedure */
-        if ((offset == DWLP_DLGPROC) && (size == sizeof(LONG_PTR)) && win->dlgInfo)
-            retval = (LONG_PTR)get_winproc( (WNDPROC)retval, ansi );
         release_win_ptr( win );
         return retval;
     }
@@ -5480,9 +5476,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_GetClientRect:
         return get_client_rect( hwnd, (RECT *)param );
-
-    case NtUserCallHwndParam_GetDialogProc:
-        return (ULONG_PTR)get_dialog_proc( hwnd, param );
 
     case NtUserCallHwndParam_GetScrollInfo:
         {

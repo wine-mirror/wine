@@ -626,6 +626,17 @@ DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
 }
 
 
+static LONG_PTR get_window_long_ptr( HWND hwnd, int offset, LONG_PTR ret, BOOL ansi )
+{
+    if (offset == DWLP_DLGPROC && NtUserGetDialogInfo( hwnd ))
+    {
+        DLGPROC proc = NtUserGetDialogProc( (DLGPROC)ret, ansi );
+        if (proc && proc != WINPROC_PROC16) return (LONG_PTR)proc;
+    }
+    return ret;
+}
+
+
 /***********************************************************************
  *              GetDpiForWindow   (USER32.@)
  */
@@ -660,6 +671,11 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
         return 0;
 #endif
     default:
+        if (sizeof(void *) == sizeof(LONG))
+        {
+            LONG_PTR ret = NtUserGetWindowLongA( hwnd, offset );
+            return get_window_long_ptr( hwnd, offset, ret, TRUE );
+        }
         return NtUserGetWindowLongA( hwnd, offset );
     }
 }
@@ -681,6 +697,11 @@ LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
         return 0;
 #endif
     default:
+        if (sizeof(void *) == sizeof(LONG))
+        {
+            LONG_PTR ret = NtUserGetWindowLongW( hwnd, offset );
+            return get_window_long_ptr( hwnd, offset, ret, FALSE );
+        }
         return NtUserGetWindowLongW( hwnd, offset );
     }
 }
@@ -1411,7 +1432,8 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
  */
 LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
 {
-    return NtUserGetWindowLongPtrW( hwnd, offset );
+    LONG_PTR ret = NtUserGetWindowLongPtrW( hwnd, offset );
+    return get_window_long_ptr( hwnd, offset, ret, FALSE );
 }
 
 /*****************************************************************************
@@ -1419,7 +1441,8 @@ LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
  */
 LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
 {
-    return NtUserGetWindowLongPtrA( hwnd, offset );
+    LONG_PTR ret = NtUserGetWindowLongPtrA( hwnd, offset );
+    return get_window_long_ptr( hwnd, offset, ret, TRUE );
 }
 
 /*****************************************************************************

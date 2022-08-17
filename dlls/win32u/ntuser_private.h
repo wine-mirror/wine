@@ -223,7 +223,7 @@ DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
-DLGPROC get_dialog_proc( HWND hwnd, enum dialog_proc_type type ) DECLSPEC_HIDDEN;
+DLGPROC get_dialog_proc( DLGPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
 ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
 void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst ) DECLSPEC_HIDDEN;

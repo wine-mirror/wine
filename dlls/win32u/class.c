@@ -237,29 +237,13 @@ void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst )
     if (!params->procW) params->procW = params->func;
 }
 
-DLGPROC get_dialog_proc( HWND hwnd, enum dialog_proc_type type )
+DLGPROC get_dialog_proc( DLGPROC ret, BOOL ansi )
 {
     WINDOWPROC *proc;
-    DLGPROC ret;
-    WND *win;
 
-    if (!(win = get_win_ptr( hwnd ))) return NULL;
-    if (win == WND_OTHER_PROCESS || win == WND_DESKTOP)
-    {
-        ERR( "cannot get dlg proc %p from other process\n", hwnd );
-        return 0;
-    }
-    ret = *(DLGPROC *)((char *)win->wExtra + DWLP_DLGPROC);
-    release_win_ptr( win );
-    if (type == DLGPROC_WIN16 || !(proc = get_winproc_ptr( ret ))) return ret;
+    if (!(proc = get_winproc_ptr( ret ))) return ret;
     if (proc == WINPROC_PROC16) return WINPROC_PROC16;
-
-    if (type == DLGPROC_ANSI)
-        ret = proc->procA ? proc->procA : proc->procW;
-    else
-        ret = proc->procW ? proc->procW : proc->procA;
-
-    return ret;
+    return ansi ? proc->procA : proc->procW;
 }
 
 /***********************************************************************

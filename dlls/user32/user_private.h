@@ -33,6 +33,8 @@
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 #define GET_LONG(ptr) (*(const LONG *)(ptr))
 
+#define WINPROC_PROC16  ((void *)1)  /* placeholder for 16-bit window procs */
+
 /* data to store state for A/W mappings of WM_CHAR */
 struct wm_char_mapping_data
 {
