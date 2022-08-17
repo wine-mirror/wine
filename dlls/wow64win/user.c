@@ -1809,12 +1809,14 @@ NTSTATUS WINAPI wow64_NtUserGetClipboardData( UINT *args )
 
     params.data = UlongToPtr( params32->data );
     params.size = params32->size;
+    params.data_size = params32->data_size;
+    params.data_only = params32->data_only;
 
     ret = NtUserGetClipboardData( format, &params );
 
+    params32->size      = params.size;
     params32->data_size = params.data_size;
     params32->seqno     = params.seqno;
-    params32->data_only = params.data_only;
     return HandleToUlong( ret );
 }
 
