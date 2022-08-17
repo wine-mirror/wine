@@ -363,7 +363,6 @@ xsltReleaseRVT(xsltTransformContextPtr ctxt, xmlDocPtr RVT)
 	}
 	/*
 	* Clear the document tree.
-	* REVISIT TODO: Do we expect ID/IDREF tables to be existent?
 	*/
 	if (RVT->children != NULL) {
 	    xmlFreeNodeList(RVT->children);
@@ -373,10 +372,6 @@ xsltReleaseRVT(xsltTransformContextPtr ctxt, xmlDocPtr RVT)
 	if (RVT->ids != NULL) {
 	    xmlFreeIDTable((xmlIDTablePtr) RVT->ids);
 	    RVT->ids = NULL;
-	}
-	if (RVT->refs != NULL) {
-	    xmlFreeRefTable((xmlRefTablePtr) RVT->refs);
-	    RVT->refs = NULL;
 	}
 
 	/*
@@ -968,6 +963,8 @@ xsltEvalVariable(xsltTransformContextPtr ctxt, xsltStackElemPtr variable,
 		xmlDocPtr container;
 		xmlNodePtr oldInsert;
 		xmlDocPtr  oldOutput;
+                const xmlChar *oldLastText;
+                int oldLastTextSize, oldLastTextUse;
 		xsltStackElemPtr oldVar = ctxt->contextVariable;
 
 		/*
@@ -993,6 +990,9 @@ xsltEvalVariable(xsltTransformContextPtr ctxt, xsltStackElemPtr variable,
 
 		oldOutput = ctxt->output;
 		oldInsert = ctxt->insert;
+                oldLastText = ctxt->lasttext;
+                oldLastTextSize = ctxt->lasttsize;
+                oldLastTextUse = ctxt->lasttuse;
 
 		ctxt->output = container;
 		ctxt->insert = (xmlNodePtr) container;
@@ -1007,6 +1007,9 @@ xsltEvalVariable(xsltTransformContextPtr ctxt, xsltStackElemPtr variable,
 		ctxt->contextVariable = oldVar;
 		ctxt->insert = oldInsert;
 		ctxt->output = oldOutput;
+                ctxt->lasttext = oldLastText;
+                ctxt->lasttsize = oldLastTextSize;
+                ctxt->lasttuse = oldLastTextUse;
 
 		result = xmlXPathNewValueTree((xmlNodePtr) container);
 	    }
