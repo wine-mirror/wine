@@ -694,29 +694,38 @@ static Context* get_current_context(void)
     return ret;
 }
 
+static Scheduler* get_scheduler_from_context(Context *ctx)
+{
+    ExternalContextBase *context = (ExternalContextBase*)ctx;
+
+    if (context->context.vtable != &ExternalContextBase_vtable)
+        return NULL;
+    return context->scheduler.scheduler;
+}
+
 static Scheduler* try_get_current_scheduler(void)
 {
-    ExternalContextBase *context = (ExternalContextBase*)try_get_current_context();
+    Context *context = try_get_current_context();
+    Scheduler *ret;
 
     if (!context)
         return NULL;
 
-    if (context->context.vtable != &ExternalContextBase_vtable) {
+    ret = get_scheduler_from_context(context);
+    if (!ret)
         ERR("unknown context set\n");
-        return NULL;
-    }
-    return context->scheduler.scheduler;
+    return ret;
 }
 
 static Scheduler* get_current_scheduler(void)
 {
-    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
+    Context *context = get_current_context();
+    Scheduler *ret;
 
-    if (context->context.vtable != &ExternalContextBase_vtable) {
+    ret = get_scheduler_from_context(context);
+    if (!ret)
         ERR("unknown context set\n");
-        return NULL;
-    }
-    return context->scheduler.scheduler;
+    return ret;
 }
 
 /* ?CurrentContext@Context@Concurrency@@SAPAV12@XZ */
