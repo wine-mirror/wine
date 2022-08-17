@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #define COBJMACROS
 #define NONAMELESSUNION
 
@@ -139,6 +141,14 @@ static const IUnknownVtbl marker_context_vtbl =
     marker_context_AddRef,
     marker_context_Release,
 };
+
+static struct marker_context *unsafe_impl_from_marker_context_IUnknown(IUnknown *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &marker_context_vtbl);
+    return CONTAINING_RECORD(iface, struct marker_context, IUnknown_iface);
+}
 
 static HRESULT create_marker_context(unsigned int marker_type, void *user_context,
         IUnknown **ret)
@@ -587,11 +597,28 @@ static HRESULT WINAPI sink_writer_SendStreamTick(IMFSinkWriter *iface, DWORD ind
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_PlaceMarker(IMFSinkWriter *iface, DWORD index, void *context)
+static HRESULT WINAPI sink_writer_PlaceMarker(IMFSinkWriter *iface, DWORD index, void *user_context)
 {
-    FIXME("%p, %lu, %p.\n", iface, index, context);
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct stream *stream;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %lu, %p.\n", iface, index, user_context);
+
+    EnterCriticalSection(&writer->cs);
+
+    if (!writer->callback)
+        hr = MF_E_INVALIDREQUEST;
+    else if (writer->state != SINK_WRITER_STATE_WRITING)
+        hr = MF_E_INVALIDREQUEST;
+    else if (!(stream = sink_writer_get_stream(writer, index)))
+        hr = MF_E_INVALIDSTREAMNUMBER;
+    else
+        hr = sink_writer_queue_marker(writer, stream, MFSTREAMSINK_MARKER_DEFAULT, 0, user_context);
+
+    LeaveCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriter *iface, DWORD index)
@@ -768,14 +795,18 @@ static HRESULT WINAPI sink_writer_callback_GetParameters(IMFAsyncCallback *iface
     return E_NOTIMPL;
 }
 
-static struct stream *sink_writer_get_stream_for_stream_sink(struct sink_writer *writer, IMFStreamSink *stream_sink)
+static struct stream *sink_writer_get_stream_for_stream_sink(struct sink_writer *writer,
+        IMFStreamSink *stream_sink, DWORD *index)
 {
-    size_t i;
+    unsigned int i;
 
     for (i = 0; i < writer->streams.count; ++i)
     {
         if (writer->streams.items[i].stream_sink == stream_sink)
+        {
+            *index = i;
             return &writer->streams.items[i];
+        }
     }
 
     return NULL;
@@ -784,12 +815,15 @@ static struct stream *sink_writer_get_stream_for_stream_sink(struct sink_writer 
 static HRESULT WINAPI sink_writer_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct sink_writer *writer = impl_from_events_callback_IMFAsyncCallback(iface);
+    struct marker_context *context;
     IMFStreamSink *stream_sink;
     MediaEventType event_type;
     struct stream *stream;
     IMFMediaEvent *event;
     LONGLONG timestamp;
     HRESULT status, hr;
+    PROPVARIANT value;
+    DWORD index;
 
     TRACE("%p, %p.\n", iface, result);
 
@@ -803,12 +837,14 @@ static HRESULT WINAPI sink_writer_events_callback_Invoke(IMFAsyncCallback *iface
 
     TRACE("Got event %lu.\n", event_type);
 
+    PropVariantInit(&value);
+
     EnterCriticalSection(&writer->cs);
 
     if (writer->status == S_OK && FAILED(status))
         writer->status = status;
 
-    if (writer->status == S_OK && (stream = sink_writer_get_stream_for_stream_sink(writer, stream_sink)))
+    if (writer->status == S_OK && (stream = sink_writer_get_stream_for_stream_sink(writer, stream_sink, &index)))
     {
         switch (event_type)
         {
@@ -824,12 +860,25 @@ static HRESULT WINAPI sink_writer_events_callback_Invoke(IMFAsyncCallback *iface
                 sink_writer_process_sample(writer, stream);
 
                 break;
+
+            case MEStreamSinkMarker:
+                if (FAILED(hr = IMFMediaEvent_GetValue(event, &value))) break;
+                if (value.vt != VT_UNKNOWN || !(context = unsafe_impl_from_marker_context_IUnknown(value.punkVal))) break;
+
+                /* This relies on the fact that default marker type is only used for PlaceMarker(). */
+                if (context->marker_type == MFSTREAMSINK_MARKER_DEFAULT)
+                    IMFSinkWriterCallback_OnMarker(writer->callback, index, context->user_context);
+
+                break;
+
             default:
                 ;
         }
     }
 
     LeaveCriticalSection(&writer->cs);
+
+    PropVariantClear(&value);
 
     IMFMediaEvent_Release(event);
 
