@@ -3222,9 +3222,15 @@ NTSTATUS WINAPI wow64_NtUserSendInput( UINT *args )
     INPUT *inputs = NULL;
     unsigned int i;
 
-    if (size != sizeof(*inputs32))
+    if (size != sizeof(*inputs32) || !count)
     {
         set_last_error32( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!inputs32)
+    {
+        set_last_error32( ERROR_NOACCESS );
         return 0;
     }
 
