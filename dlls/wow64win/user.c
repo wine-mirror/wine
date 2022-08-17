@@ -824,22 +824,19 @@ static NTSTATUS WINAPI wow64_NtUserDrawText( void *arg, ULONG size )
     struct draw_text_params *params = arg;
     struct draw_text_params32 *params32;
     RECT *rect_ptr = params->ret_rect;
-    ULONG ret_len, len;
+    ULONG ret_len;
     void *ret_ptr;
     NTSTATUS ret;
 
-    len = (size - FIELD_OFFSET( struct draw_text_params, str )) / sizeof(WCHAR);
-    if (!(params32 = Wow64AllocateTemp( FIELD_OFFSET( struct draw_text_params32, str[len] ))))
-        return 0;
-
-    params32->hdc = HandleToUlong( params->hdc );
-    params32->count = params->count;
-    params32->rect = params->rect;
-    params32->ret_rect = 0;
+    params32 = (struct draw_text_params32 *)(params + 1) - 1;
     params32->flags = params->flags;
-    if (len) memcpy( params32->str, params->str, len * sizeof(WCHAR) );
+    params32->ret_rect = 0;
+    params32->rect = params->rect;
+    params32->count = params->count;
+    params32->hdc = HandleToUlong( params->hdc );
 
-    ret = Wow64KiUserCallbackDispatcher( NtUserDrawText, params, size, &ret_ptr, &ret_len );
+    ret = Wow64KiUserCallbackDispatcher( NtUserDrawText, params32,
+                                         size - sizeof(*params) + sizeof(*params32), &ret_ptr, &ret_len );
     if (ret_len == sizeof(RECT) && rect_ptr)
     {
         *rect_ptr = *(const RECT *)ret_ptr;
