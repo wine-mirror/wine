@@ -3936,6 +3936,7 @@ NTSTATUS WINAPI wow64_NtUserTrackMouseEvent( UINT *args )
         DWORD  dwHoverTime;
     } *info32 = get_ptr( &args );
     TRACKMOUSEEVENT info;
+    BOOL ret;
 
     if (info32->cbSize != sizeof(*info32))
     {
@@ -3947,7 +3948,11 @@ NTSTATUS WINAPI wow64_NtUserTrackMouseEvent( UINT *args )
     info.dwFlags     = info32->dwFlags;
     info.hwndTrack   = UlongToHandle( info32->hwndTrack );
     info.dwHoverTime = info32->dwHoverTime;
-    return NtUserTrackMouseEvent( &info );
+    ret = NtUserTrackMouseEvent( &info );
+    info32->dwFlags     = info.dwFlags;
+    info32->hwndTrack   = HandleToUlong( info.hwndTrack );
+    info32->dwHoverTime = info.dwHoverTime;
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserTrackPopupMenuEx( UINT *args )
