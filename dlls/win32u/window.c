@@ -1309,17 +1309,6 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
     case GWLP_HINSTANCE:
     case GWLP_USERDATA:
         break;
-    case DWLP_DLGPROC:
-        if ((win->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) &&
-            (size == sizeof(LONG_PTR)) && win->dlgInfo)
-        {
-            WNDPROC *ptr = (WNDPROC *)((char *)win->wExtra + DWLP_DLGPROC);
-            retval = (ULONG_PTR)get_winproc( *ptr, ansi );
-            *ptr = alloc_winproc( (WNDPROC)newval, ansi );
-            release_win_ptr( win );
-            return retval;
-        }
-        /* fall through */
     default:
         if (offset < 0 || offset > (int)(win->cbWndExtra - size))
         {

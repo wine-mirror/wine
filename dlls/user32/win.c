@@ -637,6 +637,18 @@ static LONG_PTR get_window_long_ptr( HWND hwnd, int offset, LONG_PTR ret, BOOL a
 }
 
 
+static LONG_PTR set_dialog_proc( HWND hwnd, LONG_PTR newval, BOOL ansi )
+{
+    DLGPROC proc;
+    LONG_PTR ret;
+    newval = NtUserCallTwoParam( newval, ansi, NtUserAllocWinProc );
+    ret = NtUserSetWindowLong( hwnd, DWLP_DLGPROC, newval, ansi );
+    proc = NtUserGetDialogProc( (DLGPROC)ret, ansi );
+    if (proc) ret = (UINT_PTR)proc;
+    return ret;
+}
+
+
 /***********************************************************************
  *              GetDpiForWindow   (USER32.@)
  */
@@ -723,6 +735,10 @@ LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongA( HWND hwnd, INT offset, LONG newval
         WARN( "Invalid offset %d\n", offset );
         SetLastError( ERROR_INVALID_INDEX );
         return 0;
+#else
+    case DWLP_DLGPROC:
+        if (NtUserGetDialogInfo( hwnd )) return set_dialog_proc( hwnd, newval, TRUE );
+        /* fall through */
 #endif
     default:
         return NtUserSetWindowLong( hwnd, offset, newval, TRUE );
@@ -811,6 +827,10 @@ LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongW(
         WARN("Invalid offset %d\n", offset );
         SetLastError( ERROR_INVALID_INDEX );
         return 0;
+#else
+    case DWLP_DLGPROC:
+        if (NtUserGetDialogInfo( hwnd )) return set_dialog_proc( hwnd, newval, FALSE );
+        /* fall through */
 #endif
     default:
         return NtUserSetWindowLong( hwnd, offset, newval, FALSE );
@@ -1450,6 +1470,9 @@ LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
  */
 LONG_PTR WINAPI SetWindowLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
 {
+    if (offset == DWLP_DLGPROC && NtUserGetDialogInfo( hwnd ))
+        return set_dialog_proc( hwnd, newval, FALSE );
+
     return NtUserSetWindowLongPtr( hwnd, offset, newval, FALSE );
 }
 
@@ -1458,6 +1481,9 @@ LONG_PTR WINAPI SetWindowLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
  */
 LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 {
+    if (offset == DWLP_DLGPROC && NtUserGetDialogInfo( hwnd ))
+        return set_dialog_proc( hwnd, newval, TRUE );
+
     return NtUserSetWindowLongPtr( hwnd, offset, newval, TRUE );
 }
 
