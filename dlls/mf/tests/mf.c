@@ -1792,7 +1792,13 @@ static const struct test_stream_sink test_stream_sink = {.IMFStreamSink_iface.lp
 struct test_callback
 {
     IMFAsyncCallback IMFAsyncCallback_iface;
+    LONG refcount;
 };
+
+static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_callback, IMFAsyncCallback_iface);
+}
 
 static HRESULT WINAPI testcallback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
 {
@@ -1810,12 +1816,21 @@ static HRESULT WINAPI testcallback_QueryInterface(IMFAsyncCallback *iface, REFII
 
 static ULONG WINAPI testcallback_AddRef(IMFAsyncCallback *iface)
 {
-    return 2;
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    return InterlockedIncrement(&callback->refcount);
 }
 
 static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
 {
-    return 1;
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    ULONG refcount = InterlockedDecrement(&callback->refcount);
+
+    if (!refcount)
+    {
+        free(callback);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
@@ -1840,20 +1855,35 @@ static const IMFAsyncCallbackVtbl testcallbackvtbl =
     testcallback_Invoke,
 };
 
-static void init_test_callback(struct test_callback *callback)
+static IMFAsyncCallback *create_test_callback(void)
 {
+    struct test_callback *callback;
+
+    if (!(callback = calloc(1, sizeof(*callback))))
+        return NULL;
+
+    callback->refcount = 1;
     callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
+
+    return &callback->IMFAsyncCallback_iface;
 }
 
-static void test_session_events(IMFMediaSession *session)
+static void test_media_session_events(void)
 {
-    struct test_callback callback, callback2;
+    IMFAsyncCallback *callback, *callback2;
+    IMFMediaSession *session;
     IMFAsyncResult *result;
     IMFMediaEvent *event;
     HRESULT hr;
 
-    init_test_callback(&callback);
-    init_test_callback(&callback2);
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
+
+    callback = create_test_callback();
+    callback2 = create_test_callback();
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#lx.\n", hr);
 
     hr = IMFMediaSession_GetEvent(session, MF_EVENT_FLAG_NO_WAIT, &event);
     ok(hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#lx.\n", hr);
@@ -1862,26 +1892,31 @@ static void test_session_events(IMFMediaSession *session)
     hr = IMFMediaSession_BeginGetEvent(session, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, (IUnknown *)session);
+    hr = IMFMediaSession_BeginGetEvent(session, callback, (IUnknown *)session);
     ok(hr == S_OK, "Failed to Begin*, hr %#lx.\n", hr);
+    EXPECT_REF(callback, 2);
 
     /* Same callback, same state. */
-    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, (IUnknown *)session);
+    hr = IMFMediaSession_BeginGetEvent(session, callback, (IUnknown *)session);
     ok(hr == MF_S_MULTIPLE_BEGIN, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(callback, 2);
 
     /* Same callback, different state. */
-    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
+    hr = IMFMediaSession_BeginGetEvent(session, callback, (IUnknown *)callback);
     ok(hr == MF_E_MULTIPLE_BEGIN, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(callback, 2);
 
     /* Different callback, same state. */
-    hr = IMFMediaSession_BeginGetEvent(session, &callback2.IMFAsyncCallback_iface, (IUnknown *)session);
+    hr = IMFMediaSession_BeginGetEvent(session, callback2, (IUnknown *)session);
     ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(callback2, 1);
 
     /* Different callback, different state. */
-    hr = IMFMediaSession_BeginGetEvent(session, &callback2.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
+    hr = IMFMediaSession_BeginGetEvent(session, callback2, (IUnknown *)callback);
     ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(callback, 2);
 
-    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    hr = MFCreateAsyncResult(NULL, callback, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
 
     hr = IMFMediaSession_EndGetEvent(session, result, &event);
@@ -1890,6 +1925,17 @@ static void test_session_events(IMFMediaSession *session)
     /* Shutdown behavior. */
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+    IMFMediaSession_Release(session);
+
+    /* Shutdown leaks callback */
+    EXPECT_REF(callback, 2);
+    EXPECT_REF(callback2, 1);
+
+    IMFAsyncCallback_Release(callback);
+    IMFAsyncCallback_Release(callback2);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
 static void test_media_session(void)
@@ -1903,8 +1949,8 @@ static void test_media_session(void)
     PROPVARIANT propvar;
     IMFGetService *gs;
     IMFClock *clock;
-    DWORD caps;
     HRESULT hr;
+    DWORD caps;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
@@ -2007,17 +2053,6 @@ static void test_media_session(void)
     IMFMediaSession_Release(session);
 
     IMFAttributes_Release(attributes);
-
-    /* Basic events behavior. */
-    hr = MFCreateMediaSession(NULL, &session);
-    ok(hr == S_OK, "Failed to create media session, hr %#lx.\n", hr);
-
-    test_session_events(session);
-
-    IMFMediaSession_Release(session);
-
-    hr = MFShutdown();
-    ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
 }
 
 static void test_media_session_rate_control(void)
@@ -9795,6 +9830,7 @@ START_TEST(mf)
     test_MFGetService();
     test_sequencer_source();
     test_media_session();
+    test_media_session_events();
     test_media_session_rate_control();
     test_MFShutdownObject();
     test_presentation_clock();
