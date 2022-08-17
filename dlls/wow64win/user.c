@@ -2091,12 +2091,13 @@ NTSTATUS WINAPI wow64_NtUserGetMenuBarInfo( UINT *args )
     }
 
     info.cbSize = sizeof(info);
-    info.rcBar = info32->rcBar;
-    info.hMenu = UlongToHandle( info32->hMenu );
-    info.hwndMenu = UlongToHandle( info32->hwndMenu );
-    info.fBarFocused = info32->fBarFocused;
-    info.fFocused = info32->fFocused;
-    return NtUserGetMenuBarInfo( hwnd, id, item, &info );
+    if (!NtUserGetMenuBarInfo( hwnd, id, item, &info )) return FALSE;
+    info32->rcBar       = info.rcBar;
+    info32->hMenu       = HandleToUlong( info.hMenu );
+    info32->hwndMenu    = HandleToUlong( info.hwndMenu );
+    info32->fBarFocused = info.fBarFocused;
+    info32->fFocused    = info.fFocused;
+    return TRUE;
 }
 
 NTSTATUS WINAPI wow64_NtUserGetMenuItemRect( UINT *args )
@@ -2136,7 +2137,7 @@ NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
 
     if (size != sizeof(MOUSEMOVEPOINT32) || count < 0 || count > ARRAYSIZE( ptin ))
     {
-        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        set_last_error32( ERROR_INVALID_PARAMETER );
         return -1;
     }
 
