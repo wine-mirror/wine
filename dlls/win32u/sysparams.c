@@ -429,16 +429,20 @@ static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *m
 {
     WCHAR bufferW[MAX_PATH];
     char buffer[MAX_PATH];
+    BOOL ret = TRUE;
     HKEY hkey;
-    BOOL ret;
 
     sprintf( buffer, "Modes\\%08X", index );
+    reg_delete_tree( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR) );
     if (!(hkey = reg_create_key( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR),
                                  REG_OPTION_VOLATILE, NULL )))
         return FALSE;
 
-#define set_mode_field( name, field, flag ) \
-    if (!(ret = set_reg_value( hkey, (name), REG_DWORD, &mode->field, sizeof(mode->field) ))) goto done;
+#define set_mode_field( name, field, flag )                                                      \
+    if ((mode->dmFields & (flag)) &&                                                             \
+        !(ret = set_reg_value( hkey, (name), REG_DWORD, &mode->field,                            \
+                               sizeof(mode->field) )))                                           \
+        goto done
 
     set_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
     set_mode_field( x_resolutionW, dmPelsWidth, DM_PELSWIDTH );
@@ -467,7 +471,6 @@ static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
     WCHAR bufferW[MAX_PATH];
     char buffer[MAX_PATH];
     HKEY hkey;
-    BOOL ret;
 
     sprintf( buffer, "Modes\\%08X", index );
     if (!(hkey = reg_open_key( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR) )))
@@ -476,11 +479,12 @@ static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
 #define query_mode_field( name, field, flag )                                                      \
     do                                                                                             \
     {                                                                                              \
-        ret = query_reg_value( hkey, (name), value, sizeof(value_buf) ) &&                         \
-              value->Type == REG_DWORD;                                                            \
-        if (!ret) goto done;                                                                       \
-        mode->field = *(const DWORD *)value->Data;                                                 \
-        mode->dmFields |= (flag);                                                                  \
+        if (query_reg_value( hkey, (name), value, sizeof(value_buf) ) &&                           \
+            value->Type == REG_DWORD)                                                              \
+        {                                                                                          \
+            mode->field = *(const DWORD *)value->Data;                                             \
+            mode->dmFields |= (flag);                                                              \
+        }                                                                                          \
     } while (0)
 
     query_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
@@ -488,17 +492,16 @@ static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
     query_mode_field( y_resolutionW, dmPelsHeight, DM_PELSHEIGHT );
     query_mode_field( v_refreshW, dmDisplayFrequency, DM_DISPLAYFREQUENCY );
     query_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
+    query_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
+    query_mode_field( fixed_outputW, dmDisplayFixedOutput, DM_DISPLAYFIXEDOUTPUT );
     if (index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS)
     {
         query_mode_field( x_panningW, dmPosition.x, DM_POSITION );
         query_mode_field( y_panningW, dmPosition.y, DM_POSITION );
     }
-    query_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
-    query_mode_field( fixed_outputW, dmDisplayFixedOutput, 0 );
 
 #undef query_mode_field
 
-done:
     NtClose( hkey );
     return TRUE;
 }
