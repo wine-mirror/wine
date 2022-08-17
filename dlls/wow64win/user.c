@@ -1981,8 +1981,16 @@ NTSTATUS WINAPI wow64_NtUserGetIconInfo( UINT *args )
     info32->yHotspot = info.yHotspot;
     info32->hbmMask  = HandleToUlong( info.hbmMask );
     info32->hbmColor = HandleToUlong( info.hbmColor );
-    if (module32) module32->Length = module.Length;
-    if (res_name32) res_name32->Length = res_name.Length;
+    if (module32)
+    {
+        module32->Buffer = PtrToUlong( module.Buffer );
+        module32->Length = module.Length;
+    }
+    if (res_name32)
+    {
+        res_name32->Buffer = PtrToUlong( res_name.Buffer );
+        res_name32->Length = res_name.Length;
+    }
     return TRUE;
 }
 
