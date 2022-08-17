@@ -332,7 +332,7 @@ static MSG *msg_32to64( MSG *msg, const MSG32 *msg32 )
 {
     if (!msg32) return NULL;
 
-    msg->hwnd    = UlongToHandle( msg32->hwnd );
+    msg->hwnd    = LongToHandle( msg32->hwnd );
     msg->message = msg32->message;
     msg->wParam  = msg32->wParam;
     msg->lParam  = msg32->lParam;
@@ -1216,7 +1216,7 @@ NTSTATUS WINAPI wow64_NtUserCallHwndParam( UINT *args )
             } *params32 = UlongToPtr( param );
             struct map_window_points_params params;
 
-            params.hwnd_to = UlongToHandle( params32->hwnd_to );
+            params.hwnd_to = LongToHandle( params32->hwnd_to );
             params.points = UlongToPtr( params32->points );
             params.count = params32->count;
             return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
@@ -1701,7 +1701,7 @@ NTSTATUS WINAPI wow64_NtUserFlashWindowEx( UINT *args )
     }
 
     info.cbSize = sizeof(info);
-    info.hwnd = UlongToHandle( info32->hwnd );
+    info.hwnd = LongToHandle( info32->hwnd );
     info.dwFlags = info32->dwFlags;
     info.uCount = info32->uCount;
     info.dwTimeout = info32->dwTimeout;
@@ -2399,13 +2399,13 @@ NTSTATUS WINAPI wow64_NtUserRegisterClassExWOW( UINT *args )
     wc.lpfnWndProc = UlongToPtr( wc32->lpfnWndProc );
     wc.cbClsExtra = wc32->cbClsExtra;
     wc.cbWndExtra = wc32->cbWndExtra;
-    wc.hInstance = UlongToHandle( wc32->hInstance );
-    wc.hIcon = UlongToHandle( wc32->hIcon );
-    wc.hCursor = UlongToHandle( wc32->hCursor );
+    wc.hInstance = UlongToPtr( wc32->hInstance );
+    wc.hIcon = LongToHandle( wc32->hIcon );
+    wc.hCursor = LongToHandle( wc32->hCursor );
     wc.hbrBackground = UlongToHandle( wc32->hbrBackground );
     wc.lpszMenuName = UlongToPtr( wc32->lpszMenuName );
     wc.lpszClassName = UlongToPtr( wc32->lpszClassName );
-    wc.hIconSm = UlongToHandle( wc32->hIconSm );
+    wc.hIconSm = LongToHandle( wc32->hIconSm );
 
     return NtUserRegisterClassExWOW( &wc,
                                      unicode_str_32to64( &name, name32 ),
@@ -3022,7 +3022,7 @@ NTSTATUS WINAPI wow64_NtUserMsgWaitForMultipleObjectsEx( UINT *args )
         set_last_error32( ERROR_INVALID_PARAMETER );
         return WAIT_FAILED;
     }
-    for (i = 0; i < count; i++) handles[i] = UlongToHandle( handles32[i] );
+    for (i = 0; i < count; i++) handles[i] = LongToHandle( handles32[i] );
 
     return NtUserMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
 }
@@ -3855,7 +3855,7 @@ NTSTATUS WINAPI wow64_NtUserThunkedMenuItemInfo( UINT *args )
             info.fType = info32->fType;
             info.fState = info32->fState;
             info.wID = info32->wID;
-            info.hSubMenu = UlongToHandle( info32->hSubMenu );
+            info.hSubMenu = LongToHandle( info32->hSubMenu );
             info.hbmpChecked = UlongToHandle( info32->hbmpChecked );
             info.hbmpUnchecked = UlongToHandle( info32->hbmpUnchecked );
             info.dwItemData = info32->dwItemData;
@@ -3943,7 +3943,7 @@ NTSTATUS WINAPI wow64_NtUserTrackMouseEvent( UINT *args )
 
     info.cbSize      = sizeof(info);
     info.dwFlags     = info32->dwFlags;
-    info.hwndTrack   = UlongToHandle( info32->hwndTrack );
+    info.hwndTrack   = LongToHandle( info32->hwndTrack );
     info.dwHoverTime = info32->dwHoverTime;
     ret = NtUserTrackMouseEvent( &info );
     info32->dwFlags     = info.dwFlags;
