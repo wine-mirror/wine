@@ -243,8 +243,20 @@ static void test_wshshell(void)
     ok(retval == 10, "Unexpected retval %d.\n", retval);
     SysFreeString(str);
 
+    V_VT(&arg) = VT_ERROR;
+    V_ERROR(&arg) = DISP_E_PARAMNOTFOUND;
     V_VT(&arg2) = VT_BOOL;
     V_BOOL(&arg2) = VARIANT_TRUE;
+
+    retval = 0xdeadbeef;
+    str = SysAllocString(L"cmd.exe /c rd /s /q c:\\nosuchdir");
+    hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "Unexpected retval %d.\n", retval);
+    SysFreeString(str);
+
+    V_VT(&arg) = VT_I2;
+    V_I2(&arg) = 0;
 
     retval = 0xdeadbeef;
     str = SysAllocString(L"cmd.exe /c rd /s /q c:\\nosuchdir");
