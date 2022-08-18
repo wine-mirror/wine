@@ -1845,8 +1845,6 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     if (instance->wCollectionNumber == effect_update->axes_coll)
     {
         SET_REPORT_ID( effect_update );
-        caps->physical_min = 0;
-        caps->physical_max = 36000;
         if (effect_update->axis_count >= 6) FIXME( "more than 6 PID axes detected\n" );
         else effect_update->axis_caps[effect_update->axis_count] = caps;
         effect_update->axis_count++;
