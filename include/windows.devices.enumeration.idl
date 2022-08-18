@@ -28,6 +28,8 @@ import "windows.storage.streams.idl";
 import "windows.foundation.idl";
 
 namespace Windows.Devices.Enumeration {
+    typedef enum DeviceClass DeviceClass;
+    typedef enum DeviceInformationKind DeviceInformationKind;
     typedef enum DeviceWatcherStatus DeviceWatcherStatus;
     typedef enum Panel Panel;
 
@@ -38,6 +40,7 @@ namespace Windows.Devices.Enumeration {
     interface IEnclosureLocation;
 
     runtimeclass DeviceInformation;
+    runtimeclass DeviceInformationCollection;
     runtimeclass DeviceInformationUpdate;
     runtimeclass DeviceThumbnail;
     runtimeclass DeviceWatcher;
@@ -45,10 +48,15 @@ namespace Windows.Devices.Enumeration {
 
     declare
     {
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Enumeration.DeviceInformation *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Devices.Enumeration.DeviceInformation *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Devices.Enumeration.DeviceInformation *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.DeviceInformation *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.DeviceInformationCollection *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.DeviceThumbnail *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformation *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformationCollection *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceThumbnail *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, Windows.Devices.Enumeration.DeviceInformation *>;
@@ -57,6 +65,35 @@ namespace Windows.Devices.Enumeration {
 }
 
 namespace Windows.Devices.Enumeration {
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum DeviceClass
+    {
+        All                   = 0,
+        AudioCapture          = 1,
+        AudioRender           = 2,
+        PortableStorageDevice = 3,
+        VideoCapture          = 4,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        ImageScanner          = 5,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Location              = 6,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum DeviceInformationKind
+    {
+        Unknown                      = 0,
+        DeviceInterface              = 1,
+        DeviceContainer              = 2,
+        Device                       = 3,
+        DeviceInterfaceClass         = 4,
+        AssociationEndpoint          = 5,
+        AssociationEndpointContainer = 6,
+        AssociationEndpointService   = 7,
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)]
+        DevicePanel                  = 8,
+    };
+
     enum DeviceWatcherStatus
     {
         Created              = 0,
@@ -144,6 +181,31 @@ namespace Windows.Devices.Enumeration {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Enumeration.DeviceInformation),
+        uuid(493b4f34-a84f-45fd-9167-15d1cb1bd1f9)
+    ]
+    interface IDeviceInformationStatics2 : IInspectable
+    {
+        HRESULT GetAqsFilterFromDeviceClass([in] Windows.Devices.Enumeration.DeviceClass device_class, [out, retval] HSTRING *filter);
+        [overload("CreateFromIdAsync")]
+        HRESULT CreateFromIdAsyncWithKindAndAdditionalProperties([in] HSTRING device_id,
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *additional_properties,
+                [in] Windows.Devices.Enumeration.DeviceInformationKind kind,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformation *> **async_operation);
+        [overload("FindAllAsync")]
+        HRESULT FindAllAsyncWithKindAqsFilterAndAdditionalProperties([in] HSTRING filter,
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *additional_properties,
+                [in] Windows.Devices.Enumeration.DeviceInformationKind kind,
+                [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformationCollection *> **async_operation);
+        [overload("CreateWatcher")]
+        HRESULT CreateWatcherWithKindAqsFilterAndAdditionalProperties([in] HSTRING filter,
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *additional_properties,
+                [in] Windows.Devices.Enumeration.DeviceInformationKind kind,
+                [out, retval] Windows.Devices.Enumeration.DeviceWatcher **watcher);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Devices.Enumeration.IDeviceInformationStatics, Windows.Foundation.UniversalApiContract, 1.0),
         static(Windows.Devices.Enumeration.IDeviceInformationStatics2, Windows.Foundation.UniversalApiContract, 1.0),
@@ -153,6 +215,16 @@ namespace Windows.Devices.Enumeration {
     {
         [default] interface Windows.Devices.Enumeration.IDeviceInformation;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Enumeration.IDeviceInformation2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+    ]
+    runtimeclass DeviceInformationCollection
+    {
+        [default] interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Enumeration.DeviceInformation *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Devices.Enumeration.DeviceInformation *>;
     }
 
     [
