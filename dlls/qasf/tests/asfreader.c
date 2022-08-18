@@ -606,6 +606,382 @@ static void test_filter_state(void)
     ok(!ref, "Got ref %ld.\n", ref);
 }
 
+struct test_sink
+{
+    struct strmbase_sink sink;
+
+    DWORD receive_tid;
+    HANDLE receive_event;
+    BOOL receive_can_block;
+    IMemAllocator *allocator;
+};
+
+static inline struct test_sink *impl_from_IMemInputPin(IMemInputPin *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_sink, sink.IMemInputPin_iface);
+}
+
+static HRESULT WINAPI test_mem_input_pin_QueryInterface(IMemInputPin *iface, REFIID iid, void **out)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+    return IPin_QueryInterface(&pin->sink.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI test_mem_input_pin_AddRef(IMemInputPin *iface)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+    return IPin_AddRef(&pin->sink.pin.IPin_iface);
+}
+
+static ULONG WINAPI test_mem_input_pin_Release(IMemInputPin *iface)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+    return IPin_Release(&pin->sink.pin.IPin_iface);
+}
+
+static HRESULT WINAPI test_mem_input_pin_GetAllocator(IMemInputPin *iface,
+        IMemAllocator **allocator)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+    if (!pin->allocator)
+        return VFW_E_NO_ALLOCATOR;
+    IMemAllocator_AddRef((*allocator = pin->allocator));
+    return S_OK;
+}
+
+static HRESULT WINAPI test_mem_input_pin_NotifyAllocator(IMemInputPin *iface,
+        IMemAllocator *allocator, BOOL read_only)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+    IMemAllocator_AddRef((pin->allocator = allocator));
+    return S_OK;
+}
+
+static HRESULT WINAPI test_mem_input_pin_GetAllocatorRequirements(IMemInputPin *iface,
+        ALLOCATOR_PROPERTIES *props)
+{
+    memset(props, 0, sizeof(*props));
+    return S_OK;
+}
+
+static HRESULT WINAPI test_mem_input_pin_Receive(IMemInputPin *iface,
+        IMediaSample *sample)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+
+    pin->receive_tid = GetCurrentThreadId();
+    SetEvent(pin->receive_event);
+
+    todo_wine
+    ok(0, "Unexpected call.\n");
+
+    return S_OK;
+}
+
+static HRESULT WINAPI test_mem_input_pin_ReceiveMultiple(IMemInputPin *iface,
+        IMediaSample **samples, LONG count, LONG *processed)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+
+    pin->receive_tid = GetCurrentThreadId();
+    SetEvent(pin->receive_event);
+
+    *processed = count;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_mem_input_pin_ReceiveCanBlock(IMemInputPin *iface)
+{
+    struct test_sink *pin = impl_from_IMemInputPin(iface);
+    return pin->receive_can_block ? S_OK : S_FALSE;
+}
+
+static const IMemInputPinVtbl test_mem_input_pin_vtbl =
+{
+    test_mem_input_pin_QueryInterface,
+    test_mem_input_pin_AddRef,
+    test_mem_input_pin_Release,
+    test_mem_input_pin_GetAllocator,
+    test_mem_input_pin_NotifyAllocator,
+    test_mem_input_pin_GetAllocatorRequirements,
+    test_mem_input_pin_Receive,
+    test_mem_input_pin_ReceiveMultiple,
+    test_mem_input_pin_ReceiveCanBlock,
+};
+
+struct test_filter
+{
+    struct strmbase_filter filter;
+    struct test_sink video;
+    struct test_sink audio;
+};
+
+static inline struct test_filter *impl_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_filter, filter);
+}
+
+static inline struct strmbase_sink *impl_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct strmbase_sink, pin);
+}
+
+static struct strmbase_pin *test_filter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct test_filter *filter = impl_from_strmbase_filter(iface);
+    if (index == 0)
+        return &filter->video.sink.pin;
+    if (index == 1)
+        return &filter->audio.sink.pin;
+    return NULL;
+}
+
+static void test_filter_destroy(struct strmbase_filter *iface)
+{
+    struct test_filter *filter = impl_from_strmbase_filter(iface);
+    strmbase_sink_cleanup(&filter->audio.sink);
+    strmbase_sink_cleanup(&filter->video.sink);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops test_filter_ops =
+{
+    .filter_get_pin = test_filter_get_pin,
+    .filter_destroy = test_filter_destroy,
+};
+
+static HRESULT test_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct strmbase_sink *sink = impl_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &sink->IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static const struct strmbase_sink_ops test_sink_ops =
+{
+    .base.pin_query_interface = test_sink_query_interface,
+};
+
+static void test_filter_init(struct test_filter *filter)
+{
+    static const GUID clsid = {0xabacab};
+    memset(filter, 0, sizeof(*filter));
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &test_filter_ops);
+    strmbase_sink_init(&filter->video.sink, &filter->filter, L"Video", &test_sink_ops, NULL);
+    filter->video.sink.IMemInputPin_iface.lpVtbl = &test_mem_input_pin_vtbl;
+    strmbase_sink_init(&filter->audio.sink, &filter->filter, L"Audio", &test_sink_ops, NULL);
+    filter->audio.sink.IMemInputPin_iface.lpVtbl = &test_mem_input_pin_vtbl;
+}
+
+static void test_threading(BOOL receive_can_block)
+{
+    static const WAVEFORMATEX pcm_format =
+    {
+        .wFormatTag = WAVE_FORMAT_MSAUDIO1,
+        .nChannels = 1,
+        .nSamplesPerSec = 44100,
+        .nBlockAlign = 2,
+        .nAvgBytesPerSec = 88200,
+        .wBitsPerSample = 16,
+        .cbSize = 0,
+    };
+    static const VIDEOINFOHEADER nv12_info =
+    {
+        .rcSource = {0, 0, 64, 48},
+        .rcTarget = {0, 0, 64, 48},
+        .bmiHeader =
+        {
+            .biSize = sizeof(BITMAPINFOHEADER),
+            .biWidth = 64,
+            .biHeight = 48,
+            .biPlanes = 1,
+            .biBitCount = 12,
+            .biCompression = MAKEFOURCC('N','V','1','2'),
+            .biSizeImage = 64 * 48 * 3 / 2,
+        },
+    };
+    static const MSAUDIO1WAVEFORMAT msaudio1_format =
+    {
+        .wfx.wFormatTag = WAVE_FORMAT_MSAUDIO1,
+        .wfx.nChannels = 1,
+        .wfx.nSamplesPerSec = 44100,
+        .wfx.nBlockAlign = 743,
+        .wfx.nAvgBytesPerSec = 16000,
+        .wfx.wBitsPerSample = 16,
+        .wfx.cbSize = sizeof(MSAUDIO1WAVEFORMAT) - sizeof(WAVEFORMATEX),
+        .wEncodeOptions = 1,
+    };
+    static const VIDEOINFOHEADER2 wmv1_info2 =
+    {
+        .rcSource = {0, 0, 64, 48},
+        .rcTarget = {0, 0, 64, 48},
+        .dwBitRate = 189464,
+        .dwPictAspectRatioX = 64,
+        .dwPictAspectRatioY = 48,
+        .bmiHeader =
+        {
+            .biSize = sizeof(BITMAPINFOHEADER),
+            .biWidth = 64,
+            .biHeight = 48,
+            .biPlanes = 1,
+            .biBitCount = 24,
+            .biCompression = MAKEFOURCC('W','M','V','1'),
+            .biSizeImage = 64 * 48 * 3,
+        },
+    };
+    AM_MEDIA_TYPE audio_mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = MEDIASUBTYPE_MSAUDIO1,
+        .bFixedSizeSamples = TRUE,
+        .lSampleSize = 743,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(MSAUDIO1WAVEFORMAT),
+        .pbFormat = (BYTE *)&msaudio1_format,
+    };
+    AM_MEDIA_TYPE video_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = WMMEDIASUBTYPE_WMV1,
+        .formattype = FORMAT_VideoInfo2,
+        .bTemporalCompression = TRUE,
+        .cbFormat = sizeof(VIDEOINFOHEADER2),
+        .pbFormat = (BYTE *)&wmv1_info2,
+    };
+    AM_MEDIA_TYPE wine_audio_mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = MEDIASUBTYPE_PCM,
+        .bFixedSizeSamples = TRUE,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(WAVEFORMATEX),
+        .pbFormat = (BYTE *)&pcm_format,
+    };
+    AM_MEDIA_TYPE wine_video_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_NV12,
+        .formattype = FORMAT_VideoInfo,
+        .bTemporalCompression = TRUE,
+        .cbFormat = sizeof(VIDEOINFOHEADER),
+        .pbFormat = (BYTE *)&nv12_info,
+    };
+
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IBaseFilter *filter = create_asf_reader();
+    IFileSourceFilter *file_source;
+    struct test_filter test_sink;
+    IFilterGraph *graph;
+    FILTER_STATE state;
+    HRESULT hr;
+    IPin *pin;
+    DWORD ret;
+    ULONG ref;
+
+    winetest_push_context("blocking %u", !!receive_can_block);
+
+    test_filter_init(&test_sink);
+
+    test_sink.video.receive_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!test_sink.video.receive_event, "CreateEventW failed, error %lu\n", GetLastError());
+    test_sink.audio.receive_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!test_sink.audio.receive_event, "CreateEventW failed, error %lu\n", GetLastError());
+
+    test_sink.video.receive_can_block = receive_can_block;
+    test_sink.audio.receive_can_block = receive_can_block;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&file_source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFileSourceFilter_Load(file_source, filename, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IFileSourceFilter_Release(file_source);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph_AddFilter(graph, filter, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IFilterGraph_Release(graph);
+
+    hr = IBaseFilter_FindPin(filter, L"Raw Video 0", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_Connect(pin, &test_sink.video.sink.pin.IPin_iface, &video_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+    {
+        hr = IPin_Connect(pin, &test_sink.video.sink.pin.IPin_iface, &wine_video_mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, L"Raw Audio 1", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_Connect(pin, &test_sink.audio.sink.pin.IPin_iface, &audio_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+    {
+        hr = IPin_Connect(pin, &test_sink.audio.sink.pin.IPin_iface, &wine_audio_mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+    IPin_Release(pin);
+
+    hr = IBaseFilter_Run(filter, GetTickCount() * 10000);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %#x.\n", state);
+
+    ret = WaitForSingleObject(test_sink.video.receive_event, 500);
+    ok(!ret, "Wait timed out.\n");
+    ret = WaitForSingleObject(test_sink.audio.receive_event, 500);
+    ok(!ret, "Wait timed out.\n");
+
+    ok(test_sink.video.receive_tid != GetCurrentThreadId(), "got wrong thread\n");
+    ok(test_sink.audio.receive_tid != GetCurrentThreadId(), "got wrong thread\n");
+    if (receive_can_block)
+    {
+        todo_wine
+        ok(test_sink.audio.receive_tid != test_sink.video.receive_tid, "got wrong thread\n");
+    }
+    else
+        ok(test_sink.audio.receive_tid == test_sink.video.receive_tid, "got wrong thread\n");
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+
+    hr = IPin_Disconnect(&test_sink.video.sink.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_Disconnect(&test_sink.audio.sink.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got ref %ld.\n", ref);
+
+    if (test_sink.video.allocator)
+        IMemAllocator_Release(test_sink.video.allocator);
+    if (test_sink.audio.allocator)
+        IMemAllocator_Release(test_sink.audio.allocator);
+
+    CloseHandle(test_sink.video.receive_event);
+    CloseHandle(test_sink.audio.receive_event);
+
+    ref = IBaseFilter_Release(&test_sink.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    winetest_pop_context();
+}
+
 START_TEST(asfreader)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -614,6 +990,8 @@ START_TEST(asfreader)
     test_aggregation();
     test_filesourcefilter();
     test_filter_state();
+    test_threading(FALSE);
+    test_threading(TRUE);
 
     CoUninitialize();
 }
