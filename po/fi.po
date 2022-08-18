@@ -1327,10 +1327,8 @@ msgid "Options"
 msgstr "Valinnat"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
-msgstr "Oletukset"
+msgstr "Oletus"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -15825,56 +15823,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:67
-#, fuzzy
-#| msgid ""
-#| "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
-#| "f]\n"
-#| "\n"
-#| "  Adds a key to the registry or adds a new value to a given registry "
-#| "key.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to add or, if either [/v] or [/ve] is specified,\n"
-#| "     the key in which to add the new registry data.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  /v <value_name>\n"
-#| "     The name of the registry value to add.\n"
-#| "\n"
-#| "  /ve\n"
-#| "     Add an unnamed registry value. This option modifies the (Default)\n"
-#| "     registry value.\n"
-#| "\n"
-#| "  /t <type>\n"
-#| "     The type of data to add to the registry. If [/t] is specified,\n"
-#| "     <type> must be one of the following:\n"
-#| "\n"
-#| "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-#| "         REG_DWORD | REG_BINARY   | REG_NONE\n"
-#| "\n"
-#| "     If [/t] is not specified, the default data type is REG_SZ.\n"
-#| "\n"
-#| "  /s <separator>\n"
-#| "     The character used to separate strings in REG_MULTI_SZ data.\n"
-#| "     If [/s] is not specified, the default separator is \\0.\n"
-#| "\n"
-#| "  /d <data>\n"
-#| "     The data to add to the new registry value.\n"
-#| "\n"
-#| "  /f\n"
-#| "     Modify the registry without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
@@ -15954,7 +15902,7 @@ msgstr ""
 "     seuraavista:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"         REG_DWORD | REG_QWORD    | REG_BINARY   | REG_NONE\n"
 "\n"
 "     Jos parametria [/t] ei anneta, datan laji on oletuksena REG_SZ.\n"
 "\n"
@@ -16391,10 +16339,8 @@ msgstr "&DWORD-arvo"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "&DWORD-arvo"
+msgstr "&QWORD-arvo"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -16947,16 +16893,12 @@ msgid "Collapse"
 msgstr "Tiivistä"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Lisää uuden 32-bittisen arvon"
+msgstr "Lisää uuden 64-bittisen arvon"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "Muokkaa DWORD-arvoa"
+msgstr "Muokkaa QWORD-arvoa"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
