@@ -4151,14 +4151,13 @@ static void test_LOGFONT_charset(void)
 
     ret = SystemParametersInfoA(SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, FALSE);
     ok(ret, "SystemParametersInfoW error %lu\n", GetLastError());
-    todo_wine
     ok(lf.lfCharSet == DEFAULT_CHARSET, "got %d\n", lf.lfCharSet);
 
     ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth);
     ret = SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
     ok(ret, "SystemParametersInfoW error %lu\n", GetLastError());
-    todo_wine
     ok(ncm.lfCaptionFont.lfCharSet == DEFAULT_CHARSET, "got %d\n", ncm.lfCaptionFont.lfCharSet);
+    ok(ncm.lfSmCaptionFont.lfCharSet == DEFAULT_CHARSET, "got %d\n", ncm.lfSmCaptionFont.lfCharSet);
 }
 
 START_TEST(sysparams)
