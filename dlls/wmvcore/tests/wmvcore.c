@@ -2283,6 +2283,66 @@ static void wait_eof_callback_(int line, struct callback *callback)
     ok_(__FILE__, line)(callback->eof_count == 1, "Got %u WMT_EOF callbacks.\n", callback->eof_count);
 }
 
+static void check_async_get_output_setting(IWMReaderAdvanced2 *reader, DWORD output, const WCHAR *name,
+        WMT_ATTR_DATATYPE expect_type, DWORD expect_value, HRESULT expect_hr)
+{
+    WMT_ATTR_DATATYPE type;
+    DWORD value;
+    HRESULT hr;
+    WORD size;
+
+    winetest_push_context("%s", debugstr_w(name));
+
+    value = 0;
+    type = expect_type;
+    if (expect_type == WMT_TYPE_BOOL)
+        size = sizeof(BOOL);
+    else if (expect_type == WMT_TYPE_WORD)
+        size = sizeof(WORD);
+    else
+        size = sizeof(DWORD);
+
+    hr = IWMReaderAdvanced2_GetOutputSetting(reader, output, name, &type, (BYTE *)&value, &size);
+    todo_wine
+    ok(hr == expect_hr, "Got hr %#lx.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        ok(type == expect_type, "Got type %u.\n", type);
+        ok(value == expect_value, "Got value %lu.\n", value);
+        if (type == WMT_TYPE_BOOL)
+            ok(size == sizeof(BOOL), "Got size %u\n", size);
+        else if (type == WMT_TYPE_WORD)
+            ok(size == sizeof(WORD), "Got size %u\n", size);
+        else
+            ok(size == sizeof(DWORD), "Got size %u\n", size);
+    }
+
+    winetest_pop_context();
+}
+
+static void check_async_set_output_setting(IWMReaderAdvanced2 *reader, DWORD output, const WCHAR *name,
+        WMT_ATTR_DATATYPE type, DWORD value, HRESULT expect_hr)
+{
+    HRESULT hr;
+    WORD size;
+
+    winetest_push_context("%s", debugstr_w(name));
+
+    if (type == WMT_TYPE_BOOL)
+        size = sizeof(BOOL);
+    else if (type == WMT_TYPE_WORD)
+        size = sizeof(WORD);
+    else
+        size = sizeof(DWORD);
+
+    hr = IWMReaderAdvanced2_SetOutputSetting(reader, output, name, type, (BYTE *)&value, size);
+    todo_wine
+    ok(hr == expect_hr, "Got hr %#lx.\n", hr);
+
+    winetest_pop_context();
+}
+
 static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, struct callback *callback)
 {
     HRESULT hr;
@@ -2582,6 +2642,184 @@ static void test_async_reader_allocate_compressed(IWMReader *reader,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback->read_compressed = false;
+}
+
+static void test_async_reader_settings(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IWMReaderAdvanced2 *reader_advanced;
+    struct callback callback;
+    WMT_ATTR_DATATYPE type;
+    IWMReader *reader;
+    DWORD value;
+    HRESULT hr;
+    WORD size;
+    BOOL ret;
+
+    callback_init(&callback);
+
+    hr = WMCreateReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&reader_advanced);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    type = WMT_TYPE_BOOL;
+    size = sizeof(BOOL);
+    value = 0;
+    hr = IWMReaderAdvanced2_GetOutputSetting(reader_advanced, 0, L"AllowInterlacedOutput",
+            &type, (BYTE *)&value, &size);
+    todo_wine
+    ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+
+    hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_opened_callback(&callback);
+
+    check_async_get_output_setting(reader_advanced, 0, L"AllowInterlacedOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"DedicatedDeliveryThread",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"DeliverOnReceive",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 0, L"EnableDiscreteOutput",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 0, L"EnableFrameInterpolation",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"JustInTimeDecode",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 0, L"NeedsPreviousSample",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"ScrambledAudio",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"SingleOutputBuffer",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 0, L"SoftwareScaling",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"VideoSampleDurations",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"EnableWMAProSPDIFOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 0, L"StreamLanguage",
+            WMT_TYPE_WORD, 0, NS_E_INVALID_REQUEST);
+    check_async_get_output_setting(reader_advanced, 0, L"DynamicRangeControl",
+            WMT_TYPE_DWORD, -1, S_OK);
+    check_async_get_output_setting(reader_advanced, 0, L"EarlyDataDelivery",
+            WMT_TYPE_DWORD, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 0, L"SpeakerConfig",
+            WMT_TYPE_DWORD, -1, S_OK);
+
+    check_async_get_output_setting(reader_advanced, 1, L"AllowInterlacedOutput",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"DedicatedDeliveryThread",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 1, L"DeliverOnReceive",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"EnableDiscreteOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 1, L"EnableFrameInterpolation",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"JustInTimeDecode",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"NeedsPreviousSample",
+            WMT_TYPE_BOOL, 0, NS_E_INVALID_REQUEST);
+    check_async_get_output_setting(reader_advanced, 1, L"ScrambledAudio",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 1, L"SingleOutputBuffer",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"SoftwareScaling",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"VideoSampleDurations",
+            WMT_TYPE_BOOL, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"EnableWMAProSPDIFOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 1, L"StreamLanguage",
+            WMT_TYPE_WORD, 0, NS_E_INVALID_REQUEST);
+    check_async_get_output_setting(reader_advanced, 1, L"DynamicRangeControl",
+            WMT_TYPE_DWORD, 0, E_INVALIDARG);
+    check_async_get_output_setting(reader_advanced, 1, L"EarlyDataDelivery",
+            WMT_TYPE_DWORD, 0, S_OK);
+    check_async_get_output_setting(reader_advanced, 1, L"SpeakerConfig",
+            WMT_TYPE_DWORD, 0, E_INVALIDARG);
+
+    check_async_set_output_setting(reader_advanced, 0, L"AllowInterlacedOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 0, L"DedicatedDeliveryThread",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"DeliverOnReceive",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"EnableDiscreteOutput",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"EnableFrameInterpolation",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 0, L"JustInTimeDecode",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"NeedsPreviousSample",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 0, L"ScrambledAudio",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 0, L"SingleOutputBuffer",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"SoftwareScaling",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 0, L"VideoSampleDurations",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 0, L"EnableWMAProSPDIFOutput",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"StreamLanguage",
+            WMT_TYPE_WORD, 0, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"DynamicRangeControl",
+            WMT_TYPE_DWORD, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"EarlyDataDelivery",
+            WMT_TYPE_DWORD, 1000, S_OK);
+    check_async_set_output_setting(reader_advanced, 0, L"SpeakerConfig",
+            WMT_TYPE_DWORD, 1, S_OK);
+
+    check_async_set_output_setting(reader_advanced, 1, L"AllowInterlacedOutput",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"DedicatedDeliveryThread",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"DeliverOnReceive",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"EnableDiscreteOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 1, L"EnableFrameInterpolation",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"JustInTimeDecode",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"NeedsPreviousSample",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 1, L"ScrambledAudio",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 1, L"SingleOutputBuffer",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"SoftwareScaling",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"VideoSampleDurations",
+            WMT_TYPE_BOOL, 1, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"EnableWMAProSPDIFOutput",
+            WMT_TYPE_BOOL, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 1, L"StreamLanguage",
+            WMT_TYPE_WORD, 0, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"DynamicRangeControl",
+            WMT_TYPE_DWORD, 0, E_INVALIDARG);
+    check_async_set_output_setting(reader_advanced, 1, L"EarlyDataDelivery",
+            WMT_TYPE_DWORD, 2000, S_OK);
+    check_async_set_output_setting(reader_advanced, 1, L"SpeakerConfig",
+            WMT_TYPE_DWORD, 0, E_INVALIDARG);
+
+    SetEvent(callback.expect_started);
+    hr = IWMReader_Start(reader, 0, 0, 1, (void **)0xfacade);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMReader_Close(reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IWMReaderAdvanced2_Release(reader_advanced);
+    IWMReader_Release(reader);
+
+    callback_cleanup(&callback);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 static void test_async_reader_streaming(void)
@@ -3101,6 +3339,7 @@ START_TEST(wmvcore)
     test_sync_reader_streaming();
     test_sync_reader_types();
     test_sync_reader_file();
+    test_async_reader_settings();
     test_async_reader_streaming();
     test_async_reader_types();
     test_async_reader_file();
