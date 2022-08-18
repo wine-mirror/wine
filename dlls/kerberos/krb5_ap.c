@@ -424,9 +424,10 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
         params.output_token_length = &output->pBuffers[idx].cbBuffer;
 
         status = KRB5_CALL( initialize_context, &params );
+        if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
+            *new_context = create_context_handle( context_handle, new_context_handle );
         if (!status)
         {
-            *new_context = create_context_handle( context_handle, new_context_handle );
             *mapped_context = TRUE;
             expiry_to_timestamp( exptime, expiry );
         }
@@ -473,9 +474,10 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
         /* FIXME: check if larger output buffer exists */
         status = KRB5_CALL( accept_context, &params );
+        if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
+            *new_context = create_context_handle( context_handle, new_context_handle );
         if (!status)
         {
-            *new_context = create_context_handle( context_handle, new_context_handle );
             *mapped_context = TRUE;
             expiry_to_timestamp( exptime, expiry );
         }
