@@ -1028,8 +1028,10 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
         ShowWindow(wma->parent, lpParms->nCmdShow);
     }
     if (dwFlags & MCI_DGV_WINDOW_TEXT) {
+        if (!wma->parent)
+            return MCIERR_NO_WINDOW;
         TRACE("Setting caption to %s\n", debugstr_w(lpParms->lpstrText));
-        IVideoWindow_put_Caption(wma->vidwin, lpParms->lpstrText);
+        SetWindowTextW(wma->parent, lpParms->lpstrText);
     }
     return 0;
 }
