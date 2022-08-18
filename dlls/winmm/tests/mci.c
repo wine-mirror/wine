@@ -1425,7 +1425,7 @@ static void test_asyncWaveTypeMpegvideo(HWND hwnd)
     test_notification(hwnd,"play",0);
 
     err = mciSendStringA("window mysound state hide", NULL, 0, NULL);
-    todo_wine ok(err == MCIERR_NO_WINDOW, "mci window state returned %s\n", dbg_mcierr(err));
+    ok(err == MCIERR_NO_WINDOW, "mci window state returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("close mysound wait", NULL, 0, NULL);
     ok(!err,"mci close wait returned %s\n", dbg_mcierr(err));
@@ -1696,7 +1696,7 @@ static void test_video_window(void)
         parm.win.nCmdShow = SW_MINIMIZE;
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_STATE, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(IsIconic(main_window), "Video window should be minimized.\n");
+        ok(IsIconic(main_window), "Video window should be minimized.\n");
 
         /* video window is reset to the default window, which is visible again */
         parm.win.hWnd = NULL;
@@ -1707,14 +1707,14 @@ static void test_video_window(void)
 
         err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
+        ok(EqualRect(&parm.where.rc, &src_rc), "Got destination rect %s, expected %s.\n",
                 wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&src_rc));
 
         /* Test MCI_DGV_WINDOW_STATE for the default window. */
         parm.win.nCmdShow = SW_MINIMIZE;
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_STATE, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
-        todo_wine ok(IsIconic(video_window), "Video window should be minimized.\n");
+        ok(IsIconic(video_window), "Video window should be minimized.\n");
 
         err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
