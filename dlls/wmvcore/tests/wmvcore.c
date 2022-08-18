@@ -1789,6 +1789,8 @@ struct callback
     bool read_compressed;
     DWORD max_stream_sample_size[2];
 
+    DWORD callback_tid;
+
     QWORD expect_ontime;
     HANDLE ontime_event;
 };
@@ -1857,6 +1859,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             break;
 
         case WMT_STARTED:
+            callback->callback_tid = GetCurrentThreadId();
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1869,6 +1872,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             break;
 
         case WMT_STOPPED:
+            ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1885,6 +1889,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             break;
 
         case WMT_END_OF_STREAMING:
+            ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1892,6 +1897,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             break;
 
         case WMT_EOF:
+            ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1909,6 +1915,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
 
         /* Not sent when not using IWMReaderAdvanced::DeliverTime(). */
         case WMT_END_OF_SEGMENT:
+            ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
             ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
             ok(*(QWORD *)value == 3000, "Got value %#lx.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -1978,6 +1985,8 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
         trace("%lu: %04lx: IWMReaderCallback::OnSample(output %lu, time %I64u, duration %I64u, flags %#lx)\n",
                 GetTickCount(), GetCurrentThreadId(), output, time, duration, flags);
 
+    ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
+
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
 
     check_async_sample(callback, sample);
@@ -2031,6 +2040,8 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#lx)\n",
                 GetTickCount(), GetCurrentThreadId(), stream_number, pts, duration, flags);
 
+    ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
+
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
 
     check_async_sample(callback, sample);
@@ -2050,6 +2061,8 @@ static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface,
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnTime(time %I64u)\n",
                 GetTickCount(), GetCurrentThreadId(), time);
+
+    ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
 
     ok(time == callback->expect_ontime, "Got time %I64u.\n", time);
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
@@ -2081,6 +2094,9 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::AllocateForStream(output %u, size %lu)\n",
                 GetTickCount(), GetCurrentThreadId(), stream_number, size);
+
+    todo_wine
+    ok(callback->callback_tid != GetCurrentThreadId(), "got wrong thread\n");
 
     ok(callback->read_compressed, "AllocateForStream() should only be called when reading compressed samples.\n");
     ok(callback->allocated_samples, "AllocateForStream() should only be called when using a custom allocator.\n");
@@ -2114,6 +2130,9 @@ static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvan
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::AllocateForOutput(output %lu, size %lu)\n",
                 GetTickCount(), GetCurrentThreadId(), output, size);
+
+    todo_wine
+    ok(callback->callback_tid != GetCurrentThreadId(), "got wrong thread\n");
 
     if (!callback->read_compressed)
     {
@@ -2352,6 +2371,7 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     callback->sample_count = 0;
     callback->end_of_streaming_count = 0;
     callback->eof_count = 0;
+    callback->callback_tid = 0;
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
