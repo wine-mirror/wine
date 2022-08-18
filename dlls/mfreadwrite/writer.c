@@ -458,6 +458,22 @@ static HRESULT sink_writer_notify_end_of_segment(struct sink_writer *writer, uns
     return sink_writer_queue_marker(writer, stream, MFSTREAMSINK_MARKER_ENDOFSEGMENT, 0, NULL);
 }
 
+static HRESULT sink_writer_flush(struct sink_writer *writer, unsigned int index)
+{
+    struct stream *stream;
+
+    if (!(stream = sink_writer_get_stream(writer, index))) return MF_E_INVALIDSTREAMNUMBER;
+
+    sink_writer_drop_pending_items(stream);
+
+    IMFStreamSink_Flush(stream->stream_sink);
+
+    if (stream->encoder)
+        IMFTransform_ProcessMessage(stream->encoder, MFT_MESSAGE_COMMAND_FLUSH, 0);
+
+    return sink_writer_place_marker(writer, stream, MFSTREAMSINK_MARKER_ENDOFSEGMENT, 0, NULL);
+}
+
 static HRESULT sink_writer_process_sample(struct sink_writer *writer, struct stream *stream)
 {
     struct pending_item *item, *next;
@@ -654,9 +670,33 @@ static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriter *iface, DWORD
 
 static HRESULT WINAPI sink_writer_Flush(IMFSinkWriter *iface, DWORD index)
 {
-    FIXME("%p, %lu.\n", iface, index);
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    HRESULT hr = S_OK;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %lu.\n", iface, index);
+
+    EnterCriticalSection(&writer->cs);
+
+    if (writer->state != SINK_WRITER_STATE_WRITING)
+        hr = MF_E_INVALIDREQUEST;
+    else if (index == MF_SINK_WRITER_ALL_STREAMS)
+    {
+        for (i = 0; i < writer->streams.count; ++i)
+        {
+            if (FAILED(hr = sink_writer_flush(writer, i)))
+            {
+                WARN("Failed to flush stream %u.\n", i);
+                break;
+            }
+        }
+    }
+    else
+        hr = sink_writer_flush(writer, index);
+
+    LeaveCriticalSection(&writer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sink_writer_Finalize(IMFSinkWriter *iface)
