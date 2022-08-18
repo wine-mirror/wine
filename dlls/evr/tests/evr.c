@@ -279,6 +279,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IEVRFilterConfig, TRUE);
+    check_interface(filter, &IID_IMFGetService, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
     check_interface(filter, &IID_IMediaPosition, TRUE);
     check_interface(filter, &IID_IMediaSeeking, TRUE);

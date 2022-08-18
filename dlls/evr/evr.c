@@ -35,6 +35,7 @@ struct evr
     struct strmbase_renderer renderer;
     IEVRFilterConfig IEVRFilterConfig_iface;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
+    IMFGetService IMFGetService_iface;
 };
 
 static struct evr *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
@@ -50,6 +51,8 @@ static HRESULT evr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IEVRFilterConfig_iface;
     else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
         *out = &filter->IAMFilterMiscFlags_iface;
+    else if (IsEqualGUID(iid, &IID_IMFGetService))
+        *out = &filter->IMFGetService_iface;
     else
         return E_NOINTERFACE;
 
@@ -173,6 +176,44 @@ static const IAMFilterMiscFlagsVtbl filter_misc_flags_vtbl =
     filter_misc_flags_GetMiscFlags,
 };
 
+static struct evr *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct evr, IMFGetService_iface);
+}
+
+static HRESULT WINAPI filter_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct evr *filter = impl_from_IMFGetService(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, riid, obj);
+}
+
+static ULONG WINAPI filter_get_service_AddRef(IMFGetService *iface)
+{
+    struct evr *filter = impl_from_IMFGetService(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI filter_get_service_Release(IMFGetService *iface)
+{
+    struct evr *filter = impl_from_IMFGetService(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI filter_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("iface %p, service %s, riid %s, obj %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl filter_get_service_vtbl =
+{
+    filter_get_service_QueryInterface,
+    filter_get_service_AddRef,
+    filter_get_service_Release,
+    filter_get_service_GetService,
+};
+
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     struct evr *object;
@@ -184,6 +225,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
             &CLSID_EnhancedVideoRenderer, L"EVR Input0", &renderer_ops);
     object->IEVRFilterConfig_iface.lpVtbl = &filter_config_vtbl;
     object->IAMFilterMiscFlags_iface.lpVtbl = &filter_misc_flags_vtbl;
+    object->IMFGetService_iface.lpVtbl = &filter_get_service_vtbl;
 
     TRACE("Created EVR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
