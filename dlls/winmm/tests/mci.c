@@ -1603,9 +1603,8 @@ static void test_video_window(void)
              * in particular if the video width is less than SM_CXMIN. */
             GetClientRect(video_window, &rc);
 
-        todo_wine_if (style & (WS_POPUP | WS_CHILD))
-            ok(EqualRect(&parm.where.rc, &rc), "Got destination rect %s, expected %s.\n",
-                    wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&rc));
+        ok(EqualRect(&parm.where.rc, &rc), "Got destination rect %s, expected %s.\n",
+                wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&rc));
 
         /* Test the default video window size. */
         rc = src_rc;

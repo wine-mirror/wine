@@ -211,9 +211,14 @@ static bool create_window(WINE_MCIQTZ *wma, DWORD flags, const MCI_DGV_OPEN_PARM
     IVideoWindow_put_Owner(wma->vidwin, (OAHWND)wma->window);
     IVideoWindow_put_WindowStyle(wma->vidwin, WS_CHILD); /* reset window style */
 
-    GetClientRect(wma->window, &rc);
-    width = rc.right;
-    height = rc.bottom;
+    if (style & (WS_POPUP | WS_CHILD))
+        IBasicVideo_GetVideoSize(wma->vidbasic, &width, &height);
+    else
+    {
+        GetClientRect(wma->window, &rc);
+        width = rc.right;
+        height = rc.bottom;
+    }
 
     IVideoWindow_SetWindowPosition(wma->vidwin, 0, 0, width, height);
     IVideoWindow_put_Visible(wma->vidwin, OATRUE);
