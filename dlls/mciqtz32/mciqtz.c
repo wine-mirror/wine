@@ -1000,8 +1000,13 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
     if (dwFlags & MCI_TEST)
         return 0;
 
-    if (dwFlags & MCI_DGV_WINDOW_HWND && (IsWindow(lpParms->hWnd) || !lpParms->hWnd)) {
-        HWND hwnd = lpParms->hWnd ? lpParms->hWnd : wma->window;
+    if (dwFlags & MCI_DGV_WINDOW_HWND) {
+        HWND hwnd;
+        if (lpParms->hWnd && !IsWindow(lpParms->hWnd))
+            return MCIERR_NO_WINDOW;
+        if (!wma->parent)
+            return MCIERR_INTERNAL;
+        hwnd = lpParms->hWnd ? lpParms->hWnd : wma->window;
         TRACE("Setting parent window to %p.\n", hwnd);
         if (wma->parent != hwnd)
         {
