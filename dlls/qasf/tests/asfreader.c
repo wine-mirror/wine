@@ -513,6 +513,99 @@ static void test_filesourcefilter(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_filter_state(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IBaseFilter *filter = create_asf_reader();
+    IFileSourceFilter *file_source;
+    IReferenceClock *clock;
+    IEnumPins *enum_pins;
+    IFilterGraph *graph;
+    FILTER_STATE state;
+    IPin *pins[4];
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&file_source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFileSourceFilter_Load(file_source, filename, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IFileSourceFilter_Release(file_source);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, pins, NULL);
+    todo_wine
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IPin_Release(pins[0]);
+    IEnumPins_Release(enum_pins);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+
+    hr = IBaseFilter_Run(filter, GetTickCount() * 10000);
+    todo_wine
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+    hr = IBaseFilter_Pause(filter);
+    todo_wine
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+    hr = IBaseFilter_Stop(filter);
+    todo_wine
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph_AddFilter(graph, filter, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = IFilterGraph_Release(graph);
+    ok(!ref, "Got ref %ld.\n", ref);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IPin_Release(pins[0]);
+    hr = IEnumPins_Next(enum_pins, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IPin_Release(pins[0]);
+    hr = IEnumPins_Next(enum_pins, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    IEnumPins_Release(enum_pins);
+
+    hr = IBaseFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!clock, "Got clock %p.\n", clock);
+
+    hr = IBaseFilter_Run(filter, GetTickCount() * 10000);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %#x.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got ref %ld.\n", ref);
+}
+
 START_TEST(asfreader)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -520,6 +613,7 @@ START_TEST(asfreader)
     test_interfaces();
     test_aggregation();
     test_filesourcefilter();
+    test_filter_state();
 
     CoUninitialize();
 }
