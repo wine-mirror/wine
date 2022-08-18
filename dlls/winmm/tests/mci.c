@@ -1430,6 +1430,14 @@ static void test_asyncWaveTypeMpegvideo(HWND hwnd)
     err = mciSendStringA("window mysound text abracadabra", NULL, 0, NULL);
     ok(err == MCIERR_NO_WINDOW, "mci window text returned %s\n", dbg_mcierr(err));
 
+    sprintf(buf, "window mysound handle %lu", PtrToUlong(GetDesktopWindow()));
+    err = mciSendStringA(buf, NULL, 0, NULL);
+    todo_wine ok(err == MCIERR_INTERNAL, "mci window handle (desktop) returned %s\n", dbg_mcierr(err));
+
+    sprintf(buf, "window mysound handle %lu", (unsigned long)0xdeadbeef);
+    err = mciSendStringA(buf, NULL, 0, NULL);
+    todo_wine ok(err == MCIERR_NO_WINDOW, "mci window handle (deadbeef) returned %s\n", dbg_mcierr(err));
+
     err = mciSendStringA("close mysound wait", NULL, 0, NULL);
     ok(!err,"mci close wait returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
@@ -1649,6 +1657,10 @@ static void test_video_window(void)
         ok(IsWindowVisible(video_window), "Video window should be visible.\n");
 
         /* Test MCI_DGV_WINDOW_HWND. */
+        parm.win.hWnd = (HWND)0xdeadbeef;
+        err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&parm);
+        todo_wine ok(err == MCIERR_NO_WINDOW, "Got %s.\n", dbg_mcierr(err));
+
         parm.win.hWnd = main_window;
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
