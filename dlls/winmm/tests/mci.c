@@ -1427,6 +1427,9 @@ static void test_asyncWaveTypeMpegvideo(HWND hwnd)
     err = mciSendStringA("window mysound state hide", NULL, 0, NULL);
     ok(err == MCIERR_NO_WINDOW, "mci window state returned %s\n", dbg_mcierr(err));
 
+    err = mciSendStringA("window mysound text abracadabra", NULL, 0, NULL);
+    todo_wine ok(err == MCIERR_NO_WINDOW, "mci window text returned %s\n", dbg_mcierr(err));
+
     err = mciSendStringA("close mysound wait", NULL, 0, NULL);
     ok(!err,"mci close wait returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
@@ -1494,6 +1497,7 @@ static void test_video_window(void)
 {
     const WCHAR *filename = load_resource(L"test.mpg");
     MCI_PARMS_UNION parm;
+    WCHAR buffer[256];
     unsigned int i;
     MCIDEVICEID id;
     MCIERROR err;
@@ -1698,6 +1702,13 @@ static void test_video_window(void)
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         ok(IsIconic(main_window), "Video window should be minimized.\n");
 
+        /* Test MCI_DGV_WINDOW_TEXT for the non-default window. */
+        parm.win.lpstrText = (LPWSTR)L"foobar";
+        err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_TEXT, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        GetWindowTextW(main_window, buffer, ARRAY_SIZE(buffer));
+        todo_wine ok(!wcscmp(buffer, parm.win.lpstrText), "Got %s, expected %s\n", wine_dbgstr_w(buffer), wine_dbgstr_w(parm.win.lpstrText));
+
         /* video window is reset to the default window, which is visible again */
         parm.win.hWnd = NULL;
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&parm);
@@ -1715,6 +1726,13 @@ static void test_video_window(void)
         err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_STATE, (DWORD_PTR)&parm);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
         ok(IsIconic(video_window), "Video window should be minimized.\n");
+
+        /* Test MCI_DGV_WINDOW_TEXT for the default window. */
+        parm.win.lpstrText = (LPWSTR)L"abracadabra";
+        err = mciSendCommandW(id, MCI_WINDOW, MCI_DGV_WINDOW_TEXT, (DWORD_PTR)&parm);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        GetWindowTextW(video_window, buffer, ARRAY_SIZE(buffer));
+        todo_wine ok(!wcscmp(buffer, parm.win.lpstrText), "Got %s, expected %s\n", wine_dbgstr_w(buffer), wine_dbgstr_w(parm.win.lpstrText));
 
         err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
         ok(!err, "Got %s.\n", dbg_mcierr(err));
