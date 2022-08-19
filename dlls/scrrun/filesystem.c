@@ -3453,7 +3453,11 @@ static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *result)
         return E_OUTOFMEMORY;
 
     if(!RtlGenRandom(&random, sizeof(random)))
+    {
+        SysFreeString(*result);
         return E_FAIL;
+    }
+
     swprintf(*result, 13, L"rad%05X.tmp", random & 0xfffff);
     return S_OK;
 }
