@@ -36,6 +36,7 @@ struct evr
     IEVRFilterConfig IEVRFilterConfig_iface;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IMFGetService IMFGetService_iface;
+    IMFVideoRenderer IMFVideoRenderer_iface;
 };
 
 static struct evr *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
@@ -53,6 +54,8 @@ static HRESULT evr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IAMFilterMiscFlags_iface;
     else if (IsEqualGUID(iid, &IID_IMFGetService))
         *out = &filter->IMFGetService_iface;
+    else if (IsEqualGUID(iid, &IID_IMFVideoRenderer))
+        *out = &filter->IMFVideoRenderer_iface;
     else
         return E_NOINTERFACE;
 
@@ -214,6 +217,45 @@ static const IMFGetServiceVtbl filter_get_service_vtbl =
     filter_get_service_GetService,
 };
 
+static struct evr *impl_from_IMFVideoRenderer(IMFVideoRenderer *iface)
+{
+    return CONTAINING_RECORD(iface, struct evr, IMFVideoRenderer_iface);
+}
+
+static HRESULT WINAPI filter_video_renderer_QueryInterface(IMFVideoRenderer *iface, REFIID riid, void **obj)
+{
+    struct evr *filter = impl_from_IMFVideoRenderer(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, riid, obj);
+}
+
+static ULONG WINAPI filter_video_renderer_AddRef(IMFVideoRenderer *iface)
+{
+    struct evr *filter = impl_from_IMFVideoRenderer(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI filter_video_renderer_Release(IMFVideoRenderer *iface)
+{
+    struct evr *filter = impl_from_IMFVideoRenderer(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI filter_video_renderer_InitializeRenderer(IMFVideoRenderer *iface, IMFTransform *mixer,
+        IMFVideoPresenter *presenter)
+{
+    FIXME("iface %p, mixer %p, presenter %p.\n", iface, mixer, presenter);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoRendererVtbl filter_video_renderer_vtbl =
+{
+    filter_video_renderer_QueryInterface,
+    filter_video_renderer_AddRef,
+    filter_video_renderer_Release,
+    filter_video_renderer_InitializeRenderer,
+};
+
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     struct evr *object;
@@ -226,6 +268,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     object->IEVRFilterConfig_iface.lpVtbl = &filter_config_vtbl;
     object->IAMFilterMiscFlags_iface.lpVtbl = &filter_misc_flags_vtbl;
     object->IMFGetService_iface.lpVtbl = &filter_get_service_vtbl;
+    object->IMFVideoRenderer_iface.lpVtbl = &filter_video_renderer_vtbl;
 
     TRACE("Created EVR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
