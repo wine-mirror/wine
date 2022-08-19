@@ -3980,8 +3980,6 @@ static void test_create_effect_from_memory(void)
     }
 
     /* Test NULL data. */
-    if (strcmp(winetest_platform, "wine")) /* Crash on wine. */
-    {
     errors = (ID3D10Blob *)0xdeadbeef;
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromMemory(NULL, 0, NULL, NULL, NULL, NULL,
@@ -4015,10 +4013,10 @@ static void test_create_effect_from_memory(void)
     hr = D3DX10CreateEffectFromMemory(test_fx_source, strlen(test_fx_source) + 1, NULL, NULL, NULL, NULL,
             0x0, 0x0, device, NULL, NULL, &effect, &errors, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
-    ok(!!errors && errors != (ID3D10Blob *)0xdeadbeef, "Got unexpected errors %p.\n", errors);
+    todo_wine ok(!!errors && errors != (ID3D10Blob *)0xdeadbeef, "Got unexpected errors %p.\n", errors);
     ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
-    ID3D10Blob_Release(errors);
-    }
+    if (errors && errors != (ID3D10Blob *)0xdeadbeef)
+        ID3D10Blob_Release(errors);
 
     /* Test creating effect from source. */
     errors = (ID3D10Blob *)0xdeadbeef;
@@ -4086,8 +4084,6 @@ static void test_create_effect_from_file(void)
     ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
 
     /* Test creating effect from compiled shader file. */
-    if (strcmp(winetest_platform, "wine")) /* Crash on wine. */
-    {
     create_file(test_file_name, test_fx, sizeof(test_fx), path);
 
     errors = (ID3D10Blob *)0xdeadbeef;
@@ -4109,7 +4105,6 @@ static void test_create_effect_from_file(void)
     effect->lpVtbl->Release(effect);
 
     delete_file(test_file_name);
-    }
 
     /* Test creating effect from source file. */
     create_file(test_file_name, test_fx_source, strlen(test_fx_source) + 1, path);
@@ -4208,8 +4203,6 @@ static void test_create_effect_from_resource(void)
     ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
 
     /* Test creating effect from compiled shader resource. */
-    if (strcmp(winetest_platform, "wine")) /* Crash on wine. */
-    {
     resource_module = create_resource_module(test_resource_name, test_fx, sizeof(test_fx));
 
     errors = (ID3D10Blob *)0xdeadbeef;
@@ -4231,7 +4224,6 @@ static void test_create_effect_from_resource(void)
     effect->lpVtbl->Release(effect);
 
     delete_resource_module(test_resource_name, resource_module);
-    }
 
     /* Test creating effect from source resource. */
     resource_module = create_resource_module(test_resource_name, test_fx_source, strlen(test_fx_source) + 1);

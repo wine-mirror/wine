@@ -28,12 +28,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+#define D3DERR_INVALIDCALL 0x8876086c
+
 static HRESULT create_effect(const void *data, SIZE_T datasize, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *profile,
         UINT shader_flags, UINT effect_flags, ID3D10Device *device, ID3D10EffectPool *effect_pool,
         ID3D10Effect **effect, ID3D10Blob **errors)
 {
-    ID3D10Blob *code;
+    const char dxbc[] = {'D','X','B','C'};
+    ID3D10Blob *code = NULL;
+    void *buffer;
+    SIZE_T size;
     HRESULT hr;
 
     if (!data || !device)
@@ -42,17 +47,28 @@ static HRESULT create_effect(const void *data, SIZE_T datasize, const char *file
     if (errors)
         *errors = NULL;
 
-    if (FAILED(hr = D3DCompile(data, datasize, filename, defines, include, "main", profile,
-            shader_flags, effect_flags, &code, errors)))
+    buffer = (void *)data;
+    size = datasize;
+
+    /* Effect is not compiled. */
+    if (datasize < sizeof(dxbc) || memcmp(dxbc, data, sizeof(dxbc)))
     {
-        WARN("Effect compilation failed, hr %#lx.\n", hr);
-        return hr;
+        if (!profile)
+            return D3DERR_INVALIDCALL;
+        if (FAILED(hr = D3DCompile(data, datasize, filename, defines, include, "main", profile,
+                shader_flags, effect_flags, &code, errors)))
+        {
+            WARN("Effect compilation failed, hr %#lx.\n", hr);
+            return hr;
+        }
+        buffer = ID3D10Blob_GetBufferPointer(code);
+        size = ID3D10Blob_GetBufferSize(code);
     }
 
-    hr = D3D10CreateEffectFromMemory(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
-            effect_flags, device, effect_pool, effect);
-    ID3D10Blob_Release(code);
+    hr = D3D10CreateEffectFromMemory(buffer, size, effect_flags, device, effect_pool, effect);
 
+    if (code)
+        ID3D10Blob_Release(code);
     return hr;
 }
 
