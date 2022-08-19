@@ -19402,7 +19402,6 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
     }
     else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DHALDevice))
     {
-        todo_wine
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "HAL Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok(device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
@@ -19410,10 +19409,8 @@ static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *d
     }
     else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DRGBDevice))
     {
-        todo_wine
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        todo_wine
         ok((device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "RGB Device device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
