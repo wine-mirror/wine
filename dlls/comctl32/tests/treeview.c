@@ -232,9 +232,13 @@ static const struct message test_right_click_seq[] = {
     { WM_RBUTTONDOWN, sent|wparam, MK_RBUTTON },
     { WM_CAPTURECHANGED, sent|defwinproc },
     { TVM_GETNEXTITEM, sent|wparam|lparam|defwinproc, TVGN_CARET, 0 },
+    { WM_PAINT, sent|optional },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_NCHITTEST, sent|optional },
     { WM_SETCURSOR, sent|optional },
     { WM_MOUSEMOVE, sent|optional },
+    { WM_PAINT, sent|optional },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { 0 }
 };
 
@@ -382,6 +386,16 @@ static const struct message parent_vk_return_seq[] = {
 static const struct message parent_right_click_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, NM_RCLICK },
     { WM_CONTEXTMENU, sent },
+    { WM_NOTIFY, sent|optional },
+    { WM_SETCURSOR, sent|optional },
+    { WM_CTLCOLOREDIT, sent|optional },
+    { WM_NOTIFY, sent|optional },
+    { WM_NOTIFY, sent|optional },
+    { WM_NOTIFY, sent|optional },
+    { WM_NOTIFY, sent|optional },
+    { WM_NOTIFY, sent|optional },
+    { WM_NOTIFY, sent|optional },
+    { WM_NOTIFY, sent|optional },
     { WM_NOTIFY, sent|optional },
     { WM_SETCURSOR, sent|optional },
     { 0 }
@@ -2942,6 +2956,7 @@ static void test_right_click(void)
     flush_events();
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    ScreenToClient(hTree, &pt);
     PostMessageA(hTree, WM_RBUTTONDOWN, MK_RBUTTON, MAKELPARAM(pt.x, pt.y));
     PostMessageA(hTree, WM_RBUTTONUP, 0, MAKELPARAM(pt.x, pt.y));
 
