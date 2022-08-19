@@ -903,6 +903,12 @@ static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace 
         return FALSE;
     }
 
+    if (family->replacement)
+    {
+        TRACE( "%s is replaced by another font, skipping.\n", debugstr_w(replace) );
+        return FALSE;
+    }
+
     if (!(new_family = create_family( new_name, NULL ))) return FALSE;
     new_family->replacement = family;
     family->refcount++;
