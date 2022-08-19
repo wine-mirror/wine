@@ -37,7 +37,62 @@ struct evr
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IMFGetService IMFGetService_iface;
     IMFVideoRenderer IMFVideoRenderer_iface;
+
+    IMFTransform *mixer;
+    IMFVideoPresenter *presenter;
 };
+
+static void evr_uninitialize(struct evr *filter)
+{
+    if (filter->mixer)
+    {
+        IMFTransform_Release(filter->mixer);
+        filter->mixer = NULL;
+    }
+
+    if (filter->presenter)
+    {
+        IMFVideoPresenter_Release(filter->presenter);
+        filter->presenter = NULL;
+    }
+}
+
+static HRESULT evr_initialize(struct evr *filter, IMFTransform *mixer, IMFVideoPresenter *presenter)
+{
+    HRESULT hr = S_OK;
+
+    if (mixer)
+    {
+        IMFTransform_AddRef(mixer);
+    }
+    else if (FAILED(hr = CoCreateInstance(&CLSID_MFVideoMixer9, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&mixer)))
+    {
+        WARN("Failed to create default mixer instance, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (presenter)
+    {
+        IMFVideoPresenter_AddRef(presenter);
+    }
+    else if (FAILED(hr = CoCreateInstance(&CLSID_MFVideoPresenter9, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFVideoPresenter, (void **)&presenter)))
+    {
+        WARN("Failed to create default presenter instance, hr %#lx.\n", hr);
+        IMFTransform_Release(mixer);
+        return hr;
+    }
+
+    evr_uninitialize(filter);
+
+    filter->mixer = mixer;
+    filter->presenter = presenter;
+
+    /* FIXME: configure mixer and presenter */
+
+    return hr;
+}
 
 static struct evr *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
@@ -67,6 +122,7 @@ static void evr_destroy(struct strmbase_renderer *iface)
 {
     struct evr *filter = impl_from_strmbase_renderer(iface);
 
+    evr_uninitialize(filter);
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);
 }
@@ -204,9 +260,36 @@ static ULONG WINAPI filter_get_service_Release(IMFGetService *iface)
 
 static HRESULT WINAPI filter_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("iface %p, service %s, riid %s, obj %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    struct evr *filter = impl_from_IMFGetService(iface);
+    HRESULT hr = E_NOINTERFACE;
+    IMFGetService *gs;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, service %s, riid %s, obj %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
+
+    if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
+    {
+        if (!filter->presenter)
+            hr = evr_initialize(filter, NULL, NULL);
+
+        if (filter->presenter)
+            hr = IMFVideoPresenter_QueryInterface(filter->presenter, &IID_IMFGetService, (void **)&gs);
+    }
+    else
+    {
+        FIXME("Unsupported service %s.\n", debugstr_guid(service));
+    }
+
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+
+    if (gs)
+    {
+        hr = IMFGetService_GetService(gs, service, riid, obj);
+        IMFGetService_Release(gs);
+    }
+
+    return hr;
 }
 
 static const IMFGetServiceVtbl filter_get_service_vtbl =
@@ -243,9 +326,18 @@ static ULONG WINAPI filter_video_renderer_Release(IMFVideoRenderer *iface)
 static HRESULT WINAPI filter_video_renderer_InitializeRenderer(IMFVideoRenderer *iface, IMFTransform *mixer,
         IMFVideoPresenter *presenter)
 {
-    FIXME("iface %p, mixer %p, presenter %p.\n", iface, mixer, presenter);
+    struct evr *filter = impl_from_IMFVideoRenderer(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, mixer %p, presenter %p.\n", iface, mixer, presenter);
+
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
+
+    hr = evr_initialize(filter, mixer, presenter);
+
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+
+    return hr;
 }
 
 static const IMFVideoRendererVtbl filter_video_renderer_vtbl =
