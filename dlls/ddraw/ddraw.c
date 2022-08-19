@@ -3882,6 +3882,9 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
         hal_desc.dcmColorModel = 0;
         /* RGB, RAMP and MMX devices cannot report HAL hardware flags */
         hal_desc.dwFlags = 0;
+        /* RGB, REF, RAMP and MMX devices don't report hardware transform and lighting capability */
+        hal_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX);
+        hel_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX);
 
         hr = callback((GUID *)&IID_IDirect3DRGBDevice, reference_description,
                 device_name, &hal_desc, &hel_desc, context);
@@ -3906,6 +3909,8 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
             | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
     /* HAL devices have a HEL dcmColorModel of 0 */
     hel_desc.dcmColorModel = 0;
+    /* HAL devices report hardware transform and lighting capability, but not in hel */
+    hel_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX);
 
     hr = callback((GUID *)&IID_IDirect3DHALDevice, wined3d_description,
             device_name, &hal_desc, &hel_desc, context);

@@ -19189,16 +19189,12 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
         ok(hal->dwFlags == 0, "RGB Device hal caps has hardware flags %#lx\n", hal->dwFlags);
         ok(hel->dwFlags != 0, "RGB Device hel caps has hardware flags %#lx\n", hel->dwFlags);
 
-        todo_wine
         ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        todo_wine
         ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        todo_wine
         ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "RGB Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
-        todo_wine
         ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
@@ -19212,12 +19208,10 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
 
         ok(hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT,
            "HAL Device hal device caps does not have D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
-        todo_wine
         ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
         ok(hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
            "HAL Device hal device caps does not have D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
-        todo_wine
         ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
            "RGB Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
