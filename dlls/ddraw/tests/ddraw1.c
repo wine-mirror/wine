@@ -15145,6 +15145,169 @@ static void test_filling_convention(void)
     DestroyWindow(window);
 }
 
+static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_desc,
+        char *device_name, D3DDEVICEDESC *hal, D3DDEVICEDESC *hel, void *ctx)
+{
+    if(IsEqualGUID(&IID_IDirect3DRGBDevice, guid))
+    {
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "RGB Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "RGB Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "RGB Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "RGB Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "RGB Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "RGB Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "RGB Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "RGB Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+
+        ok(hal->dcmColorModel == 0, "RGB Device hal caps has colormodel %lu\n", hal->dcmColorModel);
+        ok(hel->dcmColorModel == D3DCOLOR_RGB, "RGB Device hel caps has colormodel %lu\n", hel->dcmColorModel);
+
+        ok(hal->dwFlags == 0, "RGB Device hal caps has hardware flags %#lx\n", hal->dwFlags);
+        ok(hel->dwFlags != 0, "RGB Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+    }
+    else if(IsEqualGUID(&IID_IDirect3DHALDevice, guid))
+    {
+        ok(hal->dcmColorModel == D3DCOLOR_RGB, "HAL Device hal caps has colormodel %lu\n", hel->dcmColorModel);
+        ok(hel->dcmColorModel == 0, "HAL Device hel caps has colormodel %lu\n", hel->dcmColorModel);
+
+        ok(hal->dwFlags != 0, "HAL Device hal caps has hardware flags %#lx\n", hal->dwFlags);
+        ok(hel->dwFlags != 0, "HAL Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+    }
+    else if(IsEqualGUID(&IID_IDirect3DRefDevice, guid))
+    {
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "REF Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "REF Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "REF Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "REF Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "REF Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "REF Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "REF Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "REF Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+    }
+    else if(IsEqualGUID(&IID_IDirect3DRampDevice, guid))
+    {
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "Ramp Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "Ramp Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "Ramp Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "Ramp Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "Ramp Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "Ramp Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "Ramp Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "Ramp Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+
+        ok(hal->dcmColorModel == 0, "Ramp Device hal caps has colormodel %lu\n", hal->dcmColorModel);
+        ok(hel->dcmColorModel == D3DCOLOR_MONO, "Ramp Device hel caps has colormodel %lu\n",
+           hel->dcmColorModel);
+
+        ok(hal->dwFlags == 0, "Ramp Device hal caps has hardware flags %#lx\n", hal->dwFlags);
+        ok(hel->dwFlags != 0, "Ramp Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+    }
+    else if(IsEqualGUID(&IID_IDirect3DMMXDevice, guid))
+    {
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "MMX Device hal line caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2) == 0,
+           "MMX Device hal tri caps has D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "MMX Device hel line caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2,
+           "MMX Device hel tri caps does not have D3DPTEXTURECAPS_POW2 flag set\n");
+
+        ok((hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "MMX Device hal line caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok((hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE) == 0,
+           "MMX Device hal tri caps has D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "MMX Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+        ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
+           "MMX Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+
+        ok(hal->dcmColorModel == 0, "MMX Device hal caps has colormodel %lu\n", hal->dcmColorModel);
+        ok(hel->dcmColorModel == D3DCOLOR_RGB, "MMX Device hel caps has colormodel %lu\n", hel->dcmColorModel);
+
+        ok(hal->dwFlags == 0, "MMX Device hal caps has hardware flags %#lx\n", hal->dwFlags);
+        ok(hel->dwFlags != 0, "MMX Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+    }
+    else
+    {
+        ok(FALSE, "Unexpected device enumerated: \"%s\" \"%s\"\n", device_desc, device_name);
+        if (hal->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2)
+            trace("hal line has pow2 set\n");
+        else
+            trace("hal line does NOT have pow2 set\n");
+        if (hal->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2)
+            trace("hal tri has pow2 set\n");
+        else
+            trace("hal tri does NOT have pow2 set\n");
+        if (hel->dpcLineCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2)
+            trace("hel line has pow2 set\n");
+        else
+            trace("hel line does NOT have pow2 set\n");
+        if (hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2)
+            trace("hel tri has pow2 set\n");
+        else
+            trace("hel tri does NOT have pow2 set\n");
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_enum_devices(void)
+{
+    IDirectDraw *ddraw;
+    IDirect3D *d3d;
+    ULONG refcount;
+    HRESULT hr;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
+    if (FAILED(hr))
+    {
+        skip("D3D interface is not available, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        return;
+    }
+
+    hr = IDirect3D_EnumDevices(d3d, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3D_EnumDevices(d3d, test_enum_devices_caps_callback, NULL);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    IDirect3D_Release(d3d);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -15263,4 +15426,5 @@ START_TEST(ddraw1)
     test_get_display_mode();
     run_for_each_device_type(test_texture_wrong_caps);
     test_filling_convention();
+    test_enum_devices();
 }
