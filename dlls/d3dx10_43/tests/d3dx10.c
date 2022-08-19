@@ -4073,7 +4073,7 @@ static void test_create_effect_from_file(void)
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromFileW(L"deadbeef", NULL, NULL, NULL, 0x0, 0x0,
             device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
     todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
     ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
 
@@ -4081,7 +4081,7 @@ static void test_create_effect_from_file(void)
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromFileA("deadbeef", NULL, NULL, NULL, 0x0, 0x0,
             device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
     todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
     ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
 
