@@ -203,6 +203,7 @@ static void * const syscalls[] =
     NtLoadDriver,
     NtLoadKey,
     NtLoadKey2,
+    NtLoadKeyEx,
     NtLockFile,
     NtLockVirtualMemory,
     NtMakeTemporaryObject,

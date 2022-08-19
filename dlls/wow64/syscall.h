@@ -104,6 +104,7 @@
     SYSCALL_ENTRY( NtLoadDriver ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
+    SYSCALL_ENTRY( NtLoadKeyEx ) \
     SYSCALL_ENTRY( NtLockFile ) \
     SYSCALL_ENTRY( NtLockVirtualMemory ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \

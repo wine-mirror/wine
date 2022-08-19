@@ -729,6 +729,16 @@ NTSTATUS WINAPI NtLoadKey2( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fi
     return NtLoadKey( attr, file );
 }
 
+/******************************************************************************
+ *              NtLoadKeyEx  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags, HANDLE trustkey,
+                             HANDLE event, ACCESS_MASK access, HANDLE *roothandle, IO_STATUS_BLOCK *iostatus )
+{
+    FIXME( "(%p,%p,0x%08x,%p,%p,0x%08x,%p,%p) stub\n", attr, file, flags, trustkey, event,
+                                                        access, roothandle, iostatus );
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /******************************************************************************
  *              NtUnloadKey  (NTDLL.@)
