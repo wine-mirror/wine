@@ -681,6 +681,24 @@ NTSTATUS WINAPI NtFlushKey( HANDLE key )
  */
 NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file )
 {
+    TRACE( "(%p,%p)\n", attr, file );
+    return NtLoadKeyEx( attr, file, 0, 0, 0, 0, NULL, NULL );
+}
+
+/******************************************************************************
+ *              NtLoadKey2  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtLoadKey2( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags )
+{
+    return NtLoadKeyEx( attr, file, flags, 0, 0, 0, NULL, NULL );
+}
+
+/******************************************************************************
+ *              NtLoadKeyEx  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags, HANDLE trustkey,
+                             HANDLE event, ACCESS_MASK access, HANDLE *roothandle, IO_STATUS_BLOCK *iostatus )
+{
     NTSTATUS ret;
     HANDLE key;
     data_size_t len;
@@ -689,7 +707,14 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES new_attr = *file;
 
-    TRACE("(%p,%p)\n", attr, file);
+    TRACE( "(%p,%p,0x%x,%p,%p,0x%x,%p,%p)\n", attr, file, flags, trustkey, event, access, roothandle, iostatus );
+
+    if (flags) FIXME( "flags %x not handled\n", flags );
+    if (trustkey) FIXME("trustkey parameter not supported\n");
+    if (event) FIXME("event parameter not supported\n");
+    if (access) FIXME("access parameter not supported\n");
+    if (roothandle) FIXME("roothandle is not filled\n");
+    if (iostatus) FIXME("iostatus is not filled\n");
 
     get_redirect( &new_attr, &nt_name );
     if (!(ret = nt_to_unix_file_name( &new_attr, &unix_name, FILE_OPEN )))
@@ -717,27 +742,6 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
     NtClose( key );
     free( objattr );
     return ret;
-}
-
-
-/******************************************************************************
- *              NtLoadKey2  (NTDLL.@)
- */
-NTSTATUS WINAPI NtLoadKey2( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags )
-{
-    FIXME( "(%p,%p,0x%08x) semi-stub: ignoring flags\n", attr, file, flags );
-    return NtLoadKey( attr, file );
-}
-
-/******************************************************************************
- *              NtLoadKeyEx  (NTDLL.@)
- */
-NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags, HANDLE trustkey,
-                             HANDLE event, ACCESS_MASK access, HANDLE *roothandle, IO_STATUS_BLOCK *iostatus )
-{
-    FIXME( "(%p,%p,0x%08x,%p,%p,0x%08x,%p,%p) stub\n", attr, file, flags, trustkey, event,
-                                                        access, roothandle, iostatus );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
