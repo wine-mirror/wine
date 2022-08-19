@@ -3324,7 +3324,7 @@ static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *result)
     if (!result)
         return E_POINTER;
 
-    if (!(*result = SysAllocStringLen(NULL, 13)))
+    if (!(*result = SysAllocStringLen(NULL, 12)))
         return E_OUTOFMEMORY;
 
     if(!RtlGenRandom(&random, sizeof(random)))
