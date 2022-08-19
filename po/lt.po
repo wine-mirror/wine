@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-06-29 00:21+0300\n"
+"PO-Revision-Date: 2022-08-19 17:01+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -1333,10 +1333,8 @@ msgid "Options"
 msgstr "Parinktys"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
-msgstr "Numatytosios reikšmės"
+msgstr "Numatytoji"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
