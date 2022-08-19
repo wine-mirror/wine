@@ -2227,6 +2227,8 @@ START_TEST(d3d)
     };
     unsigned int i;
 
+    /* These tests are deprecated. New tests should be added to tests/ddraw{1,2,4,7}.c */
+
     init_function_pointers();
     if(!pDirectDrawCreateEx) {
         win_skip("function DirectDrawCreateEx not available\n");
