@@ -359,6 +359,14 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                     "ret $4" )
 
+/*******************************************************************
+ *              RtlRestoreContext (NTDLL.@)
+ */
+void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
+{
+    TRACE( "returning to %p stack %p\n", (void *)context->Eip, (void *)context->Esp );
+    NtContinue( context, FALSE );
+}
 
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
