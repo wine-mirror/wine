@@ -571,6 +571,26 @@ static void test_misc_flags(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_display_control(void)
+{
+    IBaseFilter *filter = create_evr();
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = MFGetService((IUnknown *)filter, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, 0);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    IMFVideoDisplayControl_Release(display_control);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 static IMFMediaType * create_video_type(const GUID *subtype)
 {
     IMFMediaType *video_type;
@@ -3243,6 +3263,7 @@ START_TEST(evr)
     test_pin_info();
     test_unconnected_eos();
     test_misc_flags();
+    test_display_control();
 
     test_default_mixer();
     test_default_mixer_type_negotiation();
