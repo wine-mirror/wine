@@ -15173,6 +15173,19 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
 
         ok(hal->dwFlags == 0, "RGB Device hal caps has hardware flags %#lx\n", hal->dwFlags);
         ok(hel->dwFlags != 0, "RGB Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+
+        todo_wine
+        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "RGB Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        todo_wine
+        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "RGB Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        todo_wine
+        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "RGB Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+        todo_wine
+        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "RGB Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else if(IsEqualGUID(&IID_IDirect3DHALDevice, guid))
     {
@@ -15181,6 +15194,17 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
 
         ok(hal->dwFlags != 0, "HAL Device hal caps has hardware flags %#lx\n", hal->dwFlags);
         ok(hel->dwFlags != 0, "HAL Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+
+        ok(hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT,
+           "HAL Device hal device caps does not have D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        todo_wine
+        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "RGB Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok(hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
+           "HAL Device hal device caps does not have D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+        todo_wine
+        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "RGB Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else if(IsEqualGUID(&IID_IDirect3DRefDevice, guid))
     {
@@ -15201,6 +15225,15 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
            "REF Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
         ok(hel->dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_PERSPECTIVE,
            "REF Device hel tri caps does not have D3DPTEXTURECAPS_PERSPECTIVE set\n");
+
+        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "REF Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "REF Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "REF Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "REF Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else if(IsEqualGUID(&IID_IDirect3DRampDevice, guid))
     {
@@ -15228,6 +15261,15 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
 
         ok(hal->dwFlags == 0, "Ramp Device hal caps has hardware flags %#lx\n", hal->dwFlags);
         ok(hel->dwFlags != 0, "Ramp Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+
+        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "Ramp Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "Ramp Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "Ramp Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "Ramp Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else if(IsEqualGUID(&IID_IDirect3DMMXDevice, guid))
     {
@@ -15254,6 +15296,15 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
 
         ok(hal->dwFlags == 0, "MMX Device hal caps has hardware flags %#lx\n", hal->dwFlags);
         ok(hel->dwFlags != 0, "MMX Device hel caps has hardware flags %#lx\n", hel->dwFlags);
+
+        ok((hal->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "MMX Device hal device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok((hel->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "MMX Device hel device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok((hal->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "MMX Device hal device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+        ok((hel->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "MMX Device hel device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
     }
     else
     {

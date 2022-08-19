@@ -19390,6 +19390,70 @@ static void test_filling_convention(void)
     DestroyWindow(window);
 }
 
+static HRESULT WINAPI test_enum_devices_caps_callback(char *device_desc, char *device_name,
+        D3DDEVICEDESC7 *device_desc7, void *ctx)
+{
+    if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DTnLHalDevice))
+    {
+        ok(device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT,
+           "TnLHal Device device caps does not have D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok(device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
+           "TnLHal Device device caps does not have D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+    }
+    else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DHALDevice))
+    {
+        todo_wine
+        ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "HAL Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        ok(device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX,
+           "HAL Device device caps does not have D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+    }
+    else if (IsEqualGUID(&device_desc7->deviceGUID, &IID_IDirect3DRGBDevice))
+    {
+        todo_wine
+        ok((device_desc7->dwDevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0,
+           "RGB Device device caps has D3DDEVCAPS_HWTRANSFORMANDLIGHT set\n");
+        todo_wine
+        ok((device_desc7->dwDevCaps & D3DDEVCAPS_DRAWPRIMITIVES2EX) == 0,
+           "RGB Device device caps has D3DDEVCAPS_DRAWPRIMITIVES2EX set\n");
+    }
+    else
+    {
+        ok(FALSE, "Unexpected device enumerated: \"%s\" \"%s\"\n", device_desc, device_name);
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_enum_devices(void)
+{
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    ULONG refcount;
+    HRESULT hr;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    hr = IDirectDraw7_QueryInterface(ddraw, &IID_IDirect3D7, (void **)&d3d);
+    if (FAILED(hr))
+    {
+        skip("D3D interface is not available, skipping test.\n");
+        IDirectDraw7_Release(ddraw);
+        return;
+    }
+
+    hr = IDirect3D7_EnumDevices(d3d, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3D7_EnumDevices(d3d, test_enum_devices_caps_callback, NULL);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    IDirect3D7_Release(d3d);
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 static void run_for_each_device_type(void (*test_func)(const GUID *))
 {
     test_func(hw_device_guid);
@@ -19568,4 +19632,5 @@ START_TEST(ddraw7)
     test_get_display_mode();
     run_for_each_device_type(test_texture_wrong_caps);
     test_filling_convention();
+    test_enum_devices();
 }
