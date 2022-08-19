@@ -483,6 +483,7 @@ static void test_GetTempName(void)
     hr = IFileSystem3_GetTempName(fs3, &result);
     ok(hr == S_OK, "GetTempName returned %x, expected S_OK\n", hr);
     ok(!!wcsstr( result,L".tmp"), "GetTempName returned %s, expected .tmp suffix\n", debugstr_w(result));
+    todo_wine ok(SysStringLen(result) == lstrlenW(result),"GetTempName returned %s, has incorrect string len.\n", debugstr_w(result));
     SysFreeString(result);
 }
 
