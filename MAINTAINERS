@@ -4,8 +4,7 @@
 
 When submitting patches to Wine, the guidelines at
 <https://wiki.winehq.org/SubmittingPatches> should be followed. This file
-contains a list of maintainers for subsections of Wine. When submitting
-patches, you may want to CC relevant people from this list. If you have
+contains a list of maintainers for subsections of Wine. If you have
 questions about your work in an area of Wine, you may find a list of
 knowledgeable people here.
 
@@ -18,7 +17,7 @@ may simply be no one knowledgeable about that subject on the list.
 This file uses a similar format to the Linux kernel MAINTAINERS file.
 Descriptions of section entries used here:
 
-	M: Primary maintainer. CC patches to: FullName <address@domain>
+	M: Primary maintainer. FullName <address@domain>
 	P: Other knowledgeable person. FullName <address@domain>
 	F: Files and directories with wildcard patterns.
 	   One pattern per line.  Multiple F: lines acceptable.
