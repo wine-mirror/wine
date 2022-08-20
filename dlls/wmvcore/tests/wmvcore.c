@@ -1791,6 +1791,8 @@ struct callback
 
     DWORD callback_tid;
 
+    QWORD last_pts;
+
     QWORD expect_ontime;
     HANDLE ontime_event;
 };
@@ -2041,6 +2043,8 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
                 GetTickCount(), GetCurrentThreadId(), stream_number, pts, duration, flags);
 
     ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
+    ok(callback->last_pts <= pts, "got pts %I64d\n", pts);
+    callback->last_pts = pts;
 
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
 
@@ -2372,6 +2376,7 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     callback->end_of_streaming_count = 0;
     callback->eof_count = 0;
     callback->callback_tid = 0;
+    callback->last_pts = 0;
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
