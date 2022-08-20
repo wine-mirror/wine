@@ -267,11 +267,19 @@ static HRESULT open_stream(struct async_reader *reader, IWMReaderCallback *callb
 
 static void close_stream(struct async_reader *reader)
 {
+    struct async_op *op, *next;
+
     if (reader->callback_thread)
     {
         WaitForSingleObject(reader->callback_thread, INFINITE);
         CloseHandle(reader->callback_thread);
         reader->callback_thread = NULL;
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(op, next, &reader->async_ops, struct async_op, entry)
+    {
+        list_remove(&op->entry);
+        free(op);
     }
 }
 
