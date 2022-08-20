@@ -45,7 +45,7 @@ struct usb_event
             UINT16 vendor, product, revision;
             UINT8 class, subclass, protocol;
             bool interface;
-            UINT8 interface_index;
+            INT16 interface_index;
         } added_device;
         struct unix_device *removed_device;
         IRP *completed_irp;

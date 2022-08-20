@@ -76,7 +76,7 @@ struct usb_device
     DEVICE_OBJECT *device_obj;
 
     bool interface;
-    uint8_t interface_index;
+    int16_t interface_index;
 
     uint8_t class, subclass, protocol;
 
@@ -377,10 +377,20 @@ static void get_hardware_ids(const struct usb_device *device, struct string_buff
 
 static void get_compatible_ids(const struct usb_device *device, struct string_buffer *buffer)
 {
-    append_id(buffer, L"USB\\Class_%02x&SubClass_%02x&Prot_%02x",
-            device->class, device->subclass, device->protocol);
-    append_id(buffer, L"USB\\Class_%02x&SubClass_%02x", device->class, device->subclass);
-    append_id(buffer, L"USB\\Class_%02x", device->class);
+    if (device->interface_index != -1)
+    {
+        append_id(buffer, L"USB\\Class_%02x&SubClass_%02x&Prot_%02x",
+                device->class, device->subclass, device->protocol);
+        append_id(buffer, L"USB\\Class_%02x&SubClass_%02x", device->class, device->subclass);
+        append_id(buffer, L"USB\\Class_%02x", device->class);
+    }
+    else
+    {
+        append_id(buffer, L"USB\\DevClass_%02x&SubClass_%02x&Prot_%02x",
+                device->class, device->subclass, device->protocol);
+        append_id(buffer, L"USB\\DevClass_%02x&SubClass_%02x", device->class, device->subclass);
+        append_id(buffer, L"USB\\DevClass_%02x", device->class);
+    }
     append_id(buffer, L"");
 }
 

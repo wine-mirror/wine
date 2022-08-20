@@ -143,10 +143,28 @@ static void add_usb_device(libusb_device *libusb_device)
     usb_event.u.added_device.subclass = device_desc.bDeviceSubClass;
     usb_event.u.added_device.protocol = device_desc.bDeviceProtocol;
     usb_event.u.added_device.interface = false;
-    queue_event(&usb_event);
+    usb_event.u.added_device.interface_index = -1;
 
     if (!(ret = libusb_get_active_config_descriptor(libusb_device, &config_desc)))
     {
+        const struct libusb_interface *interface;
+        const struct libusb_interface_descriptor *iface_desc;
+
+        if (config_desc->bNumInterfaces == 1)
+        {
+            interface = &config_desc->interface[0];
+            if (interface->num_altsetting != 1)
+                FIXME("Interface 0 has %u alternate settings; using the first one.\n",
+                        interface->num_altsetting);
+            iface_desc = &interface->altsetting[0];
+
+            usb_event.u.added_device.class = iface_desc->bInterfaceClass;
+            usb_event.u.added_device.subclass = iface_desc->bInterfaceSubClass;
+            usb_event.u.added_device.protocol = iface_desc->bInterfaceProtocol;
+            usb_event.u.added_device.interface_index = iface_desc->bInterfaceNumber;
+        }
+        queue_event(&usb_event);
+
         /* Create new devices for interfaces of composite devices.
          *
          * On Windows this is the job of usbccgp.sys, a separate driver that
@@ -163,10 +181,9 @@ static void add_usb_device(libusb_device *libusb_device)
 
             for (i = 0; i < config_desc->bNumInterfaces; ++i)
             {
-                const struct libusb_interface *interface = &config_desc->interface[i];
-                const struct libusb_interface_descriptor *iface_desc;
                 struct unix_device *unix_iface;
 
+                interface = &config_desc->interface[i];
                 if (interface->num_altsetting != 1)
                     FIXME("Interface %u has %u alternate settings; using the first one.\n",
                             i, interface->num_altsetting);
@@ -196,6 +213,8 @@ static void add_usb_device(libusb_device *libusb_device)
     }
     else
     {
+        queue_event(&usb_event);
+
         ERR("Failed to get configuration descriptor: %s\n", libusb_strerror(ret));
     }
 }
