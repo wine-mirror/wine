@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-07-12 15:15+0200\n"
+"PO-Revision-Date: 2022-08-20 11:30+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -1335,10 +1335,8 @@ msgid "Options"
 msgstr "Instellingen"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
-msgstr "Multimedia Apparaten"
+msgstr "Standaard"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -19335,7 +19333,7 @@ msgstr "&Systeem\tCtrl+1"
 
 #: programs/wordpad/wordpad.rc:99
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&Geeltje\tCtrl+2"
+msgstr "Licht&geel\tCtrl+2"
 
 #: programs/wordpad/wordpad.rc:104
 msgid "&About Wine Wordpad"
