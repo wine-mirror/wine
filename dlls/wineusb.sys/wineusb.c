@@ -127,6 +127,9 @@ static void add_unix_device(const struct usb_add_device_event *event)
     InitializeListHead(&device->irp_list);
     device->removed = FALSE;
 
+    device->interface = event->interface;
+    device->interface_index = event->interface_index;
+
     device->class = event->class;
     device->subclass = event->subclass;
     device->protocol = event->protocol;
