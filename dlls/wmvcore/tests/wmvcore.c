@@ -30,6 +30,8 @@
 
 #include "wine/test.h"
 
+static const DWORD test_wmv_duration = 20460000;
+
 HRESULT WINAPI WMCreateWriterPriv(IWMWriter **writer);
 
 static BOOL compare_media_types(const WM_MEDIA_TYPE *a, const WM_MEDIA_TYPE *b)
@@ -719,7 +721,7 @@ static void test_reader_attributes(IWMProfile *profile)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
     ok(size == sizeof(QWORD), "Got size %u.\n", size);
-    ok(duration == 20460000, "Got duration %I64u.\n", duration);
+    ok(duration == test_wmv_duration, "Got duration %I64u.\n", duration);
     ok(stream_number == 0, "Got stream number %u.\n", stream_number);
 
     /* Pass a too-small size. */
@@ -2077,7 +2079,7 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
 
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration * 2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     wait_eof_callback(callback);
@@ -2416,7 +2418,7 @@ static void test_async_reader_streaming(void)
     /* By default the reader will time itself, and attempt to deliver samples
      * according to their presentation time. Call DeliverTime with the file
      * duration in order to request all samples as fast as possible. */
-    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration * 2);
     ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2425,13 +2427,13 @@ static void test_async_reader_streaming(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.ontime_event, 1000);
     ok(!ret, "Wait timed out.\n");
-    callback.expect_ontime = 1000 * 10000;
-    hr = IWMReaderAdvanced2_DeliverTime(advanced, 1000 * 10000);
+    callback.expect_ontime = test_wmv_duration / 2;
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration / 2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ret = WaitForSingleObject(callback.ontime_event, 1000);
     ok(!ret, "Wait timed out.\n");
-    callback.expect_ontime = 3000 * 10000;
-    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    callback.expect_ontime = test_wmv_duration * 2;
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration * 2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     wait_eof_callback(&callback);
@@ -2443,7 +2445,7 @@ static void test_async_reader_streaming(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_started_callback(&callback);
 
-    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration * 2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     wait_eof_callback(&callback);
