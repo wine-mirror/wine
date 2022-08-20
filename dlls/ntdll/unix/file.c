@@ -1810,6 +1810,44 @@ static NTSTATUS fill_name_info( const char *unix_name, FILE_NAME_INFORMATION *in
 }
 
 
+static NTSTATUS get_full_size_info(int fd, FILE_FS_FULL_SIZE_INFORMATION *info) {
+    struct stat st;
+    ULONGLONG bsize;
+
+#if !defined(linux) || !defined(HAVE_FSTATFS)
+    struct statvfs stfs;
+#else
+    struct statfs stfs;
+#endif
+
+    if (fstat( fd, &st ) < 0) return errno_to_status( errno );
+    if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode)) return STATUS_INVALID_DEVICE_REQUEST;
+
+    /* Linux's fstatvfs is buggy */
+#if !defined(linux) || !defined(HAVE_FSTATFS)
+    if (fstatvfs( fd, &stfs ) < 0) return errno_to_status( errno );
+    bsize = stfs.f_frsize;
+#else
+    if (fstatfs( fd, &stfs ) < 0) return errno_to_status( errno );
+    bsize = stfs.f_bsize;
+#endif
+    if (bsize == 2048)  /* assume CD-ROM */
+    {
+        info->BytesPerSector = 2048;
+        info->SectorsPerAllocationUnit = 1;
+    }
+    else
+    {
+        info->BytesPerSector = 512;
+        info->SectorsPerAllocationUnit = 8;
+    }
+    info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+    info->CallerAvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+    info->ActualAvailableAllocationUnits.QuadPart = bsize * stfs.f_bfree / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+    return STATUS_SUCCESS;
+}
+
+
 static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
                                       ULONG length, FILE_INFORMATION_CLASS info_class )
 {
@@ -6406,7 +6444,6 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
                                               FS_INFORMATION_CLASS info_class )
 {
     int fd, needs_close;
-    struct stat st;
     NTSTATUS status;
 
     status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
@@ -6456,52 +6493,15 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         else
         {
             FILE_FS_SIZE_INFORMATION *info = buffer;
+            FILE_FS_FULL_SIZE_INFORMATION full_info;
 
-            if (fstat( fd, &st ) < 0)
+            if ((status = get_full_size_info(fd, &full_info)) == STATUS_SUCCESS)
             {
-                status = errno_to_status( errno );
-                break;
-            }
-            if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-            {
-                status = STATUS_INVALID_DEVICE_REQUEST;
-            }
-            else
-            {
-                ULONGLONG bsize;
-                /* Linux's fstatvfs is buggy */
-#if !defined(linux) || !defined(HAVE_FSTATFS)
-                struct statvfs stfs;
-
-                if (fstatvfs( fd, &stfs ) < 0)
-                {
-                    status = errno_to_status( errno );
-                    break;
-                }
-                bsize = stfs.f_frsize;
-#else
-                struct statfs stfs;
-                if (fstatfs( fd, &stfs ) < 0)
-                {
-                    status = errno_to_status( errno );
-                    break;
-                }
-                bsize = stfs.f_bsize;
-#endif
-                if (bsize == 2048)  /* assume CD-ROM */
-                {
-                    info->BytesPerSector = 2048;
-                    info->SectorsPerAllocationUnit = 1;
-                }
-                else
-                {
-                    info->BytesPerSector = 512;
-                    info->SectorsPerAllocationUnit = 8;
-                }
-                info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (info->BytesPerSector * info->SectorsPerAllocationUnit);
-                info->AvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+                info->TotalAllocationUnits = full_info.TotalAllocationUnits;
+                info->AvailableAllocationUnits = full_info.CallerAvailableAllocationUnits;
+                info->SectorsPerAllocationUnit = full_info.SectorsPerAllocationUnit;
+                info->BytesPerSector = full_info.BytesPerSector;
                 io->Information = sizeof(*info);
-                status = STATUS_SUCCESS;
             }
         }
         break;
@@ -6645,8 +6645,14 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         break;
 
     case FileFsFullSizeInformation:
-        FIXME( "%p: full size info not supported\n", handle );
-        status = STATUS_NOT_IMPLEMENTED;
+        if (length < sizeof(FILE_FS_FULL_SIZE_INFORMATION))
+            status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_FULL_SIZE_INFORMATION *info = buffer;
+            if ((status = get_full_size_info(fd, info)) == STATUS_SUCCESS)
+                io->Information = sizeof(*info);
+        }
         break;
 
     case FileFsObjectIdInformation:

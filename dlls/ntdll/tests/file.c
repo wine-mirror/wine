@@ -1287,7 +1287,7 @@ static void test_file_full_size_information(void)
 
     /* Assume No Quota Settings configured on Wine Testbot */
     res = pNtQueryVolumeInformationFile(h, &io, &ffsi, sizeof ffsi, FileFsFullSizeInformation);
-    todo_wine ok(res == STATUS_SUCCESS, "cannot get attributes, res %lx\n", res);
+    ok(res == STATUS_SUCCESS, "cannot get attributes, res %lx\n", res);
     res = pNtQueryVolumeInformationFile(h, &io, &fsi, sizeof fsi, FileFsSizeInformation);
     ok(res == STATUS_SUCCESS, "cannot get attributes, res %lx\n", res);
 
@@ -1303,8 +1303,6 @@ static void test_file_full_size_information(void)
     ok(fsi.BytesPerSector == 512, "[fsi] BytesPerSector expected 512, got %ld\n",fsi.BytesPerSector);
     ok(fsi.SectorsPerAllocationUnit == 8, "[fsi] SectorsPerAllocationUnit expected 8, got %ld\n",fsi.SectorsPerAllocationUnit);
 
-    todo_wine
-    {
     ok(ffsi.TotalAllocationUnits.QuadPart > 0,
         "[ffsi] TotalAllocationUnits expected positive, got negative value 0x%s\n",
         wine_dbgstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
@@ -1322,14 +1320,10 @@ static void test_file_full_size_information(void)
         "[ffsi] CallerAvailableAllocationUnits error fsi:0x%s, ffsi: 0x%s\n",
         wine_dbgstr_longlong(fsi.AvailableAllocationUnits.QuadPart),
         wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
-    }
 
     /* Assume file system is NTFS */
-    todo_wine
-    {
     ok(ffsi.BytesPerSector == 512, "[ffsi] BytesPerSector expected 512, got %ld\n",ffsi.BytesPerSector);
     ok(ffsi.SectorsPerAllocationUnit == 8, "[ffsi] SectorsPerAllocationUnit expected 8, got %ld\n",ffsi.SectorsPerAllocationUnit);
-    }
 
     CloseHandle( h );
 }
