@@ -139,9 +139,12 @@ static void add_usb_device(libusb_device *libusb_device)
     usb_event.u.added_device.vendor = device_desc.idVendor;
     usb_event.u.added_device.product = device_desc.idProduct;
     usb_event.u.added_device.revision = device_desc.bcdDevice;
+    usb_event.u.added_device.usbver = device_desc.bcdUSB;
     usb_event.u.added_device.class = device_desc.bDeviceClass;
     usb_event.u.added_device.subclass = device_desc.bDeviceSubClass;
     usb_event.u.added_device.protocol = device_desc.bDeviceProtocol;
+    usb_event.u.added_device.busnum = libusb_get_bus_number(libusb_device);
+    usb_event.u.added_device.portnum = libusb_get_port_number(libusb_device);
     usb_event.u.added_device.interface = false;
     usb_event.u.added_device.interface_index = -1;
 
