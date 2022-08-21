@@ -1996,11 +1996,11 @@ static void test_volume_dependence(void)
         ok(vol == 1.f, "ASV_GetChannelVolume gave wrong volume: %f\n", vol);
 
         hr = IChannelAudioVolume_GetChannelCount(cav2, &nch);
-        ok(hr == S_OK, "GetChannelCount failed: %08lx\n", hr);
+        ok(hr == S_OK, "CAV_GetChannelCount failed: %08lx\n", hr);
         ok(nch == fmt->nChannels, "Got wrong channel count, expected %u: %u\n", fmt->nChannels, nch);
 
         hr = IAudioStreamVolume_GetChannelCount(asv2, &nch);
-        ok(hr == S_OK, "GetChannelCount failed: %08lx\n", hr);
+        ok(hr == S_OK, "ASV_GetChannelCount failed: %08lx\n", hr);
         ok(nch == fmt->nChannels, "Got wrong channel count, expected %u: %u\n", fmt->nChannels, nch);
 
         IAudioStreamVolume_Release(asv2);
