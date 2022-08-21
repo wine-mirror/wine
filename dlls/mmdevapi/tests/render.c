@@ -1529,7 +1529,7 @@ static void test_session(void)
     }
 
     hr = IAudioClient_Stop(ses1_ac1);
-    ok(hr == S_OK, "Start failed: %08lx\n", hr);
+    ok(hr == S_OK, "Stop failed: %08lx\n", hr);
 
     hr = IAudioSessionControl2_GetState(ses1_ctl, &state);
     ok(hr == S_OK, "GetState failed: %08lx\n", hr);
