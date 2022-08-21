@@ -582,16 +582,16 @@ static void test_streamvolume(void)
     ok(chans == fmt->nChannels, "GetChannelCount gave wrong number of channels: %d\n", chans);
 
     hr = IAudioStreamVolume_GetChannelVolume(asv, fmt->nChannels, NULL);
-    ok(hr == E_POINTER, "GetChannelCount gave wrong error: %08lx\n", hr);
+    ok(hr == E_POINTER, "GetChannelVolume gave wrong error: %08lx\n", hr);
 
     hr = IAudioStreamVolume_GetChannelVolume(asv, fmt->nChannels, &vol);
-    ok(hr == E_INVALIDARG, "GetChannelCount gave wrong error: %08lx\n", hr);
+    ok(hr == E_INVALIDARG, "GetChannelVolume gave wrong error: %08lx\n", hr);
 
     hr = IAudioStreamVolume_GetChannelVolume(asv, 0, NULL);
-    ok(hr == E_POINTER, "GetChannelCount gave wrong error: %08lx\n", hr);
+    ok(hr == E_POINTER, "GetChannelVolume gave wrong error: %08lx\n", hr);
 
     hr = IAudioStreamVolume_GetChannelVolume(asv, 0, &vol);
-    ok(hr == S_OK, "GetChannelCount failed: %08lx\n", hr);
+    ok(hr == S_OK, "GetChannelVolume failed: %08lx\n", hr);
     ok(vol == 1.f, "Channel volume was not 1: %f\n", vol);
 
     hr = IAudioStreamVolume_SetChannelVolume(asv, fmt->nChannels, -1.f);
@@ -607,7 +607,7 @@ static void test_streamvolume(void)
     ok(hr == S_OK, "SetChannelVolume failed: %08lx\n", hr);
 
     hr = IAudioStreamVolume_GetChannelVolume(asv, 0, &vol);
-    ok(hr == S_OK, "GetChannelCount failed: %08lx\n", hr);
+    ok(hr == S_OK, "GetChannelVolume failed: %08lx\n", hr);
     ok(fabsf(vol - 0.2f) < 0.05f, "Channel volume wasn't 0.2: %f\n", vol);
 
     hr = IAudioStreamVolume_GetAllVolumes(asv, 0, NULL);
@@ -681,16 +681,16 @@ static void test_channelvolume(void)
     ok(chans == fmt->nChannels, "GetChannelCount gave wrong number of channels: %d\n", chans);
 
     hr = IChannelAudioVolume_GetChannelVolume(acv, fmt->nChannels, NULL);
-    ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08lx\n", hr);
+    ok(hr == NULL_PTR_ERR, "GetChannelVolume gave wrong error: %08lx\n", hr);
 
     hr = IChannelAudioVolume_GetChannelVolume(acv, fmt->nChannels, &vol);
-    ok(hr == E_INVALIDARG, "GetChannelCount gave wrong error: %08lx\n", hr);
+    ok(hr == E_INVALIDARG, "GetChannelVolume gave wrong error: %08lx\n", hr);
 
     hr = IChannelAudioVolume_GetChannelVolume(acv, 0, NULL);
-    ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08lx\n", hr);
+    ok(hr == NULL_PTR_ERR, "GetChannelVolume gave wrong error: %08lx\n", hr);
 
     hr = IChannelAudioVolume_GetChannelVolume(acv, 0, &vol);
-    ok(hr == S_OK, "GetChannelCount failed: %08lx\n", hr);
+    ok(hr == S_OK, "GetChannelVolume failed: %08lx\n", hr);
     ok(vol == 1.f, "Channel volume was not 1: %f\n", vol);
 
     hr = IChannelAudioVolume_SetChannelVolume(acv, fmt->nChannels, -1.f, NULL);
@@ -706,7 +706,7 @@ static void test_channelvolume(void)
     ok(hr == S_OK, "SetChannelVolume failed: %08lx\n", hr);
 
     hr = IChannelAudioVolume_GetChannelVolume(acv, 0, &vol);
-    ok(hr == S_OK, "GetChannelCount failed: %08lx\n", hr);
+    ok(hr == S_OK, "GetChannelVolume failed: %08lx\n", hr);
     ok(fabsf(vol - 0.2f) < 0.05f, "Channel volume wasn't 0.2: %f\n", vol);
 
     hr = IChannelAudioVolume_GetAllVolumes(acv, 0, NULL);
