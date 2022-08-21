@@ -3534,6 +3534,14 @@ BOOLEAN WINAPI KeAreApcsDisabled(void)
 }
 
 /***********************************************************************
+ *           KeAreAllApcsDisabled    (NTOSKRNL.@)
+ */
+BOOLEAN WINAPI KeAreAllApcsDisabled(void)
+{
+    return KeAreApcsDisabled();
+}
+
+/***********************************************************************
  *           KeBugCheck    (NTOSKRNL.@)
  */
 void WINAPI KeBugCheck(ULONG code)

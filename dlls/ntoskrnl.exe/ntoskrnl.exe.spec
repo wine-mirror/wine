@@ -532,6 +532,7 @@
 @ stdcall -arch=!i386 KeAcquireSpinLockRaiseToDpc(ptr)
 @ stub KeAddSystemServiceTable
 @ stdcall KeAlertThread(ptr long)
+@ stdcall KeAreAllApcsDisabled()
 @ stdcall KeAreApcsDisabled()
 @ stub KeAttachProcess
 @ stdcall KeBugCheck(long)
