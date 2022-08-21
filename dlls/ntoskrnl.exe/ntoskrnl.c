@@ -4014,6 +4014,19 @@ NTSTATUS WINAPI ZwUnloadDriver( const UNICODE_STRING *service_name )
 }
 
 /***********************************************************************
+ *           IoCreateFileEx (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoCreateFileEx(HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                              IO_STATUS_BLOCK *io, LARGE_INTEGER *alloc_size, ULONG attributes, ULONG sharing,
+                              ULONG disposition, ULONG create_options, VOID *ea_buffer, ULONG ea_length,
+                              CREATE_FILE_TYPE file_type, VOID *parameters, ULONG options, void *driverctx)
+{
+    FIXME(": semi-stub\n");
+    return NtCreateFile(handle, access, attr, io, alloc_size, attributes, sharing, disposition,
+                        create_options, ea_buffer, ea_length);
+}
+
+/***********************************************************************
  *           IoCreateFile (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoCreateFile(HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
@@ -4021,8 +4034,9 @@ NTSTATUS WINAPI IoCreateFile(HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUT
                               ULONG disposition, ULONG create_options, VOID *ea_buffer, ULONG ea_length,
                               CREATE_FILE_TYPE file_type, VOID *parameters, ULONG options )
 {
-    FIXME(": stub\n");
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME(": semi-stub\n");
+    return IoCreateFileEx(handle, access, attr, io, alloc_size, attributes, sharing, disposition,
+                          create_options, ea_buffer, ea_length, file_type, parameters, options, NULL);
 }
 
 /***********************************************************************
