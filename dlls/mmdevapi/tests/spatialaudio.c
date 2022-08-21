@@ -240,7 +240,7 @@ static void test_audio_object_activation(void)
     hr = ISpatialAudioObject_IsActive(sao1, &is_active);
     todo_wine ok(hr == S_OK, "Failed to check if spatial audio object is active: 0x%08lx\n", hr);
     if (hr == S_OK)
-        ok(is_active, "Expected spaital audio object to be active\n");
+        ok(is_active, "Expected spatial audio object to be active\n");
 
     hr = ISpatialAudioObjectRenderStream_ActivateSpatialAudioObject(sas, AudioObjectType_FrontLeft, &sao2);
     ok(hr == SPTLAUDCLNT_E_OBJECT_ALREADY_ACTIVE, "Expected audio object to be already active: 0x%08lx\n", hr);
@@ -315,7 +315,7 @@ static void test_audio_object_buffers(void)
     ok(hr == S_OK, "Failed to activate spatial audio object: 0x%08lx\n", hr);
 
     hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
-    ok(hr == S_OK, "Failed to beging updating audio objects: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Failed to begin updating audio objects: 0x%08lx\n", hr);
     ok(dyn_object_count == 0, "Unexpected dynamic objects\n");
     ok(frame_count <= max_frame_count, "Got unexpected frame count %u.\n", frame_count);
 
@@ -345,7 +345,7 @@ static void test_audio_object_buffers(void)
         ok(hr == WAIT_OBJECT_0, "Expected event to be flagged: 0x%08lx, j %u.\n", hr, j);
 
         hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
-        ok(hr == S_OK, "Failed to beging updating audio objects: 0x%08lx\n", hr);
+        ok(hr == S_OK, "Failed to begin updating audio objects: 0x%08lx\n", hr);
         ok(dyn_object_count == 0, "Unexpected dynamic objects\n");
         ok(frame_count <= max_frame_count, "Got unexpected frame_count %u.\n", frame_count);
 
@@ -388,7 +388,7 @@ static void test_audio_object_buffers(void)
     ok(hr == WAIT_OBJECT_0, "Expected event to be flagged: 0x%08lx\n", hr);
 
     hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
-    ok(hr == S_OK, "Failed to beging updating audio objects: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Failed to begin updating audio objects: 0x%08lx\n", hr);
     ok(dyn_object_count == 0, "Unexpected dynamic objects\n");
 
     /* one more iteration but not with every object */
@@ -416,7 +416,7 @@ static void test_audio_object_buffers(void)
     todo_wine ok(hr == SPTLAUDCLNT_E_OUT_OF_ORDER, "Expected that ending the stream at this point won't be allowed: 0x%08lx\n", hr);
 
     hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
-    ok(hr == S_OK, "Failed to beging updating audio objects: 0x%08lx\n", hr);
+    ok(hr == S_OK, "Failed to begin updating audio objects: 0x%08lx\n", hr);
     ok(dyn_object_count == 0, "Unexpected dynamic objects\n");
 
     /* expect the object that was not updated last cycle to be invalidated */
