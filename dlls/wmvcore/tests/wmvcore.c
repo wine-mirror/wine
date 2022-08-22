@@ -3481,12 +3481,10 @@ static void test_sync_reader_allocator(void)
     hr = IWMSyncReader2_GetAllocateForOutput(reader, -1, &allocator);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_GetAllocateForStream(reader, 0, &allocator);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, NULL);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_GetAllocateForStream(reader, 1, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_SetAllocateForOutput(reader, -1, &callback.IWMReaderAllocatorEx_iface);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
@@ -3500,9 +3498,7 @@ static void test_sync_reader_allocator(void)
     ok(!allocator, "Got allocator %p.\n", allocator);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(!allocator, "Got allocator %p.\n", allocator);
 
 
@@ -3514,14 +3510,10 @@ static void test_sync_reader_allocator(void)
     ok(!allocator, "Got allocator %p.\n", allocator);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForStream(reader, 2, &allocator);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(!allocator, "Got allocator %p.\n", allocator);
     hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(allocator == &callback.IWMReaderAllocatorEx_iface, "Got allocator %p.\n", allocator);
 
     hr = IWMSyncReader2_SetAllocateForStream(reader, 1, NULL);
@@ -3532,9 +3524,7 @@ static void test_sync_reader_allocator(void)
     ok(!allocator, "Got allocator %p.\n", allocator);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(!allocator, "Got allocator %p.\n", allocator);
 
 
@@ -3546,9 +3536,7 @@ static void test_sync_reader_allocator(void)
     ok(!allocator, "Got allocator %p.\n", allocator);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(!allocator, "Got allocator %p.\n", allocator);
     hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3562,9 +3550,7 @@ static void test_sync_reader_allocator(void)
     ok(!allocator, "Got allocator %p.\n", allocator);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(!allocator, "Got allocator %p.\n", allocator);
 
 
