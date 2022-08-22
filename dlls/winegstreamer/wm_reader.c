@@ -2444,11 +2444,30 @@ static HRESULT WINAPI reader_SetAllocateForOutput(IWMSyncReader2 *iface, DWORD o
     return S_OK;
 }
 
-static HRESULT WINAPI reader_GetAllocateForOutput(IWMSyncReader2 *iface, DWORD output_num, IWMReaderAllocatorEx **allocator)
+static HRESULT WINAPI reader_GetAllocateForOutput(IWMSyncReader2 *iface, DWORD output, IWMReaderAllocatorEx **allocator)
 {
-    struct wm_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%lu %p): stub!\n", This, output_num, allocator);
-    return E_NOTIMPL;
+    struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+
+    TRACE("reader %p, output %lu, allocator %p.\n", reader, output, allocator);
+
+    if (!allocator)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    stream = reader->streams + output;
+    if ((*allocator = stream->output_allocator))
+        IWMReaderAllocatorEx_AddRef(*allocator);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_SetAllocateForStream(IWMSyncReader2 *iface, DWORD stream_num, IWMReaderAllocatorEx *allocator)
