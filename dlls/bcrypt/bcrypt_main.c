@@ -115,6 +115,7 @@ builtin_algorithms[] =
     {  BCRYPT_MD2_ALGORITHM,        BCRYPT_HASH_INTERFACE,                  270,   16,  128 },
     {  BCRYPT_RSA_ALGORITHM,        BCRYPT_ASYMMETRIC_ENCRYPTION_INTERFACE, 0,      0,    0 },
     {  BCRYPT_ECDH_P256_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
+    {  BCRYPT_ECDH_P384_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_RSA_SIGN_ALGORITHM,   BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P256_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P384_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
@@ -1356,6 +1357,11 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
             break;
 
+        case ALG_ID_ECDH_P384:
+            key_size = 48;
+            magic = BCRYPT_ECDH_PUBLIC_P384_MAGIC;
+            break;
+
         case ALG_ID_ECDSA_P256:
             key_size = 32;
             magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
@@ -1402,6 +1408,12 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             key_size = 32;
             magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
             break;
+
+        case ALG_ID_ECDH_P384:
+            key_size = 48;
+            magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
+            break;
+
         case ALG_ID_ECDSA_P256:
             key_size = 32;
             magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
@@ -1799,6 +1811,7 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HAN
         switch (key_blob->Magic)
         {
         case BCRYPT_ECDH_PUBLIC_P256_MAGIC:
+        case BCRYPT_ECDH_PUBLIC_P384_MAGIC:
         case BCRYPT_ECDSA_PUBLIC_P256_MAGIC:
         case BCRYPT_ECDSA_PUBLIC_P384_MAGIC:
             type = BCRYPT_ECCPUBLIC_BLOB;

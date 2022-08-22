@@ -2728,11 +2728,7 @@ static void test_ECDH(void)
 
     status = BCryptSecretAgreement(privkey, pubkey, &secret, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-
-    if (status != STATUS_SUCCESS)
-    {
-        goto derive_end;
-    }
+    if (status != STATUS_SUCCESS) goto derive_end;
 
     /* verify result on windows 10 */
     status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, NULL, 0, &size, 0);
@@ -2744,11 +2740,7 @@ static void test_ECDH(void)
     }
 
     todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-
-    if (status != STATUS_SUCCESS)
-    {
-        goto raw_secret_end;
-    }
+    if (status != STATUS_SUCCESS) goto raw_secret_end;
 
     ok(size == 32, "size of secret key incorrect, got %lu, expected 32\n", size);
     buf = HeapAlloc(GetProcessHeap(), 0, size);
@@ -2757,15 +2749,10 @@ static void test_ECDH(void)
     ok(!(memcmp(ecdh_secret, buf, size)), "wrong data\n");
     HeapFree(GetProcessHeap(), 0, buf);
 
-    raw_secret_end:
-
+raw_secret_end:
     status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
     todo_wine ok (status == STATUS_SUCCESS, "got %#lx\n", status);
-
-    if (status != STATUS_SUCCESS)
-    {
-        goto derive_end;
-    }
+    if (status != STATUS_SUCCESS) goto derive_end;
 
     ok (size == 20, "got %lu\n", size);
     buf = HeapAlloc(GetProcessHeap(), 0, size);
@@ -2791,11 +2778,44 @@ static void test_ECDH(void)
     status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
     ok (status == STATUS_NOT_SUPPORTED, "got %#lx\n", status);
 
-    derive_end:
-
+derive_end:
     BCryptDestroySecret(secret);
     BCryptDestroyKey(pubkey);
     BCryptDestroyKey(privkey);
+    BCryptCloseAlgorithmProvider(alg, 0);
+
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P384_ALGORITHM, NULL, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    key = NULL;
+    status = BCryptGenerateKeyPair(alg, &key, 384, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(key != NULL, "key not set\n");
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    size = 0;
+    status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ecckey = (BCRYPT_ECCKEY_BLOB *)buf;
+    ok(ecckey->dwMagic == BCRYPT_ECDH_PUBLIC_P384_MAGIC, "got %#lx\n", ecckey->dwMagic);
+    ok(ecckey->cbKey == 48, "got %lu\n", ecckey->cbKey);
+    ok(size == sizeof(*ecckey) + ecckey->cbKey * 2, "got %lu\n", size);
+
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &pubkey, buf, size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    BCryptDestroyKey(pubkey);
+
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, buf, size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    HeapFree(GetProcessHeap(), 0, buf);
+    BCryptDestroyKey(pubkey);
     BCryptCloseAlgorithmProvider(alg, 0);
 }
 

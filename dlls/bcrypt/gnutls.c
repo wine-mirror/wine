@@ -718,10 +718,22 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
         size = 32;
         break;
+
+    case ALG_ID_ECDH_P384:
+        magic = BCRYPT_ECDH_PUBLIC_P384_MAGIC;
+        size = 48;
+        break;
+
     case ALG_ID_ECDSA_P256:
         magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
         size = 32;
         break;
+
+    case ALG_ID_ECDSA_P384:
+        magic = BCRYPT_ECDSA_PUBLIC_P384_MAGIC;
+        size = 48;
+        break;
+
     default:
         FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
@@ -740,7 +752,7 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (curve != GNUTLS_ECC_CURVE_SECP256R1)
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1 && curve != GNUTLS_ECC_CURVE_SECP384R1)
     {
         FIXME( "curve %u not supported\n", curve );
         free( x.data ); free( y.data );
@@ -923,6 +935,12 @@ static NTSTATUS key_asymmetric_generate( void *args )
         bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP256R1 );
         break;
 
+    case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDSA_P384:
+        pk_alg = GNUTLS_PK_ECC; /* compatible with ECDSA and ECDH */
+        bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP384R1 );
+        break;
+
     default:
         FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_SUPPORTED;
@@ -975,9 +993,20 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
         size = 32;
         break;
+
+    case ALG_ID_ECDH_P384:
+        magic = BCRYPT_ECDH_PRIVATE_P384_MAGIC;
+        size = 48;
+        break;
+
     case ALG_ID_ECDSA_P256:
         magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
         size = 32;
+        break;
+
+    case ALG_ID_ECDSA_P384:
+        magic = BCRYPT_ECDSA_PRIVATE_P384_MAGIC;
+        size = 48;
         break;
 
     default:
@@ -1034,6 +1063,11 @@ static NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDSA_P256:
         curve = GNUTLS_ECC_CURVE_SECP256R1;
+        break;
+
+    case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDSA_P384:
+        curve = GNUTLS_ECC_CURVE_SECP384R1;
         break;
 
     default:
@@ -1290,8 +1324,12 @@ static NTSTATUS key_import_ecc_public( struct key *key, UCHAR *buf, ULONG len )
     switch (key->alg_id)
     {
     case ALG_ID_ECDH_P256:
-    case ALG_ID_ECDSA_P256: curve = GNUTLS_ECC_CURVE_SECP256R1; break;
-    case ALG_ID_ECDSA_P384: curve = GNUTLS_ECC_CURVE_SECP384R1; break;
+    case ALG_ID_ECDSA_P256:
+        curve = GNUTLS_ECC_CURVE_SECP256R1; break;
+
+    case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDSA_P384:
+        curve = GNUTLS_ECC_CURVE_SECP384R1; break;
 
     default:
         FIXME( "algorithm %u not yet supported\n", key->alg_id );
@@ -1448,6 +1486,7 @@ static NTSTATUS key_asymmetric_export( void *args )
     switch (key->alg_id)
     {
     case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
         if (flags & KEY_EXPORT_FLAG_PUBLIC)
@@ -1486,6 +1525,7 @@ static NTSTATUS key_asymmetric_import( void *args )
     switch (key->alg_id)
     {
     case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
         if (flags & KEY_IMPORT_FLAG_PUBLIC)
@@ -1880,6 +1920,7 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
         break;
     }
     case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDH_P384:
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     {
