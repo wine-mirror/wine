@@ -3413,6 +3413,152 @@ static void test_async_reader_file(void)
     ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
+static void test_sync_reader_allocator(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IWMReaderAllocatorEx *allocator;
+    struct teststream stream;
+    struct callback callback;
+    IWMSyncReader2 *reader;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    callback_init(&callback);
+
+    hr = WMCreateSyncReader(NULL, 0, (IWMSyncReader **)&reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
+
+    teststream_init(&stream, file);
+
+    hr = IWMSyncReader2_OpenStream(reader, &stream.IStream_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
+
+
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, -1, &allocator);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 0, &allocator);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 1, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, -1, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForStream(reader, 0, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+
+
+    hr = IWMSyncReader2_SetAllocateForStream(reader, 1, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 2, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(allocator == &callback.IWMReaderAllocatorEx_iface, "Got allocator %p.\n", allocator);
+
+    hr = IWMSyncReader2_SetAllocateForStream(reader, 1, NULL);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+
+
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 0, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 1, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(allocator == &callback.IWMReaderAllocatorEx_iface, "Got allocator %p.\n", allocator);
+
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 0, NULL);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+    allocator = (void *)0xdeadbeef;
+    hr = IWMSyncReader2_GetAllocateForStream(reader, 1, &allocator);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!allocator, "Got allocator %p.\n", allocator);
+
+
+    IWMSyncReader2_Release(reader);
+
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
+    CloseHandle(stream.file);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
+
+    callback_cleanup(&callback);
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -3431,6 +3577,7 @@ START_TEST(wmvcore)
     test_WMCreateWriterPriv();
     test_urlextension();
     test_iscontentprotected();
+    test_sync_reader_allocator();
     test_sync_reader_settings();
     test_sync_reader_streaming();
     test_sync_reader_types();
