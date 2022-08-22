@@ -197,6 +197,24 @@ static void test_set_image(void)
 
     DestroyWindow(hwnd);
     DeleteObject(image);
+
+    hwnd = CreateWindowW(L"static", L"\uffff\x65", WS_VISIBLE|WS_CHILD|SS_BITMAP, 5, 5, 100, 100,
+                         hMainWnd, (HMENU)CTRL_ID, GetModuleHandleW(NULL), 0);
+
+    bmp = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp != NULL, "got NULL\n");
+    test_image(bmp);
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowA("static", "\xff\x65\0", WS_VISIBLE|WS_CHILD|SS_BITMAP, 5, 5, 100, 100,
+                         hMainWnd, (HMENU)CTRL_ID, GetModuleHandleW(NULL), 0);
+
+    bmp = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp != NULL, "got NULL\n");
+    test_image(bmp);
+
+    DestroyWindow(hwnd);
 }
 
 static void test_STM_SETIMAGE(void)

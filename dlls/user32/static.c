@@ -418,22 +418,48 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
             switch (style) {
             case SS_ICON:
                 {
+                    const WCHAR *name = cs->lpszName;
                     HICON hIcon;
-                    if (unicode || IS_INTRESOURCE(cs->lpszName))
-                       hIcon = STATIC_LoadIconW(cs->hInstance, cs->lpszName, full_style);
+
+                    if (!unicode)
+                    {
+                        const char *nameA = (const char *)name;
+                        if (nameA && nameA[0] == '\xff')
+                            name = MAKEINTRESOURCEW(MAKEWORD(nameA[1], nameA[2]));
+                    }
+                    else if (name && name[0] == 0xffff)
+                    {
+                        name = MAKEINTRESOURCEW(name[1]);
+                    }
+
+                    if (unicode || IS_INTRESOURCE(name))
+                       hIcon = STATIC_LoadIconW(cs->hInstance, name, full_style);
                     else
-                       hIcon = STATIC_LoadIconA(cs->hInstance, (LPCSTR)cs->lpszName, full_style);
+                       hIcon = STATIC_LoadIconA(cs->hInstance, (const char *)name, full_style);
                     STATIC_SetIcon(hwnd, hIcon, full_style);
                 }
                 break;
             case SS_BITMAP:
                 if ((ULONG_PTR)cs->hInstance >> 16)
                 {
+                    const WCHAR *name = cs->lpszName;
                     HBITMAP hBitmap;
-                    if (unicode || IS_INTRESOURCE(cs->lpszName))
-                        hBitmap = LoadBitmapW(cs->hInstance, cs->lpszName);
+
+                    if (!unicode)
+                    {
+                        const char *nameA = (const char *)name;
+                        if (nameA && nameA[0] == '\xff')
+                            name = MAKEINTRESOURCEW(MAKEWORD(nameA[1], nameA[2]));
+                    }
+                    else if (name && name[0] == 0xffff)
+                    {
+                        name = MAKEINTRESOURCEW(name[1]);
+                    }
+
+                    if (unicode || IS_INTRESOURCE(name))
+                        hBitmap = LoadBitmapW(cs->hInstance, name);
                     else
-                        hBitmap = LoadBitmapA(cs->hInstance, (LPCSTR)cs->lpszName);
+                        hBitmap = LoadBitmapA(cs->hInstance, (const char *)name);
                     STATIC_SetBitmap(hwnd, hBitmap, full_style);
                 }
                 break;
