@@ -560,6 +560,7 @@ static HRESULT WINAPI WMReaderAdvanced_SetUserProvidedClock(IWMReaderAdvanced6 *
     EnterCriticalSection(&reader->callback_cs);
     reader->user_clock = !!user_clock;
     LeaveCriticalSection(&reader->callback_cs);
+    WakeConditionVariable(&reader->callback_cv);
     return S_OK;
 }
 
