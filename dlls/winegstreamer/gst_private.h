@@ -151,7 +151,6 @@ struct wm_stream
     WMT_STREAM_SELECTION selection;
     WORD index;
     bool eos;
-    bool allocate_stream;
     /* Note that we only pretend to read compressed samples, and instead output
      * uncompressed samples regardless of whether we are configured to read
      * compressed samples. Rather, the behaviour of the reader objects differs
@@ -193,6 +192,5 @@ struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *inner);
 
 HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackAdvanced *callback_advanced, WORD stream_number,
         INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number);
-HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_number, BOOL allocate);
 
 #endif /* __GST_PRIVATE_INCLUDED__ */
