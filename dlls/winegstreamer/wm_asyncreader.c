@@ -701,7 +701,7 @@ static HRESULT WINAPI WMReaderAdvanced_SetStreamsSelected(IWMReaderAdvanced6 *if
     TRACE("reader %p, count %u, stream_numbers %p, selections %p.\n",
             reader, count, stream_numbers, selections);
 
-    return wm_reader_set_streams_selected(reader->wm_reader, count, stream_numbers, selections);
+    return IWMSyncReader2_SetStreamsSelected(reader->reader, count, stream_numbers, selections);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetStreamSelected(IWMReaderAdvanced6 *iface,

@@ -1696,50 +1696,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
     }
 }
 
-HRESULT wm_reader_set_streams_selected(struct wm_reader *reader, WORD count,
-        const WORD *stream_numbers, const WMT_STREAM_SELECTION *selections)
-{
-    struct wm_stream *stream;
-    WORD i;
-
-    if (!count)
-        return E_INVALIDARG;
-
-    EnterCriticalSection(&reader->cs);
-
-    for (i = 0; i < count; ++i)
-    {
-        if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_numbers[i])))
-        {
-            LeaveCriticalSection(&reader->cs);
-            WARN("Invalid stream number %u; returning NS_E_INVALID_REQUEST.\n", stream_numbers[i]);
-            return NS_E_INVALID_REQUEST;
-        }
-    }
-
-    for (i = 0; i < count; ++i)
-    {
-        stream = wm_reader_get_stream_by_stream_number(reader, stream_numbers[i]);
-        stream->selection = selections[i];
-        if (selections[i] == WMT_OFF)
-        {
-            TRACE("Disabling stream %u.\n", stream_numbers[i]);
-            wg_parser_stream_disable(stream->wg_stream);
-        }
-        else if (selections[i] == WMT_ON)
-        {
-            if (selections[i] != WMT_ON)
-                FIXME("Ignoring selection %#x for stream %u; treating as enabled.\n",
-                        selections[i], stream_numbers[i]);
-            TRACE("Enabling stream %u.\n", stream_numbers[i]);
-            wg_parser_stream_enable(stream->wg_stream, &stream->format);
-        }
-    }
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output, BOOL allocate)
 {
     struct wm_stream *stream;
@@ -2412,11 +2368,48 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
         WORD count, WORD *stream_numbers, WMT_STREAM_SELECTION *selections)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+    WORD i;
 
     TRACE("reader %p, count %u, stream_numbers %p, selections %p.\n",
             reader, count, stream_numbers, selections);
 
-    return wm_reader_set_streams_selected(reader, count, stream_numbers, selections);
+    if (!count)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&reader->cs);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_numbers[i])))
+        {
+            LeaveCriticalSection(&reader->cs);
+            WARN("Invalid stream number %u; returning NS_E_INVALID_REQUEST.\n", stream_numbers[i]);
+            return NS_E_INVALID_REQUEST;
+        }
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        stream = wm_reader_get_stream_by_stream_number(reader, stream_numbers[i]);
+        stream->selection = selections[i];
+        if (selections[i] == WMT_OFF)
+        {
+            TRACE("Disabling stream %u.\n", stream_numbers[i]);
+            wg_parser_stream_disable(stream->wg_stream);
+        }
+        else if (selections[i] == WMT_ON)
+        {
+            if (selections[i] != WMT_ON)
+                FIXME("Ignoring selection %#x for stream %u; treating as enabled.\n",
+                        selections[i], stream_numbers[i]);
+            TRACE("Enabling stream %u.\n", stream_numbers[i]);
+            wg_parser_stream_enable(stream->wg_stream, &stream->format);
+        }
+    }
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_SetRangeByTimecode(IWMSyncReader2 *iface, WORD stream_num,
