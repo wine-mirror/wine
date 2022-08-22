@@ -870,14 +870,13 @@ static HRESULT WINAPI WMReaderAdvanced_GetReceiveStreamSamples(IWMReaderAdvanced
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReaderAdvanced_SetAllocateForOutput(IWMReaderAdvanced6 *iface,
-        DWORD output, BOOL allocate)
+static HRESULT WINAPI WMReaderAdvanced_SetAllocateForOutput(IWMReaderAdvanced6 *iface, DWORD output, BOOL allocate)
 {
     struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
 
     TRACE("reader %p, output %lu, allocate %d.\n", reader, output, allocate);
 
-    return wm_reader_set_allocate_for_output(reader->wm_reader, output, allocate);
+    return IWMSyncReader2_SetAllocateForOutput(reader->reader, output, allocate ? reader->allocator : NULL);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetAllocateForOutput(IWMReaderAdvanced6 *iface, DWORD output_num, BOOL *allocate)

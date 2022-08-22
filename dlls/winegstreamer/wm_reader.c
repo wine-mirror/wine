@@ -1631,9 +1631,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
         else if (callback_advanced && stream->read_compressed && stream->allocate_stream)
             hr = IWMReaderCallbackAdvanced_AllocateForStream(callback_advanced,
                     stream->index + 1, wg_buffer.size, &sample, NULL);
-        else if (callback_advanced && !stream->read_compressed && stream->allocate_output)
-            hr = IWMReaderCallbackAdvanced_AllocateForOutput(callback_advanced,
-                    stream->index, wg_buffer.size, &sample, NULL);
         /* FIXME: Should these be pooled? */
         else if (!(object = calloc(1, offsetof(struct buffer, data[wg_buffer.size]))))
             hr = E_OUTOFMEMORY;
@@ -1690,24 +1687,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
         *ret_stream_number = stream_number;
         return S_OK;
     }
-}
-
-HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output, BOOL allocate)
-{
-    struct wm_stream *stream;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = get_stream_by_output_number(reader, output)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    stream->allocate_output = !!allocate;
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
 }
 
 HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_number, BOOL allocate)
