@@ -496,10 +496,7 @@ static HRESULT WINAPI WMReader_GetOutputCount(IWMReader *iface, DWORD *count)
 
     TRACE("reader %p, count %p.\n", reader, count);
 
-    EnterCriticalSection(&reader->wm_reader->cs);
-    *count = reader->wm_reader->stream_count;
-    LeaveCriticalSection(&reader->wm_reader->cs);
-    return S_OK;
+    return IWMSyncReader2_GetOutputCount(reader->reader, count);
 }
 
 static HRESULT WINAPI WMReader_GetOutputProps(IWMReader *iface, DWORD output, IWMOutputMediaProps **props)
