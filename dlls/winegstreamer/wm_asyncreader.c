@@ -247,25 +247,7 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
     return 0;
 }
 
-static HRESULT open_stream(struct async_reader *reader, IWMReaderCallback *callback, void *context)
-{
-    IWMReaderCallback_AddRef((reader->callback = callback));
-    reader->context = context;
-
-    reader->running = true;
-    if (!(reader->callback_thread = CreateThread(NULL, 0, async_reader_callback_thread, reader, 0, NULL)))
-    {
-        IWMReaderCallback_Release(reader->callback);
-        reader->running = false;
-        reader->callback = NULL;
-        reader->context = NULL;
-        return E_OUTOFMEMORY;
-    }
-
-    return S_OK;
-}
-
-static void close_stream(struct async_reader *reader)
+static void async_reader_close(struct async_reader *reader)
 {
     struct async_op *op, *next;
 
@@ -281,6 +263,24 @@ static void close_stream(struct async_reader *reader)
         list_remove(&op->entry);
         free(op);
     }
+}
+
+static HRESULT async_reader_open(struct async_reader *reader, IWMReaderCallback *callback, void *context)
+{
+    IWMReaderCallback_AddRef((reader->callback = callback));
+    reader->context = context;
+
+    reader->running = true;
+    if (!(reader->callback_thread = CreateThread(NULL, 0, async_reader_callback_thread, reader, 0, NULL)))
+    {
+        IWMReaderCallback_Release(reader->callback);
+        reader->running = false;
+        reader->callback = NULL;
+        reader->context = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 static HRESULT async_reader_queue_op(struct async_reader *reader, enum async_op_type type, void *context)
@@ -345,7 +345,7 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
     }
 
     if (SUCCEEDED(hr = wm_reader_open_file(&reader->reader, url))
-            && FAILED(hr = open_stream(reader, callback, context)))
+            && FAILED(hr = async_reader_open(reader, callback, context)))
         wm_reader_close(&reader->reader);
 
     LeaveCriticalSection(&reader->reader.cs);
@@ -362,7 +362,7 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
     EnterCriticalSection(&reader->reader.cs);
 
     async_reader_queue_op(reader, ASYNC_OP_CLOSE, NULL);
-    close_stream(reader);
+    async_reader_close(reader);
 
     hr = wm_reader_close(&reader->reader);
     if (reader->callback)
@@ -825,7 +825,7 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
     }
 
     if (SUCCEEDED(hr = wm_reader_open_stream(&reader->reader, stream))
-            && FAILED(hr = open_stream(reader, callback, context)))
+            && FAILED(hr = async_reader_open(reader, callback, context)))
         wm_reader_close(&reader->reader);
 
     LeaveCriticalSection(&reader->reader.cs);
@@ -1686,7 +1686,7 @@ static void async_reader_destroy(struct wm_reader *iface)
     LeaveCriticalSection(&reader->callback_cs);
     WakeConditionVariable(&reader->callback_cv);
 
-    close_stream(reader);
+    async_reader_close(reader);
 
     reader->callback_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&reader->callback_cs);
