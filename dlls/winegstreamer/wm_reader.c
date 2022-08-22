@@ -1589,93 +1589,6 @@ HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
     return *props ? S_OK : E_OUTOFMEMORY;
 }
 
-HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
-        IWMOutputMediaProps *props_iface)
-{
-    struct output_props *props = unsafe_impl_from_IWMOutputMediaProps(props_iface);
-    struct wg_format format, pref_format;
-    struct wm_stream *stream;
-    HRESULT hr = S_OK;
-    int i;
-
-    strmbase_dump_media_type(&props->mt);
-
-    if (!amt_to_wg_format(&props->mt, &format))
-    {
-        ERR("Failed to convert media type to winegstreamer format.\n");
-        return E_FAIL;
-    }
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = get_stream_by_output_number(reader, output)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    wg_parser_stream_get_preferred_format(stream->wg_stream, &pref_format);
-    if (pref_format.major_type != format.major_type)
-    {
-        /* R.U.S.E sets the type of the wrong stream, apparently by accident. */
-        hr = NS_E_INCOMPATIBLE_FORMAT;
-    }
-    else switch (pref_format.major_type)
-    {
-        case WG_MAJOR_TYPE_AUDIO:
-            if (format.u.audio.format == WG_AUDIO_FORMAT_UNKNOWN)
-                hr = NS_E_AUDIO_CODEC_NOT_INSTALLED;
-            else if (format.u.audio.channels > pref_format.u.audio.channels)
-                hr = NS_E_AUDIO_CODEC_NOT_INSTALLED;
-            break;
-
-        case WG_MAJOR_TYPE_VIDEO:
-            for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
-                if (format.u.video.format == video_formats[i])
-                    break;
-            if (i == ARRAY_SIZE(video_formats))
-                hr = NS_E_INVALID_OUTPUT_FORMAT;
-            else if (pref_format.u.video.width != format.u.video.width)
-                hr = NS_E_INVALID_OUTPUT_FORMAT;
-            else if (pref_format.u.video.height != format.u.video.height)
-                hr = NS_E_INVALID_OUTPUT_FORMAT;
-            break;
-
-        default:
-            hr = NS_E_INCOMPATIBLE_FORMAT;
-            break;
-    }
-
-    if (FAILED(hr))
-    {
-        WARN("Unsupported media type, returning %#lx.\n", hr);
-        LeaveCriticalSection(&reader->cs);
-        return hr;
-    }
-
-    stream->format = format;
-    wg_parser_stream_enable(stream->wg_stream, &format);
-
-    /* Re-decode any buffers that might have been generated with the old format.
-     *
-     * FIXME: Seeking in-place will cause some buffers to be dropped.
-     * Unfortunately, we can't really store the last received PTS and seek there
-     * either: since seeks are inexact and we aren't guaranteed to receive
-     * samples in order, some buffers might be duplicated or dropped anyway.
-     * In order to really seamlessly allow for format changes, we need
-     * cooperation from each individual GStreamer stream, to be able to tell
-     * upstream exactly which buffers they need resent...
-     *
-     * In all likelihood this function is being called not mid-stream but rather
-     * while setting the stream up, before consuming any events. Accordingly
-     * let's just seek back to the beginning. */
-    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, reader->start_time, 0,
-            AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 static const char *get_major_type_string(enum wg_major_type type)
 {
     switch (type)
@@ -2346,13 +2259,93 @@ static HRESULT WINAPI reader_OpenStream(IWMSyncReader2 *iface, IStream *stream)
     return hr;
 }
 
-static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output, IWMOutputMediaProps *props)
+static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output, IWMOutputMediaProps *props_iface)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct output_props *props = unsafe_impl_from_IWMOutputMediaProps(props_iface);
+    struct wg_format format, pref_format;
+    struct wm_stream *stream;
+    HRESULT hr = S_OK;
+    int i;
 
-    TRACE("reader %p, output %lu, props %p.\n", reader, output, props);
+    TRACE("reader %p, output %lu, props_iface %p.\n", reader, output, props_iface);
 
-    return wm_reader_set_output_props(reader, output, props);
+    strmbase_dump_media_type(&props->mt);
+
+    if (!amt_to_wg_format(&props->mt, &format))
+    {
+        ERR("Failed to convert media type to winegstreamer format.\n");
+        return E_FAIL;
+    }
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &pref_format);
+    if (pref_format.major_type != format.major_type)
+    {
+        /* R.U.S.E sets the type of the wrong stream, apparently by accident. */
+        hr = NS_E_INCOMPATIBLE_FORMAT;
+    }
+    else switch (pref_format.major_type)
+    {
+        case WG_MAJOR_TYPE_AUDIO:
+            if (format.u.audio.format == WG_AUDIO_FORMAT_UNKNOWN)
+                hr = NS_E_AUDIO_CODEC_NOT_INSTALLED;
+            else if (format.u.audio.channels > pref_format.u.audio.channels)
+                hr = NS_E_AUDIO_CODEC_NOT_INSTALLED;
+            break;
+
+        case WG_MAJOR_TYPE_VIDEO:
+            for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
+                if (format.u.video.format == video_formats[i])
+                    break;
+            if (i == ARRAY_SIZE(video_formats))
+                hr = NS_E_INVALID_OUTPUT_FORMAT;
+            else if (pref_format.u.video.width != format.u.video.width)
+                hr = NS_E_INVALID_OUTPUT_FORMAT;
+            else if (pref_format.u.video.height != format.u.video.height)
+                hr = NS_E_INVALID_OUTPUT_FORMAT;
+            break;
+
+        default:
+            hr = NS_E_INCOMPATIBLE_FORMAT;
+            break;
+    }
+
+    if (FAILED(hr))
+    {
+        WARN("Unsupported media type, returning %#lx.\n", hr);
+        LeaveCriticalSection(&reader->cs);
+        return hr;
+    }
+
+    stream->format = format;
+    wg_parser_stream_enable(stream->wg_stream, &format);
+
+    /* Re-decode any buffers that might have been generated with the old format.
+     *
+     * FIXME: Seeking in-place will cause some buffers to be dropped.
+     * Unfortunately, we can't really store the last received PTS and seek there
+     * either: since seeks are inexact and we aren't guaranteed to receive
+     * samples in order, some buffers might be duplicated or dropped anyway.
+     * In order to really seamlessly allow for format changes, we need
+     * cooperation from each individual GStreamer stream, to be able to tell
+     * upstream exactly which buffers they need resent...
+     *
+     * In all likelihood this function is being called not mid-stream but rather
+     * while setting the stream up, before consuming any events. Accordingly
+     * let's just seek back to the beginning. */
+    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, reader->start_time, 0,
+            AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_SetOutputSetting(IWMSyncReader2 *iface, DWORD output,
