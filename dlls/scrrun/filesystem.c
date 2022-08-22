@@ -2820,11 +2820,17 @@ static HRESULT get_date_from_filetime(const FILETIME *ft, DATE *date)
     return S_OK;
 }
 
-static HRESULT WINAPI file_get_DateCreated(IFile *iface, DATE *pdate)
+static HRESULT WINAPI file_get_DateCreated(IFile *iface, DATE *date)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pdate);
-    return E_NOTIMPL;
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+
+    TRACE("(%p)->(%p)\n", This, date);
+
+    if (GetFileAttributesExW(This->path, GetFileExInfoStandard, &attrs))
+        return get_date_from_filetime(&attrs.ftCreationTime, date);
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI file_get_DateLastModified(IFile *iface, DATE *date)
