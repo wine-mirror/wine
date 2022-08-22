@@ -64,6 +64,8 @@ struct async_reader
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     IReferenceClock IReferenceClock_iface;
 
+    CRITICAL_SECTION cs;
+
     IWMReaderCallbackAdvanced *callback_advanced;
     IWMReaderCallback *callback;
     void *context;
@@ -390,11 +392,13 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
     TRACE("reader %p, url %s, callback %p, context %p.\n",
             reader, debugstr_w(url), callback, context);
 
+    EnterCriticalSection(&reader->cs);
     EnterCriticalSection(&reader->reader.cs);
 
     if (reader->reader.wg_parser)
     {
         LeaveCriticalSection(&reader->reader.cs);
+        LeaveCriticalSection(&reader->cs);
         WARN("Stream is already open; returning E_UNEXPECTED.\n");
         return E_UNEXPECTED;
     }
@@ -404,6 +408,7 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
         wm_reader_close(&reader->reader);
 
     LeaveCriticalSection(&reader->reader.cs);
+    LeaveCriticalSection(&reader->cs);
     return hr;
 }
 
@@ -414,7 +419,7 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
 
     TRACE("reader %p.\n", reader);
 
-    EnterCriticalSection(&reader->reader.cs);
+    EnterCriticalSection(&reader->cs);
 
     if (SUCCEEDED(hr = async_reader_queue_op(reader, ASYNC_OP_CLOSE, NULL)))
     {
@@ -422,7 +427,7 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
         hr = wm_reader_close(&reader->reader);
     }
 
-    LeaveCriticalSection(&reader->reader.cs);
+    LeaveCriticalSection(&reader->cs);
 
     return hr;
 }
@@ -489,14 +494,14 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface,
     if (rate != 1.0f)
         FIXME("Ignoring rate %.8e.\n", rate);
 
-    EnterCriticalSection(&reader->reader.cs);
+    EnterCriticalSection(&reader->cs);
 
     if (!reader->callback_thread)
         hr = NS_E_INVALID_REQUEST;
     else
         hr = async_reader_queue_op(reader, ASYNC_OP_START, &data);
 
-    LeaveCriticalSection(&reader->reader.cs);
+    LeaveCriticalSection(&reader->cs);
 
     return hr;
 }
@@ -508,14 +513,14 @@ static HRESULT WINAPI WMReader_Stop(IWMReader *iface)
 
     TRACE("reader %p.\n", reader);
 
-    EnterCriticalSection(&reader->reader.cs);
+    EnterCriticalSection(&reader->cs);
 
     if (!reader->callback_thread)
         hr = E_UNEXPECTED;
     else
         hr = async_reader_queue_op(reader, ASYNC_OP_STOP, NULL);
 
-    LeaveCriticalSection(&reader->reader.cs);
+    LeaveCriticalSection(&reader->cs);
 
     return hr;
 }
@@ -867,11 +872,13 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
 
     TRACE("reader %p, stream %p, callback %p, context %p.\n", reader, stream, callback, context);
 
+    EnterCriticalSection(&reader->cs);
     EnterCriticalSection(&reader->reader.cs);
 
     if (reader->reader.wg_parser)
     {
         LeaveCriticalSection(&reader->reader.cs);
+        LeaveCriticalSection(&reader->cs);
         WARN("Stream is already open; returning E_UNEXPECTED.\n");
         return E_UNEXPECTED;
     }
@@ -881,6 +888,7 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
         wm_reader_close(&reader->reader);
 
     LeaveCriticalSection(&reader->reader.cs);
+    LeaveCriticalSection(&reader->cs);
     return hr;
 }
 
@@ -1742,6 +1750,8 @@ static void async_reader_destroy(struct wm_reader *iface)
 
     reader->callback_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&reader->callback_cs);
+    reader->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&reader->cs);
 
     wm_reader_close(&reader->reader);
 
@@ -1774,6 +1784,8 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     object->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
     object->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
 
+    InitializeCriticalSection(&object->cs);
+    object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_reader.cs");
     InitializeCriticalSection(&object->callback_cs);
     object->callback_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_reader.callback_cs");
 
