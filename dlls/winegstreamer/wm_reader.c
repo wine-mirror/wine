@@ -1740,25 +1740,6 @@ HRESULT wm_reader_set_streams_selected(struct wm_reader *reader, WORD count,
     return S_OK;
 }
 
-HRESULT wm_reader_get_stream_selection(struct wm_reader *reader,
-        WORD stream_number, WMT_STREAM_SELECTION *selection)
-{
-    struct wm_stream *stream;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    *selection = stream->selection;
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output, BOOL allocate)
 {
     struct wm_stream *stream;
@@ -2164,10 +2145,22 @@ static HRESULT WINAPI reader_GetStreamSelected(IWMSyncReader2 *iface,
         WORD stream_number, WMT_STREAM_SELECTION *selection)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
 
     TRACE("reader %p, stream_number %u, selection %p.\n", reader, stream_number, selection);
 
-    return wm_reader_get_stream_selection(reader, stream_number, selection);
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    *selection = stream->selection;
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
