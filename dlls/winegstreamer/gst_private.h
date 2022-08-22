@@ -162,6 +162,8 @@ struct wm_stream
 
 struct wm_reader
 {
+    IUnknown IUnknown_inner;
+    IWMSyncReader2 IWMSyncReader2_iface;
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMLanguageList IWMLanguageList_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
@@ -169,6 +171,7 @@ struct wm_reader
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
     IUnknown *outer;
+    LONG refcount;
 
     CRITICAL_SECTION cs;
     QWORD start_time;
@@ -186,7 +189,6 @@ struct wm_reader
 HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
 struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *inner);
 
-void wm_reader_cleanup(struct wm_reader *reader);
 HRESULT wm_reader_close(struct wm_reader *reader);
 HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_number, DWORD *size);
 HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
@@ -200,7 +202,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
         INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number);
 HRESULT wm_reader_get_stream_selection(struct wm_reader *reader,
         WORD stream_number, WMT_STREAM_SELECTION *selection);
-void wm_reader_init(IUnknown *outer, struct wm_reader *reader);
 HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration);

@@ -23,7 +23,6 @@ C_SRCS = \
 	wg_transform.c \
 	wm_asyncreader.c \
 	wm_reader.c \
-	wm_syncreader.c \
 	wma_decoder.c
 
 IDL_SRCS = \
