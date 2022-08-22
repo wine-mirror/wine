@@ -475,6 +475,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
             CREATESTRUCTA csA = *(CREATESTRUCTA *)csW;
             MDICREATESTRUCTA mdi_cs;
             DWORD name_lenA = 0, name_lenW = 0, class_lenA = 0, class_lenW = 0;
+            char int_name_buf[4];
 
             if (!IS_INTRESOURCE(csW->lpszClass))
             {
@@ -483,8 +484,20 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
             }
             if (!IS_INTRESOURCE(csW->lpszName))
             {
-                name_lenW = (lstrlenW(csW->lpszName) + 1) * sizeof(WCHAR);
-                RtlUnicodeToMultiByteSize(&name_lenA, csW->lpszName, name_lenW);
+                /* resource ID string is a special case */
+                if (csW->lpszName[0] == 0xffff)
+                {
+                    int_name_buf[0] = 0xff;
+                    int_name_buf[1] = csW->lpszName[1];
+                    int_name_buf[2] = csW->lpszName[1] >> 8;
+                    int_name_buf[3] = 0;
+                    csA.lpszName = int_name_buf;
+                }
+                else
+                {
+                    name_lenW = (lstrlenW(csW->lpszName) + 1) * sizeof(WCHAR);
+                    RtlUnicodeToMultiByteSize(&name_lenA, csW->lpszName, name_lenW);
+                }
             }
 
             if (!(cls = get_buffer( buffer, sizeof(buffer), class_lenA + name_lenA ))) break;

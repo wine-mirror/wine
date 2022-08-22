@@ -304,6 +304,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     WNDCLASSEXW info;
+    WCHAR name_buf[8];
     HMENU menu;
 
     if (!get_class_info( module, className, &info, &class, FALSE )) return FALSE;
@@ -398,10 +399,21 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         }
     }
 
-    if (unicode || !cs->lpszName)
-        RtlInitUnicodeString( &window_name, cs->lpszName );
-    else if (!RtlCreateUnicodeStringFromAsciiz( &window_name, (const char *)cs->lpszName ))
-        return 0;
+    if (!unicode && cs->lpszName)
+    {
+        const char *nameA = (const char *)cs->lpszName;
+        /* resource ID string is a special case */
+        if (nameA[0] == '\xff')
+        {
+            name_buf[0] = 0xffff;
+            name_buf[1] = MAKEWORD( nameA[1], nameA[2] );
+            name_buf[2] = 0;
+            RtlInitUnicodeString( &window_name, name_buf );
+        }
+        else if (!RtlCreateUnicodeStringFromAsciiz( &window_name, (const char *)cs->lpszName ))
+            return 0;
+    }
+    else RtlInitUnicodeString( &window_name, cs->lpszName );
 
     menu = cs->hMenu;
     if (!menu && info.lpszMenuName && (cs->style & (WS_CHILD | WS_POPUP)) != WS_CHILD)

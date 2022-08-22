@@ -222,6 +222,7 @@ static LRESULT call_hook_AtoW( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
         CREATESTRUCTW csW;
         LPWSTR nameW = NULL;
         LPWSTR classW = NULL;
+        WCHAR name_buf[3];
 
         cbtcwW.lpcs = &csW;
         cbtcwW.hwndInsertAfter = cbtcwA->hwndInsertAfter;
@@ -229,8 +230,18 @@ static LRESULT call_hook_AtoW( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
 
         if (!IS_INTRESOURCE(cbtcwA->lpcs->lpszName))
         {
-            RtlCreateUnicodeStringFromAsciiz(&usBuffer,cbtcwA->lpcs->lpszName);
-            csW.lpszName = nameW = usBuffer.Buffer;
+            if (cbtcwA->lpcs->lpszName[0] != '\xff')
+            {
+                RtlCreateUnicodeStringFromAsciiz( &usBuffer, cbtcwA->lpcs->lpszName );
+                csW.lpszName = nameW = usBuffer.Buffer;
+            }
+            else
+            {
+                name_buf[0] = 0xffff;
+                name_buf[1] = MAKEWORD( cbtcwA->lpcs->lpszName[1], cbtcwA->lpcs->lpszName[2] );
+                name_buf[2] = 0;
+                csW.lpszName = name_buf;
+            }
         }
         if (!IS_INTRESOURCE(cbtcwA->lpcs->lpszClass))
         {
@@ -263,16 +274,29 @@ static LRESULT call_hook_WtoA( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
         int len;
         LPSTR nameA = NULL;
         LPSTR classA = NULL;
+        char name_buf[4];
 
         cbtcwA.lpcs = &csA;
         cbtcwA.hwndInsertAfter = cbtcwW->hwndInsertAfter;
         csA = *(CREATESTRUCTA *)cbtcwW->lpcs;
 
-        if (!IS_INTRESOURCE(cbtcwW->lpcs->lpszName)) {
-            len = WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszName, -1, NULL, 0, NULL, NULL );
-            nameA = HeapAlloc( GetProcessHeap(), 0, len*sizeof(CHAR) );
-            WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszName, -1, nameA, len, NULL, NULL );
-            csA.lpszName = nameA;
+        if (!IS_INTRESOURCE(cbtcwW->lpcs->lpszName))
+        {
+            if (cbtcwW->lpcs->lpszName[0] != 0xffff)
+            {
+                len = WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszName, -1, NULL, 0, NULL, NULL );
+                nameA = HeapAlloc( GetProcessHeap(), 0, len*sizeof(CHAR) );
+                WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszName, -1, nameA, len, NULL, NULL );
+                csA.lpszName = nameA;
+            }
+            else
+            {
+                name_buf[0] = '\xff';
+                name_buf[1] = cbtcwW->lpcs->lpszName[1];
+                name_buf[2] = cbtcwW->lpcs->lpszName[1] >> 8;
+                name_buf[3] = 0;
+                csA.lpszName = name_buf;
+            }
         }
 
         if (!IS_INTRESOURCE(cbtcwW->lpcs->lpszClass)) {

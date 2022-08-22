@@ -18990,6 +18990,52 @@ static void test_button_style(void)
     }
 }
 
+static LRESULT WINAPI test_create_name_procW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        {
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
+            memcpy( cs->lpCreateParams, cs->lpszName, 3 * sizeof(WCHAR) );
+            break;
+        }
+    case WM_SETTEXT:
+        trace("%s\n", debugstr_w((const WCHAR *)lparam));
+        break;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void test_create_name(void)
+{
+    WNDCLASSW clsW = { 0 };
+    WCHAR name_buf[3];
+    HWND hwnd;
+
+    clsW.lpfnWndProc = test_create_name_procW;
+    clsW.lpszClassName = L"TestCreateNameClassW";
+    RegisterClassW( &clsW );
+
+    hwnd = CreateWindowExW( 0, L"TestCreateNameClassW", L"\xffff\x6162",
+                            WS_POPUP, 0,0,0,0,0,0,0, name_buf );
+    ok( hwnd != NULL, "CreateWindowEx failed: %lu\n", GetLastError() );
+    ok(!memcmp(name_buf, L"\xffff\x6162", 2 * sizeof(WCHAR)),
+       "name param = %s\n", debugstr_wn(name_buf, 2));
+    DestroyWindow( hwnd );
+
+    hwnd = CreateWindowExA( 0, "TestCreateNameClassW", "\xff\0\x61\x60",
+                            WS_POPUP, 0,0,0,0,0,0,0, name_buf );
+    ok( hwnd != NULL, "CreateWindowEx failed: %lu\n", GetLastError() );
+    ok(!memcmp(name_buf, L"\xffff\x6100", 2 * sizeof(WCHAR)),
+       "name param = %s\n", debugstr_wn(name_buf, 2));
+    DestroyWindow( hwnd );
+
+    UnregisterClassW( L"TestCreateNameClassW", NULL );
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -19105,6 +19151,7 @@ START_TEST(msg)
     test_TrackPopupMenu();
     test_TrackPopupMenuEmpty();
     test_DoubleSetCapture();
+    test_create_name();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
