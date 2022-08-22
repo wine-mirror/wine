@@ -16,31 +16,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wmvcore.h"
+#include <stdarg.h>
+#include <stddef.h>
 
-#include "initguid.h"
+#define COBJMACROS
+#include "windef.h"
+#include "winbase.h"
+
+#include "wmvcore_private.h"
 #include "wmsdk.h"
+
 #include "wine/debug.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
-
-HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader);
-HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
-
-HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **reader)
-{
-    TRACE("reserved %p, rights %#lx, reader %p.\n", reserved, rights, reader);
-
-    return winegstreamer_create_wm_async_reader(reader);
-}
-
-HRESULT WINAPI WMCreateReaderPriv(IWMReader **reader)
-{
-    TRACE("reader %p.\n", reader);
-
-    return winegstreamer_create_wm_async_reader(reader);
-}
 
 HRESULT WINAPI WMCreateSyncReader(IUnknown *reserved, DWORD rights, IWMSyncReader **reader)
 {

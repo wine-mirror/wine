@@ -147,6 +147,4 @@ HRESULT aac_decoder_create(REFIID riid, void **ret);
 HRESULT h264_decoder_create(REFIID riid, void **ret);
 HRESULT video_processor_create(REFIID riid, void **ret);
 
-HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
-
 #endif /* __GST_PRIVATE_INCLUDED__ */

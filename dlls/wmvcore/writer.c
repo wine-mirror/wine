@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wmvcore.h"
+#include "wmvcore_private.h"
 #include "wmsdkidl.h"
 
 #include "wine/debug.h"

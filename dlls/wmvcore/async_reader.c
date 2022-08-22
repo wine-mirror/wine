@@ -16,8 +16,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "gst_private.h"
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdbool.h>
 
+#define COBJMACROS
+#include "windef.h"
+#include "winbase.h"
+
+#define EXTERN_GUID DEFINE_GUID
+#include "initguid.h"
+#include "wmvcore_private.h"
+
+#include "wmsdk.h"
+
+#include "wine/debug.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
@@ -1881,7 +1894,7 @@ static const IReferenceClockVtbl ReferenceClockVtbl =
     refclock_Unadvise
 };
 
-HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
+static HRESULT WINAPI async_reader_create(IWMReader **reader)
 {
     struct async_reader *object;
     HRESULT hr;
@@ -1926,4 +1939,18 @@ failed:
         IUnknown_Release(object->reader_inner);
     free(object);
     return hr;
+}
+
+HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **reader)
+{
+    TRACE("reserved %p, rights %#lx, reader %p.\n", reserved, rights, reader);
+
+    return async_reader_create(reader);
+}
+
+HRESULT WINAPI WMCreateReaderPriv(IWMReader **reader)
+{
+    TRACE("reader %p.\n", reader);
+
+    return async_reader_create(reader);
 }

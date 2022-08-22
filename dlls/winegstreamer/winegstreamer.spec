@@ -2,5 +2,4 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
-@ stdcall winegstreamer_create_wm_async_reader(ptr)
 @ stdcall winegstreamer_create_wm_sync_reader(ptr ptr)
