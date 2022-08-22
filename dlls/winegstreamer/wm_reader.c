@@ -2103,24 +2103,6 @@ HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_
     return S_OK;
 }
 
-HRESULT wm_reader_set_read_compressed(struct wm_reader *reader, WORD stream_number, BOOL compressed)
-{
-    struct wm_stream *stream;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    stream->read_compressed = compressed;
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_number, DWORD *size)
 {
     struct wm_stream *stream;
@@ -2468,10 +2450,22 @@ static HRESULT WINAPI reader_SetRangeByFrame(IWMSyncReader2 *iface, WORD stream_
 static HRESULT WINAPI reader_SetReadStreamSamples(IWMSyncReader2 *iface, WORD stream_number, BOOL compressed)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
 
     TRACE("reader %p, stream_index %u, compressed %d.\n", reader, stream_number, compressed);
 
-    return wm_reader_set_read_compressed(reader, stream_number, compressed);
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    stream->read_compressed = compressed;
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,

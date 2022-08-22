@@ -736,7 +736,7 @@ static HRESULT WINAPI WMReaderAdvanced_SetReceiveStreamSamples(IWMReaderAdvanced
 
     TRACE("reader %p, stream_number %u, compressed %d.\n", reader, stream_number, compressed);
 
-    return wm_reader_set_read_compressed(reader->wm_reader, stream_number, compressed);
+    return IWMSyncReader2_SetReadStreamSamples(reader->reader, stream_number, compressed);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetReceiveStreamSamples(IWMReaderAdvanced6 *iface, WORD stream_num,

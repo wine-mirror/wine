@@ -207,8 +207,6 @@ HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output
 HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_number, BOOL allocate);
 HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps *props);
-HRESULT wm_reader_set_read_compressed(struct wm_reader *reader,
-        WORD stream_number, BOOL compressed);
 HRESULT wm_reader_set_streams_selected(struct wm_reader *reader, WORD count,
         const WORD *stream_numbers, const WMT_STREAM_SELECTION *selections);
 
