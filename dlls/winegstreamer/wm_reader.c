@@ -1487,23 +1487,6 @@ static struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader 
     return NULL;
 }
 
-HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output, IWMOutputMediaProps **props)
-{
-    struct wm_stream *stream;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = get_stream_by_output_number(reader, output)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    *props = output_props_create(&stream->format);
-    LeaveCriticalSection(&reader->cs);
-    return *props ? S_OK : E_OUTOFMEMORY;
-}
-
 static const enum wg_video_format video_formats[] =
 {
     /* Try to prefer YUV formats over RGB ones. Most decoders output in the
@@ -2220,10 +2203,21 @@ static HRESULT WINAPI reader_GetOutputProps(IWMSyncReader2 *iface,
         DWORD output, IWMOutputMediaProps **props)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
 
     TRACE("reader %p, output %lu, props %p.\n", reader, output, props);
 
-    return wm_reader_get_output_props(reader, output, props);
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    *props = output_props_create(&stream->format);
+    LeaveCriticalSection(&reader->cs);
+    return *props ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI reader_GetOutputSetting(IWMSyncReader2 *iface, DWORD output_num, const WCHAR *name,

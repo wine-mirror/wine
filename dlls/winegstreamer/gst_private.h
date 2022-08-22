@@ -192,8 +192,6 @@ struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *inner);
 HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
         DWORD index, IWMOutputMediaProps **props);
 HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output, DWORD *count);
-HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output,
-        IWMOutputMediaProps **props);
 HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackAdvanced *callback_advanced, WORD stream_number,
         INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number);
 HRESULT wm_reader_get_stream_selection(struct wm_reader *reader,

@@ -508,7 +508,7 @@ static HRESULT WINAPI WMReader_GetOutputProps(IWMReader *iface, DWORD output, IW
 
     TRACE("reader %p, output %lu, props %p.\n", reader, output, props);
 
-    return wm_reader_get_output_props(reader->wm_reader, output, props);
+    return IWMSyncReader2_GetOutputProps(reader->reader, output, props);
 }
 
 static HRESULT WINAPI WMReader_SetOutputProps(IWMReader *iface, DWORD output, IWMOutputMediaProps *props)
