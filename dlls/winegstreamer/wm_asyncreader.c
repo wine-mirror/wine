@@ -263,24 +263,29 @@ static void async_reader_close(struct async_reader *reader)
         list_remove(&op->entry);
         free(op);
     }
+
+    if (reader->callback)
+        IWMReaderCallback_Release(reader->callback);
+    reader->callback = NULL;
+    reader->context = NULL;
 }
 
 static HRESULT async_reader_open(struct async_reader *reader, IWMReaderCallback *callback, void *context)
 {
+    HRESULT hr = E_OUTOFMEMORY;
+
     IWMReaderCallback_AddRef((reader->callback = callback));
     reader->context = context;
 
     reader->running = true;
     if (!(reader->callback_thread = CreateThread(NULL, 0, async_reader_callback_thread, reader, 0, NULL)))
-    {
-        IWMReaderCallback_Release(reader->callback);
-        reader->running = false;
-        reader->callback = NULL;
-        reader->context = NULL;
-        return E_OUTOFMEMORY;
-    }
+        goto error;
 
     return S_OK;
+
+error:
+    async_reader_close(reader);
+    return hr;
 }
 
 static HRESULT async_reader_queue_op(struct async_reader *reader, enum async_op_type type, void *context)
@@ -365,9 +370,6 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
     async_reader_close(reader);
 
     hr = wm_reader_close(&reader->reader);
-    if (reader->callback)
-        IWMReaderCallback_Release(reader->callback);
-    reader->callback = NULL;
 
     LeaveCriticalSection(&reader->reader.cs);
 
@@ -1692,9 +1694,6 @@ static void async_reader_destroy(struct wm_reader *iface)
     DeleteCriticalSection(&reader->callback_cs);
 
     wm_reader_close(&reader->reader);
-
-    if (reader->callback)
-        IWMReaderCallback_Release(reader->callback);
 
     wm_reader_cleanup(&reader->reader);
     free(reader);
