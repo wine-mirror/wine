@@ -393,21 +393,11 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
             reader, debugstr_w(url), callback, context);
 
     EnterCriticalSection(&reader->cs);
-    EnterCriticalSection(&reader->reader.cs);
-
-    if (reader->reader.wg_parser)
-    {
-        LeaveCriticalSection(&reader->reader.cs);
-        LeaveCriticalSection(&reader->cs);
-        WARN("Stream is already open; returning E_UNEXPECTED.\n");
-        return E_UNEXPECTED;
-    }
 
     if (SUCCEEDED(hr = wm_reader_open_file(&reader->reader, url))
             && FAILED(hr = async_reader_open(reader, callback, context)))
         wm_reader_close(&reader->reader);
 
-    LeaveCriticalSection(&reader->reader.cs);
     LeaveCriticalSection(&reader->cs);
     return hr;
 }
@@ -873,21 +863,11 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
     TRACE("reader %p, stream %p, callback %p, context %p.\n", reader, stream, callback, context);
 
     EnterCriticalSection(&reader->cs);
-    EnterCriticalSection(&reader->reader.cs);
-
-    if (reader->reader.wg_parser)
-    {
-        LeaveCriticalSection(&reader->reader.cs);
-        LeaveCriticalSection(&reader->cs);
-        WARN("Stream is already open; returning E_UNEXPECTED.\n");
-        return E_UNEXPECTED;
-    }
 
     if (SUCCEEDED(hr = wm_reader_open_stream(&reader->reader, stream))
             && FAILED(hr = async_reader_open(reader, callback, context)))
         wm_reader_close(&reader->reader);
 
-    LeaveCriticalSection(&reader->reader.cs);
     LeaveCriticalSection(&reader->cs);
     return hr;
 }
