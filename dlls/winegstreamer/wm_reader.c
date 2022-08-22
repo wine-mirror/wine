@@ -1764,6 +1764,7 @@ HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
     struct output_props *props = unsafe_impl_from_IWMOutputMediaProps(props_iface);
     struct wg_format format, pref_format;
     struct wm_stream *stream;
+    HRESULT hr = S_OK;
     int i;
 
     strmbase_dump_media_type(&props->mt);
@@ -1786,18 +1787,15 @@ HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
     if (pref_format.major_type != format.major_type)
     {
         /* R.U.S.E sets the type of the wrong stream, apparently by accident. */
-        LeaveCriticalSection(&reader->cs);
-        WARN("Major types don't match; returning NS_E_INCOMPATIBLE_FORMAT.\n");
-        return NS_E_INCOMPATIBLE_FORMAT;
+        hr = NS_E_INCOMPATIBLE_FORMAT;
     }
-
-    switch (pref_format.major_type)
+    else switch (pref_format.major_type)
     {
         case WG_MAJOR_TYPE_AUDIO:
             if (format.u.audio.format == WG_AUDIO_FORMAT_UNKNOWN)
-                return NS_E_AUDIO_CODEC_NOT_INSTALLED;
-            if (format.u.audio.channels > pref_format.u.audio.channels)
-                return NS_E_AUDIO_CODEC_NOT_INSTALLED;
+                hr = NS_E_AUDIO_CODEC_NOT_INSTALLED;
+            else if (format.u.audio.channels > pref_format.u.audio.channels)
+                hr = NS_E_AUDIO_CODEC_NOT_INSTALLED;
             break;
 
         case WG_MAJOR_TYPE_VIDEO:
@@ -1805,16 +1803,23 @@ HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
                 if (format.u.video.format == video_formats[i])
                     break;
             if (i == ARRAY_SIZE(video_formats))
-                return NS_E_INVALID_OUTPUT_FORMAT;
-
-            if (pref_format.u.video.width != format.u.video.width)
-                return NS_E_INVALID_OUTPUT_FORMAT;
-            if (pref_format.u.video.height != format.u.video.height)
-                return NS_E_INVALID_OUTPUT_FORMAT;
+                hr = NS_E_INVALID_OUTPUT_FORMAT;
+            else if (pref_format.u.video.width != format.u.video.width)
+                hr = NS_E_INVALID_OUTPUT_FORMAT;
+            else if (pref_format.u.video.height != format.u.video.height)
+                hr = NS_E_INVALID_OUTPUT_FORMAT;
             break;
 
         default:
-            return NS_E_INCOMPATIBLE_FORMAT;
+            hr = NS_E_INCOMPATIBLE_FORMAT;
+            break;
+    }
+
+    if (FAILED(hr))
+    {
+        WARN("Unsupported media type, returning %#lx.\n", hr);
+        LeaveCriticalSection(&reader->cs);
+        return hr;
     }
 
     stream->format = format;
