@@ -64,6 +64,7 @@ struct async_reader
     IUnknown *reader_inner;
     LONG refcount;
 
+    IWMSyncReader2 *reader;
     struct wm_reader *wm_reader;
 
     CRITICAL_SECTION cs;
@@ -1764,6 +1765,11 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     if (FAILED(hr = winegstreamer_create_wm_sync_reader((IUnknown *)&object->IWMReader_iface,
             (void **)&object->reader_inner)))
         goto failed;
+
+    if (FAILED(hr = IUnknown_QueryInterface(object->reader_inner, &IID_IWMSyncReader2,
+            (void **)&object->reader)))
+        goto failed;
+    IWMReader_Release(&object->IWMReader_iface);
     object->wm_reader = wm_reader_from_sync_reader_inner(object->reader_inner);
 
     InitializeCriticalSection(&object->cs);
