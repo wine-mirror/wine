@@ -810,7 +810,7 @@ static HRESULT WINAPI WMReaderAdvanced_GetMaxStreamSampleSize(IWMReaderAdvanced6
 
     TRACE("reader %p, stream_number %u, size %p.\n", reader, stream_number, size);
 
-    return wm_reader_get_max_stream_size(reader->wm_reader, stream_number, size);
+    return IWMSyncReader2_GetMaxStreamSampleSize(reader->reader, stream_number, size);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_NotifyLateDelivery(IWMReaderAdvanced6 *iface, QWORD lateness)

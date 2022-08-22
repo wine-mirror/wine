@@ -1985,24 +1985,6 @@ HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_
     return S_OK;
 }
 
-HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_number, DWORD *size)
-{
-    struct wm_stream *stream;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    *size = wg_format_get_max_size(&stream->format);
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 static struct wm_reader *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct wm_reader, IUnknown_inner);
@@ -2145,11 +2127,25 @@ static HRESULT WINAPI reader_GetMaxOutputSampleSize(IWMSyncReader2 *iface, DWORD
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI reader_GetMaxStreamSampleSize(IWMSyncReader2 *iface, WORD stream, DWORD *max)
+static HRESULT WINAPI reader_GetMaxStreamSampleSize(IWMSyncReader2 *iface, WORD stream_number, DWORD *size)
 {
-    struct wm_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, stream, max);
-    return E_NOTIMPL;
+    struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+
+    TRACE("reader %p, stream_number %u, size %p.\n", reader, stream_number, size);
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    *size = wg_format_get_max_size(&stream->format);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
