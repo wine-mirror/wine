@@ -138,7 +138,6 @@ static void async_reader_deliver_sample(struct async_reader *reader, struct samp
 {
     IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
     IWMReaderCallback *callback = reader->callback;
-    struct wm_stream *stream;
     BOOL read_compressed;
     HRESULT hr;
 
@@ -146,8 +145,9 @@ static void async_reader_deliver_sample(struct async_reader *reader, struct samp
             reader, sample->stream, debugstr_time(sample->pts), debugstr_time(sample->duration),
             sample->flags, sample->buffer);
 
-    stream = wm_reader_get_stream_by_stream_number(reader->wm_reader, sample->stream);
-    read_compressed = stream->read_compressed;
+    if (FAILED(hr = IWMSyncReader2_GetReadStreamSamples(reader->reader, sample->stream,
+            &read_compressed)))
+        read_compressed = FALSE;
 
     LeaveCriticalSection(&reader->callback_cs);
     if (read_compressed)

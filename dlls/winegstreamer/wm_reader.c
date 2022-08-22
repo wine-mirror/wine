@@ -1580,7 +1580,7 @@ HRESULT wm_reader_close(struct wm_reader *reader)
     return S_OK;
 }
 
-struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
+static struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
 {
     if (stream_number && stream_number <= reader->stream_count)
         return &reader->streams[stream_number - 1];
