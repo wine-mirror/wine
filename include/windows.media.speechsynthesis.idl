@@ -27,11 +27,16 @@ import "windows.storage.streams.idl";
 
 namespace Windows.Media.SpeechSynthesis
 {
+    typedef enum SpeechAppendedSilence SpeechAppendedSilence;
+    typedef enum SpeechPunctuationSilence SpeechPunctuationSilence;
     typedef enum VoiceGender VoiceGender;
     interface IInstalledVoicesStatic;
     interface IInstalledVoicesStatic2;
     interface ISpeechSynthesizer;
     interface ISpeechSynthesizer2;
+    interface ISpeechSynthesizerOptions;
+    interface ISpeechSynthesizerOptions2;
+    interface ISpeechSynthesizerOptions3;
     interface IVoiceInformation;
     interface ISpeechSynthesisStream;
     runtimeclass SpeechSynthesizer;
@@ -47,6 +52,24 @@ namespace Windows.Media.SpeechSynthesis
         interface Windows.Foundation.IAsyncOperation<Windows.Media.SpeechSynthesis.SpeechSynthesisStream*>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.SpeechSynthesis.SpeechSynthesisStream*>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0)
+    ]
+    enum SpeechAppendedSilence
+    {
+        Default = 0,
+        Min     = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0)
+    ]
+    enum SpeechPunctuationSilence
+    {
+        Default = 0,
+        Min     = 1,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -112,7 +135,7 @@ namespace Windows.Media.SpeechSynthesis
     }
 
     [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
         exclusiveto(Windows.Media.SpeechSynthesis.SpeechSynthesizerOptions),
         uuid(a0e23871-cc3d-43c9-91b1-ee185324d83d)
     ]
@@ -122,6 +145,34 @@ namespace Windows.Media.SpeechSynthesis
         [propput] HRESULT IncludeWordBoundaryMetadata([in] boolean value);
         [propget] HRESULT IncludeSentenceBoundaryMetadata([out, retval] boolean *value);
         [propput] HRESULT IncludeSentenceBoundaryMetadata([in] boolean value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.Media.SpeechSynthesis.SpeechSynthesizerOptions),
+        uuid(1cbef60e-119c-4bed-b118-d250c3a25793),
+    ]
+    interface ISpeechSynthesizerOptions2 : IInspectable
+    {
+        [propget] HRESULT AudioVolume([out, retval] DOUBLE *value);
+        [propput] HRESULT AudioVolume([in] DOUBLE value);
+        [propget] HRESULT SpeakingRate([out, retval] DOUBLE *value);
+        [propput] HRESULT SpeakingRate([in] DOUBLE value);
+        [propget] HRESULT AudioPitch([out, retval] DOUBLE *value);
+        [propput] HRESULT AudioPitch([in] DOUBLE value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Media.SpeechSynthesis.SpeechSynthesizerOptions),
+        uuid(401ed877-902c-4814-a582-a5d0c0769fa8)
+    ]
+    interface ISpeechSynthesizerOptions3 : IInspectable
+    {
+        [propget] HRESULT AppendedSilence([out, retval] Windows.Media.SpeechSynthesis.SpeechAppendedSilence *value);
+        [propput] HRESULT AppendedSilence([in] Windows.Media.SpeechSynthesis.SpeechAppendedSilence value);
+        [propget] HRESULT PunctuationSilence([out, retval] Windows.Media.SpeechSynthesis.SpeechPunctuationSilence *value);
+        [propput] HRESULT PunctuationSilence([in] Windows.Media.SpeechSynthesis.SpeechPunctuationSilence value);
     }
 
     [
@@ -145,12 +196,14 @@ namespace Windows.Media.SpeechSynthesis
     }
 
     [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
         marshaling_behavior(agile)
     ]
     runtimeclass SpeechSynthesizerOptions
     {
         [default] interface Windows.Media.SpeechSynthesis.ISpeechSynthesizerOptions;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Media.SpeechSynthesis.ISpeechSynthesizerOptions2;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.SpeechSynthesis.ISpeechSynthesizerOptions3;
     }
 
     [
