@@ -1677,9 +1677,11 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
         hres = IUnknown_QueryInterface(doc_obj->webbrowser, &IID_IWebBrowserPriv, (void**)&webbrowser_priv_old);
         if(SUCCEEDED(hres)) {
             V_VT(&uriv) = VT_BSTR;
-            IUri_GetDisplayUri(uri, &V_BSTR(&uriv));
+            V_BSTR(&uriv) = NULL;
+            hres = IUri_GetDisplayUri(uri, &V_BSTR(&uriv));
 
-            hres = IWebBrowserPriv_NavigateWithBindCtx(webbrowser_priv_old, &uriv, &flags, NULL, NULL, NULL, bind_ctx, NULL);
+            if(hres == S_OK)
+                hres = IWebBrowserPriv_NavigateWithBindCtx(webbrowser_priv_old, &uriv, &flags, NULL, NULL, NULL, bind_ctx, NULL);
 
             SysFreeString(V_BSTR(&uriv));
             IWebBrowserPriv_Release(webbrowser_priv_old);
