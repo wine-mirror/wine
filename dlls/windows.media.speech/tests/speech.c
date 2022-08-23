@@ -59,6 +59,7 @@
 
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
 static BOOL is_win10_1507 = FALSE;
+static BOOL is_win10_1709 = FALSE;
 
 static inline LONG get_ref(IUnknown *obj)
 {
@@ -1031,9 +1032,21 @@ static void test_SpeechSynthesizer(void)
 
         if (hr == S_OK)
         {
+            ISpeechSynthesizerOptions3 *options3;
+
             check_interface(options, &IID_IAgileObject, TRUE);
             check_optional_interface(options, &IID_ISpeechSynthesizerOptions2, TRUE); /* Requires Win10 >= 1709 */
-            check_optional_interface(options, &IID_ISpeechSynthesizerOptions3, TRUE); /* Requires Win10 >= 1803 */
+
+            hr = ISpeechSynthesizerOptions_QueryInterface(options, &IID_ISpeechSynthesizerOptions3, (void **)&options3);
+            ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Got unexpected hr %#lx.\n", hr); /* Requires Win10 >= 1803 */
+
+            if (hr == S_OK)
+            {
+                ref = ISpeechSynthesizerOptions3_Release(options3);
+                ok(ref == 2, "Got unexpected ref %lu.\n", ref);
+            }
+            else
+                is_win10_1709 = TRUE;
 
             ref = ISpeechSynthesizerOptions_Release(options);
             ok(ref == 1, "Got unexpected ref %lu.\n", ref);
@@ -1467,10 +1480,14 @@ static void test_SpeechRecognitionListConstraint(void)
     hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, NULL, NULL, &listconstraint);
     ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
 
-    /* The create functions on Win10 1507 x32 break when handling the given iterator. Seems like a Windows bug. Skipping these tests. */
-    if (broken(is_win10_1507 && (sizeof(void*) == 4)))
+    /*
+     * The create functions break on Win10 <= 1709 x32 with the given iterator.
+     * Seems like a Windows bug, but if you see an issue in the test's code, please FIXME.
+     * Skipping these tests.
+     */
+    if (broken((is_win10_1507 || is_win10_1709) && (sizeof(void*) == 4)))
     {
-        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 1507 x32!\n");
+        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 <= 1709 x32!\n");
         goto skip_create;
     }
 
@@ -1618,10 +1635,14 @@ static void test_Recognition(void)
         ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
     }
 
-    /* The create functions for ListConstraint are broken on Win10 1507 x32 - abort early.*/
-    if (broken(is_win10_1507 && (sizeof(void*) == 4)))
+    /*
+     * The create functions break on Win10 <= 1709 x32 with the given iterator.
+     * Seems like a Windows bug, but if you see an issue in the test's code, please FIXME.
+     * Skipping these tests.
+     */
+    if (broken((is_win10_1507 || is_win10_1709) && (sizeof(void*) == 4)))
     {
-        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 1507 x32!\n");
+        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 <= 1709 x32!\n");
         goto done;
     }
 
