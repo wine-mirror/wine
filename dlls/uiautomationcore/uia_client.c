@@ -160,6 +160,37 @@ static HRESULT get_global_interface_table(IGlobalInterfaceTable **git)
     return hr;
 }
 
+static HWND get_hwnd_from_provider(IRawElementProviderSimple *elprov)
+{
+    IRawElementProviderSimple *host_prov;
+    HRESULT hr;
+    VARIANT v;
+    HWND hwnd;
+
+    hwnd = NULL;
+    VariantInit(&v);
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &host_prov);
+    if (SUCCEEDED(hr) && host_prov)
+    {
+        hr = IRawElementProviderSimple_GetPropertyValue(host_prov, UIA_NativeWindowHandlePropertyId, &v);
+        if (SUCCEEDED(hr) && (V_VT(&v) == VT_I4))
+            hwnd = UlongToHandle(V_I4(&v));
+
+        VariantClear(&v);
+        IRawElementProviderSimple_Release(host_prov);
+    }
+
+    if (!IsWindow(hwnd))
+    {
+        hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_NativeWindowHandlePropertyId, &v);
+        if (SUCCEEDED(hr) && (V_VT(&v) == VT_I4))
+            hwnd = UlongToHandle(V_I4(&v));
+        VariantClear(&v);
+    }
+
+    return hwnd;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -169,6 +200,8 @@ struct uia_node {
 
     IWineUiaProvider *prov;
     DWORD git_cookie;
+
+    HWND hwnd;
 };
 
 static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)
@@ -482,6 +515,7 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
     prov->elprov = elprov;
     prov->ref = 1;
     node->prov = &prov->IWineUiaProvider_iface;
+    node->hwnd = get_hwnd_from_provider(elprov);
 
     /*
      * If the UseComThreading ProviderOption is specified, all calls to the
