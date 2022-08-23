@@ -104,6 +104,7 @@ F:	dlls/dpwsockx/
 
 DirectShow
 M:	Zebediah Figura <z.figura12@gmail.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/amstream/
 F:	dlls/devenum/
 F:	dlls/mciqtz32/
@@ -156,6 +157,7 @@ F:	dlls/gphoto2.ds/
 
 GStreamer multimedia backend
 M:	Zebediah Figura <z.figura12@gmail.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/winegstreamer/
 
 HID support
@@ -334,11 +336,13 @@ F:	dlls/wmiutils/
 
 Windows Media Format
 M:	Zebediah Figura <z.figura12@gmail.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/wmp/
 F:	dlls/wmvcore/
 
 Windows Media Foundation
 M:	Nikolay Sivov <nsivov@codeweavers.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/mf/
 F:	dlls/mferror/
 F:	dlls/mfmediaengine/
