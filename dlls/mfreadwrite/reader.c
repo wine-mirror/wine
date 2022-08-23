@@ -958,7 +958,7 @@ static struct stream_response *media_stream_pop_response(struct source_reader *r
 
         if (!stream) stream = &reader->streams[response->stream_index];
 
-        if (stream->allocator)
+        if (response->sample && stream->allocator)
         {
             /* Return allocation error to the caller, while keeping original response sample in for later. */
             if (SUCCEEDED(hr = IMFVideoSampleAllocatorEx_AllocateSample(stream->allocator, &sample)))
