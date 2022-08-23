@@ -73,8 +73,9 @@ static inline void check_refcount_(unsigned int line, void *obj, LONG exp)
     ok_(__FILE__, line)(exp == ref, "Unexpected refcount %lu, expected %lu\n", ref, exp);
 }
 
-#define check_interface(obj, iid, exp) check_interface_(__LINE__, obj, iid, exp)
-static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL supported)
+#define check_interface(obj, iid, exp) check_interface_(__LINE__, obj, iid, exp, FALSE)
+#define check_optional_interface(obj, iid, exp) check_interface_(__LINE__, obj, iid, exp, TRUE)
+static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL supported, BOOL optional)
 {
     IUnknown *iface = obj;
     HRESULT hr, expected_hr;
@@ -83,7 +84,7 @@ static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL 
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr || broken(hr == E_NOINTERFACE && optional), "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -1017,11 +1018,27 @@ static void test_SpeechSynthesizer(void)
     hr = IInspectable_QueryInterface(inspectable, &IID_IClosable, (void **)&closable);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    /* Test ISpeechSynthesizer2 iface */
     hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechSynthesizer2, (void **)&synthesizer2);
     ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Got unexpected hr %#lx.\n", hr); /* Requires Win10 >= 1703 */
 
     if (hr == S_OK)
     {
+        ISpeechSynthesizerOptions *options;
+
+        hr = ISpeechSynthesizer2_get_Options(synthesizer2, &options);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        if (hr == S_OK)
+        {
+            check_interface(options, &IID_IAgileObject, TRUE);
+            check_optional_interface(options, &IID_ISpeechSynthesizerOptions2, TRUE); /* Requires Win10 >= 1709 */
+            check_optional_interface(options, &IID_ISpeechSynthesizerOptions3, TRUE); /* Requires Win10 >= 1803 */
+
+            ref = ISpeechSynthesizerOptions_Release(options);
+            ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+        }
+
         ref = ISpeechSynthesizer2_Release(synthesizer2);
         ok(ref == 3, "Got unexpected ref %lu.\n", ref);
     }
