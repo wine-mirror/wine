@@ -4035,6 +4035,111 @@ static void test_create_effect_from_memory(void)
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 }
 
+static void test_create_effect_from_file(void)
+{
+    static const WCHAR *test_file_name = L"test.fx";
+    WCHAR path[MAX_PATH];
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    ID3D10Blob *errors;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    /* Test NULL file name. */
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileW(NULL, NULL, NULL, NULL, 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(errors == (ID3D10Blob *)0xdeadbeef, "Got unexpected errors %p.\n", errors);
+    ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileA(NULL, NULL, NULL, NULL, 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(errors == (ID3D10Blob *)0xdeadbeef, "Got unexpected errors %p.\n", errors);
+    ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+
+    /* Test non-existent file. */
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileW(L"deadbeef", NULL, NULL, NULL, 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    todo_wine ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileA("deadbeef", NULL, NULL, NULL, 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    todo_wine ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(effect == (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+
+    /* Test creating effect from compiled shader file. */
+    if (strcmp(winetest_platform, "wine")) /* Crash on wine. */
+    {
+    create_file(test_file_name, test_fx, sizeof(test_fx), path);
+
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileW(path, NULL, NULL, NULL, 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(!!effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
+
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileA(get_str_a(path), NULL, NULL, NULL, 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(!!effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
+
+    delete_file(test_file_name);
+    }
+
+    /* Test creating effect from source file. */
+    create_file(test_file_name, test_fx_source, strlen(test_fx_source) + 1, path);
+
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileW(path, NULL, NULL, "fx_4_0", 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
+    todo_wine ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    if (hr == S_OK)
+        effect->lpVtbl->Release(effect);
+
+    errors = (ID3D10Blob *)0xdeadbeef;
+    effect = (ID3D10Effect *)0xdeadbeef;
+    hr = D3DX10CreateEffectFromFileA(get_str_a(path), NULL, NULL, "fx_4_0", 0x0, 0x0,
+            device, NULL, NULL, &effect, &errors, NULL);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
+    todo_wine ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    if (hr == S_OK)
+        effect->lpVtbl->Release(effect);
+
+    delete_file(test_file_name);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
+}
+
 static void test_create_effect_from_resource(void)
 {
     ID3D10Device *device;
@@ -4104,6 +4209,7 @@ START_TEST(d3dx10)
     test_font();
     test_sprite();
     test_create_effect_from_memory();
+    test_create_effect_from_file();
     test_create_effect_from_resource();
     test_preprocess_shader();
 }
