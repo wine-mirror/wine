@@ -1777,17 +1777,10 @@ skip_action:
     hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
 
-    ref = ISpeechContinuousRecognitionSession_Release(session);
-    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
-
-    ref = ISpeechRecognizer2_Release(recognizer2);
-    ok(ref == 2, "Got unexpected ref %lu.\n", ref);
-
-    ref = ISpeechRecognizer_Release(recognizer);
-    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
-
-    ref = IInspectable_Release(inspectable);
-    ok(!ref, "Got unexpected ref %lu.\n", ref);
+    ISpeechContinuousRecognitionSession_Release(session);
+    ISpeechRecognizer2_Release(recognizer2);
+    ISpeechRecognizer_Release(recognizer);
+    IInspectable_Release(inspectable);
 
 done:
     for (i = 0; i < ARRAY_SIZE(commands); i++)
