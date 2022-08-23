@@ -9479,6 +9479,12 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_hostname((IUnknown*)elem, L"test1");
         test_anchor_port((IUnknown*)elem, L"8080");
 
+        /* about:blank */
+        test_anchor_put_href((IUnknown*)elem, L"about:blank");
+        test_anchor_href((IUnknown*)elem, L"about:blank");
+        test_anchor_hostname((IUnknown*)elem, NULL);
+        test_anchor_port((IUnknown*)elem, NULL);
+
         /* Restore the href */
         test_anchor_put_href((IUnknown*)elem, L"http://test/");
         test_anchor_href((IUnknown*)elem, L"http://test/");

@@ -517,6 +517,10 @@ static HRESULT WINAPI HTMLAnchorElement_get_port(IHTMLAnchorElement *iface, BSTR
     IUri_Release(uri);
     if(FAILED(hres))
         return hres;
+    if(hres != S_OK) {
+        *p = NULL;
+        return S_OK;
+    }
 
     len = swprintf(buf, ARRAY_SIZE(buf), L"%u", port);
     str = SysAllocStringLen(buf, len);
@@ -556,6 +560,11 @@ static HRESULT WINAPI HTMLAnchorElement_get_protocol(IHTMLAnchorElement *iface, 
     IUri_Release(uri);
     if(FAILED(hres))
         return hres;
+    if(hres != S_OK) {
+        SysFreeString(scheme);
+        *p = NULL;
+        return S_OK;
+    }
 
     len = SysStringLen(scheme);
     if(len) {
