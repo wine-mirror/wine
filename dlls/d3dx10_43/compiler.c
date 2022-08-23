@@ -107,6 +107,9 @@ HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SH
             debugstr_w(filename), defines, include, debugstr_a(profile), shader_flags, effect_flags,
             device, effect_pool, pump, effect, errors, hresult);
 
+    if (!filename)
+        return E_FAIL;
+
     if (pump)
         FIXME("Asynchronous mode is not supported.\n");
 
@@ -139,7 +142,7 @@ HRESULT WINAPI D3DX10CreateEffectFromFileA(const char *filename, const D3D10_SHA
             device, effect_pool, pump, effect, errors, hresult);
 
     if (!filename)
-        return E_INVALIDARG;
+        return E_FAIL;
 
     len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
     if (!(filenameW = malloc(len * sizeof(*filenameW))))
