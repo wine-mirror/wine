@@ -3181,24 +3181,32 @@ static HRESULT check_target_origin(HTMLInnerWindow *window, const WCHAR *target_
         goto done;
     }
 
+    bstr = NULL;
     hres = IUri_GetSchemeName(uri, &bstr);
-    if(FAILED(hres))
+    if(hres != S_OK) {
+        SysFreeString(bstr);
         goto done;
+    }
     hres = IUri_GetSchemeName(target, &bstr2);
     if(SUCCEEDED(hres)) {
-        hres = !wcsicmp(bstr, bstr2) ? S_OK : S_FALSE;
+        if(hres == S_OK && wcsicmp(bstr, bstr2))
+            hres = S_FALSE;
         SysFreeString(bstr2);
     }
     SysFreeString(bstr);
     if(hres != S_OK)
         goto done;
 
+    bstr = NULL;
     hres = IUri_GetHost(uri, &bstr);
-    if(FAILED(hres))
+    if(hres != S_OK) {
+        SysFreeString(bstr);
         goto done;
+    }
     hres = IUri_GetHost(target, &bstr2);
     if(SUCCEEDED(hres)) {
-        hres = !wcsicmp(bstr, bstr2) ? S_OK : S_FALSE;
+        if(hres == S_OK && wcsicmp(bstr, bstr2))
+            hres = S_FALSE;
         SysFreeString(bstr2);
     }
     SysFreeString(bstr);
@@ -3210,11 +3218,11 @@ static HRESULT check_target_origin(HTMLInnerWindow *window, const WCHAR *target_
         goto done;
 
     hres = IUri_GetPort(uri, &port);
-    if(FAILED(hres))
+    if(hres != S_OK)
         goto done;
     hres = IUri_GetPort(target, &port2);
-    if(SUCCEEDED(hres))
-        hres = (port == port2) ? S_OK : S_FALSE;
+    if(hres == S_OK && port != port2)
+        hres = S_FALSE;
 
 done:
     IUri_Release(target);
