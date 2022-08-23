@@ -215,7 +215,7 @@ compat_mode_t get_max_compat_mode(IUri *uri)
 {
     compat_config_t *iter;
     size_t len, iter_len;
-    BSTR host;
+    BSTR host = NULL;
     HRESULT hres;
 
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
@@ -224,8 +224,10 @@ compat_mode_t get_max_compat_mode(IUri *uri)
     if(!uri)
         return global_max_compat_mode;
     hres = IUri_GetHost(uri, &host);
-    if(FAILED(hres))
+    if(hres != S_OK) {
+        SysFreeString(host);
         return global_max_compat_mode;
+    }
     len = SysStringLen(host);
 
     LIST_FOR_EACH_ENTRY(iter, &compat_config, compat_config_t, entry) {

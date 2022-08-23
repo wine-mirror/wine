@@ -1123,7 +1123,7 @@ HRESULT load_script(HTMLScriptElement *script_elem, const WCHAR *src, BOOL async
 
     hres = IUri_GetScheme(uri, &bsc->scheme);
     IUri_Release(uri);
-    if(FAILED(hres))
+    if(hres != S_OK)
         bsc->scheme = URL_SCHEME_UNKNOWN;
 
     IHTMLScriptElement_AddRef(&script_elem->IHTMLScriptElement_iface);

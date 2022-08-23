@@ -1176,7 +1176,8 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
         if (FAILED(hres))
             return hres;
 
-        ShellExecuteW(NULL, L"open", uri, NULL, NULL, SW_SHOW);
+        if(hres == S_OK)
+            ShellExecuteW(NULL, L"open", uri, NULL, NULL, SW_SHOW);
         SysFreeString(uri);
         return S_OK;
     }
