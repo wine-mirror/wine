@@ -653,3 +653,57 @@ HRESULT WINAPI UiaGetPropertyValue(HUIANODE huianode, PROPERTYID prop_id, VARIAN
 
     return S_OK;
 }
+
+#define UIA_RUNTIME_ID_PREFIX 42
+static HRESULT write_runtime_id_base(SAFEARRAY *sa, HWND hwnd)
+{
+    const int rt_id[2] = { UIA_RUNTIME_ID_PREFIX, HandleToUlong(hwnd) };
+    HRESULT hr;
+    LONG idx;
+
+    for (idx = 0; idx < ARRAY_SIZE(rt_id); idx++)
+    {
+        hr = SafeArrayPutElement(sa, &idx, (void *)&rt_id[idx]);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *          UiaGetRuntimeId (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaGetRuntimeId(HUIANODE huianode, SAFEARRAY **runtime_id)
+{
+    struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
+    HRESULT hr;
+
+    FIXME("(%p, %p): partial stub\n", huianode, runtime_id);
+
+    if (!node || !runtime_id)
+        return E_INVALIDARG;
+
+    *runtime_id = NULL;
+
+    /* Provide an HWND based runtime ID if the node has an HWND. */
+    if (node->hwnd)
+    {
+        SAFEARRAY *sa;
+
+        if (!(sa = SafeArrayCreateVector(VT_I4, 0, 2)))
+            return E_FAIL;
+
+        hr = write_runtime_id_base(sa, node->hwnd);
+        if (FAILED(hr))
+        {
+            SafeArrayDestroy(sa);
+            return hr;
+        }
+
+        *runtime_id = sa;
+        return S_OK;
+    }
+
+    return E_NOTIMPL;
+}

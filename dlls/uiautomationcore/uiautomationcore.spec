@@ -66,7 +66,7 @@
 @ stdcall UiaGetReservedMixedAttributeValue(ptr)
 @ stdcall UiaGetReservedNotSupportedValue(ptr)
 @ stub UiaGetRootNode
-@ stub UiaGetRuntimeId
+@ stdcall UiaGetRuntimeId(ptr ptr)
 @ stub UiaGetUpdatedCache
 @ stub UiaHPatternObjectFromVariant
 @ stub UiaHTextRangeFromVariant

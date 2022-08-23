@@ -64,6 +64,7 @@ static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD,
     }while(0)
 
 #define NAVDIR_INTERNAL_HWND 10
+#define UIA_RUNTIME_ID_PREFIX 42
 
 DEFINE_EXPECT(winproc_GETOBJECT_CLIENT);
 DEFINE_EXPECT(winproc_GETOBJECT_UiaRoot);
@@ -1094,14 +1095,17 @@ static struct Provider
 {
     IRawElementProviderSimple IRawElementProviderSimple_iface;
     IRawElementProviderFragment IRawElementProviderFragment_iface;
+    IRawElementProviderFragmentRoot IRawElementProviderFragmentRoot_iface;
     LONG ref;
 
     const char *prov_name;
     IRawElementProviderFragment *parent;
+    IRawElementProviderFragmentRoot *frag_root;
     enum ProviderOptions prov_opts;
     HWND hwnd;
     BOOL ret_invalid_prop_type;
     DWORD expected_tid;
+    int runtime_id[2];
 } Provider, Provider2, Provider_child, Provider_child2;
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
@@ -1158,6 +1162,8 @@ enum {
     PROV_GET_PROPERTY_VALUE,
     PROV_GET_HOST_RAW_ELEMENT_PROVIDER,
     FRAG_NAVIGATE,
+    FRAG_GET_RUNTIME_ID,
+    FRAG_GET_FRAGMENT_ROOT,
 };
 
 static const char *prov_method_str[] = {
@@ -1165,6 +1171,8 @@ static const char *prov_method_str[] = {
     "GetPropertyValue",
     "get_HostRawElementProvider",
     "Navigate",
+    "GetRuntimeId",
+    "get_FragmentRoot",
 };
 
 static const char *get_prov_method_str(int method)
@@ -1405,6 +1413,36 @@ static void check_node_provider_desc_prefix_(BSTR prov_desc, DWORD pid, HWND pro
     ok_(file, line)(prov_hwnd == prov_id, "Unexpected hwnd %p\n", prov_hwnd);
 }
 
+#define check_runtime_id( exp_runtime_id, exp_size, runtime_id ) \
+        check_runtime_id_( (exp_runtime_id), (exp_size), (runtime_id), __FILE__, __LINE__)
+static void check_runtime_id_(int *exp_runtime_id, int exp_size, SAFEARRAY *runtime_id, const char *file, int line)
+{
+    LONG i, idx, lbound, ubound, elems;
+    HRESULT hr;
+    UINT dims;
+    int val;
+
+    dims = SafeArrayGetDim(runtime_id);
+    ok_(file, line)(dims == 1, "Unexpected array dims %d\n", dims);
+
+    hr = SafeArrayGetLBound(runtime_id, 1, &lbound);
+    ok_(file, line)(hr == S_OK, "Failed to get LBound with hr %#lx\n", hr);
+
+    hr = SafeArrayGetUBound(runtime_id, 1, &ubound);
+    ok_(file, line)(hr == S_OK, "Failed to get UBound with hr %#lx\n", hr);
+
+    elems = (ubound - lbound) + 1;
+    ok_(file, line)(exp_size == elems, "Unexpected runtime_id array size %#lx\n", elems);
+
+    for (i = 0; i < elems; i++)
+    {
+        idx = lbound + i;
+        hr = SafeArrayGetElement(runtime_id, &idx, &val);
+        ok_(file, line)(hr == S_OK, "Failed to get element with hr %#lx\n", hr);
+        ok_(file, line)(val == exp_runtime_id[i], "Unexpected runtime_id[%ld] %#x\n", i, val);
+    }
+}
+
 static inline struct Provider *impl_from_ProviderSimple(IRawElementProviderSimple *iface)
 {
     return CONTAINING_RECORD(iface, struct Provider, IRawElementProviderSimple_iface);
@@ -1419,6 +1457,8 @@ HRESULT WINAPI ProviderSimple_QueryInterface(IRawElementProviderSimple *iface, R
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IRawElementProviderFragment))
         *ppv = &This->IRawElementProviderFragment_iface;
+    else if (IsEqualIID(riid, &IID_IRawElementProviderFragmentRoot))
+        *ppv = &This->IRawElementProviderFragmentRoot_iface;
     else
         return E_NOINTERFACE;
 
@@ -1724,9 +1764,28 @@ static HRESULT WINAPI ProviderFragment_Navigate(IRawElementProviderFragment *ifa
 static HRESULT WINAPI ProviderFragment_GetRuntimeId(IRawElementProviderFragment *iface,
         SAFEARRAY **ret_val)
 {
-    ok(0, "unexpected call\n");
+    struct Provider *This = impl_from_ProviderFragment(iface);
+
+    add_method_call(This, FRAG_GET_RUNTIME_ID);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+    if (This->runtime_id[0] || This->runtime_id[1])
+    {
+        SAFEARRAY *sa;
+        LONG idx;
+
+        if (!(sa = SafeArrayCreateVector(VT_I4, 0, ARRAY_SIZE(This->runtime_id))))
+            return E_FAIL;
+
+        for (idx = 0; idx < ARRAY_SIZE(This->runtime_id); idx++)
+            SafeArrayPutElement(sa, &idx, (void *)&This->runtime_id[idx]);
+
+        *ret_val = sa;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProviderFragment_get_BoundingRectangle(IRawElementProviderFragment *iface,
@@ -1753,9 +1812,20 @@ static HRESULT WINAPI ProviderFragment_SetFocus(IRawElementProviderFragment *ifa
 static HRESULT WINAPI ProviderFragment_get_FragmentRoot(IRawElementProviderFragment *iface,
         IRawElementProviderFragmentRoot **ret_val)
 {
-    ok(0, "unexpected call\n");
+    struct Provider *This = impl_from_ProviderFragment(iface);
+
+    add_method_call(This, FRAG_GET_FRAGMENT_ROOT);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+    if (This->frag_root)
+    {
+        *ret_val = This->frag_root;
+        IRawElementProviderFragmentRoot_AddRef(This->frag_root);
+    }
+
+    return S_OK;
 }
 
 static const IRawElementProviderFragmentVtbl ProviderFragmentVtbl = {
@@ -1770,13 +1840,60 @@ static const IRawElementProviderFragmentVtbl ProviderFragmentVtbl = {
     ProviderFragment_get_FragmentRoot,
 };
 
+static inline struct Provider *impl_from_ProviderFragmentRoot(IRawElementProviderFragmentRoot *iface)
+{
+    return CONTAINING_RECORD(iface, struct Provider, IRawElementProviderFragmentRoot_iface);
+}
+
+static HRESULT WINAPI ProviderFragmentRoot_QueryInterface(IRawElementProviderFragmentRoot *iface, REFIID riid,
+        void **ppv)
+{
+    struct Provider *Provider = impl_from_ProviderFragmentRoot(iface);
+    return IRawElementProviderSimple_QueryInterface(&Provider->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProviderFragmentRoot_AddRef(IRawElementProviderFragmentRoot *iface)
+{
+    struct Provider *Provider = impl_from_ProviderFragmentRoot(iface);
+    return IRawElementProviderSimple_AddRef(&Provider->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI ProviderFragmentRoot_Release(IRawElementProviderFragmentRoot *iface)
+{
+    struct Provider *Provider = impl_from_ProviderFragmentRoot(iface);
+    return IRawElementProviderSimple_Release(&Provider->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI ProviderFragmentRoot_ElementProviderFromPoint(IRawElementProviderFragmentRoot *iface,
+        double x, double y, IRawElementProviderFragment **ret_val)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderFragmentRoot_GetFocus(IRawElementProviderFragmentRoot *iface,
+        IRawElementProviderFragment **ret_val)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IRawElementProviderFragmentRootVtbl ProviderFragmentRootVtbl = {
+    ProviderFragmentRoot_QueryInterface,
+    ProviderFragmentRoot_AddRef,
+    ProviderFragmentRoot_Release,
+    ProviderFragmentRoot_ElementProviderFromPoint,
+    ProviderFragmentRoot_GetFocus,
+};
+
 static struct Provider Provider =
 {
     { &ProviderSimpleVtbl },
     { &ProviderFragmentVtbl },
+    { &ProviderFragmentRootVtbl },
     1,
     "Provider",
-    NULL,
+    NULL, NULL,
     0, 0, 0,
 };
 
@@ -1784,9 +1901,10 @@ static struct Provider Provider2 =
 {
     { &ProviderSimpleVtbl },
     { &ProviderFragmentVtbl },
+    { &ProviderFragmentRootVtbl },
     1,
     "Provider2",
-    NULL,
+    NULL, NULL,
     0, 0, 0,
 };
 
@@ -1794,9 +1912,10 @@ static struct Provider Provider_child =
 {
     { &ProviderSimpleVtbl },
     { &ProviderFragmentVtbl },
+    { &ProviderFragmentRootVtbl },
     1,
     "Provider_child",
-    &Provider.IRawElementProviderFragment_iface,
+    &Provider.IRawElementProviderFragment_iface, &Provider.IRawElementProviderFragmentRoot_iface,
     ProviderOptions_ServerSideProvider, 0, 0,
 };
 
@@ -1804,9 +1923,10 @@ static struct Provider Provider_child2 =
 {
     { &ProviderSimpleVtbl },
     { &ProviderFragmentVtbl },
+    { &ProviderFragmentRootVtbl },
     1,
     "Provider_child2",
-    &Provider.IRawElementProviderFragment_iface,
+    &Provider.IRawElementProviderFragment_iface, &Provider.IRawElementProviderFragmentRoot_iface,
     ProviderOptions_ServerSideProvider, 0, 0,
 };
 
@@ -4449,6 +4569,258 @@ static void test_UiaGetPropertyValue(void)
     CoUninitialize();
 }
 
+static const struct prov_method_sequence get_runtime_id1[] = {
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { 0 }
+};
+
+static const struct prov_method_sequence get_runtime_id2[] = {
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { 0 }
+};
+
+static const struct prov_method_sequence get_runtime_id3[] = {
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    /* Not called on Windows 7. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    /* Only called on Win8+. */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider2, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider2, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { 0 }
+};
+
+static const struct prov_method_sequence get_runtime_id4[] = {
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    /* Not called on Windows 7. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    /* These methods are only called on Win8+. */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { 0 }
+};
+
+static const struct prov_method_sequence get_runtime_id5[] = {
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { 0 }
+};
+
+static void test_UiaGetRuntimeId(void)
+{
+    const int root_prov_opts[] = { ProviderOptions_ServerSideProvider, ProviderOptions_ServerSideProvider | ProviderOptions_OverrideProvider,
+                                   ProviderOptions_ClientSideProvider | ProviderOptions_NonClientAreaProvider };
+    int rt_id[4], tmp, i;
+    SAFEARRAY *sa;
+    WNDCLASSA cls;
+    HUIANODE node;
+    HRESULT hr;
+    HWND hwnd;
+    VARIANT v;
+
+    VariantInit(&v);
+    cls.style = 0;
+    cls.lpfnWndProc = test_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = NULL;
+    cls.hbrBackground = NULL;
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "UiaGetRuntimeId class";
+
+    RegisterClassA(&cls);
+
+    hwnd = CreateWindowA("UiaGetRuntimeId class", "Test window", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, NULL, NULL, NULL, NULL);
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    Provider.prov_opts = Provider2.prov_opts = Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = Provider2.hwnd = Provider_child.hwnd = NULL;
+    node = (void *)0xdeadbeef;
+    hr = UiaNodeFromProvider(&Provider_child.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+        VariantClear(&v);
+    }
+    ok_method_sequence(node_from_prov3, NULL);
+
+    /* NULL runtime ID. */
+    Provider_child.runtime_id[0] = Provider_child.runtime_id[1] = 0;
+    sa = (void *)0xdeadbeef;
+    hr = UiaGetRuntimeId(node, &sa);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!sa, "sa != NULL\n");
+    ok_method_sequence(get_runtime_id1, "get_runtime_id1");
+
+    /* No UiaAppendRuntimeId prefix, returns GetRuntimeId array directly. */
+    Provider_child.runtime_id[0] = rt_id[0] = 5;
+    Provider_child.runtime_id[1] = rt_id[1] = 2;
+    sa = (void *)0xdeadbeef;
+    hr = UiaGetRuntimeId(node, &sa);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!sa, "sa == NULL\n");
+    if (sa)
+        check_runtime_id(rt_id, 2, sa);
+    SafeArrayDestroy(sa);
+    ok_method_sequence(get_runtime_id1, "get_runtime_id1");
+
+    /*
+     * If a provider returns a RuntimeId beginning with the constant
+     * UiaAppendRuntimeId, UI Automation will add a prefix based on the
+     * providers HWND fragment root before returning to the client. The added
+     * prefix is 3 int values, with:
+     *
+     * idx[0] always being 42. (UIA_RUNTIME_ID_PREFIX)
+     * idx[1] always being the HWND.
+     * idx[2] has three different values depending on what type of provider
+     * the fragment root is. Fragment roots can be an override provider, a
+     * nonclient provider, or a main provider.
+     */
+    Provider_child.frag_root = NULL;
+    Provider_child.runtime_id[0] = UiaAppendRuntimeId;
+    Provider_child.runtime_id[1] = 2;
+    sa = (void *)0xdeadbeef;
+
+    /* Provider_child has no fragment root for UiaAppendRuntimeId. */
+    hr = UiaGetRuntimeId(node, &sa);
+    /* Windows 7 returns S_OK. */
+    todo_wine ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
+    ok(!sa, "sa != NULL\n");
+    ok_method_sequence(get_runtime_id2, "get_runtime_id2");
+
+    /*
+     * Provider_child returns a fragment root that doesn't expose an HWND. On
+     * Win8+, fragment roots are navigated recursively until either a NULL
+     * fragment root is returned, the same fragment root as the current one is
+     * returned, or a fragment root with an HWND is returned.
+     */
+    Provider_child.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    Provider2.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider2.hwnd = NULL;
+    Provider.frag_root = &Provider2.IRawElementProviderFragmentRoot_iface;
+    Provider.hwnd = NULL;
+    Provider_child.runtime_id[0] = UiaAppendRuntimeId;
+    Provider_child.runtime_id[1] = 2;
+    sa = (void *)0xdeadbeef;
+    hr = UiaGetRuntimeId(node, &sa);
+    /* Windows 7 returns S_OK. */
+    todo_wine ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx.\n", hr);
+    ok(!sa, "sa != NULL\n");
+    ok_method_sequence(get_runtime_id3, "get_runtime_id3");
+
+    /* Provider2 returns an HWND. */
+    Provider.hwnd = NULL;
+    Provider.frag_root = &Provider2.IRawElementProviderFragmentRoot_iface;
+    Provider2.hwnd = hwnd;
+    Provider2.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider_child.runtime_id[0] = UiaAppendRuntimeId;
+    Provider_child.runtime_id[1] = rt_id[3] = 2;
+    sa = NULL;
+    hr = UiaGetRuntimeId(node, &sa);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* Windows 7 returns a NULL RuntimeId due to no fragment recursion. */
+    todo_wine ok(!!sa || broken(!sa), "sa == NULL\n");
+    SafeArrayDestroy(sa);
+
+    ok_method_sequence(get_runtime_id4, "get_runtime_id4");
+
+    /* Test RuntimeId values for different root fragment provider types. */
+    Provider.frag_root = NULL;
+    Provider.hwnd = hwnd;
+    Provider_child.runtime_id[0] = UiaAppendRuntimeId;
+    Provider_child.runtime_id[1] = rt_id[3] = 2;
+    rt_id[0] = UIA_RUNTIME_ID_PREFIX;
+    rt_id[1] = HandleToULong(hwnd);
+    for (i = 0; i < ARRAY_SIZE(root_prov_opts); i++)
+    {
+        LONG lbound;
+
+        Provider.prov_opts = root_prov_opts[i];
+        sa = NULL;
+        hr = UiaGetRuntimeId(node, &sa);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine ok(!!sa, "sa == NULL\n");
+
+        hr = SafeArrayGetLBound(sa, 1, &lbound);
+        todo_wine ok(hr == S_OK, "Failed to get LBound with hr %#lx\n", hr);
+
+        lbound = lbound + 2;
+        hr = SafeArrayGetElement(sa, &lbound, &tmp);
+        todo_wine ok(hr == S_OK, "Failed to get element with hr %#lx\n", hr);
+        if (i && SUCCEEDED(hr))
+            ok(rt_id[2] != tmp, "Expected different runtime id value from previous\n");
+
+        rt_id[2] = tmp;
+        if (sa)
+            check_runtime_id(rt_id, 4, sa);
+        SafeArrayDestroy(sa);
+        ok_method_sequence(get_runtime_id5, "get_runtime_id5");
+    }
+
+    UiaNodeRelease(node);
+
+    /* Test behavior on a node with an associated HWND. */
+    Provider.prov_opts = ProviderOptions_ClientSideProvider;
+    Provider2.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = Provider2.hwnd = hwnd;
+    prov_root = &Provider2.IRawElementProviderSimple_iface;
+    node = (void *)0xdeadbeef;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Windows 7 sends this. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    VariantInit(&v);
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider2", TRUE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider", FALSE);
+        VariantClear(&v);
+    }
+    ok_method_sequence(node_from_prov6, "node_from_prov6");
+
+    /* No methods called, RuntimeId is based on the node's HWND. */
+    hr = UiaGetRuntimeId(node, &sa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!sa, "sa == NULL\n");
+    ok(!sequence_cnt, "Unexpected sequence_cnt %d\n", sequence_cnt);
+
+    rt_id[0] = UIA_RUNTIME_ID_PREFIX;
+    rt_id[1] = HandleToULong(hwnd);
+    check_runtime_id(rt_id, 2, sa);
+    SafeArrayDestroy(sa);
+    UiaNodeRelease(node);
+
+    DestroyWindow(hwnd);
+    UnregisterClassA("UiaGetRuntimeId class", NULL);
+    CoUninitialize();
+}
+
 START_TEST(uiautomation)
 {
     HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
@@ -4470,6 +4842,7 @@ START_TEST(uiautomation)
     test_UiaLookupId();
     test_UiaNodeFromProvider();
     test_UiaGetPropertyValue();
+    test_UiaGetRuntimeId();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
