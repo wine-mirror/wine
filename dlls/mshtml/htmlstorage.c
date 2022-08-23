@@ -548,28 +548,20 @@ static dispex_static_data_t HTMLStorage_dispex = {
     HTMLStorage_iface_tids
 };
 
-static WCHAR *build_filename(IUri *uri)
+static WCHAR *build_filename(BSTR hostname)
 {
     static const WCHAR store[] = L"\\Microsoft\\Internet Explorer\\DOMStore\\";
     WCHAR path[MAX_PATH], *ret;
-    BSTR hostname;
-    HRESULT hres;
     int len;
-
-    hres = IUri_GetHost(uri, &hostname);
-    if(hres != S_OK)
-        return NULL;
 
     if(!SHGetSpecialFolderPathW(NULL, path, CSIDL_LOCAL_APPDATA, TRUE)) {
         ERR("Can't get folder path %lu\n", GetLastError());
-        SysFreeString(hostname);
         return NULL;
     }
 
     len = wcslen(path);
     if(len + ARRAY_SIZE(store) > ARRAY_SIZE(path)) {
         ERR("Path too long\n");
-        SysFreeString(hostname);
         return NULL;
     }
     memcpy(path + len, store, sizeof(store));
@@ -577,7 +569,6 @@ static WCHAR *build_filename(IUri *uri)
     len += ARRAY_SIZE(store);
     ret = heap_alloc((len + wcslen(hostname) + ARRAY_SIZE(L".xml")) * sizeof(WCHAR));
     if(!ret) {
-        SysFreeString(hostname);
         return NULL;
     }
 
@@ -585,7 +576,6 @@ static WCHAR *build_filename(IUri *uri)
     wcscat(ret, hostname);
     wcscat(ret, L".xml");
 
-    SysFreeString(hostname);
     return ret;
 }
 
@@ -600,17 +590,33 @@ static WCHAR *build_mutexname(const WCHAR *filename)
     return ret;
 }
 
-HRESULT create_html_storage(compat_mode_t compat_mode, IUri *uri, IHTMLStorage **p)
+HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **p)
 {
+    IUri *uri = window->base.outer_window->uri;
     HTMLStorage *storage;
+    BSTR hostname = NULL;
+    HRESULT hres;
+
+    if(!uri)
+        return S_FALSE;
+
+    hres = IUri_GetHost(uri, &hostname);
+    if(hres != S_OK) {
+        SysFreeString(hostname);
+        return hres;
+    }
 
     storage = heap_alloc_zero(sizeof(*storage));
-    if(!storage)
+    if(!storage) {
+        SysFreeString(hostname);
         return E_OUTOFMEMORY;
+    }
 
-    if(uri) {
+    if(local) {
         WCHAR *mutexname;
-        if(!(storage->filename = build_filename(uri))) {
+        storage->filename = build_filename(hostname);
+        SysFreeString(hostname);
+        if(!storage->filename) {
             heap_free(storage);
             return E_OUTOFMEMORY;
         }
@@ -627,11 +633,13 @@ HRESULT create_html_storage(compat_mode_t compat_mode, IUri *uri, IHTMLStorage *
             heap_free(storage);
             return HRESULT_FROM_WIN32(GetLastError());
         }
-    }
+    }else
+        SysFreeString(hostname);
 
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->ref = 1;
-    init_dispatch(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex, compat_mode);
+    init_dispatch(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex,
+                  dispex_compat_mode(&window->event_target.dispex));
 
     *p = &storage->IHTMLStorage_iface;
     return S_OK;

@@ -10891,6 +10891,37 @@ static void test_docfrag(IHTMLDocument2 *doc)
     IHTMLDocument2_Release(frag);
 }
 
+static void test_about_blank_storage(IHTMLDocument2 *doc)
+{
+    IHTMLStorage *storage;
+    IHTMLWindow6 *window6;
+    IHTMLWindow2 *window;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    ok(window != NULL, "window == NULL\n");
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow6, (void**)&window6);
+    IHTMLWindow2_Release(window);
+    if(FAILED(hres)) {
+        win_skip("IHTMLWindow6 not supported\n");
+        return;
+    }
+
+    storage = (IHTMLStorage*)(INT_PTR)0xdeadbeef;
+    hres = IHTMLWindow6_get_sessionStorage(window6, &storage);
+    ok(hres == S_FALSE, "get_sessionStorage failed: %08lx\n", hres);
+    ok(storage == NULL, "session_storage != NULL\n");
+
+    storage = (IHTMLStorage*)(INT_PTR)0xdeadbeef;
+    hres = IHTMLWindow6_get_localStorage(window6, &storage);
+    ok(hres == S_FALSE, "get_localStorage failed: %08lx\n", hres);
+    ok(storage == NULL, "local_storage != NULL\n");
+
+    IHTMLWindow6_Release(window6);
+}
+
 static void check_quirks_mode(IHTMLDocument2 *doc)
 {
     test_compatmode(doc, L"BackCompat");
@@ -11626,9 +11657,11 @@ START_TEST(dom)
         run_domtest(elem_test_str, test_elems);
         run_domtest(elem_test2_str, test_elems2);
         run_domtest(doc_blank, test_dom_elements);
+        run_domtest(doc_blank, test_about_blank_storage);
         if(is_ie9plus) {
             compat_mode = COMPAT_IE9;
             run_domtest(doc_blank_ie9, test_dom_elements);
+            run_domtest(doc_blank_ie9, test_about_blank_storage);
             compat_mode = COMPAT_NONE;
         }
         run_domtest(noscript_str, test_noscript);
