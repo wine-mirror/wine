@@ -1329,15 +1329,29 @@ typedef struct
 {
     void (__cdecl *proc)(void*);
     void *data;
+    ThreadScheduler *scheduler;
 } schedule_task_arg;
+
+void __cdecl CurrentScheduler_Detach(void);
 
 static void WINAPI schedule_task_proc(PTP_CALLBACK_INSTANCE instance, void *context, PTP_WORK work)
 {
     schedule_task_arg arg;
+    BOOL detach = FALSE;
 
     arg = *(schedule_task_arg*)context;
     operator_delete(context);
+
+    if(&arg.scheduler->scheduler != try_get_current_scheduler()) {
+        ThreadScheduler_Attach(arg.scheduler);
+        detach = TRUE;
+    }
+    ThreadScheduler_Release(arg.scheduler);
+
     arg.proc(arg.data);
+
+    if(detach)
+        CurrentScheduler_Detach();
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask_loc, 16)
@@ -1352,11 +1366,14 @@ void __thiscall ThreadScheduler_ScheduleTask_loc(ThreadScheduler *this,
     arg = operator_new(sizeof(*arg));
     arg->proc = proc;
     arg->data = data;
+    arg->scheduler = this;
+    ThreadScheduler_Reference(this);
 
     work = CreateThreadpoolWork(schedule_task_proc, arg, NULL);
     if(!work) {
         scheduler_resource_allocation_error e;
 
+        ThreadScheduler_Release(this);
         operator_delete(arg);
         scheduler_resource_allocation_error_ctor_name(&e, NULL,
                 HRESULT_FROM_WIN32(GetLastError()));
