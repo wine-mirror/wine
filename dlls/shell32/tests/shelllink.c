@@ -1185,7 +1185,6 @@ static void test_ExtractIcon(void)
 
     /* specified instance handle */
     hicon = ExtractIconA(GetModuleHandleA("shell32.dll"), NULL, 0);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
     hicon2 = ExtractIconA(GetModuleHandleA("shell32.dll"), "shell32.dll", -1);
     ok(hicon2 != NULL, "Got icon %p\n", hicon2);
@@ -1211,14 +1210,12 @@ static void test_ExtractIcon(void)
     CloseHandle(file);
 
     hicon = ExtractIconA(NULL, path, 0);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     hicon = ExtractIconA(NULL, path, -1);
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     hicon = ExtractIconA(NULL, path, 1);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     r = DeleteFileA(path);
@@ -1229,7 +1226,6 @@ static void test_ExtractIcon(void)
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     hicon = ExtractIconA(NULL, "", 0);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     /* same for W variant */
@@ -1267,14 +1263,12 @@ if (0)
     CloseHandle(file);
 
     hicon = ExtractIconW(NULL, pathW, 0);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     hicon = ExtractIconW(NULL, pathW, -1);
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     hicon = ExtractIconW(NULL, pathW, 1);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     r = DeleteFileW(pathW);
@@ -1285,7 +1279,6 @@ if (0)
     ok(hicon == NULL, "Got icon %p\n", hicon);
 
     hicon = ExtractIconW(NULL, emptyW, 0);
-    todo_wine
     ok(hicon == NULL, "Got icon %p\n", hicon);
 }
 
