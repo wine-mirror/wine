@@ -53,11 +53,12 @@ struct get_endpoint_ids_params
 struct create_stream_params
 {
     const char *name;
-    const char *pulse_name;
-    EDataFlow dataflow;
-    AUDCLNT_SHAREMODE mode;
+    const char *device;
+    EDataFlow flow;
+    AUDCLNT_SHAREMODE share;
     DWORD flags;
     REFERENCE_TIME duration;
+    REFERENCE_TIME period;
     const WAVEFORMATEX *fmt;
     HRESULT result;
     UINT32 *channel_count;

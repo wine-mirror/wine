@@ -1108,7 +1108,7 @@ static NTSTATUS pulse_create_stream(void *args)
         return STATUS_SUCCESS;
     }
 
-    stream->dataflow = params->dataflow;
+    stream->dataflow = params->flow;
     for (i = 0; i < ARRAY_SIZE(stream->vol); ++i)
         stream->vol[i] = 1.f;
 
@@ -1119,7 +1119,7 @@ static NTSTATUS pulse_create_stream(void *args)
         goto exit;
 
     period = 0;
-    hr = get_device_period_helper(params->dataflow, params->pulse_name, &period, NULL);
+    hr = get_device_period_helper(params->flow, params->device, &period, NULL);
     if (FAILED(hr))
         goto exit;
 
@@ -1134,9 +1134,9 @@ static NTSTATUS pulse_create_stream(void *args)
     bufsize_bytes = stream->bufsize_frames * pa_frame_size(&stream->ss);
     stream->mmdev_period_usec = period / 10;
 
-    stream->share = params->mode;
+    stream->share = params->share;
     stream->flags = params->flags;
-    hr = pulse_stream_connect(stream, params->pulse_name, stream->period_bytes);
+    hr = pulse_stream_connect(stream, params->device, stream->period_bytes);
     if (SUCCEEDED(hr)) {
         UINT32 unalign;
         const pa_buffer_attr *attr = pa_stream_get_buffer_attr(stream->stream);
@@ -2417,11 +2417,12 @@ static NTSTATUS pulse_wow64_create_stream(void *args)
     struct
     {
         PTR32 name;
-        PTR32 pulse_name;
-        EDataFlow dataflow;
-        AUDCLNT_SHAREMODE mode;
+        PTR32 device;
+        EDataFlow flow;
+        AUDCLNT_SHAREMODE share;
         DWORD flags;
         REFERENCE_TIME duration;
+        REFERENCE_TIME period;
         PTR32 fmt;
         HRESULT result;
         PTR32 channel_count;
@@ -2430,11 +2431,12 @@ static NTSTATUS pulse_wow64_create_stream(void *args)
     struct create_stream_params params =
     {
         .name = ULongToPtr(params32->name),
-        .pulse_name = ULongToPtr(params32->pulse_name),
-        .dataflow = params32->dataflow,
-        .mode = params32->mode,
+        .device = ULongToPtr(params32->device),
+        .flow = params32->flow,
+        .share = params32->share,
         .flags = params32->flags,
         .duration = params32->duration,
+        .period = params32->period,
         .fmt = ULongToPtr(params32->fmt),
         .channel_count = ULongToPtr(params32->channel_count),
         .stream = ULongToPtr(params32->stream)

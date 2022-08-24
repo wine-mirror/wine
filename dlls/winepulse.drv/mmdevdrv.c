@@ -875,11 +875,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     }
 
     params.name = name = get_application_name(TRUE);
-    params.pulse_name  = This->pulse_name;
-    params.dataflow = This->dataflow;
-    params.mode     = mode;
+    params.device   = This->pulse_name;
+    params.flow     = This->dataflow;
+    params.share    = mode;
     params.flags    = flags;
     params.duration = duration;
+    params.period   = period;
     params.fmt      = fmt;
     params.stream   = &stream;
     params.channel_count = &channel_count;
