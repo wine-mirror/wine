@@ -50,7 +50,6 @@ enum session_command
     /* Internally used commands. */
     SESSION_CMD_END,
     SESSION_CMD_QM_NOTIFY_TOPOLOGY,
-    SESSION_CMD_SA_READY,
 };
 
 struct session_op
@@ -79,10 +78,6 @@ struct session_op
         {
             IMFTopology *topology;
         } notify_topology;
-        struct
-        {
-            TOPOID node_id;
-        } sa_ready;
     };
     struct list entry;
 };
@@ -231,6 +226,7 @@ struct media_session
     IMFRateControl IMFRateControl_iface;
     IMFTopologyNodeAttributeEditor IMFTopologyNodeAttributeEditor_iface;
     IMFAsyncCallback commands_callback;
+    IMFAsyncCallback sa_ready_callback;
     IMFAsyncCallback events_callback;
     IMFAsyncCallback sink_finalizer_callback;
     LONG refcount;
@@ -272,6 +268,11 @@ static inline struct media_session *impl_from_IMFMediaSession(IMFMediaSession *i
 static struct media_session *impl_from_commands_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct media_session, commands_callback);
+}
+
+static struct media_session *impl_from_sa_ready_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_session, sa_ready_callback);
 }
 
 static struct media_session *impl_from_events_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -1537,15 +1538,7 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
 static HRESULT WINAPI node_sample_allocator_cb_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
 {
     struct topo_node *topo_node = impl_node_from_IMFVideoSampleAllocatorNotify(iface);
-    struct session_op *op;
-
-    if (SUCCEEDED(create_session_op(SESSION_CMD_SA_READY, &op)))
-    {
-        op->sa_ready.node_id = topo_node->node_id;
-        MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &topo_node->session->commands_callback, &op->IUnknown_iface);
-        IUnknown_Release(&op->IUnknown_iface);
-    }
-
+    MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &topo_node->session->sa_ready_callback, (IUnknown *)iface);
     return S_OK;
 }
 
@@ -2378,9 +2371,6 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
 {
     struct session_op *op = impl_op_from_IUnknown(IMFAsyncResult_GetStateNoAddRef(result));
     struct media_session *session = impl_from_commands_callback_IMFAsyncCallback(iface);
-    struct topo_node *topo_node;
-    IMFTopologyNode *upstream_node;
-    DWORD upstream_output;
 
     EnterCriticalSection(&session->cs);
 
@@ -2409,18 +2399,6 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             IMFQualityManager_NotifyTopology(session->quality_manager, op->notify_topology.topology);
             session_command_complete(session);
             break;
-        case SESSION_CMD_SA_READY:
-            topo_node = session_get_node_by_id(session, op->sa_ready.node_id);
-
-            if (topo_node->u.sink.requests)
-            {
-                if (SUCCEEDED(IMFTopologyNode_GetInput(topo_node->node, 0, &upstream_node, &upstream_output)))
-                {
-                    session_deliver_pending_samples(session, upstream_node);
-                    IMFTopologyNode_Release(upstream_node);
-                }
-            }
-            break;
         case SESSION_CMD_SET_RATE:
             session_set_rate(session, op->set_rate.thin, op->set_rate.rate);
             break;
@@ -2440,6 +2418,71 @@ static const IMFAsyncCallbackVtbl session_commands_callback_vtbl =
     session_commands_callback_Release,
     session_commands_callback_GetParameters,
     session_commands_callback_Invoke,
+};
+
+static HRESULT WINAPI session_sa_ready_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI session_sa_ready_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct media_session *session = impl_from_sa_ready_callback_IMFAsyncCallback(iface);
+    return IMFMediaSession_AddRef(&session->IMFMediaSession_iface);
+}
+
+static ULONG WINAPI session_sa_ready_callback_Release(IMFAsyncCallback *iface)
+{
+    struct media_session *session = impl_from_sa_ready_callback_IMFAsyncCallback(iface);
+    return IMFMediaSession_Release(&session->IMFMediaSession_iface);
+}
+
+static HRESULT WINAPI session_sa_ready_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_sa_ready_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    IMFVideoSampleAllocatorNotify *notify = (IMFVideoSampleAllocatorNotify *)IMFAsyncResult_GetStateNoAddRef(result);
+    struct topo_node *topo_node = impl_node_from_IMFVideoSampleAllocatorNotify(notify);
+    struct media_session *session = impl_from_sa_ready_callback_IMFAsyncCallback(iface);
+    IMFTopologyNode *upstream_node;
+    DWORD upstream_output;
+
+    EnterCriticalSection(&session->cs);
+
+    if (topo_node->u.sink.requests)
+    {
+        if (SUCCEEDED(IMFTopologyNode_GetInput(topo_node->node, 0, &upstream_node, &upstream_output)))
+        {
+            session_deliver_pending_samples(session, upstream_node);
+            IMFTopologyNode_Release(upstream_node);
+        }
+    }
+
+    LeaveCriticalSection(&session->cs);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl session_sa_ready_callback_vtbl =
+{
+    session_sa_ready_callback_QueryInterface,
+    session_sa_ready_callback_AddRef,
+    session_sa_ready_callback_Release,
+    session_sa_ready_callback_GetParameters,
+    session_sa_ready_callback_Invoke,
 };
 
 static HRESULT WINAPI session_events_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
@@ -3926,6 +3969,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     object->IMFRateControl_iface.lpVtbl = &session_rate_control_vtbl;
     object->IMFTopologyNodeAttributeEditor_iface.lpVtbl = &node_attribute_editor_vtbl;
     object->commands_callback.lpVtbl = &session_commands_callback_vtbl;
+    object->sa_ready_callback.lpVtbl = &session_sa_ready_callback_vtbl;
     object->events_callback.lpVtbl = &session_events_callback_vtbl;
     object->sink_finalizer_callback.lpVtbl = &session_sink_finalizer_callback_vtbl;
     object->refcount = 1;
