@@ -242,6 +242,143 @@ enum ProviderType
     ProviderType_NonClientArea,
 };
 
+#ifndef __uiautomationclient_h__
+enum TreeScope {
+    TreeScope_Element     = 0x01,
+    TreeScope_Children    = 0x02,
+    TreeScope_Descendants = 0x04,
+    TreeScope_Parent      = 0x08,
+    TreeScope_Ancestors   = 0x10,
+    TreeScope_SubTree     = TreeScope_Element | TreeScope_Children | TreeScope_Descendants,
+};
+
+enum PropertyConditionFlags {
+    PropertyConditionFlags_None           = 0x00,
+    PropertyConditionFlags_IgnoreCase     = 0x01,
+    PropertyConditionFlags_MatchSubstring = 0x02,
+};
+
+enum AutomationElementMode {
+    AutomationElementMode_None = 0x00,
+    AutomationElementMode_Full = 0x01,
+};
+#endif
+
+enum ConditionType {
+    ConditionType_True     = 0x00,
+    ConditionType_False    = 0x01,
+    ConditionType_Property = 0x02,
+    ConditionType_And      = 0x03,
+    ConditionType_Or       = 0x04,
+    ConditionType_Not      = 0x05,
+};
+
+struct UiaCondition {
+    enum ConditionType ConditionType;
+};
+
+struct UiaPropertyCondition {
+    enum ConditionType ConditionType;
+    PROPERTYID PropertyId;
+    VARIANT Value;
+    enum PropertyConditionFlags Flags;
+};
+
+struct UiaAndOrCondition {
+    enum ConditionType ConditionType;
+    struct UiaCondition **ppConditions;
+    int cConditions;
+};
+
+struct UiaNotCondition {
+    enum ConditionType ConditionType;
+    struct UiaCondition *pConditions;
+};
+
+struct UiaCacheRequest {
+    struct UiaCondition *pViewCondition;
+    enum TreeScope Scope;
+
+    PROPERTYID *pProperties;
+    int cProperties;
+    PATTERNID *pPatterns;
+    int cPatterns;
+
+    enum AutomationElementMode automationElementMode;
+};
+
+enum EventArgsType {
+    EventArgsType_Simple              = 0x00,
+    EventArgsType_PropertyChanged     = 0x01,
+    EventArgsType_StructureChanged    = 0x02,
+    EventArgsType_AsyncContentLoaded  = 0x03,
+    EventArgsType_WindowClosed        = 0x04,
+    EventArgsType_TextEditTextChanged = 0x05,
+    EventArgsType_Changes             = 0x06,
+    EventArgsType_Notification        = 0x07,
+};
+
+enum AsyncContentLoadedState {
+    AsyncContentLoadedState_Beginning = 0x00,
+    AsyncContentLoadedState_Progress  = 0x01,
+    AsyncContentLoadedState_Completed = 0x02,
+};
+
+struct UiaEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+};
+
+struct UiaPropertyChangedEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+
+    PROPERTYID PropertyId;
+    VARIANT OldValue;
+    VARIANT NewValue;
+};
+
+struct UiaStructureChangedEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+
+    enum StructureChangeType StructureChangeType;
+    int *pRuntimeId;
+    int cRuntimeIdLen;
+};
+
+struct UiaTextEditTextChangedEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+
+    enum TextEditChangeType TextEditChangeType;
+    SAFEARRAY *pTextChange;
+};
+
+struct UiaChangesEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+
+    int EventIdCount;
+    struct UiaChangeInfo *pUiaChanges;
+};
+
+struct UiaAsyncContentLoadedEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+
+    enum AsyncContentLoadedState AsyncContentLoadedState;
+    double percentComplete;
+};
+
+struct UiaWindowClosedEventArgs {
+    enum EventArgsType Type;
+    int EventId;
+
+    int *pRuntimeId;
+    int cRuntimeIdLen;
+};
+
 typedef SAFEARRAY * WINAPI UiaProviderCallback(HWND hwnd,enum ProviderType providerType);
 
 HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value);
