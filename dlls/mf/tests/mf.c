@@ -1793,6 +1793,9 @@ struct test_callback
 {
     IMFAsyncCallback IMFAsyncCallback_iface;
     LONG refcount;
+
+    HANDLE event;
+    IMFMediaEvent *media_event;
 };
 
 static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -1827,6 +1830,9 @@ static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
 
     if (!refcount)
     {
+        if (callback->media_event)
+            IMFMediaEvent_Release(callback->media_event);
+        CloseHandle(callback->event);
         free(callback);
     }
 
@@ -1841,9 +1847,28 @@ static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD 
 
 static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
+    struct test_callback *callback = CONTAINING_RECORD(iface, struct test_callback, IMFAsyncCallback_iface);
+    IUnknown *object;
+    HRESULT hr;
+
     ok(result != NULL, "Unexpected result object.\n");
 
-    return E_NOTIMPL;
+    if (callback->media_event)
+        IMFMediaEvent_Release(callback->media_event);
+
+    hr = IMFAsyncResult_GetObject(result, &object);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFAsyncResult_GetState(result, &object);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaEventGenerator_EndGetEvent((IMFMediaEventGenerator *)object,
+            result, &callback->media_event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IUnknown_Release(object);
+
+    SetEvent(callback->event);
+
+    return S_OK;
 }
 
 static const IMFAsyncCallbackVtbl testcallbackvtbl =
@@ -1864,8 +1889,45 @@ static IMFAsyncCallback *create_test_callback(void)
 
     callback->refcount = 1;
     callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
+    callback->event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!callback->event, "CreateEventW failed, error %lu\n", GetLastError());
 
     return &callback->IMFAsyncCallback_iface;
+}
+
+#define wait_media_event(a, b, c, d, e) wait_media_event_(__LINE__, a, b, c, d, e)
+static HRESULT wait_media_event_(int line, IMFMediaSession *session, IMFAsyncCallback *callback,
+        MediaEventType expect_type, DWORD timeout, PROPVARIANT *value)
+{
+    struct test_callback *impl = impl_from_IMFAsyncCallback(callback);
+    MediaEventType type;
+    HRESULT hr, status;
+    DWORD ret;
+    GUID guid;
+
+    do
+    {
+        hr = IMFMediaSession_BeginGetEvent(session, &impl->IMFAsyncCallback_iface, (IUnknown *)session);
+        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ret = WaitForSingleObject(impl->event, timeout);
+        ok_(__FILE__, line)(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
+        hr = IMFMediaEvent_GetType(impl->media_event, &type);
+        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    } while (type != expect_type);
+
+    ok_(__FILE__, line)(type == expect_type, "got type %lu\n", type);
+
+    hr = IMFMediaEvent_GetExtendedType(impl->media_event, &guid);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(IsEqualGUID(&guid, &GUID_NULL), "got extended type %s\n", debugstr_guid(&guid));
+
+    hr = IMFMediaEvent_GetValue(impl->media_event, value);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEvent_GetStatus(impl->media_event, &status);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    return status;
 }
 
 static void test_media_session_events(void)
@@ -1874,6 +1936,7 @@ static void test_media_session_events(void)
     IMFMediaSession *session;
     IMFAsyncResult *result;
     IMFMediaEvent *event;
+    PROPVARIANT propvar;
     HRESULT hr;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
@@ -1933,6 +1996,65 @@ static void test_media_session_events(void)
 
     IMFAsyncCallback_Release(callback);
     IMFAsyncCallback_Release(callback2);
+
+
+    callback = create_test_callback();
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    propvar.vt = VT_EMPTY;
+    hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_Stop(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionStopped, 1000, &propvar);
+    todo_wine
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_Pause(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionPaused, 1000, &propvar);
+    todo_wine
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_ClearTopologies(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionTopologiesCleared, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_ClearTopologies(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionTopologiesCleared, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_Close(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionClosed, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_ClearTopologies(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionTopologiesCleared, 1000, &propvar);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_Shutdown(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* sometimes briefly leaking */
+    IMFMediaSession_Release(session);
+    IMFAsyncCallback_Release(callback);
+
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
