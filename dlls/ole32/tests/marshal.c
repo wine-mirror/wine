@@ -4489,6 +4489,63 @@ static void test_channel_hook(void)
     ok_ole_success(hr, CoRegisterMessageFilter);
 }
 
+static DWORD CALLBACK second_mta_thread_proc(void *param)
+{
+    struct implicit_mta_marshal_data *data = param;
+    HRESULT hr;
+
+    /* Second thread now keeps MTA created on first thread alive. */
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoMarshalInterface(data->stream, &IID_IClassFactory,
+        (IUnknown *)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    SetEvent(data->start);
+
+    ok(!WaitForSingleObject(data->stop, 1000), "wait failed\n");
+    CoUninitialize();
+    return 0;
+}
+
+static void test_mta_creation_thread_change_apartment(void)
+{
+    struct implicit_mta_marshal_data data;
+    IClassFactory *cf;
+    IUnknown *proxy;
+    HANDLE thread;
+    HRESULT hr;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    data.start = CreateEventA(NULL, FALSE, FALSE, NULL);
+    data.stop  = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    thread = CreateThread(NULL, 0, second_mta_thread_proc, &data, 0, NULL);
+    ok(!WaitForSingleObject(data.start, 1000), "wait failed\n");
+    CoUninitialize();
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    IStream_Seek(data.stream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(data.stream, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void **)&proxy);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+
+    IUnknown_Release(proxy);
+    IStream_Release(data.stream);
+
+    SetEvent(data.stop);
+    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    CloseHandle(thread);
+
+    CoUninitialize();
+}
+
 START_TEST(marshal)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -4511,6 +4568,7 @@ START_TEST(marshal)
 
     test_cocreateinstance_proxy();
     test_implicit_mta();
+    test_mta_creation_thread_change_apartment();
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 

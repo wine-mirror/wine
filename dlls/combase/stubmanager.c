@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /* generates an ipid in the following format (similar to native version):
  * Data1 = apartment-local ipid counter
- * Data2 = apartment creator thread ID
+ * Data2 = apartment creator thread ID, or 0 for an MTA.
  * Data3 = process ID
  * Data4 = random value
  */
@@ -62,7 +62,7 @@ static inline HRESULT generate_ipid(struct stub_manager *m, IPID *ipid)
     }
 
     ipid->Data1 = InterlockedIncrement(&m->apt->ipidc);
-    ipid->Data2 = (USHORT)m->apt->tid;
+    ipid->Data2 = !m->apt->multi_threaded ? (USHORT)m->apt->tid : 0;
     ipid->Data3 = (USHORT)GetCurrentProcessId();
     return S_OK;
 }
@@ -499,6 +499,8 @@ static HRESULT ipid_to_ifstub(const IPID *ipid, struct apartment **stub_apt,
     /* FIXME: hack for IRemUnknown */
     if (ipid->Data2 == 0xffff)
         *stub_apt = apartment_findfromoxid(*(const OXID *)ipid->Data4);
+    else if (!ipid->Data2)
+        *stub_apt = apartment_get_mta();
     else
         *stub_apt = apartment_findfromtid(ipid->Data2);
     if (!*stub_apt)
