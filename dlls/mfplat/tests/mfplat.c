@@ -8263,13 +8263,7 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
     vih.bmiHeader.biBitCount = 32;
 
     hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &GUID_NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IMFMediaType_Release(media_type);
-        return;
-    }
 
     hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

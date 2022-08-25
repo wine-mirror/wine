@@ -24,6 +24,7 @@
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
+#include "amvideo.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -2957,6 +2958,12 @@ static void mediatype_set_uint32(IMFMediaType *mediatype, const GUID *attr, unsi
         *hr = IMFMediaType_SetUINT32(mediatype, attr, value);
 }
 
+static void mediatype_set_uint64(IMFMediaType *mediatype, const GUID *attr, unsigned int high, unsigned int low, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetUINT64(mediatype, attr, (UINT64)high << 32 | low);
+}
+
 static void mediatype_set_guid(IMFMediaType *mediatype, const GUID *attr, const GUID *value, HRESULT *hr)
 {
     if (SUCCEEDED(*hr))
@@ -3558,6 +3565,16 @@ HRESULT WINAPI MFInitVideoFormat_RGB(MFVIDEOFORMAT *format, DWORD width, DWORD h
     return S_OK;
 }
 
+static HRESULT mf_get_stride_for_bitmap_info_header(DWORD fourcc, const BITMAPINFOHEADER *bih, LONG *stride)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = MFGetStrideForBitmapInfoHeader(fourcc, bih->biWidth, stride))) return hr;
+    if (bih->biHeight < 0) *stride *= -1;
+
+    return hr;
+}
+
 /***********************************************************************
  *      MFCreateVideoMediaTypeFromVideoInfoHeader (mfplat.@)
  */
@@ -3577,9 +3594,37 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromVideoInfoHeader(const KS_VIDEOINFOHEADE
 HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, const VIDEOINFOHEADER *vih, UINT32 size,
         const GUID *subtype)
 {
+    HRESULT hr = S_OK;
+    DWORD height;
+    LONG stride;
+
     FIXME("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
 
-    return E_NOTIMPL;
+    IMFMediaType_DeleteAllItems(media_type);
+
+    if (!subtype)
+    {
+        FIXME("Implicit subtype is not supported.\n");
+        return E_NOTIMPL;
+    }
+
+    height = abs(vih->bmiHeader.biHeight);
+
+    mediatype_set_guid(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video, &hr);
+    mediatype_set_guid(media_type, &MF_MT_SUBTYPE, subtype, &hr);
+    mediatype_set_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, 1, 1, &hr);
+    mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive, &hr);
+    mediatype_set_uint64(media_type, &MF_MT_FRAME_SIZE, vih->bmiHeader.biWidth, height, &hr);
+
+    if (SUCCEEDED(mf_get_stride_for_bitmap_info_header(subtype->Data1, &vih->bmiHeader, &stride)))
+    {
+        mediatype_set_uint32(media_type, &MF_MT_DEFAULT_STRIDE, stride, &hr);
+        mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, abs(stride) * height, &hr);
+        mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
+        mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+    }
+
+    return hr;
 }
 
 /***********************************************************************
