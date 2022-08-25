@@ -644,7 +644,7 @@ static BOOL get_nt_pathname( const WCHAR *name, UNICODE_STRING *nt_name )
 
 
 /* based on wine_get_unix_file_name */
-char *get_unix_file_name( const WCHAR *dosW )
+static char *get_unix_file_name( const WCHAR *dosW )
 {
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
