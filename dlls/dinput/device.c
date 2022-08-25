@@ -1346,8 +1346,8 @@ static void reset_device_state( IDirectInputDevice8W *iface )
     impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS | DIDFT_POV, reset_object_value, impl );
 }
 
-static HRESULT WINAPI dinput_device_set_property( IDirectInputDevice8W *iface, const GUID *guid,
-                                                  const DIPROPHEADER *header )
+static HRESULT dinput_device_set_property( IDirectInputDevice8W *iface, const GUID *guid,
+                                           const DIPROPHEADER *header )
 {
     struct set_object_property_params params = {.iface = iface, .header = header, .property = LOWORD( guid )};
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
