@@ -142,7 +142,7 @@ static HKEY reg_open_hkcu_key( const WCHAR *name, ULONG name_len )
     return key;
 }
 
-ULONG reg_query_value( HKEY hkey, const WCHAR *name,
+static ULONG reg_query_value( HKEY hkey, const WCHAR *name,
                        KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
 {
     unsigned int name_size = name ? wcslen( name ) * sizeof(WCHAR) : 0;
