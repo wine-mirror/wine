@@ -45,6 +45,25 @@ static INT_PTR CALLBACK prop_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
     return FALSE;
 }
 
+static LONG WINAPI device_property_sheets(PROPSHEETUI_INFO *info, LPARAM lparam)
+{
+    ok(info->cbSize == sizeof(*info), "info->cbSize = %hd\n", info->cbSize);
+    ok(info->Version == PROPSHEETUI_INFO_VERSION, "info->Version = %hd\n", info->Version);
+    ok(info->Flags == info->lParamInit ? PSUIINFO_UNICODE : 0, "info->Flags = %hd\n", info->Flags);
+    ok(info->Reason == PROPSHEETUI_REASON_INIT || info->Reason == PROPSHEETUI_REASON_DESTROY,
+            "info->Reason = %hx\n", info->Reason);
+    ok(info->hComPropSheet != NULL, "info->hComPropSheet = NULL\n");
+    ok(info->pfnComPropSheet != NULL, "info->pfnComPropSheet = NULL\n");
+    if (info->Reason == PROPSHEETUI_REASON_INIT)
+    {
+        ok(info->lParamInit == lparam, "info->lParamInit = %Ix, lparam = %Ix\n",
+                info->lParamInit, lparam);
+    }
+    ok(!info->UserData, "info->UserData = %Ix\n", info->UserData);
+    ok(!info->Result, "info->Result = %Ix\n", info->Result);
+    return lparam;
+}
+
 #define ADD_PAGES 0x1
 
 static LONG WINAPI propsheetui_callback(PROPSHEETUI_INFO *info, LPARAM lparam)
@@ -92,6 +111,12 @@ static LONG WINAPI propsheetui_callback(PROPSHEETUI_INFO *info, LPARAM lparam)
             HPROPSHEETPAGE hpsp;
             PROPSHEETPAGEW psp;
             LONG_PTR ret;
+
+            ret = info->pfnComPropSheet(info->hComPropSheet, CPSFUNC_ADD_PFNPROPSHEETUIA, (LPARAM)device_property_sheets, 0);
+            ok(!ret, "ret = %Ix\n", ret);
+
+            ret = info->pfnComPropSheet(info->hComPropSheet, CPSFUNC_ADD_PFNPROPSHEETUIW, (LPARAM)device_property_sheets, 1);
+            ok(ret, "ret = 0\n");
 
             memset(&psp, 0, sizeof(psp));
             psp.dwSize = sizeof(psp);
