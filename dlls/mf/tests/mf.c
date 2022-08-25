@@ -392,6 +392,7 @@ struct test_source
 {
     IMFMediaSource IMFMediaSource_iface;
     LONG refcount;
+    IMFPresentationDescriptor *pd;
 };
 
 static struct test_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
@@ -429,7 +430,10 @@ static ULONG WINAPI test_source_Release(IMFMediaSource *iface)
     ULONG refcount = InterlockedDecrement(&source->refcount);
 
     if (!refcount)
+    {
+        IMFPresentationDescriptor_Release(source->pd);
         free(source);
+    }
 
     return refcount;
 }
@@ -461,14 +465,14 @@ static HRESULT WINAPI test_source_QueueEvent(IMFMediaSource *iface, MediaEventTy
 
 static HRESULT WINAPI test_source_GetCharacteristics(IMFMediaSource *iface, DWORD *flags)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    *flags = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **pd)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct test_source *source = impl_from_IMFMediaSource(iface);
+    return IMFPresentationDescriptor_Clone(source->pd, pd);
 }
 
 static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *pd, const GUID *time_format,
@@ -513,13 +517,14 @@ static const IMFMediaSourceVtbl test_source_vtbl =
     test_source_Shutdown,
 };
 
-static IMFMediaSource *create_test_source(void)
+static IMFMediaSource *create_test_source(IMFPresentationDescriptor *pd)
 {
     struct test_source *source;
 
     source = calloc(1, sizeof(*source));
     source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
     source->refcount = 1;
+    IMFPresentationDescriptor_AddRef((source->pd = pd));
 
     return &source->IMFMediaSource_iface;
 }
@@ -2504,33 +2509,27 @@ static void test_topology_loader(void)
     hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node);
     ok(hr == S_OK, "Failed to create topology node, hr %#lx.\n", hr);
 
-    /* When a decoder is involved, windows requires this attribute to be present */
-    source = create_test_source();
-
-    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
-    ok(hr == S_OK, "Failed to set node source, hr %#lx.\n", hr);
-
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
-
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
 
-    hr = MFCreateStreamDescriptor(0, 1, &media_type, &sd);
-    ok(hr == S_OK, "Failed to create stream descriptor, hr %#lx.\n", hr);
+    /* When a decoder is involved, windows requires this attribute to be present */
+    create_descriptors(1, &media_type, NULL, &pd, &sd);
+    IMFMediaType_Release(media_type);
+
+    source = create_test_source(pd);
+
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
+    ok(hr == S_OK, "Failed to set node source, hr %#lx.\n", hr);
 
     hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
     ok(hr == S_OK, "Failed to set node sd, hr %#lx.\n", hr);
 
-    hr = MFCreatePresentationDescriptor(1, &sd, &pd);
-    ok(hr == S_OK, "Failed to create presentation descriptor, hr %#lx.\n", hr);
-
     hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)pd);
     ok(hr == S_OK, "Failed to set node pd, hr %#lx.\n", hr);
-
-    IMFMediaType_Release(media_type);
 
     hr = IMFTopology_AddNode(topology, src_node);
     ok(hr == S_OK, "Failed to add a node, hr %#lx.\n", hr);
@@ -2580,10 +2579,14 @@ static void test_topology_loader(void)
     ref = IMFActivate_Release(sink_activate);
     ok(ref == 0, "Release returned %ld\n", ref);
 
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ref = IMFMediaSource_Release(source);
+    ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFPresentationDescriptor_Release(pd);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFStreamDescriptor_Release(sd);
@@ -2628,10 +2631,10 @@ static void test_topology_loader(void)
         }
 
         create_descriptors(1, &input_type, test->current_input, &pd, &sd);
-        init_source_node(source, test->source_method, src_node, pd, sd);
-        IMFPresentationDescriptor_Release(pd);
-        IMFStreamDescriptor_Release(sd);
 
+        source = create_test_source(pd);
+
+        init_source_node(source, test->source_method, src_node, pd, sd);
         init_sink_node(&stream_sink.IMFStreamSink_iface, test->sink_method, sink_node);
 
         hr = IMFTopology_GetCount(topology, &count);
@@ -2791,6 +2794,19 @@ todo_wine {
         else
             ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
 
+        hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ref = IMFMediaSource_Release(source);
+        ok(ref == 0, "Release returned %ld\n", ref);
+        ref = IMFPresentationDescriptor_Release(pd);
+        ok(ref == 0, "Release returned %ld\n", ref);
+        ref = IMFStreamDescriptor_Release(sd);
+        ok(ref == 0, "Release returned %ld\n", ref);
+
         winetest_pop_context();
     }
 
@@ -2801,9 +2817,6 @@ todo_wine {
     ref = IMFTopologyNode_Release(src_node);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFTopologyNode_Release(sink_node);
-    ok(ref == 0, "Release returned %ld\n", ref);
-
-    ref = IMFMediaSource_Release(source);
     ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(input_type);
