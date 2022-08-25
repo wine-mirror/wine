@@ -354,3 +354,18 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
     IUnknown_AddRef(*factory);
     return S_OK;
 }
+
+HRESULT WINAPI RoResolveNamespace(HSTRING name, HSTRING windowsMetaDataDir,
+                                  DWORD packageGraphDirsCount, const HSTRING *packageGraphDirs,
+                                  DWORD *metaDataFilePathsCount, HSTRING **metaDataFilePaths,
+                                  DWORD *subNamespacesCount, HSTRING **subNamespaces)
+{
+    FIXME("name %s, windowsMetaDataDir %s, metaDataFilePaths %p, subNamespaces %p stub!\n",
+            debugstr_hstring(name), debugstr_hstring(windowsMetaDataDir),
+            metaDataFilePaths, subNamespaces);
+
+    if (!metaDataFilePaths && !subNamespaces)
+        return E_INVALIDARG;
+
+    return RO_E_METADATA_NAME_NOT_FOUND;
+}

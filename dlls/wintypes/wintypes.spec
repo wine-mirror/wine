@@ -8,4 +8,4 @@
 @ stub RoIsApiContractMajorVersionPresent
 @ stub RoIsApiContractPresent
 @ stub RoParseTypeName
-@ stub RoResolveNamespace
+@ stdcall RoResolveNamespace(ptr ptr long ptr ptr ptr ptr ptr)
