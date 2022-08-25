@@ -2769,7 +2769,7 @@ static HRESULT WINAPI media_query_list_addListener(IWineMSHTMLMediaQueryList *if
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
 
-    FIXME("(%p)->(%s)", media_query_list, debugstr_variant(listener));
+    FIXME("(%p)->(%s)\n", media_query_list, debugstr_variant(listener));
 
     return E_NOTIMPL;
 }
@@ -2778,7 +2778,7 @@ static HRESULT WINAPI media_query_list_removeListener(IWineMSHTMLMediaQueryList 
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
 
-    FIXME("(%p)->(%s)", media_query_list, debugstr_variant(listener));
+    FIXME("(%p)->(%s)\n", media_query_list, debugstr_variant(listener));
 
     return E_NOTIMPL;
 }
