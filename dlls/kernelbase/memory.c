@@ -1336,6 +1336,17 @@ BOOL WINAPI SetThreadSelectedCpuSets(HANDLE thread, const ULONG *cpu_set_ids, UL
 }
 
 
+/***********************************************************************
+ *           SetProcessDefaultCpuSets   (kernelbase.@)
+ */
+BOOL WINAPI SetProcessDefaultCpuSets(HANDLE process, const ULONG *cpu_set_ids, ULONG count)
+{
+    FIXME( "process %p, cpu_set_ids %p, count %lu stub.\n", process, cpu_set_ids, count );
+
+    return TRUE;
+}
+
+
 /**********************************************************************
  *             GetNumaHighestNodeNumber   (kernelbase.@)
  */
