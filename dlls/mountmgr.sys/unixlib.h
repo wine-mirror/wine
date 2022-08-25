@@ -64,6 +64,21 @@ struct add_drive_params
     int *letter;
 };
 
+struct size_info
+{
+    LONGLONG total_allocation_units;
+    LONGLONG caller_available_allocation_units;
+    LONGLONG actual_available_allocation_units;
+    ULONG sectors_per_allocation_unit;
+    ULONG bytes_per_sector;
+};
+
+struct get_volume_size_info_params
+{
+    const char *unix_mount;
+    struct size_info *info;
+};
+
 struct get_dosdev_symlink_params
 {
     const char *dev;
@@ -142,6 +157,7 @@ enum mountmgr_funcs
     unix_add_drive,
     unix_get_dosdev_symlink,
     unix_set_dosdev_symlink,
+    unix_get_volume_size_info,
     unix_get_volume_dos_devices,
     unix_read_volume_file,
     unix_match_unixdev,

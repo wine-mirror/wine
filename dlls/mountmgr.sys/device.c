@@ -1656,6 +1656,30 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_SUCCESS;
         break;
     }
+    case FileFsSizeInformation:
+    {
+        FILE_FS_SIZE_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
+        struct size_info size_info = { 0, 0, 0, 0, 0 };
+        struct get_volume_size_info_params params = { dev->unix_mount, &size_info };
+
+        if (length < sizeof(FILE_FS_SIZE_INFORMATION))
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+
+        if ((status = MOUNTMGR_CALL( get_volume_size_info, &params )) == STATUS_SUCCESS)
+        {
+            info->TotalAllocationUnits.QuadPart = size_info.total_allocation_units;
+            info->AvailableAllocationUnits.QuadPart = size_info.caller_available_allocation_units;
+            info->SectorsPerAllocationUnit = size_info.sectors_per_allocation_unit;
+            info->BytesPerSector = size_info.bytes_per_sector;
+            io->Information = sizeof(*info);
+            status = STATUS_SUCCESS;
+        }
+
+        break;
+    }
     case FileFsAttributeInformation:
     {
         FILE_FS_ATTRIBUTE_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
@@ -1702,6 +1726,32 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_SUCCESS;
         break;
     }
+    case FileFsFullSizeInformation:
+    {
+        FILE_FS_FULL_SIZE_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
+        struct size_info size_info = { 0, 0, 0, 0, 0 };
+        struct get_volume_size_info_params params = { dev->unix_mount, &size_info };
+
+        if (length < sizeof(FILE_FS_FULL_SIZE_INFORMATION))
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+
+        if ((status = MOUNTMGR_CALL( get_volume_size_info, &params )) == STATUS_SUCCESS)
+        {
+            info->TotalAllocationUnits.QuadPart = size_info.total_allocation_units;
+            info->CallerAvailableAllocationUnits.QuadPart = size_info.caller_available_allocation_units;
+            info->ActualAvailableAllocationUnits.QuadPart = size_info.actual_available_allocation_units;
+            info->SectorsPerAllocationUnit = size_info.sectors_per_allocation_unit;
+            info->BytesPerSector = size_info.bytes_per_sector;
+            io->Information = sizeof(*info);
+            status = STATUS_SUCCESS;
+        }
+
+        break;
+    }
+
     default:
         FIXME("Unsupported volume query %x\n", irpsp->Parameters.QueryVolume.FsInformationClass);
         status = STATUS_NOT_SUPPORTED;

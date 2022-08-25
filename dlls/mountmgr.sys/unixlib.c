@@ -30,11 +30,62 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif
 #include <unistd.h>
 
 #include "unixlib.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 static struct run_loop_params run_loop_params;
+
+static NTSTATUS errno_to_status( int err )
+{
+    TRACE( "errno = %d\n", err );
+    switch (err)
+    {
+    case EAGAIN:    return STATUS_SHARING_VIOLATION;
+    case EBADF:     return STATUS_INVALID_HANDLE;
+    case EBUSY:     return STATUS_DEVICE_BUSY;
+    case ENOSPC:    return STATUS_DISK_FULL;
+    case EPERM:
+    case EROFS:
+    case EACCES:    return STATUS_ACCESS_DENIED;
+    case ENOTDIR:   return STATUS_OBJECT_PATH_NOT_FOUND;
+    case ENOENT:    return STATUS_OBJECT_NAME_NOT_FOUND;
+    case EISDIR:    return STATUS_INVALID_DEVICE_REQUEST;
+    case EMFILE:
+    case ENFILE:    return STATUS_TOO_MANY_OPENED_FILES;
+    case EINVAL:    return STATUS_INVALID_PARAMETER;
+    case ENOTEMPTY: return STATUS_DIRECTORY_NOT_EMPTY;
+    case EPIPE:     return STATUS_PIPE_DISCONNECTED;
+    case EIO:       return STATUS_DEVICE_NOT_READY;
+#ifdef ENOMEDIUM
+    case ENOMEDIUM: return STATUS_NO_MEDIA_IN_DEVICE;
+#endif
+    case ENXIO:     return STATUS_NO_SUCH_DEVICE;
+    case ENOTTY:
+    case EOPNOTSUPP:return STATUS_NOT_SUPPORTED;
+    case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
+    case EFAULT:    return STATUS_ACCESS_VIOLATION;
+    case ESPIPE:    return STATUS_ILLEGAL_FUNCTION;
+    case ELOOP:     return STATUS_REPARSE_POINT_NOT_RESOLVED;
+#ifdef ETIME /* Missing on FreeBSD */
+    case ETIME:     return STATUS_IO_TIMEOUT;
+#endif
+    case ENOEXEC:   /* ?? */
+    case EEXIST:    /* ?? */
+    default:
+        FIXME( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
+        return STATUS_UNSUCCESSFUL;
+    }
+}
 
 static char *get_dosdevices_path( const char *dev )
 {
@@ -266,6 +317,85 @@ static NTSTATUS set_dosdev_symlink( void *args )
     return status;
 }
 
+static NTSTATUS get_volume_size_info( void *args )
+{
+    const struct get_volume_size_info_params *params = args;
+    const char *unix_mount = params->unix_mount;
+    struct size_info *info = params->info;
+
+    struct stat st;
+    ULONGLONG bsize;
+    NTSTATUS status;
+    int fd = -1;
+
+#if !defined(linux) || !defined(HAVE_FSTATFS)
+    struct statvfs stfs;
+#else
+    struct statfs stfs;
+#endif
+
+    if (!unix_mount) return STATUS_NO_SUCH_DEVICE;
+
+    if (unix_mount[0] != '/')
+    {
+        char *path = get_dosdevices_path( unix_mount );
+        if (path) fd = open( path, O_RDONLY );
+        free( path );
+    }
+    else fd = open( unix_mount, O_RDONLY );
+
+    if (fstat( fd, &st ) < 0)
+    {
+        status = errno_to_status( errno );
+        goto done;
+    }
+    if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+    {
+        status = STATUS_INVALID_DEVICE_REQUEST;
+        goto done;
+    }
+
+    /* Linux's fstatvfs is buggy */
+#if !defined(linux) || !defined(HAVE_FSTATFS)
+    if (fstatvfs( fd, &stfs ) < 0)
+    {
+        status = errno_to_status( errno );
+        goto done;
+    }
+    bsize = stfs.f_frsize;
+#else
+    if (fstatfs( fd, &stfs ) < 0)
+    {
+        status = errno_to_status( errno );
+        goto done;
+    }
+    bsize = stfs.f_bsize;
+#endif
+    if (bsize == 2048)  /* assume CD-ROM */
+    {
+        info->bytes_per_sector = 2048;
+        info->sectors_per_allocation_unit = 1;
+    }
+    else
+    {
+        info->bytes_per_sector = 512;
+        info->sectors_per_allocation_unit = 8;
+    }
+
+    info->total_allocation_units =
+        bsize * stfs.f_blocks / (info->bytes_per_sector * info->sectors_per_allocation_unit);
+    info->caller_available_allocation_units =
+        bsize * stfs.f_bavail / (info->bytes_per_sector * info->sectors_per_allocation_unit);
+    info->actual_available_allocation_units =
+        bsize * stfs.f_bfree / (info->bytes_per_sector * info->sectors_per_allocation_unit);
+
+    status = STATUS_SUCCESS;
+
+done:
+    close( fd );
+    return status;
+}
+
 static NTSTATUS get_volume_dos_devices( void *args )
 {
     const struct get_volume_dos_devices_params *params = args;
@@ -440,6 +570,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     add_drive,
     get_dosdev_symlink,
     set_dosdev_symlink,
+    get_volume_size_info,
     get_volume_dos_devices,
     read_volume_file,
     match_unixdev,

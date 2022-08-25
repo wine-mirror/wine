@@ -164,7 +164,6 @@ static void test_GetDiskFreeSpaceA(void)
     ok(ret, "GetVolumeNameForVolumeMountPointA error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceA(volume_guid_path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    todo_wine
     ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
@@ -257,7 +256,6 @@ static void test_GetDiskFreeSpaceW(void)
     ok(ret, "GetVolumeNameForVolumeMountPointW error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceW(volume_guid_path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    todo_wine
     ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
