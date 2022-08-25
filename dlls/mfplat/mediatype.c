@@ -3557,3 +3557,37 @@ HRESULT WINAPI MFInitVideoFormat_RGB(MFVIDEOFORMAT *format, DWORD width, DWORD h
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFCreateVideoMediaTypeFromVideoInfoHeader (mfplat.@)
+ */
+HRESULT WINAPI MFCreateVideoMediaTypeFromVideoInfoHeader(const KS_VIDEOINFOHEADER *vih, DWORD size, DWORD pixel_aspect_ratio_x,
+        DWORD pixel_aspect_ratio_y, MFVideoInterlaceMode interlace_mode, QWORD video_flags, const GUID *subtype,
+        IMFVideoMediaType **ret)
+{
+    FIXME("%p, %lu, %lu, %lu, %d, %I64x, %s, %p.\n", vih, size, pixel_aspect_ratio_x, pixel_aspect_ratio_y, interlace_mode,
+            video_flags, debugstr_guid(subtype), ret);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      MFInitMediaTypeFromVideoInfoHeader (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, const VIDEOINFOHEADER *vih, UINT32 size,
+        const GUID *subtype)
+{
+    FIXME("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      MFInitMediaTypeFromAMMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM_MEDIA_TYPE *am_type)
+{
+    FIXME("%p, %p.\n", media_type, am_type);
+
+    return E_NOTIMPL;
+}

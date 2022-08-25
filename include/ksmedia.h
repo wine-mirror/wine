@@ -143,4 +143,29 @@ typedef struct _tagKSJACK_DESCRIPTION2
 
 typedef struct _tagKSJACK_DESCRIPTION2 *PKSJACK_DESCRIPTION2;
 
+typedef struct tagKS_BITMAPINFOHEADER
+{
+    DWORD biSize;
+    LONG biWidth;
+    LONG biHeight;
+    WORD biPlanes;
+    WORD biBitCount;
+    DWORD biCompression;
+    DWORD biSizeImage;
+    LONG biXPelsPerMeter;
+    LONG biYPelsPerMeter;
+    DWORD biClrUsed;
+    DWORD biClrImportant;
+} KS_BITMAPINFOHEADER, *PKS_BITMAPINFOHEADER;
+
+typedef struct tagKS_VIDEOINFOHEADER
+{
+    RECT rcSource;
+    RECT rcTarget;
+    DWORD dwBitRate;
+    DWORD dwBitErrorRate;
+    REFERENCE_TIME AvgTimePerFrame;
+    KS_BITMAPINFOHEADER bmiHeader;
+} KS_VIDEOINFOHEADER, *PKS_VIDEOINFOHEADER;
+
 #endif  /* _KSMEDIA_ */

@@ -12,7 +12,7 @@
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeader
 @ stdcall -import MFCreateVideoMediaTypeFromSubtype(ptr ptr)
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader2
-@ stub MFCreateVideoMediaTypeFromVideoInfoHeader
+@ stdcall -import MFCreateVideoMediaTypeFromVideoInfoHeader(ptr long long long long int64 ptr ptr)
 @ stdcall MFCreateVideoMixer(ptr ptr ptr ptr)
 @ stdcall MFCreateVideoMixerAndPresenter(ptr ptr ptr ptr ptr ptr)
 @ stub MFCreateVideoOTA

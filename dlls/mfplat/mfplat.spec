@@ -81,7 +81,7 @@
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeaderEx
 @ stdcall MFCreateVideoMediaTypeFromSubtype(ptr ptr)
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader2
-@ stub MFCreateVideoMediaTypeFromVideoInfoHeader
+@ stdcall MFCreateVideoMediaTypeFromVideoInfoHeader(ptr long long long long int64 ptr ptr)
 @ stdcall MFCreateVideoSampleAllocatorEx(ptr ptr)
 @ stdcall MFCreateWaveFormatExFromMFMediaType(ptr ptr ptr long)
 @ stub MFDeserializeAttributesFromStream
@@ -119,12 +119,12 @@
 @ stdcall MFHeapFree(ptr)
 @ stub MFInitAMMediaTypeFromMFMediaType
 @ stdcall MFInitAttributesFromBlob(ptr ptr long)
-@ stub MFInitMediaTypeFromAMMediaType
+@ stdcall MFInitMediaTypeFromAMMediaType(ptr ptr)
 @ stub MFInitMediaTypeFromMFVideoFormat
 @ stub MFInitMediaTypeFromMPEG1VideoInfo
 @ stub MFInitMediaTypeFromMPEG2VideoInfo
 @ stub MFInitMediaTypeFromVideoInfoHeader2
-@ stub MFInitMediaTypeFromVideoInfoHeader
+@ stdcall MFInitMediaTypeFromVideoInfoHeader(ptr ptr long ptr)
 @ stdcall MFInitMediaTypeFromWaveFormatEx(ptr ptr long)
 @ stub MFInitVideoFormat
 @ stdcall MFInitVideoFormat_RGB(ptr long long long)
