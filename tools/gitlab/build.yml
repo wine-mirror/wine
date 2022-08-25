@@ -33,6 +33,22 @@ build-all:
     - rm -fr .git/rebase-merge  # in case a previous CI run failed in git rebase
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-all
 
+build-mac:
+  extends: .wine-build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - mac
+  artifacts:
+    when: on_failure
+    paths:
+      - build64/config.log
+      - build32/config.log
+  script:
+    - rm -fr .git/rebase-merge
+    - export PATH="/usr/local/opt/ccache/libexec:$PATH"
+    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
+
 build-winetest:
   extends: .wine-build
   rules:
