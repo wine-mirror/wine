@@ -214,7 +214,7 @@ NTSTATUS init_vulkan(void *args) DECLSPEC_HIDDEN;
 
 extern const struct unix_funcs loader_funcs;
 
-BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name) DECLSPEC_HIDDEN;
-BOOL WINAPI wine_vk_is_available_device_function(VkDevice device, const char *name) DECLSPEC_HIDDEN;
+NTSTATUS vk_is_available_instance_function(void *arg) DECLSPEC_HIDDEN;
+NTSTATUS vk_is_available_device_function(void *arg) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_VULKAN_PRIVATE_H */

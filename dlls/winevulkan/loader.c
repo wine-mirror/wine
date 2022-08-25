@@ -88,6 +88,18 @@ static void *wine_vk_get_global_proc_addr(const char *name)
     return NULL;
 }
 
+static BOOL is_available_instance_function(VkInstance instance, const char *name)
+{
+    struct is_available_instance_function_params params = { .instance = instance, .name = name };
+    return vk_unix_call(unix_is_available_instance_function, &params);
+}
+
+static BOOL is_available_device_function(VkDevice device, const char *name)
+{
+    struct is_available_device_function_params params = { .device = device, .name = name };
+    return vk_unix_call(unix_is_available_device_function, &params);
+}
+
 PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
     void *func;
@@ -111,7 +123,7 @@ PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char 
         return NULL;
     }
 
-    if (!unix_funcs->p_is_available_instance_function(instance, name))
+    if (!is_available_instance_function(instance, name))
         return NULL;
 
     func = wine_vk_get_instance_proc_addr(name);
@@ -142,7 +154,7 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
      * vkCommandBuffer or vkQueue.
      * Loader takes care of filtering of extensions which are enabled or not.
      */
-    if (unix_funcs->p_is_available_device_function(device, name))
+    if (is_available_device_function(device, name))
     {
         func = wine_vk_get_device_proc_addr(name);
         if (func)
@@ -176,7 +188,7 @@ void * WINAPI vk_icdGetPhysicalDeviceProcAddr(VkInstance instance, const char *n
 {
     TRACE("%p, %s\n", instance, debugstr_a(name));
 
-    if (!unix_funcs->p_is_available_instance_function(instance, name))
+    if (!is_available_instance_function(instance, name))
         return NULL;
 
     return wine_vk_get_phys_dev_proc_addr(name);

@@ -94,6 +94,18 @@ struct wine_vk_debug_report_params
     const char *message;
 };
 
+struct is_available_instance_function_params
+{
+    VkInstance instance;
+    const char *name;
+};
+
+struct is_available_device_function_params
+{
+    VkDevice device;
+    const char *name;
+};
+
 extern const struct unix_funcs *unix_funcs;
 extern unixlib_handle_t unix_handle DECLSPEC_HIDDEN;
 
@@ -105,8 +117,6 @@ static inline NTSTATUS vk_unix_call(enum unix_call code, void *params)
 struct unix_funcs
 {
     NTSTATUS (WINAPI *p_vk_call)(enum unix_call, void *);
-    BOOL (WINAPI *p_is_available_instance_function)(VkInstance, const char *);
-    BOOL (WINAPI *p_is_available_device_function)(VkDevice, const char *);
 };
 
 #endif /* __WINE_VULKAN_LOADER_H */

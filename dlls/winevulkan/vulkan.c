@@ -1872,12 +1872,14 @@ NTSTATUS wine_vkCreateRayTracingPipelinesNV(void *args)
     return res;
 }
 
-BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name)
+NTSTATUS vk_is_available_instance_function(void *arg)
 {
-    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->instance, name);
+    struct is_available_instance_function_params *params = arg;
+    return !!vk_funcs->p_vkGetInstanceProcAddr(params->instance->instance, params->name);
 }
 
-BOOL WINAPI wine_vk_is_available_device_function(VkDevice device, const char *name)
+NTSTATUS vk_is_available_device_function(void *arg)
 {
-    return !!vk_funcs->p_vkGetDeviceProcAddr(device->device, name);
+    struct is_available_device_function_params *params = arg;
+    return !!vk_funcs->p_vkGetDeviceProcAddr(params->device->device, params->name);
 }

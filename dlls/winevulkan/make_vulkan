@@ -2839,6 +2839,8 @@ class VkGenerator(object):
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("{\n")
         f.write("    init_vulkan,\n")
+        f.write("    vk_is_available_instance_function,\n")
+        f.write("    vk_is_available_device_function,\n")
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
@@ -2857,8 +2859,6 @@ class VkGenerator(object):
         f.write("const struct unix_funcs loader_funcs =\n")
         f.write("{\n")
         f.write("    wine_vk_call,\n")
-        f.write("    wine_vk_is_available_instance_function,\n")
-        f.write("    wine_vk_is_available_device_function,\n")
         f.write("};\n")
 
     def generate_thunks_h(self, f, prefix):
@@ -3050,6 +3050,8 @@ class VkGenerator(object):
         f.write("enum unix_call\n")
         f.write("{\n")
         f.write("    unix_init,\n")
+        f.write("    unix_is_available_instance_function,\n")
+        f.write("    unix_is_available_device_function,\n")
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue

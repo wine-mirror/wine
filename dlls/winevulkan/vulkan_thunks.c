@@ -10289,6 +10289,8 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     init_vulkan,
+    vk_is_available_instance_function,
+    vk_is_available_device_function,
     wine_vkAcquireNextImage2KHR,
     wine_vkAcquireNextImageKHR,
     wine_vkAcquirePerformanceConfigurationINTEL,
@@ -10757,6 +10759,4 @@ static NTSTATUS WINAPI wine_vk_call(enum unix_call code, void *params)
 const struct unix_funcs loader_funcs =
 {
     wine_vk_call,
-    wine_vk_is_available_instance_function,
-    wine_vk_is_available_device_function,
 };

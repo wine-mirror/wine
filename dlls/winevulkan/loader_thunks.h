@@ -15,6 +15,8 @@
 enum unix_call
 {
     unix_init,
+    unix_is_available_instance_function,
+    unix_is_available_device_function,
     unix_vkAcquireNextImage2KHR,
     unix_vkAcquireNextImageKHR,
     unix_vkAcquirePerformanceConfigurationINTEL,
