@@ -124,7 +124,7 @@ static const struct ISpeechRecognitionCompilationResultVtbl compilation_result_v
 };
 
 
-static HRESULT WINAPI compilation_result_create( SpeechRecognitionResultStatus status, ISpeechRecognitionCompilationResult **out )
+static HRESULT compilation_result_create( SpeechRecognitionResultStatus status, ISpeechRecognitionCompilationResult **out )
 {
     struct compilation_result *impl;
 
