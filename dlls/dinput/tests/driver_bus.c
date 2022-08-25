@@ -996,7 +996,7 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
     return fdo_pnp( device, irp );
 }
 
-static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     struct phys_device *impl = pdo_from_DEVICE_OBJECT( device );
@@ -1222,7 +1222,7 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
-static NTSTATUS WINAPI fdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS fdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
@@ -1286,7 +1286,7 @@ static NTSTATUS pdo_handle_ioctl( struct phys_device *impl, IRP *irp, ULONG code
     }
 }
 
-static NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     struct phys_device *impl = pdo_from_DEVICE_OBJECT( device );
@@ -1307,7 +1307,7 @@ static NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
-static NTSTATUS WINAPI fdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS fdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG in_size = stack->Parameters.DeviceIoControl.InputBufferLength;
