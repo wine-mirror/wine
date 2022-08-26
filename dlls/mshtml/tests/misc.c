@@ -197,6 +197,7 @@ static void test_HTMLStorage(void)
 {
     IHTMLDocument2 *doc, *doc2;
     IHTMLStorage *storage, *storage2;
+    LONG length, lval;
     VARIANT var;
     BSTR key, value;
     HRESULT hres;
@@ -219,6 +220,10 @@ static void test_HTMLStorage(void)
     key = SysAllocString(L"undefined");
     hres = IHTMLStorage_removeItem(storage, key);
     ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
+
+    hres = IHTMLStorage_get_length(storage, &length);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(length >= 0, "length = %ld\n", lval);
 
     value = SysAllocString(L"null");
     hres = IHTMLStorage_setItem(storage, key, value);
@@ -337,6 +342,10 @@ static void test_HTMLStorage(void)
     hres = get_sessionstorage(doc2, &storage2);
     ok(hres == S_OK, "got %08lx\n", hres);
 
+    hres = IHTMLStorage_get_length(storage, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 0, "length = %ld\n", lval);
+
     key = SysAllocString(L"");
     V_VT(&var) = 0xdead;
     hres = IHTMLStorage_getItem(storage, key, &var);
@@ -352,6 +361,13 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_setItem(storage, key, value);
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
     SysFreeString(value);
+
+    hres = IHTMLStorage_get_length(storage, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 1, "length = %ld\n", lval);
+    hres = IHTMLStorage_get_length(storage2, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 1, "length = %ld\n", lval);
 
     V_VT(&var) = 0xdead;
     hres = IHTMLStorage_getItem(storage, key, &var);
@@ -420,6 +436,13 @@ static void test_HTMLStorage(void)
     VariantClear(&var);
     SysFreeString(key);
 
+    hres = IHTMLStorage_get_length(storage, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 2, "length = %ld\n", lval);
+    hres = IHTMLStorage_get_length(storage2, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 2, "length = %ld\n", lval);
+
     hres = IHTMLStorage_key(storage, 0, &key);
     ok(hres == S_OK, "key failed %08lx\n", hres);
     ok(!wcscmp(key, L"undefined"), "key(0) = %s\n", wine_dbgstr_w(key));
@@ -457,6 +480,13 @@ static void test_HTMLStorage(void)
 
     hres = IHTMLStorage_clear(storage2);
     ok(hres == S_OK, "clear failed %08lx\n", hres);
+
+    hres = IHTMLStorage_get_length(storage, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 0, "length = %ld\n", lval);
+    hres = IHTMLStorage_get_length(storage2, &lval);
+    ok(hres == S_OK, "get_length failed %08lx\n", hres);
+    ok(lval == 0, "length = %ld\n", lval);
 
     hres = IHTMLStorage_key(storage, 0, &key);
     ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);

@@ -396,8 +396,25 @@ static HRESULT get_node_list(const WCHAR *filename, IXMLDOMNodeList **node_list)
 static HRESULT WINAPI HTMLStorage_get_length(IHTMLStorage *iface, LONG *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IXMLDOMNodeList *node_list;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->filename) {
+        *p = This->session_storage->num_keys;
+        return S_OK;
+    }
+
+    WaitForSingleObject(This->mutex, INFINITE);
+    hres = get_node_list(This->filename, &node_list);
+    if(SUCCEEDED(hres)) {
+        hres = IXMLDOMNodeList_get_length(node_list, p);
+        IXMLDOMNodeList_Release(node_list);
+    }
+    ReleaseMutex(This->mutex);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStorage_get_remainingSpace(IHTMLStorage *iface, LONG *p)
