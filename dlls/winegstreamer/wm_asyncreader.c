@@ -287,15 +287,13 @@ static HRESULT async_reader_queue_op(struct async_reader *reader, enum async_op_
 {
     struct async_op *op;
 
-    EnterCriticalSection(&reader->callback_cs);
-
     if (!(op = calloc(1, sizeof(*op))))
         return E_OUTOFMEMORY;
     op->type = type;
     op->new_context = context;
 
+    EnterCriticalSection(&reader->callback_cs);
     list_add_tail(&reader->async_ops, &op->entry);
-
     LeaveCriticalSection(&reader->callback_cs);
     WakeConditionVariable(&reader->callback_cv);
 
