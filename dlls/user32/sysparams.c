@@ -672,29 +672,16 @@ BOOL WINAPI EnumDisplaySettingsExW( const WCHAR *device, DWORD mode,
 /**********************************************************************
  *              get_win_monitor_dpi
  */
-UINT get_win_monitor_dpi( HWND hwnd )
+static UINT get_win_monitor_dpi( HWND hwnd )
 {
     /* FIXME: use the monitor DPI instead */
     return system_dpi;
 }
 
 /**********************************************************************
- *              get_thread_dpi
- */
-UINT get_thread_dpi(void)
-{
-    switch (GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() ))
-    {
-    case DPI_AWARENESS_UNAWARE:      return USER_DEFAULT_SCREEN_DPI;
-    case DPI_AWARENESS_SYSTEM_AWARE: return system_dpi;
-    default:                         return 0;  /* no scaling */
-    }
-}
-
-/**********************************************************************
  *              map_dpi_point
  */
-POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
+static POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
 {
     if (dpi_from && dpi_to && dpi_from != dpi_to)
     {
@@ -707,7 +694,7 @@ POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
 /**********************************************************************
  *              point_win_to_phys_dpi
  */
-POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
+static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 {
     return map_dpi_point( pt, GetDpiForWindow( hwnd ), get_win_monitor_dpi( hwnd ) );
 }
@@ -718,31 +705,6 @@ POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 static POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
 {
     return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), GetDpiForWindow( hwnd ));
-}
-
-/**********************************************************************
- *              map_dpi_rect
- */
-RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
-{
-    if (dpi_from && dpi_to && dpi_from != dpi_to)
-    {
-        rect.left   = MulDiv( rect.left, dpi_to, dpi_from );
-        rect.top    = MulDiv( rect.top, dpi_to, dpi_from );
-        rect.right  = MulDiv( rect.right, dpi_to, dpi_from );
-        rect.bottom = MulDiv( rect.bottom, dpi_to, dpi_from );
-    }
-    return rect;
-}
-
-/**********************************************************************
- *              rect_win_to_thread_dpi
- */
-RECT rect_win_to_thread_dpi( HWND hwnd, RECT rect )
-{
-    UINT dpi = get_thread_dpi();
-    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
-    return map_dpi_rect( rect, GetDpiForWindow( hwnd ), dpi );
 }
 
 /**********************************************************************

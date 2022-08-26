@@ -37,13 +37,6 @@ extern HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags
 
 extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 
-extern UINT get_win_monitor_dpi( HWND hwnd ) DECLSPEC_HIDDEN;
-extern UINT get_thread_dpi(void) DECLSPEC_HIDDEN;
-extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
-extern POINT point_win_to_phys_dpi( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
-extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
-extern RECT rect_win_to_thread_dpi( HWND hwnd, RECT rect ) DECLSPEC_HIDDEN;
-
 static inline void mirror_rect( const RECT *window_rect, RECT *rect )
 {
     int width = window_rect->right - window_rect->left;
