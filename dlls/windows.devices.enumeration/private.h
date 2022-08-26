@@ -37,8 +37,6 @@
 #define WIDL_using_Windows_Devices_Enumeration
 #include "windows.devices.enumeration.h"
 
-#include "wine/list.h"
-
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
     {                                                                                              \

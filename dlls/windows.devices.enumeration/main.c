@@ -34,6 +34,182 @@ static const char *debugstr_hstring( HSTRING hstr )
     return wine_dbgstr_wn( str, len );
 }
 
+struct device_watcher
+{
+    IDeviceWatcher IDeviceWatcher_iface;
+    LONG ref;
+};
+
+static inline struct device_watcher *impl_from_IDeviceWatcher( IDeviceWatcher *iface )
+{
+    return CONTAINING_RECORD( iface, struct device_watcher, IDeviceWatcher_iface );
+}
+
+static HRESULT WINAPI device_watcher_QueryInterface( IDeviceWatcher *iface, REFIID iid, void **out )
+{
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+
+    TRACE( "iface %p, iid %s, out %p stub!\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IDeviceWatcher ))
+    {
+        IInspectable_AddRef( (*out = &impl->IDeviceWatcher_iface) );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI device_watcher_AddRef( IDeviceWatcher *iface )
+{
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
+{
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+
+    if (!ref)
+        free( impl );
+
+    return ref;
+}
+
+static HRESULT WINAPI device_watcher_GetIids( IDeviceWatcher *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_GetRuntimeClassName( IDeviceWatcher *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_GetTrustLevel( IDeviceWatcher *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_add_Added( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_DeviceInformation *handler,
+                                                EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_remove_Added( IDeviceWatcher *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_add_Updated( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_DeviceInformationUpdate *handler,
+                                                  EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_remove_Updated( IDeviceWatcher *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_add_Removed( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_DeviceInformationUpdate *handler,
+                                                  EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_remove_Removed( IDeviceWatcher *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_add_EnumerationCompleted( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_IInspectable *handler,
+                                                               EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_remove_EnumerationCompleted( IDeviceWatcher *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_add_Stopped( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_IInspectable *handler, EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_remove_Stopped( IDeviceWatcher *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_Status( IDeviceWatcher *iface, DeviceWatcherStatus *status )
+{
+    FIXME( "iface %p, status %p stub!\n", iface, status );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_watcher_Stop( IDeviceWatcher *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct IDeviceWatcherVtbl device_watcher_vtbl =
+{
+    device_watcher_QueryInterface,
+    device_watcher_AddRef,
+    device_watcher_Release,
+    /* IInspectable methods */
+    device_watcher_GetIids,
+    device_watcher_GetRuntimeClassName,
+    device_watcher_GetTrustLevel,
+    /* IDeviceWatcher methods */
+    device_watcher_add_Added,
+    device_watcher_remove_Added,
+    device_watcher_add_Updated,
+    device_watcher_remove_Updated,
+    device_watcher_add_Removed,
+    device_watcher_remove_Removed,
+    device_watcher_add_EnumerationCompleted,
+    device_watcher_remove_EnumerationCompleted,
+    device_watcher_add_Stopped,
+    device_watcher_remove_Stopped,
+    device_watcher_Status,
+    device_watcher_Start,
+    device_watcher_Stop,
+};
+
 struct device_information_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -155,9 +331,19 @@ static HRESULT WINAPI device_statics2_CreateWatcher( IDeviceInformationStatics2 
                                                      IIterable_HSTRING *additional_properties, DeviceInformationKind kind,
                                                      IDeviceWatcher **watcher )
 {
-    FIXME( "iface %p, filter %s, additional_properties %p, kind %u, watcher %p stub!\n",
+    struct device_watcher *this;
+
+    FIXME( "iface %p, filter %s, additional_properties %p, kind %u, watcher %p semi-stub!\n",
             iface, debugstr_hstring( filter ), additional_properties, kind, watcher );
-    return E_NOTIMPL;
+
+    if (!(this = calloc( 1, sizeof(*this) )))
+        return E_OUTOFMEMORY;
+
+    this->IDeviceWatcher_iface.lpVtbl = &device_watcher_vtbl;
+    this->ref = 1;
+
+    *watcher = &this->IDeviceWatcher_iface;
+    return S_OK;
 }
 
 static const struct IDeviceInformationStatics2Vtbl device_statics2_vtbl =
