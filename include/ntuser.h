@@ -1126,6 +1126,7 @@ static inline BOOL NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
 /* NtUserCallHwnd codes, not compatible with Windows */
 enum
 {
+    NtUserCallHwnd_ActivateOtherWindow,
     NtUserCallHwnd_ArrangeIconicWindows,
     NtUserCallHwnd_DrawMenuBar,
     NtUserCallHwnd_GetDefaultImeWindow,
@@ -1148,6 +1149,11 @@ enum
     NtUserIsCurrehtProcessWindow,
     NtUserIsCurrehtThreadWindow,
 };
+
+static inline void NtUserActivateOtherWindow( HWND hwnd )
+{
+    NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
+}
 
 static inline UINT NtUserArrangeIconicWindows( HWND parent )
 {

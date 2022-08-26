@@ -242,68 +242,6 @@ BOOL WINAPI AnimateWindow(HWND hwnd, DWORD dwTime, DWORD dwFlags)
 }
 
 
-/*******************************************************************
- *         can_activate_window
- *
- * Check if we can activate the specified window.
- */
-static BOOL can_activate_window( HWND hwnd )
-{
-    LONG style;
-
-    if (!hwnd) return FALSE;
-    style = GetWindowLongW( hwnd, GWL_STYLE );
-    if (!(style & WS_VISIBLE)) return FALSE;
-    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
-    return !(style & WS_DISABLED);
-}
-
-
-/*******************************************************************
- *         WINPOS_ActivateOtherWindow
- *
- *  Activates window other than pWnd.
- */
-void WINPOS_ActivateOtherWindow(HWND hwnd)
-{
-    HWND hwndTo, fg;
-
-    if ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) && (hwndTo = GetWindow( hwnd, GW_OWNER )))
-    {
-        hwndTo = NtUserGetAncestor( hwndTo, GA_ROOT );
-        if (can_activate_window( hwndTo )) goto done;
-    }
-
-    hwndTo = hwnd;
-    for (;;)
-    {
-        if (!(hwndTo = GetWindow( hwndTo, GW_HWNDNEXT ))) break;
-        if (can_activate_window( hwndTo )) goto done;
-    }
-
-    hwndTo = GetTopWindow( 0 );
-    for (;;)
-    {
-        if (hwndTo == hwnd)
-        {
-            hwndTo = 0;
-            break;
-        }
-        if (can_activate_window( hwndTo )) goto done;
-        if (!(hwndTo = GetWindow( hwndTo, GW_HWNDNEXT ))) break;
-    }
-
- done:
-    fg = NtUserGetForegroundWindow();
-    TRACE("win = %p fg = %p\n", hwndTo, fg);
-    if (!fg || (hwnd == fg))
-    {
-        if (SetForegroundWindow( hwndTo )) return;
-    }
-    if (!NtUserSetActiveWindow( hwndTo )) NtUserSetActiveWindow( 0 );
-}
-
-
 /***********************************************************************
  *		BeginDeferWindowPos (USER32.@)
  */

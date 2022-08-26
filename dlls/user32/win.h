@@ -35,8 +35,6 @@ extern HWND *WIN_ListChildren( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id ) DECLSPEC_HIDDEN;
 extern HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK access ) DECLSPEC_HIDDEN;
 
-extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
-
 static inline void mirror_rect( const RECT *window_rect, RECT *rect )
 {
     int width = window_rect->right - window_rect->left;

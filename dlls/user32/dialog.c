@@ -949,7 +949,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
         if (owner)
             SetForegroundWindow( owner );
         else
-            WINPOS_ActivateOtherWindow( hwnd );
+            NtUserActivateOtherWindow( hwnd );
     }
 
     /* unblock dialog loop */
