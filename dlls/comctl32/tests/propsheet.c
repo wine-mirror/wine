@@ -1049,7 +1049,10 @@ static UINT CALLBACK proppage_callback_a(HWND hwnd, UINT msg, PROPSHEETPAGEA *ps
 
     ok(psp->lParam && psp->lParam != (LPARAM)psp, "Expected newly allocated page description, got %Ix, %p\n",
             psp->lParam, psp);
-    ok(psp_orig->pszTitle == psp->pszTitle, "Expected same page title pointer\n");
+    if (psp->dwFlags & PSP_USETITLE)
+        todo_wine ok(psp_orig->pszTitle != psp->pszTitle, "Expected different page title pointer\n");
+    else
+        ok(psp_orig->pszTitle == psp->pszTitle, "Expected same page title pointer\n");
     ok(!lstrcmpA(psp_orig->pszTitle, psp->pszTitle), "Expected same page title string\n");
     if (psp->dwSize >= FIELD_OFFSET(struct custom_proppage, addref_called))
     {
@@ -1147,6 +1150,17 @@ static void test_CreatePropertySheetPage(void)
             ok(page.release_called == 1, "Expected RELEASE callback message\n");
         }
     }
+
+    page.u.pageA.dwSize = sizeof(PROPSHEETPAGEA);
+    page.u.pageA.dwFlags |= PSP_USETITLE;
+    page.addref_called = 0;
+    hpsp = pCreatePropertySheetPageA(&page.u.pageA);
+    ok(hpsp != NULL, "Failed to create a page, size %lu\n", page.u.pageA.dwSize);
+    ok(page.addref_called == 1, "Expected ADDREF callback message\n");
+    page.release_called = 0;
+    ret = pDestroyPropertySheetPage(hpsp);
+    ok(ret, "Failed to destroy a page\n");
+    ok(page.release_called == 1, "Expected RELEASE callback message\n");
 
     memset(&page.u.pageW, 0, sizeof(page.u.pageW));
     page.u.pageW.dwFlags = PSP_USECALLBACK;
