@@ -366,10 +366,11 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
 
     EnterCriticalSection(&reader->reader.cs);
 
-    async_reader_queue_op(reader, ASYNC_OP_CLOSE, NULL);
-    async_reader_close(reader);
-
-    hr = wm_reader_close(&reader->reader);
+    if (SUCCEEDED(hr = async_reader_queue_op(reader, ASYNC_OP_CLOSE, NULL)))
+    {
+        async_reader_close(reader);
+        hr = wm_reader_close(&reader->reader);
+    }
 
     LeaveCriticalSection(&reader->reader.cs);
 
