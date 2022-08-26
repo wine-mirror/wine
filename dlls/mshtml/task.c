@@ -416,6 +416,7 @@ thread_data_t *get_thread_data(BOOL create)
         TlsSetValue(mshtml_tls, thread_data);
         list_init(&thread_data->task_list);
         list_init(&thread_data->timer_list);
+        wine_rb_init(&thread_data->session_storage_map, session_storage_map_cmp);
     }
 
     return thread_data;

@@ -256,6 +256,7 @@ static void thread_detach(void)
     if(thread_data->thread_hwnd)
         DestroyWindow(thread_data->thread_hwnd);
 
+    destroy_session_storage(thread_data);
     heap_free(thread_data);
 }
 

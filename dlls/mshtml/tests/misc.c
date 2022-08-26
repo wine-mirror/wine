@@ -168,6 +168,31 @@ static HRESULT get_localstorage(IHTMLDocument2 *doc, IHTMLStorage **storage)
     return hres;
 }
 
+static HRESULT get_sessionstorage(IHTMLDocument2 *doc, IHTMLStorage **storage)
+{
+    IHTMLWindow2 *window;
+    IHTMLWindow6 *window6;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    ok(window != NULL, "window == NULL\n");
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow6, (void**)&window6);
+    IHTMLWindow2_Release(window);
+    if(FAILED(hres)) {
+        win_skip("IHTMLWindow6 not supported\n");
+        return hres;
+    }
+
+    hres = IHTMLWindow6_get_sessionStorage(window6, storage);
+    ok(hres == S_OK, "get_sessionStorage failed: %08lx\n", hres);
+    ok(*storage != NULL, "*storage == NULL\n");
+
+    IHTMLWindow6_Release(window6);
+    return hres;
+}
+
 static void test_HTMLStorage(void)
 {
     IHTMLDocument2 *doc, *doc2;
@@ -291,8 +316,49 @@ static void test_HTMLStorage(void)
 
     IHTMLStorage_Release(storage);
     IHTMLStorage_Release(storage2);
-    IHTMLDocument2_Release(doc);
+
+    /* Session storage on same docs */
+    hres = get_sessionstorage(doc, &storage);
+    ok(hres == S_OK, "got %08lx\n", hres);
+
+    hres = get_sessionstorage(doc2, &storage2);
+    ok(hres == S_OK, "got %08lx\n", hres);
+
+    key = SysAllocString(L"undefined");
+    value = SysAllocString(L"null");
+    hres = IHTMLStorage_setItem(storage, key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SysFreeString(key);
+
+    value = SysAllocString(L"asdf");
+    hres = IHTMLStorage_setItem(storage, NULL, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+
+    key = SysAllocString(L"null-value");
+    hres = IHTMLStorage_setItem(storage, key, NULL);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(key);
+
+    key = SysAllocString(L"aaaa");
+    value = SysAllocString(L"bbbb");
+    hres = IHTMLStorage_setItem(storage2, key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SysFreeString(key);
+
+    key = SysAllocString(L"foo");
+    value = SysAllocString(L"bar");
+    hres = IHTMLStorage_setItem(storage, key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SysFreeString(key);
+
+    IHTMLStorage_Release(storage2);
+    IHTMLStorage_Release(storage);
     IHTMLDocument2_Release(doc2);
+    IHTMLDocument2_Release(doc);
 }
 
 START_TEST(misc)

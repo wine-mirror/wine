@@ -1238,10 +1238,13 @@ typedef struct {
     HWND thread_hwnd;
     struct list task_list;
     struct list timer_list;
+    struct wine_rb_tree session_storage_map;
 } thread_data_t;
 
 thread_data_t *get_thread_data(BOOL) DECLSPEC_HIDDEN;
 HWND get_thread_hwnd(void) DECLSPEC_HIDDEN;
+int session_storage_map_cmp(const void*,const struct wine_rb_entry*) DECLSPEC_HIDDEN;
+void destroy_session_storage(thread_data_t*) DECLSPEC_HIDDEN;
 
 LONG get_task_target_magic(void) DECLSPEC_HIDDEN;
 HRESULT push_task(task_t*,task_proc_t,task_proc_t,LONG) DECLSPEC_HIDDEN;

@@ -36,9 +36,133 @@ typedef struct {
     DispatchEx dispex;
     IHTMLStorage IHTMLStorage_iface;
     LONG ref;
+    struct session_map_entry *session_storage;
     WCHAR *filename;
     HANDLE mutex;
 } HTMLStorage;
+
+struct session_map_entry {
+    struct wine_rb_entry entry;
+    struct wine_rb_tree data_map;
+    UINT ref;
+    UINT num_keys;
+    UINT origin_len;
+    WCHAR origin[1];
+};
+
+int session_storage_map_cmp(const void *key, const struct wine_rb_entry *entry)
+{
+    struct session_map_entry *p = WINE_RB_ENTRY_VALUE(entry, struct session_map_entry, entry);
+    UINT len = SysStringLen((BSTR)key);
+
+    return (len != p->origin_len) ? (len - p->origin_len) : memcmp(key, p->origin, len * sizeof(WCHAR));
+}
+
+struct session_entry
+{
+    struct wine_rb_entry entry;
+    BSTR value;
+    WCHAR key[1];
+};
+
+static int session_entry_cmp(const void *key, const struct wine_rb_entry *entry)
+{
+    struct session_entry *data = WINE_RB_ENTRY_VALUE(entry, struct session_entry, entry);
+    return wcscmp(key, data->key);
+}
+
+static struct session_map_entry *grab_session_map_entry(BSTR origin)
+{
+    struct session_map_entry *entry;
+    struct wine_rb_entry *rb_entry;
+    thread_data_t *thread_data;
+    UINT origin_len;
+
+    thread_data = get_thread_data(TRUE);
+    if(!thread_data)
+        return NULL;
+
+    rb_entry = wine_rb_get(&thread_data->session_storage_map, origin);
+    if(rb_entry) {
+        entry = WINE_RB_ENTRY_VALUE(rb_entry, struct session_map_entry, entry);
+        entry->ref++;
+        return entry;
+    }
+
+    origin_len = SysStringLen(origin);
+    entry = heap_alloc(FIELD_OFFSET(struct session_map_entry, origin[origin_len]));
+    if(!entry)
+        return NULL;
+    wine_rb_init(&entry->data_map, session_entry_cmp);
+    entry->ref = 1;
+    entry->num_keys = 0;
+    entry->origin_len = origin_len;
+    memcpy(entry->origin, origin, origin_len * sizeof(WCHAR));
+
+    wine_rb_put(&thread_data->session_storage_map, origin, &entry->entry);
+    return entry;
+}
+
+static void release_session_map_entry(struct session_map_entry *entry)
+{
+    if(!entry || --entry->ref || entry->num_keys)
+        return;
+
+    wine_rb_remove(&get_thread_data(FALSE)->session_storage_map, &entry->entry);
+    heap_free(entry);
+}
+
+static HRESULT get_session_entry(struct session_map_entry *entry, const WCHAR *name, BOOL create, struct session_entry **ret)
+{
+    const WCHAR *key = name ? name : L"";
+    struct wine_rb_entry *rb_entry;
+    struct session_entry *data;
+    UINT key_len;
+
+    rb_entry = wine_rb_get(&entry->data_map, key);
+    if(rb_entry) {
+        *ret = WINE_RB_ENTRY_VALUE(rb_entry, struct session_entry, entry);
+        return S_OK;
+    }
+
+    if(!create) {
+        *ret = NULL;
+        return S_OK;
+    }
+
+    key_len = wcslen(key);
+    if(!(data = heap_alloc(FIELD_OFFSET(struct session_entry, key[key_len + 1]))))
+        return E_OUTOFMEMORY;
+    data->value = NULL;
+    memcpy(data->key, key, (key_len + 1) * sizeof(WCHAR));
+
+    entry->num_keys++;
+    wine_rb_put(&entry->data_map, key, &data->entry);
+    *ret = data;
+    return S_OK;
+}
+
+static void clear_session_storage(struct session_map_entry *entry)
+{
+    struct session_entry *iter, *iter2;
+
+    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &entry->data_map, struct session_entry, entry) {
+        SysFreeString(iter->value);
+        heap_free(iter);
+    }
+    wine_rb_destroy(&entry->data_map, NULL, NULL);
+    entry->num_keys = 0;
+}
+
+void destroy_session_storage(thread_data_t *thread_data)
+{
+    struct session_map_entry *iter, *iter2;
+
+    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &thread_data->session_storage_map, struct session_map_entry, entry) {
+        clear_session_storage(iter);
+        heap_free(iter);
+    }
+}
 
 static inline HTMLStorage *impl_from_IHTMLStorage(IHTMLStorage *iface)
 {
@@ -85,6 +209,7 @@ static ULONG WINAPI HTMLStorage_Release(IHTMLStorage *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
+        release_session_map_entry(This->session_storage);
         release_dispex(&This->dispex);
         heap_free(This->filename);
         CloseHandle(This->mutex);
@@ -438,13 +563,24 @@ done:
 static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BSTR bstrValue)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
+    struct session_entry *session_entry;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(bstrKey), debugstr_w(bstrValue));
 
     if(!This->filename) {
-        FIXME("session storage not supported\n");
-        return E_NOTIMPL;
+        BSTR value = SysAllocString(bstrValue ? bstrValue : L"");
+        if(!value)
+            return E_OUTOFMEMORY;
+
+        hres = get_session_entry(This->session_storage, bstrKey, TRUE, &session_entry);
+        if(FAILED(hres))
+            SysFreeString(value);
+        else {
+            SysFreeString(session_entry->value);
+            session_entry->value = value;
+        }
+        return hres;
     }
 
     WaitForSingleObject(This->mutex, INFINITE);
@@ -548,6 +684,52 @@ static dispex_static_data_t HTMLStorage_dispex = {
     HTMLStorage_iface_tids
 };
 
+static HRESULT build_session_origin(IUri *uri, BSTR hostname, BSTR *ret)
+{
+    UINT host_len, scheme_len;
+    BSTR scheme, origin;
+    HRESULT hres;
+
+    hres = IUri_GetSchemeName(uri, &scheme);
+    if(FAILED(hres))
+        return hres;
+    if(hres != S_OK) {
+        SysFreeString(scheme);
+        scheme = NULL;
+    }
+
+    /* Since it's only used for lookup, we can apply transformations to
+       keep the lookup itself simple and fast. First, we convert `https`
+       to `http` because they are equal for lookup. Next, we place the
+       scheme after the hostname, separated by NUL, to compare the host
+       first, since it tends to differ more often. Lastly, we lowercase
+       the whole thing since lookup must be case-insensitive. */
+    scheme_len = SysStringLen(scheme);
+    host_len = SysStringLen(hostname);
+
+    if(scheme_len == 5 && !wcsicmp(scheme, L"https"))
+        scheme_len--;
+
+    origin = SysAllocStringLen(NULL, host_len + 1 + scheme_len);
+    if(origin) {
+        WCHAR *p = origin;
+        memcpy(p, hostname, host_len * sizeof(WCHAR));
+        p += host_len;
+        *p = ' ';    /* for wcslwr */
+        memcpy(p + 1, scheme, scheme_len * sizeof(WCHAR));
+        p[1 + scheme_len] = '\0';
+        _wcslwr(origin);
+        *p = '\0';
+    }
+    SysFreeString(scheme);
+
+    if(!origin)
+        return E_OUTOFMEMORY;
+
+    *ret = origin;
+    return S_OK;
+}
+
 static WCHAR *build_filename(BSTR hostname)
 {
     static const WCHAR store[] = L"\\Microsoft\\Internet Explorer\\DOMStore\\";
@@ -593,8 +775,8 @@ static WCHAR *build_mutexname(const WCHAR *filename)
 HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **p)
 {
     IUri *uri = window->base.outer_window->uri;
+    BSTR origin, hostname = NULL;
     HTMLStorage *storage;
-    BSTR hostname = NULL;
     HRESULT hres;
 
     if(!uri)
@@ -633,8 +815,20 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
             heap_free(storage);
             return HRESULT_FROM_WIN32(GetLastError());
         }
-    }else
+    }else {
+        hres = build_session_origin(uri, hostname, &origin);
         SysFreeString(hostname);
+        if(hres != S_OK) {
+            heap_free(storage);
+            return hres;
+        }
+        storage->session_storage = grab_session_map_entry(origin);
+        SysFreeString(origin);
+        if(!storage->session_storage) {
+            heap_free(storage);
+            return E_OUTOFMEMORY;
+        }
+    }
 
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->ref = 1;
