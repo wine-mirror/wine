@@ -405,11 +405,38 @@ static void test_HTMLStorage(void)
     ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
     ok(!wcscmp(V_BSTR(&var), L"bbbb"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
+    SysFreeString(key);
 
+    hres = IHTMLStorage_key(storage, 0, &key);
+    ok(hres == S_OK, "key failed %08lx\n", hres);
+    ok(!wcscmp(key, L"undefined"), "key(0) = %s\n", wine_dbgstr_w(key));
+    SysFreeString(key);
+
+    hres = IHTMLStorage_key(storage, 1, &key);
+    ok(hres == S_OK, "key failed %08lx\n", hres);
+    ok(!wcscmp(key, L"aaaa"), "key(0) = %s\n", wine_dbgstr_w(key));
+    SysFreeString(key);
+
+    hres = IHTMLStorage_key(storage, 2, &key);
+    ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
+    hres = IHTMLStorage_key(storage, -1, &key);
+    ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
+
+    key = SysAllocString(L"undefined");
     hres = IHTMLStorage_removeItem(storage2, key);
     ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
+    SysFreeString(key);
+
+    hres = IHTMLStorage_key(storage, 0, &key);
+    ok(hres == S_OK, "key failed %08lx\n", hres);
+    ok(!wcscmp(key, L"aaaa"), "key(0) = %s\n", wine_dbgstr_w(key));
+    SysFreeString(key);
+
+    hres = IHTMLStorage_key(storage, 1, &key);
+    ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
 
     V_VT(&var) = 0xdead;
+    key = SysAllocString(L"undefined");
     hres = IHTMLStorage_getItem(storage, key, &var);
     ok(hres == S_OK, "getItem failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
@@ -417,6 +444,9 @@ static void test_HTMLStorage(void)
 
     hres = IHTMLStorage_clear(storage2);
     ok(hres == S_OK, "clear failed %08lx\n", hres);
+
+    hres = IHTMLStorage_key(storage, 0, &key);
+    ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
 
     key = SysAllocString(L"foo");
     value = SysAllocString(L"bar");

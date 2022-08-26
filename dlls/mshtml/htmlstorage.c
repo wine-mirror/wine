@@ -44,6 +44,7 @@ typedef struct {
 struct session_map_entry {
     struct wine_rb_entry entry;
     struct wine_rb_tree data_map;
+    struct list data_list;        /* for key() */
     UINT ref;
     UINT num_keys;
     UINT origin_len;
@@ -61,6 +62,7 @@ int session_storage_map_cmp(const void *key, const struct wine_rb_entry *entry)
 struct session_entry
 {
     struct wine_rb_entry entry;
+    struct list list_entry;
     BSTR value;
     WCHAR key[1];
 };
@@ -94,6 +96,7 @@ static struct session_map_entry *grab_session_map_entry(BSTR origin)
     if(!entry)
         return NULL;
     wine_rb_init(&entry->data_map, session_entry_cmp);
+    list_init(&entry->data_list);
     entry->ref = 1;
     entry->num_keys = 0;
     entry->origin_len = origin_len;
@@ -137,6 +140,7 @@ static HRESULT get_session_entry(struct session_map_entry *entry, const WCHAR *n
     memcpy(data->key, key, (key_len + 1) * sizeof(WCHAR));
 
     entry->num_keys++;
+    list_add_tail(&entry->data_list, &data->list_entry);
     wine_rb_put(&entry->data_map, key, &data->entry);
     *ret = data;
     return S_OK;
@@ -146,11 +150,12 @@ static void clear_session_storage(struct session_map_entry *entry)
 {
     struct session_entry *iter, *iter2;
 
-    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &entry->data_map, struct session_entry, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &entry->data_list, struct session_entry, list_entry) {
         SysFreeString(iter->value);
         heap_free(iter);
     }
     wine_rb_destroy(&entry->data_map, NULL, NULL);
+    list_init(&entry->data_list);
     entry->num_keys = 0;
 }
 
@@ -365,7 +370,25 @@ static HRESULT WINAPI HTMLStorage_get_remainingSpace(IHTMLStorage *iface, LONG *
 static HRESULT WINAPI HTMLStorage_key(IHTMLStorage *iface, LONG lIndex, BSTR *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    FIXME("(%p)->(%ld %p)\n", This, lIndex, p);
+    struct session_entry *session_entry;
+
+    TRACE("(%p)->(%ld %p)\n", This, lIndex, p);
+
+    if(!This->filename) {
+        struct list *entry = &This->session_storage->data_list;
+        unsigned i = 0;
+
+        if(lIndex >= This->session_storage->num_keys)
+            return E_INVALIDARG;
+
+        do entry = entry->next; while(i++ < lIndex);
+        session_entry = LIST_ENTRY(entry, struct session_entry, list_entry);
+
+        *p = SysAllocString(session_entry->key);
+        return *p ? S_OK : E_OUTOFMEMORY;
+    }
+
+    FIXME("local storage not supported\n");
     return E_NOTIMPL;
 }
 
@@ -651,6 +674,7 @@ static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
         hres = get_session_entry(This->session_storage, bstrKey, FALSE, &session_entry);
         if(SUCCEEDED(hres) && session_entry) {
             This->session_storage->num_keys--;
+            list_remove(&session_entry->list_entry);
             wine_rb_remove(&This->session_storage->data_map, &session_entry->entry);
             SysFreeString(session_entry->value);
             heap_free(session_entry);
