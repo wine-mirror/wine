@@ -112,10 +112,18 @@ static INT_PTR CALLBACK page_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam,
     {
     case WM_INITDIALOG:
       {
+        PROPSHEETPAGEA *psp = (PROPSHEETPAGEA *)lparam;
         HWND sheet = GetParent(hwnd);
         char caption[256];
+
         GetWindowTextA(sheet, caption, sizeof(caption));
         ok(!strcmp(caption,"test caption"), "caption: %s\n", caption);
+
+        if (psp->dwFlags & PSP_USETITLE)
+        {
+            todo_wine ok(!strcmp(psp->pszTitle, "page title"), "psp->pszTitle = %s\n",
+                    wine_dbgstr_a(psp->pszTitle));
+        }
         return TRUE;
       }
 
@@ -149,8 +157,9 @@ static void test_title(void)
 
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
-    psp.dwFlags = 0;
+    psp.dwFlags = PSP_USETITLE;
     psp.hInstance = GetModuleHandleA(NULL);
+    psp.pszTitle = "page title";
     U(psp).pszTemplate = "prop_page1";
     U2(psp).pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
