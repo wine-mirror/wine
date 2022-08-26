@@ -8375,13 +8375,7 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFInitMediaTypeFromAMMediaType(media_type, &mt);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IMFMediaType_Release(media_type);
-        return;
-    }
 
     hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

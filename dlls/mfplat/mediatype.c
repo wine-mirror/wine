@@ -21,6 +21,7 @@
 #include "mfplat_private.h"
 
 #include "dxva2api.h"
+#include "uuids.h"
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
@@ -3575,6 +3576,19 @@ static HRESULT mf_get_stride_for_bitmap_info_header(DWORD fourcc, const BITMAPIN
     return hr;
 }
 
+static const GUID * get_mf_subtype_for_am_subtype(const GUID *subtype)
+{
+    static const GUID null;
+
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32))
+        return &MFVideoFormat_RGB32;
+    else
+    {
+        FIXME("Unknown subtype %s.\n", debugstr_guid(subtype));
+        return &null;
+    }
+}
+
 /***********************************************************************
  *      MFCreateVideoMediaTypeFromVideoInfoHeader (mfplat.@)
  */
@@ -3632,7 +3646,54 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
  */
 HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM_MEDIA_TYPE *am_type)
 {
-    FIXME("%p, %p.\n", media_type, am_type);
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p.\n", media_type, am_type);
+
+    IMFMediaType_DeleteAllItems(media_type);
+
+    if (IsEqualGUID(&am_type->majortype, &MEDIATYPE_Video))
+    {
+        if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo))
+        {
+            const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)am_type->pbFormat;
+            const GUID *subtype;
+            DWORD height;
+            LONG stride;
+
+            subtype = get_mf_subtype_for_am_subtype(&am_type->subtype);
+            height = abs(vih->bmiHeader.biHeight);
+
+            mediatype_set_guid(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video, &hr);
+            mediatype_set_guid(media_type, &MF_MT_SUBTYPE, subtype, &hr);
+            mediatype_set_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, 1, 1, &hr);
+            mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive, &hr);
+            mediatype_set_uint64(media_type, &MF_MT_FRAME_SIZE, vih->bmiHeader.biWidth, height, &hr);
+            mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+
+            if (SUCCEEDED(mf_get_stride_for_bitmap_info_header(subtype->Data1, &vih->bmiHeader, &stride)))
+            {
+                mediatype_set_uint32(media_type, &MF_MT_DEFAULT_STRIDE, stride, &hr);
+                mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, abs(stride) * height, &hr);
+                mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
+            }
+            else
+            {
+                if (am_type->bFixedSizeSamples)
+                    mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
+                if (am_type->lSampleSize)
+                    mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, am_type->lSampleSize, &hr);
+            }
+
+            return hr;
+        }
+        else
+        {
+            FIXME("Unsupported format type %s.\n", debugstr_guid(&am_type->formattype));
+        }
+    }
+    else
+        FIXME("Unsupported major type %s.\n", debugstr_guid(&am_type->majortype));
 
     return E_NOTIMPL;
 }
