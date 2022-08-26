@@ -24,7 +24,6 @@
 #include "user_private.h"
 
   /* Window functions */
-extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_GetFullHandle( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;

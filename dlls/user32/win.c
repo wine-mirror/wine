@@ -86,20 +86,6 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *cla
 
 
 /*******************************************************************
- *           get_hwnd_message_parent
- *
- * Return the parent for HWND_MESSAGE windows.
- */
-HWND get_hwnd_message_parent(void)
-{
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-
-    if (!thread_info->msg_window) GetDesktopWindow();  /* trigger creation */
-    return UlongToHandle( thread_info->msg_window );
-}
-
-
-/*******************************************************************
  *           is_desktop_window
  *
  * Check if window is the desktop or the HWND_MESSAGE top parent.
