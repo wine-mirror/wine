@@ -18,19 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-
 #include "user_private.h"
-#include "winnls.h"
+#include "controls.h"
 #include "winver.h"
 #include "wine/server.h"
 #include "wine/asm.h"
-#include "win.h"
-#include "controls.h"
-#include "winerror.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 

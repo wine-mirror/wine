@@ -27,6 +27,7 @@
 #include "wingdi.h"
 #include "ntuser.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "wine/heap.h"
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
@@ -161,5 +162,25 @@ void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
                                const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, UINT,
                                INT, INT, INT, BOOL) DECLSPEC_HIDDEN;
 struct scroll_info *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc );
+
+/* Window functions */
+BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
+HWND WIN_GetFullHandle( HWND hwnd ) DECLSPEC_HIDDEN;
+HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;
+HWND WIN_IsCurrentThread( HWND hwnd ) DECLSPEC_HIDDEN;
+ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DECLSPEC_HIDDEN;
+HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode ) DECLSPEC_HIDDEN;
+HWND *WIN_ListChildren( HWND hwnd ) DECLSPEC_HIDDEN;
+void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id ) DECLSPEC_HIDDEN;
+HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags, BOOL inherit,
+                               ACCESS_MASK access ) DECLSPEC_HIDDEN;
+
+static inline void mirror_rect( const RECT *window_rect, RECT *rect )
+{
+    int width = window_rect->right - window_rect->left;
+    int tmp = rect->left;
+    rect->left = width - rect->right;
+    rect->right = width - tmp;
+}
 
 #endif /* __WINE_USER_PRIVATE_H */

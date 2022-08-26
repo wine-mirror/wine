@@ -24,24 +24,8 @@
  */
 
 #include <assert.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <string.h>
-
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winerror.h"
 #include "user_private.h"
-#include "win.h"
-
-#include "wine/list.h"
+#include "winnls.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

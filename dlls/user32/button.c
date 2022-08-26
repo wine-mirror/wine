@@ -38,18 +38,10 @@
  *  - BN_UNPUSHED/BN_UNHILITE
  */
 
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-
 #define OEMRESOURCE
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "controls.h"
-#include "win.h"
 #include "user_private.h"
+#include "controls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(button);

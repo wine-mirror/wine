@@ -27,18 +27,10 @@
  *
  */
 
-#include <stdarg.h>
-#include <string.h>
 #include <stdlib.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winnt.h"
-#include "win.h"
-#include "imm.h"
-#include "usp10.h"
-#include "controls.h"
 #include "user_private.h"
+#include "controls.h"
+#include "usp10.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(edit);

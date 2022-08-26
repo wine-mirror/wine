@@ -21,18 +21,10 @@
  *   - CB_SETTOPINDEX
  */
 
-#include <stdarg.h>
-#include <string.h>
-
 #define OEMRESOURCE
 
-#include "windef.h"
-#include "winbase.h"
-#include "ntuser.h"
 #include "user_private.h"
-#include "win.h"
 #include "controls.h"
-#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(combo);

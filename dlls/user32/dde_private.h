@@ -25,6 +25,9 @@
 #ifndef __WINE_DDEML_PRIVATE_H
 #define __WINE_DDEML_PRIVATE_H
 
+#include "dde.h"
+#include "ddeml.h"
+
 /* defined in atom.c file.
  */
 #define MAX_ATOM_LEN              255

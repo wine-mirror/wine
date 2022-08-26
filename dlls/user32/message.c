@@ -19,28 +19,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
-#include <stdarg.h>
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winerror.h"
-#include "winnls.h"
-#include "dbt.h"
-#include "dde.h"
-#include "imm.h"
-#include "hidusage.h"
-#include "ddk/imm.h"
-#include "wine/server.h"
 #include "user_private.h"
-#include "win.h"
 #include "controls.h"
+#include "dde.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 

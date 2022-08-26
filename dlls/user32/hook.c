@@ -62,21 +62,9 @@
  *     WH_MOUSE_LL                  Implemented but should use SendMessage instead
  */
 
-#include <stdarg.h>
-#include <assert.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winerror.h"
-#include "win.h"
 #include "user_private.h"
-#include "wine/server.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hook);
 WINE_DECLARE_DEBUG_CHANNEL(relay);

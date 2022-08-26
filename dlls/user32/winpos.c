@@ -20,7 +20,6 @@
  */
 
 #include "user_private.h"
-#include "win.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);

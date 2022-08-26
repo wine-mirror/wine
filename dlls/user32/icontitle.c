@@ -18,16 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include "user_private.h"
 #include "controls.h"
-#include "win.h"
 
 static BOOL bMultiLineTitle;
 static HFONT hIconTitleFont;
