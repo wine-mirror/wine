@@ -642,13 +642,20 @@ done:
 static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
+    struct session_entry *session_entry;
     HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(bstrKey));
 
     if(!This->filename) {
-        FIXME("session storage not supported\n");
-        return E_NOTIMPL;
+        hres = get_session_entry(This->session_storage, bstrKey, FALSE, &session_entry);
+        if(SUCCEEDED(hres) && session_entry) {
+            This->session_storage->num_keys--;
+            wine_rb_remove(&This->session_storage->data_map, &session_entry->entry);
+            SysFreeString(session_entry->value);
+            heap_free(session_entry);
+        }
+        return hres;
     }
 
     WaitForSingleObject(This->mutex, INFINITE);
