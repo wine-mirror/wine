@@ -204,6 +204,7 @@
     SYSCALL_ENTRY( NtUserIsClipboardFormatAvailable ) \
     SYSCALL_ENTRY( NtUserKillTimer ) \
     SYSCALL_ENTRY( NtUserLockWindowUpdate ) \
+    SYSCALL_ENTRY( NtUserLogicalToPerMonitorDPIPhysicalPoint ) \
     SYSCALL_ENTRY( NtUserMapVirtualKeyEx ) \
     SYSCALL_ENTRY( NtUserMenuItemFromPoint ) \
     SYSCALL_ENTRY( NtUserMessageCall ) \

@@ -692,14 +692,6 @@ static POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
 }
 
 /**********************************************************************
- *              point_win_to_phys_dpi
- */
-static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
-{
-    return map_dpi_point( pt, GetDpiForWindow( hwnd ), get_win_monitor_dpi( hwnd ) );
-}
-
-/**********************************************************************
  *              point_phys_to_win_dpi
  */
 static POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
@@ -877,19 +869,6 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
     if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
     else info->dpi_awareness = val | 0x10;
     return ULongToHandle( prev );
-}
-
-/**********************************************************************
- *              LogicalToPhysicalPointForPerMonitorDPI   (USER32.@)
- */
-BOOL WINAPI LogicalToPhysicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
-{
-    RECT rect;
-
-    if (!GetWindowRect( hwnd, &rect )) return FALSE;
-    if (pt->x < rect.left || pt->y < rect.top || pt->x > rect.right || pt->y > rect.bottom) return FALSE;
-    *pt = point_win_to_phys_dpi( hwnd, *pt );
-    return TRUE;
 }
 
 /**********************************************************************

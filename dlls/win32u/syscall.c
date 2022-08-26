@@ -218,6 +218,7 @@ static void * const syscalls[] =
     NtUserIsClipboardFormatAvailable,
     NtUserKillTimer,
     NtUserLockWindowUpdate,
+    NtUserLogicalToPerMonitorDPIPhysicalPoint,
     NtUserMapVirtualKeyEx,
     NtUserMenuItemFromPoint,
     NtUserMessageCall,

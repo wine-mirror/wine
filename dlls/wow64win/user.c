@@ -2665,6 +2665,14 @@ NTSTATUS WINAPI wow64_NtUserLockWindowUpdate( UINT *args )
     return NtUserLockWindowUpdate( hwnd );
 }
 
+NTSTATUS WINAPI wow64_NtUserLogicalToPerMonitorDPIPhysicalPoint( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    POINT *pt = get_ptr( &args );
+
+    return NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, pt );
+}
+
 NTSTATUS WINAPI wow64_NtUserMapVirtualKeyEx( UINT *args )
 {
     UINT code = get_ulong( &args );

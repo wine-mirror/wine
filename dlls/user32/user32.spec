@@ -513,7 +513,7 @@
 @ stdcall LockWindowUpdate(long) NtUserLockWindowUpdate
 @ stdcall LockWorkStation()
 @ stdcall LogicalToPhysicalPoint(long ptr)
-@ stdcall LogicalToPhysicalPointForPerMonitorDPI(long ptr)
+@ stdcall LogicalToPhysicalPointForPerMonitorDPI(long ptr) NtUserLogicalToPerMonitorDPIPhysicalPoint
 @ stdcall LookupIconIdFromDirectory(ptr long)
 @ stdcall LookupIconIdFromDirectoryEx(ptr long long long long)
 @ stub MBToWCSEx

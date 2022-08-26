@@ -1067,7 +1067,7 @@
 @ stub NtUserLockWindowStation
 @ stdcall -syscall NtUserLockWindowUpdate(long)
 @ stub NtUserLockWorkStation
-@ stub NtUserLogicalToPerMonitorDPIPhysicalPoint
+@ stdcall -syscall NtUserLogicalToPerMonitorDPIPhysicalPoint(long ptr)
 @ stub NtUserLogicalToPhysicalDpiPointForWindow
 @ stub NtUserLogicalToPhysicalPoint
 @ stub NtUserMNDragLeave
