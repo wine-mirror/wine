@@ -668,8 +668,21 @@ static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
 static HRESULT WINAPI HTMLStorage_clear(IHTMLStorage *iface)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    HRESULT hres = S_OK;
+
+    if(!This->filename) {
+        clear_session_storage(This->session_storage);
+        return S_OK;
+    }
+
+    WaitForSingleObject(This->mutex, INFINITE);
+    if(!DeleteFileW(This->filename)) {
+        DWORD error = GetLastError();
+        if(error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+            hres = HRESULT_FROM_WIN32(error);
+    }
+    ReleaseMutex(This->mutex);
+    return hres;
 }
 
 static const IHTMLStorageVtbl HTMLStorageVtbl = {

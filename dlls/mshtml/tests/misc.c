@@ -415,6 +415,9 @@ static void test_HTMLStorage(void)
     ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
     SysFreeString(key);
 
+    hres = IHTMLStorage_clear(storage2);
+    ok(hres == S_OK, "clear failed %08lx\n", hres);
+
     key = SysAllocString(L"foo");
     value = SysAllocString(L"bar");
     hres = IHTMLStorage_setItem(storage, key, value);
@@ -472,6 +475,9 @@ static void test_HTMLStorage(void)
     ok(!wcscmp(V_BSTR(&var), L"bar"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
+    hres = IHTMLStorage_clear(storage2);
+    ok(hres == S_OK, "clear failed %08lx\n", hres);
+
     IHTMLStorage_Release(storage2);
     IHTMLDocument2_Release(doc2);
 
@@ -490,6 +496,9 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_getItem(storage2, key, &var);
     ok(hres == S_OK, "getItem failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
+
+    hres = IHTMLStorage_clear(storage);
+    ok(hres == S_OK, "clear failed %08lx\n", hres);
 
     IHTMLStorage_Release(storage2);
     IHTMLStorage_Release(storage);
