@@ -2559,3 +2559,13 @@ HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct
 
     return hr;
 }
+
+/***********************************************************************
+ *          UiaFind (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, struct UiaCacheRequest *cache_req,
+        SAFEARRAY **out_req, SAFEARRAY **out_offsets, SAFEARRAY **out_tree_structs)
+{
+    FIXME("(%p, %p, %p, %p, %p, %p): stub\n", huianode, find_params, cache_req, out_req, out_offsets, out_tree_structs);
+    return E_NOTIMPL;
+}
