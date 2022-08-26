@@ -353,6 +353,46 @@ done:
     return hres;
 }
 
+static HRESULT get_root_node(IXMLDOMDocument *doc, IXMLDOMNode **root)
+{
+    HRESULT hres;
+    BSTR str;
+
+    str = SysAllocString(L"root");
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    hres = IXMLDOMDocument_selectSingleNode(doc, str, root);
+    SysFreeString(str);
+    return hres;
+}
+
+static HRESULT get_node_list(const WCHAR *filename, IXMLDOMNodeList **node_list)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *root;
+    HRESULT hres;
+    BSTR query;
+
+    hres = open_document(filename, &doc);
+    if(hres != S_OK)
+        return hres;
+
+    hres = get_root_node(doc, &root);
+    IXMLDOMDocument_Release(doc);
+    if(hres != S_OK)
+        return hres;
+
+    if(!(query = SysAllocString(L"item")))
+        hres = E_OUTOFMEMORY;
+    else {
+        hres = IXMLDOMNode_selectNodes(root, query, node_list);
+        SysFreeString(query);
+    }
+    IXMLDOMNode_Release(root);
+    return hres;
+}
+
 static HRESULT WINAPI HTMLStorage_get_length(IHTMLStorage *iface, LONG *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
@@ -367,10 +407,48 @@ static HRESULT WINAPI HTMLStorage_get_remainingSpace(IHTMLStorage *iface, LONG *
     return E_NOTIMPL;
 }
 
+static HRESULT get_key(const WCHAR *filename, LONG index, BSTR *ret)
+{
+    IXMLDOMNodeList *node_list;
+    IXMLDOMElement *elem;
+    IXMLDOMNode *node;
+    HRESULT hres;
+    VARIANT key;
+
+    hres = get_node_list(filename, &node_list);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IXMLDOMNodeList_get_item(node_list, index, &node);
+    IXMLDOMNodeList_Release(node_list);
+    if(hres != S_OK)
+        return FAILED(hres) ? hres : E_INVALIDARG;
+
+    hres = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+    IXMLDOMNode_Release(node);
+    if(hres != S_OK)
+        return E_INVALIDARG;
+
+    hres = IXMLDOMElement_getAttribute(elem, (BSTR)L"name", &key);
+    IXMLDOMElement_Release(elem);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&key) != VT_BSTR) {
+        FIXME("non-string key %s\n", debugstr_variant(&key));
+        VariantClear(&key);
+        return E_NOTIMPL;
+    }
+
+    *ret = V_BSTR(&key);
+    return S_OK;
+}
+
 static HRESULT WINAPI HTMLStorage_key(IHTMLStorage *iface, LONG lIndex, BSTR *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
     struct session_entry *session_entry;
+    HRESULT hres;
 
     TRACE("(%p)->(%ld %p)\n", This, lIndex, p);
 
@@ -388,8 +466,11 @@ static HRESULT WINAPI HTMLStorage_key(IHTMLStorage *iface, LONG lIndex, BSTR *p)
         return *p ? S_OK : E_OUTOFMEMORY;
     }
 
-    FIXME("local storage not supported\n");
-    return E_NOTIMPL;
+    WaitForSingleObject(This->mutex, INFINITE);
+    hres = get_key(This->filename, lIndex, p);
+    ReleaseMutex(This->mutex);
+
+    return hres;
 }
 
 static BSTR build_query(const WCHAR *key)
@@ -401,20 +482,6 @@ static BSTR build_query(const WCHAR *key)
 
     if(ret) swprintf(ret, len, fmt, str);
     return ret;
-}
-
-static HRESULT get_root_node(IXMLDOMDocument *doc, IXMLDOMNode **root)
-{
-    HRESULT hres;
-    BSTR str;
-
-    str = SysAllocString(L"root");
-    if(!str)
-        return E_OUTOFMEMORY;
-
-    hres = IXMLDOMDocument_selectSingleNode(doc, str, root);
-    SysFreeString(str);
-    return hres;
 }
 
 static HRESULT get_item(const WCHAR *filename, BSTR key, VARIANT *value)

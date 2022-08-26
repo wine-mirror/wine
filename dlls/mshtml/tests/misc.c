@@ -229,6 +229,19 @@ static void test_HTMLStorage(void)
     ok(hres == S_OK, "getItem failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
     if (V_VT(&var) == VT_BSTR) ok(!wcscmp(V_BSTR(&var), L"null"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    SysFreeString(key);
+
+    hres = IHTMLStorage_key(storage, 0, &key);
+    ok(hres == S_OK, "key failed %08lx\n", hres);
+    ok(!wcscmp(key, L"undefined"), "key(0) = %s\n", wine_dbgstr_w(key));
+    SysFreeString(key);
+
+    hres = IHTMLStorage_key(storage, 1, &key);
+    ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
+    hres = IHTMLStorage_key(storage, -1, &key);
+    ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
+
+    key = SysAllocString(L"undefined");
     hres = IHTMLStorage_removeItem(storage, key);
     ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
     SysFreeString(key);
