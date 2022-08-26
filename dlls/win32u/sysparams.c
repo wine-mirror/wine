@@ -2461,6 +2461,23 @@ BOOL WINAPI NtUserLogicalToPerMonitorDPIPhysicalPoint( HWND hwnd, POINT *pt )
     return TRUE;
 }
 
+/**********************************************************************
+ *           NtUserPerMonitorDPIPhysicalToLogicalPoint   (win32u.@)
+ */
+BOOL WINAPI NtUserPerMonitorDPIPhysicalToLogicalPoint( HWND hwnd, POINT *pt )
+{
+    RECT rect;
+    BOOL ret = FALSE;
+
+    if (get_window_rect( hwnd, &rect, 0 ) &&
+        pt->x >= rect.left && pt->y >= rect.top && pt->x <= rect.right && pt->y <= rect.bottom)
+    {
+        *pt = point_phys_to_win_dpi( hwnd, *pt );
+        ret = TRUE;
+    }
+    return ret;
+}
+
 /* retrieve the cached base keys for a given entry */
 static BOOL get_base_keys( enum parameter_key index, HKEY *base_key, HKEY *volatile_key )
 {

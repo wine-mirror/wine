@@ -216,6 +216,7 @@
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \
     SYSCALL_ENTRY( NtUserOpenWindowStation ) \
     SYSCALL_ENTRY( NtUserPeekMessage ) \
+    SYSCALL_ENTRY( NtUserPerMonitorDPIPhysicalToLogicalPoint ) \
     SYSCALL_ENTRY( NtUserPostMessage ) \
     SYSCALL_ENTRY( NtUserPostThreadMessage ) \
     SYSCALL_ENTRY( NtUserQueryInputContext ) \

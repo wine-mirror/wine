@@ -1099,7 +1099,7 @@
 @ stub NtUserPaintMenuBar
 @ stub NtUserPaintMonitor
 @ stdcall -syscall NtUserPeekMessage(ptr long long long long)
-@ stub NtUserPerMonitorDPIPhysicalToLogicalPoint
+@ stdcall -syscall NtUserPerMonitorDPIPhysicalToLogicalPoint(long ptr)
 @ stub NtUserPhysicalToLogicalDpiPointForWindow
 @ stub NtUserPhysicalToLogicalPoint
 @ stub NtUserPostKeyboardInputMessage

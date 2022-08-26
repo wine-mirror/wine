@@ -3100,6 +3100,14 @@ NTSTATUS WINAPI wow64_NtUserPeekMessage( UINT *args )
     return TRUE;
 }
 
+NTSTATUS WINAPI wow64_NtUserPerMonitorDPIPhysicalToLogicalPoint( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    POINT *pt = get_ptr( &args );
+
+    return NtUserPerMonitorDPIPhysicalToLogicalPoint( hwnd, pt );
+}
+
 NTSTATUS WINAPI wow64_NtUserPostMessage( UINT *args )
 {
     HWND hwnd = get_handle( &args );

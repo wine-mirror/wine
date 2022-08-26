@@ -230,6 +230,7 @@ static void * const syscalls[] =
     NtUserOpenInputDesktop,
     NtUserOpenWindowStation,
     NtUserPeekMessage,
+    NtUserPerMonitorDPIPhysicalToLogicalPoint,
     NtUserPostMessage,
     NtUserPostThreadMessage,
     NtUserQueryInputContext,

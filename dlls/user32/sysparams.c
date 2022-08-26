@@ -670,36 +670,6 @@ BOOL WINAPI EnumDisplaySettingsExW( const WCHAR *device, DWORD mode,
 }
 
 /**********************************************************************
- *              get_win_monitor_dpi
- */
-static UINT get_win_monitor_dpi( HWND hwnd )
-{
-    /* FIXME: use the monitor DPI instead */
-    return system_dpi;
-}
-
-/**********************************************************************
- *              map_dpi_point
- */
-static POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
-{
-    if (dpi_from && dpi_to && dpi_from != dpi_to)
-    {
-        pt.x = MulDiv( pt.x, dpi_to, dpi_from );
-        pt.y = MulDiv( pt.y, dpi_to, dpi_from );
-    }
-    return pt;
-}
-
-/**********************************************************************
- *              point_phys_to_win_dpi
- */
-static POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
-{
-    return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), GetDpiForWindow( hwnd ));
-}
-
-/**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
@@ -869,26 +839,6 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
     if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
     else info->dpi_awareness = val | 0x10;
     return ULongToHandle( prev );
-}
-
-/**********************************************************************
- *              PhysicalToLogicalPointForPerMonitorDPI   (USER32.@)
- */
-BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
-{
-    DPI_AWARENESS_CONTEXT context;
-    RECT rect;
-    BOOL ret = FALSE;
-
-    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-    if (GetWindowRect( hwnd, &rect ) &&
-        pt->x >= rect.left && pt->y >= rect.top && pt->x <= rect.right && pt->y <= rect.bottom)
-    {
-        *pt = point_phys_to_win_dpi( hwnd, *pt );
-        ret = TRUE;
-    }
-    SetThreadDpiAwarenessContext( context );
-    return ret;
 }
 
 /***********************************************************************

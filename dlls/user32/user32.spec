@@ -565,7 +565,7 @@
 @ stdcall PeekMessageA(ptr long long long long)
 @ stdcall PeekMessageW(ptr long long long long)
 @ stdcall PhysicalToLogicalPoint(long ptr)
-@ stdcall PhysicalToLogicalPointForPerMonitorDPI(long ptr)
+@ stdcall PhysicalToLogicalPointForPerMonitorDPI(long ptr) NtUserPerMonitorDPIPhysicalToLogicalPoint
 @ stub PlaySoundEvent
 @ stdcall PostMessageA(long long long long)
 @ stdcall PostMessageW(long long long long)
