@@ -1035,6 +1035,7 @@ struct custom_proppage
         PROPSHEETPAGEA pageA;
         PROPSHEETPAGEW pageW;
     } u;
+    DWORD extra_data;
     unsigned int addref_called;
     unsigned int release_called;
 };
@@ -1050,6 +1051,12 @@ static UINT CALLBACK proppage_callback_a(HWND hwnd, UINT msg, PROPSHEETPAGEA *ps
             psp->lParam, psp);
     ok(psp_orig->pszTitle == psp->pszTitle, "Expected same page title pointer\n");
     ok(!lstrcmpA(psp_orig->pszTitle, psp->pszTitle), "Expected same page title string\n");
+    if (psp->dwSize >= FIELD_OFFSET(struct custom_proppage, addref_called))
+    {
+        struct custom_proppage *extra_data = (struct custom_proppage *)psp;
+        todo_wine ok(extra_data->extra_data == 0x1234, "Expected extra_data to be preserved, got %lx\n",
+                extra_data->extra_data);
+    }
 
     switch (msg)
     {
@@ -1078,6 +1085,12 @@ static UINT CALLBACK proppage_callback_w(HWND hwnd, UINT msg, PROPSHEETPAGEW *ps
             psp->lParam, psp);
     ok(psp_orig->pszTitle == psp->pszTitle, "Expected same page title pointer\n");
     ok(!lstrcmpW(psp_orig->pszTitle, psp->pszTitle), "Expected same page title string\n");
+    if (psp->dwSize >= FIELD_OFFSET(struct custom_proppage, addref_called))
+    {
+        struct custom_proppage *extra_data = (struct custom_proppage *)psp;
+        todo_wine ok(extra_data->extra_data == 0x4321, "Expected extra_data to be preserved, got %lx\n",
+                extra_data->extra_data);
+    }
 
     switch (msg)
     {
@@ -1110,8 +1123,11 @@ static void test_CreatePropertySheetPage(void)
     page.u.pageA.pszTitle = "Title";
 
     /* Only minimal size validation is performed */
-    for (page.u.pageA.dwSize = PROPSHEETPAGEA_V1_SIZE - 1; page.u.pageA.dwSize <= PROPSHEETPAGEA_V4_SIZE + 1; page.u.pageA.dwSize++)
+    for (page.u.pageA.dwSize = PROPSHEETPAGEA_V1_SIZE - 1;
+            page.u.pageA.dwSize <= FIELD_OFFSET(struct custom_proppage, addref_called);
+            page.u.pageA.dwSize++)
     {
+        page.extra_data = 0x1234;
         page.addref_called = 0;
         hpsp = pCreatePropertySheetPageA(&page.u.pageA);
 
@@ -1139,8 +1155,11 @@ static void test_CreatePropertySheetPage(void)
     page.u.pageW.lParam = (LPARAM)&page;
     page.u.pageW.pszTitle = L"Title";
 
-    for (page.u.pageW.dwSize = PROPSHEETPAGEW_V1_SIZE - 1; page.u.pageW.dwSize <= PROPSHEETPAGEW_V4_SIZE + 1; page.u.pageW.dwSize++)
+    for (page.u.pageW.dwSize = PROPSHEETPAGEW_V1_SIZE - 1;
+            page.u.pageW.dwSize <= FIELD_OFFSET(struct custom_proppage, addref_called);
+            page.u.pageW.dwSize++)
     {
+        page.extra_data = 0x4321;
         page.addref_called = 0;
         hpsp = pCreatePropertySheetPageW(&page.u.pageW);
 
