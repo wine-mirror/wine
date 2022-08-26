@@ -53,10 +53,10 @@ static const WCHAR initial_mode_keyW[] = {'I','n','i','t','i','a','l',' ','D','i
     ' ','M','o','d','e'};
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
 
-static CFArrayRef modes;
-static BOOL modes_has_8bpp, modes_has_16bpp;
-static int default_mode_bpp;
-static pthread_mutex_t modes_mutex = PTHREAD_MUTEX_INITIALIZER;
+static CFArrayRef cached_modes;
+static BOOL cached_modes_has_8bpp, cached_modes_has_16bpp;
+static int cached_default_mode_bpp;
+static pthread_mutex_t cached_modes_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static BOOL inited_original_display_mode;
 
@@ -397,20 +397,20 @@ static int get_default_bpp(void)
 {
     int ret;
 
-    if (!default_mode_bpp)
+    if (!cached_default_mode_bpp)
     {
         CGDisplayModeRef mode = CGDisplayCopyDisplayMode(kCGDirectMainDisplay);
         if (mode)
         {
-            default_mode_bpp = display_mode_bits_per_pixel(mode);
+            cached_default_mode_bpp = display_mode_bits_per_pixel(mode);
             CFRelease(mode);
         }
 
-        if (!default_mode_bpp)
-            default_mode_bpp = 32;
+        if (!cached_default_mode_bpp)
+            cached_default_mode_bpp = 32;
     }
 
-    ret = default_mode_bpp;
+    ret = cached_default_mode_bpp;
 
     TRACE(" -> %d\n", ret);
     return ret;
@@ -859,9 +859,9 @@ LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
         return DISP_CHANGE_FAILED;
     }
 
-    pthread_mutex_lock(&modes_mutex);
+    pthread_mutex_lock(&cached_modes_mutex);
     bpp = get_default_bpp();
-    pthread_mutex_unlock(&modes_mutex);
+    pthread_mutex_unlock(&cached_modes_mutex);
     if ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel != bpp)
         TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, devmode->dmBitsPerPel);
 
@@ -1012,39 +1012,39 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
     if (macdrv_get_displays(&displays, &num_displays))
         goto failed;
 
-    pthread_mutex_lock(&modes_mutex);
+    pthread_mutex_lock(&cached_modes_mutex);
 
-    if (mode == 0 || !modes)
+    if (mode == 0 || !cached_modes)
     {
-        if (modes) CFRelease(modes);
-        modes = copy_display_modes(displays[0].displayID, (flags & EDS_RAWMODE) != 0);
-        modes_has_8bpp = modes_has_16bpp = FALSE;
+        if (cached_modes) CFRelease(cached_modes);
+        cached_modes = copy_display_modes(displays[0].displayID, (flags & EDS_RAWMODE) != 0);
+        cached_modes_has_8bpp = cached_modes_has_16bpp = FALSE;
 
-        if (modes)
+        if (cached_modes)
         {
-            count = CFArrayGetCount(modes);
-            for (i = 0; i < count && !(modes_has_8bpp && modes_has_16bpp); i++)
+            count = CFArrayGetCount(cached_modes);
+            for (i = 0; i < count && !(cached_modes_has_8bpp && cached_modes_has_16bpp); i++)
             {
-                CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+                CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(cached_modes, i);
                 int bpp = display_mode_bits_per_pixel(mode);
                 if (bpp == 8)
-                    modes_has_8bpp = TRUE;
+                    cached_modes_has_8bpp = TRUE;
                 else if (bpp == 16)
-                    modes_has_16bpp = TRUE;
+                    cached_modes_has_16bpp = TRUE;
             }
         }
     }
 
     display_mode = NULL;
-    if (modes)
+    if (cached_modes)
     {
         int default_bpp;
         DWORD seen_modes = 0;
 
-        count = CFArrayGetCount(modes);
+        count = CFArrayGetCount(cached_modes);
         for (i = 0; i < count; i++)
         {
-            CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+            CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(cached_modes, i);
 
             seen_modes++;
             if (seen_modes > mode)
@@ -1058,10 +1058,10 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
         default_bpp = get_default_bpp();
 
         /* If all the real modes are exhausted, synthesize lower bpp modes. */
-        if (!display_mode && (!modes_has_16bpp || !modes_has_8bpp))
+        if (!display_mode && (!cached_modes_has_16bpp || !cached_modes_has_8bpp))
         {
             /* We want to synthesize higher depths first. */
-            int synth_bpps[] = { modes_has_16bpp ? 0 : 16, modes_has_8bpp ? 0 : 8 };
+            int synth_bpps[] = { cached_modes_has_16bpp ? 0 : 16, cached_modes_has_8bpp ? 0 : 8 };
             size_t synth_bpp_idx;
             for (synth_bpp_idx = 0; synth_bpp_idx < 2; synth_bpp_idx++)
             {
@@ -1071,7 +1071,7 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
 
                 for (i = 0; i < count; i++)
                 {
-                    CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+                    CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(cached_modes, i);
                     /* We only synthesize modes from those having the default bpp. */
                     if (display_mode_bits_per_pixel(candidate) != default_bpp)
                         continue;
@@ -1092,7 +1092,7 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
         }
     }
 
-    pthread_mutex_unlock(&modes_mutex);
+    pthread_mutex_unlock(&cached_modes_mutex);
 
     if (!display_mode)
         goto failed;
