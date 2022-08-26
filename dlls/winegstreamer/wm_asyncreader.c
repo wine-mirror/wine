@@ -22,6 +22,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
+union async_op_data
+{
+    struct
+    {
+        void *context;
+    } start;
+};
+
 struct async_op
 {
     enum async_op_type
@@ -30,7 +38,7 @@ struct async_op
         ASYNC_OP_STOP,
         ASYNC_OP_CLOSE,
     } type;
-    void *new_context;
+    union async_op_data u;
     struct list entry;
 };
 
@@ -191,8 +199,8 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
             struct async_op *op = LIST_ENTRY(entry, struct async_op, entry);
             list_remove(&op->entry);
 
-            if (op->new_context)
-                reader->context = op->new_context;
+            if (op->u.start.context)
+                reader->context = op->u.start.context;
             hr = list_empty(&reader->async_ops) ? S_OK : E_ABORT;
             switch (op->type)
             {
@@ -291,14 +299,15 @@ error:
     return hr;
 }
 
-static HRESULT async_reader_queue_op(struct async_reader *reader, enum async_op_type type, void *context)
+static HRESULT async_reader_queue_op(struct async_reader *reader, enum async_op_type type, union async_op_data *data)
 {
     struct async_op *op;
 
     if (!(op = calloc(1, sizeof(*op))))
         return E_OUTOFMEMORY;
     op->type = type;
-    op->new_context = context;
+    if (data)
+        op->u = *data;
 
     EnterCriticalSection(&reader->callback_cs);
     list_add_tail(&reader->async_ops, &op->entry);
@@ -432,6 +441,7 @@ static HRESULT WINAPI WMReader_GetOutputFormat(IWMReader *iface, DWORD output,
 static HRESULT WINAPI WMReader_Start(IWMReader *iface,
         QWORD start, QWORD duration, float rate, void *context)
 {
+    union async_op_data data = {.start = {.context = context}};
     struct async_reader *reader = impl_from_IWMReader(iface);
     HRESULT hr;
 
@@ -448,7 +458,7 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface,
     else
     {
         wm_reader_seek(&reader->reader, start, duration);
-        hr = async_reader_queue_op(reader, ASYNC_OP_START, context);
+        hr = async_reader_queue_op(reader, ASYNC_OP_START, &data);
     }
 
     LeaveCriticalSection(&reader->reader.cs);
