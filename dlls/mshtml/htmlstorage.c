@@ -443,6 +443,7 @@ done:
 static HRESULT WINAPI HTMLStorage_getItem(IHTMLStorage *iface, BSTR bstrKey, VARIANT *value)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
+    struct session_entry *session_entry;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrKey), value);
@@ -451,9 +452,17 @@ static HRESULT WINAPI HTMLStorage_getItem(IHTMLStorage *iface, BSTR bstrKey, VAR
         return E_POINTER;
 
     if(!This->filename) {
-        FIXME("session storage not supported\n");
-        V_VT(value) = VT_NULL;
-        return S_OK;
+        hres = get_session_entry(This->session_storage, bstrKey, FALSE, &session_entry);
+        if(SUCCEEDED(hres)) {
+            if(!session_entry || !session_entry->value)
+                V_VT(value) = VT_NULL;
+            else {
+                V_VT(value) = VT_BSTR;
+                V_BSTR(value) = SysAllocStringLen(session_entry->value, SysStringLen(session_entry->value));
+                hres = V_BSTR(value) ? S_OK : E_OUTOFMEMORY;
+            }
+        }
+        return hres;
     }
 
     WaitForSingleObject(This->mutex, INFINITE);

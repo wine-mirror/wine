@@ -324,11 +324,32 @@ static void test_HTMLStorage(void)
     hres = get_sessionstorage(doc2, &storage2);
     ok(hres == S_OK, "got %08lx\n", hres);
 
+    key = SysAllocString(L"");
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
+    SysFreeString(key);
+
     key = SysAllocString(L"undefined");
     value = SysAllocString(L"null");
     hres = IHTMLStorage_setItem(storage, key, value);
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
     SysFreeString(value);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"null"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"null"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
     SysFreeString(key);
 
     value = SysAllocString(L"asdf");
@@ -336,9 +357,32 @@ static void test_HTMLStorage(void)
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
     SysFreeString(value);
 
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, NULL, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"asdf"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = 0xdead;
+    key = SysAllocString(L"");
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"asdf"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    SysFreeString(key);
+
     key = SysAllocString(L"null-value");
     hres = IHTMLStorage_setItem(storage, key, NULL);
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L""), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
     SysFreeString(key);
 
     key = SysAllocString(L"aaaa");
@@ -346,19 +390,97 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_setItem(storage2, key, value);
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
     SysFreeString(value);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"bbbb"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
     SysFreeString(key);
 
     key = SysAllocString(L"foo");
     value = SysAllocString(L"bar");
     hres = IHTMLStorage_setItem(storage, key, value);
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
-    SysFreeString(value);
-    SysFreeString(key);
+
+    IHTMLStorage_Release(storage2);
+    IHTMLDocument2_Release(doc2);
+
+    /* Case insensitive domain */
+    doc2 = create_doc_from_url(L"htTp://www.CodeWeavers.com/");
+    hres = get_sessionstorage(doc2, &storage2);
+    ok(hres == S_OK, "got %08lx\n", hres);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"bar"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    IHTMLStorage_Release(storage2);
+    IHTMLDocument2_Release(doc2);
+
+    /* Different schemes */
+    doc2 = create_doc_from_url(L"https://www.codeweavers.com/");
+    hres = get_sessionstorage(doc2, &storage2);
+    ok(hres == S_OK, "got %08lx\n", hres);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"bar"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    IHTMLStorage_Release(storage2);
+    IHTMLDocument2_Release(doc2);
+
+    doc2 = create_doc_from_url(L"ftp://www.codeweavers.com/");
+    hres = get_sessionstorage(doc2, &storage2);
+    ok(hres == S_OK, "got %08lx\n", hres);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
+
+    hres = IHTMLStorage_setItem(storage2, key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"bar"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    IHTMLStorage_Release(storage2);
+    IHTMLDocument2_Release(doc2);
+
+    /* Different domain */
+    doc2 = create_doc_from_url(L"https://www.winehq.org/");
+    hres = get_sessionstorage(doc2, &storage2);
+    ok(hres == S_OK, "got %08lx\n", hres);
+
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "got %d\n", V_VT(&var));
+    ok(!wcscmp(V_BSTR(&var), L"bar"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    V_VT(&var) = 0xdead;
+    hres = IHTMLStorage_getItem(storage2, key, &var);
+    ok(hres == S_OK, "getItem failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
 
     IHTMLStorage_Release(storage2);
     IHTMLStorage_Release(storage);
     IHTMLDocument2_Release(doc2);
     IHTMLDocument2_Release(doc);
+    SysFreeString(value);
+    SysFreeString(key);
 }
 
 START_TEST(misc)
