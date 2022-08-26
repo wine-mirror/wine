@@ -32,6 +32,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+/* Native defaults to 5 million chars per origin */
+enum { MAX_QUOTA = 5000000 };
+
 typedef struct {
     DispatchEx dispex;
     IHTMLStorage IHTMLStorage_iface;
@@ -46,6 +49,7 @@ struct session_map_entry {
     struct wine_rb_tree data_map;
     struct list data_list;        /* for key() */
     UINT ref;
+    UINT quota;
     UINT num_keys;
     UINT origin_len;
     WCHAR origin[1];
@@ -98,6 +102,7 @@ static struct session_map_entry *grab_session_map_entry(BSTR origin)
     wine_rb_init(&entry->data_map, session_entry_cmp);
     list_init(&entry->data_list);
     entry->ref = 1;
+    entry->quota = MAX_QUOTA;
     entry->num_keys = 0;
     entry->origin_len = origin_len;
     memcpy(entry->origin, origin, origin_len * sizeof(WCHAR));
@@ -134,11 +139,14 @@ static HRESULT get_session_entry(struct session_map_entry *entry, const WCHAR *n
     }
 
     key_len = wcslen(key);
+    if(entry->quota < key_len)
+        return E_OUTOFMEMORY;  /* native returns this when quota is exceeded */
     if(!(data = heap_alloc(FIELD_OFFSET(struct session_entry, key[key_len + 1]))))
         return E_OUTOFMEMORY;
     data->value = NULL;
     memcpy(data->key, key, (key_len + 1) * sizeof(WCHAR));
 
+    entry->quota -= key_len;
     entry->num_keys++;
     list_add_tail(&entry->data_list, &data->list_entry);
     wine_rb_put(&entry->data_map, key, &data->entry);
@@ -156,6 +164,7 @@ static void clear_session_storage(struct session_map_entry *entry)
     }
     wine_rb_destroy(&entry->data_map, NULL, NULL);
     list_init(&entry->data_list);
+    entry->quota = MAX_QUOTA;
     entry->num_keys = 0;
 }
 
@@ -420,7 +429,15 @@ static HRESULT WINAPI HTMLStorage_get_length(IHTMLStorage *iface, LONG *p)
 static HRESULT WINAPI HTMLStorage_get_remainingSpace(IHTMLStorage *iface, LONG *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    FIXME("(%p)->(%p)\n", This, p);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->filename) {
+        *p = This->session_storage->quota;
+        return S_OK;
+    }
+
+    FIXME("local storage not supported\n");
     return E_NOTIMPL;
 }
 
@@ -685,7 +702,8 @@ static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BST
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(bstrKey), debugstr_w(bstrValue));
 
     if(!This->filename) {
-        BSTR value = SysAllocString(bstrValue ? bstrValue : L"");
+        UINT value_len = bstrValue ? wcslen(bstrValue) : 0;
+        BSTR value = SysAllocStringLen(bstrValue, value_len);
         if(!value)
             return E_OUTOFMEMORY;
 
@@ -693,6 +711,12 @@ static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BST
         if(FAILED(hres))
             SysFreeString(value);
         else {
+            UINT old_len = SysStringLen(session_entry->value);
+            if(old_len < value_len && This->session_storage->quota < value_len - old_len) {
+                SysFreeString(value);
+                return E_OUTOFMEMORY;  /* native returns this when quota is exceeded */
+            }
+            This->session_storage->quota -= value_len - old_len;
             SysFreeString(session_entry->value);
             session_entry->value = value;
         }
@@ -757,6 +781,7 @@ static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
     if(!This->filename) {
         hres = get_session_entry(This->session_storage, bstrKey, FALSE, &session_entry);
         if(SUCCEEDED(hres) && session_entry) {
+            This->session_storage->quota += wcslen(session_entry->key) + SysStringLen(session_entry->value);
             This->session_storage->num_keys--;
             list_remove(&session_entry->list_entry);
             wine_rb_remove(&This->session_storage->data_map, &session_entry->entry);

@@ -197,7 +197,7 @@ static void test_HTMLStorage(void)
 {
     IHTMLDocument2 *doc, *doc2;
     IHTMLStorage *storage, *storage2;
-    LONG length, lval;
+    LONG space, length, lval;
     VARIANT var;
     BSTR key, value;
     HRESULT hres;
@@ -346,6 +346,10 @@ static void test_HTMLStorage(void)
     ok(hres == S_OK, "get_length failed %08lx\n", hres);
     ok(lval == 0, "length = %ld\n", lval);
 
+    hres = IHTMLStorage_get_remainingSpace(storage, &space);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(space >= 5000000, "remainingSpace = %ld\n", space);
+
     key = SysAllocString(L"");
     V_VT(&var) = 0xdead;
     hres = IHTMLStorage_getItem(storage, key, &var);
@@ -368,6 +372,13 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_get_length(storage2, &lval);
     ok(hres == S_OK, "get_length failed %08lx\n", hres);
     ok(lval == 1, "length = %ld\n", lval);
+
+    hres = IHTMLStorage_get_remainingSpace(storage, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space - 13, "remainingSpace = %ld\n", lval);
+    hres = IHTMLStorage_get_remainingSpace(storage2, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space - 13, "remainingSpace = %ld\n", lval);
 
     V_VT(&var) = 0xdead;
     hres = IHTMLStorage_getItem(storage, key, &var);
@@ -443,6 +454,13 @@ static void test_HTMLStorage(void)
     ok(hres == S_OK, "get_length failed %08lx\n", hres);
     ok(lval == 2, "length = %ld\n", lval);
 
+    hres = IHTMLStorage_get_remainingSpace(storage, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space - 21, "remainingSpace = %ld\n", lval);
+    hres = IHTMLStorage_get_remainingSpace(storage2, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space - 21, "remainingSpace = %ld\n", lval);
+
     hres = IHTMLStorage_key(storage, 0, &key);
     ok(hres == S_OK, "key failed %08lx\n", hres);
     ok(!wcscmp(key, L"undefined"), "key(0) = %s\n", wine_dbgstr_w(key));
@@ -488,6 +506,13 @@ static void test_HTMLStorage(void)
     ok(hres == S_OK, "get_length failed %08lx\n", hres);
     ok(lval == 0, "length = %ld\n", lval);
 
+    hres = IHTMLStorage_get_remainingSpace(storage, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space, "remainingSpace = %ld\n", lval);
+    hres = IHTMLStorage_get_remainingSpace(storage2, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space, "remainingSpace = %ld\n", lval);
+
     hres = IHTMLStorage_key(storage, 0, &key);
     ok(hres == E_INVALIDARG, "key failed %08lx\n", hres);
 
@@ -526,6 +551,10 @@ static void test_HTMLStorage(void)
     ok(!wcscmp(V_BSTR(&var), L"bar"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
+    hres = IHTMLStorage_get_remainingSpace(storage, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space - 6, "remainingSpace = %ld\n", lval);
+
     IHTMLStorage_Release(storage2);
     IHTMLDocument2_Release(doc2);
 
@@ -537,6 +566,10 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_getItem(storage2, key, &var);
     ok(hres == S_OK, "getItem failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
+
+    hres = IHTMLStorage_get_remainingSpace(storage2, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space, "remainingSpace = %ld\n", lval);
 
     hres = IHTMLStorage_setItem(storage2, key, value);
     ok(hres == S_OK, "setItem failed: %08lx\n", hres);
@@ -569,6 +602,10 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_getItem(storage2, key, &var);
     ok(hres == S_OK, "getItem failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
+
+    hres = IHTMLStorage_get_remainingSpace(storage2, &lval);
+    ok(hres == S_OK, "get_remainingSpace failed %08lx\n", hres);
+    ok(lval == space, "remainingSpace = %ld\n", lval);
 
     hres = IHTMLStorage_clear(storage);
     ok(hres == S_OK, "clear failed %08lx\n", hres);
