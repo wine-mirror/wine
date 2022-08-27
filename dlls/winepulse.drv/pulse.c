@@ -363,6 +363,8 @@ static BOOL pulse_stream_valid(struct pulse_stream *stream)
 
 static HRESULT pulse_connect(const char *name)
 {
+    pa_context_state_t state;
+
     if (pulse_ctx && PA_CONTEXT_IS_GOOD(pa_context_get_state(pulse_ctx)))
         return S_OK;
     if (pulse_ctx)
@@ -381,15 +383,12 @@ static HRESULT pulse_connect(const char *name)
         goto fail;
 
     /* Wait for connection */
-    while (pulse_cond_wait()) {
-        pa_context_state_t state = pa_context_get_state(pulse_ctx);
+    while ((state = pa_context_get_state(pulse_ctx)) != PA_CONTEXT_READY &&
+           state != PA_CONTEXT_FAILED && state != PA_CONTEXT_TERMINATED)
+        pulse_cond_wait();
 
-        if (state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED)
-            goto fail;
-
-        if (state == PA_CONTEXT_READY)
-            break;
-    }
+    if (state != PA_CONTEXT_READY)
+        goto fail;
 
     TRACE("Connected to server %s with protocol version: %i.\n",
         pa_context_get_server(pulse_ctx),
