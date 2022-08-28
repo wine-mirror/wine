@@ -444,7 +444,7 @@ NTSTATUS init_vulkan(void *args)
     }
 
 
-    *(const struct unix_funcs **)args = &loader_funcs;
+    *(void **)args = vk_direct_unix_call;
     return STATUS_SUCCESS;
 }
 

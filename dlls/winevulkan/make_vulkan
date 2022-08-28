@@ -176,7 +176,7 @@ class ThunkType(Enum):
 #   - PUBLIC means the implementation is fully auto generated.
 #   - PRIVATE thunks can be used in custom implementations for
 #     struct conversion.
-# - loader_thunk sets whether to create a thunk for unix_funcs.
+# - loader_thunk sets whether to create a thunk for unix funcs.
 FUNCTION_OVERRIDES = {
     # Global functions
     "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
@@ -777,7 +777,7 @@ class VkFunction(object):
         if self.type != "void" and not self.returns_longlong():
             body += "return "
         if self.needs_direct_call():
-            body += "unix_funcs->p_vk_call(unix_{0}, &params);\n".format(self.name)
+            body += "p_vk_direct_unix_call(unix_handle, unix_{0}, &params);\n".format(self.name)
         else:
             body += "vk_unix_call(unix_{0}, &params);\n".format(self.name)
         if self.returns_longlong():
@@ -2851,15 +2851,10 @@ class VkGenerator(object):
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
 
-        f.write("static NTSTATUS WINAPI wine_vk_call(enum unix_call code, void *params)\n")
+        f.write("NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)\n")
         f.write("{\n")
         f.write("    return __wine_unix_call_funcs[code](params);\n")
-        f.write("}\n\n")
-
-        f.write("const struct unix_funcs loader_funcs =\n")
-        f.write("{\n")
-        f.write("    wine_vk_call,\n")
-        f.write("};\n")
+        f.write("}\n")
 
     def generate_thunks_h(self, f, prefix):
         self._generate_copyright(f)

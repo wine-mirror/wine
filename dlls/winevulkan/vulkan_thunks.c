@@ -10751,12 +10751,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 };
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);
 
-static NTSTATUS WINAPI wine_vk_call(enum unix_call code, void *params)
+NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)
 {
     return __wine_unix_call_funcs[code](params);
 }
-
-const struct unix_funcs loader_funcs =
-{
-    wine_vk_call,
-};
