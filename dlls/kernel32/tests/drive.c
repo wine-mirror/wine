@@ -155,6 +155,9 @@ static void test_GetDiskFreeSpaceA(void)
     ret = GetDiskFreeSpaceA("/", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
+    ret = GetDiskFreeSpaceA("C:\\", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
+    ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
+
     logical_drives = GetLogicalDrives();
     ok(logical_drives != 0, "GetLogicalDrives error %ld\n", GetLastError());
 
@@ -215,6 +218,7 @@ static void test_GetDiskFreeSpaceW(void)
     static const WCHAR empty_pathW[] = { 0 };
     static const WCHAR root_pathW[] = { '\\', 0 };
     static const WCHAR unix_style_root_pathW[] = { '/', 0 };
+    static const WCHAR c_drive_pathW[] = { 'C', ':', '\\', 0 };
 
     ret = GetDiskFreeSpaceW(NULL, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
@@ -233,6 +237,9 @@ static void test_GetDiskFreeSpaceW(void)
     ok(ret, "GetDiskFreeSpaceW(\"\") error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceW(unix_style_root_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
+    ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
+
+    ret = GetDiskFreeSpaceW(c_drive_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
