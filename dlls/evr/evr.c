@@ -224,6 +224,64 @@ static void evr_release_services(struct evr *filter)
     }
 }
 
+static HRESULT evr_test_input_type(struct evr *filter, const AM_MEDIA_TYPE *mt, IMFMediaType **ret)
+{
+    IMFMediaType *media_type;
+    HRESULT hr = S_OK;
+
+    if (!filter->presenter)
+        hr = evr_initialize(filter, NULL, NULL);
+
+    if (SUCCEEDED(hr))
+        hr = evr_init_services(filter);
+
+    if (SUCCEEDED(hr))
+        hr = MFCreateMediaType(&media_type);
+
+    if (SUCCEEDED(hr))
+    {
+        if (SUCCEEDED(hr = MFInitMediaTypeFromAMMediaType(media_type, mt)))
+        {
+            /* TODO: some pin -> mixer input mapping is necessary to test the substreams. */
+            if (SUCCEEDED(hr = IMFTransform_SetInputType(filter->mixer, 0, media_type, MFT_SET_TYPE_TEST_ONLY)))
+            {
+                if (ret)
+                    IMFMediaType_AddRef((*ret = media_type));
+            }
+        }
+
+        IMFMediaType_Release(media_type);
+    }
+
+    return hr;
+}
+
+static HRESULT evr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct evr *filter = impl_from_strmbase_renderer(iface);
+    IMFMediaType *media_type;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = evr_test_input_type(filter, mt, &media_type)))
+    {
+        if (SUCCEEDED(hr = IMFTransform_SetInputType(filter->mixer, 0, media_type, 0)))
+            hr = IMFVideoPresenter_ProcessMessage(filter->presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+
+        IMFMediaType_Release(media_type);
+    }
+
+    return hr;
+}
+
+static void evr_disconnect(struct strmbase_renderer *iface)
+{
+    struct evr *filter = impl_from_strmbase_renderer(iface);
+
+    if (filter->mixer)
+        IMFTransform_SetInputType(filter->mixer, 0, NULL, 0);
+    evr_release_services(filter);
+}
+
 static void evr_destroy(struct strmbase_renderer *iface)
 {
     struct evr *filter = impl_from_strmbase_renderer(iface);
@@ -242,32 +300,12 @@ static HRESULT evr_render(struct strmbase_renderer *iface, IMediaSample *sample)
 static HRESULT evr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     struct evr *filter = impl_from_strmbase_renderer(iface);
-    IMFMediaType *media_type;
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     EnterCriticalSection(&filter->renderer.filter.filter_cs);
 
-    if (!filter->presenter)
-        hr = evr_initialize(filter, NULL, NULL);
-
-    if (SUCCEEDED(hr))
-        hr = evr_init_services(filter);
-
-    if (SUCCEEDED(hr))
-        hr = MFCreateMediaType(&media_type);
-
-    if (SUCCEEDED(hr))
-    {
-        if (SUCCEEDED(hr = MFInitMediaTypeFromAMMediaType(media_type, mt)))
-        {
-            /* TODO: some pin -> mixer input mapping is necessary to test the substreams. */
-            hr = IMFTransform_SetInputType(filter->mixer, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
-        }
-
-        IMFMediaType_Release(media_type);
-
-        evr_release_services(filter);
-    }
+    hr = evr_test_input_type(filter, mt, NULL);
+    evr_release_services(filter);
 
     LeaveCriticalSection(&filter->renderer.filter.filter_cs);
 
@@ -279,6 +317,8 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_query_accept = evr_query_accept,
     .renderer_render = evr_render,
     .renderer_query_interface = evr_query_interface,
+    .renderer_connect = evr_connect,
+    .renderer_disconnect = evr_disconnect,
     .renderer_destroy = evr_destroy,
 };
 
