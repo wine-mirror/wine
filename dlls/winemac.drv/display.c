@@ -54,6 +54,7 @@ static const WCHAR initial_mode_keyW[] = {'I','n','i','t','i','a','l',' ','D','i
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
 
 static CFArrayRef cached_modes;
+static DWORD cached_modes_flags;
 static BOOL cached_modes_has_8bpp, cached_modes_has_16bpp;
 static int cached_default_mode_bpp;
 static pthread_mutex_t cached_modes_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1014,11 +1015,12 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
 
     pthread_mutex_lock(&cached_modes_mutex);
 
-    if (mode == 0 || !cached_modes)
+    if (mode == 0 || !cached_modes || flags != cached_modes_flags)
     {
         if (cached_modes) CFRelease(cached_modes);
         cached_modes = copy_display_modes(displays[0].displayID, (flags & EDS_RAWMODE) != 0);
         cached_modes_has_8bpp = cached_modes_has_16bpp = FALSE;
+        cached_modes_flags = flags;
 
         if (cached_modes)
         {
