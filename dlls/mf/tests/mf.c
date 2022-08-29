@@ -1532,6 +1532,8 @@ static void test_sequencer_source(void)
 struct test_handler
 {
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+
+    ULONG set_current_count;
     IMFMediaType *current_type;
     IMFMediaType *invalid_type;
 
@@ -1619,9 +1621,13 @@ static HRESULT WINAPI test_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *ifac
 
 static HRESULT WINAPI test_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *media_type)
 {
-    /* FIXME: Wine sets downstream media type when resolving topology, native doesn't */
-    todo_wine
-    ok(0, "Unexpected call.\n");
+    struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
+
+    if (impl->current_type)
+        IMFMediaType_Release(impl->current_type);
+    IMFMediaType_AddRef((impl->current_type = media_type));
+    impl->set_current_count++;
+
     return S_OK;
 }
 
@@ -2871,10 +2877,11 @@ static void test_topology_loader(void)
         init_media_type(input_type, *test->input_type, -1);
         init_media_type(output_type, *test->output_type, -1);
 
+        handler.set_current_count = 0;
         if (test->flags & LOADER_NO_CURRENT_OUTPUT)
             handler.current_type = NULL;
         else
-            handler.current_type = output_type;
+            IMFMediaType_AddRef((handler.current_type = output_type));
 
         if (test->flags & LOADER_SET_INVALID_INPUT)
             handler.invalid_type = input_type;
@@ -3056,6 +3063,13 @@ todo_wine {
             ok(handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
         else
             ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
+
+        todo_wine_if((test->flags & LOADER_NO_CURRENT_OUTPUT) && !(test->flags & LOADER_SET_MEDIA_TYPES))
+        ok(!handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
+
+        if (handler.current_type)
+            IMFMediaType_Release(handler.current_type);
+        handler.current_type = NULL;
 
         hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, NULL);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
