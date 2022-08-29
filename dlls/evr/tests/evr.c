@@ -637,6 +637,59 @@ static void test_service_lookup(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_query_accept(void)
+{
+    IBaseFilter *filter = create_evr();
+    AM_MEDIA_TYPE req_mt = {{0}};
+    VIDEOINFOHEADER vih =
+    {
+        {0}, {0}, 0, 0, 0,
+        {sizeof(BITMAPINFOHEADER), 32, 24, 1, 0, 0xdeadbeef}
+    };
+    unsigned int i;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    static const GUID *subtype_tests[] =
+    {
+        &MEDIASUBTYPE_RGB32,
+        &MEDIASUBTYPE_YUY2,
+    };
+
+    static const GUID *unsupported_subtype_tests[] =
+    {
+        &MEDIASUBTYPE_RGB8,
+    };
+
+    IBaseFilter_FindPin(filter, L"EVR Input0", &pin);
+
+    req_mt.majortype = MEDIATYPE_Video;
+    req_mt.formattype = FORMAT_VideoInfo;
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    req_mt.pbFormat = (BYTE *)&vih;
+
+    for (i = 0; i < ARRAY_SIZE(subtype_tests); ++i)
+    {
+        memcpy(&req_mt.subtype, subtype_tests[i], sizeof(GUID));
+        hr = IPin_QueryAccept(pin, &req_mt);
+        todo_wine_if(i)
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(unsupported_subtype_tests); ++i)
+    {
+        memcpy(&req_mt.subtype, unsupported_subtype_tests[i], sizeof(GUID));
+        hr = IPin_QueryAccept(pin, &req_mt);
+        ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    }
+
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 static IMFMediaType * create_video_type(const GUID *subtype)
 {
     IMFMediaType *video_type;
@@ -3311,6 +3364,7 @@ START_TEST(evr)
     test_misc_flags();
     test_display_control();
     test_service_lookup();
+    test_query_accept();
 
     test_default_mixer();
     test_default_mixer_type_negotiation();
