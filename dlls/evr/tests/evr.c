@@ -273,7 +273,9 @@ static void check_service_interface_(unsigned int line, void *iface_ptr, REFGUID
 
 static void test_interfaces(void)
 {
-    IBaseFilter *filter = create_evr();
+    IBaseFilter *filter = create_evr(), *filter2;
+    IUnknown *unk;
+    HRESULT hr;
     ULONG ref;
 
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
@@ -284,6 +286,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IMediaFilter, TRUE);
     check_interface(filter, &IID_IMediaPosition, TRUE);
     check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IMediaEventSink, TRUE);
     check_interface(filter, &IID_IPersist, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
 
@@ -295,6 +298,15 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IPin, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    /* The scope of IMediaEventSink */
+    hr = IBaseFilter_QueryInterface(filter, &IID_IMediaEventSink, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(filter == filter2, "Unexpected pointer.\n");
+    IBaseFilter_Release(filter2);
+    IUnknown_Release(unk);
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got unexpected refcount %ld.\n", ref);

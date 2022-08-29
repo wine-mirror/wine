@@ -37,6 +37,7 @@ struct evr
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IMFGetService IMFGetService_iface;
     IMFVideoRenderer IMFVideoRenderer_iface;
+    IMediaEventSink IMediaEventSink_iface;
 
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
@@ -111,6 +112,8 @@ static HRESULT evr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IMFGetService_iface;
     else if (IsEqualGUID(iid, &IID_IMFVideoRenderer))
         *out = &filter->IMFVideoRenderer_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaEventSink))
+        *out = &filter->IMediaEventSink_iface;
     else
         return E_NOINTERFACE;
 
@@ -348,6 +351,44 @@ static const IMFVideoRendererVtbl filter_video_renderer_vtbl =
     filter_video_renderer_InitializeRenderer,
 };
 
+static struct evr *impl_from_IMediaEventSink(IMediaEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct evr, IMediaEventSink_iface);
+}
+
+static HRESULT WINAPI filter_media_event_sink_QueryInterface(IMediaEventSink *iface, REFIID riid, void **obj)
+{
+    struct evr *filter = impl_from_IMediaEventSink(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, riid, obj);
+}
+
+static ULONG WINAPI filter_media_event_sink_AddRef(IMediaEventSink *iface)
+{
+    struct evr *filter = impl_from_IMediaEventSink(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI filter_media_event_sink_Release(IMediaEventSink *iface)
+{
+    struct evr *filter = impl_from_IMediaEventSink(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI filter_media_event_sink_Notify(IMediaEventSink *iface, LONG event, LONG_PTR param1, LONG_PTR param2)
+{
+    FIXME("iface %p, event %ld, param1 %Id, param2 %Id.\n", iface, event, param1, param2);
+
+    return E_NOTIMPL;
+}
+
+static const IMediaEventSinkVtbl filter_media_event_sink_vtbl =
+{
+    filter_media_event_sink_QueryInterface,
+    filter_media_event_sink_AddRef,
+    filter_media_event_sink_Release,
+    filter_media_event_sink_Notify,
+};
+
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     struct evr *object;
@@ -361,6 +402,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     object->IAMFilterMiscFlags_iface.lpVtbl = &filter_misc_flags_vtbl;
     object->IMFGetService_iface.lpVtbl = &filter_get_service_vtbl;
     object->IMFVideoRenderer_iface.lpVtbl = &filter_video_renderer_vtbl;
+    object->IMediaEventSink_iface.lpVtbl = &filter_media_event_sink_vtbl;
 
     TRACE("Created EVR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
