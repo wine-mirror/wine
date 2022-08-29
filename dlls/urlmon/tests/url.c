@@ -158,8 +158,8 @@ static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
 static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
-#define WINEHQ_IP "4.4.81.124"
-static const WCHAR wszWineHQSite[] = L"www.winehq.org";
+#define WINEHQ_IP "4.4.81.126"
+static const WCHAR wszWineHQSite[] = L"gitlab.winehq.org";
 static const WCHAR wszWineHQIP[] = L"" WINEHQ_IP;
 static const CHAR wszIndexHtmlA[] = "index.html";
 static const WCHAR cache_fileW[] = {'c',':','\\','c','a','c','h','e','.','h','t','m',0};
