@@ -52,6 +52,7 @@ static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','
 
 static CFArrayRef cached_modes;
 static DWORD cached_modes_flags;
+static CGDirectDisplayID cached_modes_display_id;
 static BOOL cached_modes_has_8bpp, cached_modes_has_16bpp;
 static int cached_default_mode_bpp;
 static pthread_mutex_t cached_modes_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -999,9 +1000,11 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
     struct macdrv_display *displays = NULL;
     int num_displays;
     CGDisplayModeRef display_mode;
-    int display_mode_bpp;
+    int display_mode_bpp, display_idx;
     BOOL synthesized = FALSE;
+    CGDirectDisplayID display_id;
     DWORD count, i;
+    WCHAR *end;
 
     TRACE("%s, %u, %p + %hu, %08x\n", debugstr_w(devname), mode, devmode, devmode->dmSize, flags);
 
@@ -1010,13 +1013,23 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
     if (macdrv_get_displays(&displays, &num_displays))
         goto failed;
 
+    display_idx = wcstol(devname + 11, &end, 10) - 1;
+    if (display_idx >= num_displays)
+    {
+        macdrv_free_displays(displays);
+        return FALSE;
+    }
+
+    display_id = displays[display_idx].displayID;
+
     pthread_mutex_lock(&cached_modes_mutex);
 
-    if (mode == 0 || !cached_modes || flags != cached_modes_flags)
+    if (mode == 0 || !cached_modes || flags != cached_modes_flags || display_id != cached_modes_display_id)
     {
         if (cached_modes) CFRelease(cached_modes);
-        cached_modes = copy_display_modes(displays[0].displayID, (flags & EDS_RAWMODE) != 0);
+        cached_modes = copy_display_modes(display_id, (flags & EDS_RAWMODE) != 0);
         cached_modes_has_8bpp = cached_modes_has_16bpp = FALSE;
+        cached_modes_display_id = display_id;
         cached_modes_flags = flags;
 
         if (cached_modes)
@@ -1096,13 +1109,13 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
     if (!display_mode)
         goto failed;
 
-    display_mode_to_devmode(displays[0].displayID, display_mode, devmode);
+    display_mode_to_devmode(display_id, display_mode, devmode);
     devmode->dmBitsPerPel = display_mode_bpp;
     if (devmode->dmBitsPerPel)
         devmode->dmFields |= DM_BITSPERPEL;
     if (retina_enabled)
     {
-        struct display_mode_descriptor* desc = create_original_display_mode_descriptor(displays[0].displayID);
+        struct display_mode_descriptor* desc = create_original_display_mode_descriptor(display_id);
         if (display_mode_matches_descriptor(display_mode, desc))
         {
             devmode->dmPelsWidth *= 2;
