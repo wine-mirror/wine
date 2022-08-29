@@ -138,6 +138,7 @@ static void test_GetDiskFreeSpaceA(void)
 {
     BOOL ret;
     DWORD sectors_per_cluster, bytes_per_sector, free_clusters, total_clusters;
+    char volume_guid_path[50];
     char drive[] = "?:\\";
     DWORD logical_drives;
 
@@ -156,6 +157,14 @@ static void test_GetDiskFreeSpaceA(void)
     ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceA("C:\\", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
+    ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
+
+    ret = GetVolumeNameForVolumeMountPointA("C:\\", volume_guid_path,
+       sizeof(volume_guid_path) / sizeof(volume_guid_path[0]));
+    ok(ret, "GetVolumeNameForVolumeMountPointA error %ld\n", GetLastError());
+
+    ret = GetDiskFreeSpaceA(volume_guid_path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
+    todo_wine
     ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
@@ -213,6 +222,7 @@ static void test_GetDiskFreeSpaceW(void)
 {
     BOOL ret;
     DWORD sectors_per_cluster, bytes_per_sector, free_clusters, total_clusters;
+    WCHAR volume_guid_path[50];
     WCHAR drive[] = {'?',':','\\',0};
     DWORD logical_drives;
     static const WCHAR empty_pathW[] = { 0 };
@@ -240,6 +250,14 @@ static void test_GetDiskFreeSpaceW(void)
     ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceW(c_drive_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
+    ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
+
+    ret = GetVolumeNameForVolumeMountPointW(c_drive_pathW, volume_guid_path,
+       sizeof(volume_guid_path) / sizeof(volume_guid_path[0]));
+    ok(ret, "GetVolumeNameForVolumeMountPointW error %ld\n", GetLastError());
+
+    ret = GetDiskFreeSpaceW(volume_guid_path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
+    todo_wine
     ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
     logical_drives = GetLogicalDrives();
