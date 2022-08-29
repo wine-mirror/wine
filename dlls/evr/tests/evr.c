@@ -603,6 +603,40 @@ static void test_display_control(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_service_lookup(void)
+{
+    IBaseFilter *filter = create_evr();
+    IMFTopologyServiceLookup *service_lookup;
+    IUnknown *unk;
+    DWORD count;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IMFTopologyServiceLookup, (void **)&service_lookup);
+    if (FAILED(hr))
+    {
+        win_skip("IMFTopologyServiceLookup is not exposed.\n");
+        IBaseFilter_Release(filter);
+        return;
+    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTopologyServiceLookup_QueryInterface(service_lookup, &IID_IBaseFilter, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(unk == (IUnknown *)filter, "Unexpected pointer.\n");
+    IUnknown_Release(unk);
+
+    count = 1;
+    hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+            &MR_VIDEO_RENDER_SERVICE, &IID_IMediaEventSink, (void **)&unk, &count);
+    ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#lx.\n", hr);
+
+    IMFTopologyServiceLookup_Release(service_lookup);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 static IMFMediaType * create_video_type(const GUID *subtype)
 {
     IMFMediaType *video_type;
@@ -3276,6 +3310,7 @@ START_TEST(evr)
     test_unconnected_eos();
     test_misc_flags();
     test_display_control();
+    test_service_lookup();
 
     test_default_mixer();
     test_default_mixer_type_negotiation();

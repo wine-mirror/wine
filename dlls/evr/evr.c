@@ -24,6 +24,7 @@
 
 #include "evr_private.h"
 #include "d3d9.h"
+#include "mferror.h"
 
 #include "initguid.h"
 #include "dxva2api.h"
@@ -38,6 +39,7 @@ struct evr
     IMFGetService IMFGetService_iface;
     IMFVideoRenderer IMFVideoRenderer_iface;
     IMediaEventSink IMediaEventSink_iface;
+    IMFTopologyServiceLookup IMFTopologyServiceLookup_iface;
 
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
@@ -114,6 +116,8 @@ static HRESULT evr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IMFVideoRenderer_iface;
     else if (IsEqualGUID(iid, &IID_IMediaEventSink))
         *out = &filter->IMediaEventSink_iface;
+    else if (IsEqualGUID(iid, &IID_IMFTopologyServiceLookup))
+        *out = &filter->IMFTopologyServiceLookup_iface;
     else
         return E_NOINTERFACE;
 
@@ -389,6 +393,46 @@ static const IMediaEventSinkVtbl filter_media_event_sink_vtbl =
     filter_media_event_sink_Notify,
 };
 
+static struct evr *impl_from_IMFTopologyServiceLookup(IMFTopologyServiceLookup *iface)
+{
+    return CONTAINING_RECORD(iface, struct evr, IMFTopologyServiceLookup_iface);
+}
+
+static HRESULT WINAPI filter_service_lookup_QueryInterface(IMFTopologyServiceLookup *iface, REFIID riid, void **obj)
+{
+    struct evr *filter = impl_from_IMFTopologyServiceLookup(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, riid, obj);
+}
+
+static ULONG WINAPI filter_service_lookup_AddRef(IMFTopologyServiceLookup *iface)
+{
+    struct evr *filter = impl_from_IMFTopologyServiceLookup(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI filter_service_lookup_Release(IMFTopologyServiceLookup *iface)
+{
+    struct evr *filter = impl_from_IMFTopologyServiceLookup(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI filter_service_lookup_LookupService(IMFTopologyServiceLookup *iface, MF_SERVICE_LOOKUP_TYPE lookup_type,
+        DWORD index, REFGUID service, REFIID riid, void **objects, DWORD *num_objects)
+{
+    FIXME("iface %p, lookup_type %d, index %lu, service %s, riid %s, objects %p, num_objects %p.\n",
+            iface, lookup_type, index, debugstr_guid(service), debugstr_guid(riid), objects, num_objects);
+
+    return MF_E_NOTACCEPTING;
+}
+
+static const IMFTopologyServiceLookupVtbl filter_service_lookup_vtbl =
+{
+    filter_service_lookup_QueryInterface,
+    filter_service_lookup_AddRef,
+    filter_service_lookup_Release,
+    filter_service_lookup_LookupService,
+};
+
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     struct evr *object;
@@ -403,6 +447,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     object->IMFGetService_iface.lpVtbl = &filter_get_service_vtbl;
     object->IMFVideoRenderer_iface.lpVtbl = &filter_video_renderer_vtbl;
     object->IMediaEventSink_iface.lpVtbl = &filter_media_event_sink_vtbl;
+    object->IMFTopologyServiceLookup_iface.lpVtbl = &filter_service_lookup_vtbl;
 
     TRACE("Created EVR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
