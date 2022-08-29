@@ -1143,8 +1143,10 @@ failed:
 BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, LPDEVMODEW devmode)
 {
     struct macdrv_display *displays = NULL;
-    int num_displays;
+    int num_displays, display_idx;
     CGDisplayModeRef display_mode;
+    CGDirectDisplayID display_id;
+    WCHAR *end;
 
     TRACE("%s, %p + %hu\n", debugstr_w(devname), devmode, devmode->dmSize);
 
@@ -1153,17 +1155,24 @@ BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, LPDEVMODEW devmode)
     if (macdrv_get_displays(&displays, &num_displays))
         return FALSE;
 
-    display_mode = CGDisplayCopyDisplayMode(displays[0].displayID);
+    display_idx = wcstol(devname + 11, &end, 10) - 1;
+    if (display_idx >= num_displays)
+    {
+        macdrv_free_displays(displays);
+        return FALSE;
+    }
 
-    /* We currently only report modes for the primary display, so it's at (0, 0). */
-    devmode->dmPosition.x = 0;
-    devmode->dmPosition.y = 0;
+    display_id = displays[display_idx].displayID;
+    display_mode = CGDisplayCopyDisplayMode(display_id);
+
+    devmode->dmPosition.x = CGRectGetMinX(displays[display_idx].frame);
+    devmode->dmPosition.y = CGRectGetMinY(displays[display_idx].frame);
     devmode->dmFields |= DM_POSITION;
 
-    display_mode_to_devmode(displays[0].displayID, display_mode, devmode);
+    display_mode_to_devmode(display_id, display_mode, devmode);
     if (retina_enabled)
     {
-        struct display_mode_descriptor *desc = create_original_display_mode_descriptor(displays[0].displayID);
+        struct display_mode_descriptor *desc = create_original_display_mode_descriptor(display_id);
         if (display_mode_matches_descriptor(display_mode, desc))
         {
             devmode->dmPelsWidth *= 2;
@@ -1175,7 +1184,8 @@ BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, LPDEVMODEW devmode)
     CFRelease(display_mode);
     macdrv_free_displays(displays);
 
-    TRACE("current mode -- %dx%dx%dbpp @%d Hz",
+    TRACE("current mode -- %dx%d-%dx%dx%dbpp @%d Hz",
+          devmode->dmPosition.x, devmode->dmPosition.y,
           devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel,
           devmode->dmDisplayFrequency);
     if (devmode->dmDisplayOrientation)
