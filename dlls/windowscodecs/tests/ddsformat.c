@@ -878,7 +878,7 @@ static void test_dds_decoder_image_parameters(void)
         hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
         ok(hr == E_INVALIDARG, "GetParameters got unexpected hr %#lx\n", hr);
 
-        if (test_data[i].init_hr != S_OK && !test_data[i].wine_init) continue;
+        if (test_data[i].init_hr != S_OK && !test_data[i].wine_init) goto next;
 
         hr = init_decoder(decoder, stream, test_data[i].init_hr, test_data[i].wine_init);
         if (hr != S_OK) {
