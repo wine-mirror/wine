@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mci);
 
 extern HMODULE MSVFW32_hModule;
 static const WCHAR mciWndClassW[] = {'M','C','I','W','n','d','C','l','a','s','s',0};
+static const WCHAR mciWndNameW[] = {'M','C','I','W','n','d','C','r','e','a','t','e',
+                                    'W','i','n','e','I','n','t','e','r','n','a','l', 0};
 
 typedef struct
 {
@@ -113,7 +115,7 @@ HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
     else
         dwStyle |= WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
-    return CreateWindowExW(0, mciWndClassW, NULL,
+    return CreateWindowExW(0, mciWndClassW, mciWndNameW,
                            dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                            0, 0, 300, 0,
                            hwndParent, 0, hInstance, (LPVOID)szFile);
@@ -314,8 +316,9 @@ static LRESULT MCIWND_Create(HWND hWnd, LPCREATESTRUCTW cs)
         else
             lParam = (LPARAM)cs->lpCreateParams;
 
-        /* If it's our internal class pointer, file name is a unicode string */
-        if (cs->lpszClass == mciWndClassW)
+        /* If it's our internal window name, we are being called from MCIWndCreateA/W,
+         * so file name is a unicode string */
+        if (!lstrcmpW(cs->lpszName, mciWndNameW))
             SendMessageW(hWnd, MCIWNDM_OPENW, 0, lParam);
         else
         {

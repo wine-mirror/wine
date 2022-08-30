@@ -160,7 +160,7 @@ static struct {
     const WCHAR* expectedW;
     /* output */
     unsigned open_msg;
-    enum {NO_MATCH, PTR_ANSI_MATCH, PTR_UNICODE_MATCH, ANSI_MATCH, UNICODE_MATCH, TODO_WINE = 0x40} match;
+    enum {NO_MATCH, PTR_ANSI_MATCH, PTR_UNICODE_MATCH, ANSI_MATCH, UNICODE_MATCH } match;
 } wnd_creation;
 
 static WNDPROC old_MCIWndProc;
@@ -217,7 +217,7 @@ static void test_window_create(unsigned line, const char* fname, HWND parent,
     HWND window;
     char error[200];
     LRESULT ret;
-    BOOL expect_ansi = (match & ~TODO_WINE) == PTR_ANSI_MATCH || (match & ~TODO_WINE) == ANSI_MATCH;
+    BOOL expect_ansi = match == PTR_ANSI_MATCH || match == ANSI_MATCH;
 
     MultiByteToWideChar(CP_ACP, 0, fname, -1, fnameW, ARRAY_SIZE(fnameW));
 
@@ -247,15 +247,13 @@ static void test_window_create(unsigned line, const char* fname, HWND parent,
                                      parent, 0, hinst, expect_ansi ? (LPVOID)fname : (LPVOID)fnameW);
     }
     ok_(__FILE__, line)(window != NULL, "Failed to create an MCIWnd window\n");
-    ok_(__FILE__, line)(wnd_creation.match == (match & ~TODO_WINE), "unexpected match %u\n", wnd_creation.match);
-    todo_wine_if(match & TODO_WINE)
+    ok_(__FILE__, line)(wnd_creation.match == match, "unexpected match %u\n", wnd_creation.match);
     ok_(__FILE__, line)((expect_ansi && wnd_creation.open_msg == MCIWNDM_OPENA) ||
                         (!expect_ansi && wnd_creation.open_msg == MCIWNDM_OPENW),
                         "bad open message %u %s%u\n", match,
                         wnd_creation.open_msg >= WM_USER ? "WM_USER+" : "",
                         wnd_creation.open_msg >= WM_USER ? wnd_creation.open_msg - WM_USER : wnd_creation.open_msg);
     ret = SendMessageA(window, MCIWNDM_GETERRORA, sizeof(error), (LPARAM)error);
-    todo_wine_if(match & TODO_WINE)
     ok_(__FILE__, line)(!ret || broken(ret == ERROR_INVALID_HANDLE) /* w2003std, w2008s64 */,
                         "Unexpected error %Id\n", ret);
     DestroyWindow(window);
@@ -275,8 +273,8 @@ static void test_MCIWndCreate(void)
 
     hook = SetWindowsHookExW( WH_CBT, hook_proc, NULL, GetCurrentThreadId() );
 
-    test_window_create( __LINE__, fname, NULL, TRUE,  TRUE,  UNICODE_MATCH | TODO_WINE );
-    test_window_create( __LINE__, fname, NULL, TRUE,  FALSE, PTR_UNICODE_MATCH | TODO_WINE );
+    test_window_create( __LINE__, fname, NULL, TRUE,  TRUE,  UNICODE_MATCH );
+    test_window_create( __LINE__, fname, NULL, TRUE,  FALSE, PTR_UNICODE_MATCH );
     test_window_create( __LINE__, fname, NULL, FALSE, TRUE,  PTR_ANSI_MATCH );
     test_window_create( __LINE__, fname, NULL, FALSE, FALSE, PTR_ANSI_MATCH );
 
@@ -286,8 +284,8 @@ static void test_MCIWndCreate(void)
     ok(parent != NULL, "Failed to create a window\n");
     ok(!IsWindowUnicode(parent), "Expecting ansi parent window\n");
 
-    test_window_create( __LINE__, fname, parent, TRUE,  TRUE,  UNICODE_MATCH | TODO_WINE );
-    test_window_create( __LINE__, fname, parent, TRUE,  FALSE, PTR_UNICODE_MATCH | TODO_WINE );
+    test_window_create( __LINE__, fname, parent, TRUE,  TRUE,  UNICODE_MATCH );
+    test_window_create( __LINE__, fname, parent, TRUE,  FALSE, PTR_UNICODE_MATCH );
     test_window_create( __LINE__, fname, parent, FALSE, TRUE,  PTR_ANSI_MATCH );
     test_window_create( __LINE__, fname, parent, FALSE, FALSE, PTR_ANSI_MATCH );
 
