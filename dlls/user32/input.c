@@ -649,7 +649,7 @@ UINT WINAPI GetRawInputDeviceInfoA( HANDLE device, UINT command, void *data, UIN
  */
 LRESULT WINAPI DefRawInputProc( RAWINPUT **data, INT data_count, UINT header_size )
 {
-    FIXME( "data %p, data_count %d, header_size %u stub!\n", data, data_count, header_size );
+    TRACE( "data %p, data_count %d, header_size %u.\n", data, data_count, header_size );
 
-    return 0;
+    return header_size == sizeof(RAWINPUTHEADER) ? 0 : -1;
 }

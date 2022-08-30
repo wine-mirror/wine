@@ -2900,6 +2900,25 @@ static void test_rawinput(const char* argv0)
     CloseDesktop(params.desk);
 }
 
+static void test_DefRawInputProc(void)
+{
+    LRESULT ret;
+
+    SetLastError(0xdeadbeef);
+    ret = DefRawInputProc(NULL, 0, sizeof(RAWINPUTHEADER));
+    ok(!ret, "got %Id\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
+    ret = DefRawInputProc(LongToPtr(0xcafe), 0xbeef, sizeof(RAWINPUTHEADER));
+    ok(!ret, "got %Id\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
+    ret = DefRawInputProc(NULL, 0, sizeof(RAWINPUTHEADER) - 1);
+    ok(ret == -1, "got %Id\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
+    ret = DefRawInputProc(NULL, 0, sizeof(RAWINPUTHEADER) + 1);
+    ok(ret == -1, "got %Id\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
+}
+
 static void test_key_map(void)
 {
     HKL kl = GetKeyboardLayout(0);
@@ -4589,6 +4608,7 @@ START_TEST(input)
     test_GetRawInputBuffer();
     test_RegisterRawInputDevices();
     test_rawinput(argv[0]);
+    test_DefRawInputProc();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx(argv[0]);
