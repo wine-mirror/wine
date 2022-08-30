@@ -164,25 +164,19 @@ extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine
 
 #if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
 # define __wine_dbg_cdecl __cdecl
-# define __wine_dbg_va_list __builtin_ms_va_list
-# define __wine_dbg_va_start(list,arg) __builtin_ms_va_start(list,arg)
-# define __wine_dbg_va_end(list) __builtin_ms_va_end(list)
 #else
 # define __wine_dbg_cdecl
-# define __wine_dbg_va_list va_list
-# define __wine_dbg_va_start(list,arg) va_start(list,arg)
-# define __wine_dbg_va_end(list) va_end(list)
 #endif
 
 static const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... )
 {
     char buffer[200];
-    __wine_dbg_va_list args;
+    va_list args;
 
-    __wine_dbg_va_start( args, format );
+    va_start( args, format );
     vsnprintf( buffer, sizeof(buffer), format, args );
-    __wine_dbg_va_end( args );
+    va_end( args );
     return __wine_dbg_strdup( buffer );
 }
 
@@ -190,11 +184,11 @@ static int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... ) __WINE_PR
 static inline int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... )
 {
     char buffer[1024];
-    __wine_dbg_va_list args;
+    va_list args;
 
-    __wine_dbg_va_start( args, format );
+    va_start( args, format );
     vsnprintf( buffer, sizeof(buffer), format, args );
-    __wine_dbg_va_end( args );
+    va_end( args );
     return __wine_dbg_output( buffer );
 }
 
@@ -206,7 +200,7 @@ static inline int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
                                                  const char *function, const char *format, ... )
 {
     char buffer[1024];
-    __wine_dbg_va_list args;
+    va_list args;
     int ret;
 
     if (*format == '\1')  /* special magic to avoid standard prefix */
@@ -216,9 +210,9 @@ static inline int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
     }
     if ((ret = __wine_dbg_header( cls, channel, function )) == -1) return ret;
 
-    __wine_dbg_va_start( args, format );
+    va_start( args, format );
     vsnprintf( buffer, sizeof(buffer), format, args );
-    __wine_dbg_va_end( args );
+    va_end( args );
     ret += __wine_dbg_output( buffer );
     return ret;
 }
