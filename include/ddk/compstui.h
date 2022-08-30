@@ -440,6 +440,15 @@ extern "C" {
 /* TYPES */
 typedef LONG_PTR (CALLBACK *PFNCOMPROPSHEET)(HANDLE, UINT, LPARAM, LPARAM);
 
+
+typedef struct _PSPINFO {
+    WORD            cbSize;
+    WORD            wReserved;
+    HANDLE          hComPropSheet;
+    HANDLE          hCPSUIPage;
+    PFNCOMPROPSHEET pfnComPropSheet;
+} PSPINFO, *PPSPINFO;
+
 typedef struct _PROPSHEETUI_INFO {
     WORD            cbSize;
     WORD            Version;

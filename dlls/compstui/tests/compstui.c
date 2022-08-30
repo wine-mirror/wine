@@ -45,6 +45,29 @@ static INT_PTR CALLBACK prop_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
     return FALSE;
 }
 
+static INT_PTR CALLBACK prop_page_proc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        PROPSHEETPAGEW *psp = (PROPSHEETPAGEW*)lparam;
+        PSPINFO *info = (PSPINFO*)((BYTE*)lparam + psp->dwSize);
+        HWND dlg = GetParent(hwnd);
+
+        ok(psp->dwSize == sizeof(PROPSHEETPAGEW), "psp->dwSize = %ld\n", psp->dwSize);
+        ok(psp->pfnDlgProc == prop_page_proc2, "psp->pfnDlgProc != prop_page_proc2\n");
+        ok(!psp->lParam, "psp->lParam = %Ix\n", psp->lParam);
+
+        ok(info->cbSize == sizeof(*info), "info->cbSize = %hd\n", info->cbSize);
+        ok(!info->wReserved, "info->wReserved = %hd\n", info->wReserved);
+        ok(info->hComPropSheet != NULL, "info->hComPropSheet = NULL\n");
+        ok(info->hCPSUIPage != NULL, "info->hCPSUIPage = NULL\n");
+        ok(info->pfnComPropSheet != NULL, "info->pfnComPropSheet = NULL\n");
+
+        PostMessageW(dlg, PSM_SETCURSEL, 1, 0);
+    }
+    return FALSE;
+}
+
 static LONG WINAPI device_property_sheets(PROPSHEETUI_INFO *info, LPARAM lparam)
 {
     ok(info->cbSize == sizeof(*info), "info->cbSize = %hd\n", info->cbSize);
@@ -121,6 +144,10 @@ static LONG WINAPI propsheetui_callback(PROPSHEETUI_INFO *info, LPARAM lparam)
             memset(&psp, 0, sizeof(psp));
             psp.dwSize = sizeof(psp);
             U(psp).pszTemplate = L"prop_page1";
+            psp.pfnDlgProc = prop_page_proc2;
+            ret = info->pfnComPropSheet(info->hComPropSheet, CPSFUNC_ADD_PROPSHEETPAGEW, (LPARAM)&psp, 0);
+            ok(ret, "ret = 0\n");
+
             psp.pfnDlgProc = prop_page_proc;
             hpsp = CreatePropertySheetPageW(&psp);
             ok(hpsp != NULL, "hpsp = %p\n", hpsp);

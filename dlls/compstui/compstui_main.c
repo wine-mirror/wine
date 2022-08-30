@@ -28,7 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "prsht.h"
+#include "commctrl.h"
 #include "ddk/compstui.h"
 
 #include "wine/debug.h"
@@ -66,6 +66,7 @@ struct propsheet
 struct propsheetpage
 {
     HPROPSHEETPAGE hpsp;
+    DLGPROC dlg_proc;
 };
 
 struct propsheetfunc
@@ -260,6 +261,130 @@ static HANDLE add_propsheetfunc(HANDLE hcps, PFNPROPSHEETUI func, LPARAM lparam,
     return ret;
 }
 
+static HANDLE add_propsheetpage(HANDLE hcps, void *psp, PSPINFO *info,
+        DLGPROC dlg_proc, BOOL unicode)
+{
+    struct cps_data *cps_data = get_handle_data(hcps);
+    struct cps_data *cpsp_data;
+    HPROPSHEETPAGE hpsp;
+    HANDLE ret;
+
+    if (!cps_data)
+        return 0;
+
+    if (cps_data->type != HANDLE_PROPSHEET)
+    {
+        FIXME("unsupported handle type %d\n", cps_data->type);
+        return 0;
+    }
+
+    if (cps_data->ps->pages_cnt == ARRAY_SIZE(cps_data->ps->pages))
+        return 0;
+
+    ret = alloc_handle(&cpsp_data, HANDLE_PROPSHEETPAGE);
+    if (!ret)
+        return 0;
+
+    info->cbSize = sizeof(*info);
+    info->wReserved = 0;
+    info->hComPropSheet = hcps;
+    info->hCPSUIPage = ret;
+    info->pfnComPropSheet = cps_callback;
+
+    if (unicode)
+        hpsp = CreatePropertySheetPageW((PROPSHEETPAGEW*)psp);
+    else
+        hpsp = CreatePropertySheetPageA((PROPSHEETPAGEA*)psp);
+    if (!hpsp)
+    {
+        free_handle(ret);
+        return 0;
+    }
+
+    cpsp_data->psp->hpsp = hpsp;
+    cpsp_data->psp->dlg_proc = dlg_proc;
+    cps_data->ps->pages[cps_data->ps->pages_cnt++] = ret;
+    return ret;
+}
+
+static INT_PTR CALLBACK propsheetpage_dlg_procW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        PROPSHEETPAGEW *psp = (PROPSHEETPAGEW*)lparam;
+        PSPINFO *info = (PSPINFO*)((BYTE*)lparam + psp->dwSize - sizeof(*info));
+        struct cps_data *cpsp_data = get_handle_data(info->hCPSUIPage);
+
+        psp->dwSize -= sizeof(*info);
+        psp->pfnDlgProc = cpsp_data->psp->dlg_proc;
+        SetWindowLongPtrW(hwnd, DWLP_DLGPROC, (LONG_PTR)psp->pfnDlgProc);
+        return psp->pfnDlgProc(hwnd, msg, wparam, lparam);
+    }
+
+    return FALSE;
+}
+
+static HANDLE add_propsheetpageW(HANDLE hcps, PROPSHEETPAGEW *psp)
+{
+    PROPSHEETPAGEW *psp_copy;
+    PSPINFO *info;
+    HANDLE ret;
+
+    if (!psp || psp->dwSize < PROPSHEETPAGEW_V1_SIZE)
+        return 0;
+
+    psp_copy = (PROPSHEETPAGEW*)malloc(psp->dwSize + sizeof(*info));
+    if (!psp_copy)
+        return 0;
+    memcpy(psp_copy, psp, psp->dwSize);
+    psp_copy->dwSize += sizeof(*info);
+    psp_copy->pfnDlgProc = propsheetpage_dlg_procW;
+
+    info = (PSPINFO*)((BYTE*)psp_copy + psp->dwSize);
+    ret = add_propsheetpage(hcps, psp_copy, info, psp->pfnDlgProc, TRUE);
+    free(psp_copy);
+    return ret;
+}
+
+static INT_PTR CALLBACK propsheetpage_dlg_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        PROPSHEETPAGEA *psp = (PROPSHEETPAGEA*)lparam;
+        PSPINFO *info = (PSPINFO*)((BYTE*)lparam + psp->dwSize - sizeof(*info));
+        struct cps_data *cpsp_data = get_handle_data(info->hCPSUIPage);
+
+        psp->dwSize -= sizeof(*info);
+        psp->pfnDlgProc = cpsp_data->psp->dlg_proc;
+        SetWindowLongPtrA(hwnd, DWLP_DLGPROC, (LONG_PTR)psp->pfnDlgProc);
+        return psp->pfnDlgProc(hwnd, msg, wparam, lparam);
+    }
+
+    return FALSE;
+}
+
+static HANDLE add_propsheetpageA(HANDLE hcps, PROPSHEETPAGEA *psp)
+{
+    PROPSHEETPAGEA *psp_copy;
+    PSPINFO *info;
+    HANDLE ret;
+
+    if (!psp || psp->dwSize < PROPSHEETPAGEW_V1_SIZE)
+        return 0;
+
+    psp_copy = (PROPSHEETPAGEA*)malloc(psp->dwSize + sizeof(*info));
+    if (!psp_copy)
+        return 0;
+    memcpy(psp_copy, psp, psp->dwSize);
+    psp_copy->dwSize += sizeof(*info);
+    psp_copy->pfnDlgProc = propsheetpage_dlg_procA;
+
+    info = (PSPINFO*)((BYTE*)psp_copy + psp->dwSize);
+    ret = add_propsheetpage(hcps, psp_copy, info, psp->pfnDlgProc, FALSE);
+    free(psp_copy);
+    return ret;
+}
+
 static LONG_PTR WINAPI cps_callback(HANDLE hcps, UINT func, LPARAM lparam1, LPARAM lparam2)
 {
     TRACE("(%p, %u, %Ix, %Ix\n", hcps, func, lparam1, lparam2);
@@ -272,7 +397,10 @@ static LONG_PTR WINAPI cps_callback(HANDLE hcps, UINT func, LPARAM lparam1, LPAR
     case CPSFUNC_ADD_PFNPROPSHEETUIW:
         return (LONG_PTR)add_propsheetfunc(hcps, (PFNPROPSHEETUI)lparam1,
                 lparam2, func == CPSFUNC_ADD_PFNPROPSHEETUIW);
+    case CPSFUNC_ADD_PROPSHEETPAGEA:
+        return (LONG_PTR)add_propsheetpageA(hcps, (PROPSHEETPAGEA*)lparam1);
     case CPSFUNC_ADD_PROPSHEETPAGEW:
+        return (LONG_PTR)add_propsheetpageW(hcps, (PROPSHEETPAGEW*)lparam1);
     case CPSFUNC_ADD_PCOMPROPSHEETUIA:
     case CPSFUNC_ADD_PCOMPROPSHEETUIW:
     case CPSFUNC_DELETE_HCOMPROPSHEET:
@@ -284,7 +412,6 @@ static LONG_PTR WINAPI cps_callback(HANDLE hcps, UINT func, LPARAM lparam1, LPAR
     case CPSFUNC_LOAD_CPSUI_STRINGW:
     case CPSFUNC_LOAD_CPSUI_ICON:
     case CPSFUNC_GET_PFNPROPSHEETUI_ICON:
-    case CPSFUNC_ADD_PROPSHEETPAGEA:
     case CPSFUNC_INSERT_PSUIPAGEA:
     case CPSFUNC_INSERT_PSUIPAGEW:
     case CPSFUNC_SET_PSUIPAGE_TITLEA:
