@@ -3958,6 +3958,40 @@ static void test_create_effect_from_resource(void)
     ok(!refcount, "Unexpected refcount.\n");
 }
 
+static void test_preprocess_shader(void)
+{
+    static const char shader_source[] =
+        "float4 main()\n"
+        "{\n"
+        "    return float4(1.0);\n"
+        "}\n";
+    ID3D10Blob *preprocessed, *errors;
+    HRESULT hr, hr2;
+
+    hr2 = 0xdeadbeef;
+    hr = D3DX10PreprocessShaderFromMemory(NULL, 0, NULL, NULL, NULL,
+            NULL, &preprocessed, &errors, &hr2);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(hr2 == 0xdeadbeef, "Unexpected hr2 %#lx.\n", hr2);
+
+    hr2 = 0xdeadbeef;
+    hr = D3DX10PreprocessShaderFromMemory(shader_source, strlen(shader_source), NULL, NULL, NULL,
+            NULL, &preprocessed, &errors, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!preprocessed, "Unexpected preprocessed %p.\n", preprocessed);
+    ok(!errors, "Unexpected errors %p.\n", errors);
+    ID3D10Blob_Release(preprocessed);
+
+    hr2 = 0xdeadbeef;
+    hr = D3DX10PreprocessShaderFromMemory(shader_source, strlen(shader_source), NULL, NULL, NULL,
+            NULL, &preprocessed, &errors, &hr2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == hr2, "Unexpected hr2 %#lx.\n", hr2);
+    ok(!!preprocessed, "Unexpected preprocessed %p.\n", preprocessed);
+    ok(!errors, "Unexpected errors %p.\n", errors);
+    ID3D10Blob_Release(preprocessed);
+}
+
 START_TEST(d3dx10)
 {
     test_D3DX10UnsetAllDeviceObjects();
@@ -3972,4 +4006,5 @@ START_TEST(d3dx10)
     test_font();
     test_sprite();
     test_create_effect_from_resource();
+    test_preprocess_shader();
 }
