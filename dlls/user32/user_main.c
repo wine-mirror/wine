@@ -222,10 +222,8 @@ static BOOL process_attach(void)
 {
     NtCurrentTeb()->Peb->KernelCallbackTable = kernel_callback_table;
 
-    dpiaware_init();
     winproc_init();
-
-    /* Initialize system colors and metrics */
+    dpiaware_init();
     SYSPARAMS_Init();
 
     return TRUE;
