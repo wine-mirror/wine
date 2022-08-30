@@ -150,8 +150,8 @@ static inline unsigned int list_count( const struct list *list )
     return count;
 }
 
-/* move all elements from src to the tail of dst */
-static inline void list_move_tail( struct list *dst, struct list *src )
+/* move all elements from src to before the specified element */
+static inline void list_move_before( struct list *dst, struct list *src )
 {
     if (list_empty(src)) return;
 
@@ -162,8 +162,8 @@ static inline void list_move_tail( struct list *dst, struct list *src )
     list_init(src);
 }
 
-/* move all elements from src to the head of dst */
-static inline void list_move_head( struct list *dst, struct list *src )
+/* move all elements from src to after the specified element */
+static inline void list_move_after( struct list *dst, struct list *src )
 {
     if (list_empty(src)) return;
 
@@ -172,6 +172,18 @@ static inline void list_move_head( struct list *dst, struct list *src )
     dst->next = src->next;
     src->next->prev = dst;
     list_init(src);
+}
+
+/* move all elements from src to the head of dst */
+static inline void list_move_head( struct list *dst, struct list *src )
+{
+    list_move_after( dst, src );
+}
+
+/* move all elements from src to the tail of dst */
+static inline void list_move_tail( struct list *dst, struct list *src )
+{
+    list_move_before( dst, src );
 }
 
 /* iterate through the list */
