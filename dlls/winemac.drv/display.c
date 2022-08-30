@@ -840,6 +840,11 @@ LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
         devname = primary_adapter;
         devmode = &default_mode;
     }
+    else if (wcsicmp(primary_adapter, devname))
+    {
+        FIXME("Changing non-primary adapter settings is currently unsupported.\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
 
     if (is_detached_mode(devmode))
     {
@@ -880,11 +885,6 @@ LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     if (best_display_mode)
     {
         if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
-        else if (wcsicmp(primary_adapter, devname))
-        {
-            FIXME("Changing non-primary adapter settings is currently unsupported.\n");
-            ret = DISP_CHANGE_SUCCESSFUL;
-        }
         else if (macdrv_set_display_mode(&displays[0], best_display_mode))
         {
             int mode_bpp = display_mode_bits_per_pixel(best_display_mode);
