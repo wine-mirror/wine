@@ -223,7 +223,7 @@ static void test_HTMLStorage(void)
 
     hres = IHTMLStorage_get_length(storage, &length);
     ok(hres == S_OK, "get_length failed %08lx\n", hres);
-    ok(length >= 0, "length = %ld\n", lval);
+    ok(length >= 0, "length = %ld\n", length);
 
     value = SysAllocString(L"null");
     hres = IHTMLStorage_setItem(storage, key, value);
