@@ -437,7 +437,7 @@ static HRESULT WINAPI filter_get_service_GetService(IMFGetService *iface, REFGUI
 {
     struct evr *filter = impl_from_IMFGetService(iface);
     HRESULT hr = E_NOINTERFACE;
-    IMFGetService *gs;
+    IMFGetService *gs = NULL;
 
     TRACE("iface %p, service %s, riid %s, obj %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
 
