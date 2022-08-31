@@ -302,6 +302,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module )
         if (thread_info->hook_call_depth >= 25)
         {
             WARN("Too many hooks called recursively, skipping call.\n");
+            if (params != info) free( params );
             return 0;
         }
 
