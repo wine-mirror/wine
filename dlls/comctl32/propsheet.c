@@ -198,6 +198,139 @@ static WCHAR *heap_strdupAtoW(const char *str)
     return ret;
 }
 
+/*
+ * Get the size of an in-memory template
+ *
+ *( Based on the code of PROPSHEET_CollectPageInfo)
+ * See also dialog.c/DIALOG_ParseTemplate32().
+ */
+
+static UINT get_template_size(const DLGTEMPLATE *template)
+{
+    const WORD *p = (const WORD *)template;
+    BOOL istemplateex = ((const MyDLGTEMPLATEEX *)template)->signature == 0xFFFF;
+    WORD nitems;
+    UINT ret;
+
+    if (istemplateex)
+    {
+        /* DLGTEMPLATEEX (not defined in any std. header file) */
+        TRACE("is DLGTEMPLATEEX\n");
+        p++;       /* dlgVer */
+        p++;       /* signature */
+        p += 2;    /* help ID */
+        p += 2;    /* ext style */
+        p += 2;    /* style */
+    }
+    else
+    {
+        /* DLGTEMPLATE */
+        TRACE("is DLGTEMPLATE\n");
+        p += 2;    /* style */
+        p += 2;    /* ext style */
+    }
+
+    nitems = *p;
+    p++;    /* nb items */
+    p++;    /* x */
+    p++;    /* y */
+    p++;    /* width */
+    p++;    /* height */
+
+    /* menu */
+    switch (*p)
+    {
+    case 0x0000:
+        p++;
+        break;
+    case 0xffff:
+        p += 2;
+        break;
+    default:
+        TRACE("menu %s\n", debugstr_w( p ));
+        p += lstrlenW( p ) + 1;
+        break;
+    }
+
+    /* class */
+    switch (*p)
+    {
+    case 0x0000:
+        p++;
+        break;
+    case 0xffff:
+        p += 2; /* 0xffff plus predefined window class ordinal value */
+        break;
+    default:
+        TRACE("class %s\n", debugstr_w( p ));
+        p += lstrlenW( p ) + 1;
+        break;
+    }
+
+    /* title */
+    TRACE("title %s\n", debugstr_w( p ));
+    p += lstrlenW( p ) + 1;
+
+    /* font, if DS_SETFONT set */
+    if ((DS_SETFONT & ((istemplateex) ? ((const MyDLGTEMPLATEEX *)template)->style :
+                    template->style)))
+    {
+        p += istemplateex ? 3 : 1;
+        TRACE("font %s\n", debugstr_w( p ));
+        p += lstrlenW( p ) + 1; /* the font name */
+    }
+
+    /* now process the DLGITEMTEMPLATE(EX) structs (plus custom data)
+     * that are following the DLGTEMPLATE(EX) data */
+    TRACE("%d items\n", nitems);
+    while (nitems > 0)
+    {
+        p = (WORD*)(((DWORD_PTR)p + 3) & ~3); /* DWORD align */
+
+        /* skip header */
+        p += (istemplateex ? sizeof(MyDLGITEMTEMPLATEEX) : sizeof(DLGITEMTEMPLATE))
+            / sizeof(WORD);
+
+        /* check class */
+        switch (*p)
+        {
+        case 0x0000:
+            p++;
+            break;
+        case 0xffff:
+            TRACE("class ordinal %#lx\n", *(const DWORD *)p);
+            p += 2;
+            break;
+        default:
+            TRACE("class %s\n", debugstr_w( p ));
+            p += lstrlenW( p ) + 1;
+            break;
+        }
+
+        /* check title text */
+        switch (*p)
+        {
+        case 0x0000:
+            p++;
+            break;
+        case 0xffff:
+            TRACE("text ordinal %#lx\n",*(const DWORD *)p);
+            p += 2;
+            break;
+        default:
+            TRACE("text %s\n",debugstr_w( p ));
+            p += lstrlenW( p ) + 1;
+            break;
+        }
+        p += *p / sizeof(WORD) + 1;    /* Skip extra data */
+        --nitems;
+    }
+
+    ret = (p - (const WORD *)template) * sizeof(WORD);
+    TRACE("%p %p size 0x%08x\n", p, template, ret);
+    return ret;
+}
+
 static DWORD HPSP_get_flags(HPROPSHEETPAGE hpsp)
 {
     if (!hpsp) return 0;
@@ -211,6 +344,36 @@ static void HPSP_call_callback(HPROPSHEETPAGE hpsp, UINT msg)
         return;
 
     hpsp->psp.pfnCallback(0, msg, &hpsp->callback_psp);
+}
+
+static const DLGTEMPLATE* HPSP_load_template(HPROPSHEETPAGE hpsp, DWORD *size)
+{
+    HGLOBAL template;
+    HRSRC res;
+
+    if (hpsp->psp.dwFlags & PSP_DLGINDIRECT)
+    {
+        if (size)
+            *size = get_template_size(hpsp->psp.u.pResource);
+        return hpsp->psp.u.pResource;
+    }
+
+    if (hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
+    {
+        res = FindResourceW(hpsp->psp.hInstance, hpsp->psp.u.pszTemplate,
+                (LPWSTR)RT_DIALOG);
+    }
+    else
+    {
+        res = FindResourceA(hpsp->psp.hInstance,
+                (LPCSTR)hpsp->psp.u.pszTemplate, (LPSTR)RT_DIALOG);
+    }
+
+    if (size)
+        *size = SizeofResource(hpsp->psp.hInstance, res);
+
+    template = LoadResource(hpsp->psp.hInstance, res);
+    return LockResource(template);
 }
 
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
@@ -443,26 +606,7 @@ static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
   /*
    * Process page template.
    */
-  if (dwFlags & PSP_DLGINDIRECT)
-    pTemplate = hpsp->psp.u.pResource;
-  else if(dwFlags & PSP_INTERNAL_UNICODE )
-  {
-    HRSRC hResource = FindResourceW(hpsp->psp.hInstance,
-                                    hpsp->psp.u.pszTemplate,
-                                    (LPWSTR)RT_DIALOG);
-    HGLOBAL hTemplate = LoadResource(hpsp->psp.hInstance,
-                                     hResource);
-    pTemplate = LockResource(hTemplate);
-  }
-  else
-  {
-    HRSRC hResource = FindResourceA(hpsp->psp.hInstance,
-                                    (LPCSTR)hpsp->psp.u.pszTemplate,
-                                    (LPSTR)RT_DIALOG);
-    HGLOBAL hTemplate = LoadResource(hpsp->psp.hInstance,
-                                     hResource);
-    pTemplate = LockResource(hTemplate);
-  }
+  pTemplate = HPSP_load_template(hpsp, NULL);
 
   /*
    * Extract the size of the page and the caption.
@@ -1210,140 +1354,6 @@ PROPSHEET_WizardSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
   return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
-/*
- * Get the size of an in-memory Template
- *
- *( Based on the code of PROPSHEET_CollectPageInfo)
- * See also dialog.c/DIALOG_ParseTemplate32().
- */
-
-static UINT GetTemplateSize(const DLGTEMPLATE* pTemplate)
-
-{
-  const WORD*  p = (const WORD *)pTemplate;
-  BOOL  istemplateex = (((const MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF);
-  WORD nrofitems;
-  UINT ret;
-
-  if (istemplateex)
-  {
-    /* DLGTEMPLATEEX (not defined in any std. header file) */
-
-    TRACE("is DLGTEMPLATEEX\n");
-    p++;       /* dlgVer    */
-    p++;       /* signature */
-    p += 2;    /* help ID   */
-    p += 2;    /* ext style */
-    p += 2;    /* style     */
-  }
-  else
-  {
-    /* DLGTEMPLATE */
-
-    TRACE("is DLGTEMPLATE\n");
-    p += 2;    /* style     */
-    p += 2;    /* ext style */
-  }
-
-  nrofitems =   (WORD)*p; p++;    /* nb items */
-  p++;    /*   x      */
-  p++;    /*   y      */
-  p++;    /*   width  */
-  p++;    /*   height */
-
-  /* menu */
-  switch ((WORD)*p)
-  {
-    case 0x0000:
-      p++;
-      break;
-    case 0xffff:
-      p += 2;
-      break;
-    default:
-      TRACE("menu %s\n",debugstr_w( p ));
-      p += lstrlenW( p ) + 1;
-      break;
-  }
-
-  /* class */
-  switch ((WORD)*p)
-  {
-    case 0x0000:
-      p++;
-      break;
-    case 0xffff:
-      p += 2; /* 0xffff plus predefined window class ordinal value */
-      break;
-    default:
-      TRACE("class %s\n",debugstr_w( p ));
-      p += lstrlenW( p ) + 1;
-      break;
-  }
-
-  /* title */
-  TRACE("title %s\n",debugstr_w( p ));
-  p += lstrlenW( p ) + 1;
-
-  /* font, if DS_SETFONT set */
-  if ((DS_SETFONT & ((istemplateex)?  ((const MyDLGTEMPLATEEX*)pTemplate)->style :
-		     pTemplate->style)))
-    {
-      p+=(istemplateex)?3:1;
-      TRACE("font %s\n",debugstr_w( p ));
-      p += lstrlenW( p ) + 1; /* the font name */
-    }
-
-  /* now process the DLGITEMTEMPLATE(EX) structs (plus custom data)
-   * that are following the DLGTEMPLATE(EX) data */
-  TRACE("%d items\n",nrofitems);
-  while (nrofitems > 0)
-    {
-      p = (WORD*)(((DWORD_PTR)p + 3) & ~3); /* DWORD align */
-      
-      /* skip header */
-      p += (istemplateex ? sizeof(MyDLGITEMTEMPLATEEX) : sizeof(DLGITEMTEMPLATE))/sizeof(WORD);
-      
-      /* check class */
-      switch ((WORD)*p)
-	{
-	case 0x0000:
-	  p++;
-	  break;
-	case 0xffff:
-          TRACE("class ordinal %#lx\n",*(const DWORD*)p);
-	  p += 2;
-	  break;
-	default:
-	  TRACE("class %s\n",debugstr_w( p ));
-	  p += lstrlenW( p ) + 1;
-	  break;
-	}
-
-      /* check title text */
-      switch ((WORD)*p)
-	{
-	case 0x0000:
-	  p++;
-	  break;
-	case 0xffff:
-          TRACE("text ordinal %#lx\n",*(const DWORD*)p);
-	  p += 2;
-	  break;
-	default:
-	  TRACE("text %s\n",debugstr_w( p ));
-	  p += lstrlenW( p ) + 1;
-	  break;
-	}
-      p += *p / sizeof(WORD) + 1;    /* Skip extra data */
-      --nrofitems;
-    }
-  
-  ret = (p - (const WORD*)pTemplate) * sizeof(WORD);
-  TRACE("%p %p size 0x%08x\n", p, pTemplate, ret);
-  return ret;
-}
-
 /******************************************************************************
  *            PROPSHEET_CreatePage
  *
@@ -1366,55 +1376,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     return FALSE;
   }
 
-  if (HPSP_get_flags(hpsp) & PSP_DLGINDIRECT)
-    {
-      pTemplate = hpsp->psp.u.pResource;
-      resSize = GetTemplateSize(pTemplate);
-    }
-  else if(HPSP_get_flags(hpsp) & PSP_INTERNAL_UNICODE)
-  {
-    HRSRC hResource;
-    HANDLE hTemplate;
-
-    hResource = FindResourceW(hpsp->psp.hInstance,
-                                    hpsp->psp.u.pszTemplate,
-                                    (LPWSTR)RT_DIALOG);
-    if(!hResource)
-	return FALSE;
-
-    resSize = SizeofResource(hpsp->psp.hInstance, hResource);
-
-    hTemplate = LoadResource(hpsp->psp.hInstance, hResource);
-    if(!hTemplate)
-	return FALSE;
-
-    pTemplate = LockResource(hTemplate);
-    /*
-     * Make a copy of the dialog template to make it writable
-     */
-  }
-  else
-  {
-    HRSRC hResource;
-    HANDLE hTemplate;
-
-    hResource = FindResourceA(hpsp->psp.hInstance,
-                                    (LPCSTR)hpsp->psp.u.pszTemplate,
-                                    (LPSTR)RT_DIALOG);
-    if(!hResource)
-	return FALSE;
-
-    resSize = SizeofResource(hpsp->psp.hInstance, hResource);
-
-    hTemplate = LoadResource(hpsp->psp.hInstance, hResource);
-    if(!hTemplate)
-	return FALSE;
-
-    pTemplate = LockResource(hTemplate);
-    /*
-     * Make a copy of the dialog template to make it writable
-     */
-  }
+  pTemplate = HPSP_load_template(hpsp, &resSize);
   pTemplateCopy = Alloc(resSize);
   if (!pTemplateCopy)
     return FALSE;
