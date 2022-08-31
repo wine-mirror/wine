@@ -20,7 +20,7 @@
     - export PATH="/usr/lib/ccache:$PATH"
     - mkdir -p build32 build64
 
-build-all:
+build-linux:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -31,7 +31,7 @@ build-all:
       - build32/config.log
   script:
     - rm -fr .git/rebase-merge  # in case a previous CI run failed in git rebase
-    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-all
+    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
 
 build-mac:
   extends: .wine-build
