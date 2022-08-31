@@ -106,7 +106,6 @@ typedef struct tagPropPageInfo
   BOOL isDirty;
   LPCWSTR pszText;
   BOOL hasHelp;
-  BOOL useCallback;
   BOOL hasIcon;
 } PropPageInfo;
 
@@ -197,6 +196,15 @@ static WCHAR *heap_strdupAtoW(const char *str)
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 
     return ret;
+}
+
+static void HPSP_call_callback(HPROPSHEETPAGE hpsp, UINT msg)
+{
+    if (!(hpsp->psp.dwFlags & PSP_USECALLBACK) || !hpsp->psp.pfnCallback ||
+            (msg == PSPCB_ADDREF && hpsp->psp.dwSize <= PROPSHEETPAGEA_V1_SIZE))
+        return;
+
+    hpsp->psp.pfnCallback(0, msg, &hpsp->callback_psp);
 }
 
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
@@ -419,7 +427,6 @@ static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
    * Process property page flags.
    */
   dwFlags = hpsp->psp.dwFlags;
-  psInfo->proppage[index].useCallback = (dwFlags & PSP_USECALLBACK) && (hpsp->psp.pfnCallback);
   psInfo->proppage[index].hasHelp = dwFlags & PSP_HASHELP;
   psInfo->proppage[index].hasIcon = dwFlags & (PSP_USEHICON | PSP_USEICONID);
 
@@ -1436,8 +1443,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     pTemplateCopy->dwExtendedStyle |= WS_EX_CONTROLPARENT;
   }
 
-  if (psInfo->proppage[index].useCallback)
-    (*(hpsp->psp.pfnCallback))(0, PSPCB_CREATE, &hpsp->psp);
+  HPSP_call_callback(hpsp, PSPCB_CREATE);
 
   if(hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
      hwndPage = CreateDialogIndirectParamW(hpsp->psp.hInstance,
@@ -3013,9 +3019,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
     else
         ppsp->pszHeaderSubTitle = NULL;
 
-    if ((ppsp->dwFlags & PSP_USECALLBACK) && ppsp->dwSize > PROPSHEETPAGEA_V1_SIZE && ppsp->pfnCallback)
-        ppsp->pfnCallback(0, PSPCB_ADDREF, ppsp + 1);
-
+    HPSP_call_callback(ret, PSPCB_ADDREF);
     return ret;
 }
 
@@ -3074,9 +3078,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
     else
         ppsp->pszHeaderSubTitle = NULL;
 
-    if ((ppsp->dwFlags & PSP_USECALLBACK) && ppsp->dwSize > PROPSHEETPAGEW_V1_SIZE && ppsp->pfnCallback)
-        ppsp->pfnCallback(0, PSPCB_ADDREF, ppsp + 1);
-
+    HPSP_call_callback(ret, PSPCB_ADDREF);
     return ret;
 }
 
@@ -3098,8 +3100,7 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
   if (!hPropPage)
      return FALSE;
 
-  if ((psp->dwFlags & PSP_USECALLBACK) && psp->pfnCallback)
-     psp->pfnCallback(0, PSPCB_RELEASE, &hPropPage->callback_psp);
+  HPSP_call_callback(hPropPage, PSPCB_RELEASE);
 
   if (!(psp->dwFlags & PSP_DLGINDIRECT) && !IS_INTRESOURCE( psp->u.pszTemplate ))
      Free((void*)psp->u.pszTemplate);
