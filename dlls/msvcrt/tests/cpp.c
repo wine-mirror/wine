@@ -1304,6 +1304,12 @@ static void test_demangle(void)
 /* 140 */ {"??$?BH@?$foo@N@@QEAAHXZ", "public: __cdecl foo<double>::operator<int> int(void) __ptr64"},
 /* 141 */ {"??Bcastop@@QAEHXZ", "public: __thiscall castop::operator int(void)"},
 /* 142 */ {"??Bcastop@@QAE?BHXZ", "public: __thiscall castop::operator int const (void)"},
+/* 143 */ {"?pfield@@3PTAA@@DT1@", "char const volatile AA::* const volatile pfield"},
+/* 144 */ {"?ptititi1@@3PEQtititi@@IEQ1@", "unsigned int tititi::* __ptr64 __ptr64 ptititi1"},
+/* 145 */ {"?ptititi2@@3PERtititi@@IER1@", "unsigned int const tititi::* __ptr64 const __ptr64 ptititi2"},
+/* 146 */ {"?ptititi3@@3PEStititi@@IES1@", "unsigned int volatile tititi::* __ptr64 volatile __ptr64 ptititi3"},
+/* 147 */ {"?ptititi4@@3PETtititi@@IET1@", "unsigned int const volatile tititi::* __ptr64 const volatile __ptr64 ptititi4"},
+/* 148 */ {"?ptititi4v@@3RETtititi@@IET1@", "unsigned int const volatile tititi::* __ptr64 const volatile __ptr64 ptititi4v"},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;
