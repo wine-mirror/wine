@@ -991,14 +991,6 @@ static BOOL key_is_symmetric( struct key *key )
     return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
 }
 
-static BOOL is_zero_vector( const UCHAR *vector, ULONG len )
-{
-    ULONG i;
-    if (!vector) return FALSE;
-    for (i = 0; i < len; i++) if (vector[i]) return FALSE;
-    return TRUE;
-}
-
 static BOOL is_equal_vector( const UCHAR *vector, ULONG len, const UCHAR *vector2, ULONG len2 )
 {
     if (!vector && !vector2) return TRUE;
@@ -1006,10 +998,9 @@ static BOOL is_equal_vector( const UCHAR *vector, ULONG len, const UCHAR *vector
     return !memcmp( vector, vector2, len );
 }
 
-static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len, BOOL force_reset )
 {
-    BOOL needs_reset = (!is_zero_vector( vector, vector_len ) ||
-                        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len ));
+    BOOL needs_reset = force_reset || !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len );
 
     free( key->u.s.vector );
     key->u.s.vector = NULL;
@@ -1150,7 +1141,7 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
         if (auth_info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG)
             FIXME( "call chaining not implemented\n" );
 
-        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce )))
+        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce, TRUE )))
             return status;
 
         *ret_len = input_len;
@@ -1186,7 +1177,7 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
     if (!output) return STATUS_SUCCESS;
     if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
     if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
-    if ((status = key_symmetric_set_vector( key, iv, iv_len ))) return status;
+    if ((status = key_symmetric_set_vector( key, iv, iv_len, flags & BCRYPT_BLOCK_PADDING ))) return status;
 
     encrypt_params.key = key;
     encrypt_params.input = input;
@@ -1197,7 +1188,7 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
     {
         if ((status = UNIX_CALL( key_symmetric_encrypt, &encrypt_params )))
             return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0 )))
+        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
             return status;
         bytes_left -= key->u.s.block_size;
         encrypt_params.input += key->u.s.block_size;
@@ -1236,7 +1227,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
         if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
         if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce )))
+        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce, TRUE )))
             return status;
 
         *ret_len = input_len;
@@ -1278,7 +1269,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
     if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
-    if ((status = key_symmetric_set_vector( key, iv, iv_len ))) return status;
+    if ((status = key_symmetric_set_vector( key, iv, iv_len, flags & BCRYPT_BLOCK_PADDING ))) return status;
 
     decrypt_params.key = key;
     decrypt_params.input = input;
@@ -1288,7 +1279,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     while (bytes_left >= key->u.s.block_size)
     {
         if ((status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params ))) return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0 )))
+        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
             return status;
         bytes_left -= key->u.s.block_size;
         decrypt_params.input += key->u.s.block_size;
