@@ -277,7 +277,8 @@ system_fallback_config[] =
     { "1720-173F",              L"Noto Sans Hanunoo" },
     { "1740-175F",              L"Noto Sans Buhid" },
     { "1760-177F",              L"Noto Sans Tagbanwa" },
-    { "1800-18AF, 11660-1167F", L"Noto Sans Mongolian" },
+
+    { "1800-18AF, 202F, 11660-1167F", L"Noto Sans Mongolian" },
 
     { "1900-194F",              L"Noto Sans Limbu" },
     { "1950-197F",              L"Noto Sans Tai Le" },
