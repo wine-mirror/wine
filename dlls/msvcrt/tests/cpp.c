@@ -1310,6 +1310,7 @@ static void test_demangle(void)
 /* 146 */ {"?ptititi3@@3PEStititi@@IES1@", "unsigned int volatile tititi::* __ptr64 volatile __ptr64 ptititi3"},
 /* 147 */ {"?ptititi4@@3PETtititi@@IET1@", "unsigned int const volatile tititi::* __ptr64 const volatile __ptr64 ptititi4"},
 /* 148 */ {"?ptititi4v@@3RETtititi@@IET1@", "unsigned int const volatile tititi::* __ptr64 const volatile __ptr64 ptititi4v"},
+/* 149 */ {"?meth@AAA@@QFCEXXZ", "public: void __thiscall AAA::meth(void)volatile __unaligned "},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;

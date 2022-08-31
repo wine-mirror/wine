@@ -456,10 +456,8 @@ static BOOL get_modifier(struct parsed_symbol *sym, struct datatype_t *xdt, cons
     case 'T': mod = "const volatile"; break;
     default: return FALSE;
     }
-    if (xdt->left && mod)
-        xdt->left = str_printf(sym, "%s %s", xdt->left, mod);
-    else if (mod)
-        xdt->left = mod;
+    if (mod)
+        xdt->left = xdt->left ? str_printf(sym, "%s %s", mod, xdt->left) : mod;
     if (ch >= 'Q' && ch <= 'T') /* pointer to member, fetch class */
     {
         const char* class = get_class_name(sym);
