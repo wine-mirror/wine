@@ -400,7 +400,7 @@ static void PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
  * Collect property sheet data.
  * With code taken from DIALOG_ParseTemplate32.
  */
-static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
+static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
                                PropSheetInfo * psInfo,
                                int index, BOOL resize)
 {
@@ -409,19 +409,19 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   DWORD dwFlags;
   int width, height;
 
-  if (!lppsp)
+  if (!hpsp)
     return FALSE;
 
   TRACE("\n");
-  psInfo->proppage[index].hpage = (HPROPSHEETPAGE)lppsp;
+  psInfo->proppage[index].hpage = hpsp;
   psInfo->proppage[index].hwndPage = 0;
   psInfo->proppage[index].isDirty = FALSE;
 
   /*
    * Process property page flags.
    */
-  dwFlags = lppsp->dwFlags;
-  psInfo->proppage[index].useCallback = (dwFlags & PSP_USECALLBACK) && (lppsp->pfnCallback);
+  dwFlags = hpsp->psp.dwFlags;
+  psInfo->proppage[index].useCallback = (dwFlags & PSP_USECALLBACK) && (hpsp->psp.pfnCallback);
   psInfo->proppage[index].hasHelp = dwFlags & PSP_HASHELP;
   psInfo->proppage[index].hasIcon = dwFlags & (PSP_USEHICON | PSP_USEICONID);
 
@@ -433,22 +433,22 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
    * Process page template.
    */
   if (dwFlags & PSP_DLGINDIRECT)
-    pTemplate = lppsp->u.pResource;
+    pTemplate = hpsp->psp.u.pResource;
   else if(dwFlags & PSP_INTERNAL_UNICODE )
   {
-    HRSRC hResource = FindResourceW(lppsp->hInstance,
-                                    lppsp->u.pszTemplate,
+    HRSRC hResource = FindResourceW(hpsp->psp.hInstance,
+                                    hpsp->psp.u.pszTemplate,
                                     (LPWSTR)RT_DIALOG);
-    HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
+    HGLOBAL hTemplate = LoadResource(hpsp->psp.hInstance,
                                      hResource);
     pTemplate = LockResource(hTemplate);
   }
   else
   {
-    HRSRC hResource = FindResourceA(lppsp->hInstance,
-                                    (LPCSTR)lppsp->u.pszTemplate,
+    HRSRC hResource = FindResourceA(hpsp->psp.hInstance,
+                                    (LPCSTR)hpsp->psp.u.pszTemplate,
                                     (LPSTR)RT_DIALOG);
-    HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
+    HGLOBAL hTemplate = LoadResource(hpsp->psp.hInstance,
                                      hResource);
     pTemplate = LockResource(hTemplate);
   }
@@ -485,7 +485,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   width  = (WORD)*p; p++;
   height = (WORD)*p; p++;
 
-  if (lppsp->dwFlags & (PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE))
+  if (hpsp->psp.dwFlags & (PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE))
     psInfo->ppshheader.dwFlags |= PSH_HEADER;
 
   /* Special calculation for interior wizard pages so the largest page is
@@ -552,9 +552,9 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
     WCHAR szTitle[256];
     const WCHAR *pTitle;
 
-    if (IS_INTRESOURCE( lppsp->pszTitle ))
+    if (IS_INTRESOURCE( hpsp->psp.pszTitle ))
     {
-      if (LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle, szTitle, ARRAY_SIZE(szTitle)))
+      if (LoadStringW( hpsp->psp.hInstance, (DWORD_PTR)hpsp->psp.pszTitle, szTitle, ARRAY_SIZE(szTitle)))
         pTitle = szTitle;
       else if (*p)
         pTitle = p;
@@ -562,7 +562,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
         pTitle = L"(null)";
     }
     else
-      pTitle = lppsp->pszTitle;
+      pTitle = hpsp->psp.pszTitle;
 
     psInfo->proppage[index].pszText = heap_strdupW( pTitle );
   }
@@ -577,10 +577,10 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
     int icon_cy = GetSystemMetrics(SM_CYSMICON);
 
     if (dwFlags & PSP_USEICONID)
-      hIcon = LoadImageW(lppsp->hInstance, lppsp->u2.pszIcon, IMAGE_ICON,
+      hIcon = LoadImageW(hpsp->psp.hInstance, hpsp->psp.u2.pszIcon, IMAGE_ICON,
                          icon_cx, icon_cy, LR_DEFAULTCOLOR);
     else
-      hIcon = lppsp->u2.hIcon;
+      hIcon = hpsp->psp.u2.hIcon;
 
     if ( hIcon )
     {
@@ -2283,7 +2283,7 @@ static BOOL PROPSHEET_InsertPage(HWND hwndDlg, HPROPSHEETPAGE hpageInsertAfter, 
     memcpy(&ppi[index + 1], &prev_ppi[index], (psInfo->nPages - index) * sizeof(PropPageInfo));
   psInfo->proppage = ppi;
 
-  if (!PROPSHEET_CollectPageInfo(ppsp, psInfo, index, FALSE))
+  if (!PROPSHEET_CollectPageInfo(hpage, psInfo, index, FALSE))
   {
      psInfo->proppage = prev_ppi;
      Free(ppi);
@@ -2851,8 +2851,7 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
        pByte += ((LPCPROPSHEETPAGEA)pByte)->dwSize;
     }
 
-    if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
-                               psInfo, n, TRUE))
+    if (!PROPSHEET_CollectPageInfo(psInfo->proppage[n].hpage, psInfo, n, TRUE))
     {
 	if (psInfo->usePropPage)
 	    DestroyPropertySheetPage(psInfo->proppage[n].hpage);
@@ -2892,8 +2891,7 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
        pByte += ((LPCPROPSHEETPAGEW)pByte)->dwSize;
     }
 
-    if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
-                               psInfo, n, TRUE))
+    if (!PROPSHEET_CollectPageInfo(psInfo->proppage[n].hpage, psInfo, n, TRUE))
     {
 	if (psInfo->usePropPage)
 	    DestroyPropertySheetPage(psInfo->proppage[n].hpage);
