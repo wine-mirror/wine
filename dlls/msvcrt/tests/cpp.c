@@ -1295,6 +1295,8 @@ static void test_demangle(void)
 /* 132 */ {"??$meth@FD@DD@CC@@QAE_NK@Z", "public: bool __thiscall CC::DD::meth<short,char>(unsigned long)"},
 /* 133 */ {"?func@@YAXPIFAH@Z", "void __cdecl func(int __unaligned * __restrict)"},
 /* 135 */ {"?x@@3PAY02HA", "int (* x)[3]"},
+/* 136 */ {"?Qux@Bar@@0PAPAP6AHPAV1@AAH1PAH@ZA",
+           "private: static int (__cdecl** * Bar::Qux)(class Bar *,int &,int &,int *)"}, /* variation of 105: note white space handling! */
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;

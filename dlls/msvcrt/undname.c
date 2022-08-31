@@ -77,11 +77,17 @@ struct parsed_symbol
     unsigned            avail_in_first; /* number of available bytes in head block */
 };
 
+enum datatype_e
+{
+    DT_NO_LEADING_WS = 0x01,
+};
+
 /* Type for parsing mangled types */
 struct datatype_t
 {
     const char*         left;
     const char*         right;
+    enum datatype_e     flags;
 };
 
 static BOOL symbol_demangle(struct parsed_symbol* sym);
@@ -407,6 +413,7 @@ static void append_extended_modifier(struct parsed_symbol *sym, const char **whe
 static void get_extended_modifier(struct parsed_symbol *sym, struct datatype_t *xdt)
 {
     xdt->left = xdt->right = NULL;
+    xdt->flags = 0;
     for (;;)
     {
         switch (*sym->current)
@@ -455,25 +462,24 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
 
     switch (modif)
     {
-    case 'A': ref = "&";  str_modif = NULL;             break;
-    case 'B': ref = "&";  str_modif = "volatile";       break;
-    case 'P': ref = "*";  str_modif = NULL;             break;
-    case 'Q': ref = "*";  str_modif = "const";          break;
-    case 'R': ref = "*";  str_modif = "volatile";       break;
-    case 'S': ref = "*";  str_modif = "const volatile"; break;
-    case '?': ref = NULL; str_modif = NULL;             break;
-    case '$': ref = "&&"; str_modif = NULL;             break;
+    case 'A': ref = " &";  str_modif = NULL;              break;
+    case 'B': ref = " &";  str_modif = " volatile";       break;
+    case 'P': ref = " *";  str_modif = NULL;              break;
+    case 'Q': ref = " *";  str_modif = " const";          break;
+    case 'R': ref = " *";  str_modif = " volatile";       break;
+    case 'S': ref = " *";  str_modif = " const volatile"; break;
+    case '?': ref = NULL;  str_modif = NULL;              break;
+    case '$': ref = " &&"; str_modif = NULL;              break;
     default: return FALSE;
     }
     if (ref || str_modif || xdt.left || xdt.right)
-        ct->left = str_printf(sym, " %s%s%s%s%s%s%s",
-                              xdt.left,
-                              xdt.left && ref ? " " : NULL, ref,
-                              (xdt.left || ref) && xdt.right ? " " : NULL, xdt.right,
-                              (xdt.left || ref || xdt.right) && str_modif ? " " : NULL, str_modif);
+        ct->left = str_printf(sym, "%s%s%s%s%s%s",
+                              xdt.left ? " " : NULL, xdt.left, ref,
+                              xdt.right ? " " : NULL, xdt.right, str_modif);
     else
         ct->left = NULL;
     ct->right = NULL;
+    ct->flags = 0;
 
     if (get_modifier(sym, &xdt))
     {
@@ -490,10 +496,7 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
             if (!(n1 = get_number(sym))) return FALSE;
             num = atoi(n1);
 
-            if (ct->left && ct->left[0] == ' ' && !xdt.left)
-                ct->left++;
-
-            ct->left = str_printf(sym, " (%s%s", xdt.left, ct->left);
+            ct->left = str_printf(sym, " (%s%s", xdt.left, ct->left && !xdt.left ? ct->left + 1 : ct->left);
             ct->right = ")";
             xdt.left = NULL;
 
@@ -504,15 +507,9 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
         /* Recurse to get the referred-to type */
         if (!demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
             return FALSE;
-        if (xdt.left)
-            ct->left = str_printf(sym, "%s %s%s", sub_ct.left, xdt.left, ct->left);
-        else
-        {
-            /* don't insert a space between duplicate '*' */
-            if (!in_args && ct->left && ct->left[0] && ct->left[1] == '*' && sub_ct.left[strlen(sub_ct.left)-1] == '*')
-                ct->left++;
-            ct->left = str_printf(sym, "%s%s", sub_ct.left, ct->left);
-        }
+        if (sub_ct.flags & DT_NO_LEADING_WS)
+            ct->left++;
+        ct->left = str_printf(sym, "%s%s%s%s", sub_ct.left, xdt.left ? " " : NULL, xdt.left, ct->left);
         if (sub_ct.right) ct->right = str_printf(sym, "%s%s", ct->right, sub_ct.right);
         sym->stack.num = mark;
     }
@@ -814,7 +811,8 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
 
     assert(ct);
     ct->left = ct->right = NULL;
-    
+    ct->flags = 0;
+
     switch (dt = *sym->current++)
     {
     case '_':
@@ -938,6 +936,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
 
                 ct->left  = str_printf(sym, "%s%s (%s*", 
                                        sub_ct.left, sub_ct.right, call_conv);
+                ct->flags = DT_NO_LEADING_WS;
                 ct->right = str_printf(sym, ")%s", args);
             }
             else goto done;
