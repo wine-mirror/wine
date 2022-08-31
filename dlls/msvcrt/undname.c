@@ -1421,7 +1421,12 @@ done:
 static BOOL symbol_demangle(struct parsed_symbol* sym)
 {
     BOOL                ret = FALSE;
-    unsigned            do_after = 0;
+    enum {
+        PP_NONE,
+        PP_CONSTRUCTOR,
+        PP_DESTRUCTOR,
+        PP_CAST_OPERATOR,
+    } post_process = PP_NONE;
 
     /* FIXME seems wrong as name, as it demangles a simple data type */
     if (sym->flags & UNDNAME_NO_ARGUMENTS)
@@ -1455,8 +1460,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         /* C++ operator code (one character, or two if the first is '_') */
         switch (*++sym->current)
         {
-        case '0': function_name = ""; do_after = 1; break;
-        case '1': function_name = ""; do_after = 2; break;
+        case '0': function_name = ""; post_process = PP_CONSTRUCTOR; break;
+        case '1': function_name = ""; post_process = PP_DESTRUCTOR; break;
         case '2': function_name = "operator new"; break;
         case '3': function_name = "operator delete"; break;
         case '4': function_name = "operator="; break;
@@ -1466,7 +1471,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         case '8': function_name = "operator=="; break;
         case '9': function_name = "operator!="; break;
         case 'A': function_name = "operator[]"; break;
-        case 'B': function_name = "operator"; do_after = 3; break;
+        case 'B': function_name = "operator"; post_process = PP_CAST_OPERATOR; break;
         case 'C': function_name = "operator->"; break;
         case 'D': function_name = "operator*"; break;
         case 'E': function_name = "operator++"; break;
@@ -1506,7 +1511,10 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             case '9': function_name = "`vcall'"; break;
             case 'A': function_name = "`typeof'"; break;
             case 'B': function_name = "`local static guard'"; break;
-            case 'C': function_name = "`string'"; do_after = 4; break;
+            case 'C': sym->result = (char*)"`string'"; /* string literal: followed by string encoding (native nevers undecode it) */
+                /* FIXME: should unmangle the whole string for error reporting */
+                if (*sym->current && sym->current[strlen(sym->current) - 1] == '@') ret = TRUE;
+                goto done;
             case 'D': function_name = "`vbase destructor'"; break;
             case 'E': function_name = "`vector deleting destructor'"; break;
             case 'F': function_name = "`default constructor closure'"; break;
@@ -1601,18 +1609,8 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             if (args) function_name = function_name ? str_printf(sym, "%s%s", function_name, args) : args;
             sym->names.num = 0;
         }
-        switch (do_after)
-        {
-        case 4:
-            sym->result = (char*)function_name;
-            ret = TRUE;
-            goto done;
-            /* fall through */
-        default:
-            if (!str_array_push(sym, function_name, -1, &sym->stack))
-                return FALSE;
-            break;
-        }
+        if (!str_array_push(sym, function_name, -1, &sym->stack))
+            return FALSE;
     }
     else if (*sym->current == '$')
     {
@@ -1634,20 +1632,18 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         break;
     }
 
-    switch (do_after)
+    switch (post_process)
     {
-    case 0: default: break;
-    case 1: case 2:
+    case PP_NONE: default: break;
+    case PP_CONSTRUCTOR: case PP_DESTRUCTOR:
         /* it's time to set the member name for ctor & dtor */
         if (sym->stack.num <= 1) goto done;
-        if (do_after == 1)
-            sym->stack.elts[0] = str_printf(sym, "%s%s", sym->stack.elts[1], sym->stack.elts[0]);
-        else
-            sym->stack.elts[0] = str_printf(sym, "~%s%s", sym->stack.elts[1], sym->stack.elts[0]);
+        sym->stack.elts[0] = str_printf(sym, "%s%s%s", post_process == PP_DESTRUCTOR ? "~" : NULL,
+                                        sym->stack.elts[1], sym->stack.elts[0]);
         /* ctors and dtors don't have return type */
         sym->flags |= UNDNAME_NO_FUNCTION_RETURNS;
         break;
-    case 3:
+    case PP_CAST_OPERATOR:
         sym->flags &= ~UNDNAME_NO_FUNCTION_RETURNS;
         break;
     }
@@ -1656,7 +1652,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     if (*sym->current >= '0' && *sym->current <= '9')
         ret = handle_data(sym);
     else if ((*sym->current >= 'A' && *sym->current <= 'Z') || *sym->current == '$')
-        ret = handle_method(sym, do_after == 3);
+        ret = handle_method(sym, post_process == PP_CAST_OPERATOR);
     else ret = FALSE;
 done:
     if (ret) assert(sym->result);
