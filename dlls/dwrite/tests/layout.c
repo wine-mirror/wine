@@ -4972,23 +4972,43 @@ static void get_font_name(IDWriteFont *font, WCHAR *name, UINT32 size)
     IDWriteFontFamily_Release(family);
 }
 
+static void utf32_to_utf16(UINT32 C, WCHAR **ptr)
+{
+    if (C > 0xffff)
+    {
+        WCHAR X = (WCHAR)C;
+        UINT32 U = (C >> 16) & ((1 << 5) - 1);
+        WCHAR W = (WCHAR)U - 1;
+
+        **ptr = 0xD800 | (W << 6) | X >> 10; *ptr += 1;
+        **ptr = (WCHAR)(0xDC00 | (X & ((1 << 10) - 1))); *ptr += 1;
+    }
+    else
+    {
+        **ptr = C; *ptr += 1;
+    }
+}
+
 static void test_MapCharacters(void)
 {
     static const WCHAR str2W[] = {'a',0x3058,'b',0};
-    static const WCHAR variation_selectors[] =
+    static const UINT32 variation_selectors[] =
     {
         0x180b, 0x180c, 0x180d,
+
         0xfe00, 0xfe01, 0xfe02, 0xfe03, 0xfe04, 0xfe05, 0xfe06, 0xfe07,
         0xfe08, 0xfe09, 0xfe0a, 0xfe0b, 0xfe0c, 0xfe0d, 0xfe0e, 0xfe0f,
+
+        0xe0100, 0xe0121, 0xe01ef,
     };
     IDWriteFontCollectionLoader *resource_collection_loader;
     IDWriteFontFileLoader *resource_loader;
     IDWriteFontCollection *collection;
     IDWriteLocalizedStrings *strings;
+    UINT32 mappedlength, vs_length;
     IDWriteFontFallback *fallback;
     IDWriteFactory2 *factory2;
     IDWriteFactory *factory;
-    UINT32 mappedlength;
     IDWriteFont *font;
     WCHAR buffW[50];
     WCHAR name[64];
@@ -4996,6 +5016,7 @@ static void test_MapCharacters(void)
     HRSRC hrsrc;
     BOOL exists;
     FLOAT scale;
+    WCHAR *ptr;
     HRESULT hr;
 
     factory = create_factory();
@@ -5155,27 +5176,35 @@ static void test_MapCharacters(void)
     {
         g_source = buffW;
 
+        vs_length = variation_selectors[i] > 0xffff ? 2 : 1;
+
         winetest_push_context("Test %#x", variation_selectors[i]);
 
         /* Selector within supported text. */
+
         font = NULL;
-        buffW[0] = buffW[2] = 'A';
-        buffW[1] = variation_selectors[i];
-        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, collection, L"wine_test",
+        ptr = buffW;
+
+        *ptr = 'A'; ptr++;
+        utf32_to_utf16(variation_selectors[i], &ptr);
+        *ptr = 'A';
+
+        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, vs_length + 1, collection, L"wine_test",
                 DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(mappedlength == 3, "Unexpected mapped length %u.\n", mappedlength);
+        ok(mappedlength == vs_length + 1, "Unexpected mapped length %u.\n", mappedlength);
         get_font_name(font, name, ARRAY_SIZE(name));
         ok(!wcscmp(name, L"wine_test"), "Unexpected font %s.\n", debugstr_w(name));
         IDWriteFont_Release(font);
 
         /* Only selectors. */
         font = NULL;
-        buffW[0] = variation_selectors[i];
-        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, collection, L"wine_test",
+        ptr = buffW;
+        utf32_to_utf16(variation_selectors[i], &ptr);
+        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, vs_length, collection, L"wine_test",
                 DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(mappedlength == 1, "Unexpected mapped length %u.\n", mappedlength);
+        ok(mappedlength == vs_length, "Unexpected mapped length %u.\n", mappedlength);
         if (variation_selectors[i] < 0xfe00)
         {
             /* Mongolian selectors belong to Mongolian range, and are mapped to a specific font. */
@@ -5190,33 +5219,35 @@ static void test_MapCharacters(void)
         /* Leading selector. Only use VS-1..16 so we don't hit a valid mapping range. */
         if (variation_selectors[i] >= 0xfe00)
         {
-            buffW[0] = variation_selectors[i];
-            buffW[1] = variation_selectors[i];
-            buffW[2] = 'A';
+            ptr = buffW;
+            utf32_to_utf16(variation_selectors[i], &ptr);
+            utf32_to_utf16(variation_selectors[i], &ptr);
+            *ptr = 'A';
 
             font = (void *)0xdeadbeef;
-            hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, collection, L"wine_test",
+            hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, vs_length * 2 + 1, collection, L"wine_test",
                     DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(mappedlength == 2, "Unexpected mapped length %u.\n", mappedlength);
+            ok(mappedlength == vs_length * 2, "Unexpected mapped length %u.\n", mappedlength);
             ok(!font, "Unexpected font instance.\n");
 
-            hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL,
+            hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, vs_length * 2 + 1, NULL, NULL,
                     DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(mappedlength == 2, "Unexpected mapped length %u.\n", mappedlength);
+            ok(mappedlength == vs_length * 2, "Unexpected mapped length %u.\n", mappedlength);
             ok(!font, "Unexpected font instance.\n");
         }
 
         /* Trailing selector. */
-        buffW[0] = 'A';
-        buffW[1] = variation_selectors[i];
+        ptr = buffW;
+        *ptr = 'A'; ptr++;
+        utf32_to_utf16(variation_selectors[i], &ptr);
 
         font = (void *)0xdeadbeef;
-        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 2, collection, L"wine_test",
+        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, vs_length + 1, collection, L"wine_test",
                 DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(mappedlength == 2, "Unexpected mapped length %u.\n", mappedlength);
+        ok(mappedlength == vs_length + 1, "Unexpected mapped length %u.\n", mappedlength);
         get_font_name(font, name, ARRAY_SIZE(name));
         ok(!wcscmp(name, L"wine_test"), "Unexpected font %s.\n", debugstr_w(name));
         IDWriteFont_Release(font);

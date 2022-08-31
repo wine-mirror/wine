@@ -2374,6 +2374,8 @@ static inline BOOL fallback_is_uvs(const struct text_source_context *context)
     if (context->ch >= 0x180b && context->ch <= 0x180d) return TRUE;
     /* VARIATION SELECTOR-1..16 */
     if (context->ch >= 0xfe00 && context->ch <= 0xfe0f) return TRUE;
+    /* VARIATION SELECTOR-17..256 */
+    if (context->ch >= 0xe0100 && context->ch <= 0xe01ef) return TRUE;
     return FALSE;
 }
 
@@ -2434,7 +2436,7 @@ static HRESULT fallback_map_characters(const struct dwrite_fontfallback *fallbac
     /* Find a mapping for given locale. */
     text_source_get_next_u32_char(&context);
     mapping = find_fallback_mapping(data, locale, context.ch);
-    mapped = 1;
+    mapped = text_source_get_char_length(&context);
     while (!text_source_get_next_u32_char(&context))
     {
         if (find_fallback_mapping(data, locale, context.ch) != mapping) break;
