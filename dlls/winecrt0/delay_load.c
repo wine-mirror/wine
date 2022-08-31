@@ -69,14 +69,4 @@ FARPROC WINAPI DECLSPEC_HIDDEN __wine_spec_delay_load( unsigned int id )
     return proc;
 }
 
-#if defined(__GNUC__) && !defined(__APPLE__)  /* we can't support destructors properly on Mac OS */
-static void free_delay_imports(void) __attribute__((destructor));
-static void free_delay_imports(void)
-{
-    struct ImgDelayDescr *descr;
-    for (descr = __wine_spec_delay_imports; descr->szName; descr++)
-        if (*descr->phmod) FreeLibrary( *descr->phmod );
-}
-#endif
-
 #endif /* __WINE_PE_BUILD */
