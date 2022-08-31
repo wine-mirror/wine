@@ -198,6 +198,12 @@ static WCHAR *heap_strdupAtoW(const char *str)
     return ret;
 }
 
+static DWORD HPSP_get_flags(HPROPSHEETPAGE hpsp)
+{
+    if (!hpsp) return 0;
+    return hpsp->psp.dwFlags;
+}
+
 static void HPSP_call_callback(HPROPSHEETPAGE hpsp, UINT msg)
 {
     if (!(hpsp->psp.dwFlags & PSP_USECALLBACK) || !hpsp->psp.pfnCallback ||
@@ -248,7 +254,7 @@ static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
 
         if (((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
              (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
-             !(hpsp->psp.dwFlags & PSP_HIDEHEADER)) ||
+             !(HPSP_get_flags(hpsp) & PSP_HIDEHEADER)) ||
             (psInfo->ppshheader.dwFlags & PSH_WIZARD))
         {
             rc->left = rc->top = WIZARD_PADDING;
@@ -263,7 +269,7 @@ static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
 
         if ((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
             (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
-            !(hpsp->psp.dwFlags & PSP_HIDEHEADER))
+            !(HPSP_get_flags(hpsp) & PSP_HIDEHEADER))
         {
             hwndChild = GetDlgItem(hwndDlg, IDC_SUNKEN_LINEHEADER);
             GetClientRect(hwndChild, &r);
@@ -426,7 +432,7 @@ static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
   /*
    * Process property page flags.
    */
-  dwFlags = hpsp->psp.dwFlags;
+  dwFlags = HPSP_get_flags(hpsp);
   psInfo->proppage[index].hasHelp = dwFlags & PSP_HASHELP;
   psInfo->proppage[index].hasIcon = dwFlags & (PSP_USEHICON | PSP_USEICONID);
 
@@ -490,7 +496,7 @@ static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
   width  = (WORD)*p; p++;
   height = (WORD)*p; p++;
 
-  if (hpsp->psp.dwFlags & (PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE))
+  if (HPSP_get_flags(hpsp) & (PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE))
     psInfo->ppshheader.dwFlags |= PSH_HEADER;
 
   /* Special calculation for interior wizard pages so the largest page is
@@ -1360,12 +1366,12 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     return FALSE;
   }
 
-  if (hpsp->psp.dwFlags & PSP_DLGINDIRECT)
+  if (HPSP_get_flags(hpsp) & PSP_DLGINDIRECT)
     {
       pTemplate = hpsp->psp.u.pResource;
       resSize = GetTemplateSize(pTemplate);
     }
-  else if(hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
+  else if(HPSP_get_flags(hpsp) & PSP_INTERNAL_UNICODE)
   {
     HRSRC hResource;
     HANDLE hTemplate;
@@ -1445,7 +1451,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   HPSP_call_callback(hpsp, PSPCB_CREATE);
 
-  if(hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
+  if(HPSP_get_flags(hpsp) & PSP_INTERNAL_UNICODE)
      hwndPage = CreateDialogIndirectParamW(hpsp->psp.hInstance,
 					pTemplateCopy,
 					hwndParent,
@@ -1468,7 +1474,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   /* Subclass exterior wizard pages */
   if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
      (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
-     (hpsp->psp.dwFlags & PSP_HIDEHEADER))
+     (HPSP_get_flags(hpsp) & PSP_HIDEHEADER))
   {
       SetWindowSubclass(hwndPage, PROPSHEET_WizardSubclassProc, 1, 0);
   }
@@ -1559,7 +1565,7 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
   {
       hwndLineHeader = GetDlgItem(hwndDlg, IDC_SUNKEN_LINEHEADER);
       
-      if ((psInfo->proppage[index].hpage->psp.dwFlags & PSP_HIDEHEADER) ||
+      if ((HPSP_get_flags(psInfo->proppage[index].hpage) & PSP_HIDEHEADER) ||
               (!(psInfo->ppshheader.dwFlags & PSH_HEADER)) )
 	  ShowWindow(hwndLineHeader, SW_HIDE);
       else
@@ -2291,7 +2297,7 @@ static BOOL PROPSHEET_InsertPage(HWND hwndDlg, HPROPSHEETPAGE hpageInsertAfter, 
 
   psInfo->proppage[index].hpage = hpage;
 
-  if (hpage->psp.dwFlags & PSP_PREMATURE)
+  if (HPSP_get_flags(hpage) & PSP_PREMATURE)
   {
      /* Create the page but don't show it */
      if (!PROPSHEET_CreatePage(hwndDlg, index, psInfo, hpage))
@@ -2404,7 +2410,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   /* Unsubclass the page dialog window */
   if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
      (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
-     (psInfo->proppage[index].hpage->psp.dwFlags & PSP_HIDEHEADER))
+     (HPSP_get_flags(psInfo->proppage[index].hpage) & PSP_HIDEHEADER))
   {
      RemoveWindowSubclass(psInfo->proppage[index].hwndPage,
                           PROPSHEET_WizardSubclassProc, 1);
@@ -2416,7 +2422,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   /* Free page resources */
   if(psInfo->proppage[index].hpage)
   {
-     if (psInfo->proppage[index].hpage->psp.dwFlags & PSP_USETITLE)
+     if (HPSP_get_flags(psInfo->proppage[index].hpage) & PSP_USETITLE)
         Free ((LPVOID)psInfo->proppage[index].pszText);
 
      DestroyPropertySheetPage(psInfo->proppage[index].hpage);
@@ -2712,12 +2718,12 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 
   for (i = 0; i < psInfo->nPages; i++)
   {
-     PROPSHEETPAGEW* psp = &psInfo->proppage[i].hpage->psp;
+     DWORD flags = HPSP_get_flags(psInfo->proppage[i].hpage);
 
      /* Unsubclass the page dialog window */
      if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
         (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
-        (psp->dwFlags & PSP_HIDEHEADER))
+        (flags & PSP_HIDEHEADER))
      {
         RemoveWindowSubclass(psInfo->proppage[i].hwndPage,
                              PROPSHEET_WizardSubclassProc, 1);
@@ -2726,13 +2732,10 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
      if(psInfo->proppage[i].hwndPage)
         DestroyWindow(psInfo->proppage[i].hwndPage);
 
-     if(psp)
-     {
-        if (psp->dwFlags & PSP_USETITLE)
-           Free ((LPVOID)psInfo->proppage[i].pszText);
+     if (flags & PSP_USETITLE)
+        Free ((LPVOID)psInfo->proppage[i].pszText);
 
-        DestroyPropertySheetPage(psInfo->proppage[i].hpage);
-     }
+     DestroyPropertySheetPage(psInfo->proppage[i].hpage);
   }
 
   DeleteObject(psInfo->hFont);
@@ -3251,7 +3254,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
     int offsety = 0;
     HBRUSH hbr;
     RECT r, rzone;
-    LPCPROPSHEETPAGEW ppshpage;
+    HPROPSHEETPAGE hpsp;
     WCHAR szBuffer[256];
     int nLength;
 
@@ -3264,15 +3267,16 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	hOldPal = SelectPalette(hdc, psInfo->ppshheader.hplWatermark, FALSE);
 
     if (psInfo->active_page < 0)
-        ppshpage = NULL;
+        hpsp = NULL;
     else
-        ppshpage = &psInfo->proppage[psInfo->active_page].hpage->psp;
+        hpsp = psInfo->proppage[psInfo->active_page].hpage;
 
-    if ( (ppshpage && !(ppshpage->dwFlags & PSP_HIDEHEADER)) &&
+    if ( hpsp && !(HPSP_get_flags(hpsp) & PSP_HIDEHEADER) &&
 	 (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
 	 (psInfo->ppshheader.dwFlags & PSH_HEADER) ) 
     {
 	HWND hwndLineHeader = GetDlgItem(hwnd, IDC_SUNKEN_LINEHEADER);
+        LPCPROPSHEETPAGEW ppshpage = &hpsp->psp;
 	HFONT hOldFont;
 	COLORREF clrOld = 0;
 	int oldBkMode = 0;
@@ -3378,7 +3382,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	SelectObject(hdc, hOldFont);
     }
 
-    if ( (ppshpage && (ppshpage->dwFlags & PSP_HIDEHEADER)) &&
+    if ( (HPSP_get_flags(hpsp) & PSP_HIDEHEADER) &&
 	 (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
 	 (psInfo->ppshheader.dwFlags & PSH_WATERMARK) ) 
     {
