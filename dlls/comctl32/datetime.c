@@ -793,8 +793,6 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
         else
             state = ABS_DOWNNORMAL;
 
-        if (IsThemeBackgroundPartiallyTransparent(theme, SBP_ARROWBTN, state))
-            DrawThemeParentBackground(infoPtr->hwndSelf, hdc, &infoPtr->calbutton);
         DrawThemeBackground(theme, hdc, SBP_ARROWBTN, state, &infoPtr->calbutton, NULL);
     }
     else
