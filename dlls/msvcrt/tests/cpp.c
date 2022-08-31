@@ -1301,6 +1301,9 @@ static void test_demangle(void)
 /* 138 */ {"?pfunc@@3PAY0E@P6AXF@ZA", "void (__cdecl*(* pfunc)[4])(short)"},
 /* 139 */ {"??$?0AEAVzzz@BB4@AA@@AEAV012@$0A@@?$pair@Vzzz@BB4@AA@@V123@@std@@QEAA@AEAVzzz@BB4@AA@@0@Z",
            "public: __cdecl std::pair<class AA::BB4::zzz,class AA::BB4::zzz>::pair<class AA::BB4::zzz,class AA::BB4::zzz><class AA::BB4::zzz & __ptr64,class AA::BB4::zzz & __ptr64,0>(class AA::BB4::zzz & __ptr64,class AA::BB4::zzz & __ptr64) __ptr64"},
+/* 140 */ {"??$?BH@?$foo@N@@QEAAHXZ", "public: __cdecl foo<double>::operator<int> int(void) __ptr64"},
+/* 141 */ {"??Bcastop@@QAEHXZ", "public: __thiscall castop::operator int(void)"},
+/* 142 */ {"??Bcastop@@QAE?BHXZ", "public: __thiscall castop::operator int const (void)"},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;
