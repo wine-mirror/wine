@@ -1297,6 +1297,10 @@ static void test_demangle(void)
 /* 135 */ {"?x@@3PAY02HA", "int (* x)[3]"},
 /* 136 */ {"?Qux@Bar@@0PAPAP6AHPAV1@AAH1PAH@ZA",
            "private: static int (__cdecl** * Bar::Qux)(class Bar *,int &,int &,int *)"}, /* variation of 105: note white space handling! */
+/* 137 */ {"?x@@3PAW4myenum@@A", "enum myenum * x"},
+/* 138 */ {"?pfunc@@3PAY0E@P6AXF@ZA", "void (__cdecl*(* pfunc)[4])(short)"},
+/* 139 */ {"??$?0AEAVzzz@BB4@AA@@AEAV012@$0A@@?$pair@Vzzz@BB4@AA@@V123@@std@@QEAA@AEAVzzz@BB4@AA@@0@Z",
+           "public: __cdecl std::pair<class AA::BB4::zzz,class AA::BB4::zzz>::pair<class AA::BB4::zzz,class AA::BB4::zzz><class AA::BB4::zzz & __ptr64,class AA::BB4::zzz & __ptr64,0>(class AA::BB4::zzz & __ptr64,class AA::BB4::zzz & __ptr64) __ptr64"},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;

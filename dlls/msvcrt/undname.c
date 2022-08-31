@@ -452,7 +452,7 @@ static BOOL get_modifier(struct parsed_symbol *sym, struct datatype_t *xdt)
 }
 
 static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
-                              struct array *pmt_ref, char modif, BOOL in_args)
+                              struct array *pmt_ref, char modif)
 {
     struct datatype_t xdt;
     const char* ref;
@@ -860,17 +860,17 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         }
         else
         {
-            if (!get_modified_type(ct, sym, pmt_ref, '?', in_args)) goto done;
+            if (!get_modified_type(ct, sym, pmt_ref, '?')) goto done;
         }
         break;
     case 'A': /* reference */
     case 'B': /* volatile reference */
-        if (!get_modified_type(ct, sym, pmt_ref, dt, in_args)) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, dt)) goto done;
         break;
     case 'Q': /* const pointer */
     case 'R': /* volatile pointer */
     case 'S': /* const volatile pointer */
-        if (!get_modified_type(ct, sym, pmt_ref, in_args ? dt : 'P', in_args)) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, in_args ? dt : 'P')) goto done;
         break;
     case 'P': /* Pointer */
         if (isdigit(*sym->current))
@@ -941,7 +941,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             }
             else goto done;
 	}
-	else if (!get_modified_type(ct, sym, pmt_ref, 'P', in_args)) goto done;
+	else if (!get_modified_type(ct, sym, pmt_ref, 'P')) goto done;
         break;
     case 'W':
         if (*sym->current == '4')
@@ -1050,7 +1050,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             else if (*sym->current == 'Q')
             {
                 sym->current++;
-                if (!get_modified_type(ct, sym, pmt_ref, '$', in_args)) goto done;
+                if (!get_modified_type(ct, sym, pmt_ref, '$')) goto done;
             }
             break;
         }
@@ -1361,7 +1361,6 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
 {
     BOOL                ret = FALSE;
     unsigned            do_after = 0;
-    static CHAR         dashed_null[] = "--null--";
 
     /* FIXME seems wrong as name, as it demangles a simple data type */
     if (sym->flags & UNDNAME_NO_ARGUMENTS)
@@ -1384,18 +1383,19 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     if (*sym->current == '?')
     {
         const char* function_name = NULL;
+        BOOL in_template = FALSE;
 
         if (sym->current[1] == '$' && sym->current[2] == '?')
         {
-            do_after = 5;
+            in_template = TRUE;
             sym->current += 2;
         }
 
         /* C++ operator code (one character, or two if the first is '_') */
         switch (*++sym->current)
         {
-        case '0': do_after = 1; break;
-        case '1': do_after = 2; break;
+        case '0': function_name = ""; do_after = 1; break;
+        case '1': function_name = ""; do_after = 2; break;
         case '2': function_name = "operator new"; break;
         case '3': function_name = "operator delete"; break;
         case '4': function_name = "operator="; break;
@@ -1530,26 +1530,22 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             return FALSE;
         }
         sym->current++;
+        if (in_template)
+        {
+            const char *args;
+            struct array array_pmt;
+
+            str_array_init(&array_pmt);
+            args = get_args(sym, &array_pmt, FALSE, '<', '>');
+            if (args) function_name = function_name ? str_printf(sym, "%s%s", function_name, args) : args;
+            sym->names.num = 0;
+        }
         switch (do_after)
         {
-        case 1: case 2:
-            if (!str_array_push(sym, dashed_null, -1, &sym->stack))
-                return FALSE;
-            break;
         case 4:
             sym->result = (char*)function_name;
             ret = TRUE;
             goto done;
-        case 5:
-            {
-                char *args;
-                struct array array_pmt;
-
-                str_array_init(&array_pmt);
-                args = get_args(sym, &array_pmt, FALSE, '<', '>');
-                if (args != NULL) function_name = str_printf(sym, "%s%s", function_name, args);
-                sym->names.num = 0;
-            }
             /* fall through */
         default:
             if (!str_array_push(sym, function_name, -1, &sym->stack))
@@ -1584,9 +1580,9 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         /* it's time to set the member name for ctor & dtor */
         if (sym->stack.num <= 1) goto done;
         if (do_after == 1)
-            sym->stack.elts[0] = sym->stack.elts[1];
+            sym->stack.elts[0] = str_printf(sym, "%s%s", sym->stack.elts[1], sym->stack.elts[0]);
         else
-            sym->stack.elts[0] = str_printf(sym, "~%s", sym->stack.elts[1]);
+            sym->stack.elts[0] = str_printf(sym, "~%s%s", sym->stack.elts[1], sym->stack.elts[0]);
         /* ctors and dtors don't have return type */
         sym->flags |= UNDNAME_NO_FUNCTION_RETURNS;
         break;
