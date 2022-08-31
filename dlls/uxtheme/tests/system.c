@@ -2550,6 +2550,50 @@ static void test_GetThemeBackgroundRegion(void)
     DestroyWindow(hwnd);
 }
 
+static void test_theme(void)
+{
+    BOOL transparent;
+    HTHEME htheme;
+    HRESULT hr;
+    HWND hwnd;
+
+    if (!IsThemeActive())
+    {
+        skip("Theming is inactive.\n");
+        return;
+    }
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(!!hwnd, "CreateWindowA failed, error %#lx.\n", GetLastError());
+
+    /* Test that scrollbar arrow parts are transparent */
+    htheme = OpenThemeData(hwnd, L"ScrollBar");
+    ok(!!htheme, "OpenThemeData failed.\n");
+
+    transparent = FALSE;
+    hr = GetThemeBool(htheme, SBP_ARROWBTN, 0, TMT_TRANSPARENT, &transparent);
+    /* XP does use opaque scrollbar arrow parts and TMT_TRANSPARENT is FALSE */
+    if (LOBYTE(LOWORD(GetVersion())) < 6)
+    {
+        ok(hr == E_PROP_ID_UNSUPPORTED, "Got unexpected hr %#lx.\n", hr);
+
+        transparent = IsThemeBackgroundPartiallyTransparent(htheme, SBP_ARROWBTN, 0);
+        ok(!transparent, "Expected opaque.\n");
+    }
+    /* > XP use opaque scrollbar arrow parts, but TMT_TRANSPARENT is TRUE */
+    else
+    {
+        ok(hr == S_OK, "Got unexpected hr %#lx,\n", hr);
+        ok(transparent, "Expected transparent.\n");
+
+        transparent = IsThemeBackgroundPartiallyTransparent(htheme, SBP_ARROWBTN, 0);
+        ok(transparent, "Expected transparent.\n");
+    }
+    CloseThemeData(htheme);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(system)
 {
     ULONG_PTR ctx_cookie;
@@ -2574,6 +2618,7 @@ START_TEST(system)
     test_DrawThemeParentBackground();
     test_DrawThemeBackgroundEx();
     test_GetThemeBackgroundRegion();
+    test_theme();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {
