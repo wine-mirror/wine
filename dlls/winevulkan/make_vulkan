@@ -179,7 +179,7 @@ class ThunkType(Enum):
 # - loader_thunk sets whether to create a thunk for unix funcs.
 FUNCTION_OVERRIDES = {
     # Global functions
-    "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
     "vkEnumerateInstanceExtensionProperties" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkEnumerateInstanceLayerProperties" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
     "vkEnumerateInstanceVersion": {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
@@ -187,7 +187,7 @@ FUNCTION_OVERRIDES = {
 
     # Instance functions
     "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE },
+    "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkEnumerateDeviceLayerProperties": {"dispatch": True, "driver": False, "thunk": ThunkType.NONE},
     "vkEnumeratePhysicalDeviceGroups" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -1060,7 +1060,7 @@ class VkHandle(object):
 
         if self.parent is None:
             # Should only happen for VkInstance
-            return "{0}->funcs".format(param)
+            return "wine_instance_from_handle({0})->funcs".format(param)
         elif self.name == "VkDevice":
             return "wine_device_from_handle({0})->funcs".format(param)
         elif self.name == "VkQueue":
@@ -1104,6 +1104,8 @@ class VkHandle(object):
             return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
         if self.name == "VkDevice":
             return "wine_device_from_handle({0})->device".format(name)
+        if self.name == "VkInstance":
+            return "wine_instance_from_handle({0})->instance".format(name)
         if self.name == "VkQueue":
             return "wine_queue_from_handle({0})->queue".format(name)
         if self.name == "VkSurfaceKHR":
@@ -1113,8 +1115,6 @@ class VkHandle(object):
 
         if self.name == "VkCommandBuffer":
             native_handle_name = "command_buffer"
-        if self.name == "VkInstance":
-            native_handle_name = "instance"
         if self.name == "VkPhysicalDevice":
             native_handle_name = "phys_dev"
 

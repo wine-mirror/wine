@@ -76,7 +76,7 @@ struct wine_debug_utils_messenger;
 
 struct wine_debug_report_callback
 {
-    struct VkInstance_T *instance; /* parent */
+    struct wine_instance *instance; /* parent */
     VkDebugReportCallbackEXT debug_callback; /* native callback object */
 
     /* application callback + data */
@@ -86,10 +86,11 @@ struct wine_debug_report_callback
     struct wine_vk_mapping mapping;
 };
 
-struct VkInstance_T
+struct wine_instance
 {
-    struct wine_vk_base base;
     struct vulkan_instance_funcs funcs;
+
+    VkInstance handle; /* client instance */
     VkInstance instance; /* native instance */
 
     /* We cache devices as we need to wrap them as they are
@@ -112,10 +113,15 @@ struct VkInstance_T
     struct wine_vk_mapping mapping;
 };
 
+static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
+{
+    return (struct wine_instance *)(uintptr_t)handle->base.unix_handle;
+}
+
 struct VkPhysicalDevice_T
 {
     struct wine_vk_base base;
-    struct VkInstance_T *instance; /* parent */
+    struct wine_instance *instance; /* parent */
     VkPhysicalDevice phys_dev; /* native physical device */
 
     VkExtensionProperties *extensions;
@@ -164,7 +170,7 @@ static inline VkCommandPool wine_cmd_pool_to_handle(struct wine_cmd_pool *cmd_po
 
 struct wine_debug_utils_messenger
 {
-    struct VkInstance_T *instance; /* parent */
+    struct wine_instance *instance; /* parent */
     VkDebugUtilsMessengerEXT debug_messenger; /* native messenger */
 
     /* application callback + data */

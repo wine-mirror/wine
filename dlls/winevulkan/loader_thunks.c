@@ -2585,14 +2585,6 @@ void WINAPI vkDestroyIndirectCommandsLayoutNV(VkDevice device, VkIndirectCommand
     vk_unix_call(unix_vkDestroyIndirectCommandsLayoutNV, &params);
 }
 
-void WINAPI vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *pAllocator)
-{
-    struct vkDestroyInstance_params params;
-    params.instance = instance;
-    params.pAllocator = pAllocator;
-    vk_unix_call(unix_vkDestroyInstance, &params);
-}
-
 void WINAPI vkDestroyPipeline(VkDevice device, VkPipeline pipeline, const VkAllocationCallbacks *pAllocator)
 {
     struct vkDestroyPipeline_params params;

@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdlib.h>
 #include "vulkan_loader.h"
 #include "winreg.h"
 #include "ntuser.h"
@@ -251,19 +252,37 @@ static BOOL  wine_vk_init_once(void)
 }
 
 VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
-        const VkAllocationCallbacks *allocator, VkInstance *instance)
+        const VkAllocationCallbacks *allocator, VkInstance *ret)
 {
     struct vkCreateInstance_params params;
+    struct VkInstance_T *instance;
+    VkResult result;
 
-    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
+    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, ret);
 
-    if(!wine_vk_init_once())
+    if (!wine_vk_init_once())
         return VK_ERROR_INITIALIZATION_FAILED;
+
+    if (!(instance = alloc_vk_object(sizeof(*instance))))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     params.pCreateInfo = create_info;
     params.pAllocator = allocator;
-    params.pInstance = instance;
-    return vk_unix_call(unix_vkCreateInstance, &params);
+    params.pInstance = ret;
+    params.client_ptr = instance;
+    result = vk_unix_call(unix_vkCreateInstance, &params);
+    if (!instance->base.unix_handle)
+        free(instance);
+    return result;
+}
+
+void WINAPI vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyInstance_params params;
+    params.instance = instance;
+    params.pAllocator = pAllocator;
+    vk_unix_call(unix_vkDestroyInstance, &params);
+    free(instance);
 }
 
 VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,

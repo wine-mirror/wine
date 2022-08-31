@@ -7937,7 +7937,7 @@ static NTSTATUS wine_vkDebugReportMessageEXT(void *args)
 {
     struct vkDebugReportMessageEXT_params *params = args;
     TRACE("%p, %#x, %#x, 0x%s, 0x%s, %d, %p, %p\n", params->instance, params->flags, params->objectType, wine_dbgstr_longlong(params->object), wine_dbgstr_longlong(params->location), params->messageCode, params->pLayerPrefix, params->pMessage);
-    params->instance->funcs.p_vkDebugReportMessageEXT(params->instance->instance, params->flags, params->objectType, wine_vk_unwrap_handle(params->objectType, params->object), params->location, params->messageCode, params->pLayerPrefix, params->pMessage);
+    wine_instance_from_handle(params->instance)->funcs.p_vkDebugReportMessageEXT(wine_instance_from_handle(params->instance)->instance, params->flags, params->objectType, wine_vk_unwrap_handle(params->objectType, params->object), params->location, params->messageCode, params->pLayerPrefix, params->pMessage);
     return STATUS_SUCCESS;
 }
 
@@ -9922,7 +9922,7 @@ static NTSTATUS wine_vkSubmitDebugUtilsMessageEXT(void *args)
     TRACE("%p, %#x, %#x, %p\n", params->instance, params->messageSeverity, params->messageTypes, params->pCallbackData);
 
     convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(params->pCallbackData, &pCallbackData_host);
-    params->instance->funcs.p_vkSubmitDebugUtilsMessageEXT(params->instance->instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
+    wine_instance_from_handle(params->instance)->funcs.p_vkSubmitDebugUtilsMessageEXT(wine_instance_from_handle(params->instance)->instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
 
     free_VkDebugUtilsMessengerCallbackDataEXT(&pCallbackData_host);
     return STATUS_SUCCESS;
@@ -9931,7 +9931,7 @@ static NTSTATUS wine_vkSubmitDebugUtilsMessageEXT(void *args)
     TRACE("%p, %#x, %#x, %p\n", params->instance, params->messageSeverity, params->messageTypes, params->pCallbackData);
 
     convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(params->pCallbackData, &pCallbackData_host);
-    params->instance->funcs.p_vkSubmitDebugUtilsMessageEXT(params->instance->instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
+    wine_instance_from_handle(params->instance)->funcs.p_vkSubmitDebugUtilsMessageEXT(wine_instance_from_handle(params->instance)->instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
 
     free_VkDebugUtilsMessengerCallbackDataEXT(&pCallbackData_host);
     return STATUS_SUCCESS;
@@ -10337,7 +10337,7 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
     case VK_OBJECT_TYPE_DEVICE:
         return (uint64_t) (uintptr_t) wine_device_from_handle(((VkDevice) (uintptr_t) handle))->device;
     case VK_OBJECT_TYPE_INSTANCE:
-        return (uint64_t) (uintptr_t) ((VkInstance) (uintptr_t) handle)->instance;
+        return (uint64_t) (uintptr_t) wine_instance_from_handle(((VkInstance) (uintptr_t) handle))->instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
         return (uint64_t) (uintptr_t) ((VkPhysicalDevice) (uintptr_t) handle)->phys_dev;
     case VK_OBJECT_TYPE_QUEUE:

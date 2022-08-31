@@ -54,6 +54,11 @@ struct wine_vk_base
     UINT64 unix_handle;
 };
 
+struct VkInstance_T
+{
+    struct wine_vk_base base;
+};
+
 struct VkQueue_T
 {
     struct wine_vk_base base;
