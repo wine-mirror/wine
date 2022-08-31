@@ -232,7 +232,7 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
  * Retrieve rect from tab control and map into the dialog for SetWindowPos
  */
 static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
-                                  RECT *rc, LPCPROPSHEETPAGEW ppshpage)
+                                  RECT *rc, HPROPSHEETPAGE hpsp)
 {
     if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) {     
         HWND hwndChild;
@@ -240,7 +240,7 @@ static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
 
         if (((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
              (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
-             !(ppshpage->dwFlags & PSP_HIDEHEADER)) ||
+             !(hpsp->psp.dwFlags & PSP_HIDEHEADER)) ||
             (psInfo->ppshheader.dwFlags & PSH_WIZARD))
         {
             rc->left = rc->top = WIZARD_PADDING;
@@ -255,7 +255,7 @@ static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
 
         if ((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
             (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
-            !(ppshpage->dwFlags & PSP_HIDEHEADER))
+            !(hpsp->psp.dwFlags & PSP_HIDEHEADER))
         {
             hwndChild = GetDlgItem(hwndDlg, IDC_SUNKEN_LINEHEADER);
             GetClientRect(hwndChild, &r);
@@ -1996,7 +1996,6 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     int result;
     PSHNOTIFY psn;
     RECT rc;
-    LPCPROPSHEETPAGEW ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
 
     if (hwndTabControl)
 	SendMessageW(hwndTabControl, TCM_SETCURSEL, index, 0);
@@ -2029,7 +2028,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
      * wizards).
      * NOTE: The resizing happens every time the page is selected and
      * not only when it's created (some applications depend on it). */
-    PROPSHEET_GetPageRect(psInfo, hwndDlg, &rc, ppshpage);
+    PROPSHEET_GetPageRect(psInfo, hwndDlg, &rc, psInfo->proppage[index].hpage);
     TRACE("setting page %p, rc (%s) w=%ld, h=%ld\n",
           psInfo->proppage[index].hwndPage, wine_dbgstr_rect(&rc),
           rc.right - rc.left, rc.bottom - rc.top);
