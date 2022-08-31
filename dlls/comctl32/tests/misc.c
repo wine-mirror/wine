@@ -887,7 +887,7 @@ static void test_themed_background(void)
         {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq},
         {WC_TREEVIEWA, 0, treeview_seq},
         {UPDOWN_CLASSA, 0, empty_seq},
-        {WC_SCROLLBARA, 0, scrollbar_seq, TRUE},
+        {WC_SCROLLBARA, 0, scrollbar_seq},
         {WC_SCROLLBARA, SBS_SIZEBOX, empty_seq},
         {WC_SCROLLBARA, SBS_SIZEGRIP, empty_seq},
         /* Scrollbars in non-client area */

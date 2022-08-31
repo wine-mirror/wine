@@ -138,14 +138,10 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
 
             partrect = *rect;
             partrect.bottom = partrect.top + arrowsize;
-            if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_ARROWBTN, uparrowstate))
-                DrawThemeParentBackground(hwnd, dc, &partrect);
             DrawThemeBackground(theme, dc, SBP_ARROWBTN, uparrowstate, &partrect, NULL);
 
             partrect.bottom = rect->bottom;
             partrect.top = partrect.bottom - arrowsize;
-            if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_ARROWBTN, downarrowstate))
-                DrawThemeParentBackground(hwnd, dc, &partrect);
             DrawThemeBackground(theme, dc, SBP_ARROWBTN, downarrowstate, &partrect, NULL);
 
             if (thumbpos > 0) {
@@ -161,9 +157,6 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
             if (thumbsize > 0) {
                 partrect.top = rect->top + thumbpos;
                 partrect.bottom = partrect.top + thumbsize;
-
-                if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_THUMBBTNVERT, thumbstate))
-                    DrawThemeParentBackground(hwnd, dc, &partrect);
                 DrawThemeBackground(theme, dc, SBP_THUMBBTNVERT, thumbstate, &partrect, NULL);
 
                 if (SUCCEEDED(GetThemePartSize(theme, dc, SBP_GRIPPERVERT, thumbstate, NULL, TS_DRAW, &grippersize))) {
@@ -217,14 +210,10 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
 
             partrect = *rect;
             partrect.right = partrect.left + arrowsize;
-            if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_ARROWBTN, leftarrowstate))
-                DrawThemeParentBackground(hwnd, dc, &partrect);
             DrawThemeBackground(theme, dc, SBP_ARROWBTN, leftarrowstate, &partrect, NULL);
 
             partrect.right = rect->right;
             partrect.left = partrect.right - arrowsize;
-            if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_ARROWBTN, rightarrowstate))
-                DrawThemeParentBackground(hwnd, dc, &partrect);
             DrawThemeBackground(theme, dc, SBP_ARROWBTN, rightarrowstate, &partrect, NULL);
 
             if (thumbpos > 0) {
@@ -240,9 +229,6 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
             if (thumbsize > 0) {
                 partrect.left = rect->left + thumbpos;
                 partrect.right = partrect.left + thumbsize;
-
-                if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_THUMBBTNHORZ, thumbstate))
-                    DrawThemeParentBackground(hwnd, dc, &partrect);
                 DrawThemeBackground(theme, dc, SBP_THUMBBTNHORZ, thumbstate, &partrect, NULL);
 
                 if (SUCCEEDED(GetThemePartSize(theme, dc, SBP_GRIPPERHORZ, thumbstate, NULL, TS_DRAW, &grippersize))) {
