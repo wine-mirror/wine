@@ -52,4 +52,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        unixodbc-dev:amd64 unixodbc-dev:i386 \
                        x11proto-dev && \
     apt-get install -y ccache && \
-    apt-get clean
+    apt-get clean && \
+    useradd -m gitlab
+
+USER gitlab
