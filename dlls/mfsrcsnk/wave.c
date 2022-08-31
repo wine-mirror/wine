@@ -706,8 +706,8 @@ static HRESULT WINAPI wave_stream_sink_GetMediaTypeHandler(IMFStreamSink *iface,
 static HRESULT WINAPI wave_stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
     struct wave_sink *sink = impl_from_IMFStreamSink(iface);
+    IMFMediaBuffer *buffer = NULL;
     DWORD max_length, length;
-    IMFMediaBuffer *buffer;
     HRESULT hr = S_OK;
     BYTE *data;
 
