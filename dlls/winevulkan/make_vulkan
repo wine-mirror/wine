@@ -894,7 +894,7 @@ class VkFunction(object):
         stub += "}\n\n"
         return stub
 
-    def thunk(self, prefix=None):
+    def thunk(self, prefix=None, conv=False):
         if prefix == "thunk_":
             thunk = self.prototype(prefix=prefix)
             thunk += "\n{\n"
@@ -905,15 +905,8 @@ class VkFunction(object):
             thunk += "    struct {0}_params *params = args;\n".format(self.name)
             params_prefix = "params->"
 
-        if self.needs_conversion():
-            thunk += "#if defined(USE_STRUCT_CONVERSION)\n"
+        if conv and self.needs_conversion():
             thunk += self.body_conversion(conv=True, params_prefix=params_prefix)
-            thunk += "#else\n"
-            if self.needs_unwrapping():
-                thunk += self.body_conversion(conv=False, params_prefix=params_prefix)
-            else:
-                thunk += self.body(params_prefix=params_prefix)
-            thunk += "#endif\n"
         elif self.needs_unwrapping():
             thunk += self.body_conversion(conv=False, params_prefix=params_prefix)
         else:
@@ -2716,7 +2709,7 @@ class VkGenerator(object):
             f.write("{0}{1}".format("# " if spec_file else " * ", line).rstrip(" ") + "\n")
         f.write("\n" if spec_file else " */\n\n")
 
-    def generate_thunks_c(self, f, prefix):
+    def generate_thunks_c(self, f):
         self._generate_copyright(f)
 
         f.write("#if 0\n")
@@ -2743,15 +2736,22 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type == ThunkType.NONE:
+            if vk_func.loader_thunk_type == ThunkType.NONE or vk_func.thunk_type == ThunkType.NONE:
                 continue
 
+            f.write("#if !defined(USE_STRUCT_CONVERSION)\n\n")
             if vk_func.needs_private_thunk():
                 f.write(vk_func.thunk(prefix="thunk_"))
-
-            if vk_func.thunk_type == ThunkType.PUBLIC:
+            else:
                 f.write("static ")
-                f.write(vk_func.thunk(prefix=prefix))
+                f.write(vk_func.thunk(prefix="thunk64_"))
+            f.write("#else /* USE_STRUCT_CONVERSION */\n\n")
+            if vk_func.needs_private_thunk():
+                f.write(vk_func.thunk(prefix="thunk_", conv=True))
+            else:
+                f.write("static ")
+                f.write(vk_func.thunk(prefix="thunk32_", conv=True))
+            f.write("#endif /* USE_STRUCT_CONVERSION */\n\n")
 
         # Create array of device extensions.
         f.write("static const char * const vk_device_extensions[] =\n{\n")
@@ -2827,6 +2827,8 @@ class VkGenerator(object):
         f.write("    }\n")
         f.write("}\n\n")
 
+        f.write("#if !defined(USE_STRUCT_CONVERSION)\n\n")
+
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("{\n")
         f.write("    init_vulkan,\n")
@@ -2838,9 +2840,30 @@ class VkGenerator(object):
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
+            prefix = "thunk64_" if vk_func.thunk_type == ThunkType.PUBLIC else "wine_"
             f.write("    {1}{0},\n".format(vk_func.name, prefix))
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
+
+        f.write("#else /* USE_STRUCT_CONVERSION) */\n\n")
+
+        f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
+        f.write("{\n")
+        f.write("    init_vulkan,\n")
+        f.write("    vk_is_available_instance_function,\n")
+        f.write("    vk_is_available_device_function,\n")
+        for vk_func in self.registry.funcs.values():
+            if not vk_func.needs_exposing():
+                continue
+            if vk_func.loader_thunk_type == ThunkType.NONE:
+                continue
+
+            prefix = "thunk32_" if vk_func.thunk_type == ThunkType.PUBLIC else "wine_"
+            f.write("    {1}{0},\n".format(vk_func.name, prefix))
+        f.write("};\n")
+        f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
+
+        f.write("#endif /* USE_STRUCT_CONVERSION) */\n\n")
 
         f.write("NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)\n")
         f.write("{\n")
@@ -3895,7 +3918,7 @@ def main():
         generator.generate_thunks_h(f, "wine_")
 
     with open(WINE_VULKAN_THUNKS_C, "w") as f:
-        generator.generate_thunks_c(f, "wine_")
+        generator.generate_thunks_c(f)
 
     with open(WINE_VULKAN_LOADER_THUNKS_H, "w") as f:
         generator.generate_loader_thunks_h(f)
