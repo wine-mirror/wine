@@ -979,7 +979,6 @@ static void test_themed_background(void)
                 ok(color != RGB(255, 0, 0), "Got unexpected color %#08lx.\n", color);
 
                 color = GetPixel(hdc, 10, 60);
-                todo_wine
                 ok(color == RGB(255, 0, 0) || broken(color == CLR_INVALID), /* Win7 on TestBots */
                    "Got unexpected color %#08lx.\n", color);
             }

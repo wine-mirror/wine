@@ -68,8 +68,12 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
         DrawThemeBackground(theme, dc, SBP_SIZEBOX, state, rect, NULL);
     } else {
         int uppertrackstate, lowertrackstate, thumbstate;
+        HBRUSH track_brush = NULL;
         RECT partrect;
         SIZE grippersize;
+
+        if (bar == SB_CTL)
+            track_brush = (HBRUSH)SendMessageW(GetParent(hwnd), WM_CTLCOLORSCROLLBAR, (WPARAM)dc, (LPARAM)hwnd);
 
         if (disabled) {
             uppertrackstate = SCRBS_DISABLED;
@@ -148,9 +152,10 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
                 partrect.top = rect->top + arrowsize;
                 partrect.bottom = rect->top + thumbpos;
 
-                if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_UPPERTRACKVERT, uppertrackstate))
-                    DrawThemeParentBackground(hwnd, dc, &partrect);
-                DrawThemeBackground(theme, dc, SBP_UPPERTRACKVERT, uppertrackstate, &partrect, NULL);
+                if (bar == SB_CTL && track_brush)
+                    FillRect(dc, &partrect, track_brush);
+                else
+                    DrawThemeBackground(theme, dc, SBP_UPPERTRACKVERT, uppertrackstate, &partrect, NULL);
             }
 
             if (thumbsize > 0) {
@@ -178,9 +183,10 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
                 partrect.top = rect->top + arrowsize;
             if (partrect.bottom > partrect.top)
             {
-                if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_LOWERTRACKVERT, lowertrackstate))
-                    DrawThemeParentBackground(hwnd, dc, &partrect);
-                DrawThemeBackground(theme, dc, SBP_LOWERTRACKVERT, lowertrackstate, &partrect, NULL);
+                if (bar == SB_CTL && track_brush)
+                    FillRect(dc, &partrect, track_brush);
+                else
+                    DrawThemeBackground(theme, dc, SBP_LOWERTRACKVERT, lowertrackstate, &partrect, NULL);
             }
         } else {
             int leftarrowstate, rightarrowstate;
@@ -225,9 +231,10 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
                 partrect.left = rect->left + arrowsize;
                 partrect.right = rect->left + thumbpos;
 
-                if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_UPPERTRACKHORZ, uppertrackstate))
-                    DrawThemeParentBackground(hwnd, dc, &partrect);
-                DrawThemeBackground(theme, dc, SBP_UPPERTRACKHORZ, uppertrackstate, &partrect, NULL);
+                if (bar == SB_CTL && track_brush)
+                    FillRect(dc, &partrect, track_brush);
+                else
+                    DrawThemeBackground(theme, dc, SBP_UPPERTRACKHORZ, uppertrackstate, &partrect, NULL);
             }
 
             if (thumbsize > 0) {
@@ -255,9 +262,10 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
                 partrect.left = rect->left + arrowsize;
             if (partrect.right > partrect.left)
             {
-                if (bar == SB_CTL && IsThemeBackgroundPartiallyTransparent(theme, SBP_LOWERTRACKHORZ, lowertrackstate))
-                    DrawThemeParentBackground(hwnd, dc, &partrect);
-                DrawThemeBackground(theme, dc, SBP_LOWERTRACKHORZ, lowertrackstate, &partrect, NULL);
+                if (bar == SB_CTL && track_brush)
+                    FillRect(dc, &partrect, track_brush);
+                else
+                    DrawThemeBackground(theme, dc, SBP_LOWERTRACKHORZ, lowertrackstate, &partrect, NULL);
             }
         }
     }
