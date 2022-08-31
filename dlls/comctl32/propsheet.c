@@ -93,6 +93,12 @@ typedef struct
 } MyDLGITEMTEMPLATEEX;
 #include "poppack.h"
 
+struct _PSP
+{
+    PROPSHEETPAGEW psp;
+    PROPSHEETPAGEW callback_psp;
+};
+
 typedef struct tagPropPageInfo
 {
   HPROPSHEETPAGE hpage; /* to keep track of pages not passed to PropertySheet */
@@ -2953,21 +2959,19 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)
 {
     PROPSHEETPAGEW *ppsp;
+    HPROPSHEETPAGE ret;
 
     if (lpPropSheetPage->dwSize < PROPSHEETPAGEA_V1_SIZE)
         return NULL;
 
+    ret = Alloc(sizeof(*ret));
+    ppsp = &ret->psp;
+    memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
     /* original data is used for callback notifications */
     if ((lpPropSheetPage->dwFlags & PSP_USECALLBACK) && lpPropSheetPage->pfnCallback)
     {
-        ppsp = Alloc(2 * sizeof(*ppsp));
-        memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
-        memcpy(ppsp + 1, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
-    }
-    else
-    {
-        ppsp = Alloc(sizeof(*ppsp));
-        memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
+        memcpy(&ret->callback_psp, lpPropSheetPage,
+                min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
     }
 
     ppsp->dwFlags &= ~PSP_INTERNAL_UNICODE;
@@ -3025,7 +3029,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
     if ((ppsp->dwFlags & PSP_USECALLBACK) && ppsp->dwSize > PROPSHEETPAGEA_V1_SIZE && ppsp->pfnCallback)
         ppsp->pfnCallback(0, PSPCB_ADDREF, ppsp + 1);
 
-    return (HPROPSHEETPAGE)ppsp;
+    return ret;
 }
 
 /******************************************************************************
@@ -3036,21 +3040,19 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
     PROPSHEETPAGEW *ppsp;
+    HPROPSHEETPAGE ret;
 
     if (lpPropSheetPage->dwSize < PROPSHEETPAGEW_V1_SIZE)
         return NULL;
 
+    ret = Alloc(sizeof(*ret));
+    ppsp = &ret->psp;
+    memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
     /* original data is used for callback notifications */
     if ((lpPropSheetPage->dwFlags & PSP_USECALLBACK) && lpPropSheetPage->pfnCallback)
     {
-        ppsp = Alloc(2 * sizeof(*ppsp));
-        memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
-        memcpy(ppsp + 1, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
-    }
-    else
-    {
-        ppsp = Alloc(sizeof(*ppsp));
-        memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
+        memcpy(&ret->callback_psp, lpPropSheetPage,
+                min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
     }
 
     ppsp->dwFlags |= PSP_INTERNAL_UNICODE;
@@ -3088,7 +3090,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
     if ((ppsp->dwFlags & PSP_USECALLBACK) && ppsp->dwSize > PROPSHEETPAGEW_V1_SIZE && ppsp->pfnCallback)
         ppsp->pfnCallback(0, PSPCB_ADDREF, ppsp + 1);
 
-    return (HPROPSHEETPAGE)ppsp;
+    return ret;
 }
 
 /******************************************************************************
@@ -3106,7 +3108,7 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
 {
   PROPSHEETPAGEW *psp = (PROPSHEETPAGEW *)hPropPage;
 
-  if (!psp)
+  if (!hPropPage)
      return FALSE;
 
   if ((psp->dwFlags & PSP_USECALLBACK) && psp->pfnCallback)
