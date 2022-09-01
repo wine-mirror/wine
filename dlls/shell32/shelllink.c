@@ -277,8 +277,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
 
         TRACE("(%p, %s, %lx)\n",This, debugstr_w(pszFileName), dwMode);
 
-        if( dwMode == 0 )
- 		dwMode = STGM_READ | STGM_SHARE_DENY_WRITE;
+        if( dwMode == 0 ) dwMode = STGM_READ;
         r = SHCreateStreamOnFileW(pszFileName, dwMode, &stm);
         if( SUCCEEDED( r ) )
         {
@@ -371,7 +370,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         fRemember = FALSE;
     }
 
-    r = SHCreateStreamOnFileW( pszFileName, STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE, &stm );
+    r = SHCreateStreamOnFileW( pszFileName, STGM_READWRITE | STGM_CREATE | STGM_SHARE_DENY_WRITE, &stm );
     if( SUCCEEDED( r ) )
     {
         r = IPersistStream_Save(StreamThis, stm, FALSE);

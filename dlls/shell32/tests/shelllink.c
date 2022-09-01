@@ -26,6 +26,7 @@
 #include "shlguid.h"
 #include "shobjidl.h"
 #include "shlobj.h"
+#include "shlwapi.h"
 #include "shellapi.h"
 #include "commoncontrols.h"
 
@@ -619,6 +620,9 @@ static void test_load_save(void)
     char mypath[MAX_PATH];
     char mydir[MAX_PATH];
     char realpath[MAX_PATH];
+    IPersistFile *pf;
+    IShellLinkA *sl;
+    IStream *stm;
     char* p;
     HANDLE hf;
     DWORD r;
@@ -809,13 +813,52 @@ static void test_load_save(void)
     r = DeleteFileA(realpath);
     ok(r, "failed to delete file %s (%ld)\n", realpath, GetLastError());
 
+    /* test sharing modes */
+    r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLinkA, (LPVOID*)&sl);
+    ok( r == S_OK, "no IID_IShellLinkA (0x%08lx)\n", r );
+    r = IShellLinkA_QueryInterface(sl, &IID_IPersistFile, (void**)&pf);
+    ok( r == S_OK, "no IID_IPersistFile (0x%08lx)\n", r );
+
+    r = SHCreateStreamOnFileW(lnkfile, STGM_READ, &stm);
+    ok( !r, "SHCreateStreamOnFileW failed %lx\n", r );
+    r = IPersistFile_Save(pf, lnkfile, FALSE);
+    ok(r == S_OK, "IPersistFile_Save failed (0x%08lx)\n", r);
+    r = IPersistFile_Load(pf, lnkfile, 0);
+    ok(r == S_OK, "IPersistFile_Load failed (0x%08lx)\n", r);
+    IStream_Release( stm );
+
+    r = SHCreateStreamOnFileW(lnkfile, STGM_READ | STGM_SHARE_DENY_WRITE, &stm);
+    ok( r == S_OK, "SHCreateStreamOnFileW failed %lx\n", r );
+    r = IPersistFile_Save(pf, lnkfile, FALSE);
+    ok( r == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION), "IPersistFile_Save failed (0x%08lx)\n", r );
+    r = IPersistFile_Load(pf, lnkfile, 0);
+    ok(r == S_OK, "IPersistFile_Load failed (0x%08lx)\n", r);
+    IStream_Release( stm );
+
+    r = SHCreateStreamOnFileW(lnkfile, STGM_READWRITE | STGM_SHARE_DENY_WRITE, &stm);
+    ok( r == S_OK, "SHCreateStreamOnFileW failed %lx\n", r );
+    r = IPersistFile_Save(pf, lnkfile, FALSE);
+    ok( r == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION), "IPersistFile_Save failed (0x%08lx)\n", r );
+    r = IPersistFile_Load(pf, lnkfile, 0);
+    ok(r == S_OK, "IPersistFile_Load failed (0x%08lx)\n", r);
+    IStream_Release( stm );
+
+    r = SHCreateStreamOnFileW(lnkfile, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &stm);
+    ok( r == S_OK, "SHCreateStreamOnFileW failed %lx\n", r );
+    r = IPersistFile_Save(pf, lnkfile, FALSE);
+    ok( r == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION), "IPersistFile_Save failed (0x%08lx)\n", r );
+    r = IPersistFile_Load(pf, lnkfile, 0);
+    ok( r == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION), "IPersistFile_Load failed (0x%08lx)\n", r );
+    IStream_Release( stm );
+
+    IShellLinkA_Release( sl );
+    IPersistFile_Release( pf );
+
     /* FIXME: Also test saving a .lnk pointing to a pidl that cannot be
      * represented as a path.
      */
 
-    /* DeleteFileW is not implemented on Win9x */
-    r=DeleteFileA(lnkfileA);
-    ok(r, "failed to delete link '%s' (%ld)\n", lnkfileA, GetLastError());
+    DeleteFileW(lnkfile);
 }
 
 static void test_datalink(void)
