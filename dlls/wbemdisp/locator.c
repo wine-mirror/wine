@@ -50,14 +50,6 @@ static IWbemContext * unsafe_get_context_from_namedvalueset( IDispatch *disp )
     return valueset ? valueset->context : NULL;
 }
 
-static WCHAR *heap_strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-    if (!src) return NULL;
-    if ((dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
-    return dst;
-}
-
 struct services;
 
 static HRESULT EnumVARIANT_create( struct services *, IEnumWbemClassObject *, IEnumVARIANT ** );
@@ -784,7 +776,7 @@ static HRESULT SWbemMethod_create( struct methodset *set, const WCHAR *name, ISW
     method->refs = 1;
     method->set = set;
     ISWbemMethodSet_AddRef( &method->set->ISWbemMethodSet_iface );
-    if (!(method->name = heap_strdupW( name )))
+    if (!(method->name = wcsdup( name )))
     {
         ISWbemMethod_Release( &method->ISWbemMethod_iface );
         return E_OUTOFMEMORY;
