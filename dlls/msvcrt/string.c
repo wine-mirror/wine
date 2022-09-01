@@ -2817,8 +2817,11 @@ int __cdecl memcmp(const void *ptr1, const void *ptr2, size_t n)
 
 #define MEMMOVE_INIT \
     "pushq " SRC_REG "\n\t" \
+    __ASM_SEH(".seh_pushreg " SRC_REG "\n\t") \
     __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t") \
     "pushq " DEST_REG "\n\t" \
+    __ASM_SEH(".seh_pushreg " DEST_REG "\n\t") \
+    __ASM_SEH(".seh_endprologue\n\t") \
     __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t") \
     "movq %rcx, " DEST_REG "\n\t" \
     "movq %rdx, " SRC_REG "\n\t"
