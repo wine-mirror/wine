@@ -1202,7 +1202,10 @@ sync_test("map_obj", function() {
 });
 
 sync_test("storage", function() {
-    var v = document.documentMode, r;
+    var v = document.documentMode, i, r, list;
+
+    sessionStorage["add-at-end"] = 0;
+    sessionStorage.removeItem("add-at-end");
 
     sessionStorage.setItem("foobar", "1234");
     ok("foobar" in sessionStorage, "foobar not in sessionStorage");
@@ -1211,6 +1214,29 @@ sync_test("storage", function() {
     sessionStorage.barfoo = 4321;
     r = sessionStorage.getItem("barfoo");
     ok(r === "4321", "sessionStorage.barfoo = " + r);
+    sessionStorage.setItem("abcd", "blah");
+    sessionStorage.dcba = "test";
+
+    // Order isn't consistent, but changes are reflected during the enumeration.
+    // Elements that were already traversed in DISPID (even if removed before
+    // the enumeration) are not enumerated, even if re-added during the enum.
+    i = 0; list = [ "foobar", "barfoo", "abcd", "dcba" ];
+    for(r in sessionStorage) {
+        for(var j = 0; j < list.length; j++)
+            if(r === list[j])
+                break;
+        ok(j < list.length, "got '" + r + "' enumerating");
+        list.splice(j, 1);
+        if(i === 1) {
+            sessionStorage.removeItem(list[0]);
+            sessionStorage.setItem("new", "new");
+            list.splice(0, 1, "new");
+        }
+        if(!list.length)
+            sessionStorage.setItem("add-at-end", "0");
+        i++;
+    }
+    ok(i === 4, "enum did " + i + " iterations");
 
     try {
         delete sessionStorage.foobar;
