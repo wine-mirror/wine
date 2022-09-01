@@ -1813,23 +1813,14 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     if (parameters->indirect)
     {
         struct wined3d_bo_vk *bo = wined3d_bo_vk(indirect_vk->b.buffer_object);
-        uint32_t stride, size;
 
         wined3d_context_vk_reference_bo(context_vk, bo);
-        size = indirect_vk->b.resource.size - parameters->u.indirect.offset;
-
         if (parameters->indexed)
-        {
-            stride = sizeof(VkDrawIndexedIndirectCommand);
             VK_CALL(vkCmdDrawIndexedIndirect(vk_command_buffer, bo->vk_buffer,
-                    bo->b.buffer_offset + parameters->u.indirect.offset, size / stride, stride));
-        }
+                    bo->b.buffer_offset + parameters->u.indirect.offset, 1, sizeof(VkDrawIndexedIndirectCommand)));
         else
-        {
-            stride = sizeof(VkDrawIndirectCommand);
             VK_CALL(vkCmdDrawIndirect(vk_command_buffer, bo->vk_buffer,
-                    bo->b.buffer_offset + parameters->u.indirect.offset, size / stride, stride));
-        }
+                    bo->b.buffer_offset + parameters->u.indirect.offset, 1, sizeof(VkDrawIndirectCommand)));
     }
     else
     {
