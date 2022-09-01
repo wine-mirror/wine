@@ -435,13 +435,7 @@ class VkEnum(object):
 
     def create_alias(self, name, alias_name):
         """ Create an aliased value for this enum """
-        # Older GCC versions need a literal to initialize a static const uint64_t
-        # which is what we use for 64bit bitmasks.
-        if self.bitwidth == 64:
-            alias = next(x for x in self.values if x.name == alias_name)
-            self.add(VkEnumValue(name, self.bitwidth, value=alias.value, hex=alias.hex, alias=alias_name))
-        else:
-            self.add(VkEnumValue(name, self.bitwidth, alias=alias_name))
+        self.add(VkEnumValue(name, self.bitwidth, alias=alias_name))
 
     def create_value(self, name, value):
         """ Create a new value for this enum """
@@ -468,6 +462,19 @@ class VkEnum(object):
         # Avoid adding duplicate aliases multiple times
         if not any(x.name == value.name for x in self.values):
             self.values.append(value)
+
+    def fixup_64bit_aliases(self):
+        """ Replace 64bit aliases with literal values """
+        # Older GCC versions need a literal to initialize a static const uint64_t
+        # which is what we use for 64bit bitmasks.
+        if self.bitwidth != 64:
+            return
+        for value in self.values:
+            if not value.is_alias():
+                continue
+            alias = next(x for x in self.values if x.name == value.alias)
+            value.hex = alias.hex
+            value.value = alias.value
 
     def definition(self):
         if self.is_alias():
@@ -3309,6 +3316,9 @@ class VkRegistry(object):
         # Pull in any required types and functions.
         self._parse_features(root)
         self._parse_extensions(root)
+
+        for enum in self.enums.values():
+            enum.fixup_64bit_aliases()
 
         self._match_object_types()
 
