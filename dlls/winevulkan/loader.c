@@ -100,6 +100,13 @@ static BOOL is_available_device_function(VkDevice device, const char *name)
     return vk_unix_call(unix_is_available_device_function, &params);
 }
 
+static void *alloc_vk_object(size_t size)
+{
+    struct wine_vk_base *object = calloc(1, size);
+    object->loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    return object;
+}
+
 PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
     void *func;
@@ -172,8 +179,8 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
      * https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues/2323
      * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
      */
-    if (((struct wine_vk_device_base *)device)->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR
-            && ((func = wine_vk_get_instance_proc_addr(name))
+    if ((device->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR)
+        && ((func = wine_vk_get_instance_proc_addr(name))
              || (func = wine_vk_get_phys_dev_proc_addr(name))))
     {
         WARN("Returning instance function %s.\n", debugstr_a(name));
@@ -415,6 +422,37 @@ void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
     params.pProperties = properties2;
     vk_unix_call(unix_vkGetPhysicalDeviceProperties2KHR, &params);
     fill_luid_property(properties2);
+}
+
+VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateInfo *create_info,
+                               const VkAllocationCallbacks *allocator, VkDevice *ret)
+{
+    struct vkCreateDevice_params params;
+    VkDevice device;
+    VkResult result;
+
+    if (!(device = alloc_vk_object(sizeof(*device))))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    params.physicalDevice = phys_dev;
+    params.pCreateInfo = create_info;
+    params.pAllocator = allocator;
+    params.pDevice = ret;
+    params.client_ptr = device;
+    result = vk_unix_call(unix_vkCreateDevice, &params);
+    if (!device->base.unix_handle)
+        free(device);
+    return result;
+}
+
+void WINAPI vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *allocator)
+{
+    struct vkDestroyDevice_params params;
+
+    params.device = device;
+    params.pAllocator = allocator;
+    vk_unix_call(unix_vkDestroyDevice, &params);
+    free(device);
 }
 
 static BOOL WINAPI call_vulkan_debug_report_callback( struct wine_vk_debug_report_params *params, ULONG size )

@@ -46,18 +46,19 @@ struct wine_vk_mapping
 struct VkCommandBuffer_T
 {
     struct wine_vk_base base;
-    struct VkDevice_T *device; /* parent */
+    struct wine_device *device; /* parent */
     VkCommandBuffer command_buffer; /* native command buffer */
 
     struct list pool_link;
     struct wine_vk_mapping mapping;
 };
 
-struct VkDevice_T
+struct wine_device
 {
-    struct wine_vk_device_base base;
     struct vulkan_device_funcs funcs;
     struct VkPhysicalDevice_T *phys_dev; /* parent */
+
+    VkDevice handle; /* client device */
     VkDevice device; /* native device */
 
     struct VkQueue_T* queues;
@@ -65,6 +66,11 @@ struct VkDevice_T
 
     struct wine_vk_mapping mapping;
 };
+
+static inline struct wine_device *wine_device_from_handle(VkDevice handle)
+{
+    return (struct wine_device *)(uintptr_t)handle->base.unix_handle;
+}
 
 struct wine_debug_utils_messenger;
 
@@ -121,7 +127,7 @@ struct VkPhysicalDevice_T
 struct VkQueue_T
 {
     struct wine_vk_base base;
-    struct VkDevice_T *device; /* parent */
+    struct wine_device *device; /* parent */
     VkQueue queue; /* native queue */
 
     uint32_t family_index;

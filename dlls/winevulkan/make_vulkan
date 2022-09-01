@@ -186,7 +186,7 @@ FUNCTION_OVERRIDES = {
     "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
 
     # Instance functions
-    "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
     "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE },
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkEnumerateDeviceLayerProperties": {"dispatch": True, "driver": False, "thunk": ThunkType.NONE},
@@ -205,7 +205,7 @@ FUNCTION_OVERRIDES = {
     "vkCreateComputePipelines" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkCreateGraphicsPipelines" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkDestroyCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -553,6 +553,7 @@ class VkFunction(object):
         self.driver = func_info["driver"] if func_info else False
         self.thunk_type = func_info["thunk"] if func_info else ThunkType.PUBLIC
         self.loader_thunk_type = func_info["loader_thunk"] if func_info and "loader_thunk" in func_info else ThunkType.PUBLIC
+        self.extra_param = func_info["extra_param"] if func_info and "extra_param" in func_info else None
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
@@ -767,8 +768,8 @@ class VkFunction(object):
             body += "{0}result = ".format(params_prefix)
         elif self.type != "void":
             body += "return "
-        body += "{0}{1}.p_{2}({3});\n".format(params_prefix, self.params[0].dispatch_table(),
-                                              self.name, params)
+        body += "{0}.p_{1}({2});\n".format(self.params[0].dispatch_table(params_prefix),
+                                           self.name, params)
         if self.type == "void" or self.returns_longlong():
             body += "    return STATUS_SUCCESS;\n"
 
@@ -828,12 +829,12 @@ class VkFunction(object):
 
         # Call the native Vulkan function.
         if self.type == "void":
-            body += "    {0}{1}.p_{2}({3});\n".format(params_prefix, self.params[0].dispatch_table(),
-                                                      self.name, params)
+            body += "    {0}.p_{1}({2});\n".format(self.params[0].dispatch_table(params_prefix),
+                                                   self.name, params)
         else:
-            body += "    {0}result = {1}{2}.p_{3}({4});\n".format(result_prefix, params_prefix,
-                                                                  self.params[0].dispatch_table(),
-                                                                  self.name, params)
+            body += "    {0}result = {1}.p_{2}({3});\n".format(result_prefix,
+                                                               self.params[0].dispatch_table(params_prefix),
+                                                               self.name, params)
 
         body += "\n"
 
@@ -1053,20 +1054,19 @@ class VkHandle(object):
         parent = handle.attrib.get("parent") # Most objects have a parent e.g. VkQueue has VkDevice.
         return VkHandle(name, _type, parent)
 
-    def dispatch_table(self):
+    def dispatch_table(self, param):
         if not self.is_dispatchable():
             return None
 
         if self.parent is None:
             # Should only happen for VkInstance
-            return "funcs"
+            return "{0}->funcs".format(param)
         elif self.name == "VkDevice":
-            # VkDevice has VkInstance as a parent, but has its own dispatch table.
-            return "funcs"
+            return "wine_device_from_handle({0})->funcs".format(param)
         elif self.parent in ["VkInstance", "VkPhysicalDevice"]:
-            return "instance->funcs"
+            return "{0}->instance->funcs".format(param)
         elif self.parent in ["VkDevice", "VkCommandPool"]:
-            return "device->funcs"
+            return "{0}->device->funcs".format(param)
         else:
             LOGGER.error("Unhandled dispatchable parent: {0}".format(self.parent))
 
@@ -1100,6 +1100,8 @@ class VkHandle(object):
             return "wine_debug_utils_messenger_from_handle({0})->debug_messenger".format(name)
         if self.name == "VkDebugReportCallbackEXT":
             return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
+        if self.name == "VkDevice":
+            return "wine_device_from_handle({0})->device".format(name)
         if self.name == "VkSurfaceKHR":
             return "wine_surface_from_handle({0})->surface".format(name)
 
@@ -1107,8 +1109,6 @@ class VkHandle(object):
 
         if self.name == "VkCommandBuffer":
             native_handle_name = "command_buffer"
-        if self.name == "VkDevice":
-            native_handle_name = "device"
         if self.name == "VkInstance":
             native_handle_name = "instance"
         if self.name == "VkPhysicalDevice":
@@ -1701,13 +1701,13 @@ class VkParam(object):
 
         return self._direction
 
-    def dispatch_table(self):
+    def dispatch_table(self, params_prefix=""):
         """ Return functions dispatch table pointer for dispatchable objects. """
 
         if not self.is_dispatchable():
             return None
 
-        return "{0}->{1}".format(self.name, self.handle.dispatch_table())
+        return self.handle.dispatch_table(params_prefix + self.name)
 
     def format_string(self):
         return self.format_str
@@ -3076,6 +3076,8 @@ class VkGenerator(object):
             f.write("{\n");
             for p in vk_func.params:
                 f.write("    {0};\n".format(p.definition(is_member=True)))
+            if vk_func.extra_param:
+                f.write("    void *{0};\n".format(vk_func.extra_param))
             if vk_func.returns_longlong():
                 f.write("    {0} result;\n".format(vk_func.type))
             f.write("};\n\n");

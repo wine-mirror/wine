@@ -2155,6 +2155,7 @@ struct vkCreateDevice_params
     const VkDeviceCreateInfo *pCreateInfo;
     const VkAllocationCallbacks *pAllocator;
     VkDevice *pDevice;
+    void *client_ptr;
 };
 
 struct vkCreateEvent_params

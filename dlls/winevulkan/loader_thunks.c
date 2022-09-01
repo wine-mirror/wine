@@ -2110,16 +2110,6 @@ VkResult WINAPI vkCreateDescriptorUpdateTemplateKHR(VkDevice device, const VkDes
     return vk_unix_call(unix_vkCreateDescriptorUpdateTemplateKHR, &params);
 }
 
-VkResult WINAPI vkCreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDevice *pDevice)
-{
-    struct vkCreateDevice_params params;
-    params.physicalDevice = physicalDevice;
-    params.pCreateInfo = pCreateInfo;
-    params.pAllocator = pAllocator;
-    params.pDevice = pDevice;
-    return vk_unix_call(unix_vkCreateDevice, &params);
-}
-
 VkResult WINAPI vkCreateEvent(VkDevice device, const VkEventCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkEvent *pEvent)
 {
     struct vkCreateEvent_params params;
@@ -2539,14 +2529,6 @@ void WINAPI vkDestroyDescriptorUpdateTemplateKHR(VkDevice device, VkDescriptorUp
     params.descriptorUpdateTemplate = descriptorUpdateTemplate;
     params.pAllocator = pAllocator;
     vk_unix_call(unix_vkDestroyDescriptorUpdateTemplateKHR, &params);
-}
-
-void WINAPI vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *pAllocator)
-{
-    struct vkDestroyDevice_params params;
-    params.device = device;
-    params.pAllocator = pAllocator;
-    vk_unix_call(unix_vkDestroyDevice, &params);
 }
 
 void WINAPI vkDestroyEvent(VkDevice device, VkEvent event, const VkAllocationCallbacks *pAllocator)

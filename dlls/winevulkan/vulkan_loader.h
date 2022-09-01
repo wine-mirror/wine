@@ -23,6 +23,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -49,10 +50,11 @@ struct wine_vk_base
     /* Special section in each dispatchable object for use by the ICD loader for
      * storing dispatch tables. The start contains a magical value '0x01CDC0DE'.
      */
-    UINT_PTR loader_magic;
+    UINT64 loader_magic;
+    UINT64 unix_handle;
 };
 
-struct wine_vk_device_base
+struct VkDevice_T
 {
     struct wine_vk_base base;
     unsigned int quirks;
