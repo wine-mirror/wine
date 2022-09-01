@@ -1063,6 +1063,8 @@ class VkHandle(object):
             return "{0}->funcs".format(param)
         elif self.name == "VkDevice":
             return "wine_device_from_handle({0})->funcs".format(param)
+        elif self.name == "VkQueue":
+            return "wine_queue_from_handle({0})->device->funcs".format(param)
         elif self.parent in ["VkInstance", "VkPhysicalDevice"]:
             return "{0}->instance->funcs".format(param)
         elif self.parent in ["VkDevice", "VkCommandPool"]:
@@ -1102,6 +1104,8 @@ class VkHandle(object):
             return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
         if self.name == "VkDevice":
             return "wine_device_from_handle({0})->device".format(name)
+        if self.name == "VkQueue":
+            return "wine_queue_from_handle({0})->queue".format(name)
         if self.name == "VkSurfaceKHR":
             return "wine_surface_from_handle({0})->surface".format(name)
 
@@ -1113,8 +1117,6 @@ class VkHandle(object):
             native_handle_name = "instance"
         if self.name == "VkPhysicalDevice":
             native_handle_name = "phys_dev"
-        if self.name == "VkQueue":
-            native_handle_name = "queue"
 
         if native_handle_name:
             return "{0}->{1}".format(name, native_handle_name)

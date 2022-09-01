@@ -428,11 +428,16 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
                                const VkAllocationCallbacks *allocator, VkDevice *ret)
 {
     struct vkCreateDevice_params params;
+    uint32_t queue_count = 0, i;
     VkDevice device;
     VkResult result;
 
-    if (!(device = alloc_vk_object(sizeof(*device))))
+    for (i = 0; i < create_info->queueCreateInfoCount; i++)
+        queue_count += create_info->pQueueCreateInfos[i].queueCount;
+    if (!(device = alloc_vk_object(FIELD_OFFSET(struct VkDevice_T, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
+    for (i = 0; i < queue_count; i++)
+        device->queues[i].base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
     params.physicalDevice = phys_dev;
     params.pCreateInfo = create_info;

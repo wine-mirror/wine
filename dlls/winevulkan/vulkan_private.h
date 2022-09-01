@@ -61,7 +61,7 @@ struct wine_device
     VkDevice handle; /* client device */
     VkDevice device; /* native device */
 
-    struct VkQueue_T* queues;
+    struct wine_queue *queues;
     uint32_t queue_count;
 
     struct wine_vk_mapping mapping;
@@ -124,10 +124,11 @@ struct VkPhysicalDevice_T
     struct wine_vk_mapping mapping;
 };
 
-struct VkQueue_T
+struct wine_queue
 {
-    struct wine_vk_base base;
     struct wine_device *device; /* parent */
+
+    VkQueue handle; /* client queue */
     VkQueue queue; /* native queue */
 
     uint32_t family_index;
@@ -136,6 +137,11 @@ struct VkQueue_T
 
     struct wine_vk_mapping mapping;
 };
+
+static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
+{
+    return (struct wine_queue *)(uintptr_t)handle->base.unix_handle;
+}
 
 struct wine_cmd_pool
 {

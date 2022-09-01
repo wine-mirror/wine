@@ -324,17 +324,17 @@ static void wine_vk_free_command_buffers(struct wine_device *device,
 
 static void wine_vk_device_get_queues(struct wine_device *device,
         uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags,
-        struct VkQueue_T* queues)
+        struct wine_queue *queues, VkQueue *handles)
 {
     VkDeviceQueueInfo2 queue_info;
     unsigned int i;
 
     for (i = 0; i < queue_count; i++)
     {
-        struct VkQueue_T *queue = &queues[i];
+        struct wine_queue *queue = &queues[i];
 
-        queue->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
         queue->device = device;
+        queue->handle = (*handles)++;
         queue->family_index = family_index;
         queue->queue_index = i;
         queue->flags = flags;
@@ -358,7 +358,8 @@ static void wine_vk_device_get_queues(struct wine_device *device,
             device->funcs.p_vkGetDeviceQueue(device->device, family_index, i, &queue->queue);
         }
 
-        WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, queue, queue->queue, queue);
+        queue->handle->base.unix_handle = (uintptr_t)queue;
+        WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, queue->handle, queue->queue, queue);
     }
 }
 
@@ -406,7 +407,7 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
  */
 static void wine_vk_device_free(struct wine_device *device)
 {
-    struct VkQueue_T *queue;
+    struct wine_queue *queue;
 
     if (!device)
         return;
@@ -702,7 +703,8 @@ NTSTATUS wine_vkCreateDevice(void *args)
     VkDevice *ret_device = params->pDevice;
     VkDevice device_handle = params->client_ptr;
     VkDeviceCreateInfo create_info_host;
-    struct VkQueue_T *next_queue;
+    struct VkQueue_T *queue_handles;
+    struct wine_queue *next_queue;
     struct wine_device *object;
     unsigned int i;
     VkResult res;
@@ -768,6 +770,7 @@ NTSTATUS wine_vkCreateDevice(void *args)
     }
 
     next_queue = object->queues;
+    queue_handles = device_handle->queues;
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
     {
         uint32_t flags = create_info_host.pQueueCreateInfos[i].flags;
@@ -776,7 +779,7 @@ NTSTATUS wine_vkCreateDevice(void *args)
 
         TRACE("Queue family index %u, queue count %u.\n", family_index, queue_count);
 
-        wine_vk_device_get_queues(object, family_index, queue_count, flags, next_queue);
+        wine_vk_device_get_queues(object, family_index, queue_count, flags, next_queue, &queue_handles);
         next_queue += queue_count;
     }
 
@@ -1072,7 +1075,7 @@ NTSTATUS wine_vkFreeCommandBuffers(void *args)
 static VkQueue wine_vk_device_find_queue(VkDevice handle, const VkDeviceQueueInfo2 *info)
 {
     struct wine_device *device = wine_device_from_handle(handle);
-    struct VkQueue_T* queue;
+    struct wine_queue *queue;
     uint32_t i;
 
     for (i = 0; i < device->queue_count; i++)
@@ -1082,7 +1085,7 @@ static VkQueue wine_vk_device_find_queue(VkDevice handle, const VkDeviceQueueInf
                 && queue->queue_index == info->queueIndex
                 && queue->flags == info->flags)
         {
-            return queue;
+            return queue->handle;
         }
     }
 

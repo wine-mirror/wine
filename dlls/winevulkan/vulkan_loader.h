@@ -54,10 +54,16 @@ struct wine_vk_base
     UINT64 unix_handle;
 };
 
+struct VkQueue_T
+{
+    struct wine_vk_base base;
+};
+
 struct VkDevice_T
 {
     struct wine_vk_base base;
     unsigned int quirks;
+    struct VkQueue_T queues[1];
 };
 
 struct vulkan_func

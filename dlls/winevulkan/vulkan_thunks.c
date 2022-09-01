@@ -9459,7 +9459,7 @@ static NTSTATUS wine_vkGetQueueCheckpointData2NV(void *args)
 {
     struct vkGetQueueCheckpointData2NV_params *params = args;
     TRACE("%p, %p, %p\n", params->queue, params->pCheckpointDataCount, params->pCheckpointData);
-    params->queue->device->funcs.p_vkGetQueueCheckpointData2NV(params->queue->queue, params->pCheckpointDataCount, params->pCheckpointData);
+    wine_queue_from_handle(params->queue)->device->funcs.p_vkGetQueueCheckpointData2NV(wine_queue_from_handle(params->queue)->queue, params->pCheckpointDataCount, params->pCheckpointData);
     return STATUS_SUCCESS;
 }
 
@@ -9467,7 +9467,7 @@ static NTSTATUS wine_vkGetQueueCheckpointDataNV(void *args)
 {
     struct vkGetQueueCheckpointDataNV_params *params = args;
     TRACE("%p, %p, %p\n", params->queue, params->pCheckpointDataCount, params->pCheckpointData);
-    params->queue->device->funcs.p_vkGetQueueCheckpointDataNV(params->queue->queue, params->pCheckpointDataCount, params->pCheckpointData);
+    wine_queue_from_handle(params->queue)->device->funcs.p_vkGetQueueCheckpointDataNV(wine_queue_from_handle(params->queue)->queue, params->pCheckpointDataCount, params->pCheckpointData);
     return STATUS_SUCCESS;
 }
 
@@ -9609,7 +9609,7 @@ static NTSTATUS wine_vkQueueBeginDebugUtilsLabelEXT(void *args)
 {
     struct vkQueueBeginDebugUtilsLabelEXT_params *params = args;
     TRACE("%p, %p\n", params->queue, params->pLabelInfo);
-    params->queue->device->funcs.p_vkQueueBeginDebugUtilsLabelEXT(params->queue->queue, params->pLabelInfo);
+    wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueBeginDebugUtilsLabelEXT(wine_queue_from_handle(params->queue)->queue, params->pLabelInfo);
     return STATUS_SUCCESS;
 }
 
@@ -9622,13 +9622,13 @@ static NTSTATUS wine_vkQueueBindSparse(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->bindInfoCount, params->pBindInfo, wine_dbgstr_longlong(params->fence));
 
     pBindInfo_host = convert_VkBindSparseInfo_array_win_to_host(params->pBindInfo, params->bindInfoCount);
-    result = params->queue->device->funcs.p_vkQueueBindSparse(params->queue->queue, params->bindInfoCount, pBindInfo_host, params->fence);
+    result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueBindSparse(wine_queue_from_handle(params->queue)->queue, params->bindInfoCount, pBindInfo_host, params->fence);
 
     free_VkBindSparseInfo_array(pBindInfo_host, params->bindInfoCount);
     return result;
 #else
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->bindInfoCount, params->pBindInfo, wine_dbgstr_longlong(params->fence));
-    return params->queue->device->funcs.p_vkQueueBindSparse(params->queue->queue, params->bindInfoCount, params->pBindInfo, params->fence);
+    return wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueBindSparse(wine_queue_from_handle(params->queue)->queue, params->bindInfoCount, params->pBindInfo, params->fence);
 #endif
 }
 
@@ -9636,7 +9636,7 @@ static NTSTATUS wine_vkQueueEndDebugUtilsLabelEXT(void *args)
 {
     struct vkQueueEndDebugUtilsLabelEXT_params *params = args;
     TRACE("%p\n", params->queue);
-    params->queue->device->funcs.p_vkQueueEndDebugUtilsLabelEXT(params->queue->queue);
+    wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueEndDebugUtilsLabelEXT(wine_queue_from_handle(params->queue)->queue);
     return STATUS_SUCCESS;
 }
 
@@ -9644,7 +9644,7 @@ static NTSTATUS wine_vkQueueInsertDebugUtilsLabelEXT(void *args)
 {
     struct vkQueueInsertDebugUtilsLabelEXT_params *params = args;
     TRACE("%p, %p\n", params->queue, params->pLabelInfo);
-    params->queue->device->funcs.p_vkQueueInsertDebugUtilsLabelEXT(params->queue->queue, params->pLabelInfo);
+    wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueInsertDebugUtilsLabelEXT(wine_queue_from_handle(params->queue)->queue, params->pLabelInfo);
     return STATUS_SUCCESS;
 }
 
@@ -9652,14 +9652,14 @@ static NTSTATUS wine_vkQueuePresentKHR(void *args)
 {
     struct vkQueuePresentKHR_params *params = args;
     TRACE("%p, %p\n", params->queue, params->pPresentInfo);
-    return params->queue->device->funcs.p_vkQueuePresentKHR(params->queue->queue, params->pPresentInfo);
+    return wine_queue_from_handle(params->queue)->device->funcs.p_vkQueuePresentKHR(wine_queue_from_handle(params->queue)->queue, params->pPresentInfo);
 }
 
 static NTSTATUS wine_vkQueueSetPerformanceConfigurationINTEL(void *args)
 {
     struct vkQueueSetPerformanceConfigurationINTEL_params *params = args;
     TRACE("%p, 0x%s\n", params->queue, wine_dbgstr_longlong(params->configuration));
-    return params->queue->device->funcs.p_vkQueueSetPerformanceConfigurationINTEL(params->queue->queue, params->configuration);
+    return wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueSetPerformanceConfigurationINTEL(wine_queue_from_handle(params->queue)->queue, params->configuration);
 }
 
 static NTSTATUS wine_vkQueueSubmit(void *args)
@@ -9670,7 +9670,7 @@ static NTSTATUS wine_vkQueueSubmit(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     pSubmits_host = convert_VkSubmitInfo_array_win_to_host(params->pSubmits, params->submitCount);
-    result = params->queue->device->funcs.p_vkQueueSubmit(params->queue->queue, params->submitCount, pSubmits_host, params->fence);
+    result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueSubmit(wine_queue_from_handle(params->queue)->queue, params->submitCount, pSubmits_host, params->fence);
 
     free_VkSubmitInfo_array(pSubmits_host, params->submitCount);
     return result;
@@ -9685,7 +9685,7 @@ static NTSTATUS wine_vkQueueSubmit2(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     pSubmits_host = convert_VkSubmitInfo2_array_win_to_host(params->pSubmits, params->submitCount);
-    result = params->queue->device->funcs.p_vkQueueSubmit2(params->queue->queue, params->submitCount, pSubmits_host, params->fence);
+    result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueSubmit2(wine_queue_from_handle(params->queue)->queue, params->submitCount, pSubmits_host, params->fence);
 
     free_VkSubmitInfo2_array(pSubmits_host, params->submitCount);
     return result;
@@ -9695,7 +9695,7 @@ static NTSTATUS wine_vkQueueSubmit2(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     pSubmits_host = convert_VkSubmitInfo2_array_win_to_host(params->pSubmits, params->submitCount);
-    result = params->queue->device->funcs.p_vkQueueSubmit2(params->queue->queue, params->submitCount, pSubmits_host, params->fence);
+    result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueSubmit2(wine_queue_from_handle(params->queue)->queue, params->submitCount, pSubmits_host, params->fence);
 
     free_VkSubmitInfo2_array(pSubmits_host, params->submitCount);
     return result;
@@ -9711,7 +9711,7 @@ static NTSTATUS wine_vkQueueSubmit2KHR(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     pSubmits_host = convert_VkSubmitInfo2_array_win_to_host(params->pSubmits, params->submitCount);
-    result = params->queue->device->funcs.p_vkQueueSubmit2KHR(params->queue->queue, params->submitCount, pSubmits_host, params->fence);
+    result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueSubmit2KHR(wine_queue_from_handle(params->queue)->queue, params->submitCount, pSubmits_host, params->fence);
 
     free_VkSubmitInfo2_array(pSubmits_host, params->submitCount);
     return result;
@@ -9721,7 +9721,7 @@ static NTSTATUS wine_vkQueueSubmit2KHR(void *args)
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
 
     pSubmits_host = convert_VkSubmitInfo2_array_win_to_host(params->pSubmits, params->submitCount);
-    result = params->queue->device->funcs.p_vkQueueSubmit2KHR(params->queue->queue, params->submitCount, pSubmits_host, params->fence);
+    result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueSubmit2KHR(wine_queue_from_handle(params->queue)->queue, params->submitCount, pSubmits_host, params->fence);
 
     free_VkSubmitInfo2_array(pSubmits_host, params->submitCount);
     return result;
@@ -9732,7 +9732,7 @@ static NTSTATUS wine_vkQueueWaitIdle(void *args)
 {
     struct vkQueueWaitIdle_params *params = args;
     TRACE("%p\n", params->queue);
-    return params->queue->device->funcs.p_vkQueueWaitIdle(params->queue->queue);
+    return wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueWaitIdle(wine_queue_from_handle(params->queue)->queue);
 }
 
 static NTSTATUS wine_vkReleasePerformanceConfigurationINTEL(void *args)
@@ -10341,7 +10341,7 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
         return (uint64_t) (uintptr_t) ((VkPhysicalDevice) (uintptr_t) handle)->phys_dev;
     case VK_OBJECT_TYPE_QUEUE:
-        return (uint64_t) (uintptr_t) ((VkQueue) (uintptr_t) handle)->queue;
+        return (uint64_t) (uintptr_t) wine_queue_from_handle(((VkQueue) (uintptr_t) handle))->queue;
     case VK_OBJECT_TYPE_SURFACE_KHR:
         return (uint64_t) wine_surface_from_handle(handle)->surface;
     default:
