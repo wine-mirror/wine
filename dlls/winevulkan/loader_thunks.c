@@ -838,6 +838,29 @@ void WINAPI vkCmdDrawIndirectCountKHR(VkCommandBuffer commandBuffer, VkBuffer bu
     p_vk_direct_unix_call(unix_handle, unix_vkCmdDrawIndirectCountKHR, &params);
 }
 
+void WINAPI vkCmdDrawMeshTasksEXT(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+{
+    struct vkCmdDrawMeshTasksEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.groupCountX = groupCountX;
+    params.groupCountY = groupCountY;
+    params.groupCountZ = groupCountZ;
+    p_vk_direct_unix_call(unix_handle, unix_vkCmdDrawMeshTasksEXT, &params);
+}
+
+void WINAPI vkCmdDrawMeshTasksIndirectCountEXT(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride)
+{
+    struct vkCmdDrawMeshTasksIndirectCountEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.buffer = buffer;
+    params.offset = offset;
+    params.countBuffer = countBuffer;
+    params.countBufferOffset = countBufferOffset;
+    params.maxDrawCount = maxDrawCount;
+    params.stride = stride;
+    p_vk_direct_unix_call(unix_handle, unix_vkCmdDrawMeshTasksIndirectCountEXT, &params);
+}
+
 void WINAPI vkCmdDrawMeshTasksIndirectCountNV(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride)
 {
     struct vkCmdDrawMeshTasksIndirectCountNV_params params;
@@ -849,6 +872,17 @@ void WINAPI vkCmdDrawMeshTasksIndirectCountNV(VkCommandBuffer commandBuffer, VkB
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
     p_vk_direct_unix_call(unix_handle, unix_vkCmdDrawMeshTasksIndirectCountNV, &params);
+}
+
+void WINAPI vkCmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride)
+{
+    struct vkCmdDrawMeshTasksIndirectEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.buffer = buffer;
+    params.offset = offset;
+    params.drawCount = drawCount;
+    params.stride = stride;
+    p_vk_direct_unix_call(unix_handle, unix_vkCmdDrawMeshTasksIndirectEXT, &params);
 }
 
 void WINAPI vkCmdDrawMeshTasksIndirectNV(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride)
@@ -4407,7 +4441,10 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDrawIndirectCount", vkCmdDrawIndirectCount},
     {"vkCmdDrawIndirectCountAMD", vkCmdDrawIndirectCountAMD},
     {"vkCmdDrawIndirectCountKHR", vkCmdDrawIndirectCountKHR},
+    {"vkCmdDrawMeshTasksEXT", vkCmdDrawMeshTasksEXT},
+    {"vkCmdDrawMeshTasksIndirectCountEXT", vkCmdDrawMeshTasksIndirectCountEXT},
     {"vkCmdDrawMeshTasksIndirectCountNV", vkCmdDrawMeshTasksIndirectCountNV},
+    {"vkCmdDrawMeshTasksIndirectEXT", vkCmdDrawMeshTasksIndirectEXT},
     {"vkCmdDrawMeshTasksIndirectNV", vkCmdDrawMeshTasksIndirectNV},
     {"vkCmdDrawMeshTasksNV", vkCmdDrawMeshTasksNV},
     {"vkCmdDrawMultiEXT", vkCmdDrawMultiEXT},

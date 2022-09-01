@@ -3554,6 +3554,26 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceMeshShaderFeaturesEXT *in = (const VkPhysicalDeviceMeshShaderFeaturesEXT *)in_header;
+            VkPhysicalDeviceMeshShaderFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->taskShader = in->taskShader;
+            out->meshShader = in->meshShader;
+            out->multiviewMeshShader = in->multiviewMeshShader;
+            out->primitiveFragmentShadingRateMeshShader = in->primitiveFragmentShadingRateMeshShader;
+            out->meshShaderQueries = in->meshShaderQueries;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR:
         {
             const VkPhysicalDeviceAccelerationStructureFeaturesKHR *in = (const VkPhysicalDeviceAccelerationStructureFeaturesKHR *)in_header;
@@ -4824,10 +4844,10 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_ARM:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_EXT:
         {
-            const VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM *in = (const VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM *)in_header;
-            VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM *out;
+            const VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT *in = (const VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT *)in_header;
+            VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT *out;
 
             if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
 
@@ -5062,6 +5082,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->attachmentFeedbackLoopLayout = in->attachmentFeedbackLoopLayout;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *in = (const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *)in_header;
+            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->depthClampZeroOne = in->depthClampZeroOne;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -6253,11 +6289,35 @@ static NTSTATUS wine_vkCmdDrawIndirectCountKHR(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wine_vkCmdDrawMeshTasksEXT(void *args)
+{
+    struct vkCmdDrawMeshTasksEXT_params *params = args;
+    TRACE("%p, %u, %u, %u\n", params->commandBuffer, params->groupCountX, params->groupCountY, params->groupCountZ);
+    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksEXT(params->commandBuffer->command_buffer, params->groupCountX, params->groupCountY, params->groupCountZ);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wine_vkCmdDrawMeshTasksIndirectCountEXT(void *args)
+{
+    struct vkCmdDrawMeshTasksIndirectCountEXT_params *params = args;
+    TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
+    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectCountEXT(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wine_vkCmdDrawMeshTasksIndirectCountNV(void *args)
 {
     struct vkCmdDrawMeshTasksIndirectCountNV_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
     params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectCountNV(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wine_vkCmdDrawMeshTasksIndirectEXT(void *args)
+{
+    struct vkCmdDrawMeshTasksIndirectEXT_params *params = args;
+    TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
+    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectEXT(params->commandBuffer->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -10019,6 +10079,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_conservative_rasterization",
     "VK_EXT_custom_border_color",
     "VK_EXT_debug_marker",
+    "VK_EXT_depth_clamp_zero_one",
     "VK_EXT_depth_clip_control",
     "VK_EXT_depth_clip_enable",
     "VK_EXT_depth_range_unrestricted",
@@ -10046,6 +10107,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_load_store_op_none",
     "VK_EXT_memory_budget",
     "VK_EXT_memory_priority",
+    "VK_EXT_mesh_shader",
     "VK_EXT_multi_draw",
     "VK_EXT_multisampled_render_to_single_sampled",
     "VK_EXT_non_seamless_cube_map",
@@ -10061,6 +10123,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_private_data",
     "VK_EXT_provoking_vertex",
     "VK_EXT_queue_family_foreign",
+    "VK_EXT_rasterization_order_attachment_access",
     "VK_EXT_rgba10x6_formats",
     "VK_EXT_robustness2",
     "VK_EXT_sample_locations",
@@ -10372,7 +10435,10 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkCmdDrawIndirectCount,
     wine_vkCmdDrawIndirectCountAMD,
     wine_vkCmdDrawIndirectCountKHR,
+    wine_vkCmdDrawMeshTasksEXT,
+    wine_vkCmdDrawMeshTasksIndirectCountEXT,
     wine_vkCmdDrawMeshTasksIndirectCountNV,
+    wine_vkCmdDrawMeshTasksIndirectEXT,
     wine_vkCmdDrawMeshTasksIndirectNV,
     wine_vkCmdDrawMeshTasksNV,
     wine_vkCmdDrawMultiEXT,

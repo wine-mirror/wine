@@ -1910,7 +1910,10 @@ struct vulkan_device_funcs
     void (*p_vkCmdDrawIndirectCount)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawIndirectCountAMD)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawIndirectCountKHR)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawMeshTasksEXT)(VkCommandBuffer, uint32_t, uint32_t, uint32_t);
+    void (*p_vkCmdDrawMeshTasksIndirectCountEXT)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawMeshTasksIndirectCountNV)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
+    void (*p_vkCmdDrawMeshTasksIndirectEXT)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawMeshTasksIndirectNV)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (*p_vkCmdDrawMeshTasksNV)(VkCommandBuffer, uint32_t, uint32_t);
     void (*p_vkCmdDrawMultiEXT)(VkCommandBuffer, uint32_t, const VkMultiDrawInfoEXT *, uint32_t, uint32_t, uint32_t);
@@ -2367,7 +2370,10 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdDrawIndirectCount) \
     USE_VK_FUNC(vkCmdDrawIndirectCountAMD) \
     USE_VK_FUNC(vkCmdDrawIndirectCountKHR) \
+    USE_VK_FUNC(vkCmdDrawMeshTasksEXT) \
+    USE_VK_FUNC(vkCmdDrawMeshTasksIndirectCountEXT) \
     USE_VK_FUNC(vkCmdDrawMeshTasksIndirectCountNV) \
+    USE_VK_FUNC(vkCmdDrawMeshTasksIndirectEXT) \
     USE_VK_FUNC(vkCmdDrawMeshTasksIndirectNV) \
     USE_VK_FUNC(vkCmdDrawMeshTasksNV) \
     USE_VK_FUNC(vkCmdDrawMultiEXT) \
