@@ -396,6 +396,9 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     }else if(desc->invkind & (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYGET)) {
         VARTYPE vt = VT_EMPTY;
 
+        if(desc->wFuncFlags & FUNCFLAG_FHIDDEN)
+            info->func_disp_idx = -2;
+
         if(desc->invkind & DISPATCH_PROPERTYGET) {
             vt = desc->elemdescFunc.tdesc.vt;
             info->get_vtbl_off = desc->oVft/sizeof(void*);
@@ -1371,7 +1374,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
     if(FAILED(hres))
         return hres;
 
-    if(func->func_disp_idx != -1)
+    if(func->func_disp_idx >= 0)
         return function_invoke(This, func, flags, dp, res, ei, caller);
 
     if(func->hook) {
@@ -1460,7 +1463,7 @@ HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
             return hres;
 
         /* For builtin functions, we set their value to the original function. */
-        if(func->func_disp_idx != -1) {
+        if(func->func_disp_idx >= 0) {
             func_obj_entry_t *entry;
 
             if(!This->dynamic_data || !This->dynamic_data->func_disps
@@ -1889,7 +1892,6 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     }
 
     while(func < This->info->funcs + This->info->func_cnt) {
-        /* FIXME: Skip hidden properties */
         if(func->func_disp_idx == -1) {
             *pid = func->id;
             return S_OK;
