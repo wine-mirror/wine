@@ -890,6 +890,9 @@ static void test_themed_background(void)
         {WC_SCROLLBARA, 0, scrollbar_seq, TRUE},
         {WC_SCROLLBARA, SBS_SIZEBOX, empty_seq},
         {WC_SCROLLBARA, SBS_SIZEGRIP, empty_seq},
+        /* Scrollbars in non-client area */
+        {"ChildClass", WS_HSCROLL, empty_seq},
+        {"ChildClass", WS_VSCROLL, empty_seq},
     };
 
     uxtheme = LoadLibraryA("uxtheme.dll");
@@ -915,7 +918,11 @@ static void test_themed_background(void)
     cls.lpszClassName = "ParentClass";
     RegisterClassA(&cls);
 
-    parent = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.lpszClassName = "ChildClass";
+    RegisterClassA(&cls);
+
+    parent = CreateWindowA("ParentClass", "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
                            0, 0, 0, 0);
     ok(parent != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
 
@@ -924,7 +931,7 @@ static void test_themed_background(void)
         winetest_push_context("%s %#lx", tests[i].class_name, tests[i].style);
 
         child = CreateWindowA(tests[i].class_name, "    ", WS_CHILD | WS_VISIBLE | tests[i].style,
-                              0, 0, 50, 50, parent, 0, 0, 0);
+                              0, 0, 50, 100, parent, 0, 0, 0);
         ok(child != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
         flush_events();
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -965,6 +972,17 @@ static void test_themed_background(void)
                 color = GetPixel(hdc, 10, 10);
                 ok(color == 0x808080, "Expected color %#x, got %#lx.\n", 0x808080, color);
             }
+            else if (tests[i].seq == scrollbar_seq)
+            {
+                /* WM_CTLCOLORSCROLLBAR is used to fill tracks only */
+                color = GetPixel(hdc, 10, 10);
+                ok(color != RGB(255, 0, 0), "Got unexpected color %#08lx.\n", color);
+
+                color = GetPixel(hdc, 10, 60);
+                todo_wine
+                ok(color == RGB(255, 0, 0) || broken(color == CLR_INVALID), /* Win7 on TestBots */
+                   "Got unexpected color %#08lx.\n", color);
+            }
 
             ReleaseDC(child, hdc);
         }
@@ -974,7 +992,8 @@ static void test_themed_background(void)
     }
 
     DestroyWindow(parent);
-    UnregisterClassA(cls.lpszClassName, GetModuleHandleA(0));
+    UnregisterClassA("ChildClass", GetModuleHandleA(0));
+    UnregisterClassA("ParentClass", GetModuleHandleA(0));
     if (pSetThreadDpiAwarenessContext)
         pSetThreadDpiAwarenessContext(old_context);
 }
