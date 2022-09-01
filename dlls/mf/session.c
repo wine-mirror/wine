@@ -47,8 +47,6 @@ enum session_command
     SESSION_CMD_PAUSE,
     SESSION_CMD_STOP,
     SESSION_CMD_SET_RATE,
-    /* Internally used commands. */
-    SESSION_CMD_QM_NOTIFY_TOPOLOGY,
 };
 
 struct session_op
@@ -413,10 +411,6 @@ static ULONG WINAPI session_op_Release(IUnknown *iface)
                 break;
             case SESSION_CMD_START:
                 PropVariantClear(&op->start.start_position);
-                break;
-            case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
-                if (op->notify_topology.topology)
-                    IMFTopology_Release(op->notify_topology.topology);
                 break;
             default:
                 ;
@@ -1680,20 +1674,8 @@ static HRESULT session_set_current_topology(struct media_session *session, IMFTo
     DWORD caps, object_flags;
     struct media_sink *sink;
     struct topo_node *node;
-    struct session_op *op;
     IMFMediaEvent *event;
     HRESULT hr;
-
-    if (session->quality_manager)
-    {
-        if (SUCCEEDED(create_session_op(SESSION_CMD_QM_NOTIFY_TOPOLOGY, &op)))
-        {
-            op->notify_topology.topology = topology;
-            IMFTopology_AddRef(op->notify_topology.topology);
-            session_submit_command(session, op);
-            IUnknown_Release(&op->IUnknown_iface);
-        }
-    }
 
     if (FAILED(hr = IMFTopology_CloneFrom(session->presentation.current_topology, topology)))
     {
@@ -1826,6 +1808,8 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
         {
             hr = session_set_current_topology(session, topology);
             session_set_topo_status(session, hr, MF_TOPOSTATUS_READY);
+            if (session->quality_manager)
+                IMFQualityManager_NotifyTopology(session->quality_manager, topology);
         }
     }
 
@@ -2395,10 +2379,6 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             break;
         case SESSION_CMD_CLOSE:
             session_close(session);
-            break;
-        case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
-            IMFQualityManager_NotifyTopology(session->quality_manager, op->notify_topology.topology);
-            session_command_complete(session);
             break;
         case SESSION_CMD_SET_RATE:
             session_set_rate(session, op->set_rate.thin, op->set_rate.rate);
