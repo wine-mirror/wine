@@ -216,6 +216,7 @@ enum presentation_flags
     SESSION_FLAG_NEEDS_PREROLL = 0x8,
     SESSION_FLAG_END_OF_PRESENTATION = 0x10,
     SESSION_FLAG_PENDING_RATE_CHANGE = 0x20,
+    SESSION_FLAG_PENDING_COMMAND = 0x40,
 };
 
 struct media_session
@@ -801,6 +802,8 @@ static void session_command_complete(struct media_session *session)
 {
     struct session_op *op;
     struct list *e;
+
+    session->presentation.flags &= ~SESSION_FLAG_PENDING_COMMAND;
 
     /* Pop current command, submit next. */
     if ((e = list_head(&session->commands)))
@@ -2374,6 +2377,13 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
 
     EnterCriticalSection(&session->cs);
 
+    if (session->presentation.flags & SESSION_FLAG_PENDING_COMMAND)
+    {
+        WARN("session %p command is in progress, waiting for it to complete.\n", session);
+        LeaveCriticalSection(&session->cs);
+        return S_OK;
+    }
+
     switch (op->command)
     {
         case SESSION_CMD_CLEAR_TOPOLOGIES:
@@ -3335,7 +3345,7 @@ static void session_raise_end_of_presentation(struct media_session *session)
     {
         if (session_nodes_is_mask_set(session, MF_TOPOLOGY_MAX, SOURCE_FLAG_END_OF_PRESENTATION))
         {
-            session->presentation.flags |= SESSION_FLAG_END_OF_PRESENTATION;
+            session->presentation.flags |= SESSION_FLAG_END_OF_PRESENTATION | SESSION_FLAG_PENDING_COMMAND;
             session_push_back_command(session, SESSION_CMD_END);
             IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, NULL);
         }
