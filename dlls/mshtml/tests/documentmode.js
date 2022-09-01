@@ -1201,6 +1201,31 @@ sync_test("map_obj", function() {
     ok(r === 1, "r = " + r);
 });
 
+sync_test("storage", function() {
+    var v = document.documentMode, r;
+
+    sessionStorage.setItem("foobar", "1234");
+    ok("foobar" in sessionStorage, "foobar not in sessionStorage");
+    r = sessionStorage.foobar;
+    ok(r === "1234", "sessionStorage.foobar = " + r);
+    sessionStorage.barfoo = 4321;
+    r = sessionStorage.getItem("barfoo");
+    ok(r === "4321", "sessionStorage.barfoo = " + r);
+
+    try {
+        delete sessionStorage.foobar;
+        ok(v >= 8, "expected exception deleting sessionStorage.foobar");
+        ok(!("foobar" in sessionStorage), "foobar in sessionStorage after deletion");
+        r = sessionStorage.getItem("foobar");
+        ok(r === null, "sessionStorage.foobar after deletion = " + r);
+    }catch(e) {
+        ok(v < 8, "did not expect exception deleting sessionStorage.foobar");
+        ok(e.number === 0xa01bd - 0x80000000, "deleting sessionStorage.foobar threw = " + e.number);
+    }
+
+    sessionStorage.clear();
+});
+
 sync_test("elem_attr", function() {
     var v = document.documentMode;
     var elem = document.createElement("div"), r;

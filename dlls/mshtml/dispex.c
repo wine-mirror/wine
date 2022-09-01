@@ -1763,15 +1763,12 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR nam
 
     TRACE("(%p)->(%s %lx)\n", This, debugstr_w(name), grfdex);
 
-    if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
-        /* Not implemented by IE */
-        return E_NOTIMPL;
-    }
-
     hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, name, grfdex & ~fdexNameEnsure, &id);
     if(FAILED(hres)) {
+        compat_mode_t compat_mode = dispex_compat_mode(This);
         TRACE("property %s not found\n", debugstr_w(name));
-        return dispex_compat_mode(This) < COMPAT_MODE_IE9 ? hres : S_OK;
+        return compat_mode < COMPAT_MODE_IE8 ? E_NOTIMPL :
+               compat_mode < COMPAT_MODE_IE9 ? hres : S_OK;
     }
 
     return IDispatchEx_DeleteMemberByDispID(&This->IDispatchEx_iface, id);
@@ -1782,6 +1779,9 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
     DispatchEx *This = impl_from_IDispatchEx(iface);
 
     TRACE("(%p)->(%lx)\n", This, id);
+
+    if(is_custom_dispid(id) && This->info->desc->vtbl && This->info->desc->vtbl->delete)
+        return This->info->desc->vtbl->delete(This, id);
 
     if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
         /* Not implemented by IE */

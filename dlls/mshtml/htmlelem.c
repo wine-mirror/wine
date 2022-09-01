@@ -7183,6 +7183,7 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
         HTMLElement_get_dispid,
         HTMLElement_invoke,
         NULL,
+        NULL,
         HTMLElement_populate_props
     },
     HTMLElement_get_gecko_target,

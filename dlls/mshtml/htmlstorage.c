@@ -985,10 +985,25 @@ static HRESULT HTMLStorage_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD
     return S_OK;
 }
 
+static HRESULT HTMLStorage_delete(DispatchEx *dispex, DISPID id)
+{
+    HTMLStorage *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+
+    if(idx >= This->num_props)
+        return DISP_E_MEMBERNOTFOUND;
+
+    if(dispex_compat_mode(dispex) < COMPAT_MODE_IE8)
+        return MSHTML_E_INVALID_ACTION;
+
+    return HTMLStorage_removeItem(&This->IHTMLStorage_iface, This->props[idx]);
+}
+
 static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
     NULL,
     HTMLStorage_get_dispid,
     HTMLStorage_invoke,
+    HTMLStorage_delete,
     NULL
 };
 

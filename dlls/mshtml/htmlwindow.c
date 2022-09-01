@@ -3954,6 +3954,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         NULL,
         NULL,
         HTMLWindow_invoke,
+        NULL,
         HTMLWindow_get_compat_mode,
         NULL
     },
