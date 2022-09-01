@@ -118,6 +118,12 @@ static void test_effect_constant_buffer_type(void)
         return;
     }
 
+    if (strcmp(winetest_platform, "wine")) /* Crash on wine. */
+    {
+    hr = create_effect(fx_test_ecbt, 0, NULL, NULL, &effect);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    }
+
     hr = create_effect(fx_test_ecbt, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -7116,6 +7122,12 @@ static void test_effect_pool(void)
     hr = D3D10CreateEffectPoolFromMemory(NULL, 0, 0, device, &pool);
     todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    if (strcmp(winetest_platform, "wine")) /* Crash on wine. */
+    {
+    hr = create_effect_pool(fx_test_pool, NULL, &pool);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    }
 
     hr = create_effect_pool(fx_test_pool, device, &pool);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
