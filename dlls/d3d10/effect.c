@@ -9537,6 +9537,9 @@ static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *d
     struct d3d10_effect *object;
     HRESULT hr;
 
+    if (!device)
+        return D3DERR_INVALIDCALL;
+
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
@@ -9635,6 +9638,9 @@ HRESULT WINAPI D3D10CreateEffectPoolFromMemory(void *data, SIZE_T data_size, UIN
 
     TRACE("data %p, data_size %Iu, fx_flags %#x, device %p, effect_pool %p.\n",
             data, data_size, fx_flags, device, effect_pool);
+
+    if (!data)
+        return E_INVALIDARG;
 
     if (FAILED(hr = d3d10_create_effect(data, data_size, device, NULL,
             D3D10_EFFECT_IS_POOL, &object)))
