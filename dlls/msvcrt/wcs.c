@@ -79,7 +79,7 @@ wchar_t* CDECL _wcsdup( const wchar_t* str )
   wchar_t* ret = NULL;
   if (str)
   {
-    int size = (wcslen(str) + 1) * sizeof(wchar_t);
+    size_t size = (wcslen(str) + 1) * sizeof(wchar_t);
     ret = malloc( size );
     if (ret) memcpy( ret, str, size );
   }
