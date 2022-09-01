@@ -1163,11 +1163,6 @@ static void CALLBACK instance_semaphore_completion_cb(TP_CALLBACK_INSTANCE *inst
 static void CALLBACK instance_finalization_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
 {
     HANDLE *semaphores = userdata;
-    DWORD result;
-
-    Sleep(50);
-    result = WaitForSingleObject(semaphores[0], 100);
-    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %lu\n", result);
     ReleaseSemaphore(semaphores[1], 1, NULL);
 }
 
@@ -1926,7 +1921,7 @@ static void test_tp_multi_wait(void)
         multi_wait_info.result = 0;
         ReleaseSemaphore(semaphores[i], 1, NULL);
 
-        result = WaitForSingleObject(semaphore, 100);
+        result = WaitForSingleObject(semaphore, 2000);
         ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", result);
         ok(multi_wait_info.result == i, "expected result %d, got %lu\n", i, multi_wait_info.result);
 
@@ -1939,7 +1934,7 @@ static void test_tp_multi_wait(void)
         multi_wait_info.result = 0;
         ReleaseSemaphore(semaphores[i], 1, NULL);
 
-        result = WaitForSingleObject(semaphore, 100);
+        result = WaitForSingleObject(semaphore, 2000);
         ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", result);
         ok(multi_wait_info.result == i, "expected result %d, got %lu\n", i, multi_wait_info.result);
 
@@ -1956,7 +1951,7 @@ static void test_tp_multi_wait(void)
 
     for (i = 0; i < ARRAY_SIZE(semaphores); i++)
     {
-        result = WaitForSingleObject(semaphore, 150);
+        result = WaitForSingleObject(semaphore, 2000);
         ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", result);
     }
 
