@@ -678,7 +678,20 @@ int main( int argc, char **argv )
         winetest_platform = "wine";
 
     if (GetEnvironmentVariableA( "WINETEST_COLOR", p, sizeof(p) ))
-        winetest_color = !strcasecmp(p, "auto") ? isatty(fileno(stdout)) : atoi(p);
+    {
+        BOOL automode = !strcasecmp(p, "auto");
+        winetest_color = automode ? isatty( fileno( stdout ) ) : atoi(p);
+        /* enable ANSI support for Windows console */
+        if (winetest_color)
+        {
+            HANDLE hOutput = (HANDLE)_get_osfhandle( fileno( stdout ) );
+            DWORD mode;
+            if (GetConsoleMode( hOutput, &mode ) &&
+                !SetConsoleMode( hOutput, mode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING ) &&
+                automode)
+                winetest_color = 0;
+        }
+    }
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
