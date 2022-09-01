@@ -333,6 +333,7 @@ typedef struct DispatchEx DispatchEx;
 typedef struct {
     HRESULT (*value)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*get_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
+    HRESULT (*get_name)(DispatchEx*,DISPID,BSTR*);
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*delete)(DispatchEx*,DISPID);
     compat_mode_t (*get_compat_mode)(DispatchEx*);
@@ -804,6 +805,7 @@ typedef struct {
     HRESULT (*get_document)(HTMLDOMNode*,IDispatch**);
     HRESULT (*get_readystate)(HTMLDOMNode*,BSTR*);
     HRESULT (*get_dispid)(HTMLDOMNode*,BSTR,DWORD,DISPID*);
+    HRESULT (*get_name)(HTMLDOMNode*,DISPID,BSTR*);
     HRESULT (*invoke)(HTMLDOMNode*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*bind_to_tree)(HTMLDOMNode*);
     void (*traverse)(HTMLDOMNode*,nsCycleCollectionTraversalCallback*);

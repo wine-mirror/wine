@@ -467,6 +467,7 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLTextAreaElement_traverse,
     HTMLTextAreaElement_unlink,
     HTMLTextAreaElement_is_text_edit

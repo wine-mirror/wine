@@ -889,6 +889,7 @@ static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLAnchorElement_traverse,
     HTMLAnchorElement_unlink
 };

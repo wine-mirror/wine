@@ -720,6 +720,7 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLImgElement_traverse,
     HTMLImgElement_unlink
 };

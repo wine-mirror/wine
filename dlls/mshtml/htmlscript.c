@@ -447,6 +447,7 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     HTMLScriptElement_get_readystate,
     NULL,
     NULL,
+    NULL,
     HTMLScriptElement_bind_to_tree,
     HTMLScriptElement_traverse,
     HTMLScriptElement_unlink

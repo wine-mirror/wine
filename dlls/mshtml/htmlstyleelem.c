@@ -453,6 +453,7 @@ static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLStyleElement_traverse,
     HTMLStyleElement_unlink
 };

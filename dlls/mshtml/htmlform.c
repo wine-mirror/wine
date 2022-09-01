@@ -898,6 +898,31 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
     return hres;
 }
 
+static HRESULT HTMLFormElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+{
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    nsIDOMHTMLCollection *elements;
+    nsresult nsres;
+    UINT32 len = 0;
+    WCHAR buf[11];
+
+    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    nsres = nsIDOMHTMLCollection_GetLength(elements, &len);
+    nsIDOMHTMLCollection_Release(elements);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    if(idx >= len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
         DISPID id, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res,
         EXCEPINFO *ei, IServiceProvider *caller)
@@ -967,6 +992,7 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     NULL,
     NULL,
     HTMLFormElement_get_dispid,
+    HTMLFormElement_dispex_get_name,
     HTMLFormElement_invoke,
     NULL,
     HTMLFormElement_traverse,

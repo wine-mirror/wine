@@ -436,6 +436,7 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLLinkElement_traverse,
     HTMLLinkElement_unlink
 };

@@ -358,6 +358,7 @@ static const NodeImplVtbl HTMLHtmlElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLHtmlElement_is_settable
 };
 

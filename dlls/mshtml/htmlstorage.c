@@ -936,6 +936,17 @@ static HRESULT HTMLStorage_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags
     return get_prop(This, name, dispid);
 }
 
+static HRESULT HTMLStorage_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLStorage *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+
+    if(idx >= This->num_props)
+        return DISP_E_MEMBERNOTFOUND;
+
+    return (*name = SysAllocString(This->props[idx])) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLStorage_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1002,6 +1013,7 @@ static HRESULT HTMLStorage_delete(DispatchEx *dispex, DISPID id)
 static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
     NULL,
     HTMLStorage_get_dispid,
+    HTMLStorage_get_name,
     HTMLStorage_invoke,
     HTMLStorage_delete,
     NULL

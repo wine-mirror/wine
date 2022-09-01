@@ -993,6 +993,7 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLBodyElement_traverse,
     HTMLBodyElement_unlink,
     HTMLBodyElement_is_text_edit,

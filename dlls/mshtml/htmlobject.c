@@ -709,6 +709,15 @@ static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name,
     return get_plugin_dispid(&This->plugin_container, name, pid);
 }
 
+static HRESULT HTMLObjectElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    FIXME("(%p)->(%lx %p)\n", This, id, name);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -753,6 +762,7 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     NULL,
     HTMLObjectElement_get_readystate,
     HTMLObjectElement_get_dispid,
+    HTMLObjectElement_dispex_get_name,
     HTMLObjectElement_invoke,
     NULL,
     HTMLObjectElement_traverse,

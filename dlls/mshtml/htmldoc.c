@@ -5800,6 +5800,7 @@ static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLDocumentNode_traverse,
     HTMLDocumentNode_unlink
 };
@@ -5821,6 +5822,17 @@ static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode
 static inline HTMLDocumentNode *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDocumentNode, node.event_target.dispex);
+}
+
+static HRESULT HTMLDocumentNode_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+
+    if(!This->nsdoc || idx >= This->elem_vars_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    return (*name = SysAllocString(This->elem_vars[idx])) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
@@ -5920,6 +5932,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     {
         NULL,
         NULL,
+        HTMLDocumentNode_get_name,
         HTMLDocumentNode_invoke,
         NULL,
         HTMLDocumentNode_get_compat_mode,

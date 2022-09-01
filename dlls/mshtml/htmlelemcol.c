@@ -581,6 +581,20 @@ static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     return S_OK;
 }
 
+static HRESULT HTMLElementCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    WCHAR buf[11];
+    UINT len;
+
+    if(idx >= This->len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -610,6 +624,7 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     NULL,
     HTMLElementCollection_get_dispid,
+    HTMLElementCollection_get_name,
     HTMLElementCollection_invoke,
     NULL
 };

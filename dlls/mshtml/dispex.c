@@ -1825,6 +1825,12 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
 
+    if(is_custom_dispid(id)) {
+        if(This->info->desc->vtbl && This->info->desc->vtbl->get_name)
+            return This->info->desc->vtbl->get_name(This, id, pbstrName);
+        return DISP_E_MEMBERNOTFOUND;
+    }
+
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
 

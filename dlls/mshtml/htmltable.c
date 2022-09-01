@@ -509,6 +509,7 @@ static const NodeImplVtbl HTMLTableCellImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLTableCell_traverse,
     HTMLTableCell_unlink
 };
@@ -946,6 +947,7 @@ static const NodeImplVtbl HTMLTableRowImplVtbl = {
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -1977,6 +1979,7 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
+    NULL,
     NULL,
     NULL,
     NULL,

@@ -1429,6 +1429,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLInputElement_traverse,
     HTMLInputElement_unlink,
     HTMLInputElement_is_text_edit
@@ -1968,6 +1969,7 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     NULL,
     HTMLButtonElementImpl_put_disabled,
     HTMLButtonElementImpl_get_disabled,
+    NULL,
     NULL,
     NULL,
     NULL,

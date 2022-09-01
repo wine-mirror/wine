@@ -3754,6 +3754,17 @@ static inline HTMLInnerWindow *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLInnerWindow, event_target.dispex);
 }
 
+static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+
+    if(idx >= This->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    return (*name = SysAllocString(This->global_props[idx].name)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -3953,6 +3964,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
     {
         NULL,
         NULL,
+        HTMLWindow_get_name,
         HTMLWindow_invoke,
         NULL,
         HTMLWindow_get_compat_mode,

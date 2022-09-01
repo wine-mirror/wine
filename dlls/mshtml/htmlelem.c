@@ -1107,6 +1107,21 @@ static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, BSTR name, DWOR
     return S_OK;
 }
 
+static HRESULT HTMLRectCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    UINT32 len = 0;
+    WCHAR buf[11];
+
+    nsIDOMClientRectList_GetLength(This->rect_list, &len);
+    if(idx >= len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1148,6 +1163,7 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
     NULL,
     HTMLRectCollection_get_dispid,
+    HTMLRectCollection_get_name,
     HTMLRectCollection_invoke,
     NULL
 };
@@ -6808,6 +6824,17 @@ static HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name,
     return DISP_E_UNKNOWNNAME;
 }
 
+static HRESULT HTMLElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+
+    if(This->node.vtbl->get_name)
+        return This->node.vtbl->get_name(&This->node, id, name);
+
+    ERR("(%p): element has no get_name method\n", This);
+    return DISP_E_MEMBERNOTFOUND;
+}
+
 static HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
         IServiceProvider *caller)
@@ -7181,6 +7208,7 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         NULL,
         HTMLElement_get_dispid,
+        HTMLElement_get_name,
         HTMLElement_invoke,
         NULL,
         NULL,
@@ -7852,6 +7880,16 @@ static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     return S_OK;
 }
 
+static HRESULT HTMLFiltersCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    WCHAR buf[11];
+    UINT len;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -7868,6 +7906,7 @@ static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
     NULL,
     HTMLFiltersCollection_get_dispid,
+    HTMLFiltersCollection_get_name,
     HTMLFiltersCollection_invoke,
     NULL
 };
@@ -8577,6 +8616,15 @@ static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, BSTR name,
     return S_OK;
 }
 
+static HRESULT HTMLAttributeCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+
+    FIXME("(%p)->(%lx %p)\n", This, id, name);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -8614,6 +8662,7 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
     NULL,
     HTMLAttributeCollection_get_dispid,
+    HTMLAttributeCollection_get_name,
     HTMLAttributeCollection_invoke,
     NULL
 };

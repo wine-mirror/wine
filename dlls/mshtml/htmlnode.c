@@ -386,6 +386,21 @@ static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, BSTR nam
     return S_OK;
 }
 
+static HRESULT HTMLDOMChildrenCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - DISPID_CHILDCOL_0;
+    UINT32 len = 0;
+    WCHAR buf[11];
+
+    nsIDOMNodeList_GetLength(This->nslist, &len);
+    if(idx >= len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -419,6 +434,7 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
     NULL,
     HTMLDOMChildrenCollection_get_dispid,
+    HTMLDOMChildrenCollection_get_name,
     HTMLDOMChildrenCollection_invoke,
     NULL
 };

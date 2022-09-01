@@ -410,6 +410,21 @@ static HRESULT HTMLStyleSheetRulesCollection_get_dispid(DispatchEx *dispex, BSTR
     return S_OK;
 }
 
+static HRESULT HTMLStyleSheetRulesCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLStyleSheetRulesCollection_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    UINT32 len = 0;
+    WCHAR buf[11];
+
+    nsIDOMCSSRuleList_GetLength(This->nslist, &len);
+    if(idx >= len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -453,6 +468,7 @@ static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID i
 static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl = {
     NULL,
     HTMLStyleSheetRulesCollection_get_dispid,
+    HTMLStyleSheetRulesCollection_get_name,
     HTMLStyleSheetRulesCollection_invoke
 };
 static const tid_t HTMLStyleSheetRulesCollection_iface_tids[] = {
@@ -821,6 +837,21 @@ static HRESULT HTMLStyleSheetsCollection_get_dispid(DispatchEx *dispex, BSTR nam
     return S_OK;
 }
 
+static HRESULT HTMLStyleSheetsCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+{
+    HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    UINT32 len = 0;
+    WCHAR buf[11];
+
+    nsIDOMStyleSheetList_GetLength(This->nslist, &len);
+    if(idx >= len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
+    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -864,6 +895,7 @@ static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, L
 static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
     NULL,
     HTMLStyleSheetsCollection_get_dispid,
+    HTMLStyleSheetsCollection_get_name,
     HTMLStyleSheetsCollection_invoke
 };
 static const tid_t HTMLStyleSheetsCollection_iface_tids[] = {

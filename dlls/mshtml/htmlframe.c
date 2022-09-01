@@ -942,6 +942,19 @@ static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name,
     return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, pid);
 }
 
+static HRESULT HTMLFrameElement_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+{
+    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+
+    if(!This->framebase.content_window ||
+       idx >= This->framebase.content_window->base.inner_window->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    *name = SysAllocString(This->framebase.content_window->base.inner_window->global_props[idx].name);
+    return *name ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1008,6 +1021,7 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     HTMLFrameElement_get_document,
     HTMLFrameElement_get_readystate,
     HTMLFrameElement_get_dispid,
+    HTMLFrameElement_get_name,
     HTMLFrameElement_invoke,
     HTMLFrameElement_bind_to_tree,
     HTMLFrameElement_traverse,
@@ -1514,6 +1528,19 @@ static HRESULT HTMLIFrame_get_dispid(HTMLDOMNode *iface, BSTR name,
     return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, pid);
 }
 
+static HRESULT HTMLIFrame_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+{
+    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+
+    if(!This->framebase.content_window ||
+       idx >= This->framebase.content_window->base.inner_window->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    *name = SysAllocString(This->framebase.content_window->base.inner_window->global_props[idx].name);
+    return *name ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT HTMLIFrame_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1587,6 +1614,7 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     HTMLIFrame_get_document,
     HTMLIFrame_get_readystate,
     HTMLIFrame_get_dispid,
+    HTMLIFrame_get_name,
     HTMLIFrame_invoke,
     HTMLIFrame_bind_to_tree,
     HTMLIFrame_traverse,
