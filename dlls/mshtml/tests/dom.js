@@ -473,7 +473,27 @@ sync_test("storage", function() {
        "typeof(window.localStorage) = " + typeof(window.localStorage));
 
     var item = sessionStorage.getItem("nonexisting");
-    ok(item === null, "item = " + item);
+    ok(item === null, "'nonexisting' item = " + item);
+    item = sessionStorage["nonexisting"];
+    ok(item === undefined, "[nonexisting] item = " + item);
+    ok(!("nonexisting" in sessionStorage), "nonexisting in sessionStorage");
+
+    sessionStorage.setItem("foobar", 42);
+    ok("foobar" in sessionStorage, "foobar not in sessionStorage");
+    item = sessionStorage.getItem("foobar");
+    ok(item === "42", "'foobar' item = " + item);
+    item = sessionStorage["foobar"];
+    ok(item === "42", "[foobar] item = " + item);
+    sessionStorage.removeItem("foobar");
+    item = sessionStorage["foobar"];
+    ok(item === undefined, "[foobar] item after removal = " + item);
+
+    sessionStorage["barfoo"] = true;
+    ok("barfoo" in sessionStorage, "barfoo not in sessionStorage");
+    item = sessionStorage["barfoo"];
+    ok(item === "true", "[barfoo] item = " + item);
+    item = sessionStorage.getItem("barfoo");
+    ok(item === "true", "'barfoo' item = " + item);
 });
 
 async_test("animation", function() {

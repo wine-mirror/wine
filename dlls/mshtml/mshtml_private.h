@@ -1423,6 +1423,11 @@ static inline BOOL is_digit(WCHAR c)
     return '0' <= c && c <= '9';
 }
 
+static inline BOOL is_power_of_2(unsigned x)
+{
+    return !(x & (x - 1));
+}
+
 #ifdef __i386__
 extern void *call_thiscall_func;
 #endif
