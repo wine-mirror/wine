@@ -290,7 +290,7 @@ static void test_ffcn(void)
     ok( file != INVALID_HANDLE_VALUE, "CreateFile error %lu\n", GetLastError() );
     CloseHandle(file);
 
-    r = WaitForSingleObject( handle, 0 );
+    r = WaitForSingleObject( handle, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n");
 
     r = WaitForSingleObject( handle, 0 );
@@ -305,7 +305,7 @@ static void test_ffcn(void)
     r = DeleteFileW( filename );
     ok( r == TRUE, "failed to remove file\n");
 
-    r = WaitForSingleObject( handle, 0 );
+    r = WaitForSingleObject( handle, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n");
 
     r = WaitForSingleObject( handle, 0 );
@@ -320,7 +320,7 @@ static void test_ffcn(void)
     r = CreateDirectoryW( subdir, NULL );
     ok( r == TRUE, "failed to create subdir\n");
 
-    r = WaitForSingleObject( handle, 0 );
+    r = WaitForSingleObject( handle, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n");
 
     r = WaitForSingleObject( handle, 0 );
@@ -335,7 +335,7 @@ static void test_ffcn(void)
     r = RemoveDirectoryW( subdir );
     ok( r == TRUE, "failed to remove subdir\n");
 
-    r = WaitForSingleObject( handle, 0 );
+    r = WaitForSingleObject( handle, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n");
 
     r = WaitForSingleObject( handle, 0 );
