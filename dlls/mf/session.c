@@ -48,7 +48,6 @@ enum session_command
     SESSION_CMD_STOP,
     SESSION_CMD_SET_RATE,
     /* Internally used commands. */
-    SESSION_CMD_END,
     SESSION_CMD_QM_NOTIFY_TOPOLOGY,
 };
 
@@ -456,22 +455,16 @@ static HRESULT session_is_shut_down(struct media_session *session)
     return session->state == SESSION_STATE_SHUT_DOWN ? MF_E_SHUTDOWN : S_OK;
 }
 
-static void session_push_back_command(struct media_session *session, enum session_command command)
-{
-    struct session_op *op;
-
-    if (SUCCEEDED(create_session_op(command, &op)))
-        list_add_head(&session->commands, &op->entry);
-}
-
 static HRESULT session_submit_command(struct media_session *session, struct session_op *op)
 {
     HRESULT hr;
 
+    TRACE("session %p, op %p, command %u.\n", session, op, op->command);
+
     EnterCriticalSection(&session->cs);
     if (SUCCEEDED(hr = session_is_shut_down(session)))
     {
-        if (list_empty(&session->commands))
+        if (list_empty(&session->commands) && !(session->presentation.flags & SESSION_FLAG_PENDING_COMMAND))
             hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
         list_add_tail(&session->commands, &op->entry);
         IUnknown_AddRef(&op->IUnknown_iface);
@@ -805,14 +798,7 @@ static void session_command_complete(struct media_session *session)
 
     session->presentation.flags &= ~SESSION_FLAG_PENDING_COMMAND;
 
-    /* Pop current command, submit next. */
-    if ((e = list_head(&session->commands)))
-    {
-        op = LIST_ENTRY(e, struct session_op, entry);
-        list_remove(&op->entry);
-        IUnknown_Release(&op->IUnknown_iface);
-    }
-
+    /* Submit next command. */
     if ((e = list_head(&session->commands)))
     {
         op = LIST_ENTRY(e, struct session_op, entry);
@@ -2375,6 +2361,8 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
     struct session_op *op = impl_op_from_IUnknown(IMFAsyncResult_GetStateNoAddRef(result));
     struct media_session *session = impl_from_commands_callback_IMFAsyncCallback(iface);
 
+    TRACE("session %p, op %p, command %u.\n", session, op, op->command);
+
     EnterCriticalSection(&session->cs);
 
     if (session->presentation.flags & SESSION_FLAG_PENDING_COMMAND)
@@ -2383,6 +2371,9 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
         LeaveCriticalSection(&session->cs);
         return S_OK;
     }
+
+    list_remove(&op->entry);
+    session->presentation.flags |= SESSION_FLAG_PENDING_COMMAND;
 
     switch (op->command)
     {
@@ -2417,6 +2408,8 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
     }
 
     LeaveCriticalSection(&session->cs);
+
+    IUnknown_Release(&op->IUnknown_iface);
 
     return S_OK;
 }
@@ -3346,7 +3339,6 @@ static void session_raise_end_of_presentation(struct media_session *session)
         if (session_nodes_is_mask_set(session, MF_TOPOLOGY_MAX, SOURCE_FLAG_END_OF_PRESENTATION))
         {
             session->presentation.flags |= SESSION_FLAG_END_OF_PRESENTATION | SESSION_FLAG_PENDING_COMMAND;
-            session_push_back_command(session, SESSION_CMD_END);
             IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, NULL);
         }
     }
