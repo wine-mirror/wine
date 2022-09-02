@@ -1021,6 +1021,11 @@ static struct sa_test sa_tests[] = {
       {0x25cc,0x300,'a',0}, 1,
           { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT } }
     },
+    {
+      /* TAKRI LETTER A U+11680 */
+      {0xd805,0xde80,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
     /* keep this as end test data marker */
     { {0} }
 };
@@ -1080,12 +1085,16 @@ static void test_AnalyzeScript(void)
     {
         init_textsource(&analysissource, ptr->string, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
 
+        winetest_push_context("Test %s", debugstr_w(ptr->string));
+
         init_expected_sa(expected_seq, ptr);
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
             lstrlenW(ptr->string), &analysissink);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, wine_dbgstr_w(ptr->string), FALSE);
         ptr++;
+
+        winetest_pop_context();
     }
 
     IDWriteTextAnalyzer_Release(analyzer);

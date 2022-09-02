@@ -375,6 +375,11 @@ struct text_source_context
     UINT32 ch;
 };
 
+static inline unsigned int text_source_get_char_length(const struct text_source_context *context)
+{
+    return context->ch > 0xffff ? 2 : 1;
+}
+
 static void text_source_read_more(struct text_source_context *context)
 {
     if ((context->chunk_length - context->cursor) > 1) return;
@@ -674,14 +679,15 @@ static DWRITE_SCRIPT_ANALYSIS get_char_sa(UINT32 c)
 static HRESULT analyze_script(struct text_source_context *context, IDWriteTextAnalysisSink *sink)
 {
     DWRITE_SCRIPT_ANALYSIS sa;
-    UINT32 pos, seq_length;
+    UINT32 pos, length;
+    HRESULT hr;
 
     text_source_get_next_u32_char(context);
 
     sa = get_char_sa(context->ch);
 
     pos = context->position;
-    seq_length = 1;
+    length = text_source_get_char_length(context);
 
     while (!text_source_get_next_u32_char(context))
     {
@@ -705,20 +711,19 @@ static HRESULT analyze_script(struct text_source_context *context, IDWriteTextAn
 
         /* this is a length of a sequence to be reported next */
         if (sa.script == cur_sa.script && sa.shapes == cur_sa.shapes)
-            seq_length++;
-        else {
-            HRESULT hr;
-
-            hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
+            length += text_source_get_char_length(context);
+        else
+        {
+            hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
             if (FAILED(hr)) return hr;
-            pos += seq_length;
-            seq_length = 1;
+            pos += length;
+            length = text_source_get_char_length(context);
             sa = cur_sa;
         }
     }
 
     /* one char length case or normal completion call */
-    return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
+    return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
 }
 
 struct linebreaking_state {
@@ -2377,11 +2382,6 @@ static inline BOOL fallback_is_uvs(const struct text_source_context *context)
     /* VARIATION SELECTOR-17..256 */
     if (context->ch >= 0xe0100 && context->ch <= 0xe01ef) return TRUE;
     return FALSE;
-}
-
-static inline unsigned int text_source_get_char_length(const struct text_source_context *context)
-{
-    return context->ch > 0xffff ? 2 : 1;
 }
 
 static UINT32 fallback_font_get_supported_length(IDWriteFont3 *font, IDWriteTextAnalysisSource *source,
