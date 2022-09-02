@@ -252,6 +252,13 @@ cpp_quote("#define MAKE_D3D10_STATUS(code)                    MAKE_HRESULT( 0, _
 cpp_quote("#define D3D10_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS  MAKE_D3D10_HRESULT(1)")
 cpp_quote("#define D3D10_ERROR_FILE_NOT_FOUND                 MAKE_D3D10_HRESULT(2)")
 
+cpp_quote("#if defined(__cplusplus) && !defined(D3D10_NO_HELPERS)")
+cpp_quote("inline unsigned int D3D10CalcSubresource(unsigned int level, unsigned int layer, unsigned int level_count)")
+cpp_quote("{")
+cpp_quote("    return layer * level_count + level;")
+cpp_quote("}")
+cpp_quote("#endif")
+
 typedef enum D3D10_BLEND {
     D3D10_BLEND_ZERO             = 1,
     D3D10_BLEND_ONE              = 2,
