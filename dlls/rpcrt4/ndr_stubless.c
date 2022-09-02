@@ -1006,6 +1006,8 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORM
 
 __ASM_GLOBAL_FUNC( NdrClientCall2,
                    "subq $0x28,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
                    "movq %r8,0x40(%rsp)\n\t"
                    "movq %r9,0x48(%rsp)\n\t"
