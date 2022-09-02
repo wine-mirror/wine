@@ -1075,6 +1075,15 @@ bool __cdecl _Task_impl_base__IsNonBlockingThread(void)
     return FALSE;
 }
 
+/* ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ */
+/* ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ */
+/* ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_ExceptionHolder__ReportUnhandledError, 4)
+void __thiscall _ExceptionHolder__ReportUnhandledError(void *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
 __ASM_BLOCK_BEGIN(concurrency_details_vtables)
     __ASM_VTABLE(_Concurrent_queue_base_v4,
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)

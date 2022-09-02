@@ -1085,9 +1085,9 @@
 @ stub -arch=win64 ?CaptureCallstack@platform@details@Concurrency@@YA_KPEAPEAX_K1@Z
 @ cdecl ?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ() msvcp140.?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ
 @ stub ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ
-@ stub -arch=arm ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ
-@ stub -arch=i386 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ
-@ stub -arch=win64 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ
+@ cdecl -arch=arm ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ(ptr) msvcp140.?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ
+@ thiscall -arch=i386 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ(ptr) msvcp140.?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ
+@ cdecl -arch=win64 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ(ptr) msvcp140.?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ
 @ cdecl -arch=arm ?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z(ptr long str) msvcp140.?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z
 @ thiscall -arch=i386 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z(ptr long str) msvcp140.?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z
 @ cdecl -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z(ptr long str) msvcp140.?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z

@@ -1085,9 +1085,9 @@
 @ stub -arch=win64 ?CaptureCallstack@platform@details@Concurrency@@YA_KPEAPEAX_K1@Z
 @ cdecl ?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ() kernel32.GetCurrentThreadId
 @ stub ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ
-@ stub -arch=arm ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ
-@ stub -arch=i386 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ
-@ stub -arch=win64 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ
+@ cdecl -arch=arm ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ(ptr) _ExceptionHolder__ReportUnhandledError
+@ thiscall -arch=i386 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ(ptr) _ExceptionHolder__ReportUnhandledError
+@ cdecl -arch=win64 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ(ptr) _ExceptionHolder__ReportUnhandledError
 @ cdecl -arch=arm ?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z(ptr long str) _Locinfo__Addcats
 @ thiscall -arch=i386 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z(ptr long str) _Locinfo__Addcats
 @ cdecl -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z(ptr long str) _Locinfo__Addcats
