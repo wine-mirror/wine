@@ -26,26 +26,15 @@
 #include "winspool.h"
 #include "objbase.h"
 #include "prntvpt.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #include "prntvpt_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(prntvpt);
 
-static WCHAR *heap_strdupW(const WCHAR *src)
-{
-    WCHAR *dst;
-    size_t len;
-    if (!src) return NULL;
-    len = (wcslen(src) + 1) * sizeof(WCHAR);
-    if ((dst = heap_alloc(len))) memcpy(dst, src, len);
-    return dst;
-}
-
 HRESULT WINAPI PTReleaseMemory(PVOID mem)
 {
-    heap_free(mem);
+    free(mem);
     return S_OK;
 }
 
@@ -65,9 +54,9 @@ HRESULT WINAPI PTCloseProvider(HPTPROVIDER provider)
         return E_HANDLE;
 
     prov->owner = 0;
-    heap_free(prov->name);
+    free(prov->name);
     ClosePrinter(prov->hprn);
-    heap_free(prov);
+    free(prov);
 
     return S_OK;
 }
@@ -92,16 +81,16 @@ HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD p
     if (!max_version || !provider || !used_version)
         return E_INVALIDARG;
 
-    prov = heap_alloc(sizeof(*prov));
+    prov = malloc(sizeof(*prov));
     if (!prov) return E_OUTOFMEMORY;
 
     if (!OpenPrinterW((LPWSTR)printer, &prov->hprn, NULL))
     {
-        heap_free(prov);
+        free(prov);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    prov->name = heap_strdupW(printer);
+    prov->name = wcsdup(printer);
     prov->owner = GetCurrentThreadId();
     *provider = (HPTPROVIDER)prov;
     *used_version = 1;
