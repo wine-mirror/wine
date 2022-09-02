@@ -1063,6 +1063,8 @@ class VkHandle(object):
             return "wine_instance_from_handle({0})->funcs".format(param)
         elif self.name == "VkDevice":
             return "wine_device_from_handle({0})->funcs".format(param)
+        elif self.name == "VkPhysicalDevice":
+            return "wine_phys_dev_from_handle({0})->instance->funcs".format(param)
         elif self.name == "VkQueue":
             return "wine_queue_from_handle({0})->device->funcs".format(param)
         elif self.parent in ["VkInstance", "VkPhysicalDevice"]:
@@ -1106,6 +1108,8 @@ class VkHandle(object):
             return "wine_device_from_handle({0})->device".format(name)
         if self.name == "VkInstance":
             return "wine_instance_from_handle({0})->instance".format(name)
+        if self.name == "VkPhysicalDevice":
+            return "wine_phys_dev_from_handle({0})->phys_dev".format(name)
         if self.name == "VkQueue":
             return "wine_queue_from_handle({0})->queue".format(name)
         if self.name == "VkSurfaceKHR":
@@ -1115,8 +1119,6 @@ class VkHandle(object):
 
         if self.name == "VkCommandBuffer":
             native_handle_name = "command_buffer"
-        if self.name == "VkPhysicalDevice":
-            native_handle_name = "phys_dev"
 
         if native_handle_name:
             return "{0}->{1}".format(name, native_handle_name)

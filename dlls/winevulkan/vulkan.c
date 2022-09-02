@@ -211,7 +211,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
                                &ret_ptr, &ret_len );
 }
 
-static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
+static void wine_vk_physical_device_free(struct wine_phys_dev *phys_dev)
 {
     if (!phys_dev)
         return;
@@ -221,10 +221,10 @@ static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)
     free(phys_dev);
 }
 
-static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct wine_instance *instance,
-        VkPhysicalDevice phys_dev)
+static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance *instance,
+        VkPhysicalDevice phys_dev, VkPhysicalDevice handle)
 {
-    struct VkPhysicalDevice_T *object;
+    struct wine_phys_dev *object;
     uint32_t num_host_properties, num_properties = 0;
     VkExtensionProperties *host_properties = NULL;
     VkResult res;
@@ -233,11 +233,12 @@ static struct VkPhysicalDevice_T *wine_vk_physical_device_alloc(struct wine_inst
     if (!(object = calloc(1, sizeof(*object))))
         return NULL;
 
-    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
     object->instance = instance;
+    object->handle = handle;
     object->phys_dev = phys_dev;
 
-    WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, object, phys_dev, object);
+    handle->base.unix_handle = (uintptr_t)object;
+    WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, handle, phys_dev, object);
 
     res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
             NULL, &num_host_properties, NULL);
@@ -550,6 +551,13 @@ static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *ins
     if (!phys_dev_count)
         return res;
 
+    if (phys_dev_count > instance->handle->phys_dev_count)
+    {
+        instance->handle->phys_dev_count = phys_dev_count;
+        return VK_ERROR_OUT_OF_POOL_MEMORY;
+    }
+    instance->handle->phys_dev_count = phys_dev_count;
+
     if (!(tmp_phys_devs = calloc(phys_dev_count, sizeof(*tmp_phys_devs))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
@@ -570,7 +578,8 @@ static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *ins
     /* Wrap each native physical device handle into a dispatchable object for the ICD loader. */
     for (i = 0; i < phys_dev_count; i++)
     {
-        struct VkPhysicalDevice_T *phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i]);
+        struct wine_phys_dev *phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i],
+                                                                       &instance->handle->phys_devs[i]);
         if (!phys_dev)
         {
             ERR("Unable to allocate memory for physical device!\n");
@@ -587,14 +596,14 @@ static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *ins
     return VK_SUCCESS;
 }
 
-static struct VkPhysicalDevice_T *wine_vk_instance_wrap_physical_device(struct wine_instance *instance,
+static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_instance *instance,
         VkPhysicalDevice physical_device)
 {
     unsigned int i;
 
     for (i = 0; i < instance->phys_dev_count; ++i)
     {
-        struct VkPhysicalDevice_T *current = instance->phys_devs[i];
+        struct wine_phys_dev *current = instance->phys_devs[i];
         if (current->phys_dev == physical_device)
             return current;
     }
@@ -697,7 +706,7 @@ NTSTATUS wine_vkAllocateCommandBuffers(void *args)
 NTSTATUS wine_vkCreateDevice(void *args)
 {
     struct vkCreateDevice_params *params = args;
-    VkPhysicalDevice phys_dev = params->physicalDevice;
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(params->physicalDevice);
     const VkDeviceCreateInfo *create_info = params->pCreateInfo;
     const VkAllocationCallbacks *allocator = params->pAllocator;
     VkDevice *ret_device = params->pDevice;
@@ -911,7 +920,7 @@ NTSTATUS wine_vkDestroyInstance(void *args)
 NTSTATUS wine_vkEnumerateDeviceExtensionProperties(void *args)
 {
     struct vkEnumerateDeviceExtensionProperties_params *params = args;
-    VkPhysicalDevice phys_dev = params->physicalDevice;
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(params->physicalDevice);
     const char *layer_name = params->pLayerName;
     uint32_t *count = params->pPropertyCount;
     VkExtensionProperties *properties = params->pProperties;
@@ -1053,7 +1062,7 @@ NTSTATUS wine_vkEnumeratePhysicalDevices(void *args)
     *count = min(*count, instance->phys_dev_count);
     for (i = 0; i < *count; i++)
     {
-        devices[i] = instance->phys_devs[i];
+        devices[i] = instance->phys_devs[i]->handle;
     }
 
     TRACE("Returning %u devices.\n", *count);
@@ -1218,8 +1227,10 @@ static VkResult wine_vk_enumerate_physical_device_groups(struct wine_instance *i
         for (j = 0; j < current->physicalDeviceCount; ++j)
         {
             VkPhysicalDevice dev = current->physicalDevices[j];
-            if (!(current->physicalDevices[j] = wine_vk_instance_wrap_physical_device(instance, dev)))
+            struct wine_phys_dev *phys_dev = wine_vk_instance_wrap_physical_device(instance, dev);
+            if (!phys_dev)
                 return VK_ERROR_INITIALIZATION_FAILED;
+            current->physicalDevices[j] = phys_dev->handle;
         }
     }
 
@@ -1434,7 +1445,7 @@ NTSTATUS wine_vkGetCalibratedTimestampsEXT(void *args)
 NTSTATUS wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
 {
     struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params *params = args;
-    VkPhysicalDevice phys_dev = params->physicalDevice;
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(params->physicalDevice);
     uint32_t *time_domain_count = params->pTimeDomainCount;
     VkTimeDomainEXT *time_domains = params->pTimeDomains;
     BOOL supports_device = FALSE, supports_monotonic = FALSE, supports_monotonic_raw = FALSE;
@@ -1591,7 +1602,7 @@ NTSTATUS wine_vkDestroySurfaceKHR(void *args)
     return STATUS_SUCCESS;
 }
 
-static inline void adjust_max_image_count(VkPhysicalDevice phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
+static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
 {
     /* Many Windows games, for example Strange Brigade, No Man's Sky, Path of Exile
      * and World War Z, do not expect that maxImageCount can be set to 0.
@@ -1609,14 +1620,14 @@ static inline void adjust_max_image_count(VkPhysicalDevice phys_dev, VkSurfaceCa
 NTSTATUS wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilitiesKHR_params *params = args;
-    VkPhysicalDevice phys_dev = params->physicalDevice;
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(params->physicalDevice);
     VkSurfaceKHR surface = params->surface;
     VkSurfaceCapabilitiesKHR *capabilities = params->pSurfaceCapabilities;
     VkResult res;
 
     TRACE("%p, 0x%s, %p\n", phys_dev, wine_dbgstr_longlong(surface), capabilities);
 
-    res = thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev, surface, capabilities);
+    res = thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev->handle, surface, capabilities);
 
     if (res == VK_SUCCESS)
         adjust_max_image_count(phys_dev, capabilities);
@@ -1627,14 +1638,14 @@ NTSTATUS wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 NTSTATUS wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
-    VkPhysicalDevice phys_dev = params->physicalDevice;
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(params->physicalDevice);
     const VkPhysicalDeviceSurfaceInfo2KHR *surface_info = params->pSurfaceInfo;
     VkSurfaceCapabilities2KHR *capabilities = params->pSurfaceCapabilities;
     VkResult res;
 
     TRACE("%p, %p, %p\n", phys_dev, surface_info, capabilities);
 
-    res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev, surface_info, capabilities);
+    res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev->handle, surface_info, capabilities);
 
     if (res == VK_SUCCESS)
         adjust_max_image_count(phys_dev, &capabilities->surfaceCapabilities);

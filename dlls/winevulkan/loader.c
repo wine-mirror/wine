@@ -256,6 +256,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
 {
     struct vkCreateInstance_params params;
     struct VkInstance_T *instance;
+    uint32_t phys_dev_count = 8, i;
     VkResult result;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, ret);
@@ -263,14 +264,25 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (!wine_vk_init_once())
         return VK_ERROR_INITIALIZATION_FAILED;
 
-    if (!(instance = alloc_vk_object(sizeof(*instance))))
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    for (;;)
+    {
+        if (!(instance = alloc_vk_object(FIELD_OFFSET(struct VkInstance_T, phys_devs[phys_dev_count]))))
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        instance->phys_dev_count = phys_dev_count;
+        for (i = 0; i < phys_dev_count; i++)
+            instance->phys_devs[i].base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    params.pCreateInfo = create_info;
-    params.pAllocator = allocator;
-    params.pInstance = ret;
-    params.client_ptr = instance;
-    result = vk_unix_call(unix_vkCreateInstance, &params);
+        params.pCreateInfo = create_info;
+        params.pAllocator = allocator;
+        params.pInstance = ret;
+        params.client_ptr = instance;
+        result = vk_unix_call(unix_vkCreateInstance, &params);
+        if (instance->phys_dev_count <= phys_dev_count)
+            break;
+        phys_dev_count = instance->phys_dev_count;
+        free(instance);
+    }
+
     if (!instance->base.unix_handle)
         free(instance);
     return result;

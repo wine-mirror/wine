@@ -2810,7 +2810,7 @@ static inline VkPhysicalDevice *convert_VkPhysicalDevice_array_win_to_host(const
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i] = in[i]->phys_dev;
+        out[i] = wine_phys_dev_from_handle(in[i])->phys_dev;
     }
 
     return out;
@@ -8214,7 +8214,7 @@ static NTSTATUS wine_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCounter
 {
     struct vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR_params *params = args;
     TRACE("%p, %u, %p, %p, %p\n", params->physicalDevice, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
-    return params->physicalDevice->instance->funcs.p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(params->physicalDevice->phys_dev, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
 }
 
 static NTSTATUS wine_vkFlushMappedMemoryRanges(void *args)
@@ -8967,14 +8967,14 @@ static NTSTATUS wine_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *args
 {
     struct vkGetPhysicalDeviceCooperativeMatrixPropertiesNV_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(params->physicalDevice->phys_dev, params->pPropertyCount, params->pProperties);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pPropertyCount, params->pProperties);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceFeatures(void *args)
 {
     struct vkGetPhysicalDeviceFeatures_params *params = args;
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFeatures(params->physicalDevice->phys_dev, params->pFeatures);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFeatures(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pFeatures);
     return STATUS_SUCCESS;
 }
 
@@ -8982,7 +8982,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceFeatures2(void *args)
 {
     struct vkGetPhysicalDeviceFeatures2_params *params = args;
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFeatures2(params->physicalDevice->phys_dev, params->pFeatures);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFeatures2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pFeatures);
     return STATUS_SUCCESS;
 }
 
@@ -8990,7 +8990,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceFeatures2KHR(void *args)
 {
     struct vkGetPhysicalDeviceFeatures2KHR_params *params = args;
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFeatures2KHR(params->physicalDevice->phys_dev, params->pFeatures);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFeatures2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pFeatures);
     return STATUS_SUCCESS;
 }
 
@@ -8998,7 +8998,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceFormatProperties(void *args)
 {
     struct vkGetPhysicalDeviceFormatProperties_params *params = args;
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFormatProperties(params->physicalDevice->phys_dev, params->format, params->pFormatProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->format, params->pFormatProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9006,7 +9006,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceFormatProperties2_params *params = args;
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFormatProperties2(params->physicalDevice->phys_dev, params->format, params->pFormatProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFormatProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->format, params->pFormatProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9014,7 +9014,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceFormatProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceFormatProperties2KHR_params *params = args;
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFormatProperties2KHR(params->physicalDevice->phys_dev, params->format, params->pFormatProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFormatProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->format, params->pFormatProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9022,7 +9022,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceFragmentShadingRatesKHR(void *args)
 {
     struct vkGetPhysicalDeviceFragmentShadingRatesKHR_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFragmentShadingRatesKHR(params->physicalDevice->phys_dev, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceFragmentShadingRatesKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceImageFormatProperties(void *args)
@@ -9033,13 +9033,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceImageFormatProperties(void *args)
     VkImageFormatProperties_host pImageFormatProperties_host;
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p\n", params->physicalDevice, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
 
-    result = params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties(params->physicalDevice->phys_dev, params->format, params->type, params->tiling, params->usage, params->flags, &pImageFormatProperties_host);
+    result = wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->format, params->type, params->tiling, params->usage, params->flags, &pImageFormatProperties_host);
 
     convert_VkImageFormatProperties_host_to_win(&pImageFormatProperties_host, params->pImageFormatProperties);
     return result;
 #else
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p\n", params->physicalDevice, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties(params->physicalDevice->phys_dev, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
 #endif
 }
 
@@ -9049,12 +9049,12 @@ VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physic
     VkResult result;
     VkImageFormatProperties2_host pImageFormatProperties_host;
     convert_VkImageFormatProperties2_win_to_host(pImageFormatProperties, &pImageFormatProperties_host);
-    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(physicalDevice->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
+    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
 
     convert_VkImageFormatProperties2_host_to_win(&pImageFormatProperties_host, pImageFormatProperties);
     return result;
 #else
-    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(physicalDevice->phys_dev, pImageFormatInfo, pImageFormatProperties);
+    return wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, pImageFormatProperties);
 #endif
 }
 
@@ -9064,12 +9064,12 @@ VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phy
     VkResult result;
     VkImageFormatProperties2_host pImageFormatProperties_host;
     convert_VkImageFormatProperties2_win_to_host(pImageFormatProperties, &pImageFormatProperties_host);
-    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(physicalDevice->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
+    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
 
     convert_VkImageFormatProperties2_host_to_win(&pImageFormatProperties_host, pImageFormatProperties);
     return result;
 #else
-    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(physicalDevice->phys_dev, pImageFormatInfo, pImageFormatProperties);
+    return wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, pImageFormatProperties);
 #endif
 }
 
@@ -9080,13 +9080,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceMemoryProperties(void *args)
     VkPhysicalDeviceMemoryProperties_host pMemoryProperties_host;
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(params->physicalDevice->phys_dev, &pMemoryProperties_host);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pMemoryProperties_host);
 
     convert_VkPhysicalDeviceMemoryProperties_host_to_win(&pMemoryProperties_host, params->pMemoryProperties);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(params->physicalDevice->phys_dev, params->pMemoryProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pMemoryProperties);
     return STATUS_SUCCESS;
 #endif
 }
@@ -9099,13 +9099,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceMemoryProperties2(void *args)
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
     convert_VkPhysicalDeviceMemoryProperties2_win_to_host(params->pMemoryProperties, &pMemoryProperties_host);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2(params->physicalDevice->phys_dev, &pMemoryProperties_host);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pMemoryProperties_host);
 
     convert_VkPhysicalDeviceMemoryProperties2_host_to_win(&pMemoryProperties_host, params->pMemoryProperties);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2(params->physicalDevice->phys_dev, params->pMemoryProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pMemoryProperties);
     return STATUS_SUCCESS;
 #endif
 }
@@ -9118,13 +9118,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceMemoryProperties2KHR(void *args)
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
     convert_VkPhysicalDeviceMemoryProperties2_win_to_host(params->pMemoryProperties, &pMemoryProperties_host);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2KHR(params->physicalDevice->phys_dev, &pMemoryProperties_host);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pMemoryProperties_host);
 
     convert_VkPhysicalDeviceMemoryProperties2_host_to_win(&pMemoryProperties_host, params->pMemoryProperties);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2KHR(params->physicalDevice->phys_dev, params->pMemoryProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMemoryProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pMemoryProperties);
     return STATUS_SUCCESS;
 #endif
 }
@@ -9133,7 +9133,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceMultisamplePropertiesEXT(void *args)
 {
     struct vkGetPhysicalDeviceMultisamplePropertiesEXT_params *params = args;
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->samples, params->pMultisampleProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceMultisamplePropertiesEXT(params->physicalDevice->phys_dev, params->samples, params->pMultisampleProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceMultisamplePropertiesEXT(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->samples, params->pMultisampleProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9141,7 +9141,7 @@ static NTSTATUS wine_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 {
     struct vkGetPhysicalDevicePresentRectanglesKHR_params *params = args;
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pRectCount, params->pRects);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(params->physicalDevice->phys_dev, wine_surface_from_handle(params->surface)->driver_surface, params->pRectCount, params->pRects);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, wine_surface_from_handle(params->surface)->driver_surface, params->pRectCount, params->pRects);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceProperties(void *args)
@@ -9151,13 +9151,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceProperties(void *args)
     VkPhysicalDeviceProperties_host pProperties_host;
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties(params->physicalDevice->phys_dev, &pProperties_host);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pProperties_host);
 
     convert_VkPhysicalDeviceProperties_host_to_win(&pProperties_host, params->pProperties);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties(params->physicalDevice->phys_dev, params->pProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pProperties);
     return STATUS_SUCCESS;
 #endif
 }
@@ -9170,13 +9170,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceProperties2(void *args)
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
     convert_VkPhysicalDeviceProperties2_win_to_host(params->pProperties, &pProperties_host);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties2(params->physicalDevice->phys_dev, &pProperties_host);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pProperties_host);
 
     convert_VkPhysicalDeviceProperties2_host_to_win(&pProperties_host, params->pProperties);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties2(params->physicalDevice->phys_dev, params->pProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pProperties);
     return STATUS_SUCCESS;
 #endif
 }
@@ -9189,13 +9189,13 @@ static NTSTATUS wine_vkGetPhysicalDeviceProperties2KHR(void *args)
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
     convert_VkPhysicalDeviceProperties2_win_to_host(params->pProperties, &pProperties_host);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(params->physicalDevice->phys_dev, &pProperties_host);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pProperties_host);
 
     convert_VkPhysicalDeviceProperties2_host_to_win(&pProperties_host, params->pProperties);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(params->physicalDevice->phys_dev, params->pProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pProperties);
     return STATUS_SUCCESS;
 #endif
 }
@@ -9204,7 +9204,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(voi
 {
     struct vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPerformanceQueryCreateInfo, params->pNumPasses);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(params->physicalDevice->phys_dev, params->pPerformanceQueryCreateInfo, params->pNumPasses);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pPerformanceQueryCreateInfo, params->pNumPasses);
     return STATUS_SUCCESS;
 }
 
@@ -9212,7 +9212,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceQueueFamilyProperties(void *args)
 {
     struct vkGetPhysicalDeviceQueueFamilyProperties_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties(params->physicalDevice->phys_dev, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9220,7 +9220,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceQueueFamilyProperties2(void *args)
 {
     struct vkGetPhysicalDeviceQueueFamilyProperties2_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties2(params->physicalDevice->phys_dev, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9228,7 +9228,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceQueueFamilyProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceQueueFamilyProperties2KHR_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(params->physicalDevice->phys_dev, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9236,7 +9236,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceSparseImageFormatProperties(void *args)
 {
     struct vkGetPhysicalDeviceSparseImageFormatProperties_params *params = args;
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p, %p\n", params->physicalDevice, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties(params->physicalDevice->phys_dev, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9244,7 +9244,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceSparseImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceSparseImageFormatProperties2_params *params = args;
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pFormatInfo, params->pPropertyCount, params->pProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties2(params->physicalDevice->phys_dev, params->pFormatInfo, params->pPropertyCount, params->pProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties2(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pFormatInfo, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9252,7 +9252,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(void *ar
 {
     struct vkGetPhysicalDeviceSparseImageFormatProperties2KHR_params *params = args;
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pFormatInfo, params->pPropertyCount, params->pProperties);
-    params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(params->physicalDevice->phys_dev, params->pFormatInfo, params->pPropertyCount, params->pProperties);
+    wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pFormatInfo, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 
@@ -9260,7 +9260,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinat
 {
     struct vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pCombinationCount, params->pCombinations);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(params->physicalDevice->phys_dev, params->pCombinationCount, params->pCombinations);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pCombinationCount, params->pCombinations);
 }
 
 VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, VkSurfaceCapabilities2KHR *pSurfaceCapabilities)
@@ -9269,14 +9269,14 @@ VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physi
     VkResult result;
     VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(pSurfaceInfo, &pSurfaceInfo_host);
-    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physicalDevice->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
+    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
 
     return result;
 #else
     VkResult result;
     VkPhysicalDeviceSurfaceInfo2KHR pSurfaceInfo_host;
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(pSurfaceInfo, &pSurfaceInfo_host);
-    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physicalDevice->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
+    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
 
     return result;
 #endif
@@ -9284,7 +9284,7 @@ VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physi
 
 VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
 {
-    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice->phys_dev, wine_surface_from_handle(surface)->driver_surface, pSurfaceCapabilities);
+    return wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, wine_surface_from_handle(surface)->driver_surface, pSurfaceCapabilities);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
@@ -9296,7 +9296,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(params->pSurfaceInfo, &pSurfaceInfo_host);
-    result = params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(params->physicalDevice->phys_dev, &pSurfaceInfo_host, params->pSurfaceFormatCount, params->pSurfaceFormats);
+    result = wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pSurfaceInfo_host, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
     return result;
 #else
@@ -9305,7 +9305,7 @@ static NTSTATUS wine_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(params->pSurfaceInfo, &pSurfaceInfo_host);
-    result = params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(params->physicalDevice->phys_dev, &pSurfaceInfo_host, params->pSurfaceFormatCount, params->pSurfaceFormats);
+    result = wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, &pSurfaceInfo_host, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
     return result;
 #endif
@@ -9315,42 +9315,42 @@ static NTSTATUS wine_vkGetPhysicalDeviceSurfaceFormatsKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceFormatsKHR_params *params = args;
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceFormatCount, params->pSurfaceFormats);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormatsKHR(params->physicalDevice->phys_dev, wine_surface_from_handle(params->surface)->driver_surface, params->pSurfaceFormatCount, params->pSurfaceFormats);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormatsKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, wine_surface_from_handle(params->surface)->driver_surface, params->pSurfaceFormatCount, params->pSurfaceFormats);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceSurfacePresentModesKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfacePresentModesKHR_params *params = args;
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pPresentModeCount, params->pPresentModes);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfacePresentModesKHR(params->physicalDevice->phys_dev, wine_surface_from_handle(params->surface)->driver_surface, params->pPresentModeCount, params->pPresentModes);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfacePresentModesKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, wine_surface_from_handle(params->surface)->driver_surface, params->pPresentModeCount, params->pPresentModes);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceSurfaceSupportKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceSupportKHR_params *params = args;
     TRACE("%p, %u, 0x%s, %p\n", params->physicalDevice, params->queueFamilyIndex, wine_dbgstr_longlong(params->surface), params->pSupported);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceSupportKHR(params->physicalDevice->phys_dev, params->queueFamilyIndex, wine_surface_from_handle(params->surface)->driver_surface, params->pSupported);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceSupportKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->queueFamilyIndex, wine_surface_from_handle(params->surface)->driver_surface, params->pSupported);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceToolProperties(void *args)
 {
     struct vkGetPhysicalDeviceToolProperties_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pToolCount, params->pToolProperties);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceToolProperties(params->physicalDevice->phys_dev, params->pToolCount, params->pToolProperties);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceToolProperties(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pToolCount, params->pToolProperties);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceToolPropertiesEXT(void *args)
 {
     struct vkGetPhysicalDeviceToolPropertiesEXT_params *params = args;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pToolCount, params->pToolProperties);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceToolPropertiesEXT(params->physicalDevice->phys_dev, params->pToolCount, params->pToolProperties);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceToolPropertiesEXT(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->pToolCount, params->pToolProperties);
 }
 
 static NTSTATUS wine_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *args)
 {
     struct vkGetPhysicalDeviceWin32PresentationSupportKHR_params *params = args;
     TRACE("%p, %u\n", params->physicalDevice, params->queueFamilyIndex);
-    return params->physicalDevice->instance->funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR(params->physicalDevice->phys_dev, params->queueFamilyIndex);
+    return wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR(wine_phys_dev_from_handle(params->physicalDevice)->phys_dev, params->queueFamilyIndex);
 }
 
 static NTSTATUS wine_vkGetPipelineCacheData(void *args)
@@ -10339,7 +10339,7 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
     case VK_OBJECT_TYPE_INSTANCE:
         return (uint64_t) (uintptr_t) wine_instance_from_handle(((VkInstance) (uintptr_t) handle))->instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
-        return (uint64_t) (uintptr_t) ((VkPhysicalDevice) (uintptr_t) handle)->phys_dev;
+        return (uint64_t) (uintptr_t) wine_phys_dev_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->phys_dev;
     case VK_OBJECT_TYPE_QUEUE:
         return (uint64_t) (uintptr_t) wine_queue_from_handle(((VkQueue) (uintptr_t) handle))->queue;
     case VK_OBJECT_TYPE_SURFACE_KHR:

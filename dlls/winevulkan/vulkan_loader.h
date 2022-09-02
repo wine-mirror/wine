@@ -54,9 +54,16 @@ struct wine_vk_base
     UINT64 unix_handle;
 };
 
+struct VkPhysicalDevice_T
+{
+    struct wine_vk_base base;
+};
+
 struct VkInstance_T
 {
     struct wine_vk_base base;
+    uint32_t phys_dev_count;
+    struct VkPhysicalDevice_T phys_devs[1];
 };
 
 struct VkQueue_T

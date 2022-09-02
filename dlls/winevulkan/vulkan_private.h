@@ -56,7 +56,7 @@ struct VkCommandBuffer_T
 struct wine_device
 {
     struct vulkan_device_funcs funcs;
-    struct VkPhysicalDevice_T *phys_dev; /* parent */
+    struct wine_phys_dev *phys_dev; /* parent */
 
     VkDevice handle; /* client device */
     VkDevice device; /* native device */
@@ -96,7 +96,7 @@ struct wine_instance
     /* We cache devices as we need to wrap them as they are
      * dispatchable objects.
      */
-    struct VkPhysicalDevice_T **phys_devs;
+    struct wine_phys_dev **phys_devs;
     uint32_t phys_dev_count;
 
     VkBool32 enable_wrapper_list;
@@ -118,10 +118,11 @@ static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
     return (struct wine_instance *)(uintptr_t)handle->base.unix_handle;
 }
 
-struct VkPhysicalDevice_T
+struct wine_phys_dev
 {
-    struct wine_vk_base base;
     struct wine_instance *instance; /* parent */
+
+    VkPhysicalDevice handle; /* client physical device */
     VkPhysicalDevice phys_dev; /* native physical device */
 
     VkExtensionProperties *extensions;
@@ -129,6 +130,11 @@ struct VkPhysicalDevice_T
 
     struct wine_vk_mapping mapping;
 };
+
+static inline struct wine_phys_dev *wine_phys_dev_from_handle(VkPhysicalDevice handle)
+{
+    return (struct wine_phys_dev *)(uintptr_t)handle->base.unix_handle;
+}
 
 struct wine_queue
 {
