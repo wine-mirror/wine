@@ -28,8 +28,6 @@
 
 #include <pthread.h>
 
-#include "wine/list.h"
-
 #include "vulkan_loader.h"
 #include "vulkan_thunks.h"
 
@@ -43,15 +41,20 @@ struct wine_vk_mapping
     uint64_t wine_wrapped_handle;
 };
 
-struct VkCommandBuffer_T
+struct wine_cmd_buffer
 {
-    struct wine_vk_base base;
     struct wine_device *device; /* parent */
+
+    VkCommandBuffer handle; /* client command buffer */
     VkCommandBuffer command_buffer; /* native command buffer */
 
-    struct list pool_link;
     struct wine_vk_mapping mapping;
 };
+
+static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffer handle)
+{
+    return (struct wine_cmd_buffer *)(uintptr_t)handle->base.unix_handle;
+}
 
 struct wine_device
 {
@@ -159,8 +162,6 @@ struct wine_cmd_pool
 {
     VkCommandPool handle;
     VkCommandPool command_pool;
-
-    struct list command_buffers;
 
     struct wine_vk_mapping mapping;
 };

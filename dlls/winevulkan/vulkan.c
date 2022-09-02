@@ -313,13 +313,15 @@ static void wine_vk_free_command_buffers(struct wine_device *device,
 
     for (i = 0; i < count; i++)
     {
-        if (!buffers[i])
+        struct wine_cmd_buffer *buffer = wine_cmd_buffer_from_handle(buffers[i]);
+
+        if (!buffer)
             continue;
 
-        device->funcs.p_vkFreeCommandBuffers(device->device, pool->command_pool, 1, &buffers[i]->command_buffer);
-        list_remove(&buffers[i]->pool_link);
-        WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, buffers[i]);
-        free(buffers[i]);
+        device->funcs.p_vkFreeCommandBuffers(device->device, pool->command_pool, 1, &buffer->command_buffer);
+        WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, buffer);
+        buffer->handle->base.unix_handle = 0;
+        free(buffer);
     }
 }
 
@@ -649,6 +651,7 @@ NTSTATUS wine_vkAllocateCommandBuffers(void *args)
     struct wine_device *device = wine_device_from_handle(params->device);
     const VkCommandBufferAllocateInfo *allocate_info = params->pAllocateInfo;
     VkCommandBuffer *buffers = params->pCommandBuffers;
+    struct wine_cmd_buffer *buffer;
     struct wine_cmd_pool *pool;
     VkResult res = VK_SUCCESS;
     unsigned int i;
@@ -656,8 +659,6 @@ NTSTATUS wine_vkAllocateCommandBuffers(void *args)
     TRACE("%p, %p, %p\n", device, allocate_info, buffers);
 
     pool = wine_cmd_pool_from_handle(allocate_info->commandPool);
-
-    memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
     {
@@ -673,32 +674,29 @@ NTSTATUS wine_vkAllocateCommandBuffers(void *args)
         TRACE("Allocating command buffer %u from pool 0x%s.\n",
                 i, wine_dbgstr_longlong(allocate_info_host.commandPool));
 
-        if (!(buffers[i] = calloc(1, sizeof(**buffers))))
+        if (!(buffer = calloc(1, sizeof(*buffer))))
         {
             res = VK_ERROR_OUT_OF_HOST_MEMORY;
             break;
         }
 
-        buffers[i]->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
-        buffers[i]->device = device;
-        list_add_tail(&pool->command_buffers, &buffers[i]->pool_link);
+        buffer->handle = buffers[i];
+        buffer->device = device;
         res = device->funcs.p_vkAllocateCommandBuffers(device->device,
-                &allocate_info_host, &buffers[i]->command_buffer);
-        WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, buffers[i],
-                                         buffers[i]->command_buffer, buffers[i]);
+                &allocate_info_host, &buffer->command_buffer);
+        buffer->handle->base.unix_handle = (uintptr_t)buffer;
+        WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, buffer->handle,
+                                         buffer->command_buffer, buffer);
         if (res != VK_SUCCESS)
         {
             ERR("Failed to allocate command buffer, res=%d.\n", res);
-            buffers[i]->command_buffer = VK_NULL_HANDLE;
+            buffer->command_buffer = VK_NULL_HANDLE;
             break;
         }
     }
 
     if (res != VK_SUCCESS)
-    {
         wine_vk_free_command_buffers(device, pool, i + 1, buffers);
-        memset(buffers, 0, allocate_info->commandBufferCount * sizeof(*buffers));
-    }
 
     return res;
 }
@@ -1160,8 +1158,6 @@ NTSTATUS wine_vkCreateCommandPool(void *args)
     if (!(object = calloc(1, sizeof(*object))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    list_init(&object->command_buffers);
-
     res = device->funcs.p_vkCreateCommandPool(device->device, info, NULL, &object->command_pool);
 
     if (res == VK_SUCCESS)
@@ -1187,25 +1183,11 @@ NTSTATUS wine_vkDestroyCommandPool(void *args)
     VkCommandPool handle = params->commandPool;
     const VkAllocationCallbacks *allocator = params->pAllocator;
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(handle);
-    struct VkCommandBuffer_T *buffer, *cursor;
 
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(handle), allocator);
 
-    if (!handle)
-        return STATUS_SUCCESS;
-
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
-
-    /* The Vulkan spec says:
-     *
-     * "When a pool is destroyed, all command buffers allocated from the pool are freed."
-     */
-    LIST_FOR_EACH_ENTRY_SAFE(buffer, cursor, &pool->command_buffers, struct VkCommandBuffer_T, pool_link)
-    {
-        WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, buffer);
-        free(buffer);
-    }
 
     WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, pool);
 

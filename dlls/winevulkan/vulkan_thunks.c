@@ -742,7 +742,7 @@ static inline VkCommandBuffer *convert_VkCommandBuffer_array_win_to_host(const V
     out = malloc(count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i] = in[i]->command_buffer;
+        out[i] = wine_cmd_buffer_from_handle(in[i])->command_buffer;
     }
 
     return out;
@@ -2574,7 +2574,7 @@ static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array
     {
         out[i].sType = in[i].sType;
         out[i].pNext = in[i].pNext;
-        out[i].commandBuffer = in[i].commandBuffer->command_buffer;
+        out[i].commandBuffer = wine_cmd_buffer_from_handle(in[i].commandBuffer)->command_buffer;
         out[i].deviceMask = in[i].deviceMask;
     }
 
@@ -5357,13 +5357,13 @@ static NTSTATUS wine_vkBeginCommandBuffer(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pBeginInfo);
 
     convert_VkCommandBufferBeginInfo_win_to_host(params->pBeginInfo, &pBeginInfo_host);
-    result = params->commandBuffer->device->funcs.p_vkBeginCommandBuffer(params->commandBuffer->command_buffer, &pBeginInfo_host);
+    result = wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkBeginCommandBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pBeginInfo_host);
 
     free_VkCommandBufferBeginInfo(&pBeginInfo_host);
     return result;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pBeginInfo);
-    return params->commandBuffer->device->funcs.p_vkBeginCommandBuffer(params->commandBuffer->command_buffer, params->pBeginInfo);
+    return wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkBeginCommandBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pBeginInfo);
 #endif
 }
 
@@ -5503,12 +5503,12 @@ static NTSTATUS wine_vkCmdBeginConditionalRenderingEXT(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pConditionalRenderingBegin);
 
     convert_VkConditionalRenderingBeginInfoEXT_win_to_host(params->pConditionalRenderingBegin, &pConditionalRenderingBegin_host);
-    params->commandBuffer->device->funcs.p_vkCmdBeginConditionalRenderingEXT(params->commandBuffer->command_buffer, &pConditionalRenderingBegin_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginConditionalRenderingEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pConditionalRenderingBegin_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pConditionalRenderingBegin);
-    params->commandBuffer->device->funcs.p_vkCmdBeginConditionalRenderingEXT(params->commandBuffer->command_buffer, params->pConditionalRenderingBegin);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginConditionalRenderingEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pConditionalRenderingBegin);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5517,7 +5517,7 @@ static NTSTATUS wine_vkCmdBeginDebugUtilsLabelEXT(void *args)
 {
     struct vkCmdBeginDebugUtilsLabelEXT_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pLabelInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBeginDebugUtilsLabelEXT(params->commandBuffer->command_buffer, params->pLabelInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginDebugUtilsLabelEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pLabelInfo);
     return STATUS_SUCCESS;
 }
 
@@ -5525,7 +5525,7 @@ static NTSTATUS wine_vkCmdBeginQuery(void *args)
 {
     struct vkCmdBeginQuery_params *params = args;
     TRACE("%p, 0x%s, %u, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query, params->flags);
-    params->commandBuffer->device->funcs.p_vkCmdBeginQuery(params->commandBuffer->command_buffer, params->queryPool, params->query, params->flags);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginQuery(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->queryPool, params->query, params->flags);
     return STATUS_SUCCESS;
 }
 
@@ -5533,7 +5533,7 @@ static NTSTATUS wine_vkCmdBeginQueryIndexedEXT(void *args)
 {
     struct vkCmdBeginQueryIndexedEXT_params *params = args;
     TRACE("%p, 0x%s, %u, %#x, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query, params->flags, params->index);
-    params->commandBuffer->device->funcs.p_vkCmdBeginQueryIndexedEXT(params->commandBuffer->command_buffer, params->queryPool, params->query, params->flags, params->index);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginQueryIndexedEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->queryPool, params->query, params->flags, params->index);
     return STATUS_SUCCESS;
 }
 
@@ -5545,12 +5545,12 @@ static NTSTATUS wine_vkCmdBeginRenderPass(void *args)
     TRACE("%p, %p, %#x\n", params->commandBuffer, params->pRenderPassBegin, params->contents);
 
     convert_VkRenderPassBeginInfo_win_to_host(params->pRenderPassBegin, &pRenderPassBegin_host);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderPass(params->commandBuffer->command_buffer, &pRenderPassBegin_host, params->contents);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderPass(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRenderPassBegin_host, params->contents);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p, %#x\n", params->commandBuffer, params->pRenderPassBegin, params->contents);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderPass(params->commandBuffer->command_buffer, params->pRenderPassBegin, params->contents);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderPass(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRenderPassBegin, params->contents);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5563,12 +5563,12 @@ static NTSTATUS wine_vkCmdBeginRenderPass2(void *args)
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
 
     convert_VkRenderPassBeginInfo_win_to_host(params->pRenderPassBegin, &pRenderPassBegin_host);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderPass2(params->commandBuffer->command_buffer, &pRenderPassBegin_host, params->pSubpassBeginInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderPass2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRenderPassBegin_host, params->pSubpassBeginInfo);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderPass2(params->commandBuffer->command_buffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderPass2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5581,12 +5581,12 @@ static NTSTATUS wine_vkCmdBeginRenderPass2KHR(void *args)
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
 
     convert_VkRenderPassBeginInfo_win_to_host(params->pRenderPassBegin, &pRenderPassBegin_host);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderPass2KHR(params->commandBuffer->command_buffer, &pRenderPassBegin_host, params->pSubpassBeginInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderPass2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRenderPassBegin_host, params->pSubpassBeginInfo);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderPass2KHR(params->commandBuffer->command_buffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderPass2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5599,13 +5599,13 @@ static NTSTATUS wine_vkCmdBeginRendering(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pRenderingInfo);
 
     convert_VkRenderingInfo_win_to_host(params->pRenderingInfo, &pRenderingInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRendering(params->commandBuffer->command_buffer, &pRenderingInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRendering(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRenderingInfo_host);
 
     free_VkRenderingInfo(&pRenderingInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pRenderingInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRendering(params->commandBuffer->command_buffer, params->pRenderingInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRendering(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRenderingInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5618,13 +5618,13 @@ static NTSTATUS wine_vkCmdBeginRenderingKHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pRenderingInfo);
 
     convert_VkRenderingInfo_win_to_host(params->pRenderingInfo, &pRenderingInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderingKHR(params->commandBuffer->command_buffer, &pRenderingInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderingKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRenderingInfo_host);
 
     free_VkRenderingInfo(&pRenderingInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pRenderingInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBeginRenderingKHR(params->commandBuffer->command_buffer, params->pRenderingInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginRenderingKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRenderingInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5633,7 +5633,7 @@ static NTSTATUS wine_vkCmdBeginTransformFeedbackEXT(void *args)
 {
     struct vkCmdBeginTransformFeedbackEXT_params *params = args;
     TRACE("%p, %u, %u, %p, %p\n", params->commandBuffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
-    params->commandBuffer->device->funcs.p_vkCmdBeginTransformFeedbackEXT(params->commandBuffer->command_buffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBeginTransformFeedbackEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
     return STATUS_SUCCESS;
 }
 
@@ -5641,7 +5641,7 @@ static NTSTATUS wine_vkCmdBindDescriptorSets(void *args)
 {
     struct vkCmdBindDescriptorSets_params *params = args;
     TRACE("%p, %#x, 0x%s, %u, %u, %p, %u, %p\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->layout), params->firstSet, params->descriptorSetCount, params->pDescriptorSets, params->dynamicOffsetCount, params->pDynamicOffsets);
-    params->commandBuffer->device->funcs.p_vkCmdBindDescriptorSets(params->commandBuffer->command_buffer, params->pipelineBindPoint, params->layout, params->firstSet, params->descriptorSetCount, params->pDescriptorSets, params->dynamicOffsetCount, params->pDynamicOffsets);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindDescriptorSets(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineBindPoint, params->layout, params->firstSet, params->descriptorSetCount, params->pDescriptorSets, params->dynamicOffsetCount, params->pDynamicOffsets);
     return STATUS_SUCCESS;
 }
 
@@ -5649,7 +5649,7 @@ static NTSTATUS wine_vkCmdBindIndexBuffer(void *args)
 {
     struct vkCmdBindIndexBuffer_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->indexType);
-    params->commandBuffer->device->funcs.p_vkCmdBindIndexBuffer(params->commandBuffer->command_buffer, params->buffer, params->offset, params->indexType);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindIndexBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->indexType);
     return STATUS_SUCCESS;
 }
 
@@ -5657,7 +5657,7 @@ static NTSTATUS wine_vkCmdBindInvocationMaskHUAWEI(void *args)
 {
     struct vkCmdBindInvocationMaskHUAWEI_params *params = args;
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->imageView), params->imageLayout);
-    params->commandBuffer->device->funcs.p_vkCmdBindInvocationMaskHUAWEI(params->commandBuffer->command_buffer, params->imageView, params->imageLayout);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindInvocationMaskHUAWEI(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->imageView, params->imageLayout);
     return STATUS_SUCCESS;
 }
 
@@ -5665,7 +5665,7 @@ static NTSTATUS wine_vkCmdBindPipeline(void *args)
 {
     struct vkCmdBindPipeline_params *params = args;
     TRACE("%p, %#x, 0x%s\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->pipeline));
-    params->commandBuffer->device->funcs.p_vkCmdBindPipeline(params->commandBuffer->command_buffer, params->pipelineBindPoint, params->pipeline);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindPipeline(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineBindPoint, params->pipeline);
     return STATUS_SUCCESS;
 }
 
@@ -5673,7 +5673,7 @@ static NTSTATUS wine_vkCmdBindPipelineShaderGroupNV(void *args)
 {
     struct vkCmdBindPipelineShaderGroupNV_params *params = args;
     TRACE("%p, %#x, 0x%s, %u\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->pipeline), params->groupIndex);
-    params->commandBuffer->device->funcs.p_vkCmdBindPipelineShaderGroupNV(params->commandBuffer->command_buffer, params->pipelineBindPoint, params->pipeline, params->groupIndex);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindPipelineShaderGroupNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineBindPoint, params->pipeline, params->groupIndex);
     return STATUS_SUCCESS;
 }
 
@@ -5681,7 +5681,7 @@ static NTSTATUS wine_vkCmdBindShadingRateImageNV(void *args)
 {
     struct vkCmdBindShadingRateImageNV_params *params = args;
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->imageView), params->imageLayout);
-    params->commandBuffer->device->funcs.p_vkCmdBindShadingRateImageNV(params->commandBuffer->command_buffer, params->imageView, params->imageLayout);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindShadingRateImageNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->imageView, params->imageLayout);
     return STATUS_SUCCESS;
 }
 
@@ -5689,7 +5689,7 @@ static NTSTATUS wine_vkCmdBindTransformFeedbackBuffersEXT(void *args)
 {
     struct vkCmdBindTransformFeedbackBuffersEXT_params *params = args;
     TRACE("%p, %u, %u, %p, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes);
-    params->commandBuffer->device->funcs.p_vkCmdBindTransformFeedbackBuffersEXT(params->commandBuffer->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindTransformFeedbackBuffersEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes);
     return STATUS_SUCCESS;
 }
 
@@ -5697,7 +5697,7 @@ static NTSTATUS wine_vkCmdBindVertexBuffers(void *args)
 {
     struct vkCmdBindVertexBuffers_params *params = args;
     TRACE("%p, %u, %u, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets);
-    params->commandBuffer->device->funcs.p_vkCmdBindVertexBuffers(params->commandBuffer->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindVertexBuffers(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets);
     return STATUS_SUCCESS;
 }
 
@@ -5705,7 +5705,7 @@ static NTSTATUS wine_vkCmdBindVertexBuffers2(void *args)
 {
     struct vkCmdBindVertexBuffers2_params *params = args;
     TRACE("%p, %u, %u, %p, %p, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
-    params->commandBuffer->device->funcs.p_vkCmdBindVertexBuffers2(params->commandBuffer->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindVertexBuffers2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
     return STATUS_SUCCESS;
 }
 
@@ -5713,7 +5713,7 @@ static NTSTATUS wine_vkCmdBindVertexBuffers2EXT(void *args)
 {
     struct vkCmdBindVertexBuffers2EXT_params *params = args;
     TRACE("%p, %u, %u, %p, %p, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
-    params->commandBuffer->device->funcs.p_vkCmdBindVertexBuffers2EXT(params->commandBuffer->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBindVertexBuffers2EXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
     return STATUS_SUCCESS;
 }
 
@@ -5721,7 +5721,7 @@ static NTSTATUS wine_vkCmdBlitImage(void *args)
 {
     struct vkCmdBlitImage_params *params = args;
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions, params->filter);
-    params->commandBuffer->device->funcs.p_vkCmdBlitImage(params->commandBuffer->command_buffer, params->srcImage, params->srcImageLayout, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions, params->filter);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBlitImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcImage, params->srcImageLayout, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions, params->filter);
     return STATUS_SUCCESS;
 }
 
@@ -5733,12 +5733,12 @@ static NTSTATUS wine_vkCmdBlitImage2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
 
     convert_VkBlitImageInfo2_win_to_host(params->pBlitImageInfo, &pBlitImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdBlitImage2(params->commandBuffer->command_buffer, &pBlitImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBlitImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pBlitImageInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBlitImage2(params->commandBuffer->command_buffer, params->pBlitImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBlitImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pBlitImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5751,12 +5751,12 @@ static NTSTATUS wine_vkCmdBlitImage2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
 
     convert_VkBlitImageInfo2_win_to_host(params->pBlitImageInfo, &pBlitImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdBlitImage2KHR(params->commandBuffer->command_buffer, &pBlitImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBlitImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pBlitImageInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdBlitImage2KHR(params->commandBuffer->command_buffer, params->pBlitImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBlitImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pBlitImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5769,13 +5769,13 @@ static NTSTATUS wine_vkCmdBuildAccelerationStructureNV(void *args)
     TRACE("%p, %p, 0x%s, 0x%s, %u, 0x%s, 0x%s, 0x%s, 0x%s\n", params->commandBuffer, params->pInfo, wine_dbgstr_longlong(params->instanceData), wine_dbgstr_longlong(params->instanceOffset), params->update, wine_dbgstr_longlong(params->dst), wine_dbgstr_longlong(params->src), wine_dbgstr_longlong(params->scratch), wine_dbgstr_longlong(params->scratchOffset));
 
     convert_VkAccelerationStructureInfoNV_win_to_host(params->pInfo, &pInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdBuildAccelerationStructureNV(params->commandBuffer->command_buffer, &pInfo_host, params->instanceData, params->instanceOffset, params->update, params->dst, params->src, params->scratch, params->scratchOffset);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBuildAccelerationStructureNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pInfo_host, params->instanceData, params->instanceOffset, params->update, params->dst, params->src, params->scratch, params->scratchOffset);
 
     free_VkAccelerationStructureInfoNV(&pInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p, 0x%s, 0x%s, %u, 0x%s, 0x%s, 0x%s, 0x%s\n", params->commandBuffer, params->pInfo, wine_dbgstr_longlong(params->instanceData), wine_dbgstr_longlong(params->instanceOffset), params->update, wine_dbgstr_longlong(params->dst), wine_dbgstr_longlong(params->src), wine_dbgstr_longlong(params->scratch), wine_dbgstr_longlong(params->scratchOffset));
-    params->commandBuffer->device->funcs.p_vkCmdBuildAccelerationStructureNV(params->commandBuffer->command_buffer, params->pInfo, params->instanceData, params->instanceOffset, params->update, params->dst, params->src, params->scratch, params->scratchOffset);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBuildAccelerationStructureNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pInfo, params->instanceData, params->instanceOffset, params->update, params->dst, params->src, params->scratch, params->scratchOffset);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5788,13 +5788,13 @@ static NTSTATUS wine_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
     TRACE("%p, %u, %p, %p, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
 
     pInfos_host = convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win_to_host(params->pInfos, params->infoCount);
-    params->commandBuffer->device->funcs.p_vkCmdBuildAccelerationStructuresIndirectKHR(params->commandBuffer->command_buffer, params->infoCount, pInfos_host, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBuildAccelerationStructuresIndirectKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->infoCount, pInfos_host, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
 
     free_VkAccelerationStructureBuildGeometryInfoKHR_array(pInfos_host, params->infoCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %u, %p, %p, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
-    params->commandBuffer->device->funcs.p_vkCmdBuildAccelerationStructuresIndirectKHR(params->commandBuffer->command_buffer, params->infoCount, params->pInfos, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBuildAccelerationStructuresIndirectKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->infoCount, params->pInfos, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5807,13 +5807,13 @@ static NTSTATUS wine_vkCmdBuildAccelerationStructuresKHR(void *args)
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->ppBuildRangeInfos);
 
     pInfos_host = convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win_to_host(params->pInfos, params->infoCount);
-    params->commandBuffer->device->funcs.p_vkCmdBuildAccelerationStructuresKHR(params->commandBuffer->command_buffer, params->infoCount, pInfos_host, params->ppBuildRangeInfos);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBuildAccelerationStructuresKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->infoCount, pInfos_host, params->ppBuildRangeInfos);
 
     free_VkAccelerationStructureBuildGeometryInfoKHR_array(pInfos_host, params->infoCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->ppBuildRangeInfos);
-    params->commandBuffer->device->funcs.p_vkCmdBuildAccelerationStructuresKHR(params->commandBuffer->command_buffer, params->infoCount, params->pInfos, params->ppBuildRangeInfos);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdBuildAccelerationStructuresKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->infoCount, params->pInfos, params->ppBuildRangeInfos);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5822,7 +5822,7 @@ static NTSTATUS wine_vkCmdClearAttachments(void *args)
 {
     struct vkCmdClearAttachments_params *params = args;
     TRACE("%p, %u, %p, %u, %p\n", params->commandBuffer, params->attachmentCount, params->pAttachments, params->rectCount, params->pRects);
-    params->commandBuffer->device->funcs.p_vkCmdClearAttachments(params->commandBuffer->command_buffer, params->attachmentCount, params->pAttachments, params->rectCount, params->pRects);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdClearAttachments(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->attachmentCount, params->pAttachments, params->rectCount, params->pRects);
     return STATUS_SUCCESS;
 }
 
@@ -5830,7 +5830,7 @@ static NTSTATUS wine_vkCmdClearColorImage(void *args)
 {
     struct vkCmdClearColorImage_params *params = args;
     TRACE("%p, 0x%s, %#x, %p, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->image), params->imageLayout, params->pColor, params->rangeCount, params->pRanges);
-    params->commandBuffer->device->funcs.p_vkCmdClearColorImage(params->commandBuffer->command_buffer, params->image, params->imageLayout, params->pColor, params->rangeCount, params->pRanges);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdClearColorImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->image, params->imageLayout, params->pColor, params->rangeCount, params->pRanges);
     return STATUS_SUCCESS;
 }
 
@@ -5838,7 +5838,7 @@ static NTSTATUS wine_vkCmdClearDepthStencilImage(void *args)
 {
     struct vkCmdClearDepthStencilImage_params *params = args;
     TRACE("%p, 0x%s, %#x, %p, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->image), params->imageLayout, params->pDepthStencil, params->rangeCount, params->pRanges);
-    params->commandBuffer->device->funcs.p_vkCmdClearDepthStencilImage(params->commandBuffer->command_buffer, params->image, params->imageLayout, params->pDepthStencil, params->rangeCount, params->pRanges);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdClearDepthStencilImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->image, params->imageLayout, params->pDepthStencil, params->rangeCount, params->pRanges);
     return STATUS_SUCCESS;
 }
 
@@ -5850,12 +5850,12 @@ static NTSTATUS wine_vkCmdCopyAccelerationStructureKHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
     convert_VkCopyAccelerationStructureInfoKHR_win_to_host(params->pInfo, &pInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyAccelerationStructureKHR(params->commandBuffer->command_buffer, &pInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyAccelerationStructureKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyAccelerationStructureKHR(params->commandBuffer->command_buffer, params->pInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyAccelerationStructureKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5864,7 +5864,7 @@ static NTSTATUS wine_vkCmdCopyAccelerationStructureNV(void *args)
 {
     struct vkCmdCopyAccelerationStructureNV_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->dst), wine_dbgstr_longlong(params->src), params->mode);
-    params->commandBuffer->device->funcs.p_vkCmdCopyAccelerationStructureNV(params->commandBuffer->command_buffer, params->dst, params->src, params->mode);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyAccelerationStructureNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->dst, params->src, params->mode);
     return STATUS_SUCCESS;
 }
 
@@ -5876,12 +5876,12 @@ static NTSTATUS wine_vkCmdCopyAccelerationStructureToMemoryKHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
     convert_VkCopyAccelerationStructureToMemoryInfoKHR_win_to_host(params->pInfo, &pInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyAccelerationStructureToMemoryKHR(params->commandBuffer->command_buffer, &pInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyAccelerationStructureToMemoryKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyAccelerationStructureToMemoryKHR(params->commandBuffer->command_buffer, params->pInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyAccelerationStructureToMemoryKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5894,13 +5894,13 @@ static NTSTATUS wine_vkCmdCopyBuffer(void *args)
     TRACE("%p, 0x%s, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
 
     pRegions_host = convert_VkBufferCopy_array_win_to_host(params->pRegions, params->regionCount);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBuffer(params->commandBuffer->command_buffer, params->srcBuffer, params->dstBuffer, params->regionCount, pRegions_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcBuffer, params->dstBuffer, params->regionCount, pRegions_host);
 
     free_VkBufferCopy_array(pRegions_host, params->regionCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, 0x%s, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBuffer(params->commandBuffer->command_buffer, params->srcBuffer, params->dstBuffer, params->regionCount, params->pRegions);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcBuffer, params->dstBuffer, params->regionCount, params->pRegions);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5913,13 +5913,13 @@ static NTSTATUS wine_vkCmdCopyBuffer2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferInfo);
 
     convert_VkCopyBufferInfo2_win_to_host(params->pCopyBufferInfo, &pCopyBufferInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBuffer2(params->commandBuffer->command_buffer, &pCopyBufferInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBuffer2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyBufferInfo_host);
 
     free_VkCopyBufferInfo2(&pCopyBufferInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBuffer2(params->commandBuffer->command_buffer, params->pCopyBufferInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBuffer2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyBufferInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5932,13 +5932,13 @@ static NTSTATUS wine_vkCmdCopyBuffer2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferInfo);
 
     convert_VkCopyBufferInfo2_win_to_host(params->pCopyBufferInfo, &pCopyBufferInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBuffer2KHR(params->commandBuffer->command_buffer, &pCopyBufferInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBuffer2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyBufferInfo_host);
 
     free_VkCopyBufferInfo2(&pCopyBufferInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBuffer2KHR(params->commandBuffer->command_buffer, params->pCopyBufferInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBuffer2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyBufferInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5951,13 +5951,13 @@ static NTSTATUS wine_vkCmdCopyBufferToImage(void *args)
     TRACE("%p, 0x%s, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
 
     pRegions_host = convert_VkBufferImageCopy_array_win_to_host(params->pRegions, params->regionCount);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBufferToImage(params->commandBuffer->command_buffer, params->srcBuffer, params->dstImage, params->dstImageLayout, params->regionCount, pRegions_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBufferToImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcBuffer, params->dstImage, params->dstImageLayout, params->regionCount, pRegions_host);
 
     free_VkBufferImageCopy_array(pRegions_host, params->regionCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, 0x%s, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBufferToImage(params->commandBuffer->command_buffer, params->srcBuffer, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBufferToImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcBuffer, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5970,13 +5970,13 @@ static NTSTATUS wine_vkCmdCopyBufferToImage2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferToImageInfo);
 
     convert_VkCopyBufferToImageInfo2_win_to_host(params->pCopyBufferToImageInfo, &pCopyBufferToImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBufferToImage2(params->commandBuffer->command_buffer, &pCopyBufferToImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBufferToImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyBufferToImageInfo_host);
 
     free_VkCopyBufferToImageInfo2(&pCopyBufferToImageInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferToImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBufferToImage2(params->commandBuffer->command_buffer, params->pCopyBufferToImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBufferToImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyBufferToImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -5989,13 +5989,13 @@ static NTSTATUS wine_vkCmdCopyBufferToImage2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferToImageInfo);
 
     convert_VkCopyBufferToImageInfo2_win_to_host(params->pCopyBufferToImageInfo, &pCopyBufferToImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBufferToImage2KHR(params->commandBuffer->command_buffer, &pCopyBufferToImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBufferToImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyBufferToImageInfo_host);
 
     free_VkCopyBufferToImageInfo2(&pCopyBufferToImageInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferToImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyBufferToImage2KHR(params->commandBuffer->command_buffer, params->pCopyBufferToImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyBufferToImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyBufferToImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6004,7 +6004,7 @@ static NTSTATUS wine_vkCmdCopyImage(void *args)
 {
     struct vkCmdCopyImage_params *params = args;
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImage(params->commandBuffer->command_buffer, params->srcImage, params->srcImageLayout, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcImage, params->srcImageLayout, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions);
     return STATUS_SUCCESS;
 }
 
@@ -6016,12 +6016,12 @@ static NTSTATUS wine_vkCmdCopyImage2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
 
     convert_VkCopyImageInfo2_win_to_host(params->pCopyImageInfo, &pCopyImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImage2(params->commandBuffer->command_buffer, &pCopyImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyImageInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImage2(params->commandBuffer->command_buffer, params->pCopyImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6034,12 +6034,12 @@ static NTSTATUS wine_vkCmdCopyImage2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
 
     convert_VkCopyImageInfo2_win_to_host(params->pCopyImageInfo, &pCopyImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImage2KHR(params->commandBuffer->command_buffer, &pCopyImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyImageInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImage2KHR(params->commandBuffer->command_buffer, params->pCopyImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6052,13 +6052,13 @@ static NTSTATUS wine_vkCmdCopyImageToBuffer(void *args)
     TRACE("%p, 0x%s, %#x, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
 
     pRegions_host = convert_VkBufferImageCopy_array_win_to_host(params->pRegions, params->regionCount);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer(params->commandBuffer->command_buffer, params->srcImage, params->srcImageLayout, params->dstBuffer, params->regionCount, pRegions_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImageToBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcImage, params->srcImageLayout, params->dstBuffer, params->regionCount, pRegions_host);
 
     free_VkBufferImageCopy_array(pRegions_host, params->regionCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, 0x%s, %#x, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer(params->commandBuffer->command_buffer, params->srcImage, params->srcImageLayout, params->dstBuffer, params->regionCount, params->pRegions);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImageToBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcImage, params->srcImageLayout, params->dstBuffer, params->regionCount, params->pRegions);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6071,13 +6071,13 @@ static NTSTATUS wine_vkCmdCopyImageToBuffer2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageToBufferInfo);
 
     convert_VkCopyImageToBufferInfo2_win_to_host(params->pCopyImageToBufferInfo, &pCopyImageToBufferInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer2(params->commandBuffer->command_buffer, &pCopyImageToBufferInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImageToBuffer2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyImageToBufferInfo_host);
 
     free_VkCopyImageToBufferInfo2(&pCopyImageToBufferInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageToBufferInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer2(params->commandBuffer->command_buffer, params->pCopyImageToBufferInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImageToBuffer2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyImageToBufferInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6090,13 +6090,13 @@ static NTSTATUS wine_vkCmdCopyImageToBuffer2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageToBufferInfo);
 
     convert_VkCopyImageToBufferInfo2_win_to_host(params->pCopyImageToBufferInfo, &pCopyImageToBufferInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer2KHR(params->commandBuffer->command_buffer, &pCopyImageToBufferInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImageToBuffer2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pCopyImageToBufferInfo_host);
 
     free_VkCopyImageToBufferInfo2(&pCopyImageToBufferInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageToBufferInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer2KHR(params->commandBuffer->command_buffer, params->pCopyImageToBufferInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyImageToBuffer2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCopyImageToBufferInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6109,12 +6109,12 @@ static NTSTATUS wine_vkCmdCopyMemoryToAccelerationStructureKHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
     convert_VkCopyMemoryToAccelerationStructureInfoKHR_win_to_host(params->pInfo, &pInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCopyMemoryToAccelerationStructureKHR(params->commandBuffer->command_buffer, &pInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryToAccelerationStructureKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCopyMemoryToAccelerationStructureKHR(params->commandBuffer->command_buffer, params->pInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryToAccelerationStructureKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6123,7 +6123,7 @@ static NTSTATUS wine_vkCmdCopyQueryPoolResults(void *args)
 {
     struct vkCmdCopyQueryPoolResults_params *params = args;
     TRACE("%p, 0x%s, %u, %u, 0x%s, 0x%s, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), wine_dbgstr_longlong(params->stride), params->flags);
-    params->commandBuffer->device->funcs.p_vkCmdCopyQueryPoolResults(params->commandBuffer->command_buffer, params->queryPool, params->firstQuery, params->queryCount, params->dstBuffer, params->dstOffset, params->stride, params->flags);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyQueryPoolResults(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->queryPool, params->firstQuery, params->queryCount, params->dstBuffer, params->dstOffset, params->stride, params->flags);
     return STATUS_SUCCESS;
 }
 
@@ -6135,12 +6135,12 @@ static NTSTATUS wine_vkCmdCuLaunchKernelNVX(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pLaunchInfo);
 
     convert_VkCuLaunchInfoNVX_win_to_host(params->pLaunchInfo, &pLaunchInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdCuLaunchKernelNVX(params->commandBuffer->command_buffer, &pLaunchInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCuLaunchKernelNVX(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pLaunchInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pLaunchInfo);
-    params->commandBuffer->device->funcs.p_vkCmdCuLaunchKernelNVX(params->commandBuffer->command_buffer, params->pLaunchInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCuLaunchKernelNVX(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pLaunchInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6149,7 +6149,7 @@ static NTSTATUS wine_vkCmdDebugMarkerBeginEXT(void *args)
 {
     struct vkCmdDebugMarkerBeginEXT_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
-    params->commandBuffer->device->funcs.p_vkCmdDebugMarkerBeginEXT(params->commandBuffer->command_buffer, params->pMarkerInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDebugMarkerBeginEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pMarkerInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6157,7 +6157,7 @@ static NTSTATUS wine_vkCmdDebugMarkerEndEXT(void *args)
 {
     struct vkCmdDebugMarkerEndEXT_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdDebugMarkerEndEXT(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDebugMarkerEndEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -6165,7 +6165,7 @@ static NTSTATUS wine_vkCmdDebugMarkerInsertEXT(void *args)
 {
     struct vkCmdDebugMarkerInsertEXT_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
-    params->commandBuffer->device->funcs.p_vkCmdDebugMarkerInsertEXT(params->commandBuffer->command_buffer, params->pMarkerInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDebugMarkerInsertEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pMarkerInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6173,7 +6173,7 @@ static NTSTATUS wine_vkCmdDispatch(void *args)
 {
     struct vkCmdDispatch_params *params = args;
     TRACE("%p, %u, %u, %u\n", params->commandBuffer, params->groupCountX, params->groupCountY, params->groupCountZ);
-    params->commandBuffer->device->funcs.p_vkCmdDispatch(params->commandBuffer->command_buffer, params->groupCountX, params->groupCountY, params->groupCountZ);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDispatch(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->groupCountX, params->groupCountY, params->groupCountZ);
     return STATUS_SUCCESS;
 }
 
@@ -6181,7 +6181,7 @@ static NTSTATUS wine_vkCmdDispatchBase(void *args)
 {
     struct vkCmdDispatchBase_params *params = args;
     TRACE("%p, %u, %u, %u, %u, %u, %u\n", params->commandBuffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
-    params->commandBuffer->device->funcs.p_vkCmdDispatchBase(params->commandBuffer->command_buffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDispatchBase(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
     return STATUS_SUCCESS;
 }
 
@@ -6189,7 +6189,7 @@ static NTSTATUS wine_vkCmdDispatchBaseKHR(void *args)
 {
     struct vkCmdDispatchBaseKHR_params *params = args;
     TRACE("%p, %u, %u, %u, %u, %u, %u\n", params->commandBuffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
-    params->commandBuffer->device->funcs.p_vkCmdDispatchBaseKHR(params->commandBuffer->command_buffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDispatchBaseKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
     return STATUS_SUCCESS;
 }
 
@@ -6197,7 +6197,7 @@ static NTSTATUS wine_vkCmdDispatchIndirect(void *args)
 {
     struct vkCmdDispatchIndirect_params *params = args;
     TRACE("%p, 0x%s, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset));
-    params->commandBuffer->device->funcs.p_vkCmdDispatchIndirect(params->commandBuffer->command_buffer, params->buffer, params->offset);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDispatchIndirect(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset);
     return STATUS_SUCCESS;
 }
 
@@ -6205,7 +6205,7 @@ static NTSTATUS wine_vkCmdDraw(void *args)
 {
     struct vkCmdDraw_params *params = args;
     TRACE("%p, %u, %u, %u, %u\n", params->commandBuffer, params->vertexCount, params->instanceCount, params->firstVertex, params->firstInstance);
-    params->commandBuffer->device->funcs.p_vkCmdDraw(params->commandBuffer->command_buffer, params->vertexCount, params->instanceCount, params->firstVertex, params->firstInstance);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDraw(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->vertexCount, params->instanceCount, params->firstVertex, params->firstInstance);
     return STATUS_SUCCESS;
 }
 
@@ -6213,7 +6213,7 @@ static NTSTATUS wine_vkCmdDrawIndexed(void *args)
 {
     struct vkCmdDrawIndexed_params *params = args;
     TRACE("%p, %u, %u, %u, %d, %u\n", params->commandBuffer, params->indexCount, params->instanceCount, params->firstIndex, params->vertexOffset, params->firstInstance);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndexed(params->commandBuffer->command_buffer, params->indexCount, params->instanceCount, params->firstIndex, params->vertexOffset, params->firstInstance);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndexed(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->indexCount, params->instanceCount, params->firstIndex, params->vertexOffset, params->firstInstance);
     return STATUS_SUCCESS;
 }
 
@@ -6221,7 +6221,7 @@ static NTSTATUS wine_vkCmdDrawIndexedIndirect(void *args)
 {
     struct vkCmdDrawIndexedIndirect_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirect(params->commandBuffer->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndexedIndirect(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6229,7 +6229,7 @@ static NTSTATUS wine_vkCmdDrawIndexedIndirectCount(void *args)
 {
     struct vkCmdDrawIndexedIndirectCount_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirectCount(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndexedIndirectCount(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6237,7 +6237,7 @@ static NTSTATUS wine_vkCmdDrawIndexedIndirectCountAMD(void *args)
 {
     struct vkCmdDrawIndexedIndirectCountAMD_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirectCountAMD(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndexedIndirectCountAMD(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6245,7 +6245,7 @@ static NTSTATUS wine_vkCmdDrawIndexedIndirectCountKHR(void *args)
 {
     struct vkCmdDrawIndexedIndirectCountKHR_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndexedIndirectCountKHR(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndexedIndirectCountKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6253,7 +6253,7 @@ static NTSTATUS wine_vkCmdDrawIndirect(void *args)
 {
     struct vkCmdDrawIndirect_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndirect(params->commandBuffer->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndirect(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6261,7 +6261,7 @@ static NTSTATUS wine_vkCmdDrawIndirectByteCountEXT(void *args)
 {
     struct vkCmdDrawIndirectByteCountEXT_params *params = args;
     TRACE("%p, %u, %u, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, params->instanceCount, params->firstInstance, wine_dbgstr_longlong(params->counterBuffer), wine_dbgstr_longlong(params->counterBufferOffset), params->counterOffset, params->vertexStride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndirectByteCountEXT(params->commandBuffer->command_buffer, params->instanceCount, params->firstInstance, params->counterBuffer, params->counterBufferOffset, params->counterOffset, params->vertexStride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndirectByteCountEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->instanceCount, params->firstInstance, params->counterBuffer, params->counterBufferOffset, params->counterOffset, params->vertexStride);
     return STATUS_SUCCESS;
 }
 
@@ -6269,7 +6269,7 @@ static NTSTATUS wine_vkCmdDrawIndirectCount(void *args)
 {
     struct vkCmdDrawIndirectCount_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndirectCount(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndirectCount(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6277,7 +6277,7 @@ static NTSTATUS wine_vkCmdDrawIndirectCountAMD(void *args)
 {
     struct vkCmdDrawIndirectCountAMD_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndirectCountAMD(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndirectCountAMD(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6285,7 +6285,7 @@ static NTSTATUS wine_vkCmdDrawIndirectCountKHR(void *args)
 {
     struct vkCmdDrawIndirectCountKHR_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawIndirectCountKHR(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawIndirectCountKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6293,7 +6293,7 @@ static NTSTATUS wine_vkCmdDrawMeshTasksEXT(void *args)
 {
     struct vkCmdDrawMeshTasksEXT_params *params = args;
     TRACE("%p, %u, %u, %u\n", params->commandBuffer, params->groupCountX, params->groupCountY, params->groupCountZ);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksEXT(params->commandBuffer->command_buffer, params->groupCountX, params->groupCountY, params->groupCountZ);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMeshTasksEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->groupCountX, params->groupCountY, params->groupCountZ);
     return STATUS_SUCCESS;
 }
 
@@ -6301,7 +6301,7 @@ static NTSTATUS wine_vkCmdDrawMeshTasksIndirectCountEXT(void *args)
 {
     struct vkCmdDrawMeshTasksIndirectCountEXT_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectCountEXT(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMeshTasksIndirectCountEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6309,7 +6309,7 @@ static NTSTATUS wine_vkCmdDrawMeshTasksIndirectCountNV(void *args)
 {
     struct vkCmdDrawMeshTasksIndirectCountNV_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectCountNV(params->commandBuffer->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMeshTasksIndirectCountNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->countBuffer, params->countBufferOffset, params->maxDrawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6317,7 +6317,7 @@ static NTSTATUS wine_vkCmdDrawMeshTasksIndirectEXT(void *args)
 {
     struct vkCmdDrawMeshTasksIndirectEXT_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectEXT(params->commandBuffer->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMeshTasksIndirectEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6325,7 +6325,7 @@ static NTSTATUS wine_vkCmdDrawMeshTasksIndirectNV(void *args)
 {
     struct vkCmdDrawMeshTasksIndirectNV_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksIndirectNV(params->commandBuffer->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMeshTasksIndirectNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->buffer, params->offset, params->drawCount, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6333,7 +6333,7 @@ static NTSTATUS wine_vkCmdDrawMeshTasksNV(void *args)
 {
     struct vkCmdDrawMeshTasksNV_params *params = args;
     TRACE("%p, %u, %u\n", params->commandBuffer, params->taskCount, params->firstTask);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMeshTasksNV(params->commandBuffer->command_buffer, params->taskCount, params->firstTask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMeshTasksNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->taskCount, params->firstTask);
     return STATUS_SUCCESS;
 }
 
@@ -6341,7 +6341,7 @@ static NTSTATUS wine_vkCmdDrawMultiEXT(void *args)
 {
     struct vkCmdDrawMultiEXT_params *params = args;
     TRACE("%p, %u, %p, %u, %u, %u\n", params->commandBuffer, params->drawCount, params->pVertexInfo, params->instanceCount, params->firstInstance, params->stride);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMultiEXT(params->commandBuffer->command_buffer, params->drawCount, params->pVertexInfo, params->instanceCount, params->firstInstance, params->stride);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMultiEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->drawCount, params->pVertexInfo, params->instanceCount, params->firstInstance, params->stride);
     return STATUS_SUCCESS;
 }
 
@@ -6349,7 +6349,7 @@ static NTSTATUS wine_vkCmdDrawMultiIndexedEXT(void *args)
 {
     struct vkCmdDrawMultiIndexedEXT_params *params = args;
     TRACE("%p, %u, %p, %u, %u, %u, %p\n", params->commandBuffer, params->drawCount, params->pIndexInfo, params->instanceCount, params->firstInstance, params->stride, params->pVertexOffset);
-    params->commandBuffer->device->funcs.p_vkCmdDrawMultiIndexedEXT(params->commandBuffer->command_buffer, params->drawCount, params->pIndexInfo, params->instanceCount, params->firstInstance, params->stride, params->pVertexOffset);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDrawMultiIndexedEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->drawCount, params->pIndexInfo, params->instanceCount, params->firstInstance, params->stride, params->pVertexOffset);
     return STATUS_SUCCESS;
 }
 
@@ -6357,7 +6357,7 @@ static NTSTATUS wine_vkCmdEndConditionalRenderingEXT(void *args)
 {
     struct vkCmdEndConditionalRenderingEXT_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdEndConditionalRenderingEXT(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndConditionalRenderingEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -6365,7 +6365,7 @@ static NTSTATUS wine_vkCmdEndDebugUtilsLabelEXT(void *args)
 {
     struct vkCmdEndDebugUtilsLabelEXT_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdEndDebugUtilsLabelEXT(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndDebugUtilsLabelEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -6373,7 +6373,7 @@ static NTSTATUS wine_vkCmdEndQuery(void *args)
 {
     struct vkCmdEndQuery_params *params = args;
     TRACE("%p, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query);
-    params->commandBuffer->device->funcs.p_vkCmdEndQuery(params->commandBuffer->command_buffer, params->queryPool, params->query);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndQuery(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->queryPool, params->query);
     return STATUS_SUCCESS;
 }
 
@@ -6381,7 +6381,7 @@ static NTSTATUS wine_vkCmdEndQueryIndexedEXT(void *args)
 {
     struct vkCmdEndQueryIndexedEXT_params *params = args;
     TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query, params->index);
-    params->commandBuffer->device->funcs.p_vkCmdEndQueryIndexedEXT(params->commandBuffer->command_buffer, params->queryPool, params->query, params->index);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndQueryIndexedEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->queryPool, params->query, params->index);
     return STATUS_SUCCESS;
 }
 
@@ -6389,7 +6389,7 @@ static NTSTATUS wine_vkCmdEndRenderPass(void *args)
 {
     struct vkCmdEndRenderPass_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdEndRenderPass(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndRenderPass(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -6397,7 +6397,7 @@ static NTSTATUS wine_vkCmdEndRenderPass2(void *args)
 {
     struct vkCmdEndRenderPass2_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pSubpassEndInfo);
-    params->commandBuffer->device->funcs.p_vkCmdEndRenderPass2(params->commandBuffer->command_buffer, params->pSubpassEndInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndRenderPass2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pSubpassEndInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6405,7 +6405,7 @@ static NTSTATUS wine_vkCmdEndRenderPass2KHR(void *args)
 {
     struct vkCmdEndRenderPass2KHR_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pSubpassEndInfo);
-    params->commandBuffer->device->funcs.p_vkCmdEndRenderPass2KHR(params->commandBuffer->command_buffer, params->pSubpassEndInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndRenderPass2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pSubpassEndInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6413,7 +6413,7 @@ static NTSTATUS wine_vkCmdEndRendering(void *args)
 {
     struct vkCmdEndRendering_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdEndRendering(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndRendering(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -6421,7 +6421,7 @@ static NTSTATUS wine_vkCmdEndRenderingKHR(void *args)
 {
     struct vkCmdEndRenderingKHR_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdEndRenderingKHR(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndRenderingKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -6429,7 +6429,7 @@ static NTSTATUS wine_vkCmdEndTransformFeedbackEXT(void *args)
 {
     struct vkCmdEndTransformFeedbackEXT_params *params = args;
     TRACE("%p, %u, %u, %p, %p\n", params->commandBuffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
-    params->commandBuffer->device->funcs.p_vkCmdEndTransformFeedbackEXT(params->commandBuffer->command_buffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdEndTransformFeedbackEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
     return STATUS_SUCCESS;
 }
 
@@ -6440,7 +6440,7 @@ static NTSTATUS wine_vkCmdExecuteCommands(void *args)
     TRACE("%p, %u, %p\n", params->commandBuffer, params->commandBufferCount, params->pCommandBuffers);
 
     pCommandBuffers_host = convert_VkCommandBuffer_array_win_to_host(params->pCommandBuffers, params->commandBufferCount);
-    params->commandBuffer->device->funcs.p_vkCmdExecuteCommands(params->commandBuffer->command_buffer, params->commandBufferCount, pCommandBuffers_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdExecuteCommands(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->commandBufferCount, pCommandBuffers_host);
 
     free_VkCommandBuffer_array(pCommandBuffers_host, params->commandBufferCount);
     return STATUS_SUCCESS;
@@ -6454,13 +6454,13 @@ static NTSTATUS wine_vkCmdExecuteGeneratedCommandsNV(void *args)
     TRACE("%p, %u, %p\n", params->commandBuffer, params->isPreprocessed, params->pGeneratedCommandsInfo);
 
     convert_VkGeneratedCommandsInfoNV_win_to_host(params->pGeneratedCommandsInfo, &pGeneratedCommandsInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdExecuteGeneratedCommandsNV(params->commandBuffer->command_buffer, params->isPreprocessed, &pGeneratedCommandsInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdExecuteGeneratedCommandsNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->isPreprocessed, &pGeneratedCommandsInfo_host);
 
     free_VkGeneratedCommandsInfoNV(&pGeneratedCommandsInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %u, %p\n", params->commandBuffer, params->isPreprocessed, params->pGeneratedCommandsInfo);
-    params->commandBuffer->device->funcs.p_vkCmdExecuteGeneratedCommandsNV(params->commandBuffer->command_buffer, params->isPreprocessed, params->pGeneratedCommandsInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdExecuteGeneratedCommandsNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->isPreprocessed, params->pGeneratedCommandsInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6469,7 +6469,7 @@ static NTSTATUS wine_vkCmdFillBuffer(void *args)
 {
     struct vkCmdFillBuffer_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), wine_dbgstr_longlong(params->size), params->data);
-    params->commandBuffer->device->funcs.p_vkCmdFillBuffer(params->commandBuffer->command_buffer, params->dstBuffer, params->dstOffset, params->size, params->data);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdFillBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->dstBuffer, params->dstOffset, params->size, params->data);
     return STATUS_SUCCESS;
 }
 
@@ -6477,7 +6477,7 @@ static NTSTATUS wine_vkCmdInsertDebugUtilsLabelEXT(void *args)
 {
     struct vkCmdInsertDebugUtilsLabelEXT_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pLabelInfo);
-    params->commandBuffer->device->funcs.p_vkCmdInsertDebugUtilsLabelEXT(params->commandBuffer->command_buffer, params->pLabelInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdInsertDebugUtilsLabelEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pLabelInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6485,7 +6485,7 @@ static NTSTATUS wine_vkCmdNextSubpass(void *args)
 {
     struct vkCmdNextSubpass_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->contents);
-    params->commandBuffer->device->funcs.p_vkCmdNextSubpass(params->commandBuffer->command_buffer, params->contents);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdNextSubpass(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->contents);
     return STATUS_SUCCESS;
 }
 
@@ -6493,7 +6493,7 @@ static NTSTATUS wine_vkCmdNextSubpass2(void *args)
 {
     struct vkCmdNextSubpass2_params *params = args;
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
-    params->commandBuffer->device->funcs.p_vkCmdNextSubpass2(params->commandBuffer->command_buffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdNextSubpass2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6501,7 +6501,7 @@ static NTSTATUS wine_vkCmdNextSubpass2KHR(void *args)
 {
     struct vkCmdNextSubpass2KHR_params *params = args;
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
-    params->commandBuffer->device->funcs.p_vkCmdNextSubpass2KHR(params->commandBuffer->command_buffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdNextSubpass2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
     return STATUS_SUCCESS;
 }
 
@@ -6515,14 +6515,14 @@ static NTSTATUS wine_vkCmdPipelineBarrier(void *args)
 
     pBufferMemoryBarriers_host = convert_VkBufferMemoryBarrier_array_win_to_host(params->pBufferMemoryBarriers, params->bufferMemoryBarrierCount);
     pImageMemoryBarriers_host = convert_VkImageMemoryBarrier_array_win_to_host(params->pImageMemoryBarriers, params->imageMemoryBarrierCount);
-    params->commandBuffer->device->funcs.p_vkCmdPipelineBarrier(params->commandBuffer->command_buffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, pBufferMemoryBarriers_host, params->imageMemoryBarrierCount, pImageMemoryBarriers_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPipelineBarrier(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, pBufferMemoryBarriers_host, params->imageMemoryBarrierCount, pImageMemoryBarriers_host);
 
     free_VkBufferMemoryBarrier_array(pBufferMemoryBarriers_host, params->bufferMemoryBarrierCount);
     free_VkImageMemoryBarrier_array(pImageMemoryBarriers_host, params->imageMemoryBarrierCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %#x, %#x, %#x, %u, %p, %u, %p, %u, %p\n", params->commandBuffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
-    params->commandBuffer->device->funcs.p_vkCmdPipelineBarrier(params->commandBuffer->command_buffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPipelineBarrier(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6535,13 +6535,13 @@ static NTSTATUS wine_vkCmdPipelineBarrier2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pDependencyInfo);
 
     convert_VkDependencyInfo_win_to_host(params->pDependencyInfo, &pDependencyInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdPipelineBarrier2(params->commandBuffer->command_buffer, &pDependencyInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPipelineBarrier2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pDependencyInfo_host);
 
     free_VkDependencyInfo(&pDependencyInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pDependencyInfo);
-    params->commandBuffer->device->funcs.p_vkCmdPipelineBarrier2(params->commandBuffer->command_buffer, params->pDependencyInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPipelineBarrier2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pDependencyInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6554,13 +6554,13 @@ static NTSTATUS wine_vkCmdPipelineBarrier2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pDependencyInfo);
 
     convert_VkDependencyInfo_win_to_host(params->pDependencyInfo, &pDependencyInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdPipelineBarrier2KHR(params->commandBuffer->command_buffer, &pDependencyInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPipelineBarrier2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pDependencyInfo_host);
 
     free_VkDependencyInfo(&pDependencyInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pDependencyInfo);
-    params->commandBuffer->device->funcs.p_vkCmdPipelineBarrier2KHR(params->commandBuffer->command_buffer, params->pDependencyInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPipelineBarrier2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pDependencyInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6573,13 +6573,13 @@ static NTSTATUS wine_vkCmdPreprocessGeneratedCommandsNV(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pGeneratedCommandsInfo);
 
     convert_VkGeneratedCommandsInfoNV_win_to_host(params->pGeneratedCommandsInfo, &pGeneratedCommandsInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdPreprocessGeneratedCommandsNV(params->commandBuffer->command_buffer, &pGeneratedCommandsInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPreprocessGeneratedCommandsNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pGeneratedCommandsInfo_host);
 
     free_VkGeneratedCommandsInfoNV(&pGeneratedCommandsInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pGeneratedCommandsInfo);
-    params->commandBuffer->device->funcs.p_vkCmdPreprocessGeneratedCommandsNV(params->commandBuffer->command_buffer, params->pGeneratedCommandsInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPreprocessGeneratedCommandsNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pGeneratedCommandsInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6588,7 +6588,7 @@ static NTSTATUS wine_vkCmdPushConstants(void *args)
 {
     struct vkCmdPushConstants_params *params = args;
     TRACE("%p, 0x%s, %#x, %u, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->layout), params->stageFlags, params->offset, params->size, params->pValues);
-    params->commandBuffer->device->funcs.p_vkCmdPushConstants(params->commandBuffer->command_buffer, params->layout, params->stageFlags, params->offset, params->size, params->pValues);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPushConstants(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->layout, params->stageFlags, params->offset, params->size, params->pValues);
     return STATUS_SUCCESS;
 }
 
@@ -6600,13 +6600,13 @@ static NTSTATUS wine_vkCmdPushDescriptorSetKHR(void *args)
     TRACE("%p, %#x, 0x%s, %u, %u, %p\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->layout), params->set, params->descriptorWriteCount, params->pDescriptorWrites);
 
     pDescriptorWrites_host = convert_VkWriteDescriptorSet_array_win_to_host(params->pDescriptorWrites, params->descriptorWriteCount);
-    params->commandBuffer->device->funcs.p_vkCmdPushDescriptorSetKHR(params->commandBuffer->command_buffer, params->pipelineBindPoint, params->layout, params->set, params->descriptorWriteCount, pDescriptorWrites_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPushDescriptorSetKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineBindPoint, params->layout, params->set, params->descriptorWriteCount, pDescriptorWrites_host);
 
     free_VkWriteDescriptorSet_array(pDescriptorWrites_host, params->descriptorWriteCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %#x, 0x%s, %u, %u, %p\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->layout), params->set, params->descriptorWriteCount, params->pDescriptorWrites);
-    params->commandBuffer->device->funcs.p_vkCmdPushDescriptorSetKHR(params->commandBuffer->command_buffer, params->pipelineBindPoint, params->layout, params->set, params->descriptorWriteCount, params->pDescriptorWrites);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPushDescriptorSetKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineBindPoint, params->layout, params->set, params->descriptorWriteCount, params->pDescriptorWrites);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6615,7 +6615,7 @@ static NTSTATUS wine_vkCmdPushDescriptorSetWithTemplateKHR(void *args)
 {
     struct vkCmdPushDescriptorSetWithTemplateKHR_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->descriptorUpdateTemplate), wine_dbgstr_longlong(params->layout), params->set, params->pData);
-    params->commandBuffer->device->funcs.p_vkCmdPushDescriptorSetWithTemplateKHR(params->commandBuffer->command_buffer, params->descriptorUpdateTemplate, params->layout, params->set, params->pData);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdPushDescriptorSetWithTemplateKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->descriptorUpdateTemplate, params->layout, params->set, params->pData);
     return STATUS_SUCCESS;
 }
 
@@ -6623,7 +6623,7 @@ static NTSTATUS wine_vkCmdResetEvent(void *args)
 {
     struct vkCmdResetEvent_params *params = args;
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->stageMask);
-    params->commandBuffer->device->funcs.p_vkCmdResetEvent(params->commandBuffer->command_buffer, params->event, params->stageMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResetEvent(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, params->stageMask);
     return STATUS_SUCCESS;
 }
 
@@ -6631,7 +6631,7 @@ static NTSTATUS wine_vkCmdResetEvent2(void *args)
 {
     struct vkCmdResetEvent2_params *params = args;
     TRACE("%p, 0x%s, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->event), wine_dbgstr_longlong(params->stageMask));
-    params->commandBuffer->device->funcs.p_vkCmdResetEvent2(params->commandBuffer->command_buffer, params->event, params->stageMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResetEvent2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, params->stageMask);
     return STATUS_SUCCESS;
 }
 
@@ -6639,7 +6639,7 @@ static NTSTATUS wine_vkCmdResetEvent2KHR(void *args)
 {
     struct vkCmdResetEvent2KHR_params *params = args;
     TRACE("%p, 0x%s, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->event), wine_dbgstr_longlong(params->stageMask));
-    params->commandBuffer->device->funcs.p_vkCmdResetEvent2KHR(params->commandBuffer->command_buffer, params->event, params->stageMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResetEvent2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, params->stageMask);
     return STATUS_SUCCESS;
 }
 
@@ -6647,7 +6647,7 @@ static NTSTATUS wine_vkCmdResetQueryPool(void *args)
 {
     struct vkCmdResetQueryPool_params *params = args;
     TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount);
-    params->commandBuffer->device->funcs.p_vkCmdResetQueryPool(params->commandBuffer->command_buffer, params->queryPool, params->firstQuery, params->queryCount);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResetQueryPool(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->queryPool, params->firstQuery, params->queryCount);
     return STATUS_SUCCESS;
 }
 
@@ -6655,7 +6655,7 @@ static NTSTATUS wine_vkCmdResolveImage(void *args)
 {
     struct vkCmdResolveImage_params *params = args;
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
-    params->commandBuffer->device->funcs.p_vkCmdResolveImage(params->commandBuffer->command_buffer, params->srcImage, params->srcImageLayout, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResolveImage(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->srcImage, params->srcImageLayout, params->dstImage, params->dstImageLayout, params->regionCount, params->pRegions);
     return STATUS_SUCCESS;
 }
 
@@ -6667,12 +6667,12 @@ static NTSTATUS wine_vkCmdResolveImage2(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
 
     convert_VkResolveImageInfo2_win_to_host(params->pResolveImageInfo, &pResolveImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdResolveImage2(params->commandBuffer->command_buffer, &pResolveImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResolveImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pResolveImageInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdResolveImage2(params->commandBuffer->command_buffer, params->pResolveImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResolveImage2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pResolveImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6685,12 +6685,12 @@ static NTSTATUS wine_vkCmdResolveImage2KHR(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
 
     convert_VkResolveImageInfo2_win_to_host(params->pResolveImageInfo, &pResolveImageInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdResolveImage2KHR(params->commandBuffer->command_buffer, &pResolveImageInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResolveImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pResolveImageInfo_host);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
-    params->commandBuffer->device->funcs.p_vkCmdResolveImage2KHR(params->commandBuffer->command_buffer, params->pResolveImageInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdResolveImage2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pResolveImageInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6699,7 +6699,7 @@ static NTSTATUS wine_vkCmdSetBlendConstants(void *args)
 {
     struct vkCmdSetBlendConstants_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->blendConstants);
-    params->commandBuffer->device->funcs.p_vkCmdSetBlendConstants(params->commandBuffer->command_buffer, params->blendConstants);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetBlendConstants(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->blendConstants);
     return STATUS_SUCCESS;
 }
 
@@ -6707,7 +6707,7 @@ static NTSTATUS wine_vkCmdSetCheckpointNV(void *args)
 {
     struct vkCmdSetCheckpointNV_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pCheckpointMarker);
-    params->commandBuffer->device->funcs.p_vkCmdSetCheckpointNV(params->commandBuffer->command_buffer, params->pCheckpointMarker);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetCheckpointNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pCheckpointMarker);
     return STATUS_SUCCESS;
 }
 
@@ -6715,7 +6715,7 @@ static NTSTATUS wine_vkCmdSetCoarseSampleOrderNV(void *args)
 {
     struct vkCmdSetCoarseSampleOrderNV_params *params = args;
     TRACE("%p, %#x, %u, %p\n", params->commandBuffer, params->sampleOrderType, params->customSampleOrderCount, params->pCustomSampleOrders);
-    params->commandBuffer->device->funcs.p_vkCmdSetCoarseSampleOrderNV(params->commandBuffer->command_buffer, params->sampleOrderType, params->customSampleOrderCount, params->pCustomSampleOrders);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetCoarseSampleOrderNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->sampleOrderType, params->customSampleOrderCount, params->pCustomSampleOrders);
     return STATUS_SUCCESS;
 }
 
@@ -6723,7 +6723,7 @@ static NTSTATUS wine_vkCmdSetColorWriteEnableEXT(void *args)
 {
     struct vkCmdSetColorWriteEnableEXT_params *params = args;
     TRACE("%p, %u, %p\n", params->commandBuffer, params->attachmentCount, params->pColorWriteEnables);
-    params->commandBuffer->device->funcs.p_vkCmdSetColorWriteEnableEXT(params->commandBuffer->command_buffer, params->attachmentCount, params->pColorWriteEnables);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetColorWriteEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->attachmentCount, params->pColorWriteEnables);
     return STATUS_SUCCESS;
 }
 
@@ -6731,7 +6731,7 @@ static NTSTATUS wine_vkCmdSetCullMode(void *args)
 {
     struct vkCmdSetCullMode_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->cullMode);
-    params->commandBuffer->device->funcs.p_vkCmdSetCullMode(params->commandBuffer->command_buffer, params->cullMode);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetCullMode(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->cullMode);
     return STATUS_SUCCESS;
 }
 
@@ -6739,7 +6739,7 @@ static NTSTATUS wine_vkCmdSetCullModeEXT(void *args)
 {
     struct vkCmdSetCullModeEXT_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->cullMode);
-    params->commandBuffer->device->funcs.p_vkCmdSetCullModeEXT(params->commandBuffer->command_buffer, params->cullMode);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetCullModeEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->cullMode);
     return STATUS_SUCCESS;
 }
 
@@ -6747,7 +6747,7 @@ static NTSTATUS wine_vkCmdSetDepthBias(void *args)
 {
     struct vkCmdSetDepthBias_params *params = args;
     TRACE("%p, %f, %f, %f\n", params->commandBuffer, params->depthBiasConstantFactor, params->depthBiasClamp, params->depthBiasSlopeFactor);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthBias(params->commandBuffer->command_buffer, params->depthBiasConstantFactor, params->depthBiasClamp, params->depthBiasSlopeFactor);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBias(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthBiasConstantFactor, params->depthBiasClamp, params->depthBiasSlopeFactor);
     return STATUS_SUCCESS;
 }
 
@@ -6755,7 +6755,7 @@ static NTSTATUS wine_vkCmdSetDepthBiasEnable(void *args)
 {
     struct vkCmdSetDepthBiasEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthBiasEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthBiasEnable(params->commandBuffer->command_buffer, params->depthBiasEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBiasEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthBiasEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6763,7 +6763,7 @@ static NTSTATUS wine_vkCmdSetDepthBiasEnableEXT(void *args)
 {
     struct vkCmdSetDepthBiasEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthBiasEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthBiasEnableEXT(params->commandBuffer->command_buffer, params->depthBiasEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBiasEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthBiasEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6771,7 +6771,7 @@ static NTSTATUS wine_vkCmdSetDepthBounds(void *args)
 {
     struct vkCmdSetDepthBounds_params *params = args;
     TRACE("%p, %f, %f\n", params->commandBuffer, params->minDepthBounds, params->maxDepthBounds);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthBounds(params->commandBuffer->command_buffer, params->minDepthBounds, params->maxDepthBounds);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBounds(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->minDepthBounds, params->maxDepthBounds);
     return STATUS_SUCCESS;
 }
 
@@ -6779,7 +6779,7 @@ static NTSTATUS wine_vkCmdSetDepthBoundsTestEnable(void *args)
 {
     struct vkCmdSetDepthBoundsTestEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthBoundsTestEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthBoundsTestEnable(params->commandBuffer->command_buffer, params->depthBoundsTestEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBoundsTestEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthBoundsTestEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6787,7 +6787,7 @@ static NTSTATUS wine_vkCmdSetDepthBoundsTestEnableEXT(void *args)
 {
     struct vkCmdSetDepthBoundsTestEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthBoundsTestEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthBoundsTestEnableEXT(params->commandBuffer->command_buffer, params->depthBoundsTestEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthBoundsTestEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthBoundsTestEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6795,7 +6795,7 @@ static NTSTATUS wine_vkCmdSetDepthCompareOp(void *args)
 {
     struct vkCmdSetDepthCompareOp_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->depthCompareOp);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthCompareOp(params->commandBuffer->command_buffer, params->depthCompareOp);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthCompareOp(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthCompareOp);
     return STATUS_SUCCESS;
 }
 
@@ -6803,7 +6803,7 @@ static NTSTATUS wine_vkCmdSetDepthCompareOpEXT(void *args)
 {
     struct vkCmdSetDepthCompareOpEXT_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->depthCompareOp);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthCompareOpEXT(params->commandBuffer->command_buffer, params->depthCompareOp);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthCompareOpEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthCompareOp);
     return STATUS_SUCCESS;
 }
 
@@ -6811,7 +6811,7 @@ static NTSTATUS wine_vkCmdSetDepthTestEnable(void *args)
 {
     struct vkCmdSetDepthTestEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthTestEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthTestEnable(params->commandBuffer->command_buffer, params->depthTestEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthTestEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthTestEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6819,7 +6819,7 @@ static NTSTATUS wine_vkCmdSetDepthTestEnableEXT(void *args)
 {
     struct vkCmdSetDepthTestEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthTestEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthTestEnableEXT(params->commandBuffer->command_buffer, params->depthTestEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthTestEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthTestEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6827,7 +6827,7 @@ static NTSTATUS wine_vkCmdSetDepthWriteEnable(void *args)
 {
     struct vkCmdSetDepthWriteEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthWriteEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthWriteEnable(params->commandBuffer->command_buffer, params->depthWriteEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthWriteEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthWriteEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6835,7 +6835,7 @@ static NTSTATUS wine_vkCmdSetDepthWriteEnableEXT(void *args)
 {
     struct vkCmdSetDepthWriteEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->depthWriteEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetDepthWriteEnableEXT(params->commandBuffer->command_buffer, params->depthWriteEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDepthWriteEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->depthWriteEnable);
     return STATUS_SUCCESS;
 }
 
@@ -6843,7 +6843,7 @@ static NTSTATUS wine_vkCmdSetDeviceMask(void *args)
 {
     struct vkCmdSetDeviceMask_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->deviceMask);
-    params->commandBuffer->device->funcs.p_vkCmdSetDeviceMask(params->commandBuffer->command_buffer, params->deviceMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDeviceMask(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->deviceMask);
     return STATUS_SUCCESS;
 }
 
@@ -6851,7 +6851,7 @@ static NTSTATUS wine_vkCmdSetDeviceMaskKHR(void *args)
 {
     struct vkCmdSetDeviceMaskKHR_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->deviceMask);
-    params->commandBuffer->device->funcs.p_vkCmdSetDeviceMaskKHR(params->commandBuffer->command_buffer, params->deviceMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDeviceMaskKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->deviceMask);
     return STATUS_SUCCESS;
 }
 
@@ -6859,7 +6859,7 @@ static NTSTATUS wine_vkCmdSetDiscardRectangleEXT(void *args)
 {
     struct vkCmdSetDiscardRectangleEXT_params *params = args;
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstDiscardRectangle, params->discardRectangleCount, params->pDiscardRectangles);
-    params->commandBuffer->device->funcs.p_vkCmdSetDiscardRectangleEXT(params->commandBuffer->command_buffer, params->firstDiscardRectangle, params->discardRectangleCount, params->pDiscardRectangles);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetDiscardRectangleEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstDiscardRectangle, params->discardRectangleCount, params->pDiscardRectangles);
     return STATUS_SUCCESS;
 }
 
@@ -6867,7 +6867,7 @@ static NTSTATUS wine_vkCmdSetEvent(void *args)
 {
     struct vkCmdSetEvent_params *params = args;
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->stageMask);
-    params->commandBuffer->device->funcs.p_vkCmdSetEvent(params->commandBuffer->command_buffer, params->event, params->stageMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetEvent(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, params->stageMask);
     return STATUS_SUCCESS;
 }
 
@@ -6879,13 +6879,13 @@ static NTSTATUS wine_vkCmdSetEvent2(void *args)
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->pDependencyInfo);
 
     convert_VkDependencyInfo_win_to_host(params->pDependencyInfo, &pDependencyInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdSetEvent2(params->commandBuffer->command_buffer, params->event, &pDependencyInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetEvent2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, &pDependencyInfo_host);
 
     free_VkDependencyInfo(&pDependencyInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->pDependencyInfo);
-    params->commandBuffer->device->funcs.p_vkCmdSetEvent2(params->commandBuffer->command_buffer, params->event, params->pDependencyInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetEvent2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, params->pDependencyInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6898,13 +6898,13 @@ static NTSTATUS wine_vkCmdSetEvent2KHR(void *args)
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->pDependencyInfo);
 
     convert_VkDependencyInfo_win_to_host(params->pDependencyInfo, &pDependencyInfo_host);
-    params->commandBuffer->device->funcs.p_vkCmdSetEvent2KHR(params->commandBuffer->command_buffer, params->event, &pDependencyInfo_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetEvent2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, &pDependencyInfo_host);
 
     free_VkDependencyInfo(&pDependencyInfo_host);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->pDependencyInfo);
-    params->commandBuffer->device->funcs.p_vkCmdSetEvent2KHR(params->commandBuffer->command_buffer, params->event, params->pDependencyInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetEvent2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->event, params->pDependencyInfo);
     return STATUS_SUCCESS;
 #endif
 }
@@ -6913,7 +6913,7 @@ static NTSTATUS wine_vkCmdSetExclusiveScissorNV(void *args)
 {
     struct vkCmdSetExclusiveScissorNV_params *params = args;
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstExclusiveScissor, params->exclusiveScissorCount, params->pExclusiveScissors);
-    params->commandBuffer->device->funcs.p_vkCmdSetExclusiveScissorNV(params->commandBuffer->command_buffer, params->firstExclusiveScissor, params->exclusiveScissorCount, params->pExclusiveScissors);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetExclusiveScissorNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstExclusiveScissor, params->exclusiveScissorCount, params->pExclusiveScissors);
     return STATUS_SUCCESS;
 }
 
@@ -6921,7 +6921,7 @@ static NTSTATUS wine_vkCmdSetFragmentShadingRateEnumNV(void *args)
 {
     struct vkCmdSetFragmentShadingRateEnumNV_params *params = args;
     TRACE("%p, %#x, %p\n", params->commandBuffer, params->shadingRate, params->combinerOps);
-    params->commandBuffer->device->funcs.p_vkCmdSetFragmentShadingRateEnumNV(params->commandBuffer->command_buffer, params->shadingRate, params->combinerOps);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetFragmentShadingRateEnumNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->shadingRate, params->combinerOps);
     return STATUS_SUCCESS;
 }
 
@@ -6929,7 +6929,7 @@ static NTSTATUS wine_vkCmdSetFragmentShadingRateKHR(void *args)
 {
     struct vkCmdSetFragmentShadingRateKHR_params *params = args;
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pFragmentSize, params->combinerOps);
-    params->commandBuffer->device->funcs.p_vkCmdSetFragmentShadingRateKHR(params->commandBuffer->command_buffer, params->pFragmentSize, params->combinerOps);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetFragmentShadingRateKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pFragmentSize, params->combinerOps);
     return STATUS_SUCCESS;
 }
 
@@ -6937,7 +6937,7 @@ static NTSTATUS wine_vkCmdSetFrontFace(void *args)
 {
     struct vkCmdSetFrontFace_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->frontFace);
-    params->commandBuffer->device->funcs.p_vkCmdSetFrontFace(params->commandBuffer->command_buffer, params->frontFace);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetFrontFace(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->frontFace);
     return STATUS_SUCCESS;
 }
 
@@ -6945,7 +6945,7 @@ static NTSTATUS wine_vkCmdSetFrontFaceEXT(void *args)
 {
     struct vkCmdSetFrontFaceEXT_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->frontFace);
-    params->commandBuffer->device->funcs.p_vkCmdSetFrontFaceEXT(params->commandBuffer->command_buffer, params->frontFace);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetFrontFaceEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->frontFace);
     return STATUS_SUCCESS;
 }
 
@@ -6953,7 +6953,7 @@ static NTSTATUS wine_vkCmdSetLineStippleEXT(void *args)
 {
     struct vkCmdSetLineStippleEXT_params *params = args;
     TRACE("%p, %u, %u\n", params->commandBuffer, params->lineStippleFactor, params->lineStipplePattern);
-    params->commandBuffer->device->funcs.p_vkCmdSetLineStippleEXT(params->commandBuffer->command_buffer, params->lineStippleFactor, params->lineStipplePattern);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetLineStippleEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->lineStippleFactor, params->lineStipplePattern);
     return STATUS_SUCCESS;
 }
 
@@ -6961,7 +6961,7 @@ static NTSTATUS wine_vkCmdSetLineWidth(void *args)
 {
     struct vkCmdSetLineWidth_params *params = args;
     TRACE("%p, %f\n", params->commandBuffer, params->lineWidth);
-    params->commandBuffer->device->funcs.p_vkCmdSetLineWidth(params->commandBuffer->command_buffer, params->lineWidth);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetLineWidth(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->lineWidth);
     return STATUS_SUCCESS;
 }
 
@@ -6969,7 +6969,7 @@ static NTSTATUS wine_vkCmdSetLogicOpEXT(void *args)
 {
     struct vkCmdSetLogicOpEXT_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->logicOp);
-    params->commandBuffer->device->funcs.p_vkCmdSetLogicOpEXT(params->commandBuffer->command_buffer, params->logicOp);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetLogicOpEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->logicOp);
     return STATUS_SUCCESS;
 }
 
@@ -6977,7 +6977,7 @@ static NTSTATUS wine_vkCmdSetPatchControlPointsEXT(void *args)
 {
     struct vkCmdSetPatchControlPointsEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->patchControlPoints);
-    params->commandBuffer->device->funcs.p_vkCmdSetPatchControlPointsEXT(params->commandBuffer->command_buffer, params->patchControlPoints);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPatchControlPointsEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->patchControlPoints);
     return STATUS_SUCCESS;
 }
 
@@ -6990,12 +6990,12 @@ static NTSTATUS wine_vkCmdSetPerformanceMarkerINTEL(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
 
     convert_VkPerformanceMarkerInfoINTEL_win_to_host(params->pMarkerInfo, &pMarkerInfo_host);
-    result = params->commandBuffer->device->funcs.p_vkCmdSetPerformanceMarkerINTEL(params->commandBuffer->command_buffer, &pMarkerInfo_host);
+    result = wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPerformanceMarkerINTEL(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pMarkerInfo_host);
 
     return result;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
-    return params->commandBuffer->device->funcs.p_vkCmdSetPerformanceMarkerINTEL(params->commandBuffer->command_buffer, params->pMarkerInfo);
+    return wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPerformanceMarkerINTEL(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pMarkerInfo);
 #endif
 }
 
@@ -7008,12 +7008,12 @@ static NTSTATUS wine_vkCmdSetPerformanceOverrideINTEL(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pOverrideInfo);
 
     convert_VkPerformanceOverrideInfoINTEL_win_to_host(params->pOverrideInfo, &pOverrideInfo_host);
-    result = params->commandBuffer->device->funcs.p_vkCmdSetPerformanceOverrideINTEL(params->commandBuffer->command_buffer, &pOverrideInfo_host);
+    result = wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPerformanceOverrideINTEL(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pOverrideInfo_host);
 
     return result;
 #else
     TRACE("%p, %p\n", params->commandBuffer, params->pOverrideInfo);
-    return params->commandBuffer->device->funcs.p_vkCmdSetPerformanceOverrideINTEL(params->commandBuffer->command_buffer, params->pOverrideInfo);
+    return wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPerformanceOverrideINTEL(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pOverrideInfo);
 #endif
 }
 
@@ -7021,14 +7021,14 @@ static NTSTATUS wine_vkCmdSetPerformanceStreamMarkerINTEL(void *args)
 {
     struct vkCmdSetPerformanceStreamMarkerINTEL_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
-    return params->commandBuffer->device->funcs.p_vkCmdSetPerformanceStreamMarkerINTEL(params->commandBuffer->command_buffer, params->pMarkerInfo);
+    return wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPerformanceStreamMarkerINTEL(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pMarkerInfo);
 }
 
 static NTSTATUS wine_vkCmdSetPrimitiveRestartEnable(void *args)
 {
     struct vkCmdSetPrimitiveRestartEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->primitiveRestartEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetPrimitiveRestartEnable(params->commandBuffer->command_buffer, params->primitiveRestartEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPrimitiveRestartEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->primitiveRestartEnable);
     return STATUS_SUCCESS;
 }
 
@@ -7036,7 +7036,7 @@ static NTSTATUS wine_vkCmdSetPrimitiveRestartEnableEXT(void *args)
 {
     struct vkCmdSetPrimitiveRestartEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->primitiveRestartEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetPrimitiveRestartEnableEXT(params->commandBuffer->command_buffer, params->primitiveRestartEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPrimitiveRestartEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->primitiveRestartEnable);
     return STATUS_SUCCESS;
 }
 
@@ -7044,7 +7044,7 @@ static NTSTATUS wine_vkCmdSetPrimitiveTopology(void *args)
 {
     struct vkCmdSetPrimitiveTopology_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->primitiveTopology);
-    params->commandBuffer->device->funcs.p_vkCmdSetPrimitiveTopology(params->commandBuffer->command_buffer, params->primitiveTopology);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPrimitiveTopology(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->primitiveTopology);
     return STATUS_SUCCESS;
 }
 
@@ -7052,7 +7052,7 @@ static NTSTATUS wine_vkCmdSetPrimitiveTopologyEXT(void *args)
 {
     struct vkCmdSetPrimitiveTopologyEXT_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->primitiveTopology);
-    params->commandBuffer->device->funcs.p_vkCmdSetPrimitiveTopologyEXT(params->commandBuffer->command_buffer, params->primitiveTopology);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetPrimitiveTopologyEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->primitiveTopology);
     return STATUS_SUCCESS;
 }
 
@@ -7060,7 +7060,7 @@ static NTSTATUS wine_vkCmdSetRasterizerDiscardEnable(void *args)
 {
     struct vkCmdSetRasterizerDiscardEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->rasterizerDiscardEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetRasterizerDiscardEnable(params->commandBuffer->command_buffer, params->rasterizerDiscardEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetRasterizerDiscardEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->rasterizerDiscardEnable);
     return STATUS_SUCCESS;
 }
 
@@ -7068,7 +7068,7 @@ static NTSTATUS wine_vkCmdSetRasterizerDiscardEnableEXT(void *args)
 {
     struct vkCmdSetRasterizerDiscardEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->rasterizerDiscardEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetRasterizerDiscardEnableEXT(params->commandBuffer->command_buffer, params->rasterizerDiscardEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetRasterizerDiscardEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->rasterizerDiscardEnable);
     return STATUS_SUCCESS;
 }
 
@@ -7076,7 +7076,7 @@ static NTSTATUS wine_vkCmdSetRayTracingPipelineStackSizeKHR(void *args)
 {
     struct vkCmdSetRayTracingPipelineStackSizeKHR_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->pipelineStackSize);
-    params->commandBuffer->device->funcs.p_vkCmdSetRayTracingPipelineStackSizeKHR(params->commandBuffer->command_buffer, params->pipelineStackSize);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetRayTracingPipelineStackSizeKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineStackSize);
     return STATUS_SUCCESS;
 }
 
@@ -7084,7 +7084,7 @@ static NTSTATUS wine_vkCmdSetSampleLocationsEXT(void *args)
 {
     struct vkCmdSetSampleLocationsEXT_params *params = args;
     TRACE("%p, %p\n", params->commandBuffer, params->pSampleLocationsInfo);
-    params->commandBuffer->device->funcs.p_vkCmdSetSampleLocationsEXT(params->commandBuffer->command_buffer, params->pSampleLocationsInfo);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetSampleLocationsEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pSampleLocationsInfo);
     return STATUS_SUCCESS;
 }
 
@@ -7092,7 +7092,7 @@ static NTSTATUS wine_vkCmdSetScissor(void *args)
 {
     struct vkCmdSetScissor_params *params = args;
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstScissor, params->scissorCount, params->pScissors);
-    params->commandBuffer->device->funcs.p_vkCmdSetScissor(params->commandBuffer->command_buffer, params->firstScissor, params->scissorCount, params->pScissors);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetScissor(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstScissor, params->scissorCount, params->pScissors);
     return STATUS_SUCCESS;
 }
 
@@ -7100,7 +7100,7 @@ static NTSTATUS wine_vkCmdSetScissorWithCount(void *args)
 {
     struct vkCmdSetScissorWithCount_params *params = args;
     TRACE("%p, %u, %p\n", params->commandBuffer, params->scissorCount, params->pScissors);
-    params->commandBuffer->device->funcs.p_vkCmdSetScissorWithCount(params->commandBuffer->command_buffer, params->scissorCount, params->pScissors);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetScissorWithCount(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->scissorCount, params->pScissors);
     return STATUS_SUCCESS;
 }
 
@@ -7108,7 +7108,7 @@ static NTSTATUS wine_vkCmdSetScissorWithCountEXT(void *args)
 {
     struct vkCmdSetScissorWithCountEXT_params *params = args;
     TRACE("%p, %u, %p\n", params->commandBuffer, params->scissorCount, params->pScissors);
-    params->commandBuffer->device->funcs.p_vkCmdSetScissorWithCountEXT(params->commandBuffer->command_buffer, params->scissorCount, params->pScissors);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetScissorWithCountEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->scissorCount, params->pScissors);
     return STATUS_SUCCESS;
 }
 
@@ -7116,7 +7116,7 @@ static NTSTATUS wine_vkCmdSetStencilCompareMask(void *args)
 {
     struct vkCmdSetStencilCompareMask_params *params = args;
     TRACE("%p, %#x, %u\n", params->commandBuffer, params->faceMask, params->compareMask);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilCompareMask(params->commandBuffer->command_buffer, params->faceMask, params->compareMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilCompareMask(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->faceMask, params->compareMask);
     return STATUS_SUCCESS;
 }
 
@@ -7124,7 +7124,7 @@ static NTSTATUS wine_vkCmdSetStencilOp(void *args)
 {
     struct vkCmdSetStencilOp_params *params = args;
     TRACE("%p, %#x, %#x, %#x, %#x, %#x\n", params->commandBuffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilOp(params->commandBuffer->command_buffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilOp(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
     return STATUS_SUCCESS;
 }
 
@@ -7132,7 +7132,7 @@ static NTSTATUS wine_vkCmdSetStencilOpEXT(void *args)
 {
     struct vkCmdSetStencilOpEXT_params *params = args;
     TRACE("%p, %#x, %#x, %#x, %#x, %#x\n", params->commandBuffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilOpEXT(params->commandBuffer->command_buffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilOpEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
     return STATUS_SUCCESS;
 }
 
@@ -7140,7 +7140,7 @@ static NTSTATUS wine_vkCmdSetStencilReference(void *args)
 {
     struct vkCmdSetStencilReference_params *params = args;
     TRACE("%p, %#x, %u\n", params->commandBuffer, params->faceMask, params->reference);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilReference(params->commandBuffer->command_buffer, params->faceMask, params->reference);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilReference(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->faceMask, params->reference);
     return STATUS_SUCCESS;
 }
 
@@ -7148,7 +7148,7 @@ static NTSTATUS wine_vkCmdSetStencilTestEnable(void *args)
 {
     struct vkCmdSetStencilTestEnable_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->stencilTestEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilTestEnable(params->commandBuffer->command_buffer, params->stencilTestEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilTestEnable(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->stencilTestEnable);
     return STATUS_SUCCESS;
 }
 
@@ -7156,7 +7156,7 @@ static NTSTATUS wine_vkCmdSetStencilTestEnableEXT(void *args)
 {
     struct vkCmdSetStencilTestEnableEXT_params *params = args;
     TRACE("%p, %u\n", params->commandBuffer, params->stencilTestEnable);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilTestEnableEXT(params->commandBuffer->command_buffer, params->stencilTestEnable);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilTestEnableEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->stencilTestEnable);
     return STATUS_SUCCESS;
 }
 
@@ -7164,7 +7164,7 @@ static NTSTATUS wine_vkCmdSetStencilWriteMask(void *args)
 {
     struct vkCmdSetStencilWriteMask_params *params = args;
     TRACE("%p, %#x, %u\n", params->commandBuffer, params->faceMask, params->writeMask);
-    params->commandBuffer->device->funcs.p_vkCmdSetStencilWriteMask(params->commandBuffer->command_buffer, params->faceMask, params->writeMask);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetStencilWriteMask(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->faceMask, params->writeMask);
     return STATUS_SUCCESS;
 }
 
@@ -7172,7 +7172,7 @@ static NTSTATUS wine_vkCmdSetVertexInputEXT(void *args)
 {
     struct vkCmdSetVertexInputEXT_params *params = args;
     TRACE("%p, %u, %p, %u, %p\n", params->commandBuffer, params->vertexBindingDescriptionCount, params->pVertexBindingDescriptions, params->vertexAttributeDescriptionCount, params->pVertexAttributeDescriptions);
-    params->commandBuffer->device->funcs.p_vkCmdSetVertexInputEXT(params->commandBuffer->command_buffer, params->vertexBindingDescriptionCount, params->pVertexBindingDescriptions, params->vertexAttributeDescriptionCount, params->pVertexAttributeDescriptions);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetVertexInputEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->vertexBindingDescriptionCount, params->pVertexBindingDescriptions, params->vertexAttributeDescriptionCount, params->pVertexAttributeDescriptions);
     return STATUS_SUCCESS;
 }
 
@@ -7180,7 +7180,7 @@ static NTSTATUS wine_vkCmdSetViewport(void *args)
 {
     struct vkCmdSetViewport_params *params = args;
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pViewports);
-    params->commandBuffer->device->funcs.p_vkCmdSetViewport(params->commandBuffer->command_buffer, params->firstViewport, params->viewportCount, params->pViewports);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewport(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstViewport, params->viewportCount, params->pViewports);
     return STATUS_SUCCESS;
 }
 
@@ -7188,7 +7188,7 @@ static NTSTATUS wine_vkCmdSetViewportShadingRatePaletteNV(void *args)
 {
     struct vkCmdSetViewportShadingRatePaletteNV_params *params = args;
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pShadingRatePalettes);
-    params->commandBuffer->device->funcs.p_vkCmdSetViewportShadingRatePaletteNV(params->commandBuffer->command_buffer, params->firstViewport, params->viewportCount, params->pShadingRatePalettes);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewportShadingRatePaletteNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstViewport, params->viewportCount, params->pShadingRatePalettes);
     return STATUS_SUCCESS;
 }
 
@@ -7196,7 +7196,7 @@ static NTSTATUS wine_vkCmdSetViewportWScalingNV(void *args)
 {
     struct vkCmdSetViewportWScalingNV_params *params = args;
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pViewportWScalings);
-    params->commandBuffer->device->funcs.p_vkCmdSetViewportWScalingNV(params->commandBuffer->command_buffer, params->firstViewport, params->viewportCount, params->pViewportWScalings);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewportWScalingNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstViewport, params->viewportCount, params->pViewportWScalings);
     return STATUS_SUCCESS;
 }
 
@@ -7204,7 +7204,7 @@ static NTSTATUS wine_vkCmdSetViewportWithCount(void *args)
 {
     struct vkCmdSetViewportWithCount_params *params = args;
     TRACE("%p, %u, %p\n", params->commandBuffer, params->viewportCount, params->pViewports);
-    params->commandBuffer->device->funcs.p_vkCmdSetViewportWithCount(params->commandBuffer->command_buffer, params->viewportCount, params->pViewports);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewportWithCount(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->viewportCount, params->pViewports);
     return STATUS_SUCCESS;
 }
 
@@ -7212,7 +7212,7 @@ static NTSTATUS wine_vkCmdSetViewportWithCountEXT(void *args)
 {
     struct vkCmdSetViewportWithCountEXT_params *params = args;
     TRACE("%p, %u, %p\n", params->commandBuffer, params->viewportCount, params->pViewports);
-    params->commandBuffer->device->funcs.p_vkCmdSetViewportWithCountEXT(params->commandBuffer->command_buffer, params->viewportCount, params->pViewports);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewportWithCountEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->viewportCount, params->pViewports);
     return STATUS_SUCCESS;
 }
 
@@ -7220,7 +7220,7 @@ static NTSTATUS wine_vkCmdSubpassShadingHUAWEI(void *args)
 {
     struct vkCmdSubpassShadingHUAWEI_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    params->commandBuffer->device->funcs.p_vkCmdSubpassShadingHUAWEI(params->commandBuffer->command_buffer);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSubpassShadingHUAWEI(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
     return STATUS_SUCCESS;
 }
 
@@ -7228,7 +7228,7 @@ static NTSTATUS wine_vkCmdTraceRaysIndirect2KHR(void *args)
 {
     struct vkCmdTraceRaysIndirect2KHR_params *params = args;
     TRACE("%p, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->indirectDeviceAddress));
-    params->commandBuffer->device->funcs.p_vkCmdTraceRaysIndirect2KHR(params->commandBuffer->command_buffer, params->indirectDeviceAddress);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdTraceRaysIndirect2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->indirectDeviceAddress);
     return STATUS_SUCCESS;
 }
 
@@ -7246,12 +7246,12 @@ static NTSTATUS wine_vkCmdTraceRaysIndirectKHR(void *args)
     convert_VkStridedDeviceAddressRegionKHR_win_to_host(params->pMissShaderBindingTable, &pMissShaderBindingTable_host);
     convert_VkStridedDeviceAddressRegionKHR_win_to_host(params->pHitShaderBindingTable, &pHitShaderBindingTable_host);
     convert_VkStridedDeviceAddressRegionKHR_win_to_host(params->pCallableShaderBindingTable, &pCallableShaderBindingTable_host);
-    params->commandBuffer->device->funcs.p_vkCmdTraceRaysIndirectKHR(params->commandBuffer->command_buffer, &pRaygenShaderBindingTable_host, &pMissShaderBindingTable_host, &pHitShaderBindingTable_host, &pCallableShaderBindingTable_host, params->indirectDeviceAddress);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdTraceRaysIndirectKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRaygenShaderBindingTable_host, &pMissShaderBindingTable_host, &pHitShaderBindingTable_host, &pCallableShaderBindingTable_host, params->indirectDeviceAddress);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p, %p, %p, %p, 0x%s\n", params->commandBuffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, wine_dbgstr_longlong(params->indirectDeviceAddress));
-    params->commandBuffer->device->funcs.p_vkCmdTraceRaysIndirectKHR(params->commandBuffer->command_buffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, params->indirectDeviceAddress);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdTraceRaysIndirectKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, params->indirectDeviceAddress);
     return STATUS_SUCCESS;
 #endif
 }
@@ -7270,12 +7270,12 @@ static NTSTATUS wine_vkCmdTraceRaysKHR(void *args)
     convert_VkStridedDeviceAddressRegionKHR_win_to_host(params->pMissShaderBindingTable, &pMissShaderBindingTable_host);
     convert_VkStridedDeviceAddressRegionKHR_win_to_host(params->pHitShaderBindingTable, &pHitShaderBindingTable_host);
     convert_VkStridedDeviceAddressRegionKHR_win_to_host(params->pCallableShaderBindingTable, &pCallableShaderBindingTable_host);
-    params->commandBuffer->device->funcs.p_vkCmdTraceRaysKHR(params->commandBuffer->command_buffer, &pRaygenShaderBindingTable_host, &pMissShaderBindingTable_host, &pHitShaderBindingTable_host, &pCallableShaderBindingTable_host, params->width, params->height, params->depth);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdTraceRaysKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pRaygenShaderBindingTable_host, &pMissShaderBindingTable_host, &pHitShaderBindingTable_host, &pCallableShaderBindingTable_host, params->width, params->height, params->depth);
 
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %p, %p, %p, %p, %u, %u, %u\n", params->commandBuffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, params->width, params->height, params->depth);
-    params->commandBuffer->device->funcs.p_vkCmdTraceRaysKHR(params->commandBuffer->command_buffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, params->width, params->height, params->depth);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdTraceRaysKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, params->width, params->height, params->depth);
     return STATUS_SUCCESS;
 #endif
 }
@@ -7284,7 +7284,7 @@ static NTSTATUS wine_vkCmdTraceRaysNV(void *args)
 {
     struct vkCmdTraceRaysNV_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->raygenShaderBindingTableBuffer), wine_dbgstr_longlong(params->raygenShaderBindingOffset), wine_dbgstr_longlong(params->missShaderBindingTableBuffer), wine_dbgstr_longlong(params->missShaderBindingOffset), wine_dbgstr_longlong(params->missShaderBindingStride), wine_dbgstr_longlong(params->hitShaderBindingTableBuffer), wine_dbgstr_longlong(params->hitShaderBindingOffset), wine_dbgstr_longlong(params->hitShaderBindingStride), wine_dbgstr_longlong(params->callableShaderBindingTableBuffer), wine_dbgstr_longlong(params->callableShaderBindingOffset), wine_dbgstr_longlong(params->callableShaderBindingStride), params->width, params->height, params->depth);
-    params->commandBuffer->device->funcs.p_vkCmdTraceRaysNV(params->commandBuffer->command_buffer, params->raygenShaderBindingTableBuffer, params->raygenShaderBindingOffset, params->missShaderBindingTableBuffer, params->missShaderBindingOffset, params->missShaderBindingStride, params->hitShaderBindingTableBuffer, params->hitShaderBindingOffset, params->hitShaderBindingStride, params->callableShaderBindingTableBuffer, params->callableShaderBindingOffset, params->callableShaderBindingStride, params->width, params->height, params->depth);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdTraceRaysNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->raygenShaderBindingTableBuffer, params->raygenShaderBindingOffset, params->missShaderBindingTableBuffer, params->missShaderBindingOffset, params->missShaderBindingStride, params->hitShaderBindingTableBuffer, params->hitShaderBindingOffset, params->hitShaderBindingStride, params->callableShaderBindingTableBuffer, params->callableShaderBindingOffset, params->callableShaderBindingStride, params->width, params->height, params->depth);
     return STATUS_SUCCESS;
 }
 
@@ -7292,7 +7292,7 @@ static NTSTATUS wine_vkCmdUpdateBuffer(void *args)
 {
     struct vkCmdUpdateBuffer_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), wine_dbgstr_longlong(params->dataSize), params->pData);
-    params->commandBuffer->device->funcs.p_vkCmdUpdateBuffer(params->commandBuffer->command_buffer, params->dstBuffer, params->dstOffset, params->dataSize, params->pData);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdUpdateBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->dstBuffer, params->dstOffset, params->dataSize, params->pData);
     return STATUS_SUCCESS;
 }
 
@@ -7306,14 +7306,14 @@ static NTSTATUS wine_vkCmdWaitEvents(void *args)
 
     pBufferMemoryBarriers_host = convert_VkBufferMemoryBarrier_array_win_to_host(params->pBufferMemoryBarriers, params->bufferMemoryBarrierCount);
     pImageMemoryBarriers_host = convert_VkImageMemoryBarrier_array_win_to_host(params->pImageMemoryBarriers, params->imageMemoryBarrierCount);
-    params->commandBuffer->device->funcs.p_vkCmdWaitEvents(params->commandBuffer->command_buffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, pBufferMemoryBarriers_host, params->imageMemoryBarrierCount, pImageMemoryBarriers_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWaitEvents(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, pBufferMemoryBarriers_host, params->imageMemoryBarrierCount, pImageMemoryBarriers_host);
 
     free_VkBufferMemoryBarrier_array(pBufferMemoryBarriers_host, params->bufferMemoryBarrierCount);
     free_VkImageMemoryBarrier_array(pImageMemoryBarriers_host, params->imageMemoryBarrierCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %u, %p, %#x, %#x, %u, %p, %u, %p, %u, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
-    params->commandBuffer->device->funcs.p_vkCmdWaitEvents(params->commandBuffer->command_buffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWaitEvents(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
     return STATUS_SUCCESS;
 #endif
 }
@@ -7326,13 +7326,13 @@ static NTSTATUS wine_vkCmdWaitEvents2(void *args)
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
 
     pDependencyInfos_host = convert_VkDependencyInfo_array_win_to_host(params->pDependencyInfos, params->eventCount);
-    params->commandBuffer->device->funcs.p_vkCmdWaitEvents2(params->commandBuffer->command_buffer, params->eventCount, params->pEvents, pDependencyInfos_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWaitEvents2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->eventCount, params->pEvents, pDependencyInfos_host);
 
     free_VkDependencyInfo_array(pDependencyInfos_host, params->eventCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
-    params->commandBuffer->device->funcs.p_vkCmdWaitEvents2(params->commandBuffer->command_buffer, params->eventCount, params->pEvents, params->pDependencyInfos);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWaitEvents2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->eventCount, params->pEvents, params->pDependencyInfos);
     return STATUS_SUCCESS;
 #endif
 }
@@ -7345,13 +7345,13 @@ static NTSTATUS wine_vkCmdWaitEvents2KHR(void *args)
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
 
     pDependencyInfos_host = convert_VkDependencyInfo_array_win_to_host(params->pDependencyInfos, params->eventCount);
-    params->commandBuffer->device->funcs.p_vkCmdWaitEvents2KHR(params->commandBuffer->command_buffer, params->eventCount, params->pEvents, pDependencyInfos_host);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWaitEvents2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->eventCount, params->pEvents, pDependencyInfos_host);
 
     free_VkDependencyInfo_array(pDependencyInfos_host, params->eventCount);
     return STATUS_SUCCESS;
 #else
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
-    params->commandBuffer->device->funcs.p_vkCmdWaitEvents2KHR(params->commandBuffer->command_buffer, params->eventCount, params->pEvents, params->pDependencyInfos);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWaitEvents2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->eventCount, params->pEvents, params->pDependencyInfos);
     return STATUS_SUCCESS;
 #endif
 }
@@ -7360,7 +7360,7 @@ static NTSTATUS wine_vkCmdWriteAccelerationStructuresPropertiesKHR(void *args)
 {
     struct vkCmdWriteAccelerationStructuresPropertiesKHR_params *params = args;
     TRACE("%p, %u, %p, %#x, 0x%s, %u\n", params->commandBuffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, wine_dbgstr_longlong(params->queryPool), params->firstQuery);
-    params->commandBuffer->device->funcs.p_vkCmdWriteAccelerationStructuresPropertiesKHR(params->commandBuffer->command_buffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, params->queryPool, params->firstQuery);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteAccelerationStructuresPropertiesKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, params->queryPool, params->firstQuery);
     return STATUS_SUCCESS;
 }
 
@@ -7368,7 +7368,7 @@ static NTSTATUS wine_vkCmdWriteAccelerationStructuresPropertiesNV(void *args)
 {
     struct vkCmdWriteAccelerationStructuresPropertiesNV_params *params = args;
     TRACE("%p, %u, %p, %#x, 0x%s, %u\n", params->commandBuffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, wine_dbgstr_longlong(params->queryPool), params->firstQuery);
-    params->commandBuffer->device->funcs.p_vkCmdWriteAccelerationStructuresPropertiesNV(params->commandBuffer->command_buffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, params->queryPool, params->firstQuery);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteAccelerationStructuresPropertiesNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, params->queryPool, params->firstQuery);
     return STATUS_SUCCESS;
 }
 
@@ -7376,7 +7376,7 @@ static NTSTATUS wine_vkCmdWriteBufferMarker2AMD(void *args)
 {
     struct vkCmdWriteBufferMarker2AMD_params *params = args;
     TRACE("%p, 0x%s, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->stage), wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), params->marker);
-    params->commandBuffer->device->funcs.p_vkCmdWriteBufferMarker2AMD(params->commandBuffer->command_buffer, params->stage, params->dstBuffer, params->dstOffset, params->marker);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteBufferMarker2AMD(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->stage, params->dstBuffer, params->dstOffset, params->marker);
     return STATUS_SUCCESS;
 }
 
@@ -7384,7 +7384,7 @@ static NTSTATUS wine_vkCmdWriteBufferMarkerAMD(void *args)
 {
     struct vkCmdWriteBufferMarkerAMD_params *params = args;
     TRACE("%p, %#x, 0x%s, 0x%s, %u\n", params->commandBuffer, params->pipelineStage, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), params->marker);
-    params->commandBuffer->device->funcs.p_vkCmdWriteBufferMarkerAMD(params->commandBuffer->command_buffer, params->pipelineStage, params->dstBuffer, params->dstOffset, params->marker);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteBufferMarkerAMD(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineStage, params->dstBuffer, params->dstOffset, params->marker);
     return STATUS_SUCCESS;
 }
 
@@ -7392,7 +7392,7 @@ static NTSTATUS wine_vkCmdWriteTimestamp(void *args)
 {
     struct vkCmdWriteTimestamp_params *params = args;
     TRACE("%p, %#x, 0x%s, %u\n", params->commandBuffer, params->pipelineStage, wine_dbgstr_longlong(params->queryPool), params->query);
-    params->commandBuffer->device->funcs.p_vkCmdWriteTimestamp(params->commandBuffer->command_buffer, params->pipelineStage, params->queryPool, params->query);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteTimestamp(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pipelineStage, params->queryPool, params->query);
     return STATUS_SUCCESS;
 }
 
@@ -7400,7 +7400,7 @@ static NTSTATUS wine_vkCmdWriteTimestamp2(void *args)
 {
     struct vkCmdWriteTimestamp2_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->stage), wine_dbgstr_longlong(params->queryPool), params->query);
-    params->commandBuffer->device->funcs.p_vkCmdWriteTimestamp2(params->commandBuffer->command_buffer, params->stage, params->queryPool, params->query);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteTimestamp2(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->stage, params->queryPool, params->query);
     return STATUS_SUCCESS;
 }
 
@@ -7408,7 +7408,7 @@ static NTSTATUS wine_vkCmdWriteTimestamp2KHR(void *args)
 {
     struct vkCmdWriteTimestamp2KHR_params *params = args;
     TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->stage), wine_dbgstr_longlong(params->queryPool), params->query);
-    params->commandBuffer->device->funcs.p_vkCmdWriteTimestamp2KHR(params->commandBuffer->command_buffer, params->stage, params->queryPool, params->query);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdWriteTimestamp2KHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->stage, params->queryPool, params->query);
     return STATUS_SUCCESS;
 }
 
@@ -8207,7 +8207,7 @@ static NTSTATUS wine_vkEndCommandBuffer(void *args)
 {
     struct vkEndCommandBuffer_params *params = args;
     TRACE("%p\n", params->commandBuffer);
-    return params->commandBuffer->device->funcs.p_vkEndCommandBuffer(params->commandBuffer->command_buffer);
+    return wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkEndCommandBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer);
 }
 
 static NTSTATUS wine_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(void *args)
@@ -9754,7 +9754,7 @@ static NTSTATUS wine_vkResetCommandBuffer(void *args)
 {
     struct vkResetCommandBuffer_params *params = args;
     TRACE("%p, %#x\n", params->commandBuffer, params->flags);
-    return params->commandBuffer->device->funcs.p_vkResetCommandBuffer(params->commandBuffer->command_buffer, params->flags);
+    return wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkResetCommandBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->flags);
 }
 
 static NTSTATUS wine_vkResetCommandPool(void *args)
@@ -10327,7 +10327,7 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
     switch(type)
     {
     case VK_OBJECT_TYPE_COMMAND_BUFFER:
-        return (uint64_t) (uintptr_t) ((VkCommandBuffer) (uintptr_t) handle)->command_buffer;
+        return (uint64_t) (uintptr_t) wine_cmd_buffer_from_handle(((VkCommandBuffer) (uintptr_t) handle))->command_buffer;
     case VK_OBJECT_TYPE_COMMAND_POOL:
         return (uint64_t) wine_cmd_pool_from_handle(handle)->command_pool;
     case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT:

@@ -30,6 +30,7 @@
 #include "wine/debug.h"
 #include "wine/vulkan.h"
 #include "wine/unixlib.h"
+#include "wine/list.h"
 
 #include "loader_thunks.h"
 
@@ -81,12 +82,19 @@ struct VkDevice_T
 struct vk_command_pool
 {
     UINT64 unix_handle;
+    struct list command_buffers;
 };
 
 static inline struct vk_command_pool *command_pool_from_handle(VkCommandPool handle)
 {
     return (struct vk_command_pool *)(uintptr_t)handle;
 }
+
+struct VkCommandBuffer_T
+{
+    struct wine_vk_base base;
+    struct list pool_link;
+};
 
 struct vulkan_func
 {

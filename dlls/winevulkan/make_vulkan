@@ -200,13 +200,13 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PUBLIC, "loader_thunk" : ThunkType.PRIVATE},
 
     # Device functions
-    "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkCreateCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
     "vkCreateComputePipelines" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkCreateGraphicsPipelines" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkDestroyCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkGetDeviceQueue2" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -1061,6 +1061,8 @@ class VkHandle(object):
         if self.parent is None:
             # Should only happen for VkInstance
             return "wine_instance_from_handle({0})->funcs".format(param)
+        elif self.name == "VkCommandBuffer":
+            return "wine_cmd_buffer_from_handle({0})->device->funcs".format(param)
         elif self.name == "VkDevice":
             return "wine_device_from_handle({0})->funcs".format(param)
         elif self.name == "VkPhysicalDevice":
@@ -1098,6 +1100,8 @@ class VkHandle(object):
     def native_handle(self, name):
         """ Provide access to the native handle of a wrapped object. """
 
+        if self.name == "VkCommandBuffer":
+            return "wine_cmd_buffer_from_handle({0})->command_buffer".format(name)
         if self.name == "VkCommandPool":
             return "wine_cmd_pool_from_handle({0})->command_pool".format(name)
         if self.name == "VkDebugUtilsMessengerEXT":
@@ -1114,15 +1118,6 @@ class VkHandle(object):
             return "wine_queue_from_handle({0})->queue".format(name)
         if self.name == "VkSurfaceKHR":
             return "wine_surface_from_handle({0})->surface".format(name)
-
-        native_handle_name = None
-
-        if self.name == "VkCommandBuffer":
-            native_handle_name = "command_buffer"
-
-        if native_handle_name:
-            return "{0}->{1}".format(name, native_handle_name)
-
         if self.is_dispatchable():
             LOGGER.error("Unhandled native handle for: {0}".format(self.name))
         return None

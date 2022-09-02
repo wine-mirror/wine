@@ -501,6 +501,7 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     if (!(cmd_pool = malloc(sizeof(*cmd_pool))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     cmd_pool->unix_handle = 0;
+    list_init(&cmd_pool->command_buffers);
 
     params.device = device;
     params.pCreateInfo = create_info;
@@ -517,12 +518,74 @@ void WINAPI vkDestroyCommandPool(VkDevice device, VkCommandPool handle, const Vk
 {
     struct vk_command_pool *cmd_pool = command_pool_from_handle(handle);
     struct vkDestroyCommandPool_params params;
+    VkCommandBuffer buffer, cursor;
+
+    if (!cmd_pool)
+        return;
+
+    /* The Vulkan spec says:
+     *
+     * "When a pool is destroyed, all command buffers allocated from the pool are freed."
+     */
+    LIST_FOR_EACH_ENTRY_SAFE(buffer, cursor, &cmd_pool->command_buffers, struct VkCommandBuffer_T, pool_link)
+    {
+        vkFreeCommandBuffers(device, handle, 1, &buffer);
+    }
 
     params.device = device;
     params.commandPool = handle;
     params.pAllocator = allocator;
     vk_unix_call(unix_vkDestroyCommandPool, &params);
     free(cmd_pool);
+}
+
+VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferAllocateInfo *allocate_info,
+                                         VkCommandBuffer *buffers)
+{
+    struct vk_command_pool *pool = command_pool_from_handle(allocate_info->commandPool);
+    struct vkAllocateCommandBuffers_params params;
+    uint32_t i;
+    VkResult result;
+
+    for (i = 0; i < allocate_info->commandBufferCount; i++)
+        buffers[i] = alloc_vk_object(sizeof(*buffers[i]));
+
+    params.device = device;
+    params.pAllocateInfo = allocate_info;
+    params.pCommandBuffers = buffers;
+    result = vk_unix_call(unix_vkAllocateCommandBuffers, &params);
+    if (result == VK_SUCCESS)
+    {
+        for (i = 0; i < allocate_info->commandBufferCount; i++)
+            list_add_tail(&pool->command_buffers, &buffers[i]->pool_link);
+    }
+    else
+    {
+        for (i = 0; i < allocate_info->commandBufferCount; i++)
+        {
+            free(buffers[i]);
+            buffers[i] = NULL;
+        }
+    }
+    return result;
+}
+
+void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool cmd_pool, uint32_t count,
+                                 const VkCommandBuffer *buffers)
+{
+    struct vkFreeCommandBuffers_params params;
+    uint32_t i;
+
+    params.device = device;
+    params.commandPool = cmd_pool;
+    params.commandBufferCount = count;
+    params.pCommandBuffers = buffers;
+    vk_unix_call(unix_vkFreeCommandBuffers, &params);
+    for (i = 0; i < count; i++)
+    {
+        list_remove(&buffers[i]->pool_link);
+        free(buffers[i]);
+    }
 }
 
 static BOOL WINAPI call_vulkan_debug_report_callback( struct wine_vk_debug_report_params *params, ULONG size )

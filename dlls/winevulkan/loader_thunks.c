@@ -51,15 +51,6 @@ VkResult WINAPI vkAcquireProfilingLockKHR(VkDevice device, const VkAcquireProfil
     return vk_unix_call(unix_vkAcquireProfilingLockKHR, &params);
 }
 
-VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferAllocateInfo *pAllocateInfo, VkCommandBuffer *pCommandBuffers)
-{
-    struct vkAllocateCommandBuffers_params params;
-    params.device = device;
-    params.pAllocateInfo = pAllocateInfo;
-    params.pCommandBuffers = pCommandBuffers;
-    return vk_unix_call(unix_vkAllocateCommandBuffers, &params);
-}
-
 VkResult WINAPI vkAllocateDescriptorSets(VkDevice device, const VkDescriptorSetAllocateInfo *pAllocateInfo, VkDescriptorSet *pDescriptorSets)
 {
     struct vkAllocateDescriptorSets_params params;
@@ -2779,16 +2770,6 @@ VkResult WINAPI vkFlushMappedMemoryRanges(VkDevice device, uint32_t memoryRangeC
     params.memoryRangeCount = memoryRangeCount;
     params.pMemoryRanges = pMemoryRanges;
     return vk_unix_call(unix_vkFlushMappedMemoryRanges, &params);
-}
-
-void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t commandBufferCount, const VkCommandBuffer *pCommandBuffers)
-{
-    struct vkFreeCommandBuffers_params params;
-    params.device = device;
-    params.commandPool = commandPool;
-    params.commandBufferCount = commandBufferCount;
-    params.pCommandBuffers = pCommandBuffers;
-    vk_unix_call(unix_vkFreeCommandBuffers, &params);
 }
 
 VkResult WINAPI vkFreeDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool, uint32_t descriptorSetCount, const VkDescriptorSet *pDescriptorSets)
