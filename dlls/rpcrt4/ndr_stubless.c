@@ -1005,12 +1005,12 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORM
 #ifdef __x86_64__
 
 __ASM_GLOBAL_FUNC( NdrClientCall2,
-                   "movq %r8,0x18(%rsp)\n\t"
-                   "movq %r9,0x20(%rsp)\n\t"
-                   "leaq 0x18(%rsp),%r8\n\t"
-                   "xorq %r9,%r9\n\t"
                    "subq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   "movq %r8,0x40(%rsp)\n\t"
+                   "movq %r9,0x48(%rsp)\n\t"
+                   "leaq 0x40(%rsp),%r8\n\t"
+                   "xorq %r9,%r9\n\t"
                    "call " __ASM_NAME("ndr_client_call") "\n\t"
                    "addq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
