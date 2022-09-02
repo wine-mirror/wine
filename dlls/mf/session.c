@@ -1939,20 +1939,134 @@ static HRESULT WINAPI mfsession_QueueEvent(IMFMediaSession *iface, MediaEventTyp
     return IMFMediaEventQueue_QueueEventParamVar(session->event_queue, event_type, ext_type, hr, value);
 }
 
+static HRESULT session_check_stream_descriptor(IMFPresentationDescriptor *pd, IMFStreamDescriptor *sd)
+{
+    IMFStreamDescriptor *selected_sd;
+    DWORD i, count;
+    BOOL selected;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(pd, &count)))
+    {
+        WARN("Failed to get stream descriptor count, hr %#lx.\n", hr);
+        return MF_E_TOPO_STREAM_DESCRIPTOR_NOT_SELECTED;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, i,
+                    &selected, &selected_sd)))
+        {
+            WARN("Failed to get stream descriptor %lu, hr %#lx.\n", i, hr);
+            return MF_E_TOPO_STREAM_DESCRIPTOR_NOT_SELECTED;
+        }
+        IMFStreamDescriptor_Release(selected_sd);
+
+        if (selected_sd == sd)
+        {
+            if (selected)
+                return S_OK;
+
+            WARN("Presentation descriptor %p stream %p is not selected.\n", pd, sd);
+            return MF_E_TOPO_STREAM_DESCRIPTOR_NOT_SELECTED;
+        }
+    }
+
+    WARN("Failed to find stream descriptor %lu, hr %#lx.\n", i, hr);
+    return MF_E_TOPO_STREAM_DESCRIPTOR_NOT_SELECTED;
+}
+
+static HRESULT session_check_topology(IMFTopology *topology)
+{
+    MF_TOPOLOGY_TYPE node_type;
+    IMFTopologyNode *node;
+    WORD node_count, i;
+    HRESULT hr;
+
+    if (!topology)
+        return S_OK;
+
+    if (FAILED(IMFTopology_GetNodeCount(topology, &node_count))
+            || node_count == 0)
+        return E_INVALIDARG;
+
+    for (i = 0; i < node_count; ++i)
+    {
+        if (FAILED(hr = IMFTopology_GetNode(topology, i, &node)))
+            break;
+
+        if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
+        {
+            IMFTopologyNode_Release(node);
+            break;
+        }
+
+        switch (node_type)
+        {
+            case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            {
+                IMFPresentationDescriptor *pd;
+                IMFStreamDescriptor *sd;
+                IMFMediaSource *source;
+
+                if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_SOURCE, &IID_IMFMediaSource,
+                        (void **)&source)))
+                {
+                    WARN("Missing MF_TOPONODE_SOURCE, hr %#lx.\n", hr);
+                    IMFTopologyNode_Release(node);
+                    return MF_E_TOPO_MISSING_SOURCE;
+                }
+                IMFMediaSource_Release(source);
+
+                if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR,
+                        &IID_IMFPresentationDescriptor, (void **)&pd)))
+                {
+                    WARN("Missing MF_TOPONODE_PRESENTATION_DESCRIPTOR, hr %#lx.\n", hr);
+                    IMFTopologyNode_Release(node);
+                    return MF_E_TOPO_MISSING_PRESENTATION_DESCRIPTOR;
+                }
+
+                if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR,
+                        &IID_IMFStreamDescriptor, (void **)&sd)))
+                {
+                    WARN("Missing MF_TOPONODE_STREAM_DESCRIPTOR, hr %#lx.\n", hr);
+                    IMFPresentationDescriptor_Release(pd);
+                    IMFTopologyNode_Release(node);
+                    return MF_E_TOPO_MISSING_STREAM_DESCRIPTOR;
+                }
+
+                hr = session_check_stream_descriptor(pd, sd);
+                IMFPresentationDescriptor_Release(pd);
+                IMFStreamDescriptor_Release(sd);
+                if (FAILED(hr))
+                {
+                    IMFTopologyNode_Release(node);
+                    return hr;
+                }
+
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        IMFTopologyNode_Release(node);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI mfsession_SetTopology(IMFMediaSession *iface, DWORD flags, IMFTopology *topology)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
     struct session_op *op;
-    WORD node_count = 0;
     HRESULT hr;
 
     TRACE("%p, %#lx, %p.\n", iface, flags, topology);
 
-    if (topology)
-    {
-        if (FAILED(IMFTopology_GetNodeCount(topology, &node_count)) || node_count == 0)
-            return E_INVALIDARG;
-    }
+    if (FAILED(hr = session_check_topology(topology)))
+        return hr;
 
     if (FAILED(hr = create_session_op(SESSION_CMD_SET_TOPOLOGY, &op)))
         return hr;

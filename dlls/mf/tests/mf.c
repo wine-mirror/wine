@@ -2145,29 +2145,13 @@ static void test_media_session_events(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSession_SetTopology(session, 0, topology);
-    todo_wine
     ok(hr == MF_E_TOPO_MISSING_SOURCE, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = wait_media_event(session, callback, MESessionTopologySet, 1000, &propvar);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        PropVariantClear(&propvar);
-        handler.enum_count = handler.set_current_count = 0;
-    }
 
     source = create_test_source(pd);
     init_source_node(source, -1, src_node, pd, sd);
 
     hr = IMFMediaSession_SetTopology(session, 0, topology);
-    todo_wine
     ok(hr == MF_E_TOPO_STREAM_DESCRIPTOR_NOT_SELECTED, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = wait_media_event(session, callback, MESessionTopologySet, 1000, &propvar);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        PropVariantClear(&propvar);
-        handler.enum_count = handler.set_current_count = 0;
-    }
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2177,7 +2161,6 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!media_sink.shutdown, "media sink is shutdown.\n");
     media_sink.shutdown = FALSE;
 
