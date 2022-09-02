@@ -2246,11 +2246,11 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info
 #ifdef __x86_64__
 
 __ASM_GLOBAL_FUNC( NdrClientCall3,
-                   "movq %r9,0x20(%rsp)\n\t"
-                   "leaq 0x20(%rsp),%r9\n\t"
-                   "pushq $0\n\t"
-                   "subq $0x20,%rsp\n\t"
+                   "subq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   "movq %r9,0x48(%rsp)\n\t"
+                   "leaq 0x48(%rsp),%r9\n\t"
+                   "movq $0,0x20(%rsp)\n\t"
                    "call " __ASM_NAME("ndr64_client_call") "\n\t"
                    "addq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
