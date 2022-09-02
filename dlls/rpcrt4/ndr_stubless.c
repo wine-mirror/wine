@@ -2307,6 +2307,8 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO
 
 __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
                    "subq $0x28,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
                    "movq %r9,0x48(%rsp)\n\t"
                    "leaq 0x48(%rsp),%r9\n\t"
