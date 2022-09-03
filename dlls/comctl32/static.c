@@ -437,6 +437,7 @@ static BOOL hasTextStyle( DWORD style )
 
 static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
+    const WCHAR *window_name;
     LRESULT lResult = 0;
     LONG full_style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG style = full_style & SS_TYPEMASK;
@@ -549,13 +550,18 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
                 SetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
             }
 
+            if (cs->lpszName && cs->lpszName[0] == 0xffff)
+                window_name = MAKEINTRESOURCEW(cs->lpszName[1]);
+            else
+                window_name = cs->lpszName;
+
             switch (style)
             {
             case SS_ICON:
                 {
                     HICON hIcon;
 
-                    hIcon = STATIC_LoadIconW(cs->hInstance, cs->lpszName, full_style);
+                    hIcon = STATIC_LoadIconW(cs->hInstance, window_name, full_style);
                     STATIC_SetIcon(hwnd, hIcon, full_style);
                 }
                 break;
@@ -563,7 +569,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
                 if ((ULONG_PTR)cs->hInstance >> 16)
                 {
                     HBITMAP hBitmap;
-                    hBitmap = LoadBitmapW(cs->hInstance, cs->lpszName);
+                    hBitmap = LoadBitmapW(cs->hInstance, window_name);
                     STATIC_SetBitmap(hwnd, hBitmap, full_style);
                 }
                 break;

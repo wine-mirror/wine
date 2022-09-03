@@ -216,6 +216,8 @@ static void test_image(HBITMAP image, BOOL is_dib, BOOL is_premult, BOOL is_alph
 
 static void test_set_image(void)
 {
+    char resource[4];
+    WCHAR resource_unicode[3];
     HWND hwnd = create_static(SS_BITMAP);
     HBITMAP bmp1, bmp2, image;
 
@@ -269,6 +271,33 @@ static void test_set_image(void)
     DestroyWindow(hwnd);
 
     test_image(image, TRUE, FALSE, FALSE);
+
+    resource[0] = '\xff';
+    resource[1] = PtrToUlong(MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP));
+    resource[2] = PtrToUlong(MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP)) >> 8;
+    resource[3] = 0;
+
+    resource_unicode[0] = 0xffff;
+    resource_unicode[1] = PtrToUlong(MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP));
+    resource_unicode[2] = 0;
+
+    hwnd = CreateWindowW(L"Static", resource_unicode, WS_VISIBLE|WS_CHILD|SS_BITMAP, 5, 5, 100, 100,
+                         hMainWnd, (HMENU)CTRL_ID, GetModuleHandleW(NULL), 0);
+
+    bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp1 != NULL, "got NULL\n");
+    ok(bmp1 != image, "bmp == image\n");
+    test_image(bmp1, TRUE, TRUE, TRUE);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowA("Static", resource, WS_VISIBLE|WS_CHILD|SS_BITMAP, 5, 5, 100, 100,
+                         hMainWnd, (HMENU)CTRL_ID, GetModuleHandleW(NULL), 0);
+
+    bmp1 = (HBITMAP)SendMessageA(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp1 != NULL, "got NULL\n");
+    ok(bmp1 != image, "bmp == image\n");
+    test_image(bmp1, TRUE, TRUE, TRUE);
+    DestroyWindow(hwnd);
 
     DeleteObject(image);
 }
