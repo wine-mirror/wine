@@ -376,6 +376,8 @@ static HRESULT WINAPI video_processor_SetInputType(IMFTransform *iface, DWORD id
             break;
     if (i == ARRAY_SIZE(input_types))
         return MF_E_INVALIDMEDIATYPE;
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
 
     if (impl->input_type)
         IMFMediaType_Release(impl->input_type);
@@ -413,6 +415,8 @@ static HRESULT WINAPI video_processor_SetOutputType(IMFTransform *iface, DWORD i
             break;
     if (i == ARRAY_SIZE(output_types))
         return MF_E_INVALIDMEDIATYPE;
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
 
     if (impl->output_type)
         IMFMediaType_Release(impl->output_type);

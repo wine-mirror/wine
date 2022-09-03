@@ -278,7 +278,6 @@ static void check_mft_set_input_type_required_(int line, IMFTransform *transform
     hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
     ok_(__FILE__, line)(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ref = IMFMediaType_Release(media_type);
-    todo_wine_if(ref == 1)
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
 }
 
@@ -309,7 +308,6 @@ static void check_mft_set_output_type_required_(int line, IMFTransform *transfor
     hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
     ok_(__FILE__, line)(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ref = IMFMediaType_Release(media_type);
-    todo_wine_if(ref == 1)
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
 }
 

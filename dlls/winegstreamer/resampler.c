@@ -383,6 +383,8 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
 
     if (FAILED(hr = check_media_type(type)))
         return hr;
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
 
     if (!impl->input_type && FAILED(hr = MFCreateMediaType(&impl->input_type)))
         return hr;
@@ -414,6 +416,8 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
 
     if (FAILED(hr = check_media_type(type)))
         return hr;
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
 
     if (!impl->output_type && FAILED(hr = MFCreateMediaType(&impl->output_type)))
         return hr;
