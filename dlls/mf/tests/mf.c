@@ -2986,13 +2986,13 @@ static void test_topology_loader(void)
             /* Float -> PCM, refuse input type, add converter */
             .input_type = &audio_float_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
             .expected_result = MF_E_NO_MORE_TYPES,
-            .flags = LOADER_SET_INVALID_INPUT | LOADER_ADD_RESAMPLER_MFT | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+            .flags = LOADER_SET_INVALID_INPUT | LOADER_ADD_RESAMPLER_MFT | LOADER_EXPECTED_CONVERTER,
         },
         {
             /* Float -> PCM, refuse input type, add converter, allow resampler output type */
             .input_type = &audio_float_44100, .output_type = &audio_pcm_48000_resampler, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
             .expected_result = S_OK,
-            .flags = LOADER_SET_INVALID_INPUT | LOADER_ADD_RESAMPLER_MFT | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+            .flags = LOADER_SET_INVALID_INPUT | LOADER_ADD_RESAMPLER_MFT | LOADER_EXPECTED_CONVERTER,
         },
 
         {
@@ -3449,7 +3449,7 @@ todo_wine {
         else
             ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
 
-        todo_wine_if((test->flags & LOADER_NO_CURRENT_OUTPUT) && !(test->flags & LOADER_SET_MEDIA_TYPES))
+        todo_wine_if(test->flags & LOADER_NO_CURRENT_OUTPUT)
         ok(!handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
 
         if (handler.current_type)

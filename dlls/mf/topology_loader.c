@@ -498,7 +498,7 @@ static HRESULT topology_loader_resolve_branches(struct topoloader_context *conte
             WARN("Failed to clone nodes for branch %s\n", debugstr_topology_branch(branch));
         else
             hr = topology_branch_connect(context->output_topology, MF_CONNECT_ALLOW_DECODER,
-                    branch, enumerate_source_types);
+                    branch, enumerate_source_types || node_type == MF_TOPOLOGY_TRANSFORM_NODE);
 
         topology_branch_destroy(branch);
         if (FAILED(hr))
