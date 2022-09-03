@@ -1026,6 +1026,16 @@ static struct sa_test sa_tests[] = {
       {0xd805,0xde80,0}, 1,
           { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT } }
     },
+    {
+      /* Musical symbols, U+1D173 */
+      {0xd834,0xdd73,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
+    },
+    {
+      /* Tags, U+E0020 */
+      {0xdb40,0xdc20,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
+    },
     /* keep this as end test data marker */
     { {0} }
 };

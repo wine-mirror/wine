@@ -654,17 +654,22 @@ static DWRITE_SCRIPT_ANALYSIS get_char_sa(UINT32 c)
 
     sa.script = get_char_script(c);
     sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
-    if ((c >= 0x0001 && c <= 0x001f) ||
-            (c >= 0x007f && c <= 0x009f) ||
-            (c == 0x00ad) /* SOFT HYPHEN */ ||
-            (c >= 0x200b && c <= 0x200f) ||
-            (c >= 0x2028 && c <= 0x202e) ||
-            (c >= 0x2060 && c <= 0x2064) ||
-            (c >= 0x2066 && c <= 0x206f) ||
-            (c == 0xfeff) ||
-            (c == 0xfff9) ||
-            (c == 0xfffa) ||
-            (c == 0xfffb))
+    if ((c >= 0x0001 && c <= 0x001f)           /* C0 controls */
+            || (c >= 0x007f && c <= 0x009f)    /* DELETE, C1 controls */
+            || (c == 0x00ad)                   /* SOFT HYPHEN */
+            || (c >= 0x200b && c <= 0x200f)    /* ZWSP, ZWNJ, ZWJ, LRM, RLM */
+            || (c >= 0x2028 && c <= 0x202e)    /* Line/paragraph separators, LRE, RLE, PDF, LRO, RLO */
+            || (c >= 0x2060 && c <= 0x2064)    /* WJ, invisible operators */
+            || (c >= 0x2066 && c <= 0x2069)    /* LRI, RLI, FSI, PDI */
+            || (c >= 0x206a && c <= 0x206f)    /* Deprecated control characters */
+            || (c == 0xfeff)                   /* ZWBNSP */
+            || (c == 0xfff9)                   /* Interlinear annotation */
+            || (c == 0xfffa)
+            || (c == 0xfffb)
+            || (c >= 0x1bca0 && c <= 0x1bca3)  /* Shorthand format controls */
+            || (c >= 0x1d173 && c <= 0x1d17a)  /* Musical symbols: beams and slurs */
+            || (c == 0xe0001)                  /* Language tag, deprecated */
+            || (c >= 0xe0020 && c <= 0xe007f)) /* Tag components */
     {
         sa.shapes = DWRITE_SCRIPT_SHAPES_NO_VISUAL;
     }
