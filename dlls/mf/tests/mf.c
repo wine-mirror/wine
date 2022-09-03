@@ -2478,10 +2478,21 @@ enum loader_test_flags
     LOADER_NO_CURRENT_OUTPUT = 0x20,
     LOADER_SET_INVALID_INPUT = 0x40,
     LOADER_SET_MEDIA_TYPES = 0x80,
+    LOADER_ADD_RESAMPLER_MFT = 0x100,
 };
 
 static void test_topology_loader(void)
 {
+    static const media_type_desc audio_float_44100 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4 * 44100),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 4 * 8),
+    };
     static const media_type_desc audio_pcm_44100 =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
@@ -2501,6 +2512,18 @@ static void test_topology_loader(void)
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 48000),
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1),
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 8),
+    };
+    static const media_type_desc audio_pcm_48000_resampler =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 192000),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
     };
     static const media_type_desc audio_float_48000 =
     {
@@ -2657,6 +2680,19 @@ static void test_topology_loader(void)
             /* PCM -> PCM, different enumerated bps, no current type, source allow converter */
             .input_type = &audio_pcm_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_DIRECT, .source_method = MF_CONNECT_ALLOW_CONVERTER,
             .expected_result = MF_E_INVALIDMEDIATYPE,
+        },
+
+        {
+            /* Float -> PCM, refuse input type, add converter */
+            .input_type = &audio_float_44100, .output_type = &audio_pcm_48000, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
+            .expected_result = MF_E_NO_MORE_TYPES,
+            .flags = LOADER_SET_INVALID_INPUT | LOADER_ADD_RESAMPLER_MFT | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+        },
+        {
+            /* Float -> PCM, refuse input type, add converter, allow resampler output type */
+            .input_type = &audio_float_44100, .output_type = &audio_pcm_48000_resampler, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
+            .expected_result = S_OK,
+            .flags = LOADER_SET_INVALID_INPUT | LOADER_ADD_RESAMPLER_MFT | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
 
         {
@@ -2900,6 +2936,46 @@ static void test_topology_loader(void)
             handler.media_types = NULL;
         }
 
+        if (test->flags & LOADER_ADD_RESAMPLER_MFT)
+        {
+            hr = IMFTopology_Clear(topology);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopology_AddNode(topology, src_node);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopology_AddNode(topology, sink_node);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &mft_node);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = CoCreateInstance(&CLSID_CResamplerMediaObject, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopologyNode_SetGUID(mft_node, &MF_TOPONODE_TRANSFORM_OBJECTID, &CLSID_CResamplerMediaObject);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopologyNode_SetObject(mft_node, (IUnknown *)transform);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            IMFTransform_Release(transform);
+
+            hr = IMFTopology_AddNode(topology, mft_node);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopologyNode_ConnectOutput(src_node, 0, mft_node, 0);
+            ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+            hr = IMFTopologyNode_ConnectOutput(mft_node, 0, sink_node, 0);
+            ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+            IMFTopologyNode_Release(mft_node);
+        }
+        else
+        {
+            hr = IMFTopology_Clear(topology);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopology_AddNode(topology, src_node);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopology_AddNode(topology, sink_node);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopologyNode_ConnectOutput(src_node, 0, sink_node, 0);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        }
+
         create_descriptors(1, &input_type, test->current_input, &pd, &sd);
 
         source = create_test_source(pd);
@@ -3028,13 +3104,22 @@ todo_wine {
 
                 hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
                 ok(hr == S_OK, "Failed to get transform output type, hr %#lx.\n", hr);
-
                 hr = IMFMediaType_Compare(output_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
                 ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
                 ok(ret, "Output type of last transform doesn't match sink node type.\n");
+                IMFMediaType_Release(media_type);
+
+                hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+                ok(hr == S_OK, "Failed to get transform input type, hr %#lx.\n", hr);
+                if ((test->flags & (LOADER_EXPECTED_CONVERTER | LOADER_EXPECTED_DECODER)) != (LOADER_EXPECTED_CONVERTER | LOADER_EXPECTED_DECODER))
+                {
+                    hr = IMFMediaType_Compare(input_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
+                    ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
+                    ok(ret, "Input type of transform doesn't match source node type.\n");
+                }
+                IMFMediaType_Release(media_type);
 
                 IMFTopologyNode_Release(mft_node);
-                IMFMediaType_Release(media_type);
                 IMFTransform_Release(transform);
             }
 
