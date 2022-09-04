@@ -165,14 +165,7 @@ static void remove_unix_device(struct unix_device *unix_device)
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
-static HANDLE libusb_event_thread, event_thread;
-
-static DWORD CALLBACK libusb_event_thread_proc(void *arg)
-{
-    WINE_UNIX_CALL(unix_usb_main_loop, NULL);
-
-    return 0;
-}
+static HANDLE event_thread;
 
 static void complete_irp(IRP *irp)
 {
@@ -187,18 +180,18 @@ static void complete_irp(IRP *irp)
 static DWORD CALLBACK event_thread_proc(void *arg)
 {
     struct usb_event event;
-
-    TRACE("Starting client event thread.\n");
-
-    for (;;)
+    struct usb_main_loop_params params =
     {
-        struct usb_get_event_params params =
-        {
-            .event = &event,
-        };
+        .event = &event,
+    };
 
-        WINE_UNIX_CALL(unix_usb_get_event, &params);
+    TRACE("Starting event thread.\n");
 
+    if (WINE_UNIX_CALL(unix_usb_init, NULL) != STATUS_SUCCESS)
+        return 0;
+
+    while (WINE_UNIX_CALL(unix_usb_main_loop, &params) == STATUS_PENDING)
+    {
         switch (event.type)
         {
             case USB_EVENT_ADD_DEVICE:
@@ -212,12 +205,11 @@ static DWORD CALLBACK event_thread_proc(void *arg)
             case USB_EVENT_TRANSFER_COMPLETE:
                 complete_irp(event.u.completed_irp);
                 break;
-
-            case USB_EVENT_SHUTDOWN:
-                TRACE("Shutting down client event thread.\n");
-                return 0;
         }
     }
+
+    TRACE("Shutting down event thread.\n");
+    return 0;
 }
 
 static NTSTATUS fdo_pnp(IRP *irp)
@@ -266,7 +258,6 @@ static NTSTATUS fdo_pnp(IRP *irp)
         }
 
         case IRP_MN_START_DEVICE:
-            libusb_event_thread = CreateThread(NULL, 0, libusb_event_thread_proc, NULL, 0, NULL);
             event_thread = CreateThread(NULL, 0, event_thread_proc, NULL, 0, NULL);
 
             irp->IoStatus.Status = STATUS_SUCCESS;
@@ -281,8 +272,6 @@ static NTSTATUS fdo_pnp(IRP *irp)
             struct usb_device *device, *cursor;
 
             WINE_UNIX_CALL(unix_usb_exit, NULL);
-            WaitForSingleObject(libusb_event_thread, INFINITE);
-            CloseHandle(libusb_event_thread);
             WaitForSingleObject(event_thread, INFINITE);
             CloseHandle(event_thread);
 

@@ -51,10 +51,7 @@ struct unix_device
 
 static libusb_hotplug_callback_handle hotplug_cb_handle;
 
-static bool thread_shutdown;
-
-static pthread_cond_t event_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t event_mutex = PTHREAD_MUTEX_INITIALIZER;
+static volatile bool thread_shutdown;
 
 static struct usb_event *usb_events;
 static size_t usb_event_count, usb_events_capacity;
@@ -92,28 +89,21 @@ static bool array_reserve(void **elements, size_t *capacity, size_t count, size_
 
 static void queue_event(const struct usb_event *event)
 {
-    pthread_mutex_lock(&event_mutex);
     if (array_reserve((void **)&usb_events, &usb_events_capacity, usb_event_count + 1, sizeof(*usb_events)))
         usb_events[usb_event_count++] = *event;
     else
         ERR("Failed to queue event.\n");
-    pthread_mutex_unlock(&event_mutex);
-    pthread_cond_signal(&event_cond);
 }
 
-static NTSTATUS usb_get_event(void *args)
+static bool get_event(struct usb_event *event)
 {
-    const struct usb_get_event_params *params = args;
+    if (!usb_event_count) return false;
 
-    pthread_mutex_lock(&event_mutex);
-    while (!usb_event_count)
-        pthread_cond_wait(&event_cond, &event_mutex);
-    *params->event = usb_events[0];
+    *event = usb_events[0];
     if (--usb_event_count)
         memmove(usb_events, usb_events + 1, usb_event_count * sizeof(*usb_events));
-    pthread_mutex_unlock(&event_mutex);
 
-    return STATUS_SUCCESS;
+    return true;
 }
 
 static void add_usb_device(libusb_device *libusb_device)
@@ -239,10 +229,30 @@ static int LIBUSB_CALL hotplug_cb(libusb_context *context, libusb_device *device
 
 static NTSTATUS usb_main_loop(void *args)
 {
-    static const struct usb_event shutdown_event = {.type = USB_EVENT_SHUTDOWN};
+    const struct usb_main_loop_params *params = args;
     int ret;
 
-    TRACE("Starting libusb event thread.\n");
+    while (!thread_shutdown)
+    {
+        if (get_event(params->event)) return STATUS_PENDING;
+
+        if ((ret = libusb_handle_events(NULL)))
+            ERR("Error handling events: %s\n", libusb_strerror(ret));
+    }
+
+    libusb_exit(NULL);
+    free(usb_events);
+    usb_events = NULL;
+    usb_event_count = usb_events_capacity = 0;
+    thread_shutdown = false;
+
+    TRACE("USB main loop exiting.\n");
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS usb_init(void *args)
+{
+    int ret;
 
     if ((ret = libusb_init(NULL)))
     {
@@ -260,17 +270,6 @@ static NTSTATUS usb_main_loop(void *args)
         return STATUS_UNSUCCESSFUL;
     }
 
-    while (!thread_shutdown)
-    {
-        if ((ret = libusb_handle_events(NULL)))
-            ERR("Error handling events: %s\n", libusb_strerror(ret));
-    }
-
-    libusb_exit(NULL);
-
-    queue_event(&shutdown_event);
-
-    TRACE("Shutting down libusb event thread.\n");
     return STATUS_SUCCESS;
 }
 
@@ -566,8 +565,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
 #define X(name) [unix_ ## name] = name
     X(usb_main_loop),
+    X(usb_init),
     X(usb_exit),
-    X(usb_get_event),
     X(usb_submit_urb),
     X(usb_cancel_transfer),
     X(usb_destroy_device),
