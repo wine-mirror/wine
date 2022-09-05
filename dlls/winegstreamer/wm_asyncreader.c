@@ -536,7 +536,7 @@ static HRESULT WINAPI WMReader_GetOutputFormat(IWMReader *iface, DWORD output,
 
     TRACE("reader %p, output %lu, index %lu, props %p.\n", reader, output, index, props);
 
-    return wm_reader_get_output_format(reader->wm_reader, output, index, props);
+    return IWMSyncReader2_GetOutputFormat(reader->reader, output, index, props);
 }
 
 static HRESULT WINAPI WMReader_Start(IWMReader *iface,

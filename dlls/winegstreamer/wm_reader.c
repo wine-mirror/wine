@@ -1538,57 +1538,6 @@ HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output
     return S_OK;
 }
 
-HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
-        DWORD index, IWMOutputMediaProps **props)
-{
-    struct wm_stream *stream;
-    struct wg_format format;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = get_stream_by_output_number(reader, output)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
-
-    switch (format.major_type)
-    {
-        case WG_MAJOR_TYPE_VIDEO:
-            if (index >= ARRAY_SIZE(video_formats))
-            {
-                LeaveCriticalSection(&reader->cs);
-                return NS_E_INVALID_OUTPUT_FORMAT;
-            }
-            format.u.video.format = video_formats[index];
-            break;
-
-        case WG_MAJOR_TYPE_AUDIO:
-            if (index)
-            {
-                LeaveCriticalSection(&reader->cs);
-                return NS_E_INVALID_OUTPUT_FORMAT;
-            }
-            format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
-            break;
-
-        case WG_MAJOR_TYPE_MPEG1_AUDIO:
-        case WG_MAJOR_TYPE_WMA:
-        case WG_MAJOR_TYPE_H264:
-            FIXME("Format %u not implemented!\n", format.major_type);
-            break;
-        case WG_MAJOR_TYPE_UNKNOWN:
-            break;
-    }
-
-    LeaveCriticalSection(&reader->cs);
-
-    *props = output_props_create(&format);
-    return *props ? S_OK : E_OUTOFMEMORY;
-}
-
 static const char *get_major_type_string(enum wg_major_type type)
 {
     switch (type)
@@ -2086,10 +2035,54 @@ static HRESULT WINAPI reader_GetOutputFormat(IWMSyncReader2 *iface,
         DWORD output, DWORD index, IWMOutputMediaProps **props)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+    struct wg_format format;
 
     TRACE("reader %p, output %lu, index %lu, props %p.\n", reader, output, index, props);
 
-    return wm_reader_get_output_format(reader, output, index, props);
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+
+    switch (format.major_type)
+    {
+        case WG_MAJOR_TYPE_VIDEO:
+            if (index >= ARRAY_SIZE(video_formats))
+            {
+                LeaveCriticalSection(&reader->cs);
+                return NS_E_INVALID_OUTPUT_FORMAT;
+            }
+            format.u.video.format = video_formats[index];
+            break;
+
+        case WG_MAJOR_TYPE_AUDIO:
+            if (index)
+            {
+                LeaveCriticalSection(&reader->cs);
+                return NS_E_INVALID_OUTPUT_FORMAT;
+            }
+            format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
+            break;
+
+        case WG_MAJOR_TYPE_MPEG1_AUDIO:
+        case WG_MAJOR_TYPE_WMA:
+        case WG_MAJOR_TYPE_H264:
+            FIXME("Format %u not implemented!\n", format.major_type);
+            break;
+        case WG_MAJOR_TYPE_UNKNOWN:
+            break;
+    }
+
+    LeaveCriticalSection(&reader->cs);
+
+    *props = output_props_create(&format);
+    return *props ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI reader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD output, DWORD *count)
