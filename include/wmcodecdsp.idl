@@ -68,3 +68,18 @@ coclass AACMFTEncoder {}
     uuid(98230571-0087-4204-b020-3282538e57d3)
 ]
 coclass CColorConvertDMO {}
+
+[
+    uuid(d23b90d0-144f-46bd-841d-59e4eb19dc59)
+]
+coclass CWMV9EncMediaObject {}
+
+[
+    uuid(82d353df-90bd-4382-8bc2-3f6192b76e34)
+]
+coclass CWMVDecMediaObject {}
+
+[
+    uuid(7e320092-596a-41b2-bbeb-175d10504eb6)
+]
+coclass CWMVXEncMediaObject {}
