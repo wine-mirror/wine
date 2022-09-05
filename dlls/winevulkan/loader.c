@@ -491,6 +491,40 @@ void WINAPI vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *alloca
     free(device);
 }
 
+VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *create_info,
+                                    const VkAllocationCallbacks *allocator, VkCommandPool *ret)
+{
+    struct vkCreateCommandPool_params params;
+    struct vk_command_pool *cmd_pool;
+    VkResult result;
+
+    if (!(cmd_pool = malloc(sizeof(*cmd_pool))))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    cmd_pool->unix_handle = 0;
+
+    params.device = device;
+    params.pCreateInfo = create_info;
+    params.pAllocator = allocator;
+    params.pCommandPool = ret;
+    params.client_ptr = cmd_pool;
+    result = vk_unix_call(unix_vkCreateCommandPool, &params);
+    if (!cmd_pool->unix_handle)
+        free(cmd_pool);
+    return result;
+}
+
+void WINAPI vkDestroyCommandPool(VkDevice device, VkCommandPool handle, const VkAllocationCallbacks *allocator)
+{
+    struct vk_command_pool *cmd_pool = command_pool_from_handle(handle);
+    struct vkDestroyCommandPool_params params;
+
+    params.device = device;
+    params.commandPool = handle;
+    params.pAllocator = allocator;
+    vk_unix_call(unix_vkDestroyCommandPool, &params);
+    free(cmd_pool);
+}
+
 static BOOL WINAPI call_vulkan_debug_report_callback( struct wine_vk_debug_report_params *params, ULONG size )
 {
     return params->user_callback(params->flags, params->object_type, params->object_handle, params->location,

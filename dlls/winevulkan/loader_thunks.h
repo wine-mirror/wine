@@ -2066,6 +2066,7 @@ struct vkCreateCommandPool_params
     const VkCommandPoolCreateInfo *pCreateInfo;
     const VkAllocationCallbacks *pAllocator;
     VkCommandPool *pCommandPool;
+    void *client_ptr;
 };
 
 struct vkCreateComputePipelines_params

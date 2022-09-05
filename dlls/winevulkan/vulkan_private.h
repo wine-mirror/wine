@@ -157,6 +157,7 @@ static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
 
 struct wine_cmd_pool
 {
+    VkCommandPool handle;
     VkCommandPool command_pool;
 
     struct list command_buffers;
@@ -166,12 +167,8 @@ struct wine_cmd_pool
 
 static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool handle)
 {
-    return (struct wine_cmd_pool *)(uintptr_t)handle;
-}
-
-static inline VkCommandPool wine_cmd_pool_to_handle(struct wine_cmd_pool *cmd_pool)
-{
-    return (VkCommandPool)(uintptr_t)cmd_pool;
+    struct vk_command_pool *client_ptr = command_pool_from_handle(handle);
+    return (struct wine_cmd_pool *)(uintptr_t)client_ptr->unix_handle;
 }
 
 struct wine_debug_utils_messenger

@@ -63,8 +63,8 @@ static const struct vulkan_funcs *vk_funcs;
 
 #define WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, client_handle, native_handle, object) \
     wine_vk_add_handle_mapping((instance), (uintptr_t)(client_handle), (uintptr_t)(native_handle), &(object)->mapping)
-#define WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, native_handle) \
-    wine_vk_add_handle_mapping((instance), (uint64_t) (uintptr_t) (object), (uint64_t) (native_handle), &(object)->mapping)
+#define WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, client_handle, native_handle, object) \
+    wine_vk_add_handle_mapping((instance), (uintptr_t)(client_handle), (native_handle), &(object)->mapping)
 static void  wine_vk_add_handle_mapping(struct wine_instance *instance, uint64_t wrapped_handle,
         uint64_t native_handle, struct wine_vk_mapping *mapping)
 {
@@ -1148,6 +1148,7 @@ NTSTATUS wine_vkCreateCommandPool(void *args)
     const VkCommandPoolCreateInfo *info = params->pCreateInfo;
     const VkAllocationCallbacks *allocator = params->pAllocator;
     VkCommandPool *command_pool = params->pCommandPool;
+    struct vk_command_pool *handle = params->client_ptr;
     struct wine_cmd_pool *object;
     VkResult res;
 
@@ -1165,8 +1166,11 @@ NTSTATUS wine_vkCreateCommandPool(void *args)
 
     if (res == VK_SUCCESS)
     {
-        WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object, object->command_pool);
-        *command_pool = wine_cmd_pool_to_handle(object);
+        object->handle = (uintptr_t)handle;
+        handle->unix_handle = (uintptr_t)object;
+        WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object->handle,
+                                             object->command_pool, object);
+        *command_pool = object->handle;
     }
     else
     {
@@ -1575,7 +1579,7 @@ NTSTATUS wine_vkCreateWin32SurfaceKHR(void *args)
 
     object->surface = vk_funcs->p_wine_get_native_surface(object->driver_surface);
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->surface);
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->surface, object);
 
     *surface = wine_surface_to_handle(object);
 
@@ -1689,7 +1693,7 @@ NTSTATUS wine_vkCreateDebugUtilsMessengerEXT(void *args)
         return res;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->debug_messenger);
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->debug_messenger, object);
     *messenger = wine_debug_utils_messenger_to_handle(object);
 
     return VK_SUCCESS;
@@ -1753,7 +1757,7 @@ NTSTATUS wine_vkCreateDebugReportCallbackEXT(void *args)
         return res;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->debug_callback);
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->debug_callback, object);
     *callback = wine_debug_report_callback_to_handle(object);
 
     return VK_SUCCESS;

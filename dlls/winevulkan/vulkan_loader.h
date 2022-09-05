@@ -78,6 +78,16 @@ struct VkDevice_T
     struct VkQueue_T queues[1];
 };
 
+struct vk_command_pool
+{
+    UINT64 unix_handle;
+};
+
+static inline struct vk_command_pool *command_pool_from_handle(VkCommandPool handle)
+{
+    return (struct vk_command_pool *)(uintptr_t)handle;
+}
+
 struct vulkan_func
 {
     const char *name;

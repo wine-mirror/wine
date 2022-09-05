@@ -1999,16 +1999,6 @@ VkResult WINAPI vkCreateBufferView(VkDevice device, const VkBufferViewCreateInfo
     return vk_unix_call(unix_vkCreateBufferView, &params);
 }
 
-VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCommandPool *pCommandPool)
-{
-    struct vkCreateCommandPool_params params;
-    params.device = device;
-    params.pCreateInfo = pCreateInfo;
-    params.pAllocator = pAllocator;
-    params.pCommandPool = pCommandPool;
-    return vk_unix_call(unix_vkCreateCommandPool, &params);
-}
-
 VkResult WINAPI vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
 {
     struct vkCreateComputePipelines_params params;
@@ -2439,15 +2429,6 @@ void WINAPI vkDestroyBufferView(VkDevice device, VkBufferView bufferView, const 
     params.bufferView = bufferView;
     params.pAllocator = pAllocator;
     vk_unix_call(unix_vkDestroyBufferView, &params);
-}
-
-void WINAPI vkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks *pAllocator)
-{
-    struct vkDestroyCommandPool_params params;
-    params.device = device;
-    params.commandPool = commandPool;
-    params.pAllocator = pAllocator;
-    vk_unix_call(unix_vkDestroyCommandPool, &params);
 }
 
 void WINAPI vkDestroyCuFunctionNVX(VkDevice device, VkCuFunctionNVX function, const VkAllocationCallbacks *pAllocator)
