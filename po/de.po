@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-06-28 13:20+0200\n"
+"PO-Revision-Date: 2022-09-05 10:50+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -1334,10 +1334,8 @@ msgid "Options"
 msgstr "Einstellungen"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
-msgstr "Standards"
+msgstr "Standard"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
