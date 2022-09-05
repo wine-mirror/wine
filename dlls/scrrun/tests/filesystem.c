@@ -27,6 +27,7 @@
 #include "olectl.h"
 #include "oleauto.h"
 #include "dispex.h"
+#include "shlwapi.h"
 
 #include "wine/test.h"
 
@@ -927,7 +928,9 @@ static void test_BuildPath(void)
 
 static void test_GetFolder(void)
 {
-    WCHAR buffW[MAX_PATH];
+    static const WCHAR dir[] = L"test_dir";
+
+    WCHAR buffW[MAX_PATH], temp_path[MAX_PATH], prev_path[MAX_PATH];
     IFolder *folder;
     HRESULT hr;
     BSTR str;
@@ -959,6 +962,22 @@ static void test_GetFolder(void)
     SysFreeString(str);
     test_provideclassinfo(folder, &CLSID_Folder);
     IFolder_Release(folder);
+
+    GetCurrentDirectoryW(MAX_PATH, prev_path);
+    GetTempPathW(MAX_PATH, temp_path);
+    SetCurrentDirectoryW(temp_path);
+    ok(CreateDirectoryW(dir, NULL), "CreateDirectory(%s) failed\n", wine_dbgstr_w(dir));
+    str = SysAllocString(dir);
+    hr = IFileSystem3_GetFolder(fs3, str, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+    hr = IFolder_get_Path(folder, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!PathIsRelativeW(str), "path %s is relative.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IFolder_Release(folder);
+    RemoveDirectoryW(dir);
+    SetCurrentDirectoryW(prev_path);
 }
 
 static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG count, int line)
