@@ -312,6 +312,38 @@ static HRESULT evr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_
     return hr;
 }
 
+/* FIXME: errors should be propagated from init/start/stop handlers. */
+static void evr_init_stream(struct strmbase_renderer *iface)
+{
+    struct evr *filter = impl_from_strmbase_renderer(iface);
+
+    if (!filter->mixer) return;
+
+    if (SUCCEEDED(IMFTransform_ProcessMessage(filter->mixer, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0)))
+        IMFVideoPresenter_ProcessMessage(filter->presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
+}
+
+static void evr_start_stream(struct strmbase_renderer *iface)
+{
+    struct evr *filter = impl_from_strmbase_renderer(iface);
+
+    if (filter->mixer)
+        IMFTransform_ProcessMessage(filter->mixer, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+}
+
+static void evr_stop_stream(struct strmbase_renderer *iface)
+{
+    struct evr *filter = impl_from_strmbase_renderer(iface);
+
+    if (!filter->mixer) return;
+
+    if (SUCCEEDED(IMFTransform_ProcessMessage(filter->mixer, MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0)))
+    {
+        if (SUCCEEDED(IMFVideoPresenter_ProcessMessage(filter->presenter, MFVP_MESSAGE_ENDSTREAMING, 0)))
+            IMFTransform_ProcessMessage(filter->mixer, MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
+    }
+}
+
 static const struct strmbase_renderer_ops renderer_ops =
 {
     .renderer_query_accept = evr_query_accept,
@@ -320,6 +352,9 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_connect = evr_connect,
     .renderer_disconnect = evr_disconnect,
     .renderer_destroy = evr_destroy,
+    .renderer_init_stream = evr_init_stream,
+    .renderer_start_stream = evr_start_stream,
+    .renderer_stop_stream = evr_stop_stream,
 };
 
 static struct evr *impl_from_IEVRFilterConfig(IEVRFilterConfig *iface)
