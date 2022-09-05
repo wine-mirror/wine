@@ -164,7 +164,7 @@ static void classify(const WCHAR *string, WORD *chartype, DWORD count, const SCR
 
     for (i = 0; i < count; ++i)
     {
-        chartype[i] = get_table_entry_16( bidi_direction_table, string[i] );
+        chartype[i] = get_table_entry_32( bidi_direction_table, string[i] );
         if (c->fLegacyBidiClass && chartype[i] == ES)
         {
             if (string[i] == '+' || string[i] == '-') chartype[i] = NI;

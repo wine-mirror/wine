@@ -155,7 +155,7 @@ static void bidi_classify(const WCHAR *string, UINT8 *chartype, UINT32 count)
     UINT32 i;
 
     for (i = 0; i < count; ++i)
-        chartype[i] = get_table_entry_16( bidi_direction_table, string[i] );
+        chartype[i] = get_table_entry_32( bidi_direction_table, string[i] );
 }
 
 /* RESOLVE EXPLICIT */
