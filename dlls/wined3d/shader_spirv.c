@@ -57,6 +57,7 @@ struct shader_spirv_compile_arguments
         {
             uint32_t alpha_swizzle;
             unsigned int sample_count;
+            bool dual_source_blending;
         } fs;
     } u;
 };
@@ -147,6 +148,7 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
                     args->u.fs.alpha_swizzle |= 1u << i;
             }
             args->u.fs.sample_count = sample_count;
+            args->u.fs.dual_source_blending = state->blend_state && state->blend_state->dual_source;
             break;
 
         default:
@@ -176,6 +178,8 @@ static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_a
         shader_parameter->type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
         shader_parameter->data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
         shader_parameter->u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
+
+        args->spirv_target.dual_source_blending = compile_args->u.fs.dual_source_blending;
 
         args->spirv_target.parameter_count = 1;
         args->spirv_target.parameters = shader_parameter;

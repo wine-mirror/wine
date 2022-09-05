@@ -3422,6 +3422,8 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    const struct wined3d_blend_state *b = state->blend_state;
+    bool dual_source_blend = b && b->dual_source;
     struct wined3d_rendertarget_view *dsv;
     struct wined3d_rendertarget_view *rtv;
     struct wined3d_buffer_vk *buffer_vk;
@@ -3433,8 +3435,12 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     bool invalidate_ds = false;
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL))
-            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER)
+            || dual_source_blend != context_vk->c.last_was_dual_source_blend)
+    {
         context_vk->c.shader_update_mask |= (1u << WINED3D_SHADER_TYPE_PIXEL);
+        context_vk->c.last_was_dual_source_blend = dual_source_blend;
+    }
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX)))
         context_vk->c.shader_update_mask |= (1u << WINED3D_SHADER_TYPE_VERTEX);
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY)))
