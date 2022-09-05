@@ -5941,7 +5941,7 @@ static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
     WCHAR mirror;
     /* TODO: check if mirroring for higher planes makes sense at all */
     if (codepoint > 0xffff) return codepoint;
-    mirror = get_table_entry(wine_mirror_map, codepoint);
+    mirror = get_table_entry_16(wine_mirror_map, codepoint);
     return mirror ? mirror : codepoint;
 }
 

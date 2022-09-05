@@ -2993,7 +2993,7 @@ sub dump_scripts($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "wine_scripts_table", 0, 16, @scripts_table );
+    dump_three_level_mapping( "wine_scripts_table", 0, 16, @scripts_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -3257,7 +3257,7 @@ sub compress_array($$@)
 }
 
 ################################################################
-# dump a char -> 16-bit value mapping table using two-level tables
+# dump a char -> value mapping table using two-level tables
 sub dump_two_level_mapping($$$@)
 {
     my $name = shift;

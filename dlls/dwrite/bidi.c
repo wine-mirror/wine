@@ -155,7 +155,7 @@ static void bidi_classify(const WCHAR *string, UINT8 *chartype, UINT32 count)
     UINT32 i;
 
     for (i = 0; i < count; ++i)
-        chartype[i] = get_table_entry( bidi_direction_table, string[i] );
+        chartype[i] = get_table_entry_16( bidi_direction_table, string[i] );
 }
 
 /* RESOLVE EXPLICIT */
@@ -637,7 +637,7 @@ static BracketPair *bidi_compute_bracket_pairs(IsolatedRun *iso_run)
     stack_index = malloc(sizeof(int) * iso_run->length);
 
     for (i = 0; i < iso_run->length; i++) {
-        unsigned short ubv = get_table_entry(bidi_bracket_table, iso_run->item[i].ch);
+        unsigned short ubv = get_table_entry_16(bidi_bracket_table, iso_run->item[i].ch);
         if (ubv)
         {
             if (!out)
