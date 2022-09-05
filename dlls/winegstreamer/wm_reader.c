@@ -1503,41 +1503,6 @@ static const enum wg_video_format video_formats[] =
     WG_VIDEO_FORMAT_RGB15,
 };
 
-HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output, DWORD *count)
-{
-    struct wm_stream *stream;
-    struct wg_format format;
-
-    EnterCriticalSection(&reader->cs);
-
-    if (!(stream = get_stream_by_output_number(reader, output)))
-    {
-        LeaveCriticalSection(&reader->cs);
-        return E_INVALIDARG;
-    }
-
-    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
-    switch (format.major_type)
-    {
-        case WG_MAJOR_TYPE_VIDEO:
-            *count = ARRAY_SIZE(video_formats);
-            break;
-
-        case WG_MAJOR_TYPE_MPEG1_AUDIO:
-        case WG_MAJOR_TYPE_WMA:
-        case WG_MAJOR_TYPE_H264:
-            FIXME("Format %u not implemented!\n", format.major_type);
-            /* fallthrough */
-        case WG_MAJOR_TYPE_AUDIO:
-        case WG_MAJOR_TYPE_UNKNOWN:
-            *count = 1;
-            break;
-    }
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 static const char *get_major_type_string(enum wg_major_type type)
 {
     switch (type)
@@ -2088,10 +2053,39 @@ static HRESULT WINAPI reader_GetOutputFormat(IWMSyncReader2 *iface,
 static HRESULT WINAPI reader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD output, DWORD *count)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+    struct wg_format format;
 
     TRACE("reader %p, output %lu, count %p.\n", reader, output, count);
 
-    return wm_reader_get_output_format_count(reader, output, count);
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+    switch (format.major_type)
+    {
+        case WG_MAJOR_TYPE_VIDEO:
+            *count = ARRAY_SIZE(video_formats);
+            break;
+
+        case WG_MAJOR_TYPE_MPEG1_AUDIO:
+        case WG_MAJOR_TYPE_WMA:
+        case WG_MAJOR_TYPE_H264:
+            FIXME("Format %u not implemented!\n", format.major_type);
+            /* fallthrough */
+        case WG_MAJOR_TYPE_AUDIO:
+        case WG_MAJOR_TYPE_UNKNOWN:
+            *count = 1;
+            break;
+    }
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_GetOutputNumberForStream(IWMSyncReader2 *iface,

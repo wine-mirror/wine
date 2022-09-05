@@ -526,7 +526,7 @@ static HRESULT WINAPI WMReader_GetOutputFormatCount(IWMReader *iface, DWORD outp
 
     TRACE("reader %p, output %lu, count %p.\n", reader, output, count);
 
-    return wm_reader_get_output_format_count(reader->wm_reader, output, count);
+    return IWMSyncReader2_GetOutputFormatCount(reader->reader, output, count);
 }
 
 static HRESULT WINAPI WMReader_GetOutputFormat(IWMReader *iface, DWORD output,
