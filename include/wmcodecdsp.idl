@@ -52,19 +52,19 @@ coclass CMSMPEGDecoderMFT {}
 [
     uuid(2eeb4adf-4578-4d10-bca7-bb955f56320a)
 ]
-coclass CWMADecMediaObject {};
+coclass CWMADecMediaObject {}
 
 [
     uuid(70f598e9-f4ab-495a-99e2-a7c4d3d89abf)
 ]
-coclass CWMAEncMediaObject {};
+coclass CWMAEncMediaObject {}
 
 [
     uuid(93af0c51-2275-45d2-a35b-f2ba21caed00)
 ]
-coclass AACMFTEncoder {};
+coclass AACMFTEncoder {}
 
 [
     uuid(98230571-0087-4204-b020-3282538e57d3)
 ]
-coclass CColorConvertDMO {};
+coclass CColorConvertDMO {}
