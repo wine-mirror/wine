@@ -233,9 +233,14 @@ static inline BOOL is_consonant( int type )
     return (type == lex_Ra || type == lex_Consonant);
 }
 
-static inline unsigned short get_table_entry( const unsigned short *table, WCHAR ch )
+static inline unsigned short get_table_entry_16( const unsigned short *table, WCHAR ch )
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+}
+
+static inline unsigned short get_table_entry_32( const unsigned short *table, UINT ch )
+{
+    return table[table[table[table[ch >> 12] + ((ch >> 8) & 0x0f)] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
 }
 
 typedef int (*lexical_function)(WCHAR c);

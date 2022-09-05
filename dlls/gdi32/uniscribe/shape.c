@@ -1087,7 +1087,7 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     context_shape = heap_alloc(cChars * sizeof(*context_shape));
 
     for (i = 0; i < cChars; i++)
-        context_type[i] = get_table_entry( wine_shaping_table, pwcChars[i] );
+        context_type[i] = get_table_entry_16( wine_shaping_table, pwcChars[i] );
 
     for (i = 0; i < cChars; i++)
     {
@@ -1346,7 +1346,7 @@ static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     context_shape = heap_alloc(cChars * sizeof(*context_shape));
 
     for (i = 0; i < cChars; i++)
-        context_type[i] = get_table_entry( wine_shaping_table, pwcChars[i] );
+        context_type[i] = get_table_entry_16( wine_shaping_table, pwcChars[i] );
 
     for (i = 0; i < cChars; i++)
     {
@@ -2219,7 +2219,7 @@ static inline int unicode_lex(WCHAR c)
     if (c == 0x200C) return lex_ZWNJ;
     if (c == 0x00A0) return lex_NBSP;
 
-    type = get_table_entry( indic_syllabic_table, c );
+    type = get_table_entry_16( indic_syllabic_table, c );
 
     if ((type & 0x00ff) != 0x0007)  type = type & 0x00ff;
 

@@ -856,7 +856,7 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 static WCHAR mirror_char( WCHAR ch )
 {
     extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
-    WCHAR mirror = get_table_entry( wine_mirror_map, ch );
+    WCHAR mirror = get_table_entry_16( wine_mirror_map, ch );
     return mirror ? mirror : ch;
 }
 

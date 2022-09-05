@@ -2748,7 +2748,7 @@ sub dump_linebreak($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "wine_linebreak_table", $break_types{'XX'}, 16, @break_table );
+    dump_three_level_mapping( "wine_linebreak_table", $break_types{'XX'}, 16, @break_table );
 
     close OUTPUT;
     save_file($filename);

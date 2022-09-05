@@ -816,7 +816,7 @@ static inline void set_break_condition(UINT32 pos, enum BreakConditionLocation l
 
 BOOL lb_is_newline_char(WCHAR ch)
 {
-    short c = get_table_entry_16(wine_linebreak_table, ch);
+    short c = get_table_entry_32(wine_linebreak_table, ch);
     return c == b_LF || c == b_NL || c == b_CR || c == b_BK;
 }
 
@@ -834,7 +834,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
 
     for (i = 0; i < count; i++)
     {
-        break_class[i] = get_table_entry_16(wine_linebreak_table, text[i]);
+        break_class[i] = get_table_entry_32(wine_linebreak_table, text[i]);
 
         breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
         breakpoints[i].breakConditionAfter  = DWRITE_BREAK_CONDITION_NEUTRAL;
