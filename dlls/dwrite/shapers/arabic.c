@@ -122,10 +122,9 @@ arabic_state_table[][JOINING_TYPES] =
 
 extern const unsigned short arabic_shaping_table[] DECLSPEC_HIDDEN;
 
-static unsigned short arabic_get_joining_type(WCHAR ch)
+static unsigned short arabic_get_joining_type(UINT ch)
 {
-    const unsigned short *table = arabic_shaping_table;
-    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+    return get_table_entry_32(arabic_shaping_table, ch);
 }
 
 static void arabic_set_shaping_action(struct scriptshaping_context *context,

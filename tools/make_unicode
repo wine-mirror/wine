@@ -3157,7 +3157,7 @@ sub dump_arabic_shaping($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "arabic_shaping_table", 0, 16, @joining_table );
+    dump_three_level_mapping( "arabic_shaping_table", 0, 16, @joining_table );
 
     close OUTPUT;
     save_file($filename);
