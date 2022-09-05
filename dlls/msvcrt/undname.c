@@ -1509,7 +1509,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             case '9': function_name = "`vcall'"; break;
             case 'A': function_name = "`typeof'"; break;
             case 'B': function_name = "`local static guard'"; break;
-            case 'C': sym->result = (char*)"`string'"; /* string literal: followed by string encoding (native nevers undecode it) */
+            case 'C': sym->result = (char*)"`string'"; /* string literal: followed by string encoding (native never undecode it) */
                 /* FIXME: should unmangle the whole string for error reporting */
                 if (*sym->current && sym->current[strlen(sym->current) - 1] == '@') ret = TRUE;
                 goto done;
