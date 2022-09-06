@@ -351,6 +351,8 @@ static void test_sample_copier(void)
         return;
     }
 
+    winetest_push_context("copier");
+
     hr = pMFCreateSampleCopierMFT(&copier);
     ok(hr == S_OK, "Failed to create sample copier, hr %#lx.\n", hr);
 
@@ -602,6 +604,8 @@ static void test_sample_copier(void)
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaType_Release(mediatype);
     ok(ref == 0, "Release returned %ld\n", ref);
+
+    winetest_pop_context();
 }
 
 struct sample_metadata
@@ -958,6 +962,8 @@ static void test_wma_encoder(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
+    winetest_push_context("wmaenc");
+
     if (!create_transform(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, L"WMAudio Encoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &CLSID_CWMAEncMediaObject, &class_id))
@@ -1080,6 +1086,7 @@ static void test_wma_encoder(void)
     ok(ret == 0, "Release returned %lu\n", ret);
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
@@ -1209,6 +1216,8 @@ static void test_wma_decoder(void)
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("wmadec");
 
     if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"WMAudio Decoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
@@ -1592,6 +1601,7 @@ static void test_wma_decoder(void)
     ok( ref == 0, "Release returned %lu\n", ref );
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
@@ -1848,6 +1858,8 @@ static void test_h264_decoder(void)
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("h264dec");
 
     if (!create_transform(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, L"Microsoft H264 Video Decoder MFT", &MFMediaType_Video,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
@@ -2353,6 +2365,7 @@ static void test_h264_decoder(void)
     ok(ret == 0, "Release returned %lu\n", ret);
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
@@ -2463,6 +2476,8 @@ static void test_audio_convert(void)
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("resampler");
 
     if (!create_transform(MFT_CATEGORY_AUDIO_EFFECT, &input_type, &output_type, L"Resampler MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
@@ -2742,6 +2757,7 @@ static void test_audio_convert(void)
     ok(ret == 0, "Release returned %lu\n", ret);
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
@@ -2920,6 +2936,8 @@ static void test_color_convert(void)
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("colorconv");
 
     if (!create_transform(MFT_CATEGORY_VIDEO_EFFECT, &input_type, &output_type, L"Color Converter MFT", &MFMediaType_Video,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
@@ -3117,6 +3135,7 @@ static void test_color_convert(void)
     ok(ret == 0, "Release returned %ld\n", ret);
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
@@ -3308,6 +3327,8 @@ static void test_video_processor(void)
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("videoproc");
 
     if (!create_transform(MFT_CATEGORY_VIDEO_PROCESSOR, &input_type, &output_type, L"Microsoft Video Processor MFT", &MFMediaType_Video,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
@@ -3867,6 +3888,7 @@ skip_output:
     ok(ret == 0, "Release returned %ld\n", ret);
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
@@ -4003,6 +4025,8 @@ static void test_mp3_decoder(void)
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("mp3dec");
 
     if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"MP3 Decoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
@@ -4302,6 +4326,7 @@ static void test_mp3_decoder(void)
     ok(ret == 0, "Release returned %lu\n", ret);
 
 failed:
+    winetest_pop_context();
     CoUninitialize();
 }
 
