@@ -300,14 +300,14 @@ const char *winetest_elapsed(void)
     return wine_dbg_sprintf( "%.3f", (now - winetest_start_time) / 1000.0);
 }
 
-static const char color_reset[] = "\e[0m";
-static const char color_dark_red[] = "\e[31m";
-static const char color_dark_purple[] = "\e[35m";
-static const char color_green[] = "\e[32m";
-static const char color_yellow[] = "\e[33m";
-static const char color_blue[] = "\e[34m";
-static const char color_bright_red[] = "\e[1;91m";
-static const char color_bright_purple[] = "\e[1;95m";
+static const char color_reset[] = "\x1b[0m";
+static const char color_dark_red[] = "\x1b[31m";
+static const char color_dark_purple[] = "\x1b[35m";
+static const char color_green[] = "\x1b[32m";
+static const char color_yellow[] = "\x1b[33m";
+static const char color_blue[] = "\x1b[34m";
+static const char color_bright_red[] = "\x1b[1;91m";
+static const char color_bright_purple[] = "\x1b[1;95m";
 
 static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static void winetest_printf( const char *msg, ... )
