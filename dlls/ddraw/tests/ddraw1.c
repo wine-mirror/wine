@@ -14224,8 +14224,13 @@ static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC *surface_desc
 
     if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height)
     {
-        param->new_width = surface_desc->dwWidth;
-        param->new_height = surface_desc->dwHeight;
+        /* See test_coop_level_mode_set_enum_cb() for why enumeration might accidentally continue. */
+        if (!param->new_width || (param->new_width < registry_mode.dmPelsWidth
+                && param->new_height < registry_mode.dmPelsHeight))
+        {
+            param->new_width = surface_desc->dwWidth;
+            param->new_height = surface_desc->dwHeight;
+        }
         return DDENUMRET_CANCEL;
     }
 
