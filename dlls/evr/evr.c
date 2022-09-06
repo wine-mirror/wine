@@ -51,6 +51,8 @@ struct evr
 
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
+    IMFVideoSampleAllocator *allocator;
+    IMFMediaType *media_type;
     unsigned int flags;
 };
 
@@ -148,6 +150,20 @@ static BOOL evr_is_mixer_d3d_aware(const struct evr *filter)
     return ret;
 }
 
+static HRESULT evr_get_service(void *unk, REFGUID service, REFIID riid, void **obj)
+{
+    IMFGetService *gs;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IUnknown_QueryInterface((IUnknown *)unk, &IID_IMFGetService, (void **)&gs)))
+    {
+        hr = IMFGetService_GetService(gs, service, riid, obj);
+        IMFGetService_Release(gs);
+    }
+
+    return hr;
+}
+
 static HRESULT evr_init_services(struct evr *filter)
 {
     IMFTopologyServiceLookupClient *lookup_client;
@@ -224,6 +240,16 @@ static void evr_release_services(struct evr *filter)
     }
 }
 
+static void evr_set_input_type(struct evr *filter, IMFMediaType *media_type)
+{
+    if (filter->media_type)
+        IMFMediaType_Release(filter->media_type);
+    if ((filter->media_type = media_type))
+        IMFMediaType_AddRef(filter->media_type);
+    if (!media_type && filter->allocator)
+        IMFVideoSampleAllocator_UninitializeSampleAllocator(filter->allocator);
+}
+
 static HRESULT evr_test_input_type(struct evr *filter, const AM_MEDIA_TYPE *mt, IMFMediaType **ret)
 {
     IMFMediaType *media_type;
@@ -259,13 +285,36 @@ static HRESULT evr_test_input_type(struct evr *filter, const AM_MEDIA_TYPE *mt, 
 static HRESULT evr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     struct evr *filter = impl_from_strmbase_renderer(iface);
+    IMFVideoSampleAllocator *allocator;
     IMFMediaType *media_type;
+    IUnknown *device_manager;
     HRESULT hr;
 
     if (SUCCEEDED(hr = evr_test_input_type(filter, mt, &media_type)))
     {
         if (SUCCEEDED(hr = IMFTransform_SetInputType(filter->mixer, 0, media_type, 0)))
             hr = IMFVideoPresenter_ProcessMessage(filter->presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+
+        if (SUCCEEDED(hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&allocator)))
+        {
+            if (SUCCEEDED(hr = evr_get_service(filter->presenter, &MR_VIDEO_RENDER_SERVICE,
+                    &IID_IDirect3DDeviceManager9, (void **)&device_manager)))
+            {
+                if (SUCCEEDED(hr = IMFVideoSampleAllocator_SetDirectXManager(allocator, device_manager)))
+                {
+                    if (SUCCEEDED(hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, media_type)))
+                    {
+                        IMFVideoSampleAllocator_AddRef((filter->allocator = allocator));
+                    }
+                }
+                IUnknown_Release(device_manager);
+            }
+
+            IMFVideoSampleAllocator_Release(allocator);
+        }
+
+        if (SUCCEEDED(hr))
+            evr_set_input_type(filter, media_type);
 
         IMFMediaType_Release(media_type);
     }
@@ -279,6 +328,7 @@ static void evr_disconnect(struct strmbase_renderer *iface)
 
     if (filter->mixer)
         IMFTransform_SetInputType(filter->mixer, 0, NULL, 0);
+    evr_set_input_type(filter, NULL);
     evr_release_services(filter);
 }
 
@@ -287,14 +337,102 @@ static void evr_destroy(struct strmbase_renderer *iface)
     struct evr *filter = impl_from_strmbase_renderer(iface);
 
     evr_uninitialize(filter);
+    evr_set_input_type(filter, NULL);
+    if (filter->allocator)
+        IMFVideoSampleAllocator_Release(filter->allocator);
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);
 }
 
-static HRESULT evr_render(struct strmbase_renderer *iface, IMediaSample *sample)
+static HRESULT evr_copy_sample_buffer(struct evr *filter, IMediaSample *input_sample, IMFSample **sample)
 {
-    FIXME("Not implemented.\n");
-    return E_NOTIMPL;
+    IDirect3DSurface9 *surface;
+    D3DLOCKED_RECT locked_rect;
+    IMFMediaBuffer *buffer;
+    UINT64 frame_size = 0;
+    UINT32 width, lines;
+    LONG src_stride;
+    HRESULT hr;
+    BYTE *src;
+
+    if (FAILED(hr = IMFMediaType_GetUINT32(filter->media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&src_stride)))
+    {
+        WARN("Unknown input buffer stride.\n");
+        return hr;
+    }
+    IMFMediaType_GetUINT64(filter->media_type, &MF_MT_FRAME_SIZE, &frame_size);
+    width = frame_size >> 32;
+    lines = frame_size;
+
+    if (FAILED(hr = IMediaSample_GetPointer(input_sample, &src)))
+    {
+        WARN("Failed to get pointer to sample data, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IMFVideoSampleAllocator_AllocateSample(filter->allocator, sample)))
+    {
+        WARN("Failed to allocate a sample, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = IMFSample_GetBufferByIndex(*sample, 0, &buffer)))
+    {
+        if (SUCCEEDED(hr = evr_get_service(buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface)))
+        {
+            if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_DISCARD)))
+            {
+                if (src_stride < 0) src -= src_stride * (lines - 1);
+                MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width * 4, lines);
+                IDirect3DSurface9_UnlockRect(surface);
+            }
+
+            IDirect3DSurface9_Release(surface);
+        }
+        IMFMediaBuffer_Release(buffer);
+    }
+
+    if (FAILED(hr))
+    {
+        IMFSample_Release(*sample);
+        *sample = NULL;
+    }
+
+    return hr;
+}
+
+static HRESULT evr_render(struct strmbase_renderer *iface, IMediaSample *input_sample)
+{
+    struct evr *filter = impl_from_strmbase_renderer(iface);
+    HRESULT hr = E_NOTIMPL;
+    GUID subtype = { 0 };
+    IMFSample *sample;
+
+    if (!filter->media_type)
+    {
+        WARN("Media type wasn't set.\n");
+        return E_UNEXPECTED;
+    }
+
+    IMFMediaType_GetGUID(filter->media_type, &MF_MT_SUBTYPE, &subtype);
+
+    if (IsEqualGUID(&subtype, &MFVideoFormat_ARGB32)
+            || IsEqualGUID(&subtype, &MFVideoFormat_RGB32))
+    {
+        if (SUCCEEDED(hr = evr_copy_sample_buffer(filter, input_sample, &sample)))
+        {
+            if (SUCCEEDED(IMFTransform_ProcessInput(filter->mixer, 0, sample, 0)))
+                IMFVideoPresenter_ProcessMessage(filter->presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
+
+            IMFSample_Release(sample);
+        }
+    }
+    else
+    {
+        FIXME("Unhandled input type %s.\n", debugstr_guid(&subtype));
+    }
+
+    return hr;
 }
 
 static HRESULT evr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
