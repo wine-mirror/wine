@@ -1573,6 +1573,10 @@ static void test_Console(void)
     SetConsoleMode(startup.hStdInput, modeIn);
     SetConsoleMode(startup.hStdOutput, modeOut);
 
+    /* don't test flag that is changed at startup if WINETEST_COLOR is set */
+    modeOut = (modeOut & ~ENABLE_VIRTUAL_TERMINAL_PROCESSING) |
+              (modeOutC & ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
     cpInC = GetConsoleCP();
     cpOutC = GetConsoleOutputCP();
 
