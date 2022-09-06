@@ -732,8 +732,16 @@ static HRESULT analyze_script(struct text_source_context *context, IDWriteTextAn
     return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
 }
 
-struct linebreaking_state {
+struct break_index
+{
+    unsigned int index;
+    UINT8 length;
+};
+
+struct linebreaking_state
+{
     DWRITE_LINE_BREAKPOINT *breakpoints;
+    struct break_index *breaks;
     UINT32 count;
 };
 
@@ -804,19 +812,36 @@ static BOOL has_strong_condition(DWRITE_BREAK_CONDITION old_condition, DWRITE_BR
 static inline void set_break_condition(UINT32 pos, enum BreakConditionLocation location, DWRITE_BREAK_CONDITION condition,
     struct linebreaking_state *state)
 {
-    if (location == BreakConditionBefore) {
-        if (has_strong_condition(state->breakpoints[pos].breakConditionBefore, condition))
+    unsigned int index = state->breaks[pos].index;
+
+    if (location == BreakConditionBefore)
+    {
+        if (has_strong_condition(state->breakpoints[index].breakConditionBefore, condition))
             return;
-        state->breakpoints[pos].breakConditionBefore = condition;
-        if (pos > 0)
-            state->breakpoints[pos-1].breakConditionAfter = condition;
+        state->breakpoints[index].breakConditionBefore = condition;
+        if (pos)
+        {
+            --pos;
+
+            index = state->breaks[pos].index;
+            if (state->breaks[pos].length > 1) index++;
+
+            state->breakpoints[index].breakConditionAfter = condition;
+        }
     }
-    else {
-        if (has_strong_condition(state->breakpoints[pos].breakConditionAfter, condition))
+    else
+    {
+        if (state->breaks[pos].length > 1) index++;
+
+        if (has_strong_condition(state->breakpoints[index].breakConditionAfter, condition))
             return;
-        state->breakpoints[pos].breakConditionAfter = condition;
+        state->breakpoints[index].breakConditionAfter = condition;
+
         if (pos + 1 < state->count)
-            state->breakpoints[pos+1].breakConditionBefore = condition;
+        {
+            index = state->breaks[pos + 1].index;
+            state->breakpoints[index].breakConditionBefore = condition;
+        }
     }
 }
 
@@ -826,42 +851,71 @@ BOOL lb_is_newline_char(WCHAR ch)
     return c == b_LF || c == b_NL || c == b_CR || c == b_BK;
 }
 
-static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_BREAKPOINT *breakpoints)
+static HRESULT analyze_linebreaks(IDWriteTextAnalysisSource *source, UINT32 position,
+        UINT32 length, DWRITE_LINE_BREAKPOINT *breakpoints)
 {
+    struct text_source_context context;
     struct linebreaking_state state;
+    struct break_index *breaks;
+    unsigned int count, index;
     short *break_class;
-    int i, j;
+    int i = 0, j;
+    HRESULT hr;
 
-    if (!(break_class = calloc(count, sizeof(*break_class))))
+    if (FAILED(hr = text_source_context_init(&context, source, position, length))) return hr;
+
+    if (!(breaks = calloc(length, sizeof(*breaks))))
         return E_OUTOFMEMORY;
 
-    state.breakpoints = breakpoints;
-    state.count = count;
-
-    for (i = 0; i < count; i++)
+    if (!(break_class = calloc(length, sizeof(*break_class))))
     {
-        break_class[i] = get_table_entry_32(wine_linebreak_table, text[i]);
+        free(breaks);
+        return E_OUTOFMEMORY;
+    }
 
-        breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
-        breakpoints[i].breakConditionAfter  = DWRITE_BREAK_CONDITION_NEUTRAL;
-        breakpoints[i].isWhitespace = !!iswspace(text[i]);
-        breakpoints[i].isSoftHyphen = text[i] == 0x00ad /* Unicode Soft Hyphen */;
-        breakpoints[i].padding = 0;
+    count = index = 0;
+    while (!text_source_get_next_u32_char(&context))
+    {
+        break_class[count] = get_table_entry_32(wine_linebreak_table, context.ch);
+        breaks[count].length = text_source_get_char_length(&context);
+        breaks[count].index = index;
 
         /* LB1 - resolve some classes. TODO: use external algorithms for these classes. */
-        switch (break_class[i])
+        switch (break_class[count])
         {
             case b_AI:
             case b_SA:
             case b_SG:
             case b_XX:
-                break_class[i] = b_AL;
+                break_class[count] = b_AL;
                 break;
             case b_CJ:
-                break_class[i] = b_NS;
+                break_class[count] = b_NS;
                 break;
         }
+
+        breakpoints[index].breakConditionBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
+        breakpoints[index].breakConditionAfter  = DWRITE_BREAK_CONDITION_NEUTRAL;
+        breakpoints[index].isWhitespace = context.ch < 0xffff ? !!iswspace(context.ch) : 0;
+        breakpoints[index].isSoftHyphen = context.ch == 0x00ad /* Unicode Soft Hyphen */;
+        breakpoints[index].padding = 0;
+        ++index;
+
+        if (breaks[count].length > 1)
+        {
+            breakpoints[index] = breakpoints[index - 1];
+            /* Never break in surrogate pairs. */
+            breakpoints[index - 1].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+            breakpoints[index].breakConditionBefore = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+            ++index;
+        }
+
+        ++count;
     }
+
+    state.breakpoints = breakpoints;
+    state.breaks = breaks;
+    state.count = count;
 
     /* LB2 - never break at the start */
     set_break_condition(0, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
@@ -1193,6 +1247,8 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
     }
 
     free(break_class);
+    free(breaks);
+
     return S_OK;
 }
 
@@ -1332,64 +1388,23 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeNumberSubstitution(IDWriteTextAn
 }
 
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnalyzer2 *iface,
-    IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
+        IDWriteTextAnalysisSource *source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink *sink)
 {
-    DWRITE_LINE_BREAKPOINT *breakpoints = NULL;
-    WCHAR *buff = NULL;
-    const WCHAR *text;
+    DWRITE_LINE_BREAKPOINT *breakpoints;
     HRESULT hr;
-    UINT32 len;
 
     TRACE("%p, %u, %u, %p.\n", source, position, length, sink);
 
-    if (length == 0)
+    if (!length)
         return S_OK;
 
-    /* get some, check for length */
-    text = NULL;
-    len = 0;
-    hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position, &text, &len);
-    if (FAILED(hr)) return hr;
-
-    if (len < length) {
-        UINT32 read;
-
-        if (!(buff = calloc(length, sizeof(*buff))))
-            return E_OUTOFMEMORY;
-        if (text)
-            memcpy(buff, text, len*sizeof(WCHAR));
-        read = len;
-
-        while (read < length && text) {
-            text = NULL;
-            len = 0;
-            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position+read, &text, &len);
-            if (FAILED(hr))
-                goto done;
-            if (!text)
-                break;
-            memcpy(&buff[read], text, min(len, length-read)*sizeof(WCHAR));
-            read += len;
-        }
-
-        text = buff;
-    }
-
     if (!(breakpoints = calloc(length, sizeof(*breakpoints))))
-    {
-        hr = E_OUTOFMEMORY;
-        goto done;
-    }
+        return E_OUTOFMEMORY;
 
-    hr = analyze_linebreaks(text, length, breakpoints);
-    if (FAILED(hr))
-        goto done;
+    if (SUCCEEDED(hr = analyze_linebreaks(source, position, length, breakpoints)))
+        hr = IDWriteTextAnalysisSink_SetLineBreakpoints(sink, position, length, breakpoints);
 
-    hr = IDWriteTextAnalysisSink_SetLineBreakpoints(sink, position, length, breakpoints);
-
-done:
     free(breakpoints);
-    free(buff);
 
     return hr;
 }
