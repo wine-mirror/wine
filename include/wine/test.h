@@ -743,7 +743,7 @@ int main( int argc, char **argv )
 
     if (GetEnvironmentVariableA( "WINETEST_COLOR", p, sizeof(p) ))
     {
-        BOOL automode = !strcasecmp(p, "auto");
+        BOOL automode = !strcmp(p, "auto");
         winetest_color = automode ? isatty( fileno( stdout ) ) : atoi(p);
         /* enable ANSI support for Windows console */
         if (winetest_color)
