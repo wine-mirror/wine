@@ -10128,15 +10128,6 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
             case WM_MOUSEMOVE:
             case WM_NCMOUSEMOVE:
                 return 0;
-
-            case WM_ERASEBKGND:
-            {
-                RECT rc;
-                INT ret = GetClipBox((HDC)wParam, &rc);
-
-                trace("WM_ERASEBKGND: GetClipBox()=%d, %s\n", ret, wine_dbgstr_rect(&rc));
-                break;
-            }
         }
 
         msg.hwnd = hwnd;
@@ -10525,7 +10516,6 @@ static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, 
     switch (uMsg)
     {
     case CB_FINDSTRINGEXACT:
-        trace("String: %p\n", (LPCWSTR)lParam);
         if (!lstrcmpW((LPCWSTR)lParam, wszUnicode))
             return 1;
         if (!lstrcmpW((LPCWSTR)lParam, wszAnsi))
@@ -13656,11 +13646,11 @@ static void test_TrackMouseEvent(void)
 static const struct message WmSetWindowRgn[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE
             |SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE, 0 },
-    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|optional }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE, 0xf },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { 0 }
 };
@@ -13668,17 +13658,17 @@ static const struct message WmSetWindowRgn[] = {
 static const struct message WmSetWindowRgn_no_redraw[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE
             |SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW, 0 },
-    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
-    { WM_WINDOWPOSCHANGED, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW, 0xf },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { 0 }
 };
 
 static const struct message WmSetWindowRgn_clear[] = {
     { WM_WINDOWPOSCHANGING, sent/*|wparam|lparam*/, SWP_NOACTIVATE|SWP_FRAMECHANGED
-            |SWP_NOSIZE|SWP_NOMOVE/*|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE only on some Windows versions */, 0xf
+            |SWP_NOSIZE|SWP_NOMOVE/*|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE only on some Windows versions */
             /* Some newer Windows versions set window coordinates instead of zeros in WINDOWPOS structure */},
-    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional }, /* FIXME: remove optional once Wine is fixed */
