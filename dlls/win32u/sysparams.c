@@ -2460,6 +2460,7 @@ static BOOL all_detached_settings( const DEVMODEW *displays )
 static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmode,
                                     HWND hwnd, DWORD flags, void *lparam )
 {
+    struct adapter *adapter;
     DEVMODEW *displays;
     LONG ret;
 
@@ -2478,6 +2479,19 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
     ret = user_driver->pChangeDisplaySettings( displays, hwnd, flags, lparam );
 
     free( displays );
+    if (ret) return ret;
+
+    if ((adapter = find_adapter( NULL )))
+    {
+        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+        user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, &current_mode );
+        adapter_release( adapter );
+
+        send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
+                              MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ),
+                              SMTO_ABORTIFHUNG, 2000, FALSE );
+    }
+
     return ret;
 }
 

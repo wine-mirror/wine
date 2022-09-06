@@ -2003,7 +2003,7 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 NtUserSetWindowPos(hwnd, 0, CGRectGetMinX(new_desktop_rect), CGRectGetMinY(new_desktop_rect),
                                    CGRectGetWidth(new_desktop_rect), CGRectGetHeight(new_desktop_rect),
                                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE);
-                send_message_timeout(HWND_BROADCAST, WM_MACDRV_DISPLAYCHANGE, wp, lp,
+                send_message_timeout(HWND_BROADCAST, WM_MACDRV_DISPLAYCHANGE, 0, 0,
                                      SMTO_ABORTIFHUNG, 2000, NULL);
             }
         }
@@ -2013,7 +2013,6 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
     case WM_MACDRV_DISPLAYCHANGE:
         macdrv_reassert_window_position(hwnd);
-        send_message(hwnd, WM_DISPLAYCHANGE, wp, lp);
         return 0;
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
         activate_on_following_focus();

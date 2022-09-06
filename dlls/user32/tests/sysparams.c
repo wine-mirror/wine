@@ -2493,7 +2493,6 @@ static void test_WM_DISPLAYCHANGE(void)
             /* Wait quite long for the message, screen setting changes can take some time */
             res = WaitForSingleObject( displaychange_sem, 10000 );
             ok( !res, "WaitForSingleObject returned %#lx\n", res );
-            todo_wine
             ok( last_bpp == bpp, "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
         }
         else

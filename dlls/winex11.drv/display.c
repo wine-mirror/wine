@@ -419,7 +419,7 @@ LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd, DWORD flags, 
     if (ret == DISP_CHANGE_SUCCESSFUL)
         ret = apply_display_settings( displays, ids, TRUE );
     if (ret == DISP_CHANGE_SUCCESSFUL)
-        X11DRV_DisplayDevices_Update(TRUE);
+        X11DRV_DisplayDevices_Update();
 
 done:
     free( ids );
@@ -558,7 +558,7 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
         handler->register_event_handlers();
 }
 
-void X11DRV_DisplayDevices_Update(BOOL send_display_change)
+void X11DRV_DisplayDevices_Update(void)
 {
     RECT old_virtual_rect, new_virtual_rect;
     DWORD tid, pid;
@@ -576,7 +576,7 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
     if (old_virtual_rect.top != new_virtual_rect.top)
         mask |= CWY;
 
-    X11DRV_resize_desktop(send_display_change);
+    X11DRV_resize_desktop();
 
     list = build_hwnd_list();
     for (i = 0; list && list[i] != HWND_BOTTOM; i++)

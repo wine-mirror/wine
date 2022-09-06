@@ -832,20 +832,8 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, HWND hwnd, DWORD flags, L
         }
         else if (macdrv_set_display_mode(&macdrv_displays[0], best_display_mode))
         {
-            int mode_bpp = display_mode_bits_per_pixel(best_display_mode);
-            size_t width = CGDisplayModeGetWidth(best_display_mode);
-            size_t height = CGDisplayModeGetHeight(best_display_mode);
-
             macdrv_init_display_devices(TRUE);
-
-            if (retina_enabled && display_mode_matches_descriptor(best_display_mode, desc))
-            {
-                width *= 2;
-                height *= 2;
-            }
-
-            send_message(NtUserGetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
-                         MAKELPARAM(width, height));
+            send_message(NtUserGetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, 0, 0);
         }
         else
         {
@@ -1182,28 +1170,9 @@ void macdrv_displays_changed(const macdrv_event *event)
     if (event->displays_changed.activating ||
         NtUserGetWindowThread(hwnd, NULL) == GetCurrentThreadId())
     {
-        CGDirectDisplayID mainDisplay = CGMainDisplayID();
-        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(mainDisplay);
-        size_t width = CGDisplayModeGetWidth(mode);
-        size_t height = CGDisplayModeGetHeight(mode);
-        int mode_bpp = display_mode_bits_per_pixel(mode);
-        struct display_mode_descriptor* desc = create_original_display_mode_descriptor(mainDisplay);
-        BOOL is_original = display_mode_matches_descriptor(mode, desc);
-
-        free_display_mode_descriptor(desc);
-        CGDisplayModeRelease(mode);
-
         macdrv_init_display_devices(TRUE);
         init_registry_display_settings();
-
-        if (is_original && retina_enabled)
-        {
-            width *= 2;
-            height *= 2;
-        }
-
-        send_message(hwnd, WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
-                     MAKELPARAM(width, height));
+        send_message(hwnd, WM_MACDRV_UPDATE_DESKTOP_RECT, 0, 0);
     }
 }
 

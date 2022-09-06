@@ -2993,7 +2993,7 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         }
         return 0;
     case WM_X11DRV_RESIZE_DESKTOP:
-        X11DRV_resize_desktop( (BOOL)lp );
+        X11DRV_resize_desktop();
         return 0;
     case WM_X11DRV_SET_CURSOR:
     {

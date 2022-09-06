@@ -1198,11 +1198,7 @@ static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
     xrandr14_invalidate_current_mode_cache();
     if (hwnd == NtUserGetDesktopWindow() && NtUserGetWindowThread( hwnd, NULL ) == GetCurrentThreadId())
     {
-        /* Don't send a WM_DISPLAYCHANGE message here because this event may be a result from
-         * ChangeDisplaySettings(). Otherwise, ChangeDisplaySettings() would send multiple
-         * WM_DISPLAYCHANGE messages instead of just one */
-        X11DRV_DisplayDevices_Update( FALSE );
-
+        X11DRV_DisplayDevices_Update();
         init_registry_display_settings();
     }
     return FALSE;

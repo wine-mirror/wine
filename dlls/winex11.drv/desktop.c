@@ -454,7 +454,7 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
 /***********************************************************************
  *		X11DRV_resize_desktop
  */
-void X11DRV_resize_desktop( BOOL send_display_change )
+void X11DRV_resize_desktop(void)
 {
     RECT primary_rect, virtual_rect;
     HWND hwnd = NtUserGetDesktopWindow();
@@ -467,7 +467,7 @@ void X11DRV_resize_desktop( BOOL send_display_change )
 
     if (NtUserGetWindowThread( hwnd, NULL ) != GetCurrentThreadId())
     {
-        send_message( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, (LPARAM)send_display_change );
+        send_message( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, 0 );
     }
     else
     {
@@ -477,11 +477,5 @@ void X11DRV_resize_desktop( BOOL send_display_change )
                             virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
                             SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         ungrab_clipping_window();
-
-        if (send_display_change)
-        {
-            send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp, MAKELPARAM( width, height ),
-                                  SMTO_ABORTIFHUNG, 2000, NULL );
-        }
     }
 }
