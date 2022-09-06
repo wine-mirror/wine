@@ -1139,20 +1139,83 @@ class VkHandle(object):
     def needs_unwrapping(self):
         return self.is_wrapped()
 
-class VkMember(object):
-    def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
-            dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None):
+class VkVariable(object):
+    def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_len=None,
+                 dyn_array_len=None, object_type=None):
         self.const = const
-        self.struct_fwd_decl = struct_fwd_decl
+        self.type_info = type_info
+        self.type = type
         self.name = name
         self.pointer = pointer
-        self.type = _type
-        self.type_info = None
         self.array_len = array_len
         self.dyn_array_len = dyn_array_len
+        self.object_type = object_type
+        if type_info:
+            self.set_type_info(type_info)
+
+    def set_type_info(self, type_info):
+        """ Helper function to set type information from the type registry.
+        This is needed, because not all type data is available at time of
+        parsing.
+        """
+        self.type_info = type_info
+        self.handle = type_info["data"] if type_info["category"] == "handle" else None
+        self.struct = type_info["data"] if type_info["category"] == "struct" else None
+
+    def is_const(self):
+        return self.const
+
+    def is_pointer(self):
+        return self.pointer is not None
+
+    def is_handle(self):
+        return self.handle is not None
+
+    def is_struct(self):
+        return self.struct is not None
+
+    def is_dynamic_array(self):
+        """ Returns if the member is an array element.
+        Vulkan uses this for dynamically sized arrays for which
+        there is a 'count' parameter.
+        """
+        return self.dyn_array_len is not None
+
+    def is_static_array(self):
+        """ Returns if the member is an array.
+        Vulkan uses this often for fixed size arrays in which the
+        length is part of the member.
+        """
+        return self.array_len is not None
+
+    def needs_alignment(self):
+        """ Check if this member needs alignment for 64-bit data.
+        Various structures need alignment on 64-bit variables due
+        to compiler differences on 32-bit between Win32 and Linux.
+        """
+
+        if self.is_pointer():
+            return False
+        elif self.type == "size_t":
+            return False
+        elif self.type in ["uint64_t", "VkDeviceSize"]:
+            return True
+        elif self.is_struct():
+            return self.struct.needs_alignment()
+        elif self.is_handle():
+            # Dispatchable handles are pointers to objects, while
+            # non-dispatchable are uint64_t and hence need alignment.
+            return not self.handle.is_dispatchable()
+        return False
+
+class VkMember(VkVariable):
+    def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
+            dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None):
+        VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_len=array_len,
+                            dyn_array_len=dyn_array_len, object_type=object_type)
+        self.struct_fwd_decl = struct_fwd_decl
         self.optional = optional
         self.values = values
-        self.object_type = object_type
         self.bit_width = bit_width
 
     def __eq__(self, other):
@@ -1379,32 +1442,6 @@ class VkMember(object):
 
         return conversions
 
-    def is_const(self):
-        return self.const
-
-    def is_dynamic_array(self):
-        """ Returns if the member is an array element.
-        Vulkan uses this for dynamically sized arrays for which
-        there is a 'count' parameter.
-        """
-        return self.dyn_array_len is not None
-
-    def is_handle(self):
-        return self.type_info["category"] == "handle"
-
-    def is_pointer(self):
-        return self.pointer is not None
-
-    def is_static_array(self):
-        """ Returns if the member is an array.
-        Vulkan uses this often for fixed size arrays in which the
-        length is part of the member.
-        """
-        return self.array_len is not None
-
-    def is_struct(self):
-        return self.type_info["category"] == "struct"
-
     def is_struct_forward_declaration(self):
         return self.struct_fwd_decl
 
@@ -1420,28 +1457,6 @@ class VkMember(object):
 
     def is_bit_field(self):
         return self.bit_width is not None
-
-    def needs_alignment(self):
-        """ Check if this member needs alignment for 64-bit data.
-        Various structures need alignment on 64-bit variables due
-        to compiler differences on 32-bit between Win32 and Linux.
-        """
-
-        if self.is_pointer():
-            return False
-        elif self.type == "size_t":
-            return False
-        elif self.type in ["uint64_t", "VkDeviceSize"]:
-            return True
-        elif self.is_struct():
-            struct = self.type_info["data"]
-            return struct.needs_alignment()
-        elif self.is_handle():
-            # Dispatchable handles are pointers to objects, while
-            # non-dispatchable are uint64_t and hence need alignment.
-            handle = self.type_info["data"]
-            return False if handle.is_dispatchable() else True
-        return False
 
     def needs_conversion(self):
         """ Structures requiring alignment, need conversion between win32 and host. """
@@ -1486,28 +1501,13 @@ class VkMember(object):
         struct = self.type_info["data"]
         return struct.needs_struct_extensions_conversion()
 
-    def set_type_info(self, type_info):
-        """ Helper function to set type information from the type registry.
-        This is needed, because not all type data is available at time of
-        parsing.
-        """
-        self.type_info = type_info
-
-
-class VkParam(object):
+class VkParam(VkVariable):
     """ Helper class which describes a parameter to a function call. """
 
     def __init__(self, type_info, const=None, pointer=None, name=None, array_len=None, dyn_array_len=None, object_type=None):
-        self.const = const
-        self.name = name
-        self.array_len = array_len
-        self.dyn_array_len = dyn_array_len
-        self.pointer = pointer
-        self.object_type = object_type
-        self.type_info = type_info
-        self.type = type_info["name"] # For convenience
-        self.handle = type_info["data"] if type_info["category"] == "handle" else None
-        self.struct = type_info["data"] if type_info["category"] == "struct" else None
+        VkVariable.__init__(self, const=const, type_info=type_info, type=type_info["name"], name=name,
+                            pointer=pointer, array_len=array_len, dyn_array_len=dyn_array_len,
+                            object_type=object_type)
 
         self._set_direction()
         self._set_format_string()
@@ -1767,29 +1767,11 @@ class VkParam(object):
 
         return conversions
 
-    def is_const(self):
-        return self.const is not None
-
-    def is_dynamic_array(self):
-        return self.dyn_array_len is not None
-
     def is_dispatchable(self):
         if not self.is_handle():
             return False
 
         return self.handle.is_dispatchable()
-
-    def is_handle(self):
-        return self.handle is not None
-
-    def is_pointer(self):
-        return self.pointer is not None
-
-    def is_static_array(self):
-        return self.array_len is not None
-
-    def is_struct(self):
-        return self.struct is not None
 
     def needs_conversion(self):
         """ Returns if parameter needs conversion between win32 and host. """
