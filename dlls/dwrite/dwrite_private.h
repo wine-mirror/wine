@@ -535,7 +535,16 @@ enum gasp_flags {
 extern unsigned int opentype_get_gasp_flags(const struct dwrite_fonttable *gasp, float emsize) DECLSPEC_HIDDEN;
 
 /* BiDi helpers */
-extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
+struct bidi_char
+{
+    unsigned int ch;
+    UINT8 explicit;
+    UINT8 resolved;
+    UINT8 nominal_bidi_class;
+    UINT8 bidi_class;
+};
+
+extern HRESULT bidi_computelevels(struct bidi_char *chars, unsigned int count, UINT8 baselevel) DECLSPEC_HIDDEN;
 
 struct dwrite_glyphbitmap
 {

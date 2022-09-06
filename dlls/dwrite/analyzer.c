@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 extern const unsigned short wine_linebreak_table[] DECLSPEC_HIDDEN;
 extern const unsigned short wine_scripts_table[] DECLSPEC_HIDDEN;
+extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
 
 /* Number of characters needed for LOCALE_SNATIVEDIGITS */
 #define NATIVE_DIGITS_LEN 11
@@ -1224,50 +1225,6 @@ static ULONG WINAPI dwritetextanalyzer_Release(IDWriteTextAnalyzer2 *iface)
     return 1;
 }
 
-/* This helper tries to get 'length' chars from a source, allocating a buffer only if source failed to provide enough
-   data after a first request. */
-static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 position, UINT32 length, const WCHAR **text, WCHAR **buff)
-{
-    HRESULT hr;
-    UINT32 len;
-
-    *buff = NULL;
-    *text = NULL;
-    len = 0;
-    hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position, text, &len);
-    if (FAILED(hr)) return hr;
-
-    if (len < length) {
-        UINT32 read;
-
-        *buff = calloc(length, sizeof(WCHAR));
-        if (!*buff)
-            return E_OUTOFMEMORY;
-        if (*text)
-            memcpy(*buff, *text, len*sizeof(WCHAR));
-        read = len;
-
-        while (read < length && *text) {
-            *text = NULL;
-            len = 0;
-            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position+read, text, &len);
-            if (FAILED(hr))
-            {
-                free(*buff);
-                return hr;
-            }
-            if (!*text)
-                break;
-            memcpy(*buff + read, *text, min(len, length-read)*sizeof(WCHAR));
-            read += len;
-        }
-
-        *text = *buff;
-    }
-
-    return hr;
-}
-
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
@@ -1284,14 +1241,24 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *ifa
     return analyze_script(&context, sink);
 }
 
+static inline unsigned int get_bidi_char_length(const struct bidi_char *c)
+{
+    return c->ch > 0xffff ? 2 : 1;
+}
+
+static inline UINT8 get_char_bidi_class(UINT32 ch)
+{
+    return get_table_entry_32(bidi_direction_table, ch);
+}
+
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
-    UINT8 *levels = NULL, *explicit = NULL;
-    UINT8 baselevel, level, explicit_level;
-    UINT32 pos, i, seq_length;
-    WCHAR *buff = NULL;
-    const WCHAR *text;
+    struct text_source_context context;
+    UINT8 baselevel, resolved, explicit;
+    unsigned int i, chars_count = 0;
+    struct bidi_char *chars, *ptr;
+    UINT32 pos, seq_length;
     HRESULT hr;
 
     TRACE("%p, %u, %u, %p.\n", source, position, length, sink);
@@ -1299,49 +1266,57 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface
     if (!length)
         return S_OK;
 
-    hr = get_text_source_ptr(source, position, length, &text, &buff);
-    if (FAILED(hr))
-        return hr;
+    if (!(chars = calloc(length, sizeof(*chars))))
+        return E_OUTOFMEMORY;
 
-    levels = calloc(length, sizeof(*levels));
-    explicit = calloc(length, sizeof(*explicit));
+    ptr = chars;
+    text_source_context_init(&context, source, position, length);
+    while (!text_source_get_next_u32_char(&context))
+    {
+        ptr->ch = context.ch;
+        ptr->nominal_bidi_class = ptr->bidi_class = get_char_bidi_class(context.ch);
+        ptr++;
 
-    if (!levels || !explicit) {
-        hr = E_OUTOFMEMORY;
-        goto done;
+        ++chars_count;
     }
 
+    /* Resolve levels using utf-32 codepoints, size differences are accounted for
+       when levels are reported with SetBidiLevel(). */
+
     baselevel = IDWriteTextAnalysisSource_GetParagraphReadingDirection(source);
-    hr = bidi_computelevels(text, length, baselevel, explicit, levels);
+    hr = bidi_computelevels(chars, chars_count, baselevel);
     if (FAILED(hr))
         goto done;
 
-    level = levels[0];
-    explicit_level = explicit[0];
     pos = position;
-    seq_length = 1;
+    resolved = chars->resolved;
+    explicit = chars->explicit;
+    seq_length = get_bidi_char_length(chars);
 
-    for (i = 1; i < length; i++) {
-        if (levels[i] == level && explicit[i] == explicit_level)
-            seq_length++;
-        else {
-            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, seq_length, explicit_level, level);
+    for (i = 1, ptr = chars + 1; i < chars_count; ++i, ++ptr)
+    {
+        if (ptr->resolved == resolved && ptr->explicit == explicit)
+        {
+            seq_length += get_bidi_char_length(ptr);
+        }
+        else
+        {
+            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, seq_length, explicit, resolved);
             if (FAILED(hr))
                 goto done;
 
             pos += seq_length;
-            seq_length = 1;
-            level = levels[i];
-            explicit_level = explicit[i];
+            seq_length = get_bidi_char_length(ptr);
+            resolved = ptr->resolved;
+            explicit = ptr->explicit;
         }
     }
+
     /* one char length case or normal completion call */
-    hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, seq_length, explicit_level, level);
+    hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, seq_length, explicit, resolved);
 
 done:
-    free(explicit);
-    free(levels);
-    free(buff);
+    free(chars);
 
     return hr;
 }
