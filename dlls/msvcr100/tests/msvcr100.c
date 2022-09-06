@@ -237,6 +237,9 @@ static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 static char* (__cdecl *p_setlocale)(int, const char*);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
 
+static int (__cdecl *p_strcmp)(const char *, const char *);
+static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
+
 /* make sure we use the correct errno */
 #undef errno
 #define errno (*p_errno())
@@ -276,6 +279,9 @@ static BOOL init(void)
     SET(p_Context_Id, "?Id@Context@Concurrency@@SAIXZ");
     SET(p_CurrentScheduler_Detach, "?Detach@CurrentScheduler@Concurrency@@SAXXZ");
     SET(p_CurrentScheduler_Id, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
+
+    SET(p_strcmp, "strcmp");
+    SET(p_strncmp, "strncmp");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
@@ -1106,6 +1112,46 @@ static void test___strncnt(void)
     }
 }
 
+static void test_strcmp(void)
+{
+    int ret = p_strcmp( "abc", "abcd" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "", "abc" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "abc", "ab\xa0" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ok( ret == 1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ok( ret == 0, "wrong ret %d\n", ret );
+
+    ret = p_strncmp( "abc", "abcd", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+#ifdef _WIN64
+    ret = p_strncmp( "", "abc", 3 );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ok( ret == 1, "wrong ret %d\n", ret );
+#else
+    ret = p_strncmp( "", "abc", 3 );
+    ok( ret == 0 - 'a', "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ok( ret == 'c' - 0xa0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ok( ret == 0xb0 - 0xa0, "wrong ret %d\n", ret );
+#endif
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abd", 0 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abc", 12 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -1126,4 +1172,5 @@ START_TEST(msvcr100)
     test__memicmp_l();
     test_setlocale();
     test___strncnt();
+    test_strcmp();
 }

@@ -3292,7 +3292,14 @@ int __cdecl strncmp(const char *str1, const char *str2, size_t len)
 {
     if (!len) return 0;
     while (--len && *str1 && *str1 == *str2) { str1++; str2++; }
+
+#if defined(_WIN64) || defined(_UCRT) || _MSVCR_VER == 70 || _MSVCR_VER == 71 || _MSVCR_VER >= 110
+    if ((unsigned char)*str1 > (unsigned char)*str2) return 1;
+    if ((unsigned char)*str1 < (unsigned char)*str2) return -1;
+    return 0;
+#else
     return (unsigned char)*str1 - (unsigned char)*str2;
+#endif
 }
 
 /*********************************************************************

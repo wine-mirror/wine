@@ -171,6 +171,8 @@ static int (__cdecl *p____mb_cur_max_l_func)(_locale_t locale);
 static _locale_t (__cdecl *p__create_locale)(int, const char*);
 static void (__cdecl *p__free_locale)(_locale_t);
 static _locale_t (__cdecl *p__get_current_locale)(void);
+static int (__cdecl *p_strcmp)(const char *, const char *);
+static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 
 struct __lc_time_data {
     const char *short_wday[7];
@@ -471,6 +473,8 @@ static BOOL init(void)
     SET(p__create_locale, "_create_locale");
     SET(p__free_locale, "_free_locale");
     SET(p__get_current_locale, "_get_current_locale");
+    SET(p_strcmp, "strcmp");
+    SET(p_strncmp, "strncmp");
 
     if (sizeof(void *) == 8)
     {
@@ -2441,6 +2445,46 @@ static void test_ioinfo_flags(void)
     free(tempf);
 }
 
+static void test_strcmp(void)
+{
+    int ret = p_strcmp( "abc", "abcd" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "", "abc" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "abc", "ab\xa0" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ok( ret == 1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ok( ret == 0, "wrong ret %d\n", ret );
+
+    ret = p_strncmp( "abc", "abcd", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+#ifdef _WIN64
+    ret = p_strncmp( "", "abc", 3 );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ok( ret == 1, "wrong ret %d\n", ret );
+#else
+    ret = p_strncmp( "", "abc", 3 );
+    ok( ret == 0 - 'a', "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ok( ret == 'c' - 0xa0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ok( ret == 0xb0 - 0xa0, "wrong ret %d\n", ret );
+#endif
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abd", 0 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abc", 12 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -2483,4 +2527,5 @@ START_TEST(msvcr90)
     test____mb_cur_max_l_func();
     test__get_current_locale();
     test_ioinfo_flags();
+    test_strcmp();
 }

@@ -21745,7 +21745,9 @@ wine_fn_config_makefile dlls/msvcr120 enable_msvcr120
 wine_fn_config_makefile dlls/msvcr120/tests enable_tests
 wine_fn_config_makefile dlls/msvcr120_app enable_msvcr120_app
 wine_fn_config_makefile dlls/msvcr70 enable_msvcr70
+wine_fn_config_makefile dlls/msvcr70/tests enable_tests
 wine_fn_config_makefile dlls/msvcr71 enable_msvcr71
+wine_fn_config_makefile dlls/msvcr71/tests enable_tests
 wine_fn_config_makefile dlls/msvcr80 enable_msvcr80
 wine_fn_config_makefile dlls/msvcr80/tests enable_tests
 wine_fn_config_makefile dlls/msvcr90 enable_msvcr90
