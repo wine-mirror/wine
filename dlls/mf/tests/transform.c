@@ -2326,7 +2326,6 @@ static void test_h264_decoder(void)
     hr = IMFAttributes_SetUINT32(attributes, &MF_LOW_LATENCY, 1);
     ok(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
     ret = IMFAttributes_Release(attributes);
-    todo_wine
     ok(ret == 1, "Release returned %ld\n", ret);
 
     /* no output type is available before an input type is set */
