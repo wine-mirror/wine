@@ -2699,6 +2699,7 @@ static const IFolderVtbl foldervtbl = {
 HRESULT create_folder(const WCHAR *path, IFolder **folder)
 {
     struct folder *object;
+    DWORD len;
 
     *folder = NULL;
 
@@ -2709,11 +2710,26 @@ HRESULT create_folder(const WCHAR *path, IFolder **folder)
 
     object->IFolder_iface.lpVtbl = &foldervtbl;
     object->ref = 1;
-    object->path = SysAllocString(path);
-    if (!object->path)
+
+    len = GetFullPathNameW(path, 0, NULL, NULL);
+    if (!len)
+    {
+        free(object);
+        return E_FAIL;
+    }
+
+    object->path = SysAllocStringLen(NULL, len);
+    if(!object->path)
     {
         free(object);
         return E_OUTOFMEMORY;
+    }
+
+    if (!GetFullPathNameW(path, len, object->path, NULL))
+    {
+        SysFreeString(object->path);
+        free(object);
+        return E_FAIL;
     }
 
     init_classinfo(&CLSID_Folder, (IUnknown *)&object->IFolder_iface, &object->classinfo);

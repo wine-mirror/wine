@@ -973,7 +973,7 @@ static void test_GetFolder(void)
     SysFreeString(str);
     hr = IFolder_get_Path(folder, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!PathIsRelativeW(str), "path %s is relative.\n", wine_dbgstr_w(str));
+    ok(!PathIsRelativeW(str), "path %s is relative.\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IFolder_Release(folder);
     RemoveDirectoryW(dir);
