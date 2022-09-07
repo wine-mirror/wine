@@ -1432,7 +1432,8 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         return E_POINTER;
 
     params.stream = This->stream;
-    params.position = pos;
+    params.device = FALSE;
+    params.pos = pos;
     params.qpctime = qpctime;
     OSS_CALL(get_position, &params);
 

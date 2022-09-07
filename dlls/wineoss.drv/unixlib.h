@@ -186,8 +186,9 @@ struct get_frequency_params
 struct get_position_params
 {
     stream_handle stream;
+    BOOL device;
     HRESULT result;
-    UINT64 *position;
+    UINT64 *pos;
     UINT64 *qpctime;
 };
 

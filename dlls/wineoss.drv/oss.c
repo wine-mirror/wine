@@ -1311,7 +1311,7 @@ static NTSTATUS oss_get_position(void *args)
 {
     struct get_position_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
-    UINT64 *pos = params->position, *qpctime = params->qpctime;
+    UINT64 *pos = params->pos, *qpctime = params->qpctime;
 
     oss_lock(stream);
 
@@ -1928,14 +1928,16 @@ static NTSTATUS oss_wow64_get_position(void *args)
     struct
     {
         stream_handle stream;
+        BOOL device;
         HRESULT result;
-        PTR32 position;
+        PTR32 pos;
         PTR32 qpctime;
     } *params32 = args;
     struct get_position_params params =
     {
         .stream = params32->stream,
-        .position = ULongToPtr(params32->position),
+        .device = params32->device,
+        .pos = ULongToPtr(params32->pos),
         .qpctime = ULongToPtr(params32->qpctime)
     };
     oss_get_position(&params);
