@@ -26,6 +26,8 @@
 #include "winver.h"
 #include "shlobj.h"
 
+static BOOL is_wow64;
+
 static void test_find_file(void)
 {
     DWORD ret;
@@ -247,16 +249,19 @@ static void test_find_file(void)
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit.exe", NULL, NULL, curdir, &dwCur, outBuf, &dwOut);
+        todo_wine_if (is_wow64)
         ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit.exe", NULL, empty, curdir, &dwCur, outBuf, &dwOut);
+        todo_wine_if (is_wow64)
         ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
         ret = VerFindFileA(VFFF_ISSHAREDFILE, "regedit.exe", NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
+        todo_wine_if (is_wow64)
         ok(ret & VFF_CURNEDEST, "Wrong return value got %lx expected VFF_CURNEDEST set\n", ret);
 
         /* nonexistent filename */
@@ -346,6 +351,13 @@ static void test_install_file(void)
 
 START_TEST(install)
 {
+#ifndef _WIN64
+    BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
+
+    if ((pIsWow64Process = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), "IsWow64Process" )))
+        pIsWow64Process( GetCurrentProcess(), &is_wow64 );
+#endif
+
     test_find_file();
     test_install_file();
 }
