@@ -122,9 +122,9 @@ static const struct
 static struct list files[HASH_SIZE];
 static struct list global_includes[HASH_SIZE];
 
-enum install_rules { INSTALL_LIB, INSTALL_DEV, NB_INSTALL_RULES };
-static const char *install_targets[NB_INSTALL_RULES] = { "install-lib", "install-dev" };
-static const char *install_variables[NB_INSTALL_RULES] = { "INSTALL_LIB", "INSTALL_DEV" };
+enum install_rules { INSTALL_LIB, INSTALL_DEV, INSTALL_TEST, NB_INSTALL_RULES };
+static const char *install_targets[NB_INSTALL_RULES] = { "install-lib", "install-dev", "install-test" };
+static const char *install_variables[NB_INSTALL_RULES] = { "INSTALL_LIB", "INSTALL_DEV", "INSTALL_TEST" };
 
 /* variables common to all makefiles */
 static struct strarray linguas;
@@ -3624,10 +3624,14 @@ static void output_subdirs( struct makefile *make )
     for (j = 0; j < NB_INSTALL_RULES; j++)
     {
         if (!install_deps[j].count) continue;
-        output( "install %s::", install_targets[j] );
+        if (strcmp( install_targets[j], "install-test" ))
+        {
+            output( "install " );
+            strarray_add_uniq( &make->phony_targets, "install" );
+        }
+        output( "%s::", install_targets[j] );
         output_filenames( install_deps[j] );
         output( "\n" );
-        strarray_add_uniq( &make->phony_targets, "install" );
         strarray_add_uniq( &make->phony_targets, install_targets[j] );
     }
     output_uninstall_rules( make );

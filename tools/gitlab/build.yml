@@ -14,8 +14,9 @@
         - build32/config.cache
         - build64/config.cache
   before_script:
-    - export CCACHE_BASEDIR="$PWD"
-    - export CCACHE_DIR="$PWD/ccache"
+    - export BASEDIR="$PWD"
+    - export CCACHE_BASEDIR="$BASEDIR"
+    - export CCACHE_DIR="$BASEDIR/ccache"
     - export CCACHE_COMPILERCHECK=content
     - export PATH="/usr/lib/ccache:$PATH"
     - mkdir -p build32 build64
@@ -60,12 +61,11 @@ build-winetest:
       - winetest64.exe
   script:
     - cd build64
-    - ../configure -C --enable-win64 --with-mingw
-    - make -s -j$(nproc) programs/winetest/winetest.exe
+    - ../configure -q -C --enable-win64 --with-mingw
+    - make -s -j$(nproc) install-test DESTDIR=$BASEDIR
     - cd ../build32
-    - ../configure -C --with-mingw
-    - make -s -j$(nproc) programs/winetest/winetest.exe
+    - ../configure -q -C --with-mingw
+    - make -s -j$(nproc) install-test DESTDIR=$BASEDIR
     - cd ..
-    - mv build32/programs/winetest/winetest.exe winetest.exe
-    - mv build64/programs/winetest/winetest.exe winetest64.exe
-    - chmod 644 winetest.exe winetest64.exe
+    - mv usr/local/lib/wine/i386-windows/winetest.exe winetest.exe
+    - mv usr/local/lib/wine/x86_64-windows/winetest.exe winetest64.exe

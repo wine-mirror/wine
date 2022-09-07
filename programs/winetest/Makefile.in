@@ -19,4 +19,4 @@ EXTRA_OBJS = build.res
 
 EXTRA_TARGETS = build.nfo
 
-INSTALL_LIB = none
+INSTALL_TEST = winetest.exe
