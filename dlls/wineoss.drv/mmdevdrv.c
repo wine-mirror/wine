@@ -1414,7 +1414,7 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
     TRACE("(%p)->(%p)\n", This, freq);
 
     params.stream = This->stream;
-    params.frequency = freq;
+    params.freq = freq;
     OSS_CALL(get_frequency, &params);
 
     return params.result;

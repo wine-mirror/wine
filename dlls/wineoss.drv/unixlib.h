@@ -180,7 +180,7 @@ struct get_frequency_params
 {
     stream_handle stream;
     HRESULT result;
-    UINT64 *frequency;
+    UINT64 *freq;
 };
 
 struct get_position_params

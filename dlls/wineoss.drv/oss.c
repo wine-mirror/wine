@@ -1295,7 +1295,7 @@ static NTSTATUS oss_get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
-    UINT64 *freq = params->frequency;
+    UINT64 *freq = params->freq;
 
     oss_lock(stream);
 
@@ -1911,12 +1911,12 @@ static NTSTATUS oss_wow64_get_frequency(void *args)
     {
         stream_handle stream;
         HRESULT result;
-        PTR32 frequency;
+        PTR32 freq;
     } *params32 = args;
     struct get_frequency_params params =
     {
         .stream = params32->stream,
-        .frequency = ULongToPtr(params32->frequency)
+        .freq = ULongToPtr(params32->freq)
     };
     oss_get_frequency(&params);
     params32->result = params.result;
