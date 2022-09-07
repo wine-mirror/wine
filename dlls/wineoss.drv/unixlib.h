@@ -21,17 +21,18 @@
 typedef UINT64 stream_handle;
 
 /* From <dlls/mmdevapi/mmdevapi.h> */
-enum DriverPriority
+enum driver_priority
 {
-    Priority_Unavailable = 0,
-    Priority_Low,
-    Priority_Neutral,
-    Priority_Preferred
+    Priority_Unavailable = 0, /* driver won't work */
+    Priority_Low, /* driver may work, but unlikely */
+    Priority_Neutral, /* driver makes no judgment */
+    Priority_Preferred /* driver thinks it's correct */
 };
 
 struct test_connect_params
 {
-    enum DriverPriority priority;
+    const char *name;
+    enum driver_priority priority;
 };
 
 struct endpoint

@@ -234,6 +234,8 @@ int WINAPI AUDDRV_GetPriority(void)
 {
     struct test_connect_params params;
 
+    params.name = NULL;
+
     OSS_CALL(test_connect, &params);
 
     return params.priority;

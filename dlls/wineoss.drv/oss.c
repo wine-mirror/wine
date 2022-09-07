@@ -1646,6 +1646,22 @@ unixlib_entry_t __wine_unix_call_funcs[] =
 
 typedef UINT PTR32;
 
+static NTSTATUS oss_wow64_test_connect(void *args)
+{
+    struct
+    {
+        PTR32 name;
+        enum driver_priority priority;
+    } *params32 = args;
+    struct test_connect_params params =
+    {
+        .name = ULongToPtr(params32->name),
+    };
+    oss_test_connect(&params);
+    params32->priority = params.priority;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS oss_wow64_get_endpoint_ids(void *args)
 {
     struct
@@ -1986,7 +2002,7 @@ static NTSTATUS oss_wow64_aux_message(void *args)
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    oss_test_connect,
+    oss_wow64_test_connect,
     oss_wow64_get_endpoint_ids,
     oss_wow64_create_stream,
     oss_wow64_release_stream,
