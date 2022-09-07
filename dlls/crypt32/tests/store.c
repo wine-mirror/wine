@@ -216,7 +216,7 @@ static void testMemStore(void)
         ret = CertSerializeCertificateStoreElement(context, 1, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08lx\n",
          GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        buf = malloc(size);
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(context, 0, buf, &size);
@@ -224,7 +224,7 @@ static void testMemStore(void)
             ok(size == sizeof(serializedCert), "Wrong size %ld\n", size);
             ok(!memcmp(serializedCert, buf, size),
              "Unexpected serialized cert\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
 
         ret = CertFreeCertificateContext(context);
@@ -311,7 +311,7 @@ static void compareStore(HCERTSTORE store, LPCSTR name, const BYTE *pb,
     todo_wine_if (todo)
         ok(blob.cbData == cb, "%s: expected size %ld, got %ld\n", name, cb,
          blob.cbData);
-    blob.pbData = HeapAlloc(GetProcessHeap(), 0, blob.cbData);
+    blob.pbData = malloc(blob.cbData);
     if (blob.pbData)
     {
         ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
@@ -319,7 +319,7 @@ static void compareStore(HCERTSTORE store, LPCSTR name, const BYTE *pb,
         ok(ret, "CertSaveStore failed: %08lx\n", GetLastError());
         todo_wine_if (todo)
             ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
-        HeapFree(GetProcessHeap(), 0, blob.pbData);
+        free(blob.pbData);
     }
 }
 
@@ -1063,7 +1063,7 @@ static void testRegStore(void)
 
             size = 0;
             RegQueryValueExA(subKey, "Blob", NULL, NULL, NULL, &size);
-            buf = HeapAlloc(GetProcessHeap(), 0, size);
+            buf = malloc(size);
             if (buf)
             {
                 rc = RegQueryValueExA(subKey, "Blob", NULL, NULL, buf, &size);
@@ -1092,7 +1092,7 @@ static void testRegStore(void)
                          hdr->cb), "Unexpected hash in cert property\n");
                     }
                 }
-                HeapFree(GetProcessHeap(), 0, buf);
+                free(buf);
             }
             RegCloseKey(subKey);
         }
@@ -2465,7 +2465,7 @@ static void testAddCertificateLink(void)
         ret = CertSerializeCertificateStoreElement(linked, 0, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08lx\n",
          GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        buf = malloc(size);
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(linked, 0, buf, &size);
@@ -2477,7 +2477,7 @@ static void testAddCertificateLink(void)
             ok(size == sizeof(serializedCert), "Wrong size %ld\n", size);
             ok(!memcmp(serializedCert, buf, size),
              "Unexpected serialized cert\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         /* Set a friendly name on the source certificate... */
         blob.pbData = (LPBYTE)L"WineTest";
@@ -2491,7 +2491,7 @@ static void testAddCertificateLink(void)
          CERT_FRIENDLY_NAME_PROP_ID, NULL, &size);
         ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
          GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        buf = malloc(size);
         if (buf)
         {
             ret = CertGetCertificateContextProperty(linked,
@@ -2500,7 +2500,7 @@ static void testAddCertificateLink(void)
              GetLastError());
             ok(!lstrcmpW((LPCWSTR)buf, L"WineTest"),
              "unexpected friendly name\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         CertFreeCertificateContext(linked);
     }
@@ -2541,7 +2541,7 @@ static void testAddCertificateLink(void)
         ret = CertSerializeCertificateStoreElement(linked, 0, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08lx\n",
          GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        buf = malloc(size);
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(linked, 0, buf, &size);
@@ -2552,7 +2552,7 @@ static void testAddCertificateLink(void)
             ok(size == sizeof(serializedCert), "Wrong size %ld\n", size);
             ok(!memcmp(serializedCert, buf, size),
              "Unexpected serialized cert\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         /* Set a friendly name on the source certificate... */
         blob.pbData = (LPBYTE)L"WineTest";
@@ -2566,7 +2566,7 @@ static void testAddCertificateLink(void)
          CERT_FRIENDLY_NAME_PROP_ID, NULL, &size);
         ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
          GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        buf = malloc(size);
         if (buf)
         {
             ret = CertGetCertificateContextProperty(linked,
@@ -2574,7 +2574,7 @@ static void testAddCertificateLink(void)
             ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
             ok(!lstrcmpW((LPCWSTR)buf, L"WineTest"),
              "unexpected friendly name\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         CertFreeCertificateContext(linked);
     }
@@ -2603,7 +2603,7 @@ static void testAddCertificateLink(void)
         ret = CertSerializeCertificateStoreElement(linked, 0, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08lx\n",
          GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        buf = malloc(size);
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(linked, 0, buf, &size);
@@ -2616,7 +2616,7 @@ static void testAddCertificateLink(void)
              "Wrong size %ld\n", size);
             ok(!memcmp(serializedCertWithFriendlyName, buf, size),
              "Unexpected serialized cert\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         CertFreeCertificateContext(linked);
         compareStore(store2, "file store -> file store",

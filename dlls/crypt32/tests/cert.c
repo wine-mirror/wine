@@ -554,7 +554,7 @@ static void testCertProperties(void)
     ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
     if (ret)
     {
-        LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
+        LPBYTE buf = malloc(size);
 
         if (buf)
         {
@@ -563,7 +563,7 @@ static void testCertProperties(void)
             ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
              GetLastError());
             ok(!memcmp(buf, subjectKeyId, size), "Unexpected subject key id\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
     }
     CertFreeCertificateContext(context);
@@ -1640,7 +1640,7 @@ static void testGetIssuerCert(void)
     size = 0;
     ok(CertStrToNameW(X509_ASN_ENCODING, L"CN=dummy, T=Test", CERT_X500_NAME_STR, NULL, NULL, &size, NULL),
        "CertStrToName should have worked\n");
-    certencoded = HeapAlloc(GetProcessHeap(), 0, size);
+    certencoded = malloc(size);
     ok(CertStrToNameW(X509_ASN_ENCODING, L"CN=dummy, T=Test", CERT_X500_NAME_STR, NULL, certencoded, &size, NULL),
        "CertStrToName should have worked\n");
     certsubject.pbData = certencoded;
@@ -1663,7 +1663,7 @@ static void testGetIssuerCert(void)
     CertFreeCertificateContext(cert2);
     CertFreeCertificateContext(cert3);
     CertCloseStore(store, 0);
-    HeapFree(GetProcessHeap(), 0, certencoded);
+    free(certencoded);
 
     /* Test root storage self-signed certificate */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"ROOT");
@@ -1913,7 +1913,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
         }
         CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
          (LPSTR)sigOID, 0, NULL, NULL, &pubKeySize);
-        pubKeyInfo = HeapAlloc(GetProcessHeap(), 0, pubKeySize);
+        pubKeyInfo = malloc(pubKeySize);
         if (pubKeyInfo)
         {
             ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE,
@@ -1927,7 +1927,7 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
                 ok(ret, "CryptVerifyCertificateSignature failed: %08lx\n",
                  GetLastError());
             }
-            HeapFree(GetProcessHeap(), 0, pubKeyInfo);
+            free(pubKeyInfo);
         }
         LocalFree(cert);
     }
@@ -2000,7 +2000,7 @@ static void testVerifyCertSigEx(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigne
          */
         CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
          (LPSTR)sigOID, 0, NULL, NULL, &size);
-        pubKeyInfo = HeapAlloc(GetProcessHeap(), 0, size);
+        pubKeyInfo = malloc(size);
         if (pubKeyInfo)
         {
             ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE,
@@ -2014,7 +2014,7 @@ static void testVerifyCertSigEx(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigne
                 ok(ret, "CryptVerifyCertificateSignatureEx failed: %08lx\n",
                  GetLastError());
             }
-            HeapFree(GetProcessHeap(), 0, pubKeyInfo);
+            free(pubKeyInfo);
         }
         LocalFree(cert);
     }
@@ -2114,7 +2114,7 @@ static void testSignAndEncodeCert(void)
     /* oid_rsa_md5 not present in some win2k */
     if (ret)
     {
-        LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
+        LPBYTE buf = malloc(size);
 
         if (buf)
         {
@@ -2135,7 +2135,7 @@ static void testSignAndEncodeCert(void)
             else if (size == sizeof(md5SignedEmptyCertNoNull))
                 ok(!memcmp(buf, md5SignedEmptyCertNoNull, size),
                  "Unexpected value\n");
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
     }
 }
@@ -2188,7 +2188,7 @@ static void testCreateSelfSignCert(void)
             ok(ret && size, "Expected non-zero key provider info\n");
             if (size)
             {
-                PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+                PCRYPT_KEY_PROV_INFO pInfo = malloc(size);
 
                 if (pInfo)
                 {
@@ -2206,7 +2206,7 @@ static void testCreateSelfSignCert(void)
                         ok(pInfo->dwKeySpec == AT_SIGNATURE,
                          "Expected AT_SIGNATURE, got %ld\n", pInfo->dwKeySpec);
                     }
-                    HeapFree(GetProcessHeap(), 0, pInfo);
+                    free(pInfo);
                 }
             }
 
@@ -2262,7 +2262,7 @@ static void testCreateSelfSignCert(void)
         ok(ret && size, "Expected non-zero key provider info\n");
         if (size)
         {
-            PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+            PCRYPT_KEY_PROV_INFO pInfo = malloc(size);
 
             if (pInfo)
             {
@@ -2280,7 +2280,7 @@ static void testCreateSelfSignCert(void)
                     ok(pInfo->dwKeySpec == AT_SIGNATURE,
                         "Expected AT_SIGNATURE, got %ld\n", pInfo->dwKeySpec);
                 }
-                HeapFree(GetProcessHeap(), 0, pInfo);
+                free(pInfo);
             }
         }
 
@@ -2309,7 +2309,7 @@ static void testCreateSelfSignCert(void)
         ok(ret && size, "Expected non-zero key provider info\n");
         if (size)
         {
-            PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+            PCRYPT_KEY_PROV_INFO pInfo = malloc(size);
 
             if (pInfo)
             {
@@ -2327,7 +2327,7 @@ static void testCreateSelfSignCert(void)
                     ok(pInfo->dwKeySpec == AT_KEYEXCHANGE,
                         "Expected AT_KEYEXCHANGE, got %ld\n", pInfo->dwKeySpec);
                 }
-                HeapFree(GetProcessHeap(), 0, pInfo);
+                free(pInfo);
             }
         }
 
@@ -2386,7 +2386,7 @@ static void testCreateSelfSignCert(void)
         ok(ret && size, "Expected non-zero key provider info\n");
         if (size)
         {
-            PCRYPT_KEY_PROV_INFO pInfo = HeapAlloc(GetProcessHeap(), 0, size);
+            PCRYPT_KEY_PROV_INFO pInfo = malloc(size);
 
             if (pInfo)
             {
@@ -2404,7 +2404,7 @@ static void testCreateSelfSignCert(void)
                     ok(pInfo->dwKeySpec == AT_KEYEXCHANGE,
                         "Expected AT_KEYEXCHANGE, got %ld\n", pInfo->dwKeySpec);
                 }
-                HeapFree(GetProcessHeap(), 0, pInfo);
+                free(pInfo);
             }
         }
 
@@ -2627,7 +2627,7 @@ static void testKeyUsage(void)
         ret = CertGetEnhancedKeyUsage(context,
          CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, NULL, &bufSize);
         ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        buf = malloc(bufSize);
         if (buf)
         {
             PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
@@ -2644,11 +2644,11 @@ static void testKeyUsage(void)
                 ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
                  "Expected %s, got %s\n", keyUsages[i],
                  pUsage->rgpszUsageIdentifier[i]);
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         ret = CertGetEnhancedKeyUsage(context, 0, NULL, &bufSize);
         ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        buf = malloc(bufSize);
         if (buf)
         {
             PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
@@ -2668,7 +2668,7 @@ static void testKeyUsage(void)
                 ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
                  "Expected %s, got %s\n", keyUsages[i],
                  pUsage->rgpszUsageIdentifier[i]);
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         /* Shouldn't find it as an extended property */
         ret = CertGetEnhancedKeyUsage(context,
@@ -2681,7 +2681,7 @@ static void testKeyUsage(void)
          GetLastError());
         ret = CertGetEnhancedKeyUsage(context, 0, NULL, &bufSize);
         ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        buf = malloc(bufSize);
         if (buf)
         {
             PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
@@ -2696,13 +2696,13 @@ static void testKeyUsage(void)
             ok(!strcmp(pUsage->rgpszUsageIdentifier[0], szOID_RSA_RSA),
              "Expected %s, got %s\n", szOID_RSA_RSA,
              pUsage->rgpszUsageIdentifier[0]);
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         /* But querying the cert directly returns its usage */
         ret = CertGetEnhancedKeyUsage(context,
          CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, NULL, &bufSize);
         ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        buf = malloc(bufSize);
         if (buf)
         {
             PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
@@ -2718,7 +2718,7 @@ static void testKeyUsage(void)
                 ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
                  "Expected %s, got %s\n", keyUsages[i],
                  pUsage->rgpszUsageIdentifier[i]);
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         /* And removing the only usage identifier in the extended property
          * results in the cert's key usage being found.
@@ -2727,7 +2727,7 @@ static void testKeyUsage(void)
         ok(ret, "CertRemoveEnhancedKeyUsage failed: %08lx\n", GetLastError());
         ret = CertGetEnhancedKeyUsage(context, 0, NULL, &bufSize);
         ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
-        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        buf = malloc(bufSize);
         if (buf)
         {
             PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
@@ -2743,7 +2743,7 @@ static void testKeyUsage(void)
                 ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
                  "Expected %s, got %s\n", keyUsages[i],
                  pUsage->rgpszUsageIdentifier[i]);
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
 
         CertFreeCertificateContext(context);
@@ -2810,7 +2810,7 @@ static void testGetValidUsages(void)
     ok(ret, "CertGetValidUsages failed: %08lx\n", GetLastError());
     ok(numOIDs == 3, "Expected 3, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
-    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    oids = malloc(size);
     if (oids)
     {
         int i;
@@ -2825,7 +2825,7 @@ static void testGetValidUsages(void)
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs[i]), "unexpected OID %s\n",
              oids[i]);
-        HeapFree(GetProcessHeap(), 0, oids);
+        free(oids);
     }
     numOIDs = 0xdeadbeef;
     /* Oddly enough, this crashes when the number of contexts is not 1:
@@ -2837,7 +2837,7 @@ static void testGetValidUsages(void)
     ok(ret, "CertGetValidUsages failed: %08lx\n", GetLastError());
     ok(numOIDs == 3, "Expected 3, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
-    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    oids = malloc(size);
     if (oids)
     {
         int i;
@@ -2847,7 +2847,7 @@ static void testGetValidUsages(void)
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs[i]), "unexpected OID %s\n",
              oids[i]);
-        HeapFree(GetProcessHeap(), 0, oids);
+        free(oids);
     }
     numOIDs = 0xdeadbeef;
     size = 0;
@@ -2855,7 +2855,7 @@ static void testGetValidUsages(void)
     ok(ret, "CertGetValidUsages failed: %08lx\n", GetLastError());
     ok(numOIDs == 2, "Expected 2, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
-    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    oids = malloc(size);
     if (oids)
     {
         int i;
@@ -2865,7 +2865,7 @@ static void testGetValidUsages(void)
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs2[i]), "unexpected OID %s\n",
              oids[i]);
-        HeapFree(GetProcessHeap(), 0, oids);
+        free(oids);
     }
     numOIDs = 0xdeadbeef;
     size = 0;
@@ -2873,7 +2873,7 @@ static void testGetValidUsages(void)
     ok(ret, "CertGetValidUsages failed: %08lx\n", GetLastError());
     ok(numOIDs == 2, "Expected 2, got %d\n", numOIDs);
     ok(size, "Expected non-zero size\n");
-    oids = HeapAlloc(GetProcessHeap(), 0, size);
+    oids = malloc(size);
     if (oids)
     {
         int i;
@@ -2883,7 +2883,7 @@ static void testGetValidUsages(void)
         for (i = 0; i < numOIDs; i++)
             ok(!lstrcmpA(oids[i], expectedOIDs2[i]), "unexpected OID %s\n",
              oids[i]);
-        HeapFree(GetProcessHeap(), 0, oids);
+        free(oids);
     }
     CertFreeCertificateContext(contexts[0]);
     CertFreeCertificateContext(contexts[1]);
@@ -4377,7 +4377,7 @@ static void testAcquireCertPrivateKey(void)
         ok(ret, "CryptExportKey failed: %08lx\n", GetLastError());
         if (ret)
         {
-            LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size), encodedKey;
+            LPBYTE buf = malloc(size), encodedKey;
 
             ret = CryptExportKey(key, 0, PUBLICKEYBLOB, 0, buf, &size);
             ok(ret, "CryptExportKey failed: %08lx\n", GetLastError());
@@ -4395,7 +4395,7 @@ static void testAcquireCertPrivateKey(void)
                  "Unexpected value\n");
                 LocalFree(encodedKey);
             }
-            HeapFree(GetProcessHeap(), 0, buf);
+            free(buf);
         }
         CryptDestroyKey(key);
     }
@@ -4404,7 +4404,7 @@ static void testAcquireCertPrivateKey(void)
     ok(ret, "CryptExportPublicKeyInfoEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        PCERT_PUBLIC_KEY_INFO info = HeapAlloc(GetProcessHeap(), 0, size);
+        PCERT_PUBLIC_KEY_INFO info = malloc(size);
 
         ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
          NULL, 0, NULL, info, &size);
@@ -4416,7 +4416,7 @@ static void testAcquireCertPrivateKey(void)
             ok(!memcmp(info->PublicKey.pbData, asnEncodedPublicKey,
              info->PublicKey.cbData), "Unexpected value\n");
         }
-        HeapFree(GetProcessHeap(), 0, info);
+        free(info);
     }
 
     CryptReleaseContext(csp, 0);
@@ -4541,7 +4541,7 @@ static void testKeyProvInfo(void)
 
     ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
     ok(ret, "CertGetCertificateContextProperty error %#lx\n", GetLastError());
-    info = HeapAlloc(GetProcessHeap(), 0, size);
+    info = malloc(size);
     ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, info, &size);
     ok(ret, "CertGetCertificateContextProperty error %#lx\n", GetLastError());
     ok(!lstrcmpW(info->pwszContainerName, containerW), "got %s\n", wine_dbgstr_w(info->pwszContainerName));
@@ -4559,7 +4559,7 @@ static void testKeyProvInfo(void)
     ok(info->rgProvParam[1].cbData == param[1].cbData, "got %#lx\n", info->rgProvParam[1].cbData);
     ok(!memcmp(info->rgProvParam[1].pbData, param[1].pbData, param[1].cbData), "param2 mismatch\n");
     ok(info->rgProvParam[1].dwFlags == param[1].dwFlags, "got %#lx\n", info->rgProvParam[1].dwFlags);
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
 
     ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_NEW, NULL);
     ok(ret, "CertAddCertificateContextToStore error %#lx\n", GetLastError());
@@ -4578,7 +4578,7 @@ static void testKeyProvInfo(void)
 
     ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
     ok(ret, "CertGetCertificateContextProperty error %#lx\n", GetLastError());
-    info = HeapAlloc(GetProcessHeap(), 0, size);
+    info = malloc(size);
     ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, info, &size);
     ok(ret, "CertGetCertificateContextProperty error %#lx\n", GetLastError());
     ok(!lstrcmpW(info->pwszContainerName, containerW), "got %s\n", wine_dbgstr_w(info->pwszContainerName));
@@ -4596,7 +4596,7 @@ static void testKeyProvInfo(void)
     ok(info->rgProvParam[1].cbData == param[1].cbData, "got %#lx\n", info->rgProvParam[1].cbData);
     ok(!memcmp(info->rgProvParam[1].pbData, param[1].pbData, param[1].cbData), "param2 mismatch\n");
     ok(info->rgProvParam[1].dwFlags == param[1].dwFlags, "got %#lx\n", info->rgProvParam[1].dwFlags);
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
 
     ret = CertDeleteCertificateFromStore(cert);
     ok(ret, "CertDeleteCertificateFromStore error %#lx\n", GetLastError());
@@ -4675,7 +4675,7 @@ static void test_VerifySignature(void)
     ok(!status, "got %#lx\n", status);
     ok(hash_len == sizeof(hash_value), "got %lu\n", hash_len);
 
-    sig_value = HeapAlloc(GetProcessHeap(), 0, info->Signature.cbData);
+    sig_value = malloc(info->Signature.cbData);
     for (i = 0; i < info->Signature.cbData; i++)
         sig_value[i] = info->Signature.pbData[info->Signature.cbData - i - 1];
 
@@ -4683,7 +4683,7 @@ static void test_VerifySignature(void)
     status = BCryptVerifySignature(bkey, &pad, hash_value, sizeof(hash_value), sig_value, info->Signature.cbData, BCRYPT_PAD_PKCS1);
     ok(!status, "got %#lx\n", status);
 
-    HeapFree(GetProcessHeap(), 0, sig_value);
+    free(sig_value);
     BCryptDestroyHash(bhash);
     BCryptCloseAlgorithmProvider(alg, 0);
     BCryptDestroyKey(bkey);

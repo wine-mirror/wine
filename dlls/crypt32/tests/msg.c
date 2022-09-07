@@ -274,14 +274,14 @@ static void check_param(LPCSTR test, HCRYPTMSG msg, DWORD param,
     ret = CryptMsgGetParam(msg, param, 0, NULL, &size);
     ok(ret, "%s: CryptMsgGetParam failed: %08lx\n", test, GetLastError());
 
-    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    buf = malloc(size);
     ret = CryptMsgGetParam(msg, param, 0, buf, &size);
     ok(ret, "%s: CryptMsgGetParam failed: %08lx\n", test, GetLastError());
     ok(size == expectedSize, "%s: expected size %ld, got %ld\n", test,
      expectedSize, size);
     if (size == expectedSize && size)
         ok(!memcmp(buf, expected, size), "%s: unexpected data\n", test);
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 }
 
 static void test_data_msg_open(void)
