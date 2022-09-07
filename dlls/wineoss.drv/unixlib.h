@@ -262,47 +262,47 @@ struct aux_message_params
 
 enum oss_funcs
 {
-    oss_test_connect,
-    oss_get_endpoint_ids,
-    oss_create_stream,
-    oss_release_stream,
-    oss_start,
-    oss_stop,
-    oss_reset,
-    oss_timer_loop,
-    oss_get_render_buffer,
-    oss_release_render_buffer,
-    oss_get_capture_buffer,
-    oss_release_capture_buffer,
-    oss_is_format_supported,
-    oss_get_mix_format,
-    oss_get_buffer_size,
-    oss_get_latency,
-    oss_get_current_padding,
-    oss_get_next_packet_size,
-    oss_get_frequency,
-    oss_get_position,
-    oss_set_volumes,
-    oss_set_event_handle,
-    oss_is_started,
-    oss_midi_release,
-    oss_midi_out_message,
-    oss_midi_in_message,
-    oss_midi_notify_wait,
-    oss_aux_message,
+    test_connect,
+    get_endpoint_ids,
+    create_stream,
+    release_stream,
+    start,
+    stop,
+    reset,
+    timer_loop,
+    get_render_buffer,
+    release_render_buffer,
+    get_capture_buffer,
+    release_capture_buffer,
+    is_format_supported,
+    get_mix_format,
+    get_buffer_size,
+    get_latency,
+    get_current_padding,
+    get_next_packet_size,
+    get_frequency,
+    get_position,
+    set_volumes,
+    set_event_handle,
+    is_started,
+    midi_release,
+    midi_out_message,
+    midi_in_message,
+    midi_notify_wait,
+    aux_message,
 };
 
-NTSTATUS midi_release(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_midi_release(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 
 #ifdef _WIN64
-NTSTATUS wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS oss_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 #endif
 
 extern unixlib_handle_t oss_handle;
 
-#define OSS_CALL(func, params) __wine_unix_call(oss_handle, oss_ ## func, params)
+#define OSS_CALL(func, params) __wine_unix_call(oss_handle, func, params)

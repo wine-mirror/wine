@@ -116,7 +116,7 @@ static struct oss_stream *handle_get_stream(stream_handle h)
     return (struct oss_stream *)(UINT_PTR)h;
 }
 
-static NTSTATUS test_connect(void *args)
+static NTSTATUS oss_test_connect(void *args)
 {
     struct test_connect_params *params = args;
     int mixer_fd;
@@ -213,7 +213,7 @@ static void get_default_device(EDataFlow flow, char device[OSS_DEVNODE_SIZE])
     return;
 }
 
-static NTSTATUS get_endpoint_ids(void *args)
+static NTSTATUS oss_get_endpoint_ids(void *args)
 {
     struct get_endpoint_ids_params *params = args;
     oss_sysinfo sysinfo;
@@ -544,7 +544,7 @@ static ULONG_PTR zero_bits(void)
 #endif
 }
 
-static NTSTATUS create_stream(void *args)
+static NTSTATUS oss_create_stream(void *args)
 {
     struct create_stream_params *params = args;
     WAVEFORMATEXTENSIBLE *fmtex;
@@ -633,7 +633,7 @@ exit:
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS release_stream(void *args)
+static NTSTATUS oss_release_stream(void *args)
 {
     struct release_stream_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -662,7 +662,7 @@ static NTSTATUS release_stream(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS start(void *args)
+static NTSTATUS oss_start(void *args)
 {
     struct start_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -680,7 +680,7 @@ static NTSTATUS start(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS stop(void *args)
+static NTSTATUS oss_stop(void *args)
 {
     struct stop_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -696,7 +696,7 @@ static NTSTATUS stop(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS reset(void *args)
+static NTSTATUS oss_reset(void *args)
 {
     struct reset_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -869,7 +869,7 @@ static void oss_read_data(struct oss_stream *stream)
     }
 }
 
-static NTSTATUS timer_loop(void *args)
+static NTSTATUS oss_timer_loop(void *args)
 {
     struct timer_loop_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -911,7 +911,7 @@ static NTSTATUS timer_loop(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_render_buffer(void *args)
+static NTSTATUS oss_get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -977,7 +977,7 @@ static void oss_wrap_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 writ
     }
 }
 
-static NTSTATUS release_render_buffer(void *args)
+static NTSTATUS oss_release_render_buffer(void *args)
 {
     struct release_render_buffer_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1017,7 +1017,7 @@ static NTSTATUS release_render_buffer(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_capture_buffer(void *args)
+static NTSTATUS oss_get_capture_buffer(void *args)
 {
     struct get_capture_buffer_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1083,7 +1083,7 @@ static NTSTATUS get_capture_buffer(void *args)
     return oss_unlock_result(stream, &params->result, *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY);
 }
 
-static NTSTATUS release_capture_buffer(void *args)
+static NTSTATUS oss_release_capture_buffer(void *args)
 {
     struct release_capture_buffer_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1111,7 +1111,7 @@ static NTSTATUS release_capture_buffer(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS is_format_supported(void *args)
+static NTSTATUS oss_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
     int fd;
@@ -1140,7 +1140,7 @@ static NTSTATUS is_format_supported(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_mix_format(void *args)
+static NTSTATUS oss_get_mix_format(void *args)
 {
     struct get_mix_format_params *params = args;
     WAVEFORMATEXTENSIBLE *fmt = params->fmt;
@@ -1240,7 +1240,7 @@ static NTSTATUS get_mix_format(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_buffer_size(void *args)
+static NTSTATUS oss_get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1252,7 +1252,7 @@ static NTSTATUS get_buffer_size(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_latency(void *args)
+static NTSTATUS oss_get_latency(void *args)
 {
     struct get_latency_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1266,7 +1266,7 @@ static NTSTATUS get_latency(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_current_padding(void *args)
+static NTSTATUS oss_get_current_padding(void *args)
 {
     struct get_current_padding_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1278,7 +1278,7 @@ static NTSTATUS get_current_padding(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_next_packet_size(void *args)
+static NTSTATUS oss_get_next_packet_size(void *args)
 {
     struct get_next_packet_size_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1291,7 +1291,7 @@ static NTSTATUS get_next_packet_size(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_frequency(void *args)
+static NTSTATUS oss_get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1307,7 +1307,7 @@ static NTSTATUS get_frequency(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS get_position(void *args)
+static NTSTATUS oss_get_position(void *args)
 {
     struct get_position_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1351,7 +1351,7 @@ static NTSTATUS get_position(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS set_volumes(void *args)
+static NTSTATUS oss_set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1363,7 +1363,7 @@ static NTSTATUS set_volumes(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_event_handle(void *args)
+static NTSTATUS oss_set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1383,7 +1383,7 @@ static NTSTATUS set_event_handle(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
-static NTSTATUS is_started(void *args)
+static NTSTATUS oss_is_started(void *args)
 {
     struct is_started_params *params = args;
     struct oss_stream *stream = handle_get_stream(params->stream);
@@ -1571,7 +1571,7 @@ static UINT aux_set_volume(WORD dev_id, UINT vol)
     return MMSYSERR_NOERROR;
 }
 
-static NTSTATUS aux_message(void *args)
+static NTSTATUS oss_aux_message(void *args)
 {
     struct aux_message_params *params = args;
 
@@ -1612,41 +1612,41 @@ static NTSTATUS aux_message(void *args)
 
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    test_connect,
-    get_endpoint_ids,
-    create_stream,
-    release_stream,
-    start,
-    stop,
-    reset,
-    timer_loop,
-    get_render_buffer,
-    release_render_buffer,
-    get_capture_buffer,
-    release_capture_buffer,
-    is_format_supported,
-    get_mix_format,
-    get_buffer_size,
-    get_latency,
-    get_current_padding,
-    get_next_packet_size,
-    get_frequency,
-    get_position,
-    set_volumes,
-    set_event_handle,
-    is_started,
-    midi_release,
-    midi_out_message,
-    midi_in_message,
-    midi_notify_wait,
-    aux_message,
+    oss_test_connect,
+    oss_get_endpoint_ids,
+    oss_create_stream,
+    oss_release_stream,
+    oss_start,
+    oss_stop,
+    oss_reset,
+    oss_timer_loop,
+    oss_get_render_buffer,
+    oss_release_render_buffer,
+    oss_get_capture_buffer,
+    oss_release_capture_buffer,
+    oss_is_format_supported,
+    oss_get_mix_format,
+    oss_get_buffer_size,
+    oss_get_latency,
+    oss_get_current_padding,
+    oss_get_next_packet_size,
+    oss_get_frequency,
+    oss_get_position,
+    oss_set_volumes,
+    oss_set_event_handle,
+    oss_is_started,
+    oss_midi_release,
+    oss_midi_out_message,
+    oss_midi_in_message,
+    oss_midi_notify_wait,
+    oss_aux_message,
 };
 
 #ifdef _WIN64
 
 typedef UINT PTR32;
 
-static NTSTATUS wow64_get_endpoint_ids(void *args)
+static NTSTATUS oss_wow64_get_endpoint_ids(void *args)
 {
     struct
     {
@@ -1663,7 +1663,7 @@ static NTSTATUS wow64_get_endpoint_ids(void *args)
         .endpoints = ULongToPtr(params32->endpoints),
         .size = params32->size
     };
-    get_endpoint_ids(&params);
+    oss_get_endpoint_ids(&params);
     params32->size = params.size;
     params32->result = params.result;
     params32->num = params.num;
@@ -1671,7 +1671,7 @@ static NTSTATUS wow64_get_endpoint_ids(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_create_stream(void *args)
+static NTSTATUS oss_wow64_create_stream(void *args)
 {
     struct
     {
@@ -1696,12 +1696,12 @@ static NTSTATUS wow64_create_stream(void *args)
         .fmt = ULongToPtr(params32->fmt),
         .stream = ULongToPtr(params32->stream)
     };
-    create_stream(&params);
+    oss_create_stream(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_release_stream(void *args)
+static NTSTATUS oss_wow64_release_stream(void *args)
 {
     struct
     {
@@ -1714,12 +1714,12 @@ static NTSTATUS wow64_release_stream(void *args)
         .stream = params32->stream,
         .timer_thread = ULongToHandle(params32->timer_thread)
     };
-    release_stream(&params);
+    oss_release_stream(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_render_buffer(void *args)
+static NTSTATUS oss_wow64_get_render_buffer(void *args)
 {
     struct
     {
@@ -1735,13 +1735,13 @@ static NTSTATUS wow64_get_render_buffer(void *args)
         .frames = params32->frames,
         .data = &data
     };
-    get_render_buffer(&params);
+    oss_get_render_buffer(&params);
     params32->result = params.result;
     *(unsigned int *)ULongToPtr(params32->data) = PtrToUlong(data);
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_capture_buffer(void *args)
+static NTSTATUS oss_wow64_get_capture_buffer(void *args)
 {
     struct
     {
@@ -1763,13 +1763,13 @@ static NTSTATUS wow64_get_capture_buffer(void *args)
         .devpos = ULongToPtr(params32->devpos),
         .qpcpos = ULongToPtr(params32->qpcpos)
     };
-    get_capture_buffer(&params);
+    oss_get_capture_buffer(&params);
     params32->result = params.result;
     *(unsigned int *)ULongToPtr(params32->data) = PtrToUlong(data);
     return STATUS_SUCCESS;
 };
 
-static NTSTATUS wow64_is_format_supported(void *args)
+static NTSTATUS oss_wow64_is_format_supported(void *args)
 {
     struct
     {
@@ -1788,12 +1788,12 @@ static NTSTATUS wow64_is_format_supported(void *args)
         .fmt_in = ULongToPtr(params32->fmt_in),
         .fmt_out = ULongToPtr(params32->fmt_out)
     };
-    is_format_supported(&params);
+    oss_is_format_supported(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_mix_format(void *args)
+static NTSTATUS oss_wow64_get_mix_format(void *args)
 {
     struct
     {
@@ -1808,12 +1808,12 @@ static NTSTATUS wow64_get_mix_format(void *args)
         .flow = params32->flow,
         .fmt = ULongToPtr(params32->fmt)
     };
-    get_mix_format(&params);
+    oss_get_mix_format(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_buffer_size(void *args)
+static NTSTATUS oss_wow64_get_buffer_size(void *args)
 {
     struct
     {
@@ -1826,12 +1826,12 @@ static NTSTATUS wow64_get_buffer_size(void *args)
         .stream = params32->stream,
         .size = ULongToPtr(params32->size)
     };
-    get_buffer_size(&params);
+    oss_get_buffer_size(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_latency(void *args)
+static NTSTATUS oss_wow64_get_latency(void *args)
 {
     struct
     {
@@ -1844,12 +1844,12 @@ static NTSTATUS wow64_get_latency(void *args)
         .stream = params32->stream,
         .latency = ULongToPtr(params32->latency)
     };
-    get_latency(&params);
+    oss_get_latency(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_current_padding(void *args)
+static NTSTATUS oss_wow64_get_current_padding(void *args)
 {
     struct
     {
@@ -1862,12 +1862,12 @@ static NTSTATUS wow64_get_current_padding(void *args)
         .stream = params32->stream,
         .padding = ULongToPtr(params32->padding)
     };
-    get_current_padding(&params);
+    oss_get_current_padding(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_next_packet_size(void *args)
+static NTSTATUS oss_wow64_get_next_packet_size(void *args)
 {
     struct
     {
@@ -1880,12 +1880,12 @@ static NTSTATUS wow64_get_next_packet_size(void *args)
         .stream = params32->stream,
         .frames = ULongToPtr(params32->frames)
     };
-    get_next_packet_size(&params);
+    oss_get_next_packet_size(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_frequency(void *args)
+static NTSTATUS oss_wow64_get_frequency(void *args)
 {
     struct
     {
@@ -1898,12 +1898,12 @@ static NTSTATUS wow64_get_frequency(void *args)
         .stream = params32->stream,
         .frequency = ULongToPtr(params32->frequency)
     };
-    get_frequency(&params);
+    oss_get_frequency(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_get_position(void *args)
+static NTSTATUS oss_wow64_get_position(void *args)
 {
     struct
     {
@@ -1918,12 +1918,12 @@ static NTSTATUS wow64_get_position(void *args)
         .position = ULongToPtr(params32->position),
         .qpctime = ULongToPtr(params32->qpctime)
     };
-    get_position(&params);
+    oss_get_position(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_set_volumes(void *args)
+static NTSTATUS oss_wow64_set_volumes(void *args)
 {
     struct
     {
@@ -1939,10 +1939,10 @@ static NTSTATUS wow64_set_volumes(void *args)
         .volumes = ULongToPtr(params32->volumes),
         .session_volumes = ULongToPtr(params32->session_volumes)
     };
-    return set_volumes(&params);
+    return oss_set_volumes(&params);
 }
 
-static NTSTATUS wow64_set_event_handle(void *args)
+static NTSTATUS oss_wow64_set_event_handle(void *args)
 {
     struct
     {
@@ -1956,12 +1956,12 @@ static NTSTATUS wow64_set_event_handle(void *args)
         .event = ULongToHandle(params32->event)
     };
 
-    set_event_handle(&params);
+    oss_set_event_handle(&params);
     params32->result = params.result;
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wow64_aux_message(void *args)
+static NTSTATUS oss_wow64_aux_message(void *args)
 {
     struct
     {
@@ -1981,39 +1981,39 @@ static NTSTATUS wow64_aux_message(void *args)
         .param_2 = params32->param_2,
         .err = ULongToPtr(params32->err),
     };
-    return aux_message(&params);
+    return oss_aux_message(&params);
 }
 
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    test_connect,
-    wow64_get_endpoint_ids,
-    wow64_create_stream,
-    wow64_release_stream,
-    start,
-    stop,
-    reset,
-    timer_loop,
-    wow64_get_render_buffer,
-    release_render_buffer,
-    wow64_get_capture_buffer,
-    release_capture_buffer,
-    wow64_is_format_supported,
-    wow64_get_mix_format,
-    wow64_get_buffer_size,
-    wow64_get_latency,
-    wow64_get_current_padding,
-    wow64_get_next_packet_size,
-    wow64_get_frequency,
-    wow64_get_position,
-    wow64_set_volumes,
-    wow64_set_event_handle,
-    is_started,
-    midi_release,
-    wow64_midi_out_message,
-    wow64_midi_in_message,
-    wow64_midi_notify_wait,
-    wow64_aux_message,
+    oss_test_connect,
+    oss_wow64_get_endpoint_ids,
+    oss_wow64_create_stream,
+    oss_wow64_release_stream,
+    oss_start,
+    oss_stop,
+    oss_reset,
+    oss_timer_loop,
+    oss_wow64_get_render_buffer,
+    oss_release_render_buffer,
+    oss_wow64_get_capture_buffer,
+    oss_release_capture_buffer,
+    oss_wow64_is_format_supported,
+    oss_wow64_get_mix_format,
+    oss_wow64_get_buffer_size,
+    oss_wow64_get_latency,
+    oss_wow64_get_current_padding,
+    oss_wow64_get_next_packet_size,
+    oss_wow64_get_frequency,
+    oss_wow64_get_position,
+    oss_wow64_set_volumes,
+    oss_wow64_set_event_handle,
+    oss_is_started,
+    oss_midi_release,
+    oss_wow64_midi_out_message,
+    oss_wow64_midi_in_message,
+    oss_wow64_midi_notify_wait,
+    oss_wow64_aux_message,
 };
 
 #endif /* _WIN64 */
