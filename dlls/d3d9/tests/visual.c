@@ -19782,7 +19782,9 @@ static void add_dirty_rect_test(void)
     ok(hr == S_OK, "Failed to set texture, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    /* Radeon GPUs read zero from sysmem textures. */
+    ok(color_match(color, 0x000000ff, 1) || broken(color_match(color, 0x00000000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
 
     /* Tests with managed textures. */
     fill_surface(surface_managed0, 0x00ff0000, 0);
