@@ -16,19 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "unixlib.h"
+
 #include <wine/list.h>
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
-
-
-/* Changes to this enum must be synced in drivers. */
-enum _DriverPriority {
-    Priority_Unavailable = 0, /* driver won't work */
-    Priority_Low, /* driver may work, but unlikely */
-    Priority_Neutral, /* driver makes no judgment */
-    Priority_Preferred /* driver thinks it's correct */
-};
 
 typedef struct _DriverFuncs {
     HMODULE module;

@@ -22,6 +22,14 @@
 
 typedef UINT64 stream_handle;
 
+enum driver_priority
+{
+    Priority_Unavailable = 0, /* driver won't work */
+    Priority_Low, /* driver may work, but unlikely */
+    Priority_Neutral, /* driver makes no judgment */
+    Priority_Preferred /* driver thinks it's correct */
+};
+
 struct endpoint
 {
     unsigned int name;
@@ -211,7 +219,7 @@ struct set_event_handle_params
 struct test_connect_params
 {
     const char *name;
-    HRESULT result;
+    enum driver_priority priority;
 };
 
 struct is_started_params
@@ -273,6 +281,16 @@ struct midi_notify_wait_params
     struct notify_context *notify;
 };
 
+struct aux_message_params
+{
+    UINT dev_id;
+    UINT msg;
+    UINT_PTR user;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT *err;
+};
+
 enum unix_funcs
 {
     process_attach,
@@ -307,4 +325,5 @@ enum unix_funcs
     midi_out_message,
     midi_in_message,
     midi_notify_wait,
+    aux_message,
 };

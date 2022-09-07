@@ -56,14 +56,6 @@ static unixlib_handle_t pulse_handle;
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-/* From <dlls/mmdevapi/mmdevapi.h> */
-enum DriverPriority {
-    Priority_Unavailable = 0,
-    Priority_Low,
-    Priority_Neutral,
-    Priority_Preferred
-};
-
 static HANDLE pulse_thread;
 static struct list g_sessions = LIST_INIT(g_sessions);
 static struct list g_devices_cache = LIST_INIT(g_devices_cache);
@@ -493,10 +485,10 @@ int WINAPI AUDDRV_GetPriority(void)
     struct test_connect_params params;
     char *name;
 
-    params.name   = name = get_application_name(FALSE);
+    params.name = name = get_application_name(FALSE);
     pulse_call(test_connect, &params);
     free(name);
-    return SUCCEEDED(params.result) ? Priority_Preferred : Priority_Unavailable;
+    return params.priority;
 }
 
 static BOOL get_pulse_name_by_guid(const GUID *guid, char pulse_name[MAX_PULSE_NAME_LEN], EDataFlow *flow)

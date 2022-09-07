@@ -773,7 +773,7 @@ static NTSTATUS pulse_test_connect(void *args)
         pa_mainloop_free(pulse_ml);
         pulse_ml = NULL;
         pulse_unlock();
-        params->result = E_FAIL;
+        params->priority = Priority_Unavailable;
         return STATUS_SUCCESS;
     }
 
@@ -839,7 +839,7 @@ static NTSTATUS pulse_test_connect(void *args)
 
     pulse_unlock();
 
-    params->result = S_OK;
+    params->priority = Priority_Preferred;
     return STATUS_SUCCESS;
 
 fail:
@@ -848,7 +848,7 @@ fail:
     pa_mainloop_free(pulse_ml);
     pulse_ml = NULL;
     pulse_unlock();
-    params->result = E_FAIL;
+    params->priority = Priority_Unavailable;
     return STATUS_SUCCESS;
 }
 
@@ -2392,6 +2392,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 #ifdef _WIN64
@@ -2734,14 +2735,14 @@ static NTSTATUS pulse_wow64_test_connect(void *args)
     struct
     {
         PTR32 name;
-        HRESULT result;
+        enum driver_priority priority;
     } *params32 = args;
     struct test_connect_params params =
     {
         .name = ULongToPtr(params32->name),
     };
     pulse_test_connect(&params);
-    params32->result = params.result;
+    params32->priority = params.priority;
     return STATUS_SUCCESS;
 }
 
@@ -2831,6 +2832,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_test_connect,
     pulse_is_started,
     pulse_wow64_get_prop_value,
+    NULL,
     NULL,
     NULL,
     NULL,
