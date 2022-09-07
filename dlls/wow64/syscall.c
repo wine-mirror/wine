@@ -721,15 +721,12 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 }
 
 
-static void cpu_simulate(void);
-
 /**********************************************************************
  *           simulate_filter
  */
 static LONG CALLBACK simulate_filter( EXCEPTION_POINTERS *ptrs )
 {
     Wow64PassExceptionToGuest( ptrs );
-    cpu_simulate();  /* re-enter simulation to run the exception dispatcher */
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
