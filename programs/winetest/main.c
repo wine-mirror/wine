@@ -140,6 +140,59 @@ static void add_filter( const char *name )
     filters[nb_filters++] = xstrdup(name);
 }
 
+static HANDLE create_output_file( const char *name )
+{
+    SECURITY_ATTRIBUTES sa;
+    HANDLE file;
+
+    /* make handle inheritable */
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+
+    file = CreateFileA( name, GENERIC_READ|GENERIC_WRITE,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        &sa, CREATE_ALWAYS, 0, NULL );
+
+    if (file == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        /* FILE_SHARE_DELETE not supported on win9x */
+        file = CreateFileA( name, GENERIC_READ|GENERIC_WRITE,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            &sa, CREATE_ALWAYS, 0, NULL );
+    }
+    return file;
+}
+
+static HANDLE create_temp_file( char name[MAX_PATH] )
+{
+    char tmpdir[MAX_PATH];
+
+    if (!GetTempPathA( MAX_PATH, tmpdir ) ||
+        !GetTempFileNameA( tmpdir, "out", 0, name ))
+        report (R_FATAL, "Can't name temp file.");
+
+    return create_output_file( name );
+}
+
+static void close_temp_file( const char *name, HANDLE file )
+{
+    CloseHandle( file );
+    DeleteFileA( name );
+}
+
+static char *flush_temp_file( const char *name, HANDLE file, DWORD *retsize )
+{
+    DWORD size = SetFilePointer( file, 0, NULL, FILE_CURRENT );
+    char *buffer = xalloc( size + 1 );
+
+    SetFilePointer( file, 0, NULL, FILE_BEGIN );
+    if (!ReadFile( file, buffer, size, retsize, NULL )) *retsize = 0;
+    close_temp_file( name, file );
+    buffer[*retsize] = 0;
+    return buffer;
+}
+
 static char * get_file_version(char * file_name)
 {
     static char version[32];
@@ -736,40 +789,15 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     char *cmd;
     HANDLE subfile;
     DWORD err, total;
-    char buffer[8192], *index;
+    char *buffer, *index;
     static const char header[] = "Valid test names:";
     int status, allocated;
-    char tmpdir[MAX_PATH], subname[MAX_PATH];
-    SECURITY_ATTRIBUTES sa;
+    char subname[MAX_PATH];
 
     test->subtest_count = 0;
 
-    if (!GetTempPathA( MAX_PATH, tmpdir ) ||
-        !GetTempFileNameA( tmpdir, "sub", 0, subname ))
-        report (R_FATAL, "Can't name subtests file.");
-
-    /* make handle inheritable */
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-
-    subfile = CreateFileA( subname, GENERIC_READ|GENERIC_WRITE,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           &sa, CREATE_ALWAYS, 0, NULL );
-
-    if ((subfile == INVALID_HANDLE_VALUE) &&
-        (GetLastError() == ERROR_INVALID_PARAMETER)) {
-        /* FILE_SHARE_DELETE not supported on win9x */
-        subfile = CreateFileA( subname, GENERIC_READ|GENERIC_WRITE,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE,
-                           &sa, CREATE_ALWAYS, 0, NULL );
-    }
-    if (subfile == INVALID_HANDLE_VALUE) {
-        err = GetLastError();
-        report (R_ERROR, "Can't open subtests output of %s: %u",
-                test->name, GetLastError());
-        goto quit;
-    }
+    subfile = create_temp_file( subname );
+    if (subfile == INVALID_HANDLE_VALUE) return GetLastError();
 
     cmd = strmake (NULL, "%s --list", test->exename);
     if (test->maindllpath) {
@@ -790,27 +818,16 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
             report (R_ERROR, "Cannot run %s error %u", test->exename, err);
         else
             err = status;
-        CloseHandle( subfile );
-        goto quit;
+        close_temp_file( subname, subfile );
+        return err;
     }
 
-    SetFilePointer( subfile, 0, NULL, FILE_BEGIN );
-    ReadFile( subfile, buffer, sizeof(buffer), &total, NULL );
-    CloseHandle( subfile );
-    if (sizeof buffer == total) {
-        report (R_ERROR, "Subtest list of %s too big.",
-                test->name, sizeof buffer);
-        err = ERROR_OUTOFMEMORY;
-        goto quit;
-    }
-    buffer[total] = 0;
-
+    buffer = flush_temp_file( subname, subfile, &total );
     index = strstr (buffer, header);
     if (!index) {
         report (R_ERROR, "Can't parse subtests output of %s",
                 test->name);
-        err = ERROR_INTERNAL_ERROR;
-        goto quit;
+        return ERROR_INTERNAL_ERROR;
     }
     index += sizeof header;
 
@@ -826,12 +843,8 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
         index = strtok (NULL, whitespace);
     }
     test->subtests = xrealloc(test->subtests, test->subtest_count * sizeof(char*));
-    err = 0;
-
- quit:
-    if (!DeleteFileA (subname))
-        report (R_WARNING, "Can't delete file '%s': %u", subname, GetLastError());
-    return err;
+    free( buffer );
+    return 0;
 }
 
 static void
@@ -1065,7 +1078,6 @@ run_tests (char *logname, char *outdir)
     int i;
     char *strres, *eol, *nextline;
     DWORD strsize;
-    SECURITY_ATTRIBUTES sa;
     char tmppath[MAX_PATH], tempdir[MAX_PATH+4];
     BOOL newdir;
     DWORD needed;
@@ -1081,31 +1093,19 @@ run_tests (char *logname, char *outdir)
     if (!GetTempPathA( MAX_PATH, tmppath ))
         report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
 
-    if (!logname) {
+    if (logname)
+    {
+        if (!strcmp(logname, "-")) logfile = GetStdHandle( STD_OUTPUT_HANDLE );
+        else logfile = create_output_file( logname );
+    }
+    else
+    {
         static char tmpname[MAX_PATH];
-        if (!GetTempFileNameA( tmppath, "res", 0, tmpname ))
-            report (R_FATAL, "Can't name logfile.");
+        logfile = create_temp_file( tmpname );
         logname = tmpname;
     }
     report (R_OUT, logname);
 
-    /* make handle inheritable */
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-
-    logfile = strcmp(logname, "-") == 0 ? GetStdHandle( STD_OUTPUT_HANDLE ) :
-              CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           &sa, CREATE_ALWAYS, 0, NULL );
-
-    if ((logfile == INVALID_HANDLE_VALUE) &&
-        (GetLastError() == ERROR_INVALID_PARAMETER)) {
-        /* FILE_SHARE_DELETE not supported on win9x */
-        logfile = CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE,
-                           &sa, CREATE_ALWAYS, 0, NULL );
-    }
     if (logfile == INVALID_HANDLE_VALUE)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
 
