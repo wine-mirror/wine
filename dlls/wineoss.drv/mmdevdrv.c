@@ -712,6 +712,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
+    params.name = NULL;
     params.device = This->devnode;
     params.flow = This->dataflow;
     params.share = mode;
@@ -719,6 +720,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
+    params.channel_count = NULL;
     params.stream = &stream;
 
     OSS_CALL(create_stream, &params);
