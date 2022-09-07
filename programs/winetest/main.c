@@ -64,6 +64,7 @@ static const char testexe[] = "_test.exe";
 static char build_id[64];
 static BOOL is_wow64;
 static int failures;
+static int quiet_mode;
 
 /* filters for running only specific tests */
 static char **filters;
@@ -717,15 +718,11 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms, BOOL nocritic
     DWORD wait, status, flags;
     UINT old_errmode;
 
-    /* Flush to disk so we know which test caused Windows to crash if it does */
-    if (out_file)
-        FlushFileBuffers(out_file);
-
     GetStartupInfoA (&si);
     si.dwFlags    = STARTF_USESTDHANDLES;
     si.hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
-    si.hStdOutput = out_file ? out_file : GetStdHandle( STD_OUTPUT_HANDLE );
-    si.hStdError  = out_file ? out_file : GetStdHandle( STD_ERROR_HANDLE );
+    si.hStdOutput = out_file;
+    si.hStdError  = out_file;
     if (nocritical)
     {
         old_errmode = SetErrorMode(0);
@@ -862,11 +859,26 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
     else
     {
         int status;
-        DWORD pid, start = GetTickCount();
+        DWORD pid, size, start = GetTickCount();
         char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
         report (R_STEP, "Running: %s:%s", test->name, subtest);
         xprintf ("%s:%s start %s\n", test->name, subtest, file);
-        status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
+        /* Flush to disk so we know which test caused Windows to crash if it does */
+        FlushFileBuffers(out_file);
+        if (quiet_mode > 1)
+        {
+            char *data, tmpname[MAX_PATH];
+            HANDLE tmpfile = create_temp_file( tmpname );
+            status = run_ex (cmd, tmpfile, tempdir, 120000, FALSE, &pid);
+            if (status)
+            {
+                data = flush_temp_file( tmpname, tmpfile, &size );
+                WriteFile( out_file, data, size, &size, NULL );
+                free( data );
+            }
+            else close_temp_file( tmpname, tmpfile );
+        }
+        else status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
         if (status == -2) status = -GetLastError();
         free(cmd);
         xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
@@ -1372,6 +1384,7 @@ int __cdecl main( int argc, char *argv[] )
         case 'q':
             report (R_QUIET);
             interactive = 0;
+            quiet_mode++;
             break;
         case 's':
             if (!(submit = argv[++i]))
