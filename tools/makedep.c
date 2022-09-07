@@ -120,6 +120,8 @@ static const struct
 static struct list files[HASH_SIZE];
 
 enum install_rules { INSTALL_LIB, INSTALL_DEV, NB_INSTALL_RULES };
+static const char *install_targets[NB_INSTALL_RULES] = { "install-lib", "install-dev" };
+static const char *install_variables[NB_INSTALL_RULES] = { "INSTALL_LIB", "INSTALL_DEV" };
 
 /* variables common to all makefiles */
 static struct strarray linguas;
@@ -139,8 +141,7 @@ static struct strarray cmdline_vars;
 static struct strarray subdirs;
 static struct strarray disabled_dirs;
 static struct strarray delay_import_libs;
-static struct strarray top_install_lib;
-static struct strarray top_install_dev;
+static struct strarray top_install[NB_INSTALL_RULES];
 static const char *root_src_dir;
 static const char *tools_dir;
 static const char *tools_ext;
@@ -178,8 +179,7 @@ struct makefile
     struct strarray imports;
     struct strarray delayimports;
     struct strarray extradllflags;
-    struct strarray install_lib;
-    struct strarray install_dev;
+    struct strarray install[NB_INSTALL_RULES];
     struct strarray extra_targets;
     struct strarray extra_imports;
     struct list     sources;
@@ -2189,19 +2189,18 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 static void add_install_rule( struct makefile *make, const char *target,
                               const char *file, const char *dest )
 {
-    if (strarray_exists( &make->install_lib, target ) ||
-        strarray_exists( &top_install_lib, make->obj_dir ) ||
-        strarray_exists( &top_install_lib, obj_dir_path( make, target )))
+    unsigned int i;
+
+    for (i = 0; i < NB_INSTALL_RULES; i++)
     {
-        strarray_add( &make->install_rules[INSTALL_LIB], file );
-        strarray_add( &make->install_rules[INSTALL_LIB], dest );
-    }
-    else if (strarray_exists( &make->install_dev, target ) ||
-             strarray_exists( &top_install_dev, make->obj_dir ) ||
-             strarray_exists( &top_install_dev, obj_dir_path( make, target )))
-    {
-        strarray_add( &make->install_rules[INSTALL_DEV], file );
-        strarray_add( &make->install_rules[INSTALL_DEV], dest );
+        if (strarray_exists( &make->install[i], target ) ||
+            strarray_exists( &top_install[i], make->obj_dir ) ||
+            strarray_exists( &top_install[i], obj_dir_path( make, target )))
+        {
+            strarray_add( &make->install_rules[i], file );
+            strarray_add( &make->install_rules[i], dest );
+            break;
+        }
     }
 }
 
@@ -2453,7 +2452,7 @@ static void output_install_commands( struct makefile *make, struct strarray file
  * Rules are stored as a (file,dest) pair of values.
  * The first char of dest indicates the type of install.
  */
-static void output_install_rules( struct makefile *make, enum install_rules rules, const char *target )
+static void output_install_rules( struct makefile *make, enum install_rules rules )
 {
     unsigned int i;
     struct strarray files = make->install_rules[rules];
@@ -2478,12 +2477,12 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
         }
     }
 
-    output( "%s %s::", obj_dir_path( make, "install" ), obj_dir_path( make, target ));
+    output( "%s %s::", obj_dir_path( make, "install" ), obj_dir_path( make, install_targets[rules] ));
     output_filenames( targets );
     output( "\n" );
     output_install_commands( make, files );
     strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "install" ));
-    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, target ));
+    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, install_targets[rules] ));
 }
 
 
@@ -3562,11 +3561,10 @@ static void output_subdirs( struct makefile *make )
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = empty_strarray;
     struct strarray dependencies = empty_strarray;
-    struct strarray install_lib_deps = empty_strarray;
-    struct strarray install_dev_deps = empty_strarray;
+    struct strarray install_deps[NB_INSTALL_RULES] = { empty_strarray };
     struct strarray tooldeps_deps = empty_strarray;
     struct strarray buildtest_deps = empty_strarray;
-    unsigned int i;
+    unsigned int i, j;
 
     strarray_addall( &clean_files, make->clean_files );
     strarray_addall( &distclean_files, make->distclean_files );
@@ -3589,10 +3587,9 @@ static void output_subdirs( struct makefile *make )
             strarray_add( &tooldeps_deps, obj_dir_path( submakes[i], "all" ));
         if (submakes[i]->testdll)
             strarray_add( &buildtest_deps, obj_dir_path( submakes[i], "all" ));
-        if (submakes[i]->install_rules[INSTALL_LIB].count)
-            strarray_add( &install_lib_deps, obj_dir_path( submakes[i], "install-lib" ));
-        if (submakes[i]->install_rules[INSTALL_DEV].count)
-            strarray_add( &install_dev_deps, obj_dir_path( submakes[i], "install-dev" ));
+        for (j = 0; j < NB_INSTALL_RULES; j++)
+            if (submakes[i]->install_rules[j].count)
+                strarray_add( &install_deps[j], obj_dir_path( submakes[i], install_targets[j] ));
     }
     strarray_addall( &dependencies, makefile_deps );
     output( "all:" );
@@ -3603,21 +3600,14 @@ static void output_subdirs( struct makefile *make )
     output( "\n" );
     output_filenames( dependencies );
     output( ":\n" );
-    if (install_lib_deps.count)
+    for (j = 0; j < NB_INSTALL_RULES; j++)
     {
-        output( "install install-lib::" );
-        output_filenames( install_lib_deps );
+        if (!install_deps[j].count) continue;
+        output( "install %s::", install_targets[j] );
+        output_filenames( install_deps[j] );
         output( "\n" );
         strarray_add_uniq( &make->phony_targets, "install" );
-        strarray_add_uniq( &make->phony_targets, "install-lib" );
-    }
-    if (install_dev_deps.count)
-    {
-        output( "install install-dev::" );
-        output_filenames( install_dev_deps );
-        output( "\n" );
-        strarray_add_uniq( &make->phony_targets, "install" );
-        strarray_add_uniq( &make->phony_targets, "install-dev" );
+        strarray_add_uniq( &make->phony_targets, install_targets[j] );
     }
     output_uninstall_rules( make );
     if (buildtest_deps.count)
@@ -3764,8 +3754,7 @@ static void output_sources( struct makefile *make )
         output( "\n" );
         strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "all" ));
     }
-    output_install_rules( make, INSTALL_LIB, "install-lib" );
-    output_install_rules( make, INSTALL_DEV, "install-dev" );
+    for (i = 0; i < NB_INSTALL_RULES; i++) output_install_rules( make, i );
 
     if (make->clean_files.count)
     {
@@ -3947,6 +3936,7 @@ static void output_stub_makefile( struct makefile *make )
 {
     struct strarray targets = empty_strarray;
     const char *make_var = strarray_get_value( &top_makefile->vars, "MAKE" );
+    unsigned int i;
 
     if (make->obj_dir) create_dir( make->obj_dir );
 
@@ -3959,10 +3949,12 @@ static void output_stub_makefile( struct makefile *make )
     output( "all:\n" );
 
     if (make->all_targets.count) strarray_add( &targets, "all" );
-    if (make->install_rules[INSTALL_LIB].count || make->install_rules[INSTALL_DEV].count)
-        strarray_add( &targets, "install" );
-    if (make->install_rules[INSTALL_LIB].count) strarray_add( &targets, "install-lib" );
-    if (make->install_rules[INSTALL_DEV].count) strarray_add( &targets, "install-dev" );
+    for (i = 0; i < NB_INSTALL_RULES; i++)
+    {
+        if (!make->install_rules[i].count) continue;
+        strarray_add_uniq( &targets, "install" );
+        strarray_add( &targets, install_targets[i] );
+    }
     if (make->clean_files.count) strarray_add( &targets, "clean" );
     if (make->test_files.count)
     {
@@ -4124,9 +4116,9 @@ static void load_sources( struct makefile *make )
     make->imports       = get_expanded_make_var_array( make, "IMPORTS" );
     make->delayimports  = get_expanded_make_var_array( make, "DELAYIMPORTS" );
     make->extradllflags = get_expanded_make_var_array( make, "EXTRADLLFLAGS" );
-    make->install_lib   = get_expanded_make_var_array( make, "INSTALL_LIB" );
-    make->install_dev   = get_expanded_make_var_array( make, "INSTALL_DEV" );
     make->extra_targets = get_expanded_make_var_array( make, "EXTRA_TARGETS" );
+    for (i = 0; i < NB_INSTALL_RULES; i++)
+        make->install[i] = get_expanded_make_var_array( make, install_variables[i] );
 
     if (make->extlib) make->staticlib = make->extlib;
     if (make->staticlib) make->module = make->staticlib;
@@ -4147,11 +4139,16 @@ static void load_sources( struct makefile *make )
 
     if (make->use_msvcrt) strarray_add_uniq( &make->extradllflags, "-mno-cygwin" );
 
-    if (make->module && !make->install_lib.count && !make->install_dev.count)
+    if (make->module)
     {
-        if (make->importlib) strarray_add( &make->install_dev, make->importlib );
-        if (make->staticlib) strarray_add( &make->install_dev, make->staticlib );
-        else strarray_add( &make->install_lib, make->module );
+        /* add default install rules if nothing was specified */
+        for (i = 0; i < NB_INSTALL_RULES; i++) if (make->install[i].count) break;
+        if (i == NB_INSTALL_RULES)
+        {
+            if (make->importlib) strarray_add( &make->install[INSTALL_DEV], make->importlib );
+            if (make->staticlib) strarray_add( &make->install[INSTALL_DEV], make->staticlib );
+            else strarray_add( &make->install[INSTALL_LIB], make->module );
+        }
     }
 
     make->include_paths = empty_strarray;
@@ -4310,8 +4307,8 @@ int main( int argc, char *argv[] )
     lddll_flags        = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
     libs               = get_expanded_make_var_array( top_makefile, "LIBS" );
     enable_tests       = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
-    top_install_lib    = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_LIB" );
-    top_install_dev    = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_DEV" );
+    for (i = 0; i < NB_INSTALL_RULES; i++)
+        top_install[i] = get_expanded_make_var_array( top_makefile, strmake( "TOP_%s", install_variables[i] ));
 
     delay_load_flag    = get_expanded_make_variable( top_makefile, "DELAYLOADFLAG" );
     root_src_dir       = get_expanded_make_variable( top_makefile, "srcdir" );
