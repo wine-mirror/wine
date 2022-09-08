@@ -190,6 +190,17 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE handle, UCHAR *buffer, ULONG c
         if (!(flags & BCRYPT_USE_SYSTEM_PREFERRED_RNG))
             return STATUS_INVALID_HANDLE;
     }
+    else if (((ULONG_PTR)algorithm & 1) == 1)
+    {
+        /* Pseudo algorithm handles are denoted by having the lowest bit set.
+         * An aligned algorithm pointer will never have this bit set.
+         */
+        if (algorithm != BCRYPT_RNG_ALG_HANDLE)
+        {
+            FIXME("pseudo-handle algorithm %p not supported\n", algorithm);
+            return STATUS_NOT_IMPLEMENTED;
+        }
+    }
     else if (algorithm->hdr.magic != MAGIC_ALG || algorithm->id != ALG_ID_RNG)
         return STATUS_INVALID_HANDLE;
 

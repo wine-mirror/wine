@@ -57,6 +57,14 @@ static void test_BCryptGenRandom(void)
     ret = BCryptGenRandom(NULL, buffer, 8, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     ok(ret == STATUS_SUCCESS, "Expected success, got %#lx\n", ret);
     ok(memcmp(buffer, buffer + 8, 8), "Expected a random number, got 0\n");
+
+    /* Test pseudo handle, which was introduced at the same time as BCryptHash */
+    if (pBCryptHash)
+    {
+        ret = BCryptGenRandom(BCRYPT_RNG_ALG_HANDLE, buffer, sizeof(buffer), 0);
+        ok(ret == STATUS_SUCCESS, "Expected success, got %#lx\n", ret);
+    }
+    else win_skip("BCryptGenRandom pseudo handles are not available\n");
 }
 
 static void test_BCryptGetFipsAlgorithmMode(void)
