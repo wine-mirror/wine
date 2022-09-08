@@ -1886,23 +1886,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
     }
 }
 
-void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration)
-{
-    WORD i;
-
-    EnterCriticalSection(&reader->cs);
-
-    reader->start_time = start;
-
-    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, start, start + duration,
-            AM_SEEKING_AbsolutePositioning, duration ? AM_SEEKING_AbsolutePositioning : AM_SEEKING_NoPositioning);
-
-    for (i = 0; i < reader->stream_count; ++i)
-        reader->streams[i].eos = false;
-
-    LeaveCriticalSection(&reader->cs);
-}
-
 HRESULT wm_reader_set_streams_selected(struct wm_reader *reader, WORD count,
         const WORD *stream_numbers, const WMT_STREAM_SELECTION *selections)
 {
@@ -2415,10 +2398,21 @@ static HRESULT WINAPI reader_SetOutputSetting(IWMSyncReader2 *iface, DWORD outpu
 static HRESULT WINAPI reader_SetRange(IWMSyncReader2 *iface, QWORD start, LONGLONG duration)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    WORD i;
 
     TRACE("reader %p, start %I64u, duration %I64d.\n", reader, start, duration);
 
-    wm_reader_seek(reader, start, duration);
+    EnterCriticalSection(&reader->cs);
+
+    reader->start_time = start;
+
+    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, start, start + duration,
+            AM_SEEKING_AbsolutePositioning, duration ? AM_SEEKING_AbsolutePositioning : AM_SEEKING_NoPositioning);
+
+    for (i = 0; i < reader->stream_count; ++i)
+        reader->streams[i].eos = false;
+
+    LeaveCriticalSection(&reader->cs);
     return S_OK;
 }
 

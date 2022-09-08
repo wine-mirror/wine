@@ -244,10 +244,9 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
                 {
                     reader->context = op->u.start.context;
                     if (SUCCEEDED(hr))
-                    {
-                        wm_reader_seek(reader->wm_reader, op->u.start.start, op->u.start.duration);
+                        hr = IWMSyncReader2_SetRange(reader->reader, op->u.start.start, op->u.start.duration);
+                    if (SUCCEEDED(hr))
                         reader->clock_start = get_current_time(reader);
-                    }
 
                     LeaveCriticalSection(&reader->callback_cs);
                     IWMReaderCallback_OnStatus(reader->callback, WMT_STARTED, hr,
