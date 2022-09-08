@@ -1086,6 +1086,7 @@ interfacedef: attributes interface		{ if ($2->type_type == TYPE_PARAMETERIZED_TY
 interfaceref:
 	  tINTERFACE typename			{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
 	| tINTERFACE namespace_pfx typename	{ $$ = get_type(TYPE_INTERFACE, $3, $2, 0); }
+	| tINTERFACE parameterized_type		{ if (type_get_type(($$ = $2)) != TYPE_INTERFACE) error_loc("%s is not an interface\n", $$->name); }
 	;
 
 dispinterfaceref:
