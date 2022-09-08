@@ -20,6 +20,7 @@
     - export CCACHE_COMPILERCHECK=content
     - export PATH="/usr/lib/ccache:$PATH"
     - mkdir -p build32 build64
+    - rm -fr .git/rebase-merge  # in case a previous CI run failed in git rebase
 
 build-linux:
   extends: .wine-build
@@ -31,7 +32,6 @@ build-linux:
       - build64/config.log
       - build32/config.log
   script:
-    - rm -fr .git/rebase-merge  # in case a previous CI run failed in git rebase
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
 
 build-mac:
@@ -46,26 +46,32 @@ build-mac:
       - build64/config.log
       - build32/config.log
   script:
-    - rm -fr .git/rebase-merge
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
 
-build-winetest:
+build-daily-linux:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - usr/local/
+  script:
+    - ./tools/gitlab/build-linux
+
+build-winetest:
+  stage: build
+  image: $CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:bullseye
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: build-daily-linux
   artifacts:
     name: winetest
     paths:
       - winetest.exe
       - winetest64.exe
   script:
-    - cd build64
-    - ../configure -q -C --enable-win64 --with-mingw
-    - make -s -j$(nproc) install-test DESTDIR=$BASEDIR
-    - cd ../build32
-    - ../configure -q -C --with-mingw
-    - make -s -j$(nproc) install-test DESTDIR=$BASEDIR
-    - cd ..
     - mv usr/local/lib/wine/i386-windows/winetest.exe winetest.exe
     - mv usr/local/lib/wine/x86_64-windows/winetest.exe winetest64.exe

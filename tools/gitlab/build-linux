@@ -10,13 +10,19 @@ set -Eeuxo pipefail
 autoreconf
 
 cd build64
-../configure -C --enable-win64 --enable-werror --with-mingw
+../configure -q -C --enable-win64 --enable-werror --with-mingw
 make -s -j$(nproc)
 cd ..
 
 cd build32
-../configure -C --enable-werror --with-mingw
+../configure -q -C --enable-werror --with-mingw
 make -s -j$(nproc)
 cd ..
 
-git reset --hard
+if test -s .git/rebase-merge/git-rebase-todo
+then
+    git reset --hard
+else
+    make -s -j$(nproc) -C build32 install-lib install-test DESTDIR=$BASEDIR
+    make -s -j$(nproc) -C build64 install-lib install-test DESTDIR=$BASEDIR
+fi
