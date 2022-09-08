@@ -29,6 +29,7 @@
 #include "windows.h"
 #include "winternl.h"
 #include "dwrite_3.h"
+#include "usp10.h"
 
 #include "wine/test.h"
 
@@ -2829,6 +2830,115 @@ static void test_AnalyzeBidi(void)
     IDWriteTextAnalyzer_Release(analyzer);
 }
 
+enum script_id
+{
+    Script_Unknown = 0,
+    Script_Arabic = 3,
+    Script_Latin = 49,
+};
+
+static void test_glyph_justification_property(void)
+{
+    static const struct
+    {
+        enum script_id script;
+        const WCHAR *text;
+        unsigned short justification[10];
+    } tests[] =
+    {
+        {
+            Script_Latin,
+            L"a b\tc",
+            {
+                SCRIPT_JUSTIFY_CHARACTER,
+                SCRIPT_JUSTIFY_BLANK,
+                SCRIPT_JUSTIFY_CHARACTER,
+                SCRIPT_JUSTIFY_BLANK,
+                SCRIPT_JUSTIFY_CHARACTER,
+            },
+        },
+        {
+            Script_Latin,
+            L" a b",
+            {
+                SCRIPT_JUSTIFY_BLANK,
+                SCRIPT_JUSTIFY_CHARACTER,
+                SCRIPT_JUSTIFY_BLANK,
+                SCRIPT_JUSTIFY_CHARACTER,
+            },
+        },
+        {
+            Script_Arabic,
+            L" a b",
+            {
+                SCRIPT_JUSTIFY_ARABIC_BLANK,
+                SCRIPT_JUSTIFY_NONE,
+                SCRIPT_JUSTIFY_ARABIC_BLANK,
+                SCRIPT_JUSTIFY_NONE,
+            },
+        },
+        { Script_Unknown, L"a", { SCRIPT_JUSTIFY_CHARACTER } },
+        { Script_Latin, L"\x640", { SCRIPT_JUSTIFY_CHARACTER } },
+        { Script_Arabic, L"\x640", { SCRIPT_JUSTIFY_ARABIC_KASHIDA } },
+
+        { Script_Arabic, L"\x633\x627", { SCRIPT_JUSTIFY_ARABIC_SEEN, SCRIPT_JUSTIFY_ARABIC_ALEF } },
+        { Script_Arabic, L"\x633\x625", { SCRIPT_JUSTIFY_ARABIC_SEEN, SCRIPT_JUSTIFY_ARABIC_ALEF } },
+        { Script_Arabic, L"\x633\x623", { SCRIPT_JUSTIFY_ARABIC_SEEN, SCRIPT_JUSTIFY_ARABIC_ALEF } },
+        { Script_Arabic, L"\x633\x622", { SCRIPT_JUSTIFY_ARABIC_SEEN, SCRIPT_JUSTIFY_ARABIC_ALEF } },
+
+        { Script_Arabic, L"\x644\x647", { SCRIPT_JUSTIFY_NONE, SCRIPT_JUSTIFY_ARABIC_HA } },
+
+        { Script_Arabic, L"\x628\x631", { SCRIPT_JUSTIFY_NONE, SCRIPT_JUSTIFY_ARABIC_BARA } },
+        { Script_Arabic, L"\x645\x631", { SCRIPT_JUSTIFY_NONE, SCRIPT_JUSTIFY_ARABIC_BARA } },
+        { Script_Arabic, L"\x645\x632", { SCRIPT_JUSTIFY_NONE, SCRIPT_JUSTIFY_ARABIC_BARA } },
+
+        { Script_Arabic, L"\x644\x633\x645", { SCRIPT_JUSTIFY_NONE, SCRIPT_JUSTIFY_ARABIC_SEEN_M, SCRIPT_JUSTIFY_ARABIC_NORMAL } },
+    };
+    DWRITE_SHAPING_GLYPH_PROPERTIES glyph_props[16];
+    DWRITE_SHAPING_TEXT_PROPERTIES text_props[16];
+    UINT16 clustermap[16], glyphs[16];
+    IDWriteTextAnalyzer *analyzer;
+    DWRITE_SCRIPT_ANALYSIS sa;
+    IDWriteFontFace *fontface;
+    UINT32 glyph_count;
+    unsigned int i, j;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return;
+
+    analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
+    ok(!!analyzer, "Failed to create analyzer instance.\n");
+
+    fontface = create_fontface();
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Test %s", debugstr_w(tests[i].text));
+
+        sa.script = tests[i].script;
+        sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+
+        /* Use RTL for Arabic, it affects returned justification classes. */
+        hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, tests[i].text, wcslen(tests[i].text), fontface,
+                FALSE, sa.script == Script_Arabic, &sa, L"en-US", NULL, NULL, NULL, 0, ARRAY_SIZE(glyphs), clustermap,
+                text_props, glyphs, glyph_props, &glyph_count);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        for (j = 0; j < glyph_count; ++j)
+        {
+            winetest_push_context("Glyph %u", j);
+            ok(glyph_props[j].justification == tests[i].justification[j], "Unexpected justification value %u.\n",
+                    glyph_props[j].justification);
+            winetest_pop_context();
+        }
+
+        winetest_pop_context();
+    }
+
+    IDWriteFontFace_Release(fontface);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -2857,6 +2967,7 @@ START_TEST(analyzer)
     test_GetGlyphOrientationTransform();
     test_GetBaseline();
     test_GetGdiCompatibleGlyphPlacements();
+    test_glyph_justification_property();
 
     IDWriteFactory_Release(factory);
 }
