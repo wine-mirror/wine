@@ -115,7 +115,7 @@ static void callback_thread_run(struct async_reader *reader)
                 EnterCriticalSection(&reader->callback_cs);
             }
 
-            while (pts > reader->user_time && reader->running && list_empty(&reader->async_ops))
+            while (reader->running && list_empty(&reader->async_ops) && pts > reader->user_time)
                 SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs, INFINITE);
         }
         else
