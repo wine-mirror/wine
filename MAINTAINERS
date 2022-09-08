@@ -202,6 +202,19 @@ P:	Andrew Eikum <coldpie@fastmail.com>
 F:	dlls/*.acm/
 F:	dlls/msacm32/
 
+Media Foundation transforms
+M:	Rémi Bernon <rbernon@codeweavers.com>
+P:	Nikolay Sivov <nsivov@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/mf/tests/transform.c
+F:	dlls/winegstreamer/color_convert.c
+F:	dlls/winegstreamer/h264_decoder.c
+F:	dlls/winegstreamer/resampler.c
+F:	dlls/winegstreamer/video_processor.c
+F:	dlls/winegstreamer/wg_sample.c
+F:	dlls/winegstreamer/wg_transform.c
+F:	dlls/winegstreamer/wma_decoder.c
+
 Microsoft C Runtime
 M:	Piotr Caban <piotr@codeweavers.com>
 F:	dlls/msvc*/
