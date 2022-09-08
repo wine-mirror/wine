@@ -82,6 +82,20 @@ static REFERENCE_TIME get_current_time(const struct async_reader *reader)
     return (time.QuadPart * 1000) / reader->clock_frequency.QuadPart * 10000;
 }
 
+static DWORD async_reader_get_wait_timeout(struct async_reader *reader, QWORD pts)
+{
+    REFERENCE_TIME current_time = reader->user_time;
+    DWORD timeout = INFINITE;
+
+    if (!reader->user_clock)
+    {
+        current_time = get_current_time(reader) - reader->clock_start;
+        timeout = (pts - current_time) / 10000;
+    }
+
+    return pts > current_time ? timeout : 0;
+}
+
 static void callback_thread_run(struct async_reader *reader)
 {
     IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
@@ -96,6 +110,8 @@ static void callback_thread_run(struct async_reader *reader)
 
     while (reader->running && list_empty(&reader->async_ops))
     {
+        DWORD timeout;
+
         LeaveCriticalSection(&reader->callback_cs);
         hr = wm_reader_get_stream_sample(&reader->reader, callback_advanced, 0, &sample, &pts, &duration, &flags, &stream_number);
         EnterCriticalSection(&reader->callback_cs);
@@ -104,32 +120,19 @@ static void callback_thread_run(struct async_reader *reader)
 
         stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number);
 
-        if (reader->user_clock)
+        if (reader->user_clock && pts > reader->user_time && callback_advanced)
         {
             QWORD user_time = reader->user_time;
-
-            if (pts > user_time && callback_advanced)
-            {
-                LeaveCriticalSection(&reader->callback_cs);
-                IWMReaderCallbackAdvanced_OnTime(callback_advanced, user_time, reader->context);
-                EnterCriticalSection(&reader->callback_cs);
-            }
-
-            while (reader->running && list_empty(&reader->async_ops) && pts > reader->user_time)
-                SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs, INFINITE);
+            LeaveCriticalSection(&reader->callback_cs);
+            IWMReaderCallbackAdvanced_OnTime(callback_advanced, user_time, reader->context);
+            EnterCriticalSection(&reader->callback_cs);
         }
-        else
+
+        while (reader->running && list_empty(&reader->async_ops))
         {
-            while (reader->running && list_empty(&reader->async_ops))
-            {
-                REFERENCE_TIME current_time = get_current_time(reader) - reader->clock_start;
-
-                if (pts <= current_time)
-                    break;
-
-                SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs,
-                        (pts - current_time) / 10000);
-            }
+            if (!(timeout = async_reader_get_wait_timeout(reader, pts)))
+                break;
+            SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs, timeout);
         }
 
         if (reader->running && list_empty(&reader->async_ops))
