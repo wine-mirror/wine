@@ -7154,36 +7154,36 @@ static void test_draw_geometry(BOOL d3d11)
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    set_point(&point, 20.0f, 80.0f);
+    set_point(&point, 20.0f, 79.5f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_HOLLOW);
-    quadratic_to(sink, 40.0f,  80.0f, 60.0f,  80.0f);
-    quadratic_to(sink, 60.0f, 160.0f, 60.0f, 240.0f);
-    quadratic_to(sink, 40.0f, 240.0f, 20.0f, 240.0f);
-    quadratic_to(sink, 20.0f, 160.0f, 20.0f,  80.0f);
+    quadratic_to(sink, 40.0f,  79.5f, 60.0f,  79.5f);
+    quadratic_to(sink, 60.0f, 159.5f, 60.0f, 239.5f);
+    quadratic_to(sink, 40.0f, 239.5f, 20.0f, 239.5f);
+    quadratic_to(sink, 20.0f, 159.5f, 20.0f,  79.5f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
-    set_point(&point, 100.0f, 80.0f);
+    set_point(&point, 100.0f, 79.5f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_HOLLOW);
-    quadratic_to(sink, 105.0f,  80.0f, 140.0f,  80.0f);
-    quadratic_to(sink, 140.0f, 100.0f, 140.0f, 240.0f);
-    quadratic_to(sink, 135.0f, 240.0f, 100.0f, 240.0f);
-    quadratic_to(sink, 100.0f, 220.0f, 100.0f,  80.0f);
+    quadratic_to(sink, 105.0f,  79.5f, 140.0f,  79.5f);
+    quadratic_to(sink, 140.0f,  99.5f, 140.0f, 239.5f);
+    quadratic_to(sink, 135.0f, 239.5f, 100.0f, 239.5f);
+    quadratic_to(sink, 100.0f, 219.5f, 100.0f,  79.5f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
-    set_point(&point, 180.0f, 80.0f);
+    set_point(&point, 180.0f, 79.5f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_HOLLOW);
-    quadratic_to(sink, 215.0f,  80.0f, 220.0f,  80.0f);
-    quadratic_to(sink, 220.0f, 220.0f, 220.0f, 240.0f);
-    quadratic_to(sink, 185.0f, 240.0f, 180.0f, 240.0f);
-    quadratic_to(sink, 180.0f, 100.0f, 180.0f,  80.0f);
+    quadratic_to(sink, 215.0f,  79.5f, 220.0f,  79.5f);
+    quadratic_to(sink, 220.0f, 219.5f, 220.0f, 239.5f);
+    quadratic_to(sink, 185.0f, 239.5f, 180.0f, 239.5f);
+    quadratic_to(sink, 180.0f,  99.5f, 180.0f,  79.5f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
-    set_point(&point, 260.0f, 80.0f);
+    set_point(&point, 260.0f, 79.5f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_HOLLOW);
-    quadratic_to(sink, 280.0f,  80.0f, 300.0f,  80.0f);
-    quadratic_to(sink, 300.0f, 160.0f, 300.0f, 240.0f);
-    quadratic_to(sink, 280.0f, 240.0f, 260.0f, 240.0f);
-    quadratic_to(sink, 260.0f, 160.0f, 260.0f,  80.0f);
+    quadratic_to(sink, 280.0f,  79.5f, 300.0f,  79.5f);
+    quadratic_to(sink, 300.0f, 159.5f, 300.0f, 239.5f);
+    quadratic_to(sink, 280.0f, 239.5f, 260.0f, 239.5f);
+    quadratic_to(sink, 260.0f, 159.5f, 260.0f,  79.5f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
 
     set_point(&point, 20.0f, 400.0f);
