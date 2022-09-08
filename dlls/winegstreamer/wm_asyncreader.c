@@ -60,6 +60,7 @@ struct async_reader
     IWMReaderCallback *callback;
     void *context;
 
+    REFERENCE_TIME clock_start;
     LARGE_INTEGER clock_frequency;
 
     HANDLE callback_thread;
@@ -85,7 +86,6 @@ static void callback_thread_run(struct async_reader *reader)
 {
     IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
     IWMReaderCallback *callback = reader->callback;
-    REFERENCE_TIME start_time;
     struct wm_stream *stream;
     static const DWORD zero;
     QWORD pts, duration;
@@ -93,8 +93,6 @@ static void callback_thread_run(struct async_reader *reader)
     INSSBuffer *sample;
     HRESULT hr = S_OK;
     DWORD flags;
-
-    start_time = get_current_time(reader);
 
     while (reader->running && list_empty(&reader->async_ops))
     {
@@ -124,13 +122,13 @@ static void callback_thread_run(struct async_reader *reader)
         {
             while (reader->running && list_empty(&reader->async_ops))
             {
-                REFERENCE_TIME current_time = get_current_time(reader);
+                REFERENCE_TIME current_time = get_current_time(reader) - reader->clock_start;
 
-                if (pts <= current_time - start_time)
+                if (pts <= current_time)
                     break;
 
                 SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs,
-                        (pts - (current_time - start_time)) / 10000);
+                        (pts - current_time) / 10000);
             }
         }
 
@@ -208,7 +206,10 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
                 {
                     reader->context = op->u.start.context;
                     if (SUCCEEDED(hr))
+                    {
                         wm_reader_seek(&reader->reader, op->u.start.start, op->u.start.duration);
+                        reader->clock_start = get_current_time(reader);
+                    }
 
                     LeaveCriticalSection(&reader->callback_cs);
                     IWMReaderCallback_OnStatus(reader->callback, WMT_STARTED, hr,
