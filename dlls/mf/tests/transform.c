@@ -251,6 +251,68 @@ void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc,
     }
 }
 
+#define check_mft_set_input_type_required(a, b) check_mft_set_input_type_required_(__LINE__, a, b)
+static void check_mft_set_input_type_required_(int line, IMFTransform *transform, const struct attribute_desc *attributes)
+{
+    const struct attribute_desc *attr;
+    IMFMediaType *media_type;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = MFCreateMediaType(&media_type);
+    ok_(__FILE__, line)(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    for (attr = attributes; attr && attr->key; attr++)
+    {
+        winetest_push_context("%s", debugstr_a(attr->name));
+        hr = IMFMediaType_DeleteItem(media_type, attr->key);
+        ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
+        hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok_(__FILE__, line)(FAILED(hr) == attr->required, "SetInputType returned %#lx.\n", hr);
+        hr = IMFMediaType_SetItem(media_type, attr->key, &attr->value);
+        ok_(__FILE__, line)(hr == S_OK, "SetItem returned %#lx\n", hr);
+        winetest_pop_context();
+    }
+
+    hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    ok_(__FILE__, line)(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    ref = IMFMediaType_Release(media_type);
+    todo_wine_if(ref == 1)
+    ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
+}
+
+#define check_mft_set_output_type_required(a, b) check_mft_set_output_type_required_(__LINE__, a, b)
+static void check_mft_set_output_type_required_(int line, IMFTransform *transform, const struct attribute_desc *attributes)
+{
+    const struct attribute_desc *attr;
+    IMFMediaType *media_type;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = MFCreateMediaType(&media_type);
+    ok_(__FILE__, line)(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    for (attr = attributes; attr && attr->key; attr++)
+    {
+        winetest_push_context("%s", debugstr_a(attr->name));
+        hr = IMFMediaType_DeleteItem(media_type, attr->key);
+        ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok_(__FILE__, line)(FAILED(hr) == attr->required, "SetOutputType returned %#lx.\n", hr);
+        hr = IMFMediaType_SetItem(media_type, attr->key, &attr->value);
+        ok_(__FILE__, line)(hr == S_OK, "SetItem returned %#lx\n", hr);
+        winetest_pop_context();
+    }
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    ok_(__FILE__, line)(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    ref = IMFMediaType_Release(media_type);
+    todo_wine_if(ref == 1)
+    ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
+}
+
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -914,21 +976,21 @@ static void test_aac_encoder(void)
 
     static const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000, .required = TRUE),
         {0},
     };
 
@@ -994,6 +1056,8 @@ static void test_aac_encoder(void)
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, FALSE);
 
+    check_mft_set_input_type_required(transform, input_type_desc);
+
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     init_media_type(media_type, input_type_desc, -1);
@@ -1001,6 +1065,8 @@ static void test_aac_encoder(void)
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 1, "Release returned %lu\n", ret);
+
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
@@ -1133,24 +1199,24 @@ static void test_aac_decoder(void)
 
     const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data), .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
         ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
         ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
-        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data)),
         {0},
     };
     static const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
         {0},
     };
 
@@ -1232,19 +1298,11 @@ static void test_aac_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    for (i = 1; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-        init_media_type(media_type, input_type_desc, i + 1);
-    }
+    init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -1268,19 +1326,11 @@ static void test_aac_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu input media types\n", i);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 1);
-    for (i = 1; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, output_type_desc, i + 1);
-    }
+    init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -1353,24 +1403,24 @@ static void test_wma_encoder(void)
 
     static const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (32 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (32 / 8) * 22050, .required = TRUE),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size),
-        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size, .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data), .required = TRUE),
         {0},
     };
 
@@ -1411,11 +1461,20 @@ static void test_wma_encoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
+    check_mft_set_input_type_required(transform, input_type_desc);
+
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    check_mft_set_output_type_required(transform, output_type_desc);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
@@ -1615,23 +1674,24 @@ static void test_wma_decoder(void)
 
     const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
-        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8, .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003), /* not required by SetInputType, but needed for the transform to work */
         {0},
     };
     static const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 88200),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (16 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (16 / 8) * 22050, .required = TRUE),
         {0},
     };
 
@@ -1714,22 +1774,11 @@ static void test_wma_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-        init_media_type(media_type, input_type_desc, i + 1);
-    }
+    init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -1755,22 +1804,11 @@ static void test_wma_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == 2, "%lu output media types\n", i);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, output_type_desc, i + 1);
-    }
+    init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -1784,33 +1822,6 @@ static void test_wma_decoder(void)
     ok(input_info.cbSize == wmaenc_block_size, "got cbSize %lu\n", input_info.cbSize);
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
     ok(input_info.cbAlignment == 1, "got cbAlignment %#lx\n", input_info.cbAlignment);
-
-    memset(&output_info, 0xcd, sizeof(output_info));
-    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
-    ok(output_info.cbSize == 0, "got cbSize %#lx\n", output_info.cbSize);
-    ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
-
-    /* MF_MT_AUDIO_AVG_BYTES_PER_SECOND isn't required by SetInputType, but is needed for the transform to work */
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003);
-    ok(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#lx\n", hr);
-
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
 
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
@@ -2174,23 +2185,16 @@ static void test_h264_decoder(void)
     };
     const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, input_width, input_height),
-        {0},
-    };
-    const struct attribute_desc minimal_output_type_desc[] =
-    {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, input_width, input_height),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, input_width, input_height),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, input_width, input_height, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
         ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 2, 1),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 3840),
@@ -2383,19 +2387,10 @@ static void test_h264_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
     ok(i == 2 || broken(i == 1) /* Win7 */, "%lu input media types\n", i);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    todo_wine
-    ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 2);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
@@ -2426,27 +2421,10 @@ static void test_h264_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == 5, "%lu output media types\n", i);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
-    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, minimal_output_type_desc, 1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
-    ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, minimal_output_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(minimal_output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        todo_wine
-        ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, minimal_output_type_desc, i + 1);
-    }
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
@@ -2907,24 +2885,24 @@ static void test_audio_convert(void)
 
     static const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (32 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (32 / 8) * 22050, .required = TRUE),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (16 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (16 / 8) * 44100, .required = TRUE),
         {0},
     };
 
@@ -3012,22 +2990,11 @@ static void test_audio_convert(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-        init_media_type(media_type, input_type_desc, i + 1);
-    }
+    init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -3053,22 +3020,11 @@ static void test_audio_convert(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == 4, "%lu output media types\n", i);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, output_type_desc, i + 1);
-    }
+    init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -3386,17 +3342,17 @@ static void test_color_convert(void)
     static const DWORD actual_width = 96, actual_height = 96;
     const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         {0},
     };
 
@@ -3482,43 +3438,21 @@ static void test_color_convert(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
     ok(i == 20, "%lu input media types\n", i);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, output_type_desc, i + 1);
-    }
+    init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
-        init_media_type(media_type, input_type_desc, i + 1);
-    }
+    init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -3770,18 +3704,18 @@ static void test_video_processor(void)
     static const DWORD actual_width = 96, actual_height = 96;
     const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         {0},
     };
 
@@ -4219,43 +4153,21 @@ todo_wine {
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
     ok(i == 22 || i == 30 || broken(i == 26) /* w1064v1507 */, "%lu input media types\n", i);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-        init_media_type(media_type, input_type_desc, i + 1);
-    }
+    init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 1, "Release returned %lu\n", ret);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, output_type_desc, i + 1);
-    }
+    init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -4489,21 +4401,21 @@ static void test_mp3_decoder(void)
 
     const struct attribute_desc input_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
         {0},
     };
     static const struct attribute_desc output_type_desc[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 88200),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (16 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (16 / 8) * 22050, .required = TRUE),
         {0},
     };
 
@@ -4582,22 +4494,11 @@ static void test_mp3_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    /* check required input media type attributes */
+    check_mft_set_input_type_required(transform, input_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
-    init_media_type(media_type, input_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-        init_media_type(media_type, input_type_desc, i + 1);
-    }
+    init_media_type(media_type, input_type_desc, -1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
@@ -4623,22 +4524,11 @@ static void test_mp3_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu output media types\n", i);
 
-    /* check required output media type attributes */
+    check_mft_set_output_type_required(transform, output_type_desc);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
-    init_media_type(media_type, output_type_desc, 2);
-    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-        init_media_type(media_type, output_type_desc, i + 1);
-    }
+    init_media_type(media_type, output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);

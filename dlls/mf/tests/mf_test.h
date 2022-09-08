@@ -41,6 +41,7 @@ struct attribute_desc
     const char *name;
     PROPVARIANT value;
     BOOL ratio;
+    BOOL required;
     BOOL todo;
     BOOL todo_value;
 };

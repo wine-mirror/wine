@@ -102,6 +102,37 @@ static HWND create_window(void)
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
 }
 
+#define check_handler_required_attributes(a, b) check_handler_required_attributes_(__LINE__, a, b)
+static void check_handler_required_attributes_(int line, IMFMediaTypeHandler *handler, const struct attribute_desc *attributes)
+{
+    const struct attribute_desc *attr;
+    IMFMediaType *media_type;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = MFCreateMediaType(&media_type);
+    ok_(__FILE__, line)(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    for (attr = attributes; attr && attr->key; attr++)
+    {
+        winetest_push_context("%s", debugstr_a(attr->name));
+        hr = IMFMediaType_DeleteItem(media_type, attr->key);
+        ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
+        hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, NULL);
+        todo_wine_if(attr->todo)
+        ok_(__FILE__, line)(FAILED(hr) == attr->required, "IsMediaTypeSupported returned %#lx.\n", hr);
+        hr = IMFMediaType_SetItem(media_type, attr->key, &attr->value);
+        ok_(__FILE__, line)(hr == S_OK, "SetItem returned %#lx\n", hr);
+        winetest_pop_context();
+    }
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, NULL);
+    ok_(__FILE__, line)(hr == S_OK, "IsMediaTypeSupported returned %#lx.\n", hr);
+    ref = IMFMediaType_Release(media_type);
+    ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
+}
+
 static void create_descriptors(UINT enum_types_count, IMFMediaType **enum_types, const media_type_desc *current_desc,
         IMFPresentationDescriptor **pd, IMFStreamDescriptor **sd)
 {
@@ -4777,24 +4808,24 @@ static void test_sar(void)
 {
     static const struct attribute_desc input_type_desc_48000[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 8 * 48000),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float, .required = TRUE, .todo = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (32 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (32 / 8) * 48000, .required = TRUE),
         {0},
     };
     static const struct attribute_desc input_type_desc_44100[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 8 * 44100),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float, .required = TRUE, .todo = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2 * (32 / 8), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (32 / 8) * 44100, .required = TRUE),
         {0},
     };
 
@@ -4989,27 +5020,7 @@ if (SUCCEEDED(hr))
     ok(rate == 48000 || rate == 44100, "got rate %u.\n", rate);
     IMFMediaType_Release(mediatype);
 
-
-    /* check required output media type attributes */
-
-    hr = MFCreateMediaType(&mediatype);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
-    init_media_type(mediatype, rate == 44100 ? input_type_desc_44100 : input_type_desc_48000, 2);
-    for (int i = 1; i < (rate == 44100 ? ARRAY_SIZE(input_type_desc_44100) : ARRAY_SIZE(input_type_desc_48000)) - 1; ++i)
-    {
-        hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
-        init_media_type(mediatype, rate == 44100 ? input_type_desc_44100 : input_type_desc_48000, i + 1);
-    }
-    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    init_media_type(mediatype, rate == 44100 ? input_type_desc_44100 : input_type_desc_48000, -1);
-    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMFMediaType_Release(mediatype);
-
+    check_handler_required_attributes(handler, rate == 44100 ? input_type_desc_44100 : input_type_desc_48000);
 
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype);
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
