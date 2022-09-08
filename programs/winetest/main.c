@@ -1525,10 +1525,18 @@ int __cdecl main( int argc, char *argv[] )
             if (build_id[0] && nr_of_skips <= SKIP_LIMIT && failures <= FAILURES_LIMIT &&
                 !nr_native_dlls && !is_win9x &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
+            {
                 if (!send_file (submiturl, logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
-        } else run_tests (logname, outdir);
-        report (R_STATUS, "Finished - %u failures", failures);
+                else
+                    failures = 0;  /* return success */
+            }
+        }
+        else
+        {
+            run_tests (logname, outdir);
+            report (R_STATUS, "Finished - %u failures", failures);
+        }
         if (prev_crash_dialog) restore_crash_dialog( prev_crash_dialog );
     }
     if (poweroff)
