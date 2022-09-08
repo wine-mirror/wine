@@ -199,13 +199,12 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
             struct async_op *op = LIST_ENTRY(entry, struct async_op, entry);
             list_remove(&op->entry);
 
-            if (op->u.start.context)
-                reader->context = op->u.start.context;
             hr = list_empty(&reader->async_ops) ? S_OK : E_ABORT;
             switch (op->type)
             {
                 case ASYNC_OP_START:
                 {
+                    reader->context = op->u.start.context;
                     LeaveCriticalSection(&reader->callback_cs);
                     IWMReaderCallback_OnStatus(reader->callback, WMT_STARTED, hr,
                             WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
