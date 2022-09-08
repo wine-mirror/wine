@@ -45,6 +45,7 @@ DEFINE_GUID(DMOVideoFormat_RGB32,D3DFMT_X8R8G8B8,0x524f,0x11ce,0x9f,0x53,0x00,0x
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_GUID(MFAudioFormat_RAW_AAC1,WAVE_FORMAT_RAW_AAC1,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_ABGR32,0x00000020,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_P208,0x38303250,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 
@@ -123,6 +124,7 @@ struct transform_info
     struct
     {
         const GUID *subtype;
+        BOOL broken;
     } inputs[32], input_end, outputs[32], output_end;
 };
 
@@ -170,7 +172,8 @@ static void check_mft_get_info(const GUID *class_id, const struct transform_info
                 "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
     }
     for (; expect->inputs[i].subtype; ++i)
-        ok(0, "missing input[%u] subtype %s\n", i, debugstr_guid(expect->inputs[i].subtype));
+        ok(broken(expect->inputs[i].broken), "missing input[%u] subtype %s\n",
+                i, debugstr_guid(expect->inputs[i].subtype));
     for (; i < input_count; ++i)
         ok(0, "extra input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
 
@@ -1033,6 +1036,272 @@ static void test_aac_encoder(void)
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
     ok(output_info.cbSize == 0x600, "got cbSize %#lx\n", output_info.cbSize);
+    ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
+static void test_aac_decoder(void)
+{
+    const GUID *const class_id = &CLSID_MSAACDecMFT;
+    const struct transform_info expect_mft_info =
+    {
+        .name = L"Microsoft AAC Audio Decoder MFT",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_AAC},
+            {.subtype = &MFAudioFormat_RAW_AAC1},
+            {.subtype = &MFAudioFormat_ADTS, .broken = TRUE /* <= w8 */},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_Float},
+            {.subtype = &MFAudioFormat_PCM},
+        },
+    };
+
+    static const struct attribute_desc expect_input_attributes[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 6),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 24),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 1152000),
+        {0},
+    };
+    static const media_type_desc expect_available_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC),
+            ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 0),
+            ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
+            /* MF_MT_USER_DATA with some AAC codec data */
+        },
+        {
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1),
+        },
+        {
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC),
+            ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 0),
+            ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 1),
+            /* MF_MT_USER_DATA with some AAC codec data */
+        },
+        {
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC),
+            ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 0),
+            ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 3),
+            /* MF_MT_USER_DATA with some AAC codec data */
+        },
+        {
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_ADTS),
+        },
+    };
+    static const struct attribute_desc expect_output_attributes[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
+    static const media_type_desc expect_available_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+            ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+            ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4 * 44100),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+            ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2),
+            ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * 44100),
+        },
+    };
+
+    const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
+        ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
+        ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data)),
+        {0},
+    };
+    static const struct attribute_desc output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        {0},
+    };
+
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_AAC};
+    MFT_OUTPUT_STREAM_INFO output_info;
+    MFT_INPUT_STREAM_INFO input_info;
+    IMFMediaType *media_type;
+    IMFTransform *transform;
+    ULONG i, ret;
+    DWORD flags;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("aacdec");
+
+    if (!check_mft_enum(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, class_id))
+        goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, FALSE);
+
+    /* check default media types */
+
+    flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE | MFT_INPUT_STREAM_HOLDS_BUFFERS;
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
+    ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    ok(input_info.dwFlags == flags, "got dwFlags %#lx\n", input_info.dwFlags);
+    ok(input_info.cbSize == 0, "got cbSize %lu\n", input_info.cbSize);
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
+    ok(input_info.cbAlignment == 0, "got cbAlignment %#lx\n", input_info.cbAlignment);
+
+    flags = MFT_INPUT_STREAM_WHOLE_SAMPLES;
+    memset(&output_info, 0xcd, sizeof(output_info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+    ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
+    ok(output_info.cbSize == 0xc000, "got cbSize %#lx\n", output_info.cbSize);
+    ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#lx\n", hr);
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("in %lu", i);
+        ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_input_attributes, -1);
+        check_media_type(media_type, expect_available_inputs[i], -1);
+        hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        if (i != 1) ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+        else ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
+    ok(i == ARRAY_SIZE(expect_available_inputs)
+            || broken(i == 2) /* w7 */ || broken(i == 4) /* w8 */,
+            "%lu input media types\n", i);
+
+    /* setting output media type first doesn't work */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
+    init_media_type(media_type, output_type_desc, -1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* check required input media type attributes */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
+    init_media_type(media_type, input_type_desc, 1);
+    for (i = 1; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
+    {
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
+        init_media_type(media_type, input_type_desc, i + 1);
+    }
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 1, "Release returned %lu\n", ret);
+
+    /* check new output media types */
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %lu", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_output_attributes, -1);
+        check_media_type(media_type, expect_available_outputs[i], -1);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+    ok(i == ARRAY_SIZE(expect_available_outputs), "%lu input media types\n", i);
+
+    /* check required output media type attributes */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
+    init_media_type(media_type, output_type_desc, 1);
+    for (i = 1; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
+    {
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
+        init_media_type(media_type, output_type_desc, i + 1);
+    }
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 1, "Release returned %lu\n", ret);
+
+    flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE | MFT_INPUT_STREAM_HOLDS_BUFFERS;
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
+    ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    ok(input_info.dwFlags == flags, "got dwFlags %#lx\n", input_info.dwFlags);
+    ok(input_info.cbSize == 0, "got cbSize %lu\n", input_info.cbSize);
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
+    ok(input_info.cbAlignment == 0, "got cbAlignment %#lx\n", input_info.cbAlignment);
+
+    flags = MFT_INPUT_STREAM_WHOLE_SAMPLES;
+    memset(&output_info, 0xcd, sizeof(output_info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+    ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
+    ok(output_info.cbSize == 0xc000, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     ret = IMFTransform_Release(transform);
@@ -4572,6 +4841,7 @@ START_TEST(transform)
     test_sample_copier();
     test_sample_copier_output_processing();
     test_aac_encoder();
+    test_aac_decoder();
     test_wma_encoder();
     test_wma_decoder();
     test_h264_decoder();
