@@ -1193,8 +1193,8 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
     if(tested_protocol == FTP_TEST)
         ok(hrResult == E_PENDING || hrResult == S_OK, "hrResult = %08lx, expected E_PENDING or S_OK\n", hrResult);
     else
-        ok(hrResult == expect_hrResult, "hrResult = %08lx, expected: %08lx\n",
-           hrResult, expect_hrResult);
+        ok(hrResult == expect_hrResult || (test_abort && hrResult == S_OK),  /* result can come in before the abort */
+           "hrResult = %08lx, expected: %08lx\n", hrResult, expect_hrResult);
     if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST || test_abort || hrResult == INET_E_REDIRECT_FAILED)
         ok(dwError == ERROR_SUCCESS, "dwError = %ld, expected ERROR_SUCCESS\n", dwError);
     else
@@ -3331,7 +3331,8 @@ static void test_protocol_terminate(IInternetProtocol *protocol)
     ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
 
     hres = IInternetProtocol_Read(protocol, buf, 1, &cb);
-    ok(hres == (test_abort ? S_OK : S_FALSE), "Read failed: %08lx\n", hres);
+    ok(hres == S_FALSE || (test_abort && hres == S_OK), /* result can come in before the abort */
+       "Read failed: %08lx\n", hres);
 
     hres = IInternetProtocol_Terminate(protocol, 0);
     ok(hres == S_OK, "Terminate failed: %08lx\n", hres);
@@ -3421,7 +3422,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             return;
         }
 
-        if(!direct_read && !test_abort && !bind_from_cache)
+        if(!direct_read && !bind_from_cache)
             SET_EXPECT(ReportResult);
 
         if(flags & TEST_DISABLEAUTOREDIRECT)
