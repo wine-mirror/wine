@@ -44,6 +44,14 @@ struct async_op
     struct list entry;
 };
 
+struct sample
+{
+    INSSBuffer *buffer;
+    QWORD pts, duration;
+    DWORD flags;
+    WORD stream;
+};
+
 struct async_reader
 {
     struct wm_reader reader;
@@ -121,42 +129,57 @@ static bool async_reader_wait_pts(struct async_reader *reader, QWORD pts)
     return false;
 }
 
+static void async_reader_deliver_sample(struct async_reader *reader, struct sample *sample)
+{
+    IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
+    IWMReaderCallback *callback = reader->callback;
+    struct wm_stream *stream;
+    BOOL read_compressed;
+    HRESULT hr;
+
+    TRACE("reader %p, stream %u, pts %s, duration %s, flags %#lx, buffer %p.\n",
+            reader, sample->stream, debugstr_time(sample->pts), debugstr_time(sample->duration),
+            sample->flags, sample->buffer);
+
+    stream = wm_reader_get_stream_by_stream_number(&reader->reader, sample->stream);
+    read_compressed = stream->read_compressed;
+
+    LeaveCriticalSection(&reader->callback_cs);
+    if (read_compressed)
+        hr = IWMReaderCallbackAdvanced_OnStreamSample(callback_advanced, sample->stream,
+                sample->pts, sample->duration, sample->flags, sample->buffer, reader->context);
+    else
+        hr = IWMReaderCallback_OnSample(callback, sample->stream - 1, sample->pts, sample->duration,
+                sample->flags, sample->buffer, reader->context);
+    EnterCriticalSection(&reader->callback_cs);
+
+    TRACE("Callback returned %#lx.\n", hr);
+
+    INSSBuffer_Release(sample->buffer);
+}
+
 static void callback_thread_run(struct async_reader *reader)
 {
     IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
     IWMReaderCallback *callback = reader->callback;
     static const DWORD zero;
-    QWORD pts, duration;
-    WORD stream_number;
-    INSSBuffer *sample;
     HRESULT hr = S_OK;
-    DWORD flags;
 
     while (reader->running && list_empty(&reader->async_ops))
     {
+        struct sample sample;
+
         LeaveCriticalSection(&reader->callback_cs);
-        hr = wm_reader_get_stream_sample(&reader->reader, callback_advanced, 0, &sample, &pts, &duration, &flags, &stream_number);
+        hr = wm_reader_get_stream_sample(&reader->reader, callback_advanced, 0, &sample.buffer,
+                &sample.pts, &sample.duration, &sample.flags, &sample.stream);
         EnterCriticalSection(&reader->callback_cs);
         if (hr != S_OK)
             break;
 
-        if (async_reader_wait_pts(reader, pts))
-        {
-            struct wm_stream *stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number);
-
-            LeaveCriticalSection(&reader->callback_cs);
-            if (stream->read_compressed)
-                hr = IWMReaderCallbackAdvanced_OnStreamSample(callback_advanced,
-                        stream_number, pts, duration, flags, sample, reader->context);
-            else
-                hr = IWMReaderCallback_OnSample(callback, stream_number - 1, pts, duration,
-                        flags, sample, reader->context);
-            EnterCriticalSection(&reader->callback_cs);
-
-            TRACE("Callback returned %#lx.\n", hr);
-        }
-
-        INSSBuffer_Release(sample);
+        if (async_reader_wait_pts(reader, sample.pts))
+            async_reader_deliver_sample(reader, &sample);
+        else
+            INSSBuffer_Release(sample.buffer);
     }
 
     if (hr == NS_E_NO_MORE_SAMPLES)
