@@ -1737,6 +1737,24 @@ static NTSTATUS unix_wow64_create_stream(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_wow64_release_stream(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        PTR32 timer_thread;
+        HRESULT result;
+    } *params32 = args;
+    struct release_stream_params params =
+    {
+        .stream = params32->stream,
+        .timer_thread = ULongToHandle(params32->timer_thread)
+    };
+    unix_release_stream(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS unix_wow64_get_render_buffer(void *args)
 {
     struct
@@ -1966,7 +1984,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     unix_wow64_get_endpoint_ids,
     unix_wow64_create_stream,
-    unix_release_stream,
+    unix_wow64_release_stream,
     unix_start,
     unix_stop,
     unix_reset,

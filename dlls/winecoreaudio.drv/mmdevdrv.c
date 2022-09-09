@@ -535,6 +535,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         }
         if(This->stream){
             params.stream = This->stream;
+            params.timer_thread = NULL;
             UNIX_CALL(release_stream, &params);
         }
         if(This->session){
