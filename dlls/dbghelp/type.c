@@ -833,10 +833,17 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
                 return FALSE;
             break;
         case SymTagData:
-            if (((const struct symt_data*)type)->kind != DataIsMember ||
-                !((const struct symt_data*)type)->u.member.bit_length)
-                return FALSE;
-            X(DWORD64) = ((const struct symt_data*)type)->u.member.bit_length;
+            switch (((const struct symt_data*)type)->kind)
+            {
+            case DataIsMember:
+                if (!((const struct symt_data*)type)->u.member.bit_length)
+                    return FALSE;
+                X(DWORD64) = ((const struct symt_data*)type)->u.member.bit_length;
+                break;
+            default:
+                if (!symt_get_info(module, ((const struct symt_data*)type)->type, TI_GET_LENGTH, pInfo))
+                    return FALSE;
+            }
             break;
         case SymTagArrayType:
             if (!symt_get_info(module, ((const struct symt_array*)type)->base_type,
