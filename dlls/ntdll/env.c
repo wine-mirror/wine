@@ -514,6 +514,55 @@ static void append_unicode_string( void **data, const UNICODE_STRING *src,
     else dst->Buffer = NULL;
 }
 
+static RTL_USER_PROCESS_PARAMETERS *alloc_process_params( const UNICODE_STRING *image,
+                                                          const UNICODE_STRING *dllpath,
+                                                          const UNICODE_STRING *curdir,
+                                                          const UNICODE_STRING *cmdline,
+                                                          const WCHAR *env,
+                                                          const UNICODE_STRING *title,
+                                                          const UNICODE_STRING *desktop,
+                                                          const UNICODE_STRING *shell,
+                                                          const UNICODE_STRING *runtime )
+{
+    RTL_USER_PROCESS_PARAMETERS *params;
+    SIZE_T size, env_size = 0;
+    void *ptr;
+
+    if (env) env_size = get_env_length( env ) * sizeof(WCHAR);
+
+    size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
+            + ROUND_SIZE( image->MaximumLength )
+            + ROUND_SIZE( dllpath->MaximumLength )
+            + ROUND_SIZE( curdir->MaximumLength )
+            + ROUND_SIZE( cmdline->MaximumLength )
+            + ROUND_SIZE( title->MaximumLength )
+            + ROUND_SIZE( desktop->MaximumLength )
+            + ROUND_SIZE( shell->MaximumLength )
+            + ROUND_SIZE( runtime->MaximumLength ));
+
+    if (!(ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE( env_size ) )))
+        return NULL;
+
+    params = ptr;
+    params->AllocationSize  = size;
+    params->Size            = size;
+    params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
+    params->EnvironmentSize = ROUND_SIZE( env_size );
+    /* all other fields are zero */
+
+    ptr = params + 1;
+    append_unicode_string( &ptr, curdir, &params->CurrentDirectory.DosPath );
+    append_unicode_string( &ptr, dllpath, &params->DllPath );
+    append_unicode_string( &ptr, image, &params->ImagePathName );
+    append_unicode_string( &ptr, cmdline, &params->CommandLine );
+    append_unicode_string( &ptr, title, &params->WindowTitle );
+    append_unicode_string( &ptr, desktop, &params->Desktop );
+    append_unicode_string( &ptr, shell, &params->ShellInfo );
+    append_unicode_string( &ptr, runtime, &params->RuntimeInfo );
+    if (env) params->Environment = memcpy( ptr, env, env_size );
+    return params;
+}
+
 
 /******************************************************************************
  *  RtlCreateProcessParametersEx  [NTDLL.@]
@@ -532,8 +581,6 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
 {
     UNICODE_STRING curdir;
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
-    SIZE_T size, env_size = 0;
-    void *ptr;
     NTSTATUS status = STATUS_SUCCESS;
 
     RtlAcquirePebLock();
@@ -556,40 +603,11 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     if (!ShellInfo) ShellInfo = &empty_str;
     if (!RuntimeInfo) RuntimeInfo = &null_str;
 
-    if (Environment) env_size = get_env_length( Environment ) * sizeof(WCHAR);
-
-    size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
-            + ROUND_SIZE( ImagePathName->MaximumLength )
-            + ROUND_SIZE( DllPath->MaximumLength )
-            + ROUND_SIZE( curdir.MaximumLength )
-            + ROUND_SIZE( CommandLine->MaximumLength )
-            + ROUND_SIZE( WindowTitle->MaximumLength )
-            + ROUND_SIZE( Desktop->MaximumLength )
-            + ROUND_SIZE( ShellInfo->MaximumLength )
-            + ROUND_SIZE( RuntimeInfo->MaximumLength ));
-
-    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE( env_size ) )))
+    if ((*result = alloc_process_params( ImagePathName, DllPath, &curdir, CommandLine,
+                                         Environment, WindowTitle, Desktop, ShellInfo, RuntimeInfo )))
     {
-        RTL_USER_PROCESS_PARAMETERS *params = ptr;
-        params->AllocationSize  = size;
-        params->Size            = size;
-        params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
-        params->EnvironmentSize = ROUND_SIZE( env_size );
-        if (cur_params) params->ConsoleFlags = cur_params->ConsoleFlags;
-        /* all other fields are zero */
-
-        ptr = params + 1;
-        append_unicode_string( &ptr, &curdir, &params->CurrentDirectory.DosPath );
-        append_unicode_string( &ptr, DllPath, &params->DllPath );
-        append_unicode_string( &ptr, ImagePathName, &params->ImagePathName );
-        append_unicode_string( &ptr, CommandLine, &params->CommandLine );
-        append_unicode_string( &ptr, WindowTitle, &params->WindowTitle );
-        append_unicode_string( &ptr, Desktop, &params->Desktop );
-        append_unicode_string( &ptr, ShellInfo, &params->ShellInfo );
-        append_unicode_string( &ptr, RuntimeInfo, &params->RuntimeInfo );
-        if (Environment) params->Environment = memcpy( ptr, Environment, env_size );
-        *result = params;
-        if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( params );
+        if (cur_params) (*result)->ConsoleFlags = cur_params->ConsoleFlags;
+        if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( *result );
     }
     else status = STATUS_NO_MEMORY;
 
@@ -646,12 +664,10 @@ void init_user_process_params(void)
         else env[0] = 0;
     }
 
-    params->Environment = NULL;  /* avoid copying it */
-    if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &params->DllPath,
-                                      &params->CurrentDirectory.DosPath,
-                                      &params->CommandLine, NULL, &params->WindowTitle, &params->Desktop,
-                                      &params->ShellInfo, &params->RuntimeInfo,
-                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
+    if (!(new_params = alloc_process_params( &params->ImagePathName, &params->DllPath,
+                                             &params->CurrentDirectory.DosPath, &params->CommandLine,
+                                             NULL, &params->WindowTitle, &params->Desktop,
+                                             &params->ShellInfo, &params->RuntimeInfo )))
         return;
 
     new_params->Environment     = env;
