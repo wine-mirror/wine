@@ -26,6 +26,8 @@ union async_op_data
 {
     struct
     {
+        QWORD start;
+        QWORD duration;
         void *context;
     } start;
 };
@@ -205,6 +207,9 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
                 case ASYNC_OP_START:
                 {
                     reader->context = op->u.start.context;
+                    if (SUCCEEDED(hr))
+                        wm_reader_seek(&reader->reader, op->u.start.start, op->u.start.duration);
+
                     LeaveCriticalSection(&reader->callback_cs);
                     IWMReaderCallback_OnStatus(reader->callback, WMT_STARTED, hr,
                             WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
@@ -440,7 +445,7 @@ static HRESULT WINAPI WMReader_GetOutputFormat(IWMReader *iface, DWORD output,
 static HRESULT WINAPI WMReader_Start(IWMReader *iface,
         QWORD start, QWORD duration, float rate, void *context)
 {
-    union async_op_data data = {.start = {.context = context}};
+    union async_op_data data = {.start = {.start = start, .duration = duration, .context = context}};
     struct async_reader *reader = impl_from_IWMReader(iface);
     HRESULT hr;
 
@@ -455,10 +460,7 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface,
     if (!reader->callback_thread)
         hr = NS_E_INVALID_REQUEST;
     else
-    {
-        wm_reader_seek(&reader->reader, start, duration);
         hr = async_reader_queue_op(reader, ASYNC_OP_START, &data);
-    }
 
     LeaveCriticalSection(&reader->reader.cs);
 
