@@ -3299,7 +3299,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH ReOpenFile( HANDLE handle, DWORD access, DWORD s
 static void WINAPI invoke_completion( void *context, IO_STATUS_BLOCK *io, ULONG res )
 {
     LPOVERLAPPED_COMPLETION_ROUTINE completion = context;
-    completion( io->u.Status, io->Information, (LPOVERLAPPED)io );
+    completion( RtlNtStatusToDosError( io->u.Status ), io->Information, (LPOVERLAPPED)io );
 }
 
 /****************************************************************************
