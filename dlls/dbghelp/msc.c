@@ -95,8 +95,7 @@ struct cv_module_snarf
     const struct codeview_type_parse*           ipi_ctp;
     const struct CV_DebugSSubsectionHeader_t*   dbgsubsect;
     unsigned                                    dbgsubsect_size;
-    const char*                                 strimage;
-    unsigned                                    strsize;
+    const PDB_STRING_TABLE*                     strimage;
 };
 
 /*========================================================================
@@ -1633,6 +1632,8 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
     }
 }
 
+static const char* pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned offset);
+
 static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const struct cv_module_snarf* cvmod)
 {
     unsigned    i;
@@ -1684,8 +1685,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
                     WARN("Corrupt PDB file: offset in CHKSMS subsection is invalid\n");
                     break;
                 }
-                source = source_new(msc_dbg->module, NULL,
-                                    (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<stroutofbounds>>");
+                source = source_new(msc_dbg->module, NULL, pdb_get_string_table_entry(cvmod->strimage, chksms->strOffset));
                 lineblk_base = codeview_get_address(msc_dbg, lines_hdr->segCon, lines_hdr->offCon);
                 lines = CV_RECORD_AFTER(files_hdr);
                 for (i = 0; i < files_hdr->nLines; i++)
@@ -2013,8 +2013,7 @@ static BOOL cv_dbgsubsect_find_inlinee(const struct msc_debug_info* msc_dbg,
                 {
                     chksms = CV_RECORD_GAP(hdr_files, inlsrc->fileId);
                     if (!CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen))) return FALSE;
-                    *srcfile = source_new(msc_dbg->module, NULL,
-                          (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<str-out-of-bounds>>");
+                    *srcfile = source_new(msc_dbg->module, NULL, pdb_get_string_table_entry(cvmod->strimage, chksms->strOffset));
                     *srcline = inlsrc->sourceLineNum;
                     return TRUE;
                 }
@@ -2029,8 +2028,7 @@ static BOOL cv_dbgsubsect_find_inlinee(const struct msc_debug_info* msc_dbg,
                 {
                     chksms = CV_RECORD_GAP(hdr_files, inlsrcex->fileId);
                     if (!CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen))) return FALSE;
-                    *srcfile = source_new(msc_dbg->module, NULL,
-                          (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<str-out-of-bounds>>");
+                    *srcfile = source_new(msc_dbg->module, NULL, pdb_get_string_table_entry(cvmod->strimage, chksms->strOffset));
                     *srcline = inlsrcex->sourceLineNum;
                     return TRUE;
                 }
@@ -2150,8 +2148,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         case BA_OP_ChangeFile:
             chksms = CV_RECORD_GAP(hdr_files, cvba.arg1);
             if (CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen)))
-                srcfile = source_new(msc_dbg->module, NULL,
-                                     (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<str-out-of-bounds>>");
+                srcfile = source_new(msc_dbg->module, NULL, pdb_get_string_table_entry(cvmod->strimage, chksms->strOffset));
             break;
         case BA_OP_ChangeLineOffset:
             line += binannot_getsigned(cvba.arg1);
@@ -3085,20 +3082,26 @@ static unsigned pdb_get_stream_by_name(const struct pdb_file_info* pdb_file, con
     return -1;
 }
 
-static void* pdb_read_strings(const struct pdb_file_info* pdb_file)
+static PDB_STRING_TABLE* pdb_read_strings(const struct pdb_file_info* pdb_file)
 {
     unsigned idx;
-    void *ret;
+    PDB_STRING_TABLE *ret;
 
     idx = pdb_get_stream_by_name(pdb_file, "/names");
     if (idx != -1)
     {
         ret = pdb_read_file( pdb_file, idx );
-        if (ret && *(const DWORD *)ret == 0xeffeeffe) return ret;
+        if (ret && ret->magic == 0xeffeeffe &&
+            sizeof(*ret) + ret->length <= pdb_get_file_size(pdb_file, idx)) return ret;
         pdb_free( ret );
     }
     WARN("string table not found\n");
     return NULL;
+}
+
+static const char* pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned offset)
+{
+    return (!table || offset >= table->length) ? NULL : (const char*)(table + 1) + offset;
 }
 
 static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt)
@@ -3564,13 +3567,12 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                  struct pdb_module_info* pdb_module_info,
                                  unsigned module_index)
 {
-    HANDLE      hMap = NULL;
-    char*       image = NULL;
-    BYTE*       symbols_image = NULL;
-    char*       files_image = NULL;
-    DWORD       files_size = 0;
-    unsigned    matched;
-    struct pdb_file_info* pdb_file;
+    HANDLE                      hMap = NULL;
+    char*                       image = NULL;
+    BYTE*                       symbols_image = NULL;
+    PDB_STRING_TABLE*           files_image = NULL;
+    unsigned                    matched;
+    struct pdb_file_info*       pdb_file;
 
     TRACE("Processing PDB file %s\n", pdb_lookup->filename);
 
@@ -3637,7 +3639,6 @@ static BOOL pdb_process_internal(const struct process* pcs,
             return FALSE;
         }
         files_image = pdb_read_strings(pdb_file);
-        if (files_image) files_size = *(const DWORD*)(files_image + 8);
 
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,
                                    pdb_lookup, pdb_module_info, module_index);
@@ -3669,7 +3670,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             if (modimage)
             {
                 struct cv_module_snarf cvmod = {ipi_ok ? &ipi_ctp : NULL, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
-                    files_image + 12, files_size};
+                    files_image};
                 codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size,
                                &cvmod, TRUE);
 
@@ -4001,6 +4002,7 @@ static BOOL  pdb_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* fpoe
     BOOL                over = FALSE;
     struct pevaluator   pev;
 
+    if (!cmd) return FALSE;
     pev_init(&pev, csw, fpoext, cpair);
     for (ptr = cmd; !over; ptr++)
     {
@@ -4051,8 +4053,8 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
     struct module_pair          pair;
     struct pdb_module_info*     pdb_info;
     PDB_FPO_DATA*               fpoext;
-    unsigned                    i, size, strsize;
-    char*                       strbase;
+    unsigned                    i, size;
+    PDB_STRING_TABLE*           strbase;
     BOOL                        ret = TRUE;
 
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
@@ -4063,7 +4065,6 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
 
     strbase = pdb_read_strings(&pdb_info->pdb_files[0]);
     if (!strbase) return FALSE;
-    strsize = *(const DWORD*)(strbase + 8);
     fpoext = pdb_read_file(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
     size = pdb_get_file_size(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
     if (fpoext && (size % sizeof(*fpoext)) == 0)
@@ -4077,12 +4078,10 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
                       fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size,
                       fpoext[i].params_size, fpoext[i].maxstack_size, fpoext[i].prolog_size,
                       fpoext[i].savedregs_size, fpoext[i].flags,
-                      fpoext[i].str_offset < strsize ?
-                          wine_dbgstr_a(strbase + 12 + fpoext[i].str_offset) : "<out of bounds>");
-                if (fpoext[i].str_offset < strsize)
-                    ret = pdb_parse_cmd_string(csw, &fpoext[i], strbase + 12 + fpoext[i].str_offset, cpair);
-                else
-                    ret = FALSE;
+                      wine_dbgstr_a(pdb_get_string_table_entry(strbase, fpoext[i].str_offset)));
+                ret = pdb_parse_cmd_string(csw, &fpoext[i],
+                                           pdb_get_string_table_entry(strbase, fpoext[i].str_offset),
+                                           cpair);
                 break;
             }
         }
