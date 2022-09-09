@@ -183,6 +183,6 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
 
 const struct shaper arabic_shaper =
 {
-    arabic_collect_features,
-    arabic_setup_masks,
+    .collect_features = arabic_collect_features,
+    .setup_masks = arabic_setup_masks,
 };

@@ -2904,9 +2904,6 @@ static void test_glyph_justification_property(void)
     unsigned int i, j;
     HRESULT hr;
 
-    if (!strcmp(winetest_platform, "wine"))
-        return;
-
     analyzer = create_text_analyzer(&IID_IDWriteTextAnalyzer);
     ok(!!analyzer, "Failed to create analyzer instance.\n");
 
@@ -2914,6 +2911,9 @@ static void test_glyph_justification_property(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        if (tests[i].script == Script_Arabic && !strcmp(winetest_platform, "wine"))
+            continue;
+
         winetest_push_context("Test %s", debugstr_w(tests[i].text));
 
         sa.script = tests[i].script;

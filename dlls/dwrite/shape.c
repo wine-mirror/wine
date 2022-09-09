@@ -200,7 +200,22 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
     features->count = j + 1;
 }
 
-static const struct shaper null_shaper;
+static void default_shaper_setup_masks(struct scriptshaping_context *context,
+        const struct shaping_features *features)
+{
+    unsigned int i;
+
+    for (i = 0; i < context->glyph_count; ++i)
+    {
+        context->u.buffer.glyph_props[i].justification = iswspace(context->glyph_infos[i].codepoint) ?
+                SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
+    }
+}
+
+static const struct shaper default_shaper =
+{
+    .setup_masks = default_shaper_setup_masks
+};
 
 static void shape_set_shaper(struct scriptshaping_context *context)
 {
@@ -211,7 +226,7 @@ static void shape_set_shaper(struct scriptshaping_context *context)
             context->shaper = &arabic_shaper;
             break;
         default:
-            context->shaper = &null_shaper;
+            context->shaper = &default_shaper;
     }
 }
 
