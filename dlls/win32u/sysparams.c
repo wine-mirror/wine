@@ -2136,6 +2136,8 @@ static const DEVMODEW *find_display_mode( const DEVMODEW *modes, DEVMODEW *devmo
 
     for (mode = modes; mode && mode->dmSize; mode = NEXT_DEVMODEW(mode))
     {
+        if ((mode->dmFields & DM_DISPLAYFLAGS) && (mode->dmDisplayFlags & WINE_DM_UNSUPPORTED))
+            continue;
         if ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel && devmode->dmBitsPerPel != mode->dmBitsPerPel)
             continue;
         if ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth != mode->dmPelsWidth)
@@ -2526,6 +2528,8 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     else if (index != ENUM_CURRENT_SETTINGS) ret = user_driver->pEnumDisplaySettingsEx( adapter->dev.device_name, index, devmode, flags );
     else ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, devmode );
     adapter_release( adapter );
+
+    devmode->dmDisplayFlags &= ~WINE_DM_UNSUPPORTED;
 
     if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_us(device) );
     else TRACE( "position %dx%d, resolution %ux%u, frequency %u, depth %u, orientation %#x.\n",

@@ -97,6 +97,13 @@ static int display_mode_bits_per_pixel(CGDisplayModeRef display_mode)
 }
 
 
+static BOOL display_mode_is_supported(CGDisplayModeRef display_mode)
+{
+    uint32_t io_flags = CGDisplayModeGetIOFlags(display_mode);
+    return (io_flags & kDisplayModeValidFlag) && (io_flags & kDisplayModeSafeFlag);
+}
+
+
 static void display_mode_to_devmode(CGDirectDisplayID display_id, CGDisplayModeRef display_mode, DEVMODEW *devmode)
 {
     uint32_t io_flags;
@@ -124,6 +131,8 @@ static void display_mode_to_devmode(CGDirectDisplayID display_id, CGDisplayModeR
     devmode->dmDisplayFlags = 0;
     if (io_flags & kDisplayModeInterlacedFlag)
         devmode->dmDisplayFlags |= DM_INTERLACED;
+    if (!display_mode_is_supported(display_mode))
+        devmode->dmDisplayFlags |= WINE_DM_UNSUPPORTED;
     devmode->dmFields |= DM_DISPLAYFLAGS;
 
     devmode->dmDisplayFrequency = CGDisplayModeGetRefreshRate(display_mode);
@@ -414,13 +423,6 @@ static int get_default_bpp(void)
 
     TRACE(" -> %d\n", ret);
     return ret;
-}
-
-
-static BOOL display_mode_is_supported(CGDisplayModeRef display_mode)
-{
-    uint32_t io_flags = CGDisplayModeGetIOFlags(display_mode);
-    return (io_flags & kDisplayModeValidFlag) && (io_flags & kDisplayModeSafeFlag);
 }
 
 

@@ -269,6 +269,8 @@ struct gdi_device_manager
     void (*add_mode)( const DEVMODEW *mode, void *param );
 };
 
+#define WINE_DM_UNSUPPORTED 0x80000000
+
 struct tagUPDATELAYEREDWINDOWINFO;
 
 struct user_driver_funcs
