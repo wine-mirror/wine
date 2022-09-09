@@ -1285,7 +1285,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     TRACE("(%p)->(%u, %lx)\n", This, frames, flags);
 
     params.stream = This->stream;
-    params.frames = frames;
+    params.written_frames = frames;
     params.flags = flags;
     UNIX_CALL(release_render_buffer, &params);
     return params.result;

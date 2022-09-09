@@ -1424,12 +1424,12 @@ static NTSTATUS unix_release_render_buffer(void *args)
 
     OSSpinLockLock(&stream->lock);
 
-    if(!params->frames){
+    if(!params->written_frames){
         stream->getbuf_last = 0;
         params->result = S_OK;
     }else if(!stream->getbuf_last)
         params->result = AUDCLNT_E_OUT_OF_ORDER;
-    else if(params->frames > (stream->getbuf_last >= 0 ? stream->getbuf_last : -stream->getbuf_last))
+    else if(params->written_frames > (stream->getbuf_last >= 0 ? stream->getbuf_last : -stream->getbuf_last))
         params->result = AUDCLNT_E_INVALID_SIZE;
     else{
         if(stream->getbuf_last >= 0)
@@ -1438,18 +1438,18 @@ static NTSTATUS unix_release_render_buffer(void *args)
             buffer = stream->tmp_buffer;
 
         if(params->flags & AUDCLNT_BUFFERFLAGS_SILENT)
-            silence_buffer(stream, buffer, params->frames);
+            silence_buffer(stream, buffer, params->written_frames);
 
         if(stream->getbuf_last < 0)
             ca_wrap_buffer(stream->local_buffer,
                            stream->wri_offs_frames * stream->fmt->nBlockAlign,
                            stream->bufsize_frames * stream->fmt->nBlockAlign,
-                           buffer, params->frames * stream->fmt->nBlockAlign);
+                           buffer, params->written_frames * stream->fmt->nBlockAlign);
 
-        stream->wri_offs_frames += params->frames;
+        stream->wri_offs_frames += params->written_frames;
         stream->wri_offs_frames %= stream->bufsize_frames;
-        stream->held_frames += params->frames;
-        stream->written_frames += params->frames;
+        stream->held_frames += params->written_frames;
+        stream->written_frames += params->written_frames;
         stream->getbuf_last = 0;
 
         params->result = S_OK;

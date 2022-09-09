@@ -88,8 +88,8 @@ struct get_render_buffer_params
 struct release_render_buffer_params
 {
     stream_handle stream;
-    UINT32 frames;
-    DWORD flags;
+    UINT32 written_frames;
+    UINT flags;
     HRESULT result;
 };
 
