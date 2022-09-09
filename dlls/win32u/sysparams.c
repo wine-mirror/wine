@@ -2468,7 +2468,6 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
-    WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
     DEVMODEW full_mode = {.dmSize = sizeof(DEVMODEW)};
     LONG ret = DISP_CHANGE_SUCCESSFUL;
     struct adapter *adapter;
@@ -2479,11 +2478,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     if ((!devname || !devname->Length) && !devmode) return apply_display_settings( NULL, NULL, hwnd, flags, lparam );
 
     if (!lock_display_devices()) return DISP_CHANGE_FAILED;
-    if ((adapter = find_adapter( devname )))
-    {
-        lstrcpyW( device_name, adapter->dev.device_name );
-        lstrcpyW( adapter_path, adapter->config_key );
-    }
+    adapter = find_adapter( devname );
     unlock_display_devices();
     if (!adapter)
     {
@@ -2492,9 +2487,9 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     }
 
     if (!adapter_get_full_mode( adapter, devmode, &full_mode )) ret = DISP_CHANGE_BADMODE;
-    else if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings( adapter_path, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
+    else if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings( adapter->config_key, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
     else if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
-    else ret = apply_display_settings( device_name, &full_mode, hwnd, flags, lparam );
+    else ret = apply_display_settings( adapter->dev.device_name, &full_mode, hwnd, flags, lparam );
     adapter_release( adapter );
 
     if (ret) ERR( "Changing %s display settings returned %d.\n", debugstr_us(devname), ret );
@@ -2507,18 +2502,13 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
 BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVMODEW *devmode, DWORD flags )
 {
     static const WCHAR wine_display_driverW[] = {'W','i','n','e',' ','D','i','s','p','l','a','y',' ','D','r','i','v','e','r',0};
-    WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
     struct adapter *adapter;
     BOOL ret;
 
     TRACE( "device %s, index %#x, devmode %p, flags %#x\n", debugstr_us(device), index, devmode, flags );
 
     if (!lock_display_devices()) return FALSE;
-    if ((adapter = find_adapter( device )))
-    {
-        lstrcpyW( device_name, adapter->dev.device_name );
-        lstrcpyW( adapter_path, adapter->config_key );
-    }
+    adapter = find_adapter( device );
     unlock_display_devices();
     if (!adapter)
     {
@@ -2532,12 +2522,12 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     devmode->dmSize = offsetof(DEVMODEW, dmICMMethod);
     memset( &devmode->dmDriverExtra, 0, devmode->dmSize - offsetof(DEVMODEW, dmDriverExtra) );
 
-    if (index == ENUM_REGISTRY_SETTINGS) ret = read_registry_settings( adapter_path, devmode );
-    else if (index != ENUM_CURRENT_SETTINGS) ret = user_driver->pEnumDisplaySettingsEx( device_name, index, devmode, flags );
-    else ret = user_driver->pGetCurrentDisplaySettings( device_name, devmode );
+    if (index == ENUM_REGISTRY_SETTINGS) ret = read_registry_settings( adapter->config_key, devmode );
+    else if (index != ENUM_CURRENT_SETTINGS) ret = user_driver->pEnumDisplaySettingsEx( adapter->dev.device_name, index, devmode, flags );
+    else ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, devmode );
     adapter_release( adapter );
 
-    if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_w(device_name) );
+    if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_us(device) );
     else TRACE( "position %dx%d, resolution %ux%u, frequency %u, depth %u, orientation %#x.\n",
                 devmode->dmPosition.x, devmode->dmPosition.y, devmode->dmPelsWidth, devmode->dmPelsHeight,
                 devmode->dmDisplayFrequency, devmode->dmBitsPerPel, devmode->dmDisplayOrientation );
