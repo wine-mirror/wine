@@ -1897,7 +1897,7 @@ static BOOL get_line_from_function(struct module_pair* pair, struct symt_functio
                 ret = internal_line_set_nameW(pair->pcs, intl, dospath, TRUE);
                 HeapFree( GetProcessHeap(), 0, dospath );
             }
-            if (ret) *pdwDisplacement = addr - found_dli->u.address;
+            if (ret && pdwDisplacement) *pdwDisplacement = addr - found_dli->u.address;
             return ret;
         }
     }
@@ -2684,7 +2684,7 @@ BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx
         if (inlined)
         {
             symt_fill_sym_info(&pair, NULL, &inlined->func.symt, si);
-            *disp = addr - inlined->func.address;
+            if (disp) *disp = addr - inlined->func.address;
             return TRUE;
         }
         /* fall through */
