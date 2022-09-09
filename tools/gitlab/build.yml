@@ -4,6 +4,8 @@
   stage: build
   image: $CI_REGISTRY/wine/wine:debian-bullseye
   interruptible: true
+  variables:
+    GIT_DEPTH: 0
   cache:
     - paths:
         - ccache/
@@ -67,6 +69,8 @@ build-winetest:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:
     - job: build-daily-linux
+  variables:
+    GIT_STRATEGY: none
   artifacts:
     name: winetest
     paths:

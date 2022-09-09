@@ -5,6 +5,7 @@
   image: $CI_REGISTRY/wine/wine:debian-bullseye
   interruptible: true
   variables:
+    GIT_STRATEGY: none
     GECKO_VER: 2.47.3
     MONO_VER: 7.3.0
   cache:
