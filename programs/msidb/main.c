@@ -63,7 +63,7 @@ static void list_free( struct list *list )
     LIST_FOR_EACH_ENTRY_SAFE( data, next, list, struct msidb_listentry, entry )
     {
         list_remove( &data->entry );
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
     }
 }
 
@@ -71,7 +71,7 @@ static void list_append( struct list *list, WCHAR *name )
 {
     struct msidb_listentry *data;
 
-    data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct msidb_listentry) );
+    data = calloc( 1, sizeof(*data) );
     if (!data)
     {
         ERR( "Out of memory for list.\n" );
@@ -457,14 +457,14 @@ static int import_tables( struct msidb_state *state )
             DWORD len;
 
             len = lstrlenW( state->table_folder ) + 1 + lstrlenW( table_name ) + 1; /* %s/%s\0 */
-            path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+            path = malloc( len * sizeof(WCHAR) );
             if (path == NULL)
                 return 0;
             lstrcpyW( path, state->table_folder );
             PathAddBackslashW( path );
             lstrcatW( path, table_name );
             handle = FindFirstFileW( path, &f );
-            HeapFree( GetProcessHeap(), 0, path );
+            free( path );
             if (handle == INVALID_HANDLE_VALUE)
                 return 0;
             do
