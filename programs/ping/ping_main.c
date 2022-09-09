@@ -32,7 +32,6 @@
 #include <windows.h>
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ping);
 
@@ -164,10 +163,10 @@ int __cdecl main(int argc, char** argv)
 
     icmp_file = IcmpCreateFile();
 
-    send_data = heap_alloc_zero(l);
+    send_data = calloc(1, l);
     reply_size = sizeof(ICMP_ECHO_REPLY) + l + 8;
     /* The buffer has to hold 8 more bytes of data (the size of an ICMP error message). */
-    reply_buffer = heap_alloc(reply_size);
+    reply_buffer = malloc(reply_size);
     if (reply_buffer == NULL)
     {
         printf("Unable to allocate memory to reply buffer.\n");
@@ -218,6 +217,6 @@ int __cdecl main(int argc, char** argv)
                min, max, avg);
     }
 
-    heap_free(reply_buffer);
+    free(reply_buffer);
     return 0;
 }
