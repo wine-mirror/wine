@@ -51,9 +51,6 @@ static const WCHAR initial_mode_keyW[] = {'I','n','i','t','i','a','l',' ','D','i
     ' ','M','o','d','e'};
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
 
-static int cached_default_mode_bpp;
-static pthread_mutex_t cached_modes_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 static BOOL inited_original_display_mode;
 
 
@@ -400,22 +397,23 @@ static BOOL display_mode_matches_descriptor(CGDisplayModeRef mode, const struct 
 
 static int get_default_bpp(void)
 {
+    static int cached;
     int ret;
 
-    if (!cached_default_mode_bpp)
+    if (!cached)
     {
         CGDisplayModeRef mode = CGDisplayCopyDisplayMode(kCGDirectMainDisplay);
         if (mode)
         {
-            cached_default_mode_bpp = display_mode_bits_per_pixel(mode);
+            cached = display_mode_bits_per_pixel(mode);
             CFRelease(mode);
         }
 
-        if (!cached_default_mode_bpp)
-            cached_default_mode_bpp = 32;
+        if (!cached)
+            cached = 32;
     }
 
-    ret = cached_default_mode_bpp;
+    ret = cached;
 
     TRACE(" -> %d\n", ret);
     return ret;
@@ -800,9 +798,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, HWND hwnd, DWORD flags, L
         return DISP_CHANGE_FAILED;
     }
 
-    pthread_mutex_lock(&cached_modes_mutex);
     bpp = get_default_bpp();
-    pthread_mutex_unlock(&cached_modes_mutex);
 
     desc = create_original_display_mode_descriptor(macdrv_displays[0].displayID);
 
