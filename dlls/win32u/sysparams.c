@@ -522,7 +522,7 @@ static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
     return TRUE;
 }
 
-static BOOL read_registry_settings( const WCHAR *adapter_path, DEVMODEW *mode )
+static BOOL adapter_get_registry_settings( const struct adapter *adapter, DEVMODEW *mode )
 {
     BOOL ret = FALSE;
     HANDLE mutex;
@@ -531,7 +531,7 @@ static BOOL read_registry_settings( const WCHAR *adapter_path, DEVMODEW *mode )
     mutex = get_display_device_init_mutex();
 
     if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) ))) ret = FALSE;
-    else if (!(hkey = reg_open_key( config_key, adapter_path, lstrlenW( adapter_path ) * sizeof(WCHAR) ))) ret = FALSE;
+    else if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
     else
     {
         ret = read_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
@@ -542,7 +542,7 @@ static BOOL read_registry_settings( const WCHAR *adapter_path, DEVMODEW *mode )
     return ret;
 }
 
-static BOOL write_registry_settings( const WCHAR *adapter_path, const DEVMODEW *mode )
+static BOOL adapter_set_registry_settings( const struct adapter *adapter, const DEVMODEW *mode )
 {
     HANDLE mutex;
     HKEY hkey;
@@ -551,7 +551,7 @@ static BOOL write_registry_settings( const WCHAR *adapter_path, const DEVMODEW *
     mutex = get_display_device_init_mutex();
 
     if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) ))) ret = FALSE;
-    if (!(hkey = reg_open_key( config_key, adapter_path, lstrlenW( adapter_path ) * sizeof(WCHAR) ))) ret = FALSE;
+    if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
     else
     {
         ret = write_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
@@ -2180,7 +2180,7 @@ static BOOL adapter_get_full_mode( const struct adapter *adapter, const DEVMODEW
     if (devmode) memcpy( full_mode, devmode, devmode->dmSize );
     else
     {
-        if (!read_registry_settings( adapter->config_key, full_mode )) return FALSE;
+        if (!adapter_get_registry_settings( adapter, full_mode )) return FALSE;
         TRACE( "Return to original display mode\n" );
     }
 
@@ -2233,7 +2233,7 @@ static DEVMODEW *get_display_settings( const WCHAR *devname, const DEVMODEW *dev
             memcpy( &mode->dmFields, &devmode->dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
         else
         {
-            if (!devname) ret = read_registry_settings( adapter->config_key, mode );
+            if (!devname) ret = adapter_get_registry_settings( adapter, mode );
             else ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, mode );
             if (!ret) goto done;
         }
@@ -2487,7 +2487,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     }
 
     if (!adapter_get_full_mode( adapter, devmode, &full_mode )) ret = DISP_CHANGE_BADMODE;
-    else if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings( adapter->config_key, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
+    else if ((flags & CDS_UPDATEREGISTRY) && !adapter_set_registry_settings( adapter, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
     else if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
     else ret = apply_display_settings( adapter->dev.device_name, &full_mode, hwnd, flags, lparam );
     adapter_release( adapter );
@@ -2522,7 +2522,7 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     devmode->dmSize = offsetof(DEVMODEW, dmICMMethod);
     memset( &devmode->dmDriverExtra, 0, devmode->dmSize - offsetof(DEVMODEW, dmDriverExtra) );
 
-    if (index == ENUM_REGISTRY_SETTINGS) ret = read_registry_settings( adapter->config_key, devmode );
+    if (index == ENUM_REGISTRY_SETTINGS) ret = adapter_get_registry_settings( adapter, devmode );
     else if (index != ENUM_CURRENT_SETTINGS) ret = user_driver->pEnumDisplaySettingsEx( adapter->dev.device_name, index, devmode, flags );
     else ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, devmode );
     adapter_release( adapter );
