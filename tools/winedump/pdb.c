@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
-#include "wine/mscvpdb.h"
 
 struct pdb_reader
 {
@@ -206,19 +205,30 @@ static unsigned get_stream_by_name(struct pdb_reader* reader, const char* name)
     return -1;
 }
 
-static void *read_string_table(struct pdb_reader* reader)
+static PDB_STRING_TABLE* read_string_table(struct pdb_reader* reader)
 {
-    unsigned    stream_idx;
-    void*       ret;
+    unsigned            stream_idx;
+    PDB_STRING_TABLE*   ret;
+    unsigned            stream_size;
 
     stream_idx = get_stream_by_name(reader, "/names");
     if (stream_idx == -1) return NULL;
     ret = reader->read_file(reader, stream_idx);
     if (!ret) return NULL;
-    if(*(const UINT *)ret == 0xeffeeffe) return ret;
-    printf("wrong header %x expecting 0xeffeeffe\n", *(const UINT *)ret);
+    stream_size = pdb_get_file_size(reader, stream_idx);
+    if (ret->magic == 0xeffeeffe && sizeof(*ret) + ret->length < stream_size) return ret;
+    printf("Improper string table header (magic=%x)\n", ret->magic);
+    dump_data((const unsigned char*)ret, stream_size, "    ");
     free( ret );
     return NULL;
+}
+
+const char* pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned ofs)
+{
+    if (!table) return "<<no string table>>";
+    if (ofs >= table->length) return "<<invalid string table offset>>";
+    /* strings start after header */
+    return (char*)(table + 1) + ofs;
 }
 
 static void dump_global_symbol(struct pdb_reader* reader, unsigned file)
@@ -253,12 +263,11 @@ static void dump_public_symbol(struct pdb_reader* reader, unsigned file)
 
 static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx)
 {
-    PDB_SYMBOLS*    symbols;
-    unsigned char*  modimage;
-    const char*     file;
-    char*           filesimage;
-    DWORD           filessize = 0;
-    char            tcver[32];
+    PDB_SYMBOLS*        symbols;
+    unsigned char*      modimage;
+    const char*         file;
+    PDB_STRING_TABLE*   filesimage;
+    char                tcver[32];
 
     sidx->FPO = sidx->unk0 = sidx->unk1 = sidx->unk2 = sidx->unk3 = sidx->segments =
         sidx->unk4 = sidx->unk5 = sidx->unk6 = sidx->FPO_EXT = sidx->unk7 = -1;
@@ -332,7 +341,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     }
 
     if (!(filesimage = read_string_table(reader))) printf("string table not found\n");
-    else filessize = *(const DWORD*)(filesimage + 8);
 
     if (symbols->srcmodule_size)
     {
@@ -592,7 +600,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                 codeview_dump_linetab((const char*)modimage + symbol_size, TRUE, "        ");
             else if (lineno2_size) /* actually, only one of the 2 lineno should be present */
                 codeview_dump_linetab2((const char*)modimage + symbol_size, lineno2_size,
-                                       filesimage ? filesimage + 12 : NULL, filessize, "        ");
+                                       filesimage, "        ");
             /* what's that part ??? */
             if (0)
                 dump_data(modimage + symbol_size + lineno_size + lineno2_size,
@@ -644,7 +652,7 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
     void*  hash = NULL;
     unsigned i, strmsize;
     const unsigned* table;
-    char* strbase;
+    PDB_STRING_TABLE* strbase;
     unsigned *collision;
     hash = reader->read_file(reader, types->hash_file);
     if (!hash) return;
@@ -746,7 +754,7 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
                    is_bit_set(deleted_bitset, count_deleted, i) ? 'D' : '_');
             if (is_bit_set(present_bitset, count_present, i))
             {
-                printf(" %s => ", strbase + 12 + *table++);
+                printf(" %s => ", pdb_get_string_table_entry(strbase, *table++));
                 pdb_dump_hash_value((const BYTE*)table, types->hash_size);
                 table = (const unsigned*)((const BYTE*)table + types->hash_size);
             }
@@ -855,14 +863,13 @@ static void pdb_dump_fpo(struct pdb_reader* reader, unsigned stream_idx)
 static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
 {
     PDB_FPO_DATA*       fpoext;
-    unsigned            i, size, strsize;
-    char*               strbase;
+    unsigned            i, size;
+    PDB_STRING_TABLE*   strbase;
 
     if (stream_idx == (WORD)-1) return;
     strbase = read_string_table(reader);
     if (!strbase) return;
 
-    strsize = *(const DWORD*)(strbase + 8);
     fpoext = reader->read_file(reader, stream_idx);
     size = pdb_get_file_size(reader, stream_idx);
     if (fpoext && (size % sizeof(*fpoext)) == 0)
@@ -875,7 +882,7 @@ static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
             printf("\t%08x %08x %8x %8x %8x %6x   %8x %08x %s\n",
                    fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size, fpoext[i].params_size,
                    fpoext[i].maxstack_size, fpoext[i].prolog_size, fpoext[i].savedregs_size, fpoext[i].flags,
-                   fpoext[i].str_offset < strsize ? strbase + 12 + fpoext[i].str_offset : "<out of bounds>");
+                   pdb_get_string_table_entry(strbase, fpoext[i].str_offset));
         }
     }
     free(fpoext);

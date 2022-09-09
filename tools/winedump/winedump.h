@@ -45,6 +45,7 @@
 #include "../tools.h"
 #include "windef.h"
 #include "winbase.h"
+#include "wine/mscvpdb.h"
 
 /* Argument type constants */
 #define MAX_FUNCTION_ARGS   32
@@ -263,7 +264,8 @@ BOOL            codeview_dump_symbols(const void* root, unsigned long start, uns
 BOOL            codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
 BOOL            codeview_dump_types_from_block(const void* table, unsigned long len);
 void            codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx);
-void            codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimage, DWORD strsize, const char* pfx);
+void            codeview_dump_linetab2(const char* linetab, DWORD size, const PDB_STRING_TABLE*, const char* pfx);
+const char*     pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned ofs);
 
 void            dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 void		dump_codeview(unsigned long ptr, unsigned long len);

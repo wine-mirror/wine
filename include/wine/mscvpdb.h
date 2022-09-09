@@ -2610,6 +2610,18 @@ typedef struct _PDB_FPO_DATA
     unsigned int   flags;
 } PDB_FPO_DATA;
 
+typedef struct _PDB_STRING_TABLE
+{
+    unsigned int   magic;
+    unsigned int   hash_version;
+    unsigned int   length;
+}
+PDB_STRING_TABLE;
+/* This header is followed by:
+ * - a series (of bytes hdr.length) of 0-terminated strings
+ * - a serialized hash table
+ */
+
 #include "poppack.h"
 
 /* ===================================================

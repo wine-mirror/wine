@@ -31,7 +31,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
-#include "wine/mscvpdb.h"
 
 /*
  * .DBG File Layout:
