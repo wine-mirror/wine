@@ -19,10 +19,10 @@ cd build32
 make -s -j$(nproc)
 cd ..
 
-if test -s .git/rebase-merge/git-rebase-todo
+if ! test -s .git/rebase-merge/git-rebase-todo
 then
-    git reset --hard
-else
     make -s -j$(nproc) -C build32 install-lib install-test DESTDIR=$BASEDIR
     make -s -j$(nproc) -C build64 install-lib install-test DESTDIR=$BASEDIR
 fi
+
+git reset --hard
