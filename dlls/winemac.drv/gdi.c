@@ -275,7 +275,6 @@ static const struct user_driver_funcs macdrv_funcs =
     .pDesktopWindowProc = macdrv_DesktopWindowProc,
     .pDestroyCursorIcon = macdrv_DestroyCursorIcon,
     .pDestroyWindow = macdrv_DestroyWindow,
-    .pEnumDisplaySettingsEx = macdrv_EnumDisplaySettingsEx,
     .pGetCurrentDisplaySettings = macdrv_GetCurrentDisplaySettings,
     .pUpdateDisplayDevices = macdrv_UpdateDisplayDevices,
     .pGetCursorPos = macdrv_GetCursorPos,

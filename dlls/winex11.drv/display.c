@@ -51,12 +51,6 @@ static const unsigned int depths_24[]  = {8, 16, 24};
 static const unsigned int depths_32[]  = {8, 16, 32};
 const unsigned int *depths;
 
-/* Cached display modes for a device, protected by modes_section */
-static WCHAR cached_device_name[CCHDEVICENAME];
-static DWORD cached_flags;
-static DEVMODEW *cached_modes;
-static UINT cached_mode_count;
-
 static pthread_mutex_t settings_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
@@ -220,54 +214,6 @@ BOOL get_primary_adapter(WCHAR *name)
     return FALSE;
 }
 
-static int mode_compare(const void *p1, const void *p2)
-{
-    DWORD a_width, a_height, b_width, b_height;
-    const DEVMODEW *a = p1, *b = p2;
-
-    /* Use the width and height in landscape mode for comparison */
-    if (a->dmDisplayOrientation == DMDO_DEFAULT || a->dmDisplayOrientation == DMDO_180)
-    {
-        a_width = a->dmPelsWidth;
-        a_height = a->dmPelsHeight;
-    }
-    else
-    {
-        a_width = a->dmPelsHeight;
-        a_height = a->dmPelsWidth;
-    }
-
-    if (b->dmDisplayOrientation == DMDO_DEFAULT || b->dmDisplayOrientation == DMDO_180)
-    {
-        b_width = b->dmPelsWidth;
-        b_height = b->dmPelsHeight;
-    }
-    else
-    {
-        b_width = b->dmPelsHeight;
-        b_height = b->dmPelsWidth;
-    }
-
-    /* Depth in descending order */
-    if (a->dmBitsPerPel != b->dmBitsPerPel)
-        return b->dmBitsPerPel - a->dmBitsPerPel;
-
-    /* Width in ascending order */
-    if (a_width != b_width)
-        return a_width - b_width;
-
-    /* Height in ascending order */
-    if (a_height != b_height)
-        return a_height - b_height;
-
-    /* Frequency in descending order */
-    if (a->dmDisplayFrequency != b->dmDisplayFrequency)
-        return b->dmDisplayFrequency - a->dmDisplayFrequency;
-
-    /* Orientation in ascending order */
-    return a->dmDisplayOrientation - b->dmDisplayOrientation;
-}
-
 static void set_display_depth(ULONG_PTR display_id, DWORD depth)
 {
     struct x11drv_display_depth *display_depth;
@@ -314,51 +260,6 @@ static DWORD get_display_depth(ULONG_PTR display_id)
     }
     pthread_mutex_unlock( &settings_mutex );
     return screen_bpp;
-}
-
-/***********************************************************************
- *      EnumDisplaySettingsEx  (X11DRV.@)
- *
- */
-BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
-{
-    DEVMODEW *modes, mode;
-    UINT mode_count;
-    ULONG_PTR id;
-
-    pthread_mutex_lock( &settings_mutex );
-    if (n == 0 || wcsicmp(cached_device_name, name) || cached_flags != flags)
-    {
-        if (!settings_handler.get_id(name, &id) || !settings_handler.get_modes(id, flags, &modes, &mode_count))
-        {
-            ERR("Failed to get %s supported display modes.\n", wine_dbgstr_w(name));
-            pthread_mutex_unlock( &settings_mutex );
-            return FALSE;
-        }
-
-        qsort(modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare);
-
-        if (cached_modes)
-            settings_handler.free_modes(cached_modes);
-        lstrcpyW(cached_device_name, name);
-        cached_flags = flags;
-        cached_modes = modes;
-        cached_mode_count = mode_count;
-    }
-
-    if (n >= cached_mode_count)
-    {
-        pthread_mutex_unlock( &settings_mutex );
-        WARN("handler:%s device:%s mode index:%#x not found.\n", settings_handler.name, wine_dbgstr_w(name), n);
-        RtlSetLastWin32Error( ERROR_NO_MORE_FILES );
-        return FALSE;
-    }
-
-    mode = *(DEVMODEW *)((BYTE *)cached_modes + (sizeof(*cached_modes) + cached_modes[0].dmDriverExtra) * n);
-    pthread_mutex_unlock( &settings_mutex );
-
-    memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
-    return TRUE;
 }
 
 /***********************************************************************

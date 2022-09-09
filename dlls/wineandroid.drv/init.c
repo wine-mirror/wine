@@ -304,36 +304,6 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
 
 
 /***********************************************************************
- *           ANDROID_EnumDisplaySettingsEx
- */
-BOOL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags )
-{
-    if (n > 0)
-    {
-        TRACE( "mode %d -- not present\n", n );
-        RtlSetLastWin32Error( ERROR_NO_MORE_FILES );
-        return FALSE;
-    }
-
-    devmode->u2.dmDisplayFlags = 0;
-    devmode->u1.s2.dmPosition.x = 0;
-    devmode->u1.s2.dmPosition.y = 0;
-    devmode->u1.s2.dmDisplayOrientation = 0;
-    devmode->u1.s2.dmDisplayFixedOutput = 0;
-    devmode->dmPelsWidth = screen_width;
-    devmode->dmPelsHeight = screen_height;
-    devmode->dmBitsPerPel = screen_bpp;
-    devmode->dmDisplayFrequency = 60;
-    devmode->dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
-                        DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
-    TRACE( "mode %d -- %dx%d %d bpp @%d Hz\n", n,
-           devmode->dmPelsWidth, devmode->dmPelsHeight,
-           devmode->dmBitsPerPel, devmode->dmDisplayFrequency );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           ANDROID_GetCurrentDisplaySettings
  */
 BOOL ANDROID_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW devmode )
@@ -377,7 +347,6 @@ static const struct user_driver_funcs android_drv_funcs =
     .pVkKeyScanEx = ANDROID_VkKeyScanEx,
     .pSetCursor = ANDROID_SetCursor,
     .pChangeDisplaySettings = ANDROID_ChangeDisplaySettings,
-    .pEnumDisplaySettingsEx = ANDROID_EnumDisplaySettingsEx,
     .pGetCurrentDisplaySettings = ANDROID_GetCurrentDisplaySettings,
     .pUpdateDisplayDevices = ANDROID_UpdateDisplayDevices,
     .pCreateWindow = ANDROID_CreateWindow,

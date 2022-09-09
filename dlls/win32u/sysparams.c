@@ -2498,6 +2498,39 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     return ret;
 }
 
+static BOOL adapter_enum_display_settings( const struct adapter *adapter, DWORD index, DEVMODEW *devmode, DWORD flags )
+{
+    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+    const DEVMODEW *adapter_mode;
+
+    if (!(flags & EDS_ROTATEDMODE) && !user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, &current_mode ))
+    {
+        WARN( "Failed to query current display mode for EDS_ROTATEDMODE flag.\n" );
+        return FALSE;
+    }
+
+    for (adapter_mode = adapter->modes; adapter_mode->dmSize; adapter_mode = NEXT_DEVMODEW(adapter_mode))
+    {
+        if (!(flags & EDS_ROTATEDMODE) && (adapter_mode->dmFields & DM_DISPLAYORIENTATION) &&
+            adapter_mode->dmDisplayOrientation != current_mode.dmDisplayOrientation)
+            continue;
+        if (!(flags & EDS_RAWMODE) && (adapter_mode->dmFields & DM_DISPLAYFLAGS) &&
+            (adapter_mode->dmDisplayFlags & WINE_DM_UNSUPPORTED))
+            continue;
+        if (!index--)
+        {
+            memcpy( &devmode->dmFields, &adapter_mode->dmFields, devmode->dmSize - FIELD_OFFSET(DEVMODEW, dmFields) );
+            devmode->dmDisplayFlags &= ~WINE_DM_UNSUPPORTED;
+            return TRUE;
+        }
+    }
+
+    WARN( "device %s, index %#x, flags %#x display mode not found.\n",
+          debugstr_w( adapter->dev.device_name ), index, flags );
+    RtlSetLastWin32Error( ERROR_NO_MORE_FILES );
+    return FALSE;
+}
+
 /***********************************************************************
  *	     NtUserEnumDisplaySettings    (win32u.@)
  */
@@ -2522,14 +2555,12 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     devmode->dmSpecVersion = DM_SPECVERSION;
     devmode->dmDriverVersion = DM_SPECVERSION;
     devmode->dmSize = offsetof(DEVMODEW, dmICMMethod);
-    memset( &devmode->dmDriverExtra, 0, devmode->dmSize - offsetof(DEVMODEW, dmDriverExtra) );
+    devmode->dmDriverExtra = 0;
 
     if (index == ENUM_REGISTRY_SETTINGS) ret = adapter_get_registry_settings( adapter, devmode );
-    else if (index != ENUM_CURRENT_SETTINGS) ret = user_driver->pEnumDisplaySettingsEx( adapter->dev.device_name, index, devmode, flags );
-    else ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, devmode );
+    else if (index == ENUM_CURRENT_SETTINGS) ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, devmode );
+    else ret = adapter_enum_display_settings( adapter, index, devmode, flags );
     adapter_release( adapter );
-
-    devmode->dmDisplayFlags &= ~WINE_DM_UNSUPPORTED;
 
     if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_us(device) );
     else TRACE( "position %dx%d, resolution %ux%u, frequency %u, depth %u, orientation %#x.\n",

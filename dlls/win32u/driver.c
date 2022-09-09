@@ -759,11 +759,6 @@ static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd,
     return DISP_CHANGE_FAILED;
 }
 
-static BOOL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
-{
-    return FALSE;
-}
-
 static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW mode )
 {
     return FALSE;
@@ -1077,11 +1072,6 @@ static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd,
     return load_driver()->pChangeDisplaySettings( displays, hwnd, flags, lparam );
 }
 
-static BOOL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
-{
-    return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
-}
-
 static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW mode )
 {
     return load_driver()->pGetCurrentDisplaySettings( name, mode );
@@ -1188,7 +1178,6 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_UpdateClipboard,
     /* display modes */
     loaderdrv_ChangeDisplaySettings,
-    loaderdrv_EnumDisplaySettingsEx,
     loaderdrv_GetCurrentDisplaySettings,
     loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
@@ -1264,7 +1253,6 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ClipboardWindowProc);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettings);
-    SET_USER_FUNC(EnumDisplaySettingsEx);
     SET_USER_FUNC(GetCurrentDisplaySettings);
     SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktopWindow);
