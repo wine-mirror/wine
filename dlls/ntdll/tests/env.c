@@ -262,8 +262,7 @@ static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UN
     {
         ok_(__FILE__,line)( str->Length == expect->Length, "wrong length %u/%u\n",
                             str->Length, expect->Length );
-        ok_(__FILE__,line)( str->MaximumLength == expect->MaximumLength ||
-                            broken( str->MaximumLength == 1 && expect->MaximumLength == 2 ), /* winxp */
+        ok_(__FILE__,line)( str->MaximumLength == expect->MaximumLength,
                             "wrong maxlength %u/%u\n", str->MaximumLength, expect->MaximumLength );
     }
     if (!str->MaximumLength)
@@ -271,10 +270,13 @@ static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UN
         ok_(__FILE__,line)( str->Buffer == NULL, "buffer not null %p\n", str->Buffer );
         return pos;
     }
-    ok_(__FILE__,line)( (UINT_PTR)str->Buffer == align(pos, sizeof(void *)) ||
-                        (!expect && (UINT_PTR)str->Buffer == pos) ||  /* initial params are not aligned */
-                        broken( (UINT_PTR)str->Buffer == align(pos, 4) ), "wrong buffer %Ix/%Ix\n",
-                        (UINT_PTR)str->Buffer, pos );
+    if (expect)
+        ok_(__FILE__,line)( (UINT_PTR)str->Buffer == align(pos, sizeof(void *)),
+                            "wrong buffer %Ix/%Ix\n", (UINT_PTR)str->Buffer, pos );
+    else  /* initial params are not aligned */
+        todo_wine_if ((UINT_PTR)str->Buffer != pos)
+        ok_(__FILE__,line)( (UINT_PTR)str->Buffer == pos,
+                            "wrong buffer %Ix/%Ix\n", (UINT_PTR)str->Buffer, pos );
     if (str->Length < str->MaximumLength)
     {
         WCHAR *ptr = get_params_string( params, str );
@@ -302,26 +304,14 @@ static void test_process_params(void)
     SIZE_T size;
     WCHAR *str;
     UINT_PTR pos;
-    MEMORY_BASIC_INFORMATION info;
     NTSTATUS status = pRtlCreateProcessParameters( &params, &image, NULL, NULL, NULL, NULL,
                                                    NULL, NULL, NULL, NULL );
     ok( !status, "failed %lx\n", status );
-    if (VirtualQuery( params, &info, sizeof(info) ) && info.AllocationBase == params)
-    {
-        size = info.RegionSize;
-        ok( broken(TRUE), "not a heap block %p\n", params );  /* winxp */
-        ok( params->AllocationSize == info.RegionSize,
-            "wrong AllocationSize %lx/%Ix\n", params->AllocationSize, info.RegionSize );
-    }
-    else
-    {
-        size = HeapSize( GetProcessHeap(), 0, params );
-        ok( size != ~(SIZE_T)0, "not a heap block %p\n", params );
-        ok( params->AllocationSize == params->Size,
-            "wrong AllocationSize %lx/%lx\n", params->AllocationSize, params->Size );
-    }
-    ok( params->Size < size || broken(params->Size == size), /* <= win2k3 */
-        "wrong Size %lx/%Ix\n", params->Size, size );
+    size = HeapSize( GetProcessHeap(), 0, params );
+    ok( size != ~(SIZE_T)0, "not a heap block %p\n", params );
+    ok( params->AllocationSize == params->Size,
+        "wrong AllocationSize %lx/%lx\n", params->AllocationSize, params->Size );
+    ok( params->Size < size, "wrong Size %lx/%Ix\n", params->Size, size );
     ok( params->Flags == 0, "wrong Flags %lu\n", params->Flags );
     ok( params->DebugFlags == 0, "wrong Flags %lu\n", params->DebugFlags );
     ok( params->ConsoleHandle == 0, "wrong ConsoleHandle %p\n", params->ConsoleHandle );
@@ -358,40 +348,24 @@ static void test_process_params(void)
     ok( pos == params->Size || pos + 4 == params->Size,
         "wrong pos %Ix/%lx\n", pos, params->Size );
     pos = params->Size;
-    if ((char *)params->Environment > (char *)params &&
-        (char *)params->Environment < (char *)params + size)
-    {
-        ok( (char *)params->Environment - (char *)params == (UINT_PTR)pos,
-            "wrong env %Ix/%Ix\n", (UINT_PTR)((char *)params->Environment - (char *)params), pos);
-        pos += get_env_length(params->Environment) * sizeof(WCHAR);
-        ok( align(pos, sizeof(void *)) == size ||
-            broken( align(pos, 4) == size ), "wrong size %Ix/%Ix\n", pos, size );
-        ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
-            "wrong len %Ix/%Ix\n", params->EnvironmentSize,
-            size - ((char *)params->Environment - (char *)params) );
-    }
-    else ok( broken(TRUE), "environment not inside block\n" ); /* <= win2k3 */
+    ok( (char *)params->Environment - (char *)params == (UINT_PTR)pos,
+        "wrong env %Ix/%Ix\n", (UINT_PTR)((char *)params->Environment - (char *)params), pos);
+    pos += get_env_length(params->Environment) * sizeof(WCHAR);
+    ok( align(pos, sizeof(void *)) == size ||
+        broken( align(pos, 4) == size ), "wrong size %Ix/%Ix\n", pos, size );
+    ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
+        "wrong len %Ix/%Ix\n", params->EnvironmentSize,
+        size - ((char *)params->Environment - (char *)params) );
     pRtlDestroyProcessParameters( params );
 
     status = pRtlCreateProcessParameters( &params, &image, &dummy, &dummy, &dummy, dummy_env,
                                           &dummy, &dummy, &dummy, &dummy );
     ok( !status, "failed %lx\n", status );
-    if (VirtualQuery( params, &info, sizeof(info) ) && info.AllocationBase == params)
-    {
-        size = info.RegionSize;
-        ok( broken(TRUE), "not a heap block %p\n", params );  /* winxp */
-        ok( params->AllocationSize == info.RegionSize,
-            "wrong AllocationSize %lx/%Ix\n", params->AllocationSize, info.RegionSize );
-    }
-    else
-    {
-        size = HeapSize( GetProcessHeap(), 0, params );
-        ok( size != ~(SIZE_T)0, "not a heap block %p\n", params );
-        ok( params->AllocationSize == params->Size,
-            "wrong AllocationSize %lx/%lx\n", params->AllocationSize, params->Size );
-    }
-    ok( params->Size < size || broken(params->Size == size), /* <= win2k3 */
-        "wrong Size %lx/%Ix\n", params->Size, size );
+    size = HeapSize( GetProcessHeap(), 0, params );
+    ok( size != ~(SIZE_T)0, "not a heap block %p\n", params );
+    ok( params->AllocationSize == params->Size,
+        "wrong AllocationSize %lx/%lx\n", params->AllocationSize, params->Size );
+    ok( params->Size < size, "wrong Size %lx/%Ix\n", params->Size, size );
     pos = (UINT_PTR)params->CurrentDirectory.DosPath.Buffer;
 
     if (params->CurrentDirectory.DosPath.Length == dummy_dir.Length + sizeof(WCHAR))
@@ -412,38 +386,24 @@ static void test_process_params(void)
     ok( pos == params->Size || pos + 4 == params->Size,
         "wrong pos %Ix/%lx\n", pos, params->Size );
     pos = params->Size;
-    if ((char *)params->Environment > (char *)params &&
-        (char *)params->Environment < (char *)params + size)
-    {
-        ok( (char *)params->Environment - (char *)params == pos,
-            "wrong env %Ix/%Ix\n", (UINT_PTR)((char *)params->Environment - (char *)params), pos);
-        pos += get_env_length(params->Environment) * sizeof(WCHAR);
-        ok( align(pos, sizeof(void *)) == size ||
-            broken( align(pos, 4) == size ), "wrong size %Ix/%Ix\n", pos, size );
-        ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
-            "wrong len %Ix/%Ix\n", params->EnvironmentSize,
-            size - ((char *)params->Environment - (char *)params) );
-    }
-    else ok( broken(TRUE), "environment not inside block\n" );  /* <= win2k3 */
+    ok( (char *)params->Environment - (char *)params == pos,
+        "wrong env %Ix/%Ix\n", (UINT_PTR)((char *)params->Environment - (char *)params), pos);
+    pos += get_env_length(params->Environment) * sizeof(WCHAR);
+    ok( align(pos, sizeof(void *)) == size ||
+        broken( align(pos, 4) == size ), "wrong size %Ix/%Ix\n", pos, size );
+    ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
+        "wrong len %Ix/%Ix\n", params->EnvironmentSize,
+        size - ((char *)params->Environment - (char *)params) );
     pRtlDestroyProcessParameters( params );
 
     /* also test the actual parameters of the current process */
 
     ok( cur_params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED, "current params not normalized\n" );
-    if (VirtualQuery( cur_params, &info, sizeof(info) ) && info.AllocationBase == cur_params)
-    {
-        ok( broken(TRUE), "not a heap block %p\n", cur_params );  /* winxp */
-        ok( cur_params->AllocationSize == info.RegionSize,
-            "wrong AllocationSize %lx/%Ix\n", cur_params->AllocationSize, info.RegionSize );
-    }
-    else
-    {
-        size = HeapSize( GetProcessHeap(), 0, cur_params );
-        ok( size != ~(SIZE_T)0, "not a heap block %p\n", cur_params );
-        ok( cur_params->AllocationSize == cur_params->Size,
-            "wrong AllocationSize %lx/%lx\n", cur_params->AllocationSize, cur_params->Size );
-        ok( cur_params->Size == size, "wrong Size %lx/%Ix\n", cur_params->Size, size );
-    }
+    size = HeapSize( GetProcessHeap(), 0, cur_params );
+    ok( size != ~(SIZE_T)0, "not a heap block %p\n", cur_params );
+    ok( cur_params->AllocationSize == cur_params->Size,
+        "wrong AllocationSize %lx/%lx\n", cur_params->AllocationSize, cur_params->Size );
+    ok( cur_params->Size == size, "wrong Size %lx/%Ix\n", cur_params->Size, size );
 
     /* CurrentDirectory points outside the params, and DllPath may be null */
     pos = (UINT_PTR)cur_params->DllPath.Buffer;
@@ -465,18 +425,10 @@ static void test_process_params(void)
 
     ok( (char *)initial_env < (char *)cur_params || (char *)initial_env >= (char *)cur_params + size,
         "initial environment inside block %p / %p\n", cur_params, initial_env );
-
-    if (VirtualQuery( initial_env, &info, sizeof(info) ) && info.AllocationBase == initial_env)
-    {
-        ok( broken(TRUE), "env not a heap block %p / %p\n", cur_params, initial_env );  /* winxp */
-    }
-    else
-    {
-        size = HeapSize( GetProcessHeap(), 0, initial_env );
-        ok( size != ~(SIZE_T)0, "env is not a heap block %p / %p\n", cur_params, initial_env );
-        ok( cur_params->EnvironmentSize == size,
-            "wrong len %Ix/%Ix\n", cur_params->EnvironmentSize, size );
-    }
+    size = HeapSize( GetProcessHeap(), 0, initial_env );
+    ok( size != ~(SIZE_T)0, "env is not a heap block %p / %p\n", cur_params, initial_env );
+    ok( cur_params->EnvironmentSize == size,
+        "wrong len %Ix/%Ix\n", cur_params->EnvironmentSize, size );
 }
 
 static NTSTATUS set_env_var(WCHAR **env, const WCHAR *var, const WCHAR *value)
