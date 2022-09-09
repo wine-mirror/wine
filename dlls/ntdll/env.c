@@ -497,11 +497,11 @@ PRTL_USER_PROCESS_PARAMETERS WINAPI RtlDeNormalizeProcessParams( RTL_USER_PROCES
 }
 
 
-#define ROUND_SIZE(size) (((size) + sizeof(void *) - 1) & ~(sizeof(void *) - 1))
+#define ROUND_SIZE(size,align) (((size) + (align) - 1) & ~((align) - 1))
 
 /* append a unicode string to the process params data; helper for RtlCreateProcessParameters */
 static void append_unicode_string( void **data, const UNICODE_STRING *src,
-                                   UNICODE_STRING *dst )
+                                   UNICODE_STRING *dst, size_t align )
 {
     dst->Length = src->Length;
     dst->MaximumLength = src->MaximumLength;
@@ -509,12 +509,13 @@ static void append_unicode_string( void **data, const UNICODE_STRING *src,
     {
         dst->Buffer = *data;
         memcpy( dst->Buffer, src->Buffer, dst->Length );
-        *data = (char *)dst->Buffer + ROUND_SIZE( dst->MaximumLength );
+        *data = (char *)dst->Buffer + ROUND_SIZE( dst->MaximumLength, align );
     }
     else dst->Buffer = NULL;
 }
 
-static RTL_USER_PROCESS_PARAMETERS *alloc_process_params( const UNICODE_STRING *image,
+static RTL_USER_PROCESS_PARAMETERS *alloc_process_params( size_t align,
+                                                          const UNICODE_STRING *image,
                                                           const UNICODE_STRING *dllpath,
                                                           const UNICODE_STRING *curdir,
                                                           const UNICODE_STRING *cmdline,
@@ -531,34 +532,34 @@ static RTL_USER_PROCESS_PARAMETERS *alloc_process_params( const UNICODE_STRING *
     if (env) env_size = get_env_length( env ) * sizeof(WCHAR);
 
     size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
-            + ROUND_SIZE( image->MaximumLength )
-            + ROUND_SIZE( dllpath->MaximumLength )
-            + ROUND_SIZE( curdir->MaximumLength )
-            + ROUND_SIZE( cmdline->MaximumLength )
-            + ROUND_SIZE( title->MaximumLength )
-            + ROUND_SIZE( desktop->MaximumLength )
-            + ROUND_SIZE( shell->MaximumLength )
-            + ROUND_SIZE( runtime->MaximumLength ));
+            + ROUND_SIZE( image->MaximumLength, align )
+            + ROUND_SIZE( dllpath->MaximumLength, align )
+            + ROUND_SIZE( curdir->MaximumLength, align )
+            + ROUND_SIZE( cmdline->MaximumLength, align )
+            + ROUND_SIZE( title->MaximumLength, align )
+            + ROUND_SIZE( desktop->MaximumLength, align )
+            + ROUND_SIZE( shell->MaximumLength, align )
+            + ROUND_SIZE( runtime->MaximumLength, align ));
 
-    if (!(ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE( env_size ) )))
+    if (!(ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE( env_size, align ))))
         return NULL;
 
     params = ptr;
     params->AllocationSize  = size;
     params->Size            = size;
     params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
-    params->EnvironmentSize = ROUND_SIZE( env_size );
+    params->EnvironmentSize = ROUND_SIZE( env_size, align );
     /* all other fields are zero */
 
     ptr = params + 1;
-    append_unicode_string( &ptr, curdir, &params->CurrentDirectory.DosPath );
-    append_unicode_string( &ptr, dllpath, &params->DllPath );
-    append_unicode_string( &ptr, image, &params->ImagePathName );
-    append_unicode_string( &ptr, cmdline, &params->CommandLine );
-    append_unicode_string( &ptr, title, &params->WindowTitle );
-    append_unicode_string( &ptr, desktop, &params->Desktop );
-    append_unicode_string( &ptr, shell, &params->ShellInfo );
-    append_unicode_string( &ptr, runtime, &params->RuntimeInfo );
+    append_unicode_string( &ptr, curdir, &params->CurrentDirectory.DosPath, align );
+    append_unicode_string( &ptr, dllpath, &params->DllPath, align );
+    append_unicode_string( &ptr, image, &params->ImagePathName, align );
+    append_unicode_string( &ptr, cmdline, &params->CommandLine, align );
+    append_unicode_string( &ptr, title, &params->WindowTitle, align );
+    append_unicode_string( &ptr, desktop, &params->Desktop, align );
+    append_unicode_string( &ptr, shell, &params->ShellInfo, align );
+    append_unicode_string( &ptr, runtime, &params->RuntimeInfo, align );
     if (env) params->Environment = memcpy( ptr, env, env_size );
     return params;
 }
@@ -603,7 +604,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     if (!ShellInfo) ShellInfo = &empty_str;
     if (!RuntimeInfo) RuntimeInfo = &null_str;
 
-    if ((*result = alloc_process_params( ImagePathName, DllPath, &curdir, CommandLine,
+    if ((*result = alloc_process_params( sizeof(void *), ImagePathName, DllPath, &curdir, CommandLine,
                                          Environment, WindowTitle, Desktop, ShellInfo, RuntimeInfo )))
     {
         if (cur_params) (*result)->ConsoleFlags = cur_params->ConsoleFlags;
@@ -664,7 +665,7 @@ void init_user_process_params(void)
         else env[0] = 0;
     }
 
-    if (!(new_params = alloc_process_params( &params->ImagePathName, &params->DllPath,
+    if (!(new_params = alloc_process_params( 1, &params->ImagePathName, &params->DllPath,
                                              &params->CurrentDirectory.DosPath, &params->CommandLine,
                                              NULL, &params->WindowTitle, &params->Desktop,
                                              &params->ShellInfo, &params->RuntimeInfo )))

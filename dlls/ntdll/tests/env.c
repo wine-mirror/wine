@@ -274,7 +274,6 @@ static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UN
         ok_(__FILE__,line)( (UINT_PTR)str->Buffer == align(pos, sizeof(void *)),
                             "wrong buffer %Ix/%Ix\n", (UINT_PTR)str->Buffer, pos );
     else  /* initial params are not aligned */
-        todo_wine_if ((UINT_PTR)str->Buffer != pos)
         ok_(__FILE__,line)( (UINT_PTR)str->Buffer == pos,
                             "wrong buffer %Ix/%Ix\n", (UINT_PTR)str->Buffer, pos );
     if (str->Length < str->MaximumLength)
