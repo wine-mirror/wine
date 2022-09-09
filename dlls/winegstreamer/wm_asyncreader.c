@@ -96,6 +96,31 @@ static DWORD async_reader_get_wait_timeout(struct async_reader *reader, QWORD pt
     return pts > current_time ? timeout : 0;
 }
 
+static bool async_reader_wait_pts(struct async_reader *reader, QWORD pts)
+{
+    IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
+    DWORD timeout;
+
+    TRACE("reader %p, pts %I64d.\n", reader, pts);
+
+    if (reader->user_clock && pts > reader->user_time && callback_advanced)
+    {
+        QWORD user_time = reader->user_time;
+        LeaveCriticalSection(&reader->callback_cs);
+        IWMReaderCallbackAdvanced_OnTime(callback_advanced, user_time, reader->context);
+        EnterCriticalSection(&reader->callback_cs);
+    }
+
+    while (reader->running && list_empty(&reader->async_ops))
+    {
+        if (!(timeout = async_reader_get_wait_timeout(reader, pts)))
+            return true;
+        SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs, timeout);
+    }
+
+    return false;
+}
+
 static void callback_thread_run(struct async_reader *reader)
 {
     IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
@@ -110,8 +135,6 @@ static void callback_thread_run(struct async_reader *reader)
 
     while (reader->running && list_empty(&reader->async_ops))
     {
-        DWORD timeout;
-
         LeaveCriticalSection(&reader->callback_cs);
         hr = wm_reader_get_stream_sample(&reader->reader, callback_advanced, 0, &sample, &pts, &duration, &flags, &stream_number);
         EnterCriticalSection(&reader->callback_cs);
@@ -120,22 +143,7 @@ static void callback_thread_run(struct async_reader *reader)
 
         stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number);
 
-        if (reader->user_clock && pts > reader->user_time && callback_advanced)
-        {
-            QWORD user_time = reader->user_time;
-            LeaveCriticalSection(&reader->callback_cs);
-            IWMReaderCallbackAdvanced_OnTime(callback_advanced, user_time, reader->context);
-            EnterCriticalSection(&reader->callback_cs);
-        }
-
-        while (reader->running && list_empty(&reader->async_ops))
-        {
-            if (!(timeout = async_reader_get_wait_timeout(reader, pts)))
-                break;
-            SleepConditionVariableCS(&reader->callback_cv, &reader->callback_cs, timeout);
-        }
-
-        if (reader->running && list_empty(&reader->async_ops))
+        if (async_reader_wait_pts(reader, pts))
         {
             LeaveCriticalSection(&reader->callback_cs);
             if (stream->read_compressed)
