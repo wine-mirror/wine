@@ -125,7 +125,6 @@ static void callback_thread_run(struct async_reader *reader)
 {
     IWMReaderCallbackAdvanced *callback_advanced = reader->callback_advanced;
     IWMReaderCallback *callback = reader->callback;
-    struct wm_stream *stream;
     static const DWORD zero;
     QWORD pts, duration;
     WORD stream_number;
@@ -141,10 +140,10 @@ static void callback_thread_run(struct async_reader *reader)
         if (hr != S_OK)
             break;
 
-        stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number);
-
         if (async_reader_wait_pts(reader, pts))
         {
+            struct wm_stream *stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number);
+
             LeaveCriticalSection(&reader->callback_cs);
             if (stream->read_compressed)
                 hr = IWMReaderCallbackAdvanced_OnStreamSample(callback_advanced,
