@@ -2140,9 +2140,11 @@ static DEVMODEW *find_display_mode( DEVMODEW *modes, DEVMODEW *devmode )
     return NULL;
 }
 
-static DEVMODEW *get_full_mode( const WCHAR *adapter_path, const WCHAR *device_name, DEVMODEW *modes,
-                                DEVMODEW *devmode, DEVMODEW *temp_mode )
+static DEVMODEW *get_full_mode( const WCHAR *adapter_path, const WCHAR *device_name, DEVMODEW *adapter_modes,
+                                DEVMODEW *devmode, DEVMODEW *full_mode )
 {
+    DEVMODEW *adapter_mode;
+
     if (devmode)
     {
         trace_devmode( devmode );
@@ -2156,40 +2158,39 @@ static DEVMODEW *get_full_mode( const WCHAR *adapter_path, const WCHAR *device_n
             devmode = NULL;
     }
 
-    if (devmode) memcpy( temp_mode, devmode, devmode->dmSize );
+    if (devmode) memcpy( full_mode, devmode, devmode->dmSize );
     else
     {
-        if (!read_registry_settings( adapter_path, temp_mode )) return NULL;
+        if (!read_registry_settings( adapter_path, full_mode )) return NULL;
         TRACE( "Return to original display mode\n" );
     }
-    devmode = temp_mode;
 
-    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
+    if ((full_mode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
     {
-        WARN( "devmode doesn't specify the resolution: %#x\n", devmode->dmFields );
+        WARN( "devmode doesn't specify the resolution: %#x\n", full_mode->dmFields );
         return NULL;
     }
 
-    if (!is_detached_mode( devmode ) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight || !(devmode->dmFields & DM_POSITION)))
+    if (!is_detached_mode( full_mode ) && (!full_mode->dmPelsWidth || !full_mode->dmPelsHeight || !(full_mode->dmFields & DM_POSITION)))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
         if (!user_driver->pGetCurrentDisplaySettings( device_name, &current_mode )) return NULL;
-        if (!devmode->dmPelsWidth) devmode->dmPelsWidth = current_mode.dmPelsWidth;
-        if (!devmode->dmPelsHeight) devmode->dmPelsHeight = current_mode.dmPelsHeight;
-        if (!(devmode->dmFields & DM_POSITION))
+        if (!full_mode->dmPelsWidth) full_mode->dmPelsWidth = current_mode.dmPelsWidth;
+        if (!full_mode->dmPelsHeight) full_mode->dmPelsHeight = current_mode.dmPelsHeight;
+        if (!(full_mode->dmFields & DM_POSITION))
         {
-            devmode->dmPosition = current_mode.dmPosition;
-            devmode->dmFields |= DM_POSITION;
+            full_mode->dmPosition = current_mode.dmPosition;
+            full_mode->dmFields |= DM_POSITION;
         }
     }
 
-    if ((devmode = find_display_mode( modes, devmode )) && devmode != temp_mode)
+    if ((adapter_mode = find_display_mode( adapter_modes, full_mode )) && adapter_mode != full_mode)
     {
-        devmode->dmFields |= DM_POSITION;
-        devmode->dmPosition = temp_mode->dmPosition;
+        adapter_mode->dmFields |= DM_POSITION;
+        adapter_mode->dmPosition = full_mode->dmPosition;
     }
 
-    return devmode;
+    return adapter_mode;
 }
 
 static DEVMODEW *get_display_settings( const WCHAR *devname, const DEVMODEW *devmode )
@@ -2446,7 +2447,7 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
-    DEVMODEW *modes, temp_mode = {.dmSize = sizeof(DEVMODEW)};
+    DEVMODEW *modes, full_mode = {.dmSize = sizeof(DEVMODEW)};
     WCHAR device_name[CCHDEVICENAME], adapter_path[MAX_PATH];
     LONG ret = DISP_CHANGE_SUCCESSFUL;
     struct adapter *adapter;
@@ -2472,7 +2473,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
         return DISP_CHANGE_BADPARAM;
     }
 
-    if (!(devmode = get_full_mode( adapter_path, device_name, modes, devmode, &temp_mode ))) ret = DISP_CHANGE_BADMODE;
+    if (!(devmode = get_full_mode( adapter_path, device_name, modes, devmode, &full_mode ))) ret = DISP_CHANGE_BADMODE;
     else if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings( adapter_path, devmode )) ret = DISP_CHANGE_NOTUPDATED;
     else if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
     else ret = apply_display_settings( device_name, devmode, hwnd, flags, lparam );
