@@ -392,6 +392,7 @@ static HRESULT enum_trash_items( LPITEMIDLIST **pidls, int *ret_count )
     InitOnceExecuteOnce( &trash_dir_once, init_trash_dirs, NULL, NULL );
     if (!trash_dir) return E_FAIL;
 
+    *pidls = NULL;
     file = heap_alloc( (lstrlenW(trash_dir) + lstrlenW(L"\\*") + 1) * sizeof(WCHAR) );
     lstrcpyW( file, trash_dir );
     lstrcatW( file, L"\\*" );
