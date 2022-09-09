@@ -370,6 +370,7 @@ static void set_stream_volumes(ACImpl *This)
     params.master_volume   = This->session->mute ? 0.0f : This->session->master_vol;
     params.volumes         = This->vol;
     params.session_volumes = This->session->channel_vols;
+    params.channel         = 0;
     pulse_call(set_volumes, &params);
 }
 
@@ -930,7 +931,7 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
 
     params.stream = This->pulse_stream;
-    params.size = out;
+    params.frames = out;
     pulse_call(get_buffer_size, &params);
     return params.result;
 }

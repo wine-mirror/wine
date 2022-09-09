@@ -2095,7 +2095,7 @@ static NTSTATUS pulse_get_buffer_size(void *args)
     if (!pulse_stream_valid(stream))
         params->result = AUDCLNT_E_DEVICE_INVALIDATED;
     else
-        *params->size = stream->bufsize_frames;
+        *params->frames = stream->bufsize_frames;
     pulse_unlock();
 
     return STATUS_SUCCESS;
@@ -2393,6 +2393,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 #ifdef _WIN64
@@ -2587,12 +2588,12 @@ static NTSTATUS pulse_wow64_get_buffer_size(void *args)
     {
         stream_handle stream;
         HRESULT result;
-        PTR32 size;
+        PTR32 frames;
     } *params32 = args;
     struct get_buffer_size_params params =
     {
         .stream = params32->stream,
-        .size = ULongToPtr(params32->size)
+        .frames = ULongToPtr(params32->frames)
     };
     pulse_get_buffer_size(&params);
     params32->result = params.result;
@@ -2701,13 +2702,15 @@ static NTSTATUS pulse_wow64_set_volumes(void *args)
         float master_volume;
         PTR32 volumes;
         PTR32 session_volumes;
+        int channel;
     } *params32 = args;
     struct set_volumes_params params =
     {
         .stream = params32->stream,
         .master_volume = params32->master_volume,
         .volumes = ULongToPtr(params32->volumes),
-        .session_volumes = ULongToPtr(params32->session_volumes)
+        .session_volumes = ULongToPtr(params32->session_volumes),
+        .channel = params32->channel
     };
     return pulse_set_volumes(&params);
 }
@@ -2832,6 +2835,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_test_connect,
     pulse_is_started,
     pulse_wow64_get_prop_value,
+    NULL,
     NULL,
     NULL,
     NULL,

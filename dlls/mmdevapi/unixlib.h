@@ -1,6 +1,6 @@
 /*
  * Copyright 2021 Jacek Caban for CodeWeavers
- * Copyright 2022 Huw Davies
+ * Copyright 2021-2022 Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -126,7 +126,7 @@ struct get_capture_buffer_params
 struct release_capture_buffer_params
 {
     stream_handle stream;
-    BOOL done;
+    UINT32 done;
     HRESULT result;
 };
 
@@ -161,7 +161,7 @@ struct get_buffer_size_params
 {
     stream_handle stream;
     HRESULT result;
-    UINT32 *size;
+    UINT32 *frames;
 };
 
 struct get_latency_params
@@ -207,6 +207,7 @@ struct set_volumes_params
     float master_volume;
     const float *volumes;
     const float *session_volumes;
+    int channel;
 };
 
 struct set_event_handle_params
@@ -238,6 +239,11 @@ struct get_prop_value_params
     PROPVARIANT *value;
     void *buffer; /* caller allocated buffer to hold value's strings */
     unsigned int *buffer_size;
+};
+
+struct midi_init_params
+{
+    UINT *err;
 };
 
 struct notify_context
@@ -321,6 +327,7 @@ enum unix_funcs
     test_connect,
     is_started,
     get_prop_value,
+    midi_init,
     midi_release,
     midi_out_message,
     midi_in_message,

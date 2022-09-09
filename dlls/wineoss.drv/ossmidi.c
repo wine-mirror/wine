@@ -303,7 +303,7 @@ static int seq_close(int fd)
     return 0;
 }
 
-static UINT midi_init(void)
+static UINT oss_midi_init(void)
 {
     int i, status, synth_devs = 255, midi_devs = 255, fd, len;
     struct synth_info sinfo;
@@ -1694,7 +1694,7 @@ NTSTATUS oss_midi_out_message(void *args)
     switch (params->msg)
     {
     case DRVM_INIT:
-        *params->err = midi_init();
+        *params->err = oss_midi_init();
         break;
     case DRVM_EXIT:
         *params->err = midi_exit();
@@ -1754,7 +1754,7 @@ NTSTATUS oss_midi_in_message(void *args)
     switch (params->msg)
     {
     case DRVM_INIT:
-        *params->err = midi_init();
+        *params->err = oss_midi_init();
         break;
     case DRVM_EXIT:
         *params->err = midi_exit();

@@ -414,7 +414,7 @@ static void port_add(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, u
     }
 }
 
-static UINT midi_init(void)
+static UINT alsa_midi_init(void)
 {
     static BOOL init_done;
     snd_seq_client_info_t *cinfo;
@@ -1398,7 +1398,7 @@ NTSTATUS alsa_midi_out_message(void *args)
     switch (params->msg)
     {
     case DRVM_INIT:
-        *params->err = midi_init();
+        *params->err = alsa_midi_init();
         break;
     case DRVM_EXIT:
     case DRVM_ENABLE:
@@ -1456,7 +1456,7 @@ NTSTATUS alsa_midi_in_message(void *args)
     switch (params->msg)
     {
     case DRVM_INIT:
-        *params->err = midi_init();
+        *params->err = alsa_midi_init();
         break;
     case DRVM_EXIT:
     case DRVM_ENABLE:
