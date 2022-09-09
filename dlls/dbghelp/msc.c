@@ -3119,15 +3119,15 @@ static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
-static void pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
+static BOOL pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
 {
-    memset(types, 0, sizeof(PDB_TYPES));
-    if (!image) return;
+    if (!image) return FALSE;
 
     if (*(const DWORD*)image < 19960000)   /* FIXME: correct version? */
     {
         /* Old version of the types record header */
         const PDB_TYPES_OLD*    old = (const PDB_TYPES_OLD*)image;
+        memset(types, 0, sizeof(PDB_TYPES));
         types->version     = old->version;
         types->type_offset = sizeof(PDB_TYPES_OLD);
         types->type_size   = old->type_size;
@@ -3140,6 +3140,7 @@ static void pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
         /* New version of the types record header */
         *types = *(const PDB_TYPES*)image;
     }
+    return TRUE;
 }
 
 static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
@@ -3255,7 +3256,8 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
     ctp->offset = NULL;
     ctp->hash = NULL;
     ctp->alloc_hash = NULL;
-    pdb_convert_types_header(&ctp->header, image);
+    if (!pdb_convert_types_header(&ctp->header, image))
+        return FALSE;
 
     /* Check for unknown versions */
     switch (ctp->header.version)
