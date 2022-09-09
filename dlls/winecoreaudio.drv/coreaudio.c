@@ -1707,23 +1707,29 @@ static NTSTATUS unix_wow64_create_stream(void *args)
 {
     struct
     {
+        PTR32 name;
         PTR32 device;
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
+        DWORD flags;
         REFERENCE_TIME duration;
         REFERENCE_TIME period;
         PTR32 fmt;
         HRESULT result;
+        PTR32 channel_count;
         PTR32 stream;
     } *params32 = args;
     struct create_stream_params params =
     {
+        .name = ULongToPtr(params32->name),
         .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .share = params32->share,
+        .flags = params32->flags,
         .duration = params32->duration,
         .period = params32->period,
         .fmt = ULongToPtr(params32->fmt),
+        .channel_count = ULongToPtr(params32->channel_count),
         .stream = ULongToPtr(params32->stream)
     };
     unix_create_stream(&params);

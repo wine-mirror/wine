@@ -734,12 +734,15 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
+    params.name = NULL;
     params.device = This->device_name;
     params.flow = This->dataflow;
     params.share = mode;
+    params.flags = flags;
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
+    params.channel_count = NULL;
     params.stream = &stream;
 
     UNIX_CALL(create_stream, &params);
