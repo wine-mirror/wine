@@ -231,46 +231,46 @@ struct midi_notify_wait_params
 
 enum unix_funcs
 {
-    unix_get_endpoint_ids,
-    unix_create_stream,
-    unix_release_stream,
-    unix_start,
-    unix_stop,
-    unix_reset,
-    unix_get_render_buffer,
-    unix_release_render_buffer,
-    unix_get_capture_buffer,
-    unix_release_capture_buffer,
-    unix_get_mix_format,
-    unix_is_format_supported,
-    unix_get_buffer_size,
-    unix_get_latency,
-    unix_get_current_padding,
-    unix_get_next_packet_size,
-    unix_get_position,
-    unix_get_frequency,
-    unix_is_started,
-    unix_set_volumes,
-    unix_midi_init,
-    unix_midi_release,
-    unix_midi_out_message,
-    unix_midi_in_message,
-    unix_midi_notify_wait,
+    get_endpoint_ids,
+    create_stream,
+    release_stream,
+    start,
+    stop,
+    reset,
+    get_render_buffer,
+    release_render_buffer,
+    get_capture_buffer,
+    release_capture_buffer,
+    get_mix_format,
+    is_format_supported,
+    get_buffer_size,
+    get_latency,
+    get_current_padding,
+    get_next_packet_size,
+    get_position,
+    get_frequency,
+    is_started,
+    set_volumes,
+    midi_init,
+    midi_release,
+    midi_out_message,
+    midi_in_message,
+    midi_notify_wait,
 };
 
-NTSTATUS midi_init( void * ) DECLSPEC_HIDDEN;
-NTSTATUS midi_release( void * ) DECLSPEC_HIDDEN;
-NTSTATUS midi_out_message( void * ) DECLSPEC_HIDDEN;
-NTSTATUS midi_in_message( void * ) DECLSPEC_HIDDEN;
-NTSTATUS midi_notify_wait( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_midi_init( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_midi_release( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_midi_out_message( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_midi_in_message( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_midi_notify_wait( void * ) DECLSPEC_HIDDEN;
 
 #ifdef _WIN64
-NTSTATUS wow64_midi_init(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS unix_wow64_midi_init(void *args) DECLSPEC_HIDDEN;
+NTSTATUS unix_wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS unix_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS unix_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 #endif
 
 extern unixlib_handle_t coreaudio_handle;
 
-#define UNIX_CALL( func, params ) __wine_unix_call( coreaudio_handle, unix_ ## func, params )
+#define UNIX_CALL( func, params ) __wine_unix_call( coreaudio_handle, func, params )

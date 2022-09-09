@@ -308,7 +308,7 @@ static void midi_in_read_proc(const MIDIPacketList *pktlist, void *refCon, void 
     }
 }
 
-NTSTATUS midi_init(void *args)
+NTSTATUS unix_midi_init(void *args)
 {
     CFStringRef name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("wineMIDIClient.%d"), getpid());
     struct midi_init_params *params = args;
@@ -422,7 +422,7 @@ NTSTATUS midi_init(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS midi_release(void *args)
+NTSTATUS unix_midi_release(void *args)
 {
     /* stop the notify_wait thread */
     notify_post(NULL);
@@ -1122,7 +1122,7 @@ static UINT midi_in_reset(WORD dev_id, struct notify_context *notify)
     return err;
 }
 
-NTSTATUS midi_out_message(void *args)
+NTSTATUS unix_midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
 
@@ -1177,7 +1177,7 @@ NTSTATUS midi_out_message(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS midi_in_message(void *args)
+NTSTATUS unix_midi_in_message(void *args)
 {
     struct midi_in_message_params *params = args;
 
@@ -1229,7 +1229,7 @@ NTSTATUS midi_in_message(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS midi_notify_wait(void *args)
+NTSTATUS unix_midi_notify_wait(void *args)
 {
     struct midi_notify_wait_params *params = args;
 
@@ -1250,7 +1250,7 @@ NTSTATUS midi_notify_wait(void *args)
 
 typedef UINT PTR32;
 
-NTSTATUS wow64_midi_init(void *args)
+NTSTATUS unix_wow64_midi_init(void *args)
 {
     struct
     {
@@ -1260,7 +1260,7 @@ NTSTATUS wow64_midi_init(void *args)
     {
         .err = ULongToPtr(params32->err)
     };
-    return midi_init(&params);
+    return unix_midi_init(&params);
 }
 
 struct notify_context32
@@ -1343,7 +1343,7 @@ static UINT wow64_midi_out_unprepare(WORD dev_id, struct midi_hdr32 *hdr, UINT h
     return MMSYSERR_NOERROR;
 }
 
-NTSTATUS wow64_midi_out_message(void *args)
+NTSTATUS unix_wow64_midi_out_message(void *args)
 {
     struct
     {
@@ -1414,7 +1414,7 @@ NTSTATUS wow64_midi_out_message(void *args)
         return STATUS_SUCCESS;
     }
 
-    midi_out_message(&params);
+    unix_midi_out_message(&params);
 
     switch (params32->msg)
     {
@@ -1467,7 +1467,7 @@ static UINT wow64_midi_in_unprepare(WORD dev_id, struct midi_hdr32 *hdr, UINT hd
     return MMSYSERR_NOERROR;
 }
 
-NTSTATUS wow64_midi_in_message(void *args)
+NTSTATUS unix_wow64_midi_in_message(void *args)
 {
     struct
     {
@@ -1539,7 +1539,7 @@ NTSTATUS wow64_midi_in_message(void *args)
         return STATUS_SUCCESS;
     }
 
-    midi_in_message(&params);
+    unix_midi_in_message(&params);
 
     switch (params32->msg)
     {
@@ -1574,7 +1574,7 @@ NTSTATUS wow64_midi_in_message(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_midi_notify_wait(void *args)
+NTSTATUS unix_wow64_midi_notify_wait(void *args)
 {
     struct
     {
@@ -1592,7 +1592,7 @@ NTSTATUS wow64_midi_notify_wait(void *args)
     };
     notify32->send_notify = FALSE;
 
-    midi_notify_wait(&params);
+    unix_midi_notify_wait(&params);
 
     if (!*params.quit && notify.send_notify)
     {
