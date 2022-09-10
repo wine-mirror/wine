@@ -542,6 +542,39 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                 .irp = irp,
             };
 
+            switch (urb->UrbHeader.Function)
+            {
+                case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
+                {
+                    struct _URB_BULK_OR_INTERRUPT_TRANSFER *req = &urb->UrbBulkOrInterruptTransfer;
+                    if (req->TransferBufferMDL)
+                        params.transfer_buffer = MmGetSystemAddressForMdlSafe(req->TransferBufferMDL, NormalPagePriority);
+                    else
+                        params.transfer_buffer = req->TransferBuffer;
+                    break;
+                }
+
+                case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
+                {
+                    struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
+                    if (req->TransferBufferMDL)
+                        params.transfer_buffer = MmGetSystemAddressForMdlSafe(req->TransferBufferMDL, NormalPagePriority);
+                    else
+                        params.transfer_buffer = req->TransferBuffer;
+                    break;
+                }
+
+                case URB_FUNCTION_VENDOR_INTERFACE:
+                {
+                    struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
+                    if (req->TransferBufferMDL)
+                        params.transfer_buffer = MmGetSystemAddressForMdlSafe(req->TransferBufferMDL, NormalPagePriority);
+                    else
+                        params.transfer_buffer = req->TransferBuffer;
+                    break;
+                }
+            }
+
             /* Hold the wineusb lock while submitting and queuing, and
              * similarly hold it in complete_irp(). That way, if libusb reports
              * completion between submitting and queuing, we won't try to

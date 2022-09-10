@@ -305,14 +305,23 @@ static NTSTATUS usbd_status_from_libusb(enum libusb_transfer_status status)
     }
 }
 
+struct transfer_ctx
+{
+    IRP *irp;
+    void *transfer_buffer;
+};
+
 static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
 {
-    IRP *irp = transfer->user_data;
+    struct transfer_ctx *transfer_ctx = transfer->user_data;
+    IRP *irp = transfer_ctx->irp;
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
+    unsigned char *transfer_buffer = transfer_ctx->transfer_buffer;
     struct usb_event event;
 
     TRACE("Completing IRP %p, status %#x.\n", irp, transfer->status);
 
+    free(transfer_ctx);
     urb->UrbHeader.Status = usbd_status_from_libusb(transfer->status);
 
     if (transfer->status == LIBUSB_TRANSFER_COMPLETED)
@@ -327,7 +336,7 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
             {
                 struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
                 req->TransferBufferLength = transfer->actual_length;
-                memcpy(req->TransferBuffer, libusb_control_transfer_get_data(transfer), transfer->actual_length);
+                memcpy(transfer_buffer, libusb_control_transfer_get_data(transfer), transfer->actual_length);
                 break;
             }
 
@@ -336,7 +345,7 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
                 struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
                 req->TransferBufferLength = transfer->actual_length;
                 if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
-                    memcpy(req->TransferBuffer, libusb_control_transfer_get_data(transfer), transfer->actual_length);
+                    memcpy(transfer_buffer, libusb_control_transfer_get_data(transfer), transfer->actual_length);
                 break;
             }
 
@@ -410,9 +419,12 @@ static NTSTATUS usb_submit_urb(void *args)
         {
             struct _URB_BULK_OR_INTERRUPT_TRANSFER *req = &urb->UrbBulkOrInterruptTransfer;
             struct pipe pipe = get_pipe(req->PipeHandle);
+            struct transfer_ctx *transfer_ctx;
 
-            if (req->TransferBufferMDL)
-                FIXME("Unhandled MDL output buffer.\n");
+            if (!(transfer_ctx = calloc(1, sizeof(*transfer_ctx))))
+                return STATUS_NO_MEMORY;
+            transfer_ctx->irp = irp;
+            transfer_ctx->transfer_buffer = params->transfer_buffer;
 
             if (!(transfer = libusb_alloc_transfer(0)))
                 return STATUS_NO_MEMORY;
@@ -421,12 +433,12 @@ static NTSTATUS usb_submit_urb(void *args)
             if (pipe.type == UsbdPipeTypeBulk)
             {
                 libusb_fill_bulk_transfer(transfer, handle, pipe.endpoint,
-                        req->TransferBuffer, req->TransferBufferLength, transfer_cb, irp, 0);
+                        params->transfer_buffer, req->TransferBufferLength, transfer_cb, transfer_ctx, 0);
             }
             else if (pipe.type == UsbdPipeTypeInterrupt)
             {
                 libusb_fill_interrupt_transfer(transfer, handle, pipe.endpoint,
-                        req->TransferBuffer, req->TransferBufferLength, transfer_cb, irp, 0);
+                        params->transfer_buffer, req->TransferBufferLength, transfer_cb, transfer_ctx, 0);
             }
             else
             {
@@ -446,10 +458,13 @@ static NTSTATUS usb_submit_urb(void *args)
         case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
         {
             struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
+            struct transfer_ctx *transfer_ctx;
             unsigned char *buffer;
 
-            if (req->TransferBufferMDL)
-                FIXME("Unhandled MDL output buffer.\n");
+            if (!(transfer_ctx = calloc(1, sizeof(*transfer_ctx))))
+                return STATUS_NO_MEMORY;
+            transfer_ctx->irp = irp;
+            transfer_ctx->transfer_buffer = params->transfer_buffer;
 
             if (!(transfer = libusb_alloc_transfer(0)))
                 return STATUS_NO_MEMORY;
@@ -465,7 +480,7 @@ static NTSTATUS usb_submit_urb(void *args)
                     LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_DEVICE,
                     LIBUSB_REQUEST_GET_DESCRIPTOR, (req->DescriptorType << 8) | req->Index,
                     req->LanguageId, req->TransferBufferLength);
-            libusb_fill_control_transfer(transfer, handle, buffer, transfer_cb, irp, 0);
+            libusb_fill_control_transfer(transfer, handle, buffer, transfer_cb, transfer_ctx, 0);
             transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
             ret = libusb_submit_transfer(transfer);
             if (ret < 0)
@@ -498,15 +513,18 @@ static NTSTATUS usb_submit_urb(void *args)
         {
             struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
             uint8_t req_type = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
+            struct transfer_ctx *transfer_ctx;
             unsigned char *buffer;
+
+            if (!(transfer_ctx = calloc(1, sizeof(*transfer_ctx))))
+                return STATUS_NO_MEMORY;
+            transfer_ctx->irp = irp;
+            transfer_ctx->transfer_buffer = params->transfer_buffer;
 
             if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
                 req_type |= LIBUSB_ENDPOINT_IN;
             if (req->TransferFlags & ~USBD_TRANSFER_DIRECTION_IN)
                 FIXME("Unhandled flags %#x.\n", (int)req->TransferFlags);
-
-            if (req->TransferBufferMDL)
-                FIXME("Unhandled MDL output buffer.\n");
 
             if (!(transfer = libusb_alloc_transfer(0)))
                 return STATUS_NO_MEMORY;
@@ -521,8 +539,8 @@ static NTSTATUS usb_submit_urb(void *args)
             libusb_fill_control_setup(buffer, req_type, req->Request,
                     req->Value, req->Index, req->TransferBufferLength);
             if (!(req->TransferFlags & USBD_TRANSFER_DIRECTION_IN))
-                memcpy(buffer + LIBUSB_CONTROL_SETUP_SIZE, req->TransferBuffer, req->TransferBufferLength);
-            libusb_fill_control_transfer(transfer, handle, buffer, transfer_cb, irp, 0);
+                memcpy(buffer + LIBUSB_CONTROL_SETUP_SIZE, params->transfer_buffer, req->TransferBufferLength);
+            libusb_fill_control_transfer(transfer, handle, buffer, transfer_cb, transfer_ctx, 0);
             transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
             ret = libusb_submit_transfer(transfer);
             if (ret < 0)

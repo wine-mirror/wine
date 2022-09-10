@@ -61,6 +61,7 @@ struct usb_submit_urb_params
 {
     struct unix_device *device;
     IRP *irp;
+    void *transfer_buffer;
 };
 
 struct usb_cancel_transfer_params
