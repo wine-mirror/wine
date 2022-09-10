@@ -52,6 +52,7 @@
 
 #define CMD_WRAP                0x119
 #define CMD_FONT                0x140
+#define CMD_SBAR                0x205
 
 #define CMD_HELP_CONTENTS       0x130
 #define CMD_HELP_ABOUT_NOTEPAD  0x134

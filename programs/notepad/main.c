@@ -63,6 +63,7 @@ static const WCHAR value_iMarginLeft[]      = {'i','M','a','r','g','i','n','L','
 static const WCHAR value_iMarginRight[]     = {'i','M','a','r','g','i','n','R','i','g','h','t','\0'};
 static const WCHAR value_szHeader[]         = {'s','z','H','e','a','d','e','r','\0'};
 static const WCHAR value_szFooter[]         = {'s','z','T','r','a','i','l','e','r','\0'};
+static const WCHAR value_bStatusBar[]       = {'b','S','t','a','t','u','s','B','a','r','\0'};
 
 /***********************************************************************
  *
@@ -107,6 +108,34 @@ DWORD get_dpi(void)
     return dpi;
 }
 
+static void ToggleStatusBar(void)
+{
+    RECT rc;
+
+    Globals.bStatusBar = !Globals.bStatusBar;
+    CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_SBAR,
+            MF_BYCOMMAND | (Globals.bStatusBar ? MF_CHECKED : MF_UNCHECKED));
+    GetClientRect(Globals.hMainWnd, &rc);
+    ShowWindow(Globals.hStatusBar, Globals.bStatusBar ? SW_SHOW : SW_HIDE);
+    updateWindowSize(rc.right, rc.bottom);
+}
+
+void updateWindowSize(int width, int height)
+{
+    int StatusBarHeight = 0;
+
+    if(Globals.bStatusBar)
+    {
+        RECT SBarRect;
+
+        SendMessageW(Globals.hStatusBar, WM_SIZE, 0, 0);
+        GetWindowRect(Globals.hStatusBar, &SBarRect);
+        StatusBarHeight = (SBarRect.bottom - SBarRect.top);
+    }
+    SetWindowPos(Globals.hEdit, NULL, 0, 0, width, height - StatusBarHeight,
+                SWP_NOOWNERZORDER | SWP_NOZORDER);
+}
+
 /***********************************************************************
  *
  *           NOTEPAD_SaveSettingToRegistry
@@ -149,6 +178,7 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
         SET_NOTEPAD_REG(hkey, value_iMarginBottom,    Globals.iMarginBottom);
         SET_NOTEPAD_REG(hkey, value_iMarginLeft,      Globals.iMarginLeft);
         SET_NOTEPAD_REG(hkey, value_iMarginRight,     Globals.iMarginRight);
+        SET_NOTEPAD_REG(hkey, value_bStatusBar,       Globals.bStatusBar);
 #undef SET_NOTEPAD_REG
 
         /* Store the current value as 10 * twips */
@@ -192,6 +222,7 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
     Globals.iMarginBottom = 2500;
     Globals.iMarginLeft = 2000;
     Globals.iMarginRight = 2000;
+    Globals.bStatusBar = TRUE;
     
     Globals.lfFont.lfHeight         = -12;
     Globals.lfFont.lfWidth          = 0;
@@ -240,6 +271,7 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
         QUERY_NOTEPAD_REG(hkey, value_iMarginBottom,    Globals.iMarginBottom);
         QUERY_NOTEPAD_REG(hkey, value_iMarginLeft,      Globals.iMarginLeft);
         QUERY_NOTEPAD_REG(hkey, value_iMarginRight,     Globals.iMarginRight);
+        QUERY_NOTEPAD_REG(hkey, value_bStatusBar,       Globals.bStatusBar);
 #undef QUERY_NOTEPAD_REG
 
         main_rect.right = main_rect.left + dx;
@@ -302,6 +334,7 @@ static int NOTEPAD_MenuCommand(WPARAM wParam)
                                
     case CMD_WRAP:             DIALOG_EditWrap(); break;
     case CMD_FONT:             DIALOG_SelectFont(); break;
+    case CMD_SBAR:             ToggleStatusBar(); break;
 
     case CMD_HELP_CONTENTS:    DIALOG_HelpContents(); break;
     case CMD_HELP_ABOUT_NOTEPAD: DIALOG_HelpAboutNotepad(); break;
@@ -335,6 +368,9 @@ static VOID NOTEPAD_InitData(VOID)
 
     CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_WRAP,
             MF_BYCOMMAND | (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_SBAR,
+            MF_BYCOMMAND | (Globals.bStatusBar ? MF_CHECKED : MF_UNCHECKED));
+    ShowWindow(Globals.hStatusBar, Globals.bStatusBar ? SW_SHOW : SW_HIDE);
 }
 
 /***********************************************************************
@@ -542,6 +578,9 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         Globals.hFont = CreateFontIndirectW(&Globals.lfFont);
         SendMessageW(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, FALSE);
         SendMessageW(Globals.hEdit, EM_LIMITTEXT, 0, 0);
+        Globals.hStatusBar = CreateWindowExW(0, STATUSCLASSNAMEW, NULL,
+                                 WS_VISIBLE | WS_CHILD, 0, 0, 0, 0, hWnd, NULL,
+                                 Globals.hInstance, NULL);
         break;
     }
 
@@ -572,8 +611,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case WM_SIZE:
-        SetWindowPos(Globals.hEdit, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
-                     SWP_NOOWNERZORDER | SWP_NOZORDER);
+        updateWindowSize(LOWORD(lParam), HIWORD(lParam));
         break;
 
     case WM_SETFOCUS:

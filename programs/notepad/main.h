@@ -43,6 +43,9 @@ typedef struct
   HWND     hFindReplaceDlg;
   HWND     hEdit;
   HFONT    hFont; /* Font used by the edit control */
+  HWND     hStatusBar;
+  BOOL     bStatusBar;
+  WCHAR*   szStatusString;
   LOGFONTW lfFont;
   BOOL     bWrapLongLines;
   WCHAR    szFindText[MAX_PATH];
@@ -71,3 +74,4 @@ extern NOTEPAD_GLOBALS Globals;
 VOID SetFileNameAndEncoding(LPCWSTR szFileName, ENCODING enc);
 void NOTEPAD_DoFind(FINDREPLACEW *fr);
 DWORD get_dpi(void);
+void updateWindowSize(int width, int height);

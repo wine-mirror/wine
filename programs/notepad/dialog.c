@@ -1107,6 +1107,7 @@ VOID DIALOG_EditWrap(VOID)
     Globals.bWrapLongLines = !Globals.bWrapLongLines;
     CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_WRAP,
         MF_BYCOMMAND | (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
+    updateWindowSize(rc.right, rc.bottom);
 }
 
 VOID DIALOG_SelectFont(VOID)
