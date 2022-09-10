@@ -425,7 +425,6 @@ static void test_RtlUniform(void)
     expected = 0x7fffffb1;
     result = RtlUniform(&seed);
 
-    todo_wine
     ok(result == expected,
         "RtlUniform(&seed (seed == 0x80000000)) returns %lx, expected %lx\n",
         result, expected);
@@ -438,7 +437,6 @@ static void test_RtlUniform(void)
     seed = 0x7fffffff;
     expected = 0x7fffffc3;
     result = RtlUniform(&seed);
-    todo_wine
     ok(result == expected,
         "RtlUniform(&seed (seed == 0x7fffffff)) returns %lx, expected %lx\n",
         result, expected);
@@ -468,11 +466,9 @@ static void test_RtlUniform(void)
         seed = num;
         expected = ((ULONGLONG)seed * 0x7fffffed + 0x7fffffc3) % 0x7fffffff;
         result = RtlUniform(&seed);
-        todo_wine_if(num >= 2)
         ok(result == expected,
                 "test: RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
                 num, result, expected);
-        todo_wine_if(num >= 2)
         ok(seed == expected,
                 "test: RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
                 num, result, expected);
@@ -485,11 +481,9 @@ static void test_RtlUniform(void)
         expected = ((ULONGLONG)seed * 0x7fffffed + 0x7fffffc3) % 0x7fffffff;
         seed_bak = seed;
         result = RtlUniform(&seed);
-        todo_wine_if(seed_bak >= 2)
         ok(result == expected,
                 "test: %ld RtlUniform(&seed (seed == %lx)) returns %lx, expected %lx\n",
                 num, seed_bak, result, expected);
-        todo_wine_if(seed_bak >= 2)
         ok(seed == expected,
                 "test: %ld RtlUniform(&seed (seed == %lx)) sets seed to %lx, expected %lx\n",
                 num, seed_bak, result, expected);

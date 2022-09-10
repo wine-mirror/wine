@@ -684,7 +684,7 @@ __ASM_FASTCALL_FUNC(RtlUshortByteSwap, 4,
 /*************************************************************************
  * RtlUniform   [NTDLL.@]
  *
- * Generates an uniform random number
+ * Generates a uniform random number
  *
  * PARAMS
  *  seed [O] The seed of the Random function
@@ -693,12 +693,7 @@ __ASM_FASTCALL_FUNC(RtlUshortByteSwap, 4,
  *  It returns a random number uniformly distributed over [0..MAXLONG-1].
  *
  * NOTES
- *  Generates an uniform random number using D.H. Lehmer's 1948 algorithm.
- *  In our case the algorithm is:
- *
- *|  result = (*seed * 0x7fffffed + 0x7fffffc3) % MAXLONG;
- *|
- *|  *seed = result;
+ *  Generates a uniform random number using a linear congruential generator.
  *
  * DIFFERENCES
  *  The native documentation states that the random number is
@@ -706,27 +701,10 @@ __ASM_FASTCALL_FUNC(RtlUshortByteSwap, 4,
  *  function and our function return a random number uniformly
  *  distributed over [0..MAXLONG-1].
  */
-ULONG WINAPI RtlUniform (PULONG seed)
+ULONG WINAPI RtlUniform( ULONG *seed )
 {
-    ULONG result;
-
-   /*
-    * Instead of the algorithm stated above, we use the algorithm
-    * below, which is totally equivalent (see the tests), but does
-    * not use a division and therefore is faster.
-    */
-    result = *seed * 0xffffffed + 0x7fffffc3;
-    if (result == 0xffffffff || result == 0x7ffffffe) {
-	result = (result + 2) & MAXLONG;
-    } else if (result == 0x7fffffff) {
-	result = 0;
-    } else if ((result & 0x80000000) == 0) {
-	result = result + (~result & 1);
-    } else {
-	result = (result + (result & 1)) & MAXLONG;
-    } /* if */
-    *seed = result;
-    return result;
+    /* See the tests for details. */
+    return (*seed = ((ULONGLONG)*seed * 0x7fffffed + 0x7fffffc3) % 0x7fffffff);
 }
 
 
