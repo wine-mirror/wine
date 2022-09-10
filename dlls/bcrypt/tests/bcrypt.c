@@ -63,8 +63,12 @@ static void test_BCryptGenRandom(void)
     {
         ret = BCryptGenRandom(BCRYPT_RNG_ALG_HANDLE, buffer, sizeof(buffer), 0);
         ok(ret == STATUS_SUCCESS, "Expected success, got %#lx\n", ret);
+
+        ret = BCryptCloseAlgorithmProvider(BCRYPT_RNG_ALG_HANDLE, 0);
+        ok(ret == STATUS_INVALID_HANDLE, "got %#lx\n", ret);
     }
     else win_skip("BCryptGenRandom pseudo handles are not available\n");
+
 }
 
 static void test_BCryptGetFipsAlgorithmMode(void)
@@ -323,6 +327,14 @@ static void test_hash(const struct hash_test *test)
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    if (pBCryptHash)
+    {
+        ret = BCryptCreateHash(BCRYPT_SHA1_ALG_HANDLE, &hash, NULL, 0, NULL, 0, 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        ret = BCryptDestroyHash(hash);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    }
 }
 
 static void test_hashes(void)
@@ -433,6 +445,15 @@ static void test_BcryptHash(void)
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    if (pBCryptHash)
+    {
+        memset(md5, 0, sizeof(md5));
+        ret = pBCryptHash(BCRYPT_MD5_ALG_HANDLE, NULL, 0, (UCHAR *)"test", sizeof("test"), md5, sizeof(md5));
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        format_hash( md5, sizeof(md5), str );
+        ok(!strcmp(str, expected), "got %s\n", str);
+    }
 }
 
 /* test vectors from RFC 6070 */
@@ -502,6 +523,13 @@ static void test_BcryptDeriveKeyPBKDF2(void)
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    if (pBCryptHash)
+    {
+        ret = BCryptDeriveKeyPBKDF2(BCRYPT_HMAC_SHA1_ALG_HANDLE, rfc6070[0].pwd, rfc6070[0].pwd_len, rfc6070[0].salt,
+                                    rfc6070[0].salt_len, 1, buf, rfc6070[0].dk_len, 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    }
 }
 
 static void test_rng(void)
@@ -610,6 +638,19 @@ static void test_aes(void)
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    if (pBCryptHash)
+    {
+        ret = BCryptSetProperty(BCRYPT_AES_CBC_ALG_HANDLE, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_GCM, 0, 0);
+        ok(ret == STATUS_ACCESS_DENIED, "got %#lx\n", ret);
+
+        size = 0;
+        memset(mode, 0, sizeof(mode));
+        ret = BCryptGetProperty(BCRYPT_AES_CBC_ALG_HANDLE, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
+        ok(size == 64, "got %lu\n", size);
+    }
 }
 
 static void test_3des(void)
@@ -687,7 +728,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     BCRYPT_KEY_HANDLE key, key2;
     UCHAR *buf, ciphertext[16], plaintext[16], ivbuf[16], mode[64];
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
-    ULONG size, len, i;
+    ULONG size, len, len2, i;
     NTSTATUS ret;
     DWORD keylen;
 
@@ -697,6 +738,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     len = size = 0xdeadbeef;
     ret = BCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    len2 = len;
 
     key = (void *)0xdeadbeef;
     ret = BCryptGenerateSymmetricKey(NULL, &key, NULL, 0, secret, sizeof(secret), 0);
@@ -848,8 +890,16 @@ static void test_BCryptGenerateSymmetricKey(void)
 
     ret = BCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-    free(buf);
 
+    if (pBCryptHash)
+    {
+        ret = BCryptGenerateSymmetricKey(BCRYPT_AES_CBC_ALG_HANDLE, &key, buf, len2, secret, sizeof(secret), 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        ret = BCryptDestroyKey(key);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    }
+
+    free(buf);
     ret = BCryptCloseAlgorithmProvider(aes, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 }
@@ -1949,11 +1999,18 @@ static void test_key_import_export(void)
     ret = BCryptImportKey(aes, NULL, BCRYPT_OPAQUE_KEY_BLOB, &key, NULL, 0, buf, size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(key != NULL, "key not set\n");
-    free(buf);
 
     ret = BCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
+    if (pBCryptHash)
+    {
+        ret = BCryptImportKey(BCRYPT_AES_CBC_ALG_HANDLE, NULL, BCRYPT_OPAQUE_KEY_BLOB, &key, NULL, 0, buf, size, 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        BCryptDestroyKey(key);
+    }
+
+    free(buf);
     ret = BCryptCloseAlgorithmProvider(aes, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 }
@@ -2028,6 +2085,14 @@ static void test_ECDSA(void)
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_PUBLIC_KEY_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
     BCryptDestroyKey(key);
+
+    if (pBCryptHash)
+    {
+        status = BCryptImportKeyPair(BCRYPT_ECDSA_P256_ALG_HANDLE, NULL, BCRYPT_PUBLIC_KEY_BLOB, &key, buffer,
+                                     size, 0);
+        ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
+        BCryptDestroyKey(key);
+    }
 
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
@@ -2208,14 +2273,15 @@ static void test_rsa_encrypt(void)
     oaep_pad.pbLabel = (PUCHAR)"test";
     oaep_pad.cbLabel = 5;
 
-    BCryptOpenAlgorithmProvider(&rsa, BCRYPT_RSA_ALGORITHM, NULL, 0);
-    BCryptGenerateKeyPair(rsa, &key, 512, 0);
+    ret = BCryptOpenAlgorithmProvider(&rsa, BCRYPT_RSA_ALGORITHM, NULL, 0);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ret = BCryptGenerateKeyPair(rsa, &key, 512, 0);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
 
     todo_wine {
     /* Not finalized key */
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, NULL, 0, &encrypted_size, 0);
     ok(ret == STATUS_INVALID_HANDLE, "got %lx\n", ret);
-
     BCryptFinalizeKeyPair(key, 0);
 
     /*   No padding    */
@@ -2300,6 +2366,14 @@ static void test_rsa_encrypt(void)
 
     free(encrypted_a);
     free(encrypted_b);
+    BCryptDestroyKey(key);
+
+    if (pBCryptHash)
+    {
+        ret = BCryptGenerateKeyPair(BCRYPT_RSA_ALG_HANDLE, &key, 512, 0);
+        ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+        BCryptDestroyKey(key);
+    }
 }
 
 static void test_RSA(void)

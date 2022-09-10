@@ -146,10 +146,11 @@ enum alg_id
 
 enum mode_id
 {
-    MODE_ID_ECB,
     MODE_ID_CBC,
-    MODE_ID_GCM,
+    MODE_ID_ECB,
     MODE_ID_CFB,
+    MODE_ID_CCM,
+    MODE_ID_GCM,
 };
 
 struct algorithm
