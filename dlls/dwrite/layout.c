@@ -641,142 +641,176 @@ static HRESULT layout_itemize(struct dwrite_textlayout *layout)
     return hr;
 }
 
+static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struct layout_run *r,
+        IDWriteFontCollection *system_collection, IDWriteFontFallback *fallback, struct layout_run **remaining)
+{
+    struct regular_layout_run *run = &r->u.regular;
+    IDWriteFontCollection *collection;
+    struct layout_range *range;
+    unsigned int length;
+    HRESULT hr = S_OK;
+
+    *remaining = NULL;
+
+    range = get_layout_range_by_pos(layout, run->descr.textPosition);
+    collection = range->collection ? range->collection : system_collection;
+
+    length = run->descr.stringLength;
+
+    while (length)
+    {
+        unsigned int mapped_length = 0;
+        IDWriteFont *font = NULL;
+        float scale = 0.0f;
+
+        run = &r->u.regular;
+
+        hr = IDWriteFontFallback_MapCharacters(fallback, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
+                run->descr.textPosition, run->descr.stringLength, collection, range->fontfamily, range->weight,
+                range->style, range->stretch, &mapped_length, &font, &scale);
+        if (FAILED(hr))
+        {
+            WARN("%s: failed to map family %s, collection %p, hr %#lx.\n", debugstr_rundescr(&run->descr),
+                    debugstr_w(range->fontfamily), collection, hr);
+            return hr;
+        }
+
+        if (!font)
+        {
+            *remaining = r;
+            return S_OK;
+        }
+
+        hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
+        IDWriteFont_Release(font);
+        if (FAILED(hr))
+        {
+            WARN("Failed to create a font face, hr %#lx.\n", hr);
+            return hr;
+        }
+
+        run->run.fontEmSize = range->fontsize * scale;
+
+        if (mapped_length < length)
+        {
+            struct regular_layout_run *nextrun;
+            struct layout_run *nextr;
+
+            /* Keep mapped part for current run, add another run for the rest. */
+            if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, 0, &nextr)))
+                return hr;
+
+            *nextr = *r;
+            nextr->start_position = run->descr.textPosition + mapped_length;
+            nextrun = &nextr->u.regular;
+            nextrun->run.fontFace = NULL;
+            nextrun->descr.textPosition = nextr->start_position;
+            nextrun->descr.stringLength = run->descr.stringLength - mapped_length;
+            nextrun->descr.string = &layout->str[nextrun->descr.textPosition];
+            run->descr.stringLength = mapped_length;
+            list_add_after(&r->entry, &nextr->entry);
+            r = nextr;
+        }
+
+        length -= min(length, mapped_length);
+    }
+
+    return hr;
+}
+
+static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout, struct layout_run *r,
+        IDWriteFontCollection *system_collection)
+{
+    struct regular_layout_run *run = &r->u.regular;
+    struct layout_range *range;
+    IDWriteFont *font;
+    HRESULT hr;
+
+    range = get_layout_range_by_pos(layout, run->descr.textPosition);
+
+    if (FAILED(create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
+            range->stretch, &IID_IDWriteFont3, (void **)&font)))
+    {
+        if (FAILED(hr = create_matching_font(system_collection, L"Tahoma", range->weight, range->style,
+                range->stretch, &IID_IDWriteFont3, (void **)&font)))
+        {
+            WARN("Failed to create last resort font, hr %#lx.\n", hr);
+            return hr;
+        }
+    }
+
+    hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
+    IDWriteFont_Release(font);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create last resort font face, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    run->run.fontEmSize = range->fontsize;
+
+    return hr;
+}
+
 static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 {
-    IDWriteFontCollection *sys_collection, *collection;
-    IDWriteFontFallback *fallback = NULL;
-    struct layout_range *range;
-    struct layout_run *r;
+    IDWriteFontCollection *system_collection;
+    IDWriteFontFallback *system_fallback;
+    struct layout_run *r, *remaining;
     HRESULT hr;
 
     if (FAILED(hr = IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)layout->factory, FALSE,
-            (IDWriteFontCollection1 **)&sys_collection, FALSE))) {
+            (IDWriteFontCollection1 **)&system_collection, FALSE)))
+    {
         WARN("Failed to get system collection, hr %#lx.\n", hr);
         return hr;
     }
 
-    if (layout->format.fallback) {
-        fallback = layout->format.fallback;
-        IDWriteFontFallback_AddRef(fallback);
-    }
-    else {
-        if (FAILED(hr = IDWriteFactory7_GetSystemFontFallback(layout->factory, &fallback))) {
-            WARN("Failed to get system fallback, hr %#lx.\n", hr);
-            goto fatal;
-        }
+    if (FAILED(hr = IDWriteFactory7_GetSystemFontFallback(layout->factory, &system_fallback)))
+    {
+        WARN("Failed to get system fallback, hr %#lx.\n", hr);
+        IDWriteFontCollection_Release(system_collection);
+        return hr;
     }
 
-    LIST_FOR_EACH_ENTRY(r, &layout->runs, struct layout_run, entry) {
+    LIST_FOR_EACH_ENTRY(r, &layout->runs, struct layout_run, entry)
+    {
         struct regular_layout_run *run = &r->u.regular;
-        IDWriteFont *font;
-        UINT32 length;
 
         if (r->kind == LAYOUT_RUN_INLINE)
             continue;
 
-        range = get_layout_range_by_pos(layout, run->descr.textPosition);
-        collection = range->collection ? range->collection : sys_collection;
+        /* For textual runs use both custom and system fallback. For non-visual ones only use the system fallback,
+           and no hard-coded names in assumption that support for missing control characters could be easily
+           added to bundled fonts. */
 
         if (run->sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL)
         {
-            if (FAILED(hr = create_matching_font(collection, range->fontfamily, range->weight, range->style,
-                    range->stretch, &IID_IDWriteFont, (void **)&font)))
+            if (FAILED(hr = layout_map_run_characters(layout, r, system_collection, system_fallback, &remaining)))
             {
-                WARN("%s: failed to create matching font for non visual run, family %s, collection %p\n",
-                        debugstr_rundescr(&run->descr), debugstr_w(range->fontfamily), range->collection);
+                WARN("Failed to map fonts for non-visual run, hr %#lx.\n", hr);
                 break;
             }
-
-            hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
-            IDWriteFont_Release(font);
-            if (FAILED(hr)) {
-                WARN("Failed to create font face, hr %#lx.\n", hr);
-                break;
-            }
-
-            run->run.fontEmSize = range->fontsize;
-            continue;
         }
-
-        length = run->descr.stringLength;
-
-        while (length)
+        else
         {
-            UINT32 mapped_length = 0;
-            FLOAT scale;
+            if (layout->format.fallback)
+                hr = layout_map_run_characters(layout, r, system_collection, layout->format.fallback, &remaining);
+            else
+                remaining = r;
 
-            run = &r->u.regular;
-
-            hr = IDWriteFontFallback_MapCharacters(fallback,
-                (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
-                run->descr.textPosition,
-                run->descr.stringLength,
-                range->collection,
-                range->fontfamily,
-                range->weight,
-                range->style,
-                range->stretch,
-                &mapped_length,
-                &font,
-                &scale);
-            if (FAILED(hr)) {
-                WARN("%s: failed to map family %s, collection %p, hr %#lx.\n", debugstr_rundescr(&run->descr),
-                        debugstr_w(range->fontfamily), range->collection, hr);
-                goto fatal;
-            }
-
-            if (!font)
-            {
-                if (FAILED(create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
-                        range->stretch, &IID_IDWriteFont3, (void **)&font)))
-                {
-                    if (FAILED(hr = create_matching_font(sys_collection, L"Tahoma", range->weight, range->style,
-                        range->stretch, &IID_IDWriteFont3, (void **)&font)))
-                    {
-                        WARN("Failed to create last resort font, hr %#lx.\n", hr);
-                        goto fatal;
-                    }
-                }
-                mapped_length = run->descr.stringLength;
-            }
-
-            hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
-            IDWriteFont_Release(font);
-            if (FAILED(hr)) {
-                WARN("Failed to create font face, hr %#lx.\n", hr);
-                goto fatal;
-            }
-
-            run->run.fontEmSize = range->fontsize * scale;
-
-            if (mapped_length < length)
-            {
-                struct regular_layout_run *nextrun;
-                struct layout_run *nextr;
-
-                /* keep mapped part for current run, add another run for the rest */
-                if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, 0, &nextr)))
-                    goto fatal;
-
-                *nextr = *r;
-                nextr->start_position = run->descr.textPosition + mapped_length;
-                nextrun = &nextr->u.regular;
-                nextrun->descr.textPosition = nextr->start_position;
-                nextrun->descr.stringLength = run->descr.stringLength - mapped_length;
-                nextrun->descr.string = &layout->str[nextrun->descr.textPosition];
-                run->descr.stringLength = mapped_length;
-                list_add_after(&r->entry, &nextr->entry);
-                r = nextr;
-            }
-
-            length -= mapped_length;
+            if (remaining)
+                hr = layout_map_run_characters(layout, remaining, system_collection, system_fallback, &remaining);
         }
+
+        if (remaining)
+            hr = layout_run_set_last_resort_font(layout, remaining, system_collection);
+
+        if (FAILED(hr)) break;
     }
 
-fatal:
-    IDWriteFontCollection_Release(sys_collection);
-    if (fallback)
-        IDWriteFontFallback_Release(fallback);
+    IDWriteFontCollection_Release(system_collection);
+    IDWriteFontFallback_Release(system_fallback);
 
     return hr;
 }
