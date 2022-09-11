@@ -598,6 +598,34 @@ typedef struct _SYMBOL_INFO_PACKAGEW
     WCHAR        name[MAX_SYM_NAME+1];
 } SYMBOL_INFO_PACKAGEW, *PSYMBOL_INFO_PACKAGEW;
 
+typedef struct _SYMSRV_INDEX_INFO
+{
+    DWORD sizeofstruct;
+    CHAR  file[MAX_PATH + 1];
+    BOOL  stripped;
+    DWORD timestamp;
+    DWORD size;
+    CHAR  dbgfile[MAX_PATH + 1];
+    CHAR  pdbfile[MAX_PATH + 1];
+    GUID  guid;
+    DWORD sig;
+    DWORD age;
+} SYMSRV_INDEX_INFO, *PSYMSRV_INDEX_INFO;
+
+typedef struct
+{
+    DWORD sizeofstruct;
+    WCHAR file[MAX_PATH + 1];
+    BOOL  stripped;
+    DWORD timestamp;
+    DWORD size;
+    WCHAR dbgfile[MAX_PATH + 1];
+    WCHAR pdbfile[MAX_PATH + 1];
+    GUID  guid;
+    DWORD sig;
+    DWORD age;
+} SYMSRV_INDEX_INFOW, *PSYMSRV_INDEX_INFOW;
+
 typedef enum _IMAGEHLP_SYMBOL_TYPE_INFO 
 {
     TI_GET_SYMTAG,

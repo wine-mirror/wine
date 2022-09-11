@@ -2778,3 +2778,14 @@ BOOL WINAPI SymGetLineFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG in
     if (!get_line_from_inline_context(hProcess, addr, inline_ctx, mod_addr, disp, &intl)) return FALSE;
     return internal_line_copy_toW64(&intl, line);
 }
+
+/******************************************************************
+ *      SymSrvGetFileIndexInfo (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSrvGetFileIndexInfo(const char *file, SYMSRV_INDEX_INFO* info, DWORD flags)
+{
+    FIXME("(%s, %p, 0x%08lx): stub!\n", debugstr_a(file), info, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
