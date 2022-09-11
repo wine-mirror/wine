@@ -3388,6 +3388,25 @@ VOID WINAPI KeSetTargetProcessorDpc(PRKDPC dpc, CCHAR number)
 }
 
 /***********************************************************************
+ *          KeGetCurrentProcessorNumberEx   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI KeGetCurrentProcessorNumberEx(PPROCESSOR_NUMBER process_number)
+{
+    ULONG cur_number = NtGetCurrentProcessorNumber();
+
+    FIXME("%p semi-stub\n", process_number);
+
+    if (process_number)
+    {
+        process_number->Group = 0;
+        process_number->Reserved = 0;
+        process_number->Number = cur_number;
+    }
+
+    return cur_number;
+}
+
+/***********************************************************************
  *           READ_REGISTER_BUFFER_UCHAR   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI READ_REGISTER_BUFFER_UCHAR(PUCHAR Register, PUCHAR Buffer, ULONG Count)

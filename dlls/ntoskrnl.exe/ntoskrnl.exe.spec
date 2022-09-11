@@ -555,6 +555,7 @@
 @ stub KeFlushEntireTb
 @ stdcall KeFlushQueuedDpcs()
 @ stdcall KeGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
+@ stdcall KeGetCurrentProcessorNumberEx(ptr)
 @ stdcall KeGetCurrentThread()
 @ stub KeGetPreviousMode
 @ stub KeGetRecommendedSharedDataAlignment
