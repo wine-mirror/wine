@@ -175,7 +175,7 @@
 @ stdcall SymSetSearchPathW(long wstr)
 @ stub SymSrvDeltaName
 @ stub SymSrvDeltaNameW
-@ stub SymSrvGetFileIndexInfo
+@ stdcall SymSrvGetFileIndexInfo(str ptr long)
 @ stub SymSrvGetFileIndexInfoW
 @ stub SymSrvGetFileIndexString
 @ stub SymSrvGetFileIndexStringW
