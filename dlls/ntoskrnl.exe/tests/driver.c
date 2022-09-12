@@ -2031,7 +2031,10 @@ static void test_affinity(void)
     count = pKeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
     ok(count == cpu_count, "Got unexpected count %lu.\n", count);
 
-    mask_all_cpus = ~((~0u) << cpu_count);
+    if (cpu_count >= 8 * sizeof(KAFFINITY))
+        mask_all_cpus = ~(KAFFINITY)0;
+    else
+        mask_all_cpus = ((KAFFINITY)1 << cpu_count) - 1;
 
     mask = pKeQueryActiveProcessors();
     ok(mask == mask_all_cpus, "Got unexpected mask %#Ix.\n", mask);
