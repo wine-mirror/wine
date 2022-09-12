@@ -29,4 +29,24 @@ enum uia_prop_type {
     PROP_TYPE_SPECIAL,
 };
 
+struct uia_node {
+    IWineUiaNode IWineUiaNode_iface;
+    LONG ref;
+
+    IWineUiaProvider *prov;
+    DWORD git_cookie;
+
+    HWND hwnd;
+    BOOL nested_node;
+};
+
+static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_node, IWineUiaNode_iface);
+}
+
+/* uia_ids.c */
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;
+
+/* uia_provider.c */
+void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;

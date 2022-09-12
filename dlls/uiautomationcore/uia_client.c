@@ -269,21 +269,6 @@ static IRawElementProviderSimple *get_provider_hwnd_fragment_root(IRawElementPro
 /*
  * IWineUiaNode interface.
  */
-struct uia_node {
-    IWineUiaNode IWineUiaNode_iface;
-    LONG ref;
-
-    IWineUiaProvider *prov;
-    DWORD git_cookie;
-
-    HWND hwnd;
-};
-
-static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)
-{
-    return CONTAINING_RECORD(iface, struct uia_node, IWineUiaNode_iface);
-}
-
 static HRESULT WINAPI uia_node_QueryInterface(IWineUiaNode *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -328,6 +313,9 @@ static ULONG WINAPI uia_node_Release(IWineUiaNode *iface)
         }
 
         IWineUiaProvider_Release(node->prov);
+        if (node->nested_node)
+            uia_stop_provider_thread();
+
         heap_free(node);
     }
 

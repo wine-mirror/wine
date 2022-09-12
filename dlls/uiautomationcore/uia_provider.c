@@ -1132,6 +1132,7 @@ struct uia_provider_thread
 {
     HANDLE hthread;
     HWND hwnd;
+    LONG ref;
 };
 
 static struct uia_provider_thread provider_thread;
@@ -1145,6 +1146,7 @@ static CRITICAL_SECTION_DEBUG provider_thread_cs_debug =
 static CRITICAL_SECTION provider_thread_cs = { &provider_thread_cs_debug, -1, 0, 0, 0, 0 };
 
 #define WM_GET_OBJECT_UIA_NODE (WM_USER + 1)
+#define WM_UIA_PROVIDER_THREAD_STOP (WM_USER + 2)
 static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM wparam,
         LPARAM lparam)
 {
@@ -1153,7 +1155,11 @@ static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM
     case WM_GET_OBJECT_UIA_NODE:
     {
         HUIANODE node = (HUIANODE)lparam;
+        struct uia_node *node_data;
         LRESULT lr;
+
+        node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+        node_data->nested_node = TRUE;
 
         /*
          * LresultFromObject returns an index into the global atom string table,
@@ -1204,6 +1210,8 @@ static DWORD WINAPI uia_provider_thread_proc(void *arg)
     TRACE("Provider thread started.\n");
     while (GetMessageW(&msg, NULL, 0, 0))
     {
+        if (msg.message == WM_UIA_PROVIDER_THREAD_STOP)
+            break;
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
@@ -1220,7 +1228,7 @@ static BOOL uia_start_provider_thread(void)
     BOOL started = TRUE;
 
     EnterCriticalSection(&provider_thread_cs);
-    if (!provider_thread.hwnd)
+    if (++provider_thread.ref == 1)
     {
         HANDLE ready_event;
         HANDLE events[2];
@@ -1259,6 +1267,18 @@ exit:
 
     LeaveCriticalSection(&provider_thread_cs);
     return started;
+}
+
+void uia_stop_provider_thread(void)
+{
+    EnterCriticalSection(&provider_thread_cs);
+    if (!--provider_thread.ref)
+    {
+        PostMessageW(provider_thread.hwnd, WM_UIA_PROVIDER_THREAD_STOP, 0, 0);
+        CloseHandle(provider_thread.hthread);
+        memset(&provider_thread, 0, sizeof(provider_thread));
+    }
+    LeaveCriticalSection(&provider_thread_cs);
 }
 
 /*
