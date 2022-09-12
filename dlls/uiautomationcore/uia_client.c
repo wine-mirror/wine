@@ -354,11 +354,32 @@ static HRESULT WINAPI uia_node_get_provider(IWineUiaNode *iface, IWineUiaProvide
     return S_OK;
 }
 
+static HRESULT WINAPI uia_node_get_prop_val(IWineUiaNode *iface, const GUID *prop_guid,
+        VARIANT *ret_val)
+{
+    int prop_id = UiaLookupId(AutomationIdentifierType_Property, prop_guid);
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %s, %p\n", iface, debugstr_guid(prop_guid), ret_val);
+
+    hr = UiaGetPropertyValue((HUIANODE)iface, prop_id, &v);
+
+    /* VT_UNKNOWN is UiaGetReservedNotSupported value, no need to marshal it. */
+    if (V_VT(&v) == VT_UNKNOWN)
+        V_VT(ret_val) = VT_EMPTY;
+    else
+        *ret_val = v;
+
+    return hr;
+}
+
 static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_QueryInterface,
     uia_node_AddRef,
     uia_node_Release,
     uia_node_get_provider,
+    uia_node_get_prop_val,
 };
 
 static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
@@ -377,6 +398,7 @@ struct uia_provider {
     LONG ref;
 
     IRawElementProviderSimple *elprov;
+    IWineUiaNode *node;
 };
 
 static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *iface)
@@ -413,7 +435,10 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
     TRACE("%p, refcount %ld\n", prov, ref);
     if (!ref)
     {
-        IRawElementProviderSimple_Release(prov->elprov);
+        if (prov->node)
+            IWineUiaNode_Release(prov->node);
+        else
+            IRawElementProviderSimple_Release(prov->elprov);
         heap_free(prov);
     }
 
@@ -625,6 +650,18 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
 
     TRACE("%p, %p, %p\n", iface, prop_info, ret_val);
 
+    VariantInit(ret_val);
+    if (prov->node)
+    {
+        if (prop_info->type == UIAutomationType_Element || prop_info->type == UIAutomationType_ElementArray)
+        {
+            FIXME("Element property types currently unsupported for nested nodes.\n");
+            return E_NOTIMPL;
+        }
+
+        return IWineUiaNode_get_prop_val(prov->node, prop_info->guid, ret_val);
+    }
+
     switch (prop_info->prop_type)
     {
     case PROP_TYPE_ELEM_PROP:
@@ -733,6 +770,99 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
     *huianode = (void *)&node->IWineUiaNode_iface;
 
     return hr;
+}
+
+static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESULT lr)
+{
+    IGlobalInterfaceTable *git;
+    struct uia_provider *prov;
+    IWineUiaNode *nested_node;
+    HRESULT hr;
+
+    hr = ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&nested_node);
+    if (FAILED(hr))
+        return hr;
+
+    prov = heap_alloc_zero(sizeof(*prov));
+    if (!prov)
+        return E_OUTOFMEMORY;
+
+    prov->IWineUiaProvider_iface.lpVtbl = &uia_provider_vtbl;
+    prov->node = nested_node;
+    prov->ref = 1;
+    node->prov = &prov->IWineUiaProvider_iface;
+
+    /*
+     * We need to use the GIT on all nested node providers so that our
+     * IWineUiaNode proxy is used in the correct apartment.
+     */
+    hr = get_global_interface_table(&git);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IGlobalInterfaceTable_RegisterInterfaceInGlobal(git, (IUnknown *)&prov->IWineUiaProvider_iface,
+            &IID_IWineUiaProvider, &node->git_cookie);
+exit:
+    if (FAILED(hr))
+        IWineUiaProvider_Release(&prov->IWineUiaProvider_iface);
+
+    return hr;
+}
+
+static HRESULT uia_get_provider_from_hwnd(struct uia_node *node)
+{
+    LRESULT lr;
+
+    SetLastError(NOERROR);
+    lr = SendMessageW(node->hwnd, WM_GETOBJECT, 0, UiaRootObjectId);
+    if (GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
+        return UIA_E_ELEMENTNOTAVAILABLE;
+
+    if (!lr)
+    {
+        FIXME("No native UIA provider for hwnd %p, MSAA proxy currently unimplemented.\n", node->hwnd);
+        return E_NOTIMPL;
+    }
+
+    return create_wine_uia_nested_node_provider(node, lr);
+}
+
+/***********************************************************************
+ *          UiaNodeFromHandle (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
+{
+    struct uia_node *node;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", hwnd, huianode);
+
+    if (!huianode)
+        return E_INVALIDARG;
+
+    *huianode = NULL;
+
+    if (!IsWindow(hwnd))
+        return UIA_E_ELEMENTNOTAVAILABLE;
+
+    node = heap_alloc_zero(sizeof(*node));
+    if (!node)
+        return E_OUTOFMEMORY;
+
+    node->hwnd = hwnd;
+    node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
+    node->ref = 1;
+
+    hr = uia_get_provider_from_hwnd(node);
+    if (FAILED(hr))
+    {
+        heap_free(node);
+        return hr;
+    }
+
+    *huianode = (void *)&node->IWineUiaNode_iface;
+
+    return S_OK;
 }
 
 /***********************************************************************

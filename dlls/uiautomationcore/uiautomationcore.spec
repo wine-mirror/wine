@@ -77,7 +77,7 @@
 @ stdcall UiaLookupId(long ptr)
 @ stub UiaNavigate
 @ stub UiaNodeFromFocus
-@ stub UiaNodeFromHandle
+@ stdcall UiaNodeFromHandle(long ptr)
 @ stub UiaNodeFromPoint
 @ stdcall UiaNodeFromProvider(ptr ptr)
 @ stdcall UiaNodeRelease(ptr)
