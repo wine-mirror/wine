@@ -144,31 +144,31 @@ enum alg_id
     ALG_ID_RNG,
 };
 
-enum mode_id
+enum chain_mode
 {
-    MODE_ID_CBC,
-    MODE_ID_ECB,
-    MODE_ID_CFB,
-    MODE_ID_CCM,
-    MODE_ID_GCM,
+    CHAIN_MODE_CBC,
+    CHAIN_MODE_ECB,
+    CHAIN_MODE_CFB,
+    CHAIN_MODE_CCM,
+    CHAIN_MODE_GCM,
 };
 
 struct algorithm
 {
-    struct object hdr;
-    enum alg_id   id;
-    enum mode_id  mode;
-    unsigned      flags;
+    struct object   hdr;
+    enum alg_id     id;
+    enum chain_mode mode;
+    unsigned        flags;
 };
 
 struct key_symmetric
 {
-    enum mode_id mode;
-    ULONG        block_size;
-    UCHAR       *vector;
-    ULONG        vector_len;
-    UCHAR       *secret;
-    unsigned     secret_len;
+    enum chain_mode  mode;
+    ULONG            block_size;
+    UCHAR           *vector;
+    ULONG            vector_len;
+    UCHAR           *secret;
+    unsigned         secret_len;
     CRITICAL_SECTION cs;
 };
 

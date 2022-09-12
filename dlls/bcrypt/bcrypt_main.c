@@ -197,17 +197,17 @@ static const struct algorithm pseudo_algorithms[] =
     {{ 0 }}, /* AES_GMAC */
     {{ MAGIC_ALG }, ALG_ID_MD2, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG },
     {{ MAGIC_ALG }, ALG_ID_MD4, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG },
-    {{ MAGIC_ALG }, ALG_ID_3DES, MODE_ID_CBC },
-    {{ MAGIC_ALG }, ALG_ID_3DES, MODE_ID_ECB },
-    {{ MAGIC_ALG }, ALG_ID_3DES, MODE_ID_CFB },
+    {{ MAGIC_ALG }, ALG_ID_3DES, CHAIN_MODE_CBC },
+    {{ MAGIC_ALG }, ALG_ID_3DES, CHAIN_MODE_ECB },
+    {{ MAGIC_ALG }, ALG_ID_3DES, CHAIN_MODE_CFB },
     {{ 0 }}, /* 3DES_112_CBC */
     {{ 0 }}, /* 3DES_112_ECB */
     {{ 0 }}, /* 3DES_112_CFB */
-    {{ MAGIC_ALG }, ALG_ID_AES, MODE_ID_CBC },
-    {{ MAGIC_ALG }, ALG_ID_AES, MODE_ID_ECB },
-    {{ MAGIC_ALG }, ALG_ID_AES, MODE_ID_CFB },
-    {{ MAGIC_ALG }, ALG_ID_AES, MODE_ID_CCM },
-    {{ MAGIC_ALG }, ALG_ID_AES, MODE_ID_GCM },
+    {{ MAGIC_ALG }, ALG_ID_AES, CHAIN_MODE_CBC },
+    {{ MAGIC_ALG }, ALG_ID_AES, CHAIN_MODE_ECB },
+    {{ MAGIC_ALG }, ALG_ID_AES, CHAIN_MODE_CFB },
+    {{ MAGIC_ALG }, ALG_ID_AES, CHAIN_MODE_CCM },
+    {{ MAGIC_ALG }, ALG_ID_AES, CHAIN_MODE_GCM },
     {{ 0 }}, /* DES_CBC */
     {{ 0 }}, /* DES_ECB */
     {{ 0 }}, /* DES_CFB */
@@ -309,7 +309,7 @@ NTSTATUS WINAPI BCryptGenRandom( BCRYPT_ALG_HANDLE handle, UCHAR *buffer, ULONG 
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static struct algorithm *create_algorithm( enum alg_id id, enum mode_id mode, DWORD flags )
+static struct algorithm *create_algorithm( enum alg_id id, enum chain_mode mode, DWORD flags )
 {
     struct algorithm *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
@@ -577,7 +577,7 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS get_3des_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_3des_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
     {
@@ -591,7 +591,7 @@ static NTSTATUS get_3des_property( enum mode_id mode, const WCHAR *prop, UCHAR *
         const WCHAR *str;
         switch (mode)
         {
-        case MODE_ID_CBC: str = BCRYPT_CHAIN_MODE_CBC; break;
+        case CHAIN_MODE_CBC: str = BCRYPT_CHAIN_MODE_CBC; break;
         default: return STATUS_NOT_IMPLEMENTED;
         }
 
@@ -617,7 +617,7 @@ static NTSTATUS get_3des_property( enum mode_id mode, const WCHAR *prop, UCHAR *
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_aes_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
     {
@@ -631,10 +631,10 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
         const WCHAR *str;
         switch (mode)
         {
-        case MODE_ID_ECB: str = BCRYPT_CHAIN_MODE_ECB; break;
-        case MODE_ID_CBC: str = BCRYPT_CHAIN_MODE_CBC; break;
-        case MODE_ID_GCM: str = BCRYPT_CHAIN_MODE_GCM; break;
-        case MODE_ID_CFB: str = BCRYPT_CHAIN_MODE_CFB; break;
+        case CHAIN_MODE_ECB: str = BCRYPT_CHAIN_MODE_ECB; break;
+        case CHAIN_MODE_CBC: str = BCRYPT_CHAIN_MODE_CBC; break;
+        case CHAIN_MODE_GCM: str = BCRYPT_CHAIN_MODE_GCM; break;
+        case CHAIN_MODE_CFB: str = BCRYPT_CHAIN_MODE_CFB; break;
         default: return STATUS_NOT_IMPLEMENTED;
         }
 
@@ -659,7 +659,7 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     if (!wcscmp( prop, BCRYPT_AUTH_TAG_LENGTH ))
     {
         BCRYPT_AUTH_TAG_LENGTHS_STRUCT *tag_length = (void *)buf;
-        if (mode != MODE_ID_GCM) return STATUS_NOT_SUPPORTED;
+        if (mode != CHAIN_MODE_GCM) return STATUS_NOT_SUPPORTED;
         *ret_size = sizeof(*tag_length);
         if (tag_length && size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
         if (tag_length)
@@ -675,7 +675,7 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_rsa_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_PADDING_SCHEMES ))
     {
@@ -689,7 +689,7 @@ static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS get_dsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_dsa_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_PADDING_SCHEMES )) return STATUS_NOT_SUPPORTED;
     FIXME( "unsupported property %s\n", debugstr_w(prop) );
@@ -736,7 +736,7 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
         {
             if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
             {
-                alg->mode = MODE_ID_CBC;
+                alg->mode = CHAIN_MODE_CBC;
                 return STATUS_SUCCESS;
             }
             else
@@ -753,22 +753,22 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
         {
             if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
             {
-                alg->mode = MODE_ID_ECB;
+                alg->mode = CHAIN_MODE_ECB;
                 return STATUS_SUCCESS;
             }
             else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
             {
-                alg->mode = MODE_ID_CBC;
+                alg->mode = CHAIN_MODE_CBC;
                 return STATUS_SUCCESS;
             }
             else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
             {
-                alg->mode = MODE_ID_GCM;
+                alg->mode = CHAIN_MODE_GCM;
                 return STATUS_SUCCESS;
             }
             else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CFB ))
             {
-                alg->mode = MODE_ID_CFB;
+                alg->mode = CHAIN_MODE_CFB;
                 return STATUS_SUCCESS;
             }
             else
@@ -792,22 +792,22 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
     {
         if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
         {
-            key->u.s.mode = MODE_ID_ECB;
+            key->u.s.mode = CHAIN_MODE_ECB;
             return STATUS_SUCCESS;
         }
         else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
         {
-            key->u.s.mode = MODE_ID_CBC;
+            key->u.s.mode = CHAIN_MODE_CBC;
             return STATUS_SUCCESS;
         }
         else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
         {
-            key->u.s.mode = MODE_ID_GCM;
+            key->u.s.mode = CHAIN_MODE_GCM;
             return STATUS_SUCCESS;
         }
         else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CFB ))
         {
-            key->u.s.mode = MODE_ID_CFB;
+            key->u.s.mode = CHAIN_MODE_CFB;
             return STATUS_SUCCESS;
         }
         else
@@ -1131,7 +1131,7 @@ static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG 
     return STATUS_SUCCESS;
 }
 
-static struct key *create_symmetric_key( enum alg_id alg, enum mode_id mode, ULONG block_size, UCHAR *secret,
+static struct key *create_symmetric_key( enum alg_id alg, enum chain_mode mode, ULONG block_size, UCHAR *secret,
                                          ULONG secret_len )
 {
     struct key *ret;
@@ -1311,7 +1311,7 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
     UCHAR *buf;
     NTSTATUS status;
 
-    if (key->u.s.mode == MODE_ID_GCM)
+    if (key->u.s.mode == CHAIN_MODE_GCM)
     {
         BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
 
@@ -1357,7 +1357,7 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
 
     if (!output) return STATUS_SUCCESS;
     if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-    if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
+    if (key->u.s.mode == CHAIN_MODE_ECB && iv) return STATUS_INVALID_PARAMETER;
     if ((status = key_symmetric_set_vector( key, iv, iv_len, flags & BCRYPT_BLOCK_PADDING ))) return status;
 
     encrypt_params.key = key;
@@ -1369,7 +1369,7 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
     {
         if ((status = UNIX_CALL( key_symmetric_encrypt, &encrypt_params )))
             return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
+        if (key->u.s.mode == CHAIN_MODE_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
             return status;
         bytes_left -= key->u.s.block_size;
         encrypt_params.input += key->u.s.block_size;
@@ -1398,7 +1398,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     ULONG bytes_left = input_len;
     NTSTATUS status;
 
-    if (key->u.s.mode == MODE_ID_GCM)
+    if (key->u.s.mode == CHAIN_MODE_GCM)
     {
         BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
         UCHAR tag[16];
@@ -1449,7 +1449,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     }
     else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
-    if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
+    if (key->u.s.mode == CHAIN_MODE_ECB && iv) return STATUS_INVALID_PARAMETER;
     if ((status = key_symmetric_set_vector( key, iv, iv_len, flags & BCRYPT_BLOCK_PADDING ))) return status;
 
     decrypt_params.key = key;
@@ -1460,7 +1460,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     while (bytes_left >= key->u.s.block_size)
     {
         if ((status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params ))) return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
+        if (key->u.s.mode == CHAIN_MODE_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
             return status;
         bytes_left -= key->u.s.block_size;
         decrypt_params.input += key->u.s.block_size;

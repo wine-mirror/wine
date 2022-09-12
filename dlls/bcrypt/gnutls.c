@@ -490,7 +490,7 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
         WARN( "handle block size\n" );
         switch (key->u.s.mode)
         {
-        case MODE_ID_CBC:
+        case CHAIN_MODE_CBC:
             return GNUTLS_CIPHER_3DES_CBC;
         default:
             break;
@@ -502,17 +502,17 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
         WARN( "handle block size\n" );
         switch (key->u.s.mode)
         {
-        case MODE_ID_GCM:
+        case CHAIN_MODE_GCM:
             if (key->u.s.secret_len == 16) return GNUTLS_CIPHER_AES_128_GCM;
             if (key->u.s.secret_len == 32) return GNUTLS_CIPHER_AES_256_GCM;
             break;
-        case MODE_ID_ECB: /* can be emulated with CBC + empty IV */
-        case MODE_ID_CBC:
+        case CHAIN_MODE_ECB: /* can be emulated with CBC + empty IV */
+        case CHAIN_MODE_CBC:
             if (key->u.s.secret_len == 16) return GNUTLS_CIPHER_AES_128_CBC;
             if (key->u.s.secret_len == 24) return GNUTLS_CIPHER_AES_192_CBC;
             if (key->u.s.secret_len == 32) return GNUTLS_CIPHER_AES_256_CBC;
             break;
-        case MODE_ID_CFB:
+        case CHAIN_MODE_CFB:
             if (key->u.s.secret_len == 16) return GNUTLS_CIPHER_AES_128_CFB8;
             if (key->u.s.secret_len == 24) return GNUTLS_CIPHER_AES_192_CFB8;
             if (key->u.s.secret_len == 32) return GNUTLS_CIPHER_AES_256_CFB8;
@@ -2041,13 +2041,13 @@ typedef ULONG PTR32;
 
 struct key_symmetric32
 {
-    enum mode_id mode;
-    ULONG        block_size;
-    PTR32        vector;
-    ULONG        vector_len;
-    PTR32        secret;
-    ULONG        secret_len;
-    ULONG        __cs[6];
+    enum chain_mode mode;
+    ULONG           block_size;
+    PTR32           vector;
+    ULONG           vector_len;
+    PTR32           secret;
+    ULONG           secret_len;
+    ULONG           __cs[6];
 };
 
 struct key_asymmetric32
