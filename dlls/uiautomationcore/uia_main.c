@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
+HMODULE huia_module;
+
 struct uia_object_wrapper
 {
     IUnknown IUnknown_iface;
@@ -348,4 +350,25 @@ HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *provider)
 {
     FIXME("(%p): stub\n", provider);
     return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *          DllMain (uiautomationcore.@)
+ */
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
+{
+    TRACE("(%p, %ld, %p)\n", hinst, reason, reserved);
+
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinst);
+        huia_module = hinst;
+        break;
+
+    default:
+        break;
+    }
+
+    return TRUE;
 }

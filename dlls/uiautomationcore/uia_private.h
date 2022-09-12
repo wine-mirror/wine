@@ -21,6 +21,8 @@
 #include "uiautomation.h"
 #include "uia_classes.h"
 
+extern HMODULE huia_module DECLSPEC_HIDDEN;
+
 enum uia_prop_type {
     PROP_TYPE_UNKNOWN,
     PROP_TYPE_ELEM_PROP,

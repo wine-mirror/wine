@@ -1193,7 +1193,7 @@ static DWORD WINAPI uia_provider_thread_proc(void *arg)
     {
         WARN("CreateWindow failed: %ld\n", GetLastError());
         CoUninitialize();
-        ExitThread(1);
+        FreeLibraryAndExitThread(huia_module, 1);
     }
 
     SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)uia_provider_thread_msg_proc);
@@ -1212,7 +1212,7 @@ static DWORD WINAPI uia_provider_thread_proc(void *arg)
 
     DestroyWindow(hwnd);
     CoUninitialize();
-    ExitThread(0);
+    FreeLibraryAndExitThread(huia_module, 0);
 }
 
 static BOOL uia_start_provider_thread(void)
@@ -1224,12 +1224,18 @@ static BOOL uia_start_provider_thread(void)
     {
         HANDLE ready_event;
         HANDLE events[2];
+        HMODULE hmodule;
         DWORD wait_obj;
+
+        /* Increment DLL reference count. */
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                (const WCHAR *)uia_start_provider_thread, &hmodule);
 
         events[0] = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (!(provider_thread.hthread = CreateThread(NULL, 0, uia_provider_thread_proc,
                 ready_event, 0, NULL)))
         {
+            FreeLibrary(hmodule);
             started = FALSE;
             goto exit;
         }
