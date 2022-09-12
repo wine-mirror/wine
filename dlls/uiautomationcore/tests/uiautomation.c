@@ -1106,6 +1106,7 @@ static struct Provider
     BOOL ret_invalid_prop_type;
     DWORD expected_tid;
     int runtime_id[2];
+    DWORD last_call_tid;
 } Provider, Provider2, Provider_child, Provider_child2;
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
@@ -1413,6 +1414,35 @@ static void check_node_provider_desc_prefix_(BSTR prov_desc, DWORD pid, HWND pro
     ok_(file, line)(prov_hwnd == prov_id, "Unexpected hwnd %p\n", prov_hwnd);
 }
 
+/*
+ * For node providers that come from an HWND belonging to another process
+ * or another thread, the provider is considered 'nested', a node in a node.
+ */
+static BOOL get_nested_provider_desc(BSTR prov_desc, const WCHAR *prov_type, BOOL parent_link, WCHAR *out_desc)
+{
+    const WCHAR *str, *str2;
+    WCHAR buf[1024];
+
+    if (!parent_link)
+        wsprintfW(buf, L"%s:Nested ", prov_type);
+    else
+        wsprintfW(buf, L"%s(parent link):Nested ", prov_type);
+    str = wcsstr(prov_desc, buf);
+    /* Check with and without parent-link. */
+    if (!str)
+        return FALSE;
+
+    if (!out_desc)
+        return TRUE;
+
+    str += wcslen(buf);
+    str2 = wcschr(str, L']');
+    /* We want to include the ']' character, so + 2. */
+    lstrcpynW(out_desc, str, ((str2 - str) + 2));
+
+    return TRUE;
+}
+
 #define check_runtime_id( exp_runtime_id, exp_size, runtime_id ) \
         check_runtime_id_( (exp_runtime_id), (exp_size), (runtime_id), __FILE__, __LINE__)
 static void check_runtime_id_(int *exp_runtime_id, int exp_size, SAFEARRAY *runtime_id, const char *file, int line)
@@ -1486,6 +1516,7 @@ HRESULT WINAPI ProviderSimple_get_ProviderOptions(IRawElementProviderSimple *ifa
     add_method_call(This, PROV_GET_PROVIDER_OPTIONS);
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
 
     *ret_val = 0;
     if (This->prov_opts)
@@ -1512,6 +1543,7 @@ HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
     add_method_call(This, PROV_GET_PROPERTY_VALUE);
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
 
     VariantInit(ret_val);
     switch (prop_id)
@@ -1701,6 +1733,7 @@ HRESULT WINAPI ProviderSimple_get_HostRawElementProvider(IRawElementProviderSimp
     add_method_call(This, PROV_GET_HOST_RAW_ELEMENT_PROVIDER);
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
 
     *ret_val = NULL;
     if (This->hwnd)
@@ -1751,6 +1784,7 @@ static HRESULT WINAPI ProviderFragment_Navigate(IRawElementProviderFragment *ifa
     add_method_call(This, FRAG_NAVIGATE);
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
 
     *ret_val = NULL;
     if ((direction == NavigateDirection_Parent) && This->parent)
@@ -1769,6 +1803,7 @@ static HRESULT WINAPI ProviderFragment_GetRuntimeId(IRawElementProviderFragment 
     add_method_call(This, FRAG_GET_RUNTIME_ID);
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
 
     *ret_val = NULL;
     if (This->runtime_id[0] || This->runtime_id[1])
@@ -1817,6 +1852,7 @@ static HRESULT WINAPI ProviderFragment_get_FragmentRoot(IRawElementProviderFragm
     add_method_call(This, FRAG_GET_FRAGMENT_ROOT);
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
 
     *ret_val = NULL;
     if (This->frag_root)
@@ -4924,11 +4960,655 @@ static void test_UiaHUiaNodeFromVariant(void)
 #endif
 }
 
+static const struct prov_method_sequence node_from_hwnd1[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd2[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    /* Windows 10+ calls this. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd3[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd4[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    /* Only called on Windows versions past Win10v1507. */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ControlTypePropertyId */
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd5[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_LabeledByPropertyId */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    /* Only done in Windows 8+. */
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    /* These two are only done on Windows 7. */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider_child, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd6[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    /* Next 4 are only done in Windows 8+. */
+    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    /* Next two are only done on Win10v1809+. */
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
+    /* Next two are only done on Win10v1809+. */
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ControlTypePropertyId */
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd7[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
+    { 0 }
+};
+
+static const struct prov_method_sequence node_from_hwnd8[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ControlTypePropertyId */
+    { 0 }
+};
+
+static void test_UiaNodeFromHandle_client_proc(void)
+{
+    APTTYPEQUALIFIER apt_qualifier;
+    APTTYPE apt_type;
+    WCHAR buf[2048];
+    HUIANODE node;
+    HRESULT hr;
+    HWND hwnd;
+    VARIANT v;
+
+    hwnd = FindWindowA("UiaNodeFromHandle class", "Test window");
+
+    hr = CoGetApartmentType(&apt_type, &apt_qualifier);
+    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#lx\n", hr);
+
+    hr = UiaNodeFromHandle(hwnd, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        DWORD pid;
+
+        memset(buf, 0, sizeof(buf));
+        GetWindowThreadProcessId(hwnd, &pid);
+
+        ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
+        check_node_provider_desc_prefix(buf, pid, hwnd);
+        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
+        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
+            check_node_provider_desc(buf, L"Hwnd", L"Provider", TRUE);
+        else
+            check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+
+    /*
+     * On Windows 8 and above, if a node contains a nested provider, the
+     * process will be in an implicit MTA until the node is released.
+     */
+    hr = CoGetApartmentType(&apt_type, &apt_qualifier);
+    ok(hr == S_OK || broken(hr == CO_E_NOTINITIALIZED), "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(apt_type == APTTYPE_MTA, "Unexpected apt_type %#x\n", apt_type);
+        ok(apt_qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "Unexpected apt_qualifier %#x\n", apt_qualifier);
+    }
+
+    UiaNodeRelease(node);
+
+    /* Node released, we're out of the implicit MTA. */
+    hr = CoGetApartmentType(&apt_type, &apt_qualifier);
+
+    /* Windows 10v1709-1809 are stuck in an implicit MTA. */
+    ok(hr == CO_E_NOTINITIALIZED || broken(hr == S_OK), "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(apt_type == APTTYPE_MTA, "Unexpected apt_type %#x\n", apt_type);
+        ok(apt_qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "Unexpected apt_qualifier %#x\n", apt_qualifier);
+    }
+}
+
+static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
+{
+    HWND hwnd = (HWND)param;
+    HUIANODE node, node2;
+    WCHAR buf[2048];
+    HRESULT hr;
+    VARIANT v;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = hwnd;
+    Provider.runtime_id[0] = Provider.runtime_id[1] = 0;
+    Provider.frag_root = NULL;
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    hr = UiaNodeFromHandle(hwnd, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        memset(buf, 0, sizeof(buf));
+
+        ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
+        check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
+        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
+            check_node_provider_desc(buf, L"Hwnd", L"Provider", TRUE);
+        else
+            check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+
+    ok_method_sequence(node_from_hwnd3, "node_from_hwnd3");
+
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_uia_prop_val(UIA_ControlTypePropertyId, UIAutomationType_Int, &v);
+
+    /*
+     * On Windows, nested providers are always called on a separate thread if
+     * UseComThreading isn't set. Since we're doing COM marshaling, if we're
+     * currently in an MTA, we just call the nested provider from the current
+     * thread.
+     */
+    todo_wine ok(Provider.last_call_tid != GetCurrentThreadId() &&
+            Provider.last_call_tid != GetWindowThreadProcessId(hwnd, NULL), "Expected method call on separate thread\n");
+
+    /*
+     * Elements returned from nested providers have to be able to get a
+     * RuntimeId, or else we'll get E_FAIL on Win8+.
+     */
+    Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider_child.expected_tid = Provider.expected_tid;
+    Provider_child.runtime_id[0] = UiaAppendRuntimeId;
+    Provider_child.runtime_id[1] = 2;
+    Provider_child.frag_root = NULL;
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    todo_wine ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = UiaHUiaNodeFromVariant(&v, &node2);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        UiaNodeRelease(node2);
+    }
+    if (hr != E_NOTIMPL)
+        ok_method_sequence(node_from_hwnd5, "node_from_hwnd5");
+
+    /* RuntimeId check succeeds, we'll get a nested node. */
+    Provider_child.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = UiaHUiaNodeFromVariant(&v, &node2);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /*
+             * Even though this is a nested node, without any additional
+             * providers, it will not have the 'Nested' prefix.
+             */
+            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+            VariantClear(&v);
+        }
+
+        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+        ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
+
+        UiaNodeRelease(node2);
+
+        /*
+         * There is a delay between nested nodes being released and the
+         * corresponding IRawElementProviderSimple release on newer Windows
+         * versions.
+         */
+        if (Provider_child.ref != 1)
+            Sleep(50);
+        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    }
+
+
+    /*
+     * Returned nested elements with an HWND will have client-side providers
+     * added to them.
+     */
+    Provider_child.hwnd = hwnd;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = UiaHUiaNodeFromVariant(&v, &node2);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            memset(buf, 0, sizeof(buf));
+
+            ok(get_nested_provider_desc(V_BSTR(&v), L"Main", TRUE, buf), "Failed to get nested provider description\n");
+            check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+            /* Win10v1507 and below have the nested provider as 'Hwnd'. */
+            if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
+                check_node_provider_desc(buf, L"Hwnd", L"Provider_child", TRUE);
+            else
+                check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
+
+            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+            check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+            check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, FALSE);
+            VariantClear(&v);
+        }
+
+        ok_method_sequence(node_from_hwnd7, "node_from_hwnd7");
+        UiaNodeRelease(node2);
+
+        if (Provider_child.ref != 1)
+            Sleep(50);
+        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    }
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    /* Win10v1809 can be slow to call Release on Provider. */
+    if (Provider.ref != 1)
+        Sleep(50);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+
+    CoUninitialize();
+
+    return 0;
+}
+
+static void test_UiaNodeFromHandle(const char *name)
+{
+    APTTYPEQUALIFIER apt_qualifier;
+    PROCESS_INFORMATION proc;
+    char cmdline[MAX_PATH];
+    STARTUPINFOA startup;
+    HUIANODE node, node2;
+    APTTYPE apt_type;
+    DWORD exit_code;
+    WNDCLASSA cls;
+    HANDLE thread;
+    HRESULT hr;
+    HWND hwnd;
+    VARIANT v;
+
+    cls.style = 0;
+    cls.lpfnWndProc = test_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = NULL;
+    cls.hbrBackground = NULL;
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "UiaNodeFromHandle class";
+    RegisterClassA(&cls);
+
+    hwnd = CreateWindowA("UiaNodeFromHandle class", "Test window", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, NULL, NULL, NULL, NULL);
+
+    hr = UiaNodeFromHandle(hwnd, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = UiaNodeFromHandle(NULL, &node);
+    ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
+
+    /* COM uninitialized, no provider returned by UiaReturnRawElementProvider. */
+    prov_root = NULL;
+    node = (void *)0xdeadbeef;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent twice on Win7. */
+    SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
+    hr = UiaNodeFromHandle(hwnd, &node);
+    todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    /*
+     * COM initialized, no provider returned by UiaReturnRawElementProvider.
+     * In this case, we get a default MSAA proxy.
+     */
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    prov_root = NULL;
+    node = (void *)0xdeadbeef;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
+    hr = UiaNodeFromHandle(hwnd, &node);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+
+    todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+
+    /*
+     * COM initialized, but provider passed into UiaReturnRawElementProvider
+     * returns a failure code on get_ProviderOptions. Same behavior as before.
+     */
+    Provider.prov_opts = 0;
+    Provider.hwnd = hwnd;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    node = (void *)0xdeadbeef;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
+    hr = UiaNodeFromHandle(hwnd, &node);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+    ok_method_sequence(node_from_hwnd1, "node_from_hwnd1");
+
+    todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    CoUninitialize();
+
+    /*
+     * COM uninitialized, return a Provider from UiaReturnRawElementProvider
+     * with ProviderOptions_ServerSideProvider.
+     */
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = hwnd;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    node = (void *)0xdeadbeef;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    hr = UiaNodeFromHandle(hwnd, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+
+    ok_method_sequence(node_from_hwnd2, "node_from_hwnd2");
+
+    /*
+     * This is relevant too: Since we don't get a 'nested' node, all calls
+     * will occur on the current thread.
+     */
+    Provider.expected_tid = GetCurrentThreadId();
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_uia_prop_val(UIA_ControlTypePropertyId, UIAutomationType_Int, &v);
+
+    /* UIAutomationType_Element properties will return a normal node. */
+    Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider_child.hwnd = NULL;
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = UiaHUiaNodeFromVariant(&v, &node2);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+            VariantClear(&v);
+        }
+
+        Provider_child.expected_tid = GetCurrentThreadId();
+        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+        ok_method_sequence(node_from_hwnd4, "node_from_hwnd4");
+
+        ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
+    }
+
+    Provider.expected_tid = Provider_child.expected_tid = 0;
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+
+    /*
+     * On Windows 8 and above, after the first successful call to
+     * UiaReturnRawElementProvider the process ends up in an implicit MTA
+     * until the process exits.
+     */
+    hr = CoGetApartmentType(&apt_type, &apt_qualifier);
+    /* Wine's provider thread doesn't always terminate immediately. */
+    if (hr == S_OK && !strcmp(winetest_platform, "wine"))
+    {
+        Sleep(10);
+        hr = CoGetApartmentType(&apt_type, &apt_qualifier);
+    }
+    todo_wine ok(hr == S_OK || broken(hr == CO_E_NOTINITIALIZED), "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(apt_type == APTTYPE_MTA, "Unexpected apt_type %#x\n", apt_type);
+        ok(apt_qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "Unexpected apt_qualifier %#x\n", apt_qualifier);
+    }
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    thread = CreateThread(NULL, 0, uia_node_from_handle_test_thread, (void *)hwnd, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while(PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+
+    /* Test behavior from separate process. */
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = hwnd;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    sprintf(cmdline, "\"%s\" uiautomation UiaNodeFromHandle_client_proc", name);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
+    while (MsgWaitForMultipleObjects(1, &proc.hProcess, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while(PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    GetExitCodeProcess(proc.hProcess, &exit_code);
+    if (exit_code > 255)
+        ok(0, "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)GetProcessId(proc.hProcess));
+    else if (exit_code)
+        ok(0, "%u failures in child process\n", (UINT)exit_code);
+
+    CloseHandle(proc.hProcess);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+    ok_method_sequence(node_from_hwnd8, "node_from_hwnd8");
+
+    CoUninitialize();
+
+    DestroyWindow(hwnd);
+    UnregisterClassA("UiaNodeFromHandle class", NULL);
+    prov_root = NULL;
+}
+
+/*
+ * Once a process returns a UI Automation provider with
+ * UiaReturnRawElementProvider it ends up in an implicit MTA until exit. This
+ * messes with tests around COM initialization, so we run these tests in
+ * separate processes.
+ */
+static void launch_test_process(const char *name, const char *test_name)
+{
+    PROCESS_INFORMATION proc;
+    STARTUPINFOA startup;
+    char cmdline[MAX_PATH];
+
+    sprintf(cmdline, "\"%s\" uiautomation %s", name, test_name);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
+    wait_child_process(proc.hProcess);
+}
+
 START_TEST(uiautomation)
 {
     HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
     BOOL (WINAPI *pImmDisableIME)(DWORD);
     HMODULE hModuleImm32;
+    char **argv;
+    int argc;
 
     /* Make sure COM isn't initialized by imm32. */
     hModuleImm32 = LoadLibraryA("imm32.dll");
@@ -4940,6 +5620,18 @@ START_TEST(uiautomation)
     pImmDisableIME = NULL;
     FreeLibrary(hModuleImm32);
 
+    argc = winetest_get_mainargs(&argv);
+    if (argc == 3)
+    {
+        if (!strcmp(argv[2], "UiaNodeFromHandle"))
+            test_UiaNodeFromHandle(argv[0]);
+        else if (!strcmp(argv[2], "UiaNodeFromHandle_client_proc"))
+            test_UiaNodeFromHandle_client_proc();
+
+        FreeLibrary(uia_dll);
+        return;
+    }
+
     test_UiaHostProviderFromHwnd();
     test_uia_reserved_value_ifaces();
     test_UiaLookupId();
@@ -4947,6 +5639,7 @@ START_TEST(uiautomation)
     test_UiaGetPropertyValue();
     test_UiaGetRuntimeId();
     test_UiaHUiaNodeFromVariant();
+    launch_test_process(argv[0], "UiaNodeFromHandle");
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
