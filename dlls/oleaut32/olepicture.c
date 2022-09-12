@@ -1518,11 +1518,11 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
     FIXME("Unknown magic %04x, %ld read bytes:\n", magic, xread);
     hr=E_FAIL;
     for (i=0;i<xread+8;i++) {
-	if (i<8) MESSAGE("%02x ",((unsigned char*)header)[i]);
-	else MESSAGE("%02x ",xbuf[i-8]);
-        if (i % 10 == 9) MESSAGE("\n");
+	if (i<8) FIXME("%02x ",((unsigned char*)header)[i]);
+	else FIXME("%02x ",xbuf[i-8]);
+        if (i % 10 == 9) FIXME("\n");
     }
-    MESSAGE("\n");
+    FIXME("\n");
     break;
   }
   }
