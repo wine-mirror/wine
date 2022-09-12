@@ -173,14 +173,9 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
 
     if (!thread_get_state( port, x86_DEBUG_STATE, (thread_state_t)&state, &count ))
     {
-#ifdef __x86_64__
         assert( state.dsh.flavor == x86_DEBUG_STATE32 ||
                 state.dsh.flavor == x86_DEBUG_STATE64 );
-#else
-        assert( state.dsh.flavor == x86_DEBUG_STATE32 );
-#endif
 
-#ifdef __x86_64__
         if (state.dsh.flavor == x86_DEBUG_STATE64)
         {
             context->debug.x86_64_regs.dr0 = state.uds.ds64.__dr0;
@@ -191,7 +186,6 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
             context->debug.x86_64_regs.dr7 = state.uds.ds64.__dr7;
         }
         else
-#endif
         {
             context->debug.i386_regs.dr0 = state.uds.ds32.__dr0;
             context->debug.i386_regs.dr1 = state.uds.ds32.__dr1;
@@ -227,8 +221,6 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         return;
     }
 
-
-#ifdef __x86_64__
     if (thread->process->machine == IMAGE_FILE_MACHINE_AMD64)
     {
         /* Mac OS doesn't allow setting the global breakpoint flags */
@@ -246,7 +238,6 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         state.uds.ds64.__dr7 = dr7;
     }
     else
-#endif
     {
         dr7 = (context->debug.i386_regs.dr7 & ~0xaa) | ((context->debug.i386_regs.dr7 & 0xaa) >> 1);
 
