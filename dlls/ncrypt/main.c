@@ -130,37 +130,20 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
 static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE provider)
 {
     struct object *object;
-    NTSTATUS status;
-
-    if (!(object = allocate_object(KEY)))
-    {
-        ERR("Error allocating memory\n");
-        return NULL;
-    }
 
     switch (algid)
     {
     case RSA:
-    {
-        status = BCryptOpenAlgorithmProvider(&object->key.bcrypt_alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
-        if (status != STATUS_SUCCESS)
-        {
-            ERR("Error opening algorithm provider %#lx\n", status);
-            free(object);
-            return NULL;
-        }
+        if (!(object = allocate_object(KEY))) return NULL;
 
         object->key.algid = RSA;
         set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_RSA_ALGORITHM,
                             sizeof(BCRYPT_RSA_ALGORITHM));
         break;
-    }
+
     default:
-    {
         ERR("Invalid algid %#x\n", algid);
-        free(object);
         return NULL;
-    }
     }
 
     set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
@@ -190,11 +173,10 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
             return NTE_NO_MEMORY;
         }
 
-        status = BCryptGenerateKeyPair(object->key.bcrypt_alg, &object->key.bcrypt_key, default_bitlen, 0);
+        status = BCryptGenerateKeyPair(BCRYPT_RSA_ALG_HANDLE, &object->key.bcrypt_key, default_bitlen, 0);
         if (status != STATUS_SUCCESS)
         {
             ERR("Error generating key pair %#lx\n", status);
-            BCryptCloseAlgorithmProvider(object->key.bcrypt_alg, 0);
             free(object);
             return map_ntstatus(status);
         }
@@ -304,10 +286,7 @@ SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)
 
 static SECURITY_STATUS free_key_object(struct key *key)
 {
-    NTSTATUS status, status2;
-    status = BCryptDestroyKey(key->bcrypt_key);
-    if ((status2 = BCryptCloseAlgorithmProvider(key->bcrypt_alg, 0))) return map_ntstatus(status2);
-    return status ? map_ntstatus(status) : ERROR_SUCCESS;
+    return map_ntstatus( BCryptDestroyKey(key->bcrypt_key) );
 }
 
 SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
@@ -414,11 +393,10 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
             return NTE_NO_MEMORY;
         }
 
-        status = BCryptImportKeyPair(object->key.bcrypt_alg, NULL, type, &object->key.bcrypt_key, data, datasize, 0);
+        status = BCryptImportKeyPair(BCRYPT_RSA_ALG_HANDLE, NULL, type, &object->key.bcrypt_key, data, datasize, 0);
         if (status != STATUS_SUCCESS)
         {
             WARN("Error importing key pair %#lx\n", status);
-            BCryptCloseAlgorithmProvider(object->key.bcrypt_alg, 0);
             free(object);
             return map_ntstatus(status);
         }

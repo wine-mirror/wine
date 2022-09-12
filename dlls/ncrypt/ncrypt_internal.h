@@ -31,7 +31,6 @@ enum algid
 struct key
 {
     enum algid algid;
-    BCRYPT_ALG_HANDLE bcrypt_alg;
     BCRYPT_KEY_HANDLE bcrypt_key;
 };
 
