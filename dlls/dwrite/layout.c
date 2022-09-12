@@ -222,6 +222,7 @@ struct dwrite_textlayout
     LONG refcount;
 
     IDWriteFactory7 *factory;
+    IDWriteFontCollection *system_collection;
 
     WCHAR *str;
     UINT32 len;
@@ -642,7 +643,7 @@ static HRESULT layout_itemize(struct dwrite_textlayout *layout)
 }
 
 static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struct layout_run *r,
-        IDWriteFontCollection *system_collection, IDWriteFontFallback *fallback, struct layout_run **remaining)
+        IDWriteFontFallback *fallback, struct layout_run **remaining)
 {
     struct regular_layout_run *run = &r->u.regular;
     IDWriteFontCollection *collection;
@@ -653,7 +654,7 @@ static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struc
     *remaining = NULL;
 
     range = get_layout_range_by_pos(layout, run->descr.textPosition);
-    collection = range->collection ? range->collection : system_collection;
+    collection = range->collection ? range->collection : layout->system_collection;
 
     length = run->descr.stringLength;
 
@@ -718,8 +719,7 @@ static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struc
     return hr;
 }
 
-static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout, struct layout_run *r,
-        IDWriteFontCollection *system_collection)
+static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout, struct layout_run *r)
 {
     struct regular_layout_run *run = &r->u.regular;
     struct layout_range *range;
@@ -731,7 +731,7 @@ static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout,
     if (FAILED(create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
             range->stretch, &IID_IDWriteFont3, (void **)&font)))
     {
-        if (FAILED(hr = create_matching_font(system_collection, L"Tahoma", range->weight, range->style,
+        if (FAILED(hr = create_matching_font(layout->system_collection, L"Tahoma", range->weight, range->style,
                 range->stretch, &IID_IDWriteFont3, (void **)&font)))
         {
             WARN("Failed to create last resort font, hr %#lx.\n", hr);
@@ -754,22 +754,13 @@ static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout,
 
 static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 {
-    IDWriteFontCollection *system_collection;
     IDWriteFontFallback *system_fallback;
     struct layout_run *r, *remaining;
     HRESULT hr;
 
-    if (FAILED(hr = IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)layout->factory, FALSE,
-            (IDWriteFontCollection1 **)&system_collection, FALSE)))
-    {
-        WARN("Failed to get system collection, hr %#lx.\n", hr);
-        return hr;
-    }
-
     if (FAILED(hr = IDWriteFactory7_GetSystemFontFallback(layout->factory, &system_fallback)))
     {
         WARN("Failed to get system fallback, hr %#lx.\n", hr);
-        IDWriteFontCollection_Release(system_collection);
         return hr;
     }
 
@@ -786,7 +777,7 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 
         if (run->sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL)
         {
-            if (FAILED(hr = layout_map_run_characters(layout, r, system_collection, system_fallback, &remaining)))
+            if (FAILED(hr = layout_map_run_characters(layout, r, system_fallback, &remaining)))
             {
                 WARN("Failed to map fonts for non-visual run, hr %#lx.\n", hr);
                 break;
@@ -795,21 +786,20 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
         else
         {
             if (layout->format.fallback)
-                hr = layout_map_run_characters(layout, r, system_collection, layout->format.fallback, &remaining);
+                hr = layout_map_run_characters(layout, r, layout->format.fallback, &remaining);
             else
                 remaining = r;
 
             if (remaining)
-                hr = layout_map_run_characters(layout, remaining, system_collection, system_fallback, &remaining);
+                hr = layout_map_run_characters(layout, remaining, system_fallback, &remaining);
         }
 
         if (remaining)
-            hr = layout_run_set_last_resort_font(layout, remaining, system_collection);
+            hr = layout_run_set_last_resort_font(layout, remaining);
 
         if (FAILED(hr)) break;
     }
 
-    IDWriteFontCollection_Release(system_collection);
     IDWriteFontFallback_Release(system_fallback);
 
     return hr;
@@ -2923,6 +2913,8 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout4 *iface)
     if (!refcount)
     {
         IDWriteFactory7_Release(layout->factory);
+        if (layout->system_collection)
+            IDWriteFontCollection_Release(layout->system_collection);
         free_layout_ranges_list(layout);
         free_layout_eruns(layout);
         free_layout_runs(layout);
@@ -5297,6 +5289,13 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     list_add_head(&layout->effects, &effect->entry);
     list_add_head(&layout->spacing, &spacing->entry);
     list_add_head(&layout->typographies, &typography->entry);
+
+    if (FAILED(hr = IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)layout->factory, FALSE,
+            (IDWriteFontCollection1 **)&layout->system_collection, FALSE)))
+    {
+        goto fail;
+    }
+
     return S_OK;
 
 fail:
