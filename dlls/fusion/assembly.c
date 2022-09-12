@@ -809,10 +809,8 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
     ULONG i, size;
     LONG offset;
     BYTE hashdata[20], *pubkey, *ptr;
-    BCRYPT_ALG_HANDLE alg;
     BYTE tokbytes[BYTES_PER_TOKEN];
-    HRESULT hr = E_FAIL;
-    LPWSTR tok;
+    WCHAR *tok;
     DWORD idx;
 
     *token = NULL;
@@ -833,33 +831,20 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
 
     pubkey = assembly_get_blob(assembly, idx, &size);
 
-    if (BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA1_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0) != STATUS_SUCCESS)
+    if (BCryptHash(BCRYPT_SHA1_ALG_HANDLE, NULL, 0, pubkey, size, hashdata, sizeof(hashdata)) != STATUS_SUCCESS)
         return E_FAIL;
-
-    if (BCryptHash(alg, NULL, 0, pubkey, size, hashdata, sizeof(hashdata)) != STATUS_SUCCESS)
-    {
-        hr = E_FAIL;
-        goto done;
-    }
 
     size = sizeof(hashdata);
     for (i = size - 1; i >= size - 8; i--)
         tokbytes[size - i - 1] = hashdata[i];
 
     if (!(tok = malloc((TOKEN_LENGTH + 1) * sizeof(WCHAR))))
-    {
-        hr = E_OUTOFMEMORY;
-        goto done;
-    }
+        return E_OUTOFMEMORY;
 
     token_to_str(tokbytes, tok);
 
     *token = tok;
-    hr = S_OK;
-
-done:
-    BCryptCloseAlgorithmProvider(alg, 0);
-    return hr;
+    return S_OK;
 }
 
 HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version)
