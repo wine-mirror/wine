@@ -956,12 +956,15 @@ static VOID test_thread_processor(void)
            affinity_new.Mask, affinity.Mask);
 
         /* show that the "all processors" flag is not supported for SetThreadGroupAffinity */
-        affinity_new.Group = 0;
-        affinity_new.Mask  = ~0u;
-        SetLastError(0xdeadbeef);
-        ok(!pSetThreadGroupAffinity(curthread, &affinity_new, NULL), "SetThreadGroupAffinity succeeded\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+        if (sysInfo.dwNumberOfProcessors < 8 * sizeof(DWORD_PTR))
+        {
+            affinity_new.Group = 0;
+            affinity_new.Mask  = ~(DWORD_PTR)0;
+            SetLastError(0xdeadbeef);
+            ok(!pSetThreadGroupAffinity(curthread, &affinity_new, NULL), "SetThreadGroupAffinity succeeded\n");
+            ok(GetLastError() == ERROR_INVALID_PARAMETER,
+               "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+        }
 
         affinity_new.Group = 1; /* assumes that you have less than 64 logical processors */
         affinity_new.Mask  = 0x1;
