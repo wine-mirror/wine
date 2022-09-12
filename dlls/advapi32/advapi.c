@@ -321,3 +321,13 @@ ULONG WINAPI PerfCloseQueryHandle( HANDLE query )
 
     return ERROR_SUCCESS;
 }
+
+ULONG WINAPI PerfOpenQueryHandle( const WCHAR *machine, HANDLE *query )
+{
+    FIXME( "machine %s, query %p.\n", debugstr_w(machine), query );
+
+    if (!query) return ERROR_INVALID_PARAMETER;
+    *query = (HANDLE)0xdeadbeef;
+
+    return ERROR_SUCCESS;
+}

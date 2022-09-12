@@ -90,6 +90,7 @@ ULONG WINAPI PerfStartProviderEx(GUID *, PERF_PROVIDER_CONTEXT *, HANDLE *);
 ULONG WINAPI PerfStopProvider(HANDLE);
 
 ULONG WINAPI PerfCloseQueryHandle(HANDLE);
+ULONG WINAPI PerfOpenQueryHandle(const WCHAR *, HANDLE *);
 
 #ifdef __cplusplus
 }       /* extern "C" */

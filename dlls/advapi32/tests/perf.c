@@ -28,6 +28,21 @@
 
 #include "wine/test.h"
 
+#define DEFINE_FUNCTION(name) static typeof(name) *p##name;
+DEFINE_FUNCTION(PerfCloseQueryHandle);
+DEFINE_FUNCTION(PerfOpenQueryHandle);
+#undef DEFINE_FUNCTION
+
+static void init_functions(void)
+{
+    HANDLE hadvapi = GetModuleHandleA("advapi32.dll");
+
+#define GET_FUNCTION(name) p##name = (void *)GetProcAddress(hadvapi, #name)
+    GET_FUNCTION(PerfCloseQueryHandle);
+    GET_FUNCTION(PerfOpenQueryHandle);
+#undef GET_FUNCTION
+}
+
 static ULONG WINAPI test_provider_callback(ULONG code, void *buffer, ULONG size)
 {
     ok(0, "Provider callback called.\n");
@@ -188,7 +203,30 @@ void test_provider_init(void)
     ok(!ret, "Got unexpected ret %lu.\n", ret);
 }
 
+static void test_perf_counters(void)
+{
+    HANDLE query;
+    ULONG ret;
+
+    if (!pPerfOpenQueryHandle)
+    {
+        win_skip("PerfOpenQueryHandle not found.\n");
+        return;
+    }
+
+    ret = pPerfOpenQueryHandle(NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got ret %lu.\n", ret);
+    ret = pPerfOpenQueryHandle(NULL, &query);
+    ok(!ret, "got ret %lu.\n", ret);
+
+    ret = pPerfCloseQueryHandle(query);
+    ok(!ret, "got ret %lu.\n", ret);
+}
+
 START_TEST(perf)
 {
+    init_functions();
+
     test_provider_init();
+    test_perf_counters();
 }
