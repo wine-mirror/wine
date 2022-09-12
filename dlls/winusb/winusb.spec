@@ -1,7 +1,7 @@
 @ stub WinUsb_AbortPipe
 @ stub WinUsb_ControlTransfer
 @ stub WinUsb_FlushPipe
-@ stub WinUsb_Free
+@ stdcall WinUsb_Free(ptr)
 @ stub WinUsb_GetAssociatedInterface
 @ stub WinUsb_GetCurrentAlternateSetting
 @ stub WinUsb_GetDescriptor
