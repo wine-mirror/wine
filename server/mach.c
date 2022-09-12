@@ -159,6 +159,7 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
     mach_msg_type_number_t count = sizeof(state) / sizeof(int);
     mach_msg_type_name_t type;
     mach_port_t port, process_port = get_process_port( thread->process );
+    kern_return_t ret;
 
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
@@ -171,7 +172,8 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
         return;
     }
 
-    if (!thread_get_state( port, x86_DEBUG_STATE, (thread_state_t)&state, &count ))
+    ret = thread_get_state( port, x86_DEBUG_STATE, (thread_state_t)&state, &count );
+    if (!ret)
     {
         assert( state.dsh.flavor == x86_DEBUG_STATE32 ||
                 state.dsh.flavor == x86_DEBUG_STATE64 );
@@ -196,6 +198,8 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
         }
         context->flags |= SERVER_CTX_DEBUG_REGISTERS;
     }
+    else
+        mach_set_error( ret );
     mach_port_deallocate( mach_task_self(), port );
 #endif
 }
@@ -209,6 +213,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     mach_msg_type_name_t type;
     mach_port_t port, process_port = get_process_port( thread->process );
     unsigned int dr7;
+    kern_return_t ret;
 
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
@@ -252,7 +257,9 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         state.uds.ds32.__dr6 = context->debug.i386_regs.dr6;
         state.uds.ds32.__dr7 = dr7;
     }
-    thread_set_state( port, x86_DEBUG_STATE, (thread_state_t)&state, count );
+    ret = thread_set_state( port, x86_DEBUG_STATE, (thread_state_t)&state, count );
+    if (ret)
+        mach_set_error( ret );
     mach_port_deallocate( mach_task_self(), port );
 #endif
 }
