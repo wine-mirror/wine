@@ -40,7 +40,6 @@ struct key
     DWORD             magic;
     DWORD             algid;
     DWORD             flags;
-    BCRYPT_ALG_HANDLE alg_handle;
     BCRYPT_KEY_HANDLE handle;
 };
 
@@ -139,13 +138,11 @@ static const WCHAR *map_keyspec_to_keypair_name( DWORD keyspec )
 static struct key *create_key( ALG_ID algid, DWORD flags )
 {
     struct key *ret;
-    const WCHAR *alg;
 
     switch (algid)
     {
     case AT_SIGNATURE:
     case CALG_DSS_SIGN:
-        alg = BCRYPT_DSA_ALGORITHM;
         break;
 
     default:
@@ -158,11 +155,6 @@ static struct key *create_key( ALG_ID algid, DWORD flags )
     ret->magic = MAGIC_KEY;
     ret->algid = algid;
     ret->flags = flags;
-    if (BCryptOpenAlgorithmProvider( &ret->alg_handle, alg, MS_PRIMITIVE_PROVIDER, 0 ))
-    {
-        free( ret );
-        return NULL;
-    }
     return ret;
 }
 
@@ -170,7 +162,6 @@ static void destroy_key( struct key *key )
 {
     if (!key) return;
     BCryptDestroyKey( key->handle );
-    BCryptCloseAlgorithmProvider( key->alg_handle, 0 );
     key->magic = 0;
     free( key );
 }
@@ -181,7 +172,7 @@ static struct key *import_key( DWORD keyspec, BYTE *data, DWORD len )
 
     if (!(ret = create_key( keyspec, 0 ))) return NULL;
 
-    if (BCryptImportKeyPair( ret->alg_handle, NULL, LEGACY_DSA_V2_PRIVATE_BLOB, &ret->handle, data, len, 0 ))
+    if (BCryptImportKeyPair( BCRYPT_DSA_ALG_HANDLE, NULL, LEGACY_DSA_V2_PRIVATE_BLOB, &ret->handle, data, len, 0 ))
     {
         WARN( "failed to import key\n" );
         destroy_key( ret );
@@ -404,7 +395,7 @@ static BOOL generate_key( struct container *container, ALG_ID algid, DWORD bitle
 
     if (!(key = create_key( algid, flags ))) return FALSE;
 
-    if ((status = BCryptGenerateKeyPair( key->alg_handle, &key->handle, bitlen, 0 )))
+    if ((status = BCryptGenerateKeyPair( BCRYPT_DSA_ALG_HANDLE, &key->handle, bitlen, 0 )))
     {
         ERR( "failed to generate key %08lx\n", status );
         destroy_key( key );
@@ -517,7 +508,7 @@ static BOOL import_key_dss2( struct container *container, ALG_ID algid, const BY
 
     if (!(key = create_key( CALG_DSS_SIGN, flags ))) return FALSE;
 
-    if ((status = BCryptImportKeyPair( key->alg_handle, NULL, type, &key->handle, (UCHAR *)data, len, 0 )))
+    if ((status = BCryptImportKeyPair( BCRYPT_DSA_ALG_HANDLE, NULL, type, &key->handle, (UCHAR *)data, len, 0 )))
     {
         TRACE( "failed to import key %08lx\n", status );
         destroy_key( key );
@@ -624,8 +615,8 @@ static BOOL import_key_dss3( struct container *container, ALG_ID algid, const BY
     dst += blob->cbKey;
     for (i = 0; i < blob->cbKey; i++) dst[i] = src[blob->cbKey - i - 1];
 
-    if ((status = BCryptImportKeyPair( key->alg_handle, NULL, BCRYPT_DSA_PUBLIC_BLOB, &key->handle, (UCHAR *)blob,
-                                       size, 0 )))
+    if ((status = BCryptImportKeyPair( BCRYPT_DSA_ALG_HANDLE, NULL, BCRYPT_DSA_PUBLIC_BLOB, &key->handle,
+                                       (UCHAR *)blob, size, 0 )))
     {
         WARN( "failed to import key %08lx\n", status );
         destroy_key( key );
@@ -771,18 +762,17 @@ static struct hash *create_hash( ALG_ID algid )
 {
     struct hash *ret;
     BCRYPT_ALG_HANDLE alg_handle;
-    const WCHAR *alg;
     DWORD len;
 
     switch (algid)
     {
     case CALG_MD5:
-        alg = BCRYPT_MD5_ALGORITHM;
+        alg_handle = BCRYPT_MD5_ALG_HANDLE;
         len = 16;
         break;
 
     case CALG_SHA1:
-        alg = BCRYPT_SHA1_ALGORITHM;
+        alg_handle = BCRYPT_SHA1_ALG_HANDLE;
         len = 20;
         break;
 
@@ -795,19 +785,11 @@ static struct hash *create_hash( ALG_ID algid )
 
     ret->magic = MAGIC_HASH;
     ret->len   = len;
-    if (BCryptOpenAlgorithmProvider( &alg_handle, alg, MS_PRIMITIVE_PROVIDER, 0 ))
-    {
-        free( ret );
-        return NULL;
-    }
     if (BCryptCreateHash( alg_handle, &ret->handle, NULL, 0, NULL, 0, 0 ))
     {
-        BCryptCloseAlgorithmProvider( alg_handle, 0 );
         free( ret );
         return NULL;
     }
-
-    BCryptCloseAlgorithmProvider( alg_handle, 0 );
     return ret;
 }
 
