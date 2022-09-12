@@ -120,7 +120,6 @@ static BOOL sha_check(const WCHAR *file_name)
     HANDLE file, map;
     DWORD size, i;
     BCRYPT_HASH_HANDLE hash = NULL;
-    BCRYPT_ALG_HANDLE alg = NULL;
     UCHAR sha[32];
     char buf[1024];
     BOOL ret = FALSE;
@@ -143,9 +142,7 @@ static BOOL sha_check(const WCHAR *file_name)
     if(!file_map)
         return FALSE;
 
-    if(BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0))
-        goto end;
-    if(BCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0))
+    if(BCryptCreateHash(BCRYPT_SHA256_ALG_HANDLE, &hash, NULL, 0, NULL, 0, 0))
         goto end;
     if(BCryptHashData(hash, (UCHAR *)file_map, size, 0))
         goto end;
@@ -162,7 +159,6 @@ static BOOL sha_check(const WCHAR *file_name)
 end:
     UnmapViewOfFile(file_map);
     if(hash) BCryptDestroyHash(hash);
-    if(alg) BCryptCloseAlgorithmProvider(alg, 0);
     return ret;
 }
 
