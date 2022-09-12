@@ -952,7 +952,8 @@ then
         WINE_TRY_CROSSCFLAGS([-Wabsolute-value])
 
         case $host_cpu in
-          *i[[3456789]]86*) WINE_TRY_CROSSCFLAGS([-fno-omit-frame-pointer]) ;;
+          *i[[3456789]]86*) WINE_TRY_CROSSCFLAGS([-fno-omit-frame-pointer])
+                            WINE_TRY_CROSSCFLAGS([-Wl,--disable-stdcall-fixup],[CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--disable-stdcall-fixup"]) ;;
           x86_64) WINE_TRY_CROSSCFLAGS([-Wno-format])
                   WINE_TRY_CROSSCFLAGS([-Wformat-overflow])
                   WINE_TRY_CROSSCFLAGS([-Wnonnull])

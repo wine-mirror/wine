@@ -11451,6 +11451,40 @@ printf "%s\n" "$ac_cv_crosscflags__fno_omit_frame_pointer" >&6; }
 if test "x$ac_cv_crosscflags__fno_omit_frame_pointer" = xyes
 then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-omit-frame-pointer"
+fi
+                            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,--disable-stdcall-fixup" >&5
+printf %s "checking whether the cross-compiler supports -Wl,--disable-stdcall-fixup... " >&6; }
+if test ${ac_cv_crosscflags__Wl___disable_stdcall_fixup+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wl,--disable-stdcall-fixup"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_crosscflags__Wl___disable_stdcall_fixup=yes
+else $as_nop
+  ac_cv_crosscflags__Wl___disable_stdcall_fixup=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wl___disable_stdcall_fixup" >&5
+printf "%s\n" "$ac_cv_crosscflags__Wl___disable_stdcall_fixup" >&6; }
+if test "x$ac_cv_crosscflags__Wl___disable_stdcall_fixup" = xyes
+then :
+  CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--disable-stdcall-fixup"
 fi ;;
           x86_64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
 printf %s "checking whether the cross-compiler supports -Wno-format... " >&6; }
