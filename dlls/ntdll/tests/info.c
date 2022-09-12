@@ -2958,11 +2958,13 @@ static void test_affinity(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     proc_affinity = pbi.AffinityMask;
     ok( proc_affinity == get_affinity_mask( si.dwNumberOfProcessors ), "Unexpected process affinity\n" );
-    proc_affinity = (DWORD_PTR)1 << si.dwNumberOfProcessors;
-    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
-    ok( status == STATUS_INVALID_PARAMETER,
-        "Expected STATUS_INVALID_PARAMETER, got %08lx\n", status);
-
+    if (si.dwNumberOfProcessors < 8 * sizeof(DWORD_PTR))
+    {
+        proc_affinity = (DWORD_PTR)1 << si.dwNumberOfProcessors;
+        status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
+        ok( status == STATUS_INVALID_PARAMETER,
+            "Expected STATUS_INVALID_PARAMETER, got %08lx\n", status);
+    }
     proc_affinity = 0;
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessAffinityMask, &proc_affinity, sizeof(proc_affinity) );
     ok( status == STATUS_INVALID_PARAMETER,
@@ -2971,10 +2973,13 @@ static void test_affinity(void)
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( tbi.AffinityMask == get_affinity_mask( si.dwNumberOfProcessors ), "Unexpected thread affinity\n" );
-    thread_affinity = (DWORD_PTR)1 << si.dwNumberOfProcessors;
-    status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
-    ok( status == STATUS_INVALID_PARAMETER,
-        "Expected STATUS_INVALID_PARAMETER, got %08lx\n", status);
+    if (si.dwNumberOfProcessors < 8 * sizeof(DWORD_PTR))
+    {
+        thread_affinity = (DWORD_PTR)1 << si.dwNumberOfProcessors;
+        status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
+        ok( status == STATUS_INVALID_PARAMETER,
+            "Expected STATUS_INVALID_PARAMETER, got %08lx\n", status);
+    }
     thread_affinity = 0;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadAffinityMask, &thread_affinity, sizeof(thread_affinity) );
     ok( status == STATUS_INVALID_PARAMETER,
