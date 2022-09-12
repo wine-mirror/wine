@@ -2222,12 +2222,14 @@ static void test_text_types(void)
 
 static void test_double(void)
 {
+    static const BOOL is_win64 = sizeof(void*) > sizeof(int);
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
     unsigned int fpword, fpword_orig;
     static const struct
     {
         double      val;
         const char *result;
+        BOOL        todo64;
     }
     tests[] =
     {
@@ -2240,12 +2242,12 @@ static void test_double(void)
         {1.0000000000000004, "<t>1.0000000000000004</t>"},
         {100000000000000, "<t>100000000000000</t>"},
         {1000000000000000, "<t>1E+15</t>"},
-        {0.1, "<t>0.1</t>"},
-        {0.01, "<t>1E-2</t>"},
-        {-0.1, "<t>-0.1</t>"},
-        {-0.01, "<t>-1E-2</t>"},
-        {1.7976931348623158e308, "<t>1.7976931348623157E+308</t>"},
-        {-1.7976931348623158e308, "<t>-1.7976931348623157E+308</t>"},
+        {0.1, "<t>0.1</t>", TRUE},
+        {0.01, "<t>1E-2</t>", TRUE},
+        {-0.1, "<t>-0.1</t>", TRUE},
+        {-0.01, "<t>-1E-2</t>", TRUE},
+        {1.7976931348623158e308, "<t>1.7976931348623157E+308</t>", TRUE},
+        {-1.7976931348623158e308, "<t>-1.7976931348623157E+308</t>", TRUE},
     };
     HRESULT hr;
     WS_XML_WRITER *writer;
@@ -2268,8 +2270,23 @@ static void test_double(void)
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
 
         hr = WsWriteEndElement( writer, NULL );
-        ok( hr == S_OK, "%u: got %08x\n", i, hr );
-        check_output( writer, tests[i].result, __LINE__ );
+        ok( hr == S_OK, "%u: got %#x\n", i, hr );
+        if (tests[i].todo64 && is_win64)
+        {
+            WS_BYTES bytes;
+            ULONG size = sizeof(bytes);
+            int len = strlen( tests[i].result );
+            HRESULT hr;
+
+            memset( &bytes, 0, sizeof(bytes) );
+            hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+            ok( hr == S_OK, "%u: got %#x\n", i, hr );
+            todo_wine
+            ok( bytes.length == len && !memcmp( bytes.bytes, tests[i].result, len ),
+                "%u: got %u %s expected %d %s\n", i, bytes.length,
+                debugstr_bytes(bytes.bytes, bytes.length), len, tests[i].result );
+        }
+        else check_output( writer, tests[i].result, __LINE__ );
     }
 
     hr = set_output( writer );
