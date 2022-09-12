@@ -31,6 +31,7 @@
 #include "winerror.h"
 #include "wincred.h"
 #include "wct.h"
+#include "perflib.h"
 
 #include "wine/debug.h"
 
@@ -312,4 +313,11 @@ BOOL WINAPI GetThreadWaitChain(HWCT handle, DWORD_PTR ctx, DWORD flags, DWORD th
            handle, ctx, flags, thread_id, node_count, node_info_arr, is_cycle );
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
+}
+
+ULONG WINAPI PerfCloseQueryHandle( HANDLE query )
+{
+    FIXME( "query %p stub.\n", query );
+
+    return ERROR_SUCCESS;
 }

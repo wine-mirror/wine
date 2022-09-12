@@ -554,7 +554,7 @@
 # @ stub OperationEnd
 # @ stub OperationStart
 # @ stub PerfAddCounters
-# @ stub PerfCloseQueryHandle
+@ stdcall PerfCloseQueryHandle(long)
 @ stdcall -import PerfCreateInstance(long ptr wstr long)
 # @ stub PerfDecrementULongCounterValue
 # @ stub PerfDecrementULongLongCounterValue
