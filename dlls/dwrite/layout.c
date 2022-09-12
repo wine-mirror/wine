@@ -719,14 +719,11 @@ static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struc
     return hr;
 }
 
-static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout, struct layout_run *r)
+static HRESULT layout_run_get_last_resort_font(const struct dwrite_textlayout *layout, const struct layout_range *range,
+        IDWriteFontFace **fontface, float *size)
 {
-    struct regular_layout_run *run = &r->u.regular;
-    struct layout_range *range;
     IDWriteFont *font;
     HRESULT hr;
-
-    range = get_layout_range_by_pos(layout, run->descr.textPosition);
 
     if (FAILED(create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
             range->stretch, &IID_IDWriteFont3, (void **)&font)))
@@ -739,7 +736,7 @@ static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout,
         }
     }
 
-    hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
+    hr = IDWriteFont_CreateFontFace(font, fontface);
     IDWriteFont_Release(font);
     if (FAILED(hr))
     {
@@ -747,7 +744,7 @@ static HRESULT layout_run_set_last_resort_font(struct dwrite_textlayout *layout,
         return hr;
     }
 
-    run->run.fontEmSize = range->fontsize;
+    *size = range->fontsize;
 
     return hr;
 }
@@ -795,7 +792,10 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
         }
 
         if (remaining)
-            hr = layout_run_set_last_resort_font(layout, remaining);
+        {
+            hr = layout_run_get_last_resort_font(layout, get_layout_range_by_pos(layout, remaining->u.regular.descr.textPosition),
+                    &remaining->u.regular.run.fontFace, &remaining->u.regular.run.fontEmSize);
+        }
 
         if (FAILED(hr)) break;
     }
@@ -1856,29 +1856,51 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
     return S_OK;
 }
 
-/* Adds zero width line, metrics are derived from font at specified text position. */
-static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, UINT32 pos)
+static inline struct regular_layout_run * layout_get_last_run(const struct dwrite_textlayout *layout)
+{
+    struct layout_run *r;
+    struct list *e;
+
+    if (!(e = list_tail(&layout->runs))) return NULL;
+    r = LIST_ENTRY(e, struct layout_run, entry);
+    if (r->kind != LAYOUT_RUN_REGULAR) return NULL;
+    return &r->u.regular;
+}
+
+/* Adds a dummy line if:
+   - there's no text, metrics come from first range in this case;
+   - last ended with a mandatory break, metrics come from last text position.
+*/
+static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout)
 {
     DWRITE_LINE_METRICS1 metrics = { 0 };
     DWRITE_FONT_METRICS fontmetrics;
-    struct layout_range *range;
+    struct regular_layout_run *run;
     IDWriteFontFace *fontface;
-    IDWriteFont *font;
+    float size;
     HRESULT hr;
 
-    range = get_layout_range_by_pos(layout, pos);
-    if (FAILED(hr = create_matching_font(range->collection, range->fontfamily, range->weight, range->style,
-            range->stretch, &IID_IDWriteFont, (void **)&font)))
-    {
-        return hr;
-    }
-    hr = IDWriteFont_CreateFontFace(font, &fontface);
-    IDWriteFont_Release(font);
-    if (FAILED(hr))
-        return hr;
+    if (layout->cluster_count && !layout->clustermetrics[layout->cluster_count - 1].isNewline)
+        return S_OK;
 
-    layout_get_font_metrics(layout, fontface, range->fontsize, &fontmetrics);
-    layout_get_font_height(range->fontsize, &fontmetrics, &metrics.baseline, &metrics.height);
+    if (!layout->cluster_count)
+    {
+        if (FAILED(hr = layout_run_get_last_resort_font(layout, get_layout_range_by_pos(layout, 0), &fontface, &size)))
+            return hr;
+    }
+    else if (!(run = layout_get_last_run(layout)))
+    {
+        return S_OK;
+    }
+    else
+    {
+        fontface = run->run.fontFace;
+        IDWriteFontFace_AddRef(fontface);
+        size = run->run.fontEmSize;
+    }
+
+    layout_get_font_metrics(layout, fontface, size, &fontmetrics);
+    layout_get_font_height(size, &fontmetrics, &metrics.baseline, &metrics.height);
     IDWriteFontFace_Release(fontface);
 
     return layout_set_line_metrics(layout, &metrics);
@@ -2156,15 +2178,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         width = 0.0f;
     }
 
-    /* Add dummy line if:
-       - there's no text, metrics come from first range in this case;
-       - last ended with a mandatory break, metrics come from last text position.
-    */
-    if (layout->len == 0)
-        hr = layout_set_dummy_line_metrics(layout, 0);
-    else if (layout->cluster_count && layout->clustermetrics[layout->cluster_count - 1].isNewline)
-        hr = layout_set_dummy_line_metrics(layout, layout->len - 1);
-    if (FAILED(hr))
+    if (FAILED(hr = layout_set_dummy_line_metrics(layout)))
         return hr;
 
     layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0.0f;
