@@ -50,6 +50,7 @@ library UIA_wine_private
         object,
         uuid(bccb6799-d831-4057-bd50-6425823ff1a3),
         pointer_default(unique),
+        oleautomation,
     ]
     interface IWineUiaNode : IUnknown
     {

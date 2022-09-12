@@ -298,16 +298,6 @@ HRESULT WINAPI UiaGetReservedNotSupportedValue(IUnknown **value)
 }
 
 /***********************************************************************
- *          UiaReturnRawElementProvider (uiautomationcore.@)
- */
-LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wParam,
-        LPARAM lParam, IRawElementProviderSimple *elprov)
-{
-    FIXME("(%p, %Ix, %Ix, %p) stub!\n", hwnd, wParam, lParam, elprov);
-    return 0;
-}
-
-/***********************************************************************
  *          UiaRaiseAutomationEvent (uiautomationcore.@)
  */
 HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *provider, EVENTID id)

@@ -1124,3 +1124,182 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
 
     return S_OK;
 }
+
+/*
+ * UI Automation provider thread functions.
+ */
+struct uia_provider_thread
+{
+    HANDLE hthread;
+    HWND hwnd;
+};
+
+static struct uia_provider_thread provider_thread;
+static CRITICAL_SECTION provider_thread_cs;
+static CRITICAL_SECTION_DEBUG provider_thread_cs_debug =
+{
+    0, 0, &provider_thread_cs,
+    { &provider_thread_cs_debug.ProcessLocksList, &provider_thread_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": provider_thread_cs") }
+};
+static CRITICAL_SECTION provider_thread_cs = { &provider_thread_cs_debug, -1, 0, 0, 0, 0 };
+
+#define WM_GET_OBJECT_UIA_NODE (WM_USER + 1)
+static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM wparam,
+        LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_GET_OBJECT_UIA_NODE:
+    {
+        HUIANODE node = (HUIANODE)lparam;
+        LRESULT lr;
+
+        /*
+         * LresultFromObject returns an index into the global atom string table,
+         * which has a valid range of 0xc000-0xffff.
+         */
+        lr = LresultFromObject(&IID_IWineUiaNode, 0, (IUnknown *)node);
+        if ((lr > 0xffff) || (lr < 0xc000))
+        {
+            WARN("Got invalid lresult %Ix\n", lr);
+            lr = 0;
+        }
+
+        /*
+         * LresultFromObject increases refcnt by 1. If LresultFromObject
+         * failed, this is expected to release the node.
+         */
+        UiaNodeRelease(node);
+        return lr;
+    }
+
+    default:
+        break;
+    }
+
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+static DWORD WINAPI uia_provider_thread_proc(void *arg)
+{
+    HANDLE initialized_event = arg;
+    HWND hwnd;
+    MSG msg;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hwnd = CreateWindowW(L"Message", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    if (!hwnd)
+    {
+        WARN("CreateWindow failed: %ld\n", GetLastError());
+        CoUninitialize();
+        ExitThread(1);
+    }
+
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)uia_provider_thread_msg_proc);
+    provider_thread.hwnd = hwnd;
+
+    /* Initialization complete, thread can now process window messages. */
+    SetEvent(initialized_event);
+    TRACE("Provider thread started.\n");
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    TRACE("Shutting down UI Automation provider thread.\n");
+
+    DestroyWindow(hwnd);
+    CoUninitialize();
+    ExitThread(0);
+}
+
+static BOOL uia_start_provider_thread(void)
+{
+    BOOL started = TRUE;
+
+    EnterCriticalSection(&provider_thread_cs);
+    if (!provider_thread.hwnd)
+    {
+        HANDLE ready_event;
+        HANDLE events[2];
+        DWORD wait_obj;
+
+        events[0] = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        if (!(provider_thread.hthread = CreateThread(NULL, 0, uia_provider_thread_proc,
+                ready_event, 0, NULL)))
+        {
+            started = FALSE;
+            goto exit;
+        }
+
+        events[1] = provider_thread.hthread;
+        wait_obj = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        if (wait_obj != WAIT_OBJECT_0)
+        {
+            CloseHandle(provider_thread.hthread);
+            started = FALSE;
+        }
+
+exit:
+        CloseHandle(ready_event);
+        if (!started)
+        {
+            WARN("Failed to start provider thread\n");
+            memset(&provider_thread, 0, sizeof(provider_thread));
+        }
+    }
+
+    LeaveCriticalSection(&provider_thread_cs);
+    return started;
+}
+
+/*
+ * Pass our IWineUiaNode interface to the provider thread for marshaling. UI
+ * Automation has to work regardless of whether or not COM is initialized on
+ * the thread calling UiaReturnRawElementProvider.
+ */
+static LRESULT uia_lresult_from_node(HUIANODE huianode)
+{
+    if (!uia_start_provider_thread())
+    {
+        UiaNodeRelease(huianode);
+        return 0;
+    }
+
+    return SendMessageW(provider_thread.hwnd, WM_GET_OBJECT_UIA_NODE, 0, (LPARAM)huianode);
+}
+
+/***********************************************************************
+ *          UiaReturnRawElementProvider (uiautomationcore.@)
+ */
+LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wparam,
+        LPARAM lparam, IRawElementProviderSimple *elprov)
+{
+    HUIANODE node;
+    HRESULT hr;
+
+    TRACE("(%p, %Ix, %#Ix, %p)\n", hwnd, wparam, lparam, elprov);
+
+    if (!wparam && !lparam && !elprov)
+    {
+        FIXME("UIA-to-MSAA bridge not implemented, no provider map to free.\n");
+        return 0;
+    }
+
+    if (lparam != UiaRootObjectId)
+    {
+        FIXME("Unsupported object id %Id, ignoring.\n", lparam);
+        return 0;
+    }
+
+    hr = UiaNodeFromProvider(elprov, &node);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create HUIANODE with hr %#lx\n", hr);
+        return 0;
+    }
+
+    return uia_lresult_from_node(node);
+}
