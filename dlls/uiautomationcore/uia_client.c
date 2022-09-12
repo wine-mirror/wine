@@ -427,6 +427,7 @@ static ULONG WINAPI uia_provider_AddRef(IWineUiaProvider *iface)
     return ref;
 }
 
+static void uia_stop_client_thread(void);
 static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
 {
     struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
@@ -436,7 +437,10 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
     if (!ref)
     {
         if (prov->node)
+        {
             IWineUiaNode_Release(prov->node);
+            uia_stop_client_thread();
+        }
         else
             IRawElementProviderSimple_Release(prov->elprov);
         heap_free(prov);
@@ -772,6 +776,154 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
     return hr;
 }
 
+/*
+ * UI Automation client thread functions.
+ */
+struct uia_client_thread
+{
+    CO_MTA_USAGE_COOKIE mta_cookie;
+    HANDLE hthread;
+    HWND hwnd;
+    LONG ref;
+};
+
+static struct uia_client_thread client_thread;
+static CRITICAL_SECTION client_thread_cs;
+static CRITICAL_SECTION_DEBUG client_thread_cs_debug =
+{
+    0, 0, &client_thread_cs,
+    { &client_thread_cs_debug.ProcessLocksList, &client_thread_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": client_thread_cs") }
+};
+static CRITICAL_SECTION client_thread_cs = { &client_thread_cs_debug, -1, 0, 0, 0, 0 };
+
+#define WM_UIA_CLIENT_GET_NODE_PROV (WM_USER + 1)
+#define WM_UIA_CLIENT_THREAD_STOP (WM_USER + 2)
+static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESULT lr);
+static LRESULT CALLBACK uia_client_thread_msg_proc(HWND hwnd, UINT msg, WPARAM wparam,
+        LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_UIA_CLIENT_GET_NODE_PROV:
+        return create_wine_uia_nested_node_provider((struct uia_node *)lparam, (LRESULT)wparam);
+
+    default:
+        break;
+    }
+
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+static DWORD WINAPI uia_client_thread_proc(void *arg)
+{
+    HANDLE initialized_event = arg;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowW(L"Message", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    if (!hwnd)
+    {
+        WARN("CreateWindow failed: %ld\n", GetLastError());
+        FreeLibraryAndExitThread(huia_module, 1);
+    }
+
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)uia_client_thread_msg_proc);
+    client_thread.hwnd = hwnd;
+
+    /* Initialization complete, thread can now process window messages. */
+    SetEvent(initialized_event);
+    TRACE("Client thread started.\n");
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        if (msg.message == WM_UIA_CLIENT_THREAD_STOP)
+            break;
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    TRACE("Shutting down UI Automation client thread.\n");
+
+    DestroyWindow(hwnd);
+    FreeLibraryAndExitThread(huia_module, 0);
+}
+
+static BOOL uia_start_client_thread(void)
+{
+    BOOL started = TRUE;
+
+    EnterCriticalSection(&client_thread_cs);
+    if (++client_thread.ref == 1)
+    {
+        HANDLE ready_event = NULL;
+        HANDLE events[2];
+        HMODULE hmodule;
+        DWORD wait_obj;
+        HRESULT hr;
+
+        /*
+         * We use CoIncrementMTAUsage here instead of CoInitialize because it
+         * allows us to exit the implicit MTA immediately when the thread
+         * reference count hits 0, rather than waiting for the thread to
+         * shutdown and call CoUninitialize like the provider thread.
+         */
+        hr = CoIncrementMTAUsage(&client_thread.mta_cookie);
+        if (FAILED(hr))
+        {
+            started = FALSE;
+            goto exit;
+        }
+
+        /* Increment DLL reference count. */
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                (const WCHAR *)uia_start_client_thread, &hmodule);
+
+        events[0] = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        if (!(client_thread.hthread = CreateThread(NULL, 0, uia_client_thread_proc,
+                ready_event, 0, NULL)))
+        {
+            FreeLibrary(hmodule);
+            started = FALSE;
+            goto exit;
+        }
+
+        events[1] = client_thread.hthread;
+        wait_obj = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        if (wait_obj != WAIT_OBJECT_0)
+        {
+            CloseHandle(client_thread.hthread);
+            started = FALSE;
+        }
+
+exit:
+        if (ready_event)
+            CloseHandle(ready_event);
+        if (!started)
+        {
+            WARN("Failed to start client thread\n");
+            if (client_thread.mta_cookie)
+                CoDecrementMTAUsage(client_thread.mta_cookie);
+            memset(&client_thread, 0, sizeof(client_thread));
+        }
+    }
+
+    LeaveCriticalSection(&client_thread_cs);
+    return started;
+}
+
+static void uia_stop_client_thread(void)
+{
+    EnterCriticalSection(&client_thread_cs);
+    if (!--client_thread.ref)
+    {
+        PostMessageW(client_thread.hwnd, WM_UIA_CLIENT_THREAD_STOP, 0, 0);
+        CoDecrementMTAUsage(client_thread.mta_cookie);
+        CloseHandle(client_thread.hthread);
+        memset(&client_thread, 0, sizeof(client_thread));
+    }
+    LeaveCriticalSection(&client_thread_cs);
+}
+
 static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESULT lr)
 {
     IGlobalInterfaceTable *git;
@@ -781,7 +933,10 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
 
     hr = ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&nested_node);
     if (FAILED(hr))
+    {
+        uia_stop_client_thread();
         return hr;
+    }
 
     prov = heap_alloc_zero(sizeof(*prov));
     if (!prov)
@@ -809,22 +964,34 @@ exit:
     return hr;
 }
 
+/*
+ * UiaNodeFromHandle is expected to work even if the calling thread hasn't
+ * initialized COM. We marshal our node on a separate thread that initializes
+ * COM for this reason.
+ */
 static HRESULT uia_get_provider_from_hwnd(struct uia_node *node)
 {
     LRESULT lr;
 
+    if (!uia_start_client_thread())
+        return E_FAIL;
+
     SetLastError(NOERROR);
     lr = SendMessageW(node->hwnd, WM_GETOBJECT, 0, UiaRootObjectId);
     if (GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
+    {
+        uia_stop_client_thread();
         return UIA_E_ELEMENTNOTAVAILABLE;
+    }
 
     if (!lr)
     {
         FIXME("No native UIA provider for hwnd %p, MSAA proxy currently unimplemented.\n", node->hwnd);
+        uia_stop_client_thread();
         return E_NOTIMPL;
     }
 
-    return create_wine_uia_nested_node_provider(node, lr);
+    return SendMessageW(client_thread.hwnd, WM_UIA_CLIENT_GET_NODE_PROV, (WPARAM)lr, (LPARAM)node);
 }
 
 /***********************************************************************
