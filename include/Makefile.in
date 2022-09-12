@@ -890,6 +890,7 @@ SOURCES = \
 	wintabx.h \
 	winternl.h \
 	wintrust.h \
+	winusb.h \
 	winuser.h \
 	winuser.rh \
 	winver.h \
