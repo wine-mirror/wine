@@ -1284,7 +1284,7 @@ static void dump_binannot(const unsigned char* ba, const char* last, unsigned in
         case BA_OP_ChangeCodeOffsetAndLineOffset:
             {
                 unsigned p1 = binannot_uncompress(&ba);
-                printf("%*s  | ChangeCodeOffsetAndLineOffset %u %u (0x%x)\n", indent, "", p1 & 0xf, binannot_getsigned(p1 >> 4), p1);
+                printf("%*s  | ChangeCodeOffsetAndLineOffset %u %d (0x%x)\n", indent, "", p1 & 0xf, binannot_getsigned(p1 >> 4), p1);
             }
             break;
         case BA_OP_ChangeCodeLengthAndCodeOffset:
