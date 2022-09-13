@@ -28662,6 +28662,84 @@ methods:
 };
 
 /*****************************************************************************
+ *    IDOMStorageEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510722-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMStorageEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMSTORAGEEVENT_KEY)]
+    HRESULT key([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_OLDVALUE)]
+    HRESULT oldValue([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_NEWVALUE)]
+    HRESULT newValue([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_URL)]
+    HRESULT url([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_STORAGEAREA)]
+    HRESULT storageArea([out, retval] IHTMLStorage **p);
+
+    [id(DISPID_IDOMSTORAGEEVENT_INITSTORAGEEVENT)]
+    HRESULT initStorageEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] BSTR keyArg,
+            [in] BSTR oldValueArg,
+            [in] BSTR newValueArg,
+            [in] BSTR urlArg,
+            [in] IHTMLStorage *storageAreaArg);
+};
+
+/*****************************************************************************
+ *    DispDOMStorageEvent dispinterface
+ */
+[
+    hidden,
+    uuid(30590093-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMStorageEvent
+{
+properties:
+methods:
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_KEY)]
+    BSTR key();
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_OLDVALUE)]
+    BSTR oldValue();
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_NEWVALUE)]
+    BSTR newValue();
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_URL)]
+    BSTR url();
+
+    [propget, id(DISPID_IDOMSTORAGEEVENT_STORAGEAREA)]
+    IHTMLStorage *storageArea();
+
+    [id(DISPID_IDOMSTORAGEEVENT_INITSTORAGEEVENT)]
+    void initStorageEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] BSTR keyArg,
+            [in] BSTR oldValueArg,
+            [in] BSTR newValueArg,
+            [in] BSTR urlArg,
+            [in] IHTMLStorage *storageAreaArg);
+};
+
+/*****************************************************************************
  *    IHTMLNamespaceCollection interface
  */
 [
