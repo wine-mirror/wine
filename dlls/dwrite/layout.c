@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2014-2021 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2022 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -226,6 +226,13 @@ struct dwrite_textlayout
 
     WCHAR *str;
     UINT32 len;
+
+    struct
+    {
+        unsigned int offset;
+        unsigned int length;
+    } text_source;
+
     struct dwrite_textformat_data format;
     struct list strike_ranges;
     struct list underline_ranges;
@@ -595,6 +602,13 @@ static inline void layout_get_font_height(float emsize, const DWRITE_FONT_METRIC
     *height = SCALE_FONT_METRIC(fontmetrics->ascent + fontmetrics->descent + fontmetrics->lineGap, emsize, fontmetrics);
 }
 
+static inline void layout_initialize_text_source(struct dwrite_textlayout *layout, unsigned int offset,
+        unsigned int length)
+{
+    layout->text_source.offset = offset;
+    layout->text_source.length = length;
+}
+
 static HRESULT layout_itemize(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer2 *analyzer;
@@ -604,6 +618,7 @@ static HRESULT layout_itemize(struct dwrite_textlayout *layout)
 
     analyzer = get_text_analyzer();
 
+    layout_initialize_text_source(layout, 0, layout->len);
     LIST_FOR_EACH_ENTRY(range, &layout->ranges, struct layout_range, h.entry) {
         /* We don't care about ranges that don't contain any text. */
         if (range->h.range.startPosition >= layout->len)
@@ -666,9 +681,10 @@ static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struc
 
         run = &r->u.regular;
 
+        layout_initialize_text_source(layout, run->descr.textPosition, run->descr.stringLength);
         hr = IDWriteFontFallback_MapCharacters(fallback, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
-                run->descr.textPosition, run->descr.stringLength, collection, range->fontfamily, range->weight,
-                range->style, range->stretch, &mapped_length, &font, &scale);
+                0, run->descr.stringLength, collection, range->fontfamily, range->weight, range->style, range->stretch,
+                &mapped_length, &font, &scale);
         if (FAILED(hr))
         {
             WARN("%s: failed to map family %s, collection %p, hr %#lx.\n", debugstr_rundescr(&run->descr),
@@ -1238,6 +1254,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
 
         analyzer = get_text_analyzer();
 
+        layout_initialize_text_source(layout, 0, layout->len);
         if (FAILED(hr = IDWriteTextAnalyzer2_AnalyzeLineBreakpoints(analyzer,
                 (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
                 0, layout->len, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface)))
@@ -5047,11 +5064,13 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnaly
 
     TRACE("%p, %u, %p, %p.\n", iface, position, text, text_len);
 
-    if (position < layout->len) {
-        *text = &layout->str[position];
-        *text_len = layout->len - position;
+    if (position < layout->text_source.length)
+    {
+        *text = &layout->str[position + layout->text_source.offset];
+        *text_len = layout->text_source.length - position;
     }
-    else {
+    else
+    {
         *text = NULL;
         *text_len = 0;
     }
@@ -5066,11 +5085,13 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextBeforePosition(IDWriteTextA
 
     TRACE("%p, %u, %p, %p.\n", iface, position, text, text_len);
 
-    if (position > 0 && position < layout->len) {
-        *text = layout->str;
+    if (position && position < layout->text_source.length)
+    {
+        *text = &layout->str[layout->text_source.offset];
         *text_len = position;
     }
-    else {
+    else
+    {
         *text = NULL;
         *text_len = 0;
     }
@@ -5088,24 +5109,30 @@ static HRESULT WINAPI dwritetextlayout_source_GetLocaleName(IDWriteTextAnalysisS
     UINT32 position, UINT32* text_len, WCHAR const** locale)
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
-    struct layout_range *range = get_layout_range_by_pos(layout, position);
+    struct layout_range *range, *next;
+    unsigned int end;
 
-    if (position < layout->len) {
-        struct layout_range *next;
+    if (position < layout->text_source.length)
+    {
+        position += layout->text_source.offset;
+        end = layout->text_source.offset + layout->text_source.length;
+
+        range = get_layout_range_by_pos(layout, position);
 
         *locale = range->locale;
-        *text_len = range->h.range.length - position;
+        *text_len = range->h.range.startPosition + range->h.range.length - position;
 
         next = LIST_ENTRY(list_next(&layout->ranges, &range->h.entry), struct layout_range, h.entry);
-        while (next && next->h.range.startPosition < layout->len && !wcscmp(range->locale, next->locale))
+        while (next && next->h.range.startPosition < end && !wcscmp(range->locale, next->locale))
         {
             *text_len += next->h.range.length;
             next = LIST_ENTRY(list_next(&layout->ranges, &next->h.entry), struct layout_range, h.entry);
         }
 
-        *text_len = min(*text_len, layout->len - position);
+        *text_len = min(*text_len, layout->text_source.length - position);
     }
-    else {
+    else
+    {
         *locale = NULL;
         *text_len = 0;
     }
