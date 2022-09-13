@@ -312,6 +312,7 @@ sync_test("doc_props", function() {
 
     var v = document.documentMode;
 
+    test_exposed("onstorage", v < 9);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
     test_exposed("defaultView", v >= 9);
