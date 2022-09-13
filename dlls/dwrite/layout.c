@@ -301,7 +301,7 @@ static inline const char *debugstr_rundescr(const DWRITE_GLYPH_RUN_DESCRIPTION *
     return wine_dbg_sprintf("[%u,%u)", descr->textPosition, descr->textPosition + descr->stringLength);
 }
 
-static inline BOOL is_layout_gdi_compatible(struct dwrite_textlayout *layout)
+static inline BOOL is_layout_gdi_compatible(const struct dwrite_textlayout *layout)
 {
     return layout->measuringmode != DWRITE_MEASURING_MODE_NATURAL;
 }
@@ -455,7 +455,7 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
     return S_OK;
 }
 
-static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos)
+static struct layout_range *get_layout_range_by_pos(const struct dwrite_textlayout *layout, UINT32 pos)
 {
     struct layout_range *cur;
 
@@ -469,7 +469,7 @@ static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *la
     return NULL;
 }
 
-static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
+static struct layout_range_header *get_layout_range_header_by_pos(const struct list *ranges, UINT32 pos)
 {
     struct layout_range_header *cur;
 
@@ -577,7 +577,7 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
 
 #define SCALE_FONT_METRIC(metric, emSize, metrics) ((FLOAT)(metric) * (emSize) / (FLOAT)(metrics)->designUnitsPerEm)
 
-static void layout_get_font_metrics(struct dwrite_textlayout *layout, IDWriteFontFace *fontface, FLOAT emsize,
+static void layout_get_font_metrics(const struct dwrite_textlayout *layout, IDWriteFontFace *fontface, float emsize,
     DWRITE_FONT_METRICS *fontmetrics)
 {
     if (is_layout_gdi_compatible(layout)) {
@@ -589,7 +589,7 @@ static void layout_get_font_metrics(struct dwrite_textlayout *layout, IDWriteFon
         IDWriteFontFace_GetMetrics(fontface, fontmetrics);
 }
 
-static void layout_get_font_height(FLOAT emsize, DWRITE_FONT_METRICS *fontmetrics, FLOAT *baseline, FLOAT *height)
+static inline void layout_get_font_height(float emsize, const DWRITE_FONT_METRICS *fontmetrics, float *baseline, float *height)
 {
     *baseline = SCALE_FONT_METRIC(fontmetrics->ascent + fontmetrics->lineGap, emsize, fontmetrics);
     *height = SCALE_FONT_METRIC(fontmetrics->ascent + fontmetrics->descent + fontmetrics->lineGap, emsize, fontmetrics);
@@ -854,7 +854,7 @@ static HRESULT layout_shape_add_empty_user_features_range(struct shaping_context
     return S_OK;
 }
 
-static HRESULT layout_shape_get_user_features(struct dwrite_textlayout *layout, struct shaping_context *context)
+static HRESULT layout_shape_get_user_features(const struct dwrite_textlayout *layout, struct shaping_context *context)
 {
     unsigned int i, f, start = 0, r, covered_length = 0, length, feature_count;
     struct regular_layout_run *run = context->run;
@@ -989,8 +989,8 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
     return hr;
 }
 
-static struct layout_range_spacing *layout_get_next_spacing_range(struct dwrite_textlayout *layout,
-        struct layout_range_spacing *cur)
+static struct layout_range_spacing *layout_get_next_spacing_range(const struct dwrite_textlayout *layout,
+        const struct layout_range_spacing *cur)
 {
     return (struct layout_range_spacing *)LIST_ENTRY(list_next(&layout->spacing, &cur->h.entry),
             struct layout_range_header, entry);
@@ -1265,15 +1265,15 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     return hr;
 }
 
-static inline FLOAT get_cluster_range_width(struct dwrite_textlayout *layout, UINT32 start, UINT32 end)
+static inline float get_cluster_range_width(const struct dwrite_textlayout *layout, UINT32 start, UINT32 end)
 {
-    FLOAT width = 0.0f;
+    float width = 0.0f;
     for (; start < end; start++)
         width += layout->clustermetrics[start].width;
     return width;
 }
 
-static inline IUnknown *layout_get_effect_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+static inline IUnknown *layout_get_effect_from_pos(const struct dwrite_textlayout *layout, UINT32 pos)
 {
     struct layout_range_header *h = get_layout_range_header_by_pos(&layout->effects, pos);
     return ((struct layout_range_iface*)h)->iface;
@@ -1289,19 +1289,19 @@ struct layout_final_splitting_params {
     IUnknown *effect;
 };
 
-static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+static inline BOOL layout_get_strikethrough_from_pos(const struct dwrite_textlayout *layout, UINT32 pos)
 {
     struct layout_range_header *h = get_layout_range_header_by_pos(&layout->strike_ranges, pos);
     return ((struct layout_range_bool*)h)->value;
 }
 
-static inline BOOL layout_get_underline_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+static inline BOOL layout_get_underline_from_pos(const struct dwrite_textlayout *layout, UINT32 pos)
 {
     struct layout_range_header *h = get_layout_range_header_by_pos(&layout->underline_ranges, pos);
     return ((struct layout_range_bool*)h)->value;
 }
 
-static void layout_splitting_params_from_pos(struct dwrite_textlayout *layout, UINT32 pos,
+static void layout_splitting_params_from_pos(const struct dwrite_textlayout *layout, UINT32 pos,
     struct layout_final_splitting_params *params)
 {
     params->strikethrough = layout_get_strikethrough_from_pos(layout, pos);
@@ -1317,7 +1317,7 @@ static BOOL is_same_splitting_params(const struct layout_final_splitting_params 
            left->effect == right->effect;
 }
 
-static void layout_get_erun_font_metrics(struct dwrite_textlayout *layout, struct layout_effective_run *erun,
+static void layout_get_erun_font_metrics(const struct dwrite_textlayout *layout, const struct layout_effective_run *erun,
     DWRITE_FONT_METRICS *metrics)
 {
     memset(metrics, 0, sizeof(*metrics));
@@ -1491,7 +1491,7 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     return S_OK;
 }
 
-static inline struct layout_effective_run *layout_get_next_erun(struct dwrite_textlayout *layout,
+static inline struct layout_effective_run *layout_get_next_erun(const struct dwrite_textlayout *layout,
     const struct layout_effective_run *cur)
 {
     struct list *e;
@@ -1505,7 +1505,7 @@ static inline struct layout_effective_run *layout_get_next_erun(struct dwrite_te
     return LIST_ENTRY(e, struct layout_effective_run, entry);
 }
 
-static inline struct layout_effective_run *layout_get_prev_erun(struct dwrite_textlayout *layout,
+static inline struct layout_effective_run *layout_get_prev_erun(const struct dwrite_textlayout *layout,
     const struct layout_effective_run *cur)
 {
     struct list *e;
@@ -1519,7 +1519,7 @@ static inline struct layout_effective_run *layout_get_prev_erun(struct dwrite_te
     return LIST_ENTRY(e, struct layout_effective_run, entry);
 }
 
-static inline struct layout_effective_inline *layout_get_next_inline_run(struct dwrite_textlayout *layout,
+static inline struct layout_effective_inline *layout_get_next_inline_run(const struct dwrite_textlayout *layout,
     const struct layout_effective_inline *cur)
 {
     struct list *e;
@@ -1533,8 +1533,8 @@ static inline struct layout_effective_inline *layout_get_next_inline_run(struct 
     return LIST_ENTRY(e, struct layout_effective_inline, entry);
 }
 
-static FLOAT layout_get_line_width(struct dwrite_textlayout *layout,
-    struct layout_effective_run *erun, struct layout_effective_inline *inrun, UINT32 line)
+static float layout_get_line_width(const struct dwrite_textlayout *layout, const struct layout_effective_run *erun,
+        const struct layout_effective_inline *inrun, UINT32 line)
 {
     FLOAT width = 0.0f;
 
@@ -1645,7 +1645,7 @@ static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
     layout->metrics.left = is_rtl ? 0.0f : layout->metrics.layoutWidth - layout->metrics.width;
 }
 
-static inline FLOAT layout_get_centered_shift(struct dwrite_textlayout *layout, BOOL skiptransform,
+static inline float layout_get_centered_shift(const struct dwrite_textlayout *layout, BOOL skiptransform,
     FLOAT width, FLOAT det)
 {
     if (is_layout_gdi_compatible(layout)) {
@@ -1765,15 +1765,15 @@ struct layout_underline_splitting_params {
     IUnknown *effect;    /* does not hold another reference */
 };
 
-static void init_u_splitting_params_from_erun(struct layout_effective_run *erun,
+static void init_u_splitting_params_from_erun(const struct layout_effective_run *erun,
     struct layout_underline_splitting_params *params)
 {
     params->locale = erun->run->u.regular.descr.localeName;
     params->effect = erun->effect;
 }
 
-static BOOL is_same_u_splitting(struct layout_underline_splitting_params *left,
-    struct layout_underline_splitting_params *right)
+static BOOL is_same_u_splitting(const struct layout_underline_splitting_params *left,
+        const struct layout_underline_splitting_params *right)
 {
     return left->effect == right->effect && !wcsicmp(left->locale, right->locale);
 }
@@ -2815,7 +2815,7 @@ done:
     return S_OK;
 }
 
-static inline const WCHAR *get_string_attribute_ptr(struct layout_range *range, enum layout_range_attr_kind kind)
+static inline const WCHAR *get_string_attribute_ptr(const struct layout_range *range, enum layout_range_attr_kind kind)
 {
     const WCHAR *str;
 
@@ -2833,8 +2833,8 @@ static inline const WCHAR *get_string_attribute_ptr(struct layout_range *range, 
     return str;
 }
 
-static HRESULT get_string_attribute_length(struct dwrite_textlayout *layout, enum layout_range_attr_kind kind, UINT32 position,
-    UINT32 *length, DWRITE_TEXT_RANGE *r)
+static HRESULT get_string_attribute_length(const struct dwrite_textlayout *layout, enum layout_range_attr_kind kind,
+        UINT32 position, UINT32 *length, DWRITE_TEXT_RANGE *r)
 {
     struct layout_range *range;
     const WCHAR *str;
@@ -2850,8 +2850,8 @@ static HRESULT get_string_attribute_length(struct dwrite_textlayout *layout, enu
     return return_range(&range->h, r);
 }
 
-static HRESULT get_string_attribute_value(struct dwrite_textlayout *layout, enum layout_range_attr_kind kind, UINT32 position,
-    WCHAR *ret, UINT32 length, DWRITE_TEXT_RANGE *r)
+static HRESULT get_string_attribute_value(const struct dwrite_textlayout *layout, enum layout_range_attr_kind kind,
+        UINT32 position, WCHAR *ret, UINT32 length, DWRITE_TEXT_RANGE *r)
 {
     struct layout_range *range;
     const WCHAR *str;
@@ -3795,8 +3795,7 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
     d2d_rect_offset(bbox, run->origin.x + run->align_dx, run->origin.y);
 }
 
-static void layout_get_inlineobj_bbox(struct dwrite_textlayout *layout, struct layout_effective_inline *run,
-        D2D1_RECT_F *bbox)
+static void layout_get_inlineobj_bbox(const struct layout_effective_inline *run, D2D1_RECT_F *bbox)
 {
     DWRITE_OVERHANG_METRICS overhang_metrics = { 0 };
     DWRITE_INLINE_OBJECT_METRICS metrics = { 0 };
@@ -3856,7 +3855,7 @@ static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout4 *if
     {
         D2D1_RECT_F object_bbox;
 
-        layout_get_inlineobj_bbox(layout, inline_run, &object_bbox);
+        layout_get_inlineobj_bbox(inline_run, &object_bbox);
         d2d_rect_union(&bbox, &object_bbox);
     }
 
