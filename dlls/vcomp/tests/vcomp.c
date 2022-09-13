@@ -406,6 +406,10 @@ static void CDECL num_threads_cb(BOOL nested, int parallel, int nested_threads, 
     is_parallel = pomp_in_parallel();
     ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
 
+    /* limit number of nested threads */
+    nested_threads = min( nested_threads, 256 / pomp_get_max_threads() );
+    p_vcomp_set_num_threads(nested_threads);
+
     thread_count = 0;
     p_vcomp_fork(TRUE, 2, num_threads_cb2, TRUE, &thread_count);
     if (nested)
@@ -419,17 +423,6 @@ static void CDECL num_threads_cb(BOOL nested, int parallel, int nested_threads, 
     thread_count = 0;
     p_vcomp_fork(FALSE, 2, num_threads_cb2, parallel, &thread_count);
     ok(thread_count == 1, "expected 1 thread, got %ld\n", thread_count);
-
-    is_parallel = pomp_in_parallel();
-    ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
-
-    p_vcomp_set_num_threads(4);
-    thread_count = 0;
-    p_vcomp_fork(TRUE, 2, num_threads_cb2, TRUE, &thread_count);
-    if (nested)
-        ok(thread_count == 4, "expected 4 threads, got %ld\n", thread_count);
-    else
-        ok(thread_count == 1, "expected 1 thread, got %ld\n", thread_count);
 
     is_parallel = pomp_in_parallel();
     ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
