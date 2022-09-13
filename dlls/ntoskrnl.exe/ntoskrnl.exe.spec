@@ -647,6 +647,7 @@
 @ stdcall KeSetSystemAffinityThread(long)
 @ stdcall KeSetSystemAffinityThreadEx(long)
 @ stdcall KeSetTargetProcessorDpc(ptr long)
+@ stdcall KeSetTargetProcessorDpcEx(ptr ptr)
 @ stub KeSetTimeIncrement
 @ stdcall KeSetTimer(ptr int64 ptr)
 @ stdcall KeSetTimerEx(ptr int64 long ptr)

@@ -3372,6 +3372,14 @@ VOID WINAPI KeSetImportanceDpc(PRKDPC dpc, KDPC_IMPORTANCE importance)
 }
 
 /***********************************************************************
+ *          KeSetTargetProcessorDpcEx   (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI KeSetTargetProcessorDpcEx(PRKDPC dpc, PPROCESSOR_NUMBER process_number)
+{
+    FIXME("%p, %p stub\n", dpc, process_number);
+}
+
+/***********************************************************************
  *          KeSetTargetProcessorDpc   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI KeSetTargetProcessorDpc(PRKDPC dpc, CCHAR number)
