@@ -248,7 +248,7 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
 
     memset(&context, 0, sizeof(context));
     context.SegDs = context.SegEs = CURRENT_SS;
-    if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
+    if (!(context.Eax = (WORD)GetWindowLongA( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
     context.SegCs = SELECTOROF(func);
     context.Eip   = OFFSETOF(func);
     context.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME, bp);

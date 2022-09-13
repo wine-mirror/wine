@@ -1101,20 +1101,10 @@ ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi )
 /* see GetWindowWord */
 static WORD get_window_word( HWND hwnd, INT offset )
 {
-    switch(offset)
+    if (offset < 0 && offset != GWLP_USERDATA)
     {
-    case GWLP_ID:
-    case GWLP_HINSTANCE:
-    case GWLP_HWNDPARENT:
-        break;
-    default:
-        if (offset < 0)
-        {
-            WARN("Invalid offset %d\n", offset );
-            RtlSetLastWin32Error( ERROR_INVALID_INDEX );
-            return 0;
-        }
-        break;
+        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
+        return 0;
     }
     return get_window_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
@@ -1354,6 +1344,7 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
             req->is_unicode = (win->flags & WIN_ISUNICODE) != 0;
             break;
         case GWLP_USERDATA:
+            if (size == sizeof(WORD)) newval = MAKELONG( newval, win->userdata >> 16 );
             req->flags = SET_WIN_USERDATA;
             req->user_data = newval;
             break;
@@ -1426,20 +1417,10 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
  */
 WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
 {
-    switch(offset)
+    if (offset < 0 && offset != GWLP_USERDATA)
     {
-    case GWLP_ID:
-    case GWLP_HINSTANCE:
-    case GWLP_HWNDPARENT:
-        break;
-    default:
-        if (offset < 0)
-        {
-            WARN("Invalid offset %d\n", offset );
-            RtlSetLastWin32Error( ERROR_INVALID_INDEX );
-            return 0;
-        }
-        break;
+        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
+        return 0;
     }
     return set_window_long( hwnd, offset, sizeof(WORD), newval, TRUE );
 }

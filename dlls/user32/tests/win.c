@@ -7090,33 +7090,25 @@ static void test_set_window_long_size(void)
     retval = GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     ok(retval > 123, "Unexpected user data.\n");
     ret = GetWindowWord(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == 123, "Unexpected user data %#lx.\n", ret);
     ret = SetWindowWord(hwnd, GWLP_USERDATA, 124);
-    todo_wine
     ok(ret == 123, "Unexpected user data %#lx.\n", ret);
     ret = GetWindowLongA(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == 124, "Unexpected user data %#lx.\n", ret);
     retval = GetWindowLongPtrA(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(retval == 124, "Unexpected user data.\n");
 
     SetWindowLongA(hwnd, GWLP_USERDATA, (1 << 16) | 123);
     ret = GetWindowLongA(hwnd, GWLP_USERDATA);
     ok(ret == ((1 << 16) | 123), "Unexpected user data %#lx.\n", ret);
     ret = GetWindowWord(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == 123, "Unexpected user data %#lx.\n", ret);
 
     ret = SetWindowWord(hwnd, GWLP_USERDATA, 124);
-    todo_wine
     ok(ret == 123, "Unexpected user data %#lx.\n", ret);
     ret = GetWindowLongA(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == ((1 << 16) | 124), "Unexpected user data %#lx.\n", ret);
     ret = GetWindowWord(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == 124, "Unexpected user data %#lx.\n", ret);
 
     /* GWLP_ID */
@@ -7138,7 +7130,6 @@ static void test_set_window_long_size(void)
     ok(retval > 123, "Unexpected id.\n");
     SetLastError(0xdeadbeef);
     ret = GetWindowWord(hwnd, GWLP_ID);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected id %#lx.\n", ret);
 
     /* GWLP_HINSTANCE */
@@ -7155,7 +7146,6 @@ static void test_set_window_long_size(void)
 
     SetLastError(0xdeadbeef);
     ret = GetWindowWord(hwnd, GWLP_HINSTANCE);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#lx.\n", ret);
 
     SetLastError(0xdeadbeef);
@@ -7181,7 +7171,6 @@ static void test_set_window_long_size(void)
 
     SetLastError(0xdeadbeef);
     ret = GetWindowWord(hwnd, GWLP_HWNDPARENT);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#lx.\n", ret);
 
     DestroyWindow(hwnd);
@@ -7221,16 +7210,12 @@ static void test_set_window_word_size(void)
     ret = GetWindowLongA(hwnd, GWLP_USERDATA);
     ok(ret > 123, "Unexpected user data %#lx.\n", ret);
     ret = GetWindowWord(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == 123, "Unexpected user data %#lx.\n", ret);
     ret = SetWindowWord(hwnd, GWLP_USERDATA, 124);
-    todo_wine
     ok(ret == 123, "Unexpected user data %#lx.\n", ret);
     ret = GetWindowWord(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == 124, "Unexpected user data %#lx.\n", ret);
     ret = GetWindowLongA(hwnd, GWLP_USERDATA);
-    todo_wine
     ok(ret == ((1 << 16) | 124), "Unexpected user data %#lx.\n", ret);
 
     /* GWLP_ID */
@@ -7241,11 +7226,9 @@ static void test_set_window_word_size(void)
 
     SetLastError(0xdeadbeef);
     ret = GetWindowWord(hwnd, GWLP_ID);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected id %#lx.\n", ret);
     SetLastError(0xdeadbeef);
     ret = SetWindowWord(hwnd, GWLP_ID, 2);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected id %#lx.\n", ret);
 
     /* GWLP_HINSTANCE */
@@ -7254,12 +7237,10 @@ static void test_set_window_word_size(void)
 
     SetLastError(0xdeadbeef);
     ret = GetWindowWord(hwnd, GWLP_HINSTANCE);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#lx.\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = SetWindowWord(hwnd, GWLP_HINSTANCE, 0xdead);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#lx.\n", ret);
 
     /* GWLP_HWNDPARENT */
@@ -7268,7 +7249,6 @@ static void test_set_window_word_size(void)
 
     SetLastError(0xdeadbeef);
     ret = GetWindowWord(hwnd, GWLP_HWNDPARENT);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#lx.\n", ret);
 
     DestroyWindow(hwnd);

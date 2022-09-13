@@ -838,7 +838,15 @@ LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
  */
 WORD WINAPI GetWindowWord16( HWND16 hwnd, INT16 offset )
 {
-    return GetWindowWord( WIN_Handle32(hwnd), offset );
+    switch(offset)
+    {
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        return GetWindowLongA( WIN_Handle32(hwnd), offset );
+    default:
+        return GetWindowWord( WIN_Handle32(hwnd), offset );
+    }
 }
 
 
@@ -847,7 +855,15 @@ WORD WINAPI GetWindowWord16( HWND16 hwnd, INT16 offset )
  */
 WORD WINAPI SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
 {
-    return SetWindowWord( WIN_Handle32(hwnd), offset, newval );
+    switch(offset)
+    {
+    case GWLP_ID:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        return SetWindowLongA( WIN_Handle32(hwnd), offset, newval );
+    default:
+        return SetWindowWord( WIN_Handle32(hwnd), offset, newval );
+    }
 }
 
 
