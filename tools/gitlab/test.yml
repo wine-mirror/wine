@@ -49,7 +49,7 @@ debian-32:
   needs:
     - job: build-daily-linux
   script:
-    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -m $CI_JOB_URL
+    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
 
 debian-64:
   extends: .wine-test
@@ -58,4 +58,4 @@ debian-64:
   needs:
     - job: build-daily-linux
   script:
-    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -m $CI_JOB_URL
+    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL

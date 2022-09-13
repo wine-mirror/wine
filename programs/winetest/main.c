@@ -507,7 +507,8 @@ static void print_version (void)
             xprintf(", %s", is_elevated ? "elevated" : "not elevated");
         xprintf ("\n");
     }
-    xprintf ("    Submitter=%s\n", email );
+    if (email)
+        xprintf ("    Submitter=%s\n", email );
     if (description)
         xprintf ("    Description=%s\n", description );
     if (url)
@@ -1502,8 +1503,11 @@ int __cdecl main( int argc, char *argv[] )
 
         while (!email) {
             if (!interactive)
+            {
+                if (url) break;
                 report (R_FATAL, "Please specify an email address (-m option) to enable developers\n"
                         "    to contact you about your report if necessary.");
+            }
             if (guiAskEmail () == IDABORT) exit (1);
         }
 
