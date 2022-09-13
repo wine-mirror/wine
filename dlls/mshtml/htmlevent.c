@@ -191,6 +191,10 @@ static const event_info_t event_info[] = {
         EVENT_FIXME},
     {L"selectstart",       EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSELECTSTART,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {L"storage",           EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSTORAGE,
+        0},
+    {L"storagecommit",     EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSTORAGECOMMIT,
+        0},
     {L"submit",            EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSUBMIT,
         EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"timeout",           EVENT_TYPE_PROGRESS,  DISPID_EVPROP_TIMEOUT,
@@ -2606,6 +2610,164 @@ static void DOMProgressEvent_destroy(DOMEvent *event)
     nsIDOMProgressEvent_Release(This->nsevent);
 }
 
+typedef struct {
+    DOMEvent event;
+    IDOMStorageEvent IDOMStorageEvent_iface;
+    BSTR key;
+    BSTR old_value;
+    BSTR new_value;
+} DOMStorageEvent;
+
+static inline DOMStorageEvent *impl_from_IDOMStorageEvent(IDOMStorageEvent *iface)
+{
+    return CONTAINING_RECORD(iface, DOMStorageEvent, IDOMStorageEvent_iface);
+}
+
+static HRESULT WINAPI DOMStorageEvent_QueryInterface(IDOMStorageEvent *iface, REFIID riid, void **ppv)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDOMEvent_QueryInterface(&This->event.IDOMEvent_iface, riid, ppv);
+}
+
+static ULONG WINAPI DOMStorageEvent_AddRef(IDOMStorageEvent *iface)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDOMEvent_AddRef(&This->event.IDOMEvent_iface);
+}
+
+static ULONG WINAPI DOMStorageEvent_Release(IDOMStorageEvent *iface)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDOMEvent_Release(&This->event.IDOMEvent_iface);
+}
+
+static HRESULT WINAPI DOMStorageEvent_GetTypeInfoCount(IDOMStorageEvent *iface, UINT *pctinfo)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->event.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DOMStorageEvent_GetTypeInfo(IDOMStorageEvent *iface, UINT iTInfo,
+                                                   LCID lcid, ITypeInfo **ppTInfo)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->event.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DOMStorageEvent_GetIDsOfNames(IDOMStorageEvent *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->event.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI DOMStorageEvent_Invoke(IDOMStorageEvent *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    return IDispatchEx_Invoke(&This->event.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DOMStorageEvent_get_key(IDOMStorageEvent *iface, BSTR *p)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->key)
+        return (*p = SysAllocStringLen(This->key, SysStringLen(This->key))) ? S_OK : E_OUTOFMEMORY;
+    *p = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI DOMStorageEvent_get_oldValue(IDOMStorageEvent *iface, BSTR *p)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->old_value)
+        return (*p = SysAllocStringLen(This->old_value, SysStringLen(This->old_value))) ? S_OK : E_OUTOFMEMORY;
+    *p = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI DOMStorageEvent_get_newValue(IDOMStorageEvent *iface, BSTR *p)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->new_value)
+        return (*p = SysAllocStringLen(This->new_value, SysStringLen(This->new_value))) ? S_OK : E_OUTOFMEMORY;
+    *p = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI DOMStorageEvent_get_url(IDOMStorageEvent *iface, BSTR *p)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMStorageEvent_get_storageArea(IDOMStorageEvent *iface, IHTMLStorage **p)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMStorageEvent_initStorageEvent(IDOMStorageEvent *iface, BSTR type, VARIANT_BOOL can_bubble,
+                                                       VARIANT_BOOL cancelable, BSTR keyArg, BSTR oldValueArg,
+                                                       BSTR newValueArg, BSTR urlArg, IHTMLStorage *storageAreaArg)
+{
+    DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
+    FIXME("(%p)->(%s %x %x %s %s %s %s %p)\n", This, debugstr_w(type), can_bubble, cancelable,
+          debugstr_w(keyArg), debugstr_w(oldValueArg), debugstr_w(newValueArg), debugstr_w(urlArg), storageAreaArg);
+    return E_NOTIMPL;
+}
+
+static const IDOMStorageEventVtbl DOMStorageEventVtbl = {
+    DOMStorageEvent_QueryInterface,
+    DOMStorageEvent_AddRef,
+    DOMStorageEvent_Release,
+    DOMStorageEvent_GetTypeInfoCount,
+    DOMStorageEvent_GetTypeInfo,
+    DOMStorageEvent_GetIDsOfNames,
+    DOMStorageEvent_Invoke,
+    DOMStorageEvent_get_key,
+    DOMStorageEvent_get_oldValue,
+    DOMStorageEvent_get_newValue,
+    DOMStorageEvent_get_url,
+    DOMStorageEvent_get_storageArea,
+    DOMStorageEvent_initStorageEvent
+};
+
+static DOMStorageEvent *DOMStorageEvent_from_DOMEvent(DOMEvent *event)
+{
+    return CONTAINING_RECORD(event, DOMStorageEvent, event);
+}
+
+static void *DOMStorageEvent_query_interface(DOMEvent *event, REFIID riid)
+{
+    DOMStorageEvent *storage_event = DOMStorageEvent_from_DOMEvent(event);
+    if(IsEqualGUID(&IID_IDOMStorageEvent, riid))
+        return &storage_event->IDOMStorageEvent_iface;
+    return NULL;
+}
+
+static void DOMStorageEvent_destroy(DOMEvent *event)
+{
+    DOMStorageEvent *storage_event = DOMStorageEvent_from_DOMEvent(event);
+    SysFreeString(storage_event->key);
+    SysFreeString(storage_event->old_value);
+    SysFreeString(storage_event->new_value);
+}
+
 static const tid_t DOMEvent_iface_tids[] = {
     IDOMEvent_tid,
     0
@@ -2696,6 +2858,19 @@ dispex_static_data_t DOMProgressEvent_dispex = {
     NULL,
     DispDOMProgressEvent_tid,
     DOMProgressEvent_iface_tids
+};
+
+static const tid_t DOMStorageEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    IDOMStorageEvent_tid,
+    0
+};
+
+dispex_static_data_t DOMStorageEvent_dispex = {
+    L"StorageEvent",
+    NULL,
+    DispDOMStorageEvent_tid,
+    DOMStorageEvent_iface_tids
 };
 
 static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *(*query_interface)(DOMEvent*,REFIID),
@@ -2799,6 +2974,15 @@ static DOMEvent *message_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, co
     return &message_event->event;
 }
 
+static DOMEvent *storage_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+{
+    DOMStorageEvent *storage_event = event_ctor(sizeof(DOMStorageEvent), &DOMStorageEvent_dispex,
+            DOMStorageEvent_query_interface, DOMStorageEvent_destroy, nsevent, event_id, compat_mode);
+    if(!storage_event) return NULL;
+    storage_event->IDOMStorageEvent_iface.lpVtbl = &DOMStorageEventVtbl;
+    return &storage_event->event;
+}
+
 static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, eventid_t event_id)
 {
     static const struct {
@@ -2814,8 +2998,12 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
     DOMEvent *event;
     unsigned i;
 
-    if(event_id == EVENTID_MESSAGE)
-        return message_event_ctor(nsevent, event_id, compat_mode);
+    switch(event_id) {
+    case EVENTID_MESSAGE: return message_event_ctor(nsevent, event_id, compat_mode);
+    case EVENTID_STORAGECOMMIT:
+    case EVENTID_STORAGE: return storage_event_ctor(nsevent, event_id, compat_mode);
+    default: break;
+    }
 
     for(i = 0; i < ARRAY_SIZE(types_table); i++) {
         void *iface;
@@ -2925,6 +3113,31 @@ HRESULT create_message_event(HTMLDocumentNode *doc, VARIANT *data, DOMEvent **re
     if(FAILED(hres)) {
         IDOMEvent_Release(&event->IDOMEvent_iface);
         return hres;
+    }
+
+    *ret = event;
+    return S_OK;
+}
+
+HRESULT create_storage_event(HTMLDocumentNode *doc, BSTR key, BSTR old_value, BSTR new_value,
+        BOOL commit, DOMEvent **ret)
+{
+    DOMStorageEvent *storage_event;
+    DOMEvent *event;
+    HRESULT hres;
+
+    hres = create_document_event(doc, commit ? EVENTID_STORAGECOMMIT : EVENTID_STORAGE, &event);
+    if(FAILED(hres))
+        return hres;
+    storage_event = DOMStorageEvent_from_DOMEvent(event);
+
+    if(!commit) {
+        if((key       && !(storage_event->key =       SysAllocString(key))) ||
+           (old_value && !(storage_event->old_value = SysAllocString(old_value))) ||
+           (new_value && !(storage_event->new_value = SysAllocString(new_value)))) {
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+            return E_OUTOFMEMORY;
+        }
     }
 
     *ret = event;

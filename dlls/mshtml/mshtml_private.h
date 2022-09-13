@@ -91,6 +91,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispDOMMessageEvent) \
     XDIID(DispDOMMouseEvent) \
     XDIID(DispDOMProgressEvent) \
+    XDIID(DispDOMStorageEvent) \
     XDIID(DispDOMUIEvent) \
     XDIID(DispDOMDocumentType) \
     XDIID(DispHTMLAnchorElement) \
@@ -154,6 +155,7 @@ typedef struct EventTarget EventTarget;
     XIID(IDOMMessageEvent) \
     XIID(IDOMMouseEvent) \
     XIID(IDOMProgressEvent) \
+    XIID(IDOMStorageEvent) \
     XIID(IDOMUIEvent) \
     XIID(IDOMDocumentType) \
     XIID(IDocumentEvent) \
@@ -956,6 +958,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode*,IHTMLDOMImplementation**) DE
 void detach_dom_implementation(IHTMLDOMImplementation*) DECLSPEC_HIDDEN;
 
 HRESULT create_html_storage(HTMLInnerWindow*,BOOL,IHTMLStorage**) DECLSPEC_HIDDEN;
+void detach_html_storage(IHTMLStorage*) DECLSPEC_HIDDEN;
 
 void HTMLDocument_Persist_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleCmd_Init(HTMLDocument*) DECLSPEC_HIDDEN;

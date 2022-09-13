@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -41,6 +42,7 @@ typedef struct {
     LONG ref;
     unsigned num_props;
     BSTR *props;
+    HTMLInnerWindow *window;
     struct session_map_entry *session_storage;
     WCHAR *filename;
     HANDLE mutex;
@@ -193,6 +195,65 @@ static void release_props(HTMLStorage *This)
 static inline HTMLStorage *impl_from_IHTMLStorage(IHTMLStorage *iface)
 {
     return CONTAINING_RECORD(iface, HTMLStorage, IHTMLStorage_iface);
+}
+
+struct storage_event_task {
+    task_t header;
+    HTMLInnerWindow *window;
+    DOMEvent *event;
+};
+
+static void storage_event_proc(task_t *_task)
+{
+    struct storage_event_task *task = (struct storage_event_task*)_task;
+    HTMLInnerWindow *window = task->window;
+    DOMEvent *event = task->event;
+    VARIANT_BOOL cancelled;
+
+    if(event->event_id == EVENTID_STORAGE && dispex_compat_mode(&window->event_target.dispex) >= COMPAT_MODE_IE9) {
+        dispatch_event(&window->event_target, event);
+        if(window->doc)
+            fire_event(&window->doc->node, L"onstorage", NULL, &cancelled);
+    }else if(window->doc) {
+        dispatch_event(&window->doc->node.event_target, event);
+    }
+}
+
+static void storage_event_destr(task_t *_task)
+{
+    struct storage_event_task *task = (struct storage_event_task*)_task;
+    IDOMEvent_Release(&task->event->IDOMEvent_iface);
+    IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
+}
+
+/* Takes ownership of old_value */
+static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value, BSTR new_value)
+{
+    HTMLInnerWindow *window = storage->window;
+    BOOL local = !!storage->filename;
+    struct storage_event_task *task;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(!window) {
+        SysFreeString(old_value);
+        return S_OK;
+    }
+
+    hres = create_storage_event(window->doc, key, old_value, new_value, local, &event);
+    SysFreeString(old_value);
+    if(FAILED(hres))
+        return hres;
+
+    if(!(task = heap_alloc(sizeof(*task)))) {
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    task->event = event;
+    task->window = window;
+    IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
+    return push_task(&task->header, storage_event_proc, storage_event_destr, window->task_magic);
 }
 
 static HRESULT WINAPI HTMLStorage_QueryInterface(IHTMLStorage *iface, REFIID riid, void **ppv)
@@ -817,8 +878,9 @@ static HRESULT WINAPI HTMLStorage_clear(IHTMLStorage *iface)
     HRESULT hres = S_OK;
 
     if(!This->filename) {
+        UINT num_keys = This->session_storage->num_keys;
         clear_session_storage(This->session_storage);
-        return S_OK;
+        return num_keys ? send_storage_event(This, NULL, NULL, NULL) : S_OK;
     }
 
     WaitForSingleObject(This->mutex, INFINITE);
@@ -828,6 +890,8 @@ static HRESULT WINAPI HTMLStorage_clear(IHTMLStorage *iface)
             hres = HRESULT_FROM_WIN32(error);
     }
     ReleaseMutex(This->mutex);
+    if(hres == S_OK)
+        hres = send_storage_event(This, NULL, NULL, NULL);
     return hres;
 }
 
@@ -1266,9 +1330,17 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
 
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->ref = 1;
+    storage->window = window;
+
     init_dispatch(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex,
                   dispex_compat_mode(&window->event_target.dispex));
 
     *p = &storage->IHTMLStorage_iface;
     return S_OK;
+}
+
+void detach_html_storage(IHTMLStorage *iface)
+{
+    HTMLStorage *storage = impl_from_IHTMLStorage(iface);
+    storage->window = NULL;
 }

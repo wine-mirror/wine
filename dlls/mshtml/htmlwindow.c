@@ -299,10 +299,14 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     if(This->navigator)
         IOmNavigator_Release(This->navigator);
-    if(This->session_storage)
+    if(This->session_storage) {
+        detach_html_storage(This->session_storage);
         IHTMLStorage_Release(This->session_storage);
-    if(This->local_storage)
+    }
+    if(This->local_storage) {
+        detach_html_storage(This->local_storage);
         IHTMLStorage_Release(This->local_storage);
+    }
 
     if(This->mon)
         IMoniker_Release(This->mon);
@@ -2613,7 +2617,7 @@ HTMLWINDOW7_ONEVENT_PROPERTY_STUB(seeked)
 HTMLWINDOW7_ONEVENT_PROPERTY_STUB(seeking)
 HTMLWINDOW7_ONEVENT_PROPERTY_STUB(select)
 HTMLWINDOW7_ONEVENT_PROPERTY_STUB(stalled)
-HTMLWINDOW7_ONEVENT_PROPERTY_STUB(storage)
+HTMLWINDOW7_ONEVENT_PROPERTY_IMPL(storage,          EVENTID_STORAGE)
 HTMLWINDOW7_ONEVENT_PROPERTY_IMPL(submit,           EVENTID_SUBMIT)
 HTMLWINDOW7_ONEVENT_PROPERTY_STUB(suspend)
 HTMLWINDOW7_ONEVENT_PROPERTY_STUB(timeupdate)
