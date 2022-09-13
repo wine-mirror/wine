@@ -28,9 +28,12 @@
 
 #include "wine/test.h"
 
+#include "initguid.h"
+
 #define DEFINE_FUNCTION(name) static typeof(name) *p##name;
 DEFINE_FUNCTION(PerfCloseQueryHandle);
 DEFINE_FUNCTION(PerfOpenQueryHandle);
+DEFINE_FUNCTION(PerfAddCounters);
 #undef DEFINE_FUNCTION
 
 static void init_functions(void)
@@ -40,6 +43,7 @@ static void init_functions(void)
 #define GET_FUNCTION(name) p##name = (void *)GetProcAddress(hadvapi, #name)
     GET_FUNCTION(PerfCloseQueryHandle);
     GET_FUNCTION(PerfOpenQueryHandle);
+    GET_FUNCTION(PerfAddCounters);
 #undef GET_FUNCTION
 }
 
@@ -203,8 +207,12 @@ void test_provider_init(void)
     ok(!ret, "Got unexpected ret %lu.\n", ret);
 }
 
+DEFINE_GUID(TestCounterGUID, 0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
+
 static void test_perf_counters(void)
 {
+    char buffer[sizeof(PERF_COUNTER_IDENTIFIER) + 8];
+    PERF_COUNTER_IDENTIFIER *counter_id;
     HANDLE query;
     ULONG ret;
 
@@ -218,6 +226,23 @@ static void test_perf_counters(void)
     ok(ret == ERROR_INVALID_PARAMETER, "got ret %lu.\n", ret);
     ret = pPerfOpenQueryHandle(NULL, &query);
     ok(!ret, "got ret %lu.\n", ret);
+
+    counter_id = (PERF_COUNTER_IDENTIFIER *)buffer;
+    memset(buffer, 0, sizeof(buffer));
+
+    counter_id->CounterSetGuid = TestCounterGUID;
+    counter_id->CounterId = PERF_WILDCARD_COUNTER;
+    counter_id->InstanceId = PERF_WILDCARD_COUNTER;
+
+    ret = pPerfAddCounters(query, counter_id, sizeof(*counter_id));
+    ok(ret == ERROR_INVALID_PARAMETER, "got ret %lu.\n", ret);
+
+    counter_id->Size = sizeof(*counter_id);
+    ret = pPerfAddCounters(query, counter_id, 8);
+    ok(ret == ERROR_INVALID_PARAMETER, "got ret %lu.\n", ret);
+    ret = pPerfAddCounters(query, counter_id, sizeof(*counter_id));
+    ok(!ret, "got ret %lu.\n", ret);
+    ok(counter_id->Status == ERROR_WMI_GUID_NOT_FOUND, "got Status %#lx.\n", counter_id->Status);
 
     ret = pPerfCloseQueryHandle(query);
     ok(!ret, "got ret %lu.\n", ret);

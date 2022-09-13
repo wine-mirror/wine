@@ -331,3 +331,13 @@ ULONG WINAPI PerfOpenQueryHandle( const WCHAR *machine, HANDLE *query )
 
     return ERROR_SUCCESS;
 }
+
+ULONG WINAPI PerfAddCounters( HANDLE query, PERF_COUNTER_IDENTIFIER *id, DWORD size )
+{
+    FIXME( "query %p, id %p, size %lu stub.\n", query, id, size );
+
+    if (!id || size < sizeof(*id) || id->Size < sizeof(*id)) return ERROR_INVALID_PARAMETER;
+
+    id->Status = ERROR_WMI_GUID_NOT_FOUND;
+    return ERROR_SUCCESS;
+}

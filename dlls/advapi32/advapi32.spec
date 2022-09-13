@@ -553,7 +553,7 @@
 @ stdcall -ret64 -import OpenTraceW(ptr)
 # @ stub OperationEnd
 # @ stub OperationStart
-# @ stub PerfAddCounters
+@ stdcall PerfAddCounters(long ptr long)
 @ stdcall PerfCloseQueryHandle(long)
 @ stdcall -import PerfCreateInstance(long ptr wstr long)
 # @ stub PerfDecrementULongCounterValue
