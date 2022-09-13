@@ -2790,6 +2790,15 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
     return &progress_event->event;
 }
 
+static DOMEvent *message_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+{
+    DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex,
+            DOMMessageEvent_query_interface, DOMMessageEvent_destroy, nsevent, event_id, compat_mode);
+    if(!message_event) return NULL;
+    message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;
+    return &message_event->event;
+}
+
 static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, eventid_t event_id)
 {
     static const struct {
@@ -2805,14 +2814,8 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
     DOMEvent *event;
     unsigned i;
 
-    if(event_id == EVENTID_MESSAGE) {
-        DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex,
-                DOMMessageEvent_query_interface, DOMMessageEvent_destroy, nsevent, event_id, compat_mode);
-        if(!message_event)
-            return NULL;
-        message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;
-        return &message_event->event;
-    }
+    if(event_id == EVENTID_MESSAGE)
+        return message_event_ctor(nsevent, event_id, compat_mode);
 
     for(i = 0; i < ARRAY_SIZE(types_table); i++) {
         void *iface;
