@@ -702,7 +702,7 @@ static HRESULT save_document(IXMLDOMDocument *doc, const WCHAR *filename)
     return hres;
 }
 
-static HRESULT set_item(const WCHAR *filename, BSTR key, BSTR value)
+static HRESULT set_item(const WCHAR *filename, BSTR key, BSTR value, BSTR *old_value)
 {
     IXMLDOMDocument *doc;
     IXMLDOMNode *root = NULL, *node = NULL;
@@ -710,6 +710,7 @@ static HRESULT set_item(const WCHAR *filename, BSTR key, BSTR value)
     BSTR query = NULL;
     HRESULT hres;
 
+    *old_value = NULL;
     hres = open_document(filename, &doc);
     if(hres != S_OK)
         return hres;
@@ -726,9 +727,19 @@ static HRESULT set_item(const WCHAR *filename, BSTR key, BSTR value)
 
     hres = IXMLDOMNode_selectSingleNode(root, query, &node);
     if(hres == S_OK) {
+        VARIANT old;
+
         hres = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
         if(hres != S_OK)
             goto done;
+
+        hres = IXMLDOMElement_getAttribute(elem, (BSTR)L"value", &old);
+        if(hres == S_OK) {
+            if(V_VT(&old) == VT_BSTR)
+                *old_value = V_BSTR(&old);
+            else
+                VariantClear(&old);
+        }
 
         hres = set_attribute(elem, L"value", value);
         if(hres != S_OK)
@@ -764,6 +775,8 @@ done:
     if(elem)
         IXMLDOMElement_Release(elem);
     IXMLDOMDocument_Release(doc);
+    if(hres != S_OK)
+        SysFreeString(*old_value);
     return hres;
 }
 
@@ -771,6 +784,7 @@ static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BST
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
     struct session_entry *session_entry;
+    BSTR old_value;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(bstrKey), debugstr_w(bstrValue));
@@ -791,16 +805,20 @@ static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BST
                 return E_OUTOFMEMORY;  /* native returns this when quota is exceeded */
             }
             This->session_storage->quota -= value_len - old_len;
-            SysFreeString(session_entry->value);
+            old_value = session_entry->value;
             session_entry->value = value;
+
+            hres = send_storage_event(This, bstrKey, old_value, value);
         }
         return hres;
     }
 
     WaitForSingleObject(This->mutex, INFINITE);
-    hres = set_item(This->filename, bstrKey, bstrValue);
+    hres = set_item(This->filename, bstrKey, bstrValue, &old_value);
     ReleaseMutex(This->mutex);
 
+    if(hres == S_OK)
+        hres = send_storage_event(This, bstrKey, old_value, bstrValue);
     return hres;
 }
 
