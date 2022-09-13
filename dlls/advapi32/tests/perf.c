@@ -25,6 +25,7 @@
 #include "winerror.h"
 #include "perflib.h"
 #include "winperf.h"
+#include "winternl.h"
 
 #include "wine/test.h"
 
@@ -34,6 +35,7 @@
 DEFINE_FUNCTION(PerfCloseQueryHandle);
 DEFINE_FUNCTION(PerfOpenQueryHandle);
 DEFINE_FUNCTION(PerfAddCounters);
+DEFINE_FUNCTION(PerfQueryCounterData);
 #undef DEFINE_FUNCTION
 
 static void init_functions(void)
@@ -44,6 +46,7 @@ static void init_functions(void)
     GET_FUNCTION(PerfCloseQueryHandle);
     GET_FUNCTION(PerfOpenQueryHandle);
     GET_FUNCTION(PerfAddCounters);
+    GET_FUNCTION(PerfQueryCounterData);
 #undef GET_FUNCTION
 }
 
@@ -209,11 +212,19 @@ void test_provider_init(void)
 
 DEFINE_GUID(TestCounterGUID, 0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
 
+static ULONG64 trunc_nttime_ms(ULONG64 t)
+{
+    return (t / 10000) * 10000;
+}
+
 static void test_perf_counters(void)
 {
+    LARGE_INTEGER freq, qpc1, qpc2, nttime1, nttime2, systime;
     char buffer[sizeof(PERF_COUNTER_IDENTIFIER) + 8];
     PERF_COUNTER_IDENTIFIER *counter_id;
+    PERF_DATA_HEADER dh;
     HANDLE query;
+    DWORD size;
     ULONG ret;
 
     if (!pPerfOpenQueryHandle)
@@ -243,6 +254,41 @@ static void test_perf_counters(void)
     ret = pPerfAddCounters(query, counter_id, sizeof(*counter_id));
     ok(!ret, "got ret %lu.\n", ret);
     ok(counter_id->Status == ERROR_WMI_GUID_NOT_FOUND, "got Status %#lx.\n", counter_id->Status);
+
+    ret = pPerfQueryCounterData(query, NULL, 0, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got ret %lu.\n", ret);
+
+    size = 0xdeadbeef;
+    ret = pPerfQueryCounterData(query, NULL, 0, &size);
+    ok(ret == ERROR_NOT_ENOUGH_MEMORY, "got ret %lu.\n", ret);
+    ok(size == sizeof(dh), "got size %lu.\n", size);
+
+    ret = pPerfQueryCounterData(query, &dh, sizeof(dh), NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got ret %lu.\n", ret);
+
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&qpc1);
+    NtQuerySystemTime(&nttime1);
+
+    size = 0xdeadbeef;
+    ret = pPerfQueryCounterData(query, &dh, sizeof(dh), &size);
+    QueryPerformanceCounter(&qpc2);
+    NtQuerySystemTime(&nttime2);
+    SystemTimeToFileTime(&dh.SystemTime, (FILETIME *)&systime);
+    ok(!ret, "got ret %lu.\n", ret);
+    ok(size == sizeof(dh), "got size %lu.\n", size);
+    ok(dh.dwTotalSize == sizeof(dh), "got dwTotalSize %lu.\n", dh.dwTotalSize);
+    ok(!dh.dwNumCounters, "got dwNumCounters %lu.\n", dh.dwNumCounters);
+    ok(dh.PerfFreq == freq.QuadPart, "got PerfFreq %I64u.\n", dh.PerfFreq);
+    ok(dh.PerfTimeStamp >= qpc1.QuadPart && dh.PerfTimeStamp <= qpc2.QuadPart,
+            "got PerfTimeStamp %I64u, qpc1 %I64u, qpc2 %I64u.\n",
+            dh.PerfTimeStamp, qpc1.QuadPart, qpc2.QuadPart);
+    ok(dh.PerfTime100NSec >= nttime1.QuadPart && dh.PerfTime100NSec <= nttime2.QuadPart,
+            "got PerfTime100NSec %I64u, nttime1 %I64u, nttime2 %I64u.\n",
+            dh.PerfTime100NSec, nttime1.QuadPart, nttime2.QuadPart);
+    ok(systime.QuadPart >= trunc_nttime_ms(nttime1.QuadPart) && systime.QuadPart <= trunc_nttime_ms(nttime2.QuadPart),
+            "got systime %I64u, nttime1 %I64u, nttime2 %I64u, %d.\n",
+            systime.QuadPart, nttime1.QuadPart, nttime2.QuadPart, dh.SystemTime.wMilliseconds);
 
     ret = pPerfCloseQueryHandle(query);
     ok(!ret, "got ret %lu.\n", ret);

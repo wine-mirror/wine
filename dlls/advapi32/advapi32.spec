@@ -565,7 +565,7 @@
 # @ stub PerfIncrementULongCounterValue
 # @ stub PerfIncrementULongLongCounterValue
 @ stdcall PerfOpenQueryHandle(wstr ptr)
-# @ stub PerfQueryCounterData
+@ stdcall PerfQueryCounterData(long ptr long ptr)
 # @ stub PerfQueryCounterInfo
 # @ stub PerfQueryCounterSetRegistrationInfo
 # @ stub PerfQueryInstance

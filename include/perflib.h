@@ -94,6 +94,15 @@ typedef struct _PERF_COUNTER_IDENTIFIER {
 #define PERF_WILDCARD_COUNTER  0xFFFFFFFF
 #define PERF_WILDCARD_INSTANCE L"*"
 
+typedef struct _PERF_DATA_HEADER {
+    ULONG dwTotalSize;
+    ULONG dwNumCounters;
+    LONGLONG PerfTimeStamp;
+    LONGLONG PerfTime100NSec;
+    LONGLONG PerfFreq;
+    SYSTEMTIME SystemTime;
+} PERF_DATA_HEADER, *PPERF_DATA_HEADER;
+
 PERF_COUNTERSET_INSTANCE WINAPI *PerfCreateInstance(HANDLE, const GUID *, const WCHAR *, ULONG);
 ULONG WINAPI PerfDeleteInstance(HANDLE, PERF_COUNTERSET_INSTANCE *);
 ULONG WINAPI PerfSetCounterRefValue(HANDLE, PERF_COUNTERSET_INSTANCE *, ULONG, void *);
@@ -105,6 +114,7 @@ ULONG WINAPI PerfStopProvider(HANDLE);
 ULONG WINAPI PerfAddCounters(HANDLE, PERF_COUNTER_IDENTIFIER *, DWORD);
 ULONG WINAPI PerfCloseQueryHandle(HANDLE);
 ULONG WINAPI PerfOpenQueryHandle(const WCHAR *, HANDLE *);
+ULONG WINAPI PerfQueryCounterData(HANDLE, PERF_DATA_HEADER *, DWORD, DWORD *);
 
 #ifdef __cplusplus
 }       /* extern "C" */
