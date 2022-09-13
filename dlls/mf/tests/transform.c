@@ -116,120 +116,121 @@ void check_attributes_(int line, IMFAttributes *attributes, const struct attribu
     }
 }
 
-static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
-        MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name, const GUID *expect_major_type,
-        const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count,
-        IMFTransform **transform, const GUID *expect_class_id, GUID *class_id)
+struct transform_info
 {
-    MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
-    UINT32 input_count = 0, output_count = 0, count = 0, i;
+    const WCHAR *name;
+    const GUID *major_type;
+    struct
+    {
+        const GUID *subtype;
+    } inputs[32], input_end, outputs[32], output_end;
+};
+
+static BOOL check_mft_enum(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
+        MFT_REGISTER_TYPE_INFO *output_type, const GUID *expect_class_id)
+{
     GUID *class_ids = NULL;
-    WCHAR *name;
+    UINT32 count = 0, i;
     HRESULT hr;
 
     hr = MFTEnum(category, 0, input_type, output_type, NULL, &class_ids, &count);
     if (FAILED(hr) || count == 0)
     {
         todo_wine
-        win_skip("Failed to enumerate %s, skipping tests.\n", debugstr_w(expect_name));
+        win_skip("MFTEnum returned %#lx, count %u, skipping tests.\n", hr, count);
         return FALSE;
     }
 
-    ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
+    ok(hr == S_OK, "MFTEnum returned %#lx\n", hr);
     for (i = 0; i < count; ++i)
-    {
         if (IsEqualGUID(expect_class_id, class_ids + i))
             break;
-    }
-    ok(i < count, "failed to find %s transform\n", debugstr_w(expect_name));
-    *class_id = class_ids[i];
+    ok(i < count, "Failed to find transform.\n");
     CoTaskMemFree(class_ids);
-    ok(IsEqualGUID(class_id, expect_class_id), "got class id %s\n", debugstr_guid(class_id));
 
-    hr = MFTGetInfo(*class_id, &name, &input_types, &input_count, &output_types, &output_count, NULL);
-    if (FAILED(hr))
-    {
-        todo_wine
-        win_skip("Failed to get %s info, skipping tests.\n", debugstr_w(expect_name));
-    }
-    else
-    {
-        ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
-        ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
-        ok(input_count == expect_input_count, "got input_count %u\n", input_count);
-        for (i = 0; i < input_count; ++i)
-        {
-            ok(IsEqualGUID(&input_types[i].guidMajorType, expect_major_type),
-                    "got input[%u] major %s\n", i, debugstr_guid(&input_types[i].guidMajorType));
-            ok(IsEqualGUID(&input_types[i].guidSubtype, expect_input + i),
-                    "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
-        }
-        ok(output_count == expect_output_count, "got output_count %u\n", output_count);
-        for (i = 0; i < output_count; ++i)
-        {
-            ok(IsEqualGUID(&output_types[i].guidMajorType, expect_major_type),
-                    "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
-            ok(IsEqualGUID(&output_types[i].guidSubtype, expect_output + i),
-                    "got output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
-        }
-        CoTaskMemFree(output_types);
-        CoTaskMemFree(input_types);
-        CoTaskMemFree(name);
-    }
-
-    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)transform);
-    if (FAILED(hr))
-    {
-        todo_wine
-        win_skip("Failed to create %s instance, skipping tests.\n", debugstr_w(expect_name));
-        return FALSE;
-    }
-
-    return TRUE;
+    return i < count;
 }
 
-static void check_dmo(const GUID *class_id, const WCHAR *expect_name, const GUID *expect_major_type,
-        const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count)
+static void check_mft_get_info(const GUID *class_id, const struct transform_info *expect)
 {
-    ULONG i, input_count = 0, output_count = 0;
+    MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
+    UINT32 input_count = 0, output_count = 0, i;
+    WCHAR *name;
+    HRESULT hr;
+
+    hr = MFTGetInfo(*class_id, &name, &input_types, &input_count, &output_types, &output_count, NULL);
+    ok(hr == S_OK, "MFTEnum returned %#lx\n", hr);
+    ok(!wcscmp(name, expect->name), "got name %s\n", debugstr_w(name));
+
+    for (i = 0; i < input_count && expect->inputs[i].subtype; ++i)
+    {
+        ok(IsEqualGUID(&input_types[i].guidMajorType, expect->major_type),
+                "got input[%u] major %s\n", i, debugstr_guid(&input_types[i].guidMajorType));
+        ok(IsEqualGUID(&input_types[i].guidSubtype, expect->inputs[i].subtype),
+                "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
+    }
+    for (; expect->inputs[i].subtype; ++i)
+        ok(0, "missing input[%u] subtype %s\n", i, debugstr_guid(expect->inputs[i].subtype));
+    for (; i < input_count; ++i)
+        ok(0, "extra input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
+
+    for (i = 0; expect->outputs[i].subtype; ++i)
+    {
+        ok(IsEqualGUID(&output_types[i].guidMajorType, expect->major_type),
+                "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
+        ok(IsEqualGUID(&output_types[i].guidSubtype, expect->outputs[i].subtype),
+                "got output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
+    }
+    for (; expect->outputs[i].subtype; ++i)
+        ok(0, "missing output[%u] subtype %s\n", i, debugstr_guid(expect->outputs[i].subtype));
+    for (; i < output_count; ++i)
+        ok(0, "extra output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
+
+    CoTaskMemFree(output_types);
+    CoTaskMemFree(input_types);
+    CoTaskMemFree(name);
+}
+
+static void check_dmo_get_info(const GUID *class_id, const struct transform_info *expect)
+{
+    DWORD input_count = 0, output_count = 0;
     DMO_PARTIAL_MEDIATYPE output[32] = {{{0}}};
     DMO_PARTIAL_MEDIATYPE input[32] = {{{0}}};
     WCHAR name[80];
     HRESULT hr;
-
-    winetest_push_context("%s", debugstr_w(expect_name));
+    int i;
 
     hr = DMOGetName(class_id, name);
     ok(hr == S_OK, "DMOGetName returned %#lx\n", hr);
-    ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
+    ok(!wcscmp(name, expect->name), "got name %s\n", debugstr_w(name));
 
     hr = DMOGetTypes(class_id, ARRAY_SIZE(input), &input_count, input,
             ARRAY_SIZE(output), &output_count, output);
     ok(hr == S_OK, "DMOGetTypes returned %#lx\n", hr);
-    ok(input_count == expect_input_count, "got input_count %lu\n", input_count);
-    ok(output_count == expect_output_count, "got output_count %lu\n", output_count);
 
-    for (i = 0; i < input_count; ++i)
+    for (i = 0; i < input_count && expect->inputs[i].subtype; ++i)
     {
-        winetest_push_context("in %lu", i);
-        ok(IsEqualGUID(&input[i].type, expect_major_type),
-            "got type %s\n", debugstr_guid(&input[i].type));
-        ok(IsEqualGUID(&input[i].subtype, expect_input + i),
-            "got subtype %s\n", debugstr_guid(&input[i].subtype));
-        winetest_pop_context();
+        ok(IsEqualGUID(&input[i].type, expect->major_type),
+                "got input[%u] major %s\n", i, debugstr_guid(&input[i].type));
+        ok(IsEqualGUID(&input[i].subtype, expect->inputs[i].subtype),
+                "got input[%u] subtype %s\n", i, debugstr_guid(&input[i].subtype));
     }
+    for (; expect->inputs[i].subtype; ++i)
+        ok(0, "missing input[%u] subtype %s\n", i, debugstr_guid(expect->inputs[i].subtype));
+    for (; i < input_count; ++i)
+        ok(0, "extra input[%u] subtype %s\n", i, debugstr_guid(&input[i].subtype));
 
-    for (i = 0; i < output_count; ++i)
+    for (i = 0; expect->outputs[i].subtype; ++i)
     {
-        winetest_push_context("out %lu", i);
-        ok(IsEqualGUID(&output[i].type, expect_major_type),
-            "got type %s\n", debugstr_guid(&output[i].type));
-        ok(IsEqualGUID(&output[i].subtype, expect_output + i),
-            "got subtype %s\n", debugstr_guid( &output[i].subtype));
-        winetest_pop_context();
+        ok(IsEqualGUID(&output[i].type, expect->major_type),
+                "got output[%u] major %s\n", i, debugstr_guid(&output[i].type));
+        ok(IsEqualGUID(&output[i].subtype, expect->outputs[i].subtype),
+                "got output[%u] subtype %s\n", i, debugstr_guid(&output[i].subtype));
     }
-
-    winetest_pop_context();
+    for (; expect->outputs[i].subtype; ++i)
+        ok(0, "missing output[%u] subtype %s\n", i, debugstr_guid(expect->outputs[i].subtype));
+    for (; i < output_count; ++i)
+        ok(0, "extra output[%u] subtype %s\n", i, debugstr_guid(&output[i].subtype));
 }
 
 void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc, ULONG limit)
@@ -895,26 +896,37 @@ static const ULONG wmadec_block_size = 0x2000;
 
 static void test_wma_encoder(void)
 {
-    const GUID transform_inputs[] =
+    const GUID *const class_id = &CLSID_CWMAEncMediaObject;
+    const struct transform_info expect_mft_info =
     {
-        MFAudioFormat_PCM,
-        MFAudioFormat_Float,
+        .name = L"WMAudio Encoder MFT",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MFAudioFormat_Float},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_WMAudioV8},
+            {.subtype = &MFAudioFormat_WMAudioV9},
+            {.subtype = &MFAudioFormat_WMAudio_Lossless},
+        },
     };
-    const GUID transform_outputs[] =
+    const struct transform_info expect_dmo_info =
     {
-        MFAudioFormat_WMAudioV8,
-        MFAudioFormat_WMAudioV9,
-        MFAudioFormat_WMAudio_Lossless,
-    };
-    const GUID dmo_inputs[] =
-    {
-        MEDIASUBTYPE_PCM,
-    };
-    const GUID dmo_outputs[] =
-    {
-        MEDIASUBTYPE_WMAUDIO2,
-        MEDIASUBTYPE_WMAUDIO3,
-        MEDIASUBTYPE_WMAUDIO_LOSSLESS,
+        .name = L"WMAudio Encoder DMO",
+        .major_type = &MEDIATYPE_Audio,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_WMAUDIO2},
+            {.subtype = &MEDIASUBTYPE_WMAUDIO3},
+            {.subtype = &MEDIASUBTYPE_WMAUDIO_LOSSLESS},
+        },
     };
 
     static const struct attribute_desc input_type_desc[] =
@@ -954,7 +966,6 @@ static void test_wma_encoder(void)
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
-    GUID class_id;
     ULONG i, ret;
     HRESULT hr;
     LONG ref;
@@ -964,13 +975,14 @@ static void test_wma_encoder(void)
 
     winetest_push_context("wmaenc");
 
-    if (!create_transform(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, L"WMAudio Encoder MFT", &MFMediaType_Audio,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_CWMAEncMediaObject, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, class_id))
         goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
 
-    check_dmo(&class_id, L"WMAudio Encoder DMO", &MEDIATYPE_Audio, dmo_inputs, ARRAY_SIZE(dmo_inputs),
-            dmo_outputs, ARRAY_SIZE(dmo_outputs));
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
@@ -1092,29 +1104,40 @@ failed:
 
 static void test_wma_decoder(void)
 {
-    const GUID transform_inputs[] =
+    const GUID *const class_id = &CLSID_CWMADecMediaObject;
+    const struct transform_info expect_mft_info =
     {
-        MEDIASUBTYPE_MSAUDIO1,
-        MFAudioFormat_WMAudioV8,
-        MFAudioFormat_WMAudioV9,
-        MFAudioFormat_WMAudio_Lossless,
+        .name = L"WMAudio Decoder MFT",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_MSAUDIO1},
+            {.subtype = &MFAudioFormat_WMAudioV8},
+            {.subtype = &MFAudioFormat_WMAudioV9},
+            {.subtype = &MFAudioFormat_WMAudio_Lossless},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MFAudioFormat_Float},
+        },
     };
-    const GUID transform_outputs[] =
+    const struct transform_info expect_dmo_info =
     {
-        MFAudioFormat_PCM,
-        MFAudioFormat_Float,
-    };
-    const GUID dmo_inputs[] =
-    {
-        MEDIASUBTYPE_MSAUDIO1,
-        MEDIASUBTYPE_WMAUDIO2,
-        MEDIASUBTYPE_WMAUDIO3,
-        MEDIASUBTYPE_WMAUDIO_LOSSLESS,
-    };
-    const GUID dmo_outputs[] =
-    {
-        MEDIASUBTYPE_PCM,
-        MEDIASUBTYPE_IEEE_FLOAT,
+        .name = L"WMAudio Decoder DMO",
+        .major_type = &MEDIATYPE_Audio,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_MSAUDIO1},
+            {.subtype = &MEDIASUBTYPE_WMAUDIO2},
+            {.subtype = &MEDIASUBTYPE_WMAUDIO3},
+            {.subtype = &MEDIASUBTYPE_WMAUDIO_LOSSLESS},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
     };
 
     static const media_type_desc expect_available_inputs[] =
@@ -1210,7 +1233,6 @@ static void test_wma_decoder(void)
     IMFSample *sample;
     ULONG i, ret, ref;
     HRSRC resource;
-    GUID class_id;
     UINT32 value;
     HRESULT hr;
 
@@ -1219,13 +1241,14 @@ static void test_wma_decoder(void)
 
     winetest_push_context("wmadec");
 
-    if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"WMAudio Decoder MFT", &MFMediaType_Audio,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_CWMADecMediaObject, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, class_id))
         goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
 
-    check_dmo(&class_id, L"WMAudio Decoder DMO", &MEDIATYPE_Audio, dmo_inputs, ARRAY_SIZE(dmo_inputs),
-            dmo_outputs, ARRAY_SIZE(dmo_outputs));
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
@@ -1628,18 +1651,24 @@ static IMFSample *next_h264_sample_(int line, const BYTE **h264_buf, ULONG *h264
 
 static void test_h264_decoder(void)
 {
-    const GUID transform_inputs[] =
+    const GUID *const class_id = &CLSID_MSH264DecoderMFT;
+    const struct transform_info expect_mft_info =
     {
-        MFVideoFormat_H264,
-        MFVideoFormat_H264_ES,
-    };
-    const GUID transform_outputs[] =
-    {
-        MFVideoFormat_NV12,
-        MFVideoFormat_YV12,
-        MFVideoFormat_IYUV,
-        MFVideoFormat_I420,
-        MFVideoFormat_YUY2,
+        .name = L"Microsoft H264 Video Decoder MFT",
+        .major_type = &MFMediaType_Video,
+        .inputs =
+        {
+            {.subtype = &MFVideoFormat_H264},
+            {.subtype = &MFVideoFormat_H264_ES},
+        },
+        .outputs =
+        {
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_I420},
+            {.subtype = &MFVideoFormat_YUY2},
+        },
     };
     static const media_type_desc default_inputs[] =
     {
@@ -1851,7 +1880,6 @@ static void test_h264_decoder(void)
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
-    GUID class_id;
     UINT32 value;
     BYTE *data;
     HRESULT hr;
@@ -1861,9 +1889,12 @@ static void test_h264_decoder(void)
 
     winetest_push_context("h264dec");
 
-    if (!create_transform(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, L"Microsoft H264 Video Decoder MFT", &MFMediaType_Video,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_MSH264DecoderMFT, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, class_id))
+        goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
         goto failed;
 
     hr = IMFTransform_GetAttributes(transform, &attributes);
@@ -2371,15 +2402,36 @@ failed:
 
 static void test_audio_convert(void)
 {
-    const GUID transform_inputs[2] =
+    const GUID *const class_id = &CLSID_CResamplerMediaObject;
+    const struct transform_info expect_mft_info =
     {
-        MFAudioFormat_PCM,
-        MFAudioFormat_Float,
+        .name = L"Resampler MFT",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MFAudioFormat_Float},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MFAudioFormat_Float},
+        },
     };
-    const GUID transform_outputs[2] =
+    const struct transform_info expect_dmo_info =
     {
-        MFAudioFormat_PCM,
-        MFAudioFormat_Float,
+        .name = L"Resampler DMO",
+        .major_type = &MEDIATYPE_Audio,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
     };
 
     static const media_type_desc expect_available_inputs[] =
@@ -2470,7 +2522,6 @@ static void test_audio_convert(void)
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
-    GUID class_id;
     ULONG i, ret;
     HRESULT hr;
 
@@ -2479,13 +2530,14 @@ static void test_audio_convert(void)
 
     winetest_push_context("resampler");
 
-    if (!create_transform(MFT_CATEGORY_AUDIO_EFFECT, &input_type, &output_type, L"Resampler MFT", &MFMediaType_Audio,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_CResamplerMediaObject, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_AUDIO_EFFECT, &input_type, &output_type, class_id))
         goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
 
-    check_dmo(&class_id, L"Resampler DMO", &MEDIATYPE_Audio, transform_inputs, ARRAY_SIZE(transform_inputs),
-            transform_outputs, ARRAY_SIZE(transform_outputs));
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
@@ -2763,89 +2815,100 @@ failed:
 
 static void test_color_convert(void)
 {
-    const GUID transform_inputs[20] =
+    const GUID *const class_id = &CLSID_CColorConvertDMO;
+    const struct transform_info expect_mft_info =
     {
-        MFVideoFormat_YV12,
-        MFVideoFormat_YUY2,
-        MFVideoFormat_UYVY,
-        MFVideoFormat_AYUV,
-        MFVideoFormat_NV12,
-        DMOVideoFormat_RGB32,
-        DMOVideoFormat_RGB565,
-        MFVideoFormat_I420,
-        MFVideoFormat_IYUV,
-        MFVideoFormat_YVYU,
-        DMOVideoFormat_RGB24,
-        DMOVideoFormat_RGB555,
-        DMOVideoFormat_RGB8,
-        MEDIASUBTYPE_V216,
-        MEDIASUBTYPE_V410,
-        MFVideoFormat_NV11,
-        MFVideoFormat_Y41P,
-        MFVideoFormat_Y41T,
-        MFVideoFormat_Y42T,
-        MFVideoFormat_YVU9,
+        .name = L"Color Converter MFT",
+        .major_type = &MFMediaType_Video,
+        .inputs =
+        {
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_YUY2},
+            {.subtype = &MFVideoFormat_UYVY},
+            {.subtype = &MFVideoFormat_AYUV},
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &DMOVideoFormat_RGB32},
+            {.subtype = &DMOVideoFormat_RGB565},
+            {.subtype = &MFVideoFormat_I420},
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_YVYU},
+            {.subtype = &DMOVideoFormat_RGB24},
+            {.subtype = &DMOVideoFormat_RGB555},
+            {.subtype = &DMOVideoFormat_RGB8},
+            {.subtype = &MEDIASUBTYPE_V216},
+            {.subtype = &MEDIASUBTYPE_V410},
+            {.subtype = &MFVideoFormat_NV11},
+            {.subtype = &MFVideoFormat_Y41P},
+            {.subtype = &MFVideoFormat_Y41T},
+            {.subtype = &MFVideoFormat_Y42T},
+            {.subtype = &MFVideoFormat_YVU9},
+        },
+        .outputs =
+        {
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_YUY2},
+            {.subtype = &MFVideoFormat_UYVY},
+            {.subtype = &MFVideoFormat_AYUV},
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &DMOVideoFormat_RGB32},
+            {.subtype = &DMOVideoFormat_RGB565},
+            {.subtype = &MFVideoFormat_I420},
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_YVYU},
+            {.subtype = &DMOVideoFormat_RGB24},
+            {.subtype = &DMOVideoFormat_RGB555},
+            {.subtype = &DMOVideoFormat_RGB8},
+            {.subtype = &MEDIASUBTYPE_V216},
+            {.subtype = &MEDIASUBTYPE_V410},
+            {.subtype = &MFVideoFormat_NV11},
+        },
     };
-    const GUID transform_outputs[16] =
+    const struct transform_info expect_dmo_info =
     {
-        MFVideoFormat_YV12,
-        MFVideoFormat_YUY2,
-        MFVideoFormat_UYVY,
-        MFVideoFormat_AYUV,
-        MFVideoFormat_NV12,
-        DMOVideoFormat_RGB32,
-        DMOVideoFormat_RGB565,
-        MFVideoFormat_I420,
-        MFVideoFormat_IYUV,
-        MFVideoFormat_YVYU,
-        DMOVideoFormat_RGB24,
-        DMOVideoFormat_RGB555,
-        DMOVideoFormat_RGB8,
-        MEDIASUBTYPE_V216,
-        MEDIASUBTYPE_V410,
-        MFVideoFormat_NV11,
-    };
-    const GUID dmo_inputs[20] =
-    {
-        MEDIASUBTYPE_YV12,
-        MEDIASUBTYPE_YUY2,
-        MEDIASUBTYPE_UYVY,
-        MEDIASUBTYPE_AYUV,
-        MEDIASUBTYPE_NV12,
-        MEDIASUBTYPE_RGB32,
-        MEDIASUBTYPE_RGB565,
-        MEDIASUBTYPE_I420,
-        MEDIASUBTYPE_IYUV,
-        MEDIASUBTYPE_YVYU,
-        MEDIASUBTYPE_RGB24,
-        MEDIASUBTYPE_RGB555,
-        MEDIASUBTYPE_RGB8,
-        MEDIASUBTYPE_V216,
-        MEDIASUBTYPE_V410,
-        MEDIASUBTYPE_NV11,
-        MEDIASUBTYPE_Y41P,
-        MEDIASUBTYPE_Y41T,
-        MEDIASUBTYPE_Y42T,
-        MEDIASUBTYPE_YVU9,
-    };
-    const GUID dmo_outputs[16] =
-    {
-        MEDIASUBTYPE_YV12,
-        MEDIASUBTYPE_YUY2,
-        MEDIASUBTYPE_UYVY,
-        MEDIASUBTYPE_AYUV,
-        MEDIASUBTYPE_NV12,
-        MEDIASUBTYPE_RGB32,
-        MEDIASUBTYPE_RGB565,
-        MEDIASUBTYPE_I420,
-        MEDIASUBTYPE_IYUV,
-        MEDIASUBTYPE_YVYU,
-        MEDIASUBTYPE_RGB24,
-        MEDIASUBTYPE_RGB555,
-        MEDIASUBTYPE_RGB8,
-        MEDIASUBTYPE_V216,
-        MEDIASUBTYPE_V410,
-        MEDIASUBTYPE_NV11,
+        .name = L"Color Converter DMO",
+        .major_type = &MEDIATYPE_Video,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_YV12},
+            {.subtype = &MEDIASUBTYPE_YUY2},
+            {.subtype = &MEDIASUBTYPE_UYVY},
+            {.subtype = &MEDIASUBTYPE_AYUV},
+            {.subtype = &MEDIASUBTYPE_NV12},
+            {.subtype = &MEDIASUBTYPE_RGB32},
+            {.subtype = &MEDIASUBTYPE_RGB565},
+            {.subtype = &MEDIASUBTYPE_I420},
+            {.subtype = &MEDIASUBTYPE_IYUV},
+            {.subtype = &MEDIASUBTYPE_YVYU},
+            {.subtype = &MEDIASUBTYPE_RGB24},
+            {.subtype = &MEDIASUBTYPE_RGB555},
+            {.subtype = &MEDIASUBTYPE_RGB8},
+            {.subtype = &MEDIASUBTYPE_V216},
+            {.subtype = &MEDIASUBTYPE_V410},
+            {.subtype = &MEDIASUBTYPE_NV11},
+            {.subtype = &MEDIASUBTYPE_Y41P},
+            {.subtype = &MEDIASUBTYPE_Y41T},
+            {.subtype = &MEDIASUBTYPE_Y42T},
+            {.subtype = &MEDIASUBTYPE_YVU9},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_YV12},
+            {.subtype = &MEDIASUBTYPE_YUY2},
+            {.subtype = &MEDIASUBTYPE_UYVY},
+            {.subtype = &MEDIASUBTYPE_AYUV},
+            {.subtype = &MEDIASUBTYPE_NV12},
+            {.subtype = &MEDIASUBTYPE_RGB32},
+            {.subtype = &MEDIASUBTYPE_RGB565},
+            {.subtype = &MEDIASUBTYPE_I420},
+            {.subtype = &MEDIASUBTYPE_IYUV},
+            {.subtype = &MEDIASUBTYPE_YVYU},
+            {.subtype = &MEDIASUBTYPE_RGB24},
+            {.subtype = &MEDIASUBTYPE_RGB555},
+            {.subtype = &MEDIASUBTYPE_RGB8},
+            {.subtype = &MEDIASUBTYPE_V216},
+            {.subtype = &MEDIASUBTYPE_V410},
+            {.subtype = &MEDIASUBTYPE_NV11},
+        },
     };
 
     static const media_type_desc expect_available_inputs[20] =
@@ -2930,7 +2993,6 @@ static void test_color_convert(void)
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
-    GUID class_id;
     ULONG i, ret;
     HRESULT hr;
 
@@ -2939,13 +3001,14 @@ static void test_color_convert(void)
 
     winetest_push_context("colorconv");
 
-    if (!create_transform(MFT_CATEGORY_VIDEO_EFFECT, &input_type, &output_type, L"Color Converter MFT", &MFMediaType_Video,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_CColorConvertDMO, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_VIDEO_EFFECT, &input_type, &output_type, class_id))
         goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
 
-    check_dmo(&CLSID_CColorConvertDMO, L"Color Converter DMO", &MEDIATYPE_Video, dmo_inputs, ARRAY_SIZE(dmo_inputs),
-            dmo_outputs, ARRAY_SIZE(dmo_outputs));
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
@@ -3141,54 +3204,60 @@ failed:
 
 static void test_video_processor(void)
 {
-    const GUID transform_inputs[22] =
+    const GUID *const class_id = &CLSID_VideoProcessorMFT;
+    const struct transform_info expect_mft_info =
     {
-        MFVideoFormat_IYUV,
-        MFVideoFormat_YV12,
-        MFVideoFormat_NV12,
-        MFVideoFormat_YUY2,
-        MFVideoFormat_ARGB32,
-        MFVideoFormat_RGB32,
-        MFVideoFormat_NV11,
-        MFVideoFormat_AYUV,
-        MFVideoFormat_UYVY,
-        MEDIASUBTYPE_P208,
-        MFVideoFormat_RGB24,
-        MFVideoFormat_RGB555,
-        MFVideoFormat_RGB565,
-        MFVideoFormat_RGB8,
-        MFVideoFormat_I420,
-        MFVideoFormat_Y216,
-        MFVideoFormat_v410,
-        MFVideoFormat_Y41P,
-        MFVideoFormat_Y41T,
-        MFVideoFormat_Y42T,
-        MFVideoFormat_YVYU,
-        MFVideoFormat_420O,
-    };
-    const GUID transform_outputs[21] =
-    {
-        MFVideoFormat_IYUV,
-        MFVideoFormat_YV12,
-        MFVideoFormat_NV12,
-        MFVideoFormat_YUY2,
-        MFVideoFormat_ARGB32,
-        MFVideoFormat_RGB32,
-        MFVideoFormat_NV11,
-        MFVideoFormat_AYUV,
-        MFVideoFormat_UYVY,
-        MEDIASUBTYPE_P208,
-        MFVideoFormat_RGB24,
-        MFVideoFormat_RGB555,
-        MFVideoFormat_RGB565,
-        MFVideoFormat_RGB8,
-        MFVideoFormat_I420,
-        MFVideoFormat_Y216,
-        MFVideoFormat_v410,
-        MFVideoFormat_Y41P,
-        MFVideoFormat_Y41T,
-        MFVideoFormat_Y42T,
-        MFVideoFormat_YVYU,
+        .name = L"Microsoft Video Processor MFT",
+        .major_type = &MFMediaType_Video,
+        .inputs =
+        {
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &MFVideoFormat_YUY2},
+            {.subtype = &MFVideoFormat_ARGB32},
+            {.subtype = &MFVideoFormat_RGB32},
+            {.subtype = &MFVideoFormat_NV11},
+            {.subtype = &MFVideoFormat_AYUV},
+            {.subtype = &MFVideoFormat_UYVY},
+            {.subtype = &MEDIASUBTYPE_P208},
+            {.subtype = &MFVideoFormat_RGB24},
+            {.subtype = &MFVideoFormat_RGB555},
+            {.subtype = &MFVideoFormat_RGB565},
+            {.subtype = &MFVideoFormat_RGB8},
+            {.subtype = &MFVideoFormat_I420},
+            {.subtype = &MFVideoFormat_Y216},
+            {.subtype = &MFVideoFormat_v410},
+            {.subtype = &MFVideoFormat_Y41P},
+            {.subtype = &MFVideoFormat_Y41T},
+            {.subtype = &MFVideoFormat_Y42T},
+            {.subtype = &MFVideoFormat_YVYU},
+            {.subtype = &MFVideoFormat_420O},
+        },
+        .outputs =
+        {
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &MFVideoFormat_YUY2},
+            {.subtype = &MFVideoFormat_ARGB32},
+            {.subtype = &MFVideoFormat_RGB32},
+            {.subtype = &MFVideoFormat_NV11},
+            {.subtype = &MFVideoFormat_AYUV},
+            {.subtype = &MFVideoFormat_UYVY},
+            {.subtype = &MEDIASUBTYPE_P208},
+            {.subtype = &MFVideoFormat_RGB24},
+            {.subtype = &MFVideoFormat_RGB555},
+            {.subtype = &MFVideoFormat_RGB565},
+            {.subtype = &MFVideoFormat_RGB8},
+            {.subtype = &MFVideoFormat_I420},
+            {.subtype = &MFVideoFormat_Y216},
+            {.subtype = &MFVideoFormat_v410},
+            {.subtype = &MFVideoFormat_Y41P},
+            {.subtype = &MFVideoFormat_Y41T},
+            {.subtype = &MFVideoFormat_Y42T},
+            {.subtype = &MFVideoFormat_YVYU},
+        },
     };
     const GUID expect_available_inputs_w8[] =
     {
@@ -3318,7 +3387,6 @@ static void test_video_processor(void)
     HANDLE output_file;
     HRSRC resource;
     BYTE *ptr, tmp;
-    GUID class_id;
     UINT32 count;
     HRESULT hr;
     ULONG ret;
@@ -3330,9 +3398,12 @@ static void test_video_processor(void)
 
     winetest_push_context("videoproc");
 
-    if (!create_transform(MFT_CATEGORY_VIDEO_PROCESSOR, &input_type, &output_type, L"Microsoft Video Processor MFT", &MFMediaType_Video,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_VideoProcessorMFT, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_VIDEO_PROCESSOR, &input_type, &output_type, class_id))
+        goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
         goto failed;
 
     todo_wine
@@ -3620,7 +3691,7 @@ todo_wine {
     ok(ref == 0, "Release returned %ld\n", ref);
 
 
-    hr = CoCreateInstance(&class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* check default media types */
@@ -3894,21 +3965,32 @@ failed:
 
 static void test_mp3_decoder(void)
 {
-    const GUID transform_inputs[] =
+    const GUID *const class_id = &CLSID_CMP3DecMediaObject;
+    const struct transform_info expect_mft_info =
     {
-        MFAudioFormat_MP3,
+        .name = L"MP3 Decoder MFT",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_MP3},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+        },
     };
-    const GUID transform_outputs[] =
+    const struct transform_info expect_dmo_info =
     {
-        MFAudioFormat_PCM,
-    };
-    const GUID dmo_inputs[] =
-    {
-        MFAudioFormat_MP3,
-    };
-    const GUID dmo_outputs[] =
-    {
-        MEDIASUBTYPE_PCM,
+        .name = L"MP3 Decoder DMO",
+        .major_type = &MEDIATYPE_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_MP3},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+        },
     };
 
     static const media_type_desc expect_available_inputs[] =
@@ -4019,7 +4101,6 @@ static void test_mp3_decoder(void)
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
-    GUID class_id;
     ULONG i, ret;
     HRESULT hr;
 
@@ -4028,13 +4109,14 @@ static void test_mp3_decoder(void)
 
     winetest_push_context("mp3dec");
 
-    if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"MP3 Decoder MFT", &MFMediaType_Audio,
-            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &CLSID_CMP3DecMediaObject, &class_id))
+    if (!check_mft_enum(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, class_id))
         goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
 
-    check_dmo(&class_id, L"MP3 Decoder DMO", &MEDIATYPE_Audio, dmo_inputs, ARRAY_SIZE(dmo_inputs),
-            dmo_outputs, ARRAY_SIZE(dmo_outputs));
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
