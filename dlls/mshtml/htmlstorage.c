@@ -822,13 +822,15 @@ static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BST
     return hres;
 }
 
-static HRESULT remove_item(const WCHAR *filename, BSTR key)
+static HRESULT remove_item(const WCHAR *filename, BSTR key, BSTR *old_value, BOOL *changed)
 {
     IXMLDOMDocument *doc;
     IXMLDOMNode *root = NULL, *node = NULL;
     BSTR query = NULL;
     HRESULT hres;
 
+    *old_value = NULL;
+    *changed = FALSE;
     hres = open_document(filename, &doc);
     if(hres != S_OK)
         return hres;
@@ -845,6 +847,22 @@ static HRESULT remove_item(const WCHAR *filename, BSTR key)
 
     hres = IXMLDOMNode_selectSingleNode(root, query, &node);
     if(hres == S_OK) {
+        IXMLDOMElement *elem;
+        VARIANT old;
+
+        hres = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+        if(hres == S_OK) {
+            hres = IXMLDOMElement_getAttribute(elem, (BSTR)L"value", &old);
+            if(hres == S_OK) {
+                if(V_VT(&old) == VT_BSTR)
+                    *old_value = V_BSTR(&old);
+                else
+                    VariantClear(&old);
+            }
+            IXMLDOMElement_Release(elem);
+            *changed = TRUE;
+        }
+
         hres = IXMLDOMNode_removeChild(root, node, NULL);
         if(hres != S_OK)
             goto done;
@@ -859,6 +877,8 @@ done:
     if(node)
         IXMLDOMNode_Release(node);
     IXMLDOMDocument_Release(doc);
+    if(hres != S_OK || !changed)
+        SysFreeString(*old_value);
     return hres;
 }
 
@@ -866,7 +886,9 @@ static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
     struct session_entry *session_entry;
+    BSTR old_value;
     HRESULT hres;
+    BOOL changed;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(bstrKey));
 
@@ -877,16 +899,20 @@ static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
             This->session_storage->num_keys--;
             list_remove(&session_entry->list_entry);
             wine_rb_remove(&This->session_storage->data_map, &session_entry->entry);
-            SysFreeString(session_entry->value);
+            old_value = session_entry->value;
             heap_free(session_entry);
+
+            hres = send_storage_event(This, bstrKey, old_value, NULL);
         }
         return hres;
     }
 
     WaitForSingleObject(This->mutex, INFINITE);
-    hres = remove_item(This->filename, bstrKey);
+    hres = remove_item(This->filename, bstrKey, &old_value, &changed);
     ReleaseMutex(This->mutex);
 
+    if(hres == S_OK && changed)
+        hres = send_storage_event(This, bstrKey, old_value, NULL);
     return hres;
 }
 
