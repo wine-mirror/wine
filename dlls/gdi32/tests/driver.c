@@ -937,6 +937,7 @@ static void test_D3DKMTQueryVideoMemoryInfo(void)
         query_memory_info.PhysicalAdapterIndex = 0;
         query_memory_info.MemorySegmentGroup = groups[i];
         status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+        todo_wine_if (status == STATUS_INVALID_PARAMETER)  /* fails on Wine without a Vulkan adapter */
         ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
         ok(query_memory_info.Budget >= query_memory_info.AvailableForReservation,
            "Unexpected budget %I64u and reservation %I64u.\n", query_memory_info.Budget,
@@ -952,6 +953,7 @@ static void test_D3DKMTQueryVideoMemoryInfo(void)
     /* Query using the current process handle */
     query_memory_info.hProcess = GetCurrentProcess();
     status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    todo_wine_if (status == STATUS_INVALID_PARAMETER)  /* fails on Wine without a Vulkan adapter */
     ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
 
     /* Query using a process handle without PROCESS_QUERY_INFORMATION privilege */
