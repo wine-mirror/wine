@@ -2675,9 +2675,6 @@ BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx
 
     switch (IFC_MODE(inline_ctx))
     {
-    case IFC_MODE_IGNORE:
-    case IFC_MODE_REGULAR:
-        return SymFromAddr(hProcess, addr, disp, si);
     case IFC_MODE_INLINE:
         if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
         inlined = symt_find_inlined_site(pair.effective, addr, inline_ctx);
@@ -2688,6 +2685,9 @@ BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx
             return TRUE;
         }
         /* fall through */
+    case IFC_MODE_IGNORE:
+    case IFC_MODE_REGULAR:
+        return SymFromAddr(hProcess, addr, disp, si);
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;

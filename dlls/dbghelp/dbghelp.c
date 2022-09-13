@@ -712,8 +712,6 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
 
     switch (IFC_MODE(inlinectx))
     {
-    case IFC_MODE_IGNORE:
-    case IFC_MODE_REGULAR: return SymSetScopeFromAddr(hProcess, addr);
     case IFC_MODE_INLINE:
         if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
         inlined = symt_find_inlined_site(pair.effective, addr, inlinectx);
@@ -723,7 +721,9 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
             pair.pcs->localscope_symt = &inlined->func.symt;
             return TRUE;
         }
-        return FALSE;
+        /* fall through */
+    case IFC_MODE_IGNORE:
+    case IFC_MODE_REGULAR: return SymSetScopeFromAddr(hProcess, addr);
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
