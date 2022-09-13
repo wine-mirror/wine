@@ -197,6 +197,8 @@ static inline HTMLStorage *impl_from_IHTMLStorage(IHTMLStorage *iface)
     return CONTAINING_RECORD(iface, HTMLStorage, IHTMLStorage_iface);
 }
 
+static HRESULT build_session_origin(IUri*,BSTR,BSTR*);
+
 struct storage_event_task {
     task_t header;
     HTMLInnerWindow *window;
@@ -226,22 +228,22 @@ static void storage_event_destr(task_t *_task)
     IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
 }
 
-/* Takes ownership of old_value */
-static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value, BSTR new_value)
+struct send_storage_event_ctx {
+    HTMLInnerWindow *skip_window;
+    const WCHAR *origin;
+    UINT origin_len;
+    BSTR key;
+    BSTR old_value;
+    BSTR new_value;
+};
+
+static HRESULT push_storage_event_task(struct send_storage_event_ctx *ctx, HTMLInnerWindow *window, BOOL commit)
 {
-    HTMLInnerWindow *window = storage->window;
-    BOOL local = !!storage->filename;
     struct storage_event_task *task;
     DOMEvent *event;
     HRESULT hres;
 
-    if(!window) {
-        SysFreeString(old_value);
-        return S_OK;
-    }
-
-    hres = create_storage_event(window->doc, key, old_value, new_value, local, &event);
-    SysFreeString(old_value);
+    hres = create_storage_event(window->doc, ctx->key, ctx->old_value, ctx->new_value, commit, &event);
     if(FAILED(hres))
         return hres;
 
@@ -254,6 +256,102 @@ static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value
     task->window = window;
     IHTMLWindow2_AddRef(&task->window->base.IHTMLWindow2_iface);
     return push_task(&task->header, storage_event_proc, storage_event_destr, window->task_magic);
+}
+
+static HRESULT send_storage_event_impl(struct send_storage_event_ctx *ctx, HTMLInnerWindow *window)
+{
+    HTMLOuterWindow *child;
+    const WCHAR *origin;
+    UINT origin_len;
+    BOOL matches;
+    HRESULT hres;
+    BSTR bstr;
+
+    if(!window)
+        return S_OK;
+
+    LIST_FOR_EACH_ENTRY(child, &window->children, HTMLOuterWindow, sibling_entry) {
+        hres = send_storage_event_impl(ctx, child->base.inner_window);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(window == ctx->skip_window)
+        return S_OK;
+
+    /* Try it quick from session storage first, if available */
+    if(window->session_storage) {
+        HTMLStorage *storage = impl_from_IHTMLStorage(window->session_storage);
+        origin = storage->session_storage->origin;
+        origin_len = ctx->skip_window ? wcslen(origin) : storage->session_storage->origin_len;
+        bstr = NULL;
+    }else {
+        hres = IUri_GetHost(window->base.outer_window->uri, &bstr);
+        if(hres != S_OK) {
+            if(SUCCEEDED(hres))
+                SysFreeString(bstr);
+            return S_OK;
+        }
+        if(ctx->skip_window)
+            _wcslwr(bstr);
+        else {
+            BSTR tmp = bstr;
+            hres = build_session_origin(window->base.outer_window->uri, tmp, &bstr);
+            SysFreeString(tmp);
+            if(hres != S_OK) {
+                if(SUCCEEDED(hres))
+                    SysFreeString(bstr);
+                return S_OK;
+            }
+        }
+        origin = bstr;
+        origin_len = SysStringLen(bstr);
+    }
+
+    matches = (origin_len == ctx->origin_len && !memcmp(origin, ctx->origin, origin_len * sizeof(WCHAR)));
+    SysFreeString(bstr);
+
+    return matches ? push_storage_event_task(ctx, window, FALSE) : S_OK;
+}
+
+/* Takes ownership of old_value */
+static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value, BSTR new_value)
+{
+    HTMLInnerWindow *window = storage->window;
+    struct send_storage_event_ctx ctx;
+    HTMLOuterWindow *top_window;
+    BSTR hostname = NULL;
+    HRESULT hres = S_OK;
+
+    if(!window)
+        goto done;
+    get_top_window(window->base.outer_window, &top_window);
+
+    ctx.key = key;
+    ctx.old_value = old_value;
+    ctx.new_value = new_value;
+    if(!storage->filename) {
+        ctx.origin = storage->session_storage->origin;
+        ctx.origin_len = storage->session_storage->origin_len;
+        ctx.skip_window = NULL;
+    }else {
+        hres = IUri_GetHost(window->base.outer_window->uri, &hostname);
+        if(hres != S_OK)
+            goto done;
+        _wcslwr(hostname);
+        ctx.origin = hostname;
+        ctx.origin_len = SysStringLen(hostname);
+        ctx.skip_window = top_window->base.inner_window;  /* localStorage on native skips top window */
+    }
+    hres = send_storage_event_impl(&ctx, top_window->base.inner_window);
+
+    if(ctx.skip_window && hres == S_OK)
+        hres = push_storage_event_task(&ctx, window, TRUE);
+
+done:
+    SysFreeString(hostname);
+    SysFreeString(old_value);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStorage_QueryInterface(IHTMLStorage *iface, REFIID riid, void **ppv)

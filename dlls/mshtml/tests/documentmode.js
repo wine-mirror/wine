@@ -1253,6 +1253,130 @@ sync_test("storage", function() {
     sessionStorage.clear();
 });
 
+async_test("storage events", function() {
+    var iframe = document.createElement("iframe"), iframe2 = document.createElement("iframe");
+    var local = false, storage, storage2, v = document.documentMode, i = 0;
+
+    var tests = [
+        function() {
+            expect();
+            storage.removeItem("foobar");
+        },
+        function() {
+            expect(0, "foobar", "", "test");
+            storage.setItem("foobar", "test");
+        },
+        function() {
+            expect(1, "foobar", "test", "TEST", true);
+            storage2.setItem("foobar", "TEST");
+        },
+        function() {
+            expect(0, "foobar", "TEST", "");
+            storage.removeItem("foobar");
+        },
+        function() {
+            expect(1, "winetest", "", "WineTest");
+            storage2.setItem("winetest", "WineTest");
+        },
+        function() {
+            expect(0, "", "", "");
+            storage.clear();
+        }
+    ];
+
+    function next() {
+        if(++i < tests.length)
+            tests[i]();
+        else if(local)
+            next_test();
+        else {
+            // w10pro64 testbot VM throws WININET_E_INTERNAL_ERROR for some reason
+            storage = null, storage2 = null;
+            try {
+                storage = window.localStorage, storage2 = iframe.contentWindow.localStorage;
+            }catch(e) {
+                ok(e.number === 0x72ee4 - 0x80000000, "localStorage threw " + e.number + ": " + e);
+            }
+            if(!storage || !storage2) {
+                win_skip("localStorage is buggy and not available, skipping");
+                next_test();
+                return;
+            }
+            i = 0, local = true;
+
+            if(!storage.length)
+                setTimeout(function() { tests[0](); });
+            else {
+                // Get rid of any entries first, since native doesn't update immediately
+                var w = [ window, iframe.contentWindow ];
+                for(var j = 0; j < w.length; j++)
+                    w[j].onstorage = w[j].document.onstorage = w[j].document.onstoragecommit = null;
+                document.onstoragecommit = function() {
+                    if(!storage.length)
+                        setTimeout(function() { tests[0](); });
+                    else
+                        storage.clear();
+                };
+                storage.clear();
+            }
+        }
+    }
+
+    function test_event(e, key, oldValue, newValue) {
+        if(v < 9) {
+            ok(e === undefined, "event not undefined in legacy mode: " + e);
+            return;
+        }
+        var s = Object.prototype.toString.call(e);
+        todo_wine.
+        ok(s === "[object StorageEvent]", "Object.toString = " + s);
+        ok(e.key === key, "key = " + e.key + ", expected " + key);
+        ok(e.oldValue === oldValue, "oldValue = " + e.oldValue + ", expected " + oldValue);
+        ok(e.newValue === newValue, "newValue = " + e.newValue + ", expected " + newValue);
+    }
+
+    function expect(idx, key, oldValue, newValue, quirk) {
+        var window2 = iframe.contentWindow, document2 = window2.document;
+        window.onstorage = function() { ok(false, "window.onstorage called"); };
+        document.onstorage = function() { ok(false, "doc.onstorage called"); };
+        document.onstoragecommit = function() { ok(false, "doc.onstoragecommit called"); };
+        window2.onstorage = function() { ok(false, "iframe window.onstorage called"); };
+        document2.onstorage = function() { ok(false, "iframe doc.onstorage called"); };
+        document2.onstoragecommit = function() { ok(false, "iframe doc.onstoragecommit called"); };
+
+        if(idx === undefined) {
+            setTimeout(function() { next(); });
+        }else {
+            // Native sometimes calls this for some reason
+            if(local && quirk) document.onstoragecommit = null;
+
+            (v < 9 ? document2 : window2)["onstorage"] = function(e) {
+                (local && idx ? document2 : (local || v < 9 ? document : window))[local ? "onstoragecommit" : "onstorage"] = function(e) {
+                    test_event(e, local ? "" : key, local ? "" : oldValue, local ? "" : newValue);
+                    next();
+                }
+                test_event(e, key, oldValue, newValue);
+            }
+        }
+    }
+
+    iframe.onload = function() {
+        iframe2.onload = function() {
+            var w = iframe2.contentWindow;
+            w.onstorage = function() { ok(false, "about:blank window.onstorage called"); };
+            w.document.onstorage = function() { ok(false, "about:blank document.onstorage called"); };
+            w.document.onstoragecommit = function() { ok(false, "about:blank document.onstoragecommit called"); };
+
+            storage = window.sessionStorage, storage2 = iframe.contentWindow.sessionStorage;
+            tests[0]();
+        };
+        iframe2.src = "about:blank";
+        document.body.appendChild(iframe2);
+    };
+    iframe.src = "blank.html";
+    document.body.appendChild(iframe);
+});
+
 sync_test("elem_attr", function() {
     var v = document.documentMode;
     var elem = document.createElement("div"), r;
