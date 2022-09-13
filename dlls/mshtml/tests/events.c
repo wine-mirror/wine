@@ -57,6 +57,9 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 DEFINE_EXPECT(document_onclick);
 DEFINE_EXPECT(body_onclick);
 DEFINE_EXPECT(doc_onclick_attached);
@@ -90,6 +93,12 @@ DEFINE_EXPECT(submit_onclick_attached_check_cancel);
 DEFINE_EXPECT(submit_onclick_setret);
 DEFINE_EXPECT(elem2_cp_onclick);
 DEFINE_EXPECT(iframe_onload);
+DEFINE_EXPECT(doc1_onstorage);
+DEFINE_EXPECT(doc1_onstoragecommit);
+DEFINE_EXPECT(window1_onstorage);
+DEFINE_EXPECT(doc2_onstorage);
+DEFINE_EXPECT(doc2_onstoragecommit);
+DEFINE_EXPECT(window2_onstorage);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -2840,6 +2849,145 @@ static void test_create_event(IHTMLDocument2 *doc)
     IDocumentEvent_Release(doc_event);
 }
 
+static unsigned onstorage_expect_line;
+static const WCHAR *onstorage_expect_key, *onstorage_expect_old_value, *onstorage_expect_new_value;
+
+#define set_onstorage_expect(a,b,c) _set_onstorage_expect(__LINE__,a,b,c)
+static void _set_onstorage_expect(unsigned line, const WCHAR *key, const WCHAR *old_value, const WCHAR *new_value)
+{
+    onstorage_expect_line = line;
+    onstorage_expect_key = key;
+    onstorage_expect_old_value = old_value;
+    onstorage_expect_new_value = new_value;
+}
+
+static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
+{
+    const WCHAR *expect_key = onstorage_expect_key, *expect_old_value = onstorage_expect_old_value, *expect_new_value = onstorage_expect_new_value;
+    unsigned line = onstorage_expect_line;
+    IHTMLEventObj *event_obj;
+    IDOMStorageEvent *event;
+    IDispatchEx *dispex;
+    HRESULT hres;
+    unsigned i;
+    DISPID id;
+    BSTR bstr;
+
+    if(document_mode < 9) {
+        ok_(__FILE__,line)(params->cArgs == 1, "cArgs = %u\n", params->cArgs);
+        ok_(__FILE__,line)(V_VT(&params->rgvarg[0]) == VT_DISPATCH, "V_VT(this) = %d\n", V_VT(&params->rgvarg[0]));
+        return;
+    }
+
+    ok_(__FILE__,line)(params->cArgs == 2, "cArgs = %u\n", params->cArgs);
+    ok_(__FILE__,line)(V_VT(&params->rgvarg[1]) == VT_DISPATCH, "V_VT(event) = %d\n", V_VT(&params->rgvarg[1]));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&params->rgvarg[1]), &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+    hres = IDispatchEx_QueryInterface(dispex, &IID_IDOMStorageEvent, (void**)&event);
+    if(doc_onstorage) {
+        static const WCHAR *props[] = { L"key", L"oldValue", L"newValue", L"storageArea" };
+        ok_(__FILE__,line)(hres != S_OK, "Got IDOMStorageEvent in document.onstorage handler\n");
+
+        hres = IDispatchEx_QueryInterface(dispex, &IID_IHTMLEventObj, (void**)&event_obj);
+        ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLEventObj: %08lx\n", hres);
+        IHTMLEventObj_Release(event_obj);
+
+        for(i = 0; i < ARRAY_SIZE(props); i++) {
+            bstr = SysAllocString(props[i]);
+            hres = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
+            ok_(__FILE__,line)(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) failed: %08lx\n", wine_dbgstr_w(bstr), hres);
+            SysFreeString(bstr);
+        }
+
+        IDispatchEx_Release(dispex);
+        return;
+    }
+
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IDOMStorageEvent: %08lx\n", hres);
+    IDispatchEx_Release(dispex);
+
+    hres = IDOMStorageEvent_get_key(event, &bstr);
+    ok_(__FILE__,line)(hres == S_OK, "get_key failed: %08lx\n", hres);
+    ok_(__FILE__,line)((!bstr || !expect_key) ? (bstr == expect_key) : !wcscmp(bstr, expect_key),
+                       "key = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hres = IDOMStorageEvent_get_oldValue(event, &bstr);
+    ok_(__FILE__,line)(hres == S_OK, "get_oldValue failed: %08lx\n", hres);
+    ok_(__FILE__,line)((!bstr || !expect_old_value) ? (bstr == expect_old_value) : !wcscmp(bstr, expect_old_value),
+                       "oldValue = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hres = IDOMStorageEvent_get_newValue(event, &bstr);
+    ok_(__FILE__,line)(hres == S_OK, "get_newValue failed: %08lx\n", hres);
+    ok_(__FILE__,line)((!bstr || !expect_new_value) ? (bstr == expect_new_value) : !wcscmp(bstr, expect_new_value),
+                       "newValue = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    IDOMStorageEvent_Release(event);
+}
+
+static HRESULT WINAPI doc1_onstorage(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(doc1_onstorage);
+    test_storage_event(pdp, TRUE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(doc1_onstorage);
+
+static HRESULT WINAPI doc1_onstoragecommit(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(doc1_onstoragecommit);
+    test_storage_event(pdp, FALSE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(doc1_onstoragecommit);
+
+static HRESULT WINAPI window1_onstorage(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(window1_onstorage);
+    test_storage_event(pdp, FALSE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(window1_onstorage);
+
+static HRESULT WINAPI doc2_onstorage(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(doc2_onstorage);
+    test_storage_event(pdp, TRUE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(doc2_onstorage);
+
+static HRESULT WINAPI doc2_onstoragecommit(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(doc2_onstoragecommit);
+    test_storage_event(pdp, FALSE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(doc2_onstoragecommit);
+
+static HRESULT WINAPI window2_onstorage(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(window2_onstorage);
+    test_storage_event(pdp, FALSE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(window2_onstorage);
+
 static HRESULT QueryInterface(REFIID,void**);
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
@@ -3267,13 +3415,326 @@ static const IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
+typedef struct {
+    IInternetProtocolEx IInternetProtocolEx_iface;
+    IWinInetHttpInfo IWinInetHttpInfo_iface;
+
+    LONG ref;
+
+    IInternetProtocolSink *sink;
+    IUri *uri;
+
+    ULONG size;
+    const char *data;
+    const char *ptr;
+} ProtocolHandler;
+
+static DWORD WINAPI async_switch_proc(void *arg)
+{
+    PROTOCOLDATA protocol_data = { PI_FORCE_ASYNC };
+    ProtocolHandler *protocol_handler = arg;
+    IInternetProtocolSink_Switch(protocol_handler->sink, &protocol_data);
+    return 0;
+}
+
+static inline ProtocolHandler *impl_from_IInternetProtocolEx(IInternetProtocolEx *iface)
+{
+    return CONTAINING_RECORD(iface, ProtocolHandler, IInternetProtocolEx_iface);
+}
+
+static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocolEx *iface, REFIID riid, void **ppv)
+{
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid) || IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
+        *ppv = &This->IInternetProtocolEx_iface;
+    }else if(IsEqualGUID(&IID_IWinInetInfo, riid) || IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
+        *ppv = &This->IWinInetHttpInfo_iface;
+    }else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI Protocol_AddRef(IInternetProtocolEx *iface)
+{
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI Protocol_Release(IInternetProtocolEx *iface)
+{
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref) {
+        if(This->sink)
+            IInternetProtocolSink_Release(This->sink);
+        if(This->uri)
+            IUri_Release(This->uri);
+        free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI Protocol_Start(IInternetProtocolEx *iface, LPCWSTR szUrl, IInternetProtocolSink *pOIProtSink,
+        IInternetBindInfo *pOIBindInfo, DWORD grfPI, HANDLE_PTR dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Continue(IInternetProtocolEx *iface, PROTOCOLDATA *pProtocolData)
+{
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+    IServiceProvider *service_provider;
+    IHttpNegotiate *http_negotiate;
+    WCHAR *addl_headers = NULL;
+    HRESULT hres;
+    BSTR bstr;
+
+    hres = IInternetProtocolSink_QueryInterface(This->sink, &IID_IServiceProvider, (void**)&service_provider);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+
+    hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate, &IID_IHttpNegotiate, (void**)&http_negotiate);
+    IServiceProvider_Release(service_provider);
+    ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08lx\n", hres);
+
+    hres = IUri_GetDisplayUri(This->uri, &bstr);
+    ok(hres == S_OK, "Failed to get display uri: %08lx\n", hres);
+    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, bstr, L"", 0, &addl_headers);
+    ok(hres == S_OK, "BeginningTransaction failed: %08lx\n", hres);
+    CoTaskMemFree(addl_headers);
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+    hres = IHttpNegotiate_OnResponse(http_negotiate, 200, bstr, NULL, NULL);
+    ok(hres == S_OK, "OnResponse failed: %08lx\n", hres);
+    IHttpNegotiate_Release(http_negotiate);
+    SysFreeString(bstr);
+
+    hres = IInternetProtocolSink_ReportData(This->sink, BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION,
+                                            This->size, This->size);
+    ok(hres == S_OK, "ReportData failed: %08lx\n", hres);
+
+    hres = IInternetProtocolSink_ReportResult(This->sink, S_OK, 0, NULL);
+    ok(hres == S_OK, "ReportResult failed: %08lx\n", hres);
+
+    IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_Abort(IInternetProtocolEx *iface, HRESULT hrReason, DWORD dwOptions)
+{
+    trace("Abort(%08lx %lx)\n", hrReason, dwOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Terminate(IInternetProtocolEx *iface, DWORD dwOptions)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_Suspend(IInternetProtocolEx *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Resume(IInternetProtocolEx *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Read(IInternetProtocolEx *iface, void *pv, ULONG cb, ULONG *pcbRead)
+{
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+    ULONG read;
+
+    read = This->size - (This->ptr - This->data);
+    if(read > cb)
+        read = cb;
+
+    if(read) {
+        memcpy(pv, This->ptr, read);
+        This->ptr += read;
+    }
+
+    *pcbRead = read;
+    return (This->ptr != This->data + This->size) ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI Protocol_Seek(IInternetProtocolEx *iface, LARGE_INTEGER dlibMove, DWORD dwOrigin,
+        ULARGE_INTEGER *plibNewPosition)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_LockRequest(IInternetProtocolEx *iface, DWORD dwOptions)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_UnlockRequest(IInternetProtocolEx *iface)
+{
+    return S_OK;
+}
+
+static const char *protocol_doc_str;
+
+static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, IInternetProtocolSink *pOIProtSink,
+        IInternetBindInfo *pOIBindInfo, DWORD grfPI, HANDLE *dwReserved)
+{
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+
+    This->data = protocol_doc_str;
+    This->size = strlen(This->data);
+
+    IInternetProtocolSink_AddRef(This->sink = pOIProtSink);
+    IUri_AddRef(This->uri = uri);
+    This->ptr = This->data;
+
+    IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
+    QueueUserWorkItem(async_switch_proc, This, 0);
+    return E_PENDING;
+}
+
+static const IInternetProtocolExVtbl ProtocolExVtbl = {
+    Protocol_QueryInterface,
+    Protocol_AddRef,
+    Protocol_Release,
+    Protocol_Start,
+    Protocol_Continue,
+    Protocol_Abort,
+    Protocol_Terminate,
+    Protocol_Suspend,
+    Protocol_Resume,
+    Protocol_Read,
+    Protocol_Seek,
+    Protocol_LockRequest,
+    Protocol_UnlockRequest,
+    ProtocolEx_StartEx
+};
+
+static inline ProtocolHandler *impl_from_IWinInetHttpInfo(IWinInetHttpInfo *iface)
+{
+    return CONTAINING_RECORD(iface, ProtocolHandler, IWinInetHttpInfo_iface);
+}
+
+static HRESULT WINAPI HttpInfo_QueryInterface(IWinInetHttpInfo *iface, REFIID riid, void **ppv)
+{
+    ProtocolHandler *This = impl_from_IWinInetHttpInfo(iface);
+    return IInternetProtocolEx_QueryInterface(&This->IInternetProtocolEx_iface, riid, ppv);
+}
+
+static ULONG WINAPI HttpInfo_AddRef(IWinInetHttpInfo *iface)
+{
+    ProtocolHandler *This = impl_from_IWinInetHttpInfo(iface);
+    return IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
+}
+
+static ULONG WINAPI HttpInfo_Release(IWinInetHttpInfo *iface)
+{
+    ProtocolHandler *This = impl_from_IWinInetHttpInfo(iface);
+    return IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
+}
+
+static HRESULT WINAPI HttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD dwOption, void *pBuffer, DWORD *pcbBuffer)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption, void *pBuffer, DWORD *pcbBuffer,
+        DWORD *pdwFlags, DWORD *pdwReserved)
+{
+    return E_NOTIMPL;
+}
+
+static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
+    HttpInfo_QueryInterface,
+    HttpInfo_AddRef,
+    HttpInfo_Release,
+    HttpInfo_QueryOption,
+    HttpInfo_QueryInfo
+};
+
+static HRESULT WINAPI ProtocolCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProtocolCF_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ProtocolCF_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ProtocolCF_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    ProtocolHandler *protocol;
+    HRESULT hres;
+
+    protocol = calloc(1, sizeof(*protocol));
+    protocol->IInternetProtocolEx_iface.lpVtbl = &ProtocolExVtbl;
+    protocol->IWinInetHttpInfo_iface.lpVtbl = &WinInetHttpInfoVtbl;
+    protocol->ref = 1;
+
+    hres = IInternetProtocolEx_QueryInterface(&protocol->IInternetProtocolEx_iface, riid, ppv);
+    IInternetProtocolEx_Release(&protocol->IInternetProtocolEx_iface);
+    return hres;
+}
+
+static HRESULT WINAPI ProtocolCF_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    ok(0, "unexpected call\n");
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ProtocolCFVtbl = {
+    ProtocolCF_QueryInterface,
+    ProtocolCF_AddRef,
+    ProtocolCF_Release,
+    ProtocolCF_CreateInstance,
+    ProtocolCF_LockServer
+};
+
+static IClassFactory protocol_cf = { &ProtocolCFVtbl };
+
 static void doc_load_string(IHTMLDocument2 *doc, const char *str)
 {
+    IInternetSession *internet_session;
     IPersistStreamInit *init;
     IStream *stream;
     HRESULT hres;
     HGLOBAL mem;
     SIZE_T len;
+
+    if(protocol_doc_str) {
+        hres = CoInternetGetSession(0, &internet_session, 0);
+        ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
+
+        hres = IInternetSession_UnregisterNameSpace(internet_session, &protocol_cf, L"http");
+        ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+        IInternetSession_Release(internet_session);
+        protocol_doc_str = NULL;
+    }
 
     notif_doc = doc;
 
@@ -3356,6 +3817,57 @@ static IHTMLDocument2 *create_document(void)
 #endif
     ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
     return SUCCEEDED(hres) ? doc : NULL;
+}
+
+static IHTMLDocument2 *create_document_with_origin(const char *str)
+{
+    IInternetSession *internet_session;
+    IPersistMoniker *persist;
+    IHTMLDocument2 *doc;
+    IMoniker *mon;
+    HRESULT hres;
+    BSTR url;
+    MSG msg;
+
+    doc = create_document();
+    if(!doc)
+        return NULL;
+
+    if(!protocol_doc_str) {
+        hres = CoInternetGetSession(0, &internet_session, 0);
+        ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
+
+        hres = IInternetSession_RegisterNameSpace(internet_session, &protocol_cf, &CLSID_HttpProtocol, L"http", 0, NULL, 0);
+        ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+        IInternetSession_Release(internet_session);
+    }
+    protocol_doc_str = str;
+
+    notif_doc = doc;
+    doc_complete = FALSE;
+    set_client_site(doc, TRUE);
+    do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+
+    url = SysAllocString(L"http://winetest.example.org");
+    hres = CreateURLMoniker(NULL, url, &mon);
+    SysFreeString(url);
+    ok(hres == S_OK, "CreateUrlMoniker failed: %08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist);
+    ok(hres == S_OK, "Could not get IPersistMoniker iface: %08lx\n", hres);
+
+    hres = IPersistMoniker_Load(persist, FALSE, mon, NULL, 0);
+    ok(hres == S_OK, "Load failed: %08lx\n", hres);
+    IPersistMoniker_Release(persist);
+    IMoniker_Release(mon);
+
+    while(!doc_complete && GetMessageA(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+
+    return doc;
 }
 
 
@@ -3469,6 +3981,208 @@ static void test_empty_document(void)
     IHTMLDocument2_Release(doc);
 }
 
+static void test_storage_events(const char *doc_str)
+{
+    static struct  {
+        IDispatchEx *onstorage;
+        IDispatchEx *onstoragecommit;
+        IDispatchEx *window_onstorage;
+    } doc_onstorage_handlers[] = {
+        { &doc1_onstorage_obj, &doc1_onstoragecommit_obj, &window1_onstorage_obj },
+        { &doc2_onstorage_obj, &doc2_onstoragecommit_obj, &window2_onstorage_obj },
+    };
+    IHTMLStorage *session_storage[2], *local_storage[2];
+    IHTMLDocument2 *doc[2];
+    IHTMLDocument6 *doc6;
+    BSTR key, value;
+    HRESULT hres;
+    VARIANT var;
+    LONG length;
+    unsigned i;
+
+    for(i = 0; i < ARRAY_SIZE(doc); i++)
+        doc[i] = create_document_with_origin(doc_str);
+
+    document_mode = 0;
+    for(i = 0; i < ARRAY_SIZE(doc); i++) {
+        IHTMLWindow6 *window6;
+        IHTMLWindow7 *window7;
+        IHTMLWindow2 *window;
+
+        hres = IHTMLDocument2_get_parentWindow(doc[i], &window);
+        ok(hres == S_OK, "get_parentWindow[%u] failed: %08lx\n", i, hres);
+        ok(window != NULL, "window[%u] == NULL\n", i);
+
+        hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow6, (void**)&window6);
+        ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
+        IHTMLWindow2_Release(window);
+
+        hres = IHTMLWindow6_get_sessionStorage(window6, &session_storage[i]);
+        ok(hres == S_OK, "get_sessionStorage[%u] failed: %08lx\n", i, hres);
+        ok(session_storage[i] != NULL, "session_storage[%u] == NULL\n", i);
+        hres = IHTMLWindow6_get_localStorage(window6, &local_storage[i]);
+        ok(hres == S_OK, "get_localStorage[%u] failed: %08lx\n", i, hres);
+        ok(local_storage[i] != NULL, "local_storage[%u] == NULL\n", i);
+
+        hres = IHTMLDocument2_QueryInterface(doc[i], &IID_IHTMLDocument6, (void**)&doc6);
+        if(SUCCEEDED(hres)) {
+            if(i == 0) {
+                hres = IHTMLDocument6_get_documentMode(doc6, &var);
+                ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
+                ok(V_VT(&var) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&var));
+                document_mode = V_R4(&var);
+            }
+            V_VT(&var) = VT_DISPATCH;
+            V_DISPATCH(&var) = (IDispatch*)doc_onstorage_handlers[i].onstorage;
+            hres = IHTMLDocument6_put_onstorage(doc6, var);
+            ok(hres == S_OK, "put_onstorage[%u] failed: %08lx\n", i, hres);
+
+            V_DISPATCH(&var) = (IDispatch*)doc_onstorage_handlers[i].onstoragecommit;
+            hres = IHTMLDocument6_put_onstoragecommit(doc6, var);
+            ok(hres == S_OK, "put_onstoragecommit[%u] failed: %08lx\n", i, hres);
+            IHTMLDocument6_Release(doc6);
+        }
+
+        hres = IHTMLWindow6_QueryInterface(window6, &IID_IHTMLWindow7, (void**)&window7);
+        IHTMLWindow6_Release(window6);
+        if(SUCCEEDED(hres)) {
+            V_VT(&var) = VT_DISPATCH;
+            V_DISPATCH(&var) = (IDispatch*)doc_onstorage_handlers[i].window_onstorage;
+            hres = IHTMLWindow7_put_onstorage(window7, var);
+            ok(hres == S_OK, "put_onstorage[%u] failed: %08lx\n", i, hres);
+            IHTMLWindow7_Release(window7);
+        }
+    }
+
+    /* local storage */
+    for(;;) {
+        hres = IHTMLStorage_get_length(local_storage[0], &length);
+        ok(hres == S_OK, "get_length failed %08lx\n", hres);
+        if(length == 0) break;
+
+        hres = IHTMLStorage_clear(local_storage[0]);
+        ok(hres == S_OK, "clear failed: %08lx\n", hres);
+        SET_EXPECT(doc1_onstoragecommit);
+        set_onstorage_expect(NULL, NULL, NULL);
+        pump_msgs(&called_doc1_onstoragecommit);
+        CHECK_CALLED(doc1_onstoragecommit);
+    }
+
+    key = SysAllocString(L"test");
+    hres = IHTMLStorage_removeItem(local_storage[0], key);
+    ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
+
+    value = SysAllocString(L"WINE");
+    hres = IHTMLStorage_setItem(local_storage[0], key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SET_EXPECT(doc1_onstoragecommit);
+    set_onstorage_expect(NULL, NULL, NULL);
+    pump_msgs(&called_doc1_onstoragecommit);
+    CHECK_CALLED(doc1_onstoragecommit);
+
+    value = SysAllocString(L"wine");
+    hres = IHTMLStorage_setItem(local_storage[1], key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SET_EXPECT(doc1_onstoragecommit);  /* Native sometimes calls this here for some reason */
+    SET_EXPECT(doc2_onstoragecommit);
+    set_onstorage_expect(NULL, NULL, NULL);
+    pump_msgs(&called_doc2_onstoragecommit);
+    CHECK_CALLED(doc2_onstoragecommit);
+    CLEAR_CALLED(doc1_onstoragecommit);
+
+    hres = IHTMLStorage_removeItem(local_storage[0], key);
+    ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
+    SysFreeString(key);
+    SET_EXPECT(doc1_onstoragecommit);
+    set_onstorage_expect(NULL, NULL, NULL);
+    pump_msgs(&called_doc1_onstoragecommit);
+    CHECK_CALLED(doc1_onstoragecommit);
+
+    key = SysAllocString(L"winetest");
+    value = SysAllocString(L"WineTest");
+    hres = IHTMLStorage_setItem(local_storage[1], key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SysFreeString(key);
+    SET_EXPECT(doc2_onstoragecommit);
+    set_onstorage_expect(NULL, NULL, NULL);
+    pump_msgs(&called_doc2_onstoragecommit);
+    CHECK_CALLED(doc2_onstoragecommit);
+
+    hres = IHTMLStorage_clear(local_storage[0]);
+    ok(hres == S_OK, "clear failed: %08lx\n", hres);
+    SET_EXPECT(doc1_onstoragecommit);
+    set_onstorage_expect(NULL, NULL, NULL);
+    pump_msgs(&called_doc1_onstoragecommit);
+    CHECK_CALLED(doc1_onstoragecommit);
+
+    /* session storage */
+    key = SysAllocString(L"foobar");
+    hres = IHTMLStorage_removeItem(session_storage[0], key);
+    ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
+
+    value = SysAllocString(L"BarFoo");
+    hres = IHTMLStorage_setItem(session_storage[0], key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    if(document_mode >= 9) SET_EXPECT(window1_onstorage);
+    SET_EXPECT(doc1_onstorage);
+    set_onstorage_expect(L"foobar", NULL, L"BarFoo");
+    pump_msgs(&called_doc1_onstorage);
+    CHECK_CALLED(doc1_onstorage);
+    if(document_mode >= 9) CHECK_CALLED(window1_onstorage);
+
+    value = SysAllocString(L"barfoo");
+    hres = IHTMLStorage_setItem(session_storage[1], key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    if(document_mode >= 9) SET_EXPECT(window2_onstorage);
+    SET_EXPECT(doc2_onstorage);
+    set_onstorage_expect(L"foobar", L"BarFoo", L"barfoo");
+    pump_msgs(&called_doc2_onstorage);
+    CHECK_CALLED(doc2_onstorage);
+    if(document_mode >= 9) CHECK_CALLED(window2_onstorage);
+
+    hres = IHTMLStorage_removeItem(session_storage[0], key);
+    ok(hres == S_OK, "removeItem failed: %08lx\n", hres);
+    SysFreeString(key);
+    if(document_mode >= 9) SET_EXPECT(window1_onstorage);
+    SET_EXPECT(doc1_onstorage);
+    set_onstorage_expect(L"foobar", L"barfoo", NULL);
+    pump_msgs(&called_doc1_onstorage);
+    CHECK_CALLED(doc1_onstorage);
+    if(document_mode >= 9) CHECK_CALLED(window1_onstorage);
+
+    key = SysAllocString(L"winetest");
+    value = SysAllocString(L"WineTest");
+    hres = IHTMLStorage_setItem(session_storage[1], key, value);
+    ok(hres == S_OK, "setItem failed: %08lx\n", hres);
+    SysFreeString(value);
+    SysFreeString(key);
+    if(document_mode >= 9) SET_EXPECT(window2_onstorage);
+    SET_EXPECT(doc2_onstorage);
+    set_onstorage_expect(L"winetest", NULL, L"WineTest");
+    pump_msgs(&called_doc2_onstorage);
+    CHECK_CALLED(doc2_onstorage);
+    if(document_mode >= 9) CHECK_CALLED(window2_onstorage);
+
+    hres = IHTMLStorage_clear(session_storage[0]);
+    ok(hres == S_OK, "clear failed: %08lx\n", hres);
+    if(document_mode >= 9) SET_EXPECT(window1_onstorage);
+    SET_EXPECT(doc1_onstorage);
+    set_onstorage_expect(NULL, NULL, NULL);
+    pump_msgs(&called_doc1_onstorage);
+    CHECK_CALLED(doc1_onstorage);
+    if(document_mode >= 9) CHECK_CALLED(window1_onstorage);
+
+    set_client_site(doc[0], FALSE);
+    set_client_site(doc[1], FALSE);
+    IHTMLDocument2_Release(doc[0]);
+    IHTMLDocument2_Release(doc[1]);
+}
+
 static BOOL check_ie(void)
 {
     IHTMLDocument2 *doc;
@@ -3521,6 +4235,9 @@ START_TEST(events)
             run_test(empty_doc_ie9_str, test_create_event);
 
         test_empty_document();
+        test_storage_events(empty_doc_str);
+        if(is_ie9plus)
+            test_storage_events(empty_doc_ie9_str);
 
         DestroyWindow(container_hwnd);
     }else {
