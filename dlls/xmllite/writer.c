@@ -1500,6 +1500,8 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
             return WR_E_INVALIDACTION;
         break;
     case XmlWriterState_ElemStarted:
+        writer_close_starttag(This);
+        break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
     default:

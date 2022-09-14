@@ -2131,6 +2131,30 @@ static void test_WriteWhitespace(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_WriteProcessingInstruction(void)
+{
+    IXmlWriter *writer;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"w", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteProcessingInstruction(writer, L"pi", L"content");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, "<w><?pi content?>");
+    IStream_Release(stream);
+
+    IXmlWriter_Release(writer);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
@@ -2154,4 +2178,5 @@ START_TEST(writer)
     test_WriteString();
     test_WriteDocType();
     test_WriteWhitespace();
+    test_WriteProcessingInstruction();
 }
