@@ -2017,16 +2017,16 @@ static struct display_device *find_adapter_device_by_name( UNICODE_STRING *name 
  */
 static struct adapter *find_adapter( UNICODE_STRING *name )
 {
+    struct display_device *device;
     struct adapter *adapter;
 
-    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
-    {
-        if (!name || !name->Length) return adapter_acquire( adapter ); /* use primary adapter */
-        if (!wcsnicmp( name->Buffer, adapter->dev.device_name, name->Length / sizeof(WCHAR) ) &&
-            !adapter->dev.device_name[name->Length / sizeof(WCHAR)])
-            return adapter_acquire( adapter );
-    }
-    return NULL;
+    if (name && name->Length) device = find_adapter_device_by_name( name );
+    else device = find_adapter_device_by_id( 0 ); /* use primary adapter */
+
+    if (!device) adapter = NULL;
+    else adapter = adapter_acquire( CONTAINING_RECORD( device, struct adapter, dev ) );
+
+    return adapter;
 }
 
 /***********************************************************************
@@ -2496,11 +2496,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     if (!lock_display_devices()) return DISP_CHANGE_FAILED;
     adapter = find_adapter( devname );
     unlock_display_devices();
-    if (!adapter)
-    {
-        WARN( "Invalid device name %s.\n", debugstr_us(devname) );
-        return DISP_CHANGE_BADPARAM;
-    }
+    if (!adapter) return DISP_CHANGE_BADPARAM;
 
     if (!adapter_get_full_mode( adapter, devmode, &full_mode )) ret = DISP_CHANGE_BADMODE;
     else if ((flags & CDS_UPDATEREGISTRY) && !adapter_set_registry_settings( adapter, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
@@ -2559,11 +2555,7 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     if (!lock_display_devices()) return FALSE;
     adapter = find_adapter( device );
     unlock_display_devices();
-    if (!adapter)
-    {
-        WARN( "Invalid device name %s.\n", debugstr_us(device) );
-        return FALSE;
-    }
+    if (!adapter) return FALSE;
 
     lstrcpynW( devmode->dmDeviceName, wine_display_driverW, ARRAY_SIZE(devmode->dmDeviceName) );
     devmode->dmSpecVersion = DM_SPECVERSION;
