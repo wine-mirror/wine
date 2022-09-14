@@ -861,6 +861,8 @@ static void test_WriteStartElement(void)
         { NULL, L"local", L"uri", "<local xmlns=\"uri\" />", "<local" },
         { L"", L"local", L"uri", "<local xmlns=\"uri\" />", "<local" },
         { L"", L"local", L"uri", "<local xmlns=\"uri\" />", "<local" },
+        { NULL, L"local", NULL, "<local />", "<local" },
+        { NULL, L"local", L"", "<local />", "<local" },
 
         { L"prefix", NULL, NULL, NULL, NULL, E_INVALIDARG },
         { NULL, NULL, L"uri", NULL, NULL, E_INVALIDARG },
