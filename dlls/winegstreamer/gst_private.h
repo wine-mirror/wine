@@ -130,7 +130,7 @@ HRESULT wg_sample_create_mf(IMFSample *sample, struct wg_sample **out);
 HRESULT wg_sample_create_quartz(IMediaSample *sample, struct wg_sample **out);
 void wg_sample_release(struct wg_sample *wg_sample);
 
-HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *sample,
+HRESULT wg_transform_push_mf(struct wg_transform *transform, IMFSample *sample,
         struct wg_sample_queue *queue);
 HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sample *sample,
         struct wg_sample_queue *queue);

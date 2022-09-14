@@ -544,19 +544,13 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
 static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
     struct color_convert *impl = impl_from_IMFTransform(iface);
-    struct wg_sample *wg_sample;
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, sample %p, flags %#lx.\n", iface, id, sample, flags);
 
     if (!impl->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
-        return hr;
-
-    return wg_transform_push_mf(impl->wg_transform, wg_sample,
-            impl->wg_sample_queue);
+    return wg_transform_push_mf(impl->wg_transform, sample, impl->wg_sample_queue);
 }
 
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
