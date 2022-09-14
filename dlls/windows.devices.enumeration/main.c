@@ -38,6 +38,8 @@ struct device_watcher
 {
     IDeviceWatcher IDeviceWatcher_iface;
     LONG ref;
+
+    struct list stopped_handlers;
 };
 
 static inline struct device_watcher *impl_from_IDeviceWatcher( IDeviceWatcher *iface )
@@ -80,7 +82,10 @@ static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
     if (!ref)
+    {
+        typed_event_handlers_clear( &impl->stopped_handlers );
         free( impl );
+    }
 
     return ref;
 }
@@ -107,7 +112,7 @@ static HRESULT WINAPI device_watcher_add_Added( IDeviceWatcher *iface, ITypedEve
                                                 EventRegistrationToken *token )
 {
     FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI device_watcher_remove_Added( IDeviceWatcher *iface, EventRegistrationToken token )
@@ -120,7 +125,7 @@ static HRESULT WINAPI device_watcher_add_Updated( IDeviceWatcher *iface, ITypedE
                                                   EventRegistrationToken *token )
 {
     FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI device_watcher_remove_Updated( IDeviceWatcher *iface, EventRegistrationToken token )
@@ -157,14 +162,18 @@ static HRESULT WINAPI device_watcher_remove_EnumerationCompleted( IDeviceWatcher
 
 static HRESULT WINAPI device_watcher_add_Stopped( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_IInspectable *handler, EventRegistrationToken *token )
 {
-    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
-    return E_NOTIMPL;
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+
+    TRACE( "iface %p, handler %p, token %p.\n", iface, handler, token );
+    return typed_event_handlers_append( &impl->stopped_handlers, (ITypedEventHandler_IInspectable_IInspectable *)handler, token );
 }
 
 static HRESULT WINAPI device_watcher_remove_Stopped( IDeviceWatcher *iface, EventRegistrationToken token )
 {
-    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return E_NOTIMPL;
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+
+    TRACE( "iface %p, token %#I64x.\n", iface, token.value );
+    return typed_event_handlers_remove( &impl->stopped_handlers, &token );
 }
 
 static HRESULT WINAPI device_watcher_Status( IDeviceWatcher *iface, DeviceWatcherStatus *status )
@@ -176,13 +185,20 @@ static HRESULT WINAPI device_watcher_Status( IDeviceWatcher *iface, DeviceWatche
 static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
 {
     FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI device_watcher_Stop( IDeviceWatcher *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+    HRESULT hr;
+
+    FIXME( "iface %p semi-stub!\n", iface );
+
+    IDeviceWatcher_AddRef( &impl->IDeviceWatcher_iface );
+    hr = typed_event_handlers_notify( &impl->stopped_handlers, (IInspectable *)iface, NULL );
+    IDeviceWatcher_Release( &impl->IDeviceWatcher_iface );
+    return hr;
 }
 
 static const struct IDeviceWatcherVtbl device_watcher_vtbl =
@@ -341,6 +357,8 @@ static HRESULT WINAPI device_statics2_CreateWatcher( IDeviceInformationStatics2 
 
     this->IDeviceWatcher_iface.lpVtbl = &device_watcher_vtbl;
     this->ref = 1;
+
+    list_init( &this->stopped_handlers );
 
     *watcher = &this->IDeviceWatcher_iface;
     return S_OK;
