@@ -756,7 +756,7 @@ static void nulldrv_UpdateClipboard(void)
 static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
                                            DWORD flags, LPVOID lparam )
 {
-    return DISP_CHANGE_FAILED;
+    return E_NOTIMPL; /* use default implementation */
 }
 
 static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW mode )

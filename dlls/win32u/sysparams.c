@@ -509,6 +509,26 @@ static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODE
     return user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, is_primary, mode );
 }
 
+static BOOL adapter_set_current_settings( const struct adapter *adapter, const DEVMODEW *mode )
+{
+    HANDLE mutex;
+    HKEY hkey;
+    BOOL ret;
+
+    mutex = get_display_device_init_mutex();
+
+    if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) ))) ret = FALSE;
+    if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
+    else
+    {
+        ret = write_adapter_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
+        NtClose( hkey );
+    }
+
+    release_display_device_init_mutex( mutex );
+    return ret;
+}
+
 static int mode_compare(const void *p1, const void *p2)
 {
     BOOL a_interlaced, b_interlaced, a_stretched, b_stretched;
@@ -1537,6 +1557,9 @@ static BOOL update_display_cache( BOOL force )
 
     if (!user_driver->pUpdateDisplayDevices( &device_manager, force, &ctx ) && force)
     {
+        /* default implementation: expose an adapter and a monitor with a few standard modes,
+         * and read / write current display settings from / to the registry.
+         */
         static const DEVMODEW modes[] =
         {
             { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
@@ -1560,13 +1583,24 @@ static BOOL update_display_cache( BOOL force )
         struct gdi_monitor monitor =
         {
             .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
-            .rc_monitor = {.right = modes[2].dmPelsWidth, .bottom = modes[2].dmPelsHeight},
-            .rc_work = {.right = modes[2].dmPelsWidth, .bottom = modes[2].dmPelsHeight},
         };
+        DEVMODEW mode = {{0}};
         UINT i;
 
         add_gpu( &gpu, &ctx );
         add_adapter( &adapter, &ctx );
+
+        if (!read_adapter_mode( ctx.adapter_key, ENUM_CURRENT_SETTINGS, &mode ))
+        {
+            mode = modes[2];
+            mode.dmFields |= DM_POSITION;
+            write_adapter_mode( ctx.adapter_key, ENUM_CURRENT_SETTINGS, &mode );
+        }
+        monitor.rc_monitor.right = mode.dmPelsWidth;
+        monitor.rc_monitor.bottom = mode.dmPelsHeight;
+        monitor.rc_work.right = mode.dmPelsWidth;
+        monitor.rc_work.bottom = mode.dmPelsHeight;
+
         add_monitor( &monitor, &ctx );
         for (i = 0; i < ARRAY_SIZE(modes); ++i) add_mode( modes + i, &ctx );
     }
@@ -2430,8 +2464,8 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
 {
     WCHAR primary_name[CCHDEVICENAME];
     struct display_device *primary;
+    DEVMODEW *mode, *displays;
     struct adapter *adapter;
-    DEVMODEW *displays;
     LONG ret;
 
     if (!lock_display_devices()) return DISP_CHANGE_FAILED;
@@ -2454,7 +2488,18 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
     if (!(primary = find_adapter_device_by_id( 0 ))) primary_name[0] = 0;
     else wcscpy( primary_name, primary->device_name );
 
-    ret = user_driver->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
+    if ((ret = user_driver->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam )) == E_NOTIMPL)
+    {
+        /* default implementation: write current display settings to the registry. */
+        mode = displays;
+        LIST_FOR_EACH_ENTRY( adapter, &adapters, struct adapter, entry )
+        {
+            if (!adapter_set_current_settings( adapter, mode ))
+                WARN( "Failed to write adapter %s current mode.\n", debugstr_w(adapter->dev.device_name) );
+            mode = NEXT_DEVMODEW(mode);
+        }
+        ret = DISP_CHANGE_SUCCESSFUL;
+    }
     unlock_display_devices();
 
     free( displays );
