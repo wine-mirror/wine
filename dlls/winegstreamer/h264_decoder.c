@@ -607,9 +607,9 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     if (!decoder->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    *status = 0;
-    samples[0].dwStatus = 0;
-    if (!samples[0].pSample) return E_INVALIDARG;
+    *status = samples->dwStatus = 0;
+    if (!samples->pSample)
+        return E_INVALIDARG;
 
     if (FAILED(hr = IMFMediaType_GetGUID(decoder->output_type, &MF_MT_SUBTYPE, &subtype)))
         return hr;

@@ -534,14 +534,15 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
     if (count != 1)
         return E_INVALIDARG;
 
-    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
-        return hr;
-
     if (!impl->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    samples[0].dwStatus = 0;
-    if (!samples[0].pSample) return E_INVALIDARG;
+    samples->dwStatus = 0;
+    if (!samples->pSample)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
+        return hr;
 
     if (FAILED(hr = wg_sample_create_mf(samples[0].pSample, &wg_sample)))
         return hr;

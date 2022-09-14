@@ -531,22 +531,21 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
 
-    if (count > 1)
+    if (count != 1)
         return E_INVALIDARG;
 
     if (!impl->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
-        return hr;
-
-    *status = 0;
-    samples[0].dwStatus = 0;
-    if (!samples[0].pSample)
+    *status = samples->dwStatus = 0;
+    if (!samples->pSample)
     {
-        samples[0].dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
+        samples->dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
         return MF_E_TRANSFORM_NEED_MORE_INPUT;
     }
+
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
+        return hr;
 
     if (FAILED(hr = wg_sample_create_mf(samples[0].pSample, &wg_sample)))
         return hr;
