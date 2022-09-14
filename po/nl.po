@@ -15307,7 +15307,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:89
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Rij %ld, Kol %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
