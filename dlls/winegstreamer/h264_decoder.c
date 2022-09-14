@@ -592,7 +592,6 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
-    struct wg_sample *wg_sample;
     struct wg_format wg_format;
     UINT32 sample_size;
     UINT64 frame_rate;
@@ -617,20 +616,9 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
             decoder->wg_format.u.video.height, &sample_size)))
         return hr;
 
-    if (FAILED(hr = wg_sample_create_mf(samples[0].pSample, &wg_sample)))
-        return hr;
-
-    if (wg_sample->max_size < sample_size)
-    {
-        wg_sample_release(wg_sample);
-        return MF_E_BUFFERTOOSMALL;
-    }
-
-    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, wg_sample, &wg_format,
-            &samples[0].dwStatus)))
+    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, samples->pSample,
+            sample_size, &wg_format, &samples->dwStatus)))
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
-
-    wg_sample_release(wg_sample);
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
     {

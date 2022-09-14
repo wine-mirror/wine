@@ -134,8 +134,8 @@ HRESULT wg_transform_push_mf(struct wg_transform *transform, IMFSample *sample,
         struct wg_sample_queue *queue);
 HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sample *sample,
         struct wg_sample_queue *queue);
-HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *sample,
-        struct wg_format *format, DWORD *flags);
+HRESULT wg_transform_read_mf(struct wg_transform *transform, IMFSample *sample,
+        DWORD sample_size, struct wg_format *format, DWORD *flags);
 HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sample *sample);
 
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
