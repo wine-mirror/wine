@@ -1320,11 +1320,23 @@ static void test_WriteRaw(void)
 
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
     CHECK_OUTPUT(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>a<:a<:<!--a<:-->a<:<a>a</a>");
+    IStream_Release(stream);
+
+    /* With open element. */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"w", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteRaw(writer, L"text");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, "<w>text");
+    IStream_Release(stream);
 
     IXmlWriter_Release(writer);
-    IStream_Release(stream);
 }
 
 static void test_writer_state(void)
