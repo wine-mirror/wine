@@ -5675,7 +5675,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
     for (i = 0; i < gl_info->limits.vertex_attribs; ++i)
     {
         const struct wined3d_stream_info_element *element = &stream_info->elements[i];
-        const void *offset = get_vertex_attrib_pointer(element, state);
         const struct wined3d_stream_state *stream;
         const struct wined3d_format_gl *format_gl;
 
@@ -5733,6 +5732,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         if (element->stride)
         {
+            const void *offset = get_vertex_attrib_pointer(element, state);
             unsigned int format_attrs = format_gl->f.attrs;
 
             bo = wined3d_bo_gl_id(element->data.buffer_object);
