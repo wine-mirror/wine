@@ -1684,10 +1684,13 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     heap_free(context_vk->vk_descriptor_pools);
     if (context_vk->vk_framebuffer)
         VK_CALL(vkDestroyFramebuffer(device_vk->vk_device, context_vk->vk_framebuffer, NULL));
-    VK_CALL(vkDestroyCommandPool(device_vk->vk_device, context_vk->vk_command_pool, NULL));
     if (context_vk->vk_so_counter_bo.vk_buffer)
         wined3d_context_vk_destroy_bo(context_vk, &context_vk->vk_so_counter_bo);
     wined3d_context_vk_cleanup_resources(context_vk, VK_NULL_HANDLE);
+    /* Destroy the command pool after cleaning up resources. In particular,
+     * this needs to happen after all command buffers are freed, because
+     * vkFreeCommandBuffers() requires a valid pool handle. */
+    VK_CALL(vkDestroyCommandPool(device_vk->vk_device, context_vk->vk_command_pool, NULL));
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_occlusion_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_timestamp_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_pipeline_statistics_query_pools);
