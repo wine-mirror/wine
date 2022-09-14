@@ -1296,13 +1296,13 @@ static HRESULT reader_parse_encname(xmlreader *reader, strval *val)
 }
 
 /* [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" ) */
-static HRESULT reader_parse_encdecl(xmlreader *reader)
+static HRESULT reader_parse_encdecl(xmlreader *reader, BOOL *spaces)
 {
     struct reader_position position;
     strval name, val;
     HRESULT hr;
 
-    if (!reader_skipspaces(reader)) return S_FALSE;
+    if (!(*spaces = reader_skipspaces(reader))) return S_FALSE;
 
     position = reader->position;
     if (reader_cmp(reader, L"encoding")) return S_FALSE;
@@ -1328,19 +1328,20 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
 
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
+    *spaces = FALSE;
 
     return reader_add_attr(reader, NULL, &name, NULL, &val, &position, 0);
 }
 
 /* [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) */
-static HRESULT reader_parse_sddecl(xmlreader *reader)
+static HRESULT reader_parse_sddecl(xmlreader *reader, BOOL spaces)
 {
     struct reader_position position;
     strval name, val;
     UINT start;
     HRESULT hr;
 
-    if (!reader_skipspaces(reader)) return S_FALSE;
+    if (!spaces && !reader_skipspaces(reader)) return S_FALSE;
 
     position = reader->position;
     if (reader_cmp(reader, L"standalone")) return S_FALSE;
@@ -1377,6 +1378,7 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
 static HRESULT reader_parse_xmldecl(xmlreader *reader)
 {
     struct reader_position position;
+    BOOL spaces;
     HRESULT hr;
 
     if (reader_cmp(reader, L"<?xml "))
@@ -1389,12 +1391,10 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
     if (FAILED(hr))
         return hr;
 
-    hr = reader_parse_encdecl(reader);
-    if (FAILED(hr))
+    if (FAILED(hr = reader_parse_encdecl(reader, &spaces)))
         return hr;
 
-    hr = reader_parse_sddecl(reader);
-    if (FAILED(hr))
+    if (FAILED(hr = reader_parse_sddecl(reader, spaces)))
         return hr;
 
     reader_skipspaces(reader);

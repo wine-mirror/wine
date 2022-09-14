@@ -1019,6 +1019,27 @@ todo_wine {
     TEST_READER_STATE(reader, XmlReadState_Error);
 
     IStream_Release(stream);
+
+    /* No encoding attribute. */
+    set_input_string(reader, "<?xml version=\"1.0\" standalone=\"yes\"?><a/>");
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == XmlNodeType_XmlDeclaration, "got %d\n", type);
+
+    /* Just version attribute, no spaces. */
+    set_input_string(reader, "<?xml version=\"1.0\"?><a/>");
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == XmlNodeType_XmlDeclaration, "got %d\n", type);
+
+    set_input_string(reader, "<?xml version=\"1.0\"encoding=\"UTF-8\"?><a/>");
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == WC_E_XMLDECL, "Unexpected hr %#lx.\n", hr);
+
+    set_input_string(reader, "<?xml version=\"1.0\"standalone=\"yes\"?><a/>");
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == WC_E_XMLDECL, "Unexpected hr %#lx.\n", hr);
+
     IXmlReader_Release(reader);
 }
 
