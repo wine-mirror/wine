@@ -778,6 +778,52 @@ enum wined3d_shader_conditional_op
     WINED3D_SHADER_CONDITIONAL_OP_Z  = 1
 };
 
+enum wined3d_sysval_semantic
+{
+    WINED3D_SV_POSITION                  = 0x01,
+    WINED3D_SV_CLIP_DISTANCE             = 0x02,
+    WINED3D_SV_CULL_DISTANCE             = 0x03,
+    WINED3D_SV_RENDER_TARGET_ARRAY_INDEX = 0x04,
+    WINED3D_SV_VIEWPORT_ARRAY_INDEX      = 0x05,
+    WINED3D_SV_VERTEX_ID                 = 0x06,
+    WINED3D_SV_PRIMITIVE_ID              = 0x07,
+    WINED3D_SV_INSTANCE_ID               = 0x08,
+    WINED3D_SV_IS_FRONT_FACE             = 0x09,
+    WINED3D_SV_SAMPLE_INDEX              = 0x0a,
+    WINED3D_SV_TESS_FACTOR_QUADEDGE      = 0x0b,
+    WINED3D_SV_TESS_FACTOR_QUADINT       = 0x0c,
+    WINED3D_SV_TESS_FACTOR_TRIEDGE       = 0x0d,
+    WINED3D_SV_TESS_FACTOR_TRIINT        = 0x0e,
+    WINED3D_SV_TESS_FACTOR_LINEDET       = 0x0f,
+    WINED3D_SV_TESS_FACTOR_LINEDEN       = 0x10,
+};
+
+enum wined3d_component_type
+{
+    WINED3D_TYPE_UNKNOWN = 0x0,
+    WINED3D_TYPE_UINT    = 0x1,
+    WINED3D_TYPE_INT     = 0x2,
+    WINED3D_TYPE_FLOAT   = 0x3,
+};
+
+struct wined3d_shader_signature_element
+{
+    const char *semantic_name;
+    unsigned int semantic_idx;
+    unsigned int stream_idx;
+    enum wined3d_sysval_semantic sysval_semantic;
+    enum wined3d_component_type component_type;
+    unsigned int register_idx;
+    uint32_t mask;
+    unsigned int min_precision;
+};
+
+struct wined3d_shader_signature
+{
+    unsigned int element_count;
+    struct wined3d_shader_signature_element *elements;
+};
+
 #define WINED3D_SM1_VS  0xfffeu
 #define WINED3D_SM1_PS  0xffffu
 #define WINED3D_SM4_PS  0x0000u

@@ -319,8 +319,6 @@
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)
 @ cdecl wined3d_vertex_declaration_incref(ptr)
 
-@ cdecl wined3d_extract_shader_input_signature_from_dxbc(ptr ptr long)
-
 @ cdecl vkd3d_create_instance(ptr ptr)
 @ cdecl vkd3d_instance_decref(ptr)
 @ cdecl vkd3d_instance_get_vk_instance(ptr)

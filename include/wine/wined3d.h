@@ -811,34 +811,6 @@ enum wined3d_decl_usage
     WINED3D_DECL_USAGE_SAMPLE               = 13
 };
 
-enum wined3d_sysval_semantic
-{
-    WINED3D_SV_POSITION                     = 1,
-    WINED3D_SV_CLIP_DISTANCE                = 2,
-    WINED3D_SV_CULL_DISTANCE                = 3,
-    WINED3D_SV_RENDER_TARGET_ARRAY_INDEX    = 4,
-    WINED3D_SV_VIEWPORT_ARRAY_INDEX         = 5,
-    WINED3D_SV_VERTEX_ID                    = 6,
-    WINED3D_SV_PRIMITIVE_ID                 = 7,
-    WINED3D_SV_INSTANCE_ID                  = 8,
-    WINED3D_SV_IS_FRONT_FACE                = 9,
-    WINED3D_SV_SAMPLE_INDEX                 = 10,
-    WINED3D_SV_TESS_FACTOR_QUADEDGE         = 11,
-    WINED3D_SV_TESS_FACTOR_QUADINT          = 12,
-    WINED3D_SV_TESS_FACTOR_TRIEDGE          = 13,
-    WINED3D_SV_TESS_FACTOR_TRIINT           = 14,
-    WINED3D_SV_TESS_FACTOR_LINEDET          = 15,
-    WINED3D_SV_TESS_FACTOR_LINEDEN          = 16,
-};
-
-enum wined3d_component_type
-{
-    WINED3D_TYPE_UNKNOWN = 0,
-    WINED3D_TYPE_UINT    = 1,
-    WINED3D_TYPE_INT     = 2,
-    WINED3D_TYPE_FLOAT   = 3,
-};
-
 enum wined3d_scanline_ordering
 {
     WINED3D_SCANLINE_ORDERING_UNKNOWN       = 0,
@@ -2113,24 +2085,6 @@ struct wined3d_sampler_desc
     BOOL srgb_decode;
 };
 
-struct wined3d_shader_signature_element
-{
-    const char *semantic_name;
-    unsigned int semantic_idx;
-    unsigned int stream_idx;
-    enum wined3d_sysval_semantic sysval_semantic;
-    enum wined3d_component_type component_type;
-    unsigned int register_idx;
-    DWORD mask;
-    unsigned int min_precision;
-};
-
-struct wined3d_shader_signature
-{
-    UINT element_count;
-    struct wined3d_shader_signature_element *elements;
-};
-
 struct wined3d_shader_desc
 {
     const DWORD *byte_code;
@@ -2929,9 +2883,6 @@ HRESULT __cdecl wined3d_vertex_declaration_create_from_fvf(struct wined3d_device
 ULONG __cdecl wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration);
 void * __cdecl wined3d_vertex_declaration_get_parent(const struct wined3d_vertex_declaration *declaration);
 ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration);
-
-HRESULT __cdecl wined3d_extract_shader_input_signature_from_dxbc(struct wined3d_shader_signature *signature,
-        const void *byte_code, SIZE_T byte_code_size);
 
 static inline void wined3d_streaming_buffer_init(struct wined3d_streaming_buffer *buffer, unsigned int bind_flags)
 {

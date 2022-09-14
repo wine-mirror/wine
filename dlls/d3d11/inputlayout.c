@@ -19,27 +19,28 @@
 
 #include "d3d11_private.h"
 #include "winternl.h"
+#include <vkd3d_shader.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static BOOL is_vs_sysval_semantic(const struct wined3d_shader_signature_element *e)
+static BOOL is_vs_sysval_semantic(const struct vkd3d_shader_signature_element *e)
 {
     return !stricmp(e->semantic_name, "sv_instanceid") || !stricmp(e->semantic_name, "sv_vertexid");
 }
 
 static unsigned int find_input_element(const D3D11_INPUT_ELEMENT_DESC *element_descs, unsigned int element_count,
-        struct wined3d_shader_signature_element *ise)
+        const struct vkd3d_shader_signature_element *ise)
 {
     const D3D11_INPUT_ELEMENT_DESC *f;
     unsigned int i;
 
-    if (ise->stream_idx)
+    if (ise->stream_index)
         return element_count;
 
     for (i = 0; i < element_count; ++i)
     {
         f = &element_descs[i];
-        if (!stricmp(ise->semantic_name, f->SemanticName) && ise->semantic_idx == f->SemanticIndex)
+        if (!stricmp(ise->semantic_name, f->SemanticName) && ise->semantic_index == f->SemanticIndex)
             return i;
     }
     return element_count;
@@ -54,22 +55,23 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
         struct wined3d_vertex_element **wined3d_elements)
 {
-    struct wined3d_shader_signature_element *ise;
-    struct wined3d_shader_signature is;
+    const struct vkd3d_shader_code dxbc = {shader_byte_code, shader_byte_code_length};
+    struct vkd3d_shader_signature_element *ise;
     const D3D11_INPUT_ELEMENT_DESC *f;
+    struct vkd3d_shader_signature is;
     unsigned int i, index;
-    HRESULT hr;
+    int ret;
 
-    if (FAILED(hr = wined3d_extract_shader_input_signature_from_dxbc(&is, shader_byte_code, shader_byte_code_length)))
+    if ((ret = vkd3d_shader_parse_input_signature(&dxbc, &is, NULL)) < 0)
     {
-        ERR("Failed to extract input signature.\n");
+        ERR("Failed to extract input signature, ret %d.\n", ret);
         return E_FAIL;
     }
 
     if (!(*wined3d_elements = calloc(element_count, sizeof(**wined3d_elements))))
     {
         ERR("Failed to allocate wined3d vertex element array memory.\n");
-        free(is.elements);
+        vkd3d_shader_free_shader_signature(&is);
         return E_OUTOFMEMORY;
     }
 
@@ -96,18 +98,18 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
     {
         if ((index = find_input_element(element_descs, element_count, &ise[i])) < element_count)
         {
-            (*wined3d_elements)[index].output_slot = ise[i].register_idx;
+            (*wined3d_elements)[index].output_slot = ise[i].register_index;
         }
         else if (!is_vs_sysval_semantic(&ise[i]))
         {
-            WARN("Input element %s%u not found in shader signature.\n", ise[i].semantic_name, ise[i].semantic_idx);
+            WARN("Input element %s%u not found in shader signature.\n", ise[i].semantic_name, ise[i].semantic_index);
             free(*wined3d_elements);
-            free(is.elements);
+            vkd3d_shader_free_shader_signature(&is);
             return E_INVALIDARG;
         }
     }
 
-    free(is.elements);
+    vkd3d_shader_free_shader_signature(&is);
 
     return S_OK;
 }
