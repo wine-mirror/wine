@@ -42,6 +42,9 @@
 /* Don't submit the results if more than FAILURES_LIMIT tests have failed */
 #define FAILURES_LIMIT 50
 
+/* Maximum output size for individual test */
+#define MAX_OUTPUT_SIZE (32 * 1024)
+
 struct wine_test
 {
     char *name;
@@ -871,19 +874,25 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
             char *data, tmpname[MAX_PATH];
             HANDLE tmpfile = create_temp_file( tmpname );
             status = run_ex (cmd, tmpfile, tempdir, 120000, FALSE, &pid);
-            if (status)
-            {
-                data = flush_temp_file( tmpname, tmpfile, &size );
-                WriteFile( out_file, data, size, &size, NULL );
-                free( data );
-            }
-            else close_temp_file( tmpname, tmpfile );
+            data = flush_temp_file( tmpname, tmpfile, &size );
+            if (status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+            free( data );
         }
-        else status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
+        else
+        {
+            DWORD start_size = GetFileSize( out_file, NULL );
+            status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
+            size = GetFileSize( out_file, NULL ) - start_size;
+        }
         if (status == -2) status = -GetLastError();
         free(cmd);
-        xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
-        if (status) failures++;
+        xprintf ("%s:%s:%04x done (%d) in %ds %uB\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000, size);
+        if (size > MAX_OUTPUT_SIZE)
+        {
+            xprintf ("%s:%s:%04x The test prints too much data (%u bytes)\n", test->name, subtest, pid, size);
+            failures++;
+        }
+        else if (status) failures++;
     }
     if (failures) report (R_STATUS, "Running tests - %u failures", failures);
 }
