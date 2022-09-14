@@ -695,21 +695,21 @@ static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
     return IUnknown_Release(filter->filter.outer_unk);
 }
 
-HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *count)
+static HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *count)
 {
     TRACE("iface %p, count %p.\n", iface, count);
     *count = 1;
     return S_OK;
 }
 
-HRESULT WINAPI basic_audio_GetTypeInfo(IBasicAudio *iface, UINT index,
+static HRESULT WINAPI basic_audio_GetTypeInfo(IBasicAudio *iface, UINT index,
         LCID lcid, ITypeInfo **typeinfo)
 {
     TRACE("iface %p, index %u, lcid %#lx, typeinfo %p.\n", iface, index, lcid, typeinfo);
     return strmbase_get_typeinfo(IBasicAudio_tid, typeinfo);
 }
 
-HRESULT WINAPI basic_audio_GetIDsOfNames(IBasicAudio *iface, REFIID iid,
+static HRESULT WINAPI basic_audio_GetIDsOfNames(IBasicAudio *iface, REFIID iid,
         LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
 {
     ITypeInfo *typeinfo;
