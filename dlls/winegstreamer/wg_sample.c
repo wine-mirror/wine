@@ -291,7 +291,11 @@ HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *w
     TRACE_(mfplat)("transform %p, wg_sample %p, format %p, flags %p.\n", transform, wg_sample, format, flags);
 
     if (FAILED(hr = wg_transform_read_data(transform, wg_sample, format)))
+    {
+        if (hr == MF_E_TRANSFORM_STREAM_CHANGE && !format)
+            FIXME("Unexpected stream format change!\n");
         return hr;
+    }
 
     if (FAILED(hr = IMFMediaBuffer_SetCurrentLength(sample->u.mf.buffer, wg_sample->size)))
         return hr;
@@ -349,7 +353,11 @@ HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sampl
     TRACE_(mfplat)("transform %p, wg_sample %p.\n", transform, wg_sample);
 
     if (FAILED(hr = wg_transform_read_data(transform, wg_sample, NULL)))
+    {
+        if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
+            FIXME("Unexpected stream format change!\n");
         return hr;
+    }
 
     if (FAILED(hr = IMediaSample_SetActualDataLength(sample->u.quartz.sample, wg_sample->size)))
         return hr;

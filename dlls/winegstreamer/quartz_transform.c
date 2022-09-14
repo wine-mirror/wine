@@ -342,8 +342,6 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
         }
         if (FAILED(hr))
         {
-            if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
-                FIXME("Unexpected stream format change!\n");
             IMediaSample_Release(output_sample);
             return hr;
         }
