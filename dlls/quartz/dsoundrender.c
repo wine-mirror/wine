@@ -192,7 +192,8 @@ static HRESULT get_write_pos(struct dsound_render *filter,
     else if (delta_t < 0)
     {
         REFERENCE_TIME past, min_writepos_t;
-        WARN("Delta too big %s/%s, overwriting old data or even skipping\n", debugstr_time(delta_t), debugstr_time(max_lag));
+        WARN("Delta too big %s/%s, overwriting old data or even skipping.\n",
+                debugstr_time(delta_t), debugstr_time(max_lag));
         if (min_writepos >= playpos)
             min_writepos_t = cur + time_from_pos(filter, min_writepos - playpos);
         else
@@ -215,7 +216,7 @@ static HRESULT get_write_pos(struct dsound_render *filter,
     else /* delta_t > 0 */
     {
         DWORD aheadbytes;
-        WARN("Delta too big %s/%s, too far ahead\n", debugstr_time(delta_t), debugstr_time(max_lag));
+        WARN("Delta too big %s/%s, too far ahead.\n", debugstr_time(delta_t), debugstr_time(max_lag));
         aheadbytes = pos_from_time(filter, delta_t);
         WARN("Advancing %lu bytes.\n", aheadbytes);
         if (delta_t >= DSoundRenderer_Max_Fill)
@@ -378,6 +379,8 @@ static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IM
     REFERENCE_TIME start, stop;
     HRESULT hr;
 
+    TRACE("filter %p, sample %p.\n", filter, sample);
+
     if (filter->eos || filter->sink.flushing)
         return S_FALSE;
 
@@ -464,7 +467,7 @@ static void dsound_render_sink_disconnect(struct strmbase_sink *iface)
 {
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("filter %p.\n", filter);
 
     if (filter->dsbuffer)
         IDirectSoundBuffer_Release(filter->dsbuffer);
@@ -689,33 +692,27 @@ static const struct strmbase_filter_ops filter_ops =
 static HRESULT WINAPI basic_audio_QueryInterface(IBasicAudio *iface, REFIID riid, void **out)
 {
     struct dsound_render *filter = impl_from_IBasicAudio(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", filter, iface, debugstr_guid(riid), out);
-
     return IUnknown_QueryInterface(filter->filter.outer_unk, riid, out);
 }
 
 static ULONG WINAPI basic_audio_AddRef(IBasicAudio *iface)
 {
     struct dsound_render *filter = impl_from_IBasicAudio(iface);
-
-    TRACE("(%p/%p)->()\n", filter, iface);
-
     return IUnknown_AddRef(filter->filter.outer_unk);
 }
 
 static ULONG WINAPI basic_audio_Release(IBasicAudio *iface)
 {
     struct dsound_render *filter = impl_from_IBasicAudio(iface);
-
-    TRACE("(%p/%p)->()\n", filter, iface);
-
     return IUnknown_Release(filter->filter.outer_unk);
 }
 
 static HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *count)
 {
-    TRACE("iface %p, count %p.\n", iface, count);
+    struct dsound_render *filter = impl_from_IBasicAudio(iface);
+
+    TRACE("filter %p, count %p.\n", filter, count);
+
     *count = 1;
     return S_OK;
 }
@@ -723,18 +720,22 @@ static HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *cou
 static HRESULT WINAPI basic_audio_GetTypeInfo(IBasicAudio *iface, UINT index,
         LCID lcid, ITypeInfo **typeinfo)
 {
-    TRACE("iface %p, index %u, lcid %#lx, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    struct dsound_render *filter = impl_from_IBasicAudio(iface);
+
+    TRACE("filter %p, index %u, lcid %lu, typeinfo %p.\n", filter, index, lcid, typeinfo);
+
     return strmbase_get_typeinfo(IBasicAudio_tid, typeinfo);
 }
 
 static HRESULT WINAPI basic_audio_GetIDsOfNames(IBasicAudio *iface, REFIID iid,
         LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
 {
+    struct dsound_render *filter = impl_from_IBasicAudio(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("iface %p, iid %s, names %p, count %u, lcid %#lx, ids %p.\n",
-            iface, debugstr_guid(iid), names, count, lcid, ids);
+    TRACE("filter %p, iid %s, names %p, count %u, lcid %lu, ids %p.\n",
+            filter, debugstr_guid(iid), names, count, lcid, ids);
 
     if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicAudio_tid, &typeinfo)))
     {
@@ -750,8 +751,8 @@ static HRESULT WINAPI basic_audio_Invoke(IBasicAudio *iface, DISPID id, REFIID i
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("iface %p, id %ld, iid %s, lcid %#lx, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
-            iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
+    TRACE("filter %p, id %ld, iid %s, lcid %lu, flags %u, params %p, result %p, excepinfo %p, error_arg %p.\n",
+          iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
 
     if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicAudio_tid, &typeinfo)))
     {
@@ -781,7 +782,7 @@ static HRESULT WINAPI basic_audio_get_Volume(IBasicAudio *iface, LONG *volume)
 {
     struct dsound_render *filter = impl_from_IBasicAudio(iface);
 
-    TRACE("(%p/%p)->(%p)\n", filter, iface, volume);
+    TRACE("filter %p, volume %p.\n", filter, volume);
 
     if (!volume)
         return E_POINTER;
@@ -810,7 +811,7 @@ static HRESULT WINAPI basic_audio_get_Balance(IBasicAudio *iface, LONG *balance)
 {
     struct dsound_render *filter = impl_from_IBasicAudio(iface);
 
-    TRACE("(%p/%p)->(%p)\n", filter, iface, balance);
+    TRACE("filter %p, balance %p.\n", filter, balance);
 
     if (!balance)
         return E_POINTER;
@@ -837,27 +838,18 @@ static const IBasicAudioVtbl basic_audio_vtbl =
 static HRESULT WINAPI direct_sound_QueryInterface(IAMDirectSound *iface, REFIID riid, void **out)
 {
     struct dsound_render *filter = impl_from_IAMDirectSound(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", filter, iface, debugstr_guid(riid), out);
-
     return IUnknown_QueryInterface(filter->filter.outer_unk, riid, out);
 }
 
 static ULONG WINAPI direct_sound_AddRef(IAMDirectSound *iface)
 {
     struct dsound_render *filter = impl_from_IAMDirectSound(iface);
-
-    TRACE("(%p/%p)->()\n", filter, iface);
-
     return IUnknown_AddRef(filter->filter.outer_unk);
 }
 
 static ULONG WINAPI direct_sound_Release(IAMDirectSound *iface)
 {
     struct dsound_render *filter = impl_from_IAMDirectSound(iface);
-
-    TRACE("(%p/%p)->()\n", filter, iface);
-
     return IUnknown_Release(filter->filter.outer_unk);
 }
 
@@ -1012,6 +1004,8 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
     struct dsound_render *object;
     IDirectSoundBuffer *buffer;
     HRESULT hr;
+
+    TRACE("outer %p, out %p.\n", outer, out);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
