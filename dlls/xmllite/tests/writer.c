@@ -1736,9 +1736,33 @@ static void test_WriteFullEndElement(void)
         "<a>\r\n"
         "  <a></a>\r\n"
         "</a>");
+    IStream_Release(stream);
+
+    /* Empty strings for prefix and uri. */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_Indent, FALSE);
+    ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, L"", L"a", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"b", L"");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteStartElement(writer, L"", L"c", L"");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, "<a><b><c></c></b></a>");
+    IStream_Release(stream);
 
     IXmlWriter_Release(writer);
-    IStream_Release(stream);
 }
 
 static void test_WriteCharEntity(void)

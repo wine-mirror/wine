@@ -168,6 +168,11 @@ static inline void writer_free(const xmlwriter *writer, void *mem)
     m_free(writer->imalloc, mem);
 }
 
+static BOOL is_empty_string(const WCHAR *str)
+{
+    return !str || !*str;
+}
+
 static struct element *alloc_element(xmlwriter *writer, const WCHAR *prefix, const WCHAR *local)
 {
     struct element *ret;
@@ -176,7 +181,7 @@ static struct element *alloc_element(xmlwriter *writer, const WCHAR *prefix, con
     ret = writer_alloc(writer, sizeof(*ret));
     if (!ret) return ret;
 
-    len = prefix ? lstrlenW(prefix) + 1 /* ':' */ : 0;
+    len = is_empty_string(prefix) ? 0 : lstrlenW(prefix) + 1 /* ':' */;
     len += lstrlenW(local);
 
     ret->qname = writer_alloc(writer, (len + 1)*sizeof(WCHAR));
@@ -188,13 +193,13 @@ static struct element *alloc_element(xmlwriter *writer, const WCHAR *prefix, con
     }
 
     ret->len = len;
-    if (prefix)
+    if (is_empty_string(prefix))
+        ret->qname[0] = 0;
+    else
     {
         lstrcpyW(ret->qname, prefix);
         lstrcatW(ret->qname, L":");
     }
-    else
-        ret->qname[0] = 0;
     lstrcatW(ret->qname, local);
     list_init(&ret->ns);
 
@@ -286,11 +291,6 @@ static struct ns *writer_push_ns(xmlwriter *writer, const WCHAR *prefix, int pre
     }
 
     return ns;
-}
-
-static BOOL is_empty_string(const WCHAR *str)
-{
-    return !str || !*str;
 }
 
 static struct ns *writer_find_ns_current(const xmlwriter *writer, const WCHAR *prefix, const WCHAR *uri)
@@ -1676,7 +1676,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
 
     writer_push_element(This, element);
 
-    if (!ns && uri)
+    if (!ns && !is_empty_string(uri))
         writer_push_ns(This, prefix, prefix_len, uri);
 
     write_output_buffer_char(This->output, '<');
