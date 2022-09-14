@@ -1752,13 +1752,36 @@ static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHA
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR pwszWhitespace)
+static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    size_t length = 0;
 
-    FIXME("%p %s\n", This, wine_dbgstr_w(pwszWhitespace));
+    TRACE("%p, %s.\n", iface, wine_dbgstr_w(text));
 
-    return E_NOTIMPL;
+    switch (writer->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_ElemStarted:
+        writer_close_starttag(writer);
+        break;
+    case XmlWriterState_InvalidEncoding:
+        return MX_E_ENCODING;
+    case XmlWriterState_Ready:
+        break;
+    default:
+        return WR_E_INVALIDACTION;
+    }
+
+    while (text[length])
+    {
+        if (!is_wchar_space(text[length])) return WR_E_NONWHITESPACE;
+        length++;
+    }
+
+    write_output_buffer(writer->output, text, length);
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_Flush(IXmlWriter *iface)

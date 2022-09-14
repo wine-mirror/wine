@@ -63,4 +63,9 @@ BOOL is_pubchar(WCHAR ch) DECLSPEC_HIDDEN;
 BOOL is_namestartchar(WCHAR ch) DECLSPEC_HIDDEN;
 BOOL is_namechar(WCHAR ch) DECLSPEC_HIDDEN;
 
+static inline BOOL is_wchar_space(WCHAR ch)
+{
+    return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+}
+
 #endif /* __XMLLITE_PRIVATE__ */

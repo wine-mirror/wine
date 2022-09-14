@@ -148,28 +148,30 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
     /* FIXME: add WriteNodeShallow */
 
     hr = IXmlWriter_WriteProcessingInstruction(writer, L"a", L"a");
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteQualifiedName(writer, L"a", NULL);
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteRaw(writer, L"a");
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteRawChars(writer, L"a", 1);
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, L"a", NULL);
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteString(writer, L"a");
-    ok(hr == exp_hr, "Unexpected hr %#lx., expected %#lx.\n", hr, exp_hr);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     /* FIXME: add WriteSurrogateCharEntity */
-    /* FIXME: add WriteWhitespace */
+
+    hr = IXmlWriter_WriteWhitespace(writer, L" ");
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 }
 
 static IStream *writer_set_output(IXmlWriter *writer)
@@ -388,7 +390,9 @@ static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
     ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
 
     /* TODO: WriteSurrogateCharEntity */
-    /* TODO: WriteWhitespace */
+
+    hr = IXmlWriter_WriteWhitespace(writer, L" ");
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Failed to flush, hr %#lx.\n", hr);
@@ -2063,6 +2067,34 @@ static void test_WriteDocType(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_WriteWhitespace(void)
+{
+    IXmlWriter *writer;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteWhitespace(writer, L" ");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteWhitespace(writer, L"ab");
+    ok(hr == WR_E_NONWHITESPACE, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"w", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteWhitespace(writer, L"\t");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, " <w>\t");
+    IStream_Release(stream);
+
+    IXmlWriter_Release(writer);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
@@ -2085,4 +2117,5 @@ START_TEST(writer)
     test_WriteCharEntity();
     test_WriteString();
     test_WriteDocType();
+    test_WriteWhitespace();
 }

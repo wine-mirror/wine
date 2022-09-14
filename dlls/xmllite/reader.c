@@ -1159,11 +1159,6 @@ static void reader_skipn(xmlreader *reader, int n)
     }
 }
 
-static inline BOOL is_wchar_space(WCHAR ch)
-{
-    return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
-}
-
 /* [3] S ::= (#x20 | #x9 | #xD | #xA)+ */
 static int reader_skipspaces(xmlreader *reader)
 {
