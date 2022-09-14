@@ -2663,8 +2663,6 @@ static void wined3d_context_gl_cleanup_resources(struct wined3d_context_gl *cont
         wined3d_device_gl_free_memory(device_gl, r->block);
         if (i != --count)
             *r = blocks[count];
-        else
-            ++i;
     }
     device_gl->retired_block_count = count;
 }
