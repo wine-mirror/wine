@@ -1502,14 +1502,102 @@ static HRESULT WINAPI xmlwriter_WriteNmToken(IXmlWriter *iface, LPCWSTR pwszNmTo
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlwriter_WriteNode(IXmlWriter *iface, IXmlReader *pReader,
-                            BOOL fWriteDefaultAttributes)
+static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL write_default_attributes)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    XmlStandalone standalone = XmlStandalone_Omit;
+    const WCHAR *name, *value, *prefix, *uri;
+    unsigned int start_depth = 0, depth;
+    XmlNodeType node_type;
+    HRESULT hr;
 
-    FIXME("%p %p %d\n", This, pReader, fWriteDefaultAttributes);
+    if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
 
-    return E_NOTIMPL;
+    switch (node_type)
+    {
+        case XmlNodeType_None:
+            while ((hr = IXmlReader_Read(reader, NULL)) == S_OK)
+            {
+                if (FAILED(hr = writer_write_node(writer, reader, write_default_attributes))) return hr;
+            }
+            break;
+        case XmlNodeType_Element:
+            if (FAILED(hr = IXmlReader_GetPrefix(reader, &prefix, NULL))) return hr;
+            if (FAILED(hr = IXmlReader_GetLocalName(reader, &name, NULL))) return hr;
+            if (FAILED(hr = IXmlReader_GetNamespaceUri(reader, &uri, NULL))) return hr;
+            if (FAILED(hr = IXmlWriter_WriteStartElement(writer, prefix, name, uri))) return hr;
+            if (FAILED(hr = IXmlWriter_WriteAttributes(writer, reader, write_default_attributes))) return hr;
+            if (IXmlReader_IsEmptyElement(reader))
+            {
+                hr = IXmlWriter_WriteEndElement(writer);
+            }
+            else
+            {
+                if (FAILED(hr = IXmlReader_MoveToElement(reader))) return hr;
+                if (FAILED(hr = IXmlReader_GetDepth(reader, &start_depth))) return hr;
+                while ((hr = IXmlReader_Read(reader, &node_type)) == S_OK)
+                {
+                    if (FAILED(hr = writer_write_node(writer, reader, write_default_attributes))) return hr;
+                    if (FAILED(hr = IXmlReader_MoveToElement(reader))) return hr;
+
+                    depth = 0;
+                    if (FAILED(hr = IXmlReader_GetDepth(reader, &depth))) return hr;
+                    if (node_type == XmlNodeType_EndElement && (start_depth == depth - 1)) break;
+                }
+            }
+            break;
+        case XmlNodeType_Attribute:
+            break;
+        case XmlNodeType_Text:
+            if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+            hr = IXmlWriter_WriteRaw(writer, value);
+            break;
+        case XmlNodeType_CDATA:
+            if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+            hr = IXmlWriter_WriteCData(writer, value);
+            break;
+        case XmlNodeType_ProcessingInstruction:
+            if (FAILED(hr = IXmlReader_GetLocalName(reader, &name, NULL))) return hr;
+            if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+            hr = IXmlWriter_WriteProcessingInstruction(writer, name, value);
+            break;
+        case XmlNodeType_Comment:
+            if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+            hr = IXmlWriter_WriteComment(writer, value);
+            break;
+        case XmlNodeType_Whitespace:
+            if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+            hr = IXmlWriter_WriteWhitespace(writer, value);
+            break;
+        case XmlNodeType_EndElement:
+            hr = IXmlWriter_WriteFullEndElement(writer);
+            break;
+        case XmlNodeType_XmlDeclaration:
+            if (FAILED(hr = IXmlReader_MoveToAttributeByName(reader, L"standalone", NULL))) return hr;
+            if (hr == S_OK)
+            {
+                if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+                standalone = !wcscmp(value, L"yes") ? XmlStandalone_Yes : XmlStandalone_No;
+            }
+            hr = IXmlWriter_WriteStartDocument(writer, standalone);
+            break;
+        default:
+            WARN("Unknown node type %d.\n", node_type);
+            return E_UNEXPECTED;
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI xmlwriter_WriteNode(IXmlWriter *iface, IXmlReader *reader, BOOL write_default_attributes)
+{
+    HRESULT hr;
+
+    TRACE("%p, %p, %d.\n", iface, reader, write_default_attributes);
+
+    if (SUCCEEDED(hr = writer_write_node(iface, reader, write_default_attributes)))
+        hr = IXmlReader_Read(reader, NULL);
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteNodeShallow(IXmlWriter *iface, IXmlReader *pReader,
