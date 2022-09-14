@@ -17470,7 +17470,8 @@ static void test_keyflags(void)
     MSG msg;
 
     test_window = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                           100, 100, 200, 200, 0, 0, 0, NULL);
+                                  0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                                  0, 0, 0, NULL);
 
     flush_events();
     flush_sequence();
@@ -17705,8 +17706,11 @@ static void test_hotkey(void)
        "unexpected error %ld\n", GetLastError());
 
     test_window = CreateWindowExA(0, "HotkeyWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                           100, 100, 200, 200, 0, 0, 0, NULL);
+                                  0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                                  0, 0, 0, NULL);
 
+    SetForegroundWindow(test_window);
+    flush_events();
     flush_sequence();
 
     SetLastError(0xdeadbeef);
