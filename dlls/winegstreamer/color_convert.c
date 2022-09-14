@@ -545,13 +545,9 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
 {
     struct color_convert *impl = impl_from_IMFTransform(iface);
     struct wg_sample *wg_sample;
-    MFT_INPUT_STREAM_INFO info;
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, sample %p, flags %#lx.\n", iface, id, sample, flags);
-
-    if (FAILED(hr = IMFTransform_GetInputStreamInfo(iface, 0, &info)))
-        return hr;
 
     if (!impl->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
