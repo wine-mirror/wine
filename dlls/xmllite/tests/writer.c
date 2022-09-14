@@ -32,6 +32,41 @@
 #include "initguid.h"
 DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 0x33, 0x24, 0x51, 0xbc, 0x1a);
 
+static IStream *create_stream_on_data(const void *data, unsigned int size)
+{
+    IStream *stream = NULL;
+    HGLOBAL hglobal;
+    void *ptr;
+    HRESULT hr;
+
+    hglobal = GlobalAlloc(GHND, size);
+    ptr = GlobalLock(hglobal);
+
+    memcpy(ptr, data, size);
+
+    hr = CreateStreamOnHGlobal(hglobal, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(stream != NULL, "Expected non-NULL stream\n");
+
+    GlobalUnlock(hglobal);
+
+    return stream;
+}
+
+#define reader_set_input(a, b) _reader_set_input(__LINE__, a, b)
+static void _reader_set_input(unsigned line, IXmlReader *reader, const char *xml)
+{
+    IStream *stream;
+    HRESULT hr;
+
+    stream = create_stream_on_data(xml, strlen(xml));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok_(__FILE__,line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IStream_Release(stream);
+}
+
 #define EXPECT_REF(obj, ref) _expect_ref((IUnknown *)obj, ref, __LINE__)
 static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 {
@@ -2155,6 +2190,75 @@ static void test_WriteProcessingInstruction(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_WriteAttributes(void)
+{
+    XmlNodeType node_type;
+    IXmlWriter *writer;
+    IXmlReader *reader;
+    const WCHAR *name;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* No attributes. */
+    reader_set_input(reader, "<a/>");
+    stream = writer_set_output(writer);
+    hr = IXmlWriter_WriteAttributes(writer, reader, FALSE);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteAttributes(writer, reader, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, "");
+    IStream_Release(stream);
+
+    /* Position on element with attributes. */
+    reader_set_input(reader, "<a attr1=\'b\' attr2=\'c\' attr3=\'d\' />");
+    stream = writer_set_output(writer);
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"w", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteAttributes(writer, reader, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlReader_GetNodeType(reader, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == XmlNodeType_Element, "Unexpected node type %d.\n", node_type);
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, "<w attr1=\"b\" attr2=\"c\" attr3=\"d\"");
+    IStream_Release(stream);
+
+    /* Position on second attribute. */
+    hr = IXmlReader_MoveToAttributeByName(reader, L"attr2", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    stream = writer_set_output(writer);
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"w", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteAttributes(writer, reader, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlReader_GetNodeType(reader, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == XmlNodeType_Attribute, "Unexpected node type %d.\n", node_type);
+    hr = IXmlReader_GetLocalName(reader, &name, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(name, L"attr3"), "Unexpected node %s.\n", debugstr_w(name));
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_OUTPUT(stream, "<w attr2=\"c\" attr3=\"d\"");
+    IStream_Release(stream);
+
+    IXmlWriter_Release(writer);
+    IXmlReader_Release(reader);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
@@ -2179,4 +2283,5 @@ START_TEST(writer)
     test_WriteDocType();
     test_WriteWhitespace();
     test_WriteProcessingInstruction();
+    test_WriteAttributes();
 }

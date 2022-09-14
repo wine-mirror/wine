@@ -845,14 +845,54 @@ static HRESULT WINAPI xmlwriter_SetProperty(IXmlWriter *iface, UINT property, LO
     return S_OK;
 }
 
-static HRESULT WINAPI xmlwriter_WriteAttributes(IXmlWriter *iface, IXmlReader *pReader,
-                                  BOOL fWriteDefaultAttributes)
+static HRESULT writer_write_attribute(IXmlWriter *writer, IXmlReader *reader, BOOL write_default_attributes)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    const WCHAR *prefix, *local, *uri, *value;
+    HRESULT hr;
 
-    FIXME("%p %p %d\n", This, pReader, fWriteDefaultAttributes);
+    if (IXmlReader_IsDefault(reader) && !write_default_attributes)
+        return S_OK;
 
-    return E_NOTIMPL;
+    if (FAILED(hr = IXmlReader_GetPrefix(reader, &prefix, NULL))) return hr;
+    if (FAILED(hr = IXmlReader_GetLocalName(reader, &local, NULL))) return hr;
+    if (FAILED(hr = IXmlReader_GetNamespaceUri(reader, &uri, NULL))) return hr;
+    if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+    return IXmlWriter_WriteAttributeString(writer, prefix, local, uri, value);
+}
+
+static HRESULT WINAPI xmlwriter_WriteAttributes(IXmlWriter *iface, IXmlReader *reader, BOOL write_default_attributes)
+{
+    XmlNodeType node_type;
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p, %d.\n", iface, reader, write_default_attributes);
+
+    if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+
+    switch (node_type)
+    {
+        case XmlNodeType_Element:
+        case XmlNodeType_XmlDeclaration:
+        case XmlNodeType_Attribute:
+            if (node_type != XmlNodeType_Attribute)
+            {
+                if (FAILED(hr = IXmlReader_MoveToFirstAttribute(reader))) return hr;
+                if (hr == S_FALSE) return S_OK;
+            }
+            if (FAILED(hr = writer_write_attribute(iface, reader, write_default_attributes))) return hr;
+            while (IXmlReader_MoveToNextAttribute(reader) == S_OK)
+            {
+                if (FAILED(hr = writer_write_attribute(iface, reader, write_default_attributes))) break;
+            }
+            if (node_type != XmlNodeType_Attribute && SUCCEEDED(hr))
+                hr = IXmlReader_MoveToElement(reader);
+            break;
+        default:
+            WARN("Unexpected node type %d.\n", node_type);
+            return E_UNEXPECTED;
+    }
+
+    return hr;
 }
 
 static void write_output_attribute(xmlwriter *writer, const WCHAR *prefix, int prefix_len,
