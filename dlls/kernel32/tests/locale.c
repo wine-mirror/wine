@@ -4058,6 +4058,7 @@ static void test_FoldStringW(void)
       { 0x11c50, 0, 9, TRUE /*win10*/ },  /* Bhaiksuki */
       { 0x11d50, 0, 9, TRUE /*win10*/ },  /* Masaram Gondi */
       { 0x11da0, 0, 9, TRUE /*win10*/ },  /* Gunjala Gondi */
+      { 0x11f50, 0, 9, TRUE /*win10*/ },  /* Kawi */
       { 0x16a60, 0, 9, TRUE /*win10*/ },  /* Mro */
       { 0x16ac0, 0, 9, TRUE /*win10*/ },  /* Tangsa */
       { 0x16b50, 0, 9, TRUE /*win10*/ },  /* Pahawh Hmong */
@@ -4068,6 +4069,7 @@ static void test_FoldStringW(void)
       { 0x1d7f6, 0, 9 },                  /* Mathematical Monospace */
       { 0x1e140, 0, 9, TRUE /*win10*/ },  /* Nyiakeng Puachue Hmong */
       { 0x1e2f0, 0, 9, TRUE /*win10*/ },  /* Wancho */
+      { 0x1e4f0, 0, 9, TRUE /*win10*/ },  /* Nag Mundari */
       { 0x1e950, 0, 9, TRUE /*win10*/ },  /* Adlam */
       { 0x1f100, 0, 0, TRUE /*win10*/ },  /* Full Stop */
       { 0x1f101, 0, 9, TRUE /*win10*/ },  /* Comma */

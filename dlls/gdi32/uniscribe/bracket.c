@@ -1,5 +1,5 @@
 /* Unicode Bidirectional Bracket table */
-/* generated from https://www.unicode.org/Public/14.0.0/ucd/UCD.zip:BidiBrackets.txt */
+/* generated from https://www.unicode.org/Public/15.0.0/ucd/UCD.zip:BidiBrackets.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"
