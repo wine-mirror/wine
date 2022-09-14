@@ -4242,7 +4242,7 @@ HRESULT CDECL wined3d_texture_update_overlay(struct wined3d_texture *texture, un
         return WINEDDERR_NOTAOVERLAYSURFACE;
 
     if (!dst_texture || dst_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
-            || wined3d_texture_validate_sub_resource_idx(dst_texture, dst_sub_resource_idx))
+            || !wined3d_texture_validate_sub_resource_idx(dst_texture, dst_sub_resource_idx))
         return WINED3DERR_INVALIDCALL;
 
     overlay = &texture->overlay_info[sub_resource_idx];
