@@ -531,6 +531,7 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
     struct wma_decoder *decoder = impl_from_IMFTransform(iface);
     struct wg_sample *wg_sample;
     MFT_INPUT_STREAM_INFO info;
+    DWORD total_length;
     HRESULT hr;
 
     TRACE("iface %p, id %lu, sample %p, flags %#lx.\n", iface, id, sample, flags);
@@ -538,18 +539,16 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
     if (!decoder->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = IMFTransform_GetInputStreamInfo(iface, 0, &info)))
-        return hr;
-
-    if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
+    if (FAILED(hr = IMFTransform_GetInputStreamInfo(iface, 0, &info))
+            || FAILED(hr = IMFSample_GetTotalLength(sample, &total_length)))
         return hr;
 
     /* WMA transform uses fixed size input samples and ignores samples with invalid sizes */
-    if (wg_sample->size % info.cbSize)
-    {
-        wg_sample_release(wg_sample);
+    if (total_length % info.cbSize)
         return S_OK;
-    }
+
+    if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
+        return hr;
 
     return wg_transform_push_mf(decoder->wg_transform, wg_sample, decoder->wg_sample_queue);
 }
