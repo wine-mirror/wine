@@ -837,7 +837,8 @@ static void focus_out( Display *display , HWND hwnd )
         return;
     }
     if (hwnd != NtUserGetForegroundWindow()) return;
-    send_message( hwnd, WM_CANCELMODE, 0, 0 );
+    if (!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_MINIMIZE))
+        send_message( hwnd, WM_CANCELMODE, 0, 0 );
 
     /* don't reset the foreground window, if the window which is
        getting the focus is a Wine window */

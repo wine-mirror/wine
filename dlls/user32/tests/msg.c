@@ -5572,7 +5572,7 @@ static void test_messages(void)
 
     ShowWindow(hwnd, SW_MINIMIZE);
     flush_events();
-    ok_sequence(WmShowMinOverlappedSeq, "ShowWindow(SW_SHOWMINIMIZED):overlapped", TRUE);
+    ok_sequence(WmShowMinOverlappedSeq, "ShowWindow(SW_SHOWMINIMIZED):overlapped", FALSE);
     flush_sequence();
 
     if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_MINIMIZE)
