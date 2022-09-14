@@ -271,7 +271,8 @@ static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UN
         return pos;
     }
     if (expect)
-        ok_(__FILE__,line)( (UINT_PTR)str->Buffer == align(pos, sizeof(void *)),
+        ok_(__FILE__,line)( (UINT_PTR)str->Buffer == align(pos, sizeof(void *)) ||
+                            broken( (UINT_PTR)str->Buffer == align(pos, 4) ), /* win7 */
                             "wrong buffer %Ix/%Ix\n", (UINT_PTR)str->Buffer, pos );
     else  /* initial params are not aligned */
         ok_(__FILE__,line)( (UINT_PTR)str->Buffer == pos,
