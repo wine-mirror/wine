@@ -1512,7 +1512,7 @@ static BOOL update_display_cache_from_registry(void)
     return ret;
 }
 
-static BOOL update_display_cache(void)
+static BOOL update_display_cache( BOOL force )
 {
     HWINSTA winstation = NtUserGetProcessWindowStation();
     struct device_manager_ctx ctx = {0};
@@ -1529,17 +1529,7 @@ static BOOL update_display_cache(void)
         return TRUE;
     }
 
-    user_driver->pUpdateDisplayDevices( &device_manager, FALSE, &ctx );
-    release_display_manager_ctx( &ctx );
-
-    if (update_display_cache_from_registry()) return TRUE;
-    if (ctx.gpu_count)
-    {
-        ERR( "driver reported devices, but we failed to read them\n" );
-        return FALSE;
-    }
-
-    if (!user_driver->pUpdateDisplayDevices( &device_manager, TRUE, &ctx ))
+    if (!user_driver->pUpdateDisplayDevices( &device_manager, force, &ctx ) && force)
     {
         static const DEVMODEW modes[] =
         {
@@ -1578,15 +1568,27 @@ static BOOL update_display_cache(void)
 
     if (!update_display_cache_from_registry())
     {
-        ERR( "failed to read display config\n" );
-        return FALSE;
+        if (force)
+        {
+            ERR( "Failed to read display config.\n" );
+            return FALSE;
+        }
+
+        if (ctx.gpu_count)
+        {
+            ERR( "Driver reported devices, but we failed to read them.\n" );
+            return FALSE;
+        }
+
+        return update_display_cache( TRUE );
     }
+
     return TRUE;
 }
 
 static BOOL lock_display_devices(void)
 {
-    if (!update_display_cache()) return FALSE;
+    if (!update_display_cache( FALSE )) return FALSE;
     pthread_mutex_lock( &display_lock );
     return TRUE;
 }
