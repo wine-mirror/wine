@@ -108,6 +108,33 @@ DWORD get_dpi(void)
     return dpi;
 }
 
+static void UpdateStatusBar(void)
+{
+    int currentLine;
+    int currentCol = -1;
+    WCHAR statusTxt[256];
+    int lineIndex;
+    DWORD selStart;
+    DWORD selEnd;
+
+    SendMessageW(Globals.hEdit, EM_GETSEL, (WPARAM)&selStart, (LPARAM)&selEnd);
+    if(selStart == selEnd)
+        Globals.trackedSel = selStart;
+    if(selStart < Globals.trackedSel)
+        currentCol = selStart;
+    else
+        currentCol = selEnd;
+    currentLine = SendMessageW(Globals.hEdit, EM_LINEFROMCHAR, currentCol, 0);
+    lineIndex = SendMessageW(Globals.hEdit, EM_LINEINDEX, currentLine, 0);
+    if(Globals.lastLn != currentLine || Globals.lastCol != currentCol)
+    {
+        swprintf(statusTxt, ARRAY_SIZE(statusTxt), Globals.szStatusString, currentLine + 1, (currentCol - lineIndex) + 1);
+        SendMessageW(Globals.hStatusBar, SB_SETTEXTW, 0, (LPARAM)statusTxt);
+        Globals.lastLn = currentLine;
+        Globals.lastCol = currentCol;
+    }
+}
+
 static void ToggleStatusBar(void)
 {
     RECT rc;
@@ -118,6 +145,7 @@ static void ToggleStatusBar(void)
     GetClientRect(Globals.hMainWnd, &rc);
     ShowWindow(Globals.hStatusBar, Globals.bStatusBar ? SW_SHOW : SW_HIDE);
     updateWindowSize(rc.right, rc.bottom);
+    UpdateStatusBar();
 }
 
 void updateWindowSize(int width, int height)
@@ -528,6 +556,31 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
     }
 }
 
+LRESULT CALLBACK EDIT_CallBackProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                    UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+    switch (msg)
+    {
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+            UpdateStatusBar();
+            break;
+        case WM_MOUSEMOVE:
+            if(wParam == MK_LBUTTON)
+                UpdateStatusBar();
+            break;
+
+        default:
+            break;
+    }
+    return DefSubclassProc(hWnd, msg, wParam, lParam);
+}
+
+
 /***********************************************************************
  *
  *           NOTEPAD_WndProc
@@ -575,12 +628,17 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                              dwStyle, 0, 0, rc.right, rc.bottom, hWnd,
                              NULL, Globals.hInstance, NULL);
 
+        SetWindowSubclass(Globals.hEdit, EDIT_CallBackProc, 0, 0);
         Globals.hFont = CreateFontIndirectW(&Globals.lfFont);
         SendMessageW(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, FALSE);
         SendMessageW(Globals.hEdit, EM_LIMITTEXT, 0, 0);
         Globals.hStatusBar = CreateWindowExW(0, STATUSCLASSNAMEW, NULL,
                                  WS_VISIBLE | WS_CHILD, 0, 0, 0, 0, hWnd, NULL,
                                  Globals.hInstance, NULL);
+        LoadStringW(Globals.hInstance, STRING_STATUSBAR, (LPWSTR)&Globals.szStatusString, 0);
+        Globals.lastLn = -1;
+        Globals.lastCol = -1;
+        UpdateStatusBar();
         break;
     }
 

@@ -79,6 +79,8 @@
 
 #define STRING_NOTFOUND 0x17B
 
+#define STRING_STATUSBAR       0x206
+
 #define STRING_UNICODE_LE      0x180
 #define STRING_UNICODE_BE      0x181
 #define STRING_UTF8            0x182

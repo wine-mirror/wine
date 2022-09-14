@@ -62,6 +62,9 @@ typedef struct
   INT      iMarginRight;
   WCHAR    szHeader[MAX_PATH];
   WCHAR    szFooter[MAX_PATH];
+  INT      trackedSel;
+  INT      lastLn;
+  INT      lastCol;
 
   FINDREPLACEW find;
   FINDREPLACEW lastFind;
@@ -75,3 +78,4 @@ VOID SetFileNameAndEncoding(LPCWSTR szFileName, ENCODING enc);
 void NOTEPAD_DoFind(FINDREPLACEW *fr);
 DWORD get_dpi(void);
 void updateWindowSize(int width, int height);
+LRESULT CALLBACK EDIT_CallBackProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);

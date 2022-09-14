@@ -85,6 +85,8 @@ STRING_NOTSAVED,                                "File '%s' has been modified.\n\
 Would you like to save the changes?"
 STRING_NOTFOUND,                                        "'%s' could not be found."
 
+STRING_STATUSBAR,      "Ln %ld, Col %ld"
+
 STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 STRING_UTF8,           "Unicode (UTF-8)"

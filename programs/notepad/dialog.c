@@ -27,6 +27,7 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <commdlg.h>
+#include <commctrl.h>
 #include <shlwapi.h>
 #include <winternl.h>
 
@@ -1107,6 +1108,7 @@ VOID DIALOG_EditWrap(VOID)
     Globals.bWrapLongLines = !Globals.bWrapLongLines;
     CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_WRAP,
         MF_BYCOMMAND | (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
+    SetWindowSubclass(Globals.hEdit, EDIT_CallBackProc, 0, 0);
     updateWindowSize(rc.right, rc.bottom);
 }
 

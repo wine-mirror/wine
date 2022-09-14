@@ -99,7 +99,7 @@ msgstr "サポート情報"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:121
+#: programs/net/net.rc:47 programs/notepad/notepad.rc:123
 #: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
 #: programs/progman/progman.rc:106 programs/progman/progman.rc:124
 #: programs/progman/progman.rc:142 programs/progman/progman.rc:158
@@ -204,7 +204,7 @@ msgstr "インストール(&I)"
 #: dlls/shell32/shell32.rc:340 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:122
+#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:124
 #: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
 #: programs/progman/progman.rc:107 programs/progman/progman.rc:125
 #: programs/progman/progman.rc:143 programs/progman/progman.rc:159
@@ -452,7 +452,7 @@ msgstr "リセット(&E)"
 #: dlls/comdlg32/comdlg32.rc:531 dlls/ieframe/ieframe.rc:58
 #: dlls/msacm32/msacm32.rc:52 dlls/oledlg/oledlg.rc:96
 #: dlls/shell32/shell32.rc:128 programs/clock/clock.rc:44
-#: programs/notepad/notepad.rc:64 programs/notepad/notepad.rc:123
+#: programs/notepad/notepad.rc:64 programs/notepad/notepad.rc:125
 #: programs/oleview/oleview.rc:72 programs/progman/progman.rc:55
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
 #: programs/progman/progman.rc:144 programs/progman/progman.rc:160
@@ -907,7 +907,7 @@ msgstr "縦(&P)"
 msgid "L&eft:"
 msgstr "左(&E):"
 
-#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:116
+#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:118
 msgid "&Right:"
 msgstr "右(&R):"
 
@@ -915,7 +915,7 @@ msgstr "右(&R):"
 msgid "T&op:"
 msgstr "上(&O):"
 
-#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:118
+#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:120
 msgid "&Bottom:"
 msgstr "下(&B):"
 
@@ -15103,87 +15103,87 @@ msgstr "目次(&C)\tF1"
 msgid "&About Notepad"
 msgstr "バージョン情報(&A)"
 
-#: programs/notepad/notepad.rc:104
+#: programs/notepad/notepad.rc:106
 msgid "Page Setup"
 msgstr "ページ設定"
 
-#: programs/notepad/notepad.rc:106
+#: programs/notepad/notepad.rc:108
 msgid "&Header:"
 msgstr "ヘッダー(&H):"
 
-#: programs/notepad/notepad.rc:108
+#: programs/notepad/notepad.rc:110
 msgid "&Footer:"
 msgstr "フッター(&F):"
 
-#: programs/notepad/notepad.rc:111
+#: programs/notepad/notepad.rc:113
 msgid "Margins (millimeters)"
 msgstr "マージン(mm)"
 
-#: programs/notepad/notepad.rc:112
+#: programs/notepad/notepad.rc:114
 msgid "&Left:"
 msgstr "左(&L):"
 
-#: programs/notepad/notepad.rc:114
+#: programs/notepad/notepad.rc:116
 msgid "&Top:"
 msgstr "上(&T):"
 
-#: programs/notepad/notepad.rc:130
+#: programs/notepad/notepad.rc:132
 msgid "Encoding:"
 msgstr "文字コード:"
 
-#: programs/notepad/notepad.rc:136 programs/wordpad/wordpad.rc:289
+#: programs/notepad/notepad.rc:138 programs/wordpad/wordpad.rc:289
 msgctxt "accelerator Select All"
 msgid "A"
 msgstr "A"
 
-#: programs/notepad/notepad.rc:137 programs/wordpad/wordpad.rc:291
+#: programs/notepad/notepad.rc:139 programs/wordpad/wordpad.rc:291
 msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: programs/notepad/notepad.rc:138 programs/regedit/regedit.rc:377
+#: programs/notepad/notepad.rc:140 programs/regedit/regedit.rc:377
 #: programs/wordpad/wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
 
-#: programs/notepad/notepad.rc:139 programs/wordpad/wordpad.rc:288
+#: programs/notepad/notepad.rc:141 programs/wordpad/wordpad.rc:288
 msgctxt "accelerator Replace"
 msgid "H"
 msgstr "H"
 
-#: programs/notepad/notepad.rc:140 programs/wordpad/wordpad.rc:297
+#: programs/notepad/notepad.rc:142 programs/wordpad/wordpad.rc:297
 msgctxt "accelerator New"
 msgid "N"
 msgstr "N"
 
-#: programs/notepad/notepad.rc:141 programs/wordpad/wordpad.rc:298
+#: programs/notepad/notepad.rc:143 programs/wordpad/wordpad.rc:298
 msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: programs/notepad/notepad.rc:142 programs/regedit/regedit.rc:378
+#: programs/notepad/notepad.rc:144 programs/regedit/regedit.rc:378
 #: programs/wordpad/wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
 
-#: programs/notepad/notepad.rc:143 programs/wordpad/wordpad.rc:299
+#: programs/notepad/notepad.rc:145 programs/wordpad/wordpad.rc:299
 msgctxt "accelerator Save"
 msgid "S"
 msgstr "S"
 
-#: programs/notepad/notepad.rc:144
+#: programs/notepad/notepad.rc:146
 msgctxt "accelerator Paste"
 msgid "V"
 msgstr "V"
 
-#: programs/notepad/notepad.rc:145 programs/wordpad/wordpad.rc:290
+#: programs/notepad/notepad.rc:147 programs/wordpad/wordpad.rc:290
 msgctxt "accelerator Cut"
 msgid "X"
 msgstr "X"
 
-#: programs/notepad/notepad.rc:146 programs/wordpad/wordpad.rc:292
+#: programs/notepad/notepad.rc:148 programs/wordpad/wordpad.rc:292
 msgctxt "accelerator Undo"
 msgid "Z"
 msgstr "Z"
@@ -15233,19 +15233,19 @@ msgstr ""
 msgid "'%s' could not be found."
 msgstr "'%s' は見つかりませんでした。"
 
-#: programs/notepad/notepad.rc:89
+#: programs/notepad/notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: programs/notepad/notepad.rc:90
+#: programs/notepad/notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 ビッグエンディアン)"
 
-#: programs/notepad/notepad.rc:91
+#: programs/notepad/notepad.rc:93
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
-#: programs/notepad/notepad.rc:98
+#: programs/notepad/notepad.rc:100
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -15261,6 +15261,10 @@ msgstr ""
 "ら\n"
 "Unicode 選択肢のいずれか一つを選択してください。\n"
 "続行しますか?"
+
+#: programs/notepad/notepad.rc:89
+msgid "Ln %ld, Col %ld"
+msgstr ""
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
