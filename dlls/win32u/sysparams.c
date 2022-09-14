@@ -1973,6 +1973,45 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
     return ERROR_SUCCESS;
 }
 
+/* display_lock mutex must be held */
+static struct display_device *find_monitor_device( struct display_device *adapter, DWORD index )
+{
+    struct monitor *monitor;
+
+    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+        if (&monitor->adapter->dev == adapter && index == monitor->id)
+            return &monitor->dev;
+
+    WARN( "Failed to find adapter %s monitor with id %u.\n", debugstr_w(adapter->device_name), index );
+    return NULL;
+}
+
+/* display_lock mutex must be held */
+static struct display_device *find_adapter_device_by_id( DWORD index )
+{
+    struct adapter *adapter;
+
+    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+        if (index == adapter->id) return &adapter->dev;
+
+    WARN( "Failed to find adapter with id %u.\n", index );
+    return NULL;
+}
+
+/* display_lock mutex must be held */
+static struct display_device *find_adapter_device_by_name( UNICODE_STRING *name )
+{
+    SIZE_T len = name->Length / sizeof(WCHAR);
+    struct adapter *adapter;
+
+    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+        if (!wcsnicmp( name->Buffer, adapter->dev.device_name, len ) && !adapter->dev.device_name[len])
+            return &adapter->dev;
+
+    WARN( "Failed to find adapter with name %s.\n", debugstr_us(name) );
+    return NULL;
+}
+
 /* Find and acquire the adapter matching name, or primary adapter if name is NULL.
  * If not NULL, the returned adapter needs to be released with adapter_release.
  */
@@ -1997,8 +2036,6 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags )
 {
     struct display_device *found = NULL;
-    struct adapter *adapter;
-    struct monitor *monitor;
 
     TRACE( "%s %u %p %#x\n", debugstr_us( device ), index, info, flags );
 
@@ -2006,31 +2043,8 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 
     if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
 
-    if (!device || !device->Length)
-    {
-        /* Enumerate adapters */
-        LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
-        {
-            if (index == adapter->id)
-            {
-                found = &adapter->dev;
-                break;
-            }
-        }
-    }
-    else if ((adapter = find_adapter( device )))
-    {
-        /* Enumerate monitors */
-        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
-        {
-            if (monitor->adapter == adapter && index == monitor->id)
-            {
-                found = &monitor->dev;
-                break;
-            }
-        }
-        adapter_release( adapter );
-    }
+    if (!device || !device->Length) found = find_adapter_device_by_id( index );
+    else if ((found = find_adapter_device_by_name( device ))) found = find_monitor_device( found, index );
 
     if (found)
     {
