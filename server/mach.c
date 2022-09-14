@@ -237,7 +237,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     mach_msg_type_number_t count = sizeof(state) / sizeof(int);
     mach_msg_type_name_t type;
     mach_port_t port, process_port = get_process_port( thread->process );
-    unsigned int dr7;
+    unsigned long dr[8];
     kern_return_t ret;
 
     /* all other regs are handled on the client side */
@@ -251,40 +251,70 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         return;
     }
 
-    if (thread->process->machine == IMAGE_FILE_MACHINE_AMD64)
+    /* get the debug state to determine which flavor to use */
+    ret = thread_get_state(port, x86_DEBUG_STATE, (thread_state_t)&state, &count);
+    if (ret)
     {
-        /* Mac OS doesn't allow setting the global breakpoint flags */
-        dr7 = (context->debug.x86_64_regs.dr7 & ~0xaa) | ((context->debug.x86_64_regs.dr7 & 0xaa) >> 1);
+        mach_set_error( ret );
+        goto done;
+    }
+    assert( state.dsh.flavor == x86_DEBUG_STATE32 ||
+            state.dsh.flavor == x86_DEBUG_STATE64 );
 
-        state.dsh.flavor = x86_DEBUG_STATE64;
+    switch (context->machine)
+    {
+        case IMAGE_FILE_MACHINE_I386:
+            dr[0] = context->debug.i386_regs.dr0;
+            dr[1] = context->debug.i386_regs.dr1;
+            dr[2] = context->debug.i386_regs.dr2;
+            dr[3] = context->debug.i386_regs.dr3;
+            dr[6] = context->debug.i386_regs.dr6;
+            dr[7] = context->debug.i386_regs.dr7;
+            break;
+        case IMAGE_FILE_MACHINE_AMD64:
+            dr[0] = context->debug.x86_64_regs.dr0;
+            dr[1] = context->debug.x86_64_regs.dr1;
+            dr[2] = context->debug.x86_64_regs.dr2;
+            dr[3] = context->debug.x86_64_regs.dr3;
+            dr[6] = context->debug.x86_64_regs.dr6;
+            dr[7] = context->debug.x86_64_regs.dr7;
+            break;
+        default:
+            set_error( STATUS_INVALID_PARAMETER );
+            goto done;
+    }
+
+    /* Mac OS doesn't allow setting the global breakpoint flags */
+    dr[7] = (dr[7] & ~0xaa) | ((dr[7] & 0xaa) >> 1);
+
+    if (state.dsh.flavor == x86_DEBUG_STATE64)
+    {
         state.dsh.count = sizeof(state.uds.ds64) / sizeof(int);
-        state.uds.ds64.__dr0 = context->debug.x86_64_regs.dr0;
-        state.uds.ds64.__dr1 = context->debug.x86_64_regs.dr1;
-        state.uds.ds64.__dr2 = context->debug.x86_64_regs.dr2;
-        state.uds.ds64.__dr3 = context->debug.x86_64_regs.dr3;
+        state.uds.ds64.__dr0 = dr[0];
+        state.uds.ds64.__dr1 = dr[1];
+        state.uds.ds64.__dr2 = dr[2];
+        state.uds.ds64.__dr3 = dr[3];
         state.uds.ds64.__dr4 = 0;
         state.uds.ds64.__dr5 = 0;
-        state.uds.ds64.__dr6 = context->debug.x86_64_regs.dr6;
-        state.uds.ds64.__dr7 = dr7;
+        state.uds.ds64.__dr6 = dr[6];
+        state.uds.ds64.__dr7 = dr[7];
     }
     else
     {
-        dr7 = (context->debug.i386_regs.dr7 & ~0xaa) | ((context->debug.i386_regs.dr7 & 0xaa) >> 1);
-
-        state.dsh.flavor = x86_DEBUG_STATE32;
         state.dsh.count = sizeof(state.uds.ds32) / sizeof(int);
-        state.uds.ds32.__dr0 = context->debug.i386_regs.dr0;
-        state.uds.ds32.__dr1 = context->debug.i386_regs.dr1;
-        state.uds.ds32.__dr2 = context->debug.i386_regs.dr2;
-        state.uds.ds32.__dr3 = context->debug.i386_regs.dr3;
+        state.uds.ds32.__dr0 = dr[0];
+        state.uds.ds32.__dr1 = dr[1];
+        state.uds.ds32.__dr2 = dr[2];
+        state.uds.ds32.__dr3 = dr[3];
         state.uds.ds32.__dr4 = 0;
         state.uds.ds32.__dr5 = 0;
-        state.uds.ds32.__dr6 = context->debug.i386_regs.dr6;
-        state.uds.ds32.__dr7 = dr7;
+        state.uds.ds32.__dr6 = dr[6];
+        state.uds.ds32.__dr7 = dr[7];
     }
     ret = thread_set_state( port, x86_DEBUG_STATE, (thread_state_t)&state, count );
     if (ret)
         mach_set_error( ret );
+done:
     mach_port_deallocate( mach_task_self(), port );
 #endif
 }
