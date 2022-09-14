@@ -160,6 +160,7 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
     mach_msg_type_name_t type;
     mach_port_t port, process_port = get_process_port( thread->process );
     kern_return_t ret;
+    unsigned long dr[8];
 
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
@@ -180,26 +181,50 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
 
         if (state.dsh.flavor == x86_DEBUG_STATE64)
         {
-            context->debug.x86_64_regs.dr0 = state.uds.ds64.__dr0;
-            context->debug.x86_64_regs.dr1 = state.uds.ds64.__dr1;
-            context->debug.x86_64_regs.dr2 = state.uds.ds64.__dr2;
-            context->debug.x86_64_regs.dr3 = state.uds.ds64.__dr3;
-            context->debug.x86_64_regs.dr6 = state.uds.ds64.__dr6;
-            context->debug.x86_64_regs.dr7 = state.uds.ds64.__dr7;
+            dr[0] = state.uds.ds64.__dr0;
+            dr[1] = state.uds.ds64.__dr1;
+            dr[2] = state.uds.ds64.__dr2;
+            dr[3] = state.uds.ds64.__dr3;
+            dr[6] = state.uds.ds64.__dr6;
+            dr[7] = state.uds.ds64.__dr7;
         }
         else
         {
-            context->debug.i386_regs.dr0 = state.uds.ds32.__dr0;
-            context->debug.i386_regs.dr1 = state.uds.ds32.__dr1;
-            context->debug.i386_regs.dr2 = state.uds.ds32.__dr2;
-            context->debug.i386_regs.dr3 = state.uds.ds32.__dr3;
-            context->debug.i386_regs.dr6 = state.uds.ds32.__dr6;
-            context->debug.i386_regs.dr7 = state.uds.ds32.__dr7;
+            dr[0] = state.uds.ds32.__dr0;
+            dr[1] = state.uds.ds32.__dr1;
+            dr[2] = state.uds.ds32.__dr2;
+            dr[3] = state.uds.ds32.__dr3;
+            dr[6] = state.uds.ds32.__dr6;
+            dr[7] = state.uds.ds32.__dr7;
+        }
+
+        switch (context->machine)
+        {
+        case IMAGE_FILE_MACHINE_I386:
+            context->debug.i386_regs.dr0 = dr[0];
+            context->debug.i386_regs.dr1 = dr[1];
+            context->debug.i386_regs.dr2 = dr[2];
+            context->debug.i386_regs.dr3 = dr[3];
+            context->debug.i386_regs.dr6 = dr[6];
+            context->debug.i386_regs.dr7 = dr[7];
+            break;
+        case IMAGE_FILE_MACHINE_AMD64:
+            context->debug.x86_64_regs.dr0 = dr[0];
+            context->debug.x86_64_regs.dr1 = dr[1];
+            context->debug.x86_64_regs.dr2 = dr[2];
+            context->debug.x86_64_regs.dr3 = dr[3];
+            context->debug.x86_64_regs.dr6 = dr[6];
+            context->debug.x86_64_regs.dr7 = dr[7];
+            break;
+        default:
+            set_error( STATUS_INVALID_PARAMETER );
+            goto done;
         }
         context->flags |= SERVER_CTX_DEBUG_REGISTERS;
     }
     else
         mach_set_error( ret );
+done:
     mach_port_deallocate( mach_task_self(), port );
 #endif
 }
