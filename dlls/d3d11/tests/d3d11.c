@@ -20961,6 +20961,7 @@ static void check_format_support(ID3D11Device *device, const unsigned int *forma
         D3D_FEATURE_LEVEL feature_level, const struct format_support *formats,
         unsigned int format_count, unsigned int feature_flag, const char *feature_name)
 {
+    BOOL warp = is_warp_device(device);
     unsigned int i;
 
     for (i = 0; i < format_count; ++i)
@@ -20971,7 +20972,7 @@ static void check_format_support(ID3D11Device *device, const unsigned int *forma
         if (formats[i].fl_required <= feature_level)
         {
             todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
-                ok(supported || broken(is_warp_device(device)),
+                ok(supported || broken(warp),
                         "Format %#x - %s not supported, format support %#x.\n",
                         format, feature_name, format_support[format]);
             continue;
