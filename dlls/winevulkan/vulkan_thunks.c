@@ -4584,10 +4584,10 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_VALVE:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
-            const VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE *in = (const VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE *)in_header;
-            VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE *out;
+            const VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *in = (const VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *)in_header;
+            VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out;
 
             if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
 
@@ -4676,6 +4676,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->primitivesGeneratedQuery = in->primitivesGeneratedQuery;
             out->primitivesGeneratedQueryWithRasterizerDiscard = in->primitivesGeneratedQueryWithRasterizerDiscard;
             out->primitivesGeneratedQueryWithNonZeroStreams = in->primitivesGeneratedQueryWithNonZeroStreams;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_DITHERING_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceLegacyDitheringFeaturesEXT *in = (const VkPhysicalDeviceLegacyDitheringFeaturesEXT *)in_header;
+            VkPhysicalDeviceLegacyDitheringFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->legacyDithering = in->legacyDithering;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -10103,6 +10119,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_image_view_min_lod",
     "VK_EXT_index_type_uint8",
     "VK_EXT_inline_uniform_block",
+    "VK_EXT_legacy_dithering",
     "VK_EXT_line_rasterization",
     "VK_EXT_load_store_op_none",
     "VK_EXT_memory_budget",
@@ -10110,6 +10127,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_mesh_shader",
     "VK_EXT_multi_draw",
     "VK_EXT_multisampled_render_to_single_sampled",
+    "VK_EXT_mutable_descriptor_type",
     "VK_EXT_non_seamless_cube_map",
     "VK_EXT_pageable_device_local_memory",
     "VK_EXT_pci_bus_info",
