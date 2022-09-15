@@ -436,14 +436,12 @@ static void force_stack_grow(void)
     (void)buffer[0];
 }
 
-#ifdef _WIN64
 static void force_stack_grow_small(void)
 {
     volatile int buffer[0x400];
     buffer[0] = 0xdeadbeef;
     (void)buffer[0];
 }
-#endif
 
 static DWORD WINAPI test_stack_size_thread(void *ptr)
 {
@@ -453,10 +451,6 @@ static DWORD WINAPI test_stack_size_thread(void *ptr)
     SIZE_T size, guard_size;
     DWORD committed, reserved;
     void *addr;
-#ifdef _WIN64
-    DWORD prot;
-    void *tmp;
-#endif
 
     committed = (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->Tib.StackLimit;
     reserved = (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->DeallocationStack;
@@ -521,8 +515,29 @@ static DWORD WINAPI test_stack_size_thread(void *ptr)
     ok( mbi.Protect == PAGE_READWRITE, "unexpected Protect %#lx, expected %#x\n", mbi.Protect, PAGE_READWRITE );
     ok( mbi.Type == MEM_PRIVATE, "unexpected Type %#lx, expected %#x\n", mbi.Type, MEM_PRIVATE );
 
+    return 0;
+}
 
-#ifdef _WIN64
+static DWORD WINAPI test_stack_growth_thread(void *ptr)
+{
+    MEMORY_BASIC_INFORMATION mbi;
+    NTSTATUS status;
+    SIZE_T size, guard_size;
+    DWORD committed;
+    void *addr;
+    DWORD prot;
+    void *tmp;
+
+    test_stack_size_thread( ptr );
+    if (!is_win64) return 0;
+
+    addr = (char *)NtCurrentTeb()->DeallocationStack;
+    status = NtQueryVirtualMemory( NtCurrentProcess(), addr, MemoryBasicInformation, &mbi, sizeof(mbi), &size );
+    ok( !status, "NtQueryVirtualMemory returned %08lx\n", status );
+
+    guard_size = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)NtCurrentTeb()->DeallocationStack - mbi.RegionSize;
+    ok( guard_size == 0x1000 || guard_size == 0x2000 || guard_size == 0x3000, "unexpected guard_size %I64x, expected 1000, 2000 or 3000\n", (UINT64)guard_size );
+
     /* setting a guard page shrinks stack automatically */
 
     addr = (char *)NtCurrentTeb()->Tib.StackLimit + 0x2000;
@@ -668,7 +683,6 @@ static DWORD WINAPI test_stack_size_thread(void *ptr)
 
     committed = (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->Tib.StackLimit;
     todo_wine ok( committed == 0x6000, "unexpected stack committed size %lx, expected 6000\n", committed );
-#endif
 
     ExitThread(0);
 }
@@ -745,13 +759,13 @@ static void test_RtlCreateUserStack(void)
 
     args.expect_committed = 0x4000;
     args.expect_reserved = default_reserve;
-    thread = CreateThread(NULL, 0x3f00, test_stack_size_thread, &args, 0, NULL);
+    thread = CreateThread(NULL, 0x3f00, test_stack_growth_thread, &args, 0, NULL);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 
     args.expect_committed = default_commit < 0x2000 ? 0x2000 : default_commit;
     args.expect_reserved = 0x400000;
-    thread = CreateThread(NULL, 0x3ff000, test_stack_size_thread, &args, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+    thread = CreateThread(NULL, 0x3ff000, test_stack_growth_thread, &args, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 
