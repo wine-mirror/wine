@@ -4237,16 +4237,17 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
              BYTE vprot;
              struct file_view *view;
 
-             for (i = 0; i < vmentry_count && entry == NULL; i++)
-             {
-                 if (vmentries[i].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= vmentries[i].kve_end)
-                     entry = &vmentries[i];
-             }
              memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
              if ((view = find_view( p->VirtualAddress, 0 )) &&
                  get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED ) &&
                  (vprot & VPROT_COMMITTED))
              {
+                 for (i = 0; i < vmentry_count && entry == NULL; i++)
+                 {
+                     if (vmentries[i].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= vmentries[i].kve_end)
+                         entry = &vmentries[i];
+                 }
+
                  p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && entry && entry->kve_type != KVME_TYPE_SWAP;
                  p->VirtualAttributes.Shared = !is_view_valloc( view );
                  if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
@@ -4281,17 +4282,17 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
 
         memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
 
-        /* If we don't have pagemap information, default to invalid. */
-        if (!f || fseek( f, ((UINT_PTR)p->VirtualAddress >> 12) * sizeof(pagemap), SEEK_SET ) == -1 ||
-                fread( &pagemap, sizeof(pagemap), 1, f ) != 1)
-        {
-            pagemap = 0;
-        }
-
         if ((view = find_view( p->VirtualAddress, 0 )) &&
             get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED ) &&
             (vprot & VPROT_COMMITTED))
         {
+            if (!f || fseek( f, ((UINT_PTR)p->VirtualAddress >> 12) * sizeof(pagemap), SEEK_SET ) == -1 ||
+                    fread( &pagemap, sizeof(pagemap), 1, f ) != 1)
+            {
+                /* If we don't have pagemap information, default to invalid. */
+                pagemap = 0;
+            }
+
             p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
             p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
             if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
