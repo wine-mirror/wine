@@ -1502,7 +1502,7 @@ static HRESULT WINAPI xmlwriter_WriteNmToken(IXmlWriter *iface, LPCWSTR pwszNmTo
     return E_NOTIMPL;
 }
 
-static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL write_default_attributes)
+static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL shallow, BOOL write_default_attributes)
 {
     XmlStandalone standalone = XmlStandalone_Omit;
     const WCHAR *name, *value, *prefix, *uri;
@@ -1515,9 +1515,10 @@ static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL wr
     switch (node_type)
     {
         case XmlNodeType_None:
+            if (shallow) return S_OK;
             while ((hr = IXmlReader_Read(reader, NULL)) == S_OK)
             {
-                if (FAILED(hr = writer_write_node(writer, reader, write_default_attributes))) return hr;
+                if (FAILED(hr = writer_write_node(writer, reader, FALSE, write_default_attributes))) return hr;
             }
             break;
         case XmlNodeType_Element:
@@ -1532,11 +1533,12 @@ static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL wr
             }
             else
             {
+                if (shallow) return S_OK;
                 if (FAILED(hr = IXmlReader_MoveToElement(reader))) return hr;
                 if (FAILED(hr = IXmlReader_GetDepth(reader, &start_depth))) return hr;
                 while ((hr = IXmlReader_Read(reader, &node_type)) == S_OK)
                 {
-                    if (FAILED(hr = writer_write_node(writer, reader, write_default_attributes))) return hr;
+                    if (FAILED(hr = writer_write_node(writer, reader, FALSE, write_default_attributes))) return hr;
                     if (FAILED(hr = IXmlReader_MoveToElement(reader))) return hr;
 
                     depth = 0;
@@ -1572,13 +1574,17 @@ static HRESULT writer_write_node(IXmlWriter *writer, IXmlReader *reader, BOOL wr
             hr = IXmlWriter_WriteFullEndElement(writer);
             break;
         case XmlNodeType_XmlDeclaration:
-            if (FAILED(hr = IXmlReader_MoveToAttributeByName(reader, L"standalone", NULL))) return hr;
-            if (hr == S_OK)
+            while ((hr = IXmlReader_MoveToNextAttribute(reader)) == S_OK)
             {
-                if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
-                standalone = !wcscmp(value, L"yes") ? XmlStandalone_Yes : XmlStandalone_No;
+                if (FAILED(hr = IXmlReader_GetLocalName(reader, &name, NULL))) return hr;
+                if (!wcscmp(name, L"standalone"))
+                {
+                    if (FAILED(hr = IXmlReader_GetValue(reader, &value, NULL))) return hr;
+                    standalone = !wcscmp(value, L"yes") ? XmlStandalone_Yes : XmlStandalone_No;
+                }
             }
-            hr = IXmlWriter_WriteStartDocument(writer, standalone);
+            if (SUCCEEDED(hr))
+                hr = IXmlWriter_WriteStartDocument(writer, standalone);
             break;
         default:
             WARN("Unknown node type %d.\n", node_type);
@@ -1594,20 +1600,17 @@ static HRESULT WINAPI xmlwriter_WriteNode(IXmlWriter *iface, IXmlReader *reader,
 
     TRACE("%p, %p, %d.\n", iface, reader, write_default_attributes);
 
-    if (SUCCEEDED(hr = writer_write_node(iface, reader, write_default_attributes)))
+    if (SUCCEEDED(hr = writer_write_node(iface, reader, FALSE, write_default_attributes)))
         hr = IXmlReader_Read(reader, NULL);
 
     return hr;
 }
 
-static HRESULT WINAPI xmlwriter_WriteNodeShallow(IXmlWriter *iface, IXmlReader *pReader,
-                                   BOOL fWriteDefaultAttributes)
+static HRESULT WINAPI xmlwriter_WriteNodeShallow(IXmlWriter *iface, IXmlReader *reader, BOOL write_default_attributes)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    TRACE("%p, %p, %d.\n", iface, reader, write_default_attributes);
 
-    FIXME("%p %p %d\n", This, pReader, fWriteDefaultAttributes);
-
-    return E_NOTIMPL;
+    return writer_write_node(iface, reader, TRUE, write_default_attributes);
 }
 
 static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LPCWSTR name,
