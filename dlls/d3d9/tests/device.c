@@ -3644,6 +3644,7 @@ static void test_scissor_size(void)
 
         hr = IDirect3DDevice9_GetScissorRect(device_ptr, &scissorrect);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        SetRect(&expect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
         ok(EqualRect(&scissorrect, &expect), "Expected rect %s, got %s.\n",
                 wine_dbgstr_rect(&expect), wine_dbgstr_rect(&scissorrect));
 
