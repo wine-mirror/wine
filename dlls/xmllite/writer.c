@@ -912,21 +912,21 @@ static BOOL is_valid_xml_space_value(const WCHAR *value)
 static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR prefix,
     LPCWSTR local, LPCWSTR uri, LPCWSTR value)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
     BOOL is_xmlns_prefix, is_xmlns_local;
     int prefix_len, local_len;
     struct ns *ns;
     HRESULT hr;
 
-    TRACE("%p %s %s %s %s\n", This, debugstr_w(prefix), debugstr_w(local), debugstr_w(uri), debugstr_w(value));
+    TRACE("%p, %s, %s, %s, %s.\n", iface, debugstr_w(prefix), debugstr_w(local), debugstr_w(uri), debugstr_w(value));
 
-    switch (This->state)
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
-        This->state = XmlWriterState_DocClosed;
+        writer->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
@@ -939,7 +939,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     if (is_xmlns_prefix && is_empty_string(uri) && is_empty_string(local))
         return WR_E_NSPREFIXDECLARED;
 
-    if (!local)
+    if (is_empty_string(local))
         return E_INVALIDARG;
 
     /* Validate prefix and local name */
@@ -954,7 +954,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     /* Trivial case, no prefix. */
     if (prefix_len == 0 && is_empty_string(uri))
     {
-        write_output_attribute(This, prefix, prefix_len, local, local_len, value);
+        write_output_attribute(writer, prefix, prefix_len, local, local_len, value);
         return S_OK;
     }
 
@@ -969,7 +969,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
         if (!is_empty_string(uri))
             return WR_E_XMLPREFIXDECLARATION;
 
-        write_output_attribute(This, prefix, prefix_len, local, local_len, value);
+        write_output_attribute(writer, prefix, prefix_len, local, local_len, value);
 
         return S_OK;
     }
@@ -980,11 +980,11 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
             return WR_E_XMLNSPREFIXDECLARATION;
 
         /* Look for exact match defined in current element, and write it out. */
-        if (!(ns = writer_find_ns_current(This, prefix, value)))
-            ns = writer_push_ns(This, local, local_len, value);
+        if (!(ns = writer_find_ns_current(writer, prefix, value)))
+            ns = writer_push_ns(writer, local, local_len, value);
         ns->emitted = TRUE;
 
-        write_output_attribute(This, L"xmlns", 5, local, local_len, value);
+        write_output_attribute(writer, L"xmlns", 5, local, local_len, value);
 
         return S_OK;
     }
@@ -992,11 +992,11 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     /* Ignore prefix if URI wasn't specified. */
     if (is_xmlns_local && is_empty_string(uri))
     {
-        write_output_attribute(This, NULL, 0, L"xmlns", 5, value);
+        write_output_attribute(writer, NULL, 0, L"xmlns", 5, value);
         return S_OK;
     }
 
-    if (!(ns = writer_find_ns(This, prefix, uri)))
+    if (!(ns = writer_find_ns(writer, prefix, uri)))
     {
         if (is_empty_string(prefix) && !is_empty_string(uri))
         {
@@ -1004,13 +1004,13 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
             return E_NOTIMPL;
         }
         if (!is_empty_string(uri))
-            ns = writer_push_ns(This, prefix, prefix_len, uri);
+            ns = writer_push_ns(writer, prefix, prefix_len, uri);
     }
 
     if (ns)
-        write_output_attribute(This, ns->prefix, ns->prefix_len, local, local_len, value);
+        write_output_attribute(writer, ns->prefix, ns->prefix_len, local, local_len, value);
     else
-        write_output_attribute(This, prefix, prefix_len, local, local_len, value);
+        write_output_attribute(writer, prefix, prefix_len, local, local_len, value);
 
     return S_OK;
 }

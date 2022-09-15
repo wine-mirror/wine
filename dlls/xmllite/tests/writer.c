@@ -1580,8 +1580,8 @@ static void test_WriteAttributeString(void)
         { NULL, NULL, L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG },
         { L"", L"a", L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", WR_E_XMLNSPREFIXDECLARATION, 1, 1, 1 },
         { L"", NULL, L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG },
-        { L"", L"", L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG, 1, 1, 1 },
-        { NULL, L"", L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG, 1, 1, 1 },
+        { L"", L"", L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG },
+        { NULL, L"", L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG },
         { L"prefix", L"a", L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", WR_E_XMLNSURIDECLARATION, 1, 1, 1 },
         { L"prefix", NULL, L"http://www.w3.org/2000/xmlns/", L"defuri", "<e />", "<e", E_INVALIDARG },
         { L"prefix", NULL, NULL, L"b", "<e />", "<e", E_INVALIDARG },
@@ -1619,6 +1619,8 @@ static void test_WriteAttributeString(void)
 
     for (i = 0; i < ARRAY_SIZE(attribute_tests); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         stream = writer_set_output(writer);
 
         hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
@@ -1630,7 +1632,7 @@ static void test_WriteAttributeString(void)
         hr = IXmlWriter_WriteAttributeString(writer, attribute_tests[i].prefix, attribute_tests[i].local,
                 attribute_tests[i].uri, attribute_tests[i].value);
         todo_wine_if(attribute_tests[i].todo_hr)
-        ok(hr == attribute_tests[i].hr, "%u: unexpected hr %#lx, expected %#lx.\n", i, hr, attribute_tests[i].hr);
+        ok(hr == attribute_tests[i].hr, "Unexpected hr %#lx, expected %#lx.\n", hr, attribute_tests[i].hr);
 
         hr = IXmlWriter_Flush(writer);
         ok(hr == S_OK, "Failed to flush, hr %#lx.\n", hr);
@@ -1645,6 +1647,8 @@ static void test_WriteAttributeString(void)
 
         check_output(stream, attribute_tests[i].output, attribute_tests[i].todo, __LINE__);
         IStream_Release(stream);
+
+        winetest_pop_context();
     }
 
     /* With namespaces */
