@@ -4286,7 +4286,7 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
             get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED ) &&
             (vprot & VPROT_COMMITTED))
         {
-            if (!f || fseek( f, ((UINT_PTR)p->VirtualAddress >> 12) * sizeof(pagemap), SEEK_SET ) == -1 ||
+            if (!f || fseek( f, ((UINT_PTR)p->VirtualAddress >> page_shift) * sizeof(pagemap), SEEK_SET ) == -1 ||
                     fread( &pagemap, sizeof(pagemap), 1, f ) != 1)
             {
                 /* If we don't have pagemap information, default to invalid. */
