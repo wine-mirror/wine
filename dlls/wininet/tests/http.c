@@ -2407,7 +2407,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 "Content-Length: 10\r\n\r\n0123456789";
             send(c, nocontentmsg, sizeof(nocontentmsg)-1, 0);
         }
-        if (strstr(buffer, "GET /test_no_content"))
+        else if (strstr(buffer, "GET /test_no_content"))
         {
             static const char nocontentmsg[] = "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n"
                 "0123456789";
