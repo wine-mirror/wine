@@ -17466,7 +17466,7 @@ static void test_generate_mips(void)
 
     ID3D10Device_GenerateMips(device, srv);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.w);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
@@ -17498,7 +17498,7 @@ static void test_generate_mips(void)
 
     ID3D10Device_GenerateMips(device, srv);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.w);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
