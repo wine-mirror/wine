@@ -153,6 +153,7 @@ static NTSTATUS (WINAPI * pNtNotifyChangeKey)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOI
 static NTSTATUS (WINAPI * pNtNotifyChangeMultipleKeys)(HANDLE,ULONG,OBJECT_ATTRIBUTES*,HANDLE,PIO_APC_ROUTINE,
                                                        void*,IO_STATUS_BLOCK*,ULONG,BOOLEAN,void*,ULONG,BOOLEAN);
 static NTSTATUS (WINAPI * pNtWaitForSingleObject)(HANDLE,BOOLEAN,const LARGE_INTEGER*);
+static NTSTATUS (WINAPI * pNtLoadKeyEx)(const OBJECT_ATTRIBUTES*,OBJECT_ATTRIBUTES*,ULONG,HANDLE,HANDLE,ACCESS_MASK,HANDLE*,IO_STATUS_BLOCK*);
 
 static HMODULE hntdll = 0;
 static int CurrentTest = 0;
@@ -205,6 +206,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(RtlpNtQueryValueKey)
     NTDLL_GET_PROC(RtlOpenCurrentUser)
     NTDLL_GET_PROC(NtWaitForSingleObject)
+    NTDLL_GET_PROC(NtLoadKeyEx);
 
     /* optional functions */
     pNtQueryLicenseValue = (void *)GetProcAddress(hntdll, "NtQueryLicenseValue");
@@ -2268,6 +2270,108 @@ static void test_NtRenameKey(void)
     pNtClose(key);
 }
 
+static BOOL set_privileges(LPCSTR privilege, BOOL set)
+{
+    TOKEN_PRIVILEGES tp;
+    HANDLE hToken;
+    LUID luid;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        return FALSE;
+
+    if(!LookupPrivilegeValueA(NULL, privilege, &luid))
+    {
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid = luid;
+
+    if (set)
+        tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    else
+        tp.Privileges[0].Attributes = 0;
+
+    AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL);
+    if (GetLastError() != ERROR_SUCCESS)
+    {
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    CloseHandle(hToken);
+    return TRUE;
+}
+
+static void test_NtRegLoadKeyEx(void)
+{
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES file_attr, key_attr;
+    WCHAR temp_path[MAX_PATH], hivefile_path[MAX_PATH];
+    UNICODE_STRING hivefile_pathW, key_pathW;
+    HANDLE key = 0;
+
+    GetTempPathW(sizeof(temp_path), temp_path);
+    GetTempFileNameW(temp_path, L"key", 0, hivefile_path);
+    DeleteFileW(hivefile_path);
+    RtlDosPathNameToNtPathName_U(hivefile_path, &hivefile_pathW, NULL, NULL);
+
+    if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
+        !set_privileges(SE_BACKUP_NAME, TRUE))
+    {
+        win_skip("Failed to set SE_RESTORE_NAME and SE_BACKUP_NAME privileges, skipping tests\n");
+        RtlFreeUnicodeString(&hivefile_pathW);
+        return;
+    }
+
+    /* Generate hive file */
+    InitializeObjectAttributes(&key_attr, &winetestpath, 0, NULL, NULL);
+    status = pNtCreateKey(&key, KEY_ALL_ACCESS, &key_attr, 0, 0, 0, 0);
+    ok(status == ERROR_SUCCESS, "couldn't create key 0x%lx\n", status);
+    status = RegSaveKeyW(key, hivefile_path, NULL);
+    ok(status == ERROR_SUCCESS, "couldn't save key %ld\n", status);
+    status = pNtDeleteKey(key);
+    ok(status == ERROR_SUCCESS, "couldn't delete key 0x%lx\n", status);
+    key = 0;
+
+    /* Test for roothandle parameter with no flags */
+    pRtlFormatCurrentUserKeyPath(&key_pathW);
+    key_pathW.Buffer = pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, key_pathW.Buffer,
+                           key_pathW.MaximumLength + sizeof(key_pathW)*sizeof(WCHAR));
+    key_pathW.MaximumLength = key_pathW.MaximumLength + sizeof(key_pathW)*sizeof(WCHAR);
+    pRtlAppendUnicodeToString(&key_pathW, L"TestKey");
+
+    InitializeObjectAttributes(&file_attr, &hivefile_pathW, 0, NULL, NULL);
+    key_attr.ObjectName = &key_pathW;
+    status = pNtLoadKeyEx(&key_attr, &file_attr, 0, NULL, NULL, KEY_READ, &key, NULL);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER_7 || broken(status == STATUS_INVALID_PARAMETER_6) /* win7 */, "got 0x%lx\n", status);
+    if (status == STATUS_INVALID_PARAMETER_6)
+    {
+        win_skip("NtLoadKeyEx has a different order of parameters in this windows version\n");
+        RtlFreeUnicodeString(&hivefile_pathW);
+        RtlFreeUnicodeString(&key_pathW);
+        DeleteFileW(hivefile_path);
+        return;
+    }
+    ok(!key, "key is expected to be null\n");
+    if (key) pNtClose(key);
+    RtlFreeUnicodeString(&key_pathW);
+
+    /* Test for roothandle parameter with REG_APP_HIVE */
+    RtlCreateUnicodeString(&key_pathW, L"\\REGISTRY\\A\\TestKey");
+    status = pNtLoadKeyEx(&key_attr, &file_attr, REG_APP_HIVE, NULL, NULL, KEY_READ, &key, NULL);
+    todo_wine ok(status == STATUS_SUCCESS, "got 0x%lx\n", status);
+    todo_wine ok(key != NULL, "key is null\n");
+    if (key) pNtClose(key);
+    RtlFreeUnicodeString(&key_pathW);
+
+    set_privileges(SE_RESTORE_NAME, FALSE);
+    set_privileges(SE_BACKUP_NAME, FALSE);
+    RtlFreeUnicodeString(&hivefile_pathW);
+    DeleteFileW(hivefile_path);
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
@@ -2298,6 +2402,7 @@ START_TEST(reg)
     test_symlinks();
     test_redirection();
     test_NtRenameKey();
+    test_NtRegLoadKeyEx();
 
     pRtlFreeUnicodeString(&winetestpath);
 
