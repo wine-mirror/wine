@@ -1406,6 +1406,13 @@ static void release_test_context_(unsigned int line, struct d3d10core_test_conte
     ok_(__FILE__, line)(!ref, "Device has %lu references left.\n", ref);
 }
 
+static void clear_backbuffer_rtv(struct d3d10core_test_context *test_context, const struct vec4 *v)
+{
+    /* Cast to (const float *) instead of passing &v->x, since gcc warns about
+     * overreading a float[4] from a float otherwise. */
+    ID3D10Device_ClearRenderTargetView(test_context->device, test_context->backbuffer_rtv, (const float *)v);
+}
+
 #define draw_quad(context) draw_quad_vs_(__LINE__, context, NULL, 0)
 #define draw_quad_vs(a, b, c) draw_quad_vs_(__LINE__, a, b, c)
 static void draw_quad_vs_(unsigned int line, struct d3d10core_test_context *context,
@@ -13443,7 +13450,7 @@ static void test_face_culling(void)
 
     device = test_context.device;
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
@@ -13451,7 +13458,7 @@ static void test_face_culling(void)
     ccw_vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(ccw_quad), ccw_quad);
 
     test_context.vb = ccw_vb;
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
 
@@ -13476,12 +13483,12 @@ static void test_face_culling(void)
         ID3D10Device_RSSetState(device, state);
 
         test_context.vb = cw_vb;
-        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+        clear_backbuffer_rtv(&test_context, &red);
         draw_color_quad(&test_context, &green);
         check_texture_color(test_context.backbuffer, tests[i].expected_cw ? 0xff00ff00 : 0xff0000ff, 0);
 
         test_context.vb = ccw_vb;
-        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+        clear_backbuffer_rtv(&test_context, &red);
         draw_color_quad(&test_context, &green);
         check_texture_color(test_context.backbuffer, tests[i].expected_ccw ? 0xff00ff00 : 0xff0000ff, 0);
 
@@ -13502,11 +13509,11 @@ static void test_face_culling(void)
     ID3D10Device_RSSetState(device, state);
 
     test_context.vb = cw_vb;
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
     test_context.vb = ccw_vb;
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     if (!broken_warp)
         check_texture_color(test_context.backbuffer, 0xffff0000, 0);
@@ -13522,14 +13529,14 @@ static void test_face_culling(void)
     ID3D10Device_RSSetState(device, state);
 
     test_context.vb = cw_vb;
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     if (!broken_warp)
         check_texture_color(test_context.backbuffer, 0xffff0000 , 0);
     else
         win_skip("Broken WARP.\n");
     test_context.vb = ccw_vb;
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
@@ -13573,22 +13580,22 @@ static void test_line_antialiasing_blending(void)
     ok(SUCCEEDED(hr), "Failed to create blend state, hr %#lx.\n", hr);
     ID3D10Device_OMSetBlendState(device, blend_state, NULL, D3D10_DEFAULT_SAMPLE_MASK);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xe2007fcc, 1);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
+    clear_backbuffer_rtv(&test_context, &green);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xe2007fcc, 1);
 
     ID3D10Device_OMSetBlendState(device, NULL, NULL, D3D10_DEFAULT_SAMPLE_MASK);
     ID3D10BlendState_Release(blend_state);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
+    clear_backbuffer_rtv(&test_context, &green);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
 
@@ -13607,11 +13614,11 @@ static void test_line_antialiasing_blending(void)
     ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#lx.\n", hr);
     ID3D10Device_RSSetState(device, rasterizer_state);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
+    clear_backbuffer_rtv(&test_context, &green);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
 
@@ -15636,7 +15643,7 @@ static void test_stream_output_resume(void)
     ID3D10Device_GSSetShader(device, gs);
     ID3D10Device_GSSetConstantBuffers(device, 0, 1, &cb);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
+    clear_backbuffer_rtv(&test_context, &white);
     check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
     /* Draw into a SO buffer and then immediately destroy it, to make sure that
@@ -17384,7 +17391,7 @@ static void test_generate_mips(void)
 
             ID3D10Device_GenerateMips(device, srv);
 
-            ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
+            clear_backbuffer_rtv(&test_context, &white);
 
             srv_desc.Format = tests[j].texture_format == DXGI_FORMAT_R8G8B8A8_UINT
                     ? DXGI_FORMAT_R8G8B8A8_UINT : DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -17466,7 +17473,7 @@ static void test_generate_mips(void)
 
     ID3D10Device_GenerateMips(device, srv);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
+    clear_backbuffer_rtv(&test_context, &white);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
@@ -17498,7 +17505,7 @@ static void test_generate_mips(void)
 
     ID3D10Device_GenerateMips(device, srv);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
+    clear_backbuffer_rtv(&test_context, &white);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
@@ -19183,7 +19190,7 @@ static void test_dynamic_map_synchronization(void)
     hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &test_context.vb);
     ok(hr == S_OK, "Failed to create vertex buffer, hr %#lx.\n", hr);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    clear_backbuffer_rtv(&test_context, &red);
 
     for (y = 0; y < 200; ++y)
     {
