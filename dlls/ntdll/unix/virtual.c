@@ -4203,7 +4203,9 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
                                     MEMORY_WORKING_SET_EX_INFORMATION *info,
                                     SIZE_T len, SIZE_T *res_len )
 {
-    int pagemap_fd;
+#if !defined(HAVE_LIBPROCSTAT)
+    static int pagemap_fd = -2;
+#endif
     MEMORY_WORKING_SET_EX_INFORMATION *p;
     sigset_t sigset;
 
@@ -4266,14 +4268,18 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
             procstat_close( pstat );
     }
 #else
-    pagemap_fd = open( "/proc/self/pagemap", O_RDONLY, 0 );
-    if (pagemap_fd == -1)
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    if (pagemap_fd == -2)
     {
-        static int once;
-        if (!once++) WARN( "unable to open /proc/self/pagemap\n" );
+#ifdef O_CLOEXEC
+        if ((pagemap_fd = open( "/proc/self/pagemap", O_RDONLY | O_CLOEXEC, 0 )) == -1 && errno == EINVAL)
+#endif
+            pagemap_fd = open( "/proc/self/pagemap", O_RDONLY, 0 );
+
+        if (pagemap_fd == -1) WARN( "unable to open /proc/self/pagemap\n" );
+        else fcntl(pagemap_fd, F_SETFD, FD_CLOEXEC);  /* in case O_CLOEXEC isn't supported */
     }
 
-    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     for (p = info; (UINT_PTR)(p + 1) <= (UINT_PTR)info + len; p++)
     {
         BYTE vprot;
@@ -4304,8 +4310,6 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 #endif
 
-    if (pagemap_fd != -1)
-        close( pagemap_fd );
     if (res_len)
         *res_len = (UINT_PTR)p - (UINT_PTR)info;
     return STATUS_SUCCESS;
