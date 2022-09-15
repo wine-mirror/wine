@@ -363,6 +363,36 @@ NTSTATUS errno_to_status( int err )
 }
 
 
+static int xattr_fremove( int filedes, const char *name )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return fremovexattr( filedes, name, 0 );
+# else
+    return fremovexattr( filedes, name );
+# endif
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+
+static int xattr_fset( int filedes, const char *name, const void *value, size_t size )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return fsetxattr( filedes, name, value, size, 0, 0 );
+# else
+    return fsetxattr( filedes, name, value, size, 0 );
+# endif
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+
 static int xattr_get( const char *path, const char *name, void *value, size_t size )
 {
 #ifdef HAVE_SYS_XATTR_H
@@ -1516,6 +1546,51 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
     if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, st ))
         *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
     return ret;
+}
+
+
+static int fd_set_dos_attrib( int fd, ULONG attr )
+{
+    /* we only store the HIDDEN and SYSTEM attributes */
+    attr &= XATTR_ATTRIBS_MASK;
+    if (attr != 0)
+    {
+        /* encode the attributes in Samba 3 ASCII format. Samba 4 has extended
+         * this format with more features, but retains compatibility with the
+         * earlier format. */
+        char data[11];
+        int len = sprintf( data, "0x%x", attr );
+        return xattr_fset( fd, SAMBA_XATTR_DOS_ATTRIB, data, len );
+    }
+    else return xattr_fremove( fd, SAMBA_XATTR_DOS_ATTRIB );
+}
+
+
+/* set the stat info and file attributes for a file (by file descriptor) */
+NTSTATUS fd_set_file_info( int fd, ULONG attr )
+{
+    struct stat st;
+
+    if (fstat( fd, &st ) == -1) return errno_to_status( errno );
+    if (attr & FILE_ATTRIBUTE_READONLY)
+    {
+        if (S_ISDIR( st.st_mode))
+            WARN("FILE_ATTRIBUTE_READONLY ignored for directory.\n");
+        else
+            st.st_mode &= ~0222; /* clear write permission bits */
+    }
+    else
+    {
+        /* add write permission only where we already have read permission */
+        st.st_mode |= (0600 | ((st.st_mode & 044) >> 1)) & (~start_umask);
+    }
+    if (fchmod( fd, st.st_mode ) == -1) return errno_to_status( errno );
+
+    if (fd_set_dos_attrib( fd, attr ) == -1 && errno != ENOTSUP)
+        WARN( "Failed to set extended attribute " SAMBA_XATTR_DOS_ATTRIB ". errno %d (%s)\n",
+              errno, strerror( errno ) );
+
+    return STATUS_SUCCESS;
 }
 
 
@@ -4416,7 +4491,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     case FileBasicInformation:
         if (len >= sizeof(FILE_BASIC_INFORMATION))
         {
-            struct stat st;
             const FILE_BASIC_INFORMATION *info = ptr;
             LARGE_INTEGER mtime, atime;
 
@@ -4430,25 +4504,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 status = set_file_times( fd, &mtime, &atime );
 
             if (status == STATUS_SUCCESS && info->FileAttributes)
-            {
-                if (fstat( fd, &st ) == -1) status = errno_to_status( errno );
-                else
-                {
-                    if (info->FileAttributes & FILE_ATTRIBUTE_READONLY)
-                    {
-                        if (S_ISDIR( st.st_mode))
-                            WARN("FILE_ATTRIBUTE_READONLY ignored for directory.\n");
-                        else
-                            st.st_mode &= ~0222; /* clear write permission bits */
-                    }
-                    else
-                    {
-                        /* add write permission only where we already have read permission */
-                        st.st_mode |= (0600 | ((st.st_mode & 044) >> 1)) & (~start_umask);
-                    }
-                    if (fchmod( fd, st.st_mode ) == -1) status = errno_to_status( errno );
-                }
-            }
+                status = fd_set_file_info( fd, info->FileAttributes );
 
             if (needs_close) close( fd );
         }
