@@ -5484,30 +5484,27 @@ static void test_UiaNodeFromHandle(const char *name)
     Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
     Provider_child.hwnd = NULL;
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
 
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = UiaHUiaNodeFromVariant(&v, &node2);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
-            VariantClear(&v);
-        }
-
-        Provider_child.expected_tid = GetCurrentThreadId();
-        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
-        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
-        ok_method_sequence(node_from_hwnd4, "node_from_hwnd4");
-
-        ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+        VariantClear(&v);
     }
+
+    Provider_child.expected_tid = GetCurrentThreadId();
+    hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+    ok_method_sequence(node_from_hwnd4, "node_from_hwnd4");
+
+    ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
 
     Provider.expected_tid = Provider_child.expected_tid = 0;
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
