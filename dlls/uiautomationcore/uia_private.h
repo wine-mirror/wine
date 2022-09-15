@@ -20,6 +20,7 @@
 
 #include "uiautomation.h"
 #include "uia_classes.h"
+#include "wine/list.h"
 
 extern HMODULE huia_module DECLSPEC_HIDDEN;
 
@@ -38,6 +39,7 @@ struct uia_node {
 
     HWND hwnd;
     BOOL nested_node;
+    struct list prov_thread_list_entry;
 };
 
 static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)
@@ -50,3 +52,4 @@ const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_H
 
 /* uia_provider.c */
 void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;
+void uia_provider_thread_remove_node(HUIANODE node) DECLSPEC_HIDDEN;

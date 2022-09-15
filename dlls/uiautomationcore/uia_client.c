@@ -313,6 +313,8 @@ static ULONG WINAPI uia_node_Release(IWineUiaNode *iface)
         }
 
         IWineUiaProvider_Release(node->prov);
+        if (!list_empty(&node->prov_thread_list_entry))
+            uia_provider_thread_remove_node((HUIANODE)iface);
         if (node->nested_node)
             uia_stop_provider_thread();
 
@@ -751,6 +753,7 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
     }
 
     node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
+    list_init(&node->prov_thread_list_entry);
     node->ref = 1;
 
     *huianode = (void *)&node->IWineUiaNode_iface;
@@ -1127,6 +1130,7 @@ HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
 
     node->hwnd = hwnd;
     node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
+    list_init(&node->prov_thread_list_entry);
     node->ref = 1;
 
     hr = uia_get_provider_from_hwnd(node);

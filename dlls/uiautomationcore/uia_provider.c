@@ -1130,6 +1130,7 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
  */
 struct uia_provider_thread
 {
+    struct list nodes_list;
     HANDLE hthread;
     HWND hwnd;
     LONG ref;
@@ -1145,6 +1146,33 @@ static CRITICAL_SECTION_DEBUG provider_thread_cs_debug =
 };
 static CRITICAL_SECTION provider_thread_cs = { &provider_thread_cs_debug, -1, 0, 0, 0, 0 };
 
+void uia_provider_thread_remove_node(HUIANODE node)
+{
+    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+
+    TRACE("Removing node %p\n", node);
+
+    EnterCriticalSection(&provider_thread_cs);
+    list_remove(&node_data->prov_thread_list_entry);
+    list_init(&node_data->prov_thread_list_entry);
+    LeaveCriticalSection(&provider_thread_cs);
+}
+
+static HRESULT uia_provider_thread_add_node(HUIANODE node)
+{
+    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+
+    TRACE("Adding node %p\n", node);
+
+    node_data->nested_node = TRUE;
+
+    EnterCriticalSection(&provider_thread_cs);
+    list_add_tail(&provider_thread.nodes_list, &node_data->prov_thread_list_entry);
+    LeaveCriticalSection(&provider_thread_cs);
+
+    return S_OK;
+}
+
 #define WM_GET_OBJECT_UIA_NODE (WM_USER + 1)
 #define WM_UIA_PROVIDER_THREAD_STOP (WM_USER + 2)
 static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM wparam,
@@ -1155,11 +1183,14 @@ static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM
     case WM_GET_OBJECT_UIA_NODE:
     {
         HUIANODE node = (HUIANODE)lparam;
-        struct uia_node *node_data;
         LRESULT lr;
 
-        node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
-        node_data->nested_node = TRUE;
+        if (FAILED(uia_provider_thread_add_node(node)))
+        {
+            WARN("Failed to add node %p to provider thread list.\n", node);
+            UiaNodeRelease(node);
+            return 0;
+        }
 
         /*
          * LresultFromObject returns an index into the global atom string table,
@@ -1239,6 +1270,7 @@ static BOOL uia_start_provider_thread(void)
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                 (const WCHAR *)uia_start_provider_thread, &hmodule);
 
+        list_init(&provider_thread.nodes_list);
         events[0] = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (!(provider_thread.hthread = CreateThread(NULL, 0, uia_provider_thread_proc,
                 ready_event, 0, NULL)))
@@ -1276,6 +1308,8 @@ void uia_stop_provider_thread(void)
     {
         PostMessageW(provider_thread.hwnd, WM_UIA_PROVIDER_THREAD_STOP, 0, 0);
         CloseHandle(provider_thread.hthread);
+        if (!list_empty(&provider_thread.nodes_list))
+            ERR("Provider thread shutdown with nodes still in the list\n");
         memset(&provider_thread, 0, sizeof(provider_thread));
     }
     LeaveCriticalSection(&provider_thread_cs);
