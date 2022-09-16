@@ -920,7 +920,7 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
     *size = 1;
     for (e = main_envp; *e; e++) *size += strlen(*e) + 1;
 
-    if (!(env = malloc( *size * sizeof(WCHAR) ))) return NULL;
+    env = malloc( *size * sizeof(WCHAR) );
     ptr = env;
     end = env + *size - 1;
     for (e = main_envp; *e && ptr < end; e++)
