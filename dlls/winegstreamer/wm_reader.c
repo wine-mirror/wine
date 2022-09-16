@@ -1479,37 +1479,6 @@ out_destroy_parser:
     return hr;
 }
 
-HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
-{
-    STATSTG stat;
-    HRESULT hr;
-
-    if (FAILED(hr = IStream_Stat(stream, &stat, STATFLAG_NONAME)))
-    {
-        ERR("Failed to stat stream, hr %#lx.\n", hr);
-        return hr;
-    }
-
-    EnterCriticalSection(&reader->cs);
-
-    if (reader->wg_parser)
-    {
-        LeaveCriticalSection(&reader->cs);
-        WARN("Stream is already open; returning E_UNEXPECTED.\n");
-        return E_UNEXPECTED;
-    }
-
-    IStream_AddRef(reader->source_stream = stream);
-    if (FAILED(hr = init_stream(reader, stat.cbSize.QuadPart)))
-    {
-        IStream_Release(stream);
-        reader->source_stream = NULL;
-    }
-
-    LeaveCriticalSection(&reader->cs);
-    return hr;
-}
-
 static struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
 {
     if (stream_number && stream_number <= reader->stream_count)
@@ -2373,10 +2342,35 @@ static HRESULT WINAPI reader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
 static HRESULT WINAPI reader_OpenStream(IWMSyncReader2 *iface, IStream *stream)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    STATSTG stat;
+    HRESULT hr;
 
     TRACE("reader %p, stream %p.\n", reader, stream);
 
-    return wm_reader_open_stream(reader, stream);
+    if (FAILED(hr = IStream_Stat(stream, &stat, STATFLAG_NONAME)))
+    {
+        ERR("Failed to stat stream, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    EnterCriticalSection(&reader->cs);
+
+    if (reader->wg_parser)
+    {
+        LeaveCriticalSection(&reader->cs);
+        WARN("Stream is already open; returning E_UNEXPECTED.\n");
+        return E_UNEXPECTED;
+    }
+
+    IStream_AddRef(reader->source_stream = stream);
+    if (FAILED(hr = init_stream(reader, stat.cbSize.QuadPart)))
+    {
+        IStream_Release(stream);
+        reader->source_stream = NULL;
+    }
+
+    LeaveCriticalSection(&reader->cs);
+    return hr;
 }
 
 static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output, IWMOutputMediaProps *props)

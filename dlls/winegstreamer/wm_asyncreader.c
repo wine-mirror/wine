@@ -933,7 +933,7 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
 
     EnterCriticalSection(&reader->cs);
 
-    if (SUCCEEDED(hr = wm_reader_open_stream(reader->wm_reader, stream))
+    if (SUCCEEDED(hr = IWMSyncReader2_OpenStream(reader->reader, stream))
             && FAILED(hr = async_reader_open(reader, callback, context)))
         IWMSyncReader2_Close(reader->reader);
 
