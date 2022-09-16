@@ -12208,11 +12208,15 @@ static void test_nonblocking_async_recv(void)
 
     memset(buffer, 0, sizeof(buffer));
     WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
     ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
     ret = WaitForSingleObject((HANDLE)client, 0);
     ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = send(server, "data", 4, 0);
     ok(ret == 4, "got %d\n", ret);

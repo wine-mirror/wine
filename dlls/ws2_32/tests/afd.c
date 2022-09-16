@@ -1466,13 +1466,14 @@ static void test_recv(void)
             IOCTL_AFD_RECV, &params, sizeof(params) - 1, NULL, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
 
-    memset(&io, 0, sizeof(io));
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
     memset(buffer, 0xcc, sizeof(buffer));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
-    ok(!io.Status, "got status %#lx\n", io.Status);
-    ok(!io.Information, "got information %#Ix\n", io.Information);
+    ok(io.Status == 0xdeadbeef, "got status %#lx\n", io.Status);
+    ok(io.Information == 0xdeadbeef, "got information %#Ix\n", io.Information);
 
     /* These structures need not remain valid. */
     memset(&params, 0xcc, sizeof(params));
