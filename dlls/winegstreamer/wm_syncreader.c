@@ -22,9 +22,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
 struct sync_reader
 {
-    struct wm_reader reader;
-
     IWMSyncReader2 IWMSyncReader2_iface;
+    struct wm_reader reader;
+    LONG refcount;
 };
 
 static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
@@ -36,21 +36,62 @@ static HRESULT WINAPI WMSyncReader_QueryInterface(IWMSyncReader2 *iface, REFIID 
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    return IWMProfile3_QueryInterface(&reader->reader.IWMProfile3_iface, iid, out);
+    TRACE("reader %p, iid %s, out %p.\n", reader, debugstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IUnknown)
+            || IsEqualIID(iid, &IID_IWMSyncReader)
+            || IsEqualIID(iid, &IID_IWMSyncReader2))
+        *out = &reader->IWMSyncReader2_iface;
+    else if (IsEqualIID(iid, &IID_IWMHeaderInfo)
+            || IsEqualIID(iid, &IID_IWMHeaderInfo2)
+            || IsEqualIID(iid, &IID_IWMHeaderInfo3))
+        *out = &reader->reader.IWMHeaderInfo3_iface;
+    else if (IsEqualIID(iid, &IID_IWMLanguageList))
+        *out = &reader->reader.IWMLanguageList_iface;
+    else if (IsEqualIID(iid, &IID_IWMPacketSize)
+            || IsEqualIID(iid, &IID_IWMPacketSize2))
+        *out = &reader->reader.IWMPacketSize2_iface;
+    else if (IsEqualIID(iid, &IID_IWMProfile)
+            || IsEqualIID(iid, &IID_IWMProfile2)
+            || IsEqualIID(iid, &IID_IWMProfile3))
+        *out = &reader->reader.IWMProfile3_iface;
+    else if (IsEqualIID(iid, &IID_IWMReaderPlaylistBurn))
+        *out = &reader->reader.IWMReaderPlaylistBurn_iface;
+    else if (IsEqualIID(iid, &IID_IWMReaderTimecode))
+        *out = &reader->reader.IWMReaderTimecode_iface;
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI WMSyncReader_AddRef(IWMSyncReader2 *iface)
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
-
-    return IWMProfile3_AddRef(&reader->reader.IWMProfile3_iface);
+    ULONG refcount = InterlockedIncrement(&reader->refcount);
+    TRACE("%p increasing refcount to %lu.\n", reader, refcount);
+    return refcount;
 }
 
 static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    ULONG refcount = InterlockedDecrement(&reader->refcount);
 
-    return IWMProfile3_Release(&reader->reader.IWMProfile3_iface);
+    TRACE("%p decreasing refcount to %lu.\n", reader, refcount);
+
+    if (!refcount)
+    {
+        wm_reader_close(&reader->reader);
+        wm_reader_cleanup(&reader->reader);
+        free(reader);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI WMSyncReader_Close(IWMSyncReader2 *iface)
@@ -363,41 +404,6 @@ static const IWMSyncReader2Vtbl WMSyncReader2Vtbl = {
     WMSyncReader2_GetAllocateForStream
 };
 
-static struct sync_reader *impl_from_wm_reader(struct wm_reader *iface)
-{
-    return CONTAINING_RECORD(iface, struct sync_reader, reader);
-}
-
-static void *sync_reader_query_interface(struct wm_reader *iface, REFIID iid)
-{
-    struct sync_reader *reader = impl_from_wm_reader(iface);
-
-    TRACE("reader %p, iid %s.\n", reader, debugstr_guid(iid));
-
-    if (IsEqualIID(iid, &IID_IWMSyncReader)
-            || IsEqualIID(iid, &IID_IWMSyncReader2))
-        return &reader->IWMSyncReader2_iface;
-
-    return NULL;
-}
-
-static void sync_reader_destroy(struct wm_reader *iface)
-{
-    struct sync_reader *reader = impl_from_wm_reader(iface);
-
-    TRACE("reader %p.\n", reader);
-
-    wm_reader_close(&reader->reader);
-    wm_reader_cleanup(&reader->reader);
-    free(reader);
-}
-
-static const struct wm_reader_ops sync_reader_ops =
-{
-    .query_interface = sync_reader_query_interface,
-    .destroy = sync_reader_destroy,
-};
-
 HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader)
 {
     struct sync_reader *object;
@@ -407,9 +413,9 @@ HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader)
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wm_reader_init(&object->reader, &sync_reader_ops);
-
     object->IWMSyncReader2_iface.lpVtbl = &WMSyncReader2Vtbl;
+    wm_reader_init((IUnknown *)&object->IWMSyncReader2_iface, &object->reader);
+    object->refcount = 1;
 
     TRACE("Created sync reader %p.\n", object);
     *reader = (IWMSyncReader *)&object->IWMSyncReader2_iface;

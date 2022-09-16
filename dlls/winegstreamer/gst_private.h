@@ -168,9 +168,9 @@ struct wm_reader
     IWMProfile3 IWMProfile3_iface;
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
-    LONG refcount;
-    CRITICAL_SECTION cs;
+    IUnknown *outer;
 
+    CRITICAL_SECTION cs;
     QWORD start_time;
 
     IStream *source_stream;
@@ -181,14 +181,6 @@ struct wm_reader
 
     struct wm_stream *streams;
     WORD stream_count;
-
-    const struct wm_reader_ops *ops;
-};
-
-struct wm_reader_ops
-{
-    void *(*query_interface)(struct wm_reader *reader, REFIID iid);
-    void (*destroy)(struct wm_reader *reader);
 };
 
 void wm_reader_cleanup(struct wm_reader *reader);
@@ -205,7 +197,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
         INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number);
 HRESULT wm_reader_get_stream_selection(struct wm_reader *reader,
         WORD stream_number, WMT_STREAM_SELECTION *selection);
-void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
+void wm_reader_init(IUnknown *outer, struct wm_reader *reader);
 HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration);

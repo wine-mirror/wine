@@ -636,70 +636,19 @@ static struct wm_reader *impl_from_IWMProfile3(IWMProfile3 *iface)
 static HRESULT WINAPI profile_QueryInterface(IWMProfile3 *iface, REFIID iid, void **out)
 {
     struct wm_reader *reader = impl_from_IWMProfile3(iface);
-
-    TRACE("reader %p, iid %s, out %p.\n", reader, debugstr_guid(iid), out);
-
-    if (IsEqualIID(iid, &IID_IWMHeaderInfo)
-            || IsEqualIID(iid, &IID_IWMHeaderInfo2)
-            || IsEqualIID(iid, &IID_IWMHeaderInfo3))
-    {
-        *out = &reader->IWMHeaderInfo3_iface;
-    }
-    else if (IsEqualIID(iid, &IID_IWMLanguageList))
-    {
-        *out = &reader->IWMLanguageList_iface;
-    }
-    else if (IsEqualIID(iid, &IID_IWMPacketSize)
-            || IsEqualIID(iid, &IID_IWMPacketSize2))
-    {
-        *out = &reader->IWMPacketSize2_iface;
-    }
-    else if (IsEqualIID(iid, &IID_IUnknown)
-            || IsEqualIID(iid, &IID_IWMProfile)
-            || IsEqualIID(iid, &IID_IWMProfile2)
-            || IsEqualIID(iid, &IID_IWMProfile3))
-    {
-        *out = &reader->IWMProfile3_iface;
-    }
-    else if (IsEqualIID(iid, &IID_IWMReaderPlaylistBurn))
-    {
-        *out = &reader->IWMReaderPlaylistBurn_iface;
-    }
-    else if (IsEqualIID(iid, &IID_IWMReaderTimecode))
-    {
-        *out = &reader->IWMReaderTimecode_iface;
-    }
-    else if (!(*out = reader->ops->query_interface(reader, iid)))
-    {
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
+    return IUnknown_QueryInterface(reader->outer, iid, out);
 }
 
 static ULONG WINAPI profile_AddRef(IWMProfile3 *iface)
 {
     struct wm_reader *reader = impl_from_IWMProfile3(iface);
-    ULONG refcount = InterlockedIncrement(&reader->refcount);
-
-    TRACE("%p increasing refcount to %lu.\n", reader, refcount);
-
-    return refcount;
+    return IUnknown_AddRef(reader->outer);
 }
 
 static ULONG WINAPI profile_Release(IWMProfile3 *iface)
 {
     struct wm_reader *reader = impl_from_IWMProfile3(iface);
-    ULONG refcount = InterlockedDecrement(&reader->refcount);
-
-    TRACE("%p decreasing refcount to %lu.\n", reader, refcount);
-
-    if (!refcount)
-        reader->ops->destroy(reader);
-
-    return refcount;
+    return IUnknown_Release(reader->outer);
 }
 
 static HRESULT WINAPI profile_GetVersion(IWMProfile3 *iface, WMT_VERSION *version)
@@ -972,22 +921,19 @@ static struct wm_reader *impl_from_IWMHeaderInfo3(IWMHeaderInfo3 *iface)
 static HRESULT WINAPI header_info_QueryInterface(IWMHeaderInfo3 *iface, REFIID iid, void **out)
 {
     struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
-
-    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+    return IUnknown_QueryInterface(reader->outer, iid, out);
 }
 
 static ULONG WINAPI header_info_AddRef(IWMHeaderInfo3 *iface)
 {
     struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
-
-    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+    return IUnknown_AddRef(reader->outer);
 }
 
 static ULONG WINAPI header_info_Release(IWMHeaderInfo3 *iface)
 {
     struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
-
-    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+    return IUnknown_Release(reader->outer);
 }
 
 static HRESULT WINAPI header_info_GetAttributeCount(IWMHeaderInfo3 *iface, WORD stream_number, WORD *count)
@@ -1237,22 +1183,19 @@ static struct wm_reader *impl_from_IWMLanguageList(IWMLanguageList *iface)
 static HRESULT WINAPI language_list_QueryInterface(IWMLanguageList *iface, REFIID iid, void **out)
 {
     struct wm_reader *reader = impl_from_IWMLanguageList(iface);
-
-    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+    return IUnknown_QueryInterface(reader->outer, iid, out);
 }
 
 static ULONG WINAPI language_list_AddRef(IWMLanguageList *iface)
 {
     struct wm_reader *reader = impl_from_IWMLanguageList(iface);
-
-    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+    return IUnknown_AddRef(reader->outer);
 }
 
 static ULONG WINAPI language_list_Release(IWMLanguageList *iface)
 {
     struct wm_reader *reader = impl_from_IWMLanguageList(iface);
-
-    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+    return IUnknown_Release(reader->outer);
 }
 
 static HRESULT WINAPI language_list_GetLanguageCount(IWMLanguageList *iface, WORD *count)
@@ -1293,22 +1236,19 @@ static struct wm_reader *impl_from_IWMPacketSize2(IWMPacketSize2 *iface)
 static HRESULT WINAPI packet_size_QueryInterface(IWMPacketSize2 *iface, REFIID iid, void **out)
 {
     struct wm_reader *reader = impl_from_IWMPacketSize2(iface);
-
-    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+    return IUnknown_QueryInterface(reader->outer, iid, out);
 }
 
 static ULONG WINAPI packet_size_AddRef(IWMPacketSize2 *iface)
 {
     struct wm_reader *reader = impl_from_IWMPacketSize2(iface);
-
-    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+    return IUnknown_AddRef(reader->outer);
 }
 
 static ULONG WINAPI packet_size_Release(IWMPacketSize2 *iface)
 {
     struct wm_reader *reader = impl_from_IWMPacketSize2(iface);
-
-    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+    return IUnknown_Release(reader->outer);
 }
 
 static HRESULT WINAPI packet_size_GetMaxPacketSize(IWMPacketSize2 *iface, DWORD *size)
@@ -1354,22 +1294,19 @@ static struct wm_reader *impl_from_IWMReaderPlaylistBurn(IWMReaderPlaylistBurn *
 static HRESULT WINAPI playlist_QueryInterface(IWMReaderPlaylistBurn *iface, REFIID iid, void **out)
 {
     struct wm_reader *reader = impl_from_IWMReaderPlaylistBurn(iface);
-
-    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+    return IUnknown_QueryInterface(reader->outer, iid, out);
 }
 
 static ULONG WINAPI playlist_AddRef(IWMReaderPlaylistBurn *iface)
 {
     struct wm_reader *reader = impl_from_IWMReaderPlaylistBurn(iface);
-
-    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+    return IUnknown_AddRef(reader->outer);
 }
 
 static ULONG WINAPI playlist_Release(IWMReaderPlaylistBurn *iface)
 {
     struct wm_reader *reader = impl_from_IWMReaderPlaylistBurn(iface);
-
-    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+    return IUnknown_Release(reader->outer);
 }
 
 static HRESULT WINAPI playlist_InitPlaylistBurn(IWMReaderPlaylistBurn *iface, DWORD count,
@@ -1417,22 +1354,19 @@ static struct wm_reader *impl_from_IWMReaderTimecode(IWMReaderTimecode *iface)
 static HRESULT WINAPI timecode_QueryInterface(IWMReaderTimecode *iface, REFIID iid, void **out)
 {
     struct wm_reader *reader = impl_from_IWMReaderTimecode(iface);
-
-    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+    return IUnknown_QueryInterface(reader->outer, iid, out);
 }
 
 static ULONG WINAPI timecode_AddRef(IWMReaderTimecode *iface)
 {
     struct wm_reader *reader = impl_from_IWMReaderTimecode(iface);
-
-    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+    return IUnknown_AddRef(reader->outer);
 }
 
 static ULONG WINAPI timecode_Release(IWMReaderTimecode *iface)
 {
     struct wm_reader *reader = impl_from_IWMReaderTimecode(iface);
-
-    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+    return IUnknown_Release(reader->outer);
 }
 
 static HRESULT WINAPI timecode_GetTimecodeRangeCount(IWMReaderTimecode *iface,
@@ -2205,7 +2139,7 @@ HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_numb
     return S_OK;
 }
 
-void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
+void wm_reader_init(IUnknown *outer, struct wm_reader *reader)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
     reader->IWMLanguageList_iface.lpVtbl = &language_list_vtbl;
@@ -2213,8 +2147,7 @@ void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
     reader->IWMProfile3_iface.lpVtbl = &profile_vtbl;
     reader->IWMReaderPlaylistBurn_iface.lpVtbl = &playlist_vtbl;
     reader->IWMReaderTimecode_iface.lpVtbl = &timecode_vtbl;
-    reader->refcount = 1;
-    reader->ops = ops;
+    reader->outer = outer;
 
     InitializeCriticalSection(&reader->cs);
     reader->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": wm_reader.cs");
