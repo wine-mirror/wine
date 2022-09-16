@@ -72,6 +72,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
+#define MAX_DEV_NAME_LEN 10 /* Max 32 bit digits */
+
 struct coreaudio_stream
 {
     OSSpinLock lock;
@@ -266,17 +268,20 @@ static NTSTATUS get_endpoint_ids(void *args)
     endpoint = params->endpoints;
 
     for(i = 0; i < params->num; i++){
-        SIZE_T len = CFStringGetLength(info[i].name);
-        needed += (len + 1) * sizeof(WCHAR);
+        const SIZE_T name_len = CFStringGetLength(info[i].name) + 1;
+        const SIZE_T device_len = MAX_DEV_NAME_LEN + 1;
+        needed += name_len * sizeof(WCHAR) + ((device_len + 1) & ~1);
 
         if(needed <= params->size){
             endpoint->name = offset;
             ptr = (UniChar *)((char *)params->endpoints + offset);
-            CFStringGetCharacters(info[i].name, CFRangeMake(0, len), ptr);
-            ptr[len] = 0;
-            endpoint->id = info[i].id;
+            CFStringGetCharacters(info[i].name, CFRangeMake(0, name_len - 1), ptr);
+            ptr[name_len - 1] = 0;
+            offset += name_len * sizeof(WCHAR);
+            endpoint->device = offset;
+            sprintf((char *)params->endpoints + offset, "%u", (unsigned int)info[i].id);
+            offset += (device_len + 1) & ~1;
             endpoint++;
-            offset += (len + 1) * sizeof(WCHAR);
         }
         CFRelease(info[i].name);
         if(info[i].id == default_id) params->default_idx = i;
@@ -624,6 +629,11 @@ static ULONG_PTR zero_bits(void)
 #endif
 }
 
+static AudioDeviceID dev_id_from_device(const char *device)
+{
+    return strtoul(device, NULL, 10);
+}
+
 static NTSTATUS create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -645,7 +655,7 @@ static NTSTATUS create_stream(void *args)
 
     stream->period_ms = params->period / 10000;
     stream->period_frames = muldiv(params->period, stream->fmt->nSamplesPerSec, 10000000);
-    stream->dev_id = params->dev_id;
+    stream->dev_id = dev_id_from_device(params->device);
     stream->flow = params->flow;
     stream->share = params->share;
 
@@ -903,6 +913,7 @@ static NTSTATUS get_mix_format(void *args)
     UInt32 size;
     OSStatus sc;
     int i;
+    const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
     params->fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
 
@@ -910,10 +921,10 @@ static NTSTATUS get_mix_format(void *args)
     addr.mElement = 0;
     addr.mSelector = kAudioDevicePropertyPreferredChannelLayout;
 
-    sc = AudioObjectGetPropertyDataSize(params->dev_id, &addr, 0, NULL, &size);
+    sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
     if(sc == noErr){
         layout = malloc(size);
-        sc = AudioObjectGetPropertyData(params->dev_id, &addr, 0, NULL, &size, layout);
+        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, layout);
         if(sc == noErr){
             TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
                   (unsigned int)layout->mChannelLayoutTag, (unsigned int)layout->mChannelBitmap,
@@ -942,7 +953,7 @@ static NTSTATUS get_mix_format(void *args)
         addr.mElement = 0;
         addr.mSelector = kAudioDevicePropertyStreamConfiguration;
 
-        sc = AudioObjectGetPropertyDataSize(params->dev_id, &addr, 0, NULL, &size);
+        sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
         if(sc != noErr){
             WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
             params->result = osstatus_to_hresult(sc);
@@ -955,7 +966,7 @@ static NTSTATUS get_mix_format(void *args)
             return STATUS_SUCCESS;
         }
 
-        sc = AudioObjectGetPropertyData(params->dev_id, &addr, 0, NULL, &size, buffers);
+        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, buffers);
         if(sc != noErr){
             free(buffers);
             WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
@@ -973,7 +984,7 @@ static NTSTATUS get_mix_format(void *args)
 
     addr.mSelector = kAudioDevicePropertyNominalSampleRate;
     size = sizeof(Float64);
-    sc = AudioObjectGetPropertyData(params->dev_id, &addr, 0, NULL, &size, &rate);
+    sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, &rate);
     if(sc != noErr){
         WARN("Unable to get _NominalSampleRate property: %x\n", (int)sc);
         params->result = osstatus_to_hresult(sc);
@@ -1002,6 +1013,7 @@ static NTSTATUS is_format_supported(void *args)
     AudioStreamBasicDescription dev_desc;
     AudioConverterRef converter;
     AudioComponentInstance unit;
+    const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
     params->result = S_OK;
 
@@ -1031,7 +1043,7 @@ static NTSTATUS is_format_supported(void *args)
         params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
         return STATUS_SUCCESS;
     }
-    unit = get_audiounit(params->flow, params->dev_id);
+    unit = get_audiounit(params->flow, dev_id);
 
     converter = NULL;
     params->result = ca_setup_audiounit(params->flow, unit, params->fmt_in, &dev_desc, &converter);
@@ -1046,8 +1058,8 @@ unsupported:
     if(params->fmt_out){
         struct get_mix_format_params get_mix_params =
         {
+            .device = params->device,
             .flow = params->flow,
-            .dev_id = params->dev_id,
             .fmt = params->fmt_out,
         };
 
@@ -1695,7 +1707,7 @@ static NTSTATUS wow64_create_stream(void *args)
 {
     struct
     {
-        DWORD dev_id;
+        PTR32 device;
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         REFERENCE_TIME duration;
@@ -1706,7 +1718,7 @@ static NTSTATUS wow64_create_stream(void *args)
     } *params32 = args;
     struct create_stream_params params =
     {
-        .dev_id = params32->dev_id,
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
         .share = params32->share,
         .duration = params32->duration,
@@ -1773,8 +1785,8 @@ static NTSTATUS wow64_is_format_supported(void *args)
 {
     struct
     {
+        PTR32 device;
         EDataFlow flow;
-        DWORD dev_id;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
         PTR32 fmt_out;
@@ -1782,8 +1794,8 @@ static NTSTATUS wow64_is_format_supported(void *args)
     } *params32 = args;
     struct is_format_supported_params params =
     {
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
-        .dev_id = params32->dev_id,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
         .fmt_out = ULongToPtr(params32->fmt_out)
@@ -1797,15 +1809,15 @@ static NTSTATUS wow64_get_mix_format(void *args)
 {
     struct
     {
+        PTR32 device;
         EDataFlow flow;
-        DWORD dev_id;
         PTR32 fmt;
         HRESULT result;
     } *params32 = args;
     struct get_mix_format_params params =
     {
+        .device = ULongToPtr(params32->device),
         .flow = params32->flow,
-        .dev_id = params32->dev_id,
         .fmt = ULongToPtr(params32->fmt)
     };
     get_mix_format(&params);

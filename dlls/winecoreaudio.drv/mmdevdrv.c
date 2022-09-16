@@ -97,7 +97,6 @@ struct ACImpl {
     HANDLE event;
     float *vols;
 
-    DWORD dev_id;
     HANDLE timer;
 
     AudioSession *session;
@@ -105,6 +104,8 @@ struct ACImpl {
 
     stream_handle stream;
     struct list entry;
+
+    char device_name[1];
 };
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
@@ -261,7 +262,7 @@ exit:
         RegCloseKey(drv_key);
 }
 
-static void get_device_guid(EDataFlow flow, DWORD device_id, GUID *guid)
+static void get_device_guid(EDataFlow flow, const char *dev, GUID *guid)
 {
     HKEY key = NULL, dev_key;
     DWORD type, size = sizeof(*guid);
@@ -273,7 +274,7 @@ static void get_device_guid(EDataFlow flow, DWORD device_id, GUID *guid)
         key_name[0] = '0';
     key_name[1] = ',';
 
-    swprintf(key_name + 2, ARRAY_SIZE(key_name), L"%u", device_id);
+    MultiByteToWideChar(CP_UNIXCP, 0, dev, -1, key_name + 2, ARRAY_SIZE(key_name) - 2);
 
     if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
         if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
@@ -341,8 +342,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
     }
 
     for(i = 0; i < params.num; i++){
-        WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
-        int size = (wcslen(name) + 1) * sizeof(WCHAR);
+        const WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
+        const char *device = (char *)params.endpoints + params.endpoints[i].device;
+        const unsigned int size = (wcslen(name) + 1) * sizeof(WCHAR);
 
         ids[i] = heap_alloc(size);
         if(!ids[i]){
@@ -350,7 +352,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
             goto end;
         }
         memcpy(ids[i], name, size);
-        get_device_guid(flow, params.endpoints[i].id, guids + i);
+        get_device_guid(flow, device, guids + i);
     }
     *def_index = params.default_idx;
 
@@ -371,7 +373,7 @@ end:
     return params.result;
 }
 
-static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
+static BOOL get_device_name_by_guid(const GUID *guid, char *name, const SIZE_T name_size, EDataFlow *flow)
 {
     HKEY devices_key;
     UINT i = 0;
@@ -416,7 +418,7 @@ static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
                     return FALSE;
                 }
 
-                *id = wcstoul(key_name + 2, NULL, 10);
+                WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, name, name_size, NULL, NULL);
 
                 return TRUE;
             }
@@ -435,19 +437,21 @@ static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    DWORD dev_id;
+    char name[256];
+    SIZE_T name_len;
     EDataFlow dataflow;
     HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
-    if(!get_deviceid_by_guid(guid, &dev_id, &dataflow))
+    if(!get_device_name_by_guid(guid, name, sizeof(name), &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
     if(dataflow != eRender && dataflow != eCapture)
         return E_INVALIDARG;
 
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
+    name_len = strlen(name);
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, device_name[name_len + 1]));
     if(!This)
         return E_OUTOFMEMORY;
 
@@ -459,6 +463,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
 
     This->dataflow = dataflow;
+    memcpy(This->device_name, name, name_len + 1);
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->pUnkFTMarshal);
     if (FAILED(hr)) {
@@ -468,8 +473,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
 
     This->parent = dev;
     IMMDevice_AddRef(This->parent);
-
-    This->dev_id = dev_id;
 
     *out = (IAudioClient *)&This->IAudioClient3_iface;
     IAudioClient3_AddRef(&This->IAudioClient3_iface);
@@ -731,7 +734,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    params.dev_id = This->dev_id;
+    params.device = This->device_name;
     params.flow = This->dataflow;
     params.share = mode;
     params.duration = duration;
@@ -849,7 +852,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, pwfx, outpwfx);
     if(pwfx) dump_fmt(pwfx);
 
-    params.dev_id = This->dev_id;
+    params.device = This->device_name;
     params.flow = This->dataflow;
     params.share = mode;
     params.fmt_in = pwfx;
@@ -882,7 +885,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
-    params.dev_id = This->dev_id;
+    params.device = This->device_name;
     params.flow = This->dataflow;
     params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
     if(!params.fmt)

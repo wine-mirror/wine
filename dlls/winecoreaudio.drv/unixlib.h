@@ -24,7 +24,7 @@ typedef UINT64 stream_handle;
 struct endpoint
 {
     unsigned int name;
-    DWORD id;
+    unsigned int device;
 };
 
 struct get_endpoint_ids_params
@@ -39,7 +39,7 @@ struct get_endpoint_ids_params
 
 struct create_stream_params
 {
-    DWORD dev_id;
+    const char *device;
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
     REFERENCE_TIME duration;
@@ -109,16 +109,16 @@ struct release_capture_buffer_params
 
 struct get_mix_format_params
 {
+    const char *device;
     EDataFlow flow;
-    DWORD dev_id;
     WAVEFORMATEXTENSIBLE *fmt;
     HRESULT result;
 };
 
 struct is_format_supported_params
 {
+    const char *device;
     EDataFlow flow;
-    DWORD dev_id;
     AUDCLNT_SHAREMODE share;
     const WAVEFORMATEX *fmt_in;
     WAVEFORMATEXTENSIBLE *fmt_out;
