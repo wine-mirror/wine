@@ -1600,6 +1600,9 @@ static HRESULT WINAPI xmlwriter_WriteNode(IXmlWriter *iface, IXmlReader *reader,
 
     TRACE("%p, %p, %d.\n", iface, reader, write_default_attributes);
 
+    if (!reader)
+        return E_INVALIDARG;
+
     if (SUCCEEDED(hr = writer_write_node(iface, reader, FALSE, write_default_attributes)))
         hr = IXmlReader_Read(reader, NULL);
 
@@ -1609,6 +1612,9 @@ static HRESULT WINAPI xmlwriter_WriteNode(IXmlWriter *iface, IXmlReader *reader,
 static HRESULT WINAPI xmlwriter_WriteNodeShallow(IXmlWriter *iface, IXmlReader *reader, BOOL write_default_attributes)
 {
     TRACE("%p, %p, %d.\n", iface, reader, write_default_attributes);
+
+    if (!reader)
+        return E_INVALIDARG;
 
     return writer_write_node(iface, reader, TRUE, write_default_attributes);
 }

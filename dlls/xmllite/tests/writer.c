@@ -136,7 +136,11 @@ static void writer_set_property(IXmlWriter *writer, XmlWriterProperty property)
 /* used to test all Write* methods for consistent error state */
 static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
 {
+    IXmlReader *reader;
     HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* FIXME: add WriteAttributes */
 
@@ -179,8 +183,18 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
     hr = IXmlWriter_WriteNmToken(writer, L"a");
     ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
-    /* FIXME: add WriteNode */
-    /* FIXME: add WriteNodeShallow */
+    hr = IXmlWriter_WriteNode(writer, NULL, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
+
+    reader_set_input(reader, "<a/>");
+    hr = IXmlWriter_WriteNode(writer, reader, FALSE);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
+
+    reader_set_input(reader, "<a/>");
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXmlWriter_WriteNodeShallow(writer, reader, FALSE);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteProcessingInstruction(writer, L"a", L"a");
     ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
@@ -207,6 +221,8 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
 
     hr = IXmlWriter_WriteWhitespace(writer, L" ");
     ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
+
+    IXmlReader_Release(reader);
 }
 
 static IStream *writer_set_output(IXmlWriter *writer)
@@ -354,7 +370,11 @@ static void test_writer_create(void)
 
 static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
 {
+    IXmlReader *reader;
     HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_SetOutput(writer, output);
     ok(hr == S_OK, "Failed to set output, hr %#lx.\n", hr);
@@ -400,8 +420,12 @@ static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
     hr = IXmlWriter_WriteNmToken(writer, L"a");
     ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
 
-    /* TODO: WriteNode */
-    /* TODO: WriteNodeShallow */
+    reader_set_input(reader, "<a/>");
+    hr = IXmlWriter_WriteNode(writer, reader, FALSE);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteNodeShallow(writer, reader, FALSE);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteProcessingInstruction(writer, L"a", L"a");
     ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
@@ -431,6 +455,8 @@ static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
 
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Failed to flush, hr %#lx.\n", hr);
+
+    IXmlReader_Release(reader);
 }
 
 static void test_writeroutput(void)
@@ -2295,6 +2321,9 @@ static void test_WriteNode(void)
     hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IXmlWriter_WriteNode(writer, NULL, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -2444,6 +2473,9 @@ static void test_WriteNodeShallow(void)
 
     hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteNodeShallow(writer, NULL, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
