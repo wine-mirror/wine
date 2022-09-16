@@ -388,7 +388,7 @@ static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
         DWORD size, type;
         GUID reg_guid;
 
-        key_name_size = sizeof(key_name);
+        key_name_size = ARRAY_SIZE(key_name);
         if(RegEnumKeyExW(devices_key, i++, key_name, &key_name_size, NULL,
                 NULL, NULL, NULL) != ERROR_SUCCESS)
             break;
