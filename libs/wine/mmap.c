@@ -501,7 +501,7 @@ void wine_mmap_add_reserved_area_obsolete( void *addr, size_t size )
     struct reserved_area *area;
     struct list *ptr;
 
-    if (!((char *)addr + size)) size--;  /* avoid wrap-around */
+    if (!((intptr_t)addr + size)) size--;  /* avoid wrap-around */
 
     LIST_FOR_EACH( ptr, &reserved_areas )
     {
@@ -560,7 +560,7 @@ void wine_mmap_remove_reserved_area_obsolete( void *addr, size_t size, int unmap
     struct reserved_area *area;
     struct list *ptr;
 
-    if (!((char *)addr + size)) size--;  /* avoid wrap-around */
+    if (!((intptr_t)addr + size)) size--;  /* avoid wrap-around */
 
     ptr = list_head( &reserved_areas );
     /* find the first area covering address */
