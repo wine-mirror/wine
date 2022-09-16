@@ -47,6 +47,7 @@ enum session_command
     SESSION_CMD_PAUSE,
     SESSION_CMD_STOP,
     SESSION_CMD_SET_RATE,
+    SESSION_CMD_SHUTDOWN,
 };
 
 struct session_op
@@ -460,7 +461,10 @@ static HRESULT session_submit_command(struct media_session *session, struct sess
     {
         if (list_empty(&session->commands) && !(session->presentation.flags & SESSION_FLAG_PENDING_COMMAND))
             hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
-        list_add_tail(&session->commands, &op->entry);
+        if (op->command == SESSION_CMD_SHUTDOWN)
+            list_add_head(&session->commands, &op->entry);
+        else
+            list_add_tail(&session->commands, &op->entry);
         IUnknown_AddRef(&op->IUnknown_iface);
     }
     LeaveCriticalSection(&session->cs);
@@ -2041,7 +2045,7 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
         IMFPresentationClock_Release(session->clock);
         session->clock = NULL;
         session_clear_presentation(session);
-        session_clear_command_list(session);
+        session_submit_simple_command(session, SESSION_CMD_SHUTDOWN);
     }
     LeaveCriticalSection(&session->cs);
 
@@ -2382,6 +2386,10 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             break;
         case SESSION_CMD_SET_RATE:
             session_set_rate(session, op->set_rate.thin, op->set_rate.rate);
+            break;
+        case SESSION_CMD_SHUTDOWN:
+            session_clear_command_list(session);
+            session_command_complete(session);
             break;
         default:
             ;
