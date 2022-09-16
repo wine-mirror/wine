@@ -23,6 +23,7 @@
 #endif
 
 #include "config.h"
+#include <assert.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -879,23 +880,24 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     }
     SERVER_END_REQ;
 
+    /* the server currently will never succeed immediately */
+    assert(status == STATUS_ALERTED || status == STATUS_PENDING || NT_ERROR(status));
+
     alerted = status == STATUS_ALERTED;
     if (alerted)
     {
         status = try_recv( fd, async, &information );
         if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
             status = STATUS_PENDING;
-    }
-
-    if (status != STATUS_PENDING)
-    {
-        if (!NT_ERROR(status) || (wait_handle && !alerted))
+        if (!NT_ERROR(status) && status != STATUS_PENDING)
         {
             io->Status = status;
             io->Information = information;
         }
-        release_fileio( &async->io );
     }
+
+    if (status != STATUS_PENDING)
+        release_fileio( &async->io );
 
     if (alerted) set_async_direct_result( &wait_handle, status, information, FALSE );
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
