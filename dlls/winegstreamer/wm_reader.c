@@ -1549,37 +1549,6 @@ HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename)
     return hr;
 }
 
-HRESULT wm_reader_close(struct wm_reader *reader)
-{
-    EnterCriticalSection(&reader->cs);
-
-    if (!reader->wg_parser)
-    {
-        LeaveCriticalSection(&reader->cs);
-        return NS_E_INVALID_REQUEST;
-    }
-
-    wg_parser_disconnect(reader->wg_parser);
-
-    reader->read_thread_shutdown = true;
-    WaitForSingleObject(reader->read_thread, INFINITE);
-    CloseHandle(reader->read_thread);
-    reader->read_thread = NULL;
-
-    wg_parser_destroy(reader->wg_parser);
-    reader->wg_parser = NULL;
-
-    if (reader->source_stream)
-        IStream_Release(reader->source_stream);
-    reader->source_stream = NULL;
-    if (reader->file)
-        CloseHandle(reader->file);
-    reader->file = NULL;
-
-    LeaveCriticalSection(&reader->cs);
-    return S_OK;
-}
-
 static struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
 {
     if (stream_number && stream_number <= reader->stream_count)
@@ -2180,7 +2149,7 @@ static ULONG WINAPI unknown_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
-        wm_reader_close(reader);
+        IWMSyncReader2_Close(&reader->IWMSyncReader2_iface);
 
         reader->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&reader->cs);
@@ -2227,7 +2196,33 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
 
     TRACE("reader %p.\n", reader);
 
-    return wm_reader_close(reader);
+    EnterCriticalSection(&reader->cs);
+
+    if (!reader->wg_parser)
+    {
+        LeaveCriticalSection(&reader->cs);
+        return NS_E_INVALID_REQUEST;
+    }
+
+    wg_parser_disconnect(reader->wg_parser);
+
+    reader->read_thread_shutdown = true;
+    WaitForSingleObject(reader->read_thread, INFINITE);
+    CloseHandle(reader->read_thread);
+    reader->read_thread = NULL;
+
+    wg_parser_destroy(reader->wg_parser);
+    reader->wg_parser = NULL;
+
+    if (reader->source_stream)
+        IStream_Release(reader->source_stream);
+    reader->source_stream = NULL;
+    if (reader->file)
+        CloseHandle(reader->file);
+    reader->file = NULL;
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_GetMaxOutputSampleSize(IWMSyncReader2 *iface, DWORD output, DWORD *max)

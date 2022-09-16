@@ -443,7 +443,7 @@ static ULONG WINAPI WMReader_Release(IWMReader *iface)
         reader->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&reader->cs);
 
-        wm_reader_close(reader->wm_reader);
+        IWMSyncReader2_Close(reader->reader);
 
         IUnknown_Release(reader->reader_inner);
         free(reader);
@@ -465,7 +465,7 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
 
     if (SUCCEEDED(hr = wm_reader_open_file(reader->wm_reader, url))
             && FAILED(hr = async_reader_open(reader, callback, context)))
-        wm_reader_close(reader->wm_reader);
+        IWMSyncReader2_Close(reader->reader);
 
     LeaveCriticalSection(&reader->cs);
     return hr;
@@ -483,7 +483,7 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
     if (SUCCEEDED(hr = async_reader_queue_op(reader, ASYNC_OP_CLOSE, NULL)))
     {
         async_reader_close(reader);
-        hr = wm_reader_close(reader->wm_reader);
+        hr = IWMSyncReader2_Close(reader->reader);
     }
 
     LeaveCriticalSection(&reader->cs);
@@ -935,7 +935,7 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
 
     if (SUCCEEDED(hr = wm_reader_open_stream(reader->wm_reader, stream))
             && FAILED(hr = async_reader_open(reader, callback, context)))
-        wm_reader_close(reader->wm_reader);
+        IWMSyncReader2_Close(reader->reader);
 
     LeaveCriticalSection(&reader->cs);
     return hr;

@@ -189,7 +189,6 @@ struct wm_reader
 HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
 struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *inner);
 
-HRESULT wm_reader_close(struct wm_reader *reader);
 HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_number, DWORD *size);
 HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
         DWORD index, IWMOutputMediaProps **props);
