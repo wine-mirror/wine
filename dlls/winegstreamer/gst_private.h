@@ -143,54 +143,6 @@ HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
 HRESULT h264_decoder_create(REFIID riid, void **ret);
 HRESULT video_processor_create(REFIID riid, void **ret);
 
-struct wm_stream
-{
-    struct wm_reader *reader;
-    struct wg_parser_stream *wg_stream;
-    struct wg_format format;
-    WMT_STREAM_SELECTION selection;
-    WORD index;
-    bool eos;
-    /* Note that we only pretend to read compressed samples, and instead output
-     * uncompressed samples regardless of whether we are configured to read
-     * compressed samples. Rather, the behaviour of the reader objects differs
-     * in nontrivial ways depending on this field. */
-    bool read_compressed;
-
-    IWMReaderAllocatorEx *output_allocator;
-    IWMReaderAllocatorEx *stream_allocator;
-};
-
-struct wm_reader
-{
-    IUnknown IUnknown_inner;
-    IWMSyncReader2 IWMSyncReader2_iface;
-    IWMHeaderInfo3 IWMHeaderInfo3_iface;
-    IWMLanguageList IWMLanguageList_iface;
-    IWMPacketSize2 IWMPacketSize2_iface;
-    IWMProfile3 IWMProfile3_iface;
-    IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
-    IWMReaderTimecode IWMReaderTimecode_iface;
-    IUnknown *outer;
-    LONG refcount;
-
-    CRITICAL_SECTION cs;
-    QWORD start_time;
-
-    IStream *source_stream;
-    HANDLE file;
-    HANDLE read_thread;
-    bool read_thread_shutdown;
-    struct wg_parser *wg_parser;
-
-    struct wm_stream *streams;
-    WORD stream_count;
-};
-
 HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
-struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *inner);
-
-HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackAdvanced *callback_advanced, WORD stream_number,
-        INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number);
 
 #endif /* __GST_PRIVATE_INCLUDED__ */

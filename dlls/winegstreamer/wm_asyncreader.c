@@ -48,7 +48,7 @@ struct sample
 {
     INSSBuffer *buffer;
     QWORD pts, duration;
-    DWORD flags;
+    DWORD flags, output;
     WORD stream;
 };
 
@@ -65,7 +65,6 @@ struct async_reader
     LONG refcount;
 
     IWMSyncReader2 *reader;
-    struct wm_reader *wm_reader;
 
     CRITICAL_SECTION cs;
 
@@ -261,9 +260,9 @@ static void async_reader_deliver_sample(struct async_reader *reader, struct samp
     BOOL read_compressed;
     HRESULT hr;
 
-    TRACE("reader %p, stream %u, pts %s, duration %s, flags %#lx, buffer %p.\n",
-            reader, sample->stream, debugstr_time(sample->pts), debugstr_time(sample->duration),
-            sample->flags, sample->buffer);
+    TRACE("reader %p, output %lu, stream %u, pts %s, duration %s, flags %#lx, buffer %p.\n",
+            reader, sample->output, sample->stream, debugstr_time(sample->pts),
+            debugstr_time(sample->duration), sample->flags, sample->buffer);
 
     if (FAILED(hr = IWMSyncReader2_GetReadStreamSamples(reader->reader, sample->stream,
             &read_compressed)))
@@ -274,7 +273,7 @@ static void async_reader_deliver_sample(struct async_reader *reader, struct samp
         hr = IWMReaderCallbackAdvanced_OnStreamSample(callback_advanced, sample->stream,
                 sample->pts, sample->duration, sample->flags, sample->buffer, reader->context);
     else
-        hr = IWMReaderCallback_OnSample(callback, sample->stream - 1, sample->pts, sample->duration,
+        hr = IWMReaderCallback_OnSample(callback, sample->output, sample->pts, sample->duration,
                 sample->flags, sample->buffer, reader->context);
     EnterCriticalSection(&reader->callback_cs);
 
@@ -295,8 +294,8 @@ static void callback_thread_run(struct async_reader *reader)
         struct sample sample;
 
         LeaveCriticalSection(&reader->callback_cs);
-        hr = wm_reader_get_stream_sample(reader->wm_reader, callback_advanced, 0, &sample.buffer,
-                &sample.pts, &sample.duration, &sample.flags, &sample.stream);
+        hr = IWMSyncReader2_GetNextSample(reader->reader, 0, &sample.buffer, &sample.pts,
+                &sample.duration, &sample.flags, &sample.output, &sample.stream);
         EnterCriticalSection(&reader->callback_cs);
         if (hr != S_OK)
             break;
@@ -1909,7 +1908,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
             (void **)&object->reader)))
         goto failed;
     IWMReader_Release(&object->IWMReader_iface);
-    object->wm_reader = wm_reader_from_sync_reader_inner(object->reader_inner);
 
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_reader.cs");
