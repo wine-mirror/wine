@@ -79,7 +79,7 @@ static inline BOOL jsstr_is_rope(jsstr_t *str)
 
 typedef struct {
     jsstr_t str;
-    WCHAR buf[1];
+    WCHAR buf[];
 } jsstr_inline_t;
 
 typedef struct {
