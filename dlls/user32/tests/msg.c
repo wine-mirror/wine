@@ -4143,7 +4143,7 @@ static void test_mdi_messages(void)
 
     flush_sequence();
 
-    trace("creating MDI frame window\n");
+    if (winetest_debug > 1) trace("creating MDI frame window\n");
     mdi_frame = CreateWindowExA(0, "MDI_frame_class", "MDI frame window",
                                 WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                 WS_MAXIMIZEBOX | WS_VISIBLE,
@@ -4156,7 +4156,7 @@ static void test_mdi_messages(void)
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == mdi_frame, "wrong focus window %p\n", GetFocus());
 
-    trace("creating MDI client window\n");
+    if (winetest_debug > 1) trace("creating MDI client window\n");
     GetClientRect(mdi_frame, &rc);
     client_cs.hWindowMenu = 0;
     client_cs.idFirstChild = MDI_FIRST_CHILD_ID;
@@ -4179,7 +4179,7 @@ static void test_mdi_messages(void)
     SetFocus(0);
     flush_sequence();
 
-    trace("creating invisible MDI child window\n");
+    if (winetest_debug > 1) trace("creating invisible MDI child window\n");
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4220,7 +4220,7 @@ static void test_mdi_messages(void)
     DestroyWindow(mdi_child);
     flush_sequence();
 
-    trace("creating visible MDI child window\n");
+    if (winetest_debug > 1) trace("creating visible MDI child window\n");
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4256,7 +4256,7 @@ static void test_mdi_messages(void)
 
     flush_sequence();
 
-    trace("creating invisible MDI child window\n");
+    if (winetest_debug > 1) trace("creating invisible MDI child window\n");
     mdi_child2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4375,7 +4375,7 @@ static void test_mdi_messages(void)
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
-    trace("Testing WM_CHILDACTIVATE\n");
+    if (winetest_debug > 1) trace("Testing WM_CHILDACTIVATE\n");
 
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_DISABLED,
@@ -4420,7 +4420,7 @@ static void test_mdi_messages(void)
     flush_sequence();
 
     /* test for maximized MDI children */
-    trace("creating maximized visible MDI child window 1\n");
+    if (winetest_debug > 1) trace("creating maximized visible MDI child window 1\n");
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4439,7 +4439,7 @@ static void test_mdi_messages(void)
     ok(zoomed, "wrong zoomed state %d\n", zoomed);
     flush_sequence();
 
-    trace("creating maximized visible MDI child window 2\n");
+    if (winetest_debug > 1) trace("creating maximized visible MDI child window 2\n");
     mdi_child2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4457,7 +4457,7 @@ static void test_mdi_messages(void)
     ok(zoomed, "wrong zoomed state %d\n", zoomed);
     flush_sequence();
 
-    trace("destroying maximized visible MDI child window 2\n");
+    if (winetest_debug > 1) trace("destroying maximized visible MDI child window 2\n");
     DestroyWindow(mdi_child2);
     ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window", TRUE);
 
@@ -4482,7 +4482,7 @@ static void test_mdi_messages(void)
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == mdi_child, "wrong focus window %p\n", GetFocus());
 
-    trace("re-creating maximized visible MDI child window 2\n");
+    if (winetest_debug > 1) trace("re-creating maximized visible MDI child window 2\n");
     mdi_child2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4528,7 +4528,7 @@ static void test_mdi_messages(void)
        "wrong active MDI child %p\n", active_child);
     flush_sequence();
 
-    trace("creating maximized invisible MDI child window\n");
+    if (winetest_debug > 1) trace("creating maximized invisible MDI child window\n");
     mdi_child2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_MAXIMIZE | WS_CAPTION | WS_THICKFRAME,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4548,7 +4548,7 @@ static void test_mdi_messages(void)
        "wrong active MDI child %p\n", active_child);
     flush_sequence();
 
-    trace("call ShowWindow(mdi_child, SW_MAXIMIZE)\n");
+    if (winetest_debug > 1) trace("call ShowWindow(mdi_child, SW_MAXIMIZE)\n");
     ShowWindow(mdi_child2, SW_MAXIMIZE);
     ok_sequence(WmMaximizeMDIchildInvisibleSeq2, "ShowWindow(SW_MAXIMIZE):invisible maximized MDI child", FALSE);
     ok(IsZoomed(mdi_child2), "MDI child should be maximized\n");
@@ -4566,7 +4566,7 @@ static void test_mdi_messages(void)
     /* end of test for maximized MDI children */
     SetFocus(0);
     flush_sequence();
-    trace("creating maximized visible MDI child window 1(Switch test)\n");
+    if (winetest_debug > 1) trace("creating maximized visible MDI child window 1(Switch test)\n");
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4585,7 +4585,7 @@ static void test_mdi_messages(void)
     ok(zoomed, "wrong zoomed state %d(Switch test)\n", zoomed);
     flush_sequence();
 
-    trace("creating maximized visible MDI child window 2(Switch test)\n");
+    if (winetest_debug > 1) trace("creating maximized visible MDI child window 2(Switch test)\n");
     mdi_child2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -4604,10 +4604,10 @@ static void test_mdi_messages(void)
     ok(zoomed, "wrong zoomed state %d(Switch test)\n", zoomed);
     flush_sequence();
 
-    trace("Switch child window.\n");
+    if (winetest_debug > 1) trace("Switch child window.\n");
     SendMessageA(mdi_client, WM_MDIACTIVATE, (WPARAM)mdi_child, 0);
     ok_sequence(WmSwitchChild, "Child did not switch correctly", TRUE);
-    trace("end of test for switch maximized MDI children\n");
+    if (winetest_debug > 1) trace("end of test for switch maximized MDI children\n");
     flush_sequence();
 
     /* Prepare for switching test of not maximized MDI children  */
@@ -4620,7 +4620,7 @@ static void test_mdi_messages(void)
 
     SendMessageA(mdi_client, WM_MDIACTIVATE, (WPARAM)mdi_child2, 0);
     ok_sequence(WmSwitchNotMaximizedChild, "Not maximized child did not switch correctly", FALSE);
-    trace("end of test for switch not maximized MDI children\n");
+    if (winetest_debug > 1) trace("end of test for switch not maximized MDI children\n");
     flush_sequence();
 
     SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
@@ -5000,12 +5000,12 @@ static void test_showwindow(void)
     flush_sequence();
 
     /* ShowWindow( SW_SHOWNA) for invisible top level window */
-    trace("calling ShowWindow( SW_SHOWNA) for invisible top level window\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWNA) for invisible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
     ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window", FALSE);
 
     /* ShowWindow( SW_SHOWNA) for now visible top level window */
-    trace("calling ShowWindow( SW_SHOWNA) for now visible top level window\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWNA) for now visible top level window\n");
     ok( ShowWindow(hwnd, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
     ok_sequence(WmSHOWNATopVisible, "ShowWindow(SW_SHOWNA) on visible top level window", FALSE);
     /* back to invisible */
@@ -5013,26 +5013,26 @@ static void test_showwindow(void)
     ShowWindow(hwnd, SW_HIDE);
     flush_sequence();
     /* ShowWindow(SW_SHOWNA) with child and parent invisible */ 
-    trace("calling ShowWindow( SW_SHOWNA) for invisible child with invisible parent\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWNA) for invisible child with invisible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
     ok_sequence(WmSHOWNAChildInvisParInvis, "ShowWindow(SW_SHOWNA) invisible child and parent", FALSE);
     /* ShowWindow(SW_SHOWNA) with child visible and parent invisible */ 
     ok( ShowWindow(hchild, SW_SHOW) != FALSE, "ShowWindow: window was invisible\n" );
     flush_sequence();
-    trace("calling ShowWindow( SW_SHOWNA) for the visible child and invisible parent\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWNA) for the visible child and invisible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
     ok_sequence(WmSHOWNAChildVisParInvis, "ShowWindow(SW_SHOWNA) visible child and invisible parent", FALSE);
     /* ShowWindow(SW_SHOWNA) with child visible and parent visible */
     ShowWindow( hwnd, SW_SHOW);
     flush_sequence();
-    trace("calling ShowWindow( SW_SHOWNA) for the visible child and parent\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWNA) for the visible child and parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
     ok_sequence(WmSHOWNAChildVisParVis, "ShowWindow(SW_SHOWNA) for the visible child and parent", FALSE);
 
     /* ShowWindow(SW_SHOWNA) with child invisible and parent visible */
     ShowWindow( hchild, SW_HIDE);
     flush_sequence();
-    trace("calling ShowWindow( SW_SHOWNA) for the invisible child and visible parent\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWNA) for the invisible child and visible parent\n");
     ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
     ok_sequence(WmSHOWNAChildInvisParVis, "ShowWindow(SW_SHOWNA) for the invisible child and visible parent", FALSE);
 
@@ -5050,7 +5050,7 @@ static void test_showwindow(void)
      * 2. Move and resize it.
      * 3. Show it maximized.
      */
-    trace("calling CreateWindowExA( WS_MAXIMIZE ) for invisible maximized popup window\n");
+    if (winetest_debug > 1) trace("calling CreateWindowExA( WS_MAXIMIZE ) for invisible maximized popup window\n");
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create popup window\n");
@@ -5066,7 +5066,7 @@ static void test_showwindow(void)
     ok(IsZoomed(hwnd), "window should be maximized\n");
     flush_sequence();
 
-    trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible maximized popup window\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible maximized popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmShowMaxPopupResizedSeq, "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized and resized popup", FALSE);
@@ -5082,14 +5082,14 @@ static void test_showwindow(void)
      * 1. Create invisible maximized popup window.
      * 2. Show it maximized.
      */
-    trace("calling CreateWindowExA( WS_MAXIMIZE ) for invisible maximized popup window\n");
+    if (winetest_debug > 1) trace("calling CreateWindowExA( WS_MAXIMIZE ) for invisible maximized popup window\n");
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmCreateInvisibleMaxPopupSeq, "CreateWindow(WS_MAXIMIZED):popup", FALSE);
 
-    trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible maximized popup window\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for invisible maximized popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmShowMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):invisible maximized popup", FALSE);
@@ -5099,7 +5099,7 @@ static void test_showwindow(void)
     /* Test 3:
      * 1. Create visible maximized popup window.
      */
-    trace("calling CreateWindowExA( WS_MAXIMIZE ) for maximized popup window\n");
+    if (winetest_debug > 1) trace("calling CreateWindowExA( WS_MAXIMIZE ) for maximized popup window\n");
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_MAXIMIZE | WS_VISIBLE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create popup window\n");
@@ -5112,14 +5112,14 @@ static void test_showwindow(void)
      * 1. Create visible popup window.
      * 2. Maximize it.
      */
-    trace("calling CreateWindowExA( WS_VISIBLE ) for popup window\n");
+    if (winetest_debug > 1) trace("calling CreateWindowExA( WS_VISIBLE ) for popup window\n");
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test popup", WS_POPUP | WS_VISIBLE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create popup window\n");
     ok(!IsZoomed(hwnd), "window should NOT be maximized\n");
     ok_sequence(WmCreatePopupSeq, "CreateWindow(WS_VISIBLE):popup", FALSE);
 
-    trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for visible popup window\n");
+    if (winetest_debug > 1) trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for visible popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
     ok_sequence(WmShowVisMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", FALSE);
@@ -5605,7 +5605,7 @@ static void test_messages(void)
     flush_events();
     test_WM_SETREDRAW(hwnd);
 
-    trace("testing scroll APIs on a visible top level window %p\n", hwnd);
+    if (winetest_debug > 1) trace("testing scroll APIs on a visible top level window %p\n", hwnd);
     test_scroll_messages(hwnd);
 
     /* test resizing and moving */
@@ -5761,7 +5761,7 @@ static void test_messages(void)
     ok (hchild != 0, "Failed to create child window\n");
     ok_sequence(WmCreateVisibleChildSeq, "CreateWindow:visible child", FALSE);
 
-    trace("testing scroll APIs on a visible child window %p\n", hchild);
+    if (winetest_debug > 1) trace("testing scroll APIs on a visible child window %p\n", hchild);
     test_scroll_messages(hchild);
 
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
@@ -5883,7 +5883,7 @@ static void test_messages(void)
     ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog", TRUE);
 
     if(0) {
-    trace("testing scroll APIs on a visible dialog %p\n", hwnd);
+    if (winetest_debug > 1) trace("testing scroll APIs on a visible dialog %p\n", hwnd);
     test_scroll_messages(hwnd);
     }
 
@@ -5908,7 +5908,7 @@ static void test_messages(void)
                            0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL);
     ok(hwnd != 0, "Failed to create custom dialog window\n");
     flush_sequence();
-    trace("call ShowWindow(%p, SW_SHOW)\n", hwnd);
+    if (winetest_debug > 1) trace("call ShowWindow(%p, SW_SHOW)\n", hwnd);
     ShowWindow(hwnd, SW_SHOW);
     ok_sequence(WmShowCustomDialogSeq, "ShowCustomDialog", TRUE);
 
@@ -6027,7 +6027,7 @@ static void test_messages(void)
     flush_sequence();
 
     /* Message sequences for WM_SETICON */
-    trace("testing WM_SETICON\n");
+    if (winetest_debug > 1) trace("testing WM_SETICON\n");
     hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                            CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
                            NULL, NULL, 0);
@@ -6857,7 +6857,7 @@ static void test_button_messages(void)
         char desc[64];
         HDC hdc;
 
-        trace("button style %08lx\n", button[i].style);
+        if (winetest_debug > 1) trace("button style %08lx\n", button[i].style);
 
         hwnd = CreateWindowExA(0, "my_button_class", "test", button[i].style | WS_CHILD | BS_NOTIFY,
                                0, 0, 50, 14, parent, (HMENU)ID_BUTTON, 0, NULL);
@@ -7707,7 +7707,7 @@ static void test_static_messages(void)
 	SetFocus(0);
 	flush_sequence();
 
-	trace("static style %08lx\n", static_ctrl[i].style);
+	if (winetest_debug > 1) trace("static style %08lx\n", static_ctrl[i].style);
 	SendMessageA(hwnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 	ok_sequence(static_ctrl[i].setfont, "WM_SETFONT on a static", FALSE);
 
@@ -8137,7 +8137,7 @@ static void test_wmime_keydown_message(void)
     HWND hwnd;
     MSG msg;
 
-    trace("Message sequences by WM_IME_KEYDOWN\n");
+    if (winetest_debug > 1) trace("Message sequences by WM_IME_KEYDOWN\n");
 
     register_wmime_keydown_class();
     hwnd = CreateWindowExA(0, "wmime_keydown_class", NULL, WS_OVERLAPPEDWINDOW,
@@ -8906,7 +8906,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing SWP_FRAMECHANGED on parent with WS_CLIPCHILDREN\n");
+    if (winetest_debug > 1) trace("testing SWP_FRAMECHANGED on parent with WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
@@ -8916,7 +8916,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent with WS_CLIPCHILDREN\n");
+    if (winetest_debug > 1) trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent with WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_DEFERERASE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
@@ -8933,7 +8933,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing SWP_FRAMECHANGED on parent without WS_CLIPCHILDREN\n");
+    if (winetest_debug > 1) trace("testing SWP_FRAMECHANGED on parent without WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
@@ -8943,7 +8943,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent without WS_CLIPCHILDREN\n");
+    if (winetest_debug > 1) trace("testing SWP_FRAMECHANGED|SWP_DEFERERASE on parent without WS_CLIPCHILDREN\n");
     RedrawWindow( hchild, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     SetWindowPos( hparent, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_DEFERERASE |
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
@@ -8956,7 +8956,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing SetWindowPos(-10000, -10000) on child\n");
+    if (winetest_debug > 1) trace("testing SetWindowPos(-10000, -10000) on child\n");
     SetWindowPos( hchild, 0, -10000, -10000, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER );
     check_update_rgn( hchild, 0 );
     flush_events();
@@ -8965,7 +8965,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing ShowWindow(SW_MINIMIZE) on child\n");
+    if (winetest_debug > 1) trace("testing ShowWindow(SW_MINIMIZE) on child\n");
     ShowWindow( hchild, SW_MINIMIZE );
     check_update_rgn( hchild, 0 );
     flush_events();
@@ -8974,7 +8974,7 @@ static void test_paint_messages(void)
     UpdateWindow( hparent );
     flush_events();
     flush_sequence();
-    trace("testing SetWindowPos(-10000, -10000) on parent\n");
+    if (winetest_debug > 1) trace("testing SetWindowPos(-10000, -10000) on parent\n");
     SetWindowPos( hparent, 0, -10000, -10000, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER );
     check_update_rgn( hparent, 0 );
     flush_events();
@@ -9709,7 +9709,7 @@ static void test_accelerators(void)
         goto done;
     }
 
-    trace("testing VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing VK_N press/release\n");
     flush_sequence();
     keybd_event('N', 0, 0, 0);
     keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
@@ -9721,7 +9721,7 @@ static void test_accelerators(void)
     }
     ok_sequence(WmVkN, "VK_N press/release", FALSE);
 
-    trace("testing Shift+VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing Shift+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_SHIFT, 0, 0, 0);
     keybd_event('N', 0, 0, 0);
@@ -9730,7 +9730,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmShiftVkN, "Shift+VK_N press/release", FALSE);
 
-    trace("testing Ctrl+VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing Ctrl+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event('N', 0, 0, 0);
@@ -9739,7 +9739,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlVkN, "Ctrl+VK_N press/release", FALSE);
 
-    trace("testing Alt+VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing Alt+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event('N', 0, 0, 0);
@@ -9748,7 +9748,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmAltVkN, "Alt+VK_N press/release", FALSE);
 
-    trace("testing Ctrl+Alt+VK_N press/release 1\n");
+    if (winetest_debug > 1) trace("testing Ctrl+Alt+VK_N press/release 1\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
@@ -9765,14 +9765,14 @@ static void test_accelerators(void)
     hAccel = LoadAcceleratorsA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(2));
     assert(hAccel != 0);
 
-    trace("testing VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing VK_N press/release\n");
     flush_sequence();
     keybd_event('N', 0, 0, 0);
     keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmVkN, "VK_N press/release", FALSE);
 
-    trace("testing Shift+VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing Shift+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_SHIFT, 0, 0, 0);
     keybd_event('N', 0, 0, 0);
@@ -9781,7 +9781,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmShiftVkN, "Shift+VK_N press/release", FALSE);
 
-    trace("testing Ctrl+VK_N press/release 2\n");
+    if (winetest_debug > 1) trace("testing Ctrl+VK_N press/release 2\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event('N', 0, 0, 0);
@@ -9790,7 +9790,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlVkN_2, "Ctrl+VK_N press/release 2", FALSE);
 
-    trace("testing Alt+VK_N press/release 2\n");
+    if (winetest_debug > 1) trace("testing Alt+VK_N press/release 2\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event('N', 0, 0, 0);
@@ -9799,7 +9799,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmAltVkN_2, "Alt+VK_N press/release 2", FALSE);
 
-    trace("testing Ctrl+Alt+VK_N press/release 2\n");
+    if (winetest_debug > 1) trace("testing Ctrl+Alt+VK_N press/release 2\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
@@ -9810,7 +9810,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 2", FALSE);
 
-    trace("testing Ctrl+Shift+VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing Ctrl+Shift+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_SHIFT, 0, 0, 0);
@@ -9821,7 +9821,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlShiftVkN, "Ctrl+Shift+VK_N press/release", FALSE);
 
-    trace("testing Ctrl+Alt+Shift+VK_N press/release\n");
+    if (winetest_debug > 1) trace("testing Ctrl+Alt+Shift+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
@@ -9838,7 +9838,7 @@ static void test_accelerators(void)
     ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
     hAccel = 0;
 
-    trace("testing Alt press/release\n");
+    if (winetest_debug > 1) trace("testing Alt press/release\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
@@ -9848,19 +9848,19 @@ static void test_accelerators(void)
     /* this test doesn't pass in Wine for managed windows */
     ok_sequence(WmAltPressRelease, "Alt press/release", TRUE);
 
-    trace("testing VK_F1 press/release\n");
+    if (winetest_debug > 1) trace("testing VK_F1 press/release\n");
     keybd_event(VK_F1, 0, 0, 0);
     keybd_event(VK_F1, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmF1Seq, "F1 press/release", FALSE);
 
-    trace("testing VK_APPS press/release\n");
+    if (winetest_debug > 1) trace("testing VK_APPS press/release\n");
     keybd_event(VK_APPS, 0, 0, 0);
     keybd_event(VK_APPS, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmVkAppsSeq, "VK_APPS press/release", FALSE);
 
-    trace("testing VK_F10 press/release\n");
+    if (winetest_debug > 1) trace("testing VK_F10 press/release\n");
     keybd_event(VK_F10, 0, 0, 0);
     keybd_event(VK_F10, 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_F10, 0, 0, 0);
@@ -9868,7 +9868,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmVkF10Seq, "VK_F10 press/release", TRUE);
 
-    trace("testing SHIFT+F10 press/release\n");
+    if (winetest_debug > 1) trace("testing SHIFT+F10 press/release\n");
     keybd_event(VK_SHIFT, 0, 0, 0);
     keybd_event(VK_F10, 0, 0, 0);
     keybd_event(VK_F10, 0, KEYEVENTF_KEYUP, 0);
@@ -9878,7 +9878,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmShiftF10Seq, "SHIFT+F10 press/release", TRUE);
 
-    trace("testing Shift+MouseButton press/release\n");
+    if (winetest_debug > 1) trace("testing Shift+MouseButton press/release\n");
     /* first, move mouse pointer inside of the window client area */
     GetClientRect(hwnd, &rc);
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
@@ -9954,7 +9954,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	    if (capture)
 	    {
 		ok(capture == hwnd, "capture should NOT be released at this point (capture %p)\n", capture);
-		trace("current capture %p, releasing...\n", capture);
+		if (winetest_debug > 1) trace("current capture %p, releasing...\n", capture);
 		ReleaseCapture();
 	    }
 	}
@@ -10025,14 +10025,16 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	MINMAXINFO *minmax = (MINMAXINFO *)lParam;
 
 	GetClientRect(parent, &rc);
-	trace("parent %p client size = (%ld x %ld)\n", parent, rc.right, rc.bottom);
-        trace("Reserved=%ld,%ld MaxSize=%ld,%ld MaxPos=%ld,%ld MinTrack=%ld,%ld MaxTrack=%ld,%ld\n",
-              minmax->ptReserved.x, minmax->ptReserved.y,
-              minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-              minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-              minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-              minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
-
+	if (winetest_debug > 1)
+        {
+            trace("parent %p client size = (%ld x %ld)\n", parent, rc.right, rc.bottom);
+            trace("Reserved=%ld,%ld MaxSize=%ld,%ld MaxPos=%ld,%ld MinTrack=%ld,%ld MaxTrack=%ld,%ld\n",
+                  minmax->ptReserved.x, minmax->ptReserved.y,
+                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+        }
 	ok(minmax->ptMaxSize.x == rc.right, "default width of maximized child %ld != %ld\n",
 	   minmax->ptMaxSize.x, rc.right);
 	ok(minmax->ptMaxSize.y == rc.bottom, "default height of maximized child %ld != %ld\n",
@@ -11077,7 +11079,7 @@ static DWORD WINAPI win_event_global_thread_proc(void *param)
 
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
     assert(hwnd);
-    trace("created thread window %p\n", hwnd);
+    if (winetest_debug > 1) trace("created thread window %p\n", hwnd);
 
     *(HWND *)param = hwnd;
 
@@ -11109,7 +11111,7 @@ static DWORD WINAPI cbt_global_hook_thread_proc(void *param)
 
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
     assert(hwnd);
-    trace("created thread window %p\n", hwnd);
+    if (winetest_debug > 1) trace("created thread window %p\n", hwnd);
 
     *(HWND *)param = hwnd;
 
@@ -11140,7 +11142,7 @@ static DWORD WINAPI mouse_ll_global_thread_proc(void *param)
 
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
     assert(hwnd);
-    trace("created thread window %p\n", hwnd);
+    if (winetest_debug > 1) trace("created thread window %p\n", hwnd);
 
     *(HWND *)param = hwnd;
 
@@ -11509,7 +11511,7 @@ static void test_recursive_hook(void)
     hook_depth = 0;
     GetMessageW(&msg, hook_hwnd, 0, 0);
     ok(15 <= max_hook_depth && max_hook_depth < 45, "max_hook_depth = %d\n", max_hook_depth);
-    trace("max_hook_depth = %d\n", max_hook_depth);
+    if (winetest_debug > 1) trace("max_hook_depth = %d\n", max_hook_depth);
 
     b = UnhookWindowsHookEx(recursive_hook);
     ok(b, "UnhokWindowsHookEx failed\n");
@@ -11554,11 +11556,11 @@ static void test_scrollwindowex(void)
     flush_sequence();
 
     /* scroll without the child window */
-    trace("start scroll\n");
+    if (winetest_debug > 1) trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_ERASE|SW_INVALIDATE);
     ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
-    trace("end scroll\n");
+    if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
     flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", FALSE);
@@ -11566,10 +11568,10 @@ static void test_scrollwindowex(void)
     flush_sequence();
 
     /* Now without the SW_ERASE flag */
-    trace("start scroll\n");
+    if (winetest_debug > 1) trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL, SW_INVALIDATE);
     ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
-    trace("end scroll\n");
+    if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
     flush_events();
     ok_sequence(ScrollWindowPaint2, "ScrollWindowEx", FALSE);
@@ -11577,13 +11579,13 @@ static void test_scrollwindowex(void)
     flush_sequence();
 
     /* now scroll the child window as well */
-    trace("start scroll\n");
+    if (winetest_debug > 1) trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
     /* wine sends WM_POSCHANGING, WM_POSCHANGED messages */
     /* windows sometimes a WM_MOVE */
     ok_sequence(WmEmptySeq, "ScrollWindowEx", TRUE);
-    trace("end scroll\n");
+    if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
     flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", FALSE);
@@ -11591,9 +11593,9 @@ static void test_scrollwindowex(void)
     flush_sequence();
 
     /* now scroll with ScrollWindow() */
-    trace("start scroll with ScrollWindow\n");
+    if (winetest_debug > 1) trace("start scroll with ScrollWindow\n");
     ScrollWindow( hwnd, 5, 5, NULL, NULL);
-    trace("end scroll\n");
+    if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
     flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindow", FALSE);
@@ -11706,7 +11708,7 @@ static void test_DestroyWindow(void)
 
     flush_sequence();
 
-    trace("parent %p, child1 %p, child2 %p, child3 %p, child4 %p\n",
+    if (winetest_debug > 1) trace("parent %p, child1 %p, child2 %p, child3 %p, child4 %p\n",
 	   parent, child1, child2, child3, child4);
 
     SetCapture(child4);
@@ -11775,7 +11777,7 @@ static void test_DispatchMessage(void)
     }
     ok( msg.message == WM_PAINT && count > 10, "WM_PAINT messages stopped\n" );
 
-    trace("now without DispatchMessage\n");
+    if (winetest_debug > 1) trace("now without DispatchMessage\n");
     flush_sequence();
     RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE|RDW_ERASE|RDW_FRAME );
     count = 0;
@@ -12454,7 +12456,7 @@ static DWORD CALLBACK send_msg_thread_2(void *param)
     DWORD ret;
     struct peekmsg_info *info = param;
 
-    trace("thread: looping\n");
+    if (winetest_debug > 1) trace("thread: looping\n");
     SetEvent(info->hevent[EV_ACK]);
 
     while (1)
@@ -12464,18 +12466,18 @@ static DWORD CALLBACK send_msg_thread_2(void *param)
         switch (ret)
         {
         case WAIT_OBJECT_0 + EV_STOP:
-            trace("thread: exiting\n");
+            if (winetest_debug > 1) trace("thread: exiting\n");
             return 0;
 
         case WAIT_OBJECT_0 + EV_SENDMSG:
-            trace("thread: sending message\n");
+            if (winetest_debug > 1) trace("thread: sending message\n");
             ret = SendNotifyMessageA(info->hwnd, WM_USER, 0, 0);
             ok(ret, "SendNotifyMessageA failed error %lu\n", GetLastError());
             SetEvent(info->hevent[EV_ACK]);
             break;
 
         default:
-            trace("unexpected return: %04lx\n", ret);
+            if (winetest_debug > 1) trace("unexpected return: %04lx\n", ret);
             assert(0);
             break;
         }
@@ -12525,7 +12527,7 @@ static void test_PeekMessage(void)
     }
     ok(qstatus == 0, "wrong qstatus %08lx\n", qstatus);
 
-    trace("signalling to send message\n");
+    if (winetest_debug > 1) trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
@@ -12577,7 +12579,7 @@ static void test_PeekMessage(void)
        qstatus == MAKELONG(QS_PAINT, QS_PAINT|QS_POSTMESSAGE|QS_KEY|QS_SENDMESSAGE),
        "wrong qstatus %08lx\n", qstatus);
 
-    trace("signalling to send message\n");
+    if (winetest_debug > 1) trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
@@ -12606,7 +12608,7 @@ static void test_PeekMessage(void)
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08lx\n", qstatus);
 
-    trace("signalling to send message\n");
+    if (winetest_debug > 1) trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
@@ -12669,7 +12671,7 @@ static void test_PeekMessage(void)
     ok(qstatus == MAKELONG(0, QS_KEY),
        "wrong qstatus %08lx\n", qstatus);
 
-    trace("signalling to send message\n");
+    if (winetest_debug > 1) trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
@@ -12711,7 +12713,7 @@ static void test_PeekMessage(void)
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08lx\n", qstatus);
 
-    trace("signalling to send message\n");
+    if (winetest_debug > 1) trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
@@ -12909,7 +12911,7 @@ todo_wine {
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY), "wrong qstatus %08lx\n", qstatus);
 
-    trace("signalling to send message\n");
+    if (winetest_debug > 1) trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
     qstatus = GetQueueStatus(qs_all_input);
@@ -12962,7 +12964,7 @@ todo_wine {
     ok(msg.message == WM_USER, "wrong message %u\n", msg.message);
 
 done:
-    trace("signalling to exit\n");
+    if (winetest_debug > 1) trace("signalling to exit\n");
     SetEvent(info.hevent[EV_STOP]);
 
     WaitForSingleObject(hthread, INFINITE);
@@ -13009,7 +13011,7 @@ static void test_PeekMessage2(void)
     hwnd = CreateWindowA("TestWindowClass", "PeekMessage2", WS_OVERLAPPEDWINDOW,
                         10, 10, 800, 800, NULL, NULL, NULL, NULL);
     assert(hwnd);
-    trace("Window for test_PeekMessage2 %p\n", hwnd);
+    if (winetest_debug > 1) trace("Window for test_PeekMessage2 %p\n", hwnd);
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     SetFocus(hwnd);
@@ -13031,7 +13033,7 @@ static void test_PeekMessage2(void)
     }
     else
     {
-	trace("1st move event: %04x %lx %ld %ld\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
+	if (winetest_debug > 1) trace("1st move event: %04x %lx %ld %ld\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
 	message = msg.message;
 	time1 = msg.time;
 	x1 = msg.pt.x;
@@ -13051,7 +13053,7 @@ static void test_PeekMessage2(void)
     ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
     ok(ret, "no message available\n");
     if (ret) {
-	trace("2nd move event: %04x %lx %ld %ld\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
+	if (winetest_debug > 1) trace("2nd move event: %04x %lx %ld %ld\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
 	message = msg.message;
 	time2 = msg.time;
 	x2 = msg.pt.x;
@@ -13069,7 +13071,7 @@ static void test_PeekMessage2(void)
     ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
     ok(ret, "no message available\n");
     if (ret) {
-	trace("3rd move event: %04x %lx %ld %ld\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
+	if (winetest_debug > 1) trace("3rd move event: %04x %lx %ld %ld\n", msg.message, msg.time, msg.pt.x, msg.pt.y);
 	message = msg.message;
 	time3 = msg.time;
 	x3 = msg.pt.x;
@@ -13514,7 +13516,7 @@ static void test_TrackMouseEvent(void)
     ok(ret || broken(GetLastError() == 0xdeadbeef),  /* win9x */
        "SystemParametersInfo(SPI_GETMOUSEHOVERTIME) error %lu\n", GetLastError());
     if (!ret) default_hover_time = 400;
-    trace("SPI_GETMOUSEHOVERTIME returned %u ms\n", default_hover_time);
+    if (winetest_debug > 1) trace("SPI_GETMOUSEHOVERTIME returned %u ms\n", default_hover_time);
 
     SetLastError(0xdeadbeef);
     ret = SystemParametersInfoA(SPI_GETMOUSEHOVERWIDTH, 0, &hover_width, 0);
@@ -13526,7 +13528,7 @@ static void test_TrackMouseEvent(void)
     ok(ret || broken(GetLastError() == 0xdeadbeef),  /* win9x */
        "SystemParametersInfo(SPI_GETMOUSEHOVERHEIGHT) error %lu\n", GetLastError());
     if (!ret) hover_height = 4;
-    trace("hover rect is %u x %d\n", hover_width, hover_height);
+    if (winetest_debug > 1) trace("hover rect is %u x %d\n", hover_width, hover_height);
 
     hwnd = CreateWindowExA(0, "TestWindowClass", NULL,
 			  WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -13714,7 +13716,7 @@ static void test_SetWindowRgn(void)
     flush_events();
     flush_sequence();
 
-    trace("testing SetWindowRgn\n");
+    if (winetest_debug > 1) trace("testing SetWindowRgn\n");
     hrgn = CreateRectRgn( 0, 0, 150, 150 );
     SetWindowRgn( hwnd, hrgn, TRUE );
     ok_sequence( WmSetWindowRgn, "WmSetWindowRgn", FALSE );
@@ -14218,7 +14220,7 @@ static void test_ShowWindow(void)
     SetLastError(0xdeadbeef);
     ret = GetMonitorInfoA(hmon, &mi);
     ok(ret, "GetMonitorInfo error %lu\n", GetLastError());
-    trace("monitor %s, work %s\n", wine_dbgstr_rect(&mi.rcMonitor),
+    if (winetest_debug > 1) trace("monitor %s, work %s\n", wine_dbgstr_rect(&mi.rcMonitor),
           wine_dbgstr_rect(&mi.rcWork));
     work_rc = mi.rcWork;
 
@@ -14254,7 +14256,7 @@ static void test_ShowWindow(void)
         idx = (sw[i].cmd == SW_NORMALNA) ? 12 : sw[i].cmd;
 
         style = GetWindowLongA(hwnd, GWL_STYLE);
-        trace("%d: sending %s, current window style %08lx\n", i+1, sw_cmd_name[idx], style);
+        if (winetest_debug > 1) trace("%d: sending %s, current window style %08lx\n", i+1, sw_cmd_name[idx], style);
         ret = ShowWindow(hwnd, sw[i].cmd);
         ok(!ret == !sw[i].ret, "%d: cmd %s: expected ret %Iu, got %Iu\n", i+1, sw_cmd_name[idx], sw[i].ret, ret);
         style = GetWindowLongA(hwnd, GWL_STYLE) & ~WS_BASE;
@@ -15029,18 +15031,18 @@ static void test_SetActiveWindow(void)
     SetForegroundWindow( popup );
     flush_sequence();
 
-    trace("SetActiveWindow(0)\n");
+    if (winetest_debug > 1) trace("SetActiveWindow(0)\n");
     ret = SetActiveWindow(0);
     ok( ret == popup || broken(ret == 0) /* w1064v1809 */, "Failed to SetActiveWindow(0), ret:%p\n", ret);
     if (ret == popup) ok_sequence(SetActiveWindowSeq0, "SetActiveWindow(0)", FALSE);
     flush_sequence();
 
-    trace("SetActiveWindow(hwnd), hwnd visible\n");
+    if (winetest_debug > 1) trace("SetActiveWindow(hwnd), hwnd visible\n");
     ret = SetActiveWindow(hwnd);
     if (ret == hwnd) ok_sequence(SetActiveWindowSeq1, "SetActiveWindow(hwnd), hwnd visible", TRUE);
     flush_sequence();
 
-    trace("SetActiveWindow(popup), hwnd visible, popup visible\n");
+    if (winetest_debug > 1) trace("SetActiveWindow(popup), hwnd visible, popup visible\n");
     ret = SetActiveWindow(popup);
     ok( ret == hwnd, "Failed to SetActiveWindow(popup), popup visible\n");
     ok_sequence(SetActiveWindowSeq2, "SetActiveWindow(popup), hwnd visible, popup visible", FALSE);
@@ -15050,19 +15052,19 @@ static void test_SetActiveWindow(void)
     ShowWindow(popup, SW_HIDE);
     flush_sequence();
 
-    trace("SetActiveWindow(hwnd), hwnd not visible\n");
+    if (winetest_debug > 1) trace("SetActiveWindow(hwnd), hwnd not visible\n");
     ret = SetActiveWindow(hwnd);
     ok( ret == NULL, "SetActiveWindow(hwnd), hwnd not visible, previous is %p\n", ret );
     ok_sequence(SetActiveWindowSeq3, "SetActiveWindow(hwnd), hwnd not visible", TRUE);
     flush_sequence();
 
-    trace("SetActiveWindow(popup), hwnd not visible, popup not visible\n");
+    if (winetest_debug > 1) trace("SetActiveWindow(popup), hwnd not visible, popup not visible\n");
     ret = SetActiveWindow(popup);
     ok( ret == hwnd, "Failed to SetActiveWindow(popup)\n");
     ok_sequence(SetActiveWindowSeq4, "SetActiveWindow(popup), hwnd not visible, popup not visible", TRUE);
     flush_sequence();
 
-    trace("done\n");
+    if (winetest_debug > 1) trace("done\n");
 
     DestroyWindow(hwnd);
 }
@@ -15090,14 +15092,14 @@ static void test_SetForegroundWindow(void)
     SetForegroundWindow( hwnd );
     flush_sequence();
 
-    trace("SetForegroundWindow( 0 )\n");
+    if (winetest_debug > 1) trace("SetForegroundWindow( 0 )\n");
     SetForegroundWindow( 0 );
     ok_sequence(WmEmptySeq, "SetForegroundWindow( 0 ) away from foreground top level window", FALSE);
-    trace("SetForegroundWindow( GetDesktopWindow() )\n");
+    if (winetest_debug > 1) trace("SetForegroundWindow( GetDesktopWindow() )\n");
     SetForegroundWindow( GetDesktopWindow() );
     ok_sequence(SetForegroundWindowSeq, "SetForegroundWindow( desktop ) away from "
                                         "foreground top level window", FALSE);
-    trace("done\n");
+    if (winetest_debug > 1) trace("done\n");
 
     DestroyWindow(hwnd);
 }
@@ -15170,7 +15172,7 @@ static void test_dbcs_wm_char(void)
         skip( "Skipping DBCS WM_CHAR test, no appropriate char found\n" );
         return;
     }
-    trace( "using dbcs char %02x,%02x wchar %04x bad wchar %04x codepage '%s'\n",
+    if (winetest_debug > 1) trace( "using dbcs char %02x,%02x wchar %04x bad wchar %04x codepage '%s'\n",
            dbch[0], dbch[1], wch, bad_wch, cpinfo.CodePageName );
 
     hwnd = CreateWindowExW(0, testWindowClassW, NULL,
@@ -15739,26 +15741,26 @@ static void test_listbox_messages(void)
 
     flush_sequence();
 
-    trace("selecting item 0\n");
+    if (winetest_debug > 1) trace("selecting item 0\n");
     ret = SendMessageA(listbox, LB_SETCURSEL, 0, 0);
     ok(ret == 0, "expected 0, got %Id\n", ret);
     ok_sequence(wm_lb_setcursel_0, "LB_SETCURSEL 0", FALSE );
     check_lb_state(listbox, 3, 0, 0, 0);
     flush_sequence();
 
-    trace("selecting item 1\n");
+    if (winetest_debug > 1) trace("selecting item 1\n");
     ret = SendMessageA(listbox, LB_SETCURSEL, 1, 0);
     ok(ret == 1, "expected 1, got %Id\n", ret);
     ok_sequence(wm_lb_setcursel_1, "LB_SETCURSEL 1", FALSE );
     check_lb_state(listbox, 3, 1, 1, 0);
 
-    trace("selecting item 2\n");
+    if (winetest_debug > 1) trace("selecting item 2\n");
     ret = SendMessageA(listbox, LB_SETCURSEL, 2, 0);
     ok(ret == 2, "expected 2, got %Id\n", ret);
     ok_sequence(wm_lb_setcursel_2, "LB_SETCURSEL 2", FALSE );
     check_lb_state(listbox, 3, 2, 2, 0);
 
-    trace("clicking on item 0\n");
+    if (winetest_debug > 1) trace("clicking on item 0\n");
     ret = SendMessageA(listbox, WM_LBUTTONDOWN, 0, MAKELPARAM(1, 1));
     ok(ret == LB_OKAY, "expected LB_OKAY, got %Id\n", ret);
     ret = SendMessageA(listbox, WM_LBUTTONUP, 0, 0);
@@ -15767,28 +15769,28 @@ static void test_listbox_messages(void)
     check_lb_state(listbox, 3, 0, 0, 0);
     flush_sequence();
 
-    trace("deleting item 0\n");
+    if (winetest_debug > 1) trace("deleting item 0\n");
     ret = SendMessageA(listbox, LB_DELETESTRING, 0, 0);
     ok(ret == 2, "expected 2, got %Id\n", ret);
     ok_sequence(wm_lb_deletestring, "LB_DELETESTRING 0", FALSE );
     check_lb_state(listbox, 2, -1, 0, 0);
     flush_sequence();
 
-    trace("deleting item 0\n");
+    if (winetest_debug > 1) trace("deleting item 0\n");
     ret = SendMessageA(listbox, LB_DELETESTRING, 0, 0);
     ok(ret == 1, "expected 1, got %Id\n", ret);
     ok_sequence(wm_lb_deletestring, "LB_DELETESTRING 0", FALSE );
     check_lb_state(listbox, 1, -1, 0, 0);
     flush_sequence();
 
-    trace("deleting item 0\n");
+    if (winetest_debug > 1) trace("deleting item 0\n");
     ret = SendMessageA(listbox, LB_DELETESTRING, 0, 0);
     ok(ret == 0, "expected 0, got %Id\n", ret);
     ok_sequence(wm_lb_deletestring_reset, "LB_DELETESTRING 0", FALSE );
     check_lb_state(listbox, 0, -1, 0, 0);
     flush_sequence();
 
-    trace("deleting item 0\n");
+    if (winetest_debug > 1) trace("deleting item 0\n");
     ret = SendMessageA(listbox, LB_DELETESTRING, 0, 0);
     ok(ret == LB_ERR, "expected LB_ERR, got %Id\n", ret);
     check_lb_state(listbox, 0, -1, 0, 0);
@@ -16170,7 +16172,7 @@ static void test_menu_messages(void)
     }
 
     /* Alt+E, Enter */
-    trace("testing a popup menu command\n");
+    if (winetest_debug > 1) trace("testing a popup menu command\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event('E', 0, 0, 0);
@@ -16197,7 +16199,7 @@ static void test_menu_messages(void)
     ok_sequence(wm_popup_menu_1, "popup menu command", FALSE);
 
     /* Alt+F, Right, Enter */
-    trace("testing submenu of a popup menu command\n");
+    if (winetest_debug > 1) trace("testing submenu of a popup menu command\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event('F', 0, 0, 0);
@@ -16214,7 +16216,7 @@ static void test_menu_messages(void)
     }
     ok_sequence(wm_popup_menu_2, "submenu of a popup menu command", FALSE);
 
-    trace("testing single menu item command\n");
+    if (winetest_debug > 1) trace("testing single menu item command\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event('Q', 0, 0, 0);
@@ -16245,7 +16247,7 @@ static void test_menu_messages(void)
     ok(style == 0, "expected 0, got %lu\n", style);
 
     /* Alt+F, Right, Enter */
-    trace("testing submenu of a popup menu command\n");
+    if (winetest_debug > 1) trace("testing submenu of a popup menu command\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
     keybd_event('F', 0, 0, 0);
@@ -16719,7 +16721,7 @@ static void test_clipboard_viewers(void)
         WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         GetDesktopWindow(), NULL, hInst, NULL);
-    trace("clipbd viewers: hWnd1=%p, hWnd2=%p, hWnd3=%p\n", hWnd1, hWnd2, hWnd3);
+    if (winetest_debug > 1) trace("clipbd viewers: hWnd1=%p, hWnd2=%p, hWnd3=%p\n", hWnd1, hWnd2, hWnd3);
     assert(hWnd1 && hWnd2 && hWnd3);
 
     CountClipboardFormats(); /* Ensure that we do not have an X11 update to the clipboard */
@@ -17392,10 +17394,10 @@ static void test_SetParent(void)
     ok(child != 0, "Failed to create child window\n");
 
     GetWindowRect(parent1, &rc);
-    trace("parent1 %s\n", wine_dbgstr_rect(&rc));
+    if (winetest_debug > 1) trace("parent1 %s\n", wine_dbgstr_rect(&rc));
     GetWindowRect(child, &rc_old);
     MapWindowPoints(0, parent1, (POINT *)&rc_old, 2);
-    trace("child %s\n", wine_dbgstr_rect(&rc_old));
+    if (winetest_debug > 1) trace("child %s\n", wine_dbgstr_rect(&rc_old));
 
     flush_sequence();
 
@@ -17407,10 +17409,10 @@ static void test_SetParent(void)
     ok(!IsWindowVisible(child), "IsWindowVisible() should return FALSE\n");
 
     GetWindowRect(parent2, &rc);
-    trace("parent2 %s\n", wine_dbgstr_rect(&rc));
+    if (winetest_debug > 1) trace("parent2 %s\n", wine_dbgstr_rect(&rc));
     GetWindowRect(child, &rc);
     MapWindowPoints(0, parent2, (POINT *)&rc, 2);
-    trace("child %s\n", wine_dbgstr_rect(&rc));
+    if (winetest_debug > 1) trace("child %s\n", wine_dbgstr_rect(&rc));
 
     ok(EqualRect(&rc_old, &rc), "rects do not match %s / %s\n", wine_dbgstr_rect(&rc_old),
        wine_dbgstr_rect(&rc));
@@ -17421,7 +17423,7 @@ static void test_SetParent(void)
     ok(popup != 0, "Failed to create popup window\n");
 
     GetWindowRect(popup, &rc_old);
-    trace("popup %s\n", wine_dbgstr_rect(&rc_old));
+    if (winetest_debug > 1) trace("popup %s\n", wine_dbgstr_rect(&rc_old));
 
     flush_sequence();
 
@@ -17433,10 +17435,10 @@ static void test_SetParent(void)
     ok(!IsWindowVisible(popup), "IsWindowVisible() should return FALSE\n");
 
     GetWindowRect(child, &rc);
-    trace("parent2 %s\n", wine_dbgstr_rect(&rc));
+    if (winetest_debug > 1) trace("parent2 %s\n", wine_dbgstr_rect(&rc));
     GetWindowRect(popup, &rc);
     MapWindowPoints(0, child, (POINT *)&rc, 2);
-    trace("popup %s\n", wine_dbgstr_rect(&rc));
+    if (winetest_debug > 1) trace("popup %s\n", wine_dbgstr_rect(&rc));
 
     ok(EqualRect(&rc_old, &rc), "rects do not match %s / %s\n", wine_dbgstr_rect(&rc_old),
        wine_dbgstr_rect(&rc));
@@ -18063,7 +18065,7 @@ static void test_SetFocus(void)
                            0, 0, 0, 0, parent, 0, 0, NULL);
     ok(child != 0, "failed to create child window\n");
 
-    trace("parent %p, child %p, thread window %p\n", parent, child, wnd_event.hwnd);
+    if (winetest_debug > 1) trace("parent %p, child %p, thread window %p\n", parent, child, wnd_event.hwnd);
 
     SetFocus(0);
     SetActiveWindow(0);
@@ -18589,20 +18591,20 @@ static DWORD WINAPI SendMessage_thread_1(void *param)
 {
     struct wnd_event *wnd_event = param;
 
-    trace("thread: starting\n");
+    if (winetest_debug > 1) trace("thread: starting\n");
     WaitForSingleObject(wnd_event->start_event, INFINITE);
 
-    trace("thread: call PostMessage\n");
+    if (winetest_debug > 1) trace("thread: call PostMessage\n");
     PostMessageA(wnd_event->hwnd, WM_USER, 0, 0);
 
-    trace("thread: call PostMessage\n");
+    if (winetest_debug > 1) trace("thread: call PostMessage\n");
     PostMessageA(wnd_event->hwnd, WM_USER+1, 0, 0);
 
-    trace("thread: call SendMessage\n");
+    if (winetest_debug > 1) trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+2, 0, 0);
     SetEvent(wnd_event->stop_event);
 
-    trace("thread: call SendMessage\n");
+    if (winetest_debug > 1) trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+3, 0, 0);
 
     return 0;
@@ -18612,24 +18614,24 @@ static DWORD WINAPI SendMessage_thread_2(void *param)
 {
     struct wnd_event *wnd_event = param;
 
-    trace("thread: starting\n");
+    if (winetest_debug > 1) trace("thread: starting\n");
     WaitForSingleObject(wnd_event->start_event, INFINITE);
 
-    trace("thread: call PostMessage\n");
+    if (winetest_debug > 1) trace("thread: call PostMessage\n");
     PostMessageA(wnd_event->hwnd, WM_USER, 0, 0);
 
-    trace("thread: call PostMessage\n");
+    if (winetest_debug > 1) trace("thread: call PostMessage\n");
     PostMessageA(wnd_event->hwnd, WM_USER+1, 0, 0);
 
     /* this leads to sending an internal message under Wine */
-    trace("thread: call SetParent\n");
+    if (winetest_debug > 1) trace("thread: call SetParent\n");
     SetParent(wnd_event->hwnd, wnd_event->hwnd);
 
-    trace("thread: call SendMessage\n");
+    if (winetest_debug > 1) trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+2, 0, 0);
     SetEvent(wnd_event->stop_event);
 
-    trace("thread: call SendMessage\n");
+    if (winetest_debug > 1) trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+3, 0, 0);
 
     return 0;
@@ -18673,7 +18675,7 @@ static void test_SendMessage_other_thread(int thread_n)
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
     ok(ret == MAKELONG(QS_POSTMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE), "wrong status %08lx\n", ret);
 
-    trace("main: call GetMessage\n");
+    if (winetest_debug > 1) trace("main: call GetMessage\n");
     GetMessageA(&msg, 0, 0, 0);
     ok(msg.message == WM_USER, "expected WM_USER, got %04x\n", msg.message);
     DispatchMessageA(&msg);
@@ -18686,14 +18688,14 @@ static void test_SendMessage_other_thread(int thread_n)
     /* intentionally yield */
     MsgWaitForMultipleObjects(0, NULL, FALSE, 100, qs_all_input);
 
-    trace("main: call SendMessage\n");
+    if (winetest_debug > 1) trace("main: call SendMessage\n");
     SendMessageA(wnd_event.hwnd, WM_USER+4, 0, 0);
     ok_sequence(send_message_2, "SendMessage from other thread 2", FALSE);
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
     ok(ret == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE), "wrong status %08lx\n", ret);
 
-    trace("main: call PeekMessage\n");
+    if (winetest_debug > 1) trace("main: call PeekMessage\n");
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should not fail\n");
     ok(msg.message == WM_USER+1, "expected WM_USER+1, got %04x\n", msg.message);
     DispatchMessageA(&msg);
@@ -18707,14 +18709,14 @@ static void test_SendMessage_other_thread(int thread_n)
     todo_wine_if (thread_n == 2)
     ok(ret == 0, "wrong status %08lx\n", ret);
 
-    trace("main: call PeekMessage\n");
+    if (winetest_debug > 1) trace("main: call PeekMessage\n");
     ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should fail\n");
     ok_sequence(WmEmptySeq, "SendMessage from other thread 5", thread_n == 2);
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
     ok(ret == 0, "wrong status %08lx\n", ret);
 
-    trace("main: call DestroyWindow\n");
+    if (winetest_debug > 1) trace("main: call DestroyWindow\n");
     DestroyWindow(msg.hwnd);
 
     flush_events();
@@ -19004,7 +19006,7 @@ static LRESULT WINAPI test_create_name_procW( HWND hwnd, UINT msg, WPARAM wparam
             break;
         }
     case WM_SETTEXT:
-        trace("%s\n", debugstr_w((const WCHAR *)lparam));
+        if (winetest_debug > 1) trace("%s\n", debugstr_w((const WCHAR *)lparam));
         break;
     }
 
