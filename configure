@@ -1558,6 +1558,7 @@ enable_gsm
 enable_jpeg
 enable_jxr
 enable_lcms2
+enable_ldap
 enable_mfuuid
 enable_mpg123
 enable_png
@@ -22160,6 +22161,7 @@ wine_fn_config_makefile libs/gsm enable_gsm
 wine_fn_config_makefile libs/jpeg enable_jpeg
 wine_fn_config_makefile libs/jxr enable_jxr
 wine_fn_config_makefile libs/lcms2 enable_lcms2
+wine_fn_config_makefile libs/ldap enable_ldap
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/mpg123 enable_mpg123
 wine_fn_config_makefile libs/png enable_png
