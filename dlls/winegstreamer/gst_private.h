@@ -183,6 +183,9 @@ struct wm_reader
     WORD stream_count;
 };
 
+HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
+struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *inner);
+
 void wm_reader_cleanup(struct wm_reader *reader);
 HRESULT wm_reader_close(struct wm_reader *reader);
 HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_number, DWORD *size);

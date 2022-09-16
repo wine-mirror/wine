@@ -22,19 +22,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
 struct sync_reader
 {
+    IUnknown IUnknown_inner;
     IWMSyncReader2 IWMSyncReader2_iface;
     struct wm_reader reader;
     LONG refcount;
 };
 
-static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
+static struct sync_reader *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, struct sync_reader, IWMSyncReader2_iface);
+    return CONTAINING_RECORD(iface, struct sync_reader, IUnknown_inner);
 }
 
-static HRESULT WINAPI WMSyncReader_QueryInterface(IWMSyncReader2 *iface, REFIID iid, void **out)
+static HRESULT WINAPI unknown_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
 {
-    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct sync_reader *reader = impl_from_IUnknown(iface);
 
     TRACE("reader %p, iid %s, out %p.\n", reader, debugstr_guid(iid), out);
 
@@ -69,17 +70,17 @@ static HRESULT WINAPI WMSyncReader_QueryInterface(IWMSyncReader2 *iface, REFIID 
     return S_OK;
 }
 
-static ULONG WINAPI WMSyncReader_AddRef(IWMSyncReader2 *iface)
+static ULONG WINAPI unknown_inner_AddRef(IUnknown *iface)
 {
-    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct sync_reader *reader = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&reader->refcount);
     TRACE("%p increasing refcount to %lu.\n", reader, refcount);
     return refcount;
 }
 
-static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
+static ULONG WINAPI unknown_inner_Release(IUnknown *iface)
 {
-    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct sync_reader *reader = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&reader->refcount);
 
     TRACE("%p decreasing refcount to %lu.\n", reader, refcount);
@@ -92,6 +93,36 @@ static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
     }
 
     return refcount;
+}
+
+static const IUnknownVtbl unknown_inner_vtbl =
+{
+    unknown_inner_QueryInterface,
+    unknown_inner_AddRef,
+    unknown_inner_Release,
+};
+
+static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct sync_reader, IWMSyncReader2_iface);
+}
+
+static HRESULT WINAPI WMSyncReader_QueryInterface(IWMSyncReader2 *iface, REFIID iid, void **out)
+{
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    return IUnknown_QueryInterface(reader->reader.outer, iid, out);
+}
+
+static ULONG WINAPI WMSyncReader_AddRef(IWMSyncReader2 *iface)
+{
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    return IUnknown_AddRef(reader->reader.outer);
+}
+
+static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
+{
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    return IUnknown_Release(reader->reader.outer);
 }
 
 static HRESULT WINAPI WMSyncReader_Close(IWMSyncReader2 *iface)
@@ -404,20 +435,27 @@ static const IWMSyncReader2Vtbl WMSyncReader2Vtbl = {
     WMSyncReader2_GetAllocateForStream
 };
 
-HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader)
+struct wm_reader *wm_reader_from_sync_reader_inner(IUnknown *iface)
+{
+    struct sync_reader *reader = impl_from_IUnknown(iface);
+    return &reader->reader;
+}
+
+HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out)
 {
     struct sync_reader *object;
 
-    TRACE("reader %p.\n", reader);
+    TRACE("out %p.\n", out);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    object->IUnknown_inner.lpVtbl = &unknown_inner_vtbl;
     object->IWMSyncReader2_iface.lpVtbl = &WMSyncReader2Vtbl;
-    wm_reader_init((IUnknown *)&object->IWMSyncReader2_iface, &object->reader);
+    wm_reader_init(outer ? outer : &object->IUnknown_inner, &object->reader);
     object->refcount = 1;
 
     TRACE("Created sync reader %p.\n", object);
-    *reader = (IWMSyncReader *)&object->IWMSyncReader2_iface;
+    *out = outer ? (void *)&object->IUnknown_inner : (void *)&object->IWMSyncReader2_iface;
     return S_OK;
 }

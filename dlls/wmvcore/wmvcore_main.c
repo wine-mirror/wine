@@ -26,7 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
 HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader);
-HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader);
+HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out);
 
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **reader)
 {
@@ -46,14 +46,14 @@ HRESULT WINAPI WMCreateSyncReader(IUnknown *reserved, DWORD rights, IWMSyncReade
 {
     TRACE("reserved %p, rights %#lx, reader %p.\n", reserved, rights, reader);
 
-    return winegstreamer_create_wm_sync_reader(reader);
+    return winegstreamer_create_wm_sync_reader(NULL, (void **)reader);
 }
 
 HRESULT WINAPI WMCreateSyncReaderPriv(IWMSyncReader **reader)
 {
     TRACE("reader %p.\n", reader);
 
-    return winegstreamer_create_wm_sync_reader(reader);
+    return winegstreamer_create_wm_sync_reader(NULL, (void **)reader);
 }
 
 HRESULT WINAPI WMCheckURLExtension(const WCHAR *url)
