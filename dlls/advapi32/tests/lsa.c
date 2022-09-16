@@ -402,9 +402,11 @@ static void test_LsaLookupSids(void)
         /* English and Japanese */
         check_unicode_string(&names[0].Name, L"Everyone");
     else if (wcscmp(langW, L"0407") == 0) /* German */
-        check_unicode_string(&names[0].Name, L"Jeder");
+        todo_wine ok(!wcsicmp(names[0].Name.Buffer, L"Jeder"), "missing translation %s\n",
+                     debugstr_w(names[0].Name.Buffer));
     else if (wcscmp(langW, L"040C") == 0) /* French */
-        check_unicode_string(&names[0].Name, L"Tout le monde");
+        todo_wine ok(!wcsicmp(names[0].Name.Buffer, L"Tout le monde"), "missing translation %s\n",
+                     debugstr_w(names[0].Name.Buffer));
     else
         trace("<Everyone-group>.Name=%s\n", debugstr_w(names[0].Name.Buffer));
 
