@@ -356,7 +356,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         wp.cx              = ps->wp.cx;
         wp.cy              = ps->wp.cy;
         wp.flags           = ps->wp.flags;
-        memcpy( &ps->wp, &wp, sizeof(wp) );
+        memcpy( ps, &wp, sizeof(wp) );
         break;
     }
     case WM_WINE_KEYBOARD_LL_HOOK:
