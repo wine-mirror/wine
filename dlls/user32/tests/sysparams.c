@@ -30,7 +30,6 @@
 #include "winuser.h"
 #include "winnls.h"
 
-static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
@@ -2447,78 +2446,88 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
 
 static void test_WM_DISPLAYCHANGE(void)
 {
-    DEVMODEA mode, startmode;
-    int start_bpp, last_set_bpp = 0;
-    int test_bpps[] = {8, 16, 24, 32}, i;
-    LONG change_ret;
-    DWORD wait_ret;
-
-    if (!pChangeDisplaySettingsExA)
-    {
-        win_skip("ChangeDisplaySettingsExA is not available\n");
-        return;
-    }
+    UINT test_bpps[] = {8, 16, 24}, default_bpp, i;
+    DEVMODEW settings;
+    DWORD res;
+    BOOL ret;
 
     displaychange_test_active = TRUE;
+    displaychange_sem = CreateSemaphoreW( NULL, 0, 1, NULL );
 
-    memset(&startmode, 0, sizeof(startmode));
-    startmode.dmSize = sizeof(startmode);
-    EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &startmode);
-    start_bpp = startmode.dmBitsPerPel;
+    memset( &settings, 0, sizeof(DEVMODEW) );
+    settings.dmSize = sizeof(DEVMODEW);
+    ret = EnumDisplaySettingsW( NULL, ENUM_CURRENT_SETTINGS, &settings );
+    ok( ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError() );
 
-    displaychange_sem = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok( settings.dmFields & DM_BITSPERPEL, "got dmFields %#lx\n", settings.dmFields );
+    ok( settings.dmBitsPerPel == 32, "got dmBitsPerPel %lu\n", settings.dmBitsPerPel );
+    default_bpp = settings.dmBitsPerPel;
 
-    for(i = 0; i < ARRAY_SIZE(test_bpps); i++) {
+    /* setting the default mode here sends a WM_DISPLAYCHANGE */
+
+    last_bpp = -1;
+    change_counter = 0;
+    displaychange_ok = TRUE;
+    res = ChangeDisplaySettingsExW( NULL, &settings, NULL, 0, NULL );
+    ok( !res, "ChangeDisplaySettingsExW returned %ld\n", res );
+    res = WaitForSingleObject( displaychange_sem, 10000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+    ok( last_bpp == default_bpp, "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
+    displaychange_ok = FALSE;
+
+    for (i = 0; i < ARRAY_SIZE(test_bpps); i++)
+    {
+        UINT bpp = test_bpps[i];
+
+        winetest_push_context( "bpp %u", bpp );
+
+        settings.dmBitsPerPel = bpp;
+        settings.dmFields |= DM_BITSPERPEL;
+
         last_bpp = -1;
-
-        memset(&mode, 0, sizeof(mode));
-        mode.dmSize = sizeof(mode);
-        mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        mode.dmBitsPerPel = test_bpps[i];
-        mode.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN);
-        mode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
-
-        change_counter = 0; /* This sends a SETTINGSCHANGE message as well in which we aren't interested */
+        change_counter = 0;
         displaychange_ok = TRUE;
-        change_ret = pChangeDisplaySettingsExA(NULL, &mode, NULL, 0, NULL);
-        /* Wait quite long for the message, screen setting changes can take some time */
-        if(change_ret == DISP_CHANGE_SUCCESSFUL) {
-            wait_ret = WaitForSingleObject(displaychange_sem, 10000);
-            /* we may not get a notification if nothing changed */
-            if (wait_ret == WAIT_TIMEOUT && !last_set_bpp && start_bpp == test_bpps[i])
-                continue;
-            ok(wait_ret == WAIT_OBJECT_0, "Waiting for the WM_DISPLAYCHANGE message timed out\n");
+        res = ChangeDisplaySettingsExW( NULL, &settings, NULL, 0, NULL );
+        if (!res)
+        {
+            /* Wait quite long for the message, screen setting changes can take some time */
+            res = WaitForSingleObject( displaychange_sem, 10000 );
+            ok( !res, "WaitForSingleObject returned %#lx\n", res );
+            todo_wine
+            ok( last_bpp == bpp, "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
+        }
+        else
+        {
+            todo_wine
+            win_skip( "ChangeDisplaySettingsExW returned %ld\n", res );
+            ok( res == DISP_CHANGE_BADMODE || broken( DISP_CHANGE_FAILED && bpp == 8 ),
+                "ChangeDisplaySettingsExW returned %ld\n", res );
+            ok( last_bpp == -1, "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
         }
         displaychange_ok = FALSE;
 
-        if(change_ret != DISP_CHANGE_SUCCESSFUL) {
-            skip("Setting depth %d failed(ret = %ld)\n", test_bpps[i], change_ret);
-            ok(last_bpp == -1, "WM_DISPLAYCHANGE was sent with wParam %d despite mode change failure\n", last_bpp);
-            continue;
-        }
-
-        todo_wine_if(start_bpp != test_bpps[i]) {
-            ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
-        }
-        last_set_bpp = test_bpps[i];
+        winetest_pop_context();
     }
 
-    if(start_bpp != last_set_bpp && last_set_bpp != 0) {
-        memset(&mode, 0, sizeof(mode));
-        mode.dmSize = sizeof(mode);
-        mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        mode.dmBitsPerPel = start_bpp;
-        mode.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN);
-        mode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+    /* restoring default mode most of the time doesn't send WM_DISPLAYCHANGE */
 
-        displaychange_ok = TRUE;
-        change_ret = pChangeDisplaySettingsExA(NULL, &mode, NULL, 0, NULL);
-        WaitForSingleObject(displaychange_sem, 10000);
-        displaychange_ok = FALSE;
-        CloseHandle(displaychange_sem);
-        displaychange_sem = 0;
-    }
+    settings.dmBitsPerPel = default_bpp;
+    settings.dmFields |= DM_BITSPERPEL;
 
+    last_bpp = -1;
+    change_counter = 0;
+    displaychange_ok = TRUE;
+    res = ChangeDisplaySettingsExW( NULL, &settings, NULL, 0, NULL );
+    ok( !res, "ChangeDisplaySettingsExW returned %ld\n", res );
+    res = WaitForSingleObject( displaychange_sem, 1000 );
+    todo_wine
+    ok( res == WAIT_TIMEOUT || broken( !res ), "WaitForSingleObject returned %#lx\n", res );
+    todo_wine
+    ok( last_bpp == -1 || broken( last_bpp == default_bpp ), "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
+    displaychange_ok = FALSE;
+
+    CloseHandle( displaychange_sem );
+    displaychange_sem = 0;
     displaychange_test_active = FALSE;
 }
 
@@ -4136,7 +4145,6 @@ START_TEST(sysparams)
     HANDLE hInstance, hdll;
 
     hdll = GetModuleHandleA("user32.dll");
-    pChangeDisplaySettingsExA = (void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
     pIsProcessDPIAware = (void*)GetProcAddress(hdll, "IsProcessDPIAware");
     pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
     pGetDpiForSystem = (void*)GetProcAddress(hdll, "GetDpiForSystem");
