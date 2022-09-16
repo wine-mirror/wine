@@ -67,7 +67,7 @@
 @ stdcall UiaGetReservedNotSupportedValue(ptr)
 @ stub UiaGetRootNode
 @ stdcall UiaGetRuntimeId(ptr ptr)
-@ stub UiaGetUpdatedCache
+@ stdcall UiaGetUpdatedCache(ptr ptr long ptr ptr ptr)
 @ stub UiaHPatternObjectFromVariant
 @ stub UiaHTextRangeFromVariant
 @ stdcall UiaHUiaNodeFromVariant(ptr ptr)

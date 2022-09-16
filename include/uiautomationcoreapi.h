@@ -324,6 +324,12 @@ enum AsyncContentLoadedState {
     AsyncContentLoadedState_Completed = 0x02,
 };
 
+enum NormalizeState {
+    NormalizeState_None   = 0x00,
+    NormalizeState_View   = 0x01,
+    NormalizeState_Custom = 0x02,
+};
+
 struct UiaEventArgs {
     enum EventArgsType Type;
     int EventId;
@@ -399,6 +405,8 @@ HRESULT WINAPI UiaGetRuntimeId(HUIANODE huianode, SAFEARRAY **runtime_id);
 HRESULT WINAPI UiaHUiaNodeFromVariant(VARIANT *in_val, HUIANODE *huianode);
 HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode);
 HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *elprov);
+HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cache_req, enum NormalizeState normalize_state,
+        struct UiaCondition *normalize_cond, SAFEARRAY **out_req, BSTR *tree_struct);
 
 #ifdef __cplusplus
 }

@@ -1911,3 +1911,14 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
     else
         uia_provider_callback = default_uia_provider_callback;
 }
+
+/***********************************************************************
+ *          UiaGetUpdatedCache (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cache_req, enum NormalizeState normalize_state,
+        struct UiaCondition *normalize_cond, SAFEARRAY **out_req, BSTR *tree_struct)
+{
+    FIXME("(%p, %p, %u, %p, %p, %p): stub\n", huianode, cache_req, normalize_state, normalize_cond, out_req,
+            tree_struct);
+    return E_NOTIMPL;
+}
