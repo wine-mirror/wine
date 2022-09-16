@@ -1335,9 +1335,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     socklen_t addr_len;
     HANDLE wait_handle;
     NTSTATUS status;
-    ULONG_PTR information;
     ULONG options;
-    BOOL alerted;
 
     addr_len = sizeof(addr);
     if (getpeername( fd, &addr.addr, &addr_len ) != 0)
@@ -1389,37 +1387,38 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     }
     SERVER_END_REQ;
 
-    alerted = status == STATUS_ALERTED;
-    if (alerted)
+    /* the server currently will never succeed immediately */
+    assert(status == STATUS_ALERTED || status == STATUS_PENDING || NT_ERROR(status));
+
+    if (status == STATUS_ALERTED)
     {
+        ULONG_PTR information;
+
         status = try_transmit( fd, file_fd, async );
         if (status == STATUS_DEVICE_NOT_READY)
             status = STATUS_PENDING;
-    }
 
-    if (status != STATUS_PENDING)
-    {
         information = async->head_cursor + async->file_cursor + async->tail_cursor;
-        if (!NT_ERROR(status) || wait_handle)
+        if (!NT_ERROR(status) && status != STATUS_PENDING)
         {
             io->Status = status;
             io->Information = information;
         }
-        release_fileio( &async->io );
-    }
-    else information = 0;
 
-    if (alerted)
-    {
         set_async_direct_result( &wait_handle, status, information, TRUE );
-        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
-        {
-            /* Pretend we always do async I/O.  The client can always retrieve
-             * the actual I/O status via the IO_STATUS_BLOCK.
-             */
-            status = STATUS_PENDING;
-        }
     }
+
+    if (status != STATUS_PENDING)
+        release_fileio( &async->io );
+
+    if (!status && !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+    {
+        /* Pretend we always do async I/O.  The client can always retrieve
+         * the actual I/O status via the IO_STATUS_BLOCK.
+         */
+        status = STATUS_PENDING;
+    }
+
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }
