@@ -463,7 +463,7 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
 
     EnterCriticalSection(&reader->cs);
 
-    if (SUCCEEDED(hr = wm_reader_open_file(reader->wm_reader, url))
+    if (SUCCEEDED(hr = IWMSyncReader2_Open(reader->reader, url))
             && FAILED(hr = async_reader_open(reader, callback, context)))
         IWMSyncReader2_Close(reader->reader);
 

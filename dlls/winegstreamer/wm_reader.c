@@ -1510,45 +1510,6 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
     return hr;
 }
 
-HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename)
-{
-    LARGE_INTEGER size;
-    HANDLE file;
-    HRESULT hr;
-
-    if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-            OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
-    {
-        ERR("Failed to open %s, error %lu.\n", debugstr_w(filename), GetLastError());
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-
-    if (!GetFileSizeEx(file, &size))
-    {
-        ERR("Failed to get the size of %s, error %lu.\n", debugstr_w(filename), GetLastError());
-        CloseHandle(file);
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-
-    EnterCriticalSection(&reader->cs);
-
-    if (reader->wg_parser)
-    {
-        LeaveCriticalSection(&reader->cs);
-        WARN("Stream is already open; returning E_UNEXPECTED.\n");
-        CloseHandle(file);
-        return E_UNEXPECTED;
-    }
-
-    reader->file = file;
-
-    if (FAILED(hr = init_stream(reader, size.QuadPart)))
-        reader->file = NULL;
-
-    LeaveCriticalSection(&reader->cs);
-    return hr;
-}
-
 static struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
 {
     if (stream_number && stream_number <= reader->stream_count)
@@ -2370,10 +2331,43 @@ static HRESULT WINAPI reader_GetStreamSelected(IWMSyncReader2 *iface,
 static HRESULT WINAPI reader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    LARGE_INTEGER size;
+    HANDLE file;
+    HRESULT hr;
 
     TRACE("reader %p, filename %s.\n", reader, debugstr_w(filename));
 
-    return wm_reader_open_file(reader, filename);
+    if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+            OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+    {
+        ERR("Failed to open %s, error %lu.\n", debugstr_w(filename), GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    if (!GetFileSizeEx(file, &size))
+    {
+        ERR("Failed to get the size of %s, error %lu.\n", debugstr_w(filename), GetLastError());
+        CloseHandle(file);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    EnterCriticalSection(&reader->cs);
+
+    if (reader->wg_parser)
+    {
+        LeaveCriticalSection(&reader->cs);
+        WARN("Stream is already open; returning E_UNEXPECTED.\n");
+        CloseHandle(file);
+        return E_UNEXPECTED;
+    }
+
+    reader->file = file;
+
+    if (FAILED(hr = init_stream(reader, size.QuadPart)))
+        reader->file = NULL;
+
+    LeaveCriticalSection(&reader->cs);
+    return hr;
 }
 
 static HRESULT WINAPI reader_OpenStream(IWMSyncReader2 *iface, IStream *stream)
