@@ -1108,6 +1108,7 @@ static struct Provider
     DWORD expected_tid;
     int runtime_id[2];
     DWORD last_call_tid;
+    BOOL ignore_hwnd_prop;
 } Provider, Provider2, Provider_child, Provider_child2;
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
@@ -1555,7 +1556,7 @@ HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
             V_VT(ret_val) = VT_R8;
             V_R8(ret_val) = uia_r8_prop_val;
         }
-        else
+        else if (!This->ignore_hwnd_prop)
         {
             V_VT(ret_val) = VT_I4;
             V_I4(ret_val) = HandleToULong(This->hwnd);
@@ -4133,6 +4134,7 @@ static void test_UiaNodeFromProvider(void)
     SET_EXPECT(winproc_GETOBJECT_UiaRoot);
     /* Win10v1507 and below send this, Windows 7 sends it twice. */
     SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
+    Provider.ignore_hwnd_prop = TRUE;
     hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
@@ -4144,33 +4146,26 @@ static void test_UiaNodeFromProvider(void)
     if (SUCCEEDED(hr))
     {
         check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-
-        /* Newer versions of Windows have "Hwnd(parent link):" */
-        if (get_provider_desc(V_BSTR(&v), L"Hwnd(parent link):", NULL))
-        {
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-        }
-        else
-        {
-            check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, TRUE);
-            check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider", FALSE);
-        }
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
         VariantClear(&v);
     }
 
+    Provider.ignore_hwnd_prop = FALSE;
     ok_method_sequence(node_from_prov4, "node_from_prov4");
 
     ok(!!node, "node == NULL\n");
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
 
-    /* Return Provider2 in response to WM_GETOBJECT. */
+    /*
+     * Provider is our main provider, since Provider2 is also a main, it won't
+     * get added.
+     */
     Provider.hwnd = Provider2.hwnd = hwnd;
     Provider.prov_opts = Provider2.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.ignore_hwnd_prop = Provider2.ignore_hwnd_prop = TRUE;
     prov_root = &Provider2.IRawElementProviderSimple_iface;
     node = (void *)0xdeadbeef;
     SET_EXPECT(winproc_GETOBJECT_UiaRoot);
@@ -4182,7 +4177,6 @@ static void test_UiaNodeFromProvider(void)
     called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
 
     /* Win10v1507 and below hold a reference to the root provider for the HWND */
-    ok(broken(Provider2.ref == 2) || Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
     ok(!!node, "node == NULL\n");
 
@@ -4191,23 +4185,13 @@ static void test_UiaNodeFromProvider(void)
     if (SUCCEEDED(hr))
     {
         check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-
-        /* Newer versions of Windows have "Hwnd(parent link):" */
-        if (get_provider_desc(V_BSTR(&v), L"Hwnd(parent link):", NULL))
-        {
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
-        }
-        else
-        {
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider2", TRUE);
-            check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Hwnd", L"Provider", FALSE);
-        }
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
         VariantClear(&v);
     }
 
+    Provider.ignore_hwnd_prop = Provider2.ignore_hwnd_prop = FALSE;
     ok_method_sequence(node_from_prov5, "node_from_prov5");
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
@@ -4215,8 +4199,8 @@ static void test_UiaNodeFromProvider(void)
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
 
     /*
-     * Windows 10 newer than v1507 only matches older behavior if
-     * Provider is a ClientSideProvider.
+     * Provider is classified as an Hwnd provider, Provider2 will become our
+     * Main provider since we don't have one already.
      */
     Provider.prov_opts = ProviderOptions_ClientSideProvider;
     Provider2.prov_opts = ProviderOptions_ServerSideProvider;
@@ -5181,11 +5165,7 @@ static void test_UiaNodeFromHandle_client_proc(void)
 
         ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
         check_node_provider_desc_prefix(buf, pid, hwnd);
-        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
-        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
-            check_node_provider_desc(buf, L"Hwnd", L"Provider", TRUE);
-        else
-            check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+        check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
 
         check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
         check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
@@ -5243,6 +5223,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     Provider.runtime_id[0] = Provider.runtime_id[1] = 0;
     Provider.frag_root = NULL;
     Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.ignore_hwnd_prop = TRUE;
     hr = UiaNodeFromHandle(hwnd, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
@@ -5257,11 +5238,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
 
         ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
         check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
-        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
-            check_node_provider_desc(buf, L"Hwnd", L"Provider", TRUE);
-        else
-            check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+        check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
 
         check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
         check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
@@ -5269,6 +5246,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
         VariantClear(&v);
     }
 
+    Provider.ignore_hwnd_prop = FALSE;
     ok_method_sequence(node_from_hwnd3, "node_from_hwnd3");
 
     hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
@@ -5350,6 +5328,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     SET_EXPECT(winproc_GETOBJECT_UiaRoot);
     /* Only sent on Win7. */
     SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    Provider_child.ignore_hwnd_prop = TRUE;
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
@@ -5366,11 +5345,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
 
         ok(get_nested_provider_desc(V_BSTR(&v), L"Main", TRUE, buf), "Failed to get nested provider description\n");
         check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
-        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
-            check_node_provider_desc(buf, L"Hwnd", L"Provider_child", TRUE);
-        else
-            check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
+        check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
 
         check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
         check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
@@ -5378,6 +5353,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
         VariantClear(&v);
     }
 
+    Provider_child.ignore_hwnd_prop = FALSE;
     ok_method_sequence(node_from_hwnd7, "node_from_hwnd7");
     UiaNodeRelease(node2);
 
@@ -5406,6 +5382,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     Provider.hwnd = hwnd;
     Provider.runtime_id[0] = Provider.runtime_id[1] = 0;
     Provider.frag_root = NULL;
+    Provider.ignore_hwnd_prop = TRUE;
     Provider.prov_opts = ProviderOptions_ServerSideProvider;
     hr = UiaNodeFromHandle(hwnd, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -5420,11 +5397,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
 
         ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
         check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
-        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
-            check_node_provider_desc(buf, L"Hwnd", L"Provider", TRUE);
-        else
-            check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+        check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
 
         check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
         check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
@@ -5432,6 +5405,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
         VariantClear(&v);
     }
 
+    Provider.ignore_hwnd_prop = FALSE;
     ok_method_sequence(node_from_hwnd3, "node_from_hwnd3");
 
     hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
@@ -5817,6 +5791,7 @@ static void test_UiaNodeFromHandle(const char *name)
     /* Test behavior from separate process. */
     Provider.prov_opts = ProviderOptions_ServerSideProvider;
     Provider.hwnd = hwnd;
+    Provider.ignore_hwnd_prop = TRUE;
     prov_root = &Provider.IRawElementProviderSimple_iface;
     sprintf(cmdline, "\"%s\" uiautomation UiaNodeFromHandle_client_proc", name);
     memset(&startup, 0, sizeof(startup));
@@ -5844,6 +5819,7 @@ static void test_UiaNodeFromHandle(const char *name)
     CloseHandle(proc.hProcess);
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+    Provider.ignore_hwnd_prop = FALSE;
     ok_method_sequence(node_from_hwnd8, "node_from_hwnd8");
 
     CoUninitialize();
