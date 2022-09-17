@@ -861,7 +861,7 @@ static inline UINT get_palette_entries( HPALETTE palette, UINT start, UINT count
 
 static inline LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendDriverMessage, FALSE );
 }
 
 static inline LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,

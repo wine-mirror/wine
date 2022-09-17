@@ -297,10 +297,11 @@ enum
     /* Wine-specific exports */
     NtUserClipboardWindowProc = 0x0300,
     NtUserGetDispatchParams   = 0x3001,
-    NtUserSpyGetMsgName       = 0x3002,
-    NtUserSpyEnter            = 0x0303,
-    NtUserSpyExit             = 0x0304,
-    NtUserWinProcResult       = 0x0305,
+    NtUserSendDriverMessage   = 0x3002,
+    NtUserSpyGetMsgName       = 0x3003,
+    NtUserSpyEnter            = 0x0304,
+    NtUserSpyExit             = 0x0305,
+    NtUserWinProcResult       = 0x0306,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
