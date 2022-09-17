@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-08-19 17:01+0300\n"
+"PO-Revision-Date: 2022-09-17 12:50+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -15248,7 +15248,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:89
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Eil. %ld, Stulp. %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
