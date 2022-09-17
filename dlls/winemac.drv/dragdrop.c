@@ -428,7 +428,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
     BOOL ret = FALSE;
     POINT pt;
 
-    TRACE("win %p x,y %d,%d effect %x pasteboard %s\n", params->hwnd, params->x, params->y,
+    TRACE("win %x x,y %d,%d effect %x pasteboard %s\n", params->hwnd, params->x, params->y,
           params->effect, wine_dbgstr_longlong(params->handle));
 
     pt.x = params->x;
@@ -511,7 +511,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
 NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size)
 {
     struct dnd_query_exited_params *params = arg;
-    HWND hwnd = params->hwnd;
+    HWND hwnd = UlongToHandle(params->hwnd);
     IDropTarget *droptarget;
 
     TRACE("win %p\n", hwnd);
@@ -542,7 +542,7 @@ NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size)
 NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
 {
     struct dnd_query_drag_params *params = arg;
-    HWND hwnd = params->hwnd;
+    HWND hwnd = UlongToHandle(params->hwnd);
     BOOL ret = FALSE;
     POINT pt;
     DWORD effect;

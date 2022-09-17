@@ -117,8 +117,8 @@ struct app_icon_entry
     UINT32 width;
     UINT32 height;
     UINT32 size;
-    void *png;
-    HICON icon;
+    UINT32 icon;
+    UINT64 png;
 };
 
 struct app_icon_result
@@ -130,7 +130,7 @@ struct app_icon_result
 /* macdrv_app_icon params */
 struct app_icon_params
 {
-    struct app_icon_result *result; /* FIXME: Use NtCallbackReturn instead */
+    UINT64 result; /* FIXME: Use NtCallbackReturn instead */
 };
 
 /* macdrv_app_quit_request params */
@@ -142,7 +142,7 @@ struct app_quit_request_params
 /* macdrv_dnd_query_drag params */
 struct dnd_query_drag_params
 {
-    HWND hwnd;
+    UINT32 hwnd;
     UINT32 effect;
     INT32 x;
     INT32 y;
@@ -152,7 +152,7 @@ struct dnd_query_drag_params
 /* macdrv_dnd_query_drop params */
 struct dnd_query_drop_params
 {
-    HWND hwnd;
+    UINT32 hwnd;
     UINT32 effect;
     INT32 x;
     INT32 y;
@@ -162,7 +162,7 @@ struct dnd_query_drop_params
 /* macdrv_dnd_query_exited params */
 struct dnd_query_exited_params
 {
-    HWND hwnd;
+    UINT32 hwnd;
 };
 
 /* macdrv_ime_query_char_rect result */
@@ -176,21 +176,26 @@ struct ime_query_char_rect_result
 /* macdrv_ime_query_char_rect params */
 struct ime_query_char_rect_params
 {
-    HWND hwnd;
-    void *data;
+    UINT32 hwnd;
     UINT32 location;
+    UINT64 data;
+    UINT64 result; /* FIXME: Use NtCallbackReturn instead */
     UINT32 length;
-    struct ime_query_char_rect_result *result; /* FIXME: Use NtCallbackReturn instead */
 };
 
 /* macdrv_ime_set_text params */
 struct ime_set_text_params
 {
-    HWND hwnd;
-    void *data;
+    UINT32 hwnd;
     UINT32 cursor_pos;
+    UINT64 data;
     UINT32 complete;
     WCHAR text[1];
 };
+
+static inline void *param_ptr(UINT64 param)
+{
+    return (void *)(UINT_PTR)param;
+}
 
 C_ASSERT(client_func_last <= NtUserDriverCallbackLast + 1);

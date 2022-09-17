@@ -1397,7 +1397,8 @@ NTSTATUS WINAPI macdrv_ime_set_text(void *arg, ULONG size)
 {
     struct ime_set_text_params *params = arg;
     ULONG length = (size - offsetof(struct ime_set_text_params, text)) / sizeof(WCHAR);
-    void *himc = params->data;
+    void *himc = param_ptr(params->data);
+    HWND hwnd = UlongToHandle(params->hwnd);
 
     if (!himc) himc = RealIMC(FROM_MACDRV);
 
@@ -1420,10 +1421,10 @@ NTSTATUS WINAPI macdrv_ime_set_text(void *arg, ULONG size)
             {
                 input.ki.wScan      = params->text[i];
                 input.ki.dwFlags    = KEYEVENTF_UNICODE;
-                __wine_send_input(params->hwnd, &input, NULL);
+                __wine_send_input(hwnd, &input, NULL);
 
                 input.ki.dwFlags    = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-                __wine_send_input(params->hwnd, &input, NULL);
+                __wine_send_input(hwnd, &input, NULL);
             }
         }
     }
@@ -1439,8 +1440,8 @@ NTSTATUS WINAPI macdrv_ime_set_text(void *arg, ULONG size)
 NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
 {
     struct ime_query_char_rect_params *params = arg;
-    struct ime_query_char_rect_result *result = params->result;
-    void *himc = params->data;
+    struct ime_query_char_rect_result *result = param_ptr(params->result);
+    void *himc = param_ptr(params->data);
     IMECHARPOSITION charpos;
     BOOL ret = FALSE;
 

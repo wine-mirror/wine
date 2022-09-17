@@ -245,7 +245,7 @@ static BOOL CALLBACK get_first_resource(HMODULE module, LPCWSTR type, LPWSTR nam
 static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
 {
     struct app_icon_params *params = arg;
-    struct app_icon_result *result = params->result;
+    struct app_icon_result *result = param_ptr(params->result);
     HRSRC res_info;
     HGLOBAL res_data;
     GRPICONDIR *icon_dir;
@@ -337,17 +337,18 @@ static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
 
             if (!memcmp(icon_bits, png_magic, sizeof(png_magic)))
             {
-                entry->png = icon_bits;
+                entry->png = (UINT_PTR)icon_bits;
                 entry->icon = 0;
                 result->count++;
             }
             else
             {
-                entry->icon = CreateIconFromResourceEx(icon_bits, icon_dir->idEntries[i].dwBytesInRes,
-                                                       TRUE, 0x00030000, width, height, 0);
-                if (entry->icon)
+                HICON icon = CreateIconFromResourceEx(icon_bits, icon_dir->idEntries[i].dwBytesInRes,
+                                                      TRUE, 0x00030000, width, height, 0);
+                if (icon)
                 {
-                    entry->png = NULL;
+                    entry->icon = HandleToUlong(icon);
+                    entry->png = 0;
                     result->count++;
                 }
                 else

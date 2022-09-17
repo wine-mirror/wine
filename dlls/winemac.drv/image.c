@@ -250,7 +250,7 @@ cleanup:
 CFArrayRef create_app_icon_images(void)
 {
     struct app_icon_result icons;
-    struct app_icon_params params = { .result = &icons };
+    struct app_icon_params params = { .result = (UINT_PTR)&icons };
     CFMutableArrayRef images = NULL;
     int i;
 
@@ -274,7 +274,7 @@ CFArrayRef create_app_icon_images(void)
 
         if (icon->png)
         {
-            CFDataRef data = CFDataCreate(NULL, icon->png, icon->size);
+            CFDataRef data = CFDataCreate(NULL, param_ptr(icon->png), icon->size);
             if (data)
             {
                 CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
@@ -289,8 +289,9 @@ CFArrayRef create_app_icon_images(void)
         }
         else
         {
-            cgimage = create_cgimage_from_icon(icon->icon, icon->width, icon->height);
-            NtUserDestroyCursor(icon->icon, 0);
+            HICON handle = UlongToHandle(icon->icon);
+            cgimage = create_cgimage_from_icon(handle, icon->width, icon->height);
+            NtUserDestroyCursor(handle, 0);
         }
 
         if (cgimage)
