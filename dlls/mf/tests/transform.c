@@ -1424,6 +1424,7 @@ static void test_wma_encoder(void)
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    IMFSample *input_sample, *output_sample;
     ULONG audio_data_len, wmaenc_data_len;
     const BYTE *audio_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -1434,7 +1435,6 @@ static void test_wma_encoder(void)
     IMFTransform *transform;
     DWORD status, length;
     HANDLE output_file;
-    IMFSample *sample;
     HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
@@ -1502,24 +1502,23 @@ static void test_wma_encoder(void)
     audio_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
     ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
 
-    sample = create_sample(audio_data, audio_data_len);
-    hr = IMFSample_SetSampleTime(sample, 0);
+    input_sample = create_sample(audio_data, audio_data_len);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
     ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(sample, 10000000);
+    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
     ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    ref = IMFSample_Release(sample);
+    ref = IMFSample_Release(input_sample);
     ok(ref <= 1, "Release returned %ld\n", ref);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
 
     resource = FindResourceW(NULL, L"wmaencdata.bin", (const WCHAR *)RT_RCDATA);
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
@@ -1538,16 +1537,16 @@ static void test_wma_encoder(void)
     {
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+        ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)) /* win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
         ok(status == 0, "got status %#lx\n", status);
-        hr = IMFSample_GetTotalLength(sample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         ok(length == wmaenc_block_size, "got length %lu\n", length);
         ok(wmaenc_data_len > i * wmaenc_block_size, "got %lu blocks\n", i);
-        check_sample(sample, wmaenc_data + i * wmaenc_block_size, output_file);
+        check_sample(output_sample, wmaenc_data + i * wmaenc_block_size, output_file);
         winetest_pop_context();
         i++;
     }
@@ -1555,22 +1554,21 @@ static void test_wma_encoder(void)
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
 
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
@@ -1696,6 +1694,7 @@ static void test_wma_decoder(void)
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
     IUnknown *unknown, *tmp_unknown, outer = {&test_unk_vtbl};
+    IMFSample *input_sample, *output_sample;
     ULONG wmadec_data_len, wmaenc_data_len;
     const BYTE *wmadec_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -1710,7 +1709,6 @@ static void test_wma_decoder(void)
     IMFTransform *transform;
     LONGLONG time, duration;
     HANDLE output_file;
-    IMFSample *sample;
     ULONG i, ret, ref;
     HRSRC resource;
     UINT32 value;
@@ -1834,22 +1832,22 @@ static void test_wma_decoder(void)
     wmaenc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
     ok(wmaenc_data_len % wmaenc_block_size == 0, "got length %lu\n", wmaenc_data_len);
 
-    sample = create_sample(wmaenc_data, wmaenc_block_size / 2);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(wmaenc_data, wmaenc_block_size / 2);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-    sample = create_sample(wmaenc_data, wmaenc_block_size + 1);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(wmaenc_data, wmaenc_block_size + 1);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-    sample = create_sample(wmaenc_data, wmaenc_block_size);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(wmaenc_data, wmaenc_block_size);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 1, "Release returned %lu\n", ret);
 
     /* As output_info.dwFlags doesn't have MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES
@@ -1867,10 +1865,10 @@ static void test_wma_decoder(void)
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
 
-    sample = create_sample(wmaenc_data, wmaenc_block_size);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(wmaenc_data, wmaenc_block_size);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
@@ -1886,10 +1884,8 @@ static void test_wma_decoder(void)
     status = 0xdeadbeef;
     memset(&output, 0, sizeof(output));
     output_info.cbSize = wmadec_block_size;
-    sample = create_sample(NULL, output_info.cbSize);
-    outputs[0].pSample = sample;
-    sample = create_sample(NULL, output_info.cbSize);
-    outputs[1].pSample = sample;
+    outputs[0].pSample = create_sample(NULL, output_info.cbSize);
+    outputs[1].pSample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 2, outputs, &status);
     ok(hr == E_INVALIDARG, "ProcessOutput returned %#lx\n", hr);
     ref = IMFSample_Release(outputs[0].pSample);
@@ -1911,9 +1907,8 @@ static void test_wma_decoder(void)
 
     status = 0xdeadbeef;
     output_info.cbSize = wmadec_block_size;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
 
     for (i = 0; i < 4; ++i)
@@ -1921,34 +1916,34 @@ static void test_wma_decoder(void)
         winetest_push_context("%lu", i);
 
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+        ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || output.dwStatus == 0 ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7) || output.dwStatus == 7) /* Win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
         ok(status == 0, "got status %#lx\n", status);
         value = 0xdeadbeef;
-        hr = IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value);
+        hr = IMFSample_GetUINT32(output_sample, &MFSampleExtension_CleanPoint, &value);
         ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
         ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
-        hr = IMFSample_GetTotalLength(sample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         flags = 0xdeadbeef;
-        hr = IMFSample_GetSampleFlags(sample, &flags);
+        hr = IMFSample_GetSampleFlags(output_sample, &flags);
         ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
         ok(flags == 0, "got flags %#lx\n", flags);
         time = 0xdeadbeef;
-        hr = IMFSample_GetSampleTime(sample, &time);
+        hr = IMFSample_GetSampleTime(output_sample, &time);
         ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
         ok(time == i * 928798, "got time %I64d\n", time);
         duration = 0xdeadbeef;
-        hr = IMFSample_GetSampleDuration(sample, &duration);
+        hr = IMFSample_GetSampleDuration(output_sample, &duration);
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         if (output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)))
         {
             ok(length == wmadec_block_size, "got length %lu\n", length);
             ok(duration == 928798, "got duration %I64d\n", duration);
-            check_sample_pcm16(sample, wmadec_data, output_file, TRUE);
+            check_sample_pcm16(output_sample, wmadec_data, output_file, TRUE);
             wmadec_data += wmadec_block_size;
             wmadec_data_len -= wmadec_block_size;
         }
@@ -1961,17 +1956,16 @@ static void test_wma_decoder(void)
             ok(duration == 464399, "got duration %I64d\n", duration);
 
             if (length == wmadec_block_size / 2)
-                check_sample_pcm16(sample, wmadec_data, output_file, FALSE);
+                check_sample_pcm16(output_sample, wmadec_data, output_file, FALSE);
             wmadec_data += length;
             wmadec_data_len -= length;
         }
-        ret = IMFSample_Release(sample);
+        ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
 
         status = 0xdeadbeef;
-        sample = create_sample(NULL, output_info.cbSize);
         memset(&output, 0, sizeof(output));
-        output.pSample = sample;
+        output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
 
         winetest_pop_context();
@@ -1986,36 +1980,35 @@ static void test_wma_decoder(void)
     CloseHandle(output_file);
 
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0 ||
             broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)) /* Win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    sample = create_sample(wmaenc_data, wmaenc_block_size);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(wmaenc_data, wmaenc_block_size);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     hr = CoCreateInstance( &CLSID_CWMADecMediaObject, &outer, CLSCTX_INPROC_SERVER, &IID_IUnknown,
@@ -2290,6 +2283,7 @@ static void test_h264_decoder(void)
     const BYTE *h264_encoded_data, *nv12_frame_data, *i420_frame_data;
     ULONG h264_encoded_data_len, nv12_frame_len, i420_frame_len;
     DWORD input_id, output_id, input_count, output_count;
+    IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
@@ -2302,7 +2296,6 @@ static void test_h264_decoder(void)
     IMFTransform *transform;
     ULONG i, ret, flags;
     HANDLE output_file;
-    IMFSample *sample;
     HRSRC resource;
     UINT32 value;
     BYTE *data;
@@ -2498,37 +2491,37 @@ static void test_h264_decoder(void)
     ok(status == 0, "got status %#lx\n", status);
 
     i = 0;
-    sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+    input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
     while (1)
     {
         status = 0;
         memset(&output, 0, sizeof(output));
-        output.pSample = create_sample(NULL, output_info.cbSize);
+        output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
         if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) break;
         ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
         ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
-        ok(!!output.pSample, "got pSample %p\n", output.pSample);
+        ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
         ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
         ok(status == 0, "got status %#lx\n", status);
-        hr = IMFSample_GetTotalLength(output.pSample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         ok(length == 0, "got length %lu\n", length);
-        ret = IMFSample_Release(output.pSample);
+        ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
 
-        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-        ret = IMFSample_Release(sample);
+        ret = IMFSample_Release(input_sample);
         ok(ret <= 1, "Release returned %lu\n", ret);
-        sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+        input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
 
-        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-        ret = IMFSample_Release(sample);
+        ret = IMFSample_Release(input_sample);
         ok(ret <= 1, "Release returned %lu\n", ret);
-        sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+        input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
         i++;
 
         hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
@@ -2540,16 +2533,16 @@ static void test_h264_decoder(void)
     ok(h264_encoded_data_len == 1180, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
-    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE,
             "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS,
             "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(output.pSample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(output.pSample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     flags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
@@ -2596,42 +2589,43 @@ static void test_h264_decoder(void)
 
     status = 0;
     memset(&output, 0, sizeof(output));
-    output.pSample = create_sample(NULL, nv12_frame_len);
+    output.pSample = output_sample = create_sample(NULL, nv12_frame_len);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
-    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
 
-    hr = IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
+    hr = IMFSample_GetUINT32(output_sample, &MFSampleExtension_CleanPoint, &value);
+    ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
+    ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
 
     count = 0xdeadbeef;
-    hr = IMFSample_GetBufferCount(output.pSample, &count);
+    hr = IMFSample_GetBufferCount(output_sample, &count);
     ok(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
     ok(count == 1, "got count %#lx\n", count);
 
     flags = 0xdeadbeef;
-    hr = IMFSample_GetSampleFlags(output.pSample, &flags);
+    hr = IMFSample_GetSampleFlags(output_sample, &flags);
     ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
     ok(flags == 0, "got flags %#lx\n", flags);
 
     time = 0xdeadbeef;
-    hr = IMFSample_GetSampleTime(output.pSample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     ok(time == 0, "got time %I64d\n", time);
 
     /* doesn't matter what frame rate we've selected, duration is defined by the stream */
     duration = 0xdeadbeef;
-    hr = IMFSample_GetSampleDuration(output.pSample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
     /* Win8 and before pad the data with garbage instead of original
      * buffer data, make sure it's consistent.  */
-    hr = IMFSample_ConvertToContiguousBuffer(output.pSample, &media_buffer);
+    hr = IMFSample_ConvertToContiguousBuffer(output_sample, &media_buffer);
     ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
     hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
@@ -2649,9 +2643,9 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "Unlock returned %#lx\n", hr);
     IMFMediaBuffer_Release(media_buffer);
 
-    check_sample(output.pSample, nv12_frame_data, output_file);
+    check_sample(output_sample, nv12_frame_data, output_file);
 
-    ret = IMFSample_Release(output.pSample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     trace("created %s\n", debugstr_w(output_path));
@@ -2679,32 +2673,32 @@ static void test_h264_decoder(void)
 
     status = 0;
     memset(&output, 0, sizeof(output));
-    output.pSample = create_sample(NULL, actual_width * actual_height * 2);
+    output.pSample = output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
 
     while (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
     {
-        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-        ret = IMFSample_Release(sample);
+        ret = IMFSample_Release(input_sample);
         ok(ret <= 1, "Release returned %lu\n", ret);
-        sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+        input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
         todo_wine_if(hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     }
 
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
-    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(output.pSample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(output.pSample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     GetTempPathW(ARRAY_SIZE(output_path), output_path);
@@ -2720,28 +2714,28 @@ static void test_h264_decoder(void)
 
     status = 0;
     memset(&output, 0, sizeof(output));
-    output.pSample = create_sample(NULL, actual_width * actual_height * 2);
+    output.pSample = output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
-    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
 
-    hr = IMFSample_GetSampleTime(output.pSample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     todo_wine_if(time == 1334666)  /* when VA-API plugin is used */
     ok(time - 333666 <= 2, "got time %I64d\n", time);
 
     duration = 0xdeadbeef;
-    hr = IMFSample_GetSampleDuration(output.pSample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
     /* Win8 and before pad the data with garbage instead of original
      * buffer data, make sure it's consistent.  */
-    hr = IMFSample_ConvertToContiguousBuffer(output.pSample, &media_buffer);
+    hr = IMFSample_ConvertToContiguousBuffer(output_sample, &media_buffer);
     ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
     hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
@@ -2765,9 +2759,9 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "Unlock returned %#lx\n", hr);
     IMFMediaBuffer_Release(media_buffer);
 
-    check_sample(output.pSample, i420_frame_data, output_file);
+    check_sample(output_sample, i420_frame_data, output_file);
 
-    ret = IMFSample_Release(output.pSample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     trace("created %s\n", debugstr_w(output_path));
@@ -2775,21 +2769,21 @@ static void test_h264_decoder(void)
 
     status = 0;
     memset(&output, 0, sizeof(output));
-    output.pSample = create_sample(NULL, actual_width * actual_height * 2);
+    output.pSample = output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     todo_wine_if(hr == S_OK)  /* when VA-API plugin is used */
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
-    ok(!!output.pSample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
-    ret = IMFSample_Release(output.pSample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
 failed:
@@ -2907,6 +2901,7 @@ static void test_audio_convert(void)
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
     static const ULONG audioconv_block_size = 0x4000;
     ULONG audio_data_len, audioconv_data_len;
+    IMFSample *input_sample, *output_sample;
     const BYTE *audio_data, *audioconv_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
@@ -2917,7 +2912,6 @@ static void test_audio_convert(void)
     IMFTransform *transform;
     DWORD length, status;
     HANDLE output_file;
-    IMFSample *sample;
     HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
@@ -3049,24 +3043,23 @@ static void test_audio_convert(void)
     audio_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
     ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
 
-    sample = create_sample(audio_data, audio_data_len);
-    hr = IMFSample_SetSampleTime(sample, 0);
+    input_sample = create_sample(audio_data, audio_data_len);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
     ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(sample, 10000000);
+    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
     ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, audioconv_block_size);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, audioconv_block_size);
 
     resource = FindResourceW(NULL, L"audioconvdata.bin", (const WCHAR *)RT_RCDATA);
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
@@ -3085,7 +3078,7 @@ static void test_audio_convert(void)
     {
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+        ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || output.dwStatus == 0 ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|6) || output.dwStatus == 6) /* win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
@@ -3096,17 +3089,17 @@ static void test_audio_convert(void)
             break;
         }
 
-        hr = IMFSample_GetSampleTime(sample, &time);
+        hr = IMFSample_GetSampleTime(output_sample, &time);
         ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
         ok(time == i * 928798, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(sample, &duration);
+        hr = IMFSample_GetSampleDuration(output_sample, &duration);
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         ok(duration == 928798, "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(sample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         ok(length == audioconv_block_size, "got length %lu\n", length);
         ok(audioconv_data_len > audioconv_block_size, "got remaining length %lu\n", audioconv_data_len);
-        check_sample_pcm16(sample, audioconv_data, output_file, FALSE);
+        check_sample_pcm16(output_sample, audioconv_data, output_file, FALSE);
         audioconv_data_len -= audioconv_block_size;
         audioconv_data += audioconv_block_size;
 
@@ -3114,28 +3107,32 @@ static void test_audio_convert(void)
         i++;
     }
 
-    hr = IMFSample_GetSampleTime(sample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     ok(time == i * 928798, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(sample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     todo_wine
     ok(duration == 897506, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     todo_wine
     ok(length == 15832, "got length %lu\n", length);
     ok(audioconv_data_len == 16084, "got remaining length %lu\n", audioconv_data_len);
-    check_sample_pcm16(sample, audioconv_data, output_file, FALSE);
+    check_sample_pcm16(output_sample, audioconv_data, output_file, FALSE);
     audioconv_data_len -= length;
     audioconv_data += length;
 
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    status = 0xdeadbeef;
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, audioconv_block_size);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     todo_wine
     ok(hr == S_OK || broken(hr == MF_E_TRANSFORM_NEED_MORE_INPUT) /* win7 */, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     todo_wine
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || broken(output.dwStatus == 0) /* win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
@@ -3143,41 +3140,40 @@ static void test_audio_convert(void)
 
     if (hr == S_OK)
     {
-        hr = IMFSample_GetSampleTime(sample, &time);
+        hr = IMFSample_GetSampleTime(output_sample, &time);
         ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
         todo_wine
         ok(time == 10185486, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(sample, &duration);
+        hr = IMFSample_GetSampleDuration(output_sample, &duration);
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         todo_wine
         ok(duration == 14286, "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(sample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         todo_wine
         ok(length == audioconv_data_len, "got length %lu\n", length);
         if (length == audioconv_data_len)
-            check_sample_pcm16(sample, audioconv_data, output_file, FALSE);
+            check_sample_pcm16(output_sample, audioconv_data, output_file, FALSE);
     }
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
 
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, audioconv_block_size);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, audioconv_block_size);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
@@ -3357,6 +3353,7 @@ static void test_color_convert(void)
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_I420};
     ULONG nv12frame_data_len, rgb32_data_len;
     const BYTE *nv12frame_data, *rgb32_data;
+    IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
@@ -3366,7 +3363,6 @@ static void test_color_convert(void)
     IMFTransform *transform;
     DWORD length, status;
     HANDLE output_file;
-    IMFSample *sample;
     HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
@@ -3477,18 +3473,18 @@ static void test_color_convert(void)
     nv12frame_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
-    sample = create_sample(nv12frame_data, nv12frame_data_len);
-    hr = IMFSample_SetSampleTime(sample, 0);
+    input_sample = create_sample(nv12frame_data, nv12frame_data_len);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
     ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(sample, 10000000);
+    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
     ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
     resource = FindResourceW(NULL, L"rgb32frame.bin", (const WCHAR *)RT_RCDATA);
@@ -3504,47 +3500,45 @@ static void test_color_convert(void)
     ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0 || broken(output.dwStatus == 6) /* win7 */, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
 
-    hr = IMFSample_GetSampleTime(sample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     ok(time == 0, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(sample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration == 10000000, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == output_info.cbSize, "got length %lu\n", length);
-    check_sample_rgb32(sample, rgb32_data, output_file);
+    check_sample_rgb32(output_sample, rgb32_data, output_file);
     rgb32_data_len -= output_info.cbSize;
     rgb32_data += output_info.cbSize;
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
 
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
@@ -3721,15 +3715,14 @@ static void test_video_processor(void)
     DWORD input_count, output_count, input_id, output_id, flags;
     DWORD input_min, input_max, output_min, output_max, i, j, k;
     ULONG nv12frame_data_len, rgb32_data_len;
+    IMFSample *input_sample, *output_sample;
     IMFMediaType *media_type, *media_type2;
     IMFAttributes *attributes, *attributes2;
     const BYTE *nv12frame_data, *rgb32_data;
-    MFT_OUTPUT_DATA_BUFFER output_buffer;
     const GUID *expect_available_inputs;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
-    IMFSample *sample, *sample2;
     WCHAR output_path[MAX_PATH];
     LONGLONG time, duration;
     IMFTransform *transform;
@@ -3959,75 +3952,75 @@ todo_wine {
     ok(output_info.cbSize > 0, "Unexpected size %lu.\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "Unexpected alignment %lu.\n", output_info.cbAlignment);
 
-    hr = MFCreateSample(&sample);
+    hr = MFCreateSample(&input_sample);
     ok(hr == S_OK, "Failed to create a sample, hr %#lx.\n", hr);
 
-    hr = MFCreateSample(&sample2);
+    hr = MFCreateSample(&output_sample);
     ok(hr == S_OK, "Failed to create a sample, hr %#lx.\n", hr);
 
-    memset(&output_buffer, 0, sizeof(output_buffer));
-    output_buffer.pSample = sample;
+    memset(&output, 0, sizeof(output));
+    output.pSample = output_sample;
     flags = 0;
-    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &flags);
     todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#lx.\n", hr);
-    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output_buffer.dwStatus);
+    ok(output.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output.dwStatus);
     ok(flags == 0, "Unexpected status %#lx.\n", flags);
 
-    hr = IMFTransform_ProcessInput(transform, 0, sample2, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     todo_wine
     ok(hr == S_OK, "Failed to push a sample, hr %#lx.\n", hr);
 
-    hr = IMFTransform_ProcessInput(transform, 0, sample2, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     todo_wine
     ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#lx.\n", hr);
 
-    memset(&output_buffer, 0, sizeof(output_buffer));
-    output_buffer.pSample = sample;
+    memset(&output, 0, sizeof(output));
+    output.pSample = output_sample;
     flags = 0;
-    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &flags);
     todo_wine
     ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#lx.\n", hr);
-    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output_buffer.dwStatus);
+    ok(output.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output.dwStatus);
     ok(flags == 0, "Unexpected status %#lx.\n", flags);
 
-    hr = IMFSample_SetSampleTime(sample2, 0);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
     ok(hr == S_OK, "Failed to set sample time, hr %#lx.\n", hr);
-    memset(&output_buffer, 0, sizeof(output_buffer));
-    output_buffer.pSample = sample;
+    memset(&output, 0, sizeof(output));
+    output.pSample = output_sample;
     flags = 0;
-    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &flags);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output_buffer.dwStatus);
+    ok(output.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output.dwStatus);
     ok(flags == 0, "Unexpected status %#lx.\n", flags);
 
     hr = MFCreateMemoryBuffer(1024 * 1024, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
 
-    hr = IMFSample_AddBuffer(sample2, buffer);
+    hr = IMFSample_AddBuffer(input_sample, buffer);
     ok(hr == S_OK, "Failed to add a buffer, hr %#lx.\n", hr);
 
-    hr = IMFSample_AddBuffer(sample, buffer);
+    hr = IMFSample_AddBuffer(output_sample, buffer);
     ok(hr == S_OK, "Failed to add a buffer, hr %#lx.\n", hr);
 
-    memset(&output_buffer, 0, sizeof(output_buffer));
-    output_buffer.pSample = sample;
+    memset(&output, 0, sizeof(output));
+    output.pSample = output_sample;
     flags = 0;
-    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &flags);
     todo_wine
     ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Failed to get output buffer, hr %#lx.\n", hr);
-    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output_buffer.dwStatus);
+    ok(output.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output.dwStatus);
     ok(flags == 0, "Unexpected status %#lx.\n", flags);
 
     if (SUCCEEDED(hr))
     {
-        memset(&output_buffer, 0, sizeof(output_buffer));
-        output_buffer.pSample = sample;
+        memset(&output, 0, sizeof(output));
+        output.pSample = output_sample;
         flags = 0;
-        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &flags);
         ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#lx.\n", hr);
-        ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output_buffer.dwStatus);
+        ok(output.dwStatus == 0, "Unexpected buffer status, %#lx.\n", output.dwStatus);
         ok(flags == 0, "Unexpected status %#lx.\n", flags);
     }
 
@@ -4036,9 +4029,9 @@ todo_wine {
 
     ref = IMFMediaType_Release(media_type);
     ok(ref == 0, "Release returned %ld\n", ref);
-    ref = IMFSample_Release(sample2);
+    ref = IMFSample_Release(input_sample);
     ok(ref == 0, "Release returned %ld\n", ref);
-    ref = IMFSample_Release(sample);
+    ref = IMFSample_Release(output_sample);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaBuffer_Release(buffer);
     ok(ref == 0, "Release returned %ld\n", ref);
@@ -4192,18 +4185,18 @@ todo_wine {
     nv12frame_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
-    sample = create_sample(nv12frame_data, nv12frame_data_len);
-    hr = IMFSample_SetSampleTime(sample, 0);
+    input_sample = create_sample(nv12frame_data, nv12frame_data_len);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
     ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(sample, 10000000);
+    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
     ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
     resource = FindResourceW(NULL, L"rgb32frame-vp.bin", (const WCHAR *)RT_RCDATA);
@@ -4219,9 +4212,8 @@ todo_wine {
     ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, rgb32_data_len);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, rgb32_data_len);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
     if (hr != S_OK)
@@ -4230,21 +4222,21 @@ todo_wine {
         CloseHandle(output_file);
         goto skip_output;
     }
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0 || broken(output.dwStatus == 6) /* win7 */, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0xdeadbeef, "got status %#lx\n", status);
 
-    hr = IMFSample_GetSampleTime(sample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     ok(time == 0, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(sample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration == 10000000, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == output_info.cbSize, "got length %lu\n", length);
 
-    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer);
+    hr = IMFSample_ConvertToContiguousBuffer(output_sample, &buffer);
     ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &ptr, NULL, &length);
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
@@ -4259,31 +4251,30 @@ todo_wine {
     if (tmp == 0x00)
         win_skip("Frame got resized, skipping output comparison\n");
     else if (tmp == 0xcd) /* Wine doesn't flip the frame, yet */
-        check_sample_rgb32(sample, rgb32_data, output_file);
+        check_sample_rgb32(output_sample, rgb32_data, output_file);
     rgb32_data_len -= output_info.cbSize;
     rgb32_data += output_info.cbSize;
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
 
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, output_info.cbSize);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0xdeadbeef, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
 
 skip_output:
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
@@ -4419,6 +4410,7 @@ static void test_mp3_decoder(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_MP3};
     static const ULONG mp3dec_block_size = 0x1200;
+    IMFSample *input_sample, *output_sample;
     ULONG mp3dec_data_len, mp3enc_data_len;
     const BYTE *mp3dec_data, *mp3enc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -4430,7 +4422,6 @@ static void test_mp3_decoder(void)
     LONGLONG time, duration;
     DWORD status, length;
     HANDLE output_file;
-    IMFSample *sample;
     HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
@@ -4554,22 +4545,21 @@ static void test_mp3_decoder(void)
     mp3enc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
     ok(mp3enc_data_len == 6295, "got length %lu\n", mp3enc_data_len);
 
-    sample = create_sample(mp3enc_data, mp3enc_data_len);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(mp3enc_data, mp3enc_data_len);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 1, "Release returned %lu\n", ret);
 
-    sample = create_sample(mp3enc_data, mp3enc_data_len);
-    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    input_sample = create_sample(mp3enc_data, mp3enc_data_len);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, mp3dec_block_size);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, mp3dec_block_size);
 
     resource = FindResourceW(NULL, L"mp3decdata.bin", (const WCHAR *)RT_RCDATA);
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
@@ -4588,25 +4578,25 @@ static void test_mp3_decoder(void)
 
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || output.dwStatus == 0 ||
             broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7) || output.dwStatus == 7) /* win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
 
-    hr = IMFSample_GetSampleTime(sample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     ok(time == 0, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(sample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration == 282993 || broken(duration == 522449) /* win8 */ || broken(duration == 261224) /* win7 */,
             "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0x9c0 || broken(length == mp3dec_block_size) /* win8 */ || broken(length == 0x900) /* win7 */,
             "got length %lu\n", length);
     ok(mp3dec_data_len > length, "got remaining length %lu\n", mp3dec_data_len);
-    if (length == 0x9c0) check_sample_pcm16(sample, mp3dec_data, output_file, FALSE);
+    if (length == 0x9c0) check_sample_pcm16(output_sample, mp3dec_data, output_file, FALSE);
     mp3dec_data_len -= 0x9c0;
     mp3dec_data += 0x9c0;
 
@@ -4615,7 +4605,7 @@ static void test_mp3_decoder(void)
     {
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+        ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || output.dwStatus == 0 ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7) || output.dwStatus == 7) /* win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
@@ -4626,20 +4616,20 @@ static void test_mp3_decoder(void)
             break;
         }
 
-        hr = IMFSample_GetSampleTime(sample, &time);
+        hr = IMFSample_GetSampleTime(output_sample, &time);
         ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
         ok(time == i, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(sample, &duration);
+        hr = IMFSample_GetSampleDuration(output_sample, &duration);
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         ok(duration == 522449 || broken(261225 - duration <= 1) /* win7 */,
                 "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(sample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         ok(length == mp3dec_block_size || broken(length == 0x900) /* win7 */,
                 "got length %lu\n", length);
         ok(mp3dec_data_len > length || broken(mp3dec_data_len == 2304 || mp3dec_data_len == 0) /* win7 */,
                 "got remaining length %lu\n", mp3dec_data_len);
-        if (length == mp3dec_block_size) check_sample_pcm16(sample, mp3dec_data, output_file, FALSE);
+        if (length == mp3dec_block_size) check_sample_pcm16(output_sample, mp3dec_data, output_file, FALSE);
         mp3dec_data += min(mp3dec_data_len, length);
         mp3dec_data_len -= min(mp3dec_data_len, length);
 
@@ -4647,28 +4637,30 @@ static void test_mp3_decoder(void)
         i += duration;
     }
 
-    hr = IMFSample_GetSampleTime(sample, &time);
+    hr = IMFSample_GetSampleTime(output_sample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     ok(time == i || broken(time == i - duration) /* win7 */, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(sample, &duration);
+    hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     todo_wine
     ok(duration == 522449 || broken(261225 - duration <= 1) /* win7 */, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     todo_wine
     ok(length == mp3dec_block_size || broken(length == 0) /* win7 */, "got length %lu\n", length);
     ok(mp3dec_data_len == mp3dec_block_size || broken(mp3dec_data_len == 0) /* win7 */, "got remaining length %lu\n", mp3dec_data_len);
-    check_sample_pcm16(sample, mp3dec_data, output_file, FALSE);
+    check_sample_pcm16(output_sample, mp3dec_data, output_file, FALSE);
     mp3dec_data_len -= length;
     mp3dec_data += length;
 
+    IMFSample_Release(output_sample);
+
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, mp3dec_block_size);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     todo_wine
     ok(hr == S_OK || broken(hr == MF_E_TRANSFORM_NEED_MORE_INPUT) /* win7 */, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     todo_wine
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || broken(output.dwStatus == 0) /* win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
@@ -4676,41 +4668,40 @@ static void test_mp3_decoder(void)
 
     if (hr == S_OK)
     {
-        hr = IMFSample_GetSampleTime(sample, &time);
+        hr = IMFSample_GetSampleTime(output_sample, &time);
         ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
         todo_wine
         ok(time == 10185486, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(sample, &duration);
+        hr = IMFSample_GetSampleDuration(output_sample, &duration);
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         todo_wine
         ok(duration == 14286, "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(sample, &length);
+        hr = IMFSample_GetTotalLength(output_sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         todo_wine
         ok(length == mp3dec_data_len, "got length %lu\n", length);
         if (length == mp3dec_data_len)
-            check_sample_pcm16(sample, mp3dec_data, output_file, FALSE);
+            check_sample_pcm16(output_sample, mp3dec_data, output_file, FALSE);
     }
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
 
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     status = 0xdeadbeef;
-    sample = create_sample(NULL, mp3dec_block_size);
     memset(&output, 0, sizeof(output));
-    output.pSample = sample;
+    output.pSample = output_sample = create_sample(NULL, mp3dec_block_size);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    hr = IMFSample_GetTotalLength(sample, &length);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-    ret = IMFSample_Release(sample);
+    ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMFTransform_Release(transform);
