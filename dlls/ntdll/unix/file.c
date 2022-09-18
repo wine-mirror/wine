@@ -408,6 +408,21 @@ static int xattr_get( const char *path, const char *name, void *value, size_t si
 }
 
 
+static int xattr_fget( int filedes, const char *name, void *value, size_t size )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return fgetxattr( filedes, name, value, size, 0, 0 );
+# else
+    return fgetxattr( filedes, name, value, size );
+# endif
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+
 /* get space from the current directory data buffer, allocating a new one if necessary */
 static void *get_dir_data_space( struct dir_data *data, unsigned int size )
 {
@@ -1536,7 +1551,8 @@ static BOOL fd_is_mount_point( int fd, const struct stat *st )
 /* get the stat info and file attributes for a file (by file descriptor) */
 static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULONG *attr )
 {
-    int ret;
+    char attr_data[65];
+    int attr_len, ret;
 
     *attr = 0;
     ret = fstat( fd, st );
@@ -1545,6 +1561,14 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
     /* consider mount points to be reparse points (IO_REPARSE_TAG_MOUNT_POINT) */
     if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, st ))
         *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
+
+    attr_len = xattr_fget( fd, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
+    if (attr_len != -1)
+        *attr |= parse_samba_dos_attrib_data( attr_data, attr_len );
+    else if (errno != ENODATA && errno != ENOTSUP)
+        WARN( "Failed to get extended attribute " SAMBA_XATTR_DOS_ATTRIB ". errno %d (%s)\n",
+              errno, strerror( errno ) );
+
     return ret;
 }
 
