@@ -49,6 +49,8 @@ DEFINE_GUID(MFAudioFormat_RAW_AAC1,WAVE_FORMAT_RAW_AAC1,0x0000,0x0010,0x80,0x00,
 DEFINE_GUID(MFVideoFormat_ABGR32,0x00000020,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_P208,0x38303250,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 
+DEFINE_GUID(mft_output_sample_incomplete,0xffffff,0xffff,0xffff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
+
 static void load_resource(const WCHAR *filename, const BYTE **data, DWORD *length)
 {
     HRSRC resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
@@ -325,8 +327,8 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     static const DWORD expect_flags = MFT_OUTPUT_DATA_BUFFER_INCOMPLETE | MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE
             | MFT_OUTPUT_DATA_BUFFER_STREAM_END | MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
     MFT_OUTPUT_DATA_BUFFER output[2];
+    HRESULT hr, ret;
     DWORD status;
-    HRESULT ret;
 
     status = 0;
     memset(&output, 0, sizeof(output));
@@ -348,7 +350,19 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
         ok_(__FILE__, line)(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS,
                 "got status %#lx\n", status);
     else
+    {
+        if (*output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE)
+        {
+            hr = IMFSample_SetUINT32(output_sample, &mft_output_sample_incomplete, 1);
+            ok_(__FILE__, line)(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
+        }
+        else
+        {
+            hr = IMFSample_DeleteItem(output_sample, &mft_output_sample_incomplete);
+            ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
+        }
         ok_(__FILE__, line)(status == 0, "got status %#lx\n", status);
+    }
 
     return ret;
 }
@@ -463,9 +477,13 @@ struct buffer_desc
 
 struct sample_desc
 {
+    const struct attribute_desc *attributes;
+    LONGLONG sample_time;
+    LONGLONG sample_duration;
     DWORD buffer_count;
     const struct buffer_desc *buffers;
     BOOL todo_length;
+    LONGLONG todo_time;
 };
 
 typedef void (*enum_mf_media_buffers_cb)(IMFMediaBuffer *buffer, const struct buffer_desc *desc, void *context);
@@ -564,14 +582,38 @@ static DWORD check_mf_sample_(int line, IMFSample *sample, const struct sample_d
         const BYTE **expect_data, DWORD *expect_data_len)
 {
     struct check_mf_sample_context ctx = {.data = *expect_data, .data_len = *expect_data_len, .line = line};
-    DWORD buffer_count, total_length;
+    DWORD buffer_count, total_length, sample_flags;
+    LONGLONG timestamp;
     HRESULT hr;
+
+    if (expect->attributes)
+        check_attributes_(line, (IMFAttributes *)sample, expect->attributes, -1);
 
     buffer_count = 0xdeadbeef;
     hr = IMFSample_GetBufferCount(sample, &buffer_count);
     ok_(__FILE__, line)(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
     ok_(__FILE__, line)(buffer_count == expect->buffer_count,
             "got %lu buffers\n", buffer_count);
+
+    sample_flags = 0xdeadbeef;
+    hr = IMFSample_GetSampleFlags(sample, &sample_flags);
+    ok_(__FILE__, line)(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
+    ok_(__FILE__, line)(sample_flags == 0,
+            "got sample flags %#lx\n", sample_flags);
+
+    timestamp = 0xdeadbeef;
+    hr = IMFSample_GetSampleTime(sample, &timestamp);
+    ok_(__FILE__, line)(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    todo_wine_if(expect->todo_time && timestamp == expect->todo_time)
+    ok_(__FILE__, line)(llabs(timestamp - expect->sample_time) <= 50,
+            "got sample time %I64d\n", timestamp);
+
+    timestamp = 0xdeadbeef;
+    hr = IMFSample_GetSampleDuration(sample, &timestamp);
+    ok_(__FILE__, line)(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+    todo_wine_if(expect->todo_length)
+    ok_(__FILE__, line)(llabs(timestamp - expect->sample_duration) <= 1,
+            "got sample duration %I64d\n", timestamp);
 
     enum_mf_media_buffers(sample, expect, check_mf_sample_buffer, &ctx);
 
@@ -1613,9 +1655,27 @@ static void test_wma_encoder(void)
     {
         {.length = wmaenc_block_size},
     };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(mft_output_sample_incomplete, 1),
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
     const struct sample_desc output_sample_desc[] =
     {
         {
+            .attributes = output_sample_attributes,
+            .sample_time = 0, .sample_duration = 3250794,
+            .buffer_count = 1, .buffers = output_buffer_desc,
+        },
+        {
+            .attributes = output_sample_attributes,
+            .sample_time = 3250794, .sample_duration = 3715193,
+            .buffer_count = 1, .buffers = output_buffer_desc,
+        },
+        {
+            .attributes = output_sample_attributes,
+            .sample_time = 6965986, .sample_duration = 3366893,
             .buffer_count = 1, .buffers = output_buffer_desc,
         },
     };
@@ -1725,9 +1785,9 @@ static void test_wma_encoder(void)
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
         ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-        ret = check_mf_sample(output_sample, output_sample_desc, &wmaenc_data, &wmaenc_data_len);
+        ret = check_mf_sample(output_sample, output_sample_desc + i, &wmaenc_data, &wmaenc_data_len);
         ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, output_sample_desc, output_file);
+        dump_mf_sample(output_sample, output_sample_desc + i, output_file);
         winetest_pop_context();
     }
     ok(wmaenc_data_len == 0, "missing %#lx bytes\n", wmaenc_data_len);
@@ -1874,13 +1934,39 @@ static void test_wma_decoder(void)
         {.length = wmadec_block_size, .compare = compare_pcm16},
         {.length = wmadec_block_size / 2, .compare = compare_pcm16, .todo_length = TRUE},
     };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(mft_output_sample_incomplete, 1),
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
+    const struct attribute_desc output_sample_attributes_todo[] =
+    {
+        ATTR_UINT32(mft_output_sample_incomplete, 1, .todo = TRUE),
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
     const struct sample_desc output_sample_desc[] =
     {
         {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 0, .sample_duration = 928798,
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
         },
         {
-            .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 928798, .sample_duration = 928798,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0,
+        },
+        {
+            .attributes = output_sample_attributes_todo + 0,
+            .sample_time = 1857596, .sample_duration = 928798,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0,
+        },
+        {
+            .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
+            .sample_time = 2786394, .sample_duration = 464399,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE,
         },
     };
 
@@ -1891,17 +1977,15 @@ static void test_wma_decoder(void)
     ULONG wmadec_data_len, wmaenc_data_len;
     const BYTE *wmadec_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
-    DWORD flags, length, output_status;
     MFT_INPUT_STREAM_INFO input_info;
+    DWORD length, output_status;
     WCHAR output_path[MAX_PATH];
     IMediaObject *media_object;
     IPropertyBag *property_bag;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    LONGLONG time, duration;
     HANDLE output_file;
     ULONG i, ret, ref;
-    UINT32 value;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -2074,44 +2158,24 @@ static void test_wma_decoder(void)
     for (i = 0; i < 4; ++i)
     {
         winetest_push_context("%lu", i);
-
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        value = 0xdeadbeef;
-        hr = IMFSample_GetUINT32(output_sample, &MFSampleExtension_CleanPoint, &value);
-        ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
-        ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
-        flags = 0xdeadbeef;
-        hr = IMFSample_GetSampleFlags(output_sample, &flags);
-        ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
-        ok(flags == 0, "got flags %#lx\n", flags);
-        time = 0xdeadbeef;
-        hr = IMFSample_GetSampleTime(output_sample, &time);
-        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-        ok(time == i * 928798, "got time %I64d\n", time);
-        duration = 0xdeadbeef;
-        hr = IMFSample_GetSampleDuration(output_sample, &duration);
-        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-
-        if (output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE)
+        if (!strcmp(winetest_platform, "wine") && i == 2 && (output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE))
+            todo_wine ok(0, "skipping bogus sample check\n");
+        else if (output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE)
         {
             ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-            ok(duration == 928798, "got duration %I64d\n", duration);
-            ret = check_mf_sample(output_sample, output_sample_desc + 0, &wmadec_data, &wmadec_data_len);
+            ret = check_mf_sample(output_sample, output_sample_desc + i, &wmadec_data, &wmadec_data_len);
             todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
             ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-            dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
+            dump_mf_sample(output_sample, output_sample_desc + i, output_file);
         }
         else
         {
             ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-            /* FFmpeg doesn't seem to decode WMA buffers in the same way as native */
-            todo_wine
-            ok(duration == 464399, "got duration %I64d\n", duration);
-
-            ret = check_mf_sample(output_sample, output_sample_desc + 1, &wmadec_data, &wmadec_data_len);
+            ret = check_mf_sample(output_sample, output_sample_desc + i, &wmadec_data, &wmadec_data_len);
             todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
             ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-            dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
+            dump_mf_sample(output_sample, output_sample_desc + i, output_file);
         }
         ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
@@ -2421,6 +2485,11 @@ static void test_h264_decoder(void)
         },
     };
 
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = actual_width * actual_height * 3 / 2,
@@ -2428,6 +2497,8 @@ static void test_h264_decoder(void)
     };
     const struct sample_desc output_sample_desc_nv12 =
     {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 333667,
         .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
     };
     const struct buffer_desc output_buffer_desc_i420 =
@@ -2437,6 +2508,8 @@ static void test_h264_decoder(void)
     };
     const struct sample_desc output_sample_desc_i420 =
     {
+        .attributes = output_sample_attributes,
+        .sample_time = 333667, .sample_duration = 333667, .todo_time = 1334666 /* with VA-API */,
         .buffer_count = 1, .buffers = &output_buffer_desc_i420,
     };
 
@@ -2452,11 +2525,9 @@ static void test_h264_decoder(void)
     WCHAR output_path[MAX_PATH];
     IMFAttributes *attributes;
     IMFMediaType *media_type;
-    LONGLONG time, duration;
     IMFTransform *transform;
     ULONG i, ret, flags;
     HANDLE output_file;
-    UINT32 value;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -2726,26 +2797,6 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
 
-    hr = IMFSample_GetUINT32(output_sample, &MFSampleExtension_CleanPoint, &value);
-    ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
-    ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
-
-    flags = 0xdeadbeef;
-    hr = IMFSample_GetSampleFlags(output_sample, &flags);
-    ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
-    ok(flags == 0, "got flags %#lx\n", flags);
-
-    time = 0xdeadbeef;
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    ok(time == 0, "got time %I64d\n", time);
-
-    /* doesn't matter what frame rate we've selected, duration is defined by the stream */
-    duration = 0xdeadbeef;
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
-
     ret = check_mf_sample(output_sample, &output_sample_desc_nv12, &nv12_frame_data, &nv12_frame_len);
     ok(ret == 0, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, &output_sample_desc_nv12, output_file);
@@ -2815,16 +2866,6 @@ static void test_h264_decoder(void)
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    todo_wine_if(time == 1334666)  /* when VA-API plugin is used */
-    ok(time - 333666 <= 2, "got time %I64d\n", time);
-
-    duration = 0xdeadbeef;
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
     ret = check_mf_sample(output_sample, &output_sample_desc_i420, &i420_frame_data, &i420_frame_len);
     ok(ret == 0, "Unexpected %lu%% diff\n", ret);
@@ -2967,21 +3008,34 @@ static void test_audio_convert(void)
         {.length = 0x3dd8, .compare = compare_pcm16, .todo_length = TRUE},
         {.length = 0xfc, .compare = compare_pcm16},
     };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(mft_output_sample_incomplete, 1),
+        ATTR_UINT32(MFSampleExtension_CleanPoint, has_video_processor /* 0 on Win7 */, .todo = TRUE),
+        {0},
+    };
     const struct sample_desc output_sample_desc[] =
     {
         {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 0, .sample_duration = 928798,
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
         },
         {
+            .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
+            .sample_time = 9287980, .sample_duration = 897506,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE,
         },
         {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 10185486, .sample_duration = 14286,
             .buffer_count = 1, .buffers = output_buffer_desc + 2,
         },
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    struct sample_desc tmp_sample_desc = output_sample_desc[0];
     ULONG audio_data_len, audioconv_data_len;
     IMFSample *input_sample, *output_sample;
     const BYTE *audio_data, *audioconv_data;
@@ -2990,7 +3044,6 @@ static void test_audio_convert(void)
     WCHAR output_path[MAX_PATH];
     DWORD length, output_status;
     IMFMediaType *media_type;
-    LONGLONG time, duration;
     IMFTransform *transform;
     HANDLE output_file;
     ULONG i, ret;
@@ -3156,30 +3209,16 @@ static void test_audio_convert(void)
             winetest_pop_context();
             break;
         }
-
         ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-        hr = IMFSample_GetSampleTime(output_sample, &time);
-        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-        ok(time == i * 928798, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(output_sample, &duration);
-        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-        ok(duration == 928798, "got duration %I64d\n", duration);
 
-        ret = check_mf_sample(output_sample, output_sample_desc + 0, &audioconv_data, &audioconv_data_len);
+        ret = check_mf_sample(output_sample, &tmp_sample_desc, &audioconv_data, &audioconv_data_len);
         ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
+        dump_mf_sample(output_sample, &tmp_sample_desc, output_file);
+        tmp_sample_desc.sample_time += tmp_sample_desc.sample_duration;
 
         winetest_pop_context();
         i++;
     }
-
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    ok(time == i * 928798, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    todo_wine
-    ok(duration == 897506, "got duration %I64d\n", duration);
 
     ret = check_mf_sample(output_sample, output_sample_desc + 1, &audioconv_data, &audioconv_data_len);
     ok(ret == 0, "Unexpected %lu%% diff\n", ret);
@@ -3199,15 +3238,6 @@ static void test_audio_convert(void)
 
     if (hr == S_OK)
     {
-        hr = IMFSample_GetSampleTime(output_sample, &time);
-        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-        todo_wine
-        ok(time == 10185486, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(output_sample, &duration);
-        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-        todo_wine
-        ok(duration == 14286, "got duration %I64d\n", duration);
-
         ret = check_mf_sample(output_sample, output_sample_desc + 2, &audioconv_data, &audioconv_data_len);
         ok(ret == 0, "Unexpected %lu%% diff\n", ret);
         dump_mf_sample(output_sample, output_sample_desc + 2, output_file);
@@ -3411,8 +3441,15 @@ static void test_color_convert(void)
         .length = actual_width * actual_height * 4,
         .compare = compare_rgb32, .rect = {.right = 82, .bottom = 84},
     };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 0, .todo = TRUE),
+        {0},
+    };
     const struct sample_desc output_sample_desc =
     {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 10000000,
         .buffer_count = 1, .buffers = &output_buffer_desc,
     };
 
@@ -3426,7 +3463,6 @@ static void test_color_convert(void)
     WCHAR output_path[MAX_PATH];
     DWORD length, output_status;
     IMFMediaType *media_type;
-    LONGLONG time, duration;
     IMFTransform *transform;
     HANDLE output_file;
     ULONG i, ret;
@@ -3562,13 +3598,6 @@ static void test_color_convert(void)
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    ok(time == 0, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    ok(duration == 10000000, "got duration %I64d\n", duration);
 
     ret = check_mf_sample(output_sample, &output_sample_desc, &rgb32_data, &rgb32_data_len);
     ok(ret <= 4 /* small and harmless differences in Wine vs Windows */, "Unexpected %lu%% diff\n", ret);
@@ -3764,8 +3793,15 @@ static void test_video_processor(void)
         .length = actual_width * actual_height * 4,
         .compare = compare_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
     };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1, .todo = TRUE),
+        {0},
+    };
     const struct sample_desc output_sample_desc =
     {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 10000000,
         .buffer_count = 1, .buffers = &output_buffer_desc,
     };
 
@@ -3782,7 +3818,6 @@ static void test_video_processor(void)
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     WCHAR output_path[MAX_PATH];
-    LONGLONG time, duration;
     IMFTransform *transform;
     IMFMediaBuffer *buffer;
     IMFMediaEvent *event;
@@ -4246,13 +4281,6 @@ todo_wine {
     }
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
 
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    ok(time == 0, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    ok(duration == 10000000, "got duration %I64d\n", duration);
-
     ret = check_mf_sample(output_sample, &output_sample_desc, &rgb32_data, &rgb32_data_len);
     todo_wine /* Wine doesn't flip the frame, yet */
     ok(ret == 0 || broken(ret == 25) /* w1064v1507 / w1064v1809 incorrectly rescale */, "got %lu%% diff\n", ret);
@@ -4412,18 +4440,34 @@ static void test_mp3_decoder(void)
         {.length = 0x9c0, .compare = compare_pcm16},
         {.length = mp3dec_block_size, .compare = compare_pcm16},
     };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(mft_output_sample_incomplete, 1),
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
     const struct sample_desc output_sample_desc[] =
     {
         {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 0, .sample_duration = 282993,
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
         },
         {
+            .attributes = output_sample_attributes + 0,
+            .sample_time = 282993, .sample_duration = 522449,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1,
+        },
+        {
+            .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
+            .sample_time = 10209524, .sample_duration = 522449,
             .buffer_count = 1, .buffers = output_buffer_desc + 1,
         },
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_MP3};
+    struct sample_desc tmp_sample_desc = output_sample_desc[1];
     IMFSample *input_sample, *output_sample;
     ULONG mp3dec_data_len, mp3enc_data_len;
     const BYTE *mp3dec_data, *mp3enc_data;
@@ -4433,7 +4477,6 @@ static void test_mp3_decoder(void)
     DWORD length, output_status;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    LONGLONG time, duration;
     HANDLE output_file;
     ULONG i, ret;
     HRESULT hr;
@@ -4584,13 +4627,6 @@ static void test_mp3_decoder(void)
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
 
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    ok(time == 0, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    ok(duration == 282993 || broken(duration == 522449) /* win8 */ || broken(duration == 261224) /* win7 */,
-            "got duration %I64d\n", duration);
     hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0x9c0 || broken(length == mp3dec_block_size) /* win8 */ || broken(length == 0x900) /* win7 */,
@@ -4605,7 +4641,6 @@ static void test_mp3_decoder(void)
     ok(ret == 0, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
 
-    i = duration;
     while (SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)))
     {
         winetest_push_context("%lu", i);
@@ -4616,35 +4651,20 @@ static void test_mp3_decoder(void)
             winetest_pop_context();
             break;
         }
-
         ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-        hr = IMFSample_GetSampleTime(output_sample, &time);
-        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-        ok(time == i, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(output_sample, &duration);
-        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-        ok(duration == 522449 || broken(261225 - duration <= 1) /* win7 */,
-                "got duration %I64d\n", duration);
 
-        ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
+        ret = check_mf_sample(output_sample, &tmp_sample_desc, &mp3dec_data, &mp3dec_data_len);
         ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
+        dump_mf_sample(output_sample, &tmp_sample_desc, output_file);
+        tmp_sample_desc.sample_time += tmp_sample_desc.sample_duration;
 
         winetest_pop_context();
-        i += duration;
     }
 
-    hr = IMFSample_GetSampleTime(output_sample, &time);
-    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    ok(time == i || broken(time == i - duration) /* win7 */, "got time %I64d\n", time);
-    hr = IMFSample_GetSampleDuration(output_sample, &duration);
-    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    todo_wine
-    ok(duration == 522449 || broken(261225 - duration <= 1) /* win7 */, "got duration %I64d\n", duration);
-
-    ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
+    ok(mp3dec_data_len == mp3dec_block_size || broken(mp3dec_data_len == 0) /* win7 */, "got remaining length %lu\n", mp3dec_data_len);
+    ret = check_mf_sample(output_sample, output_sample_desc + 2, &mp3dec_data, &mp3dec_data_len);
     ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
+    dump_mf_sample(output_sample, output_sample_desc + 2, output_file);
 
     IMFSample_Release(output_sample);
 
@@ -4656,15 +4676,6 @@ static void test_mp3_decoder(void)
 
     if (hr == S_OK)
     {
-        hr = IMFSample_GetSampleTime(output_sample, &time);
-        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-        todo_wine
-        ok(time == 10185486, "got time %I64d\n", time);
-        hr = IMFSample_GetSampleDuration(output_sample, &duration);
-        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-        todo_wine
-        ok(duration == 14286, "got duration %I64d\n", duration);
-
         ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
         ok(ret == 0, "Unexpected %lu%% diff\n", ret);
         dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
