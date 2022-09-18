@@ -219,6 +219,22 @@ static IDBProperties Test_DBProperties =
     &Test_DBProperties_Vtbl
 };
 
+static void free_dbpropset(ULONG count, DBPROPSET *propset)
+{
+    ULONG i;
+
+    for (i = 0; i < count; i++)
+    {
+        ULONG p;
+
+        for (p = 0; p < propset[i].cProperties; p++)
+            VariantClear(&propset[i].rgProperties[p].vValue);
+
+        CoTaskMemFree(propset[i].rgProperties);
+    }
+    CoTaskMemFree(propset);
+}
+
 static void test_IDBProperties(void)
 {
     HRESULT hr;
@@ -256,6 +272,8 @@ static void test_IDBProperties(void)
     ok(!lstrcmpW(V_BSTR(&propsets->rgProperties[0].vValue), wszDBPropertyTestString), "Unexpected property value string\n");
     ok(propsets->cProperties == 1, "Expected property count of 1 but got %ld\n", propsets->cProperties);
     ok(IsEqualGUID(&propsets->guidPropertySet, &IID_IDBProperties), "Unexpected guid for property set\n");
+
+    free_dbpropset(propset_count, propsets);
 
     IDBProperties_Release(pProxy);
 
