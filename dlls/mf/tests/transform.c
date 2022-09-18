@@ -49,6 +49,14 @@ DEFINE_GUID(MFAudioFormat_RAW_AAC1,WAVE_FORMAT_RAW_AAC1,0x0000,0x0010,0x80,0x00,
 DEFINE_GUID(MFVideoFormat_ABGR32,0x00000020,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_P208,0x38303250,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 
+static void load_resource(const WCHAR *filename, const BYTE **data, DWORD *length)
+{
+    HRSRC resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    *data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    *length = SizeofResource(GetModuleHandleW(NULL), resource);
+}
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
 {
@@ -1463,7 +1471,6 @@ static void test_wma_encoder(void)
     IMFMediaType *media_type;
     IMFTransform *transform;
     HANDLE output_file;
-    HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
     LONG ref;
@@ -1524,10 +1531,7 @@ static void test_wma_encoder(void)
     ok(output_info.cbSize == wmaenc_block_size, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    resource = FindResourceW(NULL, L"audiodata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    audio_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    audio_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"audiodata.bin", &audio_data, &audio_data_len);
     ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
 
     input_sample = create_sample(audio_data, audio_data_len);
@@ -1546,10 +1550,7 @@ static void test_wma_encoder(void)
 
     output_sample = create_sample(NULL, output_info.cbSize);
 
-    resource = FindResourceW(NULL, L"wmaencdata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    wmaenc_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    wmaenc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"wmaencdata.bin", &wmaenc_data, &wmaenc_data_len);
     ok(wmaenc_data_len % wmaenc_block_size == 0, "got length %lu\n", wmaenc_data_len);
 
     /* and generate a new one as well in a temporary directory */
@@ -1725,7 +1726,6 @@ static void test_wma_decoder(void)
     LONGLONG time, duration;
     HANDLE output_file;
     ULONG i, ret, ref;
-    HRSRC resource;
     UINT32 value;
     HRESULT hr;
 
@@ -1841,10 +1841,7 @@ static void test_wma_decoder(void)
     ok(output_info.cbSize == wmadec_block_size, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    resource = FindResourceW(NULL, L"wmaencdata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    wmaenc_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    wmaenc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"wmaencdata.bin", &wmaenc_data, &wmaenc_data_len);
     ok(wmaenc_data_len % wmaenc_block_size == 0, "got length %lu\n", wmaenc_data_len);
 
     input_sample = create_sample(wmaenc_data, wmaenc_block_size / 2);
@@ -1886,10 +1883,7 @@ static void test_wma_decoder(void)
             || broken(output_status == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE)) /* Win7 */,
             "got output[0].dwStatus %#lx\n", output_status);
 
-    resource = FindResourceW(NULL, L"wmadecdata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    wmadec_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    wmadec_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"wmadecdata.bin", &wmadec_data, &wmadec_data_len);
     ok(wmadec_data_len == wmadec_block_size * 7 / 2, "got length %lu\n", wmadec_data_len);
 
     /* and generate a new one as well in a temporary directory */
@@ -2273,7 +2267,6 @@ static void test_h264_decoder(void)
     IMFTransform *transform;
     ULONG i, ret, flags;
     HANDLE output_file;
-    HRSRC resource;
     UINT32 value;
     BYTE *data;
     HRESULT hr;
@@ -2449,10 +2442,7 @@ static void test_h264_decoder(void)
     hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
     ok(hr == E_NOTIMPL, "GetStreamIDs returned %#lx\n", hr);
 
-    resource = FindResourceW(NULL, L"h264data.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    h264_encoded_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    h264_encoded_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
 
     /* As output_info.dwFlags doesn't have MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES
      * IMFTransform_ProcessOutput needs a sample or returns an error */
@@ -2540,10 +2530,7 @@ static void test_h264_decoder(void)
     output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
 
-    resource = FindResourceW(NULL, L"nv12frame.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    nv12_frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    nv12_frame_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"nv12frame.bin", &nv12_frame_data, &nv12_frame_len);
     ok(nv12_frame_len == actual_width * actual_height * 3 / 2, "got frame length %lu\n", nv12_frame_len);
 
     output_sample = create_sample(NULL, nv12_frame_len);
@@ -2656,10 +2643,7 @@ static void test_h264_decoder(void)
     output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
 
-    resource = FindResourceW(NULL, L"i420frame.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    i420_frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    i420_frame_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"i420frame.bin", &i420_frame_data, &i420_frame_len);
     ok(i420_frame_len == actual_width * actual_height * 3 / 2, "got frame length %lu\n", i420_frame_len);
 
     output_sample = create_sample(NULL, actual_width * actual_height * 2);
@@ -2849,7 +2833,6 @@ static void test_audio_convert(void)
     LONGLONG time, duration;
     IMFTransform *transform;
     HANDLE output_file;
-    HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
 
@@ -2974,10 +2957,7 @@ static void test_audio_convert(void)
     ok(output_info.cbSize == 4, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    resource = FindResourceW(NULL, L"audiodata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    audio_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    audio_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"audiodata.bin", &audio_data, &audio_data_len);
     ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
 
     input_sample = create_sample(audio_data, audio_data_len);
@@ -2996,10 +2976,7 @@ static void test_audio_convert(void)
 
     output_sample = create_sample(NULL, audioconv_block_size);
 
-    resource = FindResourceW(NULL, L"audioconvdata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    audioconv_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    audioconv_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"audioconvdata.bin", &audioconv_data, &audioconv_data_len);
     ok(audioconv_data_len == 179924, "got length %lu\n", audioconv_data_len);
 
     /* and generate a new one as well in a temporary directory */
@@ -3287,7 +3264,6 @@ static void test_color_convert(void)
     LONGLONG time, duration;
     IMFTransform *transform;
     HANDLE output_file;
-    HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
 
@@ -3391,10 +3367,7 @@ static void test_color_convert(void)
     ok(output_info.cbSize == actual_width * actual_height * 4, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    resource = FindResourceW(NULL, L"nv12frame.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    nv12frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    nv12frame_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"nv12frame.bin", &nv12frame_data, &nv12frame_data_len);
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
     input_sample = create_sample(nv12frame_data, nv12frame_data_len);
@@ -3411,10 +3384,7 @@ static void test_color_convert(void)
     ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
-    resource = FindResourceW(NULL, L"rgb32frame.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    rgb32_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    rgb32_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"rgb32frame.bin", &rgb32_data, &rgb32_data_len);
     ok(rgb32_data_len == output_info.cbSize, "got length %lu\n", rgb32_data_len);
 
     /* and generate a new one as well in a temporary directory */
@@ -3646,7 +3616,6 @@ static void test_video_processor(void)
     IMFMediaEvent *event;
     unsigned int value;
     HANDLE output_file;
-    HRSRC resource;
     BYTE *ptr, tmp;
     UINT32 count;
     HRESULT hr;
@@ -4069,10 +4038,7 @@ todo_wine {
     ok(output_info.cbSize == actual_width * actual_height * 4, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    resource = FindResourceW(NULL, L"nv12frame.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    nv12frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    nv12frame_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"nv12frame.bin", &nv12frame_data, &nv12frame_data_len);
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
     input_sample = create_sample(nv12frame_data, nv12frame_data_len);
@@ -4089,10 +4055,7 @@ todo_wine {
     ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
-    resource = FindResourceW(NULL, L"rgb32frame-vp.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    rgb32_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    rgb32_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"rgb32frame-vp.bin", &rgb32_data, &rgb32_data_len);
     ok(rgb32_data_len == output_info.cbSize, "got length %lu\n", rgb32_data_len);
 
     /* and generate a new one as well in a temporary directory */
@@ -4303,7 +4266,6 @@ static void test_mp3_decoder(void)
     IMFTransform *transform;
     LONGLONG time, duration;
     HANDLE output_file;
-    HRSRC resource;
     ULONG i, ret;
     HRESULT hr;
 
@@ -4420,10 +4382,7 @@ static void test_mp3_decoder(void)
     ok(output_info.cbSize == mp3dec_block_size, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    resource = FindResourceW(NULL, L"mp3encdata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    mp3enc_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    mp3enc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"mp3encdata.bin", &mp3enc_data, &mp3enc_data_len);
     ok(mp3enc_data_len == 6295, "got length %lu\n", mp3enc_data_len);
 
     input_sample = create_sample(mp3enc_data, mp3enc_data_len);
@@ -4440,10 +4399,7 @@ static void test_mp3_decoder(void)
 
     output_sample = create_sample(NULL, mp3dec_block_size);
 
-    resource = FindResourceW(NULL, L"mp3decdata.bin", (const WCHAR *)RT_RCDATA);
-    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    mp3dec_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    mp3dec_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    load_resource(L"mp3decdata.bin", &mp3dec_data, &mp3dec_data_len);
     ok(mp3dec_data_len == 94656, "got length %lu\n", mp3dec_data_len);
 
     /* and generate a new one as well in a temporary directory */
