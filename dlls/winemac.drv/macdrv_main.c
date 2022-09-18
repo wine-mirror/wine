@@ -32,6 +32,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "macdrv.h"
+#include "shellapi.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
@@ -413,12 +414,13 @@ static void load_strings(struct localized_string *str)
     {
         if (str->str && str->len)
         {
+            const UniChar *ptr = param_ptr(str->str);
             CFNumberRef key = CFNumberCreate(NULL, kCFNumberIntType, &str->id);
-            CFStringRef value = CFStringCreateWithCharacters(NULL, (UniChar*)str->str, str->len);
+            CFStringRef value = CFStringCreateWithCharacters(NULL, ptr, str->len);
             if (key && value)
                 CFDictionarySetValue(dict, key, value);
             else
-                ERR("Failed to add string ID 0x%04x %s\n", str->id, debugstr_wn(str->str, str->len));
+                ERR("Failed to add string ID 0x%04x %s\n", str->id, debugstr_wn(ptr, str->len));
         }
         else
             ERR("Failed to load string ID 0x%04x\n", str->id);
@@ -653,3 +655,131 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
+#ifdef _WIN64
+
+static NTSTATUS wow64_dnd_get_data(void *arg)
+{
+    struct
+    {
+        UINT64 handle;
+        UINT format;
+        ULONG size;
+        ULONG data;
+    } *params32 = arg;
+    struct dnd_get_data_params params;
+
+    params.handle = params32->handle;
+    params.format = params32->format;
+    params.size = params32->size;
+    params.data = UlongToPtr(params32->data);
+    return macdrv_dnd_get_data(&params);
+}
+
+static NTSTATUS wow64_ime_process_text_input(void *arg)
+{
+    struct
+    {
+        UINT vkey;
+        UINT scan;
+        UINT repeat;
+        ULONG key_state;
+        ULONG himc;
+        ULONG done;
+    } *params32 = arg;
+    struct process_text_input_params params;
+
+    params.vkey = params32->vkey;
+    params.scan = params32->scan;
+    params.repeat = params32->repeat;
+    params.key_state = UlongToPtr(params32->key_state);
+    params.himc = UlongToPtr(params32->himc);
+    params.done = UlongToPtr(params32->done);
+    return macdrv_ime_process_text_input(&params);
+}
+
+static NTSTATUS wow64_init(void *arg)
+{
+    struct
+    {
+        ULONG strings;
+    } *params32 = arg;
+    struct init_params params;
+
+    params.strings = UlongToPtr(params32->strings);
+    return macdrv_init(&params);
+}
+
+static NTSTATUS wow64_notify_icon(void *arg)
+{
+    struct
+    {
+        DWORD msg;
+        ULONG data;
+    } *params32 = arg;
+    struct
+    {
+        DWORD cbSize;
+        ULONG hWnd;
+        UINT uID;
+        UINT uFlags;
+        UINT uCallbackMessage;
+        ULONG hIcon;
+        WCHAR szTip[128];
+        DWORD dwState;
+        DWORD dwStateMask;
+        WCHAR szInfo[256];
+        UINT uTimeout;
+        WCHAR szInfoTitle[64];
+        DWORD dwInfoFlags;
+        GUID guidItem;
+        ULONG hBalloonIcon;
+    } *data32 = UlongToPtr(params32->data);
+
+    struct notify_icon_params params;
+    NOTIFYICONDATAW data;
+
+    params.msg = params32->msg;
+    params.data = &data;
+
+    data.cbSize = sizeof(data);
+    data.hWnd = UlongToHandle(data32->hWnd);
+    data.uID = data32->uID;
+    data.uFlags = data32->uFlags;
+    data.uCallbackMessage = data32->uCallbackMessage;
+    data.hIcon = UlongToHandle(data32->hIcon);
+    if (data.uFlags & NIF_TIP)
+        wcscpy(data.szTip, data32->szTip);
+    data.dwState = data32->dwState;
+    data.dwStateMask = data32->dwStateMask;
+    if (data.uFlags & NIF_INFO)
+    {
+        wcscpy(data.szInfoTitle, data32->szInfoTitle);
+        wcscpy(data.szInfo, data32->szInfo);
+        data.uTimeout = data32->uTimeout;
+        data.dwInfoFlags = data32->dwInfoFlags;
+    }
+    data.guidItem = data32->guidItem;
+    data.hBalloonIcon = UlongToHandle(data32->hBalloonIcon);
+
+    return macdrv_notify_icon(&params);
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_dnd_get_data,
+    macdrv_dnd_get_formats,
+    macdrv_dnd_have_format,
+    macdrv_dnd_release,
+    macdrv_dnd_retain,
+    macdrv_ime_clear,
+    wow64_ime_process_text_input,
+    macdrv_ime_using_input_method,
+    wow64_init,
+    wow64_notify_icon,
+    macdrv_quit_result,
+};
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
+
+#endif /* _WIN64 */

@@ -77,7 +77,7 @@ struct localized_string
 {
     UINT id;
     UINT len;
-    const WCHAR *str;
+    UINT64 str;
 };
 
 struct init_params
