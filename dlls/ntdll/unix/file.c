@@ -4002,6 +4002,20 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
             io->Information = FILE_OVERWRITTEN;
             break;
         }
+
+        if (io->Information == FILE_CREATED && (attributes & XATTR_ATTRIBS_MASK))
+        {
+            int fd, needs_close;
+
+            /* set any DOS extended attributes */
+            if (!server_get_unix_fd( *handle, 0, &fd, &needs_close, NULL, NULL ))
+            {
+                if (fd_set_dos_attrib( fd, attributes ) == -1 && errno != ENOTSUP)
+                    WARN( "Failed to set extended attribute " SAMBA_XATTR_DOS_ATTRIB ". errno %d (%s)",
+                          errno, strerror( errno ) );
+                if (needs_close) close( fd );
+            }
+        }
     }
     else if (status == STATUS_TOO_MANY_OPENED_FILES)
     {

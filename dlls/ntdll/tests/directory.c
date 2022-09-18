@@ -55,7 +55,6 @@ static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG disable, ULONG *
 
 /* The attribute sets to test */
 static struct testfile_s {
-    BOOL todo;                /* set if it doesn't work on wine yet */
     BOOL attr_done;           /* set if attributes were tested for this file already */
     const DWORD attr;         /* desired attribute */
     WCHAR name[20];           /* filename to use */
@@ -63,16 +62,16 @@ static struct testfile_s {
     const char *description;  /* for error messages */
     int nfound;               /* How many were found (expect 1) */
 } testfiles[] = {
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {'l','o','n','g','f','i','l','e','n','a','m','e','.','t','m','p'}, "normal" },
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {'n','.','t','m','p',}, "normal" },
-    { 1, 0, FILE_ATTRIBUTE_HIDDEN,    {'h','.','t','m','p',}, "hidden" },
-    { 1, 0, FILE_ATTRIBUTE_SYSTEM,    {'s','.','t','m','p',}, "system" },
-    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'d','.','t','m','p',}, "directory" },
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {0xe9,'a','.','t','m','p'}, "normal" },
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {0xc9,'b','.','t','m','p'}, "normal" },
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {'e','a','.','t','m','p'},  "normal" },
-    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'.'},                  ". directory" },
-    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" }
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'l','o','n','g','f','i','l','e','n','a','m','e','.','t','m','p'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'n','.','t','m','p',}, "normal" },
+    { 0, FILE_ATTRIBUTE_HIDDEN,    {'h','.','t','m','p',}, "hidden" },
+    { 0, FILE_ATTRIBUTE_SYSTEM,    {'s','.','t','m','p',}, "system" },
+    { 0, FILE_ATTRIBUTE_DIRECTORY, {'d','.','t','m','p',}, "directory" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {0xe9,'a','.','t','m','p'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {0xc9,'b','.','t','m','p'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'e','a','.','t','m','p'},  "normal" },
+    { 0, FILE_ATTRIBUTE_DIRECTORY, {'.'},                  ". directory" },
+    { 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" }
 };
 static const int test_dir_count = ARRAY_SIZE(testfiles);
 static const int max_test_dir_size = ARRAY_SIZE(testfiles) + 5;  /* size of above plus some for .. etc */
@@ -162,8 +161,8 @@ static void tally_test_file(FILE_BOTH_DIRECTORY_INFORMATION *dir_info)
         if (namelen != len || memcmp(nameW, testfiles[i].name, len*sizeof(WCHAR)))
             continue;
         if (!testfiles[i].attr_done) {
-            todo_wine_if (testfiles[i].todo)
-                ok (attrib == (testfiles[i].attr & attribmask), "file %s: expected %s (%lx), got %lx (is your linux new enough?)\n", wine_dbgstr_w(testfiles[i].name), testfiles[i].description, testfiles[i].attr, attrib);
+            ok (attrib == (testfiles[i].attr & attribmask), "file %s: expected %s (%lx), got %lx\n",
+                wine_dbgstr_w(testfiles[i].name), testfiles[i].description, testfiles[i].attr, attrib);
             testfiles[i].attr_done = TRUE;
         }
         testfiles[i].nfound++;
