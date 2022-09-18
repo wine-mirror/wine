@@ -261,6 +261,113 @@ void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc,
     }
 }
 
+static void check_mft_optional_methods(IMFTransform *transform)
+{
+    DWORD in_id, out_id, in_count, out_count, in_min, in_max, out_min, out_max;
+    PROPVARIANT propvar = {.vt = VT_EMPTY};
+    IMFMediaEvent *event;
+    HRESULT hr;
+
+    in_min = in_max = out_min = out_max = 0xdeadbeef;
+    hr = IMFTransform_GetStreamLimits(transform, &in_min, &in_max, &out_min, &out_max);
+    ok(hr == S_OK, "GetStreamLimits returned %#lx\n", hr);
+    ok(in_min == 1, "got input_min %lu\n", in_min);
+    ok(in_max == 1, "got input_max %lu\n", in_max);
+    ok(out_min == 1, "got output_min %lu\n", out_min);
+    ok(out_max == 1, "got output_max %lu\n", out_max);
+
+    in_count = out_count = 0xdeadbeef;
+    hr = IMFTransform_GetStreamCount(transform, &in_count, &out_count);
+    ok(hr == S_OK, "GetStreamCount returned %#lx\n", hr);
+    ok(in_count == 1, "got input_count %lu\n", in_count);
+    ok(out_count == 1, "got output_count %lu\n", out_count);
+
+    in_count = out_count = 1;
+    in_id = out_id = 0xdeadbeef;
+    hr = IMFTransform_GetStreamIDs(transform, in_count, &in_id, out_count, &out_id);
+    ok(hr == E_NOTIMPL, "GetStreamIDs returned %#lx\n", hr);
+
+    hr = IMFTransform_DeleteInputStream(transform, 0);
+    ok(hr == E_NOTIMPL, "DeleteInputStream returned %#lx\n", hr);
+    hr = IMFTransform_DeleteInputStream(transform, 1);
+    ok(hr == E_NOTIMPL, "DeleteInputStream returned %#lx\n", hr);
+
+    hr = IMFTransform_AddInputStreams(transform, 0, NULL);
+    ok(hr == E_NOTIMPL, "AddInputStreams returned %#lx\n", hr);
+    in_id = 0xdeadbeef;
+    hr = IMFTransform_AddInputStreams(transform, 1, &in_id);
+    ok(hr == E_NOTIMPL, "AddInputStreams returned %#lx\n", hr);
+
+    hr = IMFTransform_SetOutputBounds(transform, 0, 0);
+    ok(hr == E_NOTIMPL || hr == S_OK, "SetOutputBounds returned %#lx\n", hr);
+
+    hr = MFCreateMediaEvent(MEEndOfStream, &GUID_NULL, S_OK, &propvar, &event);
+    ok(hr == S_OK, "MFCreateMediaEvent returned %#lx\n", hr);
+    hr = IMFTransform_ProcessEvent(transform, 0, NULL);
+    ok(hr == E_NOTIMPL || hr == E_POINTER || hr == E_INVALIDARG, "ProcessEvent returned %#lx\n", hr);
+    hr = IMFTransform_ProcessEvent(transform, 1, event);
+    ok(hr == E_NOTIMPL, "ProcessEvent returned %#lx\n", hr);
+    hr = IMFTransform_ProcessEvent(transform, 0, event);
+    ok(hr == E_NOTIMPL, "ProcessEvent returned %#lx\n", hr);
+    IMFMediaEvent_Release(event);
+}
+
+static void check_mft_get_attributes(IMFTransform *transform, const struct attribute_desc *expect_transform_attributes,
+        BOOL expect_output_attributes)
+{
+    IMFAttributes *attributes, *tmp_attributes;
+    UINT32 count;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IMFTransform_GetAttributes(transform, &attributes);
+    ok(hr == (expect_transform_attributes ? S_OK : E_NOTIMPL), "GetAttributes returned %#lx\n", hr);
+    if (hr == S_OK)
+    {
+        ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
+        check_attributes(attributes, expect_transform_attributes, -1);
+
+        hr = IMFTransform_GetAttributes(transform, &tmp_attributes);
+        ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
+        ok(attributes == tmp_attributes, "got attributes %p\n", tmp_attributes);
+        IMFAttributes_Release(tmp_attributes);
+
+        ref = IMFAttributes_Release(attributes);
+        ok(ref == 1, "Release returned %lu\n", ref);
+    }
+
+    hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
+    ok(hr == (expect_output_attributes ? S_OK : E_NOTIMPL)
+            || broken(hr == MF_E_UNSUPPORTED_REPRESENTATION) /* Win7 */,
+            "GetOutputStreamAttributes returned %#lx\n", hr);
+    if (hr == S_OK)
+    {
+        ok(hr == S_OK, "GetOutputStreamAttributes returned %#lx\n", hr);
+
+        count = 0xdeadbeef;
+        hr = IMFAttributes_GetCount(attributes, &count);
+        ok(hr == S_OK, "GetCount returned %#lx\n", hr);
+        ok(!count, "got %u attributes\n", count);
+
+        hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &tmp_attributes);
+        ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
+        ok(attributes == tmp_attributes, "got attributes %p\n", tmp_attributes);
+        IMFAttributes_Release(tmp_attributes);
+
+        ref = IMFAttributes_Release(attributes);
+        ok(ref == 1, "Release returned %lu\n", ref);
+
+        hr = IMFTransform_GetOutputStreamAttributes(transform, 0, NULL);
+        ok(hr == E_NOTIMPL || hr == E_POINTER, "GetOutputStreamAttributes returned %#lx\n", hr);
+        hr = IMFTransform_GetOutputStreamAttributes(transform, 1, &attributes);
+        ok(hr == MF_E_INVALIDSTREAMNUMBER, "GetOutputStreamAttributes returned %#lx\n", hr);
+    }
+
+    hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
+    ok(hr == E_NOTIMPL || broken(hr == MF_E_UNSUPPORTED_REPRESENTATION) /* Win7 */,
+            "GetInputStreamAttributes returned %#lx\n", hr);
+}
+
 #define check_mft_set_input_type_required(a, b) check_mft_set_input_type_required_(__LINE__, a, b)
 static void check_mft_set_input_type_required_(int line, IMFTransform *transform, const struct attribute_desc *attributes)
 {
@@ -891,17 +998,18 @@ static BOOL is_sample_copier_available_type(IMFMediaType *type)
 
 static void test_sample_copier(void)
 {
-    DWORD input_count, output_count, output_status;
-    IMFAttributes *attributes, *attributes2;
-    DWORD in_min, in_max, out_min, out_max;
+    static const struct attribute_desc expect_transform_attributes[] =
+    {
+        ATTR_UINT32(MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, 1),
+        {0},
+    };
     IMFMediaType *mediatype, *mediatype2;
     MFT_OUTPUT_STREAM_INFO output_info;
     IMFSample *sample, *client_sample;
     MFT_INPUT_STREAM_INFO input_info;
     IMFMediaBuffer *media_buffer;
+    DWORD flags, output_status;
     IMFTransform *copier;
-    UINT32 value, count;
-    DWORD flags;
     HRESULT hr;
     LONG ref;
 
@@ -916,51 +1024,13 @@ static void test_sample_copier(void)
     hr = pMFCreateSampleCopierMFT(&copier);
     ok(hr == S_OK, "Failed to create sample copier, hr %#lx.\n", hr);
 
-    hr = IMFTransform_GetAttributes(copier, &attributes);
-    ok(hr == S_OK, "Failed to get transform attributes, hr %#lx.\n", hr);
-    hr = IMFTransform_GetAttributes(copier, &attributes2);
-    ok(hr == S_OK, "Failed to get transform attributes, hr %#lx.\n", hr);
-    ok(attributes == attributes2, "Unexpected instance.\n");
-    IMFAttributes_Release(attributes2);
-    hr = IMFAttributes_GetCount(attributes, &count);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(count == 1, "Unexpected attribute count %u.\n", count);
-    hr = IMFAttributes_GetUINT32(attributes, &MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, &value);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!!value, "Unexpected value %u.\n", value);
-    ref = IMFAttributes_Release(attributes);
-    ok(ref == 1, "Release returned %ld\n", ref);
+    check_interface(copier, &IID_IMFTransform, TRUE);
+    check_interface(copier, &IID_IMediaObject, FALSE);
+    check_interface(copier, &IID_IPropertyStore, FALSE);
+    check_interface(copier, &IID_IPropertyBag, FALSE);
 
-    hr = IMFTransform_GetInputStreamAttributes(copier, 0, &attributes);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetInputStreamAttributes(copier, 1, &attributes);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputStreamAttributes(copier, 0, &attributes);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputStreamAttributes(copier, 1, &attributes);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_SetOutputBounds(copier, 0, 0);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    /* No dynamic streams. */
-    input_count = output_count = 0;
-    hr = IMFTransform_GetStreamCount(copier, &input_count, &output_count);
-    ok(hr == S_OK, "Failed to get stream count, hr %#lx.\n", hr);
-    ok(input_count == 1 && output_count == 1, "Unexpected streams count.\n");
-
-    hr = IMFTransform_GetStreamLimits(copier, &in_min, &in_max, &out_min, &out_max);
-    ok(hr == S_OK, "Failed to get stream limits, hr %#lx.\n", hr);
-    ok(in_min == in_max && in_min == 1 && out_min == out_max && out_min == 1, "Unexpected stream limits.\n");
-
-    hr = IMFTransform_GetStreamIDs(copier, 1, &input_count, 1, &output_count);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_DeleteInputStream(copier, 0);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    check_mft_optional_methods(copier);
+    check_mft_get_attributes(copier, expect_transform_attributes, FALSE);
 
     /* Available types. */
     hr = IMFTransform_GetInputAvailableType(copier, 0, 0, &mediatype);
@@ -1458,6 +1528,11 @@ static void test_aac_encoder(void)
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, FALSE);
+    check_interface(transform, &IID_IPropertyStore, FALSE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, NULL, FALSE);
 
     check_mft_set_input_type_required(transform, input_type_desc);
 
@@ -1599,7 +1674,12 @@ static void test_aac_decoder(void)
             ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * 44100),
         },
     };
-
+    const struct attribute_desc expect_transform_attributes[] =
+    {
+        ATTR_UINT32(MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, !has_video_processor /* 1 on W7 */, .todo = TRUE),
+        /* more AAC decoder specific attributes from CODECAPI */
+        {0},
+    };
     const struct attribute_desc input_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
@@ -1648,6 +1728,11 @@ static void test_aac_decoder(void)
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, FALSE);
+    check_interface(transform, &IID_IPropertyStore, FALSE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, expect_transform_attributes, FALSE);
 
     /* check default media types */
 
@@ -1889,6 +1974,9 @@ static void test_wma_encoder(void)
     check_interface(transform, &IID_IMediaObject, TRUE);
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, NULL, FALSE);
 
     check_mft_set_input_type_required(transform, input_type_desc);
 
@@ -2173,6 +2261,9 @@ static void test_wma_decoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, NULL, FALSE);
+
     /* check default media types */
 
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
@@ -2451,6 +2542,15 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264_ES),
         },
     };
+    static const struct attribute_desc expect_transform_attributes[] =
+    {
+        ATTR_UINT32(MF_LOW_LATENCY, 0),
+        ATTR_UINT32(MF_SA_D3D_AWARE, 1, .todo = TRUE),
+        ATTR_UINT32(MF_SA_D3D11_AWARE, 1, .todo = TRUE),
+        ATTR_UINT32(MFT_DECODER_EXPOSE_OUTPUT_TYPES_IN_NATIVE_ORDER, 0, .todo = TRUE),
+        /* more H264 decoder specific attributes from CODECAPI */
+        {0},
+    };
     static const DWORD input_width = 120, input_height = 248;
     const media_type_desc default_outputs[] =
     {
@@ -2654,7 +2754,6 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
-    DWORD input_id, output_id, input_count, output_count;
     IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
@@ -2681,12 +2780,19 @@ static void test_h264_decoder(void)
             &IID_IMFTransform, (void **)&transform)))
         goto failed;
 
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, FALSE);
+    check_interface(transform, &IID_IPropertyStore, FALSE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, expect_transform_attributes, TRUE);
+
     hr = IMFTransform_GetAttributes(transform, &attributes);
     ok(hr == S_OK, "GetAttributes returned %#lx\n", hr);
     hr = IMFAttributes_SetUINT32(attributes, &MF_LOW_LATENCY, 1);
     ok(hr == S_OK, "SetUINT32 returned %#lx\n", hr);
-    ret = IMFAttributes_Release(attributes);
-    ok(ret == 1, "Release returned %ld\n", ret);
+    IMFAttributes_Release(attributes);
 
     /* no output type is available before an input type is set */
 
@@ -2827,14 +2933,6 @@ static void test_h264_decoder(void)
     todo_wine
     ok(output_info.cbSize == input_width * input_height * 2, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
-
-    input_count = output_count = 0xdeadbeef;
-    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
-    ok(hr == S_OK, "GetStreamCount returned %#lx\n", hr);
-    ok(input_count == 1, "got input_count %lu\n", input_count);
-    ok(output_count == 1, "got output_count %lu\n", output_count);
-    hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
-    ok(hr == E_NOTIMPL, "GetStreamIDs returned %#lx\n", hr);
 
     load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
 
@@ -3187,6 +3285,9 @@ static void test_audio_convert(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
     /* check_interface(transform, &IID_IWMResamplerProps, TRUE); */
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, NULL, FALSE);
 
     /* check default media types */
 
@@ -3565,8 +3666,13 @@ static void test_color_convert(void)
     check_interface(transform, &IID_IMediaObject, TRUE);
     check_interface(transform, &IID_IPropertyStore, TRUE);
     todo_wine
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+    todo_wine
     check_interface(transform, &IID_IMFRealTimeClient, TRUE);
     /* check_interface(transform, &IID_IWMColorConvProps, TRUE); */
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, NULL, FALSE);
 
     /* check default media types */
 
@@ -3843,6 +3949,12 @@ static void test_video_processor(void)
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
     };
+    static const struct attribute_desc expect_transform_attributes[] =
+    {
+        ATTR_UINT32(MFT_SUPPORT_3DVIDEO, 1, .todo = TRUE),
+        /* ATTR_UINT32(MF_SA_D3D_AWARE, 1), only on W7 */
+        {0},
+    };
 
     static const MFVideoArea actual_aperture = {.Area={82,84}};
     static const DWORD actual_width = 96, actual_height = 96;
@@ -3880,11 +3992,9 @@ static void test_video_processor(void)
         .buffer_count = 1, .buffers = &output_buffer_desc,
     };
 
-    DWORD input_count, output_count, input_id, output_id, flags, length, output_status;
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_I420};
-    DWORD input_min, input_max, output_min, output_max, i, j, k;
-    IMFAttributes *attributes, *attributes2;
+    DWORD i, j, k, flags, length, output_status;
     IMFSample *input_sample, *output_sample;
     IMFMediaType *media_type, *media_type2;
     const GUID *expect_available_inputs;
@@ -3895,8 +4005,6 @@ static void test_video_processor(void)
     ULONG nv12frame_data_len;
     IMFTransform *transform;
     IMFMediaBuffer *buffer;
-    IMFMediaEvent *event;
-    unsigned int value;
     UINT32 count;
     HRESULT hr;
     ULONG ret;
@@ -3923,62 +4031,11 @@ static void test_video_processor(void)
     check_interface(transform, &IID_IMFMediaEventGenerator, FALSE);
     check_interface(transform, &IID_IMFShutdown, FALSE);
 
-    /* Transform global attributes. */
-    hr = IMFTransform_GetAttributes(transform, &attributes);
-    ok(hr == S_OK, "Failed to get attributes, hr %#lx.\n", hr);
-
-    hr = IMFAttributes_GetCount(attributes, &count);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!count, "Unexpected attribute count %u.\n", count);
-
-    value = 0;
-    hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_AWARE, &value);
-todo_wine {
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(value == 1, "Unexpected attribute value %u.\n", value);
-}
-    hr = IMFTransform_GetAttributes(transform, &attributes2);
-    ok(hr == S_OK, "Failed to get attributes, hr %#lx.\n", hr);
-    ok(attributes == attributes2, "Unexpected instance.\n");
-    IMFAttributes_Release(attributes);
-    IMFAttributes_Release(attributes2);
-
-    hr = IMFTransform_GetStreamLimits(transform, &input_min, &input_max, &output_min, &output_max);
-    ok(hr == S_OK, "Failed to get stream limits, hr %#lx.\n", hr);
-    ok(input_min == input_max && input_min == 1 && output_min == output_max && output_min == 1,
-            "Unexpected stream limits.\n");
-
-    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
-    ok(hr == S_OK, "Failed to get stream count, hr %#lx.\n", hr);
-    ok(input_count == 1 && output_count == 1, "Unexpected stream count %lu, %lu.\n", input_count, output_count);
-
-    hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    input_id = 100;
-    hr = IMFTransform_AddInputStreams(transform, 1, &input_id);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_DeleteInputStream(transform, 0);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
     hr = IMFTransform_GetInputStatus(transform, 0, &flags);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-
     hr = IMFTransform_GetOutputStatus(transform, &flags);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
-    ok(hr == S_OK, "Failed to get output attributes, hr %#lx.\n", hr);
-    hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes2);
-    ok(hr == S_OK, "Failed to get output attributes, hr %#lx.\n", hr);
-    ok(attributes == attributes2, "Unexpected instance.\n");
-    IMFAttributes_Release(attributes);
-    IMFAttributes_Release(attributes2);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
@@ -3997,22 +4054,6 @@ todo_wine {
 
     hr = IMFTransform_GetInputStreamInfo(transform, 1, &input_info);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
-
-    memset(&input_info, 0xcc, sizeof(input_info));
-    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    ok(hr == S_OK, "Failed to get stream info, hr %#lx.\n", hr);
-    ok(input_info.dwFlags == 0, "Unexpected flag %#lx.\n", input_info.dwFlags);
-    ok(input_info.cbSize == 0, "Unexpected size %lu.\n", input_info.cbSize);
-    ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %lu.\n", input_info.cbMaxLookahead);
-    ok(input_info.cbAlignment == 0, "Unexpected alignment %lu.\n", input_info.cbAlignment);
-    hr = MFCreateMediaEvent(MEUnknown, &GUID_NULL, S_OK, NULL, &event);
-    ok(hr == S_OK, "Failed to create event object, hr %#lx.\n", hr);
-    hr = IMFTransform_ProcessEvent(transform, 0, event);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-    hr = IMFTransform_ProcessEvent(transform, 1, event);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-    ref = IMFMediaEvent_Release(event);
-    ok(ref == 0, "Release returned %ld\n", ref);
 
     /* Configure stream types. */
     for (i = 0;;++i)
@@ -4179,7 +4220,13 @@ todo_wine {
     hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    /* check default media types */
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, FALSE);
+    check_interface(transform, &IID_IPropertyStore, FALSE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, expect_transform_attributes, TRUE);
 
     memset(&input_info, 0xcd, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
@@ -4568,6 +4615,9 @@ static void test_mp3_decoder(void)
     todo_wine
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    check_mft_optional_methods(transform);
+    check_mft_get_attributes(transform, NULL, FALSE);
 
     /* check default media types */
 
