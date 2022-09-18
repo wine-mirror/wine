@@ -1015,7 +1015,7 @@
 @ stdcall OpenEventA(long long str)
 @ stdcall OpenEventW(long long wstr)
 @ stdcall OpenFileById(long ptr long long ptr long)
-# @ stub OpenFileMappingFromApp
+@ stdcall OpenFileMappingFromApp(long long wstr)
 @ stdcall OpenFileMappingW(long long wstr)
 # @ stub OpenGlobalizationUserSettingsKey
 @ stdcall OpenMutexW(long long wstr)

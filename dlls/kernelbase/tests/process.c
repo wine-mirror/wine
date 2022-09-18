@@ -36,6 +36,7 @@ static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, S
 static LPVOID (WINAPI *pVirtualAlloc2)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static LPVOID (WINAPI *pVirtualAlloc2FromApp)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static PVOID (WINAPI *pVirtualAllocFromApp)(PVOID, SIZE_T, DWORD, DWORD);
+static HANDLE (WINAPI *pOpenFileMappingFromApp)( ULONG, BOOL, LPCWSTR);
 
 static void test_CompareObjectHandles(void)
 {
@@ -324,6 +325,30 @@ static void test_VirtualAlloc2FromApp(void)
     }
 }
 
+static void test_OpenFileMappingFromApp(void)
+{
+    HANDLE file, mapping;
+
+    if (!pOpenFileMappingFromApp)
+    {
+        win_skip("OpenFileMappingFromApp is not available.\n");
+        return;
+    }
+
+    file = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_EXECUTE_READ, 0, 4090, "foo");
+    ok(!!file, "Failed to create a mapping.\n");
+
+    mapping = pOpenFileMappingFromApp(FILE_MAP_READ, FALSE, L"foo");
+    ok(!!mapping, "Failed to open a mapping.\n");
+    CloseHandle(mapping);
+
+    mapping = pOpenFileMappingFromApp(FILE_MAP_EXECUTE, FALSE, L"foo");
+    ok(!!mapping, "Failed to open a mapping.\n");
+    CloseHandle(mapping);
+
+    CloseHandle(file);
+}
+
 static void init_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA("kernelbase.dll");
@@ -331,6 +356,7 @@ static void init_funcs(void)
 #define X(f) { p##f = (void*)GetProcAddress(hmod, #f); }
     X(CompareObjectHandles);
     X(MapViewOfFile3);
+    X(OpenFileMappingFromApp);
     X(VirtualAlloc2);
     X(VirtualAlloc2FromApp);
     X(VirtualAllocFromApp);
@@ -346,4 +372,5 @@ START_TEST(process)
     test_VirtualAlloc2();
     test_VirtualAllocFromApp();
     test_VirtualAlloc2FromApp();
+    test_OpenFileMappingFromApp();
 }
