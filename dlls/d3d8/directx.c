@@ -52,7 +52,7 @@ static ULONG WINAPI d3d8_AddRef(IDirect3D8 *iface)
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
     ULONG refcount = InterlockedIncrement(&d3d8->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -62,7 +62,7 @@ static ULONG WINAPI d3d8_Release(IDirect3D8 *iface)
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
     ULONG refcount = InterlockedDecrement(&d3d8->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -109,7 +109,7 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
     unsigned int output_idx;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, flags %#x, identifier %p.\n",
+    TRACE("iface %p, adapter %u, flags %#lx, identifier %p.\n",
             iface, adapter, flags, identifier);
 
     output_idx = adapter;
@@ -253,7 +253,7 @@ static HRESULT WINAPI d3d8_CheckDeviceFormat(IDirect3D8 *iface, UINT adapter, D3
     unsigned int output_idx;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#x, resource_type %#x, format %#x.\n",
+    TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#lx, resource_type %#x, format %#x.\n",
             iface, adapter, device_type, adapter_format, usage, resource_type, format);
 
     output_idx = adapter;
@@ -299,7 +299,7 @@ static HRESULT WINAPI d3d8_CheckDeviceFormat(IDirect3D8 *iface, UINT adapter, D3
     wined3d_adapter = wined3d_output_get_adapter(d3d8->wined3d_outputs[output_idx]);
     if (format == D3DFMT_RESZ && resource_type == D3DRTYPE_SURFACE && usage == D3DUSAGE_RENDERTARGET)
     {
-        DWORD levels;
+        unsigned int levels;
 
         hr = wined3d_check_device_multisample_type(wined3d_adapter, wined3d_device_type_from_d3d(device_type),
                 WINED3DFMT_D24_UNORM_S8_UINT, FALSE, WINED3D_MULTISAMPLE_NON_MASKABLE, &levels);
@@ -414,7 +414,7 @@ static HMONITOR WINAPI d3d8_GetAdapterMonitor(IDirect3D8 *iface, UINT adapter)
 
     if (FAILED(hr))
     {
-        WARN("Failed to get output desc, hr %#x.\n", hr);
+        WARN("Failed to get output desc, hr %#lx.\n", hr);
         return NULL;
     }
 
@@ -429,7 +429,7 @@ static HRESULT WINAPI d3d8_CreateDevice(IDirect3D8 *iface, UINT adapter,
     struct d3d8_device *object;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",
+    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#lx, parameters %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, device);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -438,7 +438,7 @@ static HRESULT WINAPI d3d8_CreateDevice(IDirect3D8 *iface, UINT adapter,
     hr = device_init(object, d3d8, d3d8->wined3d, adapter, device_type, focus_window, flags, parameters);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
+        WARN("Failed to initialize device, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

@@ -78,7 +78,7 @@ static HRESULT WINAPI d3d8_volume_SetPrivateData(IDirect3DVolume8 *iface, REFGUI
         const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_volume *volume = impl_from_IDirect3DVolume8(iface);
-    TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
+    TRACE("iface %p, guid %s, data %p, data_size %lu, flags %#lx.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     return d3d8_resource_set_private_data(&volume->resource, guid, data, data_size, flags);
@@ -141,8 +141,7 @@ static HRESULT WINAPI d3d8_volume_LockBox(IDirect3DVolume8 *iface,
     struct wined3d_map_desc map_desc;
     HRESULT hr;
 
-    TRACE("iface %p, locked_box %p, box %p, flags %#x.\n",
-            iface, locked_box, box, flags);
+    TRACE("iface %p, locked_box %p, box %p, flags %#lx.\n", iface, locked_box, box, flags);
 
     if (FAILED(hr = wined3d_resource_map(wined3d_texture_get_resource(volume->wined3d_texture),
             volume->sub_resource_idx, &map_desc, (const struct wined3d_box *)box,

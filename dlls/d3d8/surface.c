@@ -60,7 +60,7 @@ static ULONG WINAPI d3d8_surface_AddRef(IDirect3DSurface8 *iface)
     }
 
     refcount = InterlockedIncrement(&surface->resource.refcount);
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     if (refcount == 1)
     {
@@ -94,7 +94,7 @@ static ULONG WINAPI d3d8_surface_Release(IDirect3DSurface8 *iface)
     }
 
     refcount = InterlockedDecrement(&surface->resource.refcount);
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -132,7 +132,7 @@ static HRESULT WINAPI d3d8_surface_SetPrivateData(IDirect3DSurface8 *iface, REFG
         const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_surface *surface = impl_from_IDirect3DSurface8(iface);
-    TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
+    TRACE("iface %p, guid %s, data %p, data_size %lu, flags %#lx.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     return d3d8_resource_set_private_data(&surface->resource, guid, data, data_size, flags);
@@ -205,7 +205,7 @@ static HRESULT WINAPI d3d8_surface_LockRect(IDirect3DSurface8 *iface,
     HRESULT hr;
     D3DRESOURCETYPE type;
 
-    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#lx.\n",
             iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
     wined3d_mutex_lock();
@@ -376,7 +376,7 @@ struct wined3d_rendertarget_view *d3d8_surface_acquire_rendertarget_view(struct 
     if (FAILED(hr = wined3d_rendertarget_view_create_from_sub_resource(surface->wined3d_texture,
             surface->sub_resource_idx, surface, &d3d8_view_wined3d_parent_ops, &surface->wined3d_rtv)))
     {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        ERR("Failed to create rendertarget view, hr %#lx.\n", hr);
         d3d8_surface_Release(&surface->IDirect3DSurface8_iface);
         return NULL;
     }

@@ -76,26 +76,26 @@ size_t parse_token(const DWORD* pToken)
 
     switch ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT) { /* maybe a macro to inverse ... */
         case D3DVSD_TOKEN_NOP:
-            TRACE(" 0x%08x NOP()\n", token);
+            TRACE(" 0x%08lx NOP()\n", token);
             break;
 
         case D3DVSD_TOKEN_STREAM:
             if (token & D3DVSD_STREAMTESSMASK)
             {
-                TRACE(" 0x%08x STREAM_TESS()\n", token);
+                TRACE(" 0x%08lx STREAM_TESS()\n", token);
             } else {
-                TRACE(" 0x%08x STREAM(%u)\n", token, ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT));
+                TRACE(" 0x%08lx STREAM(%lu)\n", token, ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT));
             }
             break;
 
         case D3DVSD_TOKEN_STREAMDATA:
             if (token & 0x10000000)
             {
-                TRACE(" 0x%08x SKIP(%u)\n", token, ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
+                TRACE(" 0x%08lx SKIP(%lu)\n", token, ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
             } else {
                 DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
                 DWORD reg = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-                TRACE(" 0x%08x REG(%s, %s)\n", token, debug_d3dvsde_register(reg), debug_d3dvsdt_type(type));
+                TRACE(" 0x%08lx REG(%s, %s)\n", token, debug_d3dvsde_register(reg), debug_d3dvsdt_type(type));
             }
             break;
 
@@ -104,12 +104,12 @@ size_t parse_token(const DWORD* pToken)
             {
                 DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
                 DWORD reg = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-                TRACE(" 0x%08x TESSUV(%s) as %s\n", token, debug_d3dvsde_register(reg), debug_d3dvsdt_type(type));
+                TRACE(" 0x%08lx TESSUV(%s) as %s\n", token, debug_d3dvsde_register(reg), debug_d3dvsdt_type(type));
             } else {
                 DWORD type = ((token & D3DVSD_DATATYPEMASK)    >> D3DVSD_DATATYPESHIFT);
                 DWORD regout = ((token & D3DVSD_VERTEXREGMASK)   >> D3DVSD_VERTEXREGSHIFT);
                 DWORD regin = ((token & D3DVSD_VERTEXREGINMASK) >> D3DVSD_VERTEXREGINSHIFT);
-                TRACE(" 0x%08x TESSNORMAL(%s, %s) as %s\n", token, debug_d3dvsde_register(regin),
+                TRACE(" 0x%08lx TESSNORMAL(%s, %s) as %s\n", token, debug_d3dvsde_register(regin),
                         debug_d3dvsde_register(regout), debug_d3dvsdt_type(type));
             }
             break;
@@ -125,18 +125,18 @@ size_t parse_token(const DWORD* pToken)
             {
                 DWORD count = ((token & D3DVSD_CONSTCOUNTMASK) >> D3DVSD_CONSTCOUNTSHIFT);
                 DWORD extinfo = ((token & D3DVSD_EXTINFOMASK)    >> D3DVSD_EXTINFOSHIFT);
-                TRACE(" 0x%08x EXT(%u, %u)\n", token, count, extinfo);
+                TRACE(" 0x%08lx EXT(%lu, %lu)\n", token, count, extinfo);
                 /* todo ... print extension */
                 tokenlen = count + 1;
             }
             break;
 
         case D3DVSD_TOKEN_END:
-            TRACE(" 0x%08x END()\n", token);
+            TRACE(" 0x%08lx END()\n", token);
             break;
 
         default:
-            TRACE(" 0x%08x UNKNOWN\n", token);
+            TRACE(" 0x%08lx UNKNOWN\n", token);
             /* arg error */
     }
 
@@ -160,7 +160,7 @@ void load_local_constants(const DWORD *d3d8_elements, struct wined3d_shader *win
                 DWORD i;
                 for (i = 0; i < count; ++i)
                 {
-                    TRACE("c[%u] = (%8f, %8f, %8f, %8f)\n",
+                    TRACE("c[%lu] = (%8f, %8f, %8f, %8f)\n",
                             constant_idx,
                             *(const float *)(token + i * 4 + 1),
                             *(const float *)(token + i * 4 + 2),
@@ -291,7 +291,7 @@ static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3
 
             offset += wined3d_type_sizes[type];
         } else if (token_type == D3DVSD_TOKEN_STREAMDATA && (*token & D3DVSD_DATALOADTYPEMASK)) {
-            TRACE(" 0x%08x SKIP(%u)\n", *token, (*token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+            TRACE(" 0x%08lx SKIP(%lu)\n", *token, (*token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
             offset += sizeof(DWORD) * ((*token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
         }
 
@@ -354,7 +354,7 @@ HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration
     heap_free(wined3d_elements);
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        WARN("Failed to create wined3d vertex declaration, hr %#lx.\n", hr);
         heap_free(declaration->elements);
         if (hr == E_INVALIDARG)
             hr = E_FAIL;
@@ -378,7 +378,7 @@ HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declara
             &d3d8_vertexdeclaration_wined3d_parent_ops, &declaration->wined3d_vertex_declaration);
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        WARN("Failed to create wined3d vertex declaration, hr %#lx.\n", hr);
         if (hr == E_INVALIDARG)
             hr = E_FAIL;
         return hr;

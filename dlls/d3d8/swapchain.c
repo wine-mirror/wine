@@ -50,7 +50,7 @@ static ULONG WINAPI d3d8_swapchain_AddRef(IDirect3DSwapChain8 *iface)
     struct d3d8_swapchain *swapchain = impl_from_IDirect3DSwapChain8(iface);
     ULONG ref = InterlockedIncrement(&swapchain->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, ref);
+    TRACE("%p increasing refcount to %lu.\n", iface, ref);
 
     if (ref == 1)
     {
@@ -67,7 +67,7 @@ static ULONG WINAPI d3d8_swapchain_Release(IDirect3DSwapChain8 *iface)
     struct d3d8_swapchain *swapchain = impl_from_IDirect3DSwapChain8(iface);
     ULONG ref = InterlockedDecrement(&swapchain->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, ref);
+    TRACE("%p decreasing refcount to %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -180,7 +180,7 @@ static HRESULT swapchain_init(struct d3d8_swapchain *swapchain, struct d3d8_devi
     if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, &swapchain->state_parent,
             swapchain, &d3d8_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
-        WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
+        WARN("Failed to create wined3d swapchain, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -201,7 +201,7 @@ HRESULT d3d8_swapchain_create(struct d3d8_device *device, struct wined3d_swapcha
 
     if (FAILED(hr = swapchain_init(object, device, desc, swap_interval)))
     {
-        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        WARN("Failed to initialize swapchain, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

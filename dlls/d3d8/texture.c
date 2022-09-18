@@ -24,7 +24,7 @@ static ULONG d3d8_texture_incref(struct d3d8_texture *texture)
 {
     ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
-    TRACE("%p increasing refcount to %u.\n", texture, ref);
+    TRACE("%p increasing refcount to %lu.\n", texture, ref);
 
     if (ref == 1)
     {
@@ -47,7 +47,7 @@ static ULONG d3d8_texture_decref(struct d3d8_texture *texture)
 {
     ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", texture, ref);
+    TRACE("%p decreasing refcount to %lu.\n", texture, ref);
 
     if (!ref)
     {
@@ -147,7 +147,7 @@ static HRESULT WINAPI d3d8_texture_2d_SetPrivateData(IDirect3DTexture8 *iface,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
-    TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
+    TRACE("iface %p, guid %s, data %p, data_size %lu, flags %#lx.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     return d3d8_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
@@ -177,7 +177,7 @@ static DWORD WINAPI d3d8_texture_2d_SetPriority(IDirect3DTexture8 *iface, DWORD 
     struct wined3d_resource *resource;
     DWORD ret;
 
-    TRACE("iface %p, priority %u.\n", iface, priority);
+    TRACE("iface %p, priority %lu.\n", iface, priority);
 
     wined3d_mutex_lock();
     resource = wined3d_texture_get_resource(d3d8_texture_get_draw_texture(texture));
@@ -224,7 +224,7 @@ static DWORD WINAPI d3d8_texture_2d_SetLOD(IDirect3DTexture8 *iface, DWORD lod)
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
     DWORD ret;
 
-    TRACE("iface %p, lod %u.\n", iface, lod);
+    TRACE("iface %p, lod %lu.\n", iface, lod);
 
     wined3d_mutex_lock();
     ret = wined3d_texture_set_lod(d3d8_texture_get_draw_texture(texture), lod);
@@ -315,7 +315,7 @@ static HRESULT WINAPI d3d8_texture_2d_LockRect(IDirect3DTexture8 *iface, UINT le
     struct d3d8_surface *surface_impl;
     HRESULT hr;
 
-    TRACE("iface %p, level %u, locked_rect %p, rect %p, flags %#x.\n",
+    TRACE("iface %p, level %u, locked_rect %p, rect %p, flags %#lx.\n",
             iface, level, locked_rect, rect, flags);
 
     wined3d_mutex_lock();
@@ -448,7 +448,7 @@ static HRESULT WINAPI d3d8_texture_cube_SetPrivateData(IDirect3DCubeTexture8 *if
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
-    TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
+    TRACE("iface %p, guid %s, data %p, data_size %lu, flags %#lx.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     return d3d8_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
@@ -478,7 +478,7 @@ static DWORD WINAPI d3d8_texture_cube_SetPriority(IDirect3DCubeTexture8 *iface, 
     struct wined3d_resource *resource;
     DWORD ret;
 
-    TRACE("iface %p, priority %u.\n", iface, priority);
+    TRACE("iface %p, priority %lu.\n", iface, priority);
 
     wined3d_mutex_lock();
     resource = wined3d_texture_get_resource(d3d8_texture_get_draw_texture(texture));
@@ -525,7 +525,7 @@ static DWORD WINAPI d3d8_texture_cube_SetLOD(IDirect3DCubeTexture8 *iface, DWORD
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
     DWORD ret;
 
-    TRACE("iface %p, lod %u.\n", iface, lod);
+    TRACE("iface %p, lod %lu.\n", iface, lod);
 
     wined3d_mutex_lock();
     ret = wined3d_texture_set_lod(d3d8_texture_get_draw_texture(texture), lod);
@@ -634,7 +634,7 @@ static HRESULT WINAPI d3d8_texture_cube_LockRect(IDirect3DCubeTexture8 *iface,
     UINT sub_resource_idx;
     HRESULT hr;
 
-    TRACE("iface %p, face %#x, level %u, locked_rect %p, rect %p, flags %#x.\n",
+    TRACE("iface %p, face %#x, level %u, locked_rect %p, rect %p, flags %#lx.\n",
             iface, face, level, locked_rect, rect, flags);
 
     wined3d_mutex_lock();
@@ -772,7 +772,7 @@ static HRESULT WINAPI d3d8_texture_3d_SetPrivateData(IDirect3DVolumeTexture8 *if
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
-    TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
+    TRACE("iface %p, guid %s, data %p, data_size %lu, flags %#lx.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     return d3d8_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
@@ -802,7 +802,7 @@ static DWORD WINAPI d3d8_texture_3d_SetPriority(IDirect3DVolumeTexture8 *iface, 
     struct wined3d_resource *resource;
     DWORD ret;
 
-    TRACE("iface %p, priority %u.\n", iface, priority);
+    TRACE("iface %p, priority %lu.\n", iface, priority);
 
     wined3d_mutex_lock();
     resource = wined3d_texture_get_resource(d3d8_texture_get_draw_texture(texture));
@@ -849,7 +849,7 @@ static DWORD WINAPI d3d8_texture_3d_SetLOD(IDirect3DVolumeTexture8 *iface, DWORD
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
     DWORD ret;
 
-    TRACE("iface %p, lod %u.\n", iface, lod);
+    TRACE("iface %p, lod %lu.\n", iface, lod);
 
     wined3d_mutex_lock();
     ret = wined3d_texture_set_lod(d3d8_texture_get_draw_texture(texture), lod);
@@ -940,7 +940,7 @@ static HRESULT WINAPI d3d8_texture_3d_LockBox(IDirect3DVolumeTexture8 *iface,
     struct d3d8_volume *volume_impl;
     HRESULT hr;
 
-    TRACE("iface %p, level %u, locked_box %p, box %p, flags %#x.\n",
+    TRACE("iface %p, level %u, locked_box %p, box %p, flags %#lx.\n",
             iface, level, locked_box, box, flags);
 
     wined3d_mutex_lock();
@@ -1076,7 +1076,7 @@ static HRESULT d3d8_texture_init(struct d3d8_texture *texture, struct d3d8_devic
                 NULL, texture, &d3d8_null_wined3d_parent_ops, &texture->wined3d_texture)))
         {
             wined3d_mutex_unlock();
-            WARN("Failed to create sysmem texture, hr %#x.\n", hr);
+            WARN("Failed to create sysmem texture, hr %#lx.\n", hr);
             return hr;
         }
 
@@ -1087,7 +1087,7 @@ static HRESULT d3d8_texture_init(struct d3d8_texture *texture, struct d3d8_devic
         {
             wined3d_texture_decref(texture->wined3d_texture);
             wined3d_mutex_unlock();
-            WARN("Failed to create draw texture, hr %#x.\n", hr);
+            WARN("Failed to create draw texture, hr %#lx.\n", hr);
             return hr;
         }
     }
@@ -1097,7 +1097,7 @@ static HRESULT d3d8_texture_init(struct d3d8_texture *texture, struct d3d8_devic
                 NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture)))
         {
             wined3d_mutex_unlock();
-            WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+            WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
             return hr;
         }
     }

@@ -55,7 +55,7 @@ static HRESULT d3d8_vertexshader_create_vertexdeclaration(struct d3d8_device *de
     struct d3d8_vertex_declaration *object;
     HRESULT hr;
 
-    TRACE("device %p, declaration %p, shader_handle %#x, decl_ptr %p.\n",
+    TRACE("device %p, declaration %p, shader_handle %#lx, decl_ptr %p.\n",
             device, declaration, shader_handle, decl_ptr);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -64,7 +64,7 @@ static HRESULT d3d8_vertexshader_create_vertexdeclaration(struct d3d8_device *de
     hr = d3d8_vertex_declaration_init(object, device, declaration, shader_handle);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
+        WARN("Failed to initialize vertex declaration, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -103,7 +103,7 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
     hr = d3d8_vertexshader_create_vertexdeclaration(device, declaration, shader_handle, &shader->vertex_declaration);
     if (FAILED(hr))
     {
-        WARN("Failed to create vertex declaration, hr %#x.\n", hr);
+        WARN("Failed to create vertex declaration, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -112,7 +112,7 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
         struct wined3d_shader_desc desc;
 
         if (usage)
-            FIXME("Usage %#x not implemented.\n", usage);
+            FIXME("Usage %#lx not implemented.\n", usage);
 
         desc.byte_code = byte_code;
         desc.byte_code_size = ~(size_t)0;
@@ -123,7 +123,7 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
         wined3d_mutex_unlock();
         if (FAILED(hr))
         {
-            WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
+            WARN("Failed to create wined3d vertex shader, hr %#lx.\n", hr);
             d3d8_vertex_declaration_destroy(shader->vertex_declaration);
             return hr;
         }
@@ -170,7 +170,7 @@ HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, struct d3d8_dev
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d pixel shader, hr %#lx.\n", hr);
         return hr;
     }
 
