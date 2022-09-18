@@ -5330,14 +5330,17 @@ BOOL WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown 
  */
 ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
 {
+    DPI_AWARENESS val;
+
     if (process && process != GetCurrentProcess())
     {
         WARN( "not supported on other process %p\n", process );
         return NTUSER_DPI_UNAWARE;
     }
 
-    if (!dpi_awareness) return NTUSER_DPI_UNAWARE;
-    return dpi_awareness;
+    val = ReadNoFence( &dpi_awareness );
+    if (!val) return NTUSER_DPI_UNAWARE;
+    return val;
 }
 
 BOOL message_beep( UINT i )
