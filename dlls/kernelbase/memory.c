@@ -237,6 +237,15 @@ LPVOID WINAPI DECLSPEC_HOTPATCH MapViewOfFileEx( HANDLE handle, DWORD access, DW
     return addr;
 }
 
+
+/***********************************************************************
+ *             MapViewOfFileFromApp   (kernelbase.@)
+ */
+LPVOID WINAPI DECLSPEC_HOTPATCH MapViewOfFileFromApp( HANDLE handle, ULONG access, ULONG64 offset, SIZE_T size )
+{
+    return MapViewOfFile( handle, access, offset << 32, offset, size );
+}
+
 /***********************************************************************
  *             MapViewOfFile3   (kernelbase.@)
  */
