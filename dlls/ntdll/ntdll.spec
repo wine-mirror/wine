@@ -621,6 +621,7 @@
 # @ stub RtlDosApplyFileIsolationRedirection_Ustr
 @ stdcall RtlDosPathNameToNtPathName_U(wstr ptr ptr ptr)
 @ stdcall RtlDosPathNameToNtPathName_U_WithStatus(wstr ptr ptr ptr)
+@ stdcall RtlDosPathNameToRelativeNtPathName_U(wstr ptr ptr ptr)
 @ stdcall RtlDosPathNameToRelativeNtPathName_U_WithStatus(wstr ptr ptr ptr)
 @ stdcall RtlDosSearchPath_U(wstr wstr wstr long ptr ptr)
 # @ stub RtlDosSearchPath_Ustr
