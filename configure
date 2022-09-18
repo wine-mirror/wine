@@ -1372,6 +1372,7 @@ enable_taskschd
 enable_tbs
 enable_tdh
 enable_tdi_sys
+enable_threadpoolwinrt
 enable_traffic
 enable_twain_32
 enable_tzres
@@ -21958,6 +21959,7 @@ wine_fn_config_makefile dlls/taskschd/tests enable_tests
 wine_fn_config_makefile dlls/tbs enable_tbs
 wine_fn_config_makefile dlls/tdh enable_tdh
 wine_fn_config_makefile dlls/tdi.sys enable_tdi_sys
+wine_fn_config_makefile dlls/threadpoolwinrt enable_threadpoolwinrt
 wine_fn_config_makefile dlls/toolhelp.dll16 enable_win16
 wine_fn_config_makefile dlls/traffic enable_traffic
 wine_fn_config_makefile dlls/twain.dll16 enable_win16
