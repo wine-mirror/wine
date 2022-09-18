@@ -879,7 +879,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH InitializeCriticalSectionEx( CRITICAL_SECTION *cri
  * File mappings
  ***********************************************************************/
 
-
 /***********************************************************************
  *             CreateFileMappingW   (kernelbase.@)
  */
@@ -946,6 +945,15 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMappingW( HANDLE file, LPSECURITY_ATTR
     return ret;
 }
 
+
+/***********************************************************************
+ *             CreateFileMappingFromApp   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMappingFromApp( HANDLE file, LPSECURITY_ATTRIBUTES sa, ULONG protect,
+        ULONG64 size, LPCWSTR name )
+{
+    return CreateFileMappingW( file, sa, protect, size << 32, size, name );
+}
 
 /***********************************************************************
  *             OpenFileMappingW   (kernelbase.@)
