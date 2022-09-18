@@ -239,7 +239,7 @@ static void threadsafe_queue_push(threadsafe_queue *queue, size_t id,
         queue->tail = p;
         if(!queue->head)
             queue->head = p;
-        queue->lock = 0;
+        WriteRelease(&queue->lock, 0);
     }
     else
     {
@@ -289,7 +289,7 @@ static BOOL threadsafe_queue_pop(threadsafe_queue *queue, size_t id,
         queue->head = p->_Next;
         if(!queue->head)
             queue->tail = NULL;
-        queue->lock = 0;
+        WriteRelease(&queue->lock, 0);
 
         /* TODO: Add exception handling */
         call__Concurrent_queue_base_v4__Deallocate_page(parent, p);
