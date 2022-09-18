@@ -809,6 +809,7 @@ SOURCES = \
 	windows.storage.streams.idl \
 	windows.system.idl \
 	windows.system.power.idl \
+	windows.system.threading.idl \
 	windows.system.userprofile.idl \
 	windows.ui.idl \
 	windowscontracts.idl \
