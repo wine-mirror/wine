@@ -353,15 +353,119 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     return ret;
 }
 
+typedef DWORD (*compare_cb)(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect);
+
+static DWORD compare_nv12(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+{
+    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    for (y = 0; y < height; y++, data += width, expect += width)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x++)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[x] - (int)data[x]);
+        }
+    }
+
+    for (y = 0; y < height; y += 2, data += width, expect += width)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x += 2)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[x + 0] - (int)data[x + 0]);
+            diff += abs((int)expect[x + 1] - (int)data[x + 1]);
+        }
+    }
+
+    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
+    return diff * 100 / 256 / size;
+}
+
+static DWORD compare_i420(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+{
+    DWORD i, x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    for (y = 0; y < height; y++, data += width, expect += width)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x++)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[x] - (int)data[x]);
+        }
+    }
+
+    for (i = 0; i < 2; ++i) for (y = 0; y < height; y += 2, data += width / 2, expect += width / 2)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x += 2)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[x / 2] - (int)data[x / 2]);
+        }
+    }
+
+    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
+    return diff * 100 / 256 / size;
+}
+
+static DWORD compare_rgb32(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+{
+    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    for (y = 0; y < height; y++, data += width * 4, expect += width * 4)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x++)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[4 * x + 0] - (int)data[4 * x + 0]);
+            diff += abs((int)expect[4 * x + 1] - (int)data[4 * x + 1]);
+            diff += abs((int)expect[4 * x + 2] - (int)data[4 * x + 2]);
+        }
+    }
+
+    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3;
+    return diff * 100 / 256 / size;
+}
+
+static DWORD compare_pcm16(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+{
+    const INT16 *data_pcm = (INT16 *)data, *expect_pcm = (INT16 *)expect;
+    DWORD i, size = length / 2, diff = 0;
+
+    for (i = 0; i < size; i++)
+        diff += abs((int)*expect_pcm++ - (int)*data_pcm++);
+
+    return diff * 100 / 65536 / size;
+}
+
+static DWORD compare_bytes(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+{
+    DWORD i, diff = 0;
+
+    for (i = 0; i < length; i++)
+        diff += abs((int)*expect++ - (int)*data++);
+
+    return diff * 100 / 256 / length;
+}
+
 struct buffer_desc
 {
     DWORD length;
+    BOOL todo_length;
+    compare_cb compare;
+    RECT rect;
 };
 
 struct sample_desc
 {
     DWORD buffer_count;
     const struct buffer_desc *buffers;
+    BOOL todo_length;
 };
 
 typedef void (*enum_mf_media_buffers_cb)(IMFMediaBuffer *buffer, const struct buffer_desc *desc, void *context);
@@ -407,6 +511,83 @@ static void dump_mf_media_buffer(IMFMediaBuffer *buffer, const struct buffer_des
 static void dump_mf_sample(IMFSample *sample, const struct sample_desc *sample_desc, HANDLE output)
 {
     enum_mf_media_buffers(sample, sample_desc, dump_mf_media_buffer, output);
+}
+
+#define check_mf_media_buffer(a, b, c) check_mf_media_buffer_(__LINE__, a, b, c)
+static DWORD check_mf_media_buffer_(int line, IMFMediaBuffer *buffer, const struct buffer_desc *expect,
+        const BYTE **expect_data, DWORD *expect_data_len)
+{
+    DWORD length, diff = 0;
+    HRESULT hr;
+    BYTE *data;
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &length);
+    ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
+    todo_wine_if(expect->todo_length)
+    ok_(__FILE__, line)(length == expect->length, "got length %#lx\n", length);
+
+    if (*expect_data_len < length)
+        todo_wine_if(expect->todo_length)
+        ok_(__FILE__, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
+    else if (!expect->compare)
+        diff = compare_bytes(data, length, NULL, *expect_data);
+    else
+        diff = expect->compare(data, length, &expect->rect, *expect_data);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
+
+    *expect_data = *expect_data + min(length, *expect_data_len);
+    *expect_data_len = *expect_data_len - min(length, *expect_data_len);
+
+    return diff;
+}
+
+struct check_mf_sample_context
+{
+    DWORD total_length;
+    const BYTE *data;
+    DWORD data_len;
+    DWORD diff;
+    int line;
+};
+
+static void check_mf_sample_buffer(IMFMediaBuffer *buffer, const struct buffer_desc *expect, void *context)
+{
+    struct check_mf_sample_context *ctx = context;
+    ctx->diff += check_mf_media_buffer_(ctx->line, buffer, expect, &ctx->data, &ctx->data_len);
+    ctx->total_length += expect->length;
+}
+
+#define check_mf_sample(a, b, c, d) check_mf_sample_(__LINE__, a, b, c, d)
+static DWORD check_mf_sample_(int line, IMFSample *sample, const struct sample_desc *expect,
+        const BYTE **expect_data, DWORD *expect_data_len)
+{
+    struct check_mf_sample_context ctx = {.data = *expect_data, .data_len = *expect_data_len, .line = line};
+    DWORD buffer_count, total_length;
+    HRESULT hr;
+
+    buffer_count = 0xdeadbeef;
+    hr = IMFSample_GetBufferCount(sample, &buffer_count);
+    ok_(__FILE__, line)(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
+    ok_(__FILE__, line)(buffer_count == expect->buffer_count,
+            "got %lu buffers\n", buffer_count);
+
+    enum_mf_media_buffers(sample, expect, check_mf_sample_buffer, &ctx);
+
+    total_length = 0xdeadbeef;
+    hr = IMFSample_GetTotalLength(sample, &total_length);
+    ok_(__FILE__, line)(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    todo_wine_if(expect->todo_length)
+    ok_(__FILE__, line)(total_length == ctx.total_length,
+            "got total length %#lx\n", total_length);
+    ok_(__FILE__, line)(*expect_data_len >= ctx.total_length,
+            "missing %#lx data\n", ctx.total_length - *expect_data_len);
+
+    *expect_data = *expect_data + min(total_length, *expect_data_len);
+    *expect_data_len = *expect_data_len - min(total_length, *expect_data_len);
+
+    return ctx.diff / buffer_count;
 }
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
@@ -957,90 +1138,6 @@ static IMFSample *create_sample(const BYTE *data, ULONG size)
     ok(ret == 1, "Release returned %lu\n", ret);
 
     return sample;
-}
-
-#define check_sample(a, b) check_sample_(__LINE__, a, b)
-static void check_sample_(int line, IMFSample *sample, const BYTE *expect_buf)
-{
-    IMFMediaBuffer *media_buffer;
-    DWORD length;
-    BYTE *buffer;
-    HRESULT hr;
-    ULONG ret;
-
-    hr = IMFSample_ConvertToContiguousBuffer(sample, &media_buffer);
-    ok_(__FILE__, line)(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
-    ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
-    ok_(__FILE__, line)(!memcmp(expect_buf, buffer, length), "unexpected buffer data\n");
-    hr = IMFMediaBuffer_Unlock(media_buffer);
-    ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
-    ret = IMFMediaBuffer_Release(media_buffer);
-    ok_(__FILE__, line)(ret == 1, "Release returned %lu\n", ret);
-}
-
-#define check_sample_rgb32(a, b) check_sample_rgb32_(__LINE__, a, b)
-static void check_sample_rgb32_(int line, IMFSample *sample, const BYTE *expect_buf)
-{
-    DWORD i, length, diff = 0, max_diff;
-    IMFMediaBuffer *media_buffer;
-    BYTE *buffer;
-    HRESULT hr;
-    ULONG ret;
-
-    hr = IMFSample_ConvertToContiguousBuffer(sample, &media_buffer);
-    ok_(__FILE__, line)(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
-    ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
-
-    /* check that buffer values are "close" enough, there's some pretty big
-     * differences with the color converter between ffmpeg and native.
-     */
-    for (i = 0; i < length; i++)
-    {
-        if (i % 4 == 3) continue; /* ignore alpha diff */
-        if (!expect_buf[(i & ~3) + 3]) continue; /* ignore transparent pixels */
-        diff += abs((int)expect_buf[i] - (int)buffer[i]);
-    }
-    max_diff = length * 3 * 256;
-    ok_(__FILE__, line)(diff * 100 / max_diff == 0, "unexpected buffer data\n");
-
-    hr = IMFMediaBuffer_Unlock(media_buffer);
-    ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
-    ret = IMFMediaBuffer_Release(media_buffer);
-    ok_(__FILE__, line)(ret == 1, "Release returned %lu\n", ret);
-}
-
-#define check_sample_pcm16(a, b, c) check_sample_pcm16_(__LINE__, a, b, c)
-static void check_sample_pcm16_(int line, IMFSample *sample, const BYTE *expect_buf, BOOL todo)
-{
-    IMFMediaBuffer *media_buffer;
-    DWORD i, length;
-    BYTE *buffer;
-    HRESULT hr;
-    ULONG ret;
-
-    hr = IMFSample_ConvertToContiguousBuffer(sample, &media_buffer);
-    ok_(__FILE__, line)(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
-    ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
-
-    /* check that buffer values are close enough, there's some differences in
-     * the output of audio DSP between 32bit and 64bit implementation
-     */
-    for (i = 0; i < length; i += 2)
-    {
-        DWORD expect = *(INT16 *)(expect_buf + i), value = *(INT16 *)(buffer + i);
-        if (expect - value + 512 > 1024) break;
-    }
-
-    todo_wine_if(todo && i < length / 2)
-    ok_(__FILE__, line)(i == length, "unexpected buffer data\n");
-
-    hr = IMFMediaBuffer_Unlock(media_buffer);
-    ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
-    ret = IMFMediaBuffer_Release(media_buffer);
-    ok_(__FILE__, line)(ret == 1, "Release returned %lu\n", ret);
 }
 
 static const BYTE aac_codec_data[14] = {0x00,0x00,0x29,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x12,0x08};
@@ -1628,14 +1725,12 @@ static void test_wma_encoder(void)
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
         ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-        hr = IMFSample_GetTotalLength(output_sample, &length);
-        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-        ok(length == wmaenc_block_size, "got length %lu\n", length);
-        ok(wmaenc_data_len > i * wmaenc_block_size, "got %lu blocks\n", i);
-        check_sample(output_sample, wmaenc_data + i * wmaenc_block_size);
+        ret = check_mf_sample(output_sample, output_sample_desc, &wmaenc_data, &wmaenc_data_len);
+        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
         dump_mf_sample(output_sample, output_sample_desc, output_file);
         winetest_pop_context();
     }
+    ok(wmaenc_data_len == 0, "missing %#lx bytes\n", wmaenc_data_len);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
     ret = IMFSample_Release(output_sample);
@@ -1776,8 +1871,8 @@ static void test_wma_decoder(void)
 
     const struct buffer_desc output_buffer_desc[] =
     {
-        {.length = wmadec_block_size},
-        {.length = wmadec_block_size / 2},
+        {.length = wmadec_block_size, .compare = compare_pcm16},
+        {.length = wmadec_block_size / 2, .compare = compare_pcm16, .todo_length = TRUE},
     };
     const struct sample_desc output_sample_desc[] =
     {
@@ -1785,7 +1880,7 @@ static void test_wma_decoder(void)
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
         },
         {
-            .buffer_count = 1, .buffers = output_buffer_desc + 1,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE
         },
     };
 
@@ -1985,8 +2080,6 @@ static void test_wma_decoder(void)
         hr = IMFSample_GetUINT32(output_sample, &MFSampleExtension_CleanPoint, &value);
         ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
         ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
-        hr = IMFSample_GetTotalLength(output_sample, &length);
-        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         flags = 0xdeadbeef;
         hr = IMFSample_GetSampleFlags(output_sample, &flags);
         ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
@@ -2002,29 +2095,23 @@ static void test_wma_decoder(void)
         if (output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE)
         {
             ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-            ok(length == wmadec_block_size, "got length %lu\n", length);
             ok(duration == 928798, "got duration %I64d\n", duration);
-            check_sample_pcm16(output_sample, wmadec_data, TRUE);
+            ret = check_mf_sample(output_sample, output_sample_desc + 0, &wmadec_data, &wmadec_data_len);
+            todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
+            ok(ret == 0, "Unexpected %lu%% diff\n", ret);
             dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
-            wmadec_data += wmadec_block_size;
-            wmadec_data_len -= wmadec_block_size;
         }
         else
         {
             ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
             /* FFmpeg doesn't seem to decode WMA buffers in the same way as native */
             todo_wine
-            ok(length == wmadec_block_size / 2, "got length %lu\n", length);
-            todo_wine
             ok(duration == 464399, "got duration %I64d\n", duration);
 
-            if (length == wmadec_block_size / 2)
-            {
-                check_sample_pcm16(output_sample, wmadec_data, FALSE);
-                dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-            }
-            wmadec_data += length;
-            wmadec_data_len -= length;
+            ret = check_mf_sample(output_sample, output_sample_desc + 1, &wmadec_data, &wmadec_data_len);
+            todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
+            ok(ret == 0, "Unexpected %lu%% diff\n", ret);
+            dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
         }
         ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
@@ -2037,7 +2124,7 @@ static void test_wma_decoder(void)
         /* some FFmpeg version request more input to complete decoding */
         if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && i == 2) break;
     }
-    todo_wine
+    todo_wine_if(wmadec_data_len == 0x1000)
     ok(wmadec_data_len == 0, "missing %#lx bytes\n", wmadec_data_len);
 
     trace("created %s\n", debugstr_w(output_path));
@@ -2337,6 +2424,7 @@ static void test_h264_decoder(void)
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = actual_width * actual_height * 3 / 2,
+        .compare = compare_nv12, .rect = {.right = 82, .bottom = 84},
     };
     const struct sample_desc output_sample_desc_nv12 =
     {
@@ -2345,6 +2433,7 @@ static void test_h264_decoder(void)
     const struct buffer_desc output_buffer_desc_i420 =
     {
         .length = actual_width * actual_height * 3 / 2,
+        .compare = compare_i420, .rect = {.right = 82, .bottom = 84},
     };
     const struct sample_desc output_sample_desc_i420 =
     {
@@ -2358,9 +2447,8 @@ static void test_h264_decoder(void)
     DWORD input_id, output_id, input_count, output_count;
     IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_STREAM_INFO output_info;
-    DWORD length, count, output_status;
     MFT_INPUT_STREAM_INFO input_info;
-    IMFMediaBuffer *media_buffer;
+    DWORD length, output_status;
     WCHAR output_path[MAX_PATH];
     IMFAttributes *attributes;
     IMFMediaType *media_type;
@@ -2369,7 +2457,6 @@ static void test_h264_decoder(void)
     ULONG i, ret, flags;
     HANDLE output_file;
     UINT32 value;
-    BYTE *data;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -2643,11 +2730,6 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
     ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
 
-    count = 0xdeadbeef;
-    hr = IMFSample_GetBufferCount(output_sample, &count);
-    ok(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
-    ok(count == 1, "got count %#lx\n", count);
-
     flags = 0xdeadbeef;
     hr = IMFSample_GetSampleFlags(output_sample, &flags);
     ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
@@ -2664,27 +2746,8 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
-    /* Win8 and before pad the data with garbage instead of original
-     * buffer data, make sure it's consistent.  */
-    hr = IMFSample_ConvertToContiguousBuffer(output_sample, &media_buffer);
-    ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
-    ok(hr == S_OK, "Lock returned %#lx\n", hr);
-    ok(length == nv12_frame_len, "got length %lu\n", length);
-
-    for (i = 0; i < actual_aperture.Area.cy; ++i)
-    {
-        memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
-        memset(data + actual_width * (actual_height + i / 2) + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
-    }
-    memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
-    memset(data + actual_width * (actual_height + actual_aperture.Area.cy / 2), 0xcd, (actual_height - actual_aperture.Area.cy) / 2 * actual_width);
-
-    hr = IMFMediaBuffer_Unlock(media_buffer);
-    ok(hr == S_OK, "Unlock returned %#lx\n", hr);
-    IMFMediaBuffer_Release(media_buffer);
-
-    check_sample(output_sample, nv12_frame_data);
+    ret = check_mf_sample(output_sample, &output_sample_desc_nv12, &nv12_frame_data, &nv12_frame_len);
+    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, &output_sample_desc_nv12, output_file);
 
     ret = IMFSample_Release(output_sample);
@@ -2763,33 +2826,8 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
-    /* Win8 and before pad the data with garbage instead of original
-     * buffer data, make sure it's consistent.  */
-    hr = IMFSample_ConvertToContiguousBuffer(output_sample, &media_buffer);
-    ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
-    ok(hr == S_OK, "Lock returned %#lx\n", hr);
-    ok(length == i420_frame_len, "got length %lu\n", length);
-
-    for (i = 0; i < actual_aperture.Area.cy; ++i)
-    {
-        memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
-        memset(data + actual_width * actual_height + actual_width / 2 * i + actual_aperture.Area.cx / 2, 0xcd,
-                actual_width / 2 - actual_aperture.Area.cx / 2);
-        memset(data + actual_width * actual_height + actual_width / 2 * (actual_height / 2 + i) + actual_aperture.Area.cx / 2, 0xcd,
-                actual_width / 2 - actual_aperture.Area.cx / 2);
-    }
-    memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
-    memset(data + actual_width * actual_height + actual_width / 2 * actual_aperture.Area.cy / 2, 0xcd,
-            (actual_height - actual_aperture.Area.cy) / 2 * actual_width / 2);
-    memset(data + actual_width * actual_height + actual_width / 2 * (actual_height / 2 + actual_aperture.Area.cy / 2), 0xcd,
-            (actual_height - actual_aperture.Area.cy) / 2 * actual_width / 2);
-
-    hr = IMFMediaBuffer_Unlock(media_buffer);
-    ok(hr == S_OK, "Unlock returned %#lx\n", hr);
-    IMFMediaBuffer_Release(media_buffer);
-
-    check_sample(output_sample, i420_frame_data);
+    ret = check_mf_sample(output_sample, &output_sample_desc_i420, &i420_frame_data, &i420_frame_len);
+    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, &output_sample_desc_i420, output_file);
 
     ret = IMFSample_Release(output_sample);
@@ -2925,9 +2963,9 @@ static void test_audio_convert(void)
     static const ULONG audioconv_block_size = 0x4000;
     const struct buffer_desc output_buffer_desc[] =
     {
-        {.length = audioconv_block_size},
-        {.length = 0x3dd8},
-        {.length = 0xfc},
+        {.length = audioconv_block_size, .compare = compare_pcm16},
+        {.length = 0x3dd8, .compare = compare_pcm16, .todo_length = TRUE},
+        {.length = 0xfc, .compare = compare_pcm16},
     };
     const struct sample_desc output_sample_desc[] =
     {
@@ -2935,7 +2973,7 @@ static void test_audio_convert(void)
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
         },
         {
-            .buffer_count = 1, .buffers = output_buffer_desc + 1,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1, .todo_length = TRUE,
         },
         {
             .buffer_count = 1, .buffers = output_buffer_desc + 2,
@@ -3126,14 +3164,10 @@ static void test_audio_convert(void)
         hr = IMFSample_GetSampleDuration(output_sample, &duration);
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         ok(duration == 928798, "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(output_sample, &length);
-        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-        ok(length == audioconv_block_size, "got length %lu\n", length);
-        ok(audioconv_data_len > audioconv_block_size, "got remaining length %lu\n", audioconv_data_len);
-        check_sample_pcm16(output_sample, audioconv_data, FALSE);
+
+        ret = check_mf_sample(output_sample, output_sample_desc + 0, &audioconv_data, &audioconv_data_len);
+        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
         dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
-        audioconv_data_len -= audioconv_block_size;
-        audioconv_data += audioconv_block_size;
 
         winetest_pop_context();
         i++;
@@ -3146,15 +3180,10 @@ static void test_audio_convert(void)
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     todo_wine
     ok(duration == 897506, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(output_sample, &length);
-    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    todo_wine
-    ok(length == 15832, "got length %lu\n", length);
-    ok(audioconv_data_len == 16084, "got remaining length %lu\n", audioconv_data_len);
-    check_sample_pcm16(output_sample, audioconv_data, FALSE);
+
+    ret = check_mf_sample(output_sample, output_sample_desc + 1, &audioconv_data, &audioconv_data_len);
+    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-    audioconv_data_len -= length;
-    audioconv_data += length;
 
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -3178,16 +3207,15 @@ static void test_audio_convert(void)
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         todo_wine
         ok(duration == 14286, "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(output_sample, &length);
-        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-        todo_wine
-        ok(length == audioconv_data_len, "got length %lu\n", length);
-        if (length == audioconv_data_len)
-        {
-            check_sample_pcm16(output_sample, audioconv_data, FALSE);
-            dump_mf_sample(output_sample, output_sample_desc + 2, output_file);
-        }
+
+        ret = check_mf_sample(output_sample, output_sample_desc + 2, &audioconv_data, &audioconv_data_len);
+        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
+        dump_mf_sample(output_sample, output_sample_desc + 2, output_file);
     }
+    todo_wine
+    ok(audioconv_data_len == 0
+            || broken(audioconv_data_len == 0xfc) /* Win7 */,
+            "missing %#lx bytes\n", audioconv_data_len);
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
@@ -3381,6 +3409,7 @@ static void test_color_convert(void)
     const struct buffer_desc output_buffer_desc =
     {
         .length = actual_width * actual_height * 4,
+        .compare = compare_rgb32, .rect = {.right = 82, .bottom = 84},
     };
     const struct sample_desc output_sample_desc =
     {
@@ -3540,13 +3569,10 @@ static void test_color_convert(void)
     hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration == 10000000, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(output_sample, &length);
-    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    ok(length == output_info.cbSize, "got length %lu\n", length);
-    check_sample_rgb32(output_sample, rgb32_data);
+
+    ret = check_mf_sample(output_sample, &output_sample_desc, &rgb32_data, &rgb32_data_len);
+    ok(ret <= 4 /* small and harmless differences in Wine vs Windows */, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, &output_sample_desc, output_file);
-    rgb32_data_len -= output_info.cbSize;
-    rgb32_data += output_info.cbSize;
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
@@ -3736,6 +3762,7 @@ static void test_video_processor(void)
     const struct buffer_desc output_buffer_desc =
     {
         .length = actual_width * actual_height * 4,
+        .compare = compare_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
     };
     const struct sample_desc output_sample_desc =
     {
@@ -3761,7 +3788,6 @@ static void test_video_processor(void)
     IMFMediaEvent *event;
     unsigned int value;
     HANDLE output_file;
-    BYTE *ptr, tmp;
     UINT32 count;
     HRESULT hr;
     ULONG ret;
@@ -4226,31 +4252,11 @@ todo_wine {
     hr = IMFSample_GetSampleDuration(output_sample, &duration);
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     ok(duration == 10000000, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(output_sample, &length);
-    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    ok(length == output_info.cbSize, "got length %lu\n", length);
 
-    hr = IMFSample_ConvertToContiguousBuffer(output_sample, &buffer);
-    ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(buffer, &ptr, NULL, &length);
-    ok(hr == S_OK, "Lock returned %#lx\n", hr);
-    tmp = *ptr;
-    hr = IMFMediaBuffer_Unlock(buffer);
-    ok(hr == S_OK, "Lock returned %#lx\n", hr);
-    IMFMediaBuffer_Release(buffer);
-
-    /* w1064v1809 ignores MF_MT_MINIMUM_DISPLAY_APERTURE and resizes the frame */
-    todo_wine
-    ok(tmp == 0xcd || broken(tmp == 0x00), "got %#x\n", tmp);
-    if (tmp == 0x00)
-        win_skip("Frame got resized, skipping output comparison\n");
-    else if (tmp == 0xcd) /* Wine doesn't flip the frame, yet */
-    {
-        check_sample_rgb32(output_sample, rgb32_data);
-        dump_mf_sample(output_sample, &output_sample_desc, output_file);
-    }
-    rgb32_data_len -= output_info.cbSize;
-    rgb32_data += output_info.cbSize;
+    ret = check_mf_sample(output_sample, &output_sample_desc, &rgb32_data, &rgb32_data_len);
+    todo_wine /* Wine doesn't flip the frame, yet */
+    ok(ret == 0 || broken(ret == 25) /* w1064v1507 / w1064v1809 incorrectly rescale */, "got %lu%% diff\n", ret);
+    dump_mf_sample(output_sample, &output_sample_desc, output_file);
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
@@ -4403,8 +4409,8 @@ static void test_mp3_decoder(void)
     static const ULONG mp3dec_block_size = 0x1200;
     const struct buffer_desc output_buffer_desc[] =
     {
-        {.length = 0x9c0},
-        {.length = mp3dec_block_size},
+        {.length = 0x9c0, .compare = compare_pcm16},
+        {.length = mp3dec_block_size, .compare = compare_pcm16},
     };
     const struct sample_desc output_sample_desc[] =
     {
@@ -4589,14 +4595,15 @@ static void test_mp3_decoder(void)
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0x9c0 || broken(length == mp3dec_block_size) /* win8 */ || broken(length == 0x900) /* win7 */,
             "got length %lu\n", length);
-    ok(mp3dec_data_len > length, "got remaining length %lu\n", mp3dec_data_len);
-    if (length == 0x9c0)
+    if (broken(length != 0x9c0))
     {
-        check_sample_pcm16(output_sample, mp3dec_data, FALSE);
-        dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
+        win_skip("Skipping MP3 decoder output sample checks on Win7 / Win8\n");
+        goto skip_mp3dec_output;
     }
-    mp3dec_data_len -= 0x9c0;
-    mp3dec_data += 0x9c0;
+
+    ret = check_mf_sample(output_sample, output_sample_desc + 0, &mp3dec_data, &mp3dec_data_len);
+    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
+    dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
 
     i = duration;
     while (SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)))
@@ -4618,19 +4625,10 @@ static void test_mp3_decoder(void)
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         ok(duration == 522449 || broken(261225 - duration <= 1) /* win7 */,
                 "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(output_sample, &length);
-        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-        ok(length == mp3dec_block_size || broken(length == 0x900) /* win7 */,
-                "got length %lu\n", length);
-        ok(mp3dec_data_len > length || broken(mp3dec_data_len == 2304 || mp3dec_data_len == 0) /* win7 */,
-                "got remaining length %lu\n", mp3dec_data_len);
-        if (length == mp3dec_block_size)
-        {
-            check_sample_pcm16(output_sample, mp3dec_data, FALSE);
-            dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-        }
-        mp3dec_data += min(mp3dec_data_len, length);
-        mp3dec_data_len -= min(mp3dec_data_len, length);
+
+        ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
+        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
+        dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
 
         winetest_pop_context();
         i += duration;
@@ -4643,15 +4641,10 @@ static void test_mp3_decoder(void)
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     todo_wine
     ok(duration == 522449 || broken(261225 - duration <= 1) /* win7 */, "got duration %I64d\n", duration);
-    hr = IMFSample_GetTotalLength(output_sample, &length);
-    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    todo_wine
-    ok(length == mp3dec_block_size || broken(length == 0) /* win7 */, "got length %lu\n", length);
-    ok(mp3dec_data_len == mp3dec_block_size || broken(mp3dec_data_len == 0) /* win7 */, "got remaining length %lu\n", mp3dec_data_len);
-    check_sample_pcm16(output_sample, mp3dec_data, FALSE);
+
+    ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
+    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
     dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-    mp3dec_data_len -= length;
-    mp3dec_data += length;
 
     IMFSample_Release(output_sample);
 
@@ -4671,16 +4664,12 @@ static void test_mp3_decoder(void)
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         todo_wine
         ok(duration == 14286, "got duration %I64d\n", duration);
-        hr = IMFSample_GetTotalLength(output_sample, &length);
-        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-        todo_wine
-        ok(length == mp3dec_data_len, "got length %lu\n", length);
-        if (length == mp3dec_data_len)
-        {
-            check_sample_pcm16(output_sample, mp3dec_data, FALSE);
-            dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-        }
+
+        ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
+        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
+        dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
     }
+    ok(mp3dec_data_len == 0, "missing %#lx bytes\n", mp3dec_data_len);
 
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output_file);
@@ -4695,6 +4684,7 @@ static void test_mp3_decoder(void)
     hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
+skip_mp3dec_output:
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
