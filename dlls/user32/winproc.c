@@ -747,7 +747,8 @@ void dispatch_win_proc_params( struct win_proc_params *params )
 /* make sure that there is space for 'size' bytes in buffer, growing it if needed */
 static inline void *get_buffer_space( void **buffer, size_t size, size_t prev_size )
 {
-    if (prev_size > size && !(*buffer = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (prev_size < size)
+        *buffer = HeapAlloc( GetProcessHeap(), 0, size );
     return *buffer;
 }
 
