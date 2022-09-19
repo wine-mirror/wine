@@ -124,8 +124,8 @@ static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE 
     ok(written == length, "written %lu bytes\n", written);
 }
 
-#define check_rgb32_data(a, b, c, d, e) check_rgb32_data_(__LINE__, a, b, c, d, e)
-static void check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data, DWORD length, const RECT *rect, BOOL todo)
+#define check_rgb32_data(a, b, c, d) check_rgb32_data_(__LINE__, a, b, c, d)
+static void check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data, DWORD length, const RECT *rect)
 {
     WCHAR output_path[MAX_PATH];
     const BYTE *expect_data;
@@ -146,7 +146,6 @@ static void check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data,
     expect_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
 
     diff = compare_rgb32(data, &length, rect, expect_data);
-    todo_wine_if(todo)
     ok_(__FILE__, line)(diff == 0, "Unexpected %lu%% diff\n", diff);
 }
 
@@ -1298,7 +1297,7 @@ static void test_TransferVideoFrames(void)
     ok(!!map_desc.pData, "got pData %p\n", map_desc.pData);
     ok(map_desc.DepthPitch == 16384, "got DepthPitch %u\n", map_desc.DepthPitch);
     ok(map_desc.RowPitch == desc.Width * 4, "got RowPitch %u\n", map_desc.RowPitch);
-    check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect, TRUE);
+    check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)rb_texture, 0);
 
     ID3D11DeviceContext_Release(context);
