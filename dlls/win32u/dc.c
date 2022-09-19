@@ -543,7 +543,7 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
         release_dc_ptr( dc );
         return 0;
     }
-    if (!(newdc->attr = calloc( 1, sizeof(*newdc->attr) )))
+    if (!(newdc->attr = alloc_dc_attr() ))
     {
         free( newdc );
         release_dc_ptr( dc );
