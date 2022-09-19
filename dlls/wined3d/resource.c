@@ -379,10 +379,13 @@ GLbitfield wined3d_resource_gl_storage_flags(const struct wined3d_resource *reso
 
     if (resource->usage & WINED3DUSAGE_DYNAMIC)
         flags |= GL_CLIENT_STORAGE_BIT;
-    if (access & WINED3D_RESOURCE_ACCESS_MAP_W)
-        flags |= GL_MAP_WRITE_BIT;
-    if (access & WINED3D_RESOURCE_ACCESS_MAP_R)
-        flags |= GL_MAP_READ_BIT;
+    if (!(access & WINED3D_RESOURCE_ACCESS_CPU))
+    {
+        if (access & WINED3D_RESOURCE_ACCESS_MAP_W)
+            flags |= GL_MAP_WRITE_BIT;
+        if (access & WINED3D_RESOURCE_ACCESS_MAP_R)
+            flags |= GL_MAP_READ_BIT;
+    }
 
     return flags;
 }
