@@ -1466,13 +1466,18 @@ static void _check_key_value( int line, HANDLE root, const char *name, DWORD fla
 
 static void test_redirection(void)
 {
+    WCHAR wineW[] = {'W','i','n','e'};
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
     char buffer[1024];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    KEY_BASIC_INFORMATION *basic_info = (KEY_BASIC_INFORMATION *)buffer;
+    KEY_FULL_INFORMATION *full_info = (KEY_FULL_INFORMATION *)buffer;
     DWORD dw, len;
     HANDLE key, key32, key64, root, root32, root64;
+    int i, subkeys, subkeys64, subkeys32;
+    BOOL found;
 
     if (ptr_size != 64)
     {
@@ -2060,6 +2065,245 @@ static void test_redirection(void)
 
     pNtClose( root64 );
     pNtClose( root32 );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes\\Wow6432Node\\Wine" );
+    attr.RootDirectory = 0;
+    status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    pNtClose( key );
+
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    pNtClose( key );
+
+    status = pNtOpenKey( &key, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 32 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes\\Wine" );
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 64 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 64 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtOpenKey( &key, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 64 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes\\Wow6432Node" );
+    status = pNtOpenKey( &root32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root32, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys > 0, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys32 = full_info->SubKeys;
+    pNtClose( root32 );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes" );
+    status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys > subkeys32, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys64 = full_info->SubKeys;
+    pNtClose( root64 );
+
+    status = pNtOpenKey( &root32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root32, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root32, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    todo_wine_if(ptr_size == 32) ok( ptr_size == 32 ? found : !found, "key not found\n" );
+    pNtClose( root32 );
+
+    status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root64, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    ok( ptr_size == 32 ? found : !found, "key not found\n" );
+    pNtClose( root64 );
+
+    status = pNtOpenKey( &root64, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root64, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    todo_wine_if(ptr_size == 32) ok(  ptr_size == 32 ? found : !found, "key not found\n" );
+    pNtClose( root64 );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes\\Wow6432Node" );
+    status = pNtOpenKey( &root32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root32, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys == subkeys32, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root32, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    ok( ptr_size == 32 ? !found : found, "key not found\n" );
+    pNtClose( root32 );
+
+    status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys == subkeys32, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root64, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    ok( ptr_size == 32 ? !found : found, "key not found\n" );
+    pNtClose( root64 );
+
+    status = pNtOpenKey( &root64, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys == subkeys32, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root64, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    ok( ptr_size == 32 ? !found : found, "key not found\n" );
+    pNtClose( root64 );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Wow6432Node\\Classes" );
+    status = pNtOpenKey( &root32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root32, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == (ptr_size == 32 ? subkeys64 : subkeys32), "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root32, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    todo_wine_if(ptr_size == 32) ok( found, "key not found\n" );
+    pNtClose( root32 );
+
+    status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
+    ok( full_info->SubKeys == subkeys32, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root64, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    ok( ptr_size == 32 ? !found : found, "key not found\n" );
+    pNtClose( root64 );
+
+    status = pNtOpenKey( &root64, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NQtueryKey failed: 0x%08lx\n", status );
+    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == (ptr_size == 32 ? subkeys64 : subkeys32), "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    subkeys = full_info->SubKeys;
+
+    found = FALSE;
+    for (i = 0; i < subkeys; i++)
+    {
+        status = pNtEnumerateKey( root64, i, KeyBasicInformation, basic_info, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS, "NtEnumerateKey failed: 0x%08lx\n", status );
+
+        if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
+            found = TRUE;
+    }
+    todo_wine_if(ptr_size == 32) ok( found, "key not found\n" );
+    pNtClose( root64 );
+
+    pNtDeleteKey( key32 );
+    pNtClose( key32 );
 }
 
 static void test_long_value_name(void)
