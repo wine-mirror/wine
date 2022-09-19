@@ -1,5 +1,5 @@
 MODULE = cryptowinrt.dll
-IMPORTS = combase uuid
+IMPORTS = combase bcrypt uuid
 
 C_SRCS = \
 	main.c

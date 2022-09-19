@@ -29,6 +29,8 @@
 #include "initguid.h"
 #include "activation.h"
 
+#include "bcrypt.h"
+
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
@@ -214,9 +216,10 @@ static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_GenerateRandom(
 static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_GenerateRandomNumber(
         ICryptographicBufferStatics *iface, UINT32 *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    TRACE("iface %p, value %p.\n", iface, value);
 
-    return E_NOTIMPL;
+    BCryptGenRandom(NULL, (UCHAR *)value, sizeof(*value), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_CreateFromByteArray(
