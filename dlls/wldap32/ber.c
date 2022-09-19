@@ -34,9 +34,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 /***********************************************************************
  *      ber_alloc_t     (WLDAP32.@)
  */
-BerElement * CDECL ber_alloc_t( int options )
+WLDAP32_BerElement * CDECL WLDAP32_ber_alloc_t( int options )
 {
-    BerElement *ret;
+    WLDAP32_BerElement *ret;
     struct ber_alloc_t_params params;
 
     if (!(ret = malloc( sizeof(*ret) ))) return NULL;
@@ -53,7 +53,7 @@ BerElement * CDECL ber_alloc_t( int options )
 /***********************************************************************
  *      ber_bvdup     (WLDAP32.@)
  */
-BERVAL * CDECL ber_bvdup( BERVAL *berval )
+BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL *berval )
 {
     return bervalWtoW( berval );
 }
@@ -61,7 +61,7 @@ BERVAL * CDECL ber_bvdup( BERVAL *berval )
 /***********************************************************************
  *      ber_bvecfree     (WLDAP32.@)
  */
-void CDECL ber_bvecfree( BERVAL **berval )
+void CDECL WLDAP32_ber_bvecfree( BERVAL **berval )
 {
     bvarrayfreeW( berval );
 }
@@ -69,7 +69,7 @@ void CDECL ber_bvecfree( BERVAL **berval )
 /***********************************************************************
  *      ber_bvfree     (WLDAP32.@)
  */
-void CDECL ber_bvfree( BERVAL *berval )
+void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
 {
     free( berval );
 }
@@ -77,7 +77,7 @@ void CDECL ber_bvfree( BERVAL *berval )
 /***********************************************************************
  *      ber_first_element     (WLDAP32.@)
  */
-ULONG CDECL ber_first_element( BerElement *ber, ULONG *len, char **opaque )
+ULONG CDECL WLDAP32_ber_first_element( WLDAP32_BerElement *ber, ULONG *len, char **opaque )
 {
     struct ber_first_element_params params = { BER(ber), (unsigned int *)len, opaque };
     return LDAP_CALL( ber_first_element, &params );
@@ -86,7 +86,7 @@ ULONG CDECL ber_first_element( BerElement *ber, ULONG *len, char **opaque )
 /***********************************************************************
  *      ber_flatten     (WLDAP32.@)
  */
-int CDECL ber_flatten( BerElement *ber, BERVAL **berval )
+int CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *ber, BERVAL **berval )
 {
     struct bervalU *bervalU;
     struct berval *bervalW;
@@ -104,7 +104,7 @@ int CDECL ber_flatten( BerElement *ber, BERVAL **berval )
 /***********************************************************************
  *      ber_free     (WLDAP32.@)
  */
-void CDECL ber_free( BerElement *ber, int freebuf )
+void CDECL WLDAP32_ber_free( WLDAP32_BerElement *ber, int freebuf )
 {
     struct ber_free_params params = { BER(ber), freebuf };
     LDAP_CALL( ber_free, &params );
@@ -114,10 +114,10 @@ void CDECL ber_free( BerElement *ber, int freebuf )
 /***********************************************************************
  *      ber_init     (WLDAP32.@)
  */
-BerElement * CDECL ber_init( BERVAL *berval )
+WLDAP32_BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
 {
     struct bervalU *bervalU;
-    BerElement *ret;
+    WLDAP32_BerElement *ret;
     struct ber_init_params params;
 
     if (!(ret = malloc( sizeof(*ret) ))) return NULL;
@@ -140,7 +140,7 @@ BerElement * CDECL ber_init( BERVAL *berval )
 /***********************************************************************
  *      ber_next_element     (WLDAP32.@)
  */
-ULONG CDECL ber_next_element( BerElement *ber, ULONG *len, char *opaque )
+ULONG CDECL WLDAP32_ber_next_element( WLDAP32_BerElement *ber, ULONG *len, char *opaque )
 {
     struct ber_next_element_params params = { BER(ber), (unsigned int *)len, opaque };
     return LDAP_CALL( ber_next_element, &params );
@@ -149,7 +149,7 @@ ULONG CDECL ber_next_element( BerElement *ber, ULONG *len, char *opaque )
 /***********************************************************************
  *      ber_peek_tag     (WLDAP32.@)
  */
-ULONG CDECL ber_peek_tag( BerElement *ber, ULONG *len )
+ULONG CDECL WLDAP32_ber_peek_tag( WLDAP32_BerElement *ber, ULONG *len )
 {
     struct ber_peek_tag_params params = { BER(ber), (unsigned int *)len };
     return LDAP_CALL( ber_peek_tag, &params );
@@ -158,7 +158,7 @@ ULONG CDECL ber_peek_tag( BerElement *ber, ULONG *len )
 /***********************************************************************
  *      ber_skip_tag     (WLDAP32.@)
  */
-ULONG CDECL ber_skip_tag( BerElement *ber, ULONG *len )
+ULONG CDECL WLDAP32_ber_skip_tag( WLDAP32_BerElement *ber, ULONG *len )
 {
     struct ber_skip_tag_params params = { BER(ber), (unsigned int *)len };
     return LDAP_CALL( ber_skip_tag, &params );
@@ -167,7 +167,7 @@ ULONG CDECL ber_skip_tag( BerElement *ber, ULONG *len )
 /***********************************************************************
  *      ber_printf     (WLDAP32.@)
  */
-int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
+int WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *ber, char *fmt, ... )
 {
     va_list list;
     int ret = 0;
@@ -244,7 +244,7 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
 /***********************************************************************
  *      ber_scanf     (WLDAP32.@)
  */
-ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
+ULONG WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *ber, char *fmt, ... )
 {
     va_list list;
     int ret = 0;

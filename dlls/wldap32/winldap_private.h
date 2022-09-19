@@ -24,6 +24,11 @@
 #include "winnls.h"
 #include "libldap.h"
 
+typedef struct WLDAP32_berelement
+{
+    char *opaque;
+} WLDAP32_BerElement;
+
 typedef struct ldapsearch
 {
     WCHAR *dn;
@@ -42,6 +47,20 @@ typedef struct ldapsearch
 #define SERVER_CTRLS(ld) (*(void **)(ld->Reserved3 + sizeof(void *)))
 #define MSG(entry) (entry->Request)
 #define BER(ber) (ber->opaque)
+
+WLDAP32_BerElement * CDECL WLDAP32_ber_alloc_t( int );
+BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL * );
+void CDECL WLDAP32_ber_bvecfree( BERVAL ** );
+void CDECL WLDAP32_ber_bvfree( BERVAL * );
+ULONG CDECL WLDAP32_ber_first_element( WLDAP32_BerElement *, ULONG *, char ** );
+int CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *, BERVAL ** );
+void CDECL WLDAP32_ber_free( WLDAP32_BerElement *, int );
+WLDAP32_BerElement * CDECL WLDAP32_ber_init( BERVAL * );
+ULONG CDECL WLDAP32_ber_next_element( WLDAP32_BerElement *, ULONG *, char * );
+ULONG CDECL WLDAP32_ber_peek_tag( WLDAP32_BerElement *, ULONG * );
+ULONG CDECL WLDAP32_ber_skip_tag( WLDAP32_BerElement *, ULONG * );
+int WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *, char *, ... );
+ULONG WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *, char *, ... );
 
 ULONG map_error( int ) DECLSPEC_HIDDEN;
 

@@ -252,7 +252,7 @@ exit:
 /***********************************************************************
  *      ldap_connect     (WLDAP32.@)
  */
-ULONG CDECL ldap_connect( LDAP *ld, struct l_timeval *timeout )
+ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 {
     TRACE( "(%p, %p)\n", ld, timeout );
 

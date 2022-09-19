@@ -461,7 +461,7 @@ exit:
 /***********************************************************************
  *      ldap_unbind     (WLDAP32.@)
  */
-ULONG CDECL ldap_unbind( LDAP *ld )
+ULONG CDECL WLDAP32_ldap_unbind( LDAP *ld )
 {
     ULONG ret;
 
@@ -483,7 +483,7 @@ ULONG CDECL ldap_unbind( LDAP *ld )
 /***********************************************************************
  *      ldap_unbind_s     (WLDAP32.@)
  */
-ULONG CDECL ldap_unbind_s( LDAP *ld )
+ULONG CDECL WLDAP32_ldap_unbind_s( LDAP *ld )
 {
     ULONG ret;
 

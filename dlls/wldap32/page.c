@@ -60,22 +60,22 @@ ULONG CDECL ldap_create_page_controlA( LDAP *ld, ULONG pagesize, struct berval *
 static ULONG create_page_control( ULONG pagesize, struct berval *cookie, UCHAR critical, LDAPControlW **control )
 {
     LDAPControlW *ctrl;
-    BerElement *ber;
+    WLDAP32_BerElement *ber;
     struct berval *berval, *vec[2];
     int ret, len;
     char *val;
 
-    if (!(ber = ber_alloc_t( LBER_USE_DER ))) return LDAP_NO_MEMORY;
+    if (!(ber = WLDAP32_ber_alloc_t( LBER_USE_DER ))) return LDAP_NO_MEMORY;
 
     vec[1] = NULL;
     if (cookie)
         vec[0] = cookie;
     else
         vec[0] = &null_cookieW;
-    len = ber_printf( ber, (char *)"{iV}", pagesize, vec );
+    len = WLDAP32_ber_printf( ber, (char *)"{iV}", pagesize, vec );
 
-    ret = ber_flatten( ber, &berval );
-    ber_free( ber, 1 );
+    ret = WLDAP32_ber_flatten( ber, &berval );
+    WLDAP32_ber_free( ber, 1 );
 
     if (len == LBER_ERROR) return LDAP_ENCODING_ERROR;
     if (ret == -1) return LDAP_NO_MEMORY;
@@ -85,7 +85,7 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie, UCHAR c
 
     len = berval->bv_len;
     memcpy( val, berval->bv_val, len );
-    ber_bvfree( berval );
+    WLDAP32_ber_bvfree( berval );
 
     if (!(ctrl = malloc( sizeof(*ctrl) )))
     {
@@ -218,7 +218,7 @@ ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *ret
 {
     ULONG ret, count;
     LDAPControlW *control = NULL;
-    BerElement *ber;
+    WLDAP32_BerElement *ber;
     struct berval *cookie = NULL;
     int tag;
     ULONG i;
@@ -234,9 +234,9 @@ ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *ret
     }
     if (!control) return LDAP_CONTROL_NOT_FOUND;
 
-    if (!(ber = ber_init( &control->ldctl_value ))) return LDAP_NO_MEMORY;
+    if (!(ber = WLDAP32_ber_init( &control->ldctl_value ))) return LDAP_NO_MEMORY;
 
-    tag = ber_scanf( ber, (char *)"{iO}", &count, &cookie );
+    tag = WLDAP32_ber_scanf( ber, (char *)"{iO}", &count, &cookie );
     if (tag == LBER_ERROR) ret = LDAP_DECODING_ERROR;
     else
     {
@@ -245,7 +245,7 @@ ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *ret
         ret = LDAP_SUCCESS;
     }
 
-    ber_free( ber, 1 );
+    WLDAP32_ber_free( ber, 1 );
     return ret;
 }
 

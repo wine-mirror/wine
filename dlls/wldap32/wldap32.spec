@@ -1,20 +1,20 @@
- 10 cdecl ldap_abandon(ptr long)
+ 10 cdecl ldap_abandon(ptr long) WLDAP32_ldap_abandon
  11 cdecl ldap_add(ptr str ptr) ldap_addA
  12 cdecl ldap_get_optionW(ptr long ptr)
- 13 cdecl ldap_unbind(ptr)
+ 13 cdecl ldap_unbind(ptr) WLDAP32_ldap_unbind
  14 cdecl ldap_set_optionW(ptr long ptr)
  16 cdecl LdapGetLastError()
  17 cdecl cldap_open(str long) cldap_openA
  18 cdecl LdapMapErrorToWin32(long)
  19 cdecl ldap_compare(ptr str str str) ldap_compareA
  20 cdecl ldap_delete(ptr str) ldap_deleteA
- 21 cdecl ldap_result2error(ptr ptr long)
+ 21 cdecl ldap_result2error(ptr ptr long) WLDAP32_ldap_result2error
  22 cdecl ldap_err2string(long) ldap_err2stringA
  23 cdecl ldap_modify(ptr str ptr) ldap_modifyA
  24 cdecl ldap_modrdn(ptr str ptr) ldap_modrdnA
  25 cdecl ldap_open(str long) ldap_openA
- 26 cdecl ldap_first_entry(ptr ptr)
- 27 cdecl ldap_next_entry(ptr ptr)
+ 26 cdecl ldap_first_entry(ptr ptr) WLDAP32_ldap_first_entry
+ 27 cdecl ldap_next_entry(ptr ptr) WLDAP32_ldap_next_entry
  28 cdecl cldap_openW(wstr long)
  29 cdecl LdapUTF8ToUnicode(str long ptr long)
  30 cdecl ldap_get_dn(ptr ptr) ldap_get_dnA
@@ -23,17 +23,17 @@
  33 cdecl ldap_next_attribute(ptr ptr ptr) ldap_next_attributeA
  34 cdecl ldap_get_values(ptr ptr str) ldap_get_valuesA
  35 cdecl ldap_get_values_len(ptr ptr str) ldap_get_values_lenA
- 36 cdecl ldap_count_entries(ptr ptr)
+ 36 cdecl ldap_count_entries(ptr ptr) WLDAP32_ldap_count_entries
  37 cdecl ldap_count_values(ptr) ldap_count_valuesA
  38 cdecl ldap_value_free(ptr) ldap_value_freeA
  39 cdecl ldap_explode_dn(str long) ldap_explode_dnA
- 40 cdecl ldap_result(ptr long long ptr ptr)
- 41 cdecl ldap_msgfree(ptr)
+ 40 cdecl ldap_result(ptr long long ptr ptr) WLDAP32_ldap_result
+ 41 cdecl ldap_msgfree(ptr) WLDAP32_ldap_msgfree
  42 cdecl ldap_addW(ptr wstr ptr)
  43 cdecl ldap_search(ptr str long str ptr long) ldap_searchA
  44 cdecl ldap_add_s(ptr str ptr) ldap_add_sA
  45 cdecl ldap_bind_s(ptr str str long) ldap_bind_sA
- 46 cdecl ldap_unbind_s(ptr)
+ 46 cdecl ldap_unbind_s(ptr) WLDAP32_ldap_unbind_s
  47 cdecl ldap_delete_s(ptr str) ldap_delete_sA
  48 cdecl ldap_modify_s(ptr str ptr) ldap_modify_sA
  49 cdecl ldap_modrdn_s(ptr str ptr) ldap_modrdn_sA
@@ -41,7 +41,7 @@
  51 cdecl ldap_search_st(ptr str long str ptr long ptr ptr) ldap_search_stA
  52 cdecl ldap_compare_s(ptr str str str) ldap_compare_sA
  53 cdecl LdapUnicodeToUTF8(wstr long ptr long)
- 54 cdecl ber_bvfree(ptr)
+ 54 cdecl ber_bvfree(ptr) WLDAP32_ber_bvfree
  55 cdecl cldap_openA(str long)
  56 cdecl ldap_addA(ptr str ptr)
  57 cdecl ldap_add_ext(ptr str ptr ptr ptr ptr) ldap_add_extA
@@ -64,25 +64,25 @@
  74 cdecl ldap_close_extended_op(ptr long)
  75 cdecl ldap_compareA(ptr str str str)
  76 cdecl ldap_compareW(ptr wstr wstr wstr)
- 77 cdecl ldap_count_values_len(ptr)
+ 77 cdecl ldap_count_values_len(ptr) WLDAP32_ldap_count_values_len
  78 cdecl ldap_compare_ext(ptr str str str ptr ptr ptr ptr) ldap_compare_extA
- 79 cdecl ldap_value_free_len(ptr)
+ 79 cdecl ldap_value_free_len(ptr) WLDAP32_ldap_value_free_len
  80 cdecl ldap_compare_extA(ptr str str str ptr ptr ptr ptr)
  81 cdecl ldap_compare_extW(ptr wstr wstr wstr ptr ptr ptr ptr)
- 82 cdecl ldap_perror(ptr ptr)
+ 82 cdecl ldap_perror(ptr ptr) WLDAP32_ldap_perror
  83 cdecl ldap_compare_ext_s(ptr str str str ptr ptr ptr) ldap_compare_ext_sA
  84 cdecl ldap_compare_ext_sA(ptr str str str ptr ptr ptr)
  85 cdecl ldap_compare_ext_sW(ptr wstr wstr wstr ptr ptr ptr)
  86 cdecl ldap_compare_sA(ptr str str str)
  87 cdecl ldap_compare_sW(ptr wstr wstr wstr)
- 88 cdecl ldap_connect(ptr ptr)
+ 88 cdecl ldap_connect(ptr ptr) WLDAP32_ldap_connect
  89 cdecl ldap_control_free(ptr) ldap_control_freeA
  90 cdecl ldap_control_freeA(ptr)
  91 cdecl ldap_control_freeW(ptr)
  92 cdecl ldap_controls_free(ptr) ldap_controls_freeA
  93 cdecl ldap_controls_freeA(ptr)
  94 cdecl ldap_controls_freeW(ptr)
- 95 cdecl ldap_count_references(ptr ptr)
+ 95 cdecl ldap_count_references(ptr ptr) WLDAP32_ldap_count_references
  96 cdecl ldap_count_valuesA(ptr)
  97 cdecl ldap_count_valuesW(ptr)
  98 cdecl ldap_create_page_control(ptr long ptr long ptr) ldap_create_page_controlA
@@ -115,7 +115,7 @@
 125 cdecl ldap_extended_operationW(ptr wstr ptr ptr ptr ptr)
 126 cdecl ldap_first_attributeA(ptr ptr ptr)
 127 cdecl ldap_first_attributeW(ptr ptr ptr)
-128 cdecl ldap_first_reference(ptr ptr)
+128 cdecl ldap_first_reference(ptr ptr) WLDAP32_ldap_first_reference
 129 cdecl ldap_free_controls(ptr) ldap_free_controlsA
 130 cdecl ldap_free_controlsA(ptr)
 131 cdecl ldap_free_controlsW(ptr)
@@ -155,7 +155,7 @@
 165 cdecl ldap_modrdn_sW(ptr wstr ptr)
 166 cdecl ldap_next_attributeA(ptr ptr ptr)
 167 cdecl ldap_next_attributeW(ptr ptr ptr)
-168 cdecl ldap_next_reference(ptr ptr)
+168 cdecl ldap_next_reference(ptr ptr) WLDAP32_ldap_next_reference
 169 cdecl ldap_openA(str long)
 170 cdecl ldap_openW(wstr long)
 171 cdecl ldap_parse_page_control(ptr ptr ptr ptr) ldap_parse_page_controlA
@@ -215,18 +215,18 @@
 230 cdecl ldap_check_filterA(ptr str)
 231 cdecl ldap_check_filterW(ptr wstr)
 232 cdecl ldap_dn2ufnA(str)
-300 cdecl ber_init(ptr)
-301 cdecl ber_free(ptr long)
-302 cdecl ber_bvecfree(ptr)
-303 cdecl ber_bvdup(ptr)
-304 cdecl ber_alloc_t(long)
-305 cdecl ber_skip_tag(ptr ptr)
-306 cdecl ber_peek_tag(ptr ptr)
-307 cdecl ber_first_element(ptr ptr ptr)
-308 cdecl ber_next_element(ptr ptr ptr)
-309 cdecl ber_flatten(ptr ptr)
-310 varargs ber_printf(ptr str)
-311 varargs ber_scanf(ptr str)
+300 cdecl ber_init(ptr) WLDAP32_ber_init
+301 cdecl ber_free(ptr long) WLDAP32_ber_free
+302 cdecl ber_bvecfree(ptr) WLDAP32_ber_bvecfree
+303 cdecl ber_bvdup(ptr) WLDAP32_ber_bvdup
+304 cdecl ber_alloc_t(long) WLDAP32_ber_alloc_t
+305 cdecl ber_skip_tag(ptr ptr) WLDAP32_ber_skip_tag
+306 cdecl ber_peek_tag(ptr ptr) WLDAP32_ber_peek_tag
+307 cdecl ber_first_element(ptr ptr ptr) WLDAP32_ber_first_element
+308 cdecl ber_next_element(ptr ptr ptr) WLDAP32_ber_next_element
+309 cdecl ber_flatten(ptr ptr) WLDAP32_ber_flatten
+310 varargs ber_printf(ptr str) WLDAP32_ber_printf
+311 varargs ber_scanf(ptr str) WLDAP32_ber_scanf
 312 cdecl ldap_conn_from_msg(ptr ptr)
 313 cdecl ldap_sasl_bindW(ptr wstr wstr ptr ptr ptr ptr)
 314 cdecl ldap_sasl_bind_sW(ptr wstr wstr ptr ptr ptr ptr)

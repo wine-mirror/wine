@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 /***********************************************************************
  *      ldap_count_values_len     (WLDAP32.@)
  */
-ULONG CDECL ldap_count_values_len( struct berval **values )
+ULONG CDECL WLDAP32_ldap_count_values_len( struct berval **values )
 {
     ULONG ret = 0;
     struct berval **ptr = values;
@@ -213,7 +213,7 @@ struct berval ** CDECL ldap_get_values_lenW( LDAP *ld, LDAPMessage *message, WCH
 /***********************************************************************
  *      ldap_value_free_len     (WLDAP32.@)
  */
-ULONG CDECL ldap_value_free_len( struct berval **values )
+ULONG CDECL WLDAP32_ldap_value_free_len( struct berval **values )
 {
     TRACE( "(%p)\n", values );
 

@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 /***********************************************************************
  *      ldap_abandon     (WLDAP32.@)
  */
-ULONG CDECL ldap_abandon( LDAP *ld, ULONG msgid )
+ULONG CDECL WLDAP32_ldap_abandon( LDAP *ld, ULONG msgid )
 {
     TRACE( "(%p, %#lx)\n", ld, msgid );
 
@@ -98,7 +98,7 @@ LDAP * CDECL ldap_conn_from_msg( LDAP *ld, LDAPMessage *res )
 /***********************************************************************
  *      ldap_count_entries     (WLDAP32.@)
  */
-ULONG CDECL ldap_count_entries( LDAP *ld, LDAPMessage *res )
+ULONG CDECL WLDAP32_ldap_count_entries( LDAP *ld, LDAPMessage *res )
 {
     TRACE( "(%p, %p)\n", ld, res );
 
@@ -113,7 +113,7 @@ ULONG CDECL ldap_count_entries( LDAP *ld, LDAPMessage *res )
 /***********************************************************************
  *      ldap_count_references     (WLDAP32.@)
  */
-ULONG CDECL ldap_count_references( LDAP *ld, LDAPMessage *res )
+ULONG CDECL WLDAP32_ldap_count_references( LDAP *ld, LDAPMessage *res )
 {
     TRACE( "(%p, %p)\n", ld, res );
 
@@ -248,7 +248,7 @@ WCHAR * CDECL ldap_first_attributeW( LDAP *ld, LDAPMessage *entry, BerElement **
 /***********************************************************************
  *      ldap_first_entry     (WLDAP32.@)
  */
-LDAPMessage * CDECL ldap_first_entry( LDAP *ld, LDAPMessage *res )
+LDAPMessage * CDECL WLDAP32_ldap_first_entry( LDAP *ld, LDAPMessage *res )
 {
     void *msgU;
 
@@ -269,7 +269,7 @@ LDAPMessage * CDECL ldap_first_entry( LDAP *ld, LDAPMessage *res )
 /***********************************************************************
  *      ldap_first_reference     (WLDAP32.@)
  */
-LDAPMessage * CDECL ldap_first_reference( LDAP *ld, LDAPMessage *res )
+LDAPMessage * CDECL WLDAP32_ldap_first_reference( LDAP *ld, LDAPMessage *res )
 {
     void *msgU;
 
@@ -308,7 +308,7 @@ void CDECL ldap_memfreeW( WCHAR *block )
 /***********************************************************************
  *      ldap_msgfree     (WLDAP32.@)
  */
-ULONG CDECL ldap_msgfree( LDAPMessage *res )
+ULONG CDECL WLDAP32_ldap_msgfree( LDAPMessage *res )
 {
     LDAPMessage *entry, *list = res;
 
@@ -374,7 +374,7 @@ WCHAR * CDECL ldap_next_attributeW( LDAP *ld, LDAPMessage *entry, BerElement *pt
 /***********************************************************************
  *      ldap_next_entry     (WLDAP32.@)
  */
-LDAPMessage * CDECL ldap_next_entry( LDAP *ld, LDAPMessage *entry )
+LDAPMessage * CDECL WLDAP32_ldap_next_entry( LDAP *ld, LDAPMessage *entry )
 {
     LDAPMessage *msg = NULL;
     void *msgU;
@@ -402,7 +402,7 @@ LDAPMessage * CDECL ldap_next_entry( LDAP *ld, LDAPMessage *entry )
 /***********************************************************************
  *      ldap_next_reference     (WLDAP32.@)
  */
-LDAPMessage * CDECL ldap_next_reference( LDAP *ld, LDAPMessage *entry )
+LDAPMessage * CDECL WLDAP32_ldap_next_reference( LDAP *ld, LDAPMessage *entry )
 {
     LDAPMessage *msg = NULL;
     void *msgU;
@@ -429,7 +429,7 @@ LDAPMessage * CDECL ldap_next_reference( LDAP *ld, LDAPMessage *entry )
 /***********************************************************************
  *      ldap_result     (WLDAP32.@)
  */
-ULONG CDECL ldap_result( LDAP *ld, ULONG msgid, ULONG all, struct l_timeval *timeout, LDAPMessage **res )
+ULONG CDECL WLDAP32_ldap_result( LDAP *ld, ULONG msgid, ULONG all, struct l_timeval *timeout, LDAPMessage **res )
 {
     LDAPMessage *msg;
     struct timevalU timeval;

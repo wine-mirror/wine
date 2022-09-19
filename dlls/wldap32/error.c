@@ -95,7 +95,7 @@ WCHAR * CDECL ldap_err2stringW( ULONG err )
 /***********************************************************************
  *      ldap_perror     (WLDAP32.@)
  */
-void CDECL ldap_perror( LDAP *ld, const PCHAR msg )
+void CDECL WLDAP32_ldap_perror( LDAP *ld, const PCHAR msg )
 {
     TRACE( "(%p, %s)\n", ld, debugstr_a(msg) );
 }
@@ -103,7 +103,7 @@ void CDECL ldap_perror( LDAP *ld, const PCHAR msg )
 /***********************************************************************
  *      ldap_result2error     (WLDAP32.@)
  */
-ULONG CDECL ldap_result2error( LDAP *ld, LDAPMessage *res, ULONG free )
+ULONG CDECL WLDAP32_ldap_result2error( LDAP *ld, LDAPMessage *res, ULONG free )
 {
     int error;
 
