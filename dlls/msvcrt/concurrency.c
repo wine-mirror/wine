@@ -1342,7 +1342,7 @@ static void WINAPI schedule_task_proc(PTP_CALLBACK_INSTANCE instance, void *cont
     arg = *(schedule_task_arg*)context;
     operator_delete(context);
 
-    if(&arg.scheduler->scheduler != try_get_current_scheduler()) {
+    if(&arg.scheduler->scheduler != get_current_scheduler()) {
         ThreadScheduler_Attach(arg.scheduler);
         detach = TRUE;
     }
