@@ -35,8 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_get_optionA     (WLDAP32.@)
- *
- * See ldap_get_optionW.
  */
 ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
 {
@@ -154,17 +152,6 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
 
 /***********************************************************************
  *      ldap_get_optionW     (WLDAP32.@)
- *
- * Retrieve option values for a given LDAP context.
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  option  [I] Option to get values for.
- *  value   [O] Pointer to option values.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
 {
@@ -289,8 +276,6 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
 
 /***********************************************************************
  *      ldap_set_optionA     (WLDAP32.@)
- *
- * See ldap_set_optionW.
  */
 ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
 {
@@ -435,20 +420,6 @@ static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControlU **ctrls )
 
 /***********************************************************************
  *      ldap_set_optionW     (WLDAP32.@)
- *
- * Set option values for a given LDAP context.
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  option  [I] Option to set values for.
- *  value   [I] Pointer to option values.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Set value to LDAP_OPT_ON or LDAP_OPT_OFF for on/off options.
  */
 ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
 {

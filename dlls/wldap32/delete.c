@@ -31,8 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_deleteA     (WLDAP32.@)
- *
- * See ldap_deleteW.
  */
 ULONG CDECL ldap_deleteA( LDAP *ld, char *dn )
 {
@@ -51,21 +49,6 @@ ULONG CDECL ldap_deleteA( LDAP *ld, char *dn )
 
 /***********************************************************************
  *      ldap_deleteW     (WLDAP32.@)
- *
- * Delete an entry from a directory tree (asynchronous operation).
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  dn      [I] DN of the entry to delete.
- *
- * RETURNS
- *  Success: Message ID of the add operation.
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Call ldap_result with the message ID to get the result of
- *  the operation. Cancel the operation by calling ldap_abandon
- *  with the message ID.
  */
 ULONG CDECL ldap_deleteW( LDAP *ld, WCHAR *dn )
 {
@@ -80,8 +63,6 @@ ULONG CDECL ldap_deleteW( LDAP *ld, WCHAR *dn )
 
 /***********************************************************************
  *      ldap_delete_extA     (WLDAP32.@)
- *
- * See ldap_delete_extW.
  */
 ULONG CDECL ldap_delete_extA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
     ULONG *message )
@@ -109,24 +90,6 @@ exit:
 
 /***********************************************************************
  *      ldap_delete_extW     (WLDAP32.@)
- *
- * Delete an entry from a directory tree (asynchronous operation).
- *
- * PARAMS
- *  ld          [I] Pointer to an LDAP context.
- *  dn          [I] DN of the entry to delete.
- *  serverctrls [I] Array of LDAP server controls.
- *  clientctrls [I] Array of LDAP client controls.
- *  message     [O] Message ID of the delete operation.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Call ldap_result with the message ID to get the result of
- *  the operation. The serverctrls and clientctrls parameters are
- *  optional and should be set to NULL if not used.
  */
 ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls,
     ULONG *message )
@@ -157,8 +120,6 @@ exit:
 
 /***********************************************************************
  *      ldap_delete_ext_sA     (WLDAP32.@)
- *
- * See ldap_delete_ext_sW.
  */
 ULONG CDECL ldap_delete_ext_sA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
@@ -185,22 +146,6 @@ exit:
 
 /***********************************************************************
  *      ldap_delete_ext_sW     (WLDAP32.@)
- *
- * Delete an entry from a directory tree (synchronous operation).
- *
- * PARAMS
- *  ld          [I] Pointer to an LDAP context.
- *  dn          [I] DN of the entry to delete.
- *  serverctrls [I] Array of LDAP server controls.
- *  clientctrls [I] Array of LDAP client controls.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  The serverctrls and clientctrls parameters are optional and
- *  should be set to NULL if not used.
  */
 ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
@@ -230,8 +175,6 @@ exit:
 
 /***********************************************************************
  *      ldap_delete_sA     (WLDAP32.@)
- *
- * See ldap_delete_sW.
  */
 ULONG CDECL ldap_delete_sA( LDAP *ld, char *dn )
 {
@@ -250,16 +193,6 @@ ULONG CDECL ldap_delete_sA( LDAP *ld, char *dn )
 
 /***********************************************************************
  *      ldap_delete_sW     (WLDAP32.@)
- *
- * Delete an entry from a directory tree (synchronous operation).
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  dn      [I] DN of the entry to delete.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_delete_sW( LDAP *ld, WCHAR *dn )
 {

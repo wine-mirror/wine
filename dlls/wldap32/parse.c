@@ -31,8 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_parse_extended_resultA     (WLDAP32.@)
- *
- * See ldap_parse_extended_resultW.
  */
 ULONG CDECL ldap_parse_extended_resultA( LDAP *ld, LDAPMessage *result, char **oid, struct berval **data,
     BOOLEAN free )
@@ -58,23 +56,6 @@ ULONG CDECL ldap_parse_extended_resultA( LDAP *ld, LDAPMessage *result, char **o
 
 /***********************************************************************
  *      ldap_parse_extended_resultW     (WLDAP32.@)
- *
- * Parse the result of an extended operation.
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  result  [I] Result message from an extended operation.
- *  oid     [O] OID of the extended operation.
- *  data    [O] Result data.
- *  free    [I] Free the result message?
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Free the OID and result data with ldap_memfree. Pass a nonzero
- *  value for 'free' or call ldap_msgfree to free the result message.
  */
 ULONG CDECL ldap_parse_extended_resultW( LDAP *ld, LDAPMessage *result, WCHAR **oid, struct berval **data,
     BOOLEAN free )
@@ -112,8 +93,6 @@ ULONG CDECL ldap_parse_extended_resultW( LDAP *ld, LDAPMessage *result, WCHAR **
 
 /***********************************************************************
  *      ldap_parse_referenceA     (WLDAP32.@)
- *
- * See ldap_parse_referenceW.
  */
 ULONG CDECL ldap_parse_referenceA( LDAP *ld, LDAPMessage *message, char ***referrals )
 {
@@ -137,20 +116,6 @@ ULONG CDECL ldap_parse_referenceA( LDAP *ld, LDAPMessage *message, char ***refer
 
 /***********************************************************************
  *      ldap_parse_referenceW     (WLDAP32.@)
- *
- * Return any referrals from a result message.
- *
- * PARAMS
- *  ld         [I] Pointer to an LDAP context.
- *  result     [I] Result message.
- *  referrals  [O] Array of referral URLs.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Free the referrals with ldap_value_free.
  */
 ULONG CDECL ldap_parse_referenceW( LDAP *ld, LDAPMessage *message, WCHAR ***referrals )
 {
@@ -176,8 +141,6 @@ ULONG CDECL ldap_parse_referenceW( LDAP *ld, LDAPMessage *message, WCHAR ***refe
 
 /***********************************************************************
  *      ldap_parse_resultA     (WLDAP32.@)
- *
- * See ldap_parse_resultW.
  */
 ULONG CDECL ldap_parse_resultA( LDAP *ld, LDAPMessage *result, ULONG *retcode, char **matched, char **error,
     char ***referrals, LDAPControlA ***serverctrls, BOOLEAN free )
@@ -207,28 +170,6 @@ ULONG CDECL ldap_parse_resultA( LDAP *ld, LDAPMessage *result, ULONG *retcode, c
 
 /***********************************************************************
  *      ldap_parse_resultW     (WLDAP32.@)
- *
- * Parse a result message.
- *
- * PARAMS
- *  ld           [I] Pointer to an LDAP context.
- *  result       [I] Result message.
- *  retcode      [O] Return code for the server operation.
- *  matched      [O] DNs matched in the operation.
- *  error        [O] Error message for the operation.
- *  referrals    [O] Referrals found in the result message.
- *  serverctrls  [O] Controls used in the operation.
- *  free         [I] Free the result message?
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Free the DNs and error message with ldap_memfree. Free
- *  the referrals with ldap_value_free and the controls with
- *  ldap_controls_free. Pass a nonzero value for 'free' or call
- *  ldap_msgfree to free the result message.
  */
 ULONG CDECL ldap_parse_resultW( LDAP *ld, LDAPMessage *result, ULONG *retcode, WCHAR **matched, WCHAR **error,
     WCHAR ***referrals, LDAPControlW ***serverctrls, BOOLEAN free )
@@ -262,8 +203,6 @@ ULONG CDECL ldap_parse_resultW( LDAP *ld, LDAPMessage *result, ULONG *retcode, W
 
 /***********************************************************************
  *      ldap_parse_sort_controlA     (WLDAP32.@)
- *
- * See ldap_parse_sort_controlW.
  */
 ULONG CDECL ldap_parse_sort_controlA( LDAP *ld, LDAPControlA **control, ULONG *result, char **attr )
 {
@@ -286,21 +225,6 @@ ULONG CDECL ldap_parse_sort_controlA( LDAP *ld, LDAPControlA **control, ULONG *r
 
 /***********************************************************************
  *      ldap_parse_sort_controlW     (WLDAP32.@)
- *
- * Parse a sort control.
- *
- * PARAMS
- *  ld       [I] Pointer to an LDAP context.
- *  control  [I] Control obtained from a result message.
- *  result   [O] Result code.
- *  attr     [O] Failing attribute.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  If the function fails, free the failing attribute with ldap_memfree.
  */
 ULONG CDECL ldap_parse_sort_controlW( LDAP *ld, LDAPControlW **control, ULONG *result, WCHAR **attr )
 {
@@ -349,8 +273,6 @@ ULONG CDECL ldap_parse_sort_controlW( LDAP *ld, LDAPControlW **control, ULONG *r
 
 /***********************************************************************
  *      ldap_parse_vlv_controlA     (WLDAP32.@)
- *
- * See ldap_parse_vlv_controlW.
  */
 int CDECL ldap_parse_vlv_controlA( LDAP *ld, LDAPControlA **control, ULONG *targetpos, ULONG *listcount,
     struct berval **context, int *errcode )
@@ -370,23 +292,6 @@ int CDECL ldap_parse_vlv_controlA( LDAP *ld, LDAPControlA **control, ULONG *targ
 
 /***********************************************************************
  *      ldap_parse_vlv_controlW     (WLDAP32.@)
- *
- * Parse a virtual list view control.
- *
- * PARAMS
- *  ld         [I] Pointer to an LDAP context.
- *  control    [I] Controls obtained from a result message.
- *  targetpos  [O] Position of the target in the result list.
- *  listcount  [O] Estimate of the number of results in the list.
- *  context    [O] Server side context.
- *  errcode    [O] Error code from the listview operation.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Free the server context with ber_bvfree.
  */
 int CDECL ldap_parse_vlv_controlW( LDAP *ld, LDAPControlW **control, ULONG *targetpos, ULONG *listcount,
     struct berval **context, int *errcode )

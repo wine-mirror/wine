@@ -31,20 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_close_extended_op     (WLDAP32.@)
- *
- * Close an extended operation.
- *
- * PARAMS
- *  ld    [I] Pointer to an LDAP context.
- *  msgid [I] Message ID of the operation to be closed.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Contrary to native, OpenLDAP does not require us to close
- *  extended operations, so this is a no-op.
  */
 ULONG CDECL ldap_close_extended_op( LDAP *ld, ULONG msgid )
 {
@@ -56,8 +42,6 @@ ULONG CDECL ldap_close_extended_op( LDAP *ld, ULONG msgid )
 
 /***********************************************************************
  *      ldap_extended_operationA     (WLDAP32.@)
- *
- * See ldap_extended_operationW.
  */
 ULONG CDECL ldap_extended_operationA( LDAP *ld, char *oid, struct berval *data, LDAPControlA **serverctrls,
     LDAPControlA **clientctrls, ULONG *message )
@@ -85,28 +69,6 @@ exit:
 
 /***********************************************************************
  *      ldap_extended_operationW     (WLDAP32.@)
- *
- * Perform an extended operation (asynchronous mode).
- *
- * PARAMS
- *  ld          [I] Pointer to an LDAP context.
- *  oid         [I] OID of the extended operation.
- *  data        [I] Data needed by the operation.
- *  serverctrls [I] Array of LDAP server controls.
- *  clientctrls [I] Array of LDAP client controls.
- *  message     [O] Message ID of the extended operation.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  The data parameter should be set to NULL if the operation
- *  requires no data. Call ldap_result with the message ID to
- *  get the result of the operation or ldap_abandon to cancel
- *  the operation. The serverctrls and clientctrls parameters
- *  are optional and should be set to NULL if not used. Call
- *  ldap_close_extended_op to close the operation.
  */
 ULONG CDECL ldap_extended_operationW( LDAP *ld, WCHAR *oid, struct berval *data, LDAPControlW **serverctrls,
     LDAPControlW **clientctrls, ULONG *message )
@@ -140,8 +102,6 @@ exit:
 
 /***********************************************************************
  *      ldap_extended_operation_sA     (WLDAP32.@)
- *
- * See ldap_extended_operation_sW.
  */
 ULONG CDECL ldap_extended_operation_sA( LDAP *ld, char *oid, struct berval *data, LDAPControlA **serverctrls,
     LDAPControlA **clientctrls, char **retoid, struct berval **retdata )
@@ -176,27 +136,6 @@ exit:
 
 /***********************************************************************
  *      ldap_extended_operation_sW     (WLDAP32.@)
- *
- * Perform an extended operation (synchronous mode).
- *
- * PARAMS
- *  ld          [I] Pointer to an LDAP context.
- *  oid         [I] OID of the extended operation.
- *  data        [I] Data needed by the operation.
- *  serverctrls [I] Array of LDAP server controls.
- *  clientctrls [I] Array of LDAP client controls.
- *  retoid      [O] OID of the server response message.
- *  retdata     [O] Data returned by the server.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  The data parameter should be set to NULL if the operation
- *  requires no data. The serverctrls, clientctrls, retoid and
- *  and retdata parameters are also optional. Set to NULL if not
- *  used. Free retoid and retdata after use with ldap_memfree.
  */
 ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct berval *data, LDAPControlW **serverctrls,
     LDAPControlW **clientctrls, WCHAR **retoid, struct berval **retdata )

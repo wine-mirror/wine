@@ -33,8 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_bindA     (WLDAP32.@)
- *
- * See ldap_bindW.
  */
 ULONG CDECL ldap_bindA( LDAP *ld, char *dn, char *cred, ULONG method )
 {
@@ -58,21 +56,6 @@ exit:
 
 /***********************************************************************
  *      ldap_bindW     (WLDAP32.@)
- *
- * Authenticate with an LDAP server (asynchronous operation).
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  dn      [I] DN of entry to bind as.
- *  cred    [I] Credentials (e.g. password string).
- *  method  [I] Authentication method.
- *
- * RETURNS
- *  Success: Message ID of the bind operation.
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Only LDAP_AUTH_SIMPLE is supported (just like native).
  */
 ULONG CDECL ldap_bindW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
 {
@@ -111,8 +94,6 @@ exit:
 
 /***********************************************************************
  *      ldap_bind_sA     (WLDAP32.@)
- *
- * See ldap_bind_sW.
  */
 ULONG CDECL ldap_bind_sA( LDAP *ld, char *dn, char *cred, ULONG method )
 {
@@ -143,18 +124,6 @@ exit:
 
 /***********************************************************************
  *      ldap_bind_sW     (WLDAP32.@)
- *
- * Authenticate with an LDAP server (synchronous operation).
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  dn      [I] DN of entry to bind as.
- *  cred    [I] Credentials (e.g. password string).
- *  method  [I] Authentication method.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_bind_sW( LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
 {
@@ -236,8 +205,6 @@ exit:
 
 /***********************************************************************
  *      ldap_sasl_bindA     (WLDAP32.@)
- *
- * See ldap_sasl_bindW.
  */
 ULONG CDECL ldap_sasl_bindA( LDAP *ld, const PCHAR dn, const PCHAR mechanism, const BERVAL *cred,
     LDAPControlA **serverctrls, LDAPControlA **clientctrls, int *message )
@@ -268,25 +235,6 @@ exit:
 
 /***********************************************************************
  *      ldap_sasl_bindW     (WLDAP32.@)
- *
- * Authenticate with an LDAP server using SASL (asynchronous operation).
- *
- * PARAMS
- *  ld          [I] Pointer to an LDAP context.
- *  dn          [I] DN of entry to bind as.
- *  mechanism   [I] Authentication method.
- *  cred        [I] Credentials.
- *  serverctrls [I] Array of LDAP server controls.
- *  clientctrls [I] Array of LDAP client controls.
- *  message     [O] Message ID of the bind operation.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  The serverctrls and clientctrls parameters are optional and should
- *  be set to NULL if not used.
  */
 ULONG CDECL ldap_sasl_bindW( LDAP *ld, const PWCHAR dn, const PWCHAR mechanism, const BERVAL *cred,
     LDAPControlW **serverctrls, LDAPControlW **clientctrls, int *message )
@@ -323,8 +271,6 @@ exit:
 
 /***********************************************************************
  *      ldap_sasl_bind_sA     (WLDAP32.@)
- *
- * See ldap_sasl_bind_sW.
  */
 ULONG CDECL ldap_sasl_bind_sA( LDAP *ld, const PCHAR dn, const PCHAR mechanism, const BERVAL *cred,
     LDAPControlA **serverctrls, LDAPControlA **clientctrls, BERVAL **serverdata )
@@ -355,25 +301,6 @@ exit:
 
 /***********************************************************************
  *      ldap_sasl_bind_sW     (WLDAP32.@)
- *
- * Authenticate with an LDAP server using SASL (synchronous operation).
- *
- * PARAMS
- *  ld          [I] Pointer to an LDAP context.
- *  dn          [I] DN of entry to bind as.
- *  mechanism   [I] Authentication method.
- *  cred        [I] Credentials.
- *  serverctrls [I] Array of LDAP server controls.
- *  clientctrls [I] Array of LDAP client controls.
- *  serverdata  [O] Authentication response from the server.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  The serverctrls and clientctrls parameters are optional and should
- *  be set to NULL if not used.
  */
 ULONG CDECL ldap_sasl_bind_sW( LDAP *ld, const PWCHAR dn, const PWCHAR mechanism, const BERVAL *cred,
     LDAPControlW **serverctrls, LDAPControlW **clientctrls, BERVAL **serverdata )
@@ -418,8 +345,6 @@ exit:
 
 /***********************************************************************
  *      ldap_simple_bindA     (WLDAP32.@)
- *
- * See ldap_simple_bindW.
  */
 ULONG CDECL ldap_simple_bindA( LDAP *ld, char *dn, char *passwd )
 {
@@ -443,20 +368,6 @@ exit:
 
 /***********************************************************************
  *      ldap_simple_bindW     (WLDAP32.@)
- *
- * Authenticate with an LDAP server (asynchronous operation).
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  dn      [I] DN of entry to bind as.
- *  passwd  [I] Password string.
- *
- * RETURNS
- *  Success: Message ID of the bind operation.
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Set dn and passwd to NULL to bind as an anonymous user.
  */
 ULONG CDECL ldap_simple_bindW( LDAP *ld, WCHAR *dn, WCHAR *passwd )
 {
@@ -494,8 +405,6 @@ exit:
 
 /***********************************************************************
  *      ldap_simple_bind_sA     (WLDAP32.@)
- *
- * See ldap_simple_bind_sW.
  */
 ULONG CDECL ldap_simple_bind_sA( LDAP *ld, char *dn, char *passwd )
 {
@@ -519,20 +428,6 @@ exit:
 
 /***********************************************************************
  *      ldap_simple_bind_sW     (WLDAP32.@)
- *
- * Authenticate with an LDAP server (synchronous operation).
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  dn      [I] DN of entry to bind as.
- *  passwd  [I] Password string.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Set dn and passwd to NULL to bind as an anonymous user.
  */
 ULONG CDECL ldap_simple_bind_sW( LDAP *ld, WCHAR *dn, WCHAR *passwd )
 {
@@ -565,15 +460,6 @@ exit:
 
 /***********************************************************************
  *      ldap_unbind     (WLDAP32.@)
- *
- * Close LDAP connection and free resources (asynchronous operation).
- *
- * PARAMS
- *  ld  [I] Pointer to an LDAP context.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_unbind( LDAP *ld )
 {
@@ -596,15 +482,6 @@ ULONG CDECL ldap_unbind( LDAP *ld )
 
 /***********************************************************************
  *      ldap_unbind_s     (WLDAP32.@)
- *
- * Close LDAP connection and free resources (synchronous operation).
- *
- * PARAMS
- *  ld  [I] Pointer to an LDAP context.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_unbind_s( LDAP *ld )
 {

@@ -31,8 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_dn2ufnA     (WLDAP32.@)
- *
- * See ldap_dn2ufnW.
  */
 char * CDECL ldap_dn2ufnA( char *dn )
 {
@@ -53,18 +51,6 @@ char * CDECL ldap_dn2ufnA( char *dn )
 
 /***********************************************************************
  *      ldap_dn2ufnW     (WLDAP32.@)
- *
- * Convert a DN to a user-friendly name.
- *
- * PARAMS
- *  dn  [I] DN to convert.
- *
- * RETURNS
- *  Success: Pointer to a string containing the user-friendly name.
- *  Failure: NULL
- *
- * NOTES
- *  Free the string with ldap_memfree.
  */
 WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
 {
@@ -88,8 +74,6 @@ WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
 
 /***********************************************************************
  *      ldap_explode_dnA     (WLDAP32.@)
- *
- * See ldap_explode_dnW.
  */
 char ** CDECL ldap_explode_dnA( char *dn, ULONG notypes )
 {
@@ -110,20 +94,6 @@ char ** CDECL ldap_explode_dnA( char *dn, ULONG notypes )
 
 /***********************************************************************
  *      ldap_explode_dnW     (WLDAP32.@)
- *
- * Break up a DN into its components.
- *
- * PARAMS
- *  dn       [I] DN to break up.
- *  notypes  [I] Remove attribute type information from the components.
- *
- * RETURNS
- *  Success: Pointer to a NULL-terminated array that contains the DN
- *           components.
- *  Failure: NULL
- *
- * NOTES
- *  Free the string array with ldap_value_free.
  */
 WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
 {
@@ -146,8 +116,6 @@ WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
 
 /***********************************************************************
  *      ldap_get_dnA     (WLDAP32.@)
- *
- * See ldap_get_dnW.
  */
 char * CDECL ldap_get_dnA( LDAP *ld, LDAPMessage *entry )
 {
@@ -167,19 +135,6 @@ char * CDECL ldap_get_dnA( LDAP *ld, LDAPMessage *entry )
 
 /***********************************************************************
  *      ldap_get_dnW     (WLDAP32.@)
- *
- * Retrieve the DN from a given LDAP message.
- *
- * PARAMS
- *  ld     [I] Pointer to an LDAP context.
- *  entry  [I] LDAPMessage structure to retrieve the DN from.
- *
- * RETURNS
- *  Success: Pointer to a string that contains the DN.
- *  Failure: NULL
- *
- * NOTES
- *  Free the string with ldap_memfree.
  */
 WCHAR * CDECL ldap_get_dnW( LDAP *ld, LDAPMessage *entry )
 {
@@ -201,8 +156,6 @@ WCHAR * CDECL ldap_get_dnW( LDAP *ld, LDAPMessage *entry )
 
 /***********************************************************************
  *      ldap_ufn2dnA     (WLDAP32.@)
- *
- * See ldap_ufn2dnW.
  */
 ULONG CDECL ldap_ufn2dnA( char *ufn, char **dn )
 {
@@ -231,19 +184,6 @@ ULONG CDECL ldap_ufn2dnA( char *ufn, char **dn )
 
 /***********************************************************************
  *      ldap_ufn2dnW     (WLDAP32.@)
- *
- * Convert a user-friendly name to a DN.
- *
- * PARAMS
- *  ufn  [I] User-friendly name to convert.
- *  dn   [O] Receives a pointer to a string containing the DN.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  Free the string with ldap_memfree.
  */
 ULONG CDECL ldap_ufn2dnW( WCHAR *ufn, WCHAR **dn )
 {

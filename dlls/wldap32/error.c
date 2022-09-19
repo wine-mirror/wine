@@ -60,8 +60,6 @@ ULONG map_error( int error )
 
 /***********************************************************************
  *      ldap_err2stringA     (WLDAP32.@)
- *
- * See ldap_err2stringW.
  */
 char * CDECL ldap_err2stringA( ULONG err )
 {
@@ -79,19 +77,6 @@ char * CDECL ldap_err2stringA( ULONG err )
 
 /***********************************************************************
  *      ldap_err2stringW     (WLDAP32.@)
- *
- * Convert an error code into a string describing the error.
- *
- * PARAMS
- *  err  [I] Error code to convert.
- *
- * RETURNS
- *  Success: Pointer to a string containing the error description.
- *  Failure: NULL
- *
- * NOTES
- *  The returned string is statically allocated, you must not
- *  free this string.
  */
 WCHAR * CDECL ldap_err2stringW( ULONG err )
 {
@@ -109,18 +94,6 @@ WCHAR * CDECL ldap_err2stringW( ULONG err )
 
 /***********************************************************************
  *      ldap_perror     (WLDAP32.@)
- *
- * Print a given error string.
- *
- * PARAMS
- *  ld   [I] Pointer to an LDAP context.
- *  msg  [I] Error string.
- *
- * RETURNS
- *  Nothing.
- *
- * NOTES
- *  Like native, this function does nothing.
  */
 void CDECL ldap_perror( LDAP *ld, const PCHAR msg )
 {
@@ -129,20 +102,6 @@ void CDECL ldap_perror( LDAP *ld, const PCHAR msg )
 
 /***********************************************************************
  *      ldap_result2error     (WLDAP32.@)
- *
- * Parse an LDAP message and return the error obtained from it.
- *
- * PARAMS
- *  ld    [I] Pointer to an LDAP context.
- *  res   [I] Pointer to an LDAPMessage structure.
- *  free  [I] Ask for the LDAPMessage structure to be freed.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
- *
- * NOTES
- *  If not asked for, use ldap_msgfree to free the LDAPMessage.
  */
 ULONG CDECL ldap_result2error( LDAP *ld, LDAPMessage *res, ULONG free )
 {
@@ -160,14 +119,6 @@ ULONG CDECL ldap_result2error( LDAP *ld, LDAPMessage *res, ULONG free )
 
 /***********************************************************************
  *      LdapGetLastError     (WLDAP32.@)
- *
- * Return the last error set by an LDAP function call.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  An LDAP error code.
  */
 ULONG CDECL LdapGetLastError( void )
 {
@@ -278,14 +229,6 @@ static const ULONG errormap[] = {
 
 /***********************************************************************
  *      LdapMapErrorToWin32     (WLDAP32.@)
- *
- * Map an LDAP error code to a Win32 error code.
- *
- * PARAMS
- *  err  [I] An LDAP error code.
- *
- * RETURNS
- *  A Win32 error code.
  */
 ULONG CDECL LdapMapErrorToWin32( ULONG err )
 {

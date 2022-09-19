@@ -32,19 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
  *      ldap_count_values_len     (WLDAP32.@)
- *
- * Count the number of values in an array of berval structures.
- *
- * PARAMS
- *  values  [I] Pointer to an array of berval structures.
- *
- * RETURNS
- *  Success: The number of values counted.
- *  Failure: 0
- *
- * NOTES
- *  Call ldap_count_values_len with the result of a call to
- *  ldap_get_values_len.
  */
 ULONG CDECL ldap_count_values_len( struct berval **values )
 {
@@ -60,8 +47,6 @@ ULONG CDECL ldap_count_values_len( struct berval **values )
 
 /***********************************************************************
  *      ldap_count_valuesA     (WLDAP32.@)
- *
- * See ldap_count_valuesW.
  */
 ULONG CDECL ldap_count_valuesA( char **values )
 {
@@ -77,19 +62,6 @@ ULONG CDECL ldap_count_valuesA( char **values )
 
 /***********************************************************************
  *      ldap_count_valuesW     (WLDAP32.@)
- *
- * Count the number of values in a string array.
- *
- * PARAMS
- *  values  [I] Pointer to an array of strings.
- *
- * RETURNS
- *  Success: The number of values counted.
- *  Failure: 0
- *
- * NOTES
- *  Call ldap_count_valuesW with the result of a call to
- *  ldap_get_valuesW.
  */
 ULONG CDECL ldap_count_valuesW( WCHAR **values )
 {
@@ -105,8 +77,6 @@ ULONG CDECL ldap_count_valuesW( WCHAR **values )
 
 /***********************************************************************
  *      ldap_get_valuesA     (WLDAP32.@)
- *
- * See ldap_get_valuesW.
  */
 char ** CDECL ldap_get_valuesA( LDAP *ld, LDAPMessage *entry, char *attr )
 {
@@ -170,22 +140,6 @@ static char **bv2str_array( struct bervalU **bv )
 
 /***********************************************************************
  *      ldap_get_valuesW     (WLDAP32.@)
- *
- * Retrieve string values for a given attribute.
- *
- * PARAMS
- *  ld     [I] Pointer to an LDAP context.
- *  entry  [I] Entry to retrieve values from.
- *  attr   [I] Attribute to retrieve values for.
- *
- * RETURNS
- *  Success: Pointer to a character array holding the values.
- *  Failure: NULL
- *
- * NOTES
- *  Call ldap_get_valuesW with the result of a call to
- *  ldap_first_entry or ldap_next_entry. Free the returned
- *  array with a call to ldap_value_freeW.
  */
 WCHAR ** CDECL ldap_get_valuesW( LDAP *ld, LDAPMessage *entry, WCHAR *attr )
 {
@@ -214,8 +168,6 @@ WCHAR ** CDECL ldap_get_valuesW( LDAP *ld, LDAPMessage *entry, WCHAR *attr )
 
 /***********************************************************************
  *      ldap_get_values_lenA     (WLDAP32.@)
- *
- * See ldap_get_values_lenW.
  */
 struct berval ** CDECL ldap_get_values_lenA( LDAP *ld, LDAPMessage *message, char *attr )
 {
@@ -234,22 +186,6 @@ struct berval ** CDECL ldap_get_values_lenA( LDAP *ld, LDAPMessage *message, cha
 
 /***********************************************************************
  *      ldap_get_values_lenW     (WLDAP32.@)
- *
- * Retrieve binary values for a given attribute.
- *
- * PARAMS
- *  ld      [I] Pointer to an LDAP context.
- *  message [I] Entry to retrieve values from.
- *  attr    [I] Attribute to retrieve values for.
- *
- * RETURNS
- *  Success: Pointer to a berval array holding the values.
- *  Failure: NULL
- *
- * NOTES
- *  Call ldap_get_values_lenW with the result of a call to
- *  ldap_first_entry or ldap_next_entry. Free the returned
- *  array with a call to ldap_value_free_len.
  */
 struct berval ** CDECL ldap_get_values_lenW( LDAP *ld, LDAPMessage *message, WCHAR *attr )
 {
@@ -276,15 +212,6 @@ struct berval ** CDECL ldap_get_values_lenW( LDAP *ld, LDAPMessage *message, WCH
 
 /***********************************************************************
  *      ldap_value_free_len     (WLDAP32.@)
- *
- * Free an array of berval structures.
- *
- * PARAMS
- *  values  [I] Array of berval structures.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_value_free_len( struct berval **values )
 {
@@ -296,8 +223,6 @@ ULONG CDECL ldap_value_free_len( struct berval **values )
 
 /***********************************************************************
  *      ldap_value_freeA     (WLDAP32.@)
- *
- * See ldap_value_freeW.
  */
 ULONG CDECL ldap_value_freeA( char **values )
 {
@@ -309,15 +234,6 @@ ULONG CDECL ldap_value_freeA( char **values )
 
 /***********************************************************************
  *      ldap_value_freeW     (WLDAP32.@)
- *
- * Free an array of string values.
- *
- * PARAMS
- *  values  [I] Array of string values.
- *
- * RETURNS
- *  Success: LDAP_SUCCESS
- *  Failure: An LDAP error code.
  */
 ULONG CDECL ldap_value_freeW( WCHAR **values )
 {
