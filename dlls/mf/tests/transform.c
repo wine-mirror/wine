@@ -2834,7 +2834,7 @@ static void test_h264_decoder(void)
     ref = IMFSample_Release(output_sample);
     ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample_collection(output_samples, &output_sample_desc_nv12, L"nv12frame.bin");
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc_nv12, L"nv12frame.bmp");
     ok(ret == 0, "got %lu%% diff\n", ret);
     IMFCollection_Release(output_samples);
 
@@ -2897,7 +2897,7 @@ static void test_h264_decoder(void)
     ref = IMFSample_Release(output_sample);
     ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample_collection(output_samples, &expect_output_sample_i420, L"i420frame.bin");
+    ret = check_mf_sample_collection(output_samples, &expect_output_sample_i420, L"i420frame.bmp");
     ok(ret == 0, "got %lu%% diff\n", ret);
     IMFCollection_Release(output_samples);
 
@@ -3550,7 +3550,7 @@ static void test_color_convert(void)
     ok(output_info.cbSize == actual_width * actual_height * 4, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    load_resource(L"nv12frame.bin", &nv12frame_data, &nv12frame_data_len);
+    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
     input_sample = create_sample(nv12frame_data, nv12frame_data_len);
@@ -3579,7 +3579,7 @@ static void test_color_convert(void)
     ref = IMFSample_Release(output_sample);
     ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame.bin");
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame.bmp");
     ok(ret <= 4 /* small and harmless diff in Wine vs Windows */, "got %lu%% diff\n", ret);
     IMFCollection_Release(output_samples);
 
@@ -4217,7 +4217,7 @@ todo_wine {
     ok(output_info.cbSize == actual_width * actual_height * 4, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    load_resource(L"nv12frame.bin", &nv12frame_data, &nv12frame_data_len);
+    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
     input_sample = create_sample(nv12frame_data, nv12frame_data_len);
@@ -4252,7 +4252,7 @@ todo_wine {
     ref = IMFSample_Release(output_sample);
     ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame-vp.bin");
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame-vp.bmp");
     todo_wine
     ok(ret == 0 || broken(ret == 25) /* w1064v1507 / w1064v1809 incorrectly rescale */, "got %lu%% diff\n", ret);
     IMFCollection_Release(output_samples);

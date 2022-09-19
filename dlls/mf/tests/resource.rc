@@ -55,17 +55,17 @@ mp3decdata.bin RCDATA mp3decdata.bin
 h264data.bin RCDATA h264data.bin
 
 /* Generated from running the tests on Windows */
-/* @makedep: nv12frame.bin */
-nv12frame.bin RCDATA nv12frame.bin
+/* @makedep: nv12frame.bmp */
+nv12frame.bmp RCDATA nv12frame.bmp
 
 /* Generated from running the tests on Windows */
-/* @makedep: i420frame.bin */
-i420frame.bin RCDATA i420frame.bin
+/* @makedep: i420frame.bmp */
+i420frame.bmp RCDATA i420frame.bmp
 
 /* Generated from running the tests on Windows */
-/* @makedep: rgb32frame.bin */
-rgb32frame.bin RCDATA rgb32frame.bin
+/* @makedep: rgb32frame.bmp */
+rgb32frame.bmp RCDATA rgb32frame.bmp
 
 /* Generated from running the tests on Windows */
-/* @makedep: rgb32frame-vp.bin */
-rgb32frame-vp.bin RCDATA rgb32frame-vp.bin
+/* @makedep: rgb32frame-vp.bmp */
+rgb32frame-vp.bmp RCDATA rgb32frame-vp.bmp
