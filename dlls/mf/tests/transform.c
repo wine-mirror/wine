@@ -367,11 +367,16 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     return ret;
 }
 
-typedef DWORD (*compare_cb)(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect);
+typedef DWORD (*compare_cb)(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
 
-static DWORD compare_nv12(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+static DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    /* skip BMP header and RGB data from the dump */
+    size = *(DWORD *)(expect + 2);
+    *length = *length + size;
+    expect = expect + size;
 
     for (y = 0; y < height; y++, data += width, expect += width)
     {
@@ -398,9 +403,14 @@ static DWORD compare_nv12(const BYTE *data, DWORD length, const RECT *rect, cons
     return diff * 100 / 256 / size;
 }
 
-static DWORD compare_i420(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+static DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     DWORD i, x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    /* skip BMP header and RGB data from the dump */
+    size = *(DWORD *)(expect + 2);
+    *length = *length + size;
+    expect = expect + size;
 
     for (y = 0; y < height; y++, data += width, expect += width)
     {
@@ -426,9 +436,14 @@ static DWORD compare_i420(const BYTE *data, DWORD length, const RECT *rect, cons
     return diff * 100 / 256 / size;
 }
 
-static DWORD compare_rgb32(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    /* skip BMP header from the dump */
+    size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
+    *length = *length + size;
+    expect = expect + size;
 
     for (y = 0; y < height; y++, data += width * 4, expect += width * 4)
     {
@@ -446,10 +461,10 @@ static DWORD compare_rgb32(const BYTE *data, DWORD length, const RECT *rect, con
     return diff * 100 / 256 / size;
 }
 
-static DWORD compare_pcm16(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+static DWORD compare_pcm16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     const INT16 *data_pcm = (INT16 *)data, *expect_pcm = (INT16 *)expect;
-    DWORD i, size = length / 2, diff = 0;
+    DWORD i, size = *length / 2, diff = 0;
 
     for (i = 0; i < size; i++)
         diff += abs((int)*expect_pcm++ - (int)*data_pcm++);
@@ -457,14 +472,93 @@ static DWORD compare_pcm16(const BYTE *data, DWORD length, const RECT *rect, con
     return diff * 100 / 65536 / size;
 }
 
-static DWORD compare_bytes(const BYTE *data, DWORD length, const RECT *rect, const BYTE *expect)
+static DWORD compare_bytes(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
-    DWORD i, diff = 0;
+    DWORD i, size = *length, diff = 0;
 
-    for (i = 0; i < length; i++)
+    for (i = 0; i < size; i++)
         diff += abs((int)*expect++ - (int)*data++);
 
-    return diff * 100 / 256 / length;
+    return diff * 100 / 256 / size;
+}
+
+typedef void (*dump_cb)(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
+
+static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+{
+    DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    static const char magic[2] = "BM";
+    struct
+    {
+        DWORD length;
+        DWORD reserved;
+        DWORD offset;
+        BITMAPINFOHEADER biHeader;
+    } header =
+    {
+        .length = length + sizeof(header) + 2, .offset = sizeof(header) + 2,
+        .biHeader =
+        {
+            .biSize = sizeof(BITMAPINFOHEADER), .biWidth = width, .biHeight = height, .biPlanes = 1,
+            .biBitCount = 32, .biCompression = BI_RGB, .biSizeImage = width * height * 4,
+        },
+    };
+    DWORD written;
+    BOOL ret;
+
+    ret = WriteFile(output, magic, sizeof(magic), &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == sizeof(magic), "written %lu bytes\n", written);
+    ret = WriteFile(output, &header, sizeof(header), &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == sizeof(header), "written %lu bytes\n", written);
+    ret = WriteFile(output, data, length, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == length, "written %lu bytes\n", written);
+}
+
+static void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+{
+    DWORD written, x, y, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    BYTE *rgb32_data = malloc(width * height * 4), *rgb32 = rgb32_data;
+    BOOL ret;
+
+    for (y = 0; y < height; y++) for (x = 0; x < width; x++)
+    {
+        *rgb32++ = data[width * y + x];
+        *rgb32++ = data[width * height + width * (y / 2) + (x & ~1) + 0];
+        *rgb32++ = data[width * height + width * (y / 2) + (x & ~1) + 1];
+        *rgb32++ = 0xff;
+    }
+
+    dump_rgb32(rgb32_data, width * height * 4, rect, output);
+    free(rgb32_data);
+
+    ret = WriteFile(output, data, length, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == length, "written %lu bytes\n", written);
+}
+
+static void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+{
+    DWORD written, x, y, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    BYTE *rgb32_data = malloc(width * height * 4), *rgb32 = rgb32_data;
+    BOOL ret;
+
+    for (y = 0; y < height; y++) for (x = 0; x < width; x++)
+    {
+        *rgb32++ = data[width * y + x];
+        *rgb32++ = data[width * height + (width / 2) * (y / 2) + x / 2];
+        *rgb32++ = data[width * height + (width / 2) * (y / 2) + (width / 2) * (height / 2) + x / 2];
+        *rgb32++ = 0xff;
+    }
+
+    dump_rgb32(rgb32_data, width * height * 4, rect, output);
+    free(rgb32_data);
+
+    ret = WriteFile(output, data, length, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == length, "written %lu bytes\n", written);
 }
 
 struct buffer_desc
@@ -472,6 +566,7 @@ struct buffer_desc
     DWORD length;
     BOOL todo_length;
     compare_cb compare;
+    dump_cb dump;
     RECT rect;
 };
 
@@ -551,9 +646,14 @@ static void dump_mf_media_buffer(IMFMediaBuffer *buffer, const struct buffer_des
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &length);
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
 
-    ret = WriteFile(output, data, length, &written, NULL);
-    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
-    ok(written == length, "written %lu bytes\n", written);
+    if (buffer_desc->dump)
+        buffer_desc->dump(data, length, &buffer_desc->rect, output);
+    else
+    {
+        ret = WriteFile(output, data, length, &written, NULL);
+        ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+        ok(written == length, "written %lu bytes\n", written);
+    }
 
     hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == S_OK, "Unlock returned %#lx\n", hr);
@@ -599,9 +699,9 @@ static DWORD check_mf_media_buffer_(int line, IMFMediaBuffer *buffer, const stru
         todo_wine_if(expect->todo_length)
         ok_(__FILE__, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
     else if (!expect->compare)
-        diff = compare_bytes(data, length, NULL, *expect_data);
+        diff = compare_bytes(data, &length, NULL, *expect_data);
     else
-        diff = expect->compare(data, length, &expect->rect, *expect_data);
+        diff = expect->compare(data, &length, &expect->rect, *expect_data);
 
     hr = IMFMediaBuffer_Unlock(buffer);
     ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
@@ -2532,7 +2632,7 @@ static void test_h264_decoder(void)
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = actual_width * actual_height * 3 / 2,
-        .compare = compare_nv12, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
     };
     const struct sample_desc output_sample_desc_nv12 =
     {
@@ -2543,7 +2643,7 @@ static void test_h264_decoder(void)
     const struct buffer_desc output_buffer_desc_i420 =
     {
         .length = actual_width * actual_height * 3 / 2,
-        .compare = compare_i420, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_i420, .dump = dump_i420, .rect = {.right = 82, .bottom = 84},
     };
     const struct sample_desc expect_output_sample_i420 =
     {
@@ -3422,7 +3522,7 @@ static void test_color_convert(void)
     const struct buffer_desc output_buffer_desc =
     {
         .length = actual_width * actual_height * 4,
-        .compare = compare_rgb32, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.right = 82, .bottom = 84},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -3551,6 +3651,10 @@ static void test_color_convert(void)
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+    /* skip BMP header and RGB data from the dump */
+    length = *(DWORD *)(nv12frame_data + 2);
+    nv12frame_data_len = nv12frame_data_len - length;
+    nv12frame_data = nv12frame_data + length;
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
     input_sample = create_sample(nv12frame_data, nv12frame_data_len);
@@ -3765,7 +3869,7 @@ static void test_video_processor(void)
     const struct buffer_desc output_buffer_desc =
     {
         .length = actual_width * actual_height * 4,
-        .compare = compare_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
+        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -4218,6 +4322,10 @@ todo_wine {
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+    /* skip BMP header and RGB data from the dump */
+    length = *(DWORD *)(nv12frame_data + 2);
+    nv12frame_data_len = nv12frame_data_len - length;
+    nv12frame_data = nv12frame_data + length;
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
     input_sample = create_sample(nv12frame_data, nv12frame_data_len);
