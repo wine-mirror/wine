@@ -61,7 +61,7 @@ static ULONG WINAPI d3d9_surface_AddRef(IDirect3DSurface9 *iface)
     }
 
     refcount = InterlockedIncrement(&surface->resource.refcount);
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     if (refcount == 1)
     {
@@ -95,7 +95,7 @@ static ULONG WINAPI d3d9_surface_Release(IDirect3DSurface9 *iface)
     }
 
     refcount = InterlockedDecrement(&surface->resource.refcount);
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -134,7 +134,7 @@ static HRESULT WINAPI d3d9_surface_SetPrivateData(IDirect3DSurface9 *iface, REFG
         const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d9_surface *surface = impl_from_IDirect3DSurface9(iface);
-    TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
+    TRACE("iface %p, guid %s, data %p, data_size %lu, flags %#lx.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     return d3d9_resource_set_private_data(&surface->resource, guid, data, data_size, flags);
@@ -160,7 +160,7 @@ static HRESULT WINAPI d3d9_surface_FreePrivateData(IDirect3DSurface9 *iface, REF
 
 static DWORD WINAPI d3d9_surface_SetPriority(IDirect3DSurface9 *iface, DWORD priority)
 {
-    TRACE("iface %p, priority %u. Ignored on surfaces.\n", iface, priority);
+    TRACE("iface %p, priority %lu. Ignored on surfaces.\n", iface, priority);
     return 0;
 }
 
@@ -236,7 +236,7 @@ static HRESULT WINAPI d3d9_surface_LockRect(IDirect3DSurface9 *iface,
     struct wined3d_map_desc map_desc;
     HRESULT hr;
 
-    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#lx.\n",
             iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
     if (rect)
@@ -414,7 +414,7 @@ struct wined3d_rendertarget_view *d3d9_surface_acquire_rendertarget_view(struct 
     if (FAILED(hr = wined3d_rendertarget_view_create_from_sub_resource(surface->wined3d_texture,
             surface->sub_resource_idx, surface, &d3d9_view_wined3d_parent_ops, &surface->wined3d_rtv)))
     {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        ERR("Failed to create rendertarget view, hr %#lx.\n", hr);
         d3d9_surface_Release(&surface->IDirect3DSurface9_iface);
         return NULL;
     }

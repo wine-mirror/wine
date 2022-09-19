@@ -49,7 +49,7 @@ static ULONG WINAPI d3d9_vertexshader_AddRef(IDirect3DVertexShader9 *iface)
     struct d3d9_vertexshader *shader = impl_from_IDirect3DVertexShader9(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     if (refcount == 1)
     {
@@ -65,7 +65,7 @@ static ULONG WINAPI d3d9_vertexshader_Release(IDirect3DVertexShader9 *iface)
     struct d3d9_vertexshader *shader = impl_from_IDirect3DVertexShader9(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -144,7 +144,7 @@ HRESULT vertexshader_init(struct d3d9_vertexshader *shader, struct d3d9_device *
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d vertex shader, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -192,7 +192,7 @@ static ULONG WINAPI d3d9_pixelshader_AddRef(IDirect3DPixelShader9 *iface)
     struct d3d9_pixelshader *shader = impl_from_IDirect3DPixelShader9(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     if (refcount == 1)
     {
@@ -208,7 +208,7 @@ static ULONG WINAPI d3d9_pixelshader_Release(IDirect3DPixelShader9 *iface)
     struct d3d9_pixelshader *shader = impl_from_IDirect3DPixelShader9(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -287,7 +287,7 @@ HRESULT pixelshader_init(struct d3d9_pixelshader *shader, struct d3d9_device *de
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-        WARN("Failed to created wined3d pixel shader, hr %#x.\n", hr);
+        WARN("Failed to created wined3d pixel shader, hr %#lx.\n", hr);
         return hr;
     }
 

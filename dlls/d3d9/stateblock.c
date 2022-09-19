@@ -52,7 +52,7 @@ static ULONG WINAPI d3d9_stateblock_AddRef(IDirect3DStateBlock9 *iface)
     struct d3d9_stateblock *stateblock = impl_from_IDirect3DStateBlock9(iface);
     ULONG refcount = InterlockedIncrement(&stateblock->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -62,7 +62,7 @@ static ULONG WINAPI d3d9_stateblock_Release(IDirect3DStateBlock9 *iface)
     struct d3d9_stateblock *stateblock = impl_from_IDirect3DStateBlock9(iface);
     ULONG refcount = InterlockedDecrement(&stateblock->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -192,7 +192,7 @@ HRESULT stateblock_init(struct d3d9_stateblock *stateblock, struct d3d9_device *
         wined3d_mutex_unlock();
         if (FAILED(hr))
         {
-            WARN("Failed to create wined3d stateblock, hr %#x.\n", hr);
+            WARN("Failed to create wined3d stateblock, hr %#lx.\n", hr);
             return hr;
         }
     }

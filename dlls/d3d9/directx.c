@@ -67,7 +67,7 @@ static ULONG WINAPI d3d9_AddRef(IDirect3D9Ex *iface)
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
     ULONG refcount = InterlockedIncrement(&d3d9->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -77,7 +77,7 @@ static ULONG WINAPI d3d9_Release(IDirect3D9Ex *iface)
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
     ULONG refcount = InterlockedDecrement(&d3d9->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -123,7 +123,7 @@ static HRESULT WINAPI d3d9_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT adapte
     unsigned int output_idx;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, flags %#x, identifier %p.\n",
+    TRACE("iface %p, adapter %u, flags %#lx, identifier %p.\n",
             iface, adapter, flags, identifier);
 
     output_idx = adapter;
@@ -134,7 +134,7 @@ static HRESULT WINAPI d3d9_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT adapte
     if (FAILED(hr = wined3d_output_get_desc(d3d9->wined3d_outputs[output_idx], &output_desc)))
     {
         wined3d_mutex_unlock();
-        WARN("Failed to get output description, hr %#x.\n", hr);
+        WARN("Failed to get output description, hr %#lx.\n", hr);
         return hr;
     }
     WideCharToMultiByte(CP_ACP, 0, output_desc.device_name, -1, identifier->DeviceName,
@@ -283,7 +283,7 @@ static HRESULT WINAPI d3d9_CheckDeviceFormat(IDirect3D9Ex *iface, UINT adapter, 
     unsigned int output_idx;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#x, resource_type %#x, format %#x.\n",
+    TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#lx, resource_type %#x, format %#x.\n",
             iface, adapter, device_type, adapter_format, usage, resource_type, format);
 
     output_idx = adapter;
@@ -329,7 +329,7 @@ static HRESULT WINAPI d3d9_CheckDeviceFormat(IDirect3D9Ex *iface, UINT adapter, 
     wined3d_adapter = wined3d_output_get_adapter(d3d9->wined3d_outputs[output_idx]);
     if (format == D3DFMT_RESZ && resource_type == D3DRTYPE_SURFACE && usage == D3DUSAGE_RENDERTARGET)
     {
-        DWORD levels;
+        unsigned int levels;
 
         hr = wined3d_check_device_multisample_type(wined3d_adapter, wined3d_device_type_from_d3d(device_type),
                 WINED3DFMT_D24_UNORM_S8_UINT, FALSE, WINED3D_MULTISAMPLE_NON_MASKABLE, &levels);
@@ -367,7 +367,7 @@ static HRESULT WINAPI d3d9_CheckDeviceMultiSampleType(IDirect3D9Ex *iface, UINT 
     wined3d_adapter = wined3d_output_get_adapter(d3d9->wined3d_outputs[output_idx]);
     hr = wined3d_check_device_multisample_type(wined3d_adapter,
             wined3d_device_type_from_d3d(device_type), wined3dformat_from_d3dformat(format),
-            windowed, wined3d_multisample_type_from_d3d(multisample_type), levels);
+            windowed, wined3d_multisample_type_from_d3d(multisample_type), (unsigned int *)levels);
     wined3d_mutex_unlock();
     if (hr == WINED3DERR_NOTAVAILABLE && levels)
         *levels = 1;
@@ -471,7 +471,7 @@ static HMONITOR WINAPI d3d9_GetAdapterMonitor(IDirect3D9Ex *iface, UINT adapter)
 
     if (FAILED(hr))
     {
-        WARN("Failed to get output desc, hr %#x.\n", hr);
+        WARN("Failed to get output desc, hr %#lx.\n", hr);
         return NULL;
     }
 
@@ -486,7 +486,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, U
     struct d3d9_device *object;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",
+    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#lx, parameters %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, device);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -495,7 +495,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, U
     hr = device_init(object, d3d9, d3d9->wined3d, adapter, device_type, focus_window, flags, parameters, NULL);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
+        WARN("Failed to initialize device, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -607,7 +607,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDeviceEx(IDirect3D9Ex *iface,
     struct d3d9_device *object;
     HRESULT hr;
 
-    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, mode %p, device %p.\n",
+    TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#lx, parameters %p, mode %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, mode, device);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -616,7 +616,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDeviceEx(IDirect3D9Ex *iface,
     hr = device_init(object, d3d9, d3d9->wined3d, adapter, device_type, focus_window, flags, parameters, mode);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
+        WARN("Failed to initialize device, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
