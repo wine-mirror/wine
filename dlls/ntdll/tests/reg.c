@@ -2125,7 +2125,7 @@ static void test_redirection(void)
 
     status = pNtQueryKey( root32, KeyFullInformation, full_info, sizeof(buffer), &len );
     ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
-    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
     subkeys = full_info->SubKeys;
 
     found = FALSE;
@@ -2137,7 +2137,7 @@ static void test_redirection(void)
         if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
             found = TRUE;
     }
-    todo_wine_if(ptr_size == 32) ok( ptr_size == 32 ? found : !found, "key not found\n" );
+    ok( ptr_size == 32 ? found : !found, "key not found\n" );
     pNtClose( root32 );
 
     status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
@@ -2165,7 +2165,7 @@ static void test_redirection(void)
 
     status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
     ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
-    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    ok( full_info->SubKeys == subkeys64, "wrong number of subkeys: %lu\n", full_info->SubKeys );
     subkeys = full_info->SubKeys;
 
     found = FALSE;
@@ -2177,7 +2177,7 @@ static void test_redirection(void)
         if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
             found = TRUE;
     }
-    todo_wine_if(ptr_size == 32) ok(  ptr_size == 32 ? found : !found, "key not found\n" );
+    ok(  ptr_size == 32 ? found : !found, "key not found\n" );
     pNtClose( root64 );
 
     pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes\\Wow6432Node" );
@@ -2247,7 +2247,7 @@ static void test_redirection(void)
 
     status = pNtQueryKey( root32, KeyFullInformation, full_info, sizeof(buffer), &len );
     ok( status == STATUS_SUCCESS, "NtQueryKey failed: 0x%08lx\n", status );
-    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == (ptr_size == 32 ? subkeys64 : subkeys32), "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    ok( full_info->SubKeys == (ptr_size == 32 ? subkeys64 : subkeys32), "wrong number of subkeys: %lu\n", full_info->SubKeys );
     subkeys = full_info->SubKeys;
 
     found = FALSE;
@@ -2259,7 +2259,7 @@ static void test_redirection(void)
         if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
             found = TRUE;
     }
-    todo_wine_if(ptr_size == 32) ok( found, "key not found\n" );
+    ok( found, "key not found\n" );
     pNtClose( root32 );
 
     status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
@@ -2287,7 +2287,7 @@ static void test_redirection(void)
 
     status = pNtQueryKey( root64, KeyFullInformation, full_info, sizeof(buffer), &len );
     ok( status == STATUS_SUCCESS, "NQtueryKey failed: 0x%08lx\n", status );
-    todo_wine_if(ptr_size == 32) ok( full_info->SubKeys == (ptr_size == 32 ? subkeys64 : subkeys32), "wrong number of subkeys: %lu\n", full_info->SubKeys );
+    ok( full_info->SubKeys == (ptr_size == 32 ? subkeys64 : subkeys32), "wrong number of subkeys: %lu\n", full_info->SubKeys );
     subkeys = full_info->SubKeys;
 
     found = FALSE;
@@ -2299,7 +2299,7 @@ static void test_redirection(void)
         if (basic_info->NameLength == sizeof(wineW) && !memcmp(basic_info->Name, wineW, sizeof(wineW) ))
             found = TRUE;
     }
-    todo_wine_if(ptr_size == 32) ok( found, "key not found\n" );
+    ok( found, "key not found\n" );
     pNtClose( root64 );
 
     pNtDeleteKey( key32 );
