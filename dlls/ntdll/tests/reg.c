@@ -1472,7 +1472,7 @@ static void test_redirection(void)
     char buffer[1024];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     DWORD dw, len;
-    HANDLE key, root32, root64, key32, key64;
+    HANDLE key, key32, key64, root, root32, root64;
 
     if (ptr_size != 64)
     {
@@ -1760,6 +1760,12 @@ static void test_redirection(void)
     status = pNtCreateKey( &key64, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
+    attr.RootDirectory = key64;
+    status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pNtDeleteKey( key );
+    pNtClose( key );
+
     attr.RootDirectory = root32;
     status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
     ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
@@ -1819,10 +1825,16 @@ static void test_redirection(void)
     status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
 
+    attr.RootDirectory = root32;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
+
     pNtDeleteKey( key64 );
     pNtClose( key64 );
 
-    attr.RootDirectory = root32;
     status = pNtCreateKey( &key32, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     dw = 32;
@@ -1847,6 +1859,186 @@ static void test_redirection(void)
     ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
     ok( dw == 32, "wrong value %lu\n", dw );
+    pNtClose( key64 );
+
+    pNtDeleteKey( key32 );
+    pNtClose( key32 );
+
+    pNtClose( root64 );
+    pNtClose( root32 );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Classes" );
+    attr.RootDirectory = 0;
+    status = pNtOpenKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtOpenKey( &root32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtOpenKey( &root, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    pRtlInitUnicodeString( &str, L"Interface" );
+    attr.RootDirectory = root64;
+    status = pNtOpenKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    attr.RootDirectory = root32;
+    status = pNtOpenKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    attr.RootDirectory = root;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+
+    pNtClose( root64 );
+    pNtClose( root32 );
+    pNtClose( root );
+
+    root64 = key64;
+    root32 = key32;
+    root = key;
+
+    pRtlInitUnicodeString( &str, L"Wine" );
+    attr.RootDirectory = root32;
+    status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    attr.RootDirectory = root;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    pNtClose( key );
+
+    pNtDeleteKey( key32 );
+    pNtClose( key32 );
+
+    attr.RootDirectory = root64;
+    status = pNtCreateKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    attr.RootDirectory = root;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 32 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    pNtDeleteKey( key64 );
+    pNtClose( key64 );
+
+    pNtDeleteKey( root );
+    pNtClose( root );
+
+    attr.RootDirectory = root64;
+    status = pNtCreateKey( &key64, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    attr.RootDirectory = root32;
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 32 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 32 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtCreateKey( &key32, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    dw = 32;
+    status = pNtSetValueKey( key32, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
+    pNtClose( key32 );
+
+    dw = 64;
+    status = pNtSetValueKey( key64, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
+    pNtClose( key64 );
+
+    attr.RootDirectory = root64;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+    dw = *(DWORD *)info->Data;
+    ok( dw == 64, "wrong value %lu\n", dw );
+    pNtClose( key );
+
+    attr.RootDirectory = root64;
+    status = pNtOpenKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key64, &value_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+    dw = *(DWORD *)info->Data;
+    ok( dw == 64, "wrong value %lu\n", dw );
+
+    attr.RootDirectory = root32;
+    status = pNtOpenKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
+    len = sizeof(buffer);
+    status = pNtQueryValueKey( key32, &value_str, KeyValuePartialInformation, info, len, &len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+    dw = *(DWORD *)info->Data;
+    ok( dw == ptr_size, "wrong value %lu\n", dw );
+    pNtDeleteKey( key32 );
+    pNtClose( key32 );
+
+    attr.RootDirectory = root64;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 64 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    todo_wine_if(ptr_size == 32) ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status) pNtClose( key );
+
+    attr.RootDirectory = root32;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
+
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
+
+    pNtDeleteKey( key64 );
+    pNtClose( key64 );
+
+    status = pNtCreateKey( &key32, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    dw = 32;
+    status = pNtSetValueKey( key32, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
+
+    attr.RootDirectory = root64;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 32 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status)
+    {
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+        dw = *(DWORD *)info->Data;
+        ok( dw == 32, "wrong value %lu\n", dw );
+        pNtClose( key );
+    }
+
+    attr.RootDirectory = root64;
+    status = pNtOpenKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 32 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    if (!status)
+    {
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key64, &value_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+        dw = *(DWORD *)info->Data;
+        ok( dw == 32, "wrong value %lu\n", dw );
+        pNtClose( key64 );
+    }
 
     pNtDeleteKey( key32 );
     pNtClose( key32 );
