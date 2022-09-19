@@ -64,7 +64,7 @@ ULONG CDECL ldap_compareW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value )
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value) );
 
     ret = ldap_compare_extW( ld, dn, attr, value, NULL, NULL, NULL, &msg );
-    if (ret == LDAP_SUCCESS) return msg;
+    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -75,14 +75,14 @@ ULONG CDECL ldap_compare_extA( LDAP *ld, char *dn, char *attr, char *value,
     struct berval *data, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
     ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), debugstr_a(attr), debugstr_a(value),
            data, serverctrls, clientctrls, message );
 
-    if (!ld || !message) return LDAP_PARAM_ERROR;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attr && !(attrW = strAtoW( attr ))) goto exit;
@@ -107,7 +107,7 @@ exit:
 ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct berval *data,
     LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct bervalU *dataU = NULL, val = { 0, NULL };
@@ -115,8 +115,8 @@ ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, s
     TRACE( "(%p, %s, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value),
            data, serverctrls, clientctrls, message );
 
-    if (!ld || !message) return LDAP_PARAM_ERROR;
-    if (!attr) return LDAP_NO_MEMORY;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!attr) return WLDAP32_LDAP_NO_MEMORY;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (!(attrU = strWtoU( attr ))) goto exit;
@@ -155,14 +155,14 @@ exit:
 ULONG CDECL ldap_compare_ext_sA( LDAP *ld, char *dn, char *attr, char *value, struct berval *data,
     LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_a(dn), debugstr_a(attr), debugstr_a(value),
            data, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attr && !(attrW = strAtoW( attr ))) goto exit;
@@ -187,7 +187,7 @@ exit:
 ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct berval *data,
     LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct bervalU *dataU = NULL, val = { 0, NULL };
@@ -195,7 +195,7 @@ ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value,
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value), data,
            serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (attr && !(attrU = strWtoU( attr ))) goto exit;
@@ -232,12 +232,12 @@ exit:
  */
 ULONG CDECL ldap_compare_sA( LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(attr), debugstr_a(value) );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attr && !(attrW = strAtoW( attr ))) goto exit;

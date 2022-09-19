@@ -164,16 +164,16 @@ ULONG CDECL ldap_ufn2dnA( char *ufn, char **dn )
 
     TRACE( "(%s, %p)\n", debugstr_a(ufn), dn );
 
-    if (!dn) return LDAP_PARAM_ERROR;
+    if (!dn) return WLDAP32_LDAP_PARAM_ERROR;
 
     *dn = NULL;
-    if (ufn && !(ufnW = strAtoW( ufn ))) return LDAP_NO_MEMORY;
+    if (ufn && !(ufnW = strAtoW( ufn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_ufn2dnW( ufnW, &dnW );
     if (dnW)
     {
         char *str;
-        if (!(str = strWtoA( dnW ))) ret = LDAP_NO_MEMORY;
+        if (!(str = strWtoA( dnW ))) ret = WLDAP32_LDAP_NO_MEMORY;
         else *dn = str;
     }
 
@@ -187,21 +187,21 @@ ULONG CDECL ldap_ufn2dnA( char *ufn, char **dn )
  */
 ULONG CDECL ldap_ufn2dnW( WCHAR *ufn, WCHAR **dn )
 {
-    ULONG ret = LDAP_SUCCESS;
+    ULONG ret = WLDAP32_LDAP_SUCCESS;
     char *ufnU = NULL;
 
     TRACE( "(%s, %p)\n", debugstr_w(ufn), dn );
 
-    if (!dn) return LDAP_PARAM_ERROR;
+    if (!dn) return WLDAP32_LDAP_PARAM_ERROR;
 
     *dn = NULL;
     if (ufn)
     {
         WCHAR *str;
-        if (!(ufnU = strWtoU( ufn ))) return LDAP_NO_MEMORY;
+        if (!(ufnU = strWtoU( ufn ))) return WLDAP32_LDAP_NO_MEMORY;
 
         /* FIXME: do more than just a copy */
-        if (!(str = strUtoW( ufnU ))) ret = LDAP_NO_MEMORY;
+        if (!(str = strUtoW( ufnU ))) ret = WLDAP32_LDAP_NO_MEMORY;
         else *dn = str;
     }
 

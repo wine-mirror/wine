@@ -36,7 +36,7 @@ ULONG CDECL ldap_control_freeA( LDAPControlA *control )
 {
     TRACE( "(%p)\n", control );
     controlfreeA( control );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -46,7 +46,7 @@ ULONG CDECL ldap_control_freeW( LDAPControlW *control )
 {
     TRACE( "(%p)\n", control );
     controlfreeW( control );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -56,7 +56,7 @@ ULONG CDECL ldap_controls_freeA( LDAPControlA **controls )
 {
     TRACE( "(%p)\n", controls );
     controlarrayfreeA( controls );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -66,7 +66,7 @@ ULONG CDECL ldap_controls_freeW( LDAPControlW **controls )
 {
     TRACE( "(%p)\n", controls );
     controlarrayfreeW( controls );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -80,16 +80,16 @@ ULONG CDECL ldap_create_sort_controlA( LDAP *ld, LDAPSortKeyA **sortkey, UCHAR c
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, sortkey, critical, control );
 
-    if (!ld || !sortkey || !control) return LDAP_PARAM_ERROR;
+    if (!ld || !sortkey || !control) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (!(sortkeyW = sortkeyarrayAtoW( sortkey ))) return LDAP_NO_MEMORY;
+    if (!(sortkeyW = sortkeyarrayAtoW( sortkey ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_create_sort_controlW( ld, sortkeyW, critical, &controlW );
-    if (ret == LDAP_SUCCESS)
+    if (ret == WLDAP32_LDAP_SUCCESS)
     {
         LDAPControlA *controlA = controlWtoA( controlW );
         if (controlA) *control = controlA;
-        else ret = LDAP_NO_MEMORY;
+        else ret = WLDAP32_LDAP_NO_MEMORY;
         ldap_control_freeW( controlW );
     }
 
@@ -108,20 +108,20 @@ ULONG CDECL ldap_create_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkey, UCHAR c
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, sortkey, critical, control );
 
-    if (!ld || !sortkey || !control) return LDAP_PARAM_ERROR;
+    if (!ld || !sortkey || !control) return WLDAP32_LDAP_PARAM_ERROR;
 
     if ((sortkeyU = sortkeyarrayWtoU( sortkey )))
     {
         struct ldap_create_sort_control_params params = { CTX(ld), sortkeyU, critical, &controlU };
         ret = map_error( LDAP_CALL( ldap_create_sort_control, &params ));
     }
-    else return LDAP_NO_MEMORY;
+    else return WLDAP32_LDAP_NO_MEMORY;
 
-    if (ret == LDAP_SUCCESS)
+    if (ret == WLDAP32_LDAP_SUCCESS)
     {
         LDAPControlW *controlW = controlUtoW( controlU );
         if (controlW) *control = controlW;
-        else ret = LDAP_NO_MEMORY;
+        else ret = WLDAP32_LDAP_NO_MEMORY;
         LDAP_CALL( ldap_control_free, controlU );
     }
 
@@ -142,11 +142,11 @@ INT CDECL ldap_create_vlv_controlA( LDAP *ld, LDAPVLVInfo *info, UCHAR critical,
     if (!ld || !control) return ~0u;
 
     ret = ldap_create_vlv_controlW( ld, info, critical, &controlW );
-    if (ret == LDAP_SUCCESS)
+    if (ret == WLDAP32_LDAP_SUCCESS)
     {
         LDAPControlA *controlA = controlWtoA( controlW );
         if (controlA) *control = controlA;
-        else ret = LDAP_NO_MEMORY;
+        else ret = WLDAP32_LDAP_NO_MEMORY;
         ldap_control_freeW( controlW );
     }
 
@@ -166,17 +166,17 @@ INT CDECL ldap_create_vlv_controlW( LDAP *ld, LDAPVLVInfo *info, UCHAR critical,
 
     if (!ld || !control) return ~0u;
 
-    if (info && !(infoU = vlvinfoWtoU( info ))) return LDAP_NO_MEMORY;
+    if (info && !(infoU = vlvinfoWtoU( info ))) return WLDAP32_LDAP_NO_MEMORY;
     else
     {
         struct ldap_create_vlv_control_params params = { CTX(ld), infoU, &controlU };
         ret = map_error( LDAP_CALL( ldap_create_vlv_control, &params ));
     }
-    if (ret == LDAP_SUCCESS)
+    if (ret == WLDAP32_LDAP_SUCCESS)
     {
         LDAPControlW *controlW = controlUtoW( controlU );
         if (controlW) *control = controlW;
-        else ret = LDAP_NO_MEMORY;
+        else ret = WLDAP32_LDAP_NO_MEMORY;
         LDAP_CALL( ldap_control_free, controlU );
     }
 
@@ -203,7 +203,7 @@ ULONG CDECL ldap_encode_sort_controlA( LDAP *ld, LDAPSortKeyA **sortkeys, LDAPCo
     LDAPControlA *control;
     ULONG result;
 
-    if ((result = ldap_create_sort_controlA( ld, sortkeys, critical, &control )) == LDAP_SUCCESS)
+    if ((result = ldap_create_sort_controlA( ld, sortkeys, critical, &control )) == WLDAP32_LDAP_SUCCESS)
     {
         ret->ldctl_oid = strdupU(control->ldctl_oid);
         bv_val_dup( &control->ldctl_value, &ret->ldctl_value );
@@ -221,7 +221,7 @@ ULONG CDECL ldap_encode_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkeys, LDAPCo
     LDAPControlW *control;
     ULONG result;
 
-    if ((result = ldap_create_sort_controlW( ld, sortkeys, critical, &control )) == LDAP_SUCCESS)
+    if ((result = ldap_create_sort_controlW( ld, sortkeys, critical, &control )) == WLDAP32_LDAP_SUCCESS)
     {
         ret->ldctl_oid = strdupW(control->ldctl_oid);
         bv_val_dup( &control->ldctl_value, &ret->ldctl_value );

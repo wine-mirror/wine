@@ -55,8 +55,8 @@ ULONG CDECL ldap_check_filterA( LDAP *ld, char *filter )
 
     TRACE( "(%p, %s)\n", ld, debugstr_a(filter) );
 
-    if (!ld) return LDAP_PARAM_ERROR;
-    if (filter && !(filterW = strAtoW( filter ))) return LDAP_NO_MEMORY;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (filter && !(filterW = strAtoW( filter ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_check_filterW( ld, filterW );
 
@@ -71,8 +71,8 @@ ULONG CDECL ldap_check_filterW( LDAP *ld, WCHAR *filter )
 {
     TRACE( "(%p, %s)\n", ld, debugstr_w(filter) );
 
-    if (!ld) return LDAP_PARAM_ERROR;
-    return LDAP_SUCCESS; /* FIXME: do some checks */
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    return WLDAP32_LDAP_SUCCESS; /* FIXME: do some checks */
 }
 
 /***********************************************************************
@@ -81,7 +81,7 @@ ULONG CDECL ldap_check_filterW( LDAP *ld, WCHAR *filter )
 ULONG CDECL ldap_cleanup( HANDLE instance )
 {
     TRACE( "(%p)\n", instance );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -172,10 +172,10 @@ ULONG CDECL ldap_escape_filter_elementA( char *src, ULONG srclen, char *dst, ULO
     TRACE( "(%p, %#lx, %p, %#lx)\n", src, srclen, dst, dstlen );
 
     if (!dst) return len;
-    if (!src || dstlen < len) return LDAP_PARAM_ERROR;
+    if (!src || dstlen < len) return WLDAP32_LDAP_PARAM_ERROR;
 
     escape_filter_element( src, srclen, dst );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -190,7 +190,7 @@ ULONG CDECL ldap_escape_filter_elementW( char *src, ULONG srclen, WCHAR *dst, UL
     if (!dst) return len;
 
     /* no matter what you throw at it, this is what native returns */
-    return LDAP_PARAM_ERROR;
+    return WLDAP32_LDAP_PARAM_ERROR;
 }
 
 /***********************************************************************
@@ -314,7 +314,7 @@ ULONG CDECL WLDAP32_ldap_msgfree( LDAPMessage *res )
 
     TRACE( "(%p)\n", res );
 
-    if (!res) return LDAP_SUCCESS;
+    if (!res) return WLDAP32_LDAP_SUCCESS;
 
     LDAP_CALL( ldap_msgfree, MSG(res) );
     while (list)
@@ -324,7 +324,7 @@ ULONG CDECL WLDAP32_ldap_msgfree( LDAPMessage *res )
         free( entry );
     }
 
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************

@@ -218,7 +218,7 @@ ULONG CDECL WLDAP32_ldap_value_free_len( struct berval **values )
     TRACE( "(%p)\n", values );
 
     bvarrayfreeW( values );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -229,7 +229,7 @@ ULONG CDECL ldap_value_freeA( char **values )
     TRACE( "(%p)\n", values );
 
     strarrayfreeA( values );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************
@@ -240,5 +240,5 @@ ULONG CDECL ldap_value_freeW( WCHAR **values )
     TRACE( "(%p)\n", values );
 
     strarrayfreeW( values );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }

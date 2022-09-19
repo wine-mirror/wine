@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 ULONG CDECL ldap_addA( LDAP *ld, char *dn, LDAPModA **attrs )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
 
@@ -63,7 +63,7 @@ ULONG CDECL ldap_addW( LDAP *ld, WCHAR *dn, LDAPModW **attrs )
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), attrs );
 
     ret = ldap_add_extW( ld, dn, attrs, NULL, NULL, &msg );
-    if (ret == LDAP_SUCCESS) return msg;
+    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -73,14 +73,14 @@ ULONG CDECL ldap_addW( LDAP *ld, WCHAR *dn, LDAPModW **attrs )
 ULONG CDECL ldap_add_extA( LDAP *ld, char *dn, LDAPModA **attrs, LDAPControlA **serverctrls,
                            LDAPControlA **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), attrs, serverctrls, clientctrls, message );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attrs && !(attrsW = modarrayAtoW( attrs ))) goto exit;
@@ -103,14 +103,14 @@ exit:
 ULONG CDECL ldap_add_extW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW **serverctrls,
                            LDAPControlW **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPModU **attrsU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), attrs, serverctrls, clientctrls, message );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (attrs && !(attrsU = modarrayWtoU( attrs ))) goto exit;
@@ -136,14 +136,14 @@ exit:
 ULONG CDECL ldap_add_ext_sA( LDAP *ld, char *dn, LDAPModA **attrs, LDAPControlA **serverctrls,
                              LDAPControlA **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_a(dn), attrs, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attrs && !(attrsW = modarrayAtoW( attrs ))) goto exit;
@@ -166,14 +166,14 @@ exit:
 ULONG CDECL ldap_add_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW **serverctrls,
                              LDAPControlW **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPModU **attrsU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), attrs, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (attrs && !(attrsU = modarrayWtoU( attrs ))) goto exit;
@@ -198,13 +198,13 @@ exit:
  */
 ULONG CDECL ldap_add_sA( LDAP *ld, char *dn, LDAPModA **attrs )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), attrs );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attrs && !(attrsW = modarrayAtoW( attrs ))) goto exit;

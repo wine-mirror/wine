@@ -36,24 +36,24 @@ ULONG map_error( int error )
 {
     switch (error)
     {
-    case  0:    return LDAP_SUCCESS;
-    case -1:    return LDAP_SERVER_DOWN;
-    case -2:    return LDAP_LOCAL_ERROR;
-    case -3:    return LDAP_ENCODING_ERROR;
-    case -4:    return LDAP_DECODING_ERROR;
-    case -5:    return LDAP_TIMEOUT;
-    case -6:    return LDAP_AUTH_UNKNOWN;
-    case -7:    return LDAP_FILTER_ERROR;
-    case -8:    return LDAP_USER_CANCELLED;
-    case -9:    return LDAP_PARAM_ERROR;
-    case -10:   return LDAP_NO_MEMORY;
-    case -11:   return LDAP_CONNECT_ERROR;
-    case -12:   return LDAP_NOT_SUPPORTED;
-    case -13:   return LDAP_CONTROL_NOT_FOUND;
-    case -14:   return LDAP_NO_RESULTS_RETURNED;
-    case -15:   return LDAP_MORE_RESULTS_TO_RETURN;
-    case -16:   return LDAP_CLIENT_LOOP;
-    case -17:   return LDAP_REFERRAL_LIMIT_EXCEEDED;
+    case  0:    return WLDAP32_LDAP_SUCCESS;
+    case -1:    return WLDAP32_LDAP_SERVER_DOWN;
+    case -2:    return WLDAP32_LDAP_LOCAL_ERROR;
+    case -3:    return WLDAP32_LDAP_ENCODING_ERROR;
+    case -4:    return WLDAP32_LDAP_DECODING_ERROR;
+    case -5:    return WLDAP32_LDAP_TIMEOUT;
+    case -6:    return WLDAP32_LDAP_AUTH_UNKNOWN;
+    case -7:    return WLDAP32_LDAP_FILTER_ERROR;
+    case -8:    return WLDAP32_LDAP_USER_CANCELLED;
+    case -9:    return WLDAP32_LDAP_PARAM_ERROR;
+    case -10:   return WLDAP32_LDAP_NO_MEMORY;
+    case -11:   return WLDAP32_LDAP_CONNECT_ERROR;
+    case -12:   return WLDAP32_LDAP_NOT_SUPPORTED;
+    case -13:   return WLDAP32_LDAP_CONTROL_NOT_FOUND;
+    case -14:   return WLDAP32_LDAP_NO_RESULTS_RETURNED;
+    case -15:   return WLDAP32_LDAP_MORE_RESULTS_TO_RETURN;
+    case -16:   return WLDAP32_LDAP_CLIENT_LOOP;
+    case -17:   return WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED;
     default: return error;
     }
 }
@@ -67,10 +67,10 @@ char * CDECL ldap_err2stringA( ULONG err )
 
     TRACE( "(%#lx)\n", err );
 
-    if (err <= LDAP_REFERRAL_LIMIT_EXCEEDED)
+    if (err <= WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED)
         LoadStringA( hwldap32, err, buf, 256 );
     else
-        LoadStringA( hwldap32, LDAP_LOCAL_ERROR, buf, 256 );
+        LoadStringA( hwldap32, WLDAP32_LDAP_LOCAL_ERROR, buf, 256 );
 
     return buf;
 }
@@ -84,10 +84,10 @@ WCHAR * CDECL ldap_err2stringW( ULONG err )
 
     TRACE( "(%#lx)\n", err );
 
-    if (err <= LDAP_REFERRAL_LIMIT_EXCEEDED)
+    if (err <= WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED)
         LoadStringW( hwldap32, err, buf, 256 );
     else
-        LoadStringW( hwldap32, LDAP_LOCAL_ERROR, buf, 256 );
+        LoadStringW( hwldap32, WLDAP32_LDAP_LOCAL_ERROR, buf, 256 );
 
     return buf;
 }

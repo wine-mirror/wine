@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 ULONG CDECL ldap_modrdnA( LDAP *ld, char *dn, char *newdn )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *newdnW = NULL;
 
     TRACE( "(%p, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(newdn) );
@@ -66,7 +66,7 @@ ULONG CDECL ldap_modrdnW( LDAP *ld, WCHAR *dn, WCHAR *newdn )
  */
 ULONG CDECL ldap_modrdn2A( LDAP *ld, char *dn, char *newdn, int delete )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *newdnW = NULL;
 
     TRACE( "(%p, %s, %p, 0x%02x)\n", ld, debugstr_a(dn), newdn, delete );
@@ -89,7 +89,7 @@ exit:
  */
 ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *newdnU = NULL;
     ULONG msg;
 
@@ -97,13 +97,13 @@ ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 
     if (!ld || !newdn) return ~0u;
 
-    if (dn && !(dnU = strWtoU( dn ))) return LDAP_NO_MEMORY;
+    if (dn && !(dnU = strWtoU( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     if ((newdnU = strWtoU( newdn )))
     {
         struct ldap_rename_params params = { CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL, &msg };
         ret = LDAP_CALL( ldap_rename, &params );
-        if (ret == LDAP_SUCCESS)
+        if (ret == WLDAP32_LDAP_SUCCESS)
             ret = msg;
         else
             ret = ~0u;
@@ -118,12 +118,12 @@ ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
  */
 ULONG CDECL ldap_modrdn2_sA( LDAP *ld, char *dn, char *newdn, int delete )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *newdnW = NULL;
 
     TRACE( "(%p, %s, %p, 0x%02x)\n", ld, debugstr_a(dn), newdn, delete );
 
-    if (!ld || !newdn) return LDAP_PARAM_ERROR;
+    if (!ld || !newdn) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (!(newdnW = strAtoW( newdn ))) goto exit;
@@ -141,14 +141,14 @@ exit:
  */
 ULONG CDECL ldap_modrdn2_sW( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *newdnU = NULL;
 
     TRACE( "(%p, %s, %p, 0x%02x)\n", ld, debugstr_w(dn), newdn, delete );
 
-    if (!ld || !newdn) return LDAP_PARAM_ERROR;
+    if (!ld || !newdn) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (dn && !(dnU = strWtoU( dn ))) return LDAP_NO_MEMORY;
+    if (dn && !(dnU = strWtoU( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     if ((newdnU = strWtoU( newdn )))
     {
@@ -165,12 +165,12 @@ ULONG CDECL ldap_modrdn2_sW( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
  */
 ULONG CDECL ldap_modrdn_sA( LDAP *ld, char *dn, char *newdn )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *newdnW = NULL;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), newdn );
 
-    if (!ld || !newdn) return LDAP_PARAM_ERROR;
+    if (!ld || !newdn) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (!(newdnW = strAtoW( newdn ))) goto exit;

@@ -190,19 +190,18 @@ static char *urlify_hostnames( const char *scheme, char *hostnames, ULONG port )
     return url;
 }
 
-
 static LDAP *create_context( const char *url )
 {
     LDAP *ld;
-    int version = LDAP_VERSION3;
+    int version = WLDAP32_LDAP_VERSION3;
     struct ldap_initialize_params params;
 
     if (!(ld = calloc( 1, sizeof( *ld )))) return NULL;
     params.ld = &CTX(ld);
     params.url = url;
-    if (map_error( LDAP_CALL( ldap_initialize, &params )) == LDAP_SUCCESS)
+    if (map_error( LDAP_CALL( ldap_initialize, &params )) == WLDAP32_LDAP_SUCCESS)
     {
-        struct ldap_set_option_params opt_params = { CTX(ld), LDAP_OPT_PROTOCOL_VERSION, &version };
+        struct ldap_set_option_params opt_params = { CTX(ld), WLDAP32_LDAP_OPT_PROTOCOL_VERSION, &version };
         LDAP_CALL( ldap_set_option, &opt_params );
         return ld;
     }
@@ -256,8 +255,8 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 {
     TRACE( "(%p, %p)\n", ld, timeout );
 
-    if (!ld) return LDAP_PARAM_ERROR;
-    return LDAP_SUCCESS; /* FIXME: do something, e.g. ping the host */
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    return WLDAP32_LDAP_SUCCESS; /* FIXME: do something, e.g. ping the host */
 }
 
 /***********************************************************************
@@ -388,7 +387,7 @@ exit:
 ULONG CDECL ldap_start_tls_sA( LDAP *ld, ULONG *retval, LDAPMessage **result, LDAPControlA **serverctrls,
     LDAPControlA **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
@@ -412,7 +411,7 @@ exit:
 ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LDAPControlW **serverctrls,
     LDAPControlW **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
@@ -444,7 +443,7 @@ exit:
 ULONG CDECL ldap_startup( LDAP_VERSION_INFO *version, HANDLE *instance )
 {
     TRACE( "(%p, %p)\n", version, instance );
-    return LDAP_SUCCESS;
+    return WLDAP32_LDAP_SUCCESS;
 }
 
 /***********************************************************************

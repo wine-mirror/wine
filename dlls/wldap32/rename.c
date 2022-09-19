@@ -35,14 +35,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 ULONG CDECL ldap_rename_extA( LDAP *ld, char *dn, char *newrdn, char *newparent, int delete,
     LDAPControlA **serverctrls, LDAPControlA **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *newrdnW = NULL, *newparentW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %s, %s, 0x%02x, %p, %p, %p)\n", ld, debugstr_a(dn), debugstr_a(newrdn), debugstr_a(newparent),
            delete, serverctrls, clientctrls, message );
 
-    if (!ld || !message) return LDAP_PARAM_ERROR;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (newrdn && !(newrdnW = strAtoW( newrdn ))) goto exit;
@@ -67,14 +67,14 @@ exit:
 ULONG CDECL ldap_rename_extW( LDAP *ld, WCHAR *dn, WCHAR *newrdn, WCHAR *newparent, int delete,
     LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *newrdnU = NULL, *newparentU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %s, %s, 0x%02x, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(newrdn), debugstr_w(newparent),
            delete, serverctrls, clientctrls, message );
 
-    if (!ld || !message) return LDAP_PARAM_ERROR;
+    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (newrdn && !(newrdnU = strWtoU( newrdn ))) goto exit;
@@ -101,14 +101,14 @@ exit:
 ULONG CDECL ldap_rename_ext_sA( LDAP *ld, char *dn, char *newrdn, char *newparent, int delete,
     LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *newrdnW = NULL, *newparentW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %s, %s, 0x%02x, %p, %p)\n", ld, debugstr_a(dn), debugstr_a(newrdn), debugstr_a(newparent),
            delete, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (newrdn && !(newrdnW = strAtoW( newrdn ))) goto exit;
@@ -133,14 +133,14 @@ exit:
 ULONG CDECL ldap_rename_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *newrdn, WCHAR *newparent, int delete,
     LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
-    ULONG ret = LDAP_PARAM_ERROR;
+    ULONG ret = WLDAP32_LDAP_PARAM_ERROR;
     char *dnU = NULL, *newrdnU = NULL, *newparentU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %s, %s, 0x%02x, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(newrdn), debugstr_w(newparent),
            delete, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (newrdn && !(newrdnU = strWtoU( newrdn ))) goto exit;

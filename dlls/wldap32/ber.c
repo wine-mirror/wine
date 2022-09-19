@@ -92,11 +92,11 @@ int CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *ber, BERVAL **berval )
     struct berval *bervalW;
     struct ber_flatten_params params = { BER(ber), &bervalU };
 
-    if (LDAP_CALL( ber_flatten, &params )) return LBER_ERROR;
+    if (LDAP_CALL( ber_flatten, &params )) return WLDAP32_LBER_ERROR;
 
-    if (!(bervalW = bervalUtoW( bervalU ))) return LBER_ERROR;
+    if (!(bervalW = bervalUtoW( bervalU ))) return WLDAP32_LBER_ERROR;
     LDAP_CALL( ber_bvfree, bervalU );
-    if (!bervalW) return LBER_ERROR;
+    if (!bervalW) return WLDAP32_LBER_ERROR;
     *berval = bervalW;
     return 0;
 }

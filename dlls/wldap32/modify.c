@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 ULONG CDECL ldap_modifyA( LDAP *ld, char *dn, LDAPModA **mods )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **modsW = NULL;
 
@@ -63,7 +63,7 @@ ULONG CDECL ldap_modifyW( LDAP *ld, WCHAR *dn, LDAPModW **mods )
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), mods );
 
     ret = ldap_modify_extW( ld, dn, mods, NULL, NULL, &msg );
-    if (ret == LDAP_SUCCESS) return msg;
+    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -73,7 +73,7 @@ ULONG CDECL ldap_modifyW( LDAP *ld, WCHAR *dn, LDAPModW **mods )
 ULONG CDECL ldap_modify_extA( LDAP *ld, char *dn, LDAPModA **mods, LDAPControlA **serverctrls,
     LDAPControlA **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **modsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
@@ -103,7 +103,7 @@ exit:
 ULONG CDECL ldap_modify_extW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPControlW **serverctrls,
     LDAPControlW **clientctrls, ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPModU **modsU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
@@ -136,14 +136,14 @@ exit:
 ULONG CDECL ldap_modify_ext_sA( LDAP *ld, char *dn, LDAPModA **mods, LDAPControlA **serverctrls,
     LDAPControlA **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **modsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_a(dn), mods, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (mods && !(modsW = modarrayAtoW( mods ))) goto exit;
@@ -166,14 +166,14 @@ exit:
 ULONG CDECL ldap_modify_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPControlW **serverctrls,
     LDAPControlW **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPModU **modsU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), mods, serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (mods && !(modsU = modarrayWtoU( mods ))) goto exit;
@@ -198,13 +198,13 @@ exit:
  */
 ULONG CDECL ldap_modify_sA( LDAP *ld, char *dn, LDAPModA **mods )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **modsW = NULL;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), mods );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (mods && !(modsW = modarrayAtoW( mods ))) goto exit;

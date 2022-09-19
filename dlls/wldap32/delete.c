@@ -40,7 +40,7 @@ ULONG CDECL ldap_deleteA( LDAP *ld, char *dn )
     TRACE( "(%p, %s)\n", ld, debugstr_a(dn) );
 
     if (!ld) return ~0u;
-    if (dn && !(dnW = strAtoW( dn ))) return LDAP_NO_MEMORY;
+    if (dn && !(dnW = strAtoW( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_deleteW( ld, dnW );
     free( dnW );
@@ -57,7 +57,7 @@ ULONG CDECL ldap_deleteW( LDAP *ld, WCHAR *dn )
     TRACE( "(%p, %s)\n", ld, debugstr_w(dn) );
 
     ret = ldap_delete_extW( ld, dn, NULL, NULL, &msg );
-    if (ret == LDAP_SUCCESS) return msg;
+    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -67,13 +67,13 @@ ULONG CDECL ldap_deleteW( LDAP *ld, WCHAR *dn )
 ULONG CDECL ldap_delete_extA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
     ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_a(dn), serverctrls, clientctrls, message );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (serverctrls && !(serverctrlsW = controlarrayAtoW( serverctrls ))) goto exit;
@@ -94,13 +94,13 @@ exit:
 ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls,
     ULONG *message )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls, message );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
@@ -123,13 +123,13 @@ exit:
  */
 ULONG CDECL ldap_delete_ext_sA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p)\n", ld, debugstr_a(dn), serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (serverctrls && !(serverctrlsW = controlarrayAtoW( serverctrls ))) goto exit;
@@ -149,13 +149,13 @@ exit:
  */
 ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
-    ULONG ret = LDAP_NO_MEMORY;
+    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls );
 
-    if (!ld) return LDAP_PARAM_ERROR;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
@@ -183,8 +183,8 @@ ULONG CDECL ldap_delete_sA( LDAP *ld, char *dn )
 
     TRACE( "(%p, %s)\n", ld, debugstr_a(dn) );
 
-    if (!ld) return LDAP_PARAM_ERROR;
-    if (dn && !(dnW = strAtoW( dn ))) return LDAP_NO_MEMORY;
+    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (dn && !(dnW = strAtoW( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_delete_sW( ld, dnW );
     free( dnW );
