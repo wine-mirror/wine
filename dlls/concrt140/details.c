@@ -479,24 +479,26 @@ static void concurrent_vector_alloc_segment(_Concurrent_vector_base_v4 *this,
             spin_wait(&spin);
         if(!InterlockedCompareExchangeSizeT((this->segment + seg),
                     SEGMENT_ALLOC_MARKER, 0))
-        __TRY
         {
-            if(seg == 0)
-                this->segment[seg] = this->allocator(this, element_size * (1 << this->first_block));
-            else if(seg < this->first_block)
-                this->segment[seg] = (BYTE**)this->segment[0]
+            __TRY
+            {
+                if(seg == 0)
+                    this->segment[seg] = this->allocator(this, element_size * (1 << this->first_block));
+                else if(seg < this->first_block)
+                    this->segment[seg] = (BYTE**)this->segment[0]
                         + element_size * (1 << seg);
-            else
-                this->segment[seg] = this->allocator(this, element_size * (1 << seg));
+                else
+                    this->segment[seg] = this->allocator(this, element_size * (1 << seg));
+            }
+            __EXCEPT_ALL
+            {
+                this->segment[seg] = NULL;
+                _CxxThrowException(NULL, NULL);
+            }
+            __ENDTRY
+            if(!this->segment[seg])
+                _vector_base_v4__Internal_throw_exception(this, 2);
         }
-        __EXCEPT_ALL
-        {
-            this->segment[seg] = NULL;
-            _CxxThrowException(NULL, NULL);
-        }
-        __ENDTRY
-        if(!this->segment[seg])
-            _vector_base_v4__Internal_throw_exception(this, 2);
     }
 }
 
