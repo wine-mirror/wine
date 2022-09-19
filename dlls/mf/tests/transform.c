@@ -482,6 +482,7 @@ struct sample_desc
     LONGLONG sample_duration;
     DWORD buffer_count;
     const struct buffer_desc *buffers;
+    DWORD repeat_count;
     BOOL todo_length;
     LONGLONG todo_time;
 };
@@ -508,6 +509,38 @@ static void enum_mf_media_buffers(IMFSample *sample, const struct sample_desc *s
     ok(hr == E_INVALIDARG, "GetBufferByIndex returned %#lx\n", hr);
 }
 
+struct enum_mf_sample_state
+{
+    const struct sample_desc *next_sample;
+    struct sample_desc sample;
+};
+
+typedef void (*enum_mf_sample_cb)(IMFSample *sample, const struct sample_desc *sample_desc, void *context);
+static void enum_mf_samples(IMFCollection *samples, const struct sample_desc *collection_desc,
+        enum_mf_sample_cb callback, void *context)
+{
+    struct enum_mf_sample_state state = {.next_sample = collection_desc};
+    IMFSample *sample;
+    HRESULT hr;
+    DWORD i;
+
+    for (i = 0; SUCCEEDED(hr = IMFCollection_GetElement(samples, i, (IUnknown **)&sample)); i++)
+    {
+        winetest_push_context("sample %lu", i);
+        ok(hr == S_OK, "GetElement returned %#lx\n", hr);
+
+        state.sample.sample_time += state.sample.sample_duration;
+        if (!state.sample.repeat_count--)
+            state.sample = *state.next_sample++;
+
+        callback(sample, &state.sample, context);
+
+        IMFSample_Release(sample);
+        winetest_pop_context();
+    }
+    ok(hr == E_INVALIDARG, "GetElement returned %#lx\n", hr);
+}
+
 static void dump_mf_media_buffer(IMFMediaBuffer *buffer, const struct buffer_desc *buffer_desc, HANDLE output)
 {
     DWORD length, written;
@@ -529,6 +562,24 @@ static void dump_mf_media_buffer(IMFMediaBuffer *buffer, const struct buffer_des
 static void dump_mf_sample(IMFSample *sample, const struct sample_desc *sample_desc, HANDLE output)
 {
     enum_mf_media_buffers(sample, sample_desc, dump_mf_media_buffer, output);
+}
+
+static void dump_mf_sample_collection(IMFCollection *samples, const struct sample_desc *collection_desc,
+        const WCHAR *output_filename)
+{
+    WCHAR path[MAX_PATH];
+    HANDLE output;
+
+    GetTempPathW(ARRAY_SIZE(path), path);
+    lstrcatW(path, output_filename);
+
+    output = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+
+    enum_mf_samples(samples, collection_desc, dump_mf_sample, output);
+
+    trace("created %s\n", debugstr_w(path));
+    CloseHandle(output);
 }
 
 #define check_mf_media_buffer(a, b, c) check_mf_media_buffer_(__LINE__, a, b, c)
@@ -630,6 +681,31 @@ static DWORD check_mf_sample_(int line, IMFSample *sample, const struct sample_d
     *expect_data_len = *expect_data_len - min(total_length, *expect_data_len);
 
     return ctx.diff / buffer_count;
+}
+
+static void check_mf_sample_collection_enum(IMFSample *sample, const struct sample_desc *expect, void *context)
+{
+    struct check_mf_sample_context *ctx = context;
+    ctx->diff += check_mf_sample_(ctx->line, sample, expect, &ctx->data, &ctx->data_len);
+}
+
+#define check_mf_sample_collection(a, b, c) check_mf_sample_collection_(__LINE__, a, b, c)
+static DWORD check_mf_sample_collection_(int line, IMFCollection *samples,
+        const struct sample_desc *expect_samples, const WCHAR *expect_data_filename)
+{
+    struct check_mf_sample_context ctx = {.line = line};
+    DWORD count;
+    HRESULT hr;
+
+    load_resource(expect_data_filename, &ctx.data, &ctx.data_len);
+    enum_mf_samples(samples, expect_samples, check_mf_sample_collection_enum, &ctx);
+
+    dump_mf_sample_collection(samples, expect_samples, expect_data_filename);
+
+    hr = IMFCollection_GetElementCount(samples, &count);
+    ok_(__FILE__, line)(hr == S_OK, "GetElementCount returned %#lx\n", hr);
+
+    return ctx.diff / count;
 }
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
@@ -1683,15 +1759,14 @@ static void test_wma_encoder(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
     IMFSample *input_sample, *output_sample;
-    ULONG audio_data_len, wmaenc_data_len;
-    const BYTE *audio_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
-    WCHAR output_path[MAX_PATH];
+    IMFCollection *output_samples;
     DWORD length, output_status;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    HANDLE output_file;
+    const BYTE *audio_data;
+    ULONG audio_data_len;
     ULONG i, ret;
     HRESULT hr;
     LONG ref;
@@ -1769,35 +1844,31 @@ static void test_wma_encoder(void)
     ref = IMFSample_Release(input_sample);
     ok(ref <= 1, "Release returned %ld\n", ref);
 
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
     output_sample = create_sample(NULL, output_info.cbSize);
-
-    load_resource(L"wmaencdata.bin", &wmaenc_data, &wmaenc_data_len);
-    ok(wmaenc_data_len % wmaenc_block_size == 0, "got length %lu\n", wmaenc_data_len);
-
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"wmaencdata.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-
     for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
     {
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
         ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-        ret = check_mf_sample(output_sample, output_sample_desc + i, &wmaenc_data, &wmaenc_data_len);
-        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, output_sample_desc + i, output_file);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+        output_sample = create_sample(NULL, output_info.cbSize);
         winetest_pop_context();
     }
-    ok(wmaenc_data_len == 0, "missing %#lx bytes\n", wmaenc_data_len);
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
+    ok(i == 3, "got %lu output samples\n", i);
 
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
+    ret = check_mf_sample_collection(output_samples, output_sample_desc, L"wmaencdata.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -1946,20 +2017,15 @@ static void test_wma_decoder(void)
         ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
         {0},
     };
-    const struct sample_desc output_sample_desc[] =
+    struct sample_desc output_sample_desc[] =
     {
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 0, .sample_duration = 928798,
-            .buffer_count = 1, .buffers = output_buffer_desc + 0,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 1,
         },
         {
             .attributes = output_sample_attributes + 0,
-            .sample_time = 928798, .sample_duration = 928798,
-            .buffer_count = 1, .buffers = output_buffer_desc + 0,
-        },
-        {
-            .attributes = output_sample_attributes_todo + 0,
             .sample_time = 1857596, .sample_duration = 928798,
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
         },
@@ -1974,17 +2040,16 @@ static void test_wma_decoder(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
     IUnknown *unknown, *tmp_unknown, outer = {&test_unk_vtbl};
     IMFSample *input_sample, *output_sample;
-    ULONG wmadec_data_len, wmaenc_data_len;
-    const BYTE *wmadec_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
+    IMFCollection *output_samples;
     DWORD length, output_status;
-    WCHAR output_path[MAX_PATH];
     IMediaObject *media_object;
     IPropertyBag *property_bag;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    HANDLE output_file;
+    const BYTE *wmaenc_data;
+    ULONG wmaenc_data_len;
     ULONG i, ret, ref;
     HRESULT hr;
 
@@ -2142,62 +2207,36 @@ static void test_wma_decoder(void)
             || broken(output_status == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE)) /* Win7 */,
             "got output[0].dwStatus %#lx\n", output_status);
 
-    load_resource(L"wmadecdata.bin", &wmadec_data, &wmadec_data_len);
-    ok(wmadec_data_len == wmadec_block_size * 7 / 2, "got length %lu\n", wmadec_data_len);
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
 
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"wmadecdata.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-
-    output_info.cbSize = wmadec_block_size;
     output_sample = create_sample(NULL, output_info.cbSize);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
-
-    for (i = 0; i < 4; ++i)
+    for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
     {
         winetest_push_context("%lu", i);
+        ok(!(output_status & ~MFT_OUTPUT_DATA_BUFFER_INCOMPLETE), "got output[0].dwStatus %#lx\n", output_status);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        if (!strcmp(winetest_platform, "wine") && i == 2 && (output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE))
-            todo_wine ok(0, "skipping bogus sample check\n");
-        else if (output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE)
-        {
-            ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-            ret = check_mf_sample(output_sample, output_sample_desc + i, &wmadec_data, &wmadec_data_len);
-            todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
-            ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-            dump_mf_sample(output_sample, output_sample_desc + i, output_file);
-        }
-        else
-        {
-            ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-            ret = check_mf_sample(output_sample, output_sample_desc + i, &wmadec_data, &wmadec_data_len);
-            todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
-            ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-            dump_mf_sample(output_sample, output_sample_desc + i, output_file);
-        }
-        ret = IMFSample_Release(output_sample);
-        ok(ret == 0, "Release returned %lu\n", ret);
-
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
         output_sample = create_sample(NULL, output_info.cbSize);
-        hr = check_mft_process_output(transform, output_sample, &output_status);
-
         winetest_pop_context();
-
-        /* some FFmpeg version request more input to complete decoding */
-        if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && i == 2) break;
     }
-    todo_wine_if(wmadec_data_len == 0x1000)
-    ok(wmadec_data_len == 0, "missing %#lx bytes\n", wmadec_data_len);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
-
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
+    todo_wine_if(i == 3) /* wmadec output depends on ffmpeg version used */
+    ok(i == 4, "got %lu output samples\n", i);
+
+    if (!strcmp(winetest_platform, "wine") && i == 3)
+        output_sample_desc[1].attributes = output_sample_attributes_todo;
+
+    ret = check_mf_sample_collection(output_samples, output_sample_desc, L"wmadecdata.bin");
+    todo_wine_if(ret > 0 && ret <= 10)  /* ffmpeg sometimes offsets the decoded data */
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -2506,7 +2545,7 @@ static void test_h264_decoder(void)
         .length = actual_width * actual_height * 3 / 2,
         .compare = compare_i420, .rect = {.right = 82, .bottom = 84},
     };
-    const struct sample_desc output_sample_desc_i420 =
+    const struct sample_desc expect_output_sample_i420 =
     {
         .attributes = output_sample_attributes,
         .sample_time = 333667, .sample_duration = 333667, .todo_time = 1334666 /* with VA-API */,
@@ -2515,19 +2554,18 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
-    const BYTE *h264_encoded_data, *nv12_frame_data, *i420_frame_data;
-    ULONG h264_encoded_data_len, nv12_frame_len, i420_frame_len;
     DWORD input_id, output_id, input_count, output_count;
     IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
+    IMFCollection *output_samples;
+    const BYTE *h264_encoded_data;
+    ULONG h264_encoded_data_len;
     DWORD length, output_status;
-    WCHAR output_path[MAX_PATH];
     IMFAttributes *attributes;
+    ULONG i, ret, ref, flags;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    ULONG i, ret, flags;
-    HANDLE output_file;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -2717,6 +2755,7 @@ static void test_h264_decoder(void)
         output_sample = create_sample(NULL, output_info.cbSize);
         hr = check_mft_process_output(transform, output_sample, &output_status);
         if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) break;
+
         ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
         ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
         hr = IMFSample_GetTotalLength(output_sample, &length);
@@ -2783,29 +2822,21 @@ static void test_h264_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"nv12frame.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
 
-    load_resource(L"nv12frame.bin", &nv12_frame_data, &nv12_frame_len);
-    ok(nv12_frame_len == actual_width * actual_height * 3 / 2, "got frame length %lu\n", nv12_frame_len);
-
-    output_sample = create_sample(NULL, nv12_frame_len);
+    output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    ref = IMFSample_Release(output_sample);
+    ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample(output_sample, &output_sample_desc_nv12, &nv12_frame_data, &nv12_frame_len);
-    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, &output_sample_desc_nv12, output_file);
-
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc_nv12, L"nv12frame.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
     /* we can change it, but only with the correct frame size */
     hr = MFCreateMediaType(&media_type);
@@ -2854,28 +2885,21 @@ static void test_h264_decoder(void)
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"i420frame.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-
-    load_resource(L"i420frame.bin", &i420_frame_data, &i420_frame_len);
-    ok(i420_frame_len == actual_width * actual_height * 3 / 2, "got frame length %lu\n", i420_frame_len);
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
 
     output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    ref = IMFSample_Release(output_sample);
+    ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample(output_sample, &output_sample_desc_i420, &i420_frame_data, &i420_frame_len);
-    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, &output_sample_desc_i420, output_file);
-
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
+    ret = check_mf_sample_collection(output_samples, &expect_output_sample_i420, L"i420frame.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -3019,7 +3043,7 @@ static void test_audio_convert(void)
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 0, .sample_duration = 928798,
-            .buffer_count = 1, .buffers = output_buffer_desc + 0,
+            .buffer_count = 1, .buffers = output_buffer_desc + 0, .repeat_count = 9,
         },
         {
             .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
@@ -3035,18 +3059,16 @@ static void test_audio_convert(void)
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
-    struct sample_desc tmp_sample_desc = output_sample_desc[0];
-    ULONG audio_data_len, audioconv_data_len;
     IMFSample *input_sample, *output_sample;
-    const BYTE *audio_data, *audioconv_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
-    WCHAR output_path[MAX_PATH];
+    IMFCollection *output_samples;
     DWORD length, output_status;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    HANDLE output_file;
-    ULONG i, ret;
+    const BYTE *audio_data;
+    ULONG audio_data_len;
+    ULONG i, ret, ref;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -3187,71 +3209,32 @@ static void test_audio_convert(void)
     ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
     output_sample = create_sample(NULL, audioconv_block_size);
-
-    load_resource(L"audioconvdata.bin", &audioconv_data, &audioconv_data_len);
-    ok(audioconv_data_len == 179924, "got length %lu\n", audioconv_data_len);
-
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"audioconvdata.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-
-    i = 0;
-    while (SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)))
+    for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
     {
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        if (!(output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE))
-        {
-            ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-            winetest_pop_context();
-            break;
-        }
-        ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-
-        ret = check_mf_sample(output_sample, &tmp_sample_desc, &audioconv_data, &audioconv_data_len);
-        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, &tmp_sample_desc, output_file);
-        tmp_sample_desc.sample_time += tmp_sample_desc.sample_duration;
-
+        ok(!(output_status & ~MFT_OUTPUT_DATA_BUFFER_INCOMPLETE), "got output[0].dwStatus %#lx\n", output_status);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+        output_sample = create_sample(NULL, audioconv_block_size);
         winetest_pop_context();
-        i++;
     }
-
-    ret = check_mf_sample(output_sample, output_sample_desc + 1, &audioconv_data, &audioconv_data_len);
-    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+    ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-
-    output_sample = create_sample(NULL, audioconv_block_size);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
     todo_wine
-    ok(hr == S_OK || broken(hr == MF_E_TRANSFORM_NEED_MORE_INPUT) /* Win7 */,
-            "ProcessOutput returned %#lx\n", hr);
-    todo_wine
-    ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || broken(output_status == 0) /* Win7 */,
-            "got output[0].dwStatus %#lx\n", output_status);
+    ok(i == 12 || broken(i == 11) /* Win7 */, "got %lu output samples\n", i);
 
-    if (hr == S_OK)
-    {
-        ret = check_mf_sample(output_sample, output_sample_desc + 2, &audioconv_data, &audioconv_data_len);
-        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, output_sample_desc + 2, output_file);
-    }
-    todo_wine
-    ok(audioconv_data_len == 0
-            || broken(audioconv_data_len == 0xfc) /* Win7 */,
-            "missing %#lx bytes\n", audioconv_data_len);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
-
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = check_mf_sample_collection(output_samples, output_sample_desc, L"audioconvdata.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, audioconv_block_size);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -3455,17 +3438,16 @@ static void test_color_convert(void)
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_I420};
-    ULONG nv12frame_data_len, rgb32_data_len;
-    const BYTE *nv12frame_data, *rgb32_data;
     IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
-    WCHAR output_path[MAX_PATH];
+    IMFCollection *output_samples;
     DWORD length, output_status;
+    const BYTE *nv12frame_data;
+    ULONG nv12frame_data_len;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    HANDLE output_file;
-    ULONG i, ret;
+    ULONG i, ret, ref;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -3585,29 +3567,21 @@ static void test_color_convert(void)
     ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
-    load_resource(L"rgb32frame.bin", &rgb32_data, &rgb32_data_len);
-    ok(rgb32_data_len == output_info.cbSize, "got length %lu\n", rgb32_data_len);
-
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"rgb32frame.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
 
     output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    ref = IMFSample_Release(output_sample);
+    ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample(output_sample, &output_sample_desc, &rgb32_data, &rgb32_data_len);
-    ok(ret <= 4 /* small and harmless differences in Wine vs Windows */, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, &output_sample_desc, output_file);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
-
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame.bin");
+    ok(ret <= 4 /* small and harmless diff in Wine vs Windows */, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -3809,20 +3783,19 @@ static void test_video_processor(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_I420};
     DWORD input_min, input_max, output_min, output_max, i, j, k;
-    ULONG nv12frame_data_len, rgb32_data_len;
+    IMFAttributes *attributes, *attributes2;
     IMFSample *input_sample, *output_sample;
     IMFMediaType *media_type, *media_type2;
-    IMFAttributes *attributes, *attributes2;
-    const BYTE *nv12frame_data, *rgb32_data;
     const GUID *expect_available_inputs;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
-    WCHAR output_path[MAX_PATH];
+    IMFCollection *output_samples;
+    const BYTE *nv12frame_data;
+    ULONG nv12frame_data_len;
     IMFTransform *transform;
     IMFMediaBuffer *buffer;
     IMFMediaEvent *event;
     unsigned int value;
-    HANDLE output_file;
     UINT32 count;
     HRESULT hr;
     ULONG ret;
@@ -4261,36 +4234,28 @@ todo_wine {
     ret = IMFSample_Release(input_sample);
     ok(ret <= 1, "Release returned %ld\n", ret);
 
-    load_resource(L"rgb32frame-vp.bin", &rgb32_data, &rgb32_data_len);
-    ok(rgb32_data_len == output_info.cbSize, "got length %lu\n", rgb32_data_len);
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
 
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"rgb32frame-vp.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-
-    output_sample = create_sample(NULL, rgb32_data_len);
+    output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
     if (hr != S_OK)
     {
         win_skip("ProcessOutput returned MF_E_SHUTDOWN, skipping tests.\n");
-        CloseHandle(output_file);
         goto skip_output;
     }
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
 
-    ret = check_mf_sample(output_sample, &output_sample_desc, &rgb32_data, &rgb32_data_len);
-    todo_wine /* Wine doesn't flip the frame, yet */
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    ref = IMFSample_Release(output_sample);
+    ok(ref == 1, "Release returned %ld\n", ref);
+
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc, L"rgb32frame-vp.bin");
+    todo_wine
     ok(ret == 0 || broken(ret == 25) /* w1064v1507 / w1064v1809 incorrectly rescale */, "got %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, &output_sample_desc, output_file);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
-
-    ret = IMFSample_Release(output_sample);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -4456,7 +4421,7 @@ static void test_mp3_decoder(void)
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 282993, .sample_duration = 522449,
-            .buffer_count = 1, .buffers = output_buffer_desc + 1,
+            .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 18,
         },
         {
             .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
@@ -4467,18 +4432,16 @@ static void test_mp3_decoder(void)
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_MP3};
-    struct sample_desc tmp_sample_desc = output_sample_desc[1];
     IMFSample *input_sample, *output_sample;
-    ULONG mp3dec_data_len, mp3enc_data_len;
-    const BYTE *mp3dec_data, *mp3enc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
-    WCHAR output_path[MAX_PATH];
+    IMFCollection *output_samples;
     DWORD length, output_status;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    HANDLE output_file;
-    ULONG i, ret;
+    const BYTE *mp3enc_data;
+    ULONG mp3enc_data_len;
+    ULONG i, ret, ref;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -4609,84 +4572,53 @@ static void test_mp3_decoder(void)
     ret = IMFSample_Release(input_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    output_sample = create_sample(NULL, mp3dec_block_size);
-
-    load_resource(L"mp3decdata.bin", &mp3dec_data, &mp3dec_data_len);
-    ok(mp3dec_data_len == 94656, "got length %lu\n", mp3dec_data_len);
-
-    /* and generate a new one as well in a temporary directory */
-    GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"mp3decdata.bin");
-    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
 
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    /* first sample is broken */
+    output_sample = create_sample(NULL, output_info.cbSize);
     hr = check_mft_process_output(transform, output_sample, &output_status);
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-
     hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    ok(length == 0x9c0 || broken(length == mp3dec_block_size) /* win8 */ || broken(length == 0x900) /* win7 */,
+    ok(length == mp3dec_block_size /* Win8 */ || length == 0x9c0 /* Win10 */ || length == 0x900 /* Win7 */,
             "got length %lu\n", length);
-    if (broken(length != 0x9c0))
-    {
-        win_skip("Skipping MP3 decoder output sample checks on Win7 / Win8\n");
-        goto skip_mp3dec_output;
-    }
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    ref = IMFSample_Release(output_sample);
+    ok(ref == 1, "Release returned %ld\n", ref);
 
-    ret = check_mf_sample(output_sample, output_sample_desc + 0, &mp3dec_data, &mp3dec_data_len);
-    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, output_sample_desc + 0, output_file);
-
-    while (SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)))
+    output_sample = create_sample(NULL, output_info.cbSize);
+    for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
     {
         winetest_push_context("%lu", i);
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-        if (!(output_status & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE))
-        {
-            ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-            winetest_pop_context();
-            break;
-        }
-        ok(output_status == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE, "got output[0].dwStatus %#lx\n", output_status);
-
-        ret = check_mf_sample(output_sample, &tmp_sample_desc, &mp3dec_data, &mp3dec_data_len);
-        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, &tmp_sample_desc, output_file);
-        tmp_sample_desc.sample_time += tmp_sample_desc.sample_duration;
-
+        ok(!(output_status & ~MFT_OUTPUT_DATA_BUFFER_INCOMPLETE), "got output[0].dwStatus %#lx\n", output_status);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+        output_sample = create_sample(NULL, output_info.cbSize);
         winetest_pop_context();
     }
-
-    ok(mp3dec_data_len == mp3dec_block_size || broken(mp3dec_data_len == 0) /* win7 */, "got remaining length %lu\n", mp3dec_data_len);
-    ret = check_mf_sample(output_sample, output_sample_desc + 2, &mp3dec_data, &mp3dec_data_len);
-    ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-    dump_mf_sample(output_sample, output_sample_desc + 2, output_file);
-
-    IMFSample_Release(output_sample);
-
-    output_sample = create_sample(NULL, mp3dec_block_size);
-    hr = check_mft_process_output(transform, output_sample, &output_status);
-    todo_wine
-    ok(hr == S_OK || broken(hr == MF_E_TRANSFORM_NEED_MORE_INPUT) /* win7 */, "ProcessOutput returned %#lx\n", hr);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
-
-    if (hr == S_OK)
-    {
-        ret = check_mf_sample(output_sample, output_sample_desc + 1, &mp3dec_data, &mp3dec_data_len);
-        ok(ret == 0, "Unexpected %lu%% diff\n", ret);
-        dump_mf_sample(output_sample, output_sample_desc + 1, output_file);
-    }
-    ok(mp3dec_data_len == 0, "missing %#lx bytes\n", mp3dec_data_len);
-
-    trace("created %s\n", debugstr_w(output_path));
-    CloseHandle(output_file);
-
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
+    ok(i == 20 || broken(i == 41) /* Win7 */, "got %lu output samples\n", i);
+
+    if (broken(length != 0x9c0))
+        win_skip("Skipping MP3 decoder output sample checks on Win7 / Win8\n");
+    else
+    {
+        ret = check_mf_sample_collection(output_samples, output_sample_desc, L"mp3decdata.bin");
+        ok(ret == 0, "got %lu%% diff\n", ret);
+    }
+    IMFCollection_Release(output_samples);
 
     output_sample = create_sample(NULL, mp3dec_block_size);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -4695,7 +4627,6 @@ static void test_mp3_decoder(void)
     hr = IMFSample_GetTotalLength(output_sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     ok(length == 0, "got length %lu\n", length);
-skip_mp3dec_output:
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
