@@ -226,7 +226,7 @@ static void do_search(const struct search *s)
 {
     HRESULT hr;
     IDirectorySearch *ds;
-    ADS_SEARCHPREF_INFO pref;
+    ADS_SEARCHPREF_INFO pref[2];
     ADS_SEARCH_HANDLE sh;
     ADS_SEARCH_COLUMN col;
     LPWSTR name;
@@ -242,13 +242,20 @@ static void do_search(const struct search *s)
     }
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    pref.dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
-    pref.vValue.dwType = ADSTYPE_INTEGER;
-    pref.vValue.Integer = s->scope;
-    pref.dwStatus = 0xdeadbeef;
-    hr = IDirectorySearch_SetSearchPreference(ds, &pref, 1);
+    pref[0].dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
+    pref[0].vValue.dwType = ADSTYPE_INTEGER;
+    pref[0].vValue.Integer = s->scope;
+    pref[0].dwStatus = 0xdeadbeef;
+
+    pref[1].dwSearchPref = ADS_SEARCHPREF_SIZE_LIMIT;
+    pref[1].vValue.dwType = ADSTYPE_INTEGER;
+    pref[1].vValue.Integer = 5;
+    pref[1].dwStatus = 0xdeadbeef;
+
+    hr = IDirectorySearch_SetSearchPreference(ds, pref, ARRAY_SIZE(pref));
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(pref.dwStatus == ADS_STATUS_S_OK, "got %d\n", pref.dwStatus);
+    ok(pref[0].dwStatus == ADS_STATUS_S_OK, "got %u\n", pref[0].dwStatus);
+    ok(pref[1].dwStatus == ADS_STATUS_S_OK, "got %u\n", pref[1].dwStatus);
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -346,7 +353,7 @@ static void test_DirectorySearch(void)
     };
     HRESULT hr;
     IDirectorySearch *ds;
-    ADS_SEARCHPREF_INFO pref;
+    ADS_SEARCHPREF_INFO pref[2];
     ADS_SEARCH_HANDLE sh;
     ADS_SEARCH_COLUMN col;
     LPWSTR name;
@@ -370,13 +377,20 @@ static void test_DirectorySearch(void)
     }
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    pref.dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
-    pref.vValue.dwType = ADSTYPE_INTEGER;
-    pref.vValue.Integer = ADS_SCOPE_BASE;
-    pref.dwStatus = 0xdeadbeef;
-    hr = IDirectorySearch_SetSearchPreference(ds, &pref, 1);
+    pref[0].dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
+    pref[0].vValue.dwType = ADSTYPE_INTEGER;
+    pref[0].vValue.Integer = ADS_SCOPE_BASE;
+    pref[0].dwStatus = 0xdeadbeef;
+
+    pref[1].dwSearchPref = ADS_SEARCHPREF_SIZE_LIMIT;
+    pref[1].vValue.dwType = ADSTYPE_INTEGER;
+    pref[1].vValue.Integer = 5;
+    pref[1].dwStatus = 0xdeadbeef;
+
+    hr = IDirectorySearch_SetSearchPreference(ds, pref, ARRAY_SIZE(pref));
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(pref.dwStatus == ADS_STATUS_S_OK, "got %d\n", pref.dwStatus);
+    ok(pref[0].dwStatus == ADS_STATUS_S_OK, "got %u\n", pref[0].dwStatus);
+    ok(pref[1].dwStatus == ADS_STATUS_S_OK, "got %u\n", pref[1].dwStatus);
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, NULL);
     ok(hr == E_ADS_BAD_PARAMETER, "got %#lx\n", hr);
@@ -475,7 +489,7 @@ static void test_DirectoryObject(void)
     IDirectoryObject *dirobj;
     IUnknown *unk;
     IDirectorySearch *ds;
-    ADS_SEARCHPREF_INFO pref[2];
+    ADS_SEARCHPREF_INFO pref[3];
     ADS_SEARCH_HANDLE sh;
     ADS_SEARCH_COLUMN col;
 
@@ -504,15 +518,23 @@ static void test_DirectoryObject(void)
     pref[0].vValue.dwType = ADSTYPE_INTEGER;
     pref[0].vValue.Integer = ADS_SCOPE_BASE;
     pref[0].dwStatus = 0xdeadbeef;
+
     pref[1].dwSearchPref = ADS_SEARCHPREF_SECURITY_MASK;
     pref[1].vValue.dwType = ADSTYPE_INTEGER;
     pref[1].vValue.Integer = ADS_SECURITY_INFO_OWNER | ADS_SECURITY_INFO_GROUP | ADS_SECURITY_INFO_DACL;
     pref[1].dwStatus = 0xdeadbeef;
+
+    pref[2].dwSearchPref = ADS_SEARCHPREF_SIZE_LIMIT;
+    pref[2].vValue.dwType = ADSTYPE_INTEGER;
+    pref[2].vValue.Integer = 5;
+    pref[2].dwStatus = 0xdeadbeef;
+
     hr = IDirectorySearch_SetSearchPreference(ds, pref, ARRAY_SIZE(pref));
     ok(hr == S_ADS_ERRORSOCCURRED, "got %#lx\n", hr);
     ok(pref[0].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[0].dwStatus);
     /* ldap.forumsys.com doesn't support NT security, real ADs DC - does  */
     ok(pref[1].dwStatus == ADS_STATUS_INVALID_SEARCHPREF, "got %d\n", pref[1].dwStatus);
+    ok(pref[2].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[2].dwStatus);
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -530,9 +552,16 @@ static void test_DirectoryObject(void)
     pref[0].vValue.dwType = ADSTYPE_BOOLEAN;
     pref[0].vValue.Integer = 1;
     pref[0].dwStatus = 0xdeadbeef;
-    hr = IDirectorySearch_SetSearchPreference(ds, pref, 1);
+
+    pref[1].dwSearchPref = ADS_SEARCHPREF_SIZE_LIMIT;
+    pref[1].vValue.dwType = ADSTYPE_INTEGER;
+    pref[1].vValue.Integer = 5;
+    pref[1].dwStatus = 0xdeadbeef;
+
+    hr = IDirectorySearch_SetSearchPreference(ds, pref, 2);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(pref[0].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[0].dwStatus);
+    ok(pref[1].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[1].dwStatus);
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
     ok(hr == HRESULT_FROM_WIN32(ERROR_DS_UNAVAILABLE_CRIT_EXTENSION) || broken(hr == S_OK) /* XP */, "got %#lx\n", hr);
