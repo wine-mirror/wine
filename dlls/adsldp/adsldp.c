@@ -400,6 +400,7 @@ typedef struct
     {
         ADS_SCOPEENUM scope;
         int pagesize;
+        int size_limit;
         BOOL cache_results;
         BOOL attribtypes_only;
         BOOL tombstone;
@@ -1272,6 +1273,19 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
             prefs[i].dwStatus = ADS_STATUS_S_OK;
             break;
 
+        case ADS_SEARCHPREF_SIZE_LIMIT:
+            if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
+            {
+                FIXME("ADS_SEARCHPREF_SIZE_LIMIT: unsupported dwType %d\n", prefs[i].vValue.dwType);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+
+            TRACE("SIZE_LIMIT: %ld\n", prefs[i].vValue.u.Integer);
+            ldap->search.size_limit = prefs[i].vValue.u.Integer;
+            prefs[i].dwStatus = ADS_STATUS_S_OK;
+            break;
+
         default:
             FIXME("pref %d, type %u: stub\n", prefs[i].dwSearchPref, prefs[i].vValue.dwType);
             prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
@@ -1339,7 +1353,7 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
     {
         ldap_ctx->page = ldap_search_init_pageW(ldap->ld, ldap->object, ldap->search.scope,
                                                 filter, props, ldap->search.attribtypes_only,
-                                                ctrls, NULL, 0, 0, NULL);
+                                                ctrls, NULL, 0, ldap->search.size_limit, NULL);
         if (ldap_ctx->page)
             err = ldap_get_next_page_s(ldap->ld, ldap_ctx->page, NULL,
                                        ldap->search.pagesize, &count, &ldap_ctx->res);
@@ -1348,7 +1362,8 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
     }
     else
         err = ldap_search_ext_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props,
-                                 ldap->search.attribtypes_only, ctrls, NULL, NULL, 0, &ldap_ctx->res);
+                                 ldap->search.attribtypes_only, ctrls, NULL, NULL, ldap->search.size_limit,
+                                 &ldap_ctx->res);
     heap_free(props);
     if (err != LDAP_SUCCESS)
     {
@@ -1972,6 +1987,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->attrs = NULL;
     ldap->search.scope = ADS_SCOPE_SUBTREE;
     ldap->search.pagesize = 0;
+    ldap->search.size_limit = 0;
     ldap->search.cache_results = TRUE;
     ldap->search.attribtypes_only = FALSE;
     ldap->search.tombstone = FALSE;
