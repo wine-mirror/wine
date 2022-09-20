@@ -879,7 +879,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, const VARIANTARG* pvargSrc)
   }
   else if (V_VT(pSrc) == (VT_RECORD|VT_BYREF))
   {
-    hres = VARIANT_CopyIRecordInfo(pvargDest, pvargSrc);
+    hres = VARIANT_CopyIRecordInfo(pvargDest, pSrc);
   }
   else if (V_VT(pSrc) == (VT_DISPATCH|VT_BYREF) ||
            V_VT(pSrc) == (VT_UNKNOWN|VT_BYREF))

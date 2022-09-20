@@ -902,6 +902,19 @@ static void test_VariantClear(void)
   ok(recinfo->recordclear == 1, "got %d\n", recinfo->recordclear);
   ok(recinfo->ref == 1, "got %ld\n", recinfo->ref);
   IRecordInfo_Release(&recinfo->IRecordInfo_iface);
+
+  /* RECORD BYREF */
+  recinfo = get_test_recordinfo();
+  V_VT(&v) = VT_RECORD|VT_BYREF;
+  V_RECORDINFO(&v) = &recinfo->IRecordInfo_iface;
+  V_RECORD(&v) = recinfo->validsrc;
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == VT_EMPTY, "got vt = %d",V_VT(&v));
+  /* BYREF does not own the pointed-to V_RECORD/INFO, so no RecordClear and no Release */
+  ok(recinfo->recordclear == 0, "got %d\n", recinfo->recordclear);
+  ok(recinfo->ref == 1, "got %ld\n", recinfo->ref);
+  IRecordInfo_Release(&recinfo->IRecordInfo_iface);
 }
 
 static void test_VariantCopy(void)
@@ -1069,6 +1082,7 @@ static void test_VariantCopyInd(void)
   size_t i;
   BYTE buffer[64];
   HRESULT hres, hExpected;
+  IRecordInfoImpl *recinfo;
 
   memset(buffer, 0, sizeof(buffer));
 
@@ -1259,6 +1273,52 @@ static void test_VariantCopyInd(void)
   hres = VariantCopyInd(&vDst, &vSrc);
   ok(hres == E_INVALIDARG,
      "CopyInd(ref->ref): expected E_INVALIDARG, got 0x%08lx\n", hres);
+
+  /* source data for a deep-copy of VT_BYREF|VT_RECORD... */
+  recinfo = get_test_recordinfo();
+  V_VT(&vSrc) = VT_RECORD|VT_BYREF;
+  V_RECORDINFO(&vSrc) = &recinfo->IRecordInfo_iface;
+  V_RECORD(&vSrc) = recinfo->validsrc;
+
+  /* into a separate vDst */
+  VariantInit(&vDst);
+  hres = VariantCopyInd(&vDst, &vSrc);
+  ok(hres == S_OK, "VariantCopyInd failed: 0x%08lx\n", hres);
+  ok(V_VT(&vDst) == VT_RECORD, "got vt = %d|0x%X\n", V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK);
+  ok(V_RECORDINFO(&vDst) == &recinfo->IRecordInfo_iface, "got %p\n", V_RECORDINFO(&vDst));
+  ok(recinfo->recordclear == 0,"got %d\n", recinfo->recordclear);
+  ok(V_RECORD(&vDst) != recinfo->validsrc, "expected a newly-allocated deep copy\n");
+  ok(recinfo->getsize == 1,"got %d\n", recinfo->getsize);
+  ok(recinfo->recordcopy == 1,"got %d\n", recinfo->recordcopy);
+  ok(recinfo->ref == 2,"got %ld\n", recinfo->ref);
+
+  VariantClear(&vDst);
+  ok(recinfo->ref == 1,"got %ld\n", recinfo->ref);
+  ok(recinfo->recordclear == 1,"got %d\n", recinfo->recordclear);
+
+  recinfo->getsize = 0;
+  recinfo->recordcopy = 0;
+  recinfo->recordclear = 0;
+
+  /* and also in-place */
+  hres = VariantCopyInd(&vSrc, &vSrc);
+  ok(V_VT(&vSrc) == VT_RECORD, "got vt = %d|0x%X\n", V_VT(&vSrc) & VT_TYPEMASK, V_VT(&vSrc) & ~VT_TYPEMASK);
+  ok(V_RECORDINFO(&vSrc) == &recinfo->IRecordInfo_iface, "got %p\n", V_RECORDINFO(&vSrc));
+  /* ++ref and no RecordClear, since the source BYREF does not own the V_RECORD/INFO
+   * which it pointed to, and thus did not free them when overwritten */
+  ok(recinfo->ref == 2,"got %ld\n", recinfo->ref);
+  ok(recinfo->recordclear == 0,"got %d\n", recinfo->recordclear);
+
+  ok(V_RECORD(&vDst) != recinfo->validsrc, "expected a newly-allocated deep copy\n");
+  ok(recinfo->getsize == 1,"got %d\n", recinfo->getsize);
+  ok(recinfo->recordcopy == 1,"got %d\n", recinfo->recordcopy);
+
+  /* but the no-longer-BYREF output owns and will free its copies */
+  VariantClear(&vSrc);
+  ok(recinfo->ref == 1,"got %ld\n", recinfo->ref);
+  ok(recinfo->recordclear == 1,"got %d\n", recinfo->recordclear);
+
+  IRecordInfo_Release(&recinfo->IRecordInfo_iface);
 }
 
 static HRESULT (WINAPI *pVarParseNumFromStr)(const OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
