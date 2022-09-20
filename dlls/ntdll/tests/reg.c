@@ -1630,8 +1630,7 @@ static void test_redirection(void)
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     check_key_value( key, "Winetest", 0, 64 );
     check_key_value( key, "Winetest", KEY_WOW64_64KEY, 64 );
-    dw = get_key_value( key, "Winetest", KEY_WOW64_32KEY );
-    todo_wine_if (ptr_size == 32) ok( dw == ptr_size, "wrong value %lu\n", dw );
+    check_key_value( key, "Winetest", KEY_WOW64_32KEY, ptr_size );
     pNtClose( key );
 
     status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
@@ -1993,7 +1992,7 @@ static void test_redirection(void)
     if (!status) pNtClose( key );
 
     status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
-    todo_wine_if(ptr_size == 32) ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( key );
 
     attr.RootDirectory = root32;
