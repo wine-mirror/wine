@@ -241,6 +241,63 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
     return ret;
 }
 
+static BOOL BinaryToHexRawA(const BYTE *bin, DWORD nbin, DWORD flags, char *str, DWORD *nstr)
+{
+    static const char hex[] = "0123456789abcdef";
+    DWORD needed;
+
+    if (flags & CRYPT_STRING_NOCRLF)
+        needed = 0;
+    else if (flags & CRYPT_STRING_NOCR)
+        needed = 1;
+    else
+        needed = 2;
+
+    needed += nbin * 2 + 1;
+
+    if (!str)
+    {
+        *nstr = needed;
+        return TRUE;
+    }
+
+    if (needed > *nstr && *nstr < 3)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+
+    nbin = min(nbin, (*nstr - 1) / 2);
+
+    while (nbin--)
+    {
+        *str++ = hex[(*bin >> 4) & 0xf];
+        *str++ = hex[*bin & 0xf];
+        bin++;
+    }
+
+    if (needed > *nstr)
+    {
+        *str = 0;
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+
+    if (flags & CRYPT_STRING_NOCR)
+    {
+        *str++ = '\n';
+    }
+    else if (!(flags & CRYPT_STRING_NOCRLF))
+    {
+        *str++ = '\r';
+        *str++ = '\n';
+    }
+
+    *str = 0;
+    *nstr = needed - 1;
+    return TRUE;
+}
+
 BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
  DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD *pcchString)
 {
@@ -270,6 +327,9 @@ BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
     case CRYPT_STRING_BASE64REQUESTHEADER:
     case CRYPT_STRING_BASE64X509CRLHEADER:
         encoder = BinaryToBase64A;
+        break;
+    case CRYPT_STRING_HEXRAW:
+        encoder = BinaryToHexRawA;
         break;
     case CRYPT_STRING_HEX:
     case CRYPT_STRING_HEXASCII:
