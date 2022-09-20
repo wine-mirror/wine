@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -71,7 +70,7 @@ ULONG CDECL ldap_modifyW( LDAP *ld, WCHAR *dn, LDAPModW **mods )
  *      ldap_modify_extA     (WLDAP32.@)
  */
 ULONG CDECL ldap_modify_extA( LDAP *ld, char *dn, LDAPModA **mods, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls, ULONG *message )
+                              LDAPControlA **clientctrls, ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
@@ -101,12 +100,12 @@ exit:
  *      ldap_modify_extW     (WLDAP32.@)
  */
 ULONG CDECL ldap_modify_extW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls, ULONG *message )
+                              LDAPControlW **clientctrls, ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
-    LDAPModU **modsU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPMod **modsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), mods, serverctrls, clientctrls, message );
 
@@ -118,8 +117,7 @@ ULONG CDECL ldap_modify_extW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPControlW
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_modify_ext_params params = { CTX(ld), dnU, modsU, serverctrlsU, clientctrlsU, message };
-        ret = map_error( LDAP_CALL( ldap_modify_ext, &params ));
+        ret = map_error( ldap_modify_ext( CTX(ld), dnU, modsU, serverctrlsU, clientctrlsU, (int *)message ) );
     }
 
 exit:
@@ -134,7 +132,7 @@ exit:
  *      ldap_modify_ext_sA     (WLDAP32.@)
  */
 ULONG CDECL ldap_modify_ext_sA( LDAP *ld, char *dn, LDAPModA **mods, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls )
+                                LDAPControlA **clientctrls )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
@@ -164,12 +162,12 @@ exit:
  *      ldap_modify_ext_sW     (WLDAP32.@)
  */
 ULONG CDECL ldap_modify_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls )
+                                LDAPControlW **clientctrls )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
-    LDAPModU **modsU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPMod **modsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), mods, serverctrls, clientctrls );
 
@@ -181,8 +179,7 @@ ULONG CDECL ldap_modify_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **mods, LDAPContro
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_modify_ext_s_params params = { CTX(ld), dnU, modsU, serverctrlsU, clientctrlsU };
-        ret = map_error( LDAP_CALL( ldap_modify_ext_s, &params ));
+        ret = map_error( ldap_modify_ext_s( CTX(ld), dnU, modsU, serverctrlsU, clientctrlsU ) );
     }
 
 exit:

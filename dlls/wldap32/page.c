@@ -24,21 +24,19 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
-#include "winber.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
-static struct berval null_cookieW = { 0, NULL };
+static struct WLDAP32_berval null_cookieW = { 0, NULL };
 
 /***********************************************************************
  *      ldap_create_page_controlA     (WLDAP32.@)
  */
-ULONG CDECL ldap_create_page_controlA( LDAP *ld, ULONG pagesize, struct berval *cookie, UCHAR critical,
-    LDAPControlA **control )
+ULONG CDECL ldap_create_page_controlA( LDAP *ld, ULONG pagesize, struct WLDAP32_berval *cookie, UCHAR critical,
+                                       LDAPControlA **control )
 {
     ULONG ret;
     LDAPControlW *controlW = NULL;
@@ -57,15 +55,16 @@ ULONG CDECL ldap_create_page_controlA( LDAP *ld, ULONG pagesize, struct berval *
 }
 
 /* create a page control by hand */
-static ULONG create_page_control( ULONG pagesize, struct berval *cookie, UCHAR critical, LDAPControlW **control )
+static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie, UCHAR critical,
+                                  LDAPControlW **control )
 {
     LDAPControlW *ctrl;
     WLDAP32_BerElement *ber;
-    struct berval *berval, *vec[2];
+    struct WLDAP32_berval *berval, *vec[2];
     int ret, len;
     char *val;
 
-    if (!(ber = WLDAP32_ber_alloc_t( LBER_USE_DER ))) return WLDAP32_LDAP_NO_MEMORY;
+    if (!(ber = WLDAP32_ber_alloc_t( WLDAP32_LBER_USE_DER ))) return WLDAP32_LDAP_NO_MEMORY;
 
     vec[1] = NULL;
     if (cookie)
@@ -109,8 +108,8 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie, UCHAR c
 /***********************************************************************
  *      ldap_create_page_controlW     (WLDAP32.@)
  */
-ULONG CDECL ldap_create_page_controlW( LDAP *ld, ULONG pagesize, struct berval *cookie, UCHAR critical,
-    LDAPControlW **control )
+ULONG CDECL ldap_create_page_controlW( LDAP *ld, ULONG pagesize, struct WLDAP32_berval *cookie, UCHAR critical,
+                                       LDAPControlW **control )
 {
     TRACE( "(%p, %#lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
 
@@ -127,7 +126,7 @@ ULONG CDECL ldap_get_next_page( LDAP *ld, LDAPSearch *search, ULONG pagesize, UL
 }
 
 ULONG CDECL ldap_get_next_page_s( LDAP *ld, LDAPSearch *search, struct l_timeval *timeout, ULONG pagesize,
-    ULONG *count, LDAPMessage **results )
+                                  ULONG *count, WLDAP32_LDAPMessage **results )
 {
     ULONG ret;
 
@@ -161,7 +160,7 @@ ULONG CDECL ldap_get_next_page_s( LDAP *ld, LDAPSearch *search, struct l_timeval
     return ldap_get_paged_count( ld, search, count, *results );
 }
 
-ULONG CDECL ldap_get_paged_count( LDAP *ld, LDAPSearch *search, ULONG *count, LDAPMessage *results )
+ULONG CDECL ldap_get_paged_count( LDAP *ld, LDAPSearch *search, ULONG *count, WLDAP32_LDAPMessage *results )
 {
     ULONG ret;
     LDAPControlW **server_ctrls = NULL;
@@ -196,7 +195,7 @@ ULONG CDECL ldap_get_paged_count( LDAP *ld, LDAPSearch *search, ULONG *count, LD
 /***********************************************************************
  *      ldap_parse_page_controlA      (WLDAP32.@)
  */
-ULONG CDECL ldap_parse_page_controlA( LDAP *ld, LDAPControlA **ctrls, ULONG *count, struct berval **cookie )
+ULONG CDECL ldap_parse_page_controlA( LDAP *ld, LDAPControlA **ctrls, ULONG *count, struct WLDAP32_berval **cookie )
 {
     ULONG ret;
     LDAPControlW **ctrlsW = NULL;
@@ -214,12 +213,13 @@ ULONG CDECL ldap_parse_page_controlA( LDAP *ld, LDAPControlA **ctrls, ULONG *cou
 /***********************************************************************
  *      ldap_parse_page_controlW      (WLDAP32.@)
  */
-ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *ret_count, struct berval **ret_cookie )
+ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *ret_count,
+                                      struct WLDAP32_berval **ret_cookie )
 {
     ULONG ret, count;
     LDAPControlW *control = NULL;
     WLDAP32_BerElement *ber;
-    struct berval *cookie = NULL;
+    struct WLDAP32_berval *cookie = NULL;
     int tag;
     ULONG i;
 
@@ -273,8 +273,8 @@ ULONG CDECL ldap_search_abandon_page( LDAP *ld, LDAPSearch *search )
 }
 
 LDAPSearch * CDECL ldap_search_init_pageA( LDAP *ld, char *dn, ULONG scope, char *filter, char **attrs,
-    ULONG attrsonly, LDAPControlA **serverctrls, LDAPControlA **clientctrls, ULONG timelimit, ULONG sizelimit,
-    LDAPSortKeyA **sortkeys )
+                                           ULONG attrsonly, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
+                                           ULONG timelimit, ULONG sizelimit, LDAPSortKeyA **sortkeys )
 {
     FIXME( "(%p, %s, %#lx, %s, %p, %#lx, %p, %p, %#lx, %#lx, %p)\n", ld, debugstr_a(dn), scope,
            debugstr_a(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, sortkeys );
@@ -282,8 +282,8 @@ LDAPSearch * CDECL ldap_search_init_pageA( LDAP *ld, char *dn, ULONG scope, char
 }
 
 LDAPSearch * CDECL ldap_search_init_pageW( LDAP *ld, WCHAR *dn, ULONG scope, WCHAR *filter, WCHAR **attrs,
-    ULONG attrsonly, LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG timelimit, ULONG sizelimit,
-    LDAPSortKeyW **sortkeys )
+                                           ULONG attrsonly, LDAPControlW **serverctrls, LDAPControlW **clientctrls,
+                                           ULONG timelimit, ULONG sizelimit, LDAPSortKeyW **sortkeys )
 {
     LDAPSearch *search;
     DWORD i, len;

@@ -22,7 +22,9 @@
 #include <stdlib.h>
 #include "winternl.h"
 #include "winnls.h"
-#include "libldap.h"
+
+#include <lber.h>
+#include <ldap.h>
 
 #define WLDAP32_LBER_ERROR  (~0l)
 
@@ -176,10 +178,174 @@ typedef enum {
 #define WLDAP32_LDAP_AUTH_DPA           (WLDAP32_LDAP_AUTH_OTHERKIND | 0x2000)
 #define WLDAP32_LDAP_AUTH_DIGEST        (WLDAP32_LDAP_AUTH_OTHERKIND | 0x4000)
 
+typedef struct WLDAP32_berval
+{
+    ULONG bv_len;
+    char *bv_val;
+} LDAP_BERVAL, *PLDAP_BERVAL, BERVAL, *PBERVAL;
+
 typedef struct WLDAP32_berelement
 {
     char *opaque;
 } WLDAP32_BerElement;
+
+typedef struct ldap
+{
+    struct
+    {
+        UINT_PTR sb_sd;
+        UCHAR Reserved1[41];
+        ULONG_PTR sb_naddr;
+        UCHAR Reserved2[24];
+    } ld_sb;
+
+    char *ld_host;
+    ULONG ld_version;
+    UCHAR ld_lberoptions;
+    ULONG ld_deref;
+    ULONG ld_timelimit;
+    ULONG ld_sizelimit;
+    ULONG ld_errno;
+    char *ld_matched;
+    char *ld_error;
+    ULONG ld_msgid;
+    UCHAR Reserved3[25];
+    ULONG ld_cldaptries;
+    ULONG ld_cldaptimeout;
+    ULONG ld_refhoplimit;
+    ULONG ld_options;
+} LDAP, *PLDAP;
+
+typedef struct l_timeval
+{
+    LONG tv_sec;
+    LONG tv_usec;
+} LDAP_TIMEVAL, *PLDAP_TIMEVAL;
+
+#define LDAP_PAGED_RESULT_OID_STRING "1.2.840.113556.1.4.319"
+#define LDAP_SERVER_RESP_SORT_OID "1.2.840.113556.1.4.474"
+#define LDAP_CONTROL_VLVRESPONSE "2.16.840.1.113730.3.4.10"
+
+#define LDAP_PAGED_RESULT_OID_STRING_W L"1.2.840.113556.1.4.319"
+#define LDAP_SERVER_RESP_SORT_OID_W L"1.2.840.113556.1.4.474"
+#define LDAP_CONTROL_VLVRESPONSE_W L"2.16.840.1.113730.3.4.10"
+
+typedef struct ldapcontrolA
+{
+    char *ldctl_oid;
+    struct WLDAP32_berval ldctl_value;
+    BOOLEAN ldctl_iscritical;
+} LDAPControlA, *PLDAPControlA;
+
+typedef struct ldapcontrolW
+{
+    WCHAR *ldctl_oid;
+    struct WLDAP32_berval ldctl_value;
+    BOOLEAN ldctl_iscritical;
+} LDAPControlW, *PLDAPControlW;
+
+typedef struct ldapmodA {
+    ULONG mod_op;
+    char *mod_type;
+    union {
+        char **modv_strvals;
+        struct WLDAP32_berval **modv_bvals;
+    } mod_vals;
+} LDAPModA, *PLDAPModA;
+
+typedef struct ldapmodW {
+    ULONG mod_op;
+    WCHAR *mod_type;
+    union {
+        WCHAR **modv_strvals;
+        struct WLDAP32_berval **modv_bvals;
+    } mod_vals;
+} LDAPModW, *PLDAPModW;
+
+typedef struct ldapsortkeyA
+{
+    char *sk_attrtype;
+    char *sk_matchruleoid;
+    BOOLEAN sk_reverseorder;
+} LDAPSortKeyA, *PLDAPSortKeyA;
+
+typedef struct ldapsortkeyW
+{
+    WCHAR *sk_attrtype;
+    WCHAR *sk_matchruleoid;
+    BOOLEAN sk_reverseorder;
+} LDAPSortKeyW, *PLDAPSortKeyW;
+
+typedef struct WLDAP32_ldapvlvinfo
+{
+    int ldvlv_version;
+    ULONG ldvlv_before_count;
+    ULONG ldvlv_after_count;
+    ULONG ldvlv_offset;
+    ULONG ldvlv_count;
+    BERVAL *ldvlv_attrvalue;
+    BERVAL *ldvlv_context;
+    void *ldvlv_extradata;
+} WLDAP32_LDAPVLVInfo, *WLDAP32_PLDAPVLVInfo;
+
+typedef struct ldapmsg
+{
+    ULONG lm_msgid;
+    ULONG lm_msgtype;
+    void  *lm_ber;
+    struct ldapmsg *lm_chain;
+    struct ldapmsg *lm_next;
+    ULONG lm_time;
+
+    LDAP *Connection;
+    void *Request;
+    ULONG lm_returncode;
+    USHORT lm_referral;
+    BOOLEAN lm_chased;
+    BOOLEAN lm_eom;
+    BOOLEAN ConnectionReferenced;
+} WLDAP32_LDAPMessage, *WLDAP32_PLDAPMessage;
+
+typedef struct ldap_version_info
+{
+    ULONG lv_size;
+    ULONG lv_major;
+    ULONG lv_minor;
+} LDAP_VERSION_INFO, *PLDAP_VERSION_INFO;
+
+typedef struct ldap_apifeature_infoA
+{
+    int ldapaif_info_version;
+    char *ldapaif_name;
+    int ldapaif_version;
+} LDAPAPIFeatureInfoA;
+
+typedef struct ldap_apifeature_infoW
+{
+    int ldapaif_info_version;
+    WCHAR *ldapaif_name;
+    int ldapaif_version;
+} LDAPAPIFeatureInfoW;
+
+typedef struct ldapapiinfoA
+{
+    int ldapai_info_version;
+    int ldapai_api_version;
+    int ldapai_protocol_version;
+    char **ldapai_extensions;
+    char *ldapai_vendor_name;
+    int ldapai_vendor_version;
+} LDAPAPIInfoA;
+
+typedef struct ldapapiinfoW
+{
+    int ldapai_info_version;
+    int ldapai_api_version;
+    int ldapai_protocol_version;
+    WCHAR **ldapai_extensions;
+    WCHAR *ldapai_vendor_name;
+    int ldapai_vendor_version;
+} LDAPAPIInfoW;
 
 typedef struct ldapsearch
 {
@@ -192,13 +358,13 @@ typedef struct ldapsearch
     LDAPControlW **clientctrls;
     struct l_timeval timeout;
     ULONG sizelimit;
-    struct berval *cookie;
+    struct WLDAP32_berval *cookie;
 } LDAPSearch;
 
-#define CTX(ld) (*(void **)ld->Reserved3)
-#define SERVER_CTRLS(ld) (*(void **)(ld->Reserved3 + sizeof(void *)))
+#define CTX(ld) (*(LDAP **)ld->Reserved3)
+#define SERVER_CTRLS(ld) (*(struct berval ***)(ld->Reserved3 + sizeof(LDAP *)))
 #define MSG(entry) (entry->Request)
-#define BER(ber) (ber->opaque)
+#define BER(ber) ((BerElement *)((ber)->opaque))
 
 WLDAP32_BerElement * CDECL WLDAP32_ber_alloc_t( int );
 BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL * );
@@ -213,6 +379,158 @@ ULONG CDECL WLDAP32_ber_peek_tag( WLDAP32_BerElement *, ULONG * );
 ULONG CDECL WLDAP32_ber_skip_tag( WLDAP32_BerElement *, ULONG * );
 int WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *, char *, ... );
 ULONG WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *, char *, ... );
+
+ULONG CDECL ldap_addA( LDAP *, char *, LDAPModA ** );
+ULONG CDECL ldap_addW( LDAP *, WCHAR *, LDAPModW ** );
+ULONG CDECL ldap_add_extA( LDAP *, char *, LDAPModA **, LDAPControlA **, LDAPControlA **, ULONG * );
+ULONG CDECL ldap_add_extW( LDAP *, WCHAR *, LDAPModW **, LDAPControlW **, LDAPControlW **, ULONG * );
+ULONG CDECL ldap_add_ext_sA( LDAP *, char *, LDAPModA **, LDAPControlA **, LDAPControlA ** );
+ULONG CDECL ldap_add_ext_sW( LDAP *, WCHAR *, LDAPModW **, LDAPControlW **, LDAPControlW ** );
+ULONG CDECL ldap_add_sA( LDAP *, char *, LDAPModA ** );
+ULONG CDECL ldap_add_sW( LDAP *, WCHAR *, LDAPModW ** );
+ULONG CDECL ldap_bindA( LDAP *, char *, char *, ULONG );
+ULONG CDECL ldap_bindW( LDAP *, WCHAR *, WCHAR *, ULONG );
+ULONG CDECL ldap_bind_sA( LDAP *, char *, char *, ULONG );
+ULONG CDECL ldap_bind_sW( LDAP *, WCHAR *, WCHAR *, ULONG );
+ULONG CDECL ldap_sasl_bindA( LDAP *, const PCHAR, const PCHAR, const BERVAL *, LDAPControlA **,
+                             LDAPControlA **, int * );
+ULONG CDECL ldap_sasl_bindW( LDAP *, const PWCHAR, const PWCHAR, const BERVAL *, LDAPControlW **,
+                             LDAPControlW **, int * );
+ULONG CDECL ldap_sasl_bind_sA( LDAP *,const PCHAR, const PCHAR, const BERVAL *, LDAPControlA **,
+                               LDAPControlA **, BERVAL ** );
+ULONG CDECL ldap_sasl_bind_sW( LDAP *,const PWCHAR, const PWCHAR ,const BERVAL *, LDAPControlW **,
+                               LDAPControlW **, BERVAL ** );
+ULONG CDECL ldap_simple_bindA( LDAP *, char *, char * );
+ULONG CDECL ldap_simple_bindW( LDAP *, WCHAR *, WCHAR * );
+ULONG CDECL ldap_simple_bind_sA( LDAP *, char *, char * );
+ULONG CDECL ldap_simple_bind_sW( LDAP *, WCHAR *, WCHAR * );
+ULONG CDECL ldap_compareA( LDAP *, char *, char *, char * );
+ULONG CDECL ldap_compareW( LDAP *, WCHAR *, WCHAR *, WCHAR * );
+ULONG CDECL ldap_compare_extA( LDAP *, char *, char *, char *, struct WLDAP32_berval *, LDAPControlA **,
+                               LDAPControlA **, ULONG* );
+ULONG CDECL ldap_compare_extW( LDAP *, WCHAR *, WCHAR *, WCHAR *, struct WLDAP32_berval *, LDAPControlW **,
+                               LDAPControlW **, ULONG * );
+ULONG CDECL ldap_compare_ext_sA( LDAP *, char *, char *, char *, struct WLDAP32_berval *, LDAPControlA **,
+                                 LDAPControlA ** );
+ULONG CDECL ldap_compare_ext_sW( LDAP *, WCHAR *, WCHAR *, WCHAR *, struct WLDAP32_berval *, LDAPControlW **,
+                                 LDAPControlW ** );
+ULONG CDECL ldap_compare_sA( LDAP *, char *, char *, char * );
+ULONG CDECL ldap_compare_sW( LDAP *, WCHAR *, WCHAR *, WCHAR * );
+ULONG CDECL ldap_create_sort_controlA( LDAP *, LDAPSortKeyA **, UCHAR, LDAPControlA ** );
+ULONG CDECL ldap_create_sort_controlW( LDAP *, LDAPSortKeyW **, UCHAR, LDAPControlW ** );
+int CDECL ldap_create_vlv_controlA( LDAP *, WLDAP32_LDAPVLVInfo *, UCHAR, LDAPControlA ** );
+int CDECL ldap_create_vlv_controlW( LDAP *, WLDAP32_LDAPVLVInfo *, UCHAR, LDAPControlW ** );
+ULONG CDECL ldap_deleteA( LDAP *, char * );
+ULONG CDECL ldap_deleteW( LDAP *, WCHAR * );
+ULONG CDECL ldap_delete_extA( LDAP *, char *, LDAPControlA **, LDAPControlA **, ULONG * );
+ULONG CDECL ldap_delete_extW( LDAP *, WCHAR *, LDAPControlW **, LDAPControlW **, ULONG * );
+ULONG CDECL ldap_delete_ext_sA( LDAP *, char *, LDAPControlA **, LDAPControlA ** );
+ULONG CDECL ldap_delete_ext_sW( LDAP *, WCHAR *, LDAPControlW **, LDAPControlW ** );
+ULONG CDECL ldap_delete_sA( LDAP *, char * );
+ULONG CDECL ldap_delete_sW( LDAP *, WCHAR * );
+char * CDECL ldap_dn2ufnA( char * );
+WCHAR * CDECL ldap_dn2ufnW( WCHAR * );
+void CDECL ldap_memfreeA( char * );
+void CDECL ldap_memfreeW( WCHAR * );
+char ** CDECL ldap_explode_dnA( char *, ULONG );
+WCHAR ** CDECL ldap_explode_dnW( WCHAR *, ULONG );
+ULONG CDECL ldap_value_freeA( char ** );
+ULONG CDECL ldap_value_freeW( WCHAR ** );
+char * CDECL ldap_get_dnA( LDAP *, WLDAP32_LDAPMessage * );
+WCHAR * CDECL ldap_get_dnW( LDAP *, WLDAP32_LDAPMessage * );
+ULONG CDECL ldap_ufn2dnA( char *, char ** );
+ULONG CDECL ldap_ufn2dnW( WCHAR *, WCHAR ** );
+ULONG CDECL ldap_extended_operationA( LDAP *, char *, struct WLDAP32_berval *, LDAPControlA **, LDAPControlA **,
+                                      ULONG * );
+ULONG CDECL ldap_extended_operationW( LDAP *, WCHAR *, struct WLDAP32_berval *, LDAPControlW **, LDAPControlW **,
+                                      ULONG * );
+ULONG CDECL ldap_extended_operation_sA( LDAP *, char *, struct WLDAP32_berval *, LDAPControlA **, LDAPControlA **,
+                                        char **, struct WLDAP32_berval ** );
+ULONG CDECL ldap_extended_operation_sW( LDAP *, WCHAR *, struct WLDAP32_berval *, LDAPControlW **, LDAPControlW **,
+                                        WCHAR **, struct WLDAP32_berval ** );
+LDAP * CDECL cldap_openA( char *, ULONG );
+LDAP * CDECL cldap_openW( WCHAR *, ULONG );
+LDAP * CDECL ldap_initA( const PCHAR, ULONG );
+LDAP * CDECL ldap_initW( const PWCHAR, ULONG );
+LDAP * CDECL ldap_openA( char *, ULONG );
+LDAP * CDECL ldap_openW( WCHAR *, ULONG );
+LDAP * CDECL ldap_sslinitA( char *, ULONG, int );
+LDAP * CDECL ldap_sslinitW( WCHAR *, ULONG, int );
+ULONG CDECL ldap_start_tls_sA( LDAP *, ULONG *, WLDAP32_LDAPMessage **, LDAPControlA **, LDAPControlA ** );
+ULONG CDECL ldap_start_tls_sW( LDAP *, ULONG *, WLDAP32_LDAPMessage **, LDAPControlW **, LDAPControlW ** );
+ULONG CDECL ldap_check_filterA( LDAP *, char * );
+ULONG CDECL ldap_check_filterW( LDAP *, WCHAR * );
+char * CDECL ldap_first_attributeA( LDAP *, WLDAP32_LDAPMessage *, WLDAP32_BerElement ** );
+WCHAR * CDECL ldap_first_attributeW( LDAP *, WLDAP32_LDAPMessage *, WLDAP32_BerElement ** );
+ULONG CDECL WLDAP32_ldap_msgfree( WLDAP32_LDAPMessage * );
+char * CDECL ldap_next_attributeA( LDAP *, WLDAP32_LDAPMessage *, WLDAP32_BerElement * );
+WCHAR * CDECL ldap_next_attributeW( LDAP *, WLDAP32_LDAPMessage *, WLDAP32_BerElement * );
+ULONG CDECL WLDAP32_ldap_result( LDAP *, ULONG, ULONG, struct l_timeval *, WLDAP32_LDAPMessage ** );
+ULONG CDECL ldap_modifyA( LDAP *, char *, LDAPModA ** );
+ULONG CDECL ldap_modifyW( LDAP *, WCHAR *, LDAPModW ** );
+ULONG CDECL ldap_modify_extA( LDAP *, char *, LDAPModA **, LDAPControlA **, LDAPControlA **, ULONG * );
+ULONG CDECL ldap_modify_extW( LDAP *, WCHAR *, LDAPModW **, LDAPControlW **, LDAPControlW **, ULONG * );
+ULONG CDECL ldap_modify_ext_sA( LDAP *, char *, LDAPModA **, LDAPControlA **, LDAPControlA ** );
+ULONG CDECL ldap_modify_ext_sW( LDAP *, WCHAR *, LDAPModW **, LDAPControlW **, LDAPControlW ** );
+ULONG CDECL ldap_modify_sA( LDAP *, char *, LDAPModA ** );
+ULONG CDECL ldap_modify_sW( LDAP *, WCHAR *, LDAPModW ** );
+ULONG CDECL ldap_modrdnA( LDAP *, char *, char * );
+ULONG CDECL ldap_modrdnW( LDAP *, WCHAR *, WCHAR * );
+ULONG CDECL ldap_modrdn2A( LDAP *, char *, char *, int );
+ULONG CDECL ldap_modrdn2W( LDAP *, WCHAR *, WCHAR *, int );
+ULONG CDECL ldap_modrdn2_sA( LDAP *, char *, char *, int );
+ULONG CDECL ldap_modrdn2_sW( LDAP *, WCHAR *, WCHAR *, int );
+ULONG CDECL ldap_modrdn_sA( LDAP *, char *, char * );
+ULONG CDECL ldap_modrdn_sW( LDAP *, WCHAR *, WCHAR * );
+ULONG CDECL ldap_get_optionA( LDAP *, int, void * );
+ULONG CDECL ldap_get_optionW( LDAP *, int, void * );
+ULONG CDECL ldap_set_optionA( LDAP *, int, void * );
+ULONG CDECL ldap_set_optionW( LDAP *, int, void * );
+ULONG CDECL ldap_create_page_controlA( LDAP *, ULONG, struct WLDAP32_berval *, UCHAR, LDAPControlA ** );
+ULONG CDECL ldap_create_page_controlW( LDAP *, ULONG, struct WLDAP32_berval *, UCHAR, LDAPControlW ** );
+ULONG CDECL ldap_control_freeA( LDAPControlA * );
+ULONG CDECL ldap_control_freeW( LDAPControlW * );
+ULONG CDECL ldap_search_ext_sA( LDAP *, char *, ULONG, char *, char **, ULONG, LDAPControlA **, LDAPControlA **,
+                                struct l_timeval *, ULONG, WLDAP32_LDAPMessage ** );
+ULONG CDECL ldap_search_ext_sW( LDAP *, WCHAR *, ULONG, WCHAR *, WCHAR **, ULONG, LDAPControlW **, LDAPControlW **,
+                                struct l_timeval *, ULONG, WLDAP32_LDAPMessage ** );
+ULONG CDECL ldap_get_paged_count( LDAP *, LDAPSearch *, ULONG *, WLDAP32_LDAPMessage * );
+ULONG CDECL ldap_parse_resultA( LDAP *, WLDAP32_LDAPMessage *, ULONG *, char **, char **, char ***,
+                                LDAPControlA ***, BOOLEAN );
+ULONG CDECL ldap_parse_resultW( LDAP *, WLDAP32_LDAPMessage *, ULONG *, WCHAR **, WCHAR **, WCHAR ***,
+                                LDAPControlW ***, BOOLEAN );
+ULONG CDECL ldap_parse_page_controlA( LDAP *, LDAPControlA **, ULONG *, struct WLDAP32_berval ** );
+ULONG CDECL ldap_parse_page_controlW( LDAP *, LDAPControlW **, ULONG *, struct WLDAP32_berval ** );
+ULONG CDECL ldap_controls_freeA( LDAPControlA ** );
+ULONG CDECL ldap_controls_freeW( LDAPControlW ** );
+ULONG CDECL ldap_parse_extended_resultA( LDAP *, WLDAP32_LDAPMessage *, char **, struct WLDAP32_berval **, BOOLEAN );
+ULONG CDECL ldap_parse_extended_resultW( LDAP *, WLDAP32_LDAPMessage *, WCHAR **, struct WLDAP32_berval **, BOOLEAN );
+ULONG CDECL ldap_parse_referenceA( LDAP *, WLDAP32_LDAPMessage *, char *** );
+ULONG CDECL ldap_parse_referenceW( LDAP *, WLDAP32_LDAPMessage *, WCHAR *** );
+ULONG CDECL ldap_parse_sort_controlA( LDAP *, LDAPControlA **, ULONG *, char ** );
+ULONG CDECL ldap_parse_sort_controlW( LDAP *, LDAPControlW **, ULONG *, WCHAR ** );
+int CDECL ldap_parse_vlv_controlA( LDAP *, LDAPControlA **, ULONG *, ULONG *, struct WLDAP32_berval **, int * );
+int CDECL ldap_parse_vlv_controlW( LDAP *, LDAPControlW **, ULONG *, ULONG *, struct WLDAP32_berval **, int * );
+ULONG CDECL ldap_rename_extA( LDAP *, char *, char *, char *, int, LDAPControlA **, LDAPControlA **, ULONG * );
+ULONG CDECL ldap_rename_extW( LDAP *, WCHAR *, WCHAR *, WCHAR *, int, LDAPControlW **, LDAPControlW **, ULONG * );
+ULONG CDECL ldap_rename_ext_sA( LDAP *, char *, char *, char *, int, LDAPControlA **, LDAPControlA ** );
+ULONG CDECL ldap_rename_ext_sW( LDAP *, WCHAR *, WCHAR *, WCHAR *, int, LDAPControlW **, LDAPControlW ** );
+ULONG CDECL ldap_searchA( LDAP *, char *, ULONG, char *, char **, ULONG );
+ULONG CDECL ldap_searchW( LDAP *, WCHAR *, ULONG, WCHAR *, WCHAR **, ULONG );
+ULONG CDECL ldap_search_extA( LDAP *, char *, ULONG, char *, char **, ULONG, LDAPControlA **, LDAPControlA **,
+                              ULONG, ULONG, ULONG * );
+ULONG CDECL ldap_search_extW( LDAP *, PWCHAR, ULONG, PWCHAR, PWCHAR[], ULONG, LDAPControlW **, LDAPControlW **,
+                              ULONG, ULONG, ULONG * );
+ULONG CDECL ldap_search_sA( LDAP *, char *, ULONG, char *, char **, ULONG, WLDAP32_LDAPMessage ** );
+ULONG CDECL ldap_search_sW( LDAP *, WCHAR *, ULONG, WCHAR *, WCHAR **, ULONG, WLDAP32_LDAPMessage ** );
+ULONG CDECL ldap_search_stA( LDAP *, const PCHAR, ULONG, const PCHAR, char **, ULONG, struct l_timeval *,
+                             WLDAP32_LDAPMessage ** );
+ULONG CDECL ldap_search_stW( LDAP *, const PWCHAR, ULONG, const PWCHAR, WCHAR **, ULONG, struct l_timeval *,
+                             WLDAP32_LDAPMessage ** );
+char ** CDECL ldap_get_valuesA( LDAP *, WLDAP32_LDAPMessage *, char * );
+WCHAR ** CDECL ldap_get_valuesW( LDAP *, WLDAP32_LDAPMessage *, WCHAR * );
+struct WLDAP32_berval ** CDECL ldap_get_values_lenA( LDAP *, LDAPMessage *, char * );
+struct WLDAP32_berval ** CDECL ldap_get_values_lenW( LDAP *, LDAPMessage *, WCHAR * );
 
 ULONG map_error( int ) DECLSPEC_HIDDEN;
 
@@ -288,9 +606,9 @@ static inline WCHAR *strnAtoW( const char *str, DWORD in_len, DWORD *out_len )
     return ret;
 }
 
-static inline DWORD bvarraylenW( struct berval **bv )
+static inline DWORD bvarraylenW( struct WLDAP32_berval **bv )
 {
-    struct berval **p = bv;
+    struct WLDAP32_berval **p = bv;
     while (*p) p++;
     return p - bv;
 }
@@ -304,42 +622,41 @@ static inline DWORD strarraylenW( WCHAR **strarray )
 
 static inline char **strarrayWtoU( WCHAR **strarray )
 {
-    char **strarrayU = NULL;
+    char **ret = NULL;
     DWORD size;
 
     if (strarray)
     {
         size = sizeof(char *) * (strarraylenW( strarray ) + 1);
-        if ((strarrayU = malloc( size )))
+        if ((ret = malloc( size )))
         {
             WCHAR **p = strarray;
-            char **q = strarrayU;
+            char **q = ret;
 
             while (*p) *q++ = strWtoU( *p++ );
             *q = NULL;
         }
     }
-    return strarrayU;
+    return ret;
 }
 
 static inline WCHAR **strarraydupW( WCHAR **strarray )
 {
-    WCHAR **strarrayW = NULL;
+    WCHAR **ret = NULL;
     DWORD size;
 
     if (strarray)
     {
         size = sizeof(WCHAR *) * (strarraylenW( strarray ) + 1);
-        if ((strarrayW = malloc( size )))
+        if ((ret = malloc( size )))
         {
-            WCHAR **p = strarray;
-            WCHAR **q = strarrayW;
+            WCHAR **p = strarray, **q = ret;
 
             while (*p) *q++ = strdupW( *p++ );
             *q = NULL;
         }
     }
-    return strarrayW;
+    return ret;
 }
 
 static inline char *strWtoA( const WCHAR *str )
@@ -355,22 +672,22 @@ static inline char *strWtoA( const WCHAR *str )
 
 static inline char **strarrayWtoA( WCHAR **strarray )
 {
-    char **strarrayA = NULL;
+    char **ret = NULL;
     DWORD size;
 
     if (strarray)
     {
         size = sizeof(char *) * (strarraylenW( strarray ) + 1);
-        if ((strarrayA = malloc( size )))
+        if ((ret = malloc( size )))
         {
             WCHAR **p = strarray;
-            char **q = strarrayA;
+            char **q = ret;
 
             while (*p) *q++ = strWtoA( *p++ );
             *q = NULL;
         }
     }
-    return strarrayA;
+    return ret;
 }
 
 static inline DWORD modarraylenW( LDAPModW **modarray )
@@ -380,132 +697,132 @@ static inline DWORD modarraylenW( LDAPModW **modarray )
     return p - modarray;
 }
 
-static inline struct bervalU *bervalWtoU( const struct berval *bv )
+static inline struct berval *bervalWtoU( const struct WLDAP32_berval *bv )
 {
-    struct bervalU *berval;
-    DWORD size = sizeof(*berval) + bv->bv_len;
+    struct berval *ret;
+    DWORD size = sizeof(*ret) + bv->bv_len;
 
-    if ((berval = malloc( size )))
+    if ((ret = malloc( size )))
     {
-        char *val = (char *)(berval + 1);
+        char *val = (char *)(ret + 1);
 
-        berval->bv_len = bv->bv_len;
-        berval->bv_val = val;
+        ret->bv_len = bv->bv_len;
+        ret->bv_val = val;
         memcpy( val, bv->bv_val, bv->bv_len );
     }
-    return berval;
+    return ret;
 }
 
-static inline DWORD bvarraylenU( struct bervalU **bv )
+static inline DWORD bvarraylenU( struct berval **bv )
 {
-    struct bervalU **p = bv;
+    struct berval **p = bv;
     while (*p) p++;
     return p - bv;
 }
 
-static inline struct berval *bervalUtoW( const struct bervalU *bv )
+static inline struct WLDAP32_berval *bervalUtoW( const struct berval *bv )
 {
-    struct berval *berval;
-    DWORD size = sizeof(*berval) + bv->bv_len;
+    struct WLDAP32_berval *ret;
+    DWORD size = sizeof(*ret) + bv->bv_len;
 
     assert( bv->bv_len <= ~0u );
 
-    if ((berval = malloc( size )))
+    if ((ret = malloc( size )))
     {
-        char *val = (char *)(berval + 1);
+        char *val = (char *)(ret + 1);
 
-        berval->bv_len = bv->bv_len;
-        berval->bv_val = val;
+        ret->bv_len = bv->bv_len;
+        ret->bv_val = val;
         memcpy( val, bv->bv_val, bv->bv_len );
     }
-    return berval;
+    return ret;
 }
 
-static inline struct berval **bvarrayUtoW( struct bervalU **bv )
+static inline struct WLDAP32_berval **bvarrayUtoW( struct berval **bv )
 {
-    struct berval **berval = NULL;
+    struct WLDAP32_berval **ret = NULL;
     DWORD size;
 
     if (bv)
     {
-        size = sizeof(*berval) * (bvarraylenU( bv ) + 1);
-        if ((berval = malloc( size )))
+        size = sizeof(*ret) * (bvarraylenU( bv ) + 1);
+        if ((ret = malloc( size )))
         {
-            struct bervalU **p = bv;
-            struct berval **q = berval;
+            struct berval **p = bv;
+            struct WLDAP32_berval **q = ret;
 
             while (*p) *q++ = bervalUtoW( *p++ );
             *q = NULL;
         }
     }
-    return berval;
+    return ret;
 }
 
-static inline void bvfreeU( struct bervalU *berval )
+static inline void bvfreeU( struct berval *berval )
 {
     free( berval );
 }
 
-static inline struct bervalU **bvarrayWtoU( struct berval **bv )
+static inline struct berval **bvarrayWtoU( struct WLDAP32_berval **bv )
 {
-    struct bervalU **berval = NULL;
+    struct berval **ret = NULL;
     DWORD size;
 
     if (bv)
     {
-        size = sizeof(*berval) * (bvarraylenW( bv ) + 1);
-        if ((berval = malloc( size )))
+        size = sizeof(*ret) * (bvarraylenW( bv ) + 1);
+        if ((ret = malloc( size )))
         {
-            struct berval **p = bv;
-            struct bervalU **q = berval;
+            struct WLDAP32_berval **p = bv;
+            struct berval **q = ret;
 
             while (*p) *q++ = bervalWtoU( *p++ );
             *q = NULL;
         }
     }
-    return berval;
+    return ret;
 }
 
-static inline LDAPModU *modWtoU( const LDAPModW *mod )
+static inline LDAPMod *modWtoU( const LDAPModW *mod )
 {
-    LDAPModU *modU;
+    LDAPMod *ret;
 
-    if ((modU = malloc( sizeof(*modU) )))
+    if ((ret = malloc( sizeof(*ret) )))
     {
-        modU->mod_op = mod->mod_op;
-        modU->mod_type = strWtoU( mod->mod_type );
+        ret->mod_op = mod->mod_op;
+        ret->mod_type = strWtoU( mod->mod_type );
 
         if (mod->mod_op & LDAP_MOD_BVALUES)
-            modU->mod_vals.modv_bvals = bvarrayWtoU( mod->mod_vals.modv_bvals );
+            ret->mod_vals.modv_bvals = bvarrayWtoU( mod->mod_vals.modv_bvals );
         else
-            modU->mod_vals.modv_strvals = strarrayWtoU( mod->mod_vals.modv_strvals );
+            ret->mod_vals.modv_strvals = strarrayWtoU( mod->mod_vals.modv_strvals );
     }
-    return modU;
+    return ret;
 }
 
-static inline LDAPModU **modarrayWtoU( LDAPModW **modarray )
+static inline LDAPMod **modarrayWtoU( LDAPModW **modarray )
 {
-    LDAPModU **modarrayU = NULL;
+    LDAPMod **ret = NULL;
     DWORD size;
 
     if (modarray)
     {
-        size = sizeof(LDAPModU *) * (modarraylenW( modarray ) + 1);
-        if ((modarrayU = malloc( size )))
+        size = sizeof(*ret) * (modarraylenW( modarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPModW **p = modarray;
-            LDAPModU **q = modarrayU;
+            LDAPMod **q = ret;
 
             while (*p) *q++ = modWtoU( *p++ );
             *q = NULL;
         }
     }
-    return modarrayU;
+    return ret;
 }
 
-static inline void bvarrayfreeU( struct bervalU **bv )
+static inline void bvarrayfreeU( struct berval **bv )
 {
-    struct bervalU **p = bv;
+    struct berval **p = bv;
     while (*p) free( *p++ );
     free( bv );
 }
@@ -520,7 +837,7 @@ static inline void strarrayfreeU( char **strarray )
     }
 }
 
-static inline void modfreeU( LDAPModU *mod )
+static inline void modfreeU( LDAPMod *mod )
 {
     if (mod->mod_op & LDAP_MOD_BVALUES)
         bvarrayfreeU( mod->mod_vals.modv_bvals );
@@ -529,11 +846,11 @@ static inline void modfreeU( LDAPModU *mod )
     free( mod );
 }
 
-static inline void modarrayfreeU( LDAPModU **modarray )
+static inline void modarrayfreeU( LDAPMod **modarray )
 {
     if (modarray)
     {
-        LDAPModU **p = modarray;
+        LDAPMod **p = modarray;
         while (*p) modfreeU( *p++ );
         free( modarray );
     }
@@ -546,40 +863,39 @@ static inline DWORD modarraylenA( LDAPModA **modarray )
     return p - modarray;
 }
 
-static inline struct berval *bervalWtoW( const struct berval *bv )
+static inline struct WLDAP32_berval *bervalWtoW( const struct WLDAP32_berval *bv )
 {
-    struct berval *berval;
-    DWORD size = sizeof(*berval) + bv->bv_len;
+    struct WLDAP32_berval *ret;
+    DWORD size = sizeof(*ret) + bv->bv_len;
 
-    if ((berval = malloc( size )))
+    if ((ret = malloc( size )))
     {
-        char *val = (char *)(berval + 1);
+        char *val = (char *)(ret + 1);
 
-        berval->bv_len = bv->bv_len;
-        berval->bv_val = val;
+        ret->bv_len = bv->bv_len;
+        ret->bv_val = val;
         memcpy( val, bv->bv_val, bv->bv_len );
     }
-    return berval;
+    return ret;
 }
 
-static inline struct berval **bvarrayWtoW( struct berval **bv )
+static inline struct WLDAP32_berval **bvarrayWtoW( struct WLDAP32_berval **bv )
 {
-    struct berval **berval = NULL;
+    struct WLDAP32_berval **ret = NULL;
     DWORD size;
 
     if (bv)
     {
-        size = sizeof(*berval) * (bvarraylenW( bv ) + 1);
-        if ((berval = malloc( size )))
+        size = sizeof(*ret) * (bvarraylenW( bv ) + 1);
+        if ((ret = malloc( size )))
         {
-            struct berval **p = bv;
-            struct berval **q = berval;
+            struct WLDAP32_berval **p = bv, **q = ret;
 
             while (*p) *q++ = bervalWtoW( *p++ );
             *q = NULL;
         }
     }
-    return berval;
+    return ret;
 }
 
 static inline DWORD strarraylenA( char **strarray )
@@ -591,64 +907,64 @@ static inline DWORD strarraylenA( char **strarray )
 
 static inline WCHAR **strarrayAtoW( char **strarray )
 {
-    WCHAR **strarrayW = NULL;
+    WCHAR **ret = NULL;
     DWORD size;
 
     if (strarray)
     {
-        size  = sizeof(WCHAR *) * (strarraylenA( strarray ) + 1);
-        if ((strarrayW = malloc( size )))
+        size  = sizeof(*ret) * (strarraylenA( strarray ) + 1);
+        if ((ret = malloc( size )))
         {
             char **p = strarray;
-            WCHAR **q = strarrayW;
+            WCHAR **q = ret;
 
             while (*p) *q++ = strAtoW( *p++ );
             *q = NULL;
         }
     }
-    return strarrayW;
+    return ret;
 }
 
 static inline LDAPModW *modAtoW( const LDAPModA *mod )
 {
-    LDAPModW *modW;
+    LDAPModW *ret;
 
-    if ((modW = malloc( sizeof(*modW) )))
+    if ((ret = malloc( sizeof(*ret) )))
     {
-        modW->mod_op = mod->mod_op;
-        modW->mod_type = strAtoW( mod->mod_type );
+        ret->mod_op = mod->mod_op;
+        ret->mod_type = strAtoW( mod->mod_type );
 
         if (mod->mod_op & LDAP_MOD_BVALUES)
-            modW->mod_vals.modv_bvals = bvarrayWtoW( mod->mod_vals.modv_bvals );
+            ret->mod_vals.modv_bvals = bvarrayWtoW( mod->mod_vals.modv_bvals );
         else
-            modW->mod_vals.modv_strvals = strarrayAtoW( mod->mod_vals.modv_strvals );
+            ret->mod_vals.modv_strvals = strarrayAtoW( mod->mod_vals.modv_strvals );
     }
-    return modW;
+    return ret;
 }
 
 static inline LDAPModW **modarrayAtoW( LDAPModA **modarray )
 {
-    LDAPModW **modarrayW = NULL;
+    LDAPModW **ret = NULL;
     DWORD size;
 
     if (modarray)
     {
-        size = sizeof(LDAPModW *) * (modarraylenA( modarray ) + 1);
-        if ((modarrayW = malloc( size )))
+        size = sizeof(*ret) * (modarraylenA( modarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPModA **p = modarray;
-            LDAPModW **q = modarrayW;
+            LDAPModW **q = ret;
 
             while (*p) *q++ = modAtoW( *p++ );
             *q = NULL;
         }
     }
-    return modarrayW;
+    return ret;
 }
 
-static inline void bvarrayfreeW( struct berval **bv )
+static inline void bvarrayfreeW( struct WLDAP32_berval **bv )
 {
-    struct berval **p = bv;
+    struct WLDAP32_berval **p = bv;
     while (*p) free( *p++ );
     free( bv );
 }
@@ -691,7 +1007,7 @@ static inline DWORD controlarraylenA( LDAPControlA **controlarray )
 
 static inline LDAPControlW *controlAtoW( const LDAPControlA *control )
 {
-    LDAPControlW *controlW;
+    LDAPControlW *ret;
     DWORD len = control->ldctl_value.bv_len;
     char *val = NULL;
 
@@ -701,38 +1017,38 @@ static inline LDAPControlW *controlAtoW( const LDAPControlA *control )
         memcpy( val, control->ldctl_value.bv_val, len );
     }
 
-    if (!(controlW = malloc( sizeof(*controlW) )))
+    if (!(ret = malloc( sizeof(*ret) )))
     {
         free( val );
         return NULL;
     }
 
-    controlW->ldctl_oid = strAtoW( control->ldctl_oid );
-    controlW->ldctl_value.bv_len = len;
-    controlW->ldctl_value.bv_val = val;
-    controlW->ldctl_iscritical = control->ldctl_iscritical;
+    ret->ldctl_oid = strAtoW( control->ldctl_oid );
+    ret->ldctl_value.bv_len = len;
+    ret->ldctl_value.bv_val = val;
+    ret->ldctl_iscritical = control->ldctl_iscritical;
 
-    return controlW;
+    return ret;
 }
 
 static inline LDAPControlW **controlarrayAtoW( LDAPControlA **controlarray )
 {
-    LDAPControlW **controlarrayW = NULL;
+    LDAPControlW **ret = NULL;
     DWORD size;
 
     if (controlarray)
     {
-        size = sizeof(LDAPControlW *) * (controlarraylenA( controlarray ) + 1);
-        if ((controlarrayW = malloc( size )))
+        size = sizeof(*ret) * (controlarraylenA( controlarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPControlA **p = controlarray;
-            LDAPControlW **q = controlarrayW;
+            LDAPControlW **q = ret;
 
             while (*p) *q++ = controlAtoW( *p++ );
             *q = NULL;
         }
     }
-    return controlarrayW;
+    return ret;
 }
 
 static inline void controlfreeW( LDAPControlW *control )
@@ -764,7 +1080,7 @@ static inline DWORD controlarraylenW( LDAPControlW **controlarray )
 
 static inline LDAPControlA *controlWtoA( const LDAPControlW *control )
 {
-    LDAPControlA *controlA;
+    LDAPControlA *ret;
     DWORD len = control->ldctl_value.bv_len;
     char *val = NULL;
 
@@ -774,18 +1090,18 @@ static inline LDAPControlA *controlWtoA( const LDAPControlW *control )
         memcpy( val, control->ldctl_value.bv_val, len );
     }
 
-    if (!(controlA = malloc( sizeof(*controlA) )))
+    if (!(ret = malloc( sizeof(*ret) )))
     {
         free( val );
         return NULL;
     }
 
-    controlA->ldctl_oid = strWtoA( control->ldctl_oid );
-    controlA->ldctl_value.bv_len = len;
-    controlA->ldctl_value.bv_val = val;
-    controlA->ldctl_iscritical = control->ldctl_iscritical;
+    ret->ldctl_oid = strWtoA( control->ldctl_oid );
+    ret->ldctl_value.bv_len = len;
+    ret->ldctl_value.bv_val = val;
+    ret->ldctl_iscritical = control->ldctl_iscritical;
 
-    return controlA;
+    return ret;
 }
 
 static inline void strarrayfreeA( char **strarray )
@@ -818,9 +1134,9 @@ static inline void controlarrayfreeA( LDAPControlA **controlarray )
     }
 }
 
-static inline LDAPControlU *controlWtoU( const LDAPControlW *control )
+static inline LDAPControl *controlWtoU( const LDAPControlW *control )
 {
-    LDAPControlU *controlU;
+    LDAPControl *ret;
     DWORD len = control->ldctl_value.bv_len;
     char *val = NULL;
 
@@ -830,41 +1146,41 @@ static inline LDAPControlU *controlWtoU( const LDAPControlW *control )
         memcpy( val, control->ldctl_value.bv_val, len );
     }
 
-    if (!(controlU = malloc( sizeof(*controlU) )))
+    if (!(ret = malloc( sizeof(*ret) )))
     {
         free( val );
         return NULL;
     }
 
-    controlU->ldctl_oid = strWtoU( control->ldctl_oid );
-    controlU->ldctl_value.bv_len = len;
-    controlU->ldctl_value.bv_val = val;
-    controlU->ldctl_iscritical = control->ldctl_iscritical;
+    ret->ldctl_oid = strWtoU( control->ldctl_oid );
+    ret->ldctl_value.bv_len = len;
+    ret->ldctl_value.bv_val = val;
+    ret->ldctl_iscritical = control->ldctl_iscritical;
 
-    return controlU;
+    return ret;
 }
 
-static inline LDAPControlU **controlarrayWtoU( LDAPControlW **controlarray )
+static inline LDAPControl **controlarrayWtoU( LDAPControlW **controlarray )
 {
-    LDAPControlU **controlarrayU = NULL;
+    LDAPControl **ret = NULL;
     DWORD size;
 
     if (controlarray)
     {
-        size = sizeof(LDAPControlU *) * (controlarraylenW( controlarray ) + 1);
-        if ((controlarrayU = malloc( size )))
+        size = sizeof(*ret) * (controlarraylenW( controlarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPControlW **p = controlarray;
-            LDAPControlU **q = controlarrayU;
+            LDAPControl **q = ret;
 
             while (*p) *q++ = controlWtoU( *p++ );
             *q = NULL;
         }
     }
-    return controlarrayU;
+    return ret;
 }
 
-static inline void controlfreeU( LDAPControlU *control )
+static inline void controlfreeU( LDAPControl *control )
 {
     if (control)
     {
@@ -874,26 +1190,26 @@ static inline void controlfreeU( LDAPControlU *control )
     }
 }
 
-static inline void controlarrayfreeU( LDAPControlU **controlarray )
+static inline void controlarrayfreeU( LDAPControl **controlarray )
 {
     if (controlarray)
     {
-        LDAPControlU **p = controlarray;
+        LDAPControl **p = controlarray;
         while (*p) controlfreeU( *p++ );
         free( controlarray );
     }
 }
 
-static inline DWORD controlarraylenU( LDAPControlU **controlarray )
+static inline DWORD controlarraylenU( LDAPControl **controlarray )
 {
-    LDAPControlU **p = controlarray;
+    LDAPControl **p = controlarray;
     while (*p) p++;
     return p - controlarray;
 }
 
 static inline LDAPControlW *controldupW( LDAPControlW *control )
 {
-    LDAPControlW *controlW;
+    LDAPControlW *ret;
     DWORD len = control->ldctl_value.bv_len;
     char *val = NULL;
 
@@ -903,58 +1219,57 @@ static inline LDAPControlW *controldupW( LDAPControlW *control )
         memcpy( val, control->ldctl_value.bv_val, len );
     }
 
-    if (!(controlW = malloc( sizeof(*controlW) )))
+    if (!(ret = malloc( sizeof(*ret) )))
     {
         free( val );
         return NULL;
     }
 
-    controlW->ldctl_oid = strdupW( control->ldctl_oid );
-    controlW->ldctl_value.bv_len = len;
-    controlW->ldctl_value.bv_val = val;
-    controlW->ldctl_iscritical = control->ldctl_iscritical;
+    ret->ldctl_oid = strdupW( control->ldctl_oid );
+    ret->ldctl_value.bv_len = len;
+    ret->ldctl_value.bv_val = val;
+    ret->ldctl_iscritical = control->ldctl_iscritical;
 
-    return controlW;
+    return ret;
 }
 
 static inline LDAPControlW **controlarraydupW( LDAPControlW **controlarray )
 {
-    LDAPControlW **controlarrayW = NULL;
+    LDAPControlW **ret = NULL;
     DWORD size;
 
     if (controlarray)
     {
-        size = sizeof(LDAPControlW *) * (controlarraylenW( controlarray ) + 1);
-        if ((controlarrayW = malloc( size )))
+        size = sizeof(*ret) * (controlarraylenW( controlarray ) + 1);
+        if ((ret = malloc( size )))
         {
-            LDAPControlW **p = controlarray;
-            LDAPControlW **q = controlarrayW;
+            LDAPControlW **p = controlarray, **q = ret;
 
             while (*p) *q++ = controldupW( *p++ );
             *q = NULL;
         }
     }
-    return controlarrayW;
+    return ret;
 }
 
 static inline LDAPControlA **controlarrayWtoA( LDAPControlW **controlarray )
 {
-    LDAPControlA **controlarrayA = NULL;
+    LDAPControlA **ret = NULL;
     DWORD size;
 
     if (controlarray)
     {
-        size = sizeof(LDAPControlA *) * (controlarraylenW( controlarray ) + 1);
-        if ((controlarrayA = malloc( size )))
+        size = sizeof(*ret) * (controlarraylenW( controlarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPControlW **p = controlarray;
-            LDAPControlA **q = controlarrayA;
+            LDAPControlA **q = ret;
 
             while (*p) *q++ = controlWtoA( *p++ );
             *q = NULL;
         }
     }
-    return controlarrayA;
+    return ret;
 }
 
 static inline WCHAR *strUtoW( const char *str )
@@ -977,47 +1292,46 @@ static inline DWORD strarraylenU( char **strarray )
 
 static inline WCHAR **strarrayUtoW( char **strarray )
 {
-    WCHAR **strarrayW = NULL;
+    WCHAR **ret = NULL;
     DWORD size;
 
     if (strarray)
     {
-        size = sizeof(WCHAR *) * (strarraylenU( strarray ) + 1);
-        if ((strarrayW = malloc( size )))
+        size = sizeof(*ret) * (strarraylenU( strarray ) + 1);
+        if ((ret = malloc( size )))
         {
             char **p = strarray;
-            WCHAR **q = strarrayW;
+            WCHAR **q = ret;
 
             while (*p) *q++ = strUtoW( *p++ );
             *q = NULL;
         }
     }
-    return strarrayW;
+    return ret;
 }
 
 static inline char **strarrayUtoU( char **strarray )
 {
-    char **strarrayU = NULL;
+    char **ret = NULL;
     DWORD size;
 
     if (strarray)
     {
-        size = sizeof(char *) * (strarraylenU( strarray ) + 1);
-        if ((strarrayU = malloc( size )))
+        size = sizeof(*ret) * (strarraylenU( strarray ) + 1);
+        if ((ret = malloc( size )))
         {
-            char **p = strarray;
-            char **q = strarrayU;
+            char **p = strarray, **q = ret;
 
             while (*p) *q++ = strdupU( *p++ );
             *q = NULL;
         }
     }
-    return strarrayU;
+    return ret;
 }
 
-static inline LDAPControlW *controlUtoW( const LDAPControlU *control )
+static inline LDAPControlW *controlUtoW( const LDAPControl *control )
 {
-    LDAPControlW *controlW;
+    LDAPControlW *ret;
     DWORD len = control->ldctl_value.bv_len;
     char *val = NULL;
 
@@ -1027,38 +1341,38 @@ static inline LDAPControlW *controlUtoW( const LDAPControlU *control )
         memcpy( val, control->ldctl_value.bv_val, len );
     }
 
-    if (!(controlW = malloc( sizeof(*controlW) )))
+    if (!(ret = malloc( sizeof(*ret) )))
     {
         free( val );
         return NULL;
     }
 
-    controlW->ldctl_oid = strUtoW( control->ldctl_oid );
-    controlW->ldctl_value.bv_len = len;
-    controlW->ldctl_value.bv_val = val;
-    controlW->ldctl_iscritical = control->ldctl_iscritical;
+    ret->ldctl_oid = strUtoW( control->ldctl_oid );
+    ret->ldctl_value.bv_len = len;
+    ret->ldctl_value.bv_val = val;
+    ret->ldctl_iscritical = control->ldctl_iscritical;
 
-    return controlW;
+    return ret;
 }
 
-static inline LDAPControlW **controlarrayUtoW( LDAPControlU **controlarray )
+static inline LDAPControlW **controlarrayUtoW( LDAPControl **controlarray )
 {
-    LDAPControlW **controlarrayW = NULL;
+    LDAPControlW **ret = NULL;
     DWORD size;
 
     if (controlarray)
     {
-        size = sizeof(LDAPControlW *) * (controlarraylenU( controlarray ) + 1);
-        if ((controlarrayW = malloc( size )))
+        size = sizeof(*ret) * (controlarraylenU( controlarray ) + 1);
+        if ((ret = malloc( size )))
         {
-            LDAPControlU **p = controlarray;
-            LDAPControlW **q = controlarrayW;
+            LDAPControl **p = controlarray;
+            LDAPControlW **q = ret;
 
             while (*p) *q++ = controlUtoW( *p++ );
             *q = NULL;
         }
     }
-    return controlarrayW;
+    return ret;
 }
 
 static inline DWORD sortkeyarraylenA( LDAPSortKeyA **sortkeyarray )
@@ -1070,35 +1384,35 @@ static inline DWORD sortkeyarraylenA( LDAPSortKeyA **sortkeyarray )
 
 static inline LDAPSortKeyW *sortkeyAtoW( const LDAPSortKeyA *sortkey )
 {
-    LDAPSortKeyW *sortkeyW;
+    LDAPSortKeyW *ret;
 
-    if ((sortkeyW = malloc( sizeof(*sortkeyW) )))
+    if ((ret = malloc( sizeof(*ret) )))
     {
-        sortkeyW->sk_attrtype = strAtoW( sortkey->sk_attrtype );
-        sortkeyW->sk_matchruleoid = strAtoW( sortkey->sk_matchruleoid );
-        sortkeyW->sk_reverseorder = sortkey->sk_reverseorder;
+        ret->sk_attrtype = strAtoW( sortkey->sk_attrtype );
+        ret->sk_matchruleoid = strAtoW( sortkey->sk_matchruleoid );
+        ret->sk_reverseorder = sortkey->sk_reverseorder;
     }
-    return sortkeyW;
+    return ret;
 }
 
 static inline LDAPSortKeyW **sortkeyarrayAtoW( LDAPSortKeyA **sortkeyarray )
 {
-    LDAPSortKeyW **sortkeyarrayW = NULL;
+    LDAPSortKeyW **ret = NULL;
     DWORD size;
 
     if (sortkeyarray)
     {
-        size = sizeof(LDAPSortKeyW *) * (sortkeyarraylenA( sortkeyarray ) + 1);
-        if ((sortkeyarrayW = malloc( size )))
+        size = sizeof(*ret) * (sortkeyarraylenA( sortkeyarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPSortKeyA **p = sortkeyarray;
-            LDAPSortKeyW **q = sortkeyarrayW;
+            LDAPSortKeyW **q = ret;
 
             while (*p) *q++ = sortkeyAtoW( *p++ );
             *q = NULL;
         }
     }
-    return sortkeyarrayW;
+    return ret;
 }
 
 static inline void sortkeyfreeW( LDAPSortKeyW *sortkey )
@@ -1128,40 +1442,40 @@ static inline DWORD sortkeyarraylenW( LDAPSortKeyW **sortkeyarray )
     return p - sortkeyarray;
 }
 
-static inline LDAPSortKeyU *sortkeyWtoU( const LDAPSortKeyW *sortkey )
+static inline LDAPSortKey *sortkeyWtoU( const LDAPSortKeyW *sortkey )
 {
-    LDAPSortKeyU *sortkeyU;
+    LDAPSortKey *ret;
 
-    if ((sortkeyU = malloc( sizeof(*sortkeyU) )))
+    if ((ret = malloc( sizeof(*ret) )))
     {
-        sortkeyU->attributeType = strWtoU( sortkey->sk_attrtype );
-        sortkeyU->orderingRule = strWtoU( sortkey->sk_matchruleoid );
-        sortkeyU->reverseOrder = sortkey->sk_reverseorder;
+        ret->attributeType = strWtoU( sortkey->sk_attrtype );
+        ret->orderingRule = strWtoU( sortkey->sk_matchruleoid );
+        ret->reverseOrder = sortkey->sk_reverseorder;
     }
-    return sortkeyU;
+    return ret;
 }
 
-static inline LDAPSortKeyU **sortkeyarrayWtoU( LDAPSortKeyW **sortkeyarray )
+static inline LDAPSortKey **sortkeyarrayWtoU( LDAPSortKeyW **sortkeyarray )
 {
-    LDAPSortKeyU **sortkeyarrayU = NULL;
+    LDAPSortKey **ret = NULL;
     DWORD size;
 
     if (sortkeyarray)
     {
-        size = sizeof(LDAPSortKeyU *) * (sortkeyarraylenW( sortkeyarray ) + 1);
-        if ((sortkeyarrayU = malloc( size )))
+        size = sizeof(*ret) * (sortkeyarraylenW( sortkeyarray ) + 1);
+        if ((ret = malloc( size )))
         {
             LDAPSortKeyW **p = sortkeyarray;
-            LDAPSortKeyU **q = sortkeyarrayU;
+            LDAPSortKey **q = ret;
 
             while (*p) *q++ = sortkeyWtoU( *p++ );
             *q = NULL;
         }
     }
-    return sortkeyarrayU;
+    return ret;
 }
 
-static inline void sortkeyfreeU( LDAPSortKeyU *sortkey )
+static inline void sortkeyfreeU( LDAPSortKey *sortkey )
 {
     if (sortkey)
     {
@@ -1171,44 +1485,44 @@ static inline void sortkeyfreeU( LDAPSortKeyU *sortkey )
     }
 }
 
-static inline void sortkeyarrayfreeU( LDAPSortKeyU **sortkeyarray )
+static inline void sortkeyarrayfreeU( LDAPSortKey **sortkeyarray )
 {
     if (sortkeyarray)
     {
-        LDAPSortKeyU **p = sortkeyarray;
+        LDAPSortKey **p = sortkeyarray;
         while (*p) sortkeyfreeU( *p++ );
         free( sortkeyarray );
     }
 }
 
-static inline LDAPVLVInfoU *vlvinfoWtoU( const LDAPVLVInfo *info )
+static inline LDAPVLVInfo *vlvinfoWtoU( const WLDAP32_LDAPVLVInfo *info )
 {
-    LDAPVLVInfoU *infoU;
+    LDAPVLVInfo *ret;
 
-    if ((infoU = malloc( sizeof(*infoU) )))
+    if ((ret = malloc( sizeof(*ret) )))
     {
-        infoU->ldvlv_version       = info->ldvlv_version;
-        infoU->ldvlv_before_count  = info->ldvlv_before_count;
-        infoU->ldvlv_after_count   = info->ldvlv_after_count;
-        infoU->ldvlv_offset        = info->ldvlv_offset;
-        infoU->ldvlv_count         = info->ldvlv_count;
-        if (!(infoU->ldvlv_attrvalue = bervalWtoU( info->ldvlv_attrvalue )))
+        ret->ldvlv_version       = info->ldvlv_version;
+        ret->ldvlv_before_count  = info->ldvlv_before_count;
+        ret->ldvlv_after_count   = info->ldvlv_after_count;
+        ret->ldvlv_offset        = info->ldvlv_offset;
+        ret->ldvlv_count         = info->ldvlv_count;
+        if (!(ret->ldvlv_attrvalue = bervalWtoU( info->ldvlv_attrvalue )))
         {
-            free( infoU );
+            free( ret );
             return NULL;
         }
-        if (!(infoU->ldvlv_context = bervalWtoU( info->ldvlv_context )))
+        if (!(ret->ldvlv_context = bervalWtoU( info->ldvlv_context )))
         {
-            free( infoU->ldvlv_attrvalue );
-            free( infoU );
+            free( ret->ldvlv_attrvalue );
+            free( ret );
             return NULL;
         }
-        infoU->ldvlv_extradata     = info->ldvlv_extradata;
+        ret->ldvlv_extradata = info->ldvlv_extradata;
     }
-    return infoU;
+    return ret;
 }
 
-static inline void vlvinfofreeU( LDAPVLVInfoU *info )
+static inline void vlvinfofreeU( LDAPVLVInfo *info )
 {
     free( info->ldvlv_attrvalue );
     free( info->ldvlv_context );

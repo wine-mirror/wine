@@ -42,8 +42,6 @@ AC_ARG_WITH(gssapi,    AS_HELP_STRING([--without-gssapi],[do not use GSSAPI (Ker
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(inotify,   AS_HELP_STRING([--without-inotify],[do not use inotify (filesystem change notifications)]))
 AC_ARG_WITH(krb5,      AS_HELP_STRING([--without-krb5],[do not use krb5 (Kerberos)]))
-AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
-            [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
 AC_ARG_WITH(mingw,     AS_HELP_STRING([--without-mingw],[do not use the MinGW cross-compiler]))
 AC_ARG_WITH(netapi,    AS_HELP_STRING([--without-netapi],[do not use the Samba NetAPI library]))
 AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
@@ -456,7 +454,6 @@ AC_CHECK_HEADERS(\
 	port.h \
 	pthread.h \
 	pwd.h \
-	sasl/sasl.h \
 	sched.h \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
@@ -1183,6 +1180,7 @@ WINE_EXTLIB_FLAGS(GSM, gsm, gsm, "-I\$(top_srcdir)/libs/gsm/inc")
 WINE_EXTLIB_FLAGS(JPEG, jpeg, jpeg, "-I\$(top_srcdir)/libs/jpeg")
 WINE_EXTLIB_FLAGS(JXR, jxr, jxr, "-I\$(top_srcdir)/libs/jxr/jxrgluelib -I\$(top_srcdir)/libs/jxr/image/sys")
 WINE_EXTLIB_FLAGS(LCMS2, lcms2, lcms2, "-I\$(top_srcdir)/libs/lcms2/include")
+WINE_EXTLIB_FLAGS(LDAP, ldap, ldap, "-I\$(top_srcdir)/libs/ldap/include")
 WINE_EXTLIB_FLAGS(MPG123, mpg123, mpg123, "-I\$(top_srcdir)/libs/mpg123/src/libmpg123")
 WINE_EXTLIB_FLAGS(PNG, png, "png \$(ZLIB_PE_LIBS)", "-I\$(top_srcdir)/libs/png")
 WINE_EXTLIB_FLAGS(TIFF, tiff, "tiff \$(ZLIB_PE_LIBS)", "-I\$(top_srcdir)/libs/tiff/libtiff")
@@ -2077,31 +2075,6 @@ case $host_os in
     LIBS=$ac_save_LIBS
     ;;
 esac
-
-dnl **** Check for OpenLDAP ***
-if test "x$with_ldap" != "xno"
-then
-    dnl Actually there's no pkg-config support for ldap, but this way we can still override the flags
-    WINE_PACKAGE_FLAGS(LDAP,[openldap],[-lldap -llber],,,
-        [AC_CHECK_HEADERS([ldap.h lber.h])
-        if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
-        then
-            AC_CHECK_TYPE(LDAPSortKey,
-                [AC_CHECK_LIB(ldap, ldap_initialize,
-                    [AC_CHECK_LIB(lber, ber_init,
-                        [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])],
-                        [LDAP_LIBS=""],
-                        [$PTHREAD_LIBS $LDAP_LIBS])],
-                    [LDAP_LIBS=""],
-                    [$PTHREAD_LIBS $LDAP_LIBS])],
-                [LDAP_LIBS=""],
-                [#include <ldap.h>])
-        else
-            LDAP_LIBS=""
-        fi])
-fi
-WINE_NOTICE_WITH(ldap,[test "x$LDAP_LIBS" = "x"],
-                 [libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.])
 
 AC_CACHE_CHECK([for sched_setaffinity],wine_cv_have_sched_setaffinity,
                 AC_LINK_IFELSE([AC_LANG_PROGRAM(

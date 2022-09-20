@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -71,9 +70,8 @@ ULONG CDECL ldap_compareW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value )
 /***********************************************************************
  *      ldap_compare_extA     (WLDAP32.@)
  */
-ULONG CDECL ldap_compare_extA( LDAP *ld, char *dn, char *attr, char *value,
-    struct berval *data, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
-    ULONG *message )
+ULONG CDECL ldap_compare_extA( LDAP *ld, char *dn, char *attr, char *value, struct WLDAP32_berval *data,
+                               LDAPControlA **serverctrls, LDAPControlA **clientctrls, ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
@@ -104,13 +102,13 @@ exit:
 /***********************************************************************
  *      ldap_compare_extW     (WLDAP32.@)
  */
-ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct berval *data,
-    LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG *message )
+ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct WLDAP32_berval *data,
+                               LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
-    struct bervalU *dataU = NULL, val = { 0, NULL };
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval *dataU = NULL, val = { 0, NULL };
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value),
            data, serverctrls, clientctrls, message );
@@ -135,8 +133,8 @@ ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, s
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_compare_ext_params params = { CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU, clientctrlsU, message };
-        ret = map_error( LDAP_CALL( ldap_compare_ext, &params ));
+        ret = map_error( ldap_compare_ext( CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU, clientctrlsU,
+                         (int *)message ) );
     }
 
 exit:
@@ -152,8 +150,8 @@ exit:
 /***********************************************************************
  *      ldap_compare_ext_sA     (WLDAP32.@)
  */
-ULONG CDECL ldap_compare_ext_sA( LDAP *ld, char *dn, char *attr, char *value, struct berval *data,
-    LDAPControlA **serverctrls, LDAPControlA **clientctrls )
+ULONG CDECL ldap_compare_ext_sA( LDAP *ld, char *dn, char *attr, char *value, struct WLDAP32_berval *data,
+                                 LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
@@ -184,13 +182,13 @@ exit:
 /***********************************************************************
  *      ldap_compare_ext_sW     (WLDAP32.@)
  */
-ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct berval *data,
-    LDAPControlW **serverctrls, LDAPControlW **clientctrls )
+ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct WLDAP32_berval *data,
+                                 LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
-    struct bervalU *dataU = NULL, val = { 0, NULL };
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval *dataU = NULL, val = { 0, NULL };
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value), data,
            serverctrls, clientctrls );
@@ -214,8 +212,7 @@ ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value,
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_compare_ext_s_params params = { CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU, clientctrlsU };
-        ret = map_error( LDAP_CALL( ldap_compare_ext_s, &params ));
+        ret = map_error( ldap_compare_ext_s( CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU, clientctrlsU ) );
     }
 exit:
     free( dnU );

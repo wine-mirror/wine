@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -43,8 +42,8 @@ ULONG CDECL ldap_close_extended_op( LDAP *ld, ULONG msgid )
 /***********************************************************************
  *      ldap_extended_operationA     (WLDAP32.@)
  */
-ULONG CDECL ldap_extended_operationA( LDAP *ld, char *oid, struct berval *data, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls, ULONG *message )
+ULONG CDECL ldap_extended_operationA( LDAP *ld, char *oid, struct WLDAP32_berval *data, LDAPControlA **serverctrls,
+                                      LDAPControlA **clientctrls, ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *oidW = NULL;
@@ -70,13 +69,13 @@ exit:
 /***********************************************************************
  *      ldap_extended_operationW     (WLDAP32.@)
  */
-ULONG CDECL ldap_extended_operationW( LDAP *ld, WCHAR *oid, struct berval *data, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls, ULONG *message )
+ULONG CDECL ldap_extended_operationW( LDAP *ld, WCHAR *oid, struct WLDAP32_berval *data, LDAPControlW **serverctrls,
+                                      LDAPControlW **clientctrls, ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *oidU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
-    struct bervalU *dataU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval *dataU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(oid), data, serverctrls, clientctrls, message );
 
@@ -88,8 +87,7 @@ ULONG CDECL ldap_extended_operationW( LDAP *ld, WCHAR *oid, struct berval *data,
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_extended_operation_params params = { CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU, message };
-        ret = map_error( LDAP_CALL( ldap_extended_operation, &params ));
+        ret = map_error( ldap_extended_operation( CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU, (int *)message ) );
     }
 
 exit:
@@ -103,8 +101,8 @@ exit:
 /***********************************************************************
  *      ldap_extended_operation_sA     (WLDAP32.@)
  */
-ULONG CDECL ldap_extended_operation_sA( LDAP *ld, char *oid, struct berval *data, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls, char **retoid, struct berval **retdata )
+ULONG CDECL ldap_extended_operation_sA( LDAP *ld, char *oid, struct WLDAP32_berval *data, LDAPControlA **serverctrls,
+                                        LDAPControlA **clientctrls, char **retoid, struct WLDAP32_berval **retdata )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *oidW = NULL, *retoidW = NULL;
@@ -137,13 +135,13 @@ exit:
 /***********************************************************************
  *      ldap_extended_operation_sW     (WLDAP32.@)
  */
-ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct berval *data, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls, WCHAR **retoid, struct berval **retdata )
+ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct WLDAP32_berval *data, LDAPControlW **serverctrls,
+                                        LDAPControlW **clientctrls, WCHAR **retoid, struct WLDAP32_berval **retdata )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *oidU = NULL, *retoidU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
-    struct bervalU *retdataU, *dataU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
+    struct berval *retdataU, *dataU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p, %p)\n", ld, debugstr_w(oid), data, serverctrls, clientctrls, retoid, retdata );
 
@@ -155,8 +153,8 @@ ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct berval *dat
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_extended_operation_s_params params = { CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU, &retoidU, &retdataU };
-        ret = map_error( LDAP_CALL( ldap_extended_operation_s, &params ));
+        ret = map_error( ldap_extended_operation_s( CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU, &retoidU,
+                         &retdataU ) );
     }
 
     if (retoid && retoidU)
@@ -164,14 +162,14 @@ ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct berval *dat
         WCHAR *str = strUtoW( retoidU );
         if (str) *retoid = str;
         else ret = WLDAP32_LDAP_NO_MEMORY;
-        LDAP_CALL( ldap_memfree, retoidU );
+        ldap_memfree( retoidU );
     }
     if (retdata && retdataU)
     {
-        struct berval *bv = bervalUtoW( retdataU );
+        struct WLDAP32_berval *bv = bervalUtoW( retdataU );
         if (bv) *retdata = bv;
         else ret = WLDAP32_LDAP_NO_MEMORY;
-        LDAP_CALL( ber_bvfree, retdataU );
+        ber_bvfree( retdataU );
     }
 
 exit:

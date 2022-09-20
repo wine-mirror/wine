@@ -140,15 +140,6 @@
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #undef HAVE_KRB5_KRB5_H
 
-/* Define to 1 if you have the <lber.h> header file. */
-#undef HAVE_LBER_H
-
-/* Define if you have the OpenLDAP development environment */
-#undef HAVE_LDAP
-
-/* Define to 1 if you have the <ldap.h> header file. */
-#undef HAVE_LDAP_H
-
 /* Define to 1 if you have the `gettextpo' library (-lgettextpo). */
 #undef HAVE_LIBGETTEXTPO
 
@@ -376,9 +367,6 @@
 
 /* Define to 1 if you have the `res_getservers' function. */
 #undef HAVE_RES_GETSERVERS
-
-/* Define to 1 if you have the <sasl/sasl.h> header file. */
-#undef HAVE_SASL_SASL_H
 
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H

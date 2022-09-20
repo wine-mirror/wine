@@ -23,7 +23,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -36,25 +35,69 @@ ULONG map_error( int error )
 {
     switch (error)
     {
-    case  0:    return WLDAP32_LDAP_SUCCESS;
-    case -1:    return WLDAP32_LDAP_SERVER_DOWN;
-    case -2:    return WLDAP32_LDAP_LOCAL_ERROR;
-    case -3:    return WLDAP32_LDAP_ENCODING_ERROR;
-    case -4:    return WLDAP32_LDAP_DECODING_ERROR;
-    case -5:    return WLDAP32_LDAP_TIMEOUT;
-    case -6:    return WLDAP32_LDAP_AUTH_UNKNOWN;
-    case -7:    return WLDAP32_LDAP_FILTER_ERROR;
-    case -8:    return WLDAP32_LDAP_USER_CANCELLED;
-    case -9:    return WLDAP32_LDAP_PARAM_ERROR;
-    case -10:   return WLDAP32_LDAP_NO_MEMORY;
-    case -11:   return WLDAP32_LDAP_CONNECT_ERROR;
-    case -12:   return WLDAP32_LDAP_NOT_SUPPORTED;
-    case -13:   return WLDAP32_LDAP_CONTROL_NOT_FOUND;
-    case -14:   return WLDAP32_LDAP_NO_RESULTS_RETURNED;
-    case -15:   return WLDAP32_LDAP_MORE_RESULTS_TO_RETURN;
-    case -16:   return WLDAP32_LDAP_CLIENT_LOOP;
-    case -17:   return WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED;
-    default: return error;
+    case LDAP_SUCCESS:                          return WLDAP32_LDAP_SUCCESS;
+    case LDAP_OPERATIONS_ERROR:                 return WLDAP32_LDAP_OPERATIONS_ERROR;
+    case LDAP_PROTOCOL_ERROR:                   return WLDAP32_LDAP_PROTOCOL_ERROR;
+    case LDAP_TIMELIMIT_EXCEEDED:               return WLDAP32_LDAP_TIMELIMIT_EXCEEDED;
+    case LDAP_SIZELIMIT_EXCEEDED:               return WLDAP32_LDAP_SIZELIMIT_EXCEEDED;
+    case LDAP_COMPARE_FALSE:                    return WLDAP32_LDAP_COMPARE_FALSE;
+    case LDAP_COMPARE_TRUE:                     return WLDAP32_LDAP_COMPARE_TRUE;
+    case LDAP_AUTH_METHOD_NOT_SUPPORTED:        return WLDAP32_LDAP_AUTH_METHOD_NOT_SUPPORTED;
+    case LDAP_STRONG_AUTH_REQUIRED:             return WLDAP32_LDAP_STRONG_AUTH_REQUIRED;
+    case LDAP_PARTIAL_RESULTS:                  return WLDAP32_LDAP_PARTIAL_RESULTS;
+    case LDAP_REFERRAL:                         return WLDAP32_LDAP_REFERRAL;
+    case LDAP_ADMINLIMIT_EXCEEDED:              return WLDAP32_LDAP_ADMIN_LIMIT_EXCEEDED;
+    case LDAP_UNAVAILABLE_CRITICAL_EXTENSION:   return WLDAP32_LDAP_UNAVAILABLE_CRIT_EXTENSION;
+    case LDAP_CONFIDENTIALITY_REQUIRED:         return WLDAP32_LDAP_CONFIDENTIALITY_REQUIRED;
+    case LDAP_SASL_BIND_IN_PROGRESS:            return WLDAP32_LDAP_SASL_BIND_IN_PROGRESS;
+    case LDAP_NO_SUCH_ATTRIBUTE:                return WLDAP32_LDAP_NO_SUCH_ATTRIBUTE;
+    case LDAP_UNDEFINED_TYPE:                   return WLDAP32_LDAP_UNDEFINED_TYPE;
+    case LDAP_INAPPROPRIATE_MATCHING:           return WLDAP32_LDAP_INAPPROPRIATE_MATCHING;
+    case LDAP_CONSTRAINT_VIOLATION:             return WLDAP32_LDAP_CONSTRAINT_VIOLATION;
+    case LDAP_TYPE_OR_VALUE_EXISTS:             return WLDAP32_LDAP_ATTRIBUTE_OR_VALUE_EXISTS;
+    case LDAP_INVALID_SYNTAX:                   return WLDAP32_LDAP_INVALID_SYNTAX;
+    case LDAP_NO_SUCH_OBJECT:                   return WLDAP32_LDAP_NO_SUCH_OBJECT;
+    case LDAP_ALIAS_PROBLEM:                    return WLDAP32_LDAP_ALIAS_PROBLEM;
+    case LDAP_INVALID_DN_SYNTAX:                return WLDAP32_LDAP_INVALID_DN_SYNTAX;
+    case LDAP_IS_LEAF:                          return WLDAP32_LDAP_IS_LEAF;
+    case LDAP_ALIAS_DEREF_PROBLEM:              return WLDAP32_LDAP_ALIAS_DEREF_PROBLEM;
+    case LDAP_INAPPROPRIATE_AUTH:               return WLDAP32_LDAP_INAPPROPRIATE_AUTH;
+    case LDAP_INVALID_CREDENTIALS:              return WLDAP32_LDAP_INVALID_CREDENTIALS;
+    case LDAP_INSUFFICIENT_ACCESS:              return WLDAP32_LDAP_INSUFFICIENT_RIGHTS;
+    case LDAP_BUSY:                             return WLDAP32_LDAP_BUSY;
+    case LDAP_UNAVAILABLE:                      return WLDAP32_LDAP_UNAVAILABLE;
+    case LDAP_UNWILLING_TO_PERFORM:             return WLDAP32_LDAP_UNWILLING_TO_PERFORM;
+    case LDAP_LOOP_DETECT:                      return WLDAP32_LDAP_LOOP_DETECT;
+    case LDAP_NAMING_VIOLATION:                 return WLDAP32_LDAP_NAMING_VIOLATION;
+    case LDAP_OBJECT_CLASS_VIOLATION:           return WLDAP32_LDAP_OBJECT_CLASS_VIOLATION;
+    case LDAP_NOT_ALLOWED_ON_NONLEAF:           return WLDAP32_LDAP_NOT_ALLOWED_ON_NONLEAF;
+    case LDAP_NOT_ALLOWED_ON_RDN:               return WLDAP32_LDAP_NOT_ALLOWED_ON_RDN;
+    case LDAP_ALREADY_EXISTS:                   return WLDAP32_LDAP_ALREADY_EXISTS;
+    case LDAP_NO_OBJECT_CLASS_MODS:             return WLDAP32_LDAP_NO_OBJECT_CLASS_MODS;
+    case LDAP_RESULTS_TOO_LARGE:                return WLDAP32_LDAP_RESULTS_TOO_LARGE;
+    case LDAP_AFFECTS_MULTIPLE_DSAS:            return WLDAP32_LDAP_AFFECTS_MULTIPLE_DSAS;
+    case LDAP_VLV_ERROR:                        return WLDAP32_LDAP_VIRTUAL_LIST_VIEW_ERROR;
+    case LDAP_OTHER:                            return WLDAP32_LDAP_OTHER;
+    case LDAP_SERVER_DOWN:                      return WLDAP32_LDAP_SERVER_DOWN;
+    case LDAP_LOCAL_ERROR:                      return WLDAP32_LDAP_LOCAL_ERROR;
+    case LDAP_ENCODING_ERROR:                   return WLDAP32_LDAP_ENCODING_ERROR;
+    case LDAP_DECODING_ERROR:                   return WLDAP32_LDAP_DECODING_ERROR;
+    case LDAP_TIMEOUT:                          return WLDAP32_LDAP_TIMEOUT;
+    case LDAP_AUTH_UNKNOWN:                     return WLDAP32_LDAP_AUTH_UNKNOWN;
+    case LDAP_FILTER_ERROR:                     return WLDAP32_LDAP_FILTER_ERROR;
+    case LDAP_USER_CANCELLED:                   return WLDAP32_LDAP_USER_CANCELLED;
+    case LDAP_PARAM_ERROR:                      return WLDAP32_LDAP_PARAM_ERROR;
+    case LDAP_NO_MEMORY:                        return WLDAP32_LDAP_NO_MEMORY;
+    case LDAP_CONNECT_ERROR:                    return WLDAP32_LDAP_CONNECT_ERROR;
+    case LDAP_NOT_SUPPORTED:                    return WLDAP32_LDAP_NOT_SUPPORTED;
+    case LDAP_CONTROL_NOT_FOUND:                return WLDAP32_LDAP_CONTROL_NOT_FOUND;
+    case LDAP_NO_RESULTS_RETURNED:              return WLDAP32_LDAP_NO_RESULTS_RETURNED;
+    case LDAP_MORE_RESULTS_TO_RETURN:           return WLDAP32_LDAP_MORE_RESULTS_TO_RETURN;
+    case LDAP_CLIENT_LOOP:                      return WLDAP32_LDAP_CLIENT_LOOP;
+    case LDAP_REFERRAL_LIMIT_EXCEEDED:          return WLDAP32_LDAP_REFERRAL_LIMIT_EXCEEDED;
+    default:
+        FIXME( "no mapping for %d\n", error );
+        return error;
     }
 }
 
@@ -109,11 +152,9 @@ ULONG CDECL WLDAP32_ldap_result2error( LDAP *ld, LDAPMessage *res, ULONG free )
 
     TRACE( "(%p, %p, %#lx)\n", ld, res, free );
 
-    if (ld && res)
-    {
-        struct ldap_parse_result_params params = { CTX(ld), MSG(res), &error, NULL, NULL, NULL, NULL, free };
-        if (!LDAP_CALL( ldap_parse_result, &params )) return error;
-    }
+    if (ld && res && !ldap_parse_result( CTX(ld), MSG(res), &error, NULL, NULL, NULL, NULL, free ))
+        return error;
+
     return ~0u;
 }
 

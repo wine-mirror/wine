@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -105,8 +104,8 @@ ULONG CDECL ldap_add_extW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW *
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
-    LDAPModU **attrsU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPMod **attrsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), attrs, serverctrls, clientctrls, message );
 
@@ -118,8 +117,7 @@ ULONG CDECL ldap_add_extW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW *
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_add_ext_params params = { CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU, message };
-        ret = map_error( LDAP_CALL( ldap_add_ext, &params ));
+        ret = map_error( ldap_add_ext( CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU, (int *)message ) );
     }
 
 exit:
@@ -168,8 +166,8 @@ ULONG CDECL ldap_add_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
-    LDAPModU **attrsU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPMod **attrsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), attrs, serverctrls, clientctrls );
 
@@ -181,8 +179,7 @@ ULONG CDECL ldap_add_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_add_ext_s_params params = { CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU };
-        ret = map_error( LDAP_CALL( ldap_add_ext_s, &params ));
+        ret = map_error( ldap_add_ext_s( CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU ) );
     }
 
 exit:

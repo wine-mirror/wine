@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -103,26 +102,22 @@ ULONG CDECL ldap_create_sort_controlA( LDAP *ld, LDAPSortKeyA **sortkey, UCHAR c
 ULONG CDECL ldap_create_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkey, UCHAR critical, LDAPControlW **control )
 {
     ULONG ret;
-    LDAPSortKeyU **sortkeyU;
-    LDAPControlU *controlU;
+    LDAPSortKey **sortkeyU;
+    LDAPControl *controlU;
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, sortkey, critical, control );
 
     if (!ld || !sortkey || !control) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if ((sortkeyU = sortkeyarrayWtoU( sortkey )))
-    {
-        struct ldap_create_sort_control_params params = { CTX(ld), sortkeyU, critical, &controlU };
-        ret = map_error( LDAP_CALL( ldap_create_sort_control, &params ));
-    }
-    else return WLDAP32_LDAP_NO_MEMORY;
+    if (!(sortkeyU = sortkeyarrayWtoU( sortkey ))) return WLDAP32_LDAP_NO_MEMORY;
 
+    ret = map_error( ldap_create_sort_control( CTX(ld), sortkeyU, critical, &controlU ) );
     if (ret == WLDAP32_LDAP_SUCCESS)
     {
         LDAPControlW *controlW = controlUtoW( controlU );
         if (controlW) *control = controlW;
         else ret = WLDAP32_LDAP_NO_MEMORY;
-        LDAP_CALL( ldap_control_free, controlU );
+        ldap_control_free( controlU );
     }
 
     sortkeyarrayfreeU( sortkeyU );
@@ -132,7 +127,7 @@ ULONG CDECL ldap_create_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkey, UCHAR c
 /***********************************************************************
  *      ldap_create_vlv_controlA     (WLDAP32.@)
  */
-INT CDECL ldap_create_vlv_controlA( LDAP *ld, LDAPVLVInfo *info, UCHAR critical, LDAPControlA **control )
+INT CDECL ldap_create_vlv_controlA( LDAP *ld, WLDAP32_LDAPVLVInfo *info, UCHAR critical, LDAPControlA **control )
 {
     INT ret;
     LDAPControlW *controlW;
@@ -156,35 +151,32 @@ INT CDECL ldap_create_vlv_controlA( LDAP *ld, LDAPVLVInfo *info, UCHAR critical,
 /***********************************************************************
  *      ldap_create_vlv_controlW     (WLDAP32.@)
  */
-INT CDECL ldap_create_vlv_controlW( LDAP *ld, LDAPVLVInfo *info, UCHAR critical, LDAPControlW **control )
+INT CDECL ldap_create_vlv_controlW( LDAP *ld, WLDAP32_LDAPVLVInfo *info, UCHAR critical, LDAPControlW **control )
 {
     ULONG ret;
-    LDAPVLVInfoU *infoU = NULL;
-    LDAPControlU *controlU;
+    LDAPVLVInfo *infoU = NULL;
+    LDAPControl *controlU;
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
 
     if (!ld || !control) return ~0u;
 
     if (info && !(infoU = vlvinfoWtoU( info ))) return WLDAP32_LDAP_NO_MEMORY;
-    else
-    {
-        struct ldap_create_vlv_control_params params = { CTX(ld), infoU, &controlU };
-        ret = map_error( LDAP_CALL( ldap_create_vlv_control, &params ));
-    }
+
+    ret = map_error( ldap_create_vlv_control( CTX(ld), infoU, &controlU ) );
     if (ret == WLDAP32_LDAP_SUCCESS)
     {
         LDAPControlW *controlW = controlUtoW( controlU );
         if (controlW) *control = controlW;
         else ret = WLDAP32_LDAP_NO_MEMORY;
-        LDAP_CALL( ldap_control_free, controlU );
+        ldap_control_free( controlU );
     }
 
     vlvinfofreeU( infoU );
     return ret;
 }
 
-static inline void bv_val_dup( const struct berval *src, struct berval *dst )
+static inline void bv_val_dup( const struct WLDAP32_berval *src, struct WLDAP32_berval *dst )
 {
     if ((dst->bv_val = RtlAllocateHeap( GetProcessHeap(), 0 , src->bv_len )))
     {

@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -91,7 +90,7 @@ ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL, *newdnU = NULL;
-    ULONG msg;
+    int msg;
 
     TRACE( "(%p, %s, %p, 0x%02x)\n", ld, debugstr_w(dn), newdn, delete );
 
@@ -101,8 +100,7 @@ ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 
     if ((newdnU = strWtoU( newdn )))
     {
-        struct ldap_rename_params params = { CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL, &msg };
-        ret = LDAP_CALL( ldap_rename, &params );
+        ret = ldap_rename( CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL, &msg );
         if (ret == WLDAP32_LDAP_SUCCESS)
             ret = msg;
         else
@@ -152,8 +150,7 @@ ULONG CDECL ldap_modrdn2_sW( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 
     if ((newdnU = strWtoU( newdn )))
     {
-        struct ldap_rename_s_params params = { CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL };
-        ret = map_error( LDAP_CALL( ldap_rename_s, &params ));
+        ret = map_error( ldap_rename_s( CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL ) );
         free( newdnU );
     }
     free( dnU );

@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -34,16 +33,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  */
 char * CDECL ldap_dn2ufnA( char *dn )
 {
-    char *ret;
+    char *ret = NULL;
     WCHAR *dnW, *retW;
 
     TRACE( "(%s)\n", debugstr_a(dn) );
 
     if (!(dnW = strAtoW( dn ))) return NULL;
-
-    retW = ldap_dn2ufnW( dnW );
-    ret = strWtoA( retW );
-
+    if ((retW = ldap_dn2ufnW( dnW ))) ret = strWtoA( retW );
     free( dnW );
     ldap_memfreeW( retW );
     return ret;
@@ -59,16 +55,10 @@ WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
 
     TRACE( "(%s)\n", debugstr_w(dn) );
 
-    if ((dnU = strWtoU( dn )))
-    {
-        struct ldap_dn2ufn_params params = { dnU, &retU };
-        LDAP_CALL( ldap_dn2ufn, &params );
-
-        ret = strUtoW( retU );
-
-        free( dnU );
-        LDAP_CALL( ldap_memfree, retU );
-    }
+    if (!(dnU = strWtoU( dn ))) return NULL;
+    if ((retU = ldap_dn2ufn( dnU ))) ret = strUtoW( retU );
+    free( dnU );
+    ldap_memfree( retU );
     return ret;
 }
 
@@ -77,16 +67,13 @@ WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
  */
 char ** CDECL ldap_explode_dnA( char *dn, ULONG notypes )
 {
-    char **ret;
+    char **ret = NULL;
     WCHAR *dnW, **retW;
 
     TRACE( "(%s, %#lx)\n", debugstr_a(dn), notypes );
 
     if (!(dnW = strAtoW( dn ))) return NULL;
-
-    retW = ldap_explode_dnW( dnW, notypes );
-    ret = strarrayWtoA( retW );
-
+    if ((retW = ldap_explode_dnW( dnW, notypes ))) ret = strarrayWtoA( retW );
     free( dnW );
     ldap_value_freeW( retW );
     return ret;
@@ -102,15 +89,10 @@ WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
 
     TRACE( "(%s, %#lx)\n", debugstr_w(dn), notypes );
 
-    if ((dnU = strWtoU( dn )))
-    {
-        struct ldap_explode_dn_params params = { dnU, notypes, &retU };
-        LDAP_CALL( ldap_explode_dn, &params );
-        ret = strarrayUtoW( retU );
-
-        free( dnU );
-        LDAP_CALL( ldap_memvfree, retU );
-    }
+    if (!(dnU = strWtoU( dn ))) return NULL;
+    if ((retU = ldap_explode_dn( dnU, notypes ))) ret = strarrayUtoW( retU );
+    free( dnU );
+    ldap_memvfree( (void **)retU );
     return ret;
 }
 
@@ -119,16 +101,14 @@ WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
  */
 char * CDECL ldap_get_dnA( LDAP *ld, LDAPMessage *entry )
 {
-    char *ret;
+    char *ret = NULL;
     WCHAR *retW;
 
     TRACE( "(%p, %p)\n", ld, entry );
 
     if (!ld || !entry) return NULL;
 
-    retW = ldap_get_dnW( ld, entry );
-
-    ret = strWtoA( retW );
+    if ((retW = ldap_get_dnW( ld, entry ))) ret = strWtoA( retW );
     ldap_memfreeW( retW );
     return ret;
 }
@@ -145,11 +125,8 @@ WCHAR * CDECL ldap_get_dnW( LDAP *ld, LDAPMessage *entry )
 
     if (ld && entry)
     {
-        struct ldap_get_dn_params params = { CTX(ld), MSG(entry), &retU };
-        LDAP_CALL( ldap_get_dn, &params );
-
-        ret = strUtoW( retU );
-        LDAP_CALL( ldap_memfree, retU );
+        if ((retU = ldap_get_dn( CTX(ld), MSG(entry) ))) ret = strUtoW( retU );
+        ldap_memfree( retU );
     }
     return ret;
 }

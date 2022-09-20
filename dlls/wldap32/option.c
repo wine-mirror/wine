@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -161,7 +160,7 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     {
     case WLDAP32_LDAP_OPT_API_FEATURE_INFO:
     {
-        LDAPAPIFeatureInfoU featureU;
+        LDAPAPIFeatureInfo featureU;
         LDAPAPIFeatureInfoW *featureW = value;
 
         if (!featureW->ldapaif_name) return WLDAP32_LDAP_PARAM_ERROR;
@@ -169,9 +168,8 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
         featureU.ldapaif_info_version = featureW->ldapaif_info_version;
         if ((featureU.ldapaif_name = strWtoU( featureW->ldapaif_name )))
         {
-            struct ldap_get_option_params params = { CTX(ld), option, &featureU };
             featureU.ldapaif_version = 0;
-            ret = map_error( LDAP_CALL( ldap_get_option, &params ));
+            ret = map_error( ldap_get_option( CTX(ld), option, &featureU ) );
         }
         else return WLDAP32_LDAP_NO_MEMORY;
 
@@ -181,14 +179,13 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     }
     case WLDAP32_LDAP_OPT_API_INFO:
     {
-        LDAPAPIInfoU infoU;
+        LDAPAPIInfo infoU;
         LDAPAPIInfoW *infoW = value;
-        struct ldap_get_option_params params = { CTX(ld), option, &infoU };
 
         memset( &infoU, 0, sizeof(infoU) );
         infoU.ldapai_info_version = infoW->ldapai_info_version;
 
-        ret = map_error( LDAP_CALL( ldap_get_option, &params ));
+        ret = map_error( ldap_get_option( CTX(ld), option, &infoU ) );
         if (ret == WLDAP32_LDAP_SUCCESS)
         {
             infoW->ldapai_api_version = infoU.ldapai_api_version;
@@ -198,13 +195,13 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
                 return WLDAP32_LDAP_NO_MEMORY;
             if (infoU.ldapai_vendor_name && !(infoW->ldapai_vendor_name = strUtoW( infoU.ldapai_vendor_name )))
             {
-                LDAP_CALL( ldap_memvfree, infoU.ldapai_extensions );
+                ldap_memvfree( (void **)infoU.ldapai_extensions );
                 return WLDAP32_LDAP_NO_MEMORY;
             }
             infoW->ldapai_vendor_version = infoU.ldapai_vendor_version;
 
-            LDAP_CALL( ldap_memvfree, infoU.ldapai_extensions );
-            LDAP_CALL( ldap_memfree, infoU.ldapai_vendor_name );
+            ldap_memvfree( (void **)infoU.ldapai_extensions );
+            ldap_memfree( infoU.ldapai_vendor_name );
         }
         return ret;
     }
@@ -216,10 +213,7 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_REFERRALS:
     case WLDAP32_LDAP_OPT_SIZELIMIT:
     case WLDAP32_LDAP_OPT_TIMELIMIT:
-    {
-        struct ldap_get_option_params params = { CTX(ld), option, value };
-        return map_error( LDAP_CALL( ldap_get_option, &params ));
-    }
+        return map_error( ldap_get_option( CTX(ld), option, value ) );
 
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:
@@ -355,38 +349,32 @@ ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
 static BOOL query_supported_server_ctrls( LDAP *ld )
 {
     char *attrs[] = { (char *)"supportedControl", NULL };
-    void *res, *entry;
-    struct bervalU **ctrls = SERVER_CTRLS(ld);
+    LDAPMessage *res, *entry;
+    struct berval **ctrls = SERVER_CTRLS(ld);
     ULONG ret;
 
-    if (!ctrls)
-    {
-        struct ldap_search_ext_s_params params = { CTX(ld), (char *)"", LDAP_SCOPE_BASE,
-                (char *)"(objectClass=*)", attrs, FALSE, NULL, NULL, NULL, 0, &res };
-        ret = map_error( LDAP_CALL( ldap_search_ext_s, &params ));
-    }
-    else return TRUE;
+    if (ctrls) return TRUE;
 
+    ret = map_error( ldap_search_ext_s( CTX(ld), (char *)"", WLDAP32_LDAP_SCOPE_BASE, (char *)"(objectClass=*)",
+                                        attrs, FALSE, NULL, NULL, NULL, 0, &res ) );
     if (ret == WLDAP32_LDAP_SUCCESS)
     {
-        struct ldap_first_entry_params params = { CTX(ld), res, &entry };
-        if (!LDAP_CALL( ldap_first_entry, &params ))
+        if ((entry = ldap_first_entry( CTX(ld), res )))
         {
             ULONG count, i;
-            struct ldap_get_values_len_params get_params = { CTX(ld), entry, attrs[0], &ctrls };
-            LDAP_CALL( ldap_get_values_len, &get_params );
-            count = LDAP_CALL( ldap_count_values_len, ctrls );
+            ctrls = ldap_get_values_len( CTX(ld), entry, attrs[0] );
+            count = ldap_count_values_len( ctrls );
             for (i = 0; i < count; i++) TRACE( "%lu: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ) );
-            *(struct bervalU ***)&SERVER_CTRLS(ld) = ctrls;
+            *(struct berval ***)&SERVER_CTRLS(ld) = ctrls;
         }
     }
     else return FALSE;
 
-    LDAP_CALL( ldap_msgfree, res );
+    ldap_msgfree( res );
     return ctrls != NULL;
 }
 
-static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControlU **ctrls )
+static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControl **ctrls )
 {
     ULONG user_count, server_count, i, n, supported = 0;
 
@@ -394,7 +382,7 @@ static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControlU **ctrls )
         return TRUE; /* can't verify, let the server handle it on next query */
 
     user_count = controlarraylenU( ctrls );
-    server_count = LDAP_CALL( ldap_count_values_len, SERVER_CTRLS(ld) );
+    server_count = ldap_count_values_len( SERVER_CTRLS(ld) );
 
     for (n = 0; n < user_count; n++)
     {
@@ -402,7 +390,7 @@ static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControlU **ctrls )
 
         for (i = 0; i < server_count; i++)
         {
-            struct bervalU **server_ctrls = SERVER_CTRLS(ld);
+            struct berval **server_ctrls = SERVER_CTRLS(ld);
             if (!strncmp( ctrls[n]->ldctl_oid, server_ctrls[i]->bv_val, server_ctrls[i]->bv_len))
             {
                 supported++;
@@ -429,28 +417,27 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     {
     case WLDAP32_LDAP_OPT_SERVER_CONTROLS:
     {
-        LDAPControlU **ctrlsU;
+        LDAPControl **ctrlsU;
 
         if (!(ctrlsU = controlarrayWtoU( value ))) return WLDAP32_LDAP_NO_MEMORY;
 
         if (!is_supported_server_ctrls( ld, ctrlsU ))
             ret = WLDAP32_LDAP_PARAM_ERROR;
         else
-        {
-            struct ldap_set_option_params params = { CTX(ld), option, ctrlsU };
-            ret = map_error( LDAP_CALL( ldap_set_option, &params ));
-        }
+            ret = map_error( ldap_set_option( CTX(ld), option, ctrlsU ) );
+
         controlarrayfreeU( ctrlsU );
         return ret;
     }
     case WLDAP32_LDAP_OPT_REFERRALS:
     {
-        struct ldap_set_option_params params = { CTX(ld), option, LDAP_OPT_ON };
-        if (value == WLDAP32_LDAP_OPT_OFF)
-            params.value = LDAP_OPT_OFF;
-        else
-            FIXME("upgrading referral value %p to WLDAP32_LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", value);
-        return map_error( LDAP_CALL( ldap_set_option, &params ));
+        if (value == WLDAP32_LDAP_OPT_OFF) value = LDAP_OPT_OFF;
+        else if (value != WLDAP32_LDAP_OPT_ON)
+        {
+            FIXME( "upgrading referral value %p to LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", value );
+            value = LDAP_OPT_ON;
+        }
+        return map_error( ldap_set_option( CTX(ld), option, value ) );
     }
     case WLDAP32_LDAP_OPT_DEREF:
     case WLDAP32_LDAP_OPT_DESC:
@@ -458,10 +445,7 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_PROTOCOL_VERSION:
     case WLDAP32_LDAP_OPT_SIZELIMIT:
     case WLDAP32_LDAP_OPT_TIMELIMIT:
-    {
-        struct ldap_set_option_params params = { CTX(ld), option, value };
-        return map_error( LDAP_CALL( ldap_set_option, &params ));
-    }
+        return map_error( ldap_set_option( CTX(ld), option, value ) );
 
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:

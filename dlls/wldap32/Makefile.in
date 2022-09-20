@@ -1,9 +1,7 @@
 MODULE    = wldap32.dll
-UNIXLIB   = wldap32.so
 IMPORTLIB = wldap32
-IMPORTS   = user32
-UNIX_CFLAGS  = $(LDAP_CFLAGS)
-UNIX_LIBS    = $(LDAP_LIBS)
+IMPORTS   = $(LDAP_PE_LIBS) secur32 ws2_32 user32
+EXTRAINCL = $(LDAP_PE_CFLAGS)
 
 C_SRCS = \
 	add.c \
@@ -16,7 +14,6 @@ C_SRCS = \
 	error.c \
 	extended.c \
 	init.c \
-	libldap.c \
 	main.c \
 	misc.c \
 	modify.c \

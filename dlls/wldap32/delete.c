@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -65,7 +64,7 @@ ULONG CDECL ldap_deleteW( LDAP *ld, WCHAR *dn )
  *      ldap_delete_extA     (WLDAP32.@)
  */
 ULONG CDECL ldap_delete_extA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
-    ULONG *message )
+                              ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
@@ -92,11 +91,11 @@ exit:
  *      ldap_delete_extW     (WLDAP32.@)
  */
 ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls,
-    ULONG *message )
+                              ULONG *message )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls, message );
 
@@ -107,8 +106,7 @@ ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, L
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_delete_ext_params params = { CTX(ld), dnU, serverctrlsU, clientctrlsU, message };
-        ret = map_error( LDAP_CALL( ldap_delete_ext, &params ));
+        ret = map_error( ldap_delete_ext( CTX(ld), dnU, serverctrlsU, clientctrlsU, (int *)message ) );
     }
 
 exit:
@@ -151,7 +149,7 @@ ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls,
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     char *dnU = NULL;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls );
 
@@ -162,8 +160,7 @@ ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls,
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_delete_ext_s_params params = { CTX(ld), dnU, serverctrlsU, clientctrlsU };
-        ret = map_error( LDAP_CALL( ldap_delete_ext_s, &params ));
+        ret = map_error( ldap_delete_ext_s( CTX(ld), dnU, serverctrlsU, clientctrlsU ) );
     }
 
 exit:

@@ -652,8 +652,6 @@ ac_header_c_list=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 TAGSFLAGS
-LDAP_LIBS
-LDAP_CFLAGS
 RT_LIBS
 DELAYLOADFLAG
 MSVCRTFLAGS
@@ -723,6 +721,8 @@ PNG_PE_LIBS
 PNG_PE_CFLAGS
 MPG123_PE_LIBS
 MPG123_PE_CFLAGS
+LDAP_PE_LIBS
+LDAP_PE_CFLAGS
 LCMS2_PE_LIBS
 LCMS2_PE_CFLAGS
 JXR_PE_LIBS
@@ -921,7 +921,6 @@ with_gssapi
 with_gstreamer
 with_inotify
 with_krb5
-with_ldap
 with_mingw
 with_netapi
 with_opencl
@@ -1714,6 +1713,8 @@ JXR_PE_CFLAGS
 JXR_PE_LIBS
 LCMS2_PE_CFLAGS
 LCMS2_PE_LIBS
+LDAP_PE_CFLAGS
+LDAP_PE_LIBS
 MPG123_PE_CFLAGS
 MPG123_PE_LIBS
 PNG_PE_CFLAGS
@@ -1767,9 +1768,7 @@ KRB5_LIBS
 GSSAPI_CFLAGS
 GSSAPI_LIBS
 NETAPI_CFLAGS
-NETAPI_LIBS
-LDAP_CFLAGS
-LDAP_LIBS'
+NETAPI_LIBS'
 
 
 # Initialize some variables set by options.
@@ -2428,7 +2427,6 @@ Optional Packages:
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-inotify       do not use inotify (filesystem change notifications)
   --without-krb5          do not use krb5 (Kerberos)
-  --without-ldap          do not use LDAP
   --without-mingw         do not use the MinGW cross-compiler
   --without-netapi        do not use the Samba NetAPI library
   --without-opencl        do not use OpenCL
@@ -2496,6 +2494,10 @@ Some influential environment variables:
               version
   LCMS2_PE_LIBS
               Linker flags for the PE lcms2, overriding the bundled version
+  LDAP_PE_CFLAGS
+              C compiler flags for the PE ldap, overriding the bundled version
+  LDAP_PE_LIBS
+              Linker flags for the PE ldap, overriding the bundled version
   MPG123_PE_CFLAGS
               C compiler flags for the PE mpg123, overriding the bundled
               version
@@ -2585,8 +2587,6 @@ Some influential environment variables:
   NETAPI_CFLAGS
               C compiler flags for netapi, overriding pkg-config
   NETAPI_LIBS Linker flags for netapi, overriding pkg-config
-  LDAP_CFLAGS C compiler flags for openldap, overriding pkg-config
-  LDAP_LIBS   Linker flags for openldap, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -4278,13 +4278,6 @@ fi
 if test ${with_krb5+y}
 then :
   withval=$with_krb5;
-fi
-
-
-# Check whether --with-ldap was given.
-if test ${with_ldap+y}
-then :
-  withval=$with_ldap; if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi
 fi
 
 
@@ -8128,12 +8121,6 @@ ac_fn_c_check_header_compile "$LINENO" "pwd.h" "ac_cv_header_pwd_h" "$ac_include
 if test "x$ac_cv_header_pwd_h" = xyes
 then :
   printf "%s\n" "#define HAVE_PWD_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "sasl/sasl.h" "ac_cv_header_sasl_sasl_h" "$ac_includes_default"
-if test "x$ac_cv_header_sasl_sasl_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SASL_SASL_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sched.h" "ac_cv_header_sched_h" "$ac_includes_default"
@@ -13408,6 +13395,21 @@ else $as_nop
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: lcms2 cflags: $LCMS2_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: lcms2 libs: $LCMS2_PE_LIBS" >&5
+
+if ${LDAP_PE_LIBS:+false} :
+then :
+  LDAP_PE_LIBS=ldap
+   if ${LDAP_PE_CFLAGS:+false} :
+then :
+  LDAP_PE_CFLAGS="-I\$(top_srcdir)/libs/ldap/include"
+else $as_nop
+  enable_ldap=no
+fi
+else $as_nop
+  enable_ldap=no
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: ldap cflags: $LDAP_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: ldap libs: $LDAP_PE_LIBS" >&5
 
 if ${MPG123_PE_LIBS:+false} :
 then :
@@ -20077,154 +20079,6 @@ fi
     ;;
 esac
 
-if test "x$with_ldap" != "xno"
-then
-        if ${LDAP_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  LDAP_CFLAGS=`$PKG_CONFIG --cflags openldap 2>/dev/null`
-fi
-fi
-
-if ${LDAP_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  LDAP_LIBS=`$PKG_CONFIG --libs openldap 2>/dev/null`
-fi
-fi
-
-LDAP_LIBS=${LDAP_LIBS:-"-lldap -llber"}
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: openldap cflags: $LDAP_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: openldap libs: $LDAP_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $LDAP_CFLAGS"
-ac_fn_c_check_header_compile "$LINENO" "ldap.h" "ac_cv_header_ldap_h" "$ac_includes_default"
-if test "x$ac_cv_header_ldap_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "lber.h" "ac_cv_header_lber_h" "$ac_includes_default"
-if test "x$ac_cv_header_lber_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_LBER_H 1" >>confdefs.h
-
-fi
-
-        if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
-        then
-            ac_fn_c_check_type "$LINENO" "LDAPSortKey" "ac_cv_type_LDAPSortKey" "#include <ldap.h>
-"
-if test "x$ac_cv_type_LDAPSortKey" = xyes
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ldap_initialize in -lldap" >&5
-printf %s "checking for ldap_initialize in -lldap... " >&6; }
-if test ${ac_cv_lib_ldap_ldap_initialize+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap $PTHREAD_LIBS $LDAP_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char ldap_initialize ();
-int
-main (void)
-{
-return ldap_initialize ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_ldap_ldap_initialize=yes
-else $as_nop
-  ac_cv_lib_ldap_ldap_initialize=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ldap_ldap_initialize" >&5
-printf "%s\n" "$ac_cv_lib_ldap_ldap_initialize" >&6; }
-if test "x$ac_cv_lib_ldap_ldap_initialize" = xyes
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ber_init in -llber" >&5
-printf %s "checking for ber_init in -llber... " >&6; }
-if test ${ac_cv_lib_lber_ber_init+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-llber $PTHREAD_LIBS $LDAP_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char ber_init ();
-int
-main (void)
-{
-return ber_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_lber_ber_init=yes
-else $as_nop
-  ac_cv_lib_lber_ber_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lber_ber_init" >&5
-printf "%s\n" "$ac_cv_lib_lber_ber_init" >&6; }
-if test "x$ac_cv_lib_lber_ber_init" = xyes
-then :
-
-printf "%s\n" "#define HAVE_LDAP 1" >>confdefs.h
-
-else $as_nop
-  LDAP_LIBS=""
-fi
-
-else $as_nop
-  LDAP_LIBS=""
-fi
-
-else $as_nop
-  LDAP_LIBS=""
-fi
-
-        else
-            LDAP_LIBS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$LDAP_LIBS" = "x"
-then :
-  case "x$with_ldap" in
-  x)   as_fn_append wine_notices "|libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.
-This is an error since --with-ldap was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for sched_setaffinity" >&5
 printf %s "checking for sched_setaffinity... " >&6; }
 if test ${wine_cv_have_sched_setaffinity+y}
@@ -23316,6 +23170,8 @@ JXR_PE_CFLAGS = $JXR_PE_CFLAGS
 JXR_PE_LIBS = $JXR_PE_LIBS
 LCMS2_PE_CFLAGS = $LCMS2_PE_CFLAGS
 LCMS2_PE_LIBS = $LCMS2_PE_LIBS
+LDAP_PE_CFLAGS = $LDAP_PE_CFLAGS
+LDAP_PE_LIBS = $LDAP_PE_LIBS
 MPG123_PE_CFLAGS = $MPG123_PE_CFLAGS
 MPG123_PE_LIBS = $MPG123_PE_LIBS
 PNG_PE_CFLAGS = $PNG_PE_CFLAGS
@@ -23385,8 +23241,6 @@ NETAPI_LIBS = $NETAPI_LIBS
 MSVCRTFLAGS = $MSVCRTFLAGS
 DELAYLOADFLAG = $DELAYLOADFLAG
 RT_LIBS = $RT_LIBS
-LDAP_CFLAGS = $LDAP_CFLAGS
-LDAP_LIBS = $LDAP_LIBS
 TAGSFLAGS = $TAGSFLAGS
 LIBOBJS = $LIBOBJS
 LTLIBOBJS = $LTLIBOBJS

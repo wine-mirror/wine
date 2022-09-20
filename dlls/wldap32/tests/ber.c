@@ -31,7 +31,7 @@ static void test_ber_printf(void)
     struct berval *bv;
 
     ber = ber_alloc_t( 0 );
-    todo_wine ok( ber == NULL, "ber_alloc_t succeeded\n" );
+    ok( ber == NULL, "ber_alloc_t succeeded\n" );
 
     ber = ber_alloc_t( LBER_USE_DER );
     ok( ber != NULL, "ber_alloc_t failed\n" );

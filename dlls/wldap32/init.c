@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
-#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -194,15 +193,11 @@ static LDAP *create_context( const char *url )
 {
     LDAP *ld;
     int version = WLDAP32_LDAP_VERSION3;
-    struct ldap_initialize_params params;
 
     if (!(ld = calloc( 1, sizeof( *ld )))) return NULL;
-    params.ld = &CTX(ld);
-    params.url = url;
-    if (map_error( LDAP_CALL( ldap_initialize, &params )) == WLDAP32_LDAP_SUCCESS)
+    if (map_error( ldap_initialize( &CTX(ld), url ) ) == WLDAP32_LDAP_SUCCESS)
     {
-        struct ldap_set_option_params opt_params = { CTX(ld), WLDAP32_LDAP_OPT_PROTOCOL_VERSION, &version };
-        LDAP_CALL( ldap_set_option, &opt_params );
+        ldap_set_option( CTX(ld), WLDAP32_LDAP_OPT_PROTOCOL_VERSION, &version );
         return ld;
     }
     free( ld );
@@ -385,7 +380,7 @@ exit:
  *      ldap_start_tls_sA     (WLDAP32.@)
  */
 ULONG CDECL ldap_start_tls_sA( LDAP *ld, ULONG *retval, LDAPMessage **result, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls )
+                               LDAPControlA **clientctrls )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
@@ -409,10 +404,10 @@ exit:
  *      ldap_start_tls_s     (WLDAP32.@)
  */
 ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls )
+                               LDAPControlW **clientctrls )
 {
     ULONG ret = WLDAP32_LDAP_NO_MEMORY;
-    LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
+    LDAPControl **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
     if (result)
@@ -427,8 +422,7 @@ ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LD
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
     else
     {
-        struct ldap_start_tls_s_params params = { CTX(ld), serverctrlsU, clientctrlsU };
-        ret = map_error( LDAP_CALL( ldap_start_tls_s, &params ));
+        ret = map_error( ldap_start_tls_s( CTX(ld), serverctrlsU, clientctrlsU ) );
     }
 
 exit:
