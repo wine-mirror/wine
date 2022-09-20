@@ -1107,8 +1107,8 @@ void *get_cpu_area( USHORT machine )
     switch (cpu->Machine)
     {
     case IMAGE_FILE_MACHINE_I386: align = TYPE_ALIGNMENT(I386_CONTEXT); break;
-    case IMAGE_FILE_MACHINE_AMD64: align = TYPE_ALIGNMENT(ARM_CONTEXT); break;
-    case IMAGE_FILE_MACHINE_ARMNT: align = TYPE_ALIGNMENT(AMD64_CONTEXT); break;
+    case IMAGE_FILE_MACHINE_AMD64: align = TYPE_ALIGNMENT(AMD64_CONTEXT); break;
+    case IMAGE_FILE_MACHINE_ARMNT: align = TYPE_ALIGNMENT(ARM_CONTEXT); break;
     case IMAGE_FILE_MACHINE_ARM64: align = TYPE_ALIGNMENT(ARM64_NT_CONTEXT); break;
     default: return NULL;
     }
