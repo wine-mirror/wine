@@ -1395,16 +1395,10 @@ class VkMember(VkVariable):
         elif self.is_handle() or self.is_generic_handle():
             direction = Direction.INPUT
 
-        operand = self.type_info["data"]
-        if self.is_dynamic_array():
-            conversions.append(ConversionFunction(False, True, direction, operand))
-        elif self.is_static_array():
-            conversions.append(ConversionFunction(True, False, direction, operand))
-        else:
-            conversions.append(ConversionFunction(False, False, direction, operand))
+        conversions.append(ConversionFunction(self, direction))
 
         if self.needs_free():
-            conversions.append(FreeFunction(self.is_dynamic_array(), operand))
+            conversions.append(FreeFunction(self.is_dynamic_array(), self.type_info["data"]))
 
         return conversions
 
@@ -1526,20 +1520,20 @@ class VkParam(VkVariable):
         if not self.needs_conversion() and not self.needs_unwrapping():
             return
 
-        operand = self.struct if self.is_struct() else self.handle
-
         # Input functions require win to host conversion.
         if self._direction in [Direction.INPUT, Direction.INPUT_OUTPUT]:
-            self.input_conv = ConversionFunction(False, self.is_dynamic_array(), Direction.INPUT, operand)
+            self.input_conv = ConversionFunction(self, Direction.INPUT)
 
         # Output functions require host to win conversion.
         if self._direction in [Direction.INPUT_OUTPUT, Direction.OUTPUT]:
-            self.output_conv = ConversionFunction(False, self.is_dynamic_array(), Direction.OUTPUT, operand)
+            self.output_conv = ConversionFunction(self, Direction.OUTPUT)
+
 
         # Dynamic arrays, but also some normal structs (e.g. VkCommandBufferBeginInfo) need memory
         # allocation and thus some cleanup.
         if self.is_dynamic_array() or self.struct.needs_free():
-            self.free_func = FreeFunction(self.is_dynamic_array(), operand)
+            self.free_func = FreeFunction(self.is_dynamic_array(),
+                                          self.struct if self.is_struct() else self.handle)
 
     def _set_direction(self):
         """ Internal helper function to set parameter direction (input/output/input_output). """
@@ -2068,12 +2062,12 @@ class VkStruct(Sequence):
 
 
 class ConversionFunction(object):
-    def __init__(self, array, dyn_array, direction, operand):
-        self.array = array
+    def __init__(self, variable, direction):
         self.direction = direction
-        self.dyn_array = dyn_array
-        self.operand = operand
-        self.type = operand.name
+        self.array = variable.is_static_array()
+        self.dyn_array = variable.is_dynamic_array()
+        self.operand = variable.struct if variable.is_struct() else variable.handle
+        self.type = variable.type
 
         self._set_name()
 
