@@ -395,11 +395,8 @@ static void test_DirectorySearch(void)
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, NULL);
     ok(hr == E_ADS_BAD_PARAMETER, "got %#lx\n", hr);
 
-    if (0) /* crashes under XP */
-    {
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, 1, &sh);
     ok(hr == E_ADS_BAD_PARAMETER, "got %#lx\n", hr);
-    }
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -435,8 +432,8 @@ static void test_DirectorySearch(void)
 
         name = (void *)0xdeadbeef;
         hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
-        ok(hr == S_ADS_NOMORE_COLUMNS || broken(hr == S_OK) /* XP */, "got %#lx\n", hr);
-        ok(name == NULL || broken(name && !wcscmp(name, L"ADsPath")) /* XP */, "got %p/%s\n", name, wine_dbgstr_w(name));
+        ok(hr == S_ADS_NOMORE_COLUMNS, "got %#lx\n", hr);
+        ok(name == NULL, "got %p/%s\n", name, wine_dbgstr_w(name));
     }
 
     hr = IDirectorySearch_GetNextRow(ds, sh);
@@ -445,21 +442,18 @@ static void test_DirectorySearch(void)
     name = NULL;
     hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
     todo_wine
-    ok(hr == S_OK || broken(hr == S_ADS_NOMORE_COLUMNS) /* XP */, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     todo_wine
-    ok((name && !wcscmp(name, L"ADsPath")) || broken(!name) /* XP */, "got %s\n", wine_dbgstr_w(name));
+    ok(name && !wcscmp(name, L"ADsPath"), "got %s\n", wine_dbgstr_w(name));
     FreeADsMem(name);
 
     name = (void *)0xdeadbeef;
     hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
-    ok(hr == S_ADS_NOMORE_COLUMNS || broken(hr == S_OK) /* XP */, "got %#lx\n", hr);
-    ok(name == NULL || broken(name && !wcscmp(name, L"ADsPath")) /* XP */, "got %p/%s\n", name, wine_dbgstr_w(name));
+    ok(hr == S_ADS_NOMORE_COLUMNS, "got %#lx\n", hr);
+    ok(name == NULL, "got %p/%s\n", name, wine_dbgstr_w(name));
 
-    if (0) /* crashes under XP */
-    {
     hr = IDirectorySearch_GetColumn(ds, sh, NULL, &col);
     ok(hr == E_ADS_BAD_PARAMETER, "got %#lx\n", hr);
-    }
 
     hr = IDirectorySearch_GetFirstRow(ds, sh);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -467,8 +461,8 @@ static void test_DirectorySearch(void)
     memset(&col, 0x55, sizeof(col));
     hr = IDirectorySearch_GetColumn(ds, sh, (WCHAR *)L"deadbeef", &col);
     ok(hr == E_ADS_COLUMN_NOT_SET, "got %#lx\n", hr);
-    ok(!col.pszAttrName || broken(col.pszAttrName != NULL) /* XP */, "got %p\n", col.pszAttrName);
-    ok(col.dwADsType == ADSTYPE_INVALID || broken(col.dwADsType != ADSTYPE_INVALID) /* XP */, "got %d\n", col.dwADsType);
+    ok(!col.pszAttrName, "got %p\n", col.pszAttrName);
+    ok(col.dwADsType == ADSTYPE_INVALID, "got %d\n", col.dwADsType);
     ok(!col.pADsValues, "got %p\n", col.pADsValues);
     ok(!col.dwNumValues, "got %lu\n", col.dwNumValues);
     ok(!col.hReserved, "got %p\n", col.hReserved);
@@ -564,7 +558,7 @@ static void test_DirectoryObject(void)
     ok(pref[1].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[1].dwStatus);
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_DS_UNAVAILABLE_CRIT_EXTENSION) || broken(hr == S_OK) /* XP */, "got %#lx\n", hr);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
     if (hr == S_OK)
     {
         hr = IDirectorySearch_GetNextRow(ds, sh);
