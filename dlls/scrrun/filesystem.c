@@ -897,7 +897,7 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     {
         stream->unicode = format == TristateTrue;
         /* Write Unicode BOM */
-        if (stream->unicode && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW)) {
+        if (stream->unicode && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW || disposition == TRUNCATE_EXISTING)) {
             DWORD written = 0;
             BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
             if (!ret || written != sizeof(utf16bom)) {
@@ -939,7 +939,20 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
 
             stream->eof = read != sizeof(buf);
         }
-        else SetFilePointer(stream->file, 0, 0, FILE_END);
+        else
+        {
+            LONG filePosHigh = 0;
+            DWORD filePosLow = SetFilePointer(stream->file, 0, &filePosHigh, FILE_END);
+            if(stream->unicode && filePosHigh == 0 && filePosLow == 0) {
+                /* unicode ForAppending to an empty file, write BOM */
+                DWORD written = 0;
+                BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
+                if (!ret || written != sizeof(utf16bom)) {
+                    ITextStream_Release(&stream->ITextStream_iface);
+                    return create_error(GetLastError());
+                }
+            }
+        }
     }
 
     init_classinfo(&CLSID_TextStream, (IUnknown *)&stream->ITextStream_iface, &stream->classinfo);
@@ -4049,7 +4062,11 @@ static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
 
     TRACE("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
 
-    disposition = create == VARIANT_TRUE ? OPEN_ALWAYS : OPEN_EXISTING;
+    if(mode == ForWriting) {
+        disposition = create == VARIANT_TRUE ? CREATE_ALWAYS : TRUNCATE_EXISTING;
+    } else {
+        disposition = create == VARIANT_TRUE ? OPEN_ALWAYS : OPEN_EXISTING;
+    }
     return create_textstream(filename, disposition, mode, format, stream);
 }
 

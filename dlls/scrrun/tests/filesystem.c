@@ -263,6 +263,7 @@ static void test_createfolder(void)
 
 static void test_textstream(void)
 {
+    WCHAR ExpectedW[10];
     ITextStream *stream;
     VARIANT_BOOL b;
     DWORD written;
@@ -377,6 +378,31 @@ todo_wine {
     ret = WriteFile(file, testfileW, sizeof(testfileW), &written, NULL);
     ok(ret && written == sizeof(testfileW), "got %d\n", ret);
     CloseHandle(file);
+
+    /* opening a non-empty file (from above) for writing should truncate it */
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ITextStream_Release(stream);
+
+    test_file_contents(testfileW,0,"");
+
+    /* appending to an empty file file and specifying unicode should immediately write a BOM */
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForAppending, VARIANT_FALSE, TristateTrue, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ITextStream_Release(stream);
+
+    test_file_contents(testfileW,2,L"\ufeff");
+
+    /* appending to a file that contains a BOM should detect unicode mode, but not write a second BOM */
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForAppending, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ITextStream_Write(stream, name);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ITextStream_Release(stream);
+
+    lstrcpyW(ExpectedW, L"\ufeff");
+    lstrcatW(ExpectedW, name);
+    test_file_contents(testfileW,lstrlenW(ExpectedW)*sizeof(WCHAR),ExpectedW);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForReading, VARIANT_FALSE, TristateFalse, &stream);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
