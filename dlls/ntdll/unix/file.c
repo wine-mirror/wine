@@ -5760,6 +5760,11 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
     TRACE( "(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
            handle, event, apc, apc_context, io, code, in_buffer, in_size, out_buffer, out_size );
 
+    /* some broken applications call this frequently with INVALID_HANDLE_VALUE,
+     * and run slowly if we make a server call every time */
+    if (HandleToLong( handle ) == ~0)
+        return STATUS_INVALID_HANDLE;
+
     switch (device)
     {
     case FILE_DEVICE_BEEP:
