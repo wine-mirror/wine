@@ -97,7 +97,7 @@ static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This)
 
     if (This->lpOutFormat == NULL) {
       /* we must decode to default format */
-      This->cbOutFormat = sizeof(PCMWAVEFORMAT);
+      This->cbOutFormat = sizeof(WAVEFORMATEX);
       This->lpOutFormat = HeapAlloc(GetProcessHeap(), 0, This->cbOutFormat);
       if (This->lpOutFormat == NULL)
         return AVIERR_MEMORY;
@@ -249,7 +249,7 @@ static HRESULT WINAPI ACMStream_fnCreate(IAVIStream *iface, LPARAM lParam1,
     if (((LPWAVEFORMATEX)lParam2)->wFormatTag != WAVE_FORMAT_PCM)
       This->cbOutFormat = sizeof(WAVEFORMATEX) + ((LPWAVEFORMATEX)lParam2)->cbSize;
     else
-      This->cbOutFormat = sizeof(PCMWAVEFORMAT);
+      This->cbOutFormat = sizeof(WAVEFORMATEX);
 
     This->lpOutFormat = HeapAlloc(GetProcessHeap(), 0, This->cbOutFormat);
     if (This->lpOutFormat == NULL)
