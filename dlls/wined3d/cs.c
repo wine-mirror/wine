@@ -23,6 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_sync);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
+WINE_DECLARE_DEBUG_CHANNEL(frametime);
 
 static NTSTATUS (WINAPI *pNtAlertThreadByThreadId)(HANDLE tid);
 static NTSTATUS (WINAPI *pNtWaitForAlertByThreadId)(void *addr, const LARGE_INTEGER *timeout);
@@ -643,11 +644,18 @@ static void wined3d_cs_exec_nop(struct wined3d_cs *cs, const void *data)
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 {
+    static LARGE_INTEGER freq;
+
     struct wined3d_texture *logo_texture, *cursor_texture, *back_buffer;
     struct wined3d_rendertarget_view *dsv = cs->state.fb.depth_stencil;
     const struct wined3d_cs_present *op = data;
     const struct wined3d_swapchain_desc *desc;
     struct wined3d_swapchain *swapchain;
+    LONGLONG elapsed_time;
+    LARGE_INTEGER time;
+
+    if (!freq.QuadPart)
+        QueryPerformanceFrequency(&freq);
 
     swapchain = op->swapchain;
     desc = &swapchain->state.desc;
@@ -703,6 +711,16 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
             wined3d_rendertarget_view_validate_location(dsv, WINED3D_LOCATION_DISCARDED);
     }
 
+    if (TRACE_ON(frametime))
+    {
+        QueryPerformanceCounter(&time);
+        if (swapchain->last_present_time.QuadPart)
+        {
+            elapsed_time = time.QuadPart - swapchain->last_present_time.QuadPart;
+            TRACE_(frametime)("Frame duration %u μs.\n", (unsigned int)(elapsed_time * 1000000 / freq.QuadPart));
+        }
+        swapchain->last_present_time = time;
+    }
     if (TRACE_ON(fps))
     {
         DWORD time = GetTickCount();
