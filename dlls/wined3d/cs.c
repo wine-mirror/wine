@@ -1128,6 +1128,7 @@ static void wined3d_cs_exec_flush(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_context *context;
 
+    TRACE_(d3d_perf)("Flushing adapter.\n");
     context = context_acquire(cs->c.device, NULL, 0);
     cs->c.device->adapter->adapter_ops->adapter_flush_context(context);
     context_release(context);
@@ -2475,6 +2476,8 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
         return WINED3D_OK;
     }
 
+    TRACE_(d3d_perf)("Mapping resource %p (type %u), flags %#x through the CS.\n", resource, resource->type, flags);
+
     wined3d_resource_wait_idle(resource);
 
     /* We might end up invalidating the resource on the CS thread. */
@@ -2526,6 +2529,8 @@ HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context
     }
 
     wined3d_not_from_cs(context->device->cs);
+
+    TRACE_(d3d_perf)("Unmapping resource %p (type %u) through the CS.\n", resource, resource->type);
 
     if (!(op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP)))
         return E_OUTOFMEMORY;
@@ -3279,7 +3284,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
         if (new_pos < tail && new_pos)
             break;
 
-        TRACE("Waiting for free space. Head %lu, tail %lu, packet size %Iu.\n",
+        TRACE_(d3d_perf)("Waiting for free space. Head %lu, tail %lu, packet size %Iu.\n",
                 head, tail, packet_size);
     }
 
@@ -3307,8 +3312,10 @@ static void wined3d_cs_mt_finish(struct wined3d_device_context *context, enum wi
     if (cs->thread_id == GetCurrentThreadId())
         return wined3d_cs_st_finish(context, queue_id);
 
+    TRACE_(d3d_perf)("Waiting for queue %u to be empty.\n", queue_id);
     while (cs->queue[queue_id].head != *(volatile ULONG *)&cs->queue[queue_id].tail)
         wined3d_pause(&spin_count);
+    TRACE_(d3d_perf)("Queue is now empty.\n");
 }
 
 static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
