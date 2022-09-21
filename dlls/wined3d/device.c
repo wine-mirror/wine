@@ -5848,6 +5848,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device_init_swapchain_state(device, swapchain);
         if (wined3d_settings.logo)
             device_load_logo(device, wined3d_settings.logo);
+
+        hr = device->adapter->adapter_ops->adapter_init_3d(device);
     }
     else
     {
@@ -5857,12 +5859,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_device_context_set_depth_stencil_view(context, view);
     }
 
-    if (reset_state)
-        hr = device->adapter->adapter_ops->adapter_init_3d(device);
-
-    /* All done. There is no need to reload resources or shaders, this will happen automatically on the
-     * first use
-     */
+    /* All done. There is no need to reload resources or shaders, this will
+     * happen automatically on the first use. */
     return hr;
 }
 
