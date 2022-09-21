@@ -164,7 +164,7 @@ static GstMemory *wg_allocator_alloc(GstAllocator *gst_allocator, gsize size,
     pthread_mutex_lock(&allocator->mutex);
 
     sample = allocator->request_sample(size, allocator->request_sample_context);
-    if (sample->max_size < size)
+    if (sample && sample->max_size < size)
         InterlockedDecrement(&sample->refcount);
     else
         memory->sample = sample;
