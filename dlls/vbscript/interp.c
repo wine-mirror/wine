@@ -2490,13 +2490,18 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         if(FAILED(hres)) {
             if(hres != SCRIPT_E_RECORDED) {
                 clear_ei(&ctx->ei);
-
-                ctx->ei.scode = hres = map_hres(hres);
-                ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
-                ctx->ei.bstrDescription = get_vbscript_error_string(hres);
+                hres = map_hres(hres);
+            }else if(!ctx->ei.bstrDescription) {
+                hres = map_hres(ctx->ei.scode);
             }else {
                 hres = ctx->ei.scode;
             }
+
+            ctx->ei.scode = hres;
+            if(!ctx->ei.bstrSource)
+                ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
+            if(!ctx->ei.bstrDescription)
+                ctx->ei.bstrDescription = get_vbscript_error_string(hres);
 
             if(exec.resume_next) {
                 unsigned stack_off;
