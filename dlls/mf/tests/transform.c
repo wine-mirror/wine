@@ -4336,11 +4336,33 @@ static void test_wmv_decoder(void)
         .cbAlignment = 1,
     };
 
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
+    const struct buffer_desc output_buffer_desc_nv12 =
+    {
+        .length = actual_width * actual_height * 3 / 2,
+        .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
+    };
+    const struct sample_desc output_sample_desc_nv12 =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 333333,
+        .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+    };
+
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_WMV1};
+    IMFSample *input_sample, *output_sample;
+    IMFCollection *output_samples;
     IMFMediaType *media_type;
     IMFTransform *transform;
-    ULONG i, ret;
+    const BYTE *wmvenc_data;
+    ULONG wmvenc_data_len;
+    DWORD output_status;
+    ULONG i, ret, ref;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -4424,6 +4446,44 @@ static void test_wmv_decoder(void)
 
     check_mft_get_input_stream_info(transform, S_OK, &expect_input_info);
     check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
+
+    load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
+
+    input_sample = create_sample(wmvenc_data + sizeof(DWORD), *(DWORD *)wmvenc_data);
+    wmvenc_data_len -= *(DWORD *)wmvenc_data + sizeof(DWORD);
+    wmvenc_data += *(DWORD *)wmvenc_data + sizeof(DWORD);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
+    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(input_sample, 333333);
+    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+    ret = IMFSample_Release(input_sample);
+    ok(ret <= 1, "Release returned %ld\n", ret);
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    output_sample = create_sample(NULL, expect_output_info.cbSize);
+    for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
+    {
+        winetest_push_context("%lu", i);
+        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+        output_sample = create_sample(NULL, expect_output_info.cbSize);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ok(i == 1, "got %lu output samples\n", i);
+
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc_nv12, L"nv12frame.bmp");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
 
 skip_tests:
     ret = IMFTransform_Release(transform);
