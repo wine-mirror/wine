@@ -43,6 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 #define LSA_MAGIC_CREDENTIALS ('L' << 24 | 'S' << 16 | 'A' << 8 | '1')
 #define LSA_MAGIC_CONTEXT     ('L' << 24 | 'S' << 16 | 'A' << 8 | '2')
 
+static const WCHAR *default_authentication_package = L"Negotiate";
+
 struct lsa_package
 {
     ULONG package_id;
@@ -157,9 +159,30 @@ NTSTATUS WINAPI LsaFreeReturnBuffer(PVOID buffer)
 NTSTATUS WINAPI LsaGetLogonSessionData(PLUID LogonId,
         PSECURITY_LOGON_SESSION_DATA* ppLogonSessionData)
 {
-    FIXME("%p %p stub\n", LogonId, ppLogonSessionData);
-    *ppLogonSessionData = NULL;
-    return STATUS_NOT_IMPLEMENTED;
+    SECURITY_LOGON_SESSION_DATA *data;
+    int authpkg_len;
+    WCHAR *end;
+
+    FIXME("%p %p semi-stub\n", LogonId, ppLogonSessionData);
+
+    authpkg_len = wcslen(default_authentication_package) * sizeof(WCHAR);
+
+    data = calloc(1, sizeof(*data) + authpkg_len + sizeof(WCHAR));
+    if (!data) return STATUS_NO_MEMORY;
+
+    data->Size = sizeof(*data);
+    data->LogonId = *LogonId;
+
+    end = (WCHAR *)(data + 1);
+    wcscpy(end, default_authentication_package);
+
+    data->AuthenticationPackage.Length = authpkg_len;
+    data->AuthenticationPackage.MaximumLength = authpkg_len + sizeof(WCHAR);
+    data->AuthenticationPackage.Buffer = end;
+
+    *ppLogonSessionData = data;
+
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI LsaLogonUser(HANDLE LsaHandle, PLSA_STRING OriginName,

@@ -266,7 +266,7 @@ static void test_get_logon_session_data(void)
     if (!ret) goto cleanup;
 
     status = LsaGetLogonSessionData(&ts.AuthenticationId, &data);
-    todo_wine ok(!status, "got %08lx\n", status);
+    ok(!status, "got %08lx\n", status);
 
     if (status) goto cleanup;
 
