@@ -26,6 +26,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <sspi.h>
+#include <ntsecapi.h>
 
 #include "wine/test.h"
 
@@ -244,6 +245,42 @@ static void testQuerySecurityPackageInfo(void)
     ok(pkg_info == (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
 }
 
+static void test_get_logon_session_data(void)
+{
+    SECURITY_LOGON_SESSION_DATA *data = NULL;
+    TOKEN_STATISTICS ts;
+    HANDLE thread_hdl;
+    NTSTATUS status;
+    DWORD ret_len;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &thread_hdl);
+    ok(ret, "got %ld\n", GetLastError());
+
+    if (!ret) return;
+
+    ret_len = sizeof(TOKEN_STATISTICS);
+    ret = GetTokenInformation(thread_hdl, TokenStatistics, &ts, sizeof(TOKEN_STATISTICS), &ret_len);
+    ok(ret, "got %ld\n", GetLastError());
+
+    if (!ret) goto cleanup;
+
+    status = LsaGetLogonSessionData(&ts.AuthenticationId, &data);
+    todo_wine ok(!status, "got %08lx\n", status);
+
+    if (status) goto cleanup;
+
+    ok(data->Size >= sizeof(SECURITY_LOGON_SESSION_DATA), "Size == %ld\n", data->Size);
+    ok(!memcmp(&data->LogonId, &ts.AuthenticationId, sizeof(LUID)), "LogonId mismatch\n");
+
+    /* We can't easily verify the content of the various logon parameters, so just ensure data is present */
+    ok(data->AuthenticationPackage.Length > 0, "AuthenticationPackage missing\n");
+
+cleanup:
+    CloseHandle(thread_hdl);
+    if (data != NULL) LsaFreeReturnBuffer(data);
+}
+
 START_TEST(main)
 {
     InitFunctionPtrs();
@@ -260,4 +297,6 @@ START_TEST(main)
     }
     if(secdll)
         FreeLibrary(secdll);
+
+    test_get_logon_session_data();
 }
