@@ -5603,8 +5603,12 @@ static void test_client_cert_authentication(void)
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
     ok( ret, "failed to send request %lu\n", GetLastError() );
 
+    SetLastError( 0xdeadbeef );
     ret = WinHttpReceiveResponse( req, NULL );
-    ok( ret, "failed to receive response %lu\n", GetLastError() );
+    todo_wine {
+    ok( !ret, "unexpected success\n" );
+    ok( GetLastError() == SEC_E_CERT_EXPIRED, "got %lu\n", GetLastError() );
+    }
 
     CertFreeCertificateContext( cert );
     CertCloseStore( store, 0 );
