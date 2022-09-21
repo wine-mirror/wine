@@ -38,6 +38,9 @@ wmaencdata.bin RCDATA wmaencdata.bin
 /* @makedep: wmadecdata.bin */
 wmadecdata.bin RCDATA wmadecdata.bin
 
+/* @makedep: wmvencdata.bin */
+wmvencdata.bin RCDATA wmvencdata.bin
+
 /* Generated with:
  *  gst-launch-1.0 filesrc location=dlls/mf/tests/audiodata.bin ! \
  *      audio/x-raw,format=F32LE,rate=22050,channels=2,layout=interleaved ! \

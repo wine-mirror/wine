@@ -572,7 +572,7 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
 {
     static const DWORD expect_flags = MFT_OUTPUT_DATA_BUFFER_INCOMPLETE | MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE
             | MFT_OUTPUT_DATA_BUFFER_STREAM_END | MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
-    MFT_OUTPUT_DATA_BUFFER output[2];
+    MFT_OUTPUT_DATA_BUFFER output[3];
     HRESULT hr, ret;
     DWORD status;
 
@@ -3917,12 +3917,47 @@ static void test_wmv_encoder(void)
         .cbAlignment = 1,
     };
 
+    const struct buffer_desc output_buffer_desc[] =
+    {
+        {.length = -1 /* variable */},
+    };
+    const struct attribute_desc output_sample_attributes_key[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 0),
+        {0},
+    };
+    const struct sample_desc output_sample_desc[] =
+    {
+        {
+            .attributes = output_sample_attributes_key,
+            .sample_time = 0, .sample_duration = 333333,
+            .buffer_count = 1, .buffers = output_buffer_desc,
+        },
+        {
+            .attributes = output_sample_attributes,
+            .sample_time = 333333, .sample_duration = 333333,
+            .buffer_count = 1, .buffers = output_buffer_desc, .repeat_count = 4
+        },
+    };
+
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_WMV1};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    IMFSample *input_sample, *output_sample;
+    DWORD status, length, output_status;
+    MFT_OUTPUT_DATA_BUFFER output;
+    IMFCollection *output_samples;
+    const BYTE *nv12frame_data;
     IMFMediaType *media_type;
+    ULONG nv12frame_data_len;
     IMFTransform *transform;
     ULONG i, ret;
     HRESULT hr;
+    LONG ref;
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
@@ -3986,6 +4021,63 @@ static void test_wmv_encoder(void)
     check_mft_get_input_stream_info(transform, S_OK, &expect_input_info);
     check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
 
+    if (!has_video_processor)
+    {
+        win_skip("Skipping WMV encoder tests on Win7\n");
+        goto done;
+    }
+
+    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+    /* skip BMP header and RGB data from the dump */
+    length = *(DWORD *)(nv12frame_data + 2);
+    nv12frame_data_len = nv12frame_data_len - length;
+    nv12frame_data = nv12frame_data + length;
+    ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    for (i = 0; i < 5; i++)
+    {
+        input_sample = create_sample(nv12frame_data, nv12frame_data_len);
+        hr = IMFSample_SetSampleTime(input_sample, i * 333333);
+        ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+        hr = IMFSample_SetSampleDuration(input_sample, 333333);
+        ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        ref = IMFSample_Release(input_sample);
+        ok(ref <= 1, "Release returned %ld\n", ref);
+
+        output_sample = create_sample(NULL, expect_output_info.cbSize);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+    }
+
+    ret = check_mf_sample_collection(output_samples, output_sample_desc, L"wmvencdata.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
+
+    output_sample = create_sample(NULL, expect_output_info.cbSize);
+    status = 0xdeadbeef;
+    memset(&output, 0, sizeof(output));
+    output.pSample = output_sample;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+    ok(output.pSample == output_sample, "got pSample %p\n", output.pSample);
+    ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
+    ok(status == 0, "got status %#lx\n", status);
+    hr = IMFSample_GetTotalLength(output.pSample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+done:
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
 
