@@ -90,7 +90,8 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     ok_ (file, line)((val).member == (exp).member, "got " #member " " fmt "\n", (val).member)
 #define check_member(val, exp, fmt, member) check_member_(__FILE__, __LINE__, val, exp, fmt, member)
 
-void check_attributes_(int line, IMFAttributes *attributes, const struct attribute_desc *desc, ULONG limit)
+void check_attributes_(const char *file, int line, IMFAttributes *attributes,
+        const struct attribute_desc *desc, ULONG limit)
 {
     char buffer[256], *buf = buffer;
     PROPVARIANT value;
@@ -101,7 +102,7 @@ void check_attributes_(int line, IMFAttributes *attributes, const struct attribu
     {
         hr = IMFAttributes_GetItem(attributes, desc[i].key, &value);
         todo_wine_if(desc[i].todo)
-        ok_(__FILE__, line)(hr == S_OK, "%s missing, hr %#lx\n", debugstr_a(desc[i].name), hr);
+        ok_(file, line)(hr == S_OK, "%s missing, hr %#lx\n", debugstr_a(desc[i].name), hr);
         if (hr != S_OK) continue;
 
         switch (value.vt)
@@ -128,7 +129,7 @@ void check_attributes_(int line, IMFAttributes *attributes, const struct attribu
 
         ret = PropVariantCompareEx(&value, &desc[i].value, 0, 0);
         todo_wine_if(desc[i].todo_value)
-        ok_(__FILE__, line)(ret == 0, "%s mismatch, type %u, value %s\n",
+        ok_(file, line)(ret == 0, "%s mismatch, type %u, value %s\n",
                 debugstr_a(desc[i].name), value.vt, buffer);
     }
 }
@@ -615,9 +616,7 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     return ret;
 }
 
-typedef DWORD (*compare_cb)(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
-
-static DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
 
@@ -651,7 +650,7 @@ static DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, con
     return diff * 100 / 256 / size;
 }
 
-static DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     DWORD i, x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
 
@@ -684,7 +683,7 @@ static DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, con
     return diff * 100 / 256 / size;
 }
 
-static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
 
@@ -709,7 +708,7 @@ static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, co
     return diff * 100 / 256 / size;
 }
 
-static DWORD compare_pcm16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_pcm16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
     const INT16 *data_pcm = (INT16 *)data, *expect_pcm = (INT16 *)expect;
     DWORD i, size = *length / 2, diff = 0;
@@ -730,9 +729,7 @@ static DWORD compare_bytes(const BYTE *data, DWORD *length, const RECT *rect, co
     return diff * 100 / 256 / size;
 }
 
-typedef void (*dump_cb)(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
-
-static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
 {
     DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
     static const char magic[2] = "BM";
@@ -765,7 +762,7 @@ static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE 
     ok(written == length, "written %lu bytes\n", written);
 }
 
-static void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
 {
     DWORD written, x, y, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
     BYTE *rgb32_data = malloc(width * height * 4), *rgb32 = rgb32_data;
@@ -787,7 +784,7 @@ static void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE o
     ok(written == length, "written %lu bytes\n", written);
 }
 
-static void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
 {
     DWORD written, x, y, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
     BYTE *rgb32_data = malloc(width * height * 4), *rgb32 = rgb32_data;
@@ -808,27 +805,6 @@ static void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE o
     ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(written == length, "written %lu bytes\n", written);
 }
-
-struct buffer_desc
-{
-    DWORD length;
-    BOOL todo_length;
-    compare_cb compare;
-    dump_cb dump;
-    RECT rect;
-};
-
-struct sample_desc
-{
-    const struct attribute_desc *attributes;
-    LONGLONG sample_time;
-    LONGLONG sample_duration;
-    DWORD buffer_count;
-    const struct buffer_desc *buffers;
-    DWORD repeat_count;
-    BOOL todo_length;
-    LONGLONG todo_time;
-};
 
 typedef void (*enum_mf_media_buffers_cb)(IMFMediaBuffer *buffer, const struct buffer_desc *desc, void *context);
 static void enum_mf_media_buffers(IMFSample *sample, const struct sample_desc *sample_desc,
@@ -937,8 +913,8 @@ static void dump_mf_sample_collection(IMFCollection *samples, const struct sampl
     CloseHandle(output);
 }
 
-#define check_mf_media_buffer(a, b, c) check_mf_media_buffer_(__LINE__, a, b, c)
-static DWORD check_mf_media_buffer_(int line, IMFMediaBuffer *buffer, const struct buffer_desc *expect,
+#define check_mf_media_buffer(a, b, c) check_mf_media_buffer_(__FILE__, __LINE__, a, b, c)
+static DWORD check_mf_media_buffer_(const char *file, int line, IMFMediaBuffer *buffer, const struct buffer_desc *expect,
         const BYTE **expect_data, DWORD *expect_data_len)
 {
     DWORD length, diff = 0, expect_length = expect->length;
@@ -953,20 +929,20 @@ static DWORD check_mf_media_buffer_(int line, IMFMediaBuffer *buffer, const stru
     }
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &length);
-    ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "Lock returned %#lx\n", hr);
     todo_wine_if(expect->todo_length)
-    ok_(__FILE__, line)(length == expect_length, "got length %#lx\n", length);
+    ok_(file, line)(length == expect_length, "got length %#lx\n", length);
 
     if (*expect_data_len < length)
         todo_wine_if(expect->todo_length)
-        ok_(__FILE__, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
+        ok_(file, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
     else if (!expect->compare)
         diff = compare_bytes(data, &length, NULL, *expect_data);
     else
         diff = expect->compare(data, &length, &expect->rect, *expect_data);
 
     hr = IMFMediaBuffer_Unlock(buffer);
-    ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
 
     *expect_data = *expect_data + min(length, *expect_data_len);
     *expect_data_len = *expect_data_len - min(length, *expect_data_len);
@@ -980,6 +956,7 @@ struct check_mf_sample_context
     const BYTE *data;
     DWORD data_len;
     DWORD diff;
+    const char *file;
     int line;
 };
 
@@ -987,57 +964,57 @@ static void check_mf_sample_buffer(IMFMediaBuffer *buffer, const struct buffer_d
 {
     struct check_mf_sample_context *ctx = context;
     DWORD expect_length = expect->length == -1 ? *(DWORD *)ctx->data : expect->length;
-    ctx->diff += check_mf_media_buffer_(ctx->line, buffer, expect, &ctx->data, &ctx->data_len);
+    ctx->diff += check_mf_media_buffer_(ctx->file, ctx->line, buffer, expect, &ctx->data, &ctx->data_len);
     ctx->total_length += expect_length;
 }
 
-#define check_mf_sample(a, b, c, d) check_mf_sample_(__LINE__, a, b, c, d)
-static DWORD check_mf_sample_(int line, IMFSample *sample, const struct sample_desc *expect,
+#define check_mf_sample(a, b, c, d) check_mf_sample_(__FILE__, __LINE__, a, b, c, d)
+static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, const struct sample_desc *expect,
         const BYTE **expect_data, DWORD *expect_data_len)
 {
-    struct check_mf_sample_context ctx = {.data = *expect_data, .data_len = *expect_data_len, .line = line};
+    struct check_mf_sample_context ctx = {.data = *expect_data, .data_len = *expect_data_len, .file = file, .line = line};
     DWORD buffer_count, total_length, sample_flags;
     LONGLONG timestamp;
     HRESULT hr;
 
     if (expect->attributes)
-        check_attributes_(line, (IMFAttributes *)sample, expect->attributes, -1);
+        check_attributes_(file, line, (IMFAttributes *)sample, expect->attributes, -1);
 
     buffer_count = 0xdeadbeef;
     hr = IMFSample_GetBufferCount(sample, &buffer_count);
-    ok_(__FILE__, line)(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
-    ok_(__FILE__, line)(buffer_count == expect->buffer_count,
+    ok_(file, line)(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
+    ok_(file, line)(buffer_count == expect->buffer_count,
             "got %lu buffers\n", buffer_count);
 
     sample_flags = 0xdeadbeef;
     hr = IMFSample_GetSampleFlags(sample, &sample_flags);
-    ok_(__FILE__, line)(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
-    ok_(__FILE__, line)(sample_flags == 0,
+    ok_(file, line)(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
+    ok_(file, line)(sample_flags == 0,
             "got sample flags %#lx\n", sample_flags);
 
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleTime(sample, &timestamp);
-    ok_(__FILE__, line)(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
     todo_wine_if(expect->todo_time && timestamp == expect->todo_time)
-    ok_(__FILE__, line)(llabs(timestamp - expect->sample_time) <= 50,
+    ok_(file, line)(llabs(timestamp - expect->sample_time) <= 50,
             "got sample time %I64d\n", timestamp);
 
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleDuration(sample, &timestamp);
-    ok_(__FILE__, line)(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
     todo_wine_if(expect->todo_length)
-    ok_(__FILE__, line)(llabs(timestamp - expect->sample_duration) <= 1,
+    ok_(file, line)(llabs(timestamp - expect->sample_duration) <= 1,
             "got sample duration %I64d\n", timestamp);
 
     enum_mf_media_buffers(sample, expect, check_mf_sample_buffer, &ctx);
 
     total_length = 0xdeadbeef;
     hr = IMFSample_GetTotalLength(sample, &total_length);
-    ok_(__FILE__, line)(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
     todo_wine_if(expect->todo_length)
-    ok_(__FILE__, line)(total_length == ctx.total_length,
+    ok_(file, line)(total_length == ctx.total_length,
             "got total length %#lx\n", total_length);
-    ok_(__FILE__, line)(*expect_data_len >= ctx.total_length,
+    ok_(file, line)(*expect_data_len >= ctx.total_length,
             "missing %#lx data\n", ctx.total_length - *expect_data_len);
 
     *expect_data = ctx.data;
@@ -1049,14 +1026,13 @@ static DWORD check_mf_sample_(int line, IMFSample *sample, const struct sample_d
 static void check_mf_sample_collection_enum(IMFSample *sample, const struct sample_desc *expect, void *context)
 {
     struct check_mf_sample_context *ctx = context;
-    ctx->diff += check_mf_sample_(ctx->line, sample, expect, &ctx->data, &ctx->data_len);
+    ctx->diff += check_mf_sample_(ctx->file, ctx->line, sample, expect, &ctx->data, &ctx->data_len);
 }
 
-#define check_mf_sample_collection(a, b, c) check_mf_sample_collection_(__LINE__, a, b, c)
-static DWORD check_mf_sample_collection_(int line, IMFCollection *samples,
+DWORD check_mf_sample_collection_(const char *file, int line, IMFCollection *samples,
         const struct sample_desc *expect_samples, const WCHAR *expect_data_filename)
 {
-    struct check_mf_sample_context ctx = {.line = line};
+    struct check_mf_sample_context ctx = {.file = file, .line = line};
     DWORD count;
     HRESULT hr;
 
@@ -1066,7 +1042,7 @@ static DWORD check_mf_sample_collection_(int line, IMFCollection *samples,
     dump_mf_sample_collection(samples, expect_samples, expect_data_filename);
 
     hr = IMFCollection_GetElementCount(samples, &count);
-    ok_(__FILE__, line)(hr == S_OK, "GetElementCount returned %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "GetElementCount returned %#lx\n", hr);
 
     return ctx.diff / count;
 }

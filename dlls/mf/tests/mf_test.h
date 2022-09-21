@@ -53,7 +53,44 @@ typedef struct attribute_desc media_type_desc[32];
 #define ATTR_RATIO(k, n, d, ...)  {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.HighPart = n, .LowPart = d}}, .ratio = TRUE, __VA_ARGS__ }
 #define ATTR_UINT64(k, v, ...)    {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.QuadPart = v}}, __VA_ARGS__ }
 
-#define check_media_type(a, b, c) check_attributes_(__LINE__, (IMFAttributes *)a, b, c)
-#define check_attributes(a, b, c) check_attributes_(__LINE__, a, b, c)
-extern void check_attributes_(int line, IMFAttributes *attributes, const struct attribute_desc *desc, ULONG limit);
+#define check_media_type(a, b, c) check_attributes_(__FILE__, __LINE__, (IMFAttributes *)a, b, c)
+#define check_attributes(a, b, c) check_attributes_(__FILE__, __LINE__, a, b, c)
+extern void check_attributes_(const char *file, int line, IMFAttributes *attributes,
+        const struct attribute_desc *desc, ULONG limit);
 extern void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc, ULONG limit);
+
+typedef DWORD (*compare_cb)(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
+extern DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
+extern DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
+extern DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
+extern DWORD compare_pcm16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect);
+
+typedef void (*dump_cb)(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
+extern void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
+extern void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
+extern void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output);
+
+struct buffer_desc
+{
+    DWORD length;
+    BOOL todo_length;
+    compare_cb compare;
+    dump_cb dump;
+    RECT rect;
+};
+
+struct sample_desc
+{
+    const struct attribute_desc *attributes;
+    LONGLONG sample_time;
+    LONGLONG sample_duration;
+    DWORD buffer_count;
+    const struct buffer_desc *buffers;
+    DWORD repeat_count;
+    BOOL todo_length;
+    LONGLONG todo_time;
+};
+
+#define check_mf_sample_collection(a, b, c) check_mf_sample_collection_(__FILE__, __LINE__, a, b, c)
+extern DWORD check_mf_sample_collection_(const char *file, int line, IMFCollection *samples,
+        const struct sample_desc *expect_samples, const WCHAR *expect_data_filename);

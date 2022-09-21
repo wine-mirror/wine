@@ -102,6 +102,36 @@ static HWND create_window(void)
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
 }
 
+static IMFSample *create_sample(const BYTE *data, ULONG size)
+{
+    IMFMediaBuffer *media_buffer;
+    IMFSample *sample;
+    DWORD length;
+    BYTE *buffer;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "MFCreateSample returned %#lx\n", hr);
+    hr = MFCreateMemoryBuffer(size, &media_buffer);
+    ok(hr == S_OK, "MFCreateMemoryBuffer returned %#lx\n", hr);
+    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
+    ok(hr == S_OK, "Lock returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
+    if (!data) memset(buffer, 0xcd, size);
+    else memcpy(buffer, data, size);
+    hr = IMFMediaBuffer_Unlock(media_buffer);
+    ok(hr == S_OK, "Unlock returned %#lx\n", hr);
+    hr = IMFMediaBuffer_SetCurrentLength(media_buffer, data ? size : 0);
+    ok(hr == S_OK, "SetCurrentLength returned %#lx\n", hr);
+    hr = IMFSample_AddBuffer(sample, media_buffer);
+    ok(hr == S_OK, "AddBuffer returned %#lx\n", hr);
+    ret = IMFMediaBuffer_Release(media_buffer);
+    ok(ret == 1, "Release returned %lu\n", ret);
+
+    return sample;
+}
+
 #define check_handler_required_attributes(a, b) check_handler_required_attributes_(__LINE__, a, b)
 static void check_handler_required_attributes_(int line, IMFMediaTypeHandler *handler, const struct attribute_desc *attributes)
 {
@@ -1879,6 +1909,51 @@ static HRESULT wait_media_event_(int line, IMFMediaSession *session, IMFAsyncCal
     return status;
 }
 
+static IMFMediaSource *create_media_source(const WCHAR *name, const WCHAR *mime)
+{
+    IMFSourceResolver *resolver;
+    IMFAttributes *attributes;
+    const BYTE *resource_data;
+    MF_OBJECT_TYPE obj_type;
+    IMFMediaSource *source;
+    IMFByteStream *stream;
+    ULONG resource_len;
+    HRSRC resource;
+    HRESULT hr;
+
+    resource = FindResourceW(NULL, name, (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW %s failed, error %lu\n", debugstr_w(name), GetLastError());
+    resource_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    resource_len = SizeofResource(GetModuleHandleW(NULL), resource);
+
+    hr = MFCreateTempFile(MF_ACCESSMODE_READWRITE, MF_OPENMODE_DELETE_IF_EXIST, MF_FILEFLAGS_NONE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_Write(stream, resource_data, resource_len, &resource_len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_SetCurrentPosition(stream, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, mime);
+    ok(hr == S_OK, "Failed to set string value, hr %#lx.\n", hr);
+    IMFAttributes_Release(attributes);
+
+    hr = MFCreateSourceResolver(&resolver);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&source);
+    ok(hr == S_OK || broken(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE), "Unexpected hr %#lx.\n", hr);
+    IMFSourceResolver_Release(resolver);
+    IMFByteStream_Release(stream);
+
+    if (FAILED(hr))
+        return NULL;
+
+    ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
+    return source;
+}
+
 static void test_media_session_events(void)
 {
     static const media_type_desc audio_float_44100 =
@@ -2547,6 +2622,10 @@ struct test_grabber_callback
 {
     IMFSampleGrabberSinkCallback IMFSampleGrabberSinkCallback_iface;
     LONG refcount;
+
+    IMFCollection *samples;
+    HANDLE ready_event;
+    HANDLE done_event;
 };
 
 static struct test_grabber_callback *impl_from_IMFSampleGrabberSinkCallback(IMFSampleGrabberSinkCallback *iface)
@@ -2581,7 +2660,14 @@ static ULONG WINAPI test_grabber_callback_Release(IMFSampleGrabberSinkCallback *
     ULONG refcount = InterlockedDecrement(&grabber->refcount);
 
     if (!refcount)
+    {
+        IMFCollection_Release(grabber->samples);
+        if (grabber->ready_event)
+            CloseHandle(grabber->ready_event);
+        if (grabber->done_event)
+            CloseHandle(grabber->done_event);
         free(grabber);
+    }
 
     return refcount;
 }
@@ -2620,7 +2706,30 @@ static HRESULT WINAPI test_grabber_callback_OnSetPresentationClock(IMFSampleGrab
 static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSinkCallback *iface, REFGUID major_type,
         DWORD sample_flags, LONGLONG sample_time, LONGLONG sample_duration, const BYTE *buffer, DWORD sample_size)
 {
-    return E_NOTIMPL;
+    struct test_grabber_callback *grabber = CONTAINING_RECORD(iface, struct test_grabber_callback, IMFSampleGrabberSinkCallback_iface);
+    IMFSample *sample;
+    HRESULT hr;
+    DWORD res;
+
+    if (!grabber->ready_event)
+        return E_NOTIMPL;
+
+    sample = create_sample(buffer, sample_size);
+    hr = IMFSample_SetSampleFlags(sample, sample_flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* FIXME: sample time is inconsistent across windows versions, ignore it */
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSample_SetSampleDuration(sample, sample_duration);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFCollection_AddElement(grabber->samples, (IUnknown *)sample);
+    IMFSample_Release(sample);
+
+    SetEvent(grabber->ready_event);
+    res = WaitForSingleObject(grabber->done_event, 1000);
+    ok(!res, "WaitForSingleObject returned %#lx", res);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI test_grabber_callback_OnShutdown(IMFSampleGrabberSinkCallback *iface)
@@ -2646,12 +2755,15 @@ static const IMFSampleGrabberSinkCallbackVtbl test_grabber_callback_vtbl =
 static IMFSampleGrabberSinkCallback *create_test_grabber_callback(void)
 {
     struct test_grabber_callback *grabber;
+    HRESULT hr;
 
     if (!(grabber = calloc(1, sizeof(*grabber))))
         return NULL;
 
     grabber->IMFSampleGrabberSinkCallback_iface.lpVtbl = &test_grabber_callback_vtbl;
     grabber->refcount = 1;
+    hr = MFCreateCollection(&grabber->samples);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     return &grabber->IMFSampleGrabberSinkCallback_iface;
 }
@@ -4538,6 +4650,157 @@ static void test_sample_grabber_is_mediatype_supported(void)
     IMFSampleGrabberSinkCallback_Release(grabber_callback);
 }
 
+static void test_sample_grabber_orientation(GUID subtype)
+{
+    media_type_desc video_rgb32_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, subtype),
+    };
+
+    struct test_grabber_callback *grabber_callback;
+    IMFTopologyNode *src_node, *sink_node;
+    IMFPresentationDescriptor *pd;
+    IMFAsyncCallback *callback;
+    IMFActivate *sink_activate;
+    IMFMediaType *output_type;
+    IMFMediaSession *session;
+    IMFStreamDescriptor *sd;
+    IMFMediaSource *source;
+    IMFTopology *topology;
+    PROPVARIANT propvar;
+    BOOL selected;
+    HRESULT hr;
+    DWORD res;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    if (!(source = create_media_source(L"test.mp4", L"video/mp4")))
+    {
+        win_skip("MP4 media source is not supported, skipping tests.\n");
+        return;
+    }
+
+    callback = create_test_callback();
+    grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
+
+    grabber_callback->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!grabber_callback->ready_event, "CreateEventW failed, error %lu\n", GetLastError());
+    grabber_callback->done_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!grabber_callback->done_event, "CreateEventW failed, error %lu\n", GetLastError());
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopology_AddNode(topology, sink_node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopology_AddNode(topology, src_node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyNode_ConnectOutput(src_node, 0, sink_node, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, 0, &selected, &sd);
+    ok(selected, "got selected %u.\n", !!selected);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_source_node(source, -1, src_node, pd, sd);
+    IMFTopologyNode_Release(src_node);
+    IMFPresentationDescriptor_Release(pd);
+    IMFStreamDescriptor_Release(sd);
+
+    hr = MFCreateMediaType(&output_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(output_type, video_rgb32_desc, -1);
+    hr = MFCreateSampleGrabberSinkActivate(output_type, &grabber_callback->IMFSampleGrabberSinkCallback_iface, &sink_activate);
+    ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
+    IMFMediaType_Release(output_type);
+
+    hr = IMFTopologyNode_SetObject(sink_node, (IUnknown *)sink_activate);
+    ok(hr == S_OK, "Failed to set object, hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetUINT32(sink_node, &MF_TOPONODE_CONNECT_METHOD, MF_CONNECT_ALLOW_DECODER);
+    ok(hr == S_OK, "Failed to set connect method, hr %#lx.\n", hr);
+    IMFTopologyNode_Release(sink_node);
+
+    hr = IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSession_SetTopology(session, 0, topology);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopology_Release(topology);
+
+    propvar.vt = VT_EMPTY;
+    hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    res = WaitForSingleObject(grabber_callback->ready_event, 5000);
+    ok(!res, "WaitForSingleObject returned %#lx\n", res);
+    CloseHandle(grabber_callback->ready_event);
+    grabber_callback->ready_event = NULL;
+
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB32))
+    {
+        const struct buffer_desc buffer_desc_rgb32 =
+        {
+            .length = 64 * 64 * 4, .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.right = 64, .bottom = 64},
+        };
+        const struct sample_desc sample_desc_rgb32 =
+        {
+            .sample_duration = 333667, .buffer_count = 1, .buffers = &buffer_desc_rgb32,
+        };
+        check_mf_sample_collection(grabber_callback->samples, &sample_desc_rgb32, L"rgb32frame-grabber.bmp");
+    }
+    else if (IsEqualGUID(&subtype, &MFVideoFormat_NV12))
+    {
+        const struct buffer_desc buffer_desc_nv12 =
+        {
+            .length = 64 * 64 * 3 / 2, .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 64, .bottom = 64},
+        };
+        const struct sample_desc sample_desc_nv12 =
+        {
+            .sample_duration = 333667, .buffer_count = 1, .buffers = &buffer_desc_nv12,
+        };
+        check_mf_sample_collection(grabber_callback->samples, &sample_desc_nv12, L"nv12frame-grabber.bmp");
+    }
+
+    SetEvent(grabber_callback->done_event);
+
+    hr = IMFMediaSession_ClearTopologies(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSession_Close(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionClosed, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "got vt %u\n", propvar.vt);
+
+    hr = IMFMediaSession_Shutdown(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFActivate_ShutdownObject(sink_activate);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFActivate_Release(sink_activate);
+    IMFMediaSession_Release(session);
+    IMFMediaSource_Release(source);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
+}
+
 static void test_quality_manager(void)
 {
     IMFPresentationClock *clock;
@@ -6239,6 +6502,8 @@ START_TEST(mf)
     test_presentation_clock();
     test_sample_grabber();
     test_sample_grabber_is_mediatype_supported();
+    test_sample_grabber_orientation(MFVideoFormat_RGB32);
+    test_sample_grabber_orientation(MFVideoFormat_NV12);
     test_quality_manager();
     test_sar();
     test_evr();
