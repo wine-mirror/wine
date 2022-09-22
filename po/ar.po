@@ -102,7 +102,7 @@ msgstr "معلومات الدّعم"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:123
+#: programs/net/net.rc:47 programs/notepad/notepad.rc:124
 #: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
 #: programs/progman/progman.rc:106 programs/progman/progman.rc:124
 #: programs/progman/progman.rc:142 programs/progman/progman.rc:158
@@ -205,21 +205,22 @@ msgstr "&تثبيت"
 #: dlls/shell32/shell32.rc:340 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:124
-#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
-#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
-#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
-#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
-#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:302
-#: programs/regedit/regedit.rc:313 programs/regedit/regedit.rc:326
-#: programs/regedit/regedit.rc:342 programs/regedit/regedit.rc:355
-#: programs/regedit/regedit.rc:368 programs/taskmgr/taskmgr.rc:443
-#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
-#: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
-#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
-#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
-#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
+#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:125
+#: programs/notepad/notepad.rc:138 programs/oleview/oleview.rc:162
+#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
+#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
+#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
+#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
+#: programs/regedit/regedit.rc:302 programs/regedit/regedit.rc:313
+#: programs/regedit/regedit.rc:326 programs/regedit/regedit.rc:342
+#: programs/regedit/regedit.rc:355 programs/regedit/regedit.rc:368
+#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
+#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
+#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
+#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
+#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
+#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
+#: programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "ألغِ"
 
@@ -294,7 +295,7 @@ msgstr "برامج بتنسيق exe"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
 #: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:197
-#: programs/notepad/notepad.rc:80 programs/oleview/oleview.rc:103
+#: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
 msgid "All files (*.*)"
@@ -450,7 +451,7 @@ msgstr "إ&عادة الضبط"
 #: dlls/comdlg32/comdlg32.rc:531 dlls/ieframe/ieframe.rc:58
 #: dlls/msacm32/msacm32.rc:52 dlls/oledlg/oledlg.rc:96
 #: dlls/shell32/shell32.rc:128 programs/clock/clock.rc:44
-#: programs/notepad/notepad.rc:64 programs/notepad/notepad.rc:125
+#: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:126
 #: programs/oleview/oleview.rc:72 programs/progman/progman.rc:55
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
 #: programs/progman/progman.rc:144 programs/progman/progman.rc:160
@@ -913,7 +914,7 @@ msgstr "&عمودي"
 msgid "L&eft:"
 msgstr "ال&يسار:"
 
-#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:118
+#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:119
 msgid "&Right:"
 msgstr "الي&مين:"
 
@@ -921,7 +922,7 @@ msgstr "الي&مين:"
 msgid "T&op:"
 msgstr "الأع&لى:"
 
-#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:120
+#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:121
 msgid "&Bottom:"
 msgstr "الأس&فل:"
 
@@ -2469,7 +2470,7 @@ msgstr "الخيارات المنشودة للشهادة"
 
 #: dlls/cryptui/cryptui.rc:355 dlls/ieframe/ieframe.rc:45
 #: dlls/shell32/shell32.rc:43 dlls/shell32/shell32.rc:120
-#: programs/notepad/notepad.rc:60 programs/oleview/oleview.rc:59
+#: programs/notepad/notepad.rc:61 programs/oleview/oleview.rc:59
 #: programs/oleview/oleview.rc:61 programs/oleview/oleview.rc:85
 #: programs/regedit/regedit.rc:65 programs/taskmgr/taskmgr.rc:52
 #: programs/winefile/winefile.rc:48 programs/wordpad/wordpad.rc:69
@@ -16372,128 +16373,153 @@ msgstr "ابحث عن ال&تالي\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "ا&ستبدل...\tCtrl+H"
 
-#: programs/notepad/notepad.rc:62 programs/oleview/oleview.rc:68
+#: programs/notepad/notepad.rc:59
+#, fuzzy
+#| msgid "&New...\tCtrl+N"
+msgid "&Go To...\tCtrl+G"
+msgstr "&جديد...\tCtrl+N"
+
+#: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
 #: programs/wordpad/wordpad.rc:74 programs/wordpad/wordpad.rc:275
 msgid "&Status Bar"
 msgstr "ش&ريط الحالة"
 
-#: programs/notepad/notepad.rc:65 programs/progman/progman.rc:56
+#: programs/notepad/notepad.rc:66 programs/progman/progman.rc:56
 #: programs/regedit/regedit.rc:80 programs/winefile/winefile.rc:83
 msgid "&Contents\tF1"
 msgstr "الم&حتويات\tF1"
 
-#: programs/notepad/notepad.rc:66
+#: programs/notepad/notepad.rc:67
 msgid "&About Notepad"
 msgstr "&معلومات حول المفكرة"
 
-#: programs/notepad/notepad.rc:106
+#: programs/notepad/notepad.rc:107
 msgid "Page Setup"
 msgstr "إعداد الصفحة"
 
-#: programs/notepad/notepad.rc:108
+#: programs/notepad/notepad.rc:109
 msgid "&Header:"
 msgstr "الت&رويسة:"
 
-#: programs/notepad/notepad.rc:110
+#: programs/notepad/notepad.rc:111
 msgid "&Footer:"
 msgstr "ال&تذييل:"
 
-#: programs/notepad/notepad.rc:113
+#: programs/notepad/notepad.rc:114
 msgid "Margins (millimeters)"
 msgstr "الحواف ( مليميتر )"
 
-#: programs/notepad/notepad.rc:114
+#: programs/notepad/notepad.rc:115
 msgid "&Left:"
 msgstr "ال&يسار:"
 
-#: programs/notepad/notepad.rc:116
+#: programs/notepad/notepad.rc:117
 msgid "&Top:"
 msgstr "الأ&على:"
 
 #: programs/notepad/notepad.rc:132
+msgid "Go To Line"
+msgstr ""
+
+#: programs/notepad/notepad.rc:134
+#, fuzzy
+#| msgid "CRL Number"
+msgid "&Line Number:"
+msgstr "رقم CRL"
+
+#: programs/notepad/notepad.rc:137
+msgid "Go To"
+msgstr ""
+
+#: programs/notepad/notepad.rc:145
 msgid "Encoding:"
 msgstr "الترميز:"
 
-#: programs/notepad/notepad.rc:138 programs/wordpad/wordpad.rc:289
+#: programs/notepad/notepad.rc:151 programs/wordpad/wordpad.rc:289
 msgctxt "accelerator Select All"
 msgid "A"
 msgstr "A"
 
-#: programs/notepad/notepad.rc:139 programs/wordpad/wordpad.rc:291
+#: programs/notepad/notepad.rc:152 programs/wordpad/wordpad.rc:291
 msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: programs/notepad/notepad.rc:140 programs/regedit/regedit.rc:377
+#: programs/notepad/notepad.rc:153 programs/regedit/regedit.rc:377
 #: programs/wordpad/wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
 
-#: programs/notepad/notepad.rc:141 programs/wordpad/wordpad.rc:288
+#: programs/notepad/notepad.rc:154 programs/wordpad/wordpad.rc:288
 msgctxt "accelerator Replace"
 msgid "H"
 msgstr "H"
 
-#: programs/notepad/notepad.rc:142 programs/wordpad/wordpad.rc:297
+#: programs/notepad/notepad.rc:155 programs/wordpad/wordpad.rc:297
 msgctxt "accelerator New"
 msgid "N"
 msgstr "N"
 
-#: programs/notepad/notepad.rc:143 programs/wordpad/wordpad.rc:298
+#: programs/notepad/notepad.rc:156 programs/wordpad/wordpad.rc:298
 msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: programs/notepad/notepad.rc:144 programs/regedit/regedit.rc:378
+#: programs/notepad/notepad.rc:157 programs/regedit/regedit.rc:378
 #: programs/wordpad/wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
 
-#: programs/notepad/notepad.rc:145 programs/wordpad/wordpad.rc:299
+#: programs/notepad/notepad.rc:158 programs/wordpad/wordpad.rc:299
 msgctxt "accelerator Save"
 msgid "S"
 msgstr "S"
 
-#: programs/notepad/notepad.rc:146
+#: programs/notepad/notepad.rc:159
 msgctxt "accelerator Paste"
 msgid "V"
 msgstr "V"
 
-#: programs/notepad/notepad.rc:147 programs/wordpad/wordpad.rc:290
+#: programs/notepad/notepad.rc:160 programs/wordpad/wordpad.rc:290
 msgctxt "accelerator Cut"
 msgid "X"
 msgstr "X"
 
-#: programs/notepad/notepad.rc:148 programs/wordpad/wordpad.rc:292
+#: programs/notepad/notepad.rc:161 programs/wordpad/wordpad.rc:292
 msgctxt "accelerator Undo"
 msgid "Z"
 msgstr "Z"
 
-#: programs/notepad/notepad.rc:73
+#: programs/notepad/notepad.rc:162
+msgctxt "accelerator GoTo"
+msgid "G"
+msgstr ""
+
+#: programs/notepad/notepad.rc:74
 msgid "Page &p"
 msgstr "صفحة &p"
 
-#: programs/notepad/notepad.rc:75
+#: programs/notepad/notepad.rc:76
 msgid "Notepad"
 msgstr "المفكرة"
 
-#: programs/notepad/notepad.rc:76 programs/progman/progman.rc:64
+#: programs/notepad/notepad.rc:77 programs/progman/progman.rc:64
 #: programs/winhlp32/winhlp32.rc:82
 msgid "ERROR"
 msgstr "خطأ"
 
-#: programs/notepad/notepad.rc:78
+#: programs/notepad/notepad.rc:79
 msgid "Untitled"
 msgstr "غير معنون"
 
-#: programs/notepad/notepad.rc:81 programs/winedbg/winedbg.rc:42
+#: programs/notepad/notepad.rc:82 programs/winedbg/winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "ملفات النصوص (*.txt)"
 
-#: programs/notepad/notepad.rc:84
+#: programs/notepad/notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -16503,7 +16529,7 @@ msgstr ""
 "\n"
 "أتريد إنشاء ملف جديد؟"
 
-#: programs/notepad/notepad.rc:86
+#: programs/notepad/notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -16513,23 +16539,23 @@ msgstr ""
 "\n"
 "أتريد حفظ التغييرات؟"
 
-#: programs/notepad/notepad.rc:87
+#: programs/notepad/notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "تعذّر إيجاد '%s'."
 
-#: programs/notepad/notepad.rc:91
+#: programs/notepad/notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr "يونيكود (UTF-16)"
 
-#: programs/notepad/notepad.rc:92
+#: programs/notepad/notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "يونيكود (UTF-16 Big Endian)"
 
-#: programs/notepad/notepad.rc:93
+#: programs/notepad/notepad.rc:94
 msgid "Unicode (UTF-8)"
 msgstr "يونيكود (UTF-16)"
 
-#: programs/notepad/notepad.rc:100
+#: programs/notepad/notepad.rc:101
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -16545,7 +16571,7 @@ msgstr ""
 "مجموعة محارف يونيكود أخرى من قائمة الترميزات.\n"
 "هل ترغب بالمتابعة ؟"
 
-#: programs/notepad/notepad.rc:89
+#: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
 msgstr ""
 

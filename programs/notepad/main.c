@@ -108,7 +108,7 @@ DWORD get_dpi(void)
     return dpi;
 }
 
-static void UpdateStatusBar(void)
+void UpdateStatusBar(void)
 {
     int currentLine;
     int currentCol = -1;
@@ -359,6 +359,7 @@ static int NOTEPAD_MenuCommand(WPARAM wParam)
     case CMD_SEARCH:           DIALOG_Search(); break;
     case CMD_SEARCH_NEXT:      DIALOG_SearchNext(); break;
     case CMD_REPLACE:          DIALOG_Replace(); break;
+    case CMD_GO_TO:            DIALOG_EditGoTo(); break;
                                
     case CMD_WRAP:             DIALOG_EditWrap(); break;
     case CMD_FONT:             DIALOG_SelectFont(); break;
