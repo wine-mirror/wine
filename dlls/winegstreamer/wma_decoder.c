@@ -177,15 +177,17 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
 static HRESULT WINAPI transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
         DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
 {
-    FIXME("iface %p, input_minimum %p, input_maximum %p, output_minimum %p, output_maximum %p stub!\n",
+    TRACE("iface %p, input_minimum %p, input_maximum %p, output_minimum %p, output_maximum %p.\n",
             iface, input_minimum, input_maximum, output_minimum, output_maximum);
-    return E_NOTIMPL;
+    *input_minimum = *input_maximum = *output_minimum = *output_maximum = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
 {
-    FIXME("iface %p, inputs %p, outputs %p stub!\n", iface, inputs, outputs);
-    return E_NOTIMPL;
+    TRACE("iface %p, inputs %p, outputs %p.\n", iface, inputs, outputs);
+    *inputs = *outputs = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
