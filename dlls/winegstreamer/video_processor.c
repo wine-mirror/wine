@@ -249,6 +249,9 @@ static HRESULT WINAPI video_processor_GetAttributes(IMFTransform *iface, IMFAttr
 
     FIXME("iface %p, attributes %p stub!\n", iface, attributes);
 
+    if (!attributes)
+        return E_POINTER;
+
     IMFAttributes_AddRef((*attributes = impl->attributes));
     return S_OK;
 }
@@ -264,6 +267,11 @@ static HRESULT WINAPI video_processor_GetOutputStreamAttributes(IMFTransform *if
     struct video_processor *impl = impl_from_IMFTransform(iface);
 
     FIXME("iface %p, id %#lx, attributes %p stub!\n", iface, id, attributes);
+
+    if (!attributes)
+        return E_POINTER;
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
 
     IMFAttributes_AddRef((*attributes = impl->output_attributes));
     return S_OK;
