@@ -1951,9 +1951,6 @@ static void test_aac_decoder(void)
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_input_attributes, -1);
         check_media_type(media_type, expect_available_inputs[i], -1);
-        hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
-        if (i != 1) ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-        else ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
         ret = IMFMediaType_Release(media_type);
         ok(ret <= 1, "Release returned %lu\n", ret);
         winetest_pop_context();
@@ -1980,8 +1977,6 @@ static void test_aac_decoder(void)
         ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_output_attributes, -1);
         check_media_type(media_type, expect_available_outputs[i], -1);
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         ret = IMFMediaType_Release(media_type);
         ok(ret <= 1, "Release returned %lu\n", ret);
         winetest_pop_context();
@@ -2542,8 +2537,6 @@ static void test_wma_decoder(void)
         winetest_push_context("in %lu", i);
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_available_inputs[i], -1);
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
@@ -3546,8 +3539,6 @@ static void test_audio_convert(void)
         winetest_push_context("in %lu", i);
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_available_inputs[i], -1);
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
@@ -3928,14 +3919,6 @@ static void test_color_convert(void)
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_available_common, -1);
         check_media_type(media_type, expect_available_inputs[i], -1);
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        if (i == 12)
-        {
-            todo_wine
-            ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
-        }
-        else
-            ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
@@ -4823,8 +4806,6 @@ static void test_mp3_decoder(void)
         winetest_push_context("in %lu", i);
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, expect_available_inputs[i], -1);
-        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
