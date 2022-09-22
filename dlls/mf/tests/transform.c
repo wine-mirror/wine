@@ -2830,11 +2830,8 @@ static void test_h264_decoder(void)
 
     input_count = output_count = 0xdeadbeef;
     hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
-    todo_wine
     ok(hr == S_OK, "GetStreamCount returned %#lx\n", hr);
-    todo_wine
     ok(input_count == 1, "got input_count %lu\n", input_count);
-    todo_wine
     ok(output_count == 1, "got output_count %lu\n", output_count);
     hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
     ok(hr == E_NOTIMPL, "GetStreamIDs returned %#lx\n", hr);
