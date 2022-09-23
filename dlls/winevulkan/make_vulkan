@@ -754,27 +754,6 @@ class VkFunction(object):
 
         return proto
 
-    def body(self, params_prefix=""):
-        body = ""
-
-        if not self.needs_private_thunk():
-            body += "    {0}".format(self.trace(params_prefix=params_prefix))
-
-        params = ", ".join([p.variable(conv=False, params_prefix=params_prefix) for p in self.params])
-
-        # Call the native Vulkan function.
-        body += "    "
-        if self.returns_longlong():
-            body += "{0}result = ".format(params_prefix)
-        elif self.type != "void":
-            body += "return "
-        body += "{0}.p_{1}({2});\n".format(self.params[0].dispatch_table(params_prefix),
-                                           self.name, params)
-        if self.type == "void" or self.returns_longlong():
-            body += "    return STATUS_SUCCESS;\n"
-
-        return body
-
     def loader_body(self):
         body = "    struct {0}_params params;\n".format(self.name)
         for p in self.params:
@@ -792,7 +771,7 @@ class VkFunction(object):
             body += "    return params.result;\n"
         return body
 
-    def body_conversion(self, conv, params_prefix=""):
+    def body(self, conv, unwrap=True, params_prefix=""):
         body = ""
         result_prefix = ""
 
@@ -809,7 +788,7 @@ class VkFunction(object):
                     body += "    {0}_host *{1}_host;\n".format(p.type, p.name)
                 else:
                     body += "    {0}_host {1}_host;\n".format(p.type, p.name)
-            elif p.needs_unwrapping():
+            elif unwrap and p.needs_unwrapping():
                 if p.is_dynamic_array():
                     body += "    {0} *{1}_host;\n".format(p.type, p.name)
                 else:
@@ -820,7 +799,7 @@ class VkFunction(object):
 
         # Call any win_to_host conversion calls.
         for p in self.params:
-            if p.needs_input_conversion() and (p.needs_unwrapping() or conv):
+            if p.needs_input_conversion() and (conv or (unwrap and p.needs_unwrapping())):
                 body += p.copy(Direction.INPUT, prefix=params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
@@ -839,15 +818,16 @@ class VkFunction(object):
         body += "\n"
 
         # Call any host_to_win conversion calls.
-        for p in self.params:
-            if not p.needs_output_conversion():
-                continue
+        if conv:
+            for p in self.params:
+                if not p.output_conv:
+                    continue
 
-            body += p.copy(Direction.OUTPUT, prefix=params_prefix)
+                body += p.copy(Direction.OUTPUT, prefix=params_prefix)
 
         # Perform any required cleanups. Most of these are for array functions.
         for p in self.params:
-            if p.needs_free() and (p.needs_unwrapping() or conv):
+            if p.needs_free() and (conv or (unwrap and p.needs_unwrapping())):
                 body += p.free(prefix=params_prefix)
 
         # Finally return the result.
@@ -898,20 +878,14 @@ class VkFunction(object):
         if prefix == "thunk_":
             thunk = self.prototype(prefix=prefix)
             thunk += "\n{\n"
-            params_prefix = ""
-        else:
-            thunk = "NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
-            thunk += "{\n"
-            thunk += "    struct {0}_params *params = args;\n".format(self.name)
-            params_prefix = "params->"
+            thunk += self.body(conv=conv)
+            thunk += "}\n\n"
+            return thunk
 
-        if conv and self.needs_conversion():
-            thunk += self.body_conversion(conv=True, params_prefix=params_prefix)
-        elif self.needs_unwrapping():
-            thunk += self.body_conversion(conv=False, params_prefix=params_prefix)
-        else:
-            thunk += self.body(params_prefix=params_prefix)
-
+        thunk = "NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
+        thunk += "{\n"
+        thunk += "    struct {0}_params *params = args;\n".format(self.name)
+        thunk += self.body(conv=conv, unwrap=not self.needs_private_thunk(), params_prefix="params->")
         thunk += "}\n\n"
         return thunk
 
