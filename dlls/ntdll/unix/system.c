@@ -591,39 +591,10 @@ static DWORD count_bits( ULONG_PTR mask )
     return count;
 }
 
-/* Store package and core information for a logical processor. Parsing of processor
- * data may happen in multiple passes; the 'id' parameter is then used to locate
- * previously stored data. The type of data stored in 'id' depends on 'rel':
- * - RelationProcessorPackage: package id ('CPU socket').
- * - RelationProcessorCore: physical core number.
- */
-static BOOL logical_proc_info_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWORD id, ULONG_PTR mask )
+static BOOL logical_proc_info_ex_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWORD id, ULONG_PTR mask )
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-    unsigned int ofs = 0, i;
-
-    for (i = 0; i < logical_proc_info_len; i++)
-    {
-        if (rel == RelationProcessorPackage && logical_proc_info[i].Relationship == rel
-            && logical_proc_info[i].u.Reserved[1] == id)
-        {
-            logical_proc_info[i].ProcessorMask |= mask;
-            return TRUE;
-        }
-        else if (rel == RelationProcessorCore && logical_proc_info[i].Relationship == rel
-                 && logical_proc_info[i].u.Reserved[1] == id)
-            return TRUE;
-    }
-
-    if (!grow_logical_proc_buf()) return FALSE;
-
-    logical_proc_info[i].Relationship = rel;
-    logical_proc_info[i].ProcessorMask = mask;
-    if (rel == RelationProcessorCore)
-        logical_proc_info[i].u.ProcessorCore.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
-    logical_proc_info[i].u.Reserved[0] = 0;
-    logical_proc_info[i].u.Reserved[1] = id;
-    logical_proc_info_len = i + 1;
+    unsigned int ofs = 0;
 
     while (ofs < logical_proc_info_ex_size)
     {
@@ -661,8 +632,43 @@ static BOOL logical_proc_info_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWO
     dataex->u.Processor.Reserved[1] = id;
 
     logical_proc_info_ex_size += dataex->Size;
-
     return TRUE;
+}
+
+/* Store package and core information for a logical processor. Parsing of processor
+ * data may happen in multiple passes; the 'id' parameter is then used to locate
+ * previously stored data. The type of data stored in 'id' depends on 'rel':
+ * - RelationProcessorPackage: package id ('CPU socket').
+ * - RelationProcessorCore: physical core number.
+ */
+static BOOL logical_proc_info_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWORD id, ULONG_PTR mask )
+{
+    unsigned int i;
+
+    for (i = 0; i < logical_proc_info_len; i++)
+    {
+        if (rel == RelationProcessorPackage && logical_proc_info[i].Relationship == rel
+            && logical_proc_info[i].u.Reserved[1] == id)
+        {
+            logical_proc_info[i].ProcessorMask |= mask;
+            return logical_proc_info_ex_add_by_id( rel, id, mask );
+        }
+        else if (rel == RelationProcessorCore && logical_proc_info[i].Relationship == rel
+                 && logical_proc_info[i].u.Reserved[1] == id)
+            return logical_proc_info_ex_add_by_id( rel, id, mask );
+    }
+
+    if (!grow_logical_proc_buf()) return FALSE;
+
+    logical_proc_info[i].Relationship = rel;
+    logical_proc_info[i].ProcessorMask = mask;
+    if (rel == RelationProcessorCore)
+        logical_proc_info[i].u.ProcessorCore.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
+    logical_proc_info[i].u.Reserved[0] = 0;
+    logical_proc_info[i].u.Reserved[1] = id;
+    logical_proc_info_len = i + 1;
+
+    return logical_proc_info_ex_add_by_id( rel, id, mask );
 }
 
 static BOOL logical_proc_info_add_cache( ULONG_PTR mask, CACHE_DESCRIPTOR *cache )
