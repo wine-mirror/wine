@@ -2498,10 +2498,13 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
             }
 
             ctx->ei.scode = hres;
-            if(!ctx->ei.bstrSource)
-                ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
-            if(!ctx->ei.bstrDescription)
-                ctx->ei.bstrDescription = get_vbscript_error_string(hres);
+            if(HRESULT_FACILITY(hres) == FACILITY_VBS)
+            {
+                if(!ctx->ei.bstrSource)
+                    ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
+                if(!ctx->ei.bstrDescription)
+                    ctx->ei.bstrDescription = get_vbscript_error_string(hres);
+            }
 
             if(exec.resume_next) {
                 unsigned stack_off;

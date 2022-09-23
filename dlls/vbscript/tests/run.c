@@ -2477,6 +2477,32 @@ static void test_callbacks(void)
     free_ei(&ei);
 
     IActiveScriptError_Release(error1);
+
+    store_script_error = &error1;
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_ar("throwException &h8000FFFF&");
+    ok(hres == E_UNEXPECTED, "got error: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+
+    memset(&ei, 0xcc, sizeof(ei));
+    hres = IActiveScriptError_GetExceptionInfo(error1, &ei);
+    ok(hres == S_OK, "GetExceptionInfo returned %08lx\n", hres);
+    ok(!ei.wCode, "wCode = %x\n", ei.wCode);
+    ok(!ei.wReserved, "wReserved = %x\n", ei.wReserved);
+    if(is_english) {
+        ok(!ei.bstrSource,
+           "bstrSource = %s\n", wine_dbgstr_w(ei.bstrSource));
+        ok(!ei.bstrDescription,
+           "bstrDescription = %s\n", wine_dbgstr_w(ei.bstrDescription));
+    }
+    ok(!ei.bstrHelpFile, "bstrHelpFile = %s\n", wine_dbgstr_w(ei.bstrHelpFile));
+    ok(!ei.dwHelpContext, "dwHelpContext = %lx\n", ei.dwHelpContext);
+    ok(!ei.pvReserved, "pvReserved = %p\n", ei.pvReserved);
+    ok(!ei.pfnDeferredFillIn, "pfnDeferredFillIn = %p\n", ei.pfnDeferredFillIn);
+    ok(ei.scode == E_UNEXPECTED, "scode = %lx\n", ei.scode);
+    free_ei(&ei);
+
+    IActiveScriptError_Release(error1);
 }
 
 static void test_gc(void)
