@@ -396,6 +396,14 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
     return TRUE;
 }
 
+static void set_thread_name(const WCHAR *name)
+{
+    THREAD_NAME_INFORMATION info;
+
+    RtlInitUnicodeString(&info.ThreadName, name);
+    NtSetInformationThread(GetCurrentThread(), ThreadNameInformation, &info, sizeof(info));
+}
+
 static void CALLBACK process_rtl_work_item( TP_CALLBACK_INSTANCE *instance, void *userdata )
 {
     struct rtl_work_item *item = userdata;
@@ -703,6 +711,7 @@ static void WINAPI timer_queue_thread_proc(LPVOID p)
     struct timer_queue *q = p;
     ULONG timeout_ms;
 
+    set_thread_name(L"wine_threadpool_timer_queue");
     timeout_ms = INFINITE;
     for (;;)
     {
@@ -1052,6 +1061,7 @@ static void CALLBACK timerqueue_thread_proc( void *param )
     struct list *ptr;
 
     TRACE( "starting timer queue thread\n" );
+    set_thread_name(L"wine_threadpool_timerqueue");
 
     RtlEnterCriticalSection( &timerqueue.cs );
     for (;;)
@@ -1241,6 +1251,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
     NTSTATUS status;
 
     TRACE( "starting wait queue thread\n" );
+    set_thread_name(L"wine_threadpool_waitqueue");
 
     RtlEnterCriticalSection( &waitqueue.cs );
 
@@ -1511,6 +1522,7 @@ static void CALLBACK ioqueue_thread_proc( void *param )
     NTSTATUS status;
 
     TRACE( "starting I/O completion thread\n" );
+    set_thread_name(L"wine_threadpool_ioqueue");
 
     RtlEnterCriticalSection( &ioqueue.cs );
 
@@ -2323,6 +2335,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
     struct list *ptr;
 
     TRACE( "starting worker thread for pool %p\n", pool );
+    set_thread_name(L"wine_threadpool_worker");
 
     RtlEnterCriticalSection( &pool->cs );
     for (;;)
