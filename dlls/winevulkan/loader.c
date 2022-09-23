@@ -257,7 +257,6 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
     struct vkCreateInstance_params params;
     struct VkInstance_T *instance;
     uint32_t phys_dev_count = 8, i;
-    VkResult result;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, ret);
 
@@ -276,7 +275,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         params.pAllocator = allocator;
         params.pInstance = ret;
         params.client_ptr = instance;
-        result = vk_unix_call(unix_vkCreateInstance, &params);
+        vk_unix_call(unix_vkCreateInstance, &params);
         if (instance->phys_dev_count <= phys_dev_count)
             break;
         phys_dev_count = instance->phys_dev_count;
@@ -285,7 +284,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     if (!instance->base.unix_handle)
         free(instance);
-    return result;
+    return params.result;
 }
 
 void WINAPI vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *pAllocator)
@@ -319,7 +318,8 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
     params.pLayerName = layer_name;
     params.pPropertyCount = count;
     params.pProperties = properties;
-    return vk_unix_call(unix_vkEnumerateInstanceExtensionProperties, &params);
+    vk_unix_call(unix_vkEnumerateInstanceExtensionProperties, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
@@ -335,7 +335,8 @@ VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
     }
 
     params.pApiVersion = version;
-    return vk_unix_call(unix_vkEnumerateInstanceVersion, &params);
+    vk_unix_call(unix_vkEnumerateInstanceVersion, &params);
+    return params.result;
 }
 
 static HANDLE get_display_device_init_mutex(void)
@@ -461,7 +462,6 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
     struct vkCreateDevice_params params;
     uint32_t queue_count = 0, i;
     VkDevice device;
-    VkResult result;
 
     for (i = 0; i < create_info->queueCreateInfoCount; i++)
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
@@ -475,10 +475,10 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
     params.pAllocator = allocator;
     params.pDevice = ret;
     params.client_ptr = device;
-    result = vk_unix_call(unix_vkCreateDevice, &params);
+    vk_unix_call(unix_vkCreateDevice, &params);
     if (!device->base.unix_handle)
         free(device);
-    return result;
+    return params.result;
 }
 
 void WINAPI vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *allocator)
@@ -496,7 +496,6 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
 {
     struct vkCreateCommandPool_params params;
     struct vk_command_pool *cmd_pool;
-    VkResult result;
 
     if (!(cmd_pool = malloc(sizeof(*cmd_pool))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -508,10 +507,10 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     params.pAllocator = allocator;
     params.pCommandPool = ret;
     params.client_ptr = cmd_pool;
-    result = vk_unix_call(unix_vkCreateCommandPool, &params);
+    vk_unix_call(unix_vkCreateCommandPool, &params);
     if (!cmd_pool->unix_handle)
         free(cmd_pool);
-    return result;
+    return params.result;
 }
 
 void WINAPI vkDestroyCommandPool(VkDevice device, VkCommandPool handle, const VkAllocationCallbacks *allocator)
@@ -545,7 +544,6 @@ VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferA
     struct vk_command_pool *pool = command_pool_from_handle(allocate_info->commandPool);
     struct vkAllocateCommandBuffers_params params;
     uint32_t i;
-    VkResult result;
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
         buffers[i] = alloc_vk_object(sizeof(*buffers[i]));
@@ -553,8 +551,8 @@ VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferA
     params.device = device;
     params.pAllocateInfo = allocate_info;
     params.pCommandBuffers = buffers;
-    result = vk_unix_call(unix_vkAllocateCommandBuffers, &params);
-    if (result == VK_SUCCESS)
+    vk_unix_call(unix_vkAllocateCommandBuffers, &params);
+    if (params.result == VK_SUCCESS)
     {
         for (i = 0; i < allocate_info->commandBufferCount; i++)
             list_add_tail(&pool->command_buffers, &buffers[i]->pool_link);
@@ -567,7 +565,7 @@ VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferA
             buffers[i] = NULL;
         }
     }
-    return result;
+    return params.result;
 }
 
 void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool cmd_pool, uint32_t count,

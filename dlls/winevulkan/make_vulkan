@@ -764,24 +764,18 @@ class VkFunction(object):
         body += "    ";
 
         # Call the Unix function.
-        if self.type != "void" and not self.returns_longlong():
-            body += "return "
         if self.needs_direct_call():
             body += "p_vk_direct_unix_call(unix_handle, unix_{0}, &params);\n".format(self.name)
         else:
             body += "vk_unix_call(unix_{0}, &params);\n".format(self.name)
-        if self.returns_longlong():
+        if self.type != "void":
             body += "    return params.result;\n"
         return body
 
     def body(self, conv, unwrap=True, params_prefix=""):
         body = ""
-        result_prefix = ""
 
-        # Declare a variable to hold the result for non-void functions.
-        if self.returns_longlong():
-            result_prefix = "params->"
-        elif self.type != "void":
+        if params_prefix == "" and self.type != "void":
             body += "    {0} result;\n".format(self.type)
 
         # Declare any tmp parameters for conversion.
@@ -820,7 +814,7 @@ class VkFunction(object):
         if self.type == "void":
             body += "    {0}{1}({2});\n".format(func_prefix, self.name, params)
         else:
-            body += "    {0}result = {1}{2}({3});\n".format(result_prefix, func_prefix, self.name, params)
+            body += "    {0}result = {1}{2}({3});\n".format(params_prefix, func_prefix, self.name, params)
 
         # Call any host_to_win conversion calls.
         if conv and unwrap:
@@ -836,10 +830,10 @@ class VkFunction(object):
                 body += p.free(prefix=params_prefix)
 
         # Finally return the result.
-        if self.type != "void" and not self.returns_longlong():
-            body += "    return result;\n"
-        else:
+        if params_prefix != "":
             body += "    return STATUS_SUCCESS;\n"
+        elif self.type != "void":
+            body += "    return result;\n"
 
         return body
 
@@ -3060,7 +3054,7 @@ class VkGenerator(object):
                 f.write("    {0};\n".format(p.definition(is_member=True)))
             if vk_func.extra_param:
                 f.write("    void *{0};\n".format(vk_func.extra_param))
-            if vk_func.returns_longlong():
+            if vk_func.type != "void":
                 f.write("    {0} result;\n".format(vk_func.type))
             f.write("};\n\n");
 

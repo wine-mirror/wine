@@ -19,7 +19,8 @@ VkResult WINAPI vkAcquireNextImage2KHR(VkDevice device, const VkAcquireNextImage
     params.device = device;
     params.pAcquireInfo = pAcquireInfo;
     params.pImageIndex = pImageIndex;
-    return vk_unix_call(unix_vkAcquireNextImage2KHR, &params);
+    vk_unix_call(unix_vkAcquireNextImage2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t *pImageIndex)
@@ -31,7 +32,8 @@ VkResult WINAPI vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
     params.semaphore = semaphore;
     params.fence = fence;
     params.pImageIndex = pImageIndex;
-    return vk_unix_call(unix_vkAcquireNextImageKHR, &params);
+    vk_unix_call(unix_vkAcquireNextImageKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkAcquirePerformanceConfigurationINTEL(VkDevice device, const VkPerformanceConfigurationAcquireInfoINTEL *pAcquireInfo, VkPerformanceConfigurationINTEL *pConfiguration)
@@ -40,7 +42,8 @@ VkResult WINAPI vkAcquirePerformanceConfigurationINTEL(VkDevice device, const Vk
     params.device = device;
     params.pAcquireInfo = pAcquireInfo;
     params.pConfiguration = pConfiguration;
-    return vk_unix_call(unix_vkAcquirePerformanceConfigurationINTEL, &params);
+    vk_unix_call(unix_vkAcquirePerformanceConfigurationINTEL, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkAcquireProfilingLockKHR(VkDevice device, const VkAcquireProfilingLockInfoKHR *pInfo)
@@ -48,7 +51,8 @@ VkResult WINAPI vkAcquireProfilingLockKHR(VkDevice device, const VkAcquireProfil
     struct vkAcquireProfilingLockKHR_params params;
     params.device = device;
     params.pInfo = pInfo;
-    return vk_unix_call(unix_vkAcquireProfilingLockKHR, &params);
+    vk_unix_call(unix_vkAcquireProfilingLockKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkAllocateDescriptorSets(VkDevice device, const VkDescriptorSetAllocateInfo *pAllocateInfo, VkDescriptorSet *pDescriptorSets)
@@ -57,7 +61,8 @@ VkResult WINAPI vkAllocateDescriptorSets(VkDevice device, const VkDescriptorSetA
     params.device = device;
     params.pAllocateInfo = pAllocateInfo;
     params.pDescriptorSets = pDescriptorSets;
-    return vk_unix_call(unix_vkAllocateDescriptorSets, &params);
+    vk_unix_call(unix_vkAllocateDescriptorSets, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkAllocateMemory(VkDevice device, const VkMemoryAllocateInfo *pAllocateInfo, const VkAllocationCallbacks *pAllocator, VkDeviceMemory *pMemory)
@@ -67,7 +72,8 @@ VkResult WINAPI vkAllocateMemory(VkDevice device, const VkMemoryAllocateInfo *pA
     params.pAllocateInfo = pAllocateInfo;
     params.pAllocator = pAllocator;
     params.pMemory = pMemory;
-    return vk_unix_call(unix_vkAllocateMemory, &params);
+    vk_unix_call(unix_vkAllocateMemory, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBeginCommandBuffer(VkCommandBuffer commandBuffer, const VkCommandBufferBeginInfo *pBeginInfo)
@@ -75,7 +81,8 @@ VkResult WINAPI vkBeginCommandBuffer(VkCommandBuffer commandBuffer, const VkComm
     struct vkBeginCommandBuffer_params params;
     params.commandBuffer = commandBuffer;
     params.pBeginInfo = pBeginInfo;
-    return vk_unix_call(unix_vkBeginCommandBuffer, &params);
+    vk_unix_call(unix_vkBeginCommandBuffer, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindAccelerationStructureMemoryNV(VkDevice device, uint32_t bindInfoCount, const VkBindAccelerationStructureMemoryInfoNV *pBindInfos)
@@ -84,7 +91,8 @@ VkResult WINAPI vkBindAccelerationStructureMemoryNV(VkDevice device, uint32_t bi
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    return vk_unix_call(unix_vkBindAccelerationStructureMemoryNV, &params);
+    vk_unix_call(unix_vkBindAccelerationStructureMemoryNV, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset)
@@ -94,7 +102,8 @@ VkResult WINAPI vkBindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMem
     params.buffer = buffer;
     params.memory = memory;
     params.memoryOffset = memoryOffset;
-    return vk_unix_call(unix_vkBindBufferMemory, &params);
+    vk_unix_call(unix_vkBindBufferMemory, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindBufferMemory2(VkDevice device, uint32_t bindInfoCount, const VkBindBufferMemoryInfo *pBindInfos)
@@ -103,7 +112,8 @@ VkResult WINAPI vkBindBufferMemory2(VkDevice device, uint32_t bindInfoCount, con
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    return vk_unix_call(unix_vkBindBufferMemory2, &params);
+    vk_unix_call(unix_vkBindBufferMemory2, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindBufferMemory2KHR(VkDevice device, uint32_t bindInfoCount, const VkBindBufferMemoryInfo *pBindInfos)
@@ -112,7 +122,8 @@ VkResult WINAPI vkBindBufferMemory2KHR(VkDevice device, uint32_t bindInfoCount, 
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    return vk_unix_call(unix_vkBindBufferMemory2KHR, &params);
+    vk_unix_call(unix_vkBindBufferMemory2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset)
@@ -122,7 +133,8 @@ VkResult WINAPI vkBindImageMemory(VkDevice device, VkImage image, VkDeviceMemory
     params.image = image;
     params.memory = memory;
     params.memoryOffset = memoryOffset;
-    return vk_unix_call(unix_vkBindImageMemory, &params);
+    vk_unix_call(unix_vkBindImageMemory, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindImageMemory2(VkDevice device, uint32_t bindInfoCount, const VkBindImageMemoryInfo *pBindInfos)
@@ -131,7 +143,8 @@ VkResult WINAPI vkBindImageMemory2(VkDevice device, uint32_t bindInfoCount, cons
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    return vk_unix_call(unix_vkBindImageMemory2, &params);
+    vk_unix_call(unix_vkBindImageMemory2, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBindImageMemory2KHR(VkDevice device, uint32_t bindInfoCount, const VkBindImageMemoryInfo *pBindInfos)
@@ -140,7 +153,8 @@ VkResult WINAPI vkBindImageMemory2KHR(VkDevice device, uint32_t bindInfoCount, c
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    return vk_unix_call(unix_vkBindImageMemory2KHR, &params);
+    vk_unix_call(unix_vkBindImageMemory2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkBuildAccelerationStructuresKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR *pInfos, const VkAccelerationStructureBuildRangeInfoKHR * const*ppBuildRangeInfos)
@@ -151,7 +165,8 @@ VkResult WINAPI vkBuildAccelerationStructuresKHR(VkDevice device, VkDeferredOper
     params.infoCount = infoCount;
     params.pInfos = pInfos;
     params.ppBuildRangeInfos = ppBuildRangeInfos;
-    return vk_unix_call(unix_vkBuildAccelerationStructuresKHR, &params);
+    vk_unix_call(unix_vkBuildAccelerationStructuresKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkCmdBeginConditionalRenderingEXT(VkCommandBuffer commandBuffer, const VkConditionalRenderingBeginInfoEXT *pConditionalRenderingBegin)
@@ -1491,7 +1506,8 @@ VkResult WINAPI vkCmdSetPerformanceMarkerINTEL(VkCommandBuffer commandBuffer, co
     struct vkCmdSetPerformanceMarkerINTEL_params params;
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
-    return p_vk_direct_unix_call(unix_handle, unix_vkCmdSetPerformanceMarkerINTEL, &params);
+    p_vk_direct_unix_call(unix_handle, unix_vkCmdSetPerformanceMarkerINTEL, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCmdSetPerformanceOverrideINTEL(VkCommandBuffer commandBuffer, const VkPerformanceOverrideInfoINTEL *pOverrideInfo)
@@ -1499,7 +1515,8 @@ VkResult WINAPI vkCmdSetPerformanceOverrideINTEL(VkCommandBuffer commandBuffer, 
     struct vkCmdSetPerformanceOverrideINTEL_params params;
     params.commandBuffer = commandBuffer;
     params.pOverrideInfo = pOverrideInfo;
-    return p_vk_direct_unix_call(unix_handle, unix_vkCmdSetPerformanceOverrideINTEL, &params);
+    p_vk_direct_unix_call(unix_handle, unix_vkCmdSetPerformanceOverrideINTEL, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCmdSetPerformanceStreamMarkerINTEL(VkCommandBuffer commandBuffer, const VkPerformanceStreamMarkerInfoINTEL *pMarkerInfo)
@@ -1507,7 +1524,8 @@ VkResult WINAPI vkCmdSetPerformanceStreamMarkerINTEL(VkCommandBuffer commandBuff
     struct vkCmdSetPerformanceStreamMarkerINTEL_params params;
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
-    return p_vk_direct_unix_call(unix_handle, unix_vkCmdSetPerformanceStreamMarkerINTEL, &params);
+    p_vk_direct_unix_call(unix_handle, unix_vkCmdSetPerformanceStreamMarkerINTEL, &params);
+    return params.result;
 }
 
 void WINAPI vkCmdSetPrimitiveRestartEnable(VkCommandBuffer commandBuffer, VkBool32 primitiveRestartEnable)
@@ -1920,7 +1938,8 @@ VkResult WINAPI vkCompileDeferredNV(VkDevice device, VkPipeline pipeline, uint32
     params.device = device;
     params.pipeline = pipeline;
     params.shader = shader;
-    return vk_unix_call(unix_vkCompileDeferredNV, &params);
+    vk_unix_call(unix_vkCompileDeferredNV, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCopyAccelerationStructureKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, const VkCopyAccelerationStructureInfoKHR *pInfo)
@@ -1929,7 +1948,8 @@ VkResult WINAPI vkCopyAccelerationStructureKHR(VkDevice device, VkDeferredOperat
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    return vk_unix_call(unix_vkCopyAccelerationStructureKHR, &params);
+    vk_unix_call(unix_vkCopyAccelerationStructureKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCopyAccelerationStructureToMemoryKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, const VkCopyAccelerationStructureToMemoryInfoKHR *pInfo)
@@ -1938,7 +1958,8 @@ VkResult WINAPI vkCopyAccelerationStructureToMemoryKHR(VkDevice device, VkDeferr
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    return vk_unix_call(unix_vkCopyAccelerationStructureToMemoryKHR, &params);
+    vk_unix_call(unix_vkCopyAccelerationStructureToMemoryKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCopyMemoryToAccelerationStructureKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo)
@@ -1947,7 +1968,8 @@ VkResult WINAPI vkCopyMemoryToAccelerationStructureKHR(VkDevice device, VkDeferr
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    return vk_unix_call(unix_vkCopyMemoryToAccelerationStructureKHR, &params);
+    vk_unix_call(unix_vkCopyMemoryToAccelerationStructureKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateAccelerationStructureKHR(VkDevice device, const VkAccelerationStructureCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkAccelerationStructureKHR *pAccelerationStructure)
@@ -1957,7 +1979,8 @@ VkResult WINAPI vkCreateAccelerationStructureKHR(VkDevice device, const VkAccele
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pAccelerationStructure = pAccelerationStructure;
-    return vk_unix_call(unix_vkCreateAccelerationStructureKHR, &params);
+    vk_unix_call(unix_vkCreateAccelerationStructureKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateAccelerationStructureNV(VkDevice device, const VkAccelerationStructureCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkAccelerationStructureNV *pAccelerationStructure)
@@ -1967,7 +1990,8 @@ VkResult WINAPI vkCreateAccelerationStructureNV(VkDevice device, const VkAcceler
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pAccelerationStructure = pAccelerationStructure;
-    return vk_unix_call(unix_vkCreateAccelerationStructureNV, &params);
+    vk_unix_call(unix_vkCreateAccelerationStructureNV, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateBuffer(VkDevice device, const VkBufferCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkBuffer *pBuffer)
@@ -1977,7 +2001,8 @@ VkResult WINAPI vkCreateBuffer(VkDevice device, const VkBufferCreateInfo *pCreat
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pBuffer = pBuffer;
-    return vk_unix_call(unix_vkCreateBuffer, &params);
+    vk_unix_call(unix_vkCreateBuffer, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateBufferView(VkDevice device, const VkBufferViewCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkBufferView *pView)
@@ -1987,7 +2012,8 @@ VkResult WINAPI vkCreateBufferView(VkDevice device, const VkBufferViewCreateInfo
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pView = pView;
-    return vk_unix_call(unix_vkCreateBufferView, &params);
+    vk_unix_call(unix_vkCreateBufferView, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
@@ -1999,7 +2025,8 @@ VkResult WINAPI vkCreateComputePipelines(VkDevice device, VkPipelineCache pipeli
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    return vk_unix_call(unix_vkCreateComputePipelines, &params);
+    vk_unix_call(unix_vkCreateComputePipelines, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateCuFunctionNVX(VkDevice device, const VkCuFunctionCreateInfoNVX *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCuFunctionNVX *pFunction)
@@ -2009,7 +2036,8 @@ VkResult WINAPI vkCreateCuFunctionNVX(VkDevice device, const VkCuFunctionCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pFunction = pFunction;
-    return vk_unix_call(unix_vkCreateCuFunctionNVX, &params);
+    vk_unix_call(unix_vkCreateCuFunctionNVX, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoNVX *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCuModuleNVX *pModule)
@@ -2019,7 +2047,8 @@ VkResult WINAPI vkCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoN
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pModule = pModule;
-    return vk_unix_call(unix_vkCreateCuModuleNVX, &params);
+    vk_unix_call(unix_vkCreateCuModuleNVX, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback)
@@ -2029,7 +2058,8 @@ VkResult WINAPI vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebu
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pCallback = pCallback;
-    return vk_unix_call(unix_vkCreateDebugReportCallbackEXT, &params);
+    vk_unix_call(unix_vkCreateDebugReportCallbackEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pMessenger)
@@ -2039,7 +2069,8 @@ VkResult WINAPI vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebu
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pMessenger = pMessenger;
-    return vk_unix_call(unix_vkCreateDebugUtilsMessengerEXT, &params);
+    vk_unix_call(unix_vkCreateDebugUtilsMessengerEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDeferredOperationKHR(VkDevice device, const VkAllocationCallbacks *pAllocator, VkDeferredOperationKHR *pDeferredOperation)
@@ -2048,7 +2079,8 @@ VkResult WINAPI vkCreateDeferredOperationKHR(VkDevice device, const VkAllocation
     params.device = device;
     params.pAllocator = pAllocator;
     params.pDeferredOperation = pDeferredOperation;
-    return vk_unix_call(unix_vkCreateDeferredOperationKHR, &params);
+    vk_unix_call(unix_vkCreateDeferredOperationKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDescriptorPool(VkDevice device, const VkDescriptorPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorPool *pDescriptorPool)
@@ -2058,7 +2090,8 @@ VkResult WINAPI vkCreateDescriptorPool(VkDevice device, const VkDescriptorPoolCr
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pDescriptorPool = pDescriptorPool;
-    return vk_unix_call(unix_vkCreateDescriptorPool, &params);
+    vk_unix_call(unix_vkCreateDescriptorPool, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDescriptorSetLayout(VkDevice device, const VkDescriptorSetLayoutCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorSetLayout *pSetLayout)
@@ -2068,7 +2101,8 @@ VkResult WINAPI vkCreateDescriptorSetLayout(VkDevice device, const VkDescriptorS
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSetLayout = pSetLayout;
-    return vk_unix_call(unix_vkCreateDescriptorSetLayout, &params);
+    vk_unix_call(unix_vkCreateDescriptorSetLayout, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDescriptorUpdateTemplate(VkDevice device, const VkDescriptorUpdateTemplateCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate)
@@ -2078,7 +2112,8 @@ VkResult WINAPI vkCreateDescriptorUpdateTemplate(VkDevice device, const VkDescri
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pDescriptorUpdateTemplate = pDescriptorUpdateTemplate;
-    return vk_unix_call(unix_vkCreateDescriptorUpdateTemplate, &params);
+    vk_unix_call(unix_vkCreateDescriptorUpdateTemplate, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateDescriptorUpdateTemplateKHR(VkDevice device, const VkDescriptorUpdateTemplateCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate)
@@ -2088,7 +2123,8 @@ VkResult WINAPI vkCreateDescriptorUpdateTemplateKHR(VkDevice device, const VkDes
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pDescriptorUpdateTemplate = pDescriptorUpdateTemplate;
-    return vk_unix_call(unix_vkCreateDescriptorUpdateTemplateKHR, &params);
+    vk_unix_call(unix_vkCreateDescriptorUpdateTemplateKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateEvent(VkDevice device, const VkEventCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkEvent *pEvent)
@@ -2098,7 +2134,8 @@ VkResult WINAPI vkCreateEvent(VkDevice device, const VkEventCreateInfo *pCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pEvent = pEvent;
-    return vk_unix_call(unix_vkCreateEvent, &params);
+    vk_unix_call(unix_vkCreateEvent, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateFence(VkDevice device, const VkFenceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkFence *pFence)
@@ -2108,7 +2145,8 @@ VkResult WINAPI vkCreateFence(VkDevice device, const VkFenceCreateInfo *pCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pFence = pFence;
-    return vk_unix_call(unix_vkCreateFence, &params);
+    vk_unix_call(unix_vkCreateFence, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateFramebuffer(VkDevice device, const VkFramebufferCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkFramebuffer *pFramebuffer)
@@ -2118,7 +2156,8 @@ VkResult WINAPI vkCreateFramebuffer(VkDevice device, const VkFramebufferCreateIn
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pFramebuffer = pFramebuffer;
-    return vk_unix_call(unix_vkCreateFramebuffer, &params);
+    vk_unix_call(unix_vkCreateFramebuffer, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkGraphicsPipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
@@ -2130,7 +2169,8 @@ VkResult WINAPI vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipel
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    return vk_unix_call(unix_vkCreateGraphicsPipelines, &params);
+    vk_unix_call(unix_vkCreateGraphicsPipelines, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateImage(VkDevice device, const VkImageCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkImage *pImage)
@@ -2140,7 +2180,8 @@ VkResult WINAPI vkCreateImage(VkDevice device, const VkImageCreateInfo *pCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pImage = pImage;
-    return vk_unix_call(unix_vkCreateImage, &params);
+    vk_unix_call(unix_vkCreateImage, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateImageView(VkDevice device, const VkImageViewCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkImageView *pView)
@@ -2150,7 +2191,8 @@ VkResult WINAPI vkCreateImageView(VkDevice device, const VkImageViewCreateInfo *
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pView = pView;
-    return vk_unix_call(unix_vkCreateImageView, &params);
+    vk_unix_call(unix_vkCreateImageView, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateIndirectCommandsLayoutNV(VkDevice device, const VkIndirectCommandsLayoutCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkIndirectCommandsLayoutNV *pIndirectCommandsLayout)
@@ -2160,7 +2202,8 @@ VkResult WINAPI vkCreateIndirectCommandsLayoutNV(VkDevice device, const VkIndire
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pIndirectCommandsLayout = pIndirectCommandsLayout;
-    return vk_unix_call(unix_vkCreateIndirectCommandsLayoutNV, &params);
+    vk_unix_call(unix_vkCreateIndirectCommandsLayoutNV, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreatePipelineCache(VkDevice device, const VkPipelineCacheCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPipelineCache *pPipelineCache)
@@ -2170,7 +2213,8 @@ VkResult WINAPI vkCreatePipelineCache(VkDevice device, const VkPipelineCacheCrea
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPipelineCache = pPipelineCache;
-    return vk_unix_call(unix_vkCreatePipelineCache, &params);
+    vk_unix_call(unix_vkCreatePipelineCache, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreatePipelineLayout(VkDevice device, const VkPipelineLayoutCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPipelineLayout *pPipelineLayout)
@@ -2180,7 +2224,8 @@ VkResult WINAPI vkCreatePipelineLayout(VkDevice device, const VkPipelineLayoutCr
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPipelineLayout = pPipelineLayout;
-    return vk_unix_call(unix_vkCreatePipelineLayout, &params);
+    vk_unix_call(unix_vkCreatePipelineLayout, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreatePrivateDataSlot(VkDevice device, const VkPrivateDataSlotCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPrivateDataSlot *pPrivateDataSlot)
@@ -2190,7 +2235,8 @@ VkResult WINAPI vkCreatePrivateDataSlot(VkDevice device, const VkPrivateDataSlot
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPrivateDataSlot = pPrivateDataSlot;
-    return vk_unix_call(unix_vkCreatePrivateDataSlot, &params);
+    vk_unix_call(unix_vkCreatePrivateDataSlot, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataSlotCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPrivateDataSlot *pPrivateDataSlot)
@@ -2200,7 +2246,8 @@ VkResult WINAPI vkCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataS
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPrivateDataSlot = pPrivateDataSlot;
-    return vk_unix_call(unix_vkCreatePrivateDataSlotEXT, &params);
+    vk_unix_call(unix_vkCreatePrivateDataSlotEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateQueryPool(VkDevice device, const VkQueryPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkQueryPool *pQueryPool)
@@ -2210,7 +2257,8 @@ VkResult WINAPI vkCreateQueryPool(VkDevice device, const VkQueryPoolCreateInfo *
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pQueryPool = pQueryPool;
-    return vk_unix_call(unix_vkCreateQueryPool, &params);
+    vk_unix_call(unix_vkCreateQueryPool, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoKHR *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
@@ -2223,7 +2271,8 @@ VkResult WINAPI vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperat
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    return vk_unix_call(unix_vkCreateRayTracingPipelinesKHR, &params);
+    vk_unix_call(unix_vkCreateRayTracingPipelinesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoNV *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
@@ -2235,7 +2284,8 @@ VkResult WINAPI vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache p
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    return vk_unix_call(unix_vkCreateRayTracingPipelinesNV, &params);
+    vk_unix_call(unix_vkCreateRayTracingPipelinesNV, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateRenderPass(VkDevice device, const VkRenderPassCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkRenderPass *pRenderPass)
@@ -2245,7 +2295,8 @@ VkResult WINAPI vkCreateRenderPass(VkDevice device, const VkRenderPassCreateInfo
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pRenderPass = pRenderPass;
-    return vk_unix_call(unix_vkCreateRenderPass, &params);
+    vk_unix_call(unix_vkCreateRenderPass, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateRenderPass2(VkDevice device, const VkRenderPassCreateInfo2 *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkRenderPass *pRenderPass)
@@ -2255,7 +2306,8 @@ VkResult WINAPI vkCreateRenderPass2(VkDevice device, const VkRenderPassCreateInf
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pRenderPass = pRenderPass;
-    return vk_unix_call(unix_vkCreateRenderPass2, &params);
+    vk_unix_call(unix_vkCreateRenderPass2, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateRenderPass2KHR(VkDevice device, const VkRenderPassCreateInfo2 *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkRenderPass *pRenderPass)
@@ -2265,7 +2317,8 @@ VkResult WINAPI vkCreateRenderPass2KHR(VkDevice device, const VkRenderPassCreate
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pRenderPass = pRenderPass;
-    return vk_unix_call(unix_vkCreateRenderPass2KHR, &params);
+    vk_unix_call(unix_vkCreateRenderPass2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateSampler(VkDevice device, const VkSamplerCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSampler *pSampler)
@@ -2275,7 +2328,8 @@ VkResult WINAPI vkCreateSampler(VkDevice device, const VkSamplerCreateInfo *pCre
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSampler = pSampler;
-    return vk_unix_call(unix_vkCreateSampler, &params);
+    vk_unix_call(unix_vkCreateSampler, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateSamplerYcbcrConversion(VkDevice device, const VkSamplerYcbcrConversionCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSamplerYcbcrConversion *pYcbcrConversion)
@@ -2285,7 +2339,8 @@ VkResult WINAPI vkCreateSamplerYcbcrConversion(VkDevice device, const VkSamplerY
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pYcbcrConversion = pYcbcrConversion;
-    return vk_unix_call(unix_vkCreateSamplerYcbcrConversion, &params);
+    vk_unix_call(unix_vkCreateSamplerYcbcrConversion, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateSamplerYcbcrConversionKHR(VkDevice device, const VkSamplerYcbcrConversionCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSamplerYcbcrConversion *pYcbcrConversion)
@@ -2295,7 +2350,8 @@ VkResult WINAPI vkCreateSamplerYcbcrConversionKHR(VkDevice device, const VkSampl
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pYcbcrConversion = pYcbcrConversion;
-    return vk_unix_call(unix_vkCreateSamplerYcbcrConversionKHR, &params);
+    vk_unix_call(unix_vkCreateSamplerYcbcrConversionKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateSemaphore(VkDevice device, const VkSemaphoreCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSemaphore *pSemaphore)
@@ -2305,7 +2361,8 @@ VkResult WINAPI vkCreateSemaphore(VkDevice device, const VkSemaphoreCreateInfo *
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSemaphore = pSemaphore;
-    return vk_unix_call(unix_vkCreateSemaphore, &params);
+    vk_unix_call(unix_vkCreateSemaphore, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateShaderModule(VkDevice device, const VkShaderModuleCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkShaderModule *pShaderModule)
@@ -2315,7 +2372,8 @@ VkResult WINAPI vkCreateShaderModule(VkDevice device, const VkShaderModuleCreate
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pShaderModule = pShaderModule;
-    return vk_unix_call(unix_vkCreateShaderModule, &params);
+    vk_unix_call(unix_vkCreateShaderModule, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
@@ -2325,7 +2383,8 @@ VkResult WINAPI vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInf
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSwapchain = pSwapchain;
-    return vk_unix_call(unix_vkCreateSwapchainKHR, &params);
+    vk_unix_call(unix_vkCreateSwapchainKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateValidationCacheEXT(VkDevice device, const VkValidationCacheCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkValidationCacheEXT *pValidationCache)
@@ -2335,7 +2394,8 @@ VkResult WINAPI vkCreateValidationCacheEXT(VkDevice device, const VkValidationCa
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pValidationCache = pValidationCache;
-    return vk_unix_call(unix_vkCreateValidationCacheEXT, &params);
+    vk_unix_call(unix_vkCreateValidationCacheEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface)
@@ -2345,7 +2405,8 @@ VkResult WINAPI vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32Surfac
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSurface = pSurface;
-    return vk_unix_call(unix_vkCreateWin32SurfaceKHR, &params);
+    vk_unix_call(unix_vkCreateWin32SurfaceKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMarkerObjectNameInfoEXT *pNameInfo)
@@ -2353,7 +2414,8 @@ VkResult WINAPI vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMark
     struct vkDebugMarkerSetObjectNameEXT_params params;
     params.device = device;
     params.pNameInfo = pNameInfo;
-    return vk_unix_call(unix_vkDebugMarkerSetObjectNameEXT, &params);
+    vk_unix_call(unix_vkDebugMarkerSetObjectNameEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *pTagInfo)
@@ -2361,7 +2423,8 @@ VkResult WINAPI vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarke
     struct vkDebugMarkerSetObjectTagEXT_params params;
     params.device = device;
     params.pTagInfo = pTagInfo;
-    return vk_unix_call(unix_vkDebugMarkerSetObjectTagEXT, &params);
+    vk_unix_call(unix_vkDebugMarkerSetObjectTagEXT, &params);
+    return params.result;
 }
 
 void WINAPI vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char *pLayerPrefix, const char *pMessage)
@@ -2383,7 +2446,8 @@ VkResult WINAPI vkDeferredOperationJoinKHR(VkDevice device, VkDeferredOperationK
     struct vkDeferredOperationJoinKHR_params params;
     params.device = device;
     params.operation = operation;
-    return vk_unix_call(unix_vkDeferredOperationJoinKHR, &params);
+    vk_unix_call(unix_vkDeferredOperationJoinKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkDestroyAccelerationStructureKHR(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks *pAllocator)
@@ -2696,14 +2760,16 @@ VkResult WINAPI vkDeviceWaitIdle(VkDevice device)
 {
     struct vkDeviceWaitIdle_params params;
     params.device = device;
-    return vk_unix_call(unix_vkDeviceWaitIdle, &params);
+    vk_unix_call(unix_vkDeviceWaitIdle, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEndCommandBuffer(VkCommandBuffer commandBuffer)
 {
     struct vkEndCommandBuffer_params params;
     params.commandBuffer = commandBuffer;
-    return vk_unix_call(unix_vkEndCommandBuffer, &params);
+    vk_unix_call(unix_vkEndCommandBuffer, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties)
@@ -2713,7 +2779,8 @@ VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDe
     params.pLayerName = pLayerName;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkEnumerateDeviceExtensionProperties, &params);
+    vk_unix_call(unix_vkEnumerateDeviceExtensionProperties, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties)
@@ -2722,7 +2789,8 @@ VkResult WINAPI vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice
     params.physicalDevice = physicalDevice;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkEnumerateDeviceLayerProperties, &params);
+    vk_unix_call(unix_vkEnumerateDeviceLayerProperties, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumeratePhysicalDeviceGroups(VkInstance instance, uint32_t *pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties *pPhysicalDeviceGroupProperties)
@@ -2731,7 +2799,8 @@ VkResult WINAPI vkEnumeratePhysicalDeviceGroups(VkInstance instance, uint32_t *p
     params.instance = instance;
     params.pPhysicalDeviceGroupCount = pPhysicalDeviceGroupCount;
     params.pPhysicalDeviceGroupProperties = pPhysicalDeviceGroupProperties;
-    return vk_unix_call(unix_vkEnumeratePhysicalDeviceGroups, &params);
+    vk_unix_call(unix_vkEnumeratePhysicalDeviceGroups, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance, uint32_t *pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties *pPhysicalDeviceGroupProperties)
@@ -2740,7 +2809,8 @@ VkResult WINAPI vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance, uint32_t
     params.instance = instance;
     params.pPhysicalDeviceGroupCount = pPhysicalDeviceGroupCount;
     params.pPhysicalDeviceGroupProperties = pPhysicalDeviceGroupProperties;
-    return vk_unix_call(unix_vkEnumeratePhysicalDeviceGroupsKHR, &params);
+    vk_unix_call(unix_vkEnumeratePhysicalDeviceGroupsKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, uint32_t *pCounterCount, VkPerformanceCounterKHR *pCounters, VkPerformanceCounterDescriptionKHR *pCounterDescriptions)
@@ -2751,7 +2821,8 @@ VkResult WINAPI vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(
     params.pCounterCount = pCounterCount;
     params.pCounters = pCounters;
     params.pCounterDescriptions = pCounterDescriptions;
-    return vk_unix_call(unix_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR, &params);
+    vk_unix_call(unix_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *pPhysicalDeviceCount, VkPhysicalDevice *pPhysicalDevices)
@@ -2760,7 +2831,8 @@ VkResult WINAPI vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *pPhysi
     params.instance = instance;
     params.pPhysicalDeviceCount = pPhysicalDeviceCount;
     params.pPhysicalDevices = pPhysicalDevices;
-    return vk_unix_call(unix_vkEnumeratePhysicalDevices, &params);
+    vk_unix_call(unix_vkEnumeratePhysicalDevices, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkFlushMappedMemoryRanges(VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange *pMemoryRanges)
@@ -2769,7 +2841,8 @@ VkResult WINAPI vkFlushMappedMemoryRanges(VkDevice device, uint32_t memoryRangeC
     params.device = device;
     params.memoryRangeCount = memoryRangeCount;
     params.pMemoryRanges = pMemoryRanges;
-    return vk_unix_call(unix_vkFlushMappedMemoryRanges, &params);
+    vk_unix_call(unix_vkFlushMappedMemoryRanges, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkFreeDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool, uint32_t descriptorSetCount, const VkDescriptorSet *pDescriptorSets)
@@ -2779,7 +2852,8 @@ VkResult WINAPI vkFreeDescriptorSets(VkDevice device, VkDescriptorPool descripto
     params.descriptorPool = descriptorPool;
     params.descriptorSetCount = descriptorSetCount;
     params.pDescriptorSets = pDescriptorSets;
-    return vk_unix_call(unix_vkFreeDescriptorSets, &params);
+    vk_unix_call(unix_vkFreeDescriptorSets, &params);
+    return params.result;
 }
 
 void WINAPI vkFreeMemory(VkDevice device, VkDeviceMemory memory, const VkAllocationCallbacks *pAllocator)
@@ -2818,7 +2892,8 @@ VkResult WINAPI vkGetAccelerationStructureHandleNV(VkDevice device, VkAccelerati
     params.accelerationStructure = accelerationStructure;
     params.dataSize = dataSize;
     params.pData = pData;
-    return vk_unix_call(unix_vkGetAccelerationStructureHandleNV, &params);
+    vk_unix_call(unix_vkGetAccelerationStructureHandleNV, &params);
+    return params.result;
 }
 
 void WINAPI vkGetAccelerationStructureMemoryRequirementsNV(VkDevice device, const VkAccelerationStructureMemoryRequirementsInfoNV *pInfo, VkMemoryRequirements2KHR *pMemoryRequirements)
@@ -2910,7 +2985,8 @@ VkResult WINAPI vkGetCalibratedTimestampsEXT(VkDevice device, uint32_t timestamp
     params.pTimestampInfos = pTimestampInfos;
     params.pTimestamps = pTimestamps;
     params.pMaxDeviation = pMaxDeviation;
-    return vk_unix_call(unix_vkGetCalibratedTimestampsEXT, &params);
+    vk_unix_call(unix_vkGetCalibratedTimestampsEXT, &params);
+    return params.result;
 }
 
 uint32_t WINAPI vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDeferredOperationKHR operation)
@@ -2918,7 +2994,8 @@ uint32_t WINAPI vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDefer
     struct vkGetDeferredOperationMaxConcurrencyKHR_params params;
     params.device = device;
     params.operation = operation;
-    return vk_unix_call(unix_vkGetDeferredOperationMaxConcurrencyKHR, &params);
+    vk_unix_call(unix_vkGetDeferredOperationMaxConcurrencyKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetDeferredOperationResultKHR(VkDevice device, VkDeferredOperationKHR operation)
@@ -2926,7 +3003,8 @@ VkResult WINAPI vkGetDeferredOperationResultKHR(VkDevice device, VkDeferredOpera
     struct vkGetDeferredOperationResultKHR_params params;
     params.device = device;
     params.operation = operation;
-    return vk_unix_call(unix_vkGetDeferredOperationResultKHR, &params);
+    vk_unix_call(unix_vkGetDeferredOperationResultKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkGetDescriptorSetHostMappingVALVE(VkDevice device, VkDescriptorSet descriptorSet, void **ppData)
@@ -3019,7 +3097,8 @@ VkResult WINAPI vkGetDeviceGroupPresentCapabilitiesKHR(VkDevice device, VkDevice
     struct vkGetDeviceGroupPresentCapabilitiesKHR_params params;
     params.device = device;
     params.pDeviceGroupPresentCapabilities = pDeviceGroupPresentCapabilities;
-    return vk_unix_call(unix_vkGetDeviceGroupPresentCapabilitiesKHR, &params);
+    vk_unix_call(unix_vkGetDeviceGroupPresentCapabilitiesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfaceKHR surface, VkDeviceGroupPresentModeFlagsKHR *pModes)
@@ -3028,7 +3107,8 @@ VkResult WINAPI vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfac
     params.device = device;
     params.surface = surface;
     params.pModes = pModes;
-    return vk_unix_call(unix_vkGetDeviceGroupSurfacePresentModesKHR, &params);
+    vk_unix_call(unix_vkGetDeviceGroupSurfacePresentModesKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkGetDeviceImageMemoryRequirements(VkDevice device, const VkDeviceImageMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
@@ -3121,7 +3201,8 @@ VkResult WINAPI vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(VkDevice device,
     params.device = device;
     params.renderpass = renderpass;
     params.pMaxWorkgroupSize = pMaxWorkgroupSize;
-    return vk_unix_call(unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI, &params);
+    vk_unix_call(unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetDynamicRenderingTilePropertiesQCOM(VkDevice device, const VkRenderingInfo *pRenderingInfo, VkTilePropertiesQCOM *pProperties)
@@ -3130,7 +3211,8 @@ VkResult WINAPI vkGetDynamicRenderingTilePropertiesQCOM(VkDevice device, const V
     params.device = device;
     params.pRenderingInfo = pRenderingInfo;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkGetDynamicRenderingTilePropertiesQCOM, &params);
+    vk_unix_call(unix_vkGetDynamicRenderingTilePropertiesQCOM, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetEventStatus(VkDevice device, VkEvent event)
@@ -3138,7 +3220,8 @@ VkResult WINAPI vkGetEventStatus(VkDevice device, VkEvent event)
     struct vkGetEventStatus_params params;
     params.device = device;
     params.event = event;
-    return vk_unix_call(unix_vkGetEventStatus, &params);
+    vk_unix_call(unix_vkGetEventStatus, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetFenceStatus(VkDevice device, VkFence fence)
@@ -3146,7 +3229,8 @@ VkResult WINAPI vkGetFenceStatus(VkDevice device, VkFence fence)
     struct vkGetFenceStatus_params params;
     params.device = device;
     params.fence = fence;
-    return vk_unix_call(unix_vkGetFenceStatus, &params);
+    vk_unix_call(unix_vkGetFenceStatus, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetFramebufferTilePropertiesQCOM(VkDevice device, VkFramebuffer framebuffer, uint32_t *pPropertiesCount, VkTilePropertiesQCOM *pProperties)
@@ -3156,7 +3240,8 @@ VkResult WINAPI vkGetFramebufferTilePropertiesQCOM(VkDevice device, VkFramebuffe
     params.framebuffer = framebuffer;
     params.pPropertiesCount = pPropertiesCount;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkGetFramebufferTilePropertiesQCOM, &params);
+    vk_unix_call(unix_vkGetFramebufferTilePropertiesQCOM, &params);
+    return params.result;
 }
 
 void WINAPI vkGetGeneratedCommandsMemoryRequirementsNV(VkDevice device, const VkGeneratedCommandsMemoryRequirementsInfoNV *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
@@ -3251,7 +3336,8 @@ VkResult WINAPI vkGetImageViewAddressNVX(VkDevice device, VkImageView imageView,
     params.device = device;
     params.imageView = imageView;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkGetImageViewAddressNVX, &params);
+    vk_unix_call(unix_vkGetImageViewAddressNVX, &params);
+    return params.result;
 }
 
 uint32_t WINAPI vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo)
@@ -3259,7 +3345,8 @@ uint32_t WINAPI vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandle
     struct vkGetImageViewHandleNVX_params params;
     params.device = device;
     params.pInfo = pInfo;
-    return vk_unix_call(unix_vkGetImageViewHandleNVX, &params);
+    vk_unix_call(unix_vkGetImageViewHandleNVX, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties)
@@ -3269,7 +3356,8 @@ VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalM
     params.handleType = handleType;
     params.pHostPointer = pHostPointer;
     params.pMemoryHostPointerProperties = pMemoryHostPointerProperties;
-    return vk_unix_call(unix_vkGetMemoryHostPointerPropertiesEXT, &params);
+    vk_unix_call(unix_vkGetMemoryHostPointerPropertiesEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPerformanceParameterINTEL(VkDevice device, VkPerformanceParameterTypeINTEL parameter, VkPerformanceValueINTEL *pValue)
@@ -3278,7 +3366,8 @@ VkResult WINAPI vkGetPerformanceParameterINTEL(VkDevice device, VkPerformancePar
     params.device = device;
     params.parameter = parameter;
     params.pValue = pValue;
-    return vk_unix_call(unix_vkGetPerformanceParameterINTEL, &params);
+    vk_unix_call(unix_vkGetPerformanceParameterINTEL, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice physicalDevice, uint32_t *pTimeDomainCount, VkTimeDomainEXT *pTimeDomains)
@@ -3287,7 +3376,8 @@ VkResult WINAPI vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice 
     params.physicalDevice = physicalDevice;
     params.pTimeDomainCount = pTimeDomainCount;
     params.pTimeDomains = pTimeDomains;
-    return vk_unix_call(unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesNV *pProperties)
@@ -3296,7 +3386,8 @@ VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevic
     params.physicalDevice = physicalDevice;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV, &params);
+    return params.result;
 }
 
 void WINAPI vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo, VkExternalBufferProperties *pExternalBufferProperties)
@@ -3410,7 +3501,8 @@ VkResult WINAPI vkGetPhysicalDeviceFragmentShadingRatesKHR(VkPhysicalDevice phys
     params.physicalDevice = physicalDevice;
     params.pFragmentShadingRateCount = pFragmentShadingRateCount;
     params.pFragmentShadingRates = pFragmentShadingRates;
-    return vk_unix_call(unix_vkGetPhysicalDeviceFragmentShadingRatesKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceFragmentShadingRatesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkImageTiling tiling, VkImageUsageFlags usage, VkImageCreateFlags flags, VkImageFormatProperties *pImageFormatProperties)
@@ -3423,7 +3515,8 @@ VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties(VkPhysicalDevice physic
     params.usage = usage;
     params.flags = flags;
     params.pImageFormatProperties = pImageFormatProperties;
-    return vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
@@ -3432,7 +3525,8 @@ VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physi
     params.physicalDevice = physicalDevice;
     params.pImageFormatInfo = pImageFormatInfo;
     params.pImageFormatProperties = pImageFormatProperties;
-    return vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties2, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties2, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
@@ -3441,7 +3535,8 @@ VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice ph
     params.physicalDevice = physicalDevice;
     params.pImageFormatInfo = pImageFormatInfo;
     params.pImageFormatProperties = pImageFormatProperties;
-    return vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties2KHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties2KHR, &params);
+    return params.result;
 }
 
 void WINAPI vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties *pMemoryProperties)
@@ -3484,7 +3579,8 @@ VkResult WINAPI vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice physica
     params.surface = surface;
     params.pRectCount = pRectCount;
     params.pRects = pRects;
-    return vk_unix_call(unix_vkGetPhysicalDevicePresentRectanglesKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDevicePresentRectanglesKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties *pProperties)
@@ -3571,7 +3667,8 @@ VkResult WINAPI vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsN
     params.physicalDevice = physicalDevice;
     params.pCombinationCount = pCombinationCount;
     params.pCombinations = pCombinations;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, VkSurfaceCapabilities2KHR *pSurfaceCapabilities)
@@ -3580,7 +3677,8 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice phys
     params.physicalDevice = physicalDevice;
     params.pSurfaceInfo = pSurfaceInfo;
     params.pSurfaceCapabilities = pSurfaceCapabilities;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSurfaceCapabilities2KHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSurfaceCapabilities2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
@@ -3589,7 +3687,8 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physi
     params.physicalDevice = physicalDevice;
     params.surface = surface;
     params.pSurfaceCapabilities = pSurfaceCapabilities;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSurfaceCapabilitiesKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSurfaceCapabilitiesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, uint32_t *pSurfaceFormatCount, VkSurfaceFormat2KHR *pSurfaceFormats)
@@ -3599,7 +3698,8 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice physicalD
     params.pSurfaceInfo = pSurfaceInfo;
     params.pSurfaceFormatCount = pSurfaceFormatCount;
     params.pSurfaceFormats = pSurfaceFormats;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSurfaceFormats2KHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSurfaceFormats2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t *pSurfaceFormatCount, VkSurfaceFormatKHR *pSurfaceFormats)
@@ -3609,7 +3709,8 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice physicalDe
     params.surface = surface;
     params.pSurfaceFormatCount = pSurfaceFormatCount;
     params.pSurfaceFormats = pSurfaceFormats;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSurfaceFormatsKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSurfaceFormatsKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t *pPresentModeCount, VkPresentModeKHR *pPresentModes)
@@ -3619,7 +3720,8 @@ VkResult WINAPI vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevice physi
     params.surface = surface;
     params.pPresentModeCount = pPresentModeCount;
     params.pPresentModes = pPresentModes;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSurfacePresentModesKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSurfacePresentModesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkSurfaceKHR surface, VkBool32 *pSupported)
@@ -3629,7 +3731,8 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDe
     params.queueFamilyIndex = queueFamilyIndex;
     params.surface = surface;
     params.pSupported = pSupported;
-    return vk_unix_call(unix_vkGetPhysicalDeviceSurfaceSupportKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceSurfaceSupportKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceToolProperties(VkPhysicalDevice physicalDevice, uint32_t *pToolCount, VkPhysicalDeviceToolProperties *pToolProperties)
@@ -3638,7 +3741,8 @@ VkResult WINAPI vkGetPhysicalDeviceToolProperties(VkPhysicalDevice physicalDevic
     params.physicalDevice = physicalDevice;
     params.pToolCount = pToolCount;
     params.pToolProperties = pToolProperties;
-    return vk_unix_call(unix_vkGetPhysicalDeviceToolProperties, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceToolProperties, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDevice, uint32_t *pToolCount, VkPhysicalDeviceToolProperties *pToolProperties)
@@ -3647,7 +3751,8 @@ VkResult WINAPI vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDe
     params.physicalDevice = physicalDevice;
     params.pToolCount = pToolCount;
     params.pToolProperties = pToolProperties;
-    return vk_unix_call(unix_vkGetPhysicalDeviceToolPropertiesEXT, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceToolPropertiesEXT, &params);
+    return params.result;
 }
 
 VkBool32 WINAPI vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex)
@@ -3655,7 +3760,8 @@ VkBool32 WINAPI vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice 
     struct vkGetPhysicalDeviceWin32PresentationSupportKHR_params params;
     params.physicalDevice = physicalDevice;
     params.queueFamilyIndex = queueFamilyIndex;
-    return vk_unix_call(unix_vkGetPhysicalDeviceWin32PresentationSupportKHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceWin32PresentationSupportKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPipelineCacheData(VkDevice device, VkPipelineCache pipelineCache, size_t *pDataSize, void *pData)
@@ -3665,7 +3771,8 @@ VkResult WINAPI vkGetPipelineCacheData(VkDevice device, VkPipelineCache pipeline
     params.pipelineCache = pipelineCache;
     params.pDataSize = pDataSize;
     params.pData = pData;
-    return vk_unix_call(unix_vkGetPipelineCacheData, &params);
+    vk_unix_call(unix_vkGetPipelineCacheData, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPipelineExecutableInternalRepresentationsKHR(VkDevice device, const VkPipelineExecutableInfoKHR *pExecutableInfo, uint32_t *pInternalRepresentationCount, VkPipelineExecutableInternalRepresentationKHR *pInternalRepresentations)
@@ -3675,7 +3782,8 @@ VkResult WINAPI vkGetPipelineExecutableInternalRepresentationsKHR(VkDevice devic
     params.pExecutableInfo = pExecutableInfo;
     params.pInternalRepresentationCount = pInternalRepresentationCount;
     params.pInternalRepresentations = pInternalRepresentations;
-    return vk_unix_call(unix_vkGetPipelineExecutableInternalRepresentationsKHR, &params);
+    vk_unix_call(unix_vkGetPipelineExecutableInternalRepresentationsKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPipelineExecutablePropertiesKHR(VkDevice device, const VkPipelineInfoKHR *pPipelineInfo, uint32_t *pExecutableCount, VkPipelineExecutablePropertiesKHR *pProperties)
@@ -3685,7 +3793,8 @@ VkResult WINAPI vkGetPipelineExecutablePropertiesKHR(VkDevice device, const VkPi
     params.pPipelineInfo = pPipelineInfo;
     params.pExecutableCount = pExecutableCount;
     params.pProperties = pProperties;
-    return vk_unix_call(unix_vkGetPipelineExecutablePropertiesKHR, &params);
+    vk_unix_call(unix_vkGetPipelineExecutablePropertiesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPipelineExecutableStatisticsKHR(VkDevice device, const VkPipelineExecutableInfoKHR *pExecutableInfo, uint32_t *pStatisticCount, VkPipelineExecutableStatisticKHR *pStatistics)
@@ -3695,7 +3804,8 @@ VkResult WINAPI vkGetPipelineExecutableStatisticsKHR(VkDevice device, const VkPi
     params.pExecutableInfo = pExecutableInfo;
     params.pStatisticCount = pStatisticCount;
     params.pStatistics = pStatistics;
-    return vk_unix_call(unix_vkGetPipelineExecutableStatisticsKHR, &params);
+    vk_unix_call(unix_vkGetPipelineExecutableStatisticsKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoEXT *pPipelineInfo, VkBaseOutStructure *pPipelineProperties)
@@ -3704,7 +3814,8 @@ VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfo
     params.device = device;
     params.pPipelineInfo = pPipelineInfo;
     params.pPipelineProperties = pPipelineProperties;
-    return vk_unix_call(unix_vkGetPipelinePropertiesEXT, &params);
+    vk_unix_call(unix_vkGetPipelinePropertiesEXT, &params);
+    return params.result;
 }
 
 void WINAPI vkGetPrivateData(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t *pData)
@@ -3740,7 +3851,8 @@ VkResult WINAPI vkGetQueryPoolResults(VkDevice device, VkQueryPool queryPool, ui
     params.pData = pData;
     params.stride = stride;
     params.flags = flags;
-    return vk_unix_call(unix_vkGetQueryPoolResults, &params);
+    vk_unix_call(unix_vkGetQueryPoolResults, &params);
+    return params.result;
 }
 
 void WINAPI vkGetQueueCheckpointData2NV(VkQueue queue, uint32_t *pCheckpointDataCount, VkCheckpointData2NV *pCheckpointData)
@@ -3770,7 +3882,8 @@ VkResult WINAPI vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(VkDevice devic
     params.groupCount = groupCount;
     params.dataSize = dataSize;
     params.pData = pData;
-    return vk_unix_call(unix_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR, &params);
+    vk_unix_call(unix_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetRayTracingShaderGroupHandlesKHR(VkDevice device, VkPipeline pipeline, uint32_t firstGroup, uint32_t groupCount, size_t dataSize, void *pData)
@@ -3782,7 +3895,8 @@ VkResult WINAPI vkGetRayTracingShaderGroupHandlesKHR(VkDevice device, VkPipeline
     params.groupCount = groupCount;
     params.dataSize = dataSize;
     params.pData = pData;
-    return vk_unix_call(unix_vkGetRayTracingShaderGroupHandlesKHR, &params);
+    vk_unix_call(unix_vkGetRayTracingShaderGroupHandlesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetRayTracingShaderGroupHandlesNV(VkDevice device, VkPipeline pipeline, uint32_t firstGroup, uint32_t groupCount, size_t dataSize, void *pData)
@@ -3794,7 +3908,8 @@ VkResult WINAPI vkGetRayTracingShaderGroupHandlesNV(VkDevice device, VkPipeline 
     params.groupCount = groupCount;
     params.dataSize = dataSize;
     params.pData = pData;
-    return vk_unix_call(unix_vkGetRayTracingShaderGroupHandlesNV, &params);
+    vk_unix_call(unix_vkGetRayTracingShaderGroupHandlesNV, &params);
+    return params.result;
 }
 
 VkDeviceSize WINAPI vkGetRayTracingShaderGroupStackSizeKHR(VkDevice device, VkPipeline pipeline, uint32_t group, VkShaderGroupShaderKHR groupShader)
@@ -3804,7 +3919,8 @@ VkDeviceSize WINAPI vkGetRayTracingShaderGroupStackSizeKHR(VkDevice device, VkPi
     params.pipeline = pipeline;
     params.group = group;
     params.groupShader = groupShader;
-    return vk_unix_call(unix_vkGetRayTracingShaderGroupStackSizeKHR, &params);
+    vk_unix_call(unix_vkGetRayTracingShaderGroupStackSizeKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkGetRenderAreaGranularity(VkDevice device, VkRenderPass renderPass, VkExtent2D *pGranularity)
@@ -3822,7 +3938,8 @@ VkResult WINAPI vkGetSemaphoreCounterValue(VkDevice device, VkSemaphore semaphor
     params.device = device;
     params.semaphore = semaphore;
     params.pValue = pValue;
-    return vk_unix_call(unix_vkGetSemaphoreCounterValue, &params);
+    vk_unix_call(unix_vkGetSemaphoreCounterValue, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetSemaphoreCounterValueKHR(VkDevice device, VkSemaphore semaphore, uint64_t *pValue)
@@ -3831,7 +3948,8 @@ VkResult WINAPI vkGetSemaphoreCounterValueKHR(VkDevice device, VkSemaphore semap
     params.device = device;
     params.semaphore = semaphore;
     params.pValue = pValue;
-    return vk_unix_call(unix_vkGetSemaphoreCounterValueKHR, &params);
+    vk_unix_call(unix_vkGetSemaphoreCounterValueKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetShaderInfoAMD(VkDevice device, VkPipeline pipeline, VkShaderStageFlagBits shaderStage, VkShaderInfoTypeAMD infoType, size_t *pInfoSize, void *pInfo)
@@ -3843,7 +3961,8 @@ VkResult WINAPI vkGetShaderInfoAMD(VkDevice device, VkPipeline pipeline, VkShade
     params.infoType = infoType;
     params.pInfoSize = pInfoSize;
     params.pInfo = pInfo;
-    return vk_unix_call(unix_vkGetShaderInfoAMD, &params);
+    vk_unix_call(unix_vkGetShaderInfoAMD, &params);
+    return params.result;
 }
 
 void WINAPI vkGetShaderModuleCreateInfoIdentifierEXT(VkDevice device, const VkShaderModuleCreateInfo *pCreateInfo, VkShaderModuleIdentifierEXT *pIdentifier)
@@ -3871,7 +3990,8 @@ VkResult WINAPI vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchai
     params.swapchain = swapchain;
     params.pSwapchainImageCount = pSwapchainImageCount;
     params.pSwapchainImages = pSwapchainImages;
-    return vk_unix_call(unix_vkGetSwapchainImagesKHR, &params);
+    vk_unix_call(unix_vkGetSwapchainImagesKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkGetValidationCacheDataEXT(VkDevice device, VkValidationCacheEXT validationCache, size_t *pDataSize, void *pData)
@@ -3881,7 +4001,8 @@ VkResult WINAPI vkGetValidationCacheDataEXT(VkDevice device, VkValidationCacheEX
     params.validationCache = validationCache;
     params.pDataSize = pDataSize;
     params.pData = pData;
-    return vk_unix_call(unix_vkGetValidationCacheDataEXT, &params);
+    vk_unix_call(unix_vkGetValidationCacheDataEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkInitializePerformanceApiINTEL(VkDevice device, const VkInitializePerformanceApiInfoINTEL *pInitializeInfo)
@@ -3889,7 +4010,8 @@ VkResult WINAPI vkInitializePerformanceApiINTEL(VkDevice device, const VkInitial
     struct vkInitializePerformanceApiINTEL_params params;
     params.device = device;
     params.pInitializeInfo = pInitializeInfo;
-    return vk_unix_call(unix_vkInitializePerformanceApiINTEL, &params);
+    vk_unix_call(unix_vkInitializePerformanceApiINTEL, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkInvalidateMappedMemoryRanges(VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange *pMemoryRanges)
@@ -3898,7 +4020,8 @@ VkResult WINAPI vkInvalidateMappedMemoryRanges(VkDevice device, uint32_t memoryR
     params.device = device;
     params.memoryRangeCount = memoryRangeCount;
     params.pMemoryRanges = pMemoryRanges;
-    return vk_unix_call(unix_vkInvalidateMappedMemoryRanges, &params);
+    vk_unix_call(unix_vkInvalidateMappedMemoryRanges, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void **ppData)
@@ -3910,7 +4033,8 @@ VkResult WINAPI vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize
     params.size = size;
     params.flags = flags;
     params.ppData = ppData;
-    return vk_unix_call(unix_vkMapMemory, &params);
+    vk_unix_call(unix_vkMapMemory, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkMergePipelineCaches(VkDevice device, VkPipelineCache dstCache, uint32_t srcCacheCount, const VkPipelineCache *pSrcCaches)
@@ -3920,7 +4044,8 @@ VkResult WINAPI vkMergePipelineCaches(VkDevice device, VkPipelineCache dstCache,
     params.dstCache = dstCache;
     params.srcCacheCount = srcCacheCount;
     params.pSrcCaches = pSrcCaches;
-    return vk_unix_call(unix_vkMergePipelineCaches, &params);
+    vk_unix_call(unix_vkMergePipelineCaches, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkMergeValidationCachesEXT(VkDevice device, VkValidationCacheEXT dstCache, uint32_t srcCacheCount, const VkValidationCacheEXT *pSrcCaches)
@@ -3930,7 +4055,8 @@ VkResult WINAPI vkMergeValidationCachesEXT(VkDevice device, VkValidationCacheEXT
     params.dstCache = dstCache;
     params.srcCacheCount = srcCacheCount;
     params.pSrcCaches = pSrcCaches;
-    return vk_unix_call(unix_vkMergeValidationCachesEXT, &params);
+    vk_unix_call(unix_vkMergeValidationCachesEXT, &params);
+    return params.result;
 }
 
 void WINAPI vkQueueBeginDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT *pLabelInfo)
@@ -3948,7 +4074,8 @@ VkResult WINAPI vkQueueBindSparse(VkQueue queue, uint32_t bindInfoCount, const V
     params.bindInfoCount = bindInfoCount;
     params.pBindInfo = pBindInfo;
     params.fence = fence;
-    return vk_unix_call(unix_vkQueueBindSparse, &params);
+    vk_unix_call(unix_vkQueueBindSparse, &params);
+    return params.result;
 }
 
 void WINAPI vkQueueEndDebugUtilsLabelEXT(VkQueue queue)
@@ -3971,7 +4098,8 @@ VkResult WINAPI vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *pPresen
     struct vkQueuePresentKHR_params params;
     params.queue = queue;
     params.pPresentInfo = pPresentInfo;
-    return vk_unix_call(unix_vkQueuePresentKHR, &params);
+    vk_unix_call(unix_vkQueuePresentKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkQueueSetPerformanceConfigurationINTEL(VkQueue queue, VkPerformanceConfigurationINTEL configuration)
@@ -3979,7 +4107,8 @@ VkResult WINAPI vkQueueSetPerformanceConfigurationINTEL(VkQueue queue, VkPerform
     struct vkQueueSetPerformanceConfigurationINTEL_params params;
     params.queue = queue;
     params.configuration = configuration;
-    return vk_unix_call(unix_vkQueueSetPerformanceConfigurationINTEL, &params);
+    vk_unix_call(unix_vkQueueSetPerformanceConfigurationINTEL, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmitInfo *pSubmits, VkFence fence)
@@ -3989,7 +4118,8 @@ VkResult WINAPI vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmi
     params.submitCount = submitCount;
     params.pSubmits = pSubmits;
     params.fence = fence;
-    return vk_unix_call(unix_vkQueueSubmit, &params);
+    vk_unix_call(unix_vkQueueSubmit, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkQueueSubmit2(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2 *pSubmits, VkFence fence)
@@ -3999,7 +4129,8 @@ VkResult WINAPI vkQueueSubmit2(VkQueue queue, uint32_t submitCount, const VkSubm
     params.submitCount = submitCount;
     params.pSubmits = pSubmits;
     params.fence = fence;
-    return vk_unix_call(unix_vkQueueSubmit2, &params);
+    vk_unix_call(unix_vkQueueSubmit2, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2 *pSubmits, VkFence fence)
@@ -4009,14 +4140,16 @@ VkResult WINAPI vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkS
     params.submitCount = submitCount;
     params.pSubmits = pSubmits;
     params.fence = fence;
-    return vk_unix_call(unix_vkQueueSubmit2KHR, &params);
+    vk_unix_call(unix_vkQueueSubmit2KHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkQueueWaitIdle(VkQueue queue)
 {
     struct vkQueueWaitIdle_params params;
     params.queue = queue;
-    return vk_unix_call(unix_vkQueueWaitIdle, &params);
+    vk_unix_call(unix_vkQueueWaitIdle, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkReleasePerformanceConfigurationINTEL(VkDevice device, VkPerformanceConfigurationINTEL configuration)
@@ -4024,7 +4157,8 @@ VkResult WINAPI vkReleasePerformanceConfigurationINTEL(VkDevice device, VkPerfor
     struct vkReleasePerformanceConfigurationINTEL_params params;
     params.device = device;
     params.configuration = configuration;
-    return vk_unix_call(unix_vkReleasePerformanceConfigurationINTEL, &params);
+    vk_unix_call(unix_vkReleasePerformanceConfigurationINTEL, &params);
+    return params.result;
 }
 
 void WINAPI vkReleaseProfilingLockKHR(VkDevice device)
@@ -4039,7 +4173,8 @@ VkResult WINAPI vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBuf
     struct vkResetCommandBuffer_params params;
     params.commandBuffer = commandBuffer;
     params.flags = flags;
-    return vk_unix_call(unix_vkResetCommandBuffer, &params);
+    vk_unix_call(unix_vkResetCommandBuffer, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkResetCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolResetFlags flags)
@@ -4048,7 +4183,8 @@ VkResult WINAPI vkResetCommandPool(VkDevice device, VkCommandPool commandPool, V
     params.device = device;
     params.commandPool = commandPool;
     params.flags = flags;
-    return vk_unix_call(unix_vkResetCommandPool, &params);
+    vk_unix_call(unix_vkResetCommandPool, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkResetDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorPoolResetFlags flags)
@@ -4057,7 +4193,8 @@ VkResult WINAPI vkResetDescriptorPool(VkDevice device, VkDescriptorPool descript
     params.device = device;
     params.descriptorPool = descriptorPool;
     params.flags = flags;
-    return vk_unix_call(unix_vkResetDescriptorPool, &params);
+    vk_unix_call(unix_vkResetDescriptorPool, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkResetEvent(VkDevice device, VkEvent event)
@@ -4065,7 +4202,8 @@ VkResult WINAPI vkResetEvent(VkDevice device, VkEvent event)
     struct vkResetEvent_params params;
     params.device = device;
     params.event = event;
-    return vk_unix_call(unix_vkResetEvent, &params);
+    vk_unix_call(unix_vkResetEvent, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkResetFences(VkDevice device, uint32_t fenceCount, const VkFence *pFences)
@@ -4074,7 +4212,8 @@ VkResult WINAPI vkResetFences(VkDevice device, uint32_t fenceCount, const VkFenc
     params.device = device;
     params.fenceCount = fenceCount;
     params.pFences = pFences;
-    return vk_unix_call(unix_vkResetFences, &params);
+    vk_unix_call(unix_vkResetFences, &params);
+    return params.result;
 }
 
 void WINAPI vkResetQueryPool(VkDevice device, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount)
@@ -4102,7 +4241,8 @@ VkResult WINAPI vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtils
     struct vkSetDebugUtilsObjectNameEXT_params params;
     params.device = device;
     params.pNameInfo = pNameInfo;
-    return vk_unix_call(unix_vkSetDebugUtilsObjectNameEXT, &params);
+    vk_unix_call(unix_vkSetDebugUtilsObjectNameEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT *pTagInfo)
@@ -4110,7 +4250,8 @@ VkResult WINAPI vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsO
     struct vkSetDebugUtilsObjectTagEXT_params params;
     params.device = device;
     params.pTagInfo = pTagInfo;
-    return vk_unix_call(unix_vkSetDebugUtilsObjectTagEXT, &params);
+    vk_unix_call(unix_vkSetDebugUtilsObjectTagEXT, &params);
+    return params.result;
 }
 
 void WINAPI vkSetDeviceMemoryPriorityEXT(VkDevice device, VkDeviceMemory memory, float priority)
@@ -4127,7 +4268,8 @@ VkResult WINAPI vkSetEvent(VkDevice device, VkEvent event)
     struct vkSetEvent_params params;
     params.device = device;
     params.event = event;
-    return vk_unix_call(unix_vkSetEvent, &params);
+    vk_unix_call(unix_vkSetEvent, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkSetPrivateData(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data)
@@ -4138,7 +4280,8 @@ VkResult WINAPI vkSetPrivateData(VkDevice device, VkObjectType objectType, uint6
     params.objectHandle = objectHandle;
     params.privateDataSlot = privateDataSlot;
     params.data = data;
-    return vk_unix_call(unix_vkSetPrivateData, &params);
+    vk_unix_call(unix_vkSetPrivateData, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data)
@@ -4149,7 +4292,8 @@ VkResult WINAPI vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, ui
     params.objectHandle = objectHandle;
     params.privateDataSlot = privateDataSlot;
     params.data = data;
-    return vk_unix_call(unix_vkSetPrivateDataEXT, &params);
+    vk_unix_call(unix_vkSetPrivateDataEXT, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkSignalSemaphore(VkDevice device, const VkSemaphoreSignalInfo *pSignalInfo)
@@ -4157,7 +4301,8 @@ VkResult WINAPI vkSignalSemaphore(VkDevice device, const VkSemaphoreSignalInfo *
     struct vkSignalSemaphore_params params;
     params.device = device;
     params.pSignalInfo = pSignalInfo;
-    return vk_unix_call(unix_vkSignalSemaphore, &params);
+    vk_unix_call(unix_vkSignalSemaphore, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkSignalSemaphoreKHR(VkDevice device, const VkSemaphoreSignalInfo *pSignalInfo)
@@ -4165,7 +4310,8 @@ VkResult WINAPI vkSignalSemaphoreKHR(VkDevice device, const VkSemaphoreSignalInf
     struct vkSignalSemaphoreKHR_params params;
     params.device = device;
     params.pSignalInfo = pSignalInfo;
-    return vk_unix_call(unix_vkSignalSemaphoreKHR, &params);
+    vk_unix_call(unix_vkSignalSemaphoreKHR, &params);
+    return params.result;
 }
 
 void WINAPI vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData)
@@ -4250,7 +4396,8 @@ VkResult WINAPI vkWaitForFences(VkDevice device, uint32_t fenceCount, const VkFe
     params.pFences = pFences;
     params.waitAll = waitAll;
     params.timeout = timeout;
-    return vk_unix_call(unix_vkWaitForFences, &params);
+    vk_unix_call(unix_vkWaitForFences, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkWaitForPresentKHR(VkDevice device, VkSwapchainKHR swapchain, uint64_t presentId, uint64_t timeout)
@@ -4260,7 +4407,8 @@ VkResult WINAPI vkWaitForPresentKHR(VkDevice device, VkSwapchainKHR swapchain, u
     params.swapchain = swapchain;
     params.presentId = presentId;
     params.timeout = timeout;
-    return vk_unix_call(unix_vkWaitForPresentKHR, &params);
+    vk_unix_call(unix_vkWaitForPresentKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkWaitSemaphores(VkDevice device, const VkSemaphoreWaitInfo *pWaitInfo, uint64_t timeout)
@@ -4269,7 +4417,8 @@ VkResult WINAPI vkWaitSemaphores(VkDevice device, const VkSemaphoreWaitInfo *pWa
     params.device = device;
     params.pWaitInfo = pWaitInfo;
     params.timeout = timeout;
-    return vk_unix_call(unix_vkWaitSemaphores, &params);
+    vk_unix_call(unix_vkWaitSemaphores, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkWaitSemaphoresKHR(VkDevice device, const VkSemaphoreWaitInfo *pWaitInfo, uint64_t timeout)
@@ -4278,7 +4427,8 @@ VkResult WINAPI vkWaitSemaphoresKHR(VkDevice device, const VkSemaphoreWaitInfo *
     params.device = device;
     params.pWaitInfo = pWaitInfo;
     params.timeout = timeout;
-    return vk_unix_call(unix_vkWaitSemaphoresKHR, &params);
+    vk_unix_call(unix_vkWaitSemaphoresKHR, &params);
+    return params.result;
 }
 
 VkResult WINAPI vkWriteAccelerationStructuresPropertiesKHR(VkDevice device, uint32_t accelerationStructureCount, const VkAccelerationStructureKHR *pAccelerationStructures, VkQueryType queryType, size_t dataSize, void *pData, size_t stride)
@@ -4291,7 +4441,8 @@ VkResult WINAPI vkWriteAccelerationStructuresPropertiesKHR(VkDevice device, uint
     params.dataSize = dataSize;
     params.pData = pData;
     params.stride = stride;
-    return vk_unix_call(unix_vkWriteAccelerationStructuresPropertiesKHR, &params);
+    vk_unix_call(unix_vkWriteAccelerationStructuresPropertiesKHR, &params);
+    return params.result;
 }
 
 static const struct vulkan_func vk_device_dispatch_table[] =
