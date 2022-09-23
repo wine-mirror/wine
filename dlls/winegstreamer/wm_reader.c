@@ -1652,55 +1652,6 @@ static HRESULT wm_reader_read_stream_sample(struct wm_reader *reader, struct wg_
     return S_OK;
 }
 
-static HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, WORD stream_number,
-        INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags, WORD *ret_stream_number)
-{
-    struct wg_parser_buffer wg_buffer;
-    struct wm_stream *stream;
-    HRESULT hr = S_OK;
-
-    do
-    {
-        if (!stream_number)
-        {
-            if (!wg_parser_stream_get_buffer(reader->wg_parser, NULL, &wg_buffer))
-            {
-                /* All streams are disabled or EOS. */
-                return NS_E_NO_MORE_SAMPLES;
-            }
-        }
-        else
-        {
-            if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
-            {
-                WARN("Invalid stream number %u; returning E_INVALIDARG.\n", stream_number);
-                return E_INVALIDARG;
-            }
-
-            if (stream->selection == WMT_OFF)
-            {
-                WARN("Stream %u is deselected; returning NS_E_INVALID_REQUEST.\n", stream_number);
-                return NS_E_INVALID_REQUEST;
-            }
-
-            if (stream->eos)
-                return NS_E_NO_MORE_SAMPLES;
-
-            if (!wg_parser_stream_get_buffer(reader->wg_parser, stream->wg_stream, &wg_buffer))
-            {
-                stream->eos = true;
-                TRACE("End of stream.\n");
-                return NS_E_NO_MORE_SAMPLES;
-            }
-        }
-
-        if (SUCCEEDED(hr = wm_reader_read_stream_sample(reader, &wg_buffer, ret_sample, pts, duration, flags)))
-            *ret_stream_number = wg_buffer.stream + 1;
-    } while (hr == S_FALSE);
-
-    return hr;
-}
-
 static struct wm_reader *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct wm_reader, IUnknown_inner);
@@ -1869,7 +1820,8 @@ static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
         DWORD *flags, DWORD *output_number, WORD *ret_stream_number)
 {
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
-    HRESULT hr = NS_E_NO_MORE_SAMPLES;
+    struct wm_stream *stream;
+    HRESULT hr = S_FALSE;
 
     TRACE("reader %p, stream_number %u, sample %p, pts %p, duration %p,"
             " flags %p, output_number %p, ret_stream_number %p.\n",
@@ -1880,7 +1832,27 @@ static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
 
     EnterCriticalSection(&reader->cs);
 
-    hr = wm_reader_get_stream_sample(reader, stream_number, sample, pts, duration, flags, &stream_number);
+    if (!stream_number)
+        stream = NULL;
+    else if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+        hr = E_INVALIDARG;
+    else if (stream->selection == WMT_OFF)
+        hr = NS_E_INVALID_REQUEST;
+    else if (stream->eos)
+        hr = NS_E_NO_MORE_SAMPLES;
+
+    while (hr == S_FALSE)
+    {
+        struct wg_parser_buffer wg_buffer;
+        if (!wg_parser_stream_get_buffer(reader->wg_parser, stream ? stream->wg_stream : NULL, &wg_buffer))
+            hr = NS_E_NO_MORE_SAMPLES;
+        else if (SUCCEEDED(hr = wm_reader_read_stream_sample(reader, &wg_buffer, sample, pts, duration, flags)))
+            stream_number = wg_buffer.stream + 1;
+    }
+
+    if (stream && hr == NS_E_NO_MORE_SAMPLES)
+        stream->eos = true;
+
     if (output_number && hr == S_OK)
         *output_number = stream_number - 1;
     if (ret_stream_number && (hr == S_OK || stream_number))
