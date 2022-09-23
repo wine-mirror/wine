@@ -366,12 +366,7 @@ static void wine_vk_device_get_queues(struct wine_device *device,
     }
 }
 
-static void wine_vk_device_free_create_info(VkDeviceCreateInfo *create_info)
-{
-    free_VkDeviceCreateInfo_struct_chain(create_info);
-}
-
-static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
+static VkResult wine_vk_device_convert_create_info(struct conversion_context *ctx, const VkDeviceCreateInfo *src,
         VkDeviceCreateInfo *dst)
 {
     unsigned int i;
@@ -379,7 +374,7 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
 
     *dst = *src;
 
-    if ((res = convert_VkDeviceCreateInfo_struct_chain(src->pNext, dst)) < 0)
+    if ((res = convert_VkDeviceCreateInfo_struct_chain(ctx, src->pNext, dst)) < 0)
     {
         WARN("Failed to convert VkDeviceCreateInfo pNext chain, res=%d.\n", res);
         return res;
@@ -397,7 +392,6 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
         if (!wine_vk_device_extension_supported(extension_name))
         {
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
-            wine_vk_device_free_create_info(dst);
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
     }
@@ -455,7 +449,7 @@ NTSTATUS init_vulkan(void *args)
  * This function takes care of extensions handled at winevulkan layer, a Wine graphics
  * driver is responsible for handling e.g. surface extensions.
  */
-static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
+static VkResult wine_vk_instance_convert_create_info(struct conversion_context *ctx, const VkInstanceCreateInfo *src,
         VkInstanceCreateInfo *dst, struct wine_instance *object)
 {
     VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger;
@@ -466,7 +460,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
 
     *dst = *src;
 
-    if ((res = convert_VkInstanceCreateInfo_struct_chain(src->pNext, dst)) < 0)
+    if ((res = convert_VkInstanceCreateInfo_struct_chain(ctx, src->pNext, dst)) < 0)
     {
         WARN("Failed to convert VkInstanceCreateInfo pNext chain, res=%d.\n", res);
         return res;
@@ -524,7 +518,6 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
         if (!wine_vk_instance_extension_supported(extension_name))
         {
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
-            free_VkInstanceCreateInfo_struct_chain(dst);
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
         if (!strcmp(extension_name, "VK_EXT_debug_utils") || !strcmp(extension_name, "VK_EXT_debug_report"))
@@ -707,6 +700,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     struct VkQueue_T *queue_handles;
     struct wine_queue *next_queue;
     struct wine_device *object;
+    struct conversion_context ctx;
     unsigned int i;
     VkResult res;
 
@@ -729,13 +723,12 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
 
     object->phys_dev = phys_dev;
 
-    res = wine_vk_device_convert_create_info(create_info, &create_info_host);
-    if (res != VK_SUCCESS)
-        goto fail;
-
-    res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
-            &create_info_host, NULL /* allocator */, &object->device);
-    wine_vk_device_free_create_info(&create_info_host);
+    init_conversion_context(&ctx);
+    res = wine_vk_device_convert_create_info(&ctx, create_info, &create_info_host);
+    if (res == VK_SUCCESS)
+        res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
+                &create_info_host, NULL /* allocator */, &object->device);
+    free_conversion_context(&ctx);
     WINE_VK_ADD_DISPATCHABLE_MAPPING(phys_dev->instance, device_handle, object->device, object);
     if (res != VK_SUCCESS)
     {
@@ -801,6 +794,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     VkInstanceCreateInfo create_info_host;
     const VkApplicationInfo *app_info;
     struct wine_instance *object;
+    struct conversion_context ctx;
     VkResult res;
 
     if (allocator)
@@ -814,15 +808,11 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     list_init(&object->wrappers);
     pthread_rwlock_init(&object->wrapper_lock, NULL);
 
-    res = wine_vk_instance_convert_create_info(create_info, &create_info_host, object);
-    if (res != VK_SUCCESS)
-    {
-        wine_vk_instance_free(object);
-        return res;
-    }
-
-    res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
-    free_VkInstanceCreateInfo_struct_chain(&create_info_host);
+    init_conversion_context(&ctx);
+    res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, object);
+    if (res == VK_SUCCESS)
+        res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
+    free_conversion_context(&ctx);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);

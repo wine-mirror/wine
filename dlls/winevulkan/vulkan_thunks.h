@@ -1959,10 +1959,9 @@ typedef VkCopyDescriptorSet VkCopyDescriptorSet_host;
 #endif
 
 
-VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCreateInfo *out_struct) DECLSPEC_HIDDEN;
-void free_VkDeviceCreateInfo_struct_chain(VkDeviceCreateInfo *s) DECLSPEC_HIDDEN;
-VkResult convert_VkInstanceCreateInfo_struct_chain(const void *pNext, VkInstanceCreateInfo *out_struct) DECLSPEC_HIDDEN;
-void free_VkInstanceCreateInfo_struct_chain(VkInstanceCreateInfo *s) DECLSPEC_HIDDEN;
+struct conversion_context;
+VkResult convert_VkDeviceCreateInfo_struct_chain(struct conversion_context *ctx, const void *pNext, VkDeviceCreateInfo *out_struct) DECLSPEC_HIDDEN;
+VkResult convert_VkInstanceCreateInfo_struct_chain(struct conversion_context *ctx, const void *pNext, VkInstanceCreateInfo *out_struct) DECLSPEC_HIDDEN;
 
 /* For use by vkDevice and children */
 struct vulkan_device_funcs

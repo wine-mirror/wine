@@ -239,4 +239,42 @@ NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, 
 NTSTATUS vk_is_available_instance_function(void *arg) DECLSPEC_HIDDEN;
 NTSTATUS vk_is_available_device_function(void *arg) DECLSPEC_HIDDEN;
 
+struct conversion_context
+{
+    char buffer[2048];
+    uint32_t used;
+    struct list alloc_entries;
+};
+
+static inline void init_conversion_context(struct conversion_context *pool)
+{
+    pool->used = 0;
+    list_init(&pool->alloc_entries);
+}
+
+static inline void free_conversion_context(struct conversion_context *pool)
+{
+    struct list *entry, *next;
+    LIST_FOR_EACH_SAFE(entry, next, &pool->alloc_entries)
+        free(entry);
+}
+
+static inline void *conversion_context_alloc(struct conversion_context *pool, size_t size)
+{
+    if (pool->used + size <= sizeof(pool->buffer))
+    {
+        void *ret = pool->buffer + pool->used;
+        pool->used += size;
+        return ret;
+    }
+    else
+    {
+        struct list *entry;
+        if (!(entry = malloc(sizeof(*entry) + size)))
+            return NULL;
+        list_add_tail(&pool->alloc_entries, entry);
+        return entry + 1;
+    }
+}
+
 #endif /* __WINE_VULKAN_PRIVATE_H */
