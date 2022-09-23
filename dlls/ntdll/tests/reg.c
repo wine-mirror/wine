@@ -1648,6 +1648,22 @@ static void test_redirection(void)
     ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( key64 );
 
+    pRtlInitUnicodeString( &str, L"Winetest" );
+    attr.RootDirectory = root64;
+    status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+
+    pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Wow6432Node\\Wine\\Winetest" );
+    attr.RootDirectory = 0;
+    status = pNtOpenKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr );
+    ok( status == (ptr_size == 64 ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_SUCCESS),
+        "NtOpenKey failed: 0x%08lx\n", status );
+    pNtClose( key );
+
+    status = pNtDeleteKey( key32 );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
+    pNtClose( key32 );
+
     pNtDeleteKey( root32 );
     pNtClose( root32 );
     pNtDeleteKey( root64 );
