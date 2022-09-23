@@ -154,6 +154,7 @@ struct wg_parser_buffer
     /* pts and duration are in 100-nanosecond units. */
     UINT64 pts, duration;
     UINT32 size;
+    UINT32 stream;
     bool discontinuity, preroll, delta, has_pts, has_duration;
 };
 C_ASSERT(sizeof(struct wg_parser_buffer) == 32);
@@ -222,6 +223,7 @@ struct wg_parser_stream_enable_params
 
 struct wg_parser_stream_get_buffer_params
 {
+    struct wg_parser *parser;
     struct wg_parser_stream *stream;
     struct wg_parser_buffer *buffer;
 };

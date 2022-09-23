@@ -938,7 +938,7 @@ static DWORD CALLBACK stream_thread(void *arg)
             continue;
         }
 
-        if (wg_parser_stream_get_buffer(pin->wg_stream, &buffer))
+        if (wg_parser_stream_get_buffer(filter->wg_parser, pin->wg_stream, &buffer))
         {
             send_buffer(pin, &buffer);
         }

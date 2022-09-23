@@ -528,12 +528,13 @@ out:
 
 static void wait_on_sample(struct media_stream *stream, IUnknown *token)
 {
+    struct media_source *source = stream->parent_source;
     PROPVARIANT empty_var = {.vt = VT_EMPTY};
     struct wg_parser_buffer buffer;
 
     TRACE("%p, %p\n", stream, token);
 
-    if (wg_parser_stream_get_buffer(stream->wg_stream, &buffer))
+    if (wg_parser_stream_get_buffer(source->wg_parser, stream->wg_stream, &buffer))
     {
         send_buffer(stream, &buffer, token);
     }

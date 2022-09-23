@@ -202,15 +202,17 @@ void wg_parser_stream_disable(struct wg_parser_stream *stream)
     __wine_unix_call(unix_handle, unix_wg_parser_stream_disable, stream);
 }
 
-bool wg_parser_stream_get_buffer(struct wg_parser_stream *stream, struct wg_parser_buffer *buffer)
+bool wg_parser_stream_get_buffer(struct wg_parser *parser, struct wg_parser_stream *stream,
+        struct wg_parser_buffer *buffer)
 {
     struct wg_parser_stream_get_buffer_params params =
     {
+        .parser = parser,
         .stream = stream,
         .buffer = buffer,
     };
 
-    TRACE("stream %p, buffer %p.\n", stream, buffer);
+    TRACE("parser %p, stream %p, buffer %p.\n", parser, stream, buffer);
 
     return !__wine_unix_call(unix_handle, unix_wg_parser_stream_get_buffer, &params);
 }

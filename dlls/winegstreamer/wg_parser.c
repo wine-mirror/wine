@@ -96,6 +96,7 @@ struct wg_parser
 struct wg_parser_stream
 {
     struct wg_parser *parser;
+    uint32_t number;
 
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
@@ -260,43 +261,89 @@ static NTSTATUS wg_parser_stream_disable(void *args)
     return S_OK;
 }
 
+static GstBuffer *wait_parser_stream_buffer(struct wg_parser *parser, struct wg_parser_stream *stream)
+{
+    GstBuffer *buffer = NULL;
+
+    /* Note that we can both have a buffer and stream->eos, in which case we
+     * must return the buffer. */
+
+    while (!(buffer = stream->buffer) && !stream->eos)
+        pthread_cond_wait(&stream->event_cond, &parser->mutex);
+
+    return buffer;
+}
+
 static NTSTATUS wg_parser_stream_get_buffer(void *args)
 {
     const struct wg_parser_stream_get_buffer_params *params = args;
     struct wg_parser_buffer *wg_buffer = params->buffer;
     struct wg_parser_stream *stream = params->stream;
-    struct wg_parser *parser = stream->parser;
+    struct wg_parser *parser = params->parser;
     GstBuffer *buffer;
+    unsigned int i;
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (!stream->eos && !stream->buffer)
-        pthread_cond_wait(&stream->event_cond, &parser->mutex);
-
-    /* Note that we can both have a buffer and stream->eos, in which case we
-     * must return the buffer. */
-    if ((buffer = stream->buffer))
+    if (stream)
+        buffer = wait_parser_stream_buffer(parser, stream);
+    else
     {
-        /* FIXME: Should we use gst_segment_to_stream_time_full()? Under what
-         * circumstances is the stream time not equal to the buffer PTS? Note
-         * that this will need modification to wg_parser_stream_notify_qos() as
-         * well. */
+        /* Find the earliest buffer by PTS.
+         *
+         * Native seems to behave similarly to this with the wm async reader, although our
+         * unit tests show that it's not entirely consistent—some frames are received
+         * slightly out of order. It's possible that one stream is being manually offset
+         * to account for decoding latency.
+         *
+         * The behaviour with the wm sync reader, when stream 0 is requested, seems
+         * consistent with this hypothesis, but with a much larger offset—the video
+         * stream seems to be "behind" by about 150 ms.
+         *
+         * The main reason for doing this is that the video and audio stream probably
+         * don't have quite the same "frame rate", and we don't want to force one stream
+         * to decode faster just to keep up with the other. Delivering samples in PTS
+         * order should avoid that problem. */
+        GstBuffer *earliest = NULL;
 
-        if ((wg_buffer->has_pts = GST_BUFFER_PTS_IS_VALID(buffer)))
-            wg_buffer->pts = GST_BUFFER_PTS(buffer) / 100;
-        if ((wg_buffer->has_duration = GST_BUFFER_DURATION_IS_VALID(buffer)))
-            wg_buffer->duration = GST_BUFFER_DURATION(buffer) / 100;
-        wg_buffer->discontinuity = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DISCONT);
-        wg_buffer->preroll = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_LIVE);
-        wg_buffer->delta = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
-        wg_buffer->size = gst_buffer_get_size(buffer);
+        for (i = 0; i < parser->stream_count; ++i)
+        {
+            if (!parser->streams[i]->enabled || !(buffer = wait_parser_stream_buffer(parser, parser->streams[i])))
+                continue;
+            /* invalid PTS is GST_CLOCK_TIME_NONE == (guint64)-1, so this will prefer valid timestamps. */
+            if (!earliest || GST_BUFFER_PTS(buffer) < GST_BUFFER_PTS(earliest))
+            {
+                stream = parser->streams[i];
+                earliest = buffer;
+            }
+        }
 
-        pthread_mutex_unlock(&parser->mutex);
-        return S_OK;
+        buffer = earliest;
     }
 
+    if (!buffer)
+    {
+        pthread_mutex_unlock(&parser->mutex);
+        return S_FALSE;
+    }
+
+    /* FIXME: Should we use gst_segment_to_stream_time_full()? Under what
+     * circumstances is the stream time not equal to the buffer PTS? Note
+     * that this will need modification to wg_parser_stream_notify_qos() as
+     * well. */
+
+    if ((wg_buffer->has_pts = GST_BUFFER_PTS_IS_VALID(buffer)))
+        wg_buffer->pts = GST_BUFFER_PTS(buffer) / 100;
+    if ((wg_buffer->has_duration = GST_BUFFER_DURATION_IS_VALID(buffer)))
+        wg_buffer->duration = GST_BUFFER_DURATION(buffer) / 100;
+    wg_buffer->discontinuity = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DISCONT);
+    wg_buffer->preroll = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_LIVE);
+    wg_buffer->delta = GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+    wg_buffer->size = gst_buffer_get_size(buffer);
+    wg_buffer->stream = stream->number;
+
     pthread_mutex_unlock(&parser->mutex);
-    return S_FALSE;
+    return S_OK;
 }
 
 static NTSTATUS wg_parser_stream_copy_buffer(void *args)
@@ -691,6 +738,7 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
     gst_segment_init(&stream->segment, GST_FORMAT_UNDEFINED);
 
     stream->parser = parser;
+    stream->number = parser->stream_count;
     stream->current_format.major_type = WG_MAJOR_TYPE_UNKNOWN;
     pthread_cond_init(&stream->event_cond, NULL);
     pthread_cond_init(&stream->event_empty_cond, NULL);
