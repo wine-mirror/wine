@@ -42,6 +42,7 @@ static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPageA)(const PROPSHEETPAGEA *
 static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPageW)(const PROPSHEETPAGEW *desc);
 static BOOL (WINAPI *pDestroyPropertySheetPage)(HPROPSHEETPAGE proppage);
 static INT_PTR (WINAPI *pPropertySheetA)(const PROPSHEETHEADERA *header);
+static INT_PTR (WINAPI *pPropertySheetW)(const PROPSHEETHEADERW *header);
 
 static BOOL (WINAPI *pIsThemeActive)(void);
 static BOOL (WINAPI *pIsThemeDialogTextureEnabled)(HWND);
@@ -1301,6 +1302,92 @@ static void test_page_dialog_texture(void)
     DestroyWindow(hdlg);
 }
 
+static void test_invalid_hpropsheetpage(void)
+{
+    BYTE buf_pspW[sizeof(ULONG_PTR) + sizeof(PROPSHEETPAGEW)];
+    BYTE buf_psp[sizeof(ULONG_PTR) + sizeof(PROPSHEETPAGEA)];
+    HPROPSHEETPAGE hpsp[1];
+    PROPSHEETHEADERW pshW;
+    PROPSHEETHEADERA psh;
+    PROPSHEETPAGEW *pspW;
+    PROPSHEETPAGEA *psp;
+    LRESULT ret;
+    HWND hdlg;
+
+    /* LocalSize throws exception on misaligned pointers (x86_64). */
+    psp = (PROPSHEETPAGEA *)((ULONG_PTR)buf_psp & 0xf ? buf_psp : buf_psp + sizeof(ULONG_PTR));
+    pspW = (PROPSHEETPAGEW *)((ULONG_PTR)buf_pspW & 0xf ? buf_pspW : buf_pspW + sizeof(ULONG_PTR));
+
+    memset(psp, 0, sizeof(*psp));
+    psp->dwSize = sizeof(*psp);
+    psp->hInstance = GetModuleHandleA(NULL);
+    U(psp)->pszTemplate = "prop_page1";
+    U2(psp)->pszIcon = NULL;
+    psp->pfnDlgProc = page_dlg_proc;
+    psp->lParam = 0;
+
+    /* Pass PROPSHEETPAGEA* instead of HPROPSHEETPAGE */
+    hpsp[0] = (HPROPSHEETPAGE)psp;
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = sizeof(psh);
+    psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
+    psh.pszCaption = "test caption";
+    psh.nPages = 1;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = hpsp;
+    psh.pfnCallback = sheet_callback;
+
+    hdlg = (HWND)pPropertySheetA(&psh);
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
+
+    ret = SendMessageA(hdlg, PSM_INDEXTOPAGE, 0, 0);
+    ok(ret, "page was not created\n");
+    todo_wine ok((HPROPSHEETPAGE)ret != hpsp[0], "invalid HPROPSHEETPAGE was preserved\n");
+    DestroyWindow(hdlg);
+
+    memset(pspW, 0, sizeof(*pspW));
+    pspW->dwSize = sizeof(*pspW);
+    pspW->hInstance = GetModuleHandleA(NULL);
+    U(pspW)->pszTemplate = L"prop_page1";
+    U2(pspW)->pszIcon = NULL;
+    pspW->pfnDlgProc = page_dlg_proc;
+    pspW->lParam = 0;
+
+    /* Pass PROPSHEETPAGEW* instead of HPROPSHEETPAGE */
+    hpsp[0] = (HPROPSHEETPAGE)pspW;
+
+    hdlg = (HWND)pPropertySheetA(&psh);
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
+
+    ok(!SendMessageA(hdlg, PSM_INDEXTOPAGE, 0, 0), "there should be no pages\n");
+    /* Pass PROPSHEETPAGE[AW]* instead of HPROPSHEETPAGE */
+    ok(!SendMessageW(hdlg, PSM_ADDPAGE, 0, (LPARAM)pspW), "PSM_ADDPAGE succeeded\n");
+    ok(SendMessageW(hdlg, PSM_ADDPAGE, 0, (LPARAM)psp), "PSM_ADDPAGE failed\n");
+    ok(SendMessageA(hdlg, PSM_INDEXTOPAGE, 0, 0), "no pages after PSM_ADDPAGE\n");
+    DestroyWindow(hdlg);
+
+    /* Pass PROPSHEETPAGEW* instead of HPROPSHEETPAGE */
+    hpsp[0] = (HPROPSHEETPAGE)pspW;
+
+    memset(&pshW, 0, sizeof(pshW));
+    pshW.dwSize = sizeof(pshW);
+    pshW.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
+    pshW.pszCaption = L"test caption";
+    pshW.nPages = 1;
+    pshW.hwndParent = GetDesktopWindow();
+    U3(pshW).phpage = hpsp;
+    pshW.pfnCallback = sheet_callback;
+
+    hdlg = (HWND)pPropertySheetW(&pshW);
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
+
+    ret = SendMessageA(hdlg, PSM_INDEXTOPAGE, 0, 0);
+    todo_wine ok(ret, "page was not created\n");
+    ok((HPROPSHEETPAGE)ret != hpsp[0], "invalid HPROPSHEETPAGE was preserved\n");
+    DestroyWindow(hdlg);
+}
+
 static void init_comctl32_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1310,6 +1397,7 @@ static void init_comctl32_functions(void)
     X(CreatePropertySheetPageW);
     X(DestroyPropertySheetPage);
     X(PropertySheetA);
+    X(PropertySheetW);
 #undef X
 }
 
@@ -1353,6 +1441,7 @@ START_TEST(propsheet)
     test_PSM_INSERTPAGE();
     test_CreatePropertySheetPage();
     test_page_dialog_texture();
+    test_invalid_hpropsheetpage();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
