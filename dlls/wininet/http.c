@@ -249,6 +249,7 @@ static DWORD WINAPI collect_connections_proc(void *arg)
 {
     BOOL remaining_conns;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_wininet_collect_connections");
     do {
         /* FIXME: Use more sophisticated method */
         Sleep(5000);
