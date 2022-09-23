@@ -160,6 +160,7 @@ struct wm_stream
     bool read_compressed;
 
     IWMReaderAllocatorEx *output_allocator;
+    IWMReaderAllocatorEx *stream_allocator;
 };
 
 struct wm_reader

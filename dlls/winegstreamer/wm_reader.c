@@ -1623,6 +1623,9 @@ HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, IWMReaderCallbackA
         if (!stream->read_compressed && stream->output_allocator)
             hr = IWMReaderAllocatorEx_AllocateForOutputEx(stream->output_allocator, stream->index,
                     wg_buffer.size, &sample, 0, 0, 0, NULL);
+        else if (stream->read_compressed && stream->stream_allocator)
+            hr = IWMReaderAllocatorEx_AllocateForStreamEx(stream->stream_allocator, stream->index + 1,
+                    wg_buffer.size, &sample, 0, 0, 0, NULL);
         else if (callback_advanced && stream->read_compressed && stream->allocate_stream)
             hr = IWMReaderCallbackAdvanced_AllocateForStream(callback_advanced,
                     stream->index + 1, wg_buffer.size, &sample, NULL);
@@ -2470,11 +2473,28 @@ static HRESULT WINAPI reader_GetAllocateForOutput(IWMSyncReader2 *iface, DWORD o
     return S_OK;
 }
 
-static HRESULT WINAPI reader_SetAllocateForStream(IWMSyncReader2 *iface, DWORD stream_num, IWMReaderAllocatorEx *allocator)
+static HRESULT WINAPI reader_SetAllocateForStream(IWMSyncReader2 *iface, DWORD stream_number, IWMReaderAllocatorEx *allocator)
 {
-    struct wm_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%lu %p): stub!\n", This, stream_num, allocator);
-    return E_NOTIMPL;
+    struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+
+    TRACE("reader %p, stream_number %lu, allocator %p.\n", reader, stream_number, allocator);
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    if (stream->stream_allocator)
+        IWMReaderAllocatorEx_Release(stream->stream_allocator);
+    if ((stream->stream_allocator = allocator))
+        IWMReaderAllocatorEx_AddRef(stream->stream_allocator);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_GetAllocateForStream(IWMSyncReader2 *iface, DWORD stream_num, IWMReaderAllocatorEx **allocator)

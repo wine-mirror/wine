@@ -3491,7 +3491,6 @@ static void test_sync_reader_allocator(void)
     hr = IWMSyncReader2_SetAllocateForOutput(reader, -1, &callback.IWMReaderAllocatorEx_iface);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_SetAllocateForStream(reader, 0, &callback.IWMReaderAllocatorEx_iface);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
 
@@ -3508,7 +3507,6 @@ static void test_sync_reader_allocator(void)
 
 
     hr = IWMSyncReader2_SetAllocateForStream(reader, 1, &callback.IWMReaderAllocatorEx_iface);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
@@ -3527,7 +3525,6 @@ static void test_sync_reader_allocator(void)
     ok(allocator == &callback.IWMReaderAllocatorEx_iface, "Got allocator %p.\n", allocator);
 
     hr = IWMSyncReader2_SetAllocateForStream(reader, 1, NULL);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     allocator = (void *)0xdeadbeef;
     hr = IWMSyncReader2_GetAllocateForOutput(reader, 0, &allocator);
@@ -3574,7 +3571,6 @@ static void test_sync_reader_allocator(void)
     hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_SetAllocateForStream(reader, stream_num, &callback.IWMReaderAllocatorEx_iface);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_SetReadStreamSamples(reader, stream_num, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3588,7 +3584,6 @@ static void test_sync_reader_allocator(void)
     hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
             &output_num, &stream_num);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
     INSSBuffer_Release(sample);
 
