@@ -1461,8 +1461,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
      (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
      (ppshpage->dwFlags & PSP_HIDEHEADER))
   {
-      SetWindowSubclass(hwndPage, PROPSHEET_WizardSubclassProc, 1,
-                        (DWORD_PTR)ppshpage);
+      SetWindowSubclass(hwndPage, PROPSHEET_WizardSubclassProc, 1, 0);
   }
   if (!(psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD))
       EnableThemeDialogTexture (hwndPage, ETDT_ENABLETAB);
