@@ -1572,6 +1572,30 @@ static const char *get_major_type_string(enum wg_major_type type)
     return NULL;
 }
 
+static HRESULT wm_stream_allocate_sample(struct wm_stream *stream, DWORD size, INSSBuffer **sample)
+{
+    struct buffer *buffer;
+
+    if (!stream->read_compressed && stream->output_allocator)
+        return IWMReaderAllocatorEx_AllocateForOutputEx(stream->output_allocator, stream->index,
+                size, sample, 0, 0, 0, NULL);
+
+    if (stream->read_compressed && stream->stream_allocator)
+        return IWMReaderAllocatorEx_AllocateForStreamEx(stream->stream_allocator, stream->index + 1,
+                size, sample, 0, 0, 0, NULL);
+
+    /* FIXME: Should these be pooled? */
+    if (!(buffer = calloc(1, offsetof(struct buffer, data[size]))))
+        return E_OUTOFMEMORY;
+    buffer->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+    buffer->refcount = 1;
+    buffer->capacity = size;
+
+    TRACE("Created buffer %p.\n", buffer);
+    *sample = &buffer->INSSBuffer_iface;
+    return S_OK;
+}
+
 /* Find the earliest buffer by PTS.
  *
  * Native seems to behave similarly to this with the async reader, although our
@@ -1621,7 +1645,6 @@ static HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, WORD stream
     struct wg_parser_stream *wg_stream;
     struct wg_parser_buffer wg_buffer;
     struct wm_stream *stream;
-    struct buffer *object;
     DWORD size, capacity;
     INSSBuffer *sample;
     HRESULT hr = S_OK;
@@ -1668,26 +1691,7 @@ static HRESULT wm_reader_get_stream_sample(struct wm_reader *reader, WORD stream
 
         TRACE("Got buffer for '%s' stream %p.\n", get_major_type_string(stream->format.major_type), stream);
 
-        if (!stream->read_compressed && stream->output_allocator)
-            hr = IWMReaderAllocatorEx_AllocateForOutputEx(stream->output_allocator, stream->index,
-                    wg_buffer.size, &sample, 0, 0, 0, NULL);
-        else if (stream->read_compressed && stream->stream_allocator)
-            hr = IWMReaderAllocatorEx_AllocateForStreamEx(stream->stream_allocator, stream->index + 1,
-                    wg_buffer.size, &sample, 0, 0, 0, NULL);
-        /* FIXME: Should these be pooled? */
-        else if (!(object = calloc(1, offsetof(struct buffer, data[wg_buffer.size]))))
-            hr = E_OUTOFMEMORY;
-        else
-        {
-            object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
-            object->refcount = 1;
-            object->capacity = wg_buffer.size;
-
-            TRACE("Created buffer %p.\n", object);
-            sample = &object->INSSBuffer_iface;
-        }
-
-        if (FAILED(hr))
+        if (FAILED(hr = wm_stream_allocate_sample(stream, wg_buffer.size, &sample)))
         {
             ERR("Failed to allocate sample of %u bytes, hr %#lx.\n", wg_buffer.size, hr);
             wg_parser_stream_release_buffer(wg_stream);
