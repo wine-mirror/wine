@@ -62,6 +62,32 @@ static inline void get_temp_path(const WCHAR *prefix, WCHAR *path)
     DeleteFileW(path);
 }
 
+#define test_file_contents(a, b, c) _test_file_contents(a, b, c, __LINE__)
+static void _test_file_contents(LPCWSTR pathW, DWORD expected_size, const void * expected_contents, int line)
+{
+    HANDLE file;
+    BOOL ret;
+    DWORD actual_size;
+
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok_(__FILE__,line) (file != INVALID_HANDLE_VALUE, "got %p\n", file);
+
+    actual_size = GetFileSize(file,NULL);
+    ok_(__FILE__,line) (actual_size == expected_size, "expected file %s size %ld, got %ld\n", wine_dbgstr_w(pathW), expected_size, actual_size);
+
+    if((expected_contents != NULL) && (actual_size > 0))
+    {
+	DWORD r;
+        void *actual_contents = malloc(actual_size);
+        ret = ReadFile(file, actual_contents, actual_size, &r, NULL);
+        ok_(__FILE__,line) (ret && r == actual_size, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
+        ok_(__FILE__,line) (!memcmp(expected_contents, actual_contents, expected_size), "expected file %s contents %s, got %s\n", wine_dbgstr_w(pathW), wine_dbgstr_an(expected_contents,expected_size), wine_dbgstr_an(actual_contents,r));
+        free(actual_contents);
+    }
+
+    CloseHandle(file);
+}
+
 static IDrive *get_fixed_drive(void)
 {
     IDriveCollection *drives;
@@ -1507,13 +1533,12 @@ static void get_temp_filepath(const WCHAR *filename, WCHAR *path, WCHAR *dir)
 
 static void test_CreateTextFile(void)
 {
-    WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[10];
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
     ITextStream *stream;
     BSTR nameW, str;
     HANDLE file;
     HRESULT hr;
     BOOL ret;
-    DWORD r;
 
     get_temp_filepath(testfileW, pathW, dirW);
 
@@ -1563,15 +1588,7 @@ static void test_CreateTextFile(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
-    /* check contents */
-    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
-    r = 0;
-    ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
-    ok(ret && r == 2, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
-
-    ok( buffW[0] == 0xfeff, "got %04x\n", buffW[0] );
-    CloseHandle(file);
+    test_file_contents(pathW,2,L"\ufeff");
 
     DeleteFileW(nameW);
     RemoveDirectoryW(dirW);
@@ -1580,14 +1597,13 @@ static void test_CreateTextFile(void)
 
 static void test_FolderCreateTextFile(void)
 {
-    WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[10], buff2W[10];
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
     ITextStream *stream;
     BSTR nameW, str;
     HANDLE file;
     IFolder *folder;
     HRESULT hr;
     BOOL ret;
-    DWORD r;
 
     get_temp_filepath(testfileW, pathW, dirW);
     nameW = SysAllocString(L"foo.txt");
@@ -1640,18 +1656,7 @@ static void test_FolderCreateTextFile(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
-    /* check contents */
-    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
-    r = 0;
-    ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
-    ok(ret && r == 2, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
-    buffW[r/sizeof(WCHAR)] = 0;
-
-    buff2W[0] = 0xfeff;
-    buff2W[1] = 0;
-    ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
-    CloseHandle(file);
+    test_file_contents(pathW,2,L"\ufeff");
 
     DeleteFileW(pathW);
     RemoveDirectoryW(dirW);
@@ -1661,11 +1666,10 @@ static void test_FolderCreateTextFile(void)
 static void test_WriteLine(void)
 {
     WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
-    WCHAR buffW[MAX_PATH], buff2W[MAX_PATH];
-    char buffA[MAX_PATH];
+    WCHAR ExpectedW[MAX_PATH];
+    char ExpectedA[MAX_PATH];
     ITextStream *stream;
-    DWORD r, len;
-    HANDLE file;
+    DWORD len;
     BSTR nameW;
     HRESULT hr;
     BOOL ret;
@@ -1684,19 +1688,10 @@ static void test_WriteLine(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
-    /* check contents */
-    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
-    r = 0;
-    ret = ReadFile(file, buffA, sizeof(buffA), &r, NULL);
-    ok(ret && r, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
-
-    len = MultiByteToWideChar(CP_ACP, 0, buffA, r, buffW, ARRAY_SIZE(buffW));
-    buffW[len] = 0;
-    lstrcpyW(buff2W, nameW);
-    lstrcatW(buff2W, L"\r\n");
-    ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
-    CloseHandle(file);
+    len = WideCharToMultiByte(CP_ACP, 0, nameW, -1, ExpectedA, ARRAY_SIZE(ExpectedA)-2, NULL, NULL);
+    ok(len > 0, "got %ld", len);
+    lstrcatA(ExpectedA, "\r\n");
+    test_file_contents(pathW,lstrlenA(ExpectedA),ExpectedA);
     DeleteFileW(nameW);
 
     /* same for unicode file */
@@ -1707,20 +1702,10 @@ static void test_WriteLine(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ITextStream_Release(stream);
 
-    /* check contents */
-    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
-    r = 0;
-    ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
-    ok(ret && r, "Read %ld, got %d, error %ld.\n", r, ret, GetLastError());
-    buffW[r/sizeof(WCHAR)] = 0;
-
-    buff2W[0] = 0xfeff;
-    buff2W[1] = 0;
-    lstrcatW(buff2W, nameW);
-    lstrcatW(buff2W, L"\r\n");
-    ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
-    CloseHandle(file);
+    lstrcpyW(ExpectedW, L"\ufeff");
+    lstrcatW(ExpectedW, nameW);
+    lstrcatW(ExpectedW, L"\r\n");
+    test_file_contents(pathW,lstrlenW(ExpectedW)*sizeof(WCHAR),ExpectedW);
     DeleteFileW(nameW);
 
     RemoveDirectoryW(dirW);
