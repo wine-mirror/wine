@@ -2248,16 +2248,51 @@ static HRESULT WINAPI callback_allocator_AllocateForStreamEx(IWMReaderAllocatorE
         WORD stream_number, DWORD size, INSSBuffer **sample, DWORD flags,
         QWORD pts, QWORD duration, void *context)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct callback *callback = impl_from_IWMReaderAllocatorEx(iface);
+    struct buffer *object;
+
+    ok(callback->allocated_samples, "Unexpected call.\n");
+    ok(stream_number, "got stream_number %u.\n", stream_number);
+    ok(!flags, "got flags %#lx.\n", flags);
+    ok(!pts, "got pts %I64d.\n", pts);
+    ok(!duration, "got duration %I64d.\n", duration);
+    ok(!context, "got context %p.\n", context);
+
+    if (!(object = malloc(offsetof(struct buffer, data[size]))))
+        return E_OUTOFMEMORY;
+    object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+    object->refcount = 1;
+    object->capacity = size;
+    object->size = size;
+
+    *sample = &object->INSSBuffer_iface;
+    InterlockedIncrement(&outstanding_buffers);
+    return S_OK;
 }
 
 static HRESULT WINAPI callback_allocator_AllocateForOutputEx(IWMReaderAllocatorEx *iface,
         DWORD output, DWORD size, INSSBuffer **sample, DWORD flags,
         QWORD pts, QWORD duration, void *context)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct callback *callback = impl_from_IWMReaderAllocatorEx(iface);
+    struct buffer *object;
+
+    ok(callback->allocated_samples, "Unexpected call.\n");
+    ok(!flags, "got flags %#lx.\n", flags);
+    ok(!pts, "got pts %I64d.\n", pts);
+    ok(!duration, "got duration %I64d.\n", duration);
+    ok(!context, "got context %p.\n", context);
+
+    if (!(object = malloc(offsetof(struct buffer, data[size]))))
+        return E_OUTOFMEMORY;
+    object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+    object->refcount = 1;
+    object->capacity = size;
+    object->size = size;
+
+    *sample = &object->INSSBuffer_iface;
+    InterlockedIncrement(&outstanding_buffers);
+    return S_OK;
 }
 
 static const IWMReaderAllocatorExVtbl callback_allocator_vtbl =
@@ -3419,7 +3454,11 @@ static void test_sync_reader_allocator(void)
     IWMReaderAllocatorEx *allocator;
     struct teststream stream;
     struct callback callback;
+    DWORD output_num, flags;
     IWMSyncReader2 *reader;
+    QWORD pts, duration;
+    INSSBuffer *sample;
+    WORD stream_num;
     HANDLE file;
     HRESULT hr;
     BOOL ret;
@@ -3547,6 +3586,92 @@ static void test_sync_reader_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine
     ok(!allocator, "Got allocator %p.\n", allocator);
+
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForStream(reader, stream_num, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetReadStreamSamples(reader, stream_num, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 1, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    callback.allocated_samples = true;
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
+    INSSBuffer_Release(sample);
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 1, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
+    INSSBuffer_Release(sample);
+
+    callback.allocated_samples = false;
+
+
+    /* without compressed sample read, allocator isn't used */
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetReadStreamSamples(reader, stream_num, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(sample->lpVtbl != &buffer_vtbl, "Unexpected buffer vtbl.\n");
+    INSSBuffer_Release(sample);
+
+
+    /* cannot change or remove allocators after they've been used */
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForStream(reader, stream_num, NULL);
+    todo_wine
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 0, &callback.IWMReaderAllocatorEx_iface);
+    todo_wine
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 1, NULL);
+    todo_wine
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetReadStreamSamples(reader, stream_num, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    callback.allocated_samples = true;
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 1, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
+    INSSBuffer_Release(sample);
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sample->lpVtbl == &buffer_vtbl, "Unexpected buffer vtbl.\n");
+    INSSBuffer_Release(sample);
+
+    callback.allocated_samples = false;
 
 
     IWMSyncReader2_Release(reader);
