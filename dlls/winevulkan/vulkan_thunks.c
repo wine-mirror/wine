@@ -49,6 +49,19 @@ static inline void convert_VkAcquireProfilingLockInfoKHR_win32_to_host(const VkA
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(const VkCommandBufferAllocateInfo *in, VkCommandBufferAllocateInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->commandPool = in->commandPool;
+    out->level = in->level;
+    out->commandBufferCount = in->commandBufferCount;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(const VkDescriptorSetAllocateInfo *in, VkDescriptorSetAllocateInfo_host *out)
 {
     if (!in) return;
@@ -2122,8 +2135,8 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
 }
 #endif /* USE_STRUCT_CONVERSION */
 
-#if !defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
 {
     if (!in) return;
 
@@ -2133,8 +2146,8 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const V
 }
 #endif /* USE_STRUCT_CONVERSION */
 
-#if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
+#if !defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
 {
     if (!in) return;
 
@@ -5361,9 +5374,11 @@ static NTSTATUS thunk64_vkAllocateCommandBuffers(void *args)
 static NTSTATUS thunk32_vkAllocateCommandBuffers(void *args)
 {
     struct vkAllocateCommandBuffers_params *params = args;
+    VkCommandBufferAllocateInfo_host pAllocateInfo_host;
     TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pCommandBuffers);
 
-    params->result = wine_vkAllocateCommandBuffers(params->device, params->pAllocateInfo, params->pCommandBuffers);
+    convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(params->pAllocateInfo, &pAllocateInfo_host);
+    params->result = wine_vkAllocateCommandBuffers(params->device, &pAllocateInfo_host, params->pCommandBuffers);
     return STATUS_SUCCESS;
 }
 
@@ -11444,13 +11459,6 @@ static NTSTATUS thunk32_vkCreateCommandPool(void *args)
 
 #if !defined(USE_STRUCT_CONVERSION)
 
-VkResult thunk_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    result = wine_device_from_handle(device)->funcs.p_vkCreateComputePipelines(wine_device_from_handle(device)->device, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
-    return result;
-}
-
 static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
@@ -11462,24 +11470,17 @@ static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    VkComputePipelineCreateInfo_host *pCreateInfos_host;
-    struct conversion_context ctx;
-    init_conversion_context(&ctx);
-    pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win32_to_host(&ctx, pCreateInfos, createInfoCount);
-    result = wine_device_from_handle(device)->funcs.p_vkCreateComputePipelines(wine_device_from_handle(device)->device, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
-    free_conversion_context(&ctx);
-    return result;
-}
-
 static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
+    VkComputePipelineCreateInfo_host *pCreateInfos_host;
+    struct conversion_context ctx;
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    params->result = wine_vkCreateComputePipelines(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    init_conversion_context(&ctx);
+    pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
+    params->result = wine_vkCreateComputePipelines(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -11807,13 +11808,6 @@ static NTSTATUS thunk32_vkCreateFramebuffer(void *args)
 
 #if !defined(USE_STRUCT_CONVERSION)
 
-VkResult thunk_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkGraphicsPipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    result = wine_device_from_handle(device)->funcs.p_vkCreateGraphicsPipelines(wine_device_from_handle(device)->device, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
-    return result;
-}
-
 static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
@@ -11825,24 +11819,17 @@ static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkGraphicsPipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
-    struct conversion_context ctx;
-    init_conversion_context(&ctx);
-    pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(&ctx, pCreateInfos, createInfoCount);
-    result = wine_device_from_handle(device)->funcs.p_vkCreateGraphicsPipelines(wine_device_from_handle(device)->device, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
-    free_conversion_context(&ctx);
-    return result;
-}
-
 static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
+    VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
+    struct conversion_context ctx;
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    params->result = wine_vkCreateGraphicsPipelines(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    init_conversion_context(&ctx);
+    pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
+    params->result = wine_vkCreateGraphicsPipelines(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -12123,13 +12110,6 @@ static NTSTATUS thunk32_vkCreateQueryPool(void *args)
 
 #if !defined(USE_STRUCT_CONVERSION)
 
-VkResult thunk_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoKHR *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    result = wine_device_from_handle(device)->funcs.p_vkCreateRayTracingPipelinesKHR(wine_device_from_handle(device)->device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
-    return result;
-}
-
 static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
@@ -12141,37 +12121,23 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoKHR *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
-    struct conversion_context ctx;
-    init_conversion_context(&ctx);
-    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(&ctx, pCreateInfos, createInfoCount);
-    result = wine_device_from_handle(device)->funcs.p_vkCreateRayTracingPipelinesKHR(wine_device_from_handle(device)->device, deferredOperation, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
-    free_conversion_context(&ctx);
-    return result;
-}
-
 static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
+    VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
+    struct conversion_context ctx;
     TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    params->result = wine_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    init_conversion_context(&ctx);
+    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
+    params->result = wine_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-
-VkResult thunk_vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoNV *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    result = wine_device_from_handle(device)->funcs.p_vkCreateRayTracingPipelinesNV(wine_device_from_handle(device)->device, pipelineCache, createInfoCount, pCreateInfos, NULL, pPipelines);
-    return result;
-}
 
 static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 {
@@ -12184,24 +12150,17 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoNV *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines)
-{
-    VkResult result;
-    VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
-    struct conversion_context ctx;
-    init_conversion_context(&ctx);
-    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(&ctx, pCreateInfos, createInfoCount);
-    result = wine_device_from_handle(device)->funcs.p_vkCreateRayTracingPipelinesNV(wine_device_from_handle(device)->device, pipelineCache, createInfoCount, pCreateInfos_host, NULL, pPipelines);
-    free_conversion_context(&ctx);
-    return result;
-}
-
 static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
 {
     struct vkCreateRayTracingPipelinesNV_params *params = args;
+    VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
+    struct conversion_context ctx;
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    params->result = wine_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+    init_conversion_context(&ctx);
+    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
+    params->result = wine_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -15696,13 +15655,6 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties(void *args)
 
 #if !defined(USE_STRUCT_CONVERSION)
 
-VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
-{
-    VkResult result;
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, pImageFormatProperties);
-    return result;
-}
-
 static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
@@ -15714,35 +15666,21 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
-{
-    VkResult result;
-    VkImageFormatProperties2_host pImageFormatProperties_host;
-    convert_VkImageFormatProperties2_win32_to_host(pImageFormatProperties, &pImageFormatProperties_host);
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
-    convert_VkImageFormatProperties2_host_to_win32(&pImageFormatProperties_host, pImageFormatProperties);
-    return result;
-}
-
 static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
+    VkImageFormatProperties2_host pImageFormatProperties_host;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
 
-    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+    convert_VkImageFormatProperties2_win32_to_host(params->pImageFormatProperties, &pImageFormatProperties_host);
+    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2(params->physicalDevice, params->pImageFormatInfo, &pImageFormatProperties_host);
+    convert_VkImageFormatProperties2_host_to_win32(&pImageFormatProperties_host, params->pImageFormatProperties);
     return STATUS_SUCCESS;
 }
 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-
-VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
-{
-    VkResult result;
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, pImageFormatProperties);
-    return result;
-}
 
 static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
@@ -15755,22 +15693,15 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
-{
-    VkResult result;
-    VkImageFormatProperties2_host pImageFormatProperties_host;
-    convert_VkImageFormatProperties2_win32_to_host(pImageFormatProperties, &pImageFormatProperties_host);
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
-    convert_VkImageFormatProperties2_host_to_win32(&pImageFormatProperties_host, pImageFormatProperties);
-    return result;
-}
-
 static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2KHR_params *params = args;
+    VkImageFormatProperties2_host pImageFormatProperties_host;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
 
-    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2KHR(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+    convert_VkImageFormatProperties2_win32_to_host(params->pImageFormatProperties, &pImageFormatProperties_host);
+    params->result = wine_vkGetPhysicalDeviceImageFormatProperties2KHR(params->physicalDevice, params->pImageFormatInfo, &pImageFormatProperties_host);
+    convert_VkImageFormatProperties2_host_to_win32(&pImageFormatProperties_host, params->pImageFormatProperties);
     return STATUS_SUCCESS;
 }
 
@@ -16202,15 +16133,6 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombi
 
 #if !defined(USE_STRUCT_CONVERSION)
 
-VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, VkSurfaceCapabilities2KHR *pSurfaceCapabilities)
-{
-    VkResult result;
-    VkPhysicalDeviceSurfaceInfo2KHR pSurfaceInfo_host;
-    convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(pSurfaceInfo, &pSurfaceInfo_host);
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
-    return result;
-}
-
 static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
@@ -16222,34 +16144,20 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 
 #else /* USE_STRUCT_CONVERSION */
 
-VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, VkSurfaceCapabilities2KHR *pSurfaceCapabilities)
-{
-    VkResult result;
-    VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
-    convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(pSurfaceInfo, &pSurfaceInfo_host);
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
-    return result;
-}
-
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
+    VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
+    convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(params->pSurfaceInfo, &pSurfaceInfo_host);
+    params->result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, &pSurfaceInfo_host, params->pSurfaceCapabilities);
     return STATUS_SUCCESS;
 }
 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-
-VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
-{
-    VkResult result;
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, wine_surface_from_handle(surface)->driver_surface, pSurfaceCapabilities);
-    return result;
-}
 
 static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {
@@ -16261,13 +16169,6 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 }
 
 #else /* USE_STRUCT_CONVERSION */
-
-VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
-{
-    VkResult result;
-    result = wine_phys_dev_from_handle(physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(wine_phys_dev_from_handle(physicalDevice)->phys_dev, wine_surface_from_handle(surface)->driver_surface, pSurfaceCapabilities);
-    return result;
-}
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {

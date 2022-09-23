@@ -638,7 +638,7 @@ static void wine_vk_instance_free(struct wine_instance *instance)
     free(instance);
 }
 
-VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAllocateInfo *allocate_info,
+VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAllocateInfo_host *allocate_info,
                                        VkCommandBuffer *buffers )
 {
     struct wine_device *device = wine_device_from_handle(handle);
@@ -1196,14 +1196,16 @@ void wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice phys_d
     memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
 }
 
-VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_dev,
+VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_dev_handle,
                                                         const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                        VkImageFormatProperties2 *properties)
+                                                        VkImageFormatProperties2_host *properties)
 {
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(phys_dev_handle);
     VkExternalImageFormatProperties *external_image_properties;
     VkResult res;
 
-    res = thunk_vkGetPhysicalDeviceImageFormatProperties2(phys_dev, format_info, properties);
+    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(phys_dev->phys_dev,
+            format_info, properties);
 
     if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
     {
@@ -1216,14 +1218,16 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_de
     return res;
 }
 
-VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys_dev,
+VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys_dev_handle,
                                                            const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                           VkImageFormatProperties2 *properties)
+                                                           VkImageFormatProperties2_host *properties)
 {
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(phys_dev_handle);
     VkExternalImageFormatProperties *external_image_properties;
     VkResult res;
 
-    res = thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(phys_dev, format_info, properties);
+    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(phys_dev->phys_dev,
+            format_info, properties);
 
     if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
     {
@@ -1466,13 +1470,15 @@ static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurf
     }
 }
 
-VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice handle, VkSurfaceKHR surface,
+VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice handle, VkSurfaceKHR surface_handle,
                                                         VkSurfaceCapabilitiesKHR *capabilities)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
+    struct wine_surface *surface = wine_surface_from_handle(surface_handle);
     VkResult res;
 
-    res = thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev->handle, surface, capabilities);
+    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev->phys_dev,
+            surface->driver_surface, capabilities);
 
     if (res == VK_SUCCESS)
         adjust_max_image_count(phys_dev, capabilities);
@@ -1481,13 +1487,19 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice handle,
 }
 
 VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice handle,
-                                                         const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
+                                                         const VkPhysicalDeviceSurfaceInfo2KHR_host *surface_info,
                                                          VkSurfaceCapabilities2KHR *capabilities)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
+    struct wine_surface *surface = wine_surface_from_handle(surface_info->surface);
+    VkPhysicalDeviceSurfaceInfo2KHR_host host_info;
     VkResult res;
 
-    res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev->handle, surface_info, capabilities);
+    host_info.sType = surface_info->sType;
+    host_info.pNext = surface_info->pNext;
+    host_info.surface = surface->driver_surface;
+    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev->phys_dev,
+            &host_info, capabilities);
 
     if (res == VK_SUCCESS)
         adjust_max_image_count(phys_dev, &capabilities->surfaceCapabilities);
@@ -1642,15 +1654,16 @@ static void fixup_pipeline_feedback_info(const void *pipeline_info)
         feedback->pipelineStageCreationFeedbackCount);
 }
 
-VkResult wine_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipeline_cache,
-                                       uint32_t count, const VkComputePipelineCreateInfo *create_infos,
+VkResult wine_vkCreateComputePipelines(VkDevice handle, VkPipelineCache pipeline_cache,
+                                       uint32_t count, const VkComputePipelineCreateInfo_host *create_infos,
                                        const VkAllocationCallbacks *allocator, VkPipeline *pipelines)
 {
+    struct wine_device *device = wine_device_from_handle(handle);
     VkResult res;
     uint32_t i;
 
-    res = thunk_vkCreateComputePipelines(device, pipeline_cache, count, create_infos,
-                                         allocator, pipelines);
+    res = device->funcs.p_vkCreateComputePipelines(device->device, pipeline_cache, count, create_infos,
+                                                   allocator, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
@@ -1658,15 +1671,16 @@ VkResult wine_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipeline
     return res;
 }
 
-VkResult wine_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipeline_cache,
-                                        uint32_t count, const VkGraphicsPipelineCreateInfo *create_infos,
+VkResult wine_vkCreateGraphicsPipelines(VkDevice handle, VkPipelineCache pipeline_cache,
+                                        uint32_t count, const VkGraphicsPipelineCreateInfo_host *create_infos,
                                         const VkAllocationCallbacks *allocator, VkPipeline *pipelines)
 {
+    struct wine_device *device = wine_device_from_handle(handle);
     VkResult res;
     uint32_t i;
 
-    res = thunk_vkCreateGraphicsPipelines(device, pipeline_cache, count, create_infos,
-                                          allocator, pipelines);
+    res = device->funcs.p_vkCreateGraphicsPipelines(device->device, pipeline_cache, count, create_infos,
+                                                    allocator, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
@@ -1674,16 +1688,17 @@ VkResult wine_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelin
     return res;
 }
 
-VkResult wine_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperationKHR deferred_operation,
+VkResult wine_vkCreateRayTracingPipelinesKHR(VkDevice handle, VkDeferredOperationKHR deferred_operation,
                                              VkPipelineCache pipeline_cache, uint32_t count,
-                                             const VkRayTracingPipelineCreateInfoKHR *create_infos,
+                                             const VkRayTracingPipelineCreateInfoKHR_host *create_infos,
                                              const VkAllocationCallbacks *allocator, VkPipeline *pipelines)
 {
+    struct wine_device *device = wine_device_from_handle(handle);
     VkResult res;
     uint32_t i;
 
-    res = thunk_vkCreateRayTracingPipelinesKHR(device, deferred_operation, pipeline_cache,
-                                               count, create_infos, allocator, pipelines);
+    res = device->funcs.p_vkCreateRayTracingPipelinesKHR(device->device, deferred_operation, pipeline_cache,
+                                                         count, create_infos, allocator, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
@@ -1691,15 +1706,16 @@ VkResult wine_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperatio
     return res;
 }
 
-VkResult wine_vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pipeline_cache, uint32_t count,
-                                            const VkRayTracingPipelineCreateInfoNV *create_infos,
+VkResult wine_vkCreateRayTracingPipelinesNV(VkDevice handle, VkPipelineCache pipeline_cache, uint32_t count,
+                                            const VkRayTracingPipelineCreateInfoNV_host *create_infos,
                                             const VkAllocationCallbacks *allocator, VkPipeline *pipelines)
 {
+    struct wine_device *device = wine_device_from_handle(handle);
     VkResult res;
     uint32_t i;
 
-    res = thunk_vkCreateRayTracingPipelinesNV(device, pipeline_cache, count, create_infos,
-                                              allocator, pipelines);
+    res = device->funcs.p_vkCreateRayTracingPipelinesNV(device->device, pipeline_cache, count, create_infos,
+                                                        allocator, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
