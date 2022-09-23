@@ -2489,27 +2489,18 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
             if(hres != SCRIPT_E_RECORDED) {
+                /* SCRIPT_E_RECORDED means ctx->ei is already populated */
                 clear_ei(&ctx->ei);
-                hres = map_hres(hres);
-            }else if(!ctx->ei.bstrDescription) {
-                hres = map_hres(ctx->ei.scode);
-            }else {
-                hres = ctx->ei.scode;
+                ctx->ei.scode = hres;
             }
 
-            ctx->ei.scode = hres;
-            if(HRESULT_FACILITY(hres) == FACILITY_VBS)
-            {
-                if(!ctx->ei.bstrSource)
-                    ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
-                if(!ctx->ei.bstrDescription)
-                    ctx->ei.bstrDescription = get_vbscript_error_string(hres);
-            }
+            if(!ctx->ei.bstrDescription)
+                map_vbs_exception(&ctx->ei);
 
             if(exec.resume_next) {
                 unsigned stack_off;
 
-                WARN("Failed %08lx in resume next mode\n", hres);
+                WARN("Failed %08lx in resume next mode\n", ctx->ei.scode);
 
                 /*
                  * Unwinding here is simple. We need to find the next OP_catch, which contains

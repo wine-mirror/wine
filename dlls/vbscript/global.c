@@ -3288,7 +3288,7 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
 {
     BSTR source = NULL, description = NULL, helpfile = NULL;
     int code,  helpcontext = 0;
-    HRESULT hres, error;
+    HRESULT hres;
 
     TRACE("%s %u...\n", debugstr_variant(args), args_cnt);
 
@@ -3310,20 +3310,14 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
     if(SUCCEEDED(hres)) {
         script_ctx_t *ctx = This->ctx;
 
-        error = (code & ~0xffff) ? map_hres(code) : MAKE_VBSERROR(code);
-
         if(source) {
             SysFreeString(ctx->ei.bstrSource);
             ctx->ei.bstrSource = source;
         }
-        if(!ctx->ei.bstrSource)
-            ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
         if(description) {
             SysFreeString(ctx->ei.bstrDescription);
             ctx->ei.bstrDescription = description;
         }
-        if(!ctx->ei.bstrDescription)
-            ctx->ei.bstrDescription = get_vbscript_error_string(error);
         if(helpfile) {
             SysFreeString(ctx->ei.bstrHelpFile);
             ctx->ei.bstrHelpFile = helpfile;
@@ -3331,7 +3325,9 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
         if(args_cnt >= 5)
             ctx->ei.dwHelpContext = helpcontext;
 
-        ctx->ei.scode = error;
+        ctx->ei.scode = (code & ~0xffff) ? code : MAKE_VBSERROR(code);
+        map_vbs_exception(&ctx->ei);
+
         hres = SCRIPT_E_RECORDED;
     }else {
         SysFreeString(source);
