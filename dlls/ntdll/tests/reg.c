@@ -2312,7 +2312,7 @@ static void test_NtRegLoadKeyEx(void)
     UNICODE_STRING hivefile_pathW, key_pathW;
     HANDLE key = 0;
 
-    GetTempPathW(sizeof(temp_path), temp_path);
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
     GetTempFileNameW(temp_path, L"key", 0, hivefile_path);
     DeleteFileW(hivefile_path);
     RtlDosPathNameToNtPathName_U(hivefile_path, &hivefile_pathW, NULL, NULL);
