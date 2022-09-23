@@ -1802,6 +1802,8 @@ static DWORD CALLBACK rpcrt4_http_timer_thread(PVOID param)
     HttpTimerThreadData data;
     DWORD timeout;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_rpcrt4_http_timer");
+
     data = *data_in;
     HeapFree(GetProcessHeap(), 0, data_in);
 
