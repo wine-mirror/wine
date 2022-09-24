@@ -268,7 +268,7 @@ static GstBuffer *wait_parser_stream_buffer(struct wg_parser *parser, struct wg_
     /* Note that we can both have a buffer and stream->eos, in which case we
      * must return the buffer. */
 
-    while (!(buffer = stream->buffer) && !stream->eos)
+    while (stream->enabled && !(buffer = stream->buffer) && !stream->eos)
         pthread_cond_wait(&stream->event_cond, &parser->mutex);
 
     return buffer;
@@ -308,7 +308,7 @@ static NTSTATUS wg_parser_stream_get_buffer(void *args)
 
         for (i = 0; i < parser->stream_count; ++i)
         {
-            if (!parser->streams[i]->enabled || !(buffer = wait_parser_stream_buffer(parser, parser->streams[i])))
+            if (!(buffer = wait_parser_stream_buffer(parser, parser->streams[i])))
                 continue;
             /* invalid PTS is GST_CLOCK_TIME_NONE == (guint64)-1, so this will prefer valid timestamps. */
             if (!earliest || GST_BUFFER_PTS(buffer) < GST_BUFFER_PTS(earliest))
