@@ -59,6 +59,19 @@ static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d
     TRACE("sampler %p, device %p, desc %p, parent %p, parent_ops %p.\n",
             sampler, device, desc, parent, parent_ops);
 
+    TRACE("    Address modes: U %#x, V %#x, W %#x.\n", desc->address_u, desc->address_v, desc->address_w);
+    TRACE("    Border colour: {%.8e, %.8e, %.8e, %.8e}.\n",
+            desc->border_color[0], desc->border_color[1], desc->border_color[2], desc->border_color[3]);
+    TRACE("    Filters: mag %#x, min %#x, mip %#x.\n", desc->mag_filter, desc->min_filter, desc->mip_filter);
+    TRACE("    LOD bias: %.8e.\n", desc->lod_bias);
+    TRACE("    Minimum LOD: %.8e.\n", desc->min_lod);
+    TRACE("    Maximum LOD: %.8e.\n", desc->max_lod);
+    TRACE("    Base mip level: %u.\n", desc->mip_base_level);
+    TRACE("    Maximum anisotropy: %u.\n", desc->max_anisotropy);
+    TRACE("    Comparison: %d.\n", desc->compare);
+    TRACE("    Comparison func: %#x.\n", desc->comparison_func);
+    TRACE("    SRGB decode: %d.\n", desc->srgb_decode);
+
     sampler->refcount = 1;
     sampler->device = device;
     sampler->parent = parent;
