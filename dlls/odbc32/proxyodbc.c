@@ -1041,12 +1041,6 @@ SQLRETURN WINAPI SQLGetInfo(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQL
     TRACE("(ConnectionHandle, %p, InfoType %d, InfoValue %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
           InfoType, InfoValue, BufferLength, StringLength);
 
-    if (!InfoValue)
-    {
-        WARN("Unexpected NULL InfoValue address\n");
-        return SQL_ERROR;
-    }
-
     ret = ODBC_CALL( SQLGetInfo, &params );
     TRACE("Returning %d\n", ret);
     return ret;
@@ -2245,12 +2239,6 @@ SQLRETURN WINAPI SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQ
 
     TRACE("(ConnectionHandle, %p, InfoType %d, InfoValue %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
           InfoType, InfoValue, BufferLength, StringLength);
-
-    if (!InfoValue)
-    {
-        WARN("Unexpected NULL InfoValue address\n");
-        return SQL_ERROR;
-    }
 
     ret = ODBC_CALL( SQLGetInfoW, &params );
     TRACE("Returning %d\n", ret);
