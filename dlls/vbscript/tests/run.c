@@ -1577,8 +1577,11 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         if(pdp->cArgs >= 2) {
             v = pdp->rgvarg + pdp->cArgs - 2;
-            ok(V_VT(v) == VT_BSTR, "v = %s\n", debugstr_variant(v));
-            pei->bstrSource = SysAllocString(V_BSTR(v));
+            if(!(V_VT(v) == VT_ERROR && V_ERROR(v) == DISP_E_PARAMNOTFOUND)) /* != vtMissing */
+            {
+                ok(V_VT(v) == VT_BSTR, "v = %s\n", debugstr_variant(v));
+                pei->bstrSource = SysAllocString(V_BSTR(v));
+            }
         }
 
         if(pdp->cArgs >= 3) {
@@ -2449,6 +2452,31 @@ static void test_callbacks(void)
     ok(!ei.pvReserved, "pvReserved = %p\n", ei.pvReserved);
     ok(!ei.pfnDeferredFillIn, "pfnDeferredFillIn = %p\n", ei.pfnDeferredFillIn);
     ok(ei.scode == MAKE_VBSERROR(430), "scode = %lx\n", ei.scode);
+    free_ei(&ei);
+
+    IActiveScriptError_Release(error1);
+
+    store_script_error = &error1;
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_ar("throwException &h80004002&, , \"test desc\"");
+    ok(hres == E_NOINTERFACE, "got error: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+
+    memset(&ei, 0xcc, sizeof(ei));
+    hres = IActiveScriptError_GetExceptionInfo(error1, &ei);
+    ok(hres == S_OK, "GetExceptionInfo returned %08lx\n", hres);
+    ok(!ei.wCode, "wCode = %x\n", ei.wCode);
+    ok(!ei.wReserved, "wReserved = %x\n", ei.wReserved);
+    if(is_english) {
+        ok(!ei.bstrSource, "bstrSource = %s\n", wine_dbgstr_w(ei.bstrSource));
+        ok(!wcscmp(ei.bstrDescription, L"test desc"),
+           "bstrDescription = %s\n", wine_dbgstr_w(ei.bstrDescription));
+    }
+    ok(!ei.bstrHelpFile, "bstrHelpFile = %s\n", wine_dbgstr_w(ei.bstrHelpFile));
+    ok(!ei.dwHelpContext, "dwHelpContext = %lx\n", ei.dwHelpContext);
+    ok(!ei.pvReserved, "pvReserved = %p\n", ei.pvReserved);
+    ok(!ei.pfnDeferredFillIn, "pfnDeferredFillIn = %p\n", ei.pfnDeferredFillIn);
+    ok(ei.scode == E_NOINTERFACE, "scode = %lx\n", ei.scode);
     free_ei(&ei);
 
     IActiveScriptError_Release(error1);
