@@ -654,8 +654,6 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAll
     VkResult res = VK_SUCCESS;
     unsigned int i;
 
-    TRACE("%p, %p, %p\n", device, allocate_info, buffers);
-
     pool = wine_cmd_pool_from_handle(allocate_info->commandPool);
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
@@ -711,8 +709,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     struct wine_device *object;
     unsigned int i;
     VkResult res;
-
-    TRACE("%p, %p, %p, %p\n", phys_dev_handle, create_info, allocator, ret_device);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -883,8 +879,6 @@ void wine_vkDestroyDevice(VkDevice handle, const VkAllocationCallbacks *allocato
 {
     struct wine_device *device = wine_device_from_handle(handle);
 
-    TRACE("%p %p\n", device, allocator);
-
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
@@ -894,8 +888,6 @@ void wine_vkDestroyDevice(VkDevice handle, const VkAllocationCallbacks *allocato
 void wine_vkDestroyInstance(VkInstance handle, const VkAllocationCallbacks *allocator)
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
-
-    TRACE("%p, %p\n", instance, allocator);
 
     if (allocator)
         FIXME("Support allocation allocators\n");
@@ -907,8 +899,6 @@ VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_dev_han
                                                    uint32_t *count, VkExtensionProperties *properties)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(phys_dev_handle);
-
-    TRACE("%p, %p, %p, %p\n", phys_dev, layer_name, count, properties);
 
     /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
     if (layer_name)
@@ -990,8 +980,6 @@ VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t 
 VkResult wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice phys_dev, uint32_t *count,
                                                VkLayerProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, count, properties);
-
     *count = 0;
     return VK_SUCCESS;
 }
@@ -1025,8 +1013,6 @@ VkResult wine_vkEnumeratePhysicalDevices(VkInstance handle, uint32_t *count, VkP
     struct wine_instance *instance = wine_instance_from_handle(handle);
     unsigned int i;
 
-    TRACE("%p %p %p\n", instance, count, devices);
-
     if (!devices)
     {
         *count = instance->phys_dev_count;
@@ -1048,8 +1034,6 @@ void wine_vkFreeCommandBuffers(VkDevice handle, VkCommandPool command_pool, uint
 {
     struct wine_device *device = wine_device_from_handle(handle);
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(command_pool);
-
-    TRACE("%p, 0x%s, %u, %p\n", device, wine_dbgstr_longlong(command_pool), count, buffers);
 
     wine_vk_free_command_buffers(device, pool, count, buffers);
 }
@@ -1078,8 +1062,6 @@ void wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index, uint32_t queu
 {
     VkDeviceQueueInfo2 queue_info;
 
-    TRACE("%p, %u, %u, %p\n", device, family_index, queue_index, queue);
-
     queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
     queue_info.pNext = NULL;
     queue_info.flags = 0;
@@ -1092,8 +1074,6 @@ void wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index, uint32_t queu
 void wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
 {
     const VkBaseInStructure *chain;
-
-    TRACE("%p, %p, %p\n", device, info, queue);
 
     if ((chain = info->pNext))
         FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
@@ -1109,8 +1089,6 @@ VkResult wine_vkCreateCommandPool(VkDevice device_handle, const VkCommandPoolCre
     struct vk_command_pool *handle = client_ptr;
     struct wine_cmd_pool *object;
     VkResult res;
-
-    TRACE("%p, %p, %p, %p\n", device, info, allocator, command_pool);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -1141,8 +1119,6 @@ void wine_vkDestroyCommandPool(VkDevice device_handle, VkCommandPool handle,
 {
     struct wine_device *device = wine_device_from_handle(device_handle);
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(handle);
-
-    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(handle), allocator);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -1185,7 +1161,6 @@ VkResult wine_vkEnumeratePhysicalDeviceGroups(VkInstance handle, uint32_t *count
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
 
-    TRACE("%p, %p, %p\n", instance, count, properties);
     return wine_vk_enumerate_physical_device_groups(instance,
             instance->funcs.p_vkEnumeratePhysicalDeviceGroups, count, properties);
 }
@@ -1195,7 +1170,6 @@ VkResult wine_vkEnumeratePhysicalDeviceGroupsKHR(VkInstance handle, uint32_t *co
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
 
-    TRACE("%p, %p, %p\n", instance, count, properties);
     return wine_vk_enumerate_physical_device_groups(instance,
             instance->funcs.p_vkEnumeratePhysicalDeviceGroupsKHR, count, properties);
 }
@@ -1204,7 +1178,6 @@ void wine_vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice phys_dev,
                                                      const VkPhysicalDeviceExternalFenceInfo *fence_info,
                                                      VkExternalFenceProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, fence_info, properties);
     properties->exportFromImportedHandleTypes = 0;
     properties->compatibleHandleTypes = 0;
     properties->externalFenceFeatures = 0;
@@ -1214,7 +1187,6 @@ void wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice phys_de
                                                         const VkPhysicalDeviceExternalFenceInfo *fence_info,
                                                         VkExternalFenceProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, fence_info, properties);
     properties->exportFromImportedHandleTypes = 0;
     properties->compatibleHandleTypes = 0;
     properties->externalFenceFeatures = 0;
@@ -1224,7 +1196,6 @@ void wine_vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice phys_dev,
                                                       const VkPhysicalDeviceExternalBufferInfo *buffer_info,
                                                       VkExternalBufferProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, buffer_info, properties);
     memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
 }
 
@@ -1232,7 +1203,6 @@ void wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice phys_d
                                                          const VkPhysicalDeviceExternalBufferInfo *buffer_info,
                                                          VkExternalBufferProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, buffer_info, properties);
     memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
 }
 
@@ -1242,8 +1212,6 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_de
 {
     VkExternalImageFormatProperties *external_image_properties;
     VkResult res;
-
-    TRACE("%p, %p, %p\n", phys_dev, format_info, properties);
 
     res = thunk_vkGetPhysicalDeviceImageFormatProperties2(phys_dev, format_info, properties);
 
@@ -1264,8 +1232,6 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys
 {
     VkExternalImageFormatProperties *external_image_properties;
     VkResult res;
-
-    TRACE("%p, %p, %p\n", phys_dev, format_info, properties);
 
     res = thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(phys_dev, format_info, properties);
 
@@ -1372,8 +1338,6 @@ VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice ha
     unsigned int i;
     VkResult res;
 
-    TRACE("%p, %p, %p\n", phys_dev, time_domain_count, time_domains);
-
     /* Find out the time domains supported on the host */
     res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(phys_dev->phys_dev, &host_time_domain_count, NULL);
     if (res != VK_SUCCESS)
@@ -1436,7 +1400,6 @@ void wine_vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice phys_d
                                                          const VkPhysicalDeviceExternalSemaphoreInfo *info,
                                                          VkExternalSemaphoreProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, info, properties);
     properties->exportFromImportedHandleTypes = 0;
     properties->compatibleHandleTypes = 0;
     properties->externalSemaphoreFeatures = 0;
@@ -1446,7 +1409,6 @@ void wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice phy
                                                             const VkPhysicalDeviceExternalSemaphoreInfo *info,
                                                             VkExternalSemaphoreProperties *properties)
 {
-    TRACE("%p, %p, %p\n", phys_dev, info, properties);
     properties->exportFromImportedHandleTypes = 0;
     properties->compatibleHandleTypes = 0;
     properties->externalSemaphoreFeatures = 0;
@@ -1458,8 +1420,6 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance handle, const VkWin32SurfaceCre
     struct wine_instance *instance = wine_instance_from_handle(handle);
     struct wine_surface *object;
     VkResult res;
-
-    TRACE("%p, %p, %p, %p\n", instance, createInfo, allocator, surface);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -1492,8 +1452,6 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
     struct wine_instance *instance = wine_instance_from_handle(handle);
     struct wine_surface *object = wine_surface_from_handle(surface);
 
-    TRACE("%p, 0x%s, %p\n", instance, wine_dbgstr_longlong(surface), allocator);
-
     if (!object)
         return;
 
@@ -1524,8 +1482,6 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice handle,
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
     VkResult res;
 
-    TRACE("%p, 0x%s, %p\n", phys_dev, wine_dbgstr_longlong(surface), capabilities);
-
     res = thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev->handle, surface, capabilities);
 
     if (res == VK_SUCCESS)
@@ -1540,8 +1496,6 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice handle
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
     VkResult res;
-
-    TRACE("%p, %p, %p\n", phys_dev, surface_info, capabilities);
 
     res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev->handle, surface_info, capabilities);
 
@@ -1560,8 +1514,6 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance handle,
     VkDebugUtilsMessengerCreateInfoEXT wine_create_info;
     struct wine_debug_utils_messenger *object;
     VkResult res;
-
-    TRACE("%p, %p, %p, %p\n", instance, create_info, allocator, messenger);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -1598,8 +1550,6 @@ void wine_vkDestroyDebugUtilsMessengerEXT(VkInstance handle, VkDebugUtilsMesseng
     struct wine_instance *instance = wine_instance_from_handle(handle);
     struct wine_debug_utils_messenger *object;
 
-    TRACE("%p, 0x%s, %p\n", instance, wine_dbgstr_longlong(messenger), allocator);
-
     object = wine_debug_utils_messenger_from_handle(messenger);
 
     if (!object)
@@ -1620,8 +1570,6 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance handle,
     VkDebugReportCallbackCreateInfoEXT wine_create_info;
     struct wine_debug_report_callback *object;
     VkResult res;
-
-    TRACE("%p, %p, %p, %p\n", instance, create_info, allocator, callback);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -1657,8 +1605,6 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance handle, VkDebugReportCallba
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
     struct wine_debug_report_callback *object;
-
-    TRACE("%p, 0x%s, %p\n", instance, wine_dbgstr_longlong(callback), allocator);
 
     object = wine_debug_report_callback_from_handle(callback);
 
@@ -1713,9 +1659,6 @@ VkResult wine_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipeline
     VkResult res;
     uint32_t i;
 
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", device, wine_dbgstr_longlong(pipeline_cache),
-          count, create_infos, allocator, pipelines);
-
     res = thunk_vkCreateComputePipelines(device, pipeline_cache, count, create_infos,
                                          allocator, pipelines);
 
@@ -1731,9 +1674,6 @@ VkResult wine_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelin
 {
     VkResult res;
     uint32_t i;
-
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", device, wine_dbgstr_longlong(pipeline_cache),
-          count, create_infos, allocator, pipelines);
 
     res = thunk_vkCreateGraphicsPipelines(device, pipeline_cache, count, create_infos,
                                           allocator, pipelines);
@@ -1752,9 +1692,6 @@ VkResult wine_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperatio
     VkResult res;
     uint32_t i;
 
-    TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", device, wine_dbgstr_longlong(deferred_operation),
-          wine_dbgstr_longlong(pipeline_cache), count, create_infos, allocator, pipelines);
-
     res = thunk_vkCreateRayTracingPipelinesKHR(device, deferred_operation, pipeline_cache,
                                                count, create_infos, allocator, pipelines);
 
@@ -1770,9 +1707,6 @@ VkResult wine_vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pip
 {
     VkResult res;
     uint32_t i;
-
-    TRACE("%p, 0x%s, %u, %p, %p, %p\n", device, wine_dbgstr_longlong(pipeline_cache),
-          count, create_infos, allocator, pipelines);
 
     res = thunk_vkCreateRayTracingPipelinesNV(device, pipeline_cache, count, create_infos,
                                               allocator, pipelines);

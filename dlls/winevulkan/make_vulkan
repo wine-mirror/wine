@@ -797,7 +797,7 @@ class VkFunction(object):
                 else:
                     body += "    {0} {1}_host;\n".format(p.type, p.name)
 
-        if self.thunk_type == ThunkType.PUBLIC:
+        if params_prefix:
             body += "    {0}\n".format(self.trace(params_prefix=params_prefix))
 
         # Call any win_to_host conversion calls.

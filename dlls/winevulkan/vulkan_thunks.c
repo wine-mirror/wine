@@ -5392,6 +5392,8 @@ static NTSTATUS thunk64_vkAllocateCommandBuffers(void *args)
 {
     struct vkAllocateCommandBuffers_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pCommandBuffers);
+
     result = wine_vkAllocateCommandBuffers(params->device, params->pAllocateInfo, params->pCommandBuffers);
     return result;
 }
@@ -5402,6 +5404,8 @@ static NTSTATUS thunk32_vkAllocateCommandBuffers(void *args)
 {
     struct vkAllocateCommandBuffers_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pCommandBuffers);
+
     result = wine_vkAllocateCommandBuffers(params->device, params->pAllocateInfo, params->pCommandBuffers);
     return result;
 }
@@ -10408,6 +10412,8 @@ static NTSTATUS thunk64_vkCreateCommandPool(void *args)
 {
     struct vkCreateCommandPool_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool);
+
     result = wine_vkCreateCommandPool(params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool, params->client_ptr);
     return result;
 }
@@ -10418,6 +10424,8 @@ static NTSTATUS thunk32_vkCreateCommandPool(void *args)
 {
     struct vkCreateCommandPool_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool);
+
     result = wine_vkCreateCommandPool(params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool, params->client_ptr);
     return result;
 }
@@ -10437,6 +10445,8 @@ static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateComputePipelines(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -10457,6 +10467,8 @@ static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateComputePipelines(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -10523,6 +10535,8 @@ static NTSTATUS thunk64_vkCreateDebugReportCallbackEXT(void *args)
 {
     struct vkCreateDebugReportCallbackEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pCallback);
+
     result = wine_vkCreateDebugReportCallbackEXT(params->instance, params->pCreateInfo, params->pAllocator, params->pCallback);
     return result;
 }
@@ -10533,6 +10547,8 @@ static NTSTATUS thunk32_vkCreateDebugReportCallbackEXT(void *args)
 {
     struct vkCreateDebugReportCallbackEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pCallback);
+
     result = wine_vkCreateDebugReportCallbackEXT(params->instance, params->pCreateInfo, params->pAllocator, params->pCallback);
     return result;
 }
@@ -10545,6 +10561,8 @@ static NTSTATUS thunk64_vkCreateDebugUtilsMessengerEXT(void *args)
 {
     struct vkCreateDebugUtilsMessengerEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pMessenger);
+
     result = wine_vkCreateDebugUtilsMessengerEXT(params->instance, params->pCreateInfo, params->pAllocator, params->pMessenger);
     return result;
 }
@@ -10555,6 +10573,8 @@ static NTSTATUS thunk32_vkCreateDebugUtilsMessengerEXT(void *args)
 {
     struct vkCreateDebugUtilsMessengerEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pMessenger);
+
     result = wine_vkCreateDebugUtilsMessengerEXT(params->instance, params->pCreateInfo, params->pAllocator, params->pMessenger);
     return result;
 }
@@ -10701,6 +10721,8 @@ static NTSTATUS thunk64_vkCreateDevice(void *args)
 {
     struct vkCreateDevice_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pCreateInfo, params->pAllocator, params->pDevice);
+
     result = wine_vkCreateDevice(params->physicalDevice, params->pCreateInfo, params->pAllocator, params->pDevice, params->client_ptr);
     return result;
 }
@@ -10711,6 +10733,8 @@ static NTSTATUS thunk32_vkCreateDevice(void *args)
 {
     struct vkCreateDevice_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pCreateInfo, params->pAllocator, params->pDevice);
+
     result = wine_vkCreateDevice(params->physicalDevice, params->pCreateInfo, params->pAllocator, params->pDevice, params->client_ptr);
     return result;
 }
@@ -10810,6 +10834,8 @@ static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateGraphicsPipelines(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -10830,6 +10856,8 @@ static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateGraphicsPipelines(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -10925,6 +10953,8 @@ static NTSTATUS thunk64_vkCreateInstance(void *args)
 {
     struct vkCreateInstance_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->pCreateInfo, params->pAllocator, params->pInstance);
+
     result = wine_vkCreateInstance(params->pCreateInfo, params->pAllocator, params->pInstance, params->client_ptr);
     return result;
 }
@@ -10935,6 +10965,8 @@ static NTSTATUS thunk32_vkCreateInstance(void *args)
 {
     struct vkCreateInstance_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->pCreateInfo, params->pAllocator, params->pInstance);
+
     result = wine_vkCreateInstance(params->pCreateInfo, params->pAllocator, params->pInstance, params->client_ptr);
     return result;
 }
@@ -11084,6 +11116,8 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -11104,6 +11138,8 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -11123,6 +11159,8 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 {
     struct vkCreateRayTracingPipelinesNV_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -11143,6 +11181,8 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
 {
     struct vkCreateRayTracingPipelinesNV_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
+
     result = wine_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
     return result;
 }
@@ -11419,6 +11459,8 @@ static NTSTATUS thunk64_vkCreateWin32SurfaceKHR(void *args)
 {
     struct vkCreateWin32SurfaceKHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
+
     result = wine_vkCreateWin32SurfaceKHR(params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
     return result;
 }
@@ -11429,6 +11471,8 @@ static NTSTATUS thunk32_vkCreateWin32SurfaceKHR(void *args)
 {
     struct vkCreateWin32SurfaceKHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
+
     result = wine_vkCreateWin32SurfaceKHR(params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
     return result;
 }
@@ -11646,6 +11690,8 @@ static NTSTATUS thunk32_vkDestroyBufferView(void *args)
 static NTSTATUS thunk64_vkDestroyCommandPool(void *args)
 {
     struct vkDestroyCommandPool_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->pAllocator);
+
     wine_vkDestroyCommandPool(params->device, params->commandPool, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11655,6 +11701,8 @@ static NTSTATUS thunk64_vkDestroyCommandPool(void *args)
 static NTSTATUS thunk32_vkDestroyCommandPool(void *args)
 {
     struct vkDestroyCommandPool_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->pAllocator);
+
     wine_vkDestroyCommandPool(params->device, params->commandPool, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11714,6 +11762,8 @@ static NTSTATUS thunk32_vkDestroyCuModuleNVX(void *args)
 static NTSTATUS thunk64_vkDestroyDebugReportCallbackEXT(void *args)
 {
     struct vkDestroyDebugReportCallbackEXT_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->callback), params->pAllocator);
+
     wine_vkDestroyDebugReportCallbackEXT(params->instance, params->callback, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11723,6 +11773,8 @@ static NTSTATUS thunk64_vkDestroyDebugReportCallbackEXT(void *args)
 static NTSTATUS thunk32_vkDestroyDebugReportCallbackEXT(void *args)
 {
     struct vkDestroyDebugReportCallbackEXT_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->callback), params->pAllocator);
+
     wine_vkDestroyDebugReportCallbackEXT(params->instance, params->callback, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11734,6 +11786,8 @@ static NTSTATUS thunk32_vkDestroyDebugReportCallbackEXT(void *args)
 static NTSTATUS thunk64_vkDestroyDebugUtilsMessengerEXT(void *args)
 {
     struct vkDestroyDebugUtilsMessengerEXT_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->messenger), params->pAllocator);
+
     wine_vkDestroyDebugUtilsMessengerEXT(params->instance, params->messenger, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11743,6 +11797,8 @@ static NTSTATUS thunk64_vkDestroyDebugUtilsMessengerEXT(void *args)
 static NTSTATUS thunk32_vkDestroyDebugUtilsMessengerEXT(void *args)
 {
     struct vkDestroyDebugUtilsMessengerEXT_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->messenger), params->pAllocator);
+
     wine_vkDestroyDebugUtilsMessengerEXT(params->instance, params->messenger, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11874,6 +11930,8 @@ static NTSTATUS thunk32_vkDestroyDescriptorUpdateTemplateKHR(void *args)
 static NTSTATUS thunk64_vkDestroyDevice(void *args)
 {
     struct vkDestroyDevice_params *params = args;
+    TRACE("%p, %p\n", params->device, params->pAllocator);
+
     wine_vkDestroyDevice(params->device, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -11883,6 +11941,8 @@ static NTSTATUS thunk64_vkDestroyDevice(void *args)
 static NTSTATUS thunk32_vkDestroyDevice(void *args)
 {
     struct vkDestroyDevice_params *params = args;
+    TRACE("%p, %p\n", params->device, params->pAllocator);
+
     wine_vkDestroyDevice(params->device, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -12038,6 +12098,8 @@ static NTSTATUS thunk32_vkDestroyIndirectCommandsLayoutNV(void *args)
 static NTSTATUS thunk64_vkDestroyInstance(void *args)
 {
     struct vkDestroyInstance_params *params = args;
+    TRACE("%p, %p\n", params->instance, params->pAllocator);
+
     wine_vkDestroyInstance(params->instance, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -12047,6 +12109,8 @@ static NTSTATUS thunk64_vkDestroyInstance(void *args)
 static NTSTATUS thunk32_vkDestroyInstance(void *args)
 {
     struct vkDestroyInstance_params *params = args;
+    TRACE("%p, %p\n", params->instance, params->pAllocator);
+
     wine_vkDestroyInstance(params->instance, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -12346,6 +12410,8 @@ static NTSTATUS thunk32_vkDestroyShaderModule(void *args)
 static NTSTATUS thunk64_vkDestroySurfaceKHR(void *args)
 {
     struct vkDestroySurfaceKHR_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->surface), params->pAllocator);
+
     wine_vkDestroySurfaceKHR(params->instance, params->surface, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -12355,6 +12421,8 @@ static NTSTATUS thunk64_vkDestroySurfaceKHR(void *args)
 static NTSTATUS thunk32_vkDestroySurfaceKHR(void *args)
 {
     struct vkDestroySurfaceKHR_params *params = args;
+    TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->surface), params->pAllocator);
+
     wine_vkDestroySurfaceKHR(params->instance, params->surface, params->pAllocator);
     return STATUS_SUCCESS;
 }
@@ -12467,6 +12535,8 @@ static NTSTATUS thunk64_vkEnumerateDeviceExtensionProperties(void *args)
 {
     struct vkEnumerateDeviceExtensionProperties_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
+
     result = wine_vkEnumerateDeviceExtensionProperties(params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
     return result;
 }
@@ -12477,6 +12547,8 @@ static NTSTATUS thunk32_vkEnumerateDeviceExtensionProperties(void *args)
 {
     struct vkEnumerateDeviceExtensionProperties_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
+
     result = wine_vkEnumerateDeviceExtensionProperties(params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
     return result;
 }
@@ -12489,6 +12561,8 @@ static NTSTATUS thunk64_vkEnumerateDeviceLayerProperties(void *args)
 {
     struct vkEnumerateDeviceLayerProperties_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
+
     result = wine_vkEnumerateDeviceLayerProperties(params->physicalDevice, params->pPropertyCount, params->pProperties);
     return result;
 }
@@ -12499,6 +12573,8 @@ static NTSTATUS thunk32_vkEnumerateDeviceLayerProperties(void *args)
 {
     struct vkEnumerateDeviceLayerProperties_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
+
     result = wine_vkEnumerateDeviceLayerProperties(params->physicalDevice, params->pPropertyCount, params->pProperties);
     return result;
 }
@@ -12511,6 +12587,8 @@ static NTSTATUS thunk64_vkEnumerateInstanceExtensionProperties(void *args)
 {
     struct vkEnumerateInstanceExtensionProperties_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->pLayerName, params->pPropertyCount, params->pProperties);
+
     result = wine_vkEnumerateInstanceExtensionProperties(params->pLayerName, params->pPropertyCount, params->pProperties);
     return result;
 }
@@ -12521,6 +12599,8 @@ static NTSTATUS thunk32_vkEnumerateInstanceExtensionProperties(void *args)
 {
     struct vkEnumerateInstanceExtensionProperties_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->pLayerName, params->pPropertyCount, params->pProperties);
+
     result = wine_vkEnumerateInstanceExtensionProperties(params->pLayerName, params->pPropertyCount, params->pProperties);
     return result;
 }
@@ -12533,6 +12613,8 @@ static NTSTATUS thunk64_vkEnumerateInstanceVersion(void *args)
 {
     struct vkEnumerateInstanceVersion_params *params = args;
     VkResult result;
+    TRACE("%p\n", params->pApiVersion);
+
     result = wine_vkEnumerateInstanceVersion(params->pApiVersion);
     return result;
 }
@@ -12543,6 +12625,8 @@ static NTSTATUS thunk32_vkEnumerateInstanceVersion(void *args)
 {
     struct vkEnumerateInstanceVersion_params *params = args;
     VkResult result;
+    TRACE("%p\n", params->pApiVersion);
+
     result = wine_vkEnumerateInstanceVersion(params->pApiVersion);
     return result;
 }
@@ -12555,6 +12639,8 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDeviceGroups(void *args)
 {
     struct vkEnumeratePhysicalDeviceGroups_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
+
     result = wine_vkEnumeratePhysicalDeviceGroups(params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
     return result;
 }
@@ -12565,6 +12651,8 @@ static NTSTATUS thunk32_vkEnumeratePhysicalDeviceGroups(void *args)
 {
     struct vkEnumeratePhysicalDeviceGroups_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
+
     result = wine_vkEnumeratePhysicalDeviceGroups(params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
     return result;
 }
@@ -12577,6 +12665,8 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
 {
     struct vkEnumeratePhysicalDeviceGroupsKHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
+
     result = wine_vkEnumeratePhysicalDeviceGroupsKHR(params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
     return result;
 }
@@ -12587,6 +12677,8 @@ static NTSTATUS thunk32_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
 {
     struct vkEnumeratePhysicalDeviceGroupsKHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
+
     result = wine_vkEnumeratePhysicalDeviceGroupsKHR(params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
     return result;
 }
@@ -12625,6 +12717,8 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDevices(void *args)
 {
     struct vkEnumeratePhysicalDevices_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
+
     result = wine_vkEnumeratePhysicalDevices(params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
     return result;
 }
@@ -12635,6 +12729,8 @@ static NTSTATUS thunk32_vkEnumeratePhysicalDevices(void *args)
 {
     struct vkEnumeratePhysicalDevices_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
+
     result = wine_vkEnumeratePhysicalDevices(params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
     return result;
 }
@@ -12675,6 +12771,8 @@ static NTSTATUS thunk32_vkFlushMappedMemoryRanges(void *args)
 static NTSTATUS thunk64_vkFreeCommandBuffers(void *args)
 {
     struct vkFreeCommandBuffers_params *params = args;
+    TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->commandBufferCount, params->pCommandBuffers);
+
     wine_vkFreeCommandBuffers(params->device, params->commandPool, params->commandBufferCount, params->pCommandBuffers);
     return STATUS_SUCCESS;
 }
@@ -12684,6 +12782,8 @@ static NTSTATUS thunk64_vkFreeCommandBuffers(void *args)
 static NTSTATUS thunk32_vkFreeCommandBuffers(void *args)
 {
     struct vkFreeCommandBuffers_params *params = args;
+    TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->commandBufferCount, params->pCommandBuffers);
+
     wine_vkFreeCommandBuffers(params->device, params->commandPool, params->commandBufferCount, params->pCommandBuffers);
     return STATUS_SUCCESS;
 }
@@ -13069,6 +13169,8 @@ static NTSTATUS thunk64_vkGetCalibratedTimestampsEXT(void *args)
 {
     struct vkGetCalibratedTimestampsEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %u, %p, %p, %p\n", params->device, params->timestampCount, params->pTimestampInfos, params->pTimestamps, params->pMaxDeviation);
+
     result = wine_vkGetCalibratedTimestampsEXT(params->device, params->timestampCount, params->pTimestampInfos, params->pTimestamps, params->pMaxDeviation);
     return result;
 }
@@ -13079,6 +13181,8 @@ static NTSTATUS thunk32_vkGetCalibratedTimestampsEXT(void *args)
 {
     struct vkGetCalibratedTimestampsEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %u, %p, %p, %p\n", params->device, params->timestampCount, params->pTimestampInfos, params->pTimestamps, params->pMaxDeviation);
+
     result = wine_vkGetCalibratedTimestampsEXT(params->device, params->timestampCount, params->pTimestampInfos, params->pTimestamps, params->pMaxDeviation);
     return result;
 }
@@ -13602,6 +13706,8 @@ static NTSTATUS thunk32_vkGetDeviceMemoryOpaqueCaptureAddressKHR(void *args)
 static NTSTATUS thunk64_vkGetDeviceQueue(void *args)
 {
     struct vkGetDeviceQueue_params *params = args;
+    TRACE("%p, %u, %u, %p\n", params->device, params->queueFamilyIndex, params->queueIndex, params->pQueue);
+
     wine_vkGetDeviceQueue(params->device, params->queueFamilyIndex, params->queueIndex, params->pQueue);
     return STATUS_SUCCESS;
 }
@@ -13611,6 +13717,8 @@ static NTSTATUS thunk64_vkGetDeviceQueue(void *args)
 static NTSTATUS thunk32_vkGetDeviceQueue(void *args)
 {
     struct vkGetDeviceQueue_params *params = args;
+    TRACE("%p, %u, %u, %p\n", params->device, params->queueFamilyIndex, params->queueIndex, params->pQueue);
+
     wine_vkGetDeviceQueue(params->device, params->queueFamilyIndex, params->queueIndex, params->pQueue);
     return STATUS_SUCCESS;
 }
@@ -13622,6 +13730,8 @@ static NTSTATUS thunk32_vkGetDeviceQueue(void *args)
 static NTSTATUS thunk64_vkGetDeviceQueue2(void *args)
 {
     struct vkGetDeviceQueue2_params *params = args;
+    TRACE("%p, %p, %p\n", params->device, params->pQueueInfo, params->pQueue);
+
     wine_vkGetDeviceQueue2(params->device, params->pQueueInfo, params->pQueue);
     return STATUS_SUCCESS;
 }
@@ -13631,6 +13741,8 @@ static NTSTATUS thunk64_vkGetDeviceQueue2(void *args)
 static NTSTATUS thunk32_vkGetDeviceQueue2(void *args)
 {
     struct vkGetDeviceQueue2_params *params = args;
+    TRACE("%p, %p, %p\n", params->device, params->pQueueInfo, params->pQueue);
+
     wine_vkGetDeviceQueue2(params->device, params->pQueueInfo, params->pQueue);
     return STATUS_SUCCESS;
 }
@@ -14127,6 +14239,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *arg
 {
     struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pTimeDomainCount, params->pTimeDomains);
+
     result = wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(params->physicalDevice, params->pTimeDomainCount, params->pTimeDomains);
     return result;
 }
@@ -14137,6 +14251,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *arg
 {
     struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pTimeDomainCount, params->pTimeDomains);
+
     result = wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(params->physicalDevice, params->pTimeDomainCount, params->pTimeDomains);
     return result;
 }
@@ -14174,6 +14290,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *a
 static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferProperties_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
+
     wine_vkGetPhysicalDeviceExternalBufferProperties(params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
     return STATUS_SUCCESS;
 }
@@ -14183,6 +14301,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferProperties_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
+
     wine_vkGetPhysicalDeviceExternalBufferProperties(params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
     return STATUS_SUCCESS;
 }
@@ -14194,6 +14314,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferPropertiesKHR_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
+
     wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
     return STATUS_SUCCESS;
 }
@@ -14203,6 +14325,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *arg
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferPropertiesKHR_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
+
     wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
     return STATUS_SUCCESS;
 }
@@ -14214,6 +14338,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *arg
 static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalFenceProperties_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
+
     wine_vkGetPhysicalDeviceExternalFenceProperties(params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
     return STATUS_SUCCESS;
 }
@@ -14223,6 +14349,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalFenceProperties_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
+
     wine_vkGetPhysicalDeviceExternalFenceProperties(params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
     return STATUS_SUCCESS;
 }
@@ -14234,6 +14362,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalFencePropertiesKHR_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
+
     wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
     return STATUS_SUCCESS;
 }
@@ -14243,6 +14373,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalFencePropertiesKHR_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
+
     wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
     return STATUS_SUCCESS;
 }
@@ -14254,6 +14386,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args
 static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphoreProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalSemaphoreProperties_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
+
     wine_vkGetPhysicalDeviceExternalSemaphoreProperties(params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
     return STATUS_SUCCESS;
 }
@@ -14263,6 +14397,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphoreProperties(void *arg
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalSemaphoreProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalSemaphoreProperties_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
+
     wine_vkGetPhysicalDeviceExternalSemaphoreProperties(params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
     return STATUS_SUCCESS;
 }
@@ -14274,6 +14410,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceExternalSemaphoreProperties(void *arg
 static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalSemaphorePropertiesKHR_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
+
     wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
     return STATUS_SUCCESS;
 }
@@ -14283,6 +14421,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalSemaphorePropertiesKHR_params *params = args;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
+
     wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(params->physicalDevice, params->pExternalSemaphoreInfo, params->pExternalSemaphoreProperties);
     return STATUS_SUCCESS;
 }
@@ -14500,6 +14640,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+
     result = wine_vkGetPhysicalDeviceImageFormatProperties2(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
     return result;
 }
@@ -14520,6 +14662,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+
     result = wine_vkGetPhysicalDeviceImageFormatProperties2(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
     return result;
 }
@@ -14539,6 +14683,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2KHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+
     result = wine_vkGetPhysicalDeviceImageFormatProperties2KHR(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
     return result;
 }
@@ -14559,6 +14705,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2KHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
+
     result = wine_vkGetPhysicalDeviceImageFormatProperties2KHR(params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
     return result;
 }
@@ -14984,6 +15132,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
+
     result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
     return result;
 }
@@ -15003,6 +15153,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
     VkResult result;
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
+
     result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
     return result;
 }
@@ -15022,6 +15174,8 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilitiesKHR_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceCapabilities);
+
     result = wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(params->physicalDevice, params->surface, params->pSurfaceCapabilities);
     return result;
 }
@@ -15039,6 +15193,8 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilitiesKHR_params *params = args;
     VkResult result;
+    TRACE("%p, 0x%s, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceCapabilities);
+
     result = wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(params->physicalDevice, params->surface, params->pSurfaceCapabilities);
     return result;
 }
