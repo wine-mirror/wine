@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-08-20 11:30+0200\n"
+"PO-Revision-Date: 2022-09-26 12:00+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -15134,10 +15134,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Vervangen...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "&Nieuw...\tCtrl+N"
+msgstr "&Ga Naar...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15180,17 +15178,15 @@ msgstr "&Boven:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Ga Naar Regel"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "CRL Nummer"
+msgstr "Rege&l Nummer:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Ga Naar"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15256,7 +15252,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
