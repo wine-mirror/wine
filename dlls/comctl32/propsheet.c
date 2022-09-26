@@ -396,6 +396,26 @@ static WCHAR* HPSP_get_title(HPROPSHEETPAGE hpsp, const WCHAR *template_title)
     return heap_strdupW(pTitle);
 }
 
+static HICON HPSP_get_icon(HPROPSHEETPAGE hpsp)
+{
+    HICON ret;
+
+    if (hpsp->psp.dwFlags & PSP_USEICONID)
+    {
+        int cx = GetSystemMetrics(SM_CXSMICON);
+        int cy = GetSystemMetrics(SM_CYSMICON);
+
+        ret = LoadImageW(hpsp->psp.hInstance, hpsp->psp.u2.pszIcon, IMAGE_ICON,
+                cx, cy, LR_DEFAULTCOLOR);
+    }
+    else
+    {
+        ret = hpsp->psp.u2.hIcon;
+    }
+
+    return ret;
+}
+
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
  *            PROPSHEET_UnImplementedFlags
@@ -734,13 +754,7 @@ static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
     int icon_cx = GetSystemMetrics(SM_CXSMICON);
     int icon_cy = GetSystemMetrics(SM_CYSMICON);
 
-    if (dwFlags & PSP_USEICONID)
-      hIcon = LoadImageW(hpsp->psp.hInstance, hpsp->psp.u2.pszIcon, IMAGE_ICON,
-                         icon_cx, icon_cy, LR_DEFAULTCOLOR);
-    else
-      hIcon = hpsp->psp.u2.hIcon;
-
-    if ( hIcon )
+    if ((hIcon = HPSP_get_icon(hpsp)))
     {
       if (psInfo->hImageList == 0 )
 	psInfo->hImageList = ImageList_Create(icon_cx, icon_cy, ILC_COLOR, 1, 1);
