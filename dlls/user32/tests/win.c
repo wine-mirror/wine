@@ -8143,9 +8143,11 @@ static void test_EnableWindow(void)
     DWORD tid;
     MSG msg;
 
-    hwnd = CreateWindowExA(0, "MainWindowClass", NULL, WS_OVERLAPPEDWINDOW,
-                           0, 0, 100, 100, 0, 0, 0, NULL);
+    hwnd = CreateWindowExA(0, "MainWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                           0, 0, 0, NULL);
     assert(hwnd);
+    flush_events( TRUE );
     ok(IsWindowEnabled(hwnd), "window should be enabled\n");
     SetFocus(hwnd);
     SetCapture(hwnd);
@@ -8658,6 +8660,7 @@ static void run_NCRedrawLoop(UINT flags)
 
     UINT loopcount = 0;
 
+    flush_events( TRUE );
     hwnd = CreateWindowA("TestNCRedrawClass", "MainWindow",
                          WS_OVERLAPPEDWINDOW, 0, 0, 200, 100,
                          NULL, NULL, 0, &flags);
