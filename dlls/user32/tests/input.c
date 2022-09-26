@@ -2584,6 +2584,7 @@ static void rawinput_test_process(void)
             raw_devices[0].dwFlags = RIDEV_REMOVE;
             raw_devices[0].hwndTarget = 0;
 
+            flaky_wine
             ok(rawinput_test_received_legacy, "%d: foreground process expected WM_MOUSEMOVE message\n", i);
             ok(rawinput_test_received_raw, "%d: foreground process expected WM_INPUT message\n", i);
             ok(rawinput_test_received_rawfg, "%d: foreground process expected RIM_INPUT message\n", i);
@@ -2853,6 +2854,7 @@ static void test_rawinput(const char* argv0)
         SetEvent(process_done);
         SetEvent(params.done);
 
+        flaky_wine
         if (!skipped)
         {
             todo_wine_if(rawinput_tests[i].todo_legacy)
@@ -3432,6 +3434,7 @@ static LRESULT CALLBACK mouse_move_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
         POINT pt = {LOWORD(lparam), HIWORD(lparam)};
         MapWindowPoints(hwnd, NULL, &pt, 1);
 
+        flaky
         if (pt.x != last_x) ok( pt.x == expect_x, "got unexpected WM_MOUSEMOVE x %ld, expected %ld\n", pt.x, expect_x );
 
         expect_x = pt.x == 200 ? 210 : 200;
@@ -3583,6 +3586,7 @@ static void test_Input_mouse(void)
     SetEvent(thread_data.end_event);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
+    flaky_wine
     ok(hittest_no && hittest_no<50, "expected WM_NCHITTEST message\n");
     ok(!got_button_down, "unexpected WM_RBUTTONDOWN message\n");
     ok(!got_button_up, "unexpected WM_RBUTTONUP message\n");
