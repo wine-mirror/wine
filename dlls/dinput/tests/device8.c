@@ -2032,12 +2032,16 @@ static void test_sys_mouse( DWORD version )
     ok( hr == (version < 0x800 ? DI_OK : DI_BUFFEROVERFLOW), "GetDeviceData returned %#lx\n", hr );
     count = 1;
     hr = IDirectInputDevice8_GetDeviceData( device, sizeof(objdata), &objdata, &count, 0 );
+
+    flaky_wine_if (hr == DIERR_NOTACQUIRED)
     ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
     ok( count == 1, "got count %lu\n", count );
 
-    hr = IDirectInputDevice8_Unacquire( device );
-    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
-
+    if (hr != DIERR_NOTACQUIRED)
+    {
+        hr = IDirectInputDevice8_Unacquire( device );
+        ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+    }
 
     tmp_hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
                               50, 250, 200, 200, NULL, NULL, NULL, NULL );
