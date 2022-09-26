@@ -225,12 +225,11 @@ static void wg_format_from_caps_video_cinepak(struct wg_format *format, const Gs
         fps_d = 1;
     }
 
-    format->major_type = WG_MAJOR_TYPE_VIDEO;
-    format->u.video.format = WG_VIDEO_FORMAT_CINEPAK;
-    format->u.video.width = width;
-    format->u.video.height = height;
-    format->u.video.fps_n = fps_n;
-    format->u.video.fps_d = fps_d;
+    format->major_type = WG_MAJOR_TYPE_VIDEO_CINEPAK;
+    format->u.video_cinepak.width = width;
+    format->u.video_cinepak.height = height;
+    format->u.video_cinepak.fps_n = fps_n;
+    format->u.video_cinepak.fps_d = fps_d;
 }
 
 void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
@@ -407,6 +406,23 @@ static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
     return caps;
 }
 
+static GstCaps *wg_format_to_caps_video_cinepak(const struct wg_format *format)
+{
+    GstCaps *caps;
+
+    if (!(caps = gst_caps_new_empty_simple("video/x-cinepak")))
+        return NULL;
+
+    if (format->u.video_cinepak.width)
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video_cinepak.width, NULL);
+    if (format->u.video_cinepak.height)
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_cinepak.height, NULL);
+    if (format->u.video_cinepak.fps_d || format->u.video_cinepak.fps_n)
+        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_cinepak.fps_n, format->u.video_cinepak.fps_d, NULL);
+
+    return caps;
+}
+
 static GstCaps *wg_format_to_caps_wma(const struct wg_format *format)
 {
     GstBuffer *buffer;
@@ -523,6 +539,8 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
             return wg_format_to_caps_audio(format);
         case WG_MAJOR_TYPE_VIDEO:
             return wg_format_to_caps_video(format);
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
+            return wg_format_to_caps_video_cinepak(format);
     }
     assert(0);
     return NULL;
@@ -554,6 +572,11 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
                     && a->u.video.width == b->u.video.width
                     && abs(a->u.video.height) == abs(b->u.video.height)
                     && EqualRect( &a->u.video.padding, &b->u.video.padding );
+
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
+            /* Do not compare FPS. */
+            return a->u.video_cinepak.width == b->u.video_cinepak.width
+                    && a->u.video_cinepak.height == b->u.video_cinepak.height;
     }
 
     assert(0);

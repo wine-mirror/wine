@@ -425,6 +425,7 @@ NTSTATUS wg_transform_create(void *args)
             /* fallthrough */
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
         case WG_MAJOR_TYPE_WMA:
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
                     || !transform_append_element(transform, element, &first, &last))
             {
@@ -475,6 +476,7 @@ NTSTATUS wg_transform_create(void *args)
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
         case WG_MAJOR_TYPE_H264:
         case WG_MAJOR_TYPE_WMA:
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", output_format.major_type);
             goto out;

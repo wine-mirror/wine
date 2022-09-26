@@ -237,7 +237,6 @@ static NTSTATUS wg_parser_stream_enable(void *args)
             case WG_VIDEO_FORMAT_YV12:
             case WG_VIDEO_FORMAT_YVYU:
             case WG_VIDEO_FORMAT_UNKNOWN:
-            case WG_VIDEO_FORMAT_CINEPAK:
                 break;
         }
 

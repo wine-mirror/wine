@@ -36,6 +36,7 @@ struct wg_format
     {
         WG_MAJOR_TYPE_UNKNOWN,
         WG_MAJOR_TYPE_VIDEO,
+        WG_MAJOR_TYPE_VIDEO_CINEPAK,
         WG_MAJOR_TYPE_AUDIO,
         WG_MAJOR_TYPE_MPEG1_AUDIO,
         WG_MAJOR_TYPE_WMA,
@@ -63,8 +64,6 @@ struct wg_format
                 WG_VIDEO_FORMAT_YUY2,
                 WG_VIDEO_FORMAT_YV12,
                 WG_VIDEO_FORMAT_YVYU,
-
-                WG_VIDEO_FORMAT_CINEPAK,
             } format;
             int32_t width, height;
             uint32_t fps_n, fps_d;
@@ -105,6 +104,13 @@ struct wg_format
             uint32_t codec_data_len;
             unsigned char codec_data[64];
         } wma;
+        struct
+        {
+            uint32_t width;
+            uint32_t height;
+            uint32_t fps_n;
+            uint32_t fps_d;
+        } video_cinepak;
         struct
         {
             int32_t width, height;

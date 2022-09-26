@@ -1511,6 +1511,8 @@ static const char *get_major_type_string(enum wg_major_type type)
             return "audio";
         case WG_MAJOR_TYPE_VIDEO:
             return "video";
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
+            return "cinepak";
         case WG_MAJOR_TYPE_UNKNOWN:
             return "unknown";
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
@@ -1969,6 +1971,7 @@ static HRESULT WINAPI reader_GetOutputFormat(IWMSyncReader2 *iface,
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_H264:
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             FIXME("Format %u not implemented!\n", format.major_type);
             break;
         case WG_MAJOR_TYPE_UNKNOWN:
@@ -2007,6 +2010,7 @@ static HRESULT WINAPI reader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD o
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_H264:
+        case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             FIXME("Format %u not implemented!\n", format.major_type);
             /* fallthrough */
         case WG_MAJOR_TYPE_AUDIO:
