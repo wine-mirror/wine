@@ -308,3 +308,11 @@ __ASM_BLOCK_BEGIN(type_info_vtables) \
     __ASM_VTABLE(type_info, \
             VTABLE_ADD_FUNC(type_info_vector_dtor)); \
 __ASM_BLOCK_END
+
+typedef struct
+{
+    EXCEPTION_RECORD *rec;
+    LONG *ref; /* not binary compatible with native msvcr100 */
+} exception_ptr;
+
+void throw_exception(const char*) DECLSPEC_HIDDEN;
