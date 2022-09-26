@@ -1873,8 +1873,14 @@ DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection_ctor, 8)
 _StructuredTaskCollection* __thiscall _StructuredTaskCollection_ctor(
         _StructuredTaskCollection *this, /*_CancellationTokenState*/void *token)
 {
-    FIXME("(%p): stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    if (token)
+        FIXME("_StructuredTaskCollection with cancellation token not implemented!\n");
+
+    memset(this, 0, sizeof(*this));
+    this->finished = FINISHED_INITIAL;
+    return this;
 }
 
 #endif /* _MSVCR_VER >= 110 */

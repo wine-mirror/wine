@@ -1403,7 +1403,7 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
         MSVCRT_bool canceling = call_func1(
                 p__StructuredTaskCollection__IsCanceling,
                 chore->chore.task_collection);
-        ok(canceling, "Task is not canceling\n");
+        todo_wine ok(canceling, "Task is not canceling\n");
     }
 }
 
@@ -1433,7 +1433,7 @@ static void test_StructuredTaskCollection(void)
         skip("_StructuredTaskCollection constructor not implemented\n");
         return;
     }
-    ok(task_coll.unk2 == 0x1fffffff,
+    todo_wine ok(task_coll.unk2 == 0x1fffffff,
             "_StructuredTaskCollection ctor set wrong unk2: 0x%x != 0x1fffffff\n", task_coll.unk2);
     ok(task_coll.unk3 == NULL,
             "_StructuredTaskCollection ctor set wrong unk3: %p != NULL\n", task_coll.unk3);
@@ -1587,7 +1587,7 @@ static void test_StructuredTaskCollection(void)
     ok(b, "SetEvent failed\n");
 
     status = p__StructuredTaskCollection__RunAndWait(&task_coll, NULL);
-    ok(status == 2, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
+    todo_wine ok(status == 2, "_StructuredTaskCollection::_RunAndWait failed: %d\n", status);
     call_func1(p__StructuredTaskCollection_dtor, &task_coll);
 
     CloseHandle(chore_start_evt);
