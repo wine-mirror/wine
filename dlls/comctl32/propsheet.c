@@ -376,6 +376,26 @@ static const DLGTEMPLATE* HPSP_load_template(HPROPSHEETPAGE hpsp, DWORD *size)
     return LockResource(template);
 }
 
+static WCHAR* HPSP_get_title(HPROPSHEETPAGE hpsp, const WCHAR *template_title)
+{
+    const WCHAR *pTitle;
+    WCHAR szTitle[256];
+
+    if (IS_INTRESOURCE(hpsp->psp.pszTitle))
+    {
+        if (LoadStringW(hpsp->psp.hInstance, (DWORD_PTR)hpsp->psp.pszTitle, szTitle, ARRAY_SIZE(szTitle)))
+            pTitle = szTitle;
+        else if (*template_title)
+            pTitle = template_title;
+        else
+            pTitle = L"(null)";
+    }
+    else
+        pTitle = hpsp->psp.pszTitle;
+
+    return heap_strdupW(pTitle);
+}
+
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
  *            PROPSHEET_UnImplementedFlags
@@ -703,24 +723,7 @@ static BOOL PROPSHEET_CollectPageInfo(HPROPSHEETPAGE hpsp,
   TRACE("Tab %d %s\n",index,debugstr_w( p ));
 
   if (dwFlags & PSP_USETITLE)
-  {
-    WCHAR szTitle[256];
-    const WCHAR *pTitle;
-
-    if (IS_INTRESOURCE( hpsp->psp.pszTitle ))
-    {
-      if (LoadStringW( hpsp->psp.hInstance, (DWORD_PTR)hpsp->psp.pszTitle, szTitle, ARRAY_SIZE(szTitle)))
-        pTitle = szTitle;
-      else if (*p)
-        pTitle = p;
-      else
-        pTitle = L"(null)";
-    }
-    else
-      pTitle = hpsp->psp.pszTitle;
-
-    psInfo->proppage[index].pszText = heap_strdupW( pTitle );
-  }
+      psInfo->proppage[index].pszText = HPSP_get_title(hpsp, p);
 
   /*
    * Build the image list for icons
