@@ -288,12 +288,6 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
-    if (!decoder->input_type)
-    {
-        memset(info, 0, sizeof(*info));
-        return MF_E_TRANSFORM_TYPE_NOT_SET;
-    }
-
     *info = decoder->input_info;
     return S_OK;
 }

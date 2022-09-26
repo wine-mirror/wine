@@ -2816,12 +2816,9 @@ static void test_h264_decoder(void)
     flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
     memset(&input_info, 0xcd, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    todo_wine
     ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
-    todo_wine
     ok(input_info.dwFlags == flags, "got dwFlags %#lx\n", input_info.dwFlags);
-    todo_wine
     ok(input_info.cbSize == 0x1000, "got cbSize %lu\n", input_info.cbSize);
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
     ok(input_info.cbAlignment == 0, "got cbAlignment %#lx\n", input_info.cbAlignment);
