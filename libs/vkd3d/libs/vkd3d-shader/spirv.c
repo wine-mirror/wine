@@ -206,7 +206,7 @@ static enum vkd3d_shader_input_sysval_semantic vkd3d_siv_from_sysval(enum vkd3d_
 
 #define VKD3D_SPIRV_VERSION 0x00010000
 #define VKD3D_SPIRV_GENERATOR_ID 18
-#define VKD3D_SPIRV_GENERATOR_VERSION 4
+#define VKD3D_SPIRV_GENERATOR_VERSION 5
 #define VKD3D_SPIRV_GENERATOR_MAGIC vkd3d_make_u32(VKD3D_SPIRV_GENERATOR_VERSION, VKD3D_SPIRV_GENERATOR_ID)
 
 struct vkd3d_spirv_stream
@@ -2228,6 +2228,7 @@ struct vkd3d_dxbc_compiler
 
     bool strip_debug;
     bool ssbo_uavs;
+    bool uav_read_without_format;
 
     struct rb_tree symbol_table;
     uint32_t temp_id;
@@ -2378,6 +2379,15 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
                 WARN("Ignoring unrecognised option %#x with value %#x.\n", option->name, option->value);
 
             case VKD3D_SHADER_COMPILE_OPTION_API_VERSION:
+                break;
+
+            case VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV:
+                if (option->value == VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV_READ_FORMAT_R32)
+                    compiler->uav_read_without_format = false;
+                else if (option->value == VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV_READ_FORMAT_UNKNOWN)
+                    compiler->uav_read_without_format = true;
+                else
+                    WARN("Ignoring unrecognised value %#x for option %#x.\n", option->value, option->name);
                 break;
         }
     }
@@ -5856,14 +5866,18 @@ static uint32_t vkd3d_dxbc_compiler_get_image_type_id(struct vkd3d_dxbc_compiler
     const struct vkd3d_shader_descriptor_info *d;
     uint32_t sampled_type_id;
     SpvImageFormat format;
+    bool uav_read;
 
     format = SpvImageFormatUnknown;
     if (reg->type == VKD3DSPR_UAV)
     {
         d = vkd3d_dxbc_compiler_get_descriptor_info(compiler,
                 VKD3D_SHADER_DESCRIPTOR_TYPE_UAV, range);
-        if (raw_structured || (d->flags & VKD3D_SHADER_DESCRIPTOR_INFO_FLAG_UAV_READ))
+        uav_read = !!(d->flags & VKD3D_SHADER_DESCRIPTOR_INFO_FLAG_UAV_READ);
+        if (raw_structured || (uav_read && !compiler->uav_read_without_format))
             format = image_format_for_image_read(data_type);
+        else if (uav_read)
+            vkd3d_spirv_enable_capability(builder, SpvCapabilityStorageImageReadWithoutFormat);
     }
 
     sampled_type_id = vkd3d_spirv_get_type_id(builder, data_type, 1);
@@ -5962,7 +5976,7 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
         const struct vkd3d_shader_resource *resource, enum vkd3d_shader_resource_type resource_type,
         enum vkd3d_data_type resource_data_type, unsigned int structure_stride, bool raw)
 {
-    struct vkd3d_descriptor_variable_info var_info, counter_var_info;
+    struct vkd3d_descriptor_variable_info var_info, counter_var_info = {0};
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     SpvStorageClass storage_class = SpvStorageClassUniformConstant;
     uint32_t counter_type_id, type_id, var_id, counter_var_id = 0;

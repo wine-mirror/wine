@@ -143,6 +143,8 @@ struct vkd3d_vulkan_info
     bool rasterization_stream;
     bool transform_feedback_queries;
 
+    bool uav_read_without_format;
+
     bool vertex_attrib_zero_divisor;
     unsigned int max_vertex_attrib_divisor;
 
@@ -346,7 +348,6 @@ struct vkd3d_fence_worker
     union vkd3d_thread_handle thread;
     struct vkd3d_mutex mutex;
     struct vkd3d_cond cond;
-    struct vkd3d_cond fence_destruction_cond;
     bool should_exit;
 
     size_t fence_count;
@@ -529,7 +530,7 @@ struct d3d12_fence
     {
         uint64_t value;
         HANDLE event;
-        bool latch;
+        bool *latch;
     } *events;
     size_t events_size;
     size_t event_count;

@@ -1944,6 +1944,13 @@ struct d3d12_pipeline_state *unsafe_impl_from_ID3D12PipelineState(ID3D12Pipeline
     return impl_from_ID3D12PipelineState(iface);
 }
 
+static inline unsigned int typed_uav_compile_option(const struct d3d12_device *device)
+{
+    return device->vk_info.uav_read_without_format
+            ? VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV_READ_FORMAT_UNKNOWN
+            : VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV_READ_FORMAT_R32;
+}
+
 static HRESULT create_shader_stage(struct d3d12_device *device,
         struct VkPipelineShaderStageCreateInfo *stage_desc, enum VkShaderStageFlagBits stage,
         const D3D12_SHADER_BYTECODE *code, const struct vkd3d_shader_interface_info *shader_interface)
@@ -1955,9 +1962,10 @@ static HRESULT create_shader_stage(struct d3d12_device *device,
     VkResult vr;
     int ret;
 
-    static const struct vkd3d_shader_compile_option options[] =
+    const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_4},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_5},
+        {VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV, typed_uav_compile_option(device)},
     };
 
     stage_desc->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -2001,14 +2009,15 @@ static HRESULT create_shader_stage(struct d3d12_device *device,
     return S_OK;
 }
 
-static int vkd3d_scan_dxbc(const D3D12_SHADER_BYTECODE *code,
+static int vkd3d_scan_dxbc(const struct d3d12_device *device, const D3D12_SHADER_BYTECODE *code,
         struct vkd3d_shader_scan_descriptor_info *descriptor_info)
 {
     struct vkd3d_shader_compile_info compile_info;
 
-    static const struct vkd3d_shader_compile_option options[] =
+    const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_4},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_5},
+        {VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV, typed_uav_compile_option(device)},
     };
 
     compile_info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
@@ -2170,7 +2179,7 @@ static HRESULT d3d12_pipeline_state_find_and_init_uav_counters(struct d3d12_pipe
 
     shader_info.type = VKD3D_SHADER_STRUCTURE_TYPE_SCAN_DESCRIPTOR_INFO;
     shader_info.next = NULL;
-    if ((ret = vkd3d_scan_dxbc(code, &shader_info)) < 0)
+    if ((ret = vkd3d_scan_dxbc(device, code, &shader_info)) < 0)
     {
         WARN("Failed to scan shader bytecode, stage %#x, vkd3d result %d.\n", stage_flags, ret);
         return hresult_from_vkd3d_result(ret);

@@ -61,6 +61,9 @@ enum vkd3d_api_version
     VKD3D_API_VERSION_1_2,
     VKD3D_API_VERSION_1_3,
     VKD3D_API_VERSION_1_4,
+    VKD3D_API_VERSION_1_5,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_API_VERSION),
 };
 
 typedef HRESULT (*PFN_vkd3d_signal_event)(HANDLE event);

@@ -1391,6 +1391,45 @@ static void vkd3d_device_vk_heaps_descriptor_limits_init(struct vkd3d_device_des
     limits->sampler_max_descriptors = min(limits->sampler_max_descriptors, VKD3D_MAX_DESCRIPTOR_SET_SAMPLERS);
 }
 
+static bool d3d12_device_supports_typed_uav_load_additional_formats(const struct d3d12_device *device)
+{
+    const struct vkd3d_vk_instance_procs *vk_procs = &device->vkd3d_instance->vk_procs;
+    const struct vkd3d_format *format;
+    VkFormatProperties properties;
+    unsigned int i;
+
+    static const DXGI_FORMAT additional_formats[] =
+    {
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32B32A32_UINT,
+        DXGI_FORMAT_R32G32B32A32_SINT,
+        DXGI_FORMAT_R16G16B16A16_FLOAT,
+        DXGI_FORMAT_R16G16B16A16_UINT,
+        DXGI_FORMAT_R16G16B16A16_SINT,
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_FORMAT_R8G8B8A8_UINT,
+        DXGI_FORMAT_R8G8B8A8_SINT,
+        DXGI_FORMAT_R16_FLOAT,
+        DXGI_FORMAT_R16_UINT,
+        DXGI_FORMAT_R16_SINT,
+        DXGI_FORMAT_R8_UNORM,
+        DXGI_FORMAT_R8_UINT,
+        DXGI_FORMAT_R8_SINT,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(additional_formats); ++i)
+    {
+        format = vkd3d_get_format(device, additional_formats[i], false);
+        assert(format);
+
+        VK_CALL(vkGetPhysicalDeviceFormatProperties(device->vk_physical_device, format->vk_format, &properties));
+        if (!((properties.linearTilingFeatures | properties.optimalTilingFeatures) & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT))
+            return false;
+    }
+
+    return true;
+}
+
 static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
         const struct vkd3d_device_create_info *create_info,
         struct vkd3d_physical_device_info *physical_device_info,
@@ -1425,6 +1464,7 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     vulkan_info->sparse_properties = physical_device_info->properties2.properties.sparseProperties;
     vulkan_info->rasterization_stream = physical_device_info->xfb_properties.transformFeedbackRasterizationStreamSelect;
     vulkan_info->transform_feedback_queries = physical_device_info->xfb_properties.transformFeedbackQueries;
+    vulkan_info->uav_read_without_format = features->shaderStorageImageReadWithoutFormat;
     vulkan_info->max_vertex_attrib_divisor = max(physical_device_info->vertex_divisor_properties.maxVertexAttribDivisor, 1);
 
     device->feature_options.DoublePrecisionFloatShaderOps = features->shaderFloat64;
@@ -1455,7 +1495,8 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     else
         device->feature_options.ResourceBindingTier = D3D12_RESOURCE_BINDING_TIER_3;
 
-    device->feature_options.TypedUAVLoadAdditionalFormats = features->shaderStorageImageExtendedFormats;
+    device->feature_options.TypedUAVLoadAdditionalFormats = features->shaderStorageImageReadWithoutFormat
+            && d3d12_device_supports_typed_uav_load_additional_formats(device);
     /* GL_INTEL_fragment_shader_ordering, no Vulkan equivalent. */
     device->feature_options.ROVsSupported = FALSE;
     /* GL_INTEL_conservative_rasterization, no Vulkan equivalent. */

@@ -369,7 +369,143 @@ static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
     return true;
 }
 
-bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context)
+static bool fold_max(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_INT:
+                dst->value[k].i = max(src1->value[k].i, src2->value[k].i);
+                break;
+
+            case HLSL_TYPE_UINT:
+                dst->value[k].u = max(src1->value[k].u, src2->value[k].u);
+                break;
+
+            default:
+                FIXME("Fold max for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool fold_min(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_INT:
+                dst->value[k].i = min(src1->value[k].i, src2->value[k].i);
+                break;
+
+            case HLSL_TYPE_UINT:
+                dst->value[k].u = min(src1->value[k].u, src2->value[k].u);
+                break;
+
+            default:
+                FIXME("Fold min for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool fold_bit_xor(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_INT:
+            case HLSL_TYPE_UINT:
+                dst->value[k].u = src1->value[k].u ^ src2->value[k].u;
+                break;
+
+            default:
+                FIXME("Fold bit xor for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool fold_bit_and(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_INT:
+            case HLSL_TYPE_UINT:
+                dst->value[k].u = src1->value[k].u & src2->value[k].u;
+                break;
+
+            default:
+                FIXME("Fold bit and for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool fold_bit_or(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_INT:
+            case HLSL_TYPE_UINT:
+                dst->value[k].u = src1->value[k].u | src2->value[k].u;
+                break;
+
+            default:
+                FIXME("Fold bit or for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
+bool hlsl_fold_constant_exprs(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context)
 {
     struct hlsl_ir_constant *arg1, *arg2 = NULL, *res;
     struct hlsl_ir_expr *expr;
@@ -430,6 +566,26 @@ bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void 
             success = fold_mod(ctx, res, arg1, arg2);
             break;
 
+        case HLSL_OP2_MAX:
+            success = fold_max(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_MIN:
+            success = fold_min(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_BIT_XOR:
+            success = fold_bit_xor(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_BIT_AND:
+            success = fold_bit_and(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_BIT_OR:
+            success = fold_bit_or(ctx, res, arg1, arg2);
+            break;
+
         default:
             FIXME("Fold \"%s\" expression.\n", debug_hlsl_expr_op(expr->op));
             success = false;
@@ -446,4 +602,33 @@ bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void 
         vkd3d_free(res);
     }
     return success;
+}
+
+bool hlsl_fold_constant_swizzles(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context)
+{
+    struct hlsl_ir_constant *value, *res;
+    struct hlsl_ir_swizzle *swizzle;
+    unsigned int i, swizzle_bits;
+
+    if (instr->type != HLSL_IR_SWIZZLE)
+        return false;
+    swizzle = hlsl_ir_swizzle(instr);
+    if (swizzle->val.node->type != HLSL_IR_CONSTANT)
+        return false;
+    value = hlsl_ir_constant(swizzle->val.node);
+
+    if (!(res = hlsl_alloc(ctx, sizeof(*res))))
+        return false;
+    init_node(&res->node, HLSL_IR_CONSTANT, instr->data_type, instr->loc);
+
+    swizzle_bits = swizzle->swizzle;
+    for (i = 0; i < swizzle->node.data_type->dimx; ++i)
+    {
+        res->value[i] = value->value[swizzle_bits & 3];
+        swizzle_bits >>= 2;
+    }
+
+    list_add_before(&swizzle->node.entry, &res->node.entry);
+    hlsl_replace_node(&swizzle->node, &res->node);
+    return true;
 }

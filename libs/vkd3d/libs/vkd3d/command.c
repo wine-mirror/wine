@@ -369,7 +369,10 @@ static void *vkd3d_fence_worker_main(void *arg)
         }
 
         if (worker->should_exit)
+        {
+            vkd3d_mutex_unlock(&worker->mutex);
             break;
+        }
 
         old_fences_size = cur_fences_size;
         old_fences = cur_fences;
@@ -424,20 +427,11 @@ static HRESULT vkd3d_fence_worker_start(struct vkd3d_fence_worker *worker,
         return hresult_from_errno(rc);
     }
 
-    if ((rc = vkd3d_cond_init(&worker->fence_destruction_cond)))
-    {
-        ERR("Failed to initialize condition variable, error %d.\n", rc);
-        vkd3d_mutex_destroy(&worker->mutex);
-        vkd3d_cond_destroy(&worker->cond);
-        return hresult_from_errno(rc);
-    }
-
     if (FAILED(hr = vkd3d_create_thread(device->vkd3d_instance,
             vkd3d_fence_worker_main, worker, &worker->thread)))
     {
         vkd3d_mutex_destroy(&worker->mutex);
         vkd3d_cond_destroy(&worker->cond);
-        vkd3d_cond_destroy(&worker->fence_destruction_cond);
     }
 
     return hr;
@@ -467,7 +461,6 @@ static HRESULT vkd3d_fence_worker_stop(struct vkd3d_fence_worker *worker,
 
     vkd3d_mutex_destroy(&worker->mutex);
     vkd3d_cond_destroy(&worker->cond);
-    vkd3d_cond_destroy(&worker->fence_destruction_cond);
 
     vkd3d_free(worker->fences);
 
@@ -858,7 +851,7 @@ static void d3d12_fence_signal_external_events_locked(struct d3d12_fence *fence)
             }
             else
             {
-                current->latch = true;
+                *current->latch = true;
                 signal_null_event_cond = true;
             }
         }
@@ -1162,7 +1155,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence *i
 {
     struct d3d12_fence *fence = impl_from_ID3D12Fence(iface);
     unsigned int i;
-    bool *latch;
+    bool latch = false;
     int rc;
 
     TRACE("iface %p, value %#"PRIx64", event %p.\n", iface, value, event);
@@ -1203,8 +1196,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence *i
 
     fence->events[fence->event_count].value = value;
     fence->events[fence->event_count].event = event;
-    fence->events[fence->event_count].latch = false;
-    latch = &fence->events[fence->event_count].latch;
+    fence->events[fence->event_count].latch = &latch;
     ++fence->event_count;
 
     /* If event is NULL, we need to block until the fence value completes.
@@ -1213,7 +1205,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence *i
      * and signal a condition variable instead of calling external signal_event callback. */
     if (!event)
     {
-        while (!*latch)
+        while (!latch)
             vkd3d_cond_wait(&fence->null_event_cond, &fence->mutex);
     }
 
@@ -6804,22 +6796,15 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_Wait(ID3D12CommandQueue *if
         goto done;
     }
 
-    vkd3d_mutex_unlock(&fence->mutex);
-
     /* This is the critical part required to support out-of-order signal.
      * Normally we would be able to submit waits and signals out of order, but
      * we don't have virtualized queues in Vulkan, so we need to handle the case
      * where multiple queues alias over the same physical queue, so effectively,
      * we need to manage out-of-order submits ourselves. */
 
-    if (!command_queue->ops_count)
-        hr = d3d12_device_add_blocked_command_queues(command_queue->device, &command_queue, 1);
-
-    if (FAILED(hr))
-        goto done;
-
     if (!(op = d3d12_command_queue_require_space_locked(command_queue)))
     {
+        vkd3d_mutex_unlock(&fence->mutex);
         hr = E_OUTOFMEMORY;
         goto done;
     }
@@ -6828,6 +6813,16 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_Wait(ID3D12CommandQueue *if
     op->u.wait.value = value;
 
     d3d12_fence_incref(fence);
+
+    /* Add the queue to the blocked list after writing the op to ensure the queue isn't
+     * removed again in another thread because it has no ops. */
+    if (command_queue->ops_count == 1)
+        hr = d3d12_device_add_blocked_command_queues(command_queue->device, &command_queue, 1);
+
+    /* The fence must remain locked until the op is created and the queue is added to the blocked list,
+     * because if an unblocking d3d12_fence_Signal() call occurs on another thread before the above
+     * work is done, flushing will be delayed until the next signal, if one occurs at all. */
+    vkd3d_mutex_unlock(&fence->mutex);
 
 done:
     vkd3d_mutex_unlock(&command_queue->op_mutex);
