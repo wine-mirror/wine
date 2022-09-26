@@ -103,6 +103,7 @@ struct _PSP
     {
         PROPSHEETPAGEA pspA;
         PROPSHEETPAGEW pspW;
+        BYTE data[1];
     };
 };
 
@@ -3076,10 +3077,10 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
     if (lpPropSheetPage->dwSize < PROPSHEETPAGEA_V1_SIZE)
         return NULL;
 
-    ret = Alloc(sizeof(*ret));
+    ret = Alloc(FIELD_OFFSET(struct _PSP, data[lpPropSheetPage->dwSize]));
     ret->magic = HPROPSHEETPAGE_MAGIC;
     ppsp = &ret->pspA;
-    memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
+    memcpy(ppsp, lpPropSheetPage, lpPropSheetPage->dwSize);
 
     if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
     {
@@ -3131,11 +3132,11 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
     if (lpPropSheetPage->dwSize < PROPSHEETPAGEW_V1_SIZE)
         return NULL;
 
-    ret = Alloc(sizeof(*ret));
+    ret = Alloc(FIELD_OFFSET(struct _PSP, data[lpPropSheetPage->dwSize]));
     ret->magic = HPROPSHEETPAGE_MAGIC;
     ret->unicode = TRUE;
     ppsp = &ret->pspW;
-    memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
+    memcpy(ppsp, lpPropSheetPage, lpPropSheetPage->dwSize);
 
     if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
     {

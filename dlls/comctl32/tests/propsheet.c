@@ -1058,7 +1058,7 @@ static UINT CALLBACK proppage_callback_a(HWND hwnd, UINT msg, PROPSHEETPAGEA *ps
     if (psp->dwSize >= FIELD_OFFSET(struct custom_proppage, addref_called))
     {
         struct custom_proppage *extra_data = (struct custom_proppage *)psp;
-        todo_wine ok(extra_data->extra_data == 0x1234, "Expected extra_data to be preserved, got %lx\n",
+        ok(extra_data->extra_data == 0x1234, "Expected extra_data to be preserved, got %lx\n",
                 extra_data->extra_data);
     }
 
@@ -1092,7 +1092,7 @@ static UINT CALLBACK proppage_callback_w(HWND hwnd, UINT msg, PROPSHEETPAGEW *ps
     if (psp->dwSize >= FIELD_OFFSET(struct custom_proppage, addref_called))
     {
         struct custom_proppage *extra_data = (struct custom_proppage *)psp;
-        todo_wine ok(extra_data->extra_data == 0x4321, "Expected extra_data to be preserved, got %lx\n",
+        ok(extra_data->extra_data == 0x4321, "Expected extra_data to be preserved, got %lx\n",
                 extra_data->extra_data);
     }
 
