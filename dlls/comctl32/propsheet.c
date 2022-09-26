@@ -416,6 +416,24 @@ static HICON HPSP_get_icon(HPROPSHEETPAGE hpsp)
     return ret;
 }
 
+static HWND HPSP_create_page(HPROPSHEETPAGE hpsp, DLGTEMPLATE *template, HWND parent)
+{
+    HWND hwnd;
+
+    if(hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
+    {
+        hwnd = CreateDialogIndirectParamW(hpsp->psp.hInstance, template,
+                parent, hpsp->psp.pfnDlgProc, (LPARAM)&hpsp->psp);
+    }
+    else
+    {
+        hwnd = CreateDialogIndirectParamA(hpsp->psp.hInstance, template,
+                parent, hpsp->psp.pfnDlgProc, (LPARAM)&hpsp->psp);
+    }
+
+    return hwnd;
+}
+
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
  *            PROPSHEET_UnImplementedFlags
@@ -1429,19 +1447,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   }
 
   HPSP_call_callback(hpsp, PSPCB_CREATE);
-
-  if(HPSP_get_flags(hpsp) & PSP_INTERNAL_UNICODE)
-     hwndPage = CreateDialogIndirectParamW(hpsp->psp.hInstance,
-					pTemplateCopy,
-					hwndParent,
-					hpsp->psp.pfnDlgProc,
-					(LPARAM)&hpsp->psp);
-  else
-     hwndPage = CreateDialogIndirectParamA(hpsp->psp.hInstance,
-					pTemplateCopy,
-					hwndParent,
-					hpsp->psp.pfnDlgProc,
-					(LPARAM)&hpsp->psp);
+  hwndPage = HPSP_create_page(hpsp, pTemplateCopy, hwndParent);
   /* Free a no more needed copy */
   Free(pTemplateCopy);
 
