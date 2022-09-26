@@ -2194,6 +2194,8 @@ static DWORD WINAPI wined3d_set_window_state(void *ctx)
     struct wined3d_window_state *s = ctx;
     bool filter;
 
+    SetThreadDescription(GetCurrentThread(), L"wined3d_set_window_state");
+
     filter = wined3d_filter_messages(s->window, TRUE);
 
     if (s->set_style)

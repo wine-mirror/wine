@@ -3354,6 +3354,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     bool run = true;
 
     TRACE("Started.\n");
+    SetThreadDescription(GetCurrentThread(), L"wined3d_cs");
 
     /* Copy the module handle to a local variable to avoid racing with the
      * thread freeing "cs" before the FreeLibraryAndExitThread() call. */
