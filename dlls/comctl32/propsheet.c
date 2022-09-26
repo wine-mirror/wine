@@ -448,6 +448,14 @@ static void HPSP_set_header_title(HPROPSHEETPAGE hpsp, const WCHAR *title)
     hpsp->psp.dwFlags |= PSP_USEHEADERTITLE;
 }
 
+static void HPSP_set_header_subtitle(HPROPSHEETPAGE hpsp, const WCHAR *subtitle)
+{
+    if (!IS_INTRESOURCE(hpsp->psp.pszHeaderTitle))
+        Free((void *)hpsp->psp.pszHeaderTitle);
+
+    hpsp->psp.pszHeaderTitle = heap_strdupW(subtitle);
+    hpsp->psp.dwFlags |= PSP_USEHEADERSUBTITLE;
+}
 
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
@@ -2534,20 +2542,13 @@ static void PROPSHEET_SetHeaderTitleA(HWND hwndDlg, UINT page_index, const char 
 static void PROPSHEET_SetHeaderSubTitleW(HWND hwndDlg, UINT page_index, const WCHAR *subtitle)
 {
     PropSheetInfo *psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
-    PROPSHEETPAGEW *page;
 
     TRACE("(%p, %u, %s)\n", hwndDlg, page_index, debugstr_w(subtitle));
 
     if (page_index >= psInfo->nPages)
         return;
 
-    page = &psInfo->proppage[page_index].hpage->psp;
-
-    if (!IS_INTRESOURCE(page->pszHeaderSubTitle))
-        Free((void *)page->pszHeaderSubTitle);
-
-    page->pszHeaderSubTitle = heap_strdupW(subtitle);
-    page->dwFlags |= PSP_USEHEADERSUBTITLE;
+    HPSP_set_header_subtitle(psInfo->proppage[page_index].hpage, subtitle);
 }
 
 /******************************************************************************
