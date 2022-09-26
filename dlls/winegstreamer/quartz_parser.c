@@ -208,12 +208,12 @@ static bool amt_from_wg_format_audio(AM_MEDIA_TYPE *mt, const struct wg_format *
     return false;
 }
 
-static bool amt_from_wg_format_mpeg1_audio(AM_MEDIA_TYPE *mt, const struct wg_format *format)
+static bool amt_from_wg_format_audio_mpeg1(AM_MEDIA_TYPE *mt, const struct wg_format *format)
 {
     mt->majortype = MEDIATYPE_Audio;
     mt->formattype = FORMAT_WaveFormatEx;
 
-    switch (format->u.mpeg1_audio.layer)
+    switch (format->u.audio_mpeg1.layer)
     {
         case 1:
         case 2:
@@ -228,10 +228,10 @@ static bool amt_from_wg_format_mpeg1_audio(AM_MEDIA_TYPE *mt, const struct wg_fo
             mt->cbFormat = sizeof(*wave_format);
             mt->pbFormat = (BYTE *)wave_format;
             wave_format->wfx.wFormatTag = WAVE_FORMAT_MPEG;
-            wave_format->wfx.nChannels = format->u.mpeg1_audio.channels;
-            wave_format->wfx.nSamplesPerSec = format->u.mpeg1_audio.rate;
+            wave_format->wfx.nChannels = format->u.audio_mpeg1.channels;
+            wave_format->wfx.nSamplesPerSec = format->u.audio_mpeg1.rate;
             wave_format->wfx.cbSize = sizeof(*wave_format) - sizeof(WAVEFORMATEX);
-            wave_format->fwHeadLayer = format->u.mpeg1_audio.layer;
+            wave_format->fwHeadLayer = format->u.audio_mpeg1.layer;
             return true;
         }
 
@@ -247,8 +247,8 @@ static bool amt_from_wg_format_mpeg1_audio(AM_MEDIA_TYPE *mt, const struct wg_fo
             mt->cbFormat = sizeof(*wave_format);
             mt->pbFormat = (BYTE *)wave_format;
             wave_format->wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
-            wave_format->wfx.nChannels = format->u.mpeg1_audio.channels;
-            wave_format->wfx.nSamplesPerSec = format->u.mpeg1_audio.rate;
+            wave_format->wfx.nChannels = format->u.audio_mpeg1.channels;
+            wave_format->wfx.nSamplesPerSec = format->u.audio_mpeg1.rate;
             wave_format->wfx.cbSize = sizeof(*wave_format) - sizeof(WAVEFORMATEX);
             /* FIXME: We can't get most of the MPEG data from the caps. We may have
              * to manually parse the header. */
@@ -345,8 +345,8 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             break;
         }
 
-        case WG_MAJOR_TYPE_MPEG1_AUDIO:
-            switch (format->u.mpeg1_audio.layer)
+        case WG_MAJOR_TYPE_AUDIO_MPEG1:
+            switch (format->u.audio_mpeg1.layer)
             {
             case 1:
                 return 56000;
@@ -535,11 +535,11 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
     case WG_MAJOR_TYPE_UNKNOWN:
         return false;
 
-    case WG_MAJOR_TYPE_MPEG1_AUDIO:
-        return amt_from_wg_format_mpeg1_audio(mt, format);
-
     case WG_MAJOR_TYPE_AUDIO:
         return amt_from_wg_format_audio(mt, format);
+
+    case WG_MAJOR_TYPE_AUDIO_MPEG1:
+        return amt_from_wg_format_audio_mpeg1(mt, format);
 
     case WG_MAJOR_TYPE_VIDEO:
         return amt_from_wg_format_video(mt, format, wm);
@@ -636,10 +636,10 @@ static bool amt_to_wg_format_audio_mpeg1(const AM_MEDIA_TYPE *mt, struct wg_form
         return false;
     }
 
-    format->major_type = WG_MAJOR_TYPE_MPEG1_AUDIO;
-    format->u.mpeg1_audio.channels = audio_format->wfx.nChannels;
-    format->u.mpeg1_audio.rate = audio_format->wfx.nSamplesPerSec;
-    format->u.mpeg1_audio.layer = audio_format->fwHeadLayer;
+    format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG1;
+    format->u.audio_mpeg1.channels = audio_format->wfx.nChannels;
+    format->u.audio_mpeg1.rate = audio_format->wfx.nSamplesPerSec;
+    format->u.audio_mpeg1.layer = audio_format->fwHeadLayer;
     return true;
 }
 
@@ -658,10 +658,10 @@ static bool amt_to_wg_format_audio_mpeg1_layer3(const AM_MEDIA_TYPE *mt, struct 
         return false;
     }
 
-    format->major_type = WG_MAJOR_TYPE_MPEG1_AUDIO;
-    format->u.mpeg1_audio.channels = audio_format->wfx.nChannels;
-    format->u.mpeg1_audio.rate = audio_format->wfx.nSamplesPerSec;
-    format->u.mpeg1_audio.layer = 3;
+    format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG1;
+    format->u.audio_mpeg1.channels = audio_format->wfx.nChannels;
+    format->u.audio_mpeg1.rate = audio_format->wfx.nSamplesPerSec;
+    format->u.audio_mpeg1.layer = 3;
     return true;
 }
 

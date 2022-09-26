@@ -38,7 +38,7 @@ struct wg_format
         WG_MAJOR_TYPE_VIDEO,
         WG_MAJOR_TYPE_VIDEO_CINEPAK,
         WG_MAJOR_TYPE_AUDIO,
-        WG_MAJOR_TYPE_MPEG1_AUDIO,
+        WG_MAJOR_TYPE_AUDIO_MPEG1,
         WG_MAJOR_TYPE_WMA,
         WG_MAJOR_TYPE_H264,
     } major_type;
@@ -92,7 +92,7 @@ struct wg_format
             uint32_t layer;
             uint32_t rate;
             uint32_t channels;
-        } mpeg1_audio;
+        } audio_mpeg1;
         struct
         {
             uint32_t version;

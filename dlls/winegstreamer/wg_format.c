@@ -198,10 +198,10 @@ static void wg_format_from_caps_audio_mpeg1(struct wg_format *format, const GstC
         return;
     }
 
-    format->major_type = WG_MAJOR_TYPE_MPEG1_AUDIO;
-    format->u.mpeg1_audio.layer = layer;
-    format->u.mpeg1_audio.channels = channels;
-    format->u.mpeg1_audio.rate = rate;
+    format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG1;
+    format->u.audio_mpeg1.layer = layer;
+    format->u.audio_mpeg1.channels = channels;
+    format->u.audio_mpeg1.rate = rate;
 }
 
 static void wg_format_from_caps_video_cinepak(struct wg_format *format, const GstCaps *caps)
@@ -330,7 +330,7 @@ static void wg_channel_mask_to_gst(GstAudioChannelPosition *positions, uint32_t 
     }
 }
 
-static GstCaps *wg_format_to_caps_mpeg1_audio(const struct wg_format *format)
+static GstCaps *wg_format_to_caps_audio_mpeg1(const struct wg_format *format)
 {
     GstCaps *caps;
 
@@ -338,9 +338,9 @@ static GstCaps *wg_format_to_caps_mpeg1_audio(const struct wg_format *format)
         return NULL;
 
     gst_caps_set_simple(caps, "mpegversion", G_TYPE_INT, 1, NULL);
-    gst_caps_set_simple(caps, "layer", G_TYPE_INT, format->u.mpeg1_audio.layer, NULL);
-    gst_caps_set_simple(caps, "rate", G_TYPE_INT, format->u.mpeg1_audio.rate, NULL);
-    gst_caps_set_simple(caps, "channels", G_TYPE_INT, format->u.mpeg1_audio.channels, NULL);
+    gst_caps_set_simple(caps, "layer", G_TYPE_INT, format->u.audio_mpeg1.layer, NULL);
+    gst_caps_set_simple(caps, "rate", G_TYPE_INT, format->u.audio_mpeg1.rate, NULL);
+    gst_caps_set_simple(caps, "channels", G_TYPE_INT, format->u.audio_mpeg1.channels, NULL);
     gst_caps_set_simple(caps, "parsed", G_TYPE_BOOLEAN, TRUE, NULL);
 
     return caps;
@@ -529,14 +529,14 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
     {
         case WG_MAJOR_TYPE_UNKNOWN:
             return gst_caps_new_any();
-        case WG_MAJOR_TYPE_MPEG1_AUDIO:
-            return wg_format_to_caps_mpeg1_audio(format);
         case WG_MAJOR_TYPE_WMA:
             return wg_format_to_caps_wma(format);
         case WG_MAJOR_TYPE_H264:
             return wg_format_to_caps_h264(format);
         case WG_MAJOR_TYPE_AUDIO:
             return wg_format_to_caps_audio(format);
+        case WG_MAJOR_TYPE_AUDIO_MPEG1:
+            return wg_format_to_caps_audio_mpeg1(format);
         case WG_MAJOR_TYPE_VIDEO:
             return wg_format_to_caps_video(format);
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
@@ -553,7 +553,7 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
 
     switch (a->major_type)
     {
-        case WG_MAJOR_TYPE_MPEG1_AUDIO:
+        case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_H264:
             GST_FIXME("Format %u not implemented!", a->major_type);

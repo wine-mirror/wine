@@ -700,8 +700,8 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
     };
     static const struct wg_format input_format =
     {
-        .major_type = WG_MAJOR_TYPE_MPEG1_AUDIO,
-        .u.mpeg1_audio =
+        .major_type = WG_MAJOR_TYPE_AUDIO_MPEG1,
+        .u.audio_mpeg1 =
         {
             .layer = 2,
             .channels = 1,
