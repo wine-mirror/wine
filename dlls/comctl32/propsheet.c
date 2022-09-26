@@ -457,6 +457,22 @@ static void HPSP_set_header_subtitle(HPROPSHEETPAGE hpsp, const WCHAR *subtitle)
     hpsp->psp.dwFlags |= PSP_USEHEADERSUBTITLE;
 }
 
+static void HPSP_draw_text(HPROPSHEETPAGE hpsp, HDC hdc, BOOL title, RECT *r, UINT format)
+{
+    const WCHAR *text = title ? hpsp->psp.pszHeaderTitle : hpsp->psp.pszHeaderSubTitle;
+    WCHAR buf[256];
+    INT len;
+
+    if (!IS_INTRESOURCE(text))
+        DrawTextW(hdc, text, -1, r, format);
+    else
+    {
+        len = LoadStringW(hpsp->psp.hInstance, (UINT_PTR)text, buf, ARRAY_SIZE(buf));
+        if (len != 0)
+            DrawTextW(hdc, buf, len, r, format);
+    }
+}
+
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
  *            PROPSHEET_UnImplementedFlags
@@ -3252,8 +3268,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
     HBRUSH hbr;
     RECT r, rzone;
     HPROPSHEETPAGE hpsp;
-    WCHAR szBuffer[256];
-    int nLength;
+    DWORD flags;
 
     hdc = hdcParam ? hdcParam : BeginPaint(hwnd, &ps);
     if (!hdc) return 1;
@@ -3267,13 +3282,13 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
         hpsp = NULL;
     else
         hpsp = psInfo->proppage[psInfo->active_page].hpage;
+    flags = HPSP_get_flags(hpsp);
 
-    if ( hpsp && !(HPSP_get_flags(hpsp) & PSP_HIDEHEADER) &&
+    if ( hpsp && !(flags & PSP_HIDEHEADER) &&
 	 (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
 	 (psInfo->ppshheader.dwFlags & PSH_HEADER) ) 
     {
 	HWND hwndLineHeader = GetDlgItem(hwnd, IDC_SUNKEN_LINEHEADER);
-        LPCPROPSHEETPAGEW ppshpage = &hpsp->psp;
 	HFONT hOldFont;
 	COLORREF clrOld = 0;
 	int oldBkMode = 0;
@@ -3341,35 +3356,15 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	clrOld = SetTextColor (hdc, 0x00000000);
 	oldBkMode = SetBkMode (hdc, TRANSPARENT); 
 
-	if (ppshpage->dwFlags & PSP_USEHEADERTITLE) {
+	if (flags & PSP_USEHEADERTITLE) {
 	    SetRect(&r, 20, 10, 0, 0);
-            if (!IS_INTRESOURCE(ppshpage->pszHeaderTitle))
-                DrawTextW(hdc, ppshpage->pszHeaderTitle, -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
-	    else
-	    {
-		nLength = LoadStringW(ppshpage->hInstance, (UINT_PTR)ppshpage->pszHeaderTitle,
-				      szBuffer, 256);
-		if (nLength != 0)
-		{
-		    DrawTextW(hdc, szBuffer, nLength, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
-		}
-	    }
+            HPSP_draw_text(hpsp, hdc, TRUE, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
 	}
 
-	if (ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) {
+	if (flags & PSP_USEHEADERSUBTITLE) {
 	    SelectObject(hdc, psInfo->hFont);
 	    SetRect(&r, 40, 25, rzone.right - 69, rzone.bottom);
-            if (!IS_INTRESOURCE(ppshpage->pszHeaderSubTitle))
-                DrawTextW(hdc, ppshpage->pszHeaderSubTitle, -1, &r, DT_LEFT | DT_WORDBREAK);
-	    else
-	    {
-		nLength = LoadStringW(ppshpage->hInstance, (UINT_PTR)ppshpage->pszHeaderSubTitle,
-				      szBuffer, 256);
-		if (nLength != 0)
-		{
-		    DrawTextW(hdc, szBuffer, nLength, &r, DT_LEFT | DT_WORDBREAK);
-		}
-	    }
+            HPSP_draw_text(hpsp, hdc, FALSE, &r, DT_LEFT | DT_WORDBREAK);
 	}
 
 	offsety = rzone.bottom + 2;
@@ -3379,7 +3374,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	SelectObject(hdc, hOldFont);
     }
 
-    if ( (HPSP_get_flags(hpsp) & PSP_HIDEHEADER) &&
+    if ( (flags & PSP_HIDEHEADER) &&
 	 (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
 	 (psInfo->ppshheader.dwFlags & PSH_WATERMARK) ) 
     {
