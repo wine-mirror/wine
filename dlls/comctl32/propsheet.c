@@ -416,6 +416,11 @@ static HICON HPSP_get_icon(HPROPSHEETPAGE hpsp)
     return ret;
 }
 
+static LRESULT HPSP_get_template(HPROPSHEETPAGE hpsp)
+{
+    return (LRESULT)hpsp->psp.u.pszTemplate;
+}
+
 static HWND HPSP_create_page(HPROPSHEETPAGE hpsp, DLGTEMPLATE *template, HWND parent)
 {
     HWND hwnd;
@@ -517,7 +522,7 @@ static INT PROPSHEET_FindPageByResId(const PropSheetInfo * psInfo, LRESULT resId
    for (i = 0; i < psInfo->nPages; i++)
    {
       /* Fixme: if resource ID is a string shall we use strcmp ??? */
-      if (psInfo->proppage[i].hpage->psp.u.pszTemplate == (LPVOID)resId)
+      if (HPSP_get_template(psInfo->proppage[i].hpage) == resId)
          break;
    }
 
@@ -2624,7 +2629,7 @@ static LRESULT PROPSHEET_IdToIndex(HWND hwndDlg, int iPageId)
     PropSheetInfo * psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
     TRACE("(%p, %d)\n", hwndDlg, iPageId);
     for (index = 0; index < psInfo->nPages; index++) {
-        if (psInfo->proppage[index].hpage->psp.u.pszTemplate == MAKEINTRESOURCEW(iPageId))
+        if (HPSP_get_template(psInfo->proppage[index].hpage) == iPageId)
             return index;
     }
 
@@ -2637,17 +2642,20 @@ static LRESULT PROPSHEET_IdToIndex(HWND hwndDlg, int iPageId)
 static LRESULT PROPSHEET_IndexToId(HWND hwndDlg, int iPageIndex)
 {
     PropSheetInfo * psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
-    LPCPROPSHEETPAGEW psp;
+    HPROPSHEETPAGE hpsp;
+    LRESULT template;
+
     TRACE("(%p, %d)\n", hwndDlg, iPageIndex);
+
     if (iPageIndex<0 || iPageIndex>=psInfo->nPages) {
         WARN("%d out of range.\n", iPageIndex);
 	return 0;
     }
-    psp = &psInfo->proppage[iPageIndex].hpage->psp;
-    if (psp->dwFlags & PSP_DLGINDIRECT || !IS_INTRESOURCE(psp->u.pszTemplate)) {
+    hpsp = psInfo->proppage[iPageIndex].hpage;
+    template = HPSP_get_template(hpsp);
+    if (HPSP_get_flags(hpsp) & PSP_DLGINDIRECT || !IS_INTRESOURCE(template))
         return 0;
-    }
-    return (LRESULT)psp->u.pszTemplate;
+    return template;
 }
 
 /******************************************************************************
