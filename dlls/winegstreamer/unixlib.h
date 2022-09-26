@@ -37,6 +37,7 @@ struct wg_format
         WG_MAJOR_TYPE_UNKNOWN = 0,
         WG_MAJOR_TYPE_AUDIO,
         WG_MAJOR_TYPE_AUDIO_MPEG1,
+        WG_MAJOR_TYPE_AUDIO_MPEG4,
         WG_MAJOR_TYPE_AUDIO_WMA,
         WG_MAJOR_TYPE_VIDEO,
         WG_MAJOR_TYPE_VIDEO_CINEPAK,
@@ -69,6 +70,12 @@ struct wg_format
             uint32_t rate;
             uint32_t channels;
         } audio_mpeg1;
+        struct
+        {
+            uint32_t payload_type;
+            uint32_t codec_data_len;
+            unsigned char codec_data[64];
+        } audio_mpeg4;
         struct
         {
             uint32_t version;

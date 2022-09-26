@@ -424,6 +424,7 @@ NTSTATUS wg_transform_create(void *args)
                 goto out;
             /* fallthrough */
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
+        case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
@@ -474,6 +475,7 @@ NTSTATUS wg_transform_create(void *args)
             break;
 
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
+        case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_H264:

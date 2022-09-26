@@ -346,6 +346,37 @@ static GstCaps *wg_format_to_caps_audio_mpeg1(const struct wg_format *format)
     return caps;
 }
 
+static GstCaps *wg_format_to_caps_audio_mpeg4(const struct wg_format *format)
+{
+    GstBuffer *buffer;
+    GstCaps *caps;
+
+    if (!(caps = gst_caps_new_empty_simple("audio/mpeg")))
+        return NULL;
+
+    gst_caps_set_simple(caps, "mpegversion", G_TYPE_INT, 4, NULL);
+
+    switch (format->u.audio_mpeg4.payload_type)
+    {
+        case 0: gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "raw", NULL); break;
+        case 1: gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "adts", NULL); break;
+        case 2: gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "adif", NULL); break;
+        case 3: gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "loas", NULL); break;
+    }
+
+    /* FIXME: Use gst_codec_utils_aac_caps_set_level_and_profile from GStreamer pbutils library */
+
+    if (format->u.audio_mpeg4.codec_data_len)
+    {
+        buffer = gst_buffer_new_and_alloc(format->u.audio_mpeg4.codec_data_len);
+        gst_buffer_fill(buffer, 0, format->u.audio_mpeg4.codec_data, format->u.audio_mpeg4.codec_data_len);
+        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
+        gst_buffer_unref(buffer);
+    }
+
+    return caps;
+}
+
 static GstCaps *wg_format_to_caps_audio(const struct wg_format *format)
 {
     GstAudioChannelPosition positions[32];
@@ -533,6 +564,8 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
             return wg_format_to_caps_audio(format);
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
             return wg_format_to_caps_audio_mpeg1(format);
+        case WG_MAJOR_TYPE_AUDIO_MPEG4:
+            return wg_format_to_caps_audio_mpeg4(format);
         case WG_MAJOR_TYPE_AUDIO_WMA:
             return wg_format_to_caps_audio_wma(format);
         case WG_MAJOR_TYPE_VIDEO:
@@ -554,6 +587,7 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
     switch (a->major_type)
     {
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
+        case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_H264:
             GST_FIXME("Format %u not implemented!", a->major_type);
