@@ -1900,6 +1900,15 @@ static ThreadScheduler *get_thread_scheduler_from_context(Context *context)
     return NULL;
 }
 
+static void execute_chore(_UnrealizedChore *chore,
+        _StructuredTaskCollection *task_collection)
+{
+    TRACE("(%p %p)\n", chore, task_collection);
+
+    if (chore->chore_proc)
+        chore->chore_proc(chore);
+}
+
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
 {
     _UnrealizedChore *chore = data;
@@ -1921,23 +1930,20 @@ static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
             new_finished = prev_finished + 1;
     } while (InterlockedCompareExchange(ptr, new_finished, prev_finished)
              != prev_finished);
+    RtlWakeAddressSingle((LONG*)ptr);
 }
 
 static void __cdecl chore_wrapper(_UnrealizedChore *chore)
 {
-    TRACE("(%p)\n", chore);
-
     __TRY
     {
-        if (chore->chore_proc)
-            chore->chore_proc(chore);
+        execute_chore(chore, chore->task_collection);
     }
     __FINALLY_CTX(chore_wrapper_finally, chore)
 }
 
-static void __cdecl _StructuredTaskCollection_scheduler_cb(void *data)
+static BOOL pick_and_execute_chore(ThreadScheduler *scheduler)
 {
-    ThreadScheduler *scheduler = (ThreadScheduler*)get_current_scheduler();
     struct list *entry;
     struct scheduled_chore *sc;
     _UnrealizedChore *chore;
@@ -1947,7 +1953,7 @@ static void __cdecl _StructuredTaskCollection_scheduler_cb(void *data)
     if (scheduler->scheduler.vtable != &ThreadScheduler_vtable)
     {
         ERR("unknown scheduler set\n");
-        return;
+        return FALSE;
     }
 
     EnterCriticalSection(&scheduler->cs);
@@ -1956,13 +1962,19 @@ static void __cdecl _StructuredTaskCollection_scheduler_cb(void *data)
         list_remove(entry);
     LeaveCriticalSection(&scheduler->cs);
     if (!entry)
-        return;
+        return FALSE;
 
     sc = LIST_ENTRY(entry, struct scheduled_chore, entry);
     chore = sc->chore;
     operator_delete(sc);
 
     chore->chore_wrapper(chore);
+    return TRUE;
+}
+
+static void __cdecl _StructuredTaskCollection_scheduler_cb(void *data)
+{
+    pick_and_execute_chore((ThreadScheduler*)get_current_scheduler());
 }
 
 static bool schedule_chore(_StructuredTaskCollection *this,
@@ -2044,11 +2056,35 @@ void __thiscall _StructuredTaskCollection__Schedule(
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAA?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z */
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAG?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z */
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QEAA?AW4_TaskCollectionStatus@23@PEAV_UnrealizedChore@23@@Z */
-/*enum Concurrency::details::_TaskCollectionStatus*/int __stdcall
-_StructuredTaskCollection__RunAndWait(
+/*_TaskCollectionStatus*/int __stdcall _StructuredTaskCollection__RunAndWait(
         _StructuredTaskCollection *this, _UnrealizedChore *chore)
 {
-    FIXME("(%p %p): stub!\n", this, chore);
+    LONG expected, val;
+
+    TRACE("(%p %p)\n", this, chore);
+
+    if (chore) {
+        if (chore->task_collection) {
+            invalid_multiple_scheduling e;
+            invalid_multiple_scheduling_ctor_str(&e, "Chore scheduled multiple times");
+            _CxxThrowException(&e, &invalid_multiple_scheduling_exception_type);
+        }
+        execute_chore(chore, this);
+    }
+
+    if (this->context) {
+        ThreadScheduler *scheduler = get_thread_scheduler_from_context(this->context);
+        if (scheduler) {
+            while (pick_and_execute_chore(scheduler)) ;
+        }
+    }
+
+    expected = this->count ? this->count : FINISHED_INITIAL;
+    while ((val = this->finished) != expected)
+        RtlWaitOnAddress((LONG*)&this->finished, &val, sizeof(val), NULL);
+
+    this->finished = 0;
+    this->count = 0;
     return 1;
 }
 
