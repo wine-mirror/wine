@@ -439,6 +439,16 @@ static HWND HPSP_create_page(HPROPSHEETPAGE hpsp, DLGTEMPLATE *template, HWND pa
     return hwnd;
 }
 
+static void HPSP_set_header_title(HPROPSHEETPAGE hpsp, const WCHAR *title)
+{
+    if (!IS_INTRESOURCE(hpsp->psp.pszHeaderTitle))
+        Free((void *)hpsp->psp.pszHeaderTitle);
+
+    hpsp->psp.pszHeaderTitle = heap_strdupW(title);
+    hpsp->psp.dwFlags |= PSP_USEHEADERTITLE;
+}
+
+
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
  *            PROPSHEET_UnImplementedFlags
@@ -2495,20 +2505,13 @@ static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags)
 static void PROPSHEET_SetHeaderTitleW(HWND hwndDlg, UINT page_index, const WCHAR *title)
 {
     PropSheetInfo *psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
-    PROPSHEETPAGEW *page;
 
     TRACE("(%p, %u, %s)\n", hwndDlg, page_index, debugstr_w(title));
 
     if (page_index >= psInfo->nPages)
         return;
 
-    page = &psInfo->proppage[page_index].hpage->psp;
-
-    if (!IS_INTRESOURCE(page->pszHeaderTitle))
-        Free((void *)page->pszHeaderTitle);
-
-    page->pszHeaderTitle = heap_strdupW(title);
-    page->dwFlags |= PSP_USEHEADERTITLE;
+    HPSP_set_header_title(psInfo->proppage[page_index].hpage, title);
 }
 
 /******************************************************************************
