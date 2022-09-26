@@ -39,7 +39,7 @@ struct wg_format
         WG_MAJOR_TYPE_VIDEO_CINEPAK,
         WG_MAJOR_TYPE_AUDIO,
         WG_MAJOR_TYPE_AUDIO_MPEG1,
-        WG_MAJOR_TYPE_WMA,
+        WG_MAJOR_TYPE_AUDIO_WMA,
         WG_MAJOR_TYPE_H264,
     } major_type;
 
@@ -103,7 +103,7 @@ struct wg_format
             uint32_t block_align;
             uint32_t codec_data_len;
             unsigned char codec_data[64];
-        } wma;
+        } audio_wma;
         struct
         {
             uint32_t width;

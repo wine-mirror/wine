@@ -488,8 +488,8 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
     switch (format->major_type)
     {
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
+        case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_H264:
-        case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             FIXME("Format %u not implemented!\n", format->major_type);
             /* fallthrough */
@@ -601,7 +601,7 @@ static void mf_media_type_to_wg_format_video(IMFMediaType *type, const GUID *sub
     FIXME("Unrecognized video subtype %s.\n", debugstr_guid(subtype));
 }
 
-static void mf_media_type_to_wg_format_wma(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
+static void mf_media_type_to_wg_format_audio_wma(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
     UINT32 rate, depth, channels, block_align, bytes_per_second, codec_data_len;
     BYTE codec_data[64];
@@ -652,15 +652,15 @@ static void mf_media_type_to_wg_format_wma(IMFMediaType *type, const GUID *subty
         return;
     }
 
-    format->major_type = WG_MAJOR_TYPE_WMA;
-    format->u.wma.version = version;
-    format->u.wma.bitrate = bytes_per_second * 8;
-    format->u.wma.rate = rate;
-    format->u.wma.depth = depth;
-    format->u.wma.channels = channels;
-    format->u.wma.block_align = block_align;
-    format->u.wma.codec_data_len = codec_data_len;
-    memcpy(format->u.wma.codec_data, codec_data, codec_data_len);
+    format->major_type = WG_MAJOR_TYPE_AUDIO_WMA;
+    format->u.audio_wma.version = version;
+    format->u.audio_wma.bitrate = bytes_per_second * 8;
+    format->u.audio_wma.rate = rate;
+    format->u.audio_wma.depth = depth;
+    format->u.audio_wma.channels = channels;
+    format->u.audio_wma.block_align = block_align;
+    format->u.audio_wma.codec_data_len = codec_data_len;
+    memcpy(format->u.audio_wma.codec_data, codec_data, codec_data_len);
 }
 
 static void mf_media_type_to_wg_format_h264(IMFMediaType *type, struct wg_format *format)
@@ -718,7 +718,7 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV8) ||
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV9) ||
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudio_Lossless))
-            mf_media_type_to_wg_format_wma(type, &subtype, format);
+            mf_media_type_to_wg_format_audio_wma(type, &subtype, format);
         else
             mf_media_type_to_wg_format_audio(type, &subtype, format);
     }

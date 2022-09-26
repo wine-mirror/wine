@@ -864,7 +864,7 @@ HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
             .rate = 44100,
         },
     };
-    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_WMA};
+    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_AUDIO_WMA};
     struct wg_transform *transform;
     struct wma_decoder *decoder;
     HRESULT hr;
