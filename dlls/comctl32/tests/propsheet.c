@@ -122,7 +122,7 @@ static INT_PTR CALLBACK page_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam,
 
         if (psp->dwFlags & PSP_USETITLE)
         {
-            todo_wine ok(!strcmp(psp->pszTitle, "page title"), "psp->pszTitle = %s\n",
+            ok(!strcmp(psp->pszTitle, "page title"), "psp->pszTitle = %s\n",
                     wine_dbgstr_a(psp->pszTitle));
         }
         return TRUE;
@@ -1051,7 +1051,7 @@ static UINT CALLBACK proppage_callback_a(HWND hwnd, UINT msg, PROPSHEETPAGEA *ps
     ok(psp->lParam && psp->lParam != (LPARAM)psp, "Expected newly allocated page description, got %Ix, %p\n",
             psp->lParam, psp);
     if (psp->dwFlags & PSP_USETITLE)
-        todo_wine ok(psp_orig->pszTitle != psp->pszTitle, "Expected different page title pointer\n");
+        ok(psp_orig->pszTitle != psp->pszTitle, "Expected different page title pointer\n");
     else
         ok(psp_orig->pszTitle == psp->pszTitle, "Expected same page title pointer\n");
     ok(!lstrcmpA(psp_orig->pszTitle, psp->pszTitle), "Expected same page title string\n");
