@@ -122,10 +122,10 @@
 @ stub -arch=win64 ??0message_not_found@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0message_not_found@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0message_not_found@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??0missing_wait@Concurrency@@QAE@PBD@Z
-@ stub -arch=win64 ??0missing_wait@Concurrency@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0missing_wait@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0missing_wait@Concurrency@@QEAA@XZ
+@ thiscall -arch=win32 ??0missing_wait@Concurrency@@QAE@PBD@Z(ptr str) missing_wait_ctor_str
+@ cdecl -arch=win64 ??0missing_wait@Concurrency@@QEAA@PEBD@Z(ptr str) missing_wait_ctor_str
+@ thiscall -arch=win32 ??0missing_wait@Concurrency@@QAE@XZ(ptr) missing_wait_ctor
+@ cdecl -arch=win64 ??0missing_wait@Concurrency@@QEAA@XZ(ptr) missing_wait_ctor
 @ stub -arch=win32 ??0nested_scheduler_missing_detach@Concurrency@@QAE@PBD@Z
 @ stub -arch=win64 ??0nested_scheduler_missing_detach@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0nested_scheduler_missing_detach@Concurrency@@QAE@XZ

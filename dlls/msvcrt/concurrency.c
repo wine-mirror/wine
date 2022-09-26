@@ -361,6 +361,9 @@ extern const vtable_ptr invalid_scheduler_policy_thread_specification_vtable;
 typedef exception invalid_scheduler_policy_value;
 extern const vtable_ptr invalid_scheduler_policy_value_vtable;
 
+typedef exception missing_wait;
+extern const vtable_ptr missing_wait_vtable;
+
 typedef struct {
     exception e;
     HRESULT hr;
@@ -584,6 +587,34 @@ invalid_scheduler_policy_value * __thiscall invalid_scheduler_policy_value_copy_
     return __exception_copy_ctor(_this, rhs, &invalid_scheduler_policy_value_vtable);
 }
 
+/* ??0missing_wait@Concurrency@@QAA@PBD@Z */
+/* ??0missing_wait@Concurrency@@QAE@PBD@Z */
+/* ??0missing_wait@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(missing_wait_ctor_str, 8)
+missing_wait* __thiscall missing_wait_ctor_str(
+        missing_wait *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &missing_wait_vtable);
+}
+
+/* ??0missing_wait@Concurrency@@QAA@XZ */
+/* ??0missing_wait@Concurrency@@QAE@XZ */
+/* ??0missing_wait@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(missing_wait_ctor, 4)
+missing_wait* __thiscall missing_wait_ctor(missing_wait *this)
+{
+    return missing_wait_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(missing_wait_copy_ctor,8)
+missing_wait * __thiscall missing_wait_copy_ctor(
+        missing_wait * _this, const missing_wait * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    return __exception_copy_ctor(_this, rhs, &missing_wait_vtable);
+}
+
 /* ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z */
 /* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z */
 DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor_name, 12)
@@ -643,6 +674,8 @@ DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &cexception_
         ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_value, 0, &cexception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_value@Concurrency@@")
+DEFINE_RTTI_DATA1(missing_wait, 0, &cexception_rtti_base_descriptor,
+        ".?AVmissing_wait@Concurrency@@")
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
 
@@ -675,6 +708,9 @@ __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(invalid_scheduler_policy_value,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(missing_wait,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(scheduler_resource_allocation_error,
@@ -3391,6 +3427,7 @@ void msvcrt_init_concurrency(void *base)
     init_invalid_scheduler_policy_key_rtti(base);
     init_invalid_scheduler_policy_thread_specification_rtti(base);
     init_invalid_scheduler_policy_value_rtti(base);
+    init_missing_wait_rtti(base);
     init_scheduler_resource_allocation_error_rtti(base);
     init_Context_rtti(base);
     init_ContextBase_rtti(base);
