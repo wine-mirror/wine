@@ -2818,15 +2818,12 @@ static void test_h264_decoder(void)
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
     todo_wine
     ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
     todo_wine
     ok(input_info.dwFlags == flags, "got dwFlags %#lx\n", input_info.dwFlags);
     todo_wine
     ok(input_info.cbSize == 0x1000, "got cbSize %lu\n", input_info.cbSize);
-    todo_wine
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
-    todo_wine
     ok(input_info.cbAlignment == 0, "got cbAlignment %#lx\n", input_info.cbAlignment);
 
     flags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
@@ -2865,7 +2862,6 @@ static void test_h264_decoder(void)
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize == input_width * input_height * 2, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
@@ -2930,7 +2926,6 @@ static void test_h264_decoder(void)
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize == input_width * input_height * 2, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 

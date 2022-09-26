@@ -29,6 +29,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#define ALIGN_SIZE(size, alignment) (((size) + (alignment)) & ~((alignment)))
+
 static const GUID *const h264_decoder_input_types[] =
 {
     &MFVideoFormat_H264,
@@ -50,8 +52,11 @@ struct h264_decoder
 
     IMFAttributes *attributes;
     IMFAttributes *output_attributes;
+
     IMFMediaType *input_type;
+    MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *output_type;
+    MFT_OUTPUT_STREAM_INFO output_info;
 
     struct wg_format wg_format;
     struct wg_transform *wg_transform;
@@ -284,31 +289,22 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
     if (!decoder->input_type)
+    {
+        memset(info, 0, sizeof(*info));
         return MF_E_TRANSFORM_TYPE_NOT_SET;
+    }
 
-    info->hnsMaxLatency = 0;
-    info->dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
-    info->cbSize = 0x1000;
-    info->cbMaxLookahead = 0;
-    info->cbAlignment = 0;
-
+    *info = decoder->input_info;
     return S_OK;
 }
 
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
-    UINT32 actual_width, actual_height;
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
-    actual_width = (decoder->wg_format.u.video.width + 15) & ~15;
-    actual_height = (decoder->wg_format.u.video.height + 15) & ~15;
-
-    info->dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
-    info->cbSize = actual_width * actual_height * 2;
-    info->cbAlignment = 0;
-
+    *info = decoder->output_info;
     return S_OK;
 }
 
@@ -460,6 +456,8 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     {
         decoder->wg_format.u.video.width = frame_size >> 32;
         decoder->wg_format.u.video.height = (UINT32)frame_size;
+        decoder->output_info.cbSize = decoder->wg_format.u.video.width
+                * decoder->wg_format.u.video.height * 2;
     }
 
     return S_OK;
@@ -643,6 +641,8 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
     {
         decoder->wg_format = wg_format;
+        decoder->output_info.cbSize = ALIGN_SIZE(decoder->wg_format.u.video.width, 0xf)
+                * ALIGN_SIZE(decoder->wg_format.u.video.height, 0xf) * 2;
 
         /* keep the frame rate that was requested, GStreamer doesn't provide any */
         if (SUCCEEDED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_RATE, &frame_rate)))
@@ -724,6 +724,13 @@ HRESULT h264_decoder_create(REFIID riid, void **ret)
     decoder->wg_format.u.video.height = 1080;
     decoder->wg_format.u.video.fps_n = 30000;
     decoder->wg_format.u.video.fps_d = 1001;
+
+    decoder->input_info.dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
+    decoder->input_info.cbSize = 0x1000;
+    decoder->output_info.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
+    decoder->output_info.cbSize = 1920 * 1088 * 2;
 
     if (FAILED(hr = MFCreateAttributes(&decoder->attributes, 16)))
         goto failed;
