@@ -316,3 +316,8 @@ typedef struct
 } exception_ptr;
 
 void throw_exception(const char*) DECLSPEC_HIDDEN;
+void exception_ptr_from_record(exception_ptr*,EXCEPTION_RECORD*) DECLSPEC_HIDDEN;
+
+void __cdecl __ExceptionPtrCreate(exception_ptr*);
+void __cdecl __ExceptionPtrDestroy(exception_ptr*);
+void __cdecl __ExceptionPtrRethrow(const exception_ptr*);

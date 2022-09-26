@@ -91,6 +91,7 @@ __ASM_VTABLE(range_error,
         VTABLE_ADD_FUNC(exception_what));
 __ASM_BLOCK_END
 
+DEFINE_CXX_EXCEPTION0( exception, exception_dtor )
 DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@")
 DEFINE_CXX_TYPE_INFO(runtime_error)
 DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor,
@@ -103,6 +104,13 @@ void DECLSPEC_NORETURN throw_range_error(const char *str)
     range_error e;
     __exception_ctor(&e, str, &range_error_vtable);
     _CxxThrowException(&e, &range_error_exception_type);
+}
+
+void DECLSPEC_NORETURN throw_exception(const char* msg)
+{
+    exception e;
+    __exception_ctor(&e, msg, &exception_vtable);
+    _CxxThrowException(&e, &exception_exception_type);
 }
 
 static BOOL init_cxx_funcs(void)
@@ -138,7 +146,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
        init_runtime_error_rtti((char*)inst);
        init_type_info_rtti((char*)inst);
 
-       init_exception_cxx_type_info((char*)inst);
+       init_exception_cxx((char*)inst);
        init_runtime_error_cxx_type_info((char*)inst);
        init_range_error_cxx((char*)inst);
 #endif

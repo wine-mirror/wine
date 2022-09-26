@@ -1,7 +1,9 @@
+EXTRADEFS = -D_CONCRT=
 MODULE = concrt140.dll
 PARENTSRC = ../msvcrt
 
 C_SRCS = \
 	concrt140.c \
 	concurrency.c \
-	details.c
+	details.c \
+	exception_ptr.c

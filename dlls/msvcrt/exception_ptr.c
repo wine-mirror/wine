@@ -28,6 +28,37 @@
 #include "msvcrt.h"
 #include "cxx.h"
 
+#ifdef __i386__
+
+extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
+
+__ASM_GLOBAL_FUNC( call_copy_ctor,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp, %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl $1\n\t"
+                   "movl 12(%ebp), %ecx\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "call *8(%ebp)\n\t"
+                   "leave\n"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" );
+
+#elif _MSVCR_VER >= 100
+
+static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
+{
+    if (has_vbase)
+        ((void (__cdecl*)(void*, void*, BOOL))func)(this, src, 1);
+    else
+        ((void (__cdecl*)(void*, void*))func)(this, src);
+}
+
+#endif
+
 #if _MSVCR_VER >= 100
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -89,6 +120,8 @@ void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
     }
 }
 
+#ifndef _CONCRT
+
 /*********************************************************************
  * ?__ExceptionPtrCopy@@YAXPAXPBX@Z
  * ?__ExceptionPtrCopy@@YAXPEAXPEBX@Z
@@ -120,6 +153,8 @@ void __cdecl __ExceptionPtrAssign(exception_ptr *ep, const exception_ptr *assign
         InterlockedIncrement(ep->ref);
 }
 
+#endif
+
 /*********************************************************************
  * ?__ExceptionPtrRethrow@@YAXPBX@Z
  * ?__ExceptionPtrRethrow@@YAXPEBX@Z
@@ -138,21 +173,8 @@ void __cdecl __ExceptionPtrRethrow(const exception_ptr *ep)
             ep->rec->NumberParameters, ep->rec->ExceptionInformation);
 }
 
-#ifdef __i386__
-extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
-#else
-static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
-{
-    TRACE( "calling copy ctor %p object %p src %p\n", func, this, src );
-    if (has_vbase)
-        ((void (__cdecl*)(void*, void*, BOOL))func)(this, src, 1);
-    else
-        ((void (__cdecl*)(void*, void*))func)(this, src);
-}
-#endif
-
 #ifndef __x86_64__
-static void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
+void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
 {
     TRACE("(%p)\n", ep);
 
@@ -196,7 +218,7 @@ static void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
     return;
 }
 #else
-static void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
+void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
 {
     TRACE("(%p)\n", ep);
 
@@ -241,6 +263,8 @@ static void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
     return;
 }
 #endif
+
+#ifndef _CONCRT
 
 /*********************************************************************
  * ?__ExceptionPtrCurrentException@@YAXPAX@Z
@@ -348,5 +372,7 @@ bool __cdecl __ExceptionPtrCompare(const exception_ptr *ep1, const exception_ptr
 {
     return ep1->rec == ep2->rec;
 }
+
+#endif
 
 #endif /* _MSVCR_VER >= 100 */

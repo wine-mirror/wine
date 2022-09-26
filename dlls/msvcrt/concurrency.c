@@ -1900,13 +1900,56 @@ static ThreadScheduler *get_thread_scheduler_from_context(Context *context)
     return NULL;
 }
 
+struct execute_chore_data {
+    _UnrealizedChore *chore;
+    _StructuredTaskCollection *task_collection;
+};
+
+static LONG CALLBACK execute_chore_except(EXCEPTION_POINTERS *pexc, void *_data)
+{
+    struct execute_chore_data *data = _data;
+    void *prev_exception, *new_exception;
+    exception_ptr *ptr;
+
+    if (pexc->ExceptionRecord->ExceptionCode != CXX_EXCEPTION)
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    ptr = operator_new(sizeof(*ptr));
+    __ExceptionPtrCreate(ptr);
+    exception_ptr_from_record(ptr, pexc->ExceptionRecord);
+
+    new_exception = data->task_collection->exception;
+    do {
+        if ((ULONG_PTR)new_exception & ~0x7) {
+            __ExceptionPtrDestroy(ptr);
+            operator_delete(ptr);
+            break;
+        }
+        prev_exception = new_exception;
+        new_exception = (void*)((ULONG_PTR)new_exception | (ULONG_PTR)ptr);
+    } while ((new_exception = InterlockedCompareExchangePointer(
+                    &data->task_collection->exception, new_exception,
+                    prev_exception)) != prev_exception);
+    data->task_collection->event = 0;
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 static void execute_chore(_UnrealizedChore *chore,
         _StructuredTaskCollection *task_collection)
 {
+    struct execute_chore_data data = { chore, task_collection };
+
     TRACE("(%p %p)\n", chore, task_collection);
 
-    if (chore->chore_proc)
-        chore->chore_proc(chore);
+    __TRY
+    {
+        if (!((ULONG_PTR)task_collection->exception & ~0x7) && chore->chore_proc)
+            chore->chore_proc(chore);
+    }
+    __EXCEPT_CTX(execute_chore_except, &data)
+    {
+    }
+    __ENDTRY
 }
 
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
@@ -2053,6 +2096,16 @@ void __thiscall _StructuredTaskCollection__Schedule(
     }
 }
 
+static void CALLBACK exception_ptr_rethrow_finally(BOOL normal, void *data)
+{
+    exception_ptr *ep = data;
+
+    TRACE("(%u %p)\n", normal, data);
+
+    __ExceptionPtrDestroy(ep);
+    operator_delete(ep);
+}
+
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAA?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z */
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QAG?AW4_TaskCollectionStatus@23@PAV_UnrealizedChore@23@@Z */
 /* ?_RunAndWait@_StructuredTaskCollection@details@Concurrency@@QEAA?AW4_TaskCollectionStatus@23@PEAV_UnrealizedChore@23@@Z */
@@ -2060,6 +2113,7 @@ void __thiscall _StructuredTaskCollection__Schedule(
         _StructuredTaskCollection *this, _UnrealizedChore *chore)
 {
     LONG expected, val;
+    ULONG_PTR exception;
 
     TRACE("(%p %p)\n", this, chore);
 
@@ -2085,6 +2139,17 @@ void __thiscall _StructuredTaskCollection__Schedule(
 
     this->finished = 0;
     this->count = 0;
+
+    exception = (ULONG_PTR)this->exception;
+    if (exception & ~0x7) {
+        exception_ptr *ep = (exception_ptr*)(exception & ~0x7);
+        this->exception = 0;
+        __TRY
+        {
+            __ExceptionPtrRethrow(ep);
+        }
+        __FINALLY_CTX(exception_ptr_rethrow_finally, ep)
+    }
     return 1;
 }
 

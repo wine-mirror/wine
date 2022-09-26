@@ -17,6 +17,7 @@ C_SRCS = \
 	except_arm64.c \
 	except_i386.c \
 	except_x86_64.c \
+	exception_ptr.c \
 	exit.c \
 	file.c \
 	heap.c \
