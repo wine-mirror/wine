@@ -73,10 +73,13 @@ struct video_processor
     IMFTransform IMFTransform_iface;
     LONG refcount;
 
-    IMFMediaType *input_type;
-    IMFMediaType *output_type;
     IMFAttributes *attributes;
     IMFAttributes *output_attributes;
+
+    IMFMediaType *input_type;
+    MFT_INPUT_STREAM_INFO input_info;
+    IMFMediaType *output_type;
+    MFT_OUTPUT_STREAM_INFO output_info;
 
     struct wg_transform *wg_transform;
     struct wg_sample_queue *wg_sample_queue;
@@ -192,54 +195,26 @@ static HRESULT WINAPI video_processor_GetStreamIDs(IMFTransform *iface, DWORD in
 static HRESULT WINAPI video_processor_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
 {
     struct video_processor *impl = impl_from_IMFTransform(iface);
-    UINT32 sample_size;
-    UINT64 framesize;
-    GUID subtype;
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
 
-    if (impl->input_type && SUCCEEDED(hr = IMFMediaType_GetGUID(impl->input_type, &MF_MT_SUBTYPE, &subtype))
-            && SUCCEEDED(hr = IMFMediaType_GetUINT64(impl->input_type, &MF_MT_FRAME_SIZE, &framesize)))
-        MFCalculateImageSize(&subtype, framesize >> 32, (UINT32)framesize, &sample_size);
-    else
-        sample_size = 0;
-
-    info->dwFlags = 0;
-    info->cbSize = sample_size;
-    info->cbAlignment = 0;
-    info->hnsMaxLatency = 0;
-    info->cbMaxLookahead = 0;
-
+    *info = impl->input_info;
     return S_OK;
 }
 
 static HRESULT WINAPI video_processor_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
     struct video_processor *impl = impl_from_IMFTransform(iface);
-    UINT32 sample_size;
-    UINT64 framesize;
-    GUID subtype;
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
 
-    if (impl->output_type && SUCCEEDED(hr = IMFMediaType_GetGUID(impl->output_type, &MF_MT_SUBTYPE, &subtype))
-            && SUCCEEDED(hr = IMFMediaType_GetUINT64(impl->output_type, &MF_MT_FRAME_SIZE, &framesize)))
-        MFCalculateImageSize(&subtype, framesize >> 32, (UINT32)framesize, &sample_size);
-    else
-        sample_size = 0;
-
-    info->dwFlags = 0;
-    info->cbSize = sample_size;
-    info->cbAlignment = 0;
-
+    *info = impl->output_info;
     return S_OK;
 }
 
@@ -397,6 +372,10 @@ static HRESULT WINAPI video_processor_SetInputType(IMFTransform *iface, DWORD id
         impl->input_type = NULL;
     }
 
+    if (FAILED(hr) || FAILED(MFCalculateImageSize(&subtype, frame_size >> 32, (UINT32)frame_size,
+            (UINT32 *)&impl->input_info.cbSize)))
+        impl->input_info.cbSize = 0;
+
     return hr;
 }
 
@@ -435,6 +414,10 @@ static HRESULT WINAPI video_processor_SetOutputType(IMFTransform *iface, DWORD i
         IMFMediaType_Release(impl->output_type);
         impl->output_type = NULL;
     }
+
+    if (FAILED(hr) || FAILED(MFCalculateImageSize(&subtype, frame_size >> 32, (UINT32)frame_size,
+            (UINT32 *)&impl->output_info.cbSize)))
+        impl->output_info.cbSize = 0;
 
     return hr;
 }
