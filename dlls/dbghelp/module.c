@@ -1009,6 +1009,23 @@ BOOL module_remove(struct process* pcs, struct module* module)
 
     TRACE("%s (%p)\n", debugstr_w(module->modulename), module);
 
+    /* remove local scope if symbol is from this module */
+    if (pcs->localscope_symt)
+    {
+        struct symt* locsym = pcs->localscope_symt;
+        if (symt_check_tag(locsym, SymTagInlineSite))
+            locsym = &symt_get_function_from_inlined((struct symt_inlinesite*)locsym)->symt;
+        if (symt_check_tag(locsym, SymTagFunction))
+        {
+            locsym = ((struct symt_function*)locsym)->container;
+            if (symt_check_tag(locsym, SymTagCompiland) &&
+                module == ((struct symt_compiland*)locsym)->container->module)
+            {
+                pcs->localscope_pc = 0;
+                pcs->localscope_symt = NULL;
+            }
+        }
+    }
     for (i = 0; i < DFI_LAST; i++)
     {
         if ((modfmt = module->format_info[i]) && modfmt->remove)
@@ -1058,13 +1075,6 @@ BOOL WINAPI SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll)
     if (!pcs) return FALSE;
     module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
     if (!module) return FALSE;
-    /* remove local scope if defined inside this module */
-    if (pcs->localscope_pc >= module->module.BaseOfImage &&
-        pcs->localscope_pc < module->module.BaseOfImage + module->module.ImageSize)
-    {
-        pcs->localscope_pc = 0;
-        pcs->localscope_symt = NULL;
-    }
     module_remove(pcs, module);
     return TRUE;
 }
