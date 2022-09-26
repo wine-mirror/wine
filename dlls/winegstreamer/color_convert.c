@@ -288,7 +288,7 @@ static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes
 static HRESULT WINAPI transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
     FIXME("iface %p, id %#lx, attributes %p stub!\n", iface, id, attributes);
-    return MFCreateAttributes(attributes, 0);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
