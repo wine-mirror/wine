@@ -97,7 +97,8 @@ typedef struct
 
 struct _PSP
 {
-    ULONG_PTR magic;
+    DWORD magic;
+    BOOL unicode;
     PROPSHEETPAGEW psp;
     PROPSHEETPAGEW callback_psp;
 };
@@ -148,8 +149,6 @@ typedef struct
  */
 
 static const WCHAR PropSheetInfoStr[] = L"PropertySheetInfo";
-
-#define PSP_INTERNAL_UNICODE 0x80000000
 
 #define MAX_CAPTION_LENGTH 255
 #define MAX_TABTEXT_LENGTH 255
@@ -361,7 +360,7 @@ static const DLGTEMPLATE* HPSP_load_template(HPROPSHEETPAGE hpsp, DWORD *size)
         return hpsp->psp.u.pResource;
     }
 
-    if (hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
+    if (hpsp->unicode)
     {
         res = FindResourceW(hpsp->psp.hInstance, hpsp->psp.u.pszTemplate,
                 (LPWSTR)RT_DIALOG);
@@ -428,7 +427,7 @@ static HWND HPSP_create_page(HPROPSHEETPAGE hpsp, DLGTEMPLATE *template, HWND pa
 {
     HWND hwnd;
 
-    if(hpsp->psp.dwFlags & PSP_INTERNAL_UNICODE)
+    if (hpsp->unicode)
     {
         hwnd = CreateDialogIndirectParamW(hpsp->psp.hInstance, template,
                 parent, hpsp->psp.pfnDlgProc, (LPARAM)&hpsp->psp);
@@ -3017,8 +3016,6 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                 min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
     }
 
-    ppsp->dwFlags &= ~PSP_INTERNAL_UNICODE;
-
     if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
     {
         if (!IS_INTRESOURCE( ppsp->u.pszTemplate ))
@@ -3088,6 +3085,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
 
     ret = Alloc(sizeof(*ret));
     ret->magic = HPROPSHEETPAGE_MAGIC;
+    ret->unicode = TRUE;
     ppsp = &ret->psp;
     memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
     /* original data is used for callback notifications */
@@ -3096,8 +3094,6 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
         memcpy(&ret->callback_psp, lpPropSheetPage,
                 min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
     }
-
-    ppsp->dwFlags |= PSP_INTERNAL_UNICODE;
 
     if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
     {
