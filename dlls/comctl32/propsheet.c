@@ -66,6 +66,8 @@
 
 #include "wine/debug.h"
 
+#define HPROPSHEETPAGE_MAGIC 0x5A9234E3
+
 /******************************************************************************
  * Data structures
  */
@@ -95,6 +97,7 @@ typedef struct
 
 struct _PSP
 {
+    ULONG_PTR magic;
     PROPSHEETPAGEW psp;
     PROPSHEETPAGEW callback_psp;
 };
@@ -2302,6 +2305,14 @@ static BOOL PROPSHEET_InsertPage(HWND hwndDlg, HPROPSHEETPAGE hpageInsertAfter, 
   if (!ppi)
       return FALSE;
 
+  if (hpage && hpage->magic != HPROPSHEETPAGE_MAGIC)
+  {
+      if (psInfo->unicode)
+          hpage = CreatePropertySheetPageW((const PROPSHEETPAGEW *)hpage);
+      else
+          hpage = CreatePropertySheetPageA((const PROPSHEETPAGEA *)hpage);
+  }
+
   /*
    * Fill in a new PropPageInfo entry.
    */
@@ -2855,7 +2866,18 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
   for (n = i = 0; i < lppsh->nPages; i++, n++)
   {
     if (!psInfo->usePropPage)
-      psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
+    {
+        if (psInfo->ppshheader.u3.phpage[i] &&
+                psInfo->ppshheader.u3.phpage[i]->magic == HPROPSHEETPAGE_MAGIC)
+        {
+            psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
+        }
+        else
+        {
+            psInfo->proppage[n].hpage = CreatePropertySheetPageA(
+                    (const PROPSHEETPAGEA *)psInfo->ppshheader.u3.phpage[i]);
+        }
+    }
     else
     {
        psInfo->proppage[n].hpage = CreatePropertySheetPageA((LPCPROPSHEETPAGEA)pByte);
@@ -2895,7 +2917,18 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
   for (n = i = 0; i < lppsh->nPages; i++, n++)
   {
     if (!psInfo->usePropPage)
-      psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
+    {
+        if (psInfo->ppshheader.u3.phpage[i] &&
+                psInfo->ppshheader.u3.phpage[i]->magic == HPROPSHEETPAGE_MAGIC)
+        {
+            psInfo->proppage[n].hpage = psInfo->ppshheader.u3.phpage[i];
+        }
+        else
+        {
+            psInfo->proppage[n].hpage = CreatePropertySheetPageW(
+                    (const PROPSHEETPAGEW *)psInfo->ppshheader.u3.phpage[i]);
+        }
+    }
     else
     {
        psInfo->proppage[n].hpage = CreatePropertySheetPageW((LPCPROPSHEETPAGEW)pByte);
@@ -2974,6 +3007,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         return NULL;
 
     ret = Alloc(sizeof(*ret));
+    ret->magic = HPROPSHEETPAGE_MAGIC;
     ppsp = &ret->psp;
     memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEA)));
     /* original data is used for callback notifications */
@@ -3053,6 +3087,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
         return NULL;
 
     ret = Alloc(sizeof(*ret));
+    ret->magic = HPROPSHEETPAGE_MAGIC;
     ppsp = &ret->psp;
     memcpy(ppsp, lpPropSheetPage, min(lpPropSheetPage->dwSize, sizeof(PROPSHEETPAGEW)));
     /* original data is used for callback notifications */

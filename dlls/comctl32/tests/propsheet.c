@@ -1343,7 +1343,7 @@ static void test_invalid_hpropsheetpage(void)
 
     ret = SendMessageA(hdlg, PSM_INDEXTOPAGE, 0, 0);
     ok(ret, "page was not created\n");
-    todo_wine ok((HPROPSHEETPAGE)ret != hpsp[0], "invalid HPROPSHEETPAGE was preserved\n");
+    ok((HPROPSHEETPAGE)ret != hpsp[0], "invalid HPROPSHEETPAGE was preserved\n");
     DestroyWindow(hdlg);
 
     memset(pspW, 0, sizeof(*pspW));
@@ -1383,7 +1383,7 @@ static void test_invalid_hpropsheetpage(void)
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
 
     ret = SendMessageA(hdlg, PSM_INDEXTOPAGE, 0, 0);
-    todo_wine ok(ret, "page was not created\n");
+    ok(ret, "page was not created\n");
     ok((HPROPSHEETPAGE)ret != hpsp[0], "invalid HPROPSHEETPAGE was preserved\n");
     DestroyWindow(hdlg);
 }
