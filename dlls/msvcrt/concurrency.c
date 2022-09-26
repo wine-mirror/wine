@@ -686,6 +686,9 @@ DEFINE_CXX_DATA1(invalid_multiple_scheduling, &cexception_cxx_type_info, cexcept
 DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_thread_specification, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
+#if _MSVCR_VER >= 120
+DEFINE_CXX_DATA1(missing_wait, &cexception_cxx_type_info, cexception_dtor)
+#endif
 DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
@@ -1930,6 +1933,11 @@ DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection_dtor, 4)
 void __thiscall _StructuredTaskCollection_dtor(_StructuredTaskCollection *this)
 {
     FIXME("(%p): stub!\n", this);
+    if (this->count && !__uncaught_exception()) {
+        missing_wait e;
+        missing_wait_ctor_str(&e, "Missing call to _RunAndWait");
+        _CxxThrowException(&e, &missing_wait_exception_type);
+    }
 }
 
 #endif /* _MSVCR_VER >= 120 */
@@ -3445,6 +3453,9 @@ void msvcrt_init_concurrency(void *base)
     init_invalid_scheduler_policy_key_cxx(base);
     init_invalid_scheduler_policy_thread_specification_cxx(base);
     init_invalid_scheduler_policy_value_cxx(base);
+#if _MSVCR_VER >= 120
+    init_missing_wait_cxx(base);
+#endif
     init_scheduler_resource_allocation_error_cxx(base);
 #endif
 }
