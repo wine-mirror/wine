@@ -44,8 +44,8 @@ extern int winetest_time;
 /* running in interactive mode? */
 extern int winetest_interactive;
 
-/* always count flaky tests as successful (BOOL) */
-extern int winetest_allow_flaky;
+/* report failed flaky tests as failures (BOOL) */
+extern int winetest_report_flaky;
 
 /* report successful tests (BOOL) */
 extern int winetest_report_success;
@@ -207,8 +207,8 @@ int winetest_interactive = 0;
 /* current platform */
 const char *winetest_platform = "windows";
 
-/* always count flaky tests as successful (BOOL) */
-int winetest_allow_flaky;
+/* report failed flaky tests as failures (BOOL) */
+int winetest_report_flaky = 0;
 
 /* report successful tests (BOOL) */
 int winetest_report_success = 0;
@@ -731,7 +731,7 @@ static int run_test( const char *name )
         winetest_print_unlock();
     }
     status = failures + todo_failures;
-    if (!winetest_allow_flaky) status += flaky_failures;
+    if (winetest_report_flaky) status += flaky_failures;
     if (status > 255) status = 255;
     return status;
 }
@@ -807,7 +807,7 @@ int main( int argc, char **argv )
     }
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
-    if (GetEnvironmentVariableA( "WINETEST_ALLOW_FLAKY", p, sizeof(p) )) winetest_allow_flaky = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_REPORT_FLAKY", p, sizeof(p) )) winetest_report_flaky = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_TIME", p, sizeof(p) )) winetest_time = atoi(p);
     winetest_last_time = winetest_start_time = GetTickCount();
