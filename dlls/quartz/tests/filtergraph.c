@@ -430,6 +430,7 @@ static void test_state_change(IFilterGraph2 *graph)
     hr = IMediaControl_Pause(control);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
+    flaky_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %ld.\n", state);
 
@@ -519,10 +520,12 @@ static void test_media_event(IFilterGraph2 *graph)
             }
         }
     }
+    flaky_wine
     ok(got_eos, "didn't get EOS\n");
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    flaky_wine
     ok(current == stop, "expected %s, got %s\n", wine_dbgstr_longlong(stop), wine_dbgstr_longlong(current));
 
     hr = IMediaControl_Stop(control);

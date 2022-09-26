@@ -1949,6 +1949,7 @@ static void test_video_window_style(IVideoWindow *window, HWND hwnd, HWND our_hw
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#lx.\n", style);
 
+    flaky_wine
     ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
 
     hr = IVideoWindow_get_WindowStyleEx(window, &style);
@@ -2580,6 +2581,7 @@ static void test_video_window(void)
     filter = create_vmr9(VMR9Mode_Windowed);
     flush_events();
 
+    flaky_wine
     ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
@@ -2632,6 +2634,7 @@ static void test_video_window(void)
         IMemAllocator_Release(allocator);
     }
 
+    flaky_wine
     ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
 
     test_video_window_caption(window, hwnd);
