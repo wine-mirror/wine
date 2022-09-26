@@ -151,15 +151,9 @@ static inline void call_copy_ctor( void *func, void *this, void *src, int has_vb
 }
 #endif
 
-/*********************************************************************
- * ?__ExceptionPtrCurrentException@@YAXPAX@Z
- * ?__ExceptionPtrCurrentException@@YAXPEAX@Z
- */
 #ifndef __x86_64__
-void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
+static void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
 {
-    EXCEPTION_RECORD *rec = msvcrt_get_thread_data()->exc_record;
-
     TRACE("(%p)\n", ep);
 
     if (!rec)
@@ -202,10 +196,8 @@ void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
     return;
 }
 #else
-void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
+static void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
 {
-    EXCEPTION_RECORD *rec = msvcrt_get_thread_data()->exc_record;
-
     TRACE("(%p)\n", ep);
 
     if (!rec)
@@ -249,6 +241,16 @@ void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
     return;
 }
 #endif
+
+/*********************************************************************
+ * ?__ExceptionPtrCurrentException@@YAXPAX@Z
+ * ?__ExceptionPtrCurrentException@@YAXPEAX@Z
+ */
+void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
+{
+    TRACE("(%p)\n", ep);
+    exception_ptr_from_record(ep, msvcrt_get_thread_data()->exc_record);
+}
 
 #if _MSVCR_VER >= 110
 /*********************************************************************
