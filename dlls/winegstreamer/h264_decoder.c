@@ -694,7 +694,7 @@ HRESULT h264_decoder_create(REFIID riid, void **ret)
             .height = 1080,
         },
     };
-    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_H264};
+    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_VIDEO_H264};
     struct wg_transform *transform;
     struct h264_decoder *decoder;
     HRESULT hr;

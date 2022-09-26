@@ -489,8 +489,8 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
     {
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_AUDIO_WMA:
-        case WG_MAJOR_TYPE_H264:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
+        case WG_MAJOR_TYPE_VIDEO_H264:
             FIXME("Format %u not implemented!\n", format->major_type);
             /* fallthrough */
         case WG_MAJOR_TYPE_UNKNOWN:
@@ -663,36 +663,36 @@ static void mf_media_type_to_wg_format_audio_wma(IMFMediaType *type, const GUID 
     memcpy(format->u.audio_wma.codec_data, codec_data, codec_data_len);
 }
 
-static void mf_media_type_to_wg_format_h264(IMFMediaType *type, struct wg_format *format)
+static void mf_media_type_to_wg_format_video_h264(IMFMediaType *type, struct wg_format *format)
 {
     UINT64 frame_rate, frame_size;
     UINT32 profile, level;
 
     memset(format, 0, sizeof(*format));
-    format->major_type = WG_MAJOR_TYPE_H264;
+    format->major_type = WG_MAJOR_TYPE_VIDEO_H264;
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
-        format->u.h264.width = frame_size >> 32;
-        format->u.h264.height = (UINT32)frame_size;
+        format->u.video_h264.width = frame_size >> 32;
+        format->u.video_h264.height = (UINT32)frame_size;
     }
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
     {
-        format->u.h264.fps_n = frame_rate >> 32;
-        format->u.h264.fps_d = (UINT32)frame_rate;
+        format->u.video_h264.fps_n = frame_rate >> 32;
+        format->u.video_h264.fps_d = (UINT32)frame_rate;
     }
     else
     {
-        format->u.h264.fps_n = 1;
-        format->u.h264.fps_d = 1;
+        format->u.video_h264.fps_n = 1;
+        format->u.video_h264.fps_d = 1;
     }
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_PROFILE, &profile)))
-        format->u.h264.profile = profile;
+        format->u.video_h264.profile = profile;
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_LEVEL, &level)))
-        format->u.h264.level = level;
+        format->u.video_h264.level = level;
 }
 
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
@@ -725,7 +725,7 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
     else if (IsEqualGUID(&major_type, &MFMediaType_Video))
     {
         if (IsEqualGUID(&subtype, &MFVideoFormat_H264))
-            mf_media_type_to_wg_format_h264(type, format);
+            mf_media_type_to_wg_format_video_h264(type, format);
         else
             mf_media_type_to_wg_format_video(type, &subtype, format);
     }

@@ -411,7 +411,7 @@ NTSTATUS wg_transform_create(void *args)
 
     switch (input_format.major_type)
     {
-        case WG_MAJOR_TYPE_H264:
+        case WG_MAJOR_TYPE_VIDEO_H264:
             /* Call of Duty: Black Ops 3 doesn't care about the ProcessInput/ProcessOutput
              * return values, it calls them in a specific order and expects the decoder
              * transform to be able to queue its input buffers. We need to use a buffer list
@@ -475,8 +475,8 @@ NTSTATUS wg_transform_create(void *args)
 
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_AUDIO_WMA:
-        case WG_MAJOR_TYPE_H264:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
+        case WG_MAJOR_TYPE_VIDEO_H264:
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", output_format.major_type);
             goto out;

@@ -37,10 +37,10 @@ struct wg_format
         WG_MAJOR_TYPE_UNKNOWN,
         WG_MAJOR_TYPE_VIDEO,
         WG_MAJOR_TYPE_VIDEO_CINEPAK,
+        WG_MAJOR_TYPE_VIDEO_H264,
         WG_MAJOR_TYPE_AUDIO,
         WG_MAJOR_TYPE_AUDIO_MPEG1,
         WG_MAJOR_TYPE_AUDIO_WMA,
-        WG_MAJOR_TYPE_H264,
     } major_type;
 
     union
@@ -117,7 +117,7 @@ struct wg_format
             uint32_t fps_n, fps_d;
             uint32_t profile;
             uint32_t level;
-        } h264;
+        } video_h264;
     } u;
 };
 
