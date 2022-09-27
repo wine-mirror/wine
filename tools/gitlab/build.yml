@@ -29,10 +29,9 @@ build-linux:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   artifacts:
-    when: on_failure
+    expire_in: 1 day
     paths:
-      - build64/config.log
-      - build32/config.log
+      - usr/local/
   script:
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
 

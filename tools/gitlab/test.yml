@@ -42,6 +42,18 @@
     - wine wineboot.exe -u
     - wineserver -w
 
+test-linux-32:
+  extends: .wine-test
+  variables:
+    EXCLUDE_TESTS: "d3d10core:d3d10core d3d11:d3d11 d3d8:device d3d8:visual d3d9:d3d9ex d3d9:device d3d9:visual"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  needs:
+    - job: build-linux
+  script:
+    - export WINETEST_COLOR=1
+    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL -n $EXCLUDE_TESTS
+
 debian-32:
   extends: .wine-test
   rules:
