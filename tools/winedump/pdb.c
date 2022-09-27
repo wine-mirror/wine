@@ -306,17 +306,26 @@ static void dump_global_symbol(struct pdb_reader* reader, unsigned file)
 
 static void dump_public_symbol(struct pdb_reader* reader, unsigned file)
 {
-    void*  public = NULL;
-    DWORD  size;
+    unsigned            size;
+    DBI_PUBLIC_HEADER*  hdr;
 
-    public = reader->read_file(reader, file);
-    if (!public) return;
+    hdr = reader->read_file(reader, file);
+    if (!hdr) return;
 
     size = pdb_get_file_size(reader, file);
 
-    printf("Public symbols table:\n");
-    dump_data(public, size, "\t");
-    free(public);
+    printf("Public symbols table: (%u)\n", size);
+
+    printf("\tHash size:              %u\n", hdr->hash_size);
+    printf("\tAddress map size:       %u\n", hdr->address_map_size);
+    printf("\tNumber of thunks:       %u\n", hdr->num_thunks);
+    printf("\tSize of thunk:          %u\n", hdr->size_thunk);
+    printf("\tSection of thunk table: %u\n", hdr->section_thunk_table);
+    printf("\tOffset of thunk table:  %u\n", hdr->offset_thunk_table);
+    printf("\tNumber of sections:     %u\n", hdr->num_sects);
+
+    dump_dbi_hash_table((const BYTE*)(hdr + 1), hdr->hash_size, "Public", "\t");
+    free(hdr);
 }
 
 static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx)

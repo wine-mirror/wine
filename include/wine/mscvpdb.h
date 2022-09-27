@@ -2649,6 +2649,21 @@ typedef struct
 #define DBI_MAX_HASH 4096
 #define DBI_BITMAP_HASH_SIZE ((DBI_MAX_HASH / (8 * sizeof(unsigned)) + 1) * sizeof(unsigned))
 
+/* Header for public stream (from DBI / SYMBOLS stream)
+ * Followed by a hash table (cf DBI_HASH_HEADER and the following bits)
+ */
+typedef struct
+{
+    unsigned hash_size;
+    unsigned address_map_size;
+    unsigned num_thunks;
+    unsigned size_thunk;
+    unsigned short section_thunk_table;
+    unsigned short _pad0;
+    unsigned offset_thunk_table;
+    unsigned num_sects;
+} DBI_PUBLIC_HEADER;
+
 #include "poppack.h"
 
 /* ===================================================
