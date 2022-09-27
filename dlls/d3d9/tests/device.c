@@ -1348,9 +1348,13 @@ static void test_swapchain(void)
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
     ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
 
+    d3dpp.hDeviceWindow = NULL;
     d3dpp.BackBufferCount  = 1;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain2);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain2, &d3dpp);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(d3dpp.hDeviceWindow == window, "Got window %p, expected %p.\n", d3dpp.hDeviceWindow, window);
 
     d3dpp.BackBufferCount  = 2;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain3);
@@ -12208,7 +12212,7 @@ static void test_swapchain_parameters(void)
 
     present_parameters_windowed.BackBufferWidth = registry_mode.dmPelsWidth;
     present_parameters_windowed.BackBufferHeight = registry_mode.dmPelsHeight;
-    present_parameters_windowed.hDeviceWindow = window;
+    present_parameters_windowed.hDeviceWindow = NULL;
     present_parameters_windowed.BackBufferFormat = D3DFMT_X8R8G8B8;
     present_parameters_windowed.SwapEffect = D3DSWAPEFFECT_COPY;
     present_parameters_windowed.Windowed = TRUE;
@@ -12219,7 +12223,7 @@ static void test_swapchain_parameters(void)
         memset(&present_parameters, 0, sizeof(present_parameters));
         present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
         present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
-        present_parameters.hDeviceWindow = window;
+        present_parameters.hDeviceWindow = NULL;
         present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
 
         present_parameters.SwapEffect = tests[i].swap_effect;
@@ -12237,7 +12241,9 @@ static void test_swapchain_parameters(void)
             ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#lx, test %u.\n", hr, i);
 
             hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters2);
-            ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#lx, test %u.\n", hr, i);
+            ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+            todo_wine ok(present_parameters2.hDeviceWindow == window, "Got window %p, expected %p.\n",
+                    present_parameters2.hDeviceWindow, window);
             ok(present_parameters2.SwapEffect == tests[i].swap_effect, "Swap effect changed from %u to %u, test %u.\n",
                     tests[i].swap_effect, present_parameters2.SwapEffect, i);
             ok(present_parameters2.BackBufferCount == bb_count, "Backbuffer count changed from %u to %u, test %u.\n",
@@ -12256,7 +12262,7 @@ static void test_swapchain_parameters(void)
         memset(&present_parameters, 0, sizeof(present_parameters));
         present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
         present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
-        present_parameters.hDeviceWindow = window;
+        present_parameters.hDeviceWindow = NULL;
         present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
 
         present_parameters.SwapEffect = tests[i].swap_effect;
@@ -12268,9 +12274,18 @@ static void test_swapchain_parameters(void)
 
         if (FAILED(hr))
         {
+            present_parameters_windowed.hDeviceWindow = NULL;
             hr = IDirect3DDevice9_Reset(device, &present_parameters_windowed);
             ok(SUCCEEDED(hr), "Failed to reset device, hr %#lx, test %u.\n", hr, i);
         }
+
+        hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters2);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(present_parameters2.hDeviceWindow == window, "Got window %p, expected %p.\n",
+                present_parameters2.hDeviceWindow, window);
+        IDirect3DSwapChain9_Release(swapchain);
         IDirect3DDevice9_Release(device);
     }
 
