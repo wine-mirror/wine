@@ -1893,6 +1893,9 @@ LRESULT X11DRV_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     case WM_WINE_ADD_TAB:
         send_notify_message( (HWND)wp, WM_X11DRV_ADD_TAB, 0, 0 );
         break;
+    case WM_DISPLAYCHANGE:
+        X11DRV_resize_desktop();
+        break;
     }
     return NtUserMessageCall( hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE );
 }
@@ -2992,9 +2995,6 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
             sync_window_region( data, (HRGN)1 );
             release_win_data( data );
         }
-        return 0;
-    case WM_X11DRV_RESIZE_DESKTOP:
-        X11DRV_resize_desktop();
         return 0;
     case WM_X11DRV_DESKTOP_RESIZED:
         if ((data = get_win_data( hwnd )))

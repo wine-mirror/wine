@@ -467,12 +467,6 @@ void X11DRV_resize_desktop(void)
     width = primary_rect.right;
     height = primary_rect.bottom;
 
-    if (NtUserGetWindowThread( hwnd, NULL ) != GetCurrentThreadId())
-    {
-        send_message( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, 0 );
-        return;
-    }
-
     TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
     update_desktop_fullscreen( width, height );
     NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,

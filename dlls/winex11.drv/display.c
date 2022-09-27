@@ -419,7 +419,7 @@ LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd, DWORD flags, 
     if (ret == DISP_CHANGE_SUCCESSFUL)
         ret = apply_display_settings( displays, ids, TRUE );
     if (ret == DISP_CHANGE_SUCCESSFUL)
-        X11DRV_DisplayDevices_Update();
+        X11DRV_DisplayDevices_Init(TRUE);
 
 done:
     free( ids );
@@ -556,13 +556,6 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
 
     if (handler->register_event_handlers)
         handler->register_event_handlers();
-}
-
-void X11DRV_DisplayDevices_Update(void)
-{
-    X11DRV_DisplayDevices_Init(TRUE);
-
-    X11DRV_resize_desktop();
 }
 
 static BOOL force_display_devices_refresh;
