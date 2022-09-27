@@ -2211,10 +2211,8 @@ static DEVMODEW *get_display_settings( const WCHAR *devname, const DEVMODEW *dev
     struct adapter *adapter;
     BOOL ret;
 
-    if (!lock_display_devices()) return NULL;
-
     /* allocate an extra mode for easier iteration */
-    if (!(displays = calloc( list_count( &adapters ) + 1, sizeof(DEVMODEW) ))) goto done;
+    if (!(displays = calloc( list_count( &adapters ) + 1, sizeof(DEVMODEW) ))) return NULL;
     mode = displays;
 
     LIST_FOR_EACH_ENTRY( adapter, &adapters, struct adapter, entry )
@@ -2226,20 +2224,18 @@ static DEVMODEW *get_display_settings( const WCHAR *devname, const DEVMODEW *dev
         {
             if (!devname) ret = adapter_get_registry_settings( adapter, mode );
             else ret = adapter_get_current_settings( adapter, mode );
-            if (!ret) goto done;
+            if (!ret)
+            {
+                free( displays );
+                return NULL;
+            }
         }
 
         lstrcpyW( mode->dmDeviceName, adapter->dev.device_name );
         mode = NEXT_DEVMODEW(mode);
     }
 
-    unlock_display_devices();
     return displays;
-
-done:
-    unlock_display_devices();
-    free( displays );
-    return NULL;
 }
 
 static INT offset_length( POINT offset )
@@ -2433,15 +2429,21 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
                                     HWND hwnd, DWORD flags, void *lparam )
 {
     WCHAR primary_name[CCHDEVICENAME];
+    struct display_device *primary;
     struct adapter *adapter;
     DEVMODEW *displays;
     LONG ret;
 
-    displays = get_display_settings( devname, devmode );
-    if (!displays) return DISP_CHANGE_FAILED;
+    if (!lock_display_devices()) return DISP_CHANGE_FAILED;
+    if (!(displays = get_display_settings( devname, devmode )))
+    {
+        unlock_display_devices();
+        return DISP_CHANGE_FAILED;
+    }
 
     if (all_detached_settings( displays ))
     {
+        unlock_display_devices();
         WARN( "Detaching all modes is not permitted.\n" );
         free( displays );
         return DISP_CHANGE_SUCCESSFUL;
@@ -2449,14 +2451,11 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
 
     place_all_displays( displays );
 
-    if (!(adapter = find_adapter( NULL ))) primary_name[0] = 0;
-    else
-    {
-        wcscpy( primary_name, adapter->dev.device_name );
-        adapter_release( adapter );
-    }
+    if (!(primary = find_adapter_device_by_id( 0 ))) primary_name[0] = 0;
+    else wcscpy( primary_name, primary->device_name );
 
     ret = user_driver->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
+    unlock_display_devices();
 
     free( displays );
     if (ret) return ret;
