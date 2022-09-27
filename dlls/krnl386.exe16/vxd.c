@@ -1323,7 +1323,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
 
         if (!atom || GlobalGetAtomNameA(atom, name, sizeof(name)))
         {
-            TRACE("NtCreateSection: name=%s\n", atom? name : NULL);
+            TRACE("NtCreateSection: name=%s\n", atom? name : "");
 
             result = CreateFileMappingA(hFile, NULL, protect,
                                           size? size->u.HighPart : 0,
