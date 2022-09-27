@@ -2443,6 +2443,9 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
     free( displays );
     if (ret) return ret;
 
+    if (!update_display_cache( TRUE ))
+        WARN( "Failed to update display cache after mode change.\n" );
+
     if ((adapter = find_adapter( NULL )))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};

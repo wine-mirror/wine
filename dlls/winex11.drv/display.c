@@ -418,8 +418,6 @@ LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd, DWORD flags, 
     ret = apply_display_settings( displays, ids, FALSE );
     if (ret == DISP_CHANGE_SUCCESSFUL)
         ret = apply_display_settings( displays, ids, TRUE );
-    if (ret == DISP_CHANGE_SUCCESSFUL)
-        X11DRV_DisplayDevices_Init(TRUE);
 
 done:
     free( ids );
