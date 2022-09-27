@@ -998,7 +998,8 @@ void update_net_wm_states( struct x11drv_win_data *data )
         new_state |= (1 << NET_WM_STATE_ABOVE);
     if (!data->add_taskbar)
     {
-        if (data->skip_taskbar || (ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)))
+        if (data->skip_taskbar || (ex_style & WS_EX_NOACTIVATE)
+            || (ex_style & WS_EX_TOOLWINDOW && !(ex_style & WS_EX_APPWINDOW)))
             new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
         else if (!(ex_style & WS_EX_APPWINDOW) && NtUserGetWindowRelative( data->hwnd, GW_OWNER ))
             new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
