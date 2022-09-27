@@ -1099,9 +1099,8 @@ static void sock_save_icmp_id( struct async_send_ioctl *async )
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                            IO_STATUS_BLOCK *io, int fd, struct async_send_ioctl *async, int force_async )
 {
-    BOOL nonblocking, alerted;
-    ULONG_PTR information;
     HANDLE wait_handle;
+    BOOL nonblocking;
     NTSTATUS status;
     ULONG options;
 
@@ -1122,9 +1121,10 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (!NT_ERROR(status) && is_icmp_over_dgram( fd ))
         sock_save_icmp_id( async );
 
-    alerted = status == STATUS_ALERTED;
-    if (alerted)
+    if (status == STATUS_ALERTED)
     {
+        ULONG_PTR information;
+
         status = try_send( fd, async );
         if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
             status = STATUS_PENDING;
@@ -1142,12 +1142,13 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
             io->Status = status;
             io->Information = information;
         }
+
+        set_async_direct_result( &wait_handle, status, information, FALSE );
     }
 
     if (status != STATUS_PENDING)
         release_fileio( &async->io );
 
-    if (alerted) set_async_direct_result( &wait_handle, status, information, FALSE );
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }
