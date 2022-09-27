@@ -2953,7 +2953,8 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     }
     case WM_NCCALCSIZE:
         return 0;
-
+    case WM_DISPLAYCHANGE:
+        return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );
     default:
         if (msg >= WM_USER && hwnd == get_desktop_window())
             return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );
