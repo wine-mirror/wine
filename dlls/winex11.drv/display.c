@@ -560,46 +560,12 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
 
 void X11DRV_DisplayDevices_Update(void)
 {
-    RECT old_virtual_rect, new_virtual_rect;
     DWORD tid, pid;
     HWND foreground;
-    UINT mask = 0, i;
-    HWND *list;
 
-    old_virtual_rect = NtUserGetVirtualScreenRect();
     X11DRV_DisplayDevices_Init(TRUE);
-    new_virtual_rect = NtUserGetVirtualScreenRect();
-
-    /* Calculate XReconfigureWMWindow() mask */
-    if (old_virtual_rect.left != new_virtual_rect.left)
-        mask |= CWX;
-    if (old_virtual_rect.top != new_virtual_rect.top)
-        mask |= CWY;
 
     X11DRV_resize_desktop();
-
-    list = build_hwnd_list();
-    for (i = 0; list && list[i] != HWND_BOTTOM; i++)
-    {
-        struct x11drv_win_data *data;
-
-        if (!(data = get_win_data( list[i] ))) continue;
-
-        /* update the full screen state */
-        update_net_wm_states(data);
-
-        if (mask && data->whole_window)
-        {
-            POINT pos = virtual_screen_to_root(data->whole_rect.left, data->whole_rect.top);
-            XWindowChanges changes;
-            changes.x = pos.x;
-            changes.y = pos.y;
-            XReconfigureWMWindow(data->display, data->whole_window, data->vis.screen, mask, &changes);
-        }
-        release_win_data(data);
-    }
-
-    free( list );
 
     /* forward clip_fullscreen_window request to the foreground window */
     if ((foreground = NtUserGetForegroundWindow()) &&

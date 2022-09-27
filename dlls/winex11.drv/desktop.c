@@ -456,6 +456,8 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
  */
 void X11DRV_resize_desktop(void)
 {
+    static RECT old_virtual_rect;
+
     RECT primary_rect, virtual_rect;
     HWND hwnd = NtUserGetDesktopWindow();
     INT width, height;
@@ -468,14 +470,17 @@ void X11DRV_resize_desktop(void)
     if (NtUserGetWindowThread( hwnd, NULL ) != GetCurrentThreadId())
     {
         send_message( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, 0 );
+        return;
     }
-    else
-    {
-        TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
-        update_desktop_fullscreen( width, height );
-        NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
-                            virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
-                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
-        ungrab_clipping_window();
-    }
+
+    TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
+    update_desktop_fullscreen( width, height );
+    NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
+                        virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
+    ungrab_clipping_window();
+    send_message_timeout( HWND_BROADCAST, WM_X11DRV_DESKTOP_RESIZED, old_virtual_rect.left,
+                          old_virtual_rect.top, SMTO_ABORTIFHUNG, 2000, FALSE );
+
+    old_virtual_rect = virtual_rect;
 }
