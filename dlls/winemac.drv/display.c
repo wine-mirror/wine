@@ -831,10 +831,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, HWND hwnd, DWORD flags, L
             ret = DISP_CHANGE_BADMODE;
         }
         else if (macdrv_set_display_mode(&macdrv_displays[0], best_display_mode))
-        {
             macdrv_init_display_devices(TRUE);
-            send_message(NtUserGetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, 0, 0);
-        }
         else
         {
             WARN("Failed to set display mode\n");
@@ -1172,7 +1169,7 @@ void macdrv_displays_changed(const macdrv_event *event)
     {
         macdrv_init_display_devices(TRUE);
         init_registry_display_settings();
-        send_message(hwnd, WM_MACDRV_UPDATE_DESKTOP_RECT, 0, 0);
+        macdrv_resize_desktop();
     }
 }
 

@@ -92,7 +92,6 @@ extern BOOL CDECL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_H
 enum macdrv_window_messages
 {
     WM_MACDRV_SET_WIN_REGION = 0x80001000,
-    WM_MACDRV_UPDATE_DESKTOP_RECT,
     WM_MACDRV_RESET_DEVICE_METRICS,
     WM_MACDRV_DISPLAYCHANGE,
     WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS,
@@ -268,6 +267,7 @@ extern void macdrv_status_item_mouse_move(const macdrv_event *event) DECLSPEC_HI
 
 extern void check_retina_status(void) DECLSPEC_HIDDEN;
 extern void macdrv_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
+extern void macdrv_resize_desktop(void) DECLSPEC_HIDDEN;
 extern void init_user_driver(void) DECLSPEC_HIDDEN;
 
 /* unixlib interface */
