@@ -2535,7 +2535,7 @@ typedef struct _PDB_SYMBOL_IMPORT
 
 typedef struct _PDB_SYMBOLS_OLD
 {
-    unsigned short global_file;
+    unsigned short global_hash_file;
     unsigned short public_file;
     unsigned short gsym_file;
     unsigned short pad;
@@ -2550,7 +2550,7 @@ typedef struct _PDB_SYMBOLS
     unsigned int   signature;
     unsigned int   version;
     unsigned int   age;
-    unsigned short global_file;
+    unsigned short global_hash_file;
     unsigned short flags;
     unsigned short public_file;
     unsigned short bldVer;
@@ -2621,6 +2621,33 @@ PDB_STRING_TABLE;
  * - a series (of bytes hdr.length) of 0-terminated strings
  * - a serialized hash table
  */
+
+/* Header for hash tables inside DBI (aka symbols) stream.
+ * - The global hash stream contains only the hash table.
+ * - The public stream contains the same layout for its hash table
+ *   (but other information as well).
+ */
+typedef struct
+{
+    unsigned signature;
+    unsigned version;
+    unsigned size_hash_records;
+    unsigned unknown;
+} DBI_HASH_HEADER;
+/* This header is followed by:
+ * - DBI_HASH_RECORDS (on hdr:size_hash_records bytes)
+ * - a bitmap of DBI_MAX_HASH + 1 entries (on DBI_BITMAP_HASH_SIZE bytes)
+ * - a table (one entry per present bit in bitmap) as index into hdr:num_records
+ */
+
+typedef struct
+{
+    unsigned offset;
+    unsigned unknown;
+} DBI_HASH_RECORD;
+
+#define DBI_MAX_HASH 4096
+#define DBI_BITMAP_HASH_SIZE ((DBI_MAX_HASH / (8 * sizeof(unsigned)) + 1) * sizeof(unsigned))
 
 #include "poppack.h"
 

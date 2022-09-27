@@ -231,6 +231,65 @@ const char* pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned o
     return (char*)(table + 1) + ofs;
 }
 
+static void dump_dbi_hash_table(const BYTE* root, unsigned size, const char* name, const char* pfx)
+{
+    if (size >= sizeof(DBI_HASH_HEADER))
+    {
+        const DBI_HASH_HEADER* hdr = (const DBI_HASH_HEADER*)root;
+
+        printf("%s%s symbols hash:\n", pfx, name);
+        printf("%s\tSignature: 0x%x\n", pfx, hdr->signature);
+        printf("%s\tVersion: 0x%x (%u)\n", pfx, hdr->version, hdr->version - 0xeffe0000);
+        printf("%s\tSize of hash records: %u\n", pfx, hdr->size_hash_records);
+        printf("%s\tUnknown: %u\n", pfx, hdr->unknown);
+
+        if (hdr->signature != 0xFFFFFFFF ||
+            hdr->version != 0xeffe0000 + 19990810 ||
+            (hdr->size_hash_records % sizeof(DBI_HASH_RECORD)) != 0 ||
+            sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE > size ||
+            (size - (sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
+        {
+            printf("%s\t\tIncorrect hash structure\n", pfx);
+        }
+        else
+        {
+            unsigned i;
+            unsigned num_hash_records = hdr->size_hash_records / sizeof(DBI_HASH_RECORD);
+            const DBI_HASH_RECORD* hr = (const DBI_HASH_RECORD*)(hdr + 1);
+            unsigned* bitmap = (unsigned*)((char*)(hdr + 1) + hdr->size_hash_records);
+            unsigned* buckets = (unsigned*)((char*)(hdr + 1) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE);
+            unsigned index, last_index = (size - (sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE)) / sizeof(unsigned);
+
+            /* Yes, offsets for accessiong hr[] are stored as multiple of 12; and not
+             * as multiple of sizeof(*hr) = 8 as one might expect.
+             * Perhaps, native implementation likes to keep the same offsets between
+             * in memory representation vs on file representations.
+             */
+            for (index = 0, i = 0; i <= DBI_MAX_HASH; i++)
+            {
+                if (bitmap[i / 32] & (1u << (i % 32)))
+                {
+                    unsigned j;
+                    printf("%s\t[%u]\n", pfx, i);
+                    for (j = buckets[index] / 12; j < (index + 1 < last_index ? buckets[index + 1] / 12 : num_hash_records); j++)
+                        printf("%s\t\t[%u] offset=%08x unk=%x\n", pfx, j, hr[j].offset - 1, hr[j].unknown);
+                    index++;
+                }
+                else
+                    printf("%s\t[%u] <<empty>>\n", pfx, i);
+            }
+            /* shouldn't happen */
+            if (sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE + index * sizeof(unsigned) > size)
+            {
+                printf("%s-- left over %u bytes\n", pfx,
+                       size - (unsigned)(sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE + index * sizeof(unsigned)));
+            }
+        }
+    }
+    else
+        printf("%sNo header in symbols hash\n", pfx);
+}
+
 static void dump_global_symbol(struct pdb_reader* reader, unsigned file)
 {
     void*  global = NULL;
@@ -241,8 +300,7 @@ static void dump_global_symbol(struct pdb_reader* reader, unsigned file)
 
     size = pdb_get_file_size(reader, file);
 
-    printf("Global symbols table:\n");
-    dump_data(global, size, "\t");
+    dump_dbi_hash_table(global, size, "Global", "");
     free(global);
 }
 
@@ -290,30 +348,30 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     else
         sprintf(tcver, "old-%x", symbols->flags);
     printf("Symbols:\n"
-           "\tsignature:       %08x\n"
-           "\tversion:         %u\n"
-           "\tage:             %08x\n"
-           "\tglobal_file:     %u\n"
-           "\tbuilder:         %s\n"
-           "\tpublic_file:     %u\n"
-           "\tbldVer:          %u\n"
-           "\tgsym_file:       %u\n"
-           "\trbldVer:         %u\n"
-           "\tmodule_size:     %08x\n"
-           "\toffset_size:     %08x\n"
-           "\thash_size:       %08x\n"
-           "\tsrc_module_size: %08x\n"
-           "\tpdbimport_size:  %08x\n"
-           "\tresvd0:          %08x\n"
-           "\tstream_idx_size: %08x\n"
-           "\tunknown2_size:   %08x\n"
-           "\tresvd3:          %04x\n"
-           "\tmachine:         %s\n"
-           "\tresvd4           %08x\n",
+           "\tsignature:        %08x\n"
+           "\tversion:          %u\n"
+           "\tage:              %08x\n"
+           "\tglobal_hash_file: %u\n"
+           "\tbuilder:          %s\n"
+           "\tpublic_file:      %u\n"
+           "\tbldVer:           %u\n"
+           "\tgsym_file:        %u\n"
+           "\trbldVer:          %u\n"
+           "\tmodule_size:      %08x\n"
+           "\toffset_size:      %08x\n"
+           "\thash_size:        %08x\n"
+           "\tsrc_module_size:  %08x\n"
+           "\tpdbimport_size:   %08x\n"
+           "\tresvd0:           %08x\n"
+           "\tstream_idx_size:  %08x\n"
+           "\tunknown2_size:    %08x\n"
+           "\tresvd3:           %04x\n"
+           "\tmachine:          %s\n"
+           "\tresvd4            %08x\n",
            symbols->signature,
            symbols->version,
            symbols->age,
-           symbols->global_file,
+           symbols->global_hash_file,
            tcver, /* from symbols->flags */
            symbols->public_file,
            symbols->bldVer,
@@ -610,8 +668,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
 
         file = (char*)((DWORD_PTR)(lib_name + strlen(lib_name) + 1 + 3) & ~3);
     }
-    dump_global_symbol(reader, symbols->global_file);
+    dump_global_symbol(reader, symbols->global_hash_file);
     dump_public_symbol(reader, symbols->public_file);
+
     free(symbols);
     free(filesimage);
 }

@@ -3182,7 +3182,7 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
         symbols->hash_size       = old->hash_size;
         symbols->srcmodule_size  = old->srcmodule_size;
         symbols->pdbimport_size  = 0;
-        symbols->global_file     = old->global_file;
+        symbols->global_hash_file= old->global_hash_file;
         symbols->public_file     = old->public_file;
         symbols->gsym_file       = old->gsym_file;
 
