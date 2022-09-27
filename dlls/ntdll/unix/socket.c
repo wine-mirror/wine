@@ -852,9 +852,8 @@ static BOOL is_icmp_over_dgram( int fd )
 static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                            int fd, struct async_recv_ioctl *async, int force_async )
 {
-    BOOL nonblocking, alerted;
-    ULONG_PTR information;
     HANDLE wait_handle;
+    BOOL nonblocking;
     NTSTATUS status;
     unsigned int i;
     ULONG options;
@@ -883,9 +882,10 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     /* the server currently will never succeed immediately */
     assert(status == STATUS_ALERTED || status == STATUS_PENDING || NT_ERROR(status));
 
-    alerted = status == STATUS_ALERTED;
-    if (alerted)
+    if (status == STATUS_ALERTED)
     {
+        ULONG_PTR information;
+
         status = try_recv( fd, async, &information );
         if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
             status = STATUS_PENDING;
@@ -894,12 +894,12 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
             io->Status = status;
             io->Information = information;
         }
+        set_async_direct_result( &wait_handle, status, information, FALSE );
     }
 
     if (status != STATUS_PENDING)
         release_fileio( &async->io );
 
-    if (alerted) set_async_direct_result( &wait_handle, status, information, FALSE );
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }
