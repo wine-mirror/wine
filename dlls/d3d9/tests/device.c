@@ -1354,7 +1354,7 @@ static void test_swapchain(void)
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     hr = IDirect3DSwapChain9_GetPresentParameters(swapchain2, &d3dpp);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(d3dpp.hDeviceWindow == window, "Got window %p, expected %p.\n", d3dpp.hDeviceWindow, window);
+    ok(d3dpp.hDeviceWindow == window, "Got window %p, expected %p.\n", d3dpp.hDeviceWindow, window);
 
     d3dpp.BackBufferCount  = 2;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain3);
@@ -12242,7 +12242,7 @@ static void test_swapchain_parameters(void)
 
             hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters2);
             ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
-            todo_wine ok(present_parameters2.hDeviceWindow == window, "Got window %p, expected %p.\n",
+            ok(present_parameters2.hDeviceWindow == window, "Got window %p, expected %p.\n",
                     present_parameters2.hDeviceWindow, window);
             ok(present_parameters2.SwapEffect == tests[i].swap_effect, "Swap effect changed from %u to %u, test %u.\n",
                     tests[i].swap_effect, present_parameters2.SwapEffect, i);
@@ -12283,7 +12283,7 @@ static void test_swapchain_parameters(void)
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
         hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters2);
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
-        todo_wine ok(present_parameters2.hDeviceWindow == window, "Got window %p, expected %p.\n",
+        ok(present_parameters2.hDeviceWindow == window, "Got window %p, expected %p.\n",
                 present_parameters2.hDeviceWindow, window);
         IDirect3DSwapChain9_Release(swapchain);
         IDirect3DDevice9_Release(device);

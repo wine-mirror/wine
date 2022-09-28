@@ -5582,6 +5582,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_view_desc view_desc;
     BOOL backbuffer_resized, windowed;
     HRESULT hr = WINED3D_OK;
+    HWND device_window;
     unsigned int i;
 
     TRACE("device %p, swapchain_desc %p, mode %p, callback %p, reset_state %#x.\n",
@@ -5658,12 +5659,13 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     current_desc->refresh_rate = swapchain_desc->refresh_rate;
     current_desc->auto_restore_display_mode = swapchain_desc->auto_restore_display_mode;
 
-    if (swapchain_desc->device_window && swapchain_desc->device_window != current_desc->device_window)
+    device_window = swapchain_desc->device_window ? swapchain_desc->device_window : device->create_parms.focus_window;
+    if (device_window && device_window != current_desc->device_window)
     {
         TRACE("Changing the device window from %p to %p.\n",
-                current_desc->device_window, swapchain_desc->device_window);
-        current_desc->device_window = swapchain_desc->device_window;
-        swapchain_state->device_window = swapchain_desc->device_window;
+                current_desc->device_window, device_window);
+        current_desc->device_window = device_window;
+        swapchain_state->device_window = device_window;
         wined3d_swapchain_set_window(swapchain, NULL);
     }
 
