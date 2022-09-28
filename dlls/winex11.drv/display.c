@@ -560,20 +560,9 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
 
 void X11DRV_DisplayDevices_Update(void)
 {
-    DWORD tid, pid;
-    HWND foreground;
-
     X11DRV_DisplayDevices_Init(TRUE);
 
     X11DRV_resize_desktop();
-
-    /* forward clip_fullscreen_window request to the foreground window */
-    if ((foreground = NtUserGetForegroundWindow()) &&
-        (tid = NtUserGetWindowThread( foreground, &pid )) && pid == GetCurrentProcessId())
-    {
-        if (tid == GetCurrentThreadId()) clip_fullscreen_window( foreground, TRUE );
-        else send_notify_message( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, TRUE, TRUE );
-    }
 }
 
 static BOOL force_display_devices_refresh;
