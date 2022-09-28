@@ -418,9 +418,7 @@ static GpStatus alpha_blend_bmp_pixels(GpGraphics *graphics, INT dst_x, INT dst_
 {
     GpBitmap *dst_bitmap = (GpBitmap*)graphics->image;
     INT x, y;
-    CompositingMode comp_mode;
-
-    GdipGetCompositingMode(graphics, &comp_mode);
+    CompositingMode comp_mode = graphics->compmode;
 
     for (y=0; y<src_height; y++)
     {
