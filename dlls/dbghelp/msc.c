@@ -1764,6 +1764,8 @@ static const union codeview_symbol* get_next_sym(const union codeview_symbol* sy
 
 static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                                          struct symt_compiland* compiland,
+                                         struct symt_function* func,
+                                         struct symt_block* block,
                                          const char* name,
                                          unsigned segment, unsigned offset,
                                          unsigned symtype, BOOL is_local, BOOL in_tls, BOOL force)
@@ -1775,6 +1777,13 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
         loc.kind = in_tls ? loc_tlsrel : loc_absolute;
         loc.reg = 0;
         loc.offset = in_tls ? offset : codeview_get_address(msc_dbg, segment, offset);
+        if (func)
+        {
+            if (!is_local || in_tls) WARN("Unsupported construct\n");
+            symt_add_func_local(msc_dbg->module, func, DataIsStaticLocal, &loc, block,
+                                codeview_get_type(symtype, FALSE), name);
+            return;
+        }
         if (force || in_tls || !symt_find_symbol_at(msc_dbg->module, loc.offset))
         {
             symt_new_global_variable(msc_dbg->module, compiland,
@@ -2232,21 +2241,21 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	case S_GDATA32_16t:
 	case S_LDATA32_16t:
             if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v1.p_name),
+                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->data_v1.p_name),
                                       sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
                                       sym->generic.id == S_LDATA32_16t, FALSE, TRUE);
 	    break;
 	case S_GDATA32_ST:
 	case S_LDATA32_ST:
             if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v2.p_name),
+                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->data_v2.p_name),
                                       sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
                                       sym->generic.id == S_LDATA32_ST, FALSE, TRUE);
 	    break;
 	case S_GDATA32:
 	case S_LDATA32:
             if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, sym->data_v3.name,
+                codeview_add_variable(msc_dbg, compiland, curr_func, block, sym->data_v3.name,
                                       sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
                                       sym->generic.id == S_LDATA32, FALSE, TRUE);
 	    break;
@@ -2255,21 +2264,21 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	case S_GTHREAD32_16t:
 	case S_LTHREAD32_16t:
             if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v1.p_name),
+                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->thread_v1.p_name),
                                       sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
                                       sym->generic.id == S_LTHREAD32_16t, TRUE, TRUE);
 	    break;
 	case S_GTHREAD32_ST:
 	case S_LTHREAD32_ST:
             if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v2.p_name),
+                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->thread_v2.p_name),
                                       sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
                                       sym->generic.id == S_LTHREAD32_ST, TRUE, TRUE);
 	    break;
 	case S_GTHREAD32:
 	case S_LTHREAD32:
             if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, sym->thread_v3.name,
+                codeview_add_variable(msc_dbg, compiland, curr_func, block, sym->thread_v3.name,
                                       sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
                                       sym->generic.id == S_LTHREAD32, TRUE, TRUE);
 	    break;
@@ -2881,19 +2890,19 @@ static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BY
          */
 	case S_GDATA32_16t:
 	case S_LDATA32_16t:
-            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v1.p_name),
+            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->data_v1.p_name),
                                   sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
                                   sym->generic.id == S_LDATA32_16t, FALSE, FALSE);
 	    break;
 	case S_GDATA32_ST:
 	case S_LDATA32_ST:
-            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v2.p_name),
+            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->data_v2.p_name),
                                   sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
                                   sym->generic.id == S_LDATA32_ST, FALSE, FALSE);
 	    break;
 	case S_GDATA32:
 	case S_LDATA32:
-            codeview_add_variable(msc_dbg, compiland, sym->data_v3.name,
+            codeview_add_variable(msc_dbg, compiland, NULL, NULL, sym->data_v3.name,
                                   sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
                                   sym->generic.id == S_LDATA32, FALSE, FALSE);
 	    break;
@@ -2901,19 +2910,19 @@ static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BY
         /* variables with thread storage */
 	case S_GTHREAD32_16t:
 	case S_LTHREAD32_16t:
-            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v1.p_name),
+            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->thread_v1.p_name),
                                   sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
                                   sym->generic.id == S_LTHREAD32_16t, TRUE, FALSE);
 	    break;
 	case S_GTHREAD32_ST:
 	case S_LTHREAD32_ST:
-            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v2.p_name),
+            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->thread_v2.p_name),
                                   sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
                                   sym->generic.id == S_LTHREAD32_ST, TRUE, FALSE);
 	    break;
 	case S_GTHREAD32:
 	case S_LTHREAD32:
-            codeview_add_variable(msc_dbg, compiland, sym->thread_v3.name,
+            codeview_add_variable(msc_dbg, compiland, NULL, NULL, sym->thread_v3.name,
                                   sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
                                   sym->generic.id == S_LTHREAD32, TRUE, FALSE);
 	    break;

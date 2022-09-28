@@ -449,6 +449,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
  *
  * Adds a new local/parameter to a given function:
  * In any cases, dt tells whether it's a local variable or a parameter
+ * or a static variable inside the function.
  * If regno it's not 0:
  *      - then variable is stored in a register
  *      - otherwise, value is referenced by register + offset
@@ -470,7 +471,7 @@ struct symt_data* symt_add_func_local(struct module* module,
                          name, type);
 
     assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
-    assert(dt == DataIsParam || dt == DataIsLocal);
+    assert(dt == DataIsParam || dt == DataIsLocal || dt == DataIsStaticLocal);
 
     locsym = pool_alloc(&module->pool, sizeof(*locsym));
     locsym->symt.tag      = SymTagData;
@@ -804,6 +805,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
                 break;
             case DataIsGlobal:
             case DataIsFileStatic:
+            case DataIsStaticLocal:
                 switch (data->u.var.kind)
                 {
                 case loc_tlsrel:
