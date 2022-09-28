@@ -3422,6 +3422,8 @@ START_TEST(wmvcore)
     if(hr != S_OK)
         return;
 
+    winetest_mute_threshold = 3;  /* FIXME: thread tests print too many "got wrong thread" todos */
+
     test_wmreader_interfaces();
     test_wmsyncreader_interfaces();
     test_wmwriter_interfaces();
