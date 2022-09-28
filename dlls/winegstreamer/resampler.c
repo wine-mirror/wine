@@ -269,14 +269,14 @@ static HRESULT get_available_media_type(DWORD index, IMFMediaType **type, BOOL o
     const GUID *subtype;
     HRESULT hr;
 
-    if (FAILED(hr = MFCreateMediaType(&media_type)))
-        return hr;
-
     *type = NULL;
 
     if (index >= (output ? 2 : 1) * ARRAY_SIZE(audio_formats))
         return MF_E_NO_MORE_TYPES;
     subtype = audio_formats[index % ARRAY_SIZE(audio_formats)];
+
+    if (FAILED(hr = MFCreateMediaType(&media_type)))
+        return hr;
 
     if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)))
         goto done;
