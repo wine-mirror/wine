@@ -654,7 +654,9 @@ void winetest_wait_child_process( HANDLE process )
         {
             DWORD pid = GetProcessId( process );
             winetest_print_lock();
+            if (winetest_color) printf( color_bright_red );
             winetest_printf( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)pid );
+            if (winetest_color) printf( color_reset );
             winetest_print_unlock();
             InterlockedIncrement( &failures );
         }
@@ -754,9 +756,11 @@ static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
     if (data->current_file)
         printf( "%s:%d: this is the last test seen before the exception\n",
                 data->current_file, data->current_line );
+    if (winetest_color) printf( color_bright_red );
     printf( "%04x:%s:%s unhandled exception %08x at %p\n",
             (UINT)GetCurrentProcessId(), current_test->name, winetest_elapsed(),
             (UINT)ptrs->ExceptionRecord->ExceptionCode, ptrs->ExceptionRecord->ExceptionAddress );
+    if (winetest_color) printf( color_reset );
     fflush( stdout );
     winetest_print_unlock();
     return EXCEPTION_EXECUTE_HANDLER;
