@@ -413,9 +413,10 @@ static void test_swapchain(void)
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
     ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
 
+    d3dpp.hDeviceWindow = NULL;
     d3dpp.BackBufferCount  = 1;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(device, &d3dpp, &swapchain2);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
 
     d3dpp.BackBufferCount  = 2;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(device, &d3dpp, &swapchain3);
@@ -8714,6 +8715,7 @@ static void test_swapchain_parameters(void)
     present_parameters_windowed.Windowed = TRUE;
     present_parameters_windowed.BackBufferCount = 1;
 
+
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         UINT bb_count = tests[i].backbuffer_count ? tests[i].backbuffer_count : 1;
@@ -8721,7 +8723,7 @@ static void test_swapchain_parameters(void)
         memset(&present_parameters, 0, sizeof(present_parameters));
         present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
         present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
-        present_parameters.hDeviceWindow = window;
+        present_parameters.hDeviceWindow = NULL;
         present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
 
         present_parameters.SwapEffect = tests[i].swap_effect;
@@ -8752,7 +8754,7 @@ static void test_swapchain_parameters(void)
         memset(&present_parameters, 0, sizeof(present_parameters));
         present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
         present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
-        present_parameters.hDeviceWindow = window;
+        present_parameters.hDeviceWindow = NULL;
         present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
 
         present_parameters.SwapEffect = tests[i].swap_effect;
