@@ -2422,7 +2422,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
     heap_pool_init(&exec.heap);
 
-    TRACE("%s(", debugstr_w(func->name));
+    TRACE("%s args=%u\n", debugstr_w(func->name),func->arg_cnt);
     if(func->arg_cnt) {
         VARIANT *v;
         unsigned i;
@@ -2435,7 +2435,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
         for(i=0; i < func->arg_cnt; i++) {
             v = get_arg(dp, i);
-            TRACE("%s%s", i ? ", " : "", debugstr_variant(v));
+            TRACE("  [%d] %s\n", i, debugstr_variant(v));
             if(V_VT(v) == (VT_VARIANT|VT_BYREF)) {
                 if(func->args[i].by_ref)
                     exec.args[i] = *v;
@@ -2452,7 +2452,6 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     }else {
         exec.args = NULL;
     }
-    TRACE(")\n");
 
     if(func->var_cnt) {
         exec.vars = heap_alloc_zero(func->var_cnt * sizeof(VARIANT));

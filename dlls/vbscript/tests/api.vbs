@@ -777,6 +777,11 @@ sub testSpaceError()
 end sub
 call testSpaceError()
 
+function strlength(s1, s2, s3, s4, s5)
+   strlength = Len(s1 & s2 & s3 & s4 & s5)
+end function
+Call ok(strlength(String(500, "a"), String(500, "b"), String(500, "c"), String(500, "d"), String(500, "e")) = 500*5, "strlength(...) = 500*5")
+
 sub test_string(cnt, char, exp)
     call ok(String(cnt, char) = exp, "String(" & cnt & ", """ & char & """ = """ & _
                                      String(cnt, char) & """ expected """ & exp & """")
