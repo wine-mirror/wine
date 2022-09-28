@@ -1768,7 +1768,7 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                                          struct symt_block* block,
                                          const char* name,
                                          unsigned segment, unsigned offset,
-                                         unsigned symtype, BOOL is_local, BOOL in_tls, BOOL force)
+                                         unsigned symtype, BOOL is_local, BOOL in_tls, BOOL dontcheck)
 {
     if (name && *name)
     {
@@ -1784,13 +1784,38 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                                 codeview_get_type(symtype, FALSE), name);
             return;
         }
-        if (force || in_tls || !symt_find_symbol_at(msc_dbg->module, loc.offset))
+        if (!dontcheck && !in_tls)
         {
-            symt_new_global_variable(msc_dbg->module, compiland,
-                                     name, is_local, loc, 0,
-                                     codeview_get_type(symtype, FALSE));
+            /* Check that we don't add twice the same variable */
+            struct hash_table_iter      hti;
+            void*                       ptr;
+            struct symt_ht*             sym;
+
+            hash_table_iter_init(&msc_dbg->module->ht_symbols, &hti, name);
+            while ((ptr = hash_table_iter_up(&hti)))
+            {
+                sym = CONTAINING_RECORD(ptr, struct symt_ht, hash_elt);
+                if (symt_check_tag(&sym->symt, SymTagData) && !strcmp(sym->hash_elt.name, name))
+                {
+                    struct symt_data* symdata = (struct symt_data*)&sym->symt;
+                    if (symdata->kind == (is_local ? DataIsFileStatic : DataIsGlobal) &&
+                        symdata->u.var.kind == loc.kind &&
+                        symdata->u.var.offset == loc.offset &&
+                        symdata->container == &compiland->symt)
+                    {
+                        /* We don't compare types yet... Unfortunately, they are not
+                         * always the same typeid... it'd require full type equivalence
+                         * (eg: we've seen 'int* foo' <> 'int[4] foo')
+                         */
+                        return;
+                    }
+                }
+            }
         }
-    }
+        if (is_local ^ (compiland != NULL)) FIXME("Unsupported construct\n");
+        symt_new_global_variable(msc_dbg->module, compiland, name, is_local, loc, 0,
+                                 codeview_get_type(symtype, FALSE));
+     }
 }
 
 struct cv_local_info
