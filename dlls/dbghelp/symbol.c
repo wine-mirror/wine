@@ -1653,6 +1653,7 @@ static BOOL find_name(struct process* pcs, struct module* module, const char* na
 BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
 {
     struct process*             pcs = process_find_by_handle(hProcess);
+    struct module_pair          pair;
     struct module*              module;
     const char*                 name;
 
@@ -1669,6 +1670,45 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
         module = module_find_by_nameA(pcs, tmp);
         return find_name(pcs, module, name + 1, Symbol);
     }
+
+    /* search first in local context */
+    pair.pcs = pcs;
+    pair.requested = module_find_by_addr(pair.pcs, pcs->localscope_pc, DMT_UNKNOWN);
+    if (module_get_debug(&pair) &&
+        (symt_check_tag(pcs->localscope_symt, SymTagFunction) ||
+         symt_check_tag(pcs->localscope_symt, SymTagInlineSite)))
+    {
+        struct symt_function* func = (struct symt_function*)pcs->localscope_symt;
+        struct vector* v = &func->vchildren;
+        unsigned i;
+
+        for (i = 0; i < vector_length(v); i++)
+        {
+            struct symt* lsym = *(struct symt**)vector_at(v, i);
+            switch (lsym->tag)
+            {
+            case SymTagBlock: /* no recursion */
+                break;
+            case SymTagData:
+                name = symt_get_name(lsym);
+                if (name && !strcmp(name, Name))
+                {
+                    symt_fill_sym_info(&pair, func, lsym, Symbol);
+                    return TRUE;
+                }
+                break;
+            case SymTagLabel: /* not returned here */
+            case SymTagFuncDebugStart:
+            case SymTagFuncDebugEnd:
+            case SymTagCustom:
+            case SymTagInlineSite:
+                break;
+            default:
+                WARN("Unsupported tag: %u (%x)\n", lsym->tag, lsym->tag);
+            }
+        }
+    }
+    /* lookup at global scope */
     for (module = pcs->lmodules; module; module = module->next)
     {
         if (module->type == DMT_PE && find_name(pcs, module, Name, Symbol))
@@ -1686,6 +1726,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
                 return TRUE;
         }
     }
+    SetLastError(ERROR_MOD_NOT_FOUND);
     return FALSE;
 }
 
