@@ -2209,8 +2209,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
 
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                            const BYTE* root, unsigned offset, unsigned size,
-                           const struct cv_module_snarf* cvmod,
-                           BOOL do_globals)
+                           const struct cv_module_snarf* cvmod)
 {
     struct symt_function*               top_func = NULL;
     struct symt_function*               curr_func = NULL;
@@ -2240,47 +2239,41 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
          */
 	case S_GDATA32_16t:
 	case S_LDATA32_16t:
-            if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->data_v1.p_name),
-                                      sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
-                                      sym->generic.id == S_LDATA32_16t, FALSE, TRUE);
+            codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->data_v1.p_name),
+                                  sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
+                                  sym->generic.id == S_LDATA32_16t, FALSE, TRUE);
 	    break;
 	case S_GDATA32_ST:
 	case S_LDATA32_ST:
-            if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->data_v2.p_name),
-                                      sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
-                                      sym->generic.id == S_LDATA32_ST, FALSE, TRUE);
+            codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->data_v2.p_name),
+                                  sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
+                                  sym->generic.id == S_LDATA32_ST, FALSE, TRUE);
 	    break;
 	case S_GDATA32:
 	case S_LDATA32:
-            if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, curr_func, block, sym->data_v3.name,
-                                      sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
-                                      sym->generic.id == S_LDATA32, FALSE, TRUE);
+            codeview_add_variable(msc_dbg, compiland, curr_func, block, sym->data_v3.name,
+                                  sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
+                                  sym->generic.id == S_LDATA32, FALSE, TRUE);
 	    break;
 
         /* variables with thread storage */
 	case S_GTHREAD32_16t:
 	case S_LTHREAD32_16t:
-            if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->thread_v1.p_name),
-                                      sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
-                                      sym->generic.id == S_LTHREAD32_16t, TRUE, TRUE);
+            codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->thread_v1.p_name),
+                                  sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
+                                  sym->generic.id == S_LTHREAD32_16t, TRUE, TRUE);
 	    break;
 	case S_GTHREAD32_ST:
 	case S_LTHREAD32_ST:
-            if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->thread_v2.p_name),
-                                      sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
-                                      sym->generic.id == S_LTHREAD32_ST, TRUE, TRUE);
+            codeview_add_variable(msc_dbg, compiland, curr_func, block, terminate_string(&sym->thread_v2.p_name),
+                                  sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
+                                  sym->generic.id == S_LTHREAD32_ST, TRUE, TRUE);
 	    break;
 	case S_GTHREAD32:
 	case S_LTHREAD32:
-            if (do_globals)
-                codeview_add_variable(msc_dbg, compiland, curr_func, block, sym->thread_v3.name,
-                                      sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
-                                      sym->generic.id == S_LTHREAD32, TRUE, TRUE);
+            codeview_add_variable(msc_dbg, compiland, curr_func, block, sym->thread_v3.name,
+                                  sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
+                                  sym->generic.id == S_LTHREAD32, TRUE, TRUE);
 	    break;
 
         /* Public symbols */
@@ -2823,124 +2816,156 @@ static void pdb_location_compute(struct process* pcs,
     loc->reg = loc_err_internal;
 }
 
-static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYTE* root,
-                                  int offset, int size)
+static void* pdb_read_file(const struct pdb_file_info* pdb_file, DWORD file_nr);
+static unsigned pdb_get_file_size(const struct pdb_file_info* pdb_file, DWORD file_nr);
 
+static BOOL codeview_snarf_sym_hashtable(const struct msc_debug_info* msc_dbg, const BYTE* symroot, DWORD symsize,
+                                         const BYTE* hashroot, DWORD hashsize,
+                                         BOOL (*feed)(const struct msc_debug_info* msc_dbg, const union codeview_symbol*))
 {
-    int                                 i, length;
-    struct symt_compiland*              compiland = NULL;
+    const DBI_HASH_HEADER* hash_hdr = (const DBI_HASH_HEADER*)hashroot;
+    unsigned num_hash_records, i;
+    const DBI_HASH_RECORD* hr;
 
-    /*
-     * Loop over the different types of records and whenever we
-     * find something we are interested in, record it and move on.
-     */
-    for (i = offset; i < size; i += length)
+    if (hashsize < sizeof(DBI_HASH_HEADER) ||
+        hash_hdr->signature != 0xFFFFFFFF ||
+        hash_hdr->version != 0xeffe0000 + 19990810 ||
+        (hash_hdr->size_hash_records % sizeof(DBI_HASH_RECORD)) != 0 ||
+        sizeof(DBI_HASH_HEADER) + hash_hdr->size_hash_records + DBI_BITMAP_HASH_SIZE > hashsize ||
+        (hashsize - (sizeof(DBI_HASH_HEADER) + hash_hdr->size_hash_records + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
     {
-        const union codeview_symbol* sym = (const union codeview_symbol*)(root + i);
-        length = sym->generic.len + 2;
-        if (i + length > size) break;
-        if (!sym->generic.id || length < 4) break;
-        if (length & 3) FIXME("unpadded len %u\n", length);
-
-        switch (sym->generic.id)
-        {
-        case S_PUB32_16t:
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                terminate_string(&sym->public_v1.p_name),
-                                sym->public_v1.pubsymflags == SYMTYPE_FUNCTION,
-                                codeview_get_address(msc_dbg, sym->public_v1.segment, sym->public_v1.offset), 1);
-            }
-            break;
-        case S_PUB32_ST:
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                terminate_string(&sym->public_v2.p_name),
-                                sym->public_v2.pubsymflags == SYMTYPE_FUNCTION,
-                                codeview_get_address(msc_dbg, sym->public_v2.segment, sym->public_v2.offset), 1);
-            }
-            break;
-
-        case S_PUB32:
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                sym->public_v3.name,
-                                sym->public_v3.pubsymflags == SYMTYPE_FUNCTION,
-                                codeview_get_address(msc_dbg, sym->public_v3.segment, sym->public_v3.offset), 1);
-            }
-            break;
-        case S_PROCREF:
-        case S_LPROCREF: /* using a data_v3 isn't what we'd expect */
-#if 0
-            /* FIXME: this is plain wrong (from a simple test) */
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                sym->data_v3.name,
-                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset), 1);
-            }
-#endif
-            break;
-        /*
-         * Global and local data symbols.  We don't associate these
-         * with any given source file.
-         */
-	case S_GDATA32_16t:
-	case S_LDATA32_16t:
-            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->data_v1.p_name),
-                                  sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
-                                  sym->generic.id == S_LDATA32_16t, FALSE, FALSE);
-	    break;
-	case S_GDATA32_ST:
-	case S_LDATA32_ST:
-            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->data_v2.p_name),
-                                  sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
-                                  sym->generic.id == S_LDATA32_ST, FALSE, FALSE);
-	    break;
-	case S_GDATA32:
-	case S_LDATA32:
-            codeview_add_variable(msc_dbg, compiland, NULL, NULL, sym->data_v3.name,
-                                  sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
-                                  sym->generic.id == S_LDATA32, FALSE, FALSE);
-	    break;
-
-        /* variables with thread storage */
-	case S_GTHREAD32_16t:
-	case S_LTHREAD32_16t:
-            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->thread_v1.p_name),
-                                  sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
-                                  sym->generic.id == S_LTHREAD32_16t, TRUE, FALSE);
-	    break;
-	case S_GTHREAD32_ST:
-	case S_LTHREAD32_ST:
-            codeview_add_variable(msc_dbg, compiland, NULL, NULL, terminate_string(&sym->thread_v2.p_name),
-                                  sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
-                                  sym->generic.id == S_LTHREAD32_ST, TRUE, FALSE);
-	    break;
-	case S_GTHREAD32:
-	case S_LTHREAD32:
-            codeview_add_variable(msc_dbg, compiland, NULL, NULL, sym->thread_v3.name,
-                                  sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
-                                  sym->generic.id == S_LTHREAD32, TRUE, FALSE);
-	    break;
-
-        /*
-         * These are special, in that they are always followed by an
-         * additional length-prefixed string which is *not* included
-         * into the symbol length count.  We need to skip it.
-         */
-	case S_PROCREF_ST:
-	case S_DATAREF_ST:
-	case S_LPROCREF_ST:
-            length += (((const char*)sym)[length] + 1 + 3) & ~3;
-            break;
-        }
-        msc_dbg->module->sortlist_valid = TRUE;
+        FIXME("Incorrect hash structure\n");
+        return FALSE;
     }
-    msc_dbg->module->sortlist_valid = FALSE;
+
+    hr = (DBI_HASH_RECORD*)(hash_hdr + 1);
+    num_hash_records = hash_hdr->size_hash_records / sizeof(DBI_HASH_RECORD);
+
+    /* Only iterate over the records listed in the hash table.
+     * We assume that records present in stream, but not listed in hash table, are
+     * invalid (and thus not loaded).
+     */
+    for (i = 0; i < num_hash_records; i++)
+    {
+        if (hr[i].offset && hr[i].offset < symsize)
+        {
+            const union codeview_symbol* sym = (const union codeview_symbol*)(symroot + hr[i].offset - 1);
+            (*feed)(msc_dbg, sym);
+        }
+    }
+    return TRUE;
+}
+
+static BOOL pdb_global_feed_types(const struct msc_debug_info* msc_dbg, const union codeview_symbol* sym)
+{
+    struct symt* symt;
+    switch (sym->generic.id)
+    {
+    case S_UDT_16t:
+        if (sym->udt_v1.type)
+        {
+            if ((symt = codeview_get_type(sym->udt_v1.type, FALSE)))
+                symt_new_typedef(msc_dbg->module, symt,
+                                 terminate_string(&sym->udt_v1.p_name));
+            else
+                FIXME("S-Udt %s: couldn't find type 0x%x\n",
+                      terminate_string(&sym->udt_v1.p_name), sym->udt_v1.type);
+        }
+        break;
+    case S_UDT_ST:
+        if (sym->udt_v2.type)
+        {
+            if ((symt = codeview_get_type(sym->udt_v2.type, FALSE)))
+                symt_new_typedef(msc_dbg->module, symt,
+                                 terminate_string(&sym->udt_v2.p_name));
+            else
+                FIXME("S-Udt %s: couldn't find type 0x%x\n",
+                      terminate_string(&sym->udt_v2.p_name), sym->udt_v2.type);
+        }
+        break;
+    case S_UDT:
+        if (sym->udt_v3.type)
+        {
+            if ((symt = codeview_get_type(sym->udt_v3.type, FALSE)))
+                symt_new_typedef(msc_dbg->module, symt, sym->udt_v3.name);
+            else
+                FIXME("S-Udt %s: couldn't find type 0x%x\n",
+                      sym->udt_v3.name, sym->udt_v3.type);
+        }
+        break;
+    default: return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL pdb_global_feed_variables(const struct msc_debug_info* msc_dbg, const union codeview_symbol* sym)
+{
+    /* The only interest here is to add global variables that haven't been seen
+     * in module (=compilation unit) stream.
+     * So we don't care about 'local' symbols since we cannot tell their compiland.
+     */
+    switch (sym->generic.id)
+    {
+    case S_GDATA32_16t:
+        codeview_add_variable(msc_dbg, NULL, NULL, NULL, terminate_string(&sym->data_v1.p_name),
+                              sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
+                              FALSE, FALSE, FALSE);
+        break;
+    case S_GDATA32_ST:
+        codeview_add_variable(msc_dbg, NULL, NULL, NULL, terminate_string(&sym->data_v2.p_name),
+                              sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
+                              FALSE, FALSE, FALSE);
+        break;
+    case S_GDATA32:
+        codeview_add_variable(msc_dbg, NULL, NULL, NULL, sym->data_v3.name,
+                              sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
+                              FALSE, FALSE, FALSE);
+        break;
+    /* variables with thread storage */
+    case S_GTHREAD32_16t:
+        codeview_add_variable(msc_dbg, NULL, NULL, NULL, terminate_string(&sym->thread_v1.p_name),
+                              sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
+                              FALSE, TRUE, FALSE);
+        break;
+    case S_GTHREAD32_ST:
+        codeview_add_variable(msc_dbg, NULL, NULL, NULL, terminate_string(&sym->thread_v2.p_name),
+                              sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
+                              FALSE, TRUE, FALSE);
+        break;
+    case S_GTHREAD32:
+        codeview_add_variable(msc_dbg, NULL, NULL, NULL, sym->thread_v3.name,
+                              sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
+                              FALSE, TRUE, FALSE);
+        break;
+    default: return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL pdb_global_feed_public(const struct msc_debug_info* msc_dbg, const union codeview_symbol* sym)
+{
+    switch (sym->generic.id)
+    {
+    case S_PUB32_16t:
+        symt_new_public(msc_dbg->module, NULL,
+                        terminate_string(&sym->public_v1.p_name),
+                        sym->public_v1.pubsymflags == SYMTYPE_FUNCTION,
+                        codeview_get_address(msc_dbg, sym->public_v1.segment, sym->public_v1.offset), 1);
+        break;
+    case S_PUB32_ST:
+        symt_new_public(msc_dbg->module, NULL,
+                        terminate_string(&sym->public_v2.p_name),
+                        sym->public_v2.pubsymflags == SYMTYPE_FUNCTION,
+                        codeview_get_address(msc_dbg, sym->public_v2.segment, sym->public_v2.offset), 1);
+        break;
+    case S_PUB32:
+        symt_new_public(msc_dbg->module, NULL,
+                        sym->public_v3.name,
+                        sym->public_v3.pubsymflags == SYMTYPE_FUNCTION,
+                        codeview_get_address(msc_dbg, sym->public_v3.segment, sym->public_v3.offset), 1);
+        break;
+    default: return FALSE;
+    }
     return TRUE;
 }
 
@@ -3681,12 +3706,23 @@ static BOOL pdb_process_internal(const struct process* pcs,
         ipi_image = pdb_read_file(pdb_file, 4);
         ipi_ok = pdb_init_type_parse(msc_dbg, pdb_file, &ipi_ctp, ipi_image);
 
-        /* Read global symbol table */
+        /* Read global types first, so that lookup by name in module (=compilation unit)
+         * streams' loading can succeed them.
+         */
         globalimage = pdb_read_file(pdb_file, symbols.gsym_file);
         if (globalimage)
         {
-            codeview_snarf(msc_dbg, globalimage, 0, pdb_get_file_size(pdb_file, symbols.gsym_file),
-                           NULL, FALSE);
+            const BYTE* data;
+            unsigned global_size = pdb_get_file_size(pdb_file, symbols.gsym_file);
+
+            data = pdb_read_file(pdb_file, symbols.global_hash_file);
+            if (data)
+            {
+                codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
+                                             data, pdb_get_file_size(pdb_file, symbols.global_hash_file),
+                                             pdb_global_feed_types);
+                pdb_free((void*)data);
+            }
         }
 
         /* Read per-module symbols' tables */
@@ -3705,8 +3741,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             {
                 struct cv_module_snarf cvmod = {ipi_ok ? &ipi_ctp : NULL, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
                     files_image};
-                codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size,
-                               &cvmod, TRUE);
+                codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size, &cvmod);
 
                 if (sfile.lineno_size && sfile.lineno2_size)
                     FIXME("Both line info present... only supporting second\n");
@@ -3722,11 +3757,27 @@ static BOOL pdb_process_internal(const struct process* pcs,
             file_name += strlen(file_name) + 1;
             file = (BYTE*)((DWORD_PTR)(file_name + strlen(file_name) + 1 + 3) & ~3);
         }
-        /* finish the remaining public and global information */
+        /* Load the global variables and constants (if not yet loaded) and public information */
         if (globalimage)
         {
-            codeview_snarf_public(msc_dbg, globalimage, 0,
-                                  pdb_get_file_size(pdb_file, symbols.gsym_file));
+            const BYTE* data;
+            unsigned global_size = pdb_get_file_size(pdb_file, symbols.gsym_file);
+
+            data = pdb_read_file(pdb_file, symbols.global_hash_file);
+            if (data)
+            {
+                codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
+                                             data, pdb_get_file_size(pdb_file, symbols.global_hash_file),
+                                             pdb_global_feed_variables);
+                pdb_free((void*)data);
+            }
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS) && (data = pdb_read_file(pdb_file, symbols.public_file)))
+            {
+                const DBI_PUBLIC_HEADER* pubhdr = (const DBI_PUBLIC_HEADER*)data;
+                codeview_snarf_sym_hashtable(msc_dbg, globalimage, pdb_get_file_size(pdb_file, symbols.gsym_file),
+                                             (const BYTE*)(pubhdr + 1), pubhdr->hash_size, pdb_global_feed_public);
+                pdb_free((void*)data);
+            }
             pdb_free(globalimage);
         }
         HeapFree(GetProcessHeap(), 0, (DWORD*)ipi_ctp.offset);
@@ -4195,8 +4246,7 @@ static BOOL codeview_process_info(const struct process* pcs,
 
             if (ent->SubSection == sstAlignSym)
             {
-                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb,
-                               NULL, TRUE);
+                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb, NULL);
 
                 /*
                  * Check the next and previous entry.  If either is a
