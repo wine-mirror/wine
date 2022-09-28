@@ -1993,14 +1993,23 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             break;
         case loc_absolute:
             /* it's a global variable */
-            /* FIXME: we don't handle its scope yet */
             if (!dwarf2_find_attribute(di, DW_AT_external, &ext))
                 ext.u.uvalue = 0;
             loc.offset += subpgm->ctx->module_ctx->load_offset;
-            symt_new_global_variable(subpgm->ctx->module_ctx->module,
-                                     ext.u.uvalue ? NULL : subpgm->ctx->compiland,
-                                     dwarf2_get_cpp_name(di, name.u.string), !ext.u.uvalue,
-                                     loc, 0, param_type);
+            if (subpgm->top_func)
+            {
+                if (ext.u.uvalue) WARN("unexpected global inside a functionn");
+                symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
+                                    DataIsStaticLocal, &loc, subpgm->current_block,
+                                    param_type, dwarf2_get_cpp_name(di, name.u.string));
+            }
+            else
+            {
+                symt_new_global_variable(subpgm->ctx->module_ctx->module,
+                                         ext.u.uvalue ? NULL : subpgm->ctx->compiland,
+                                         dwarf2_get_cpp_name(di, name.u.string), !ext.u.uvalue,
+                                         loc, 0, param_type);
+            }
             break;
         default:
             subpgm->non_computed_variable = TRUE;
