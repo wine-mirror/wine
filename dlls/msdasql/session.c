@@ -1244,13 +1244,6 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
         return E_FAIL;
     }
 
-    ret = SQLRowCount(hstmt, &results);
-    if (ret != SQL_SUCCESS)
-        ERR("SQLRowCount failed (%d)\n", ret);
-
-    if (affected)
-        *affected = results;
-
     *rowset = NULL;
     if (!wcsnicmp( command->query, L"select ", 7 ))
     {
@@ -1273,7 +1266,16 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
         IRowset_Release(&msrowset->IRowset_iface);
     }
     else
+    {
+        ret = SQLRowCount(hstmt, &results);
+        if (ret != SQL_SUCCESS)
+            ERR("SQLRowCount failed (%d)\n", ret);
+
         SQLFreeStmt(hstmt, SQL_CLOSE);
+    }
+
+    if (affected)
+        *affected = results;
 
     return hr;
 }
