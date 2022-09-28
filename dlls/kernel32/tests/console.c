@@ -4230,28 +4230,66 @@ static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
     CloseHandle(std_input);
 }
 
-static void test_console_title(void)
+static void test_GetConsoleTitleA(void)
 {
-    WCHAR buf[64];
-    BOOL ret;
+    char buf[64], str[] = "test";
+    DWORD ret;
 
-    ret = SetConsoleTitleW(L"test");
+    ret = SetConsoleTitleA(str);
+    ok(ret, "SetConsoleTitleA failed: %lu\n", GetLastError());
+
+    ret = GetConsoleTitleA(NULL, 0);
+    ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
+
+    ret = GetConsoleTitleA(buf, 0);
+    ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
+
+    ret = GetConsoleTitleA(buf, ARRAY_SIZE(buf));
+    ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
+    ok(ret == strlen(str), "Got string length %lu, expected %Iu\n", ret, strlen(str));
+    ok(!strcmp(buf, str), "Title = %s\n", wine_dbgstr_a(buf));
+
+    ret = SetConsoleTitleA("");
+    ok(ret, "SetConsoleTitleA failed: %lu\n", GetLastError());
+
+    ret = GetConsoleTitleA(buf, ARRAY_SIZE(buf));
+    ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
+}
+
+static void test_GetConsoleTitleW(void)
+{
+    WCHAR buf[64], str[] = L"test";
+    DWORD ret;
+
+    ret = SetConsoleTitleW(str);
     ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
+
+    ret = GetConsoleTitleW(NULL, 0);
+    ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
+
+    ret = GetConsoleTitleW(buf, 0);
+    ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
 
     ret = GetConsoleTitleW(buf, ARRAY_SIZE(buf));
     ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
-    ok(!wcscmp(buf, L"test"), "title = %s\n", wine_dbgstr_w(buf));
+    todo_wine ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
+    ok(!wcscmp(buf, str), "Title = %s\n", wine_dbgstr_w(buf));
 
-    if (!skip_nt)
-    {
-        ret = GetConsoleTitleW(buf, 2);
-        ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
-        ok(!wcscmp(buf, L"t"), "title = %s\n", wine_dbgstr_w(buf));
+    ret = GetConsoleTitleW(buf, 2);
+    ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
+    todo_wine ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
+    if (!skip_nt) ok(!wcscmp(buf, L"t"), "Title = %s\n", wine_dbgstr_w(buf));
 
-        ret = GetConsoleTitleW(buf, 4);
-        ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
-        ok(!wcscmp(buf, L"tes"), "title = %s\n", wine_dbgstr_w(buf));
-    }
+    ret = GetConsoleTitleW(buf, 4);
+    ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
+    ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
+    if (!skip_nt) ok(!wcscmp(buf, L"tes"), "Title = %s\n", wine_dbgstr_w(buf));
+
+    ret = SetConsoleTitleW(L"");
+    ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
+
+    ret = GetConsoleTitleW(buf, ARRAY_SIZE(buf));
+    todo_wine ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
 }
 
 static void test_file_info(HANDLE input, HANDLE output)
@@ -4584,7 +4622,8 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
     hwnd = GetConsoleWindow();
     ok(IsWindow(hwnd), "no console window\n");
 
-    test_console_title();
+    test_GetConsoleTitleA();
+    test_GetConsoleTitleW();
     test_WriteConsoleInputW(input);
 }
 
@@ -5017,7 +5056,8 @@ START_TEST(console)
     test_GetConsoleScreenBufferInfoEx(hConOut);
     test_SetConsoleScreenBufferInfoEx(hConOut);
     test_file_info(hConIn, hConOut);
-    test_console_title();
+    test_GetConsoleTitleA();
+    test_GetConsoleTitleW();
     if (!test_current)
     {
         test_pseudo_console();
