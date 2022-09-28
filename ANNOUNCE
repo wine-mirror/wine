@@ -1,19 +1,12 @@
-The Wine team is proud to announce that the stable release Wine 7.0
-is now available.
+The Wine development release 7.0.1 is now available.
 
-This release represents a year of development effort and over 9,100
-individual changes. It contains a large number of improvements that
-are listed in the release notes below. The areas of major changes are:
+What's new in this release:
+  - Various bug fixes
+  - Translation updates
 
-  - Most modules converted to PE format.
-  - Better theming support, with a bundled theme for a more modern look.
-  - Vastly improved HID stack and joystick support.
-  - New WoW64 architecture.
+The source is available at:
 
-The source is available from the following locations:
-
-  https://dl.winehq.org/wine/source/7.0/wine-7.0.tar.xz
-  http://mirrors.ibiblio.org/wine/source/7.0/wine-7.0.tar.xz
+  https://dl.winehq.org/wine/source/7.0/wine-7.0.1.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -29,414 +22,234 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 7.0
-======================
-
-*** PE modules
-
-- With a few exceptions, all modules can be built in PE format. The goal is to
-  convert the remaining modules after 7.0.
-
-- For PE modules with an associated Unix library, the interface between the PE
-  part and the Unix part goes through a standard NT system call. This enables
-  hiding the Unix code from Windows debuggers, and switching the thread
-  register on platforms that require it.
-
-- Builtin dlls are only loaded if there is a corresponding PE file on disk,
-  either a real binary or a fake PE module. This ensures that the application
-  always sees a valid PE file mapping. It can be disabled through the
-  WINEBOOTSTRAPMODE environment variable, used at prefix creation time.
-
-
-*** WoW64
-
-- The 64-bit Windows-on-Windows (WoW64) architecture is implemented, and
-  supports running a 32-bit Windows application inside a 64-bit Unix host
-  process, using thunks to map 32-bit NT system calls to the 64-bit NTDLL.
-
-- WoW64 thunks are implemented for most Unix libraries, enabling a 32-bit PE
-  module to call a 64-bit Unix library. Once the remaining modules are
-  converted to PE, this will make it possible to run 32-bit applications
-  without installing 32-bit Unix libraries.
-
-
-*** Theming
-
-- A "Light" theme is included in Wine, with the color variants "Blue" and
-  "Classic Blue". It can be enabled through WineCfg.
-
-- All the Common Controls support theming, and automatically refresh on theme
-  changes.
-
-- All the builtin applications support theming, as well as High DPI rendering.
-
- 
-*** Graphics
-
-- There's a new Win32u library implementing the kernel side of graphics and
-  window management support. Large portions of the GDI32 and USER32 libraries
-  are converted to use this new library. This work will continue after 7.0, and
-  the graphics drivers (winex11.drv, winemac.drv, etc.) will be migrated to
-  Win32u as well.
-
-- The Vulkan driver supports up to version 1.2.201 of the Vulkan spec.
-
-- Hit-testing stroked geometries using the Direct2D API is implemented.
-
-- Some initial support for Direct2D effects (using the ID2D1Effect interface)
-  is implemented.
-
-- The Direct2D API supports the ID2D1MultiThread interface.
-
-- WindowsCodecs supports decoding images in WMP (Windows Media Photo) format,
-  as well as encoding images to the DDS (DirectDraw Surface) format.
-
-- WindowsCodecs no longer supports encoding images to macOS ICNS format. This
-  is not supported on Windows, and was no longer used by Wine either.
-
-
-*** Direct3D
-
-- Various improvements have been made to the Vulkan renderer for the Wine
-  Direct3D implementation. In most cases, for Direct3D 10 and 11 applications
-  the Vulkan renderer should be about on-par with the older OpenGL renderer in
-  Wine 7.0. Like in Wine 6.0, the Vulkan renderer can be enabled by setting the
-  Direct3D "renderer" registry setting to "vulkan".
-
-- The following Direct3D 10 and 11 features are implemented:
-  - Deferred device contexts.
-  - Device context state objects, and switching between them.
-  - Constant buffer offsetting.
-  - Resolving typeless multi-sample resources.
-  - Clearing unordered-access views of texture resources. When using the OpenGL
-    renderer, this requires the GL_ARB_clear_texture OpenGL extension.
-  - Resource copies between resources with "block-compatible" formats, like for
-    example DXGI_FORMAT_BC3_TYPELESS and DXGI_FORMAT_R32G32B32A32_TYPELESS.
-  - Clearing layered render-target views.
-
-- Support for multiple displays ("multi-head") is implemented. In practice,
-  this tends to mean the ability to choose which monitor a Direct3D application
-  will use for full-screen mode. Note that this depends on the underlying
-  display drivers to accurately report the attached displays. For Wine's X11
-  driver, that requires proper support for version 1.4 or later of the X RandR
-  extension.
-
-- Display gamma adjustment using the DXGI API is implemented. This is sometimes
-  used by Direct3D 10 and 11 applications to adjust screen "brightness".
-
-- Direct3D 12 supports version 1.1 root signatures.
-
-- When the VK_EXT_host_query_reset Vulkan extension is available, query
-  handling in the Vulkan renderer is slightly more efficient.
-
-- Retrieving swapchain present counts using the DXGI API is implemented.
-
-- A fallback path using GDI is added for swapchain presentation. This is used
-  in cases where OpenGL or Vulkan can't be used to present the swapchain, for
-  example when presenting to a window of a different process. This path is much
-  slower, but is often sufficient for some common use cases, like for example
-  applications using the Chromium Embedded Framework ("CEF") with cross-process
-  rendering.
-
-- The "precise" shader instruction modifier is respected when using the GLSL
-  shader backend.
-
-- The DirectDraw API supports 3D rendering to system memory surfaces when using
-  software device types like the "RGB", "MMX", and "Ramp" devices.
-
-- The following additional graphics cards are recognized by the Direct3D
-  graphics card database:
-  - AMD Radeon RX 5500M
-  - AMD Radeon RX 6800/6800 XT/6900 XT
-  - AMD Van Gogh
-  - Intel UHD Graphics 630
-  - NVIDIA GT 1030
-
-- The following HKEY_CURRENT_USER\Software\Wine\Direct3D key is removed:
-  - "UseGLSL"
-    This setting was deprecated in favor of the "shader_backend" setting in
-    Wine 5.0, and has been removed in this release.
-
-
-*** D3DX
-
-- The support for version 10 of the D3DX effects framework is much improved.
-
-- D3DX 10 supports the Windows Media Photo (JPEG XR) image file format.
-
-- Various D3DX10 texture creation functions (D3DX10CreateTextureFromMemory()
-  and variants) are implemented.
-
-- A partial implementation of the ID3DX10Sprite interface is added.
-
-- A partial implementation of the ID3DX10Font interface is added.
-
-
-*** Audio / video
-
-- The DirectShow and Media Foundation GStreamer glue is unified into a single
-  backend, making it easier to implement new media decoding APIs.
-
-- The Windows Media asynchronous and synchronous reader objects are implemented
-  based on the WineGStreamer backend. Like other multimedia decoding libraries,
-  they require a functioning GStreamer installation.
-
-- The Media Foundation support is more complete, with notably:
-  - Basic functionality of IMFPMediaPlayer, media item properties, support for
-    audio and video tracks.
-  - Support for sample allocator in the Source Reader.
-  - Improved EVR sink integration with presenter and mixer.
-  - Improved SAR rendering buffer behavior.
-  - Video sample allocator, with support for d3d9, d3d11, and system memory
-    buffers.
-  - Further improvements to EVR's presenter and mixer implementation.
-  - D3D11 frame output for IMFMediaEngine.
-  - Improvements to generic media source implementation in WineGStreamer to
-    support stopped and paused states, refined output type configuration.
-
-- The QuickTime decoder library (wineqtdecoder) is removed. GStreamer is
-  required for all built-in multimedia codecs also on macOS.
-
-
-*** Input devices
-
-- The HID (Human Interface Device) stack implementation is more complete. This
-  includes HID descriptor and report parsers, report processing, as well as HID
-  mini-driver support.
-
-- The winebus.sys driver backends are improved, to better describe the devices
-  into HID reports when pass-through is not possible, and to add standard
-  Physical Interface Device reports to expose force-feedback capabilities over
-  HID.
-
-- There's a new DirectInput joystick backend using the improved HID stack to
-  communicate with winebus.sys and host devices. This backend supports
-  force-feedback effects using the standard HID Physical Interface Device
-  reports, and is also compatible with pass-through HID device which implement
-  it. The SDL and evdev winebus.sys Linux backends are also supported as they
-  implement it too. This replaces and deprecates the legacy Linux js and evdev,
-  and macOS IOHID backends.
-
-- The joystick control panel is improved, as well as the interaction with
-  XInput-compatible devices. For such devices the joystick control panel can be
-  used to force DInput as the primary interface instead of XInput. This
-  translates to the "<joystick name>"="override" (REG_SZ) registry value in
-  HKCU\Software\Wine\AppDefaults\<app.exe>\DirectInput (or
-  HKCU\Software\Wine\DirectInput for prefix-wide setting).
-
-- The WinMM joystick support is implemented using DInput instead of Linux evdev
-  or macOS IOHID, and the old joystick driver (winejoystick.drv) is removed.
-
-- Many tests are added to the DInput module, using a virtual HID device to not
-  require a physical device anymore. The code is extensively and automatically
-  tested, including force-feedback effects with HID input / output report
-  validation.
-
-
-*** Text and fonts
-
-- Arabic shaping is implemented in DirectWrite, currently enabled for Arabic
-  and Syriac.
-
-- The Font Set object is implemented in DirectWrite.
-
-- The TextHost interface is properly implemented in RichEdit.
-
-
-*** Mono / .NET
-
-- The Mono engine is updated to version 7.0.0, with the following changes:
-  - IDispatch interface supported on COM Callable Wrappers.
-  - Improved support for SafeArray marshaling.
-  - Many other marshaling and COM interop improvements.
-  - Code imports from .NET Core: System.Drawing.Printing,
-    System.Security.Principal, WindowsFormsApplicationBase, parts of
-    Microsoft.VisualBasic.Interaction
-  - WMA and WMV support in FNA using mfplat.
-  - Debug symbols available separately in PDB form.
-  - Old VBNC compiler for Visual Basic .NET replaced with the VBC compiler from
-    .NET Core.
-  - Mono's JIT compiler generates code compatible with 64-bit macOS.
-  - WPF built with support for media controls.
-  - A replacement for the Managed DirectX API is included.
-  - Fixes for various bugs that prevented most WPF applications from working.
-
-
-*** Internationalization
-
-- Unicode character tables are based on version 14.0.0 of the Unicode Standard.
-
-- The timezone data is updated, based on the information from the Olson and
-  Unicode CLDR databases.
-
-- Codepages 720 (Arabic, Farsi and Urdu) and 20949 (Korean Wansung) are
-  supported.
-
-- The sr-Latn-RS locale is supported.
-
-  
-*** Kernel
-
-- Launching applications with the 'wine' executable invokes start.exe for any
-  unrecognized binary. This means that file associations work also from the
-  Unix command line, e.g. 'wine foo.msi'.
-
-- The low-level NtAlertThreadByThreadId / NtWaitForAlertByThreadId
-  synchronization mechanism (roughly equivalent to Linux futexes) is supported,
-  and used to implement the higher-level synchronization primitives.
-
-- NT debug objects are implemented and used by the kernel debugger functions.
-
-- The dynamic registry keys for performance data are implemented.
-
-
-*** C runtime
-
-- There's a full math library implementation in the C runtime, mostly imported
-  from the Musl C library. The Unix math library is no longer used.
-
-- The floating point environment functions are supported properly on all CPU
-  platforms.
-
-
-*** Internet and networking
-
-- IE11 compatibility mode is improved and used by default for
-  standard-compliant HTML documents.
-
-- JScript EcmaScript compliant mode supports 'let' statements, Map object,
-  object freezing, object sealing and mutable prototype chains.
-
-- Gecko add-on MSI packages are installed into the prefix on demand, instead of
-  during prefix update, to make updates faster and reduce disk space usage.
-
-- The DTLS communication protocol is supported.
-
-- The NSI device (Network Store Interface) is implemented, and used to provide
-  higher-level network services in IpHlpAPI.
-
-- The Windows Sockets support is reimplemented to go through NTDLL and the Afd
-  device, following the Windows architecture.
-
-- The various network database files (/etc/protocols, /etc/networks, etc.)  are
-  provided and installed in the prefix. The equivalent Unix databases are no
-  longer used for network queries.
-
-
-*** Alternative platforms
-
-- The new Apple Silicon Macs are supported, including running x86-64 binaries
-  under Rosetta 2.
-
-- GnuTLS is required on macOS for BCrypt and Secur32 support; the
-  macOS-specific backend implementations have been removed.
-
-- 32-bit ARM binaries are built in Thumb-2 mode, like on Windows.
-
-- The preloader is also used on 32-bit ARM, for a more compatible address space
-  layout.
-
-- Stack unwinding is implemented on 32-bit ARM.
-
-- More low-level system information queries like memory and battery status are
-  supported on FreeBSD.
-
-
-*** Builtin applications
-
-- The REG registry tool supports operating on either the 32- or 64-bit view of
-  the registry.
-
-- The REG registry tool supports copying registry keys.
-
-- The WineDump tool supports dumping Windows Metafiles, and shows more detailed
-  information for CodeView records.
-
-- The Wine Debugger (winedbg) supports debugging a 32-bit target process from
-  the 64-bit debugger.
-
-
-*** Development tools
-
-- The IDL compiler (widl) supports loading type libraries embedded inside PE
-  files.
-
-- The IDL compiler searches for type libraries in the per-platform library
-  search path instead of the include search path.
-
-- The IDL compiler supports many more WinRT-specific constructs and attributes.
-
-
-*** Build infrastructure
-
-- All libraries are installed in architecture-specific directories, using names
-  like 'i386-windows' for PE binaries, and 'x86_64-unix' for the Unix
-  libraries. This enables supporting multiple architectures with a single Wine
-  installation, as well as Winelib cross-compilation.
-
-- Static (.a) import libraries are used on all platforms. Wine no longer
-  generates the old-style .def libraries, though they are still supported for
-  backwards compatibility.
-
-- The option to prefer a native DLL by default is specified through a flag in
-  the PE header, which can be set by passing the '--prefer-native option' to
-  winebuild. The previous method, handling DLL_WINE_PREATTACH in DllMain, is no
-  longer supported.
-
-- The Dwarf debugging format is supported up to version 4. The Wine libraries
-  are built with version 4 by default.
-
-- Unique build identifiers can be stored in the binaries by passing the
-  '--enable-build-id' option to configure.
-
-- The Clang compiler in MSVC mode is supported.
-
-
-*** Miscellaneous
-
-- The Shell Folder naming is converted to use the Windows Vista+ scheme; for
-  instance 'My Documents' becomes 'Documents', and most things are saved under
-  the 'AppData' directory.
-
-- The OpenCL library wrapper supports versions up to OpenCL 1.2.
-
-- Paper forms are supported in various sizes in the WinSpool printer driver.
-
-- There is initial support for MSDASQL, a Microsoft OLE DB provider for ODBC
-  drivers.
-
-
-*** External dependencies
-
-- The following libraries are bundled in the source tree and built as PE
-  libraries, so they are no longer required at the Unix level:
-   - Faudio
-   - GSM
-   - LCMS2
-   - LibJPEG
-   - LibJXR
-   - LibMPG123
-   - LibPng
-   - LibTiff
-   - LibXml2
-   - LibXslt
-   - Zlib
-
-- The libraries above can still be imported as external libraries instead of
-  using the bundled copy, provided that they are available in PE format. This
-  behavior is requested with the '--with-system-dllpath' configure option,
-  which specifies the Unix search path for such dependencies.
-
-- Direct3D 12 support now requires version 1.2 or later of the vkd3d library.
-  Version 1.2 or later of the related vkd3d-shader library was already required
-  by Wine 6.0 for translation of Direct3D shader to SPIR-V in the Vulkan
-  renderer for the Direct3D implementation.
-
-- The deprecated HAL library is no longer supported or needed.
-
-- The macOS QuickTime library is no longer used.
-
-
---
-Alexandre Julliard
-julliard@winehq.org
+Bugs fixed in 7.0.1 (total 32):
+
+ - #12732  Nota Bene crashes on install
+ - #44202  undname.c fails to parse symbols with rvalue-reference semantics '&&'
+ - #45916  x64dbg fails to load debuggee, needs ThreadScheduler_ScheduleTask
+ - #50352  Maximum sockets per process is set very low
+ - #50370  Gothic 1 doesn't start correctly when screen resolution of the game matches display resolution
+ - #50433  'MsiBreak' custom action debugging aid should use custom action's name from 'CustomAction' table (currently uses 'Target' field)
+ - #50869  Killing Wine process in Wine 6.5 doesn't terminate the application because of the new use of start.exe
+ - #51163  WinOffice Pro 5.3 stops after splashscreen, needs WMI class SoftwareLicensingProduct
+ - #51619  advapi32:registry fails in Wine because French & German timezone name translations are too long
+ - #51900  regression: REAPER scrollbars flash between themed and non-themed
+ - #52163  postgresql-9.3 installer expects scrrun:filesys_GetTempName to return filename with TMP suffix
+ - #52298  Opening PPT with Freeoffice Presentations crashes on unimplemented function ole32.dll.OleConvertIStorageToOLESTREAMEx
+ - #52426  BCryptSignHash mishandles empty arguments
+ - #52434  Light Blue theme has rendering errors in tree views
+ - #52436  In Light Blue theme, checkable toggle buttons (BS_AUTOCHECKBOX) look unchecked when hovered
+ - #52446  Normal dlls with native subsystem id are no longer processed when importing system dlls with uppercase names
+ - #52476  QuickLOAD (VB5 app) input value is changed by factor 10
+ - #52494  shell32 progman_dde tests crash if run immediately after prefix creation
+ - #52510  alt:V mod for Grand Theft Auto V fails due to missing concrt140._Byte_reverse_table@details@Concurrency@@3QBEB
+ - #52562  advapi32:registry fails in Wine because some French timezone name translations are too long
+ - #52581  Internet MIDI crashes with Light Blue theme enabled
+ - #52583  ApiSetView does not display export ordinals correctly
+ - #52616  SteelSeries GG installer crashes on unimplemented function setupapi.dll.SetupQueryInfVersionInformationW
+ - #52618  32-bit EXEs do not launch from build dir on macOS 10.14 in WOW64
+ - #52626  MahjongSoul needs unimplemented function combase.dll.RoSetErrorReportingFlags
+ - #52667  DTS Master Audio Suite can't select save file location when wine's "Light" theme is used
+ - #52679  Anno 1602 / 1602 A.D. graphics too dark / black
+ - #52704  FreeHand 9 demo: invalid handle exception (0xc0000008) when attaching uxtheme.dll
+ - #52787  Invalid function prototype for "RegisterUserApiHook" when compiling for C++
+ - #52953  GuiPy crashes on unimplemented function xmllite.dll.CreateXmlReaderInputWithEncodingCodePage
+ - #53034  Lazarus: menu text disappears under mouse if light theme is enabled
+ - #53430  urlmon:url fails due to unexpected redirection
+
+----------------------------------------------------------------
+
+Changes since 7.0:
+
+Alex Henrie (14):
+      explorer: Only try to destroy the IShellWindows object if it exists.
+      tzres: Inform translators of 31-character limit.
+      po: Update Catalan translation.
+      msi: Fix memory leak in get_fusion_filename (Coverity).
+      winhttp: Fix memory leak on error path in WinHttpCrackUrl (Coverity).
+      adsldp: Fix memory leak on error path in search_ExecuteSearch (Coverity).
+      conhost: Fix memory leak on error path in create_screen_buffer (cppcheck).
+      dbghelp: Fix memory leak on error path in dwarf2_read_range (cppcheck).
+      ws2_32: Fix memory leak on error path in get_local_ips (cppcheck).
+      ws2_32: Fix memory leaks on error paths in unix_gethostby* (scan-build).
+      sane: Fix memory leak in create_item (Coverity).
+      winspool: Fix memory leaks on error path in DeviceCapabilitiesA (Coverity).
+      shell32: Fix sizeof argument in DoPaste (Coverity).
+      mciwave: Fix bad free in MCI_SendCommandAsync (Coverity).
+
+Alexandre Julliard (12):
+      user.exe: Make sure that the thunk selector doesn't get freed.
+      makefiles: Disable printf format warnings for non-PE msvcrt modules.
+      readme: Mention Gitlab.
+      kernel32/tests: Fix affinity test when there are too many CPUs.
+      ntdll/tests: Fix affinity test when there are too many CPUs.
+      secur32/tests: Update for new WineHQ certificate.
+      urlmon/tests: Run tests against the gitlab server to avoid redirects.
+      webservices/tests: Mark tests that fail on 64-bit as todo.
+      wininet/tests: Update WineHQ certificate.
+      makedep: Make the handling of install rules more generic.
+      makefiles: Add install-test target to install winetest.exe.
+      winetest: Don't require an email if we have a URL.
+
+Alistair Leslie-Hughes (1):
+      msado15: Return valid object in Recordset::Clone.
+
+Andrey Gusev (1):
+      d3d11: Implement the ID3DUserDefinedAnnotation interface.
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
+
+Bastien Orivel (1):
+      ws2_32: Fix setsockopt(TCP_NODELAY) when optlen is less than 4.
+
+Ben Shefte (1):
+      ntdll: Use case insensitive comparison in is_import_dll_system().
+
+Bhavesh Davda (1):
+      wined3d: Add GPU information for NVIDIA Ampere A10 and AMD Radeon Pro V620 GPUs.
+
+Brandon Moore (1):
+      msadpm: Stop decoding instead of crashing for invalid adpcm data.
+
+Brendan Shanks (1):
+      makefiles: On macOS, use @rpath instead of @loader_path when building Unix libs.
+
+David Kahurani (1):
+      oleaut32: Do not skip the first decimal digit in VarParseNumFromStr().
+
+Dmitry Timoshkov (2):
+      ieframe: Clear a being invalidated history entry.
+      ieframe: Initialize new history log entry.
+
+Eric Pouech (3):
+      start: Wrap child inside a job so it gets killed when start.exe terminates.
+      include/msvcrt: Redefine towlower* & towupper* with wint_t types.
+      msacm32: Use extended structure definition for driver configuration.
+
+Fabian Maurer (4):
+      printui: Use LocalFree for memory allocated by LocalAlloc (Coverity).
+      mfplay: Prevent usage of uninitialized pointer in error case (Coverity).
+      mfplat: Prevent use after free (Coverity).
+      shell32: Prevent user after free in error case (Coverity).
+
+Floris Renaud (1):
+      po: Update Dutch Translation.
+
+François Gouget (8):
+      po: Fix the French translation of 'code page'.
+      po: Fix backslash duplication in a French translation.
+      po: Remove a space before a linefeed in the French translation.
+      po: Remove spaces before linefeeds in the Spanish translation.
+      po: Remove a space before a linefeed in the Chinese translation.
+      po: Fix an accelerator shortcut in the Norwegian Bokmål translation.
+      inetmib1: Avoid overflows in IPv4 address comparisons.
+      inetmib1: Fix the IPv4 address network order for comparisons.
+
+Gabriel Ivăncescu (3):
+      ddraw: Use WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES only if window is not in foreground.
+      jscript: Handle NULL return pointers in all constructors.
+      mshtml: Fix leak on failure in return_nsstr.
+
+Gerald Pfeifer (1):
+      iphlpapi: Zero-init prefix_len to avoid a compiler warning.
+
+Gijs Vermeulen (1):
+      setupapi: Add SetupQueryInfVersionInformationA/W stub.
+
+Giovanni Mascellani (3):
+      winegstreamer: Do not block forever if EOS races with command queue.
+      mfplat: Avoid a race condition when releasing a tracked sample.
+      mfmediaengine: Fix a memory leak.
+
+Hans Leidekker (1):
+      msi: Use custom action name for MsiBreak handling.
+
+Henri Verbeet (2):
+      d3d11/tests: Add some tests for ID3DUserDefinedAnnotation.
+      wined3d: Add GPU information for NVIDIA Tesla T4.
+
+Kevin Puetz (1):
+      winegcc: --out-implib needs to propagate -m32/-m64 to winebuild.
+
+Lauri Kenttä (2):
+      po: Update Finnish translation.
+      readme: Update Finnish translation.
+
+Louis Lenders (2):
+      wbemprox: Add some properties of SoftwareLicensingProduct class.
+      ole32: Add stub for OleConvertIStorageToOLESTREAMEx.
+
+Martin Storsjö (1):
+      ntdll: Zero-initialize the syscall_frame used for starting threads on ARM/ARM64.
+
+Matteo Bruni (1):
+      combase: Add RoSetErrorReportingFlags() stub.
+
+Michael Stefaniuc (3):
+      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
+      gitlab: Import the gitlab CI from the master branch (devel tree).
+      tools: Import make_announce changes from the devel tree.
+
+Mohamad Al-Jaf (1):
+      hid: Implement HidD_GetPhysicalDescriptor.
+
+Nikolay Sivov (4):
+      comctl32/listview: Initialize subitem text buffer before drawing each subitem.
+      uxtheme: Fix double free on registry key handle.
+      xmllite/reader: Implement CreateXmlReaderInputWithEncodingCodePage().
+      evr/sample: Avoid a race condition when releasing a tracked sample.
+
+Paul Gofman (1):
+      concrt140: Add ?_Byte_reverse_table@details@Concurrency@@3QBEB data export.
+
+Piotr Caban (2):
+      ucrtbase: Add support for r-value demangling in unDName.
+      msvcr100: Improve ThreadScheduler_ScheduleTask_loc stub.
+
+Piotr Kleski (1):
+      bcrypt: Return BCryptSignHash len when only output is NULL.
+
+Robert Wilhelm (2):
+      scrrun: Add test for GetTempName.
+      scrrun: Generate temp name with tmp suffix.
+
+Rémi Bernon (1):
+      mf: Handle MESourceSeeked and MEStreamSeeked state change events.
+
+Santino Mazza (2):
+      ncrypt/tests: Test key import of an rsa key.
+      ncrypt: Make NCryptOpenStorageProvider return a valid stub pointer.
+
+Saulius Krasuckas (1):
+      ntdll: Check __WINE_PE_BUILD instead of compiler macros.
+
+Zebediah Figura (12):
+      ws2_32/tests: Add tests for WSAStartup().
+      ws2_32: Always fill the WSADATA structure in WSAStartup().
+      ws2_32: Cap the negotiated winsock version to 1.1 or 2.2.
+      ws2_32: Return 32767 or 0 in the iMaxSockets field.
+      ws2_32: Return 65467 or 0 in the iMaxUdpDg field.
+      ws2_32: Return WSAEFAULT instead of WSAEINVAL from WSAStartup() if "data" is NULL.
+      configure: Fix the check for CAPI support.
+      d3dx9: Don't mark annotation variables as dirty.
+      winegstreamer: Release stream_cs on error in stream_thread().
+      setupapi: Avoid leaking subKey in SETUPDI_AddDeviceInterfaces().
+      server: Allocate enough space for the backslash in dup_nt_name() (Valgrind).
+      tiff: Explictly link to zlib.
+
+Zhiyi Zhang (14):
+      user32/tests: Test painting standard scroll bars in hovered state.
+      user32: Draw standard scroll bars in hovered state only when they were previously painted by DefWinProc().
+      comctl32/button: Use pressed state when a pushlike checkbox or radio button is checked and hovered.
+      comctl32/treeview: Do not draw client edge without WS_EX_CLIENTEDGE.
+      light.msstyles: Do not use transparent treeview parts.
+      uxtheme/tests: Add IsThemePartDefined() tests.
+      uxtheme: Search parts of any state in IsThemePartDefined().
+      light.msstyles: Add Menu stub class.
+      user32/tests: Test NUMCOLORS for display DCs.
+      win32u: Return -1 for NUMCOLORS with 8-bit display DCs.
+      include: Avoid a C++ keyword for RegisterUserApiHook().
+      light.msstyles: Use stretch sizing type for scroll bar arrow button background.
+      uxtheme: Support parsing menu class.
+      light.msstyles: Add Menu parts.
