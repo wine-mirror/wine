@@ -76,6 +76,7 @@ struct wg_parser
 
     pthread_cond_t init_cond;
     bool no_more_pads, has_duration, error;
+    bool err_on, warn_on;
 
     pthread_cond_t read_cond, read_done_cond;
     struct
@@ -1071,8 +1072,11 @@ static GstBusSyncReply bus_handler_cb(GstBus *bus, GstMessage *msg, gpointer use
     {
     case GST_MESSAGE_ERROR:
         gst_message_parse_error(msg, &err, &dbg_info);
-        fprintf(stderr, "winegstreamer error: %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
-        fprintf(stderr, "winegstreamer error: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
+        if (parser->err_on)
+        {
+            fprintf(stderr, "winegstreamer error: %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+            fprintf(stderr, "winegstreamer error: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
+        }
         g_error_free(err);
         g_free(dbg_info);
         pthread_mutex_lock(&parser->mutex);
@@ -1083,8 +1087,11 @@ static GstBusSyncReply bus_handler_cb(GstBus *bus, GstMessage *msg, gpointer use
 
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning(msg, &err, &dbg_info);
-        fprintf(stderr, "winegstreamer warning: %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
-        fprintf(stderr, "winegstreamer warning: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
+        if (parser->warn_on)
+        {
+            fprintf(stderr, "winegstreamer warning: %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+            fprintf(stderr, "winegstreamer warning: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
+        }
         g_error_free(err);
         g_free(dbg_info);
         break;
@@ -1571,7 +1578,8 @@ static NTSTATUS wg_parser_create(void *args)
     pthread_cond_init(&parser->read_done_cond, NULL);
     parser->init_gst = init_funcs[params->type];
     parser->unlimited_buffering = params->unlimited_buffering;
-
+    parser->err_on = params->err_on;
+    parser->warn_on = params->warn_on;
     GST_DEBUG("Created winegstreamer parser %p.", parser);
     params->parser = parser;
     return S_OK;

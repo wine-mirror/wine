@@ -68,6 +68,8 @@ struct wg_parser *wg_parser_create(enum wg_parser_type type, bool unlimited_buff
     {
         .type = type,
         .unlimited_buffering = unlimited_buffering,
+        .err_on = ERR_ON(quartz),
+        .warn_on = WARN_ON(quartz),
     };
 
     TRACE("type %#x, unlimited_buffering %d.\n", type, unlimited_buffering);
