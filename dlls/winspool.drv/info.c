@@ -51,6 +51,7 @@
 #include "wine/heap.h"
 #include <wine/unixlib.h>
 
+#include "ddk/compstui.h"
 #include "ddk/winsplp.h"
 #include "wspool.h"
 
@@ -115,10 +116,26 @@ typedef struct
 
     /* entry points */
     DWORD (WINAPI *pDrvDeviceCapabilities)(HANDLE, const WCHAR *, WORD, void *, const DEVMODEW *);
-    INT   (WINAPI *pDrvDocumentProperties)(HWND, const WCHAR *, DEVMODEW *, DEVMODEW *, DWORD);
+    LONG  (WINAPI *pDrvDocumentPropertySheets)(PROPSHEETUI_INFO*, LPARAM);
 
     WCHAR name[1];
 } config_module_t;
+
+typedef struct {
+    WORD cbSize;
+    WORD Reserved;
+    HANDLE hPrinter;
+    LPCWSTR pszPrinterName;
+    PDEVMODEW pdmIn;
+    PDEVMODEW pdmOut;
+    DWORD cbOut;
+    DWORD fMode;
+} DOCUMENTPROPERTYHEADERW;
+
+typedef struct {
+    DOCUMENTPROPERTYHEADERW dph;
+    config_module_t *config;
+} document_property_t;
 
 /* ############################### */
 
@@ -502,7 +519,7 @@ static config_module_t *get_config_module(const WCHAR *device, BOOL grab)
     ret->ref = 2; /* one for config_module and one for the caller */
     ret->module = driver_module;
     ret->pDrvDeviceCapabilities = (void *)GetProcAddress(driver_module, "DrvDeviceCapabilities");
-    ret->pDrvDocumentProperties = (void *)GetProcAddress(driver_module, "DrvDocumentProperties");
+    ret->pDrvDocumentPropertySheets = (void *)GetProcAddress(driver_module, "DrvDocumentPropertySheets");
     wcscpy( ret->name, device );
 
     wine_rb_put(&config_modules, ret->name, &ret->entry);
@@ -1896,6 +1913,18 @@ LONG WINAPI DocumentPropertiesA(HWND hwnd, HANDLE printer, char *device_name, DE
     return ret;
 }
 
+static LONG WINAPI document_callback(PROPSHEETUI_INFO *info, LPARAM lparam)
+{
+    if (info->Reason == PROPSHEETUI_REASON_INIT)
+    {
+        document_property_t *dp = (document_property_t *)info->lParamInit;
+
+        if (!info->pfnComPropSheet(info->hComPropSheet, CPSFUNC_ADD_PFNPROPSHEETUIW,
+                    (LPARAM)dp->config->pDrvDocumentPropertySheets, (LPARAM)&dp->dph))
+            return ERR_CPSUI_GETLASTERROR;
+    }
+    return CPSUI_OK;
+}
 
 /*****************************************************************************
  *          DocumentPropertiesW (WINSPOOL.@)
@@ -1905,8 +1934,8 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 				LPDEVMODEW pDevModeOutput,
 				LPDEVMODEW pDevModeInput, DWORD fMode)
 {
-    config_module_t *config = NULL;
-    const WCHAR *device = NULL;
+    document_property_t dp;
+    const WCHAR *device;
     LONG ret;
 
     TRACE("(%p,%p,%s,%p,%p,%ld)\n",
@@ -1918,17 +1947,30 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
         return -1;
     }
 
-    config = get_config_module(device, TRUE);
-    if (!config) {
+    dp.dph.cbSize = sizeof(dp.dph);
+    dp.dph.Reserved = 0;
+    dp.dph.hPrinter = hPrinter;
+    dp.dph.pszPrinterName = device;
+    dp.dph.pdmIn = pDevModeInput;
+    dp.dph.pdmOut = pDevModeOutput;
+    dp.dph.cbOut = dp.dph.pdmOut ? dp.dph.pdmOut->dmSize : 0;
+    dp.dph.fMode = fMode;
+    dp.config = get_config_module(device, TRUE);
+    if (!dp.config) {
         ERR("Could not load config module for %s\n", debugstr_w(device));
         return -1;
     }
 
-    /* FIXME: This uses Wine-specific config file entry point.
-     * We should use DrvDevicePropertySheets instead (requires CPSUI support first).
-     */
-    ret = config->pDrvDocumentProperties(hWnd, device, pDevModeOutput, pDevModeInput, fMode);
-    release_config_module(config);
+    if (!(fMode & ~(DM_IN_BUFFER | DM_OUT_BUFFER | DM_OUT_DEFAULT))) {
+        ret = dp.config->pDrvDocumentPropertySheets(NULL, (LPARAM)&dp.dph);
+
+        if ((!fMode || !pDevModeOutput) && dp.dph.cbOut != ret)
+            FIXME("size mismatch: ret = %ld cbOut = %ld\n", ret, dp.dph.cbOut);
+    } else {
+        ret = CommonPropertySheetUIW(hWnd, document_callback, (LPARAM)&dp, NULL);
+    }
+
+    release_config_module(dp.config);
     return ret;
 }
 
