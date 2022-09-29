@@ -2925,6 +2925,11 @@ static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
                        "newValue = %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
+    hres = IDOMStorageEvent_get_url(event, &bstr);
+    ok_(__FILE__,line)(hres == S_OK, "get_url failed: %08lx\n", hres);
+    ok_(__FILE__,line)(!wcscmp(bstr, L"http://winetest.example.org/"), "url = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     IDOMStorageEvent_Release(event);
 }
 

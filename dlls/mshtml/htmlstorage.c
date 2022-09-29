@@ -235,6 +235,7 @@ struct send_storage_event_ctx {
     BSTR key;
     BSTR old_value;
     BSTR new_value;
+    const WCHAR *url;
 };
 
 static HRESULT push_storage_event_task(struct send_storage_event_ctx *ctx, HTMLInnerWindow *window, BOOL commit)
@@ -243,7 +244,7 @@ static HRESULT push_storage_event_task(struct send_storage_event_ctx *ctx, HTMLI
     DOMEvent *event;
     HRESULT hres;
 
-    hres = create_storage_event(window->doc, ctx->key, ctx->old_value, ctx->new_value, commit, &event);
+    hres = create_storage_event(window->doc, ctx->key, ctx->old_value, ctx->new_value, ctx->url, commit, &event);
     if(FAILED(hres))
         return hres;
 
@@ -327,6 +328,7 @@ static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value
         goto done;
     get_top_window(window->base.outer_window, &top_window);
 
+    ctx.url = window->base.outer_window->url;
     ctx.key = key;
     ctx.old_value = old_value;
     ctx.new_value = new_value;

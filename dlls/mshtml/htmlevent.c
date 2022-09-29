@@ -2616,6 +2616,7 @@ typedef struct {
     BSTR key;
     BSTR old_value;
     BSTR new_value;
+    BSTR url;
 } DOMStorageEvent;
 
 static inline DOMStorageEvent *impl_from_IDOMStorageEvent(IDOMStorageEvent *iface)
@@ -2710,8 +2711,13 @@ static HRESULT WINAPI DOMStorageEvent_get_newValue(IDOMStorageEvent *iface, BSTR
 static HRESULT WINAPI DOMStorageEvent_get_url(IDOMStorageEvent *iface, BSTR *p)
 {
     DOMStorageEvent *This = impl_from_IDOMStorageEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->url)
+        return (*p = SysAllocStringLen(This->url, SysStringLen(This->url))) ? S_OK : E_OUTOFMEMORY;
+    *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMStorageEvent_get_storageArea(IDOMStorageEvent *iface, IHTMLStorage **p)
@@ -2766,6 +2772,7 @@ static void DOMStorageEvent_destroy(DOMEvent *event)
     SysFreeString(storage_event->key);
     SysFreeString(storage_event->old_value);
     SysFreeString(storage_event->new_value);
+    SysFreeString(storage_event->url);
 }
 
 static const tid_t DOMEvent_iface_tids[] = {
@@ -3120,7 +3127,7 @@ HRESULT create_message_event(HTMLDocumentNode *doc, VARIANT *data, DOMEvent **re
 }
 
 HRESULT create_storage_event(HTMLDocumentNode *doc, BSTR key, BSTR old_value, BSTR new_value,
-        BOOL commit, DOMEvent **ret)
+        const WCHAR *url, BOOL commit, DOMEvent **ret)
 {
     DOMStorageEvent *storage_event;
     DOMEvent *event;
@@ -3138,6 +3145,11 @@ HRESULT create_storage_event(HTMLDocumentNode *doc, BSTR key, BSTR old_value, BS
             IDOMEvent_Release(&event->IDOMEvent_iface);
             return E_OUTOFMEMORY;
         }
+    }
+
+    if(url && !(storage_event->url = SysAllocString(url))) {
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+        return E_OUTOFMEMORY;
     }
 
     *ret = event;

@@ -1322,7 +1322,7 @@ async_test("storage events", function() {
         }
     }
 
-    function test_event(e, key, oldValue, newValue) {
+    function test_event(e, idx, key, oldValue, newValue) {
         if(v < 9) {
             ok(e === undefined, "event not undefined in legacy mode: " + e);
             return;
@@ -1333,6 +1333,8 @@ async_test("storage events", function() {
         ok(e.key === key, "key = " + e.key + ", expected " + key);
         ok(e.oldValue === oldValue, "oldValue = " + e.oldValue + ", expected " + oldValue);
         ok(e.newValue === newValue, "newValue = " + e.newValue + ", expected " + newValue);
+        s = (idx ? iframe.contentWindow : window)["location"]["href"];
+        ok(e.url === s, "url = " + e.url + ", expected " + s);
     }
 
     function expect(idx, key, oldValue, newValue, quirk) {
@@ -1352,10 +1354,10 @@ async_test("storage events", function() {
 
             (v < 9 ? document2 : window2)["onstorage"] = function(e) {
                 (local && idx ? document2 : (local || v < 9 ? document : window))[local ? "onstoragecommit" : "onstorage"] = function(e) {
-                    test_event(e, local ? "" : key, local ? "" : oldValue, local ? "" : newValue);
+                    test_event(e, idx, local ? "" : key, local ? "" : oldValue, local ? "" : newValue);
                     next();
                 }
-                test_event(e, key, oldValue, newValue);
+                test_event(e, idx, key, oldValue, newValue);
             }
         }
     }
