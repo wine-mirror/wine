@@ -59,13 +59,15 @@ typedef enum {
     DISPATCH_LEGACY
 } dispatch_mode_t;
 
+/* Keep inherited event types after the inheritor (e.g. DragEvent->MouseEvent->UIEvent) */
 typedef enum {
     EVENT_TYPE_EVENT,
-    EVENT_TYPE_UIEVENT,
+    EVENT_TYPE_CUSTOM,
+    EVENT_TYPE_DRAG,
     EVENT_TYPE_KEYBOARD,
     EVENT_TYPE_MOUSE,
     EVENT_TYPE_FOCUS,
-    EVENT_TYPE_DRAG,
+    EVENT_TYPE_UIEVENT,
     EVENT_TYPE_MESSAGE,
     EVENT_TYPE_PROGRESS,
     EVENT_TYPE_STORAGE,
@@ -74,11 +76,12 @@ typedef enum {
 
 static const WCHAR *event_types[] = {
     L"Event",
-    L"UIEvent",
+    L"CustomEvent",
+    L"Event", /* FIXME */
     L"KeyboardEvent",
     L"MouseEvent",
     L"Event", /* FIXME */
-    L"Event", /* FIXME */
+    L"UIEvent",
     L"MessageEvent",
     L"ProgressEvent",
     L"StorageEvent",
@@ -2916,6 +2919,11 @@ static void fill_parent_ui_event(nsIDOMEvent *nsevent, DOMUIEvent *ui_event)
     nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMUIEvent, (void**)&ui_event->nsevent);
 }
 
+static DOMEvent *generic_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+{
+    return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, NULL, NULL, nsevent, event_id, compat_mode);
+}
+
 static DOMEvent *ui_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
     DOMUIEvent *ui_event = event_ctor(sizeof(DOMUIEvent), &DOMUIEvent_dispex,
@@ -2973,7 +2981,7 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
     return &progress_event->event;
 }
 
-static DOMEvent *message_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+static DOMEvent *message_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
     DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex,
             DOMMessageEvent_query_interface, DOMMessageEvent_destroy, nsevent, event_id, compat_mode);
@@ -2982,7 +2990,7 @@ static DOMEvent *message_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, co
     return &message_event->event;
 }
 
-static DOMEvent *storage_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+static DOMEvent *storage_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
     DOMStorageEvent *storage_event = event_ctor(sizeof(DOMStorageEvent), &DOMStorageEvent_dispex,
             DOMStorageEvent_query_interface, DOMStorageEvent_destroy, nsevent, event_id, compat_mode);
@@ -2991,48 +2999,46 @@ static DOMEvent *storage_event_ctor(nsIDOMEvent *nsevent, eventid_t event_id, co
     return &storage_event->event;
 }
 
-static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, eventid_t event_id)
+static const struct {
+    REFIID iid;
+    DOMEvent *(*ctor)(void *iface, nsIDOMEvent *nsevent, eventid_t, compat_mode_t);
+} event_types_ctor_table[] = {
+    [EVENT_TYPE_EVENT]          = { NULL,                         generic_event_ctor },
+    [EVENT_TYPE_UIEVENT]        = { &IID_nsIDOMUIEvent,           ui_event_ctor },
+    [EVENT_TYPE_MOUSE]          = { &IID_nsIDOMMouseEvent,        mouse_event_ctor },
+    [EVENT_TYPE_KEYBOARD]       = { &IID_nsIDOMKeyEvent,          keyboard_event_ctor },
+    [EVENT_TYPE_CLIPBOARD]      = { NULL,                         generic_event_ctor },
+    [EVENT_TYPE_FOCUS]          = { NULL,                         generic_event_ctor },
+    [EVENT_TYPE_DRAG]           = { NULL,                         generic_event_ctor },
+    [EVENT_TYPE_CUSTOM]         = { &IID_nsIDOMCustomEvent,       custom_event_ctor },
+    [EVENT_TYPE_PROGRESS]       = { &IID_nsIDOMProgressEvent,     progress_event_ctor },
+    [EVENT_TYPE_MESSAGE]        = { NULL,                         message_event_ctor },
+    [EVENT_TYPE_STORAGE]        = { NULL,                         storage_event_ctor },
+};
+
+static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, event_type_t event_type,
+        eventid_t event_id)
 {
-    static const struct {
-        REFIID iid;
-        DOMEvent *(*ctor)(void *iface, nsIDOMEvent *nsevent, eventid_t, compat_mode_t);
-    } types_table[] = {
-        { &IID_nsIDOMMouseEvent,        mouse_event_ctor },
-        { &IID_nsIDOMKeyEvent,          keyboard_event_ctor },
-        { &IID_nsIDOMUIEvent,           ui_event_ctor },
-        { &IID_nsIDOMCustomEvent,       custom_event_ctor },
-        { &IID_nsIDOMProgressEvent,     progress_event_ctor },
-    };
+    void *iface = NULL;
     DOMEvent *event;
-    unsigned i;
 
-    switch(event_id) {
-    case EVENTID_MESSAGE: return message_event_ctor(nsevent, event_id, compat_mode);
-    case EVENTID_STORAGECOMMIT:
-    case EVENTID_STORAGE: return storage_event_ctor(nsevent, event_id, compat_mode);
-    default: break;
-    }
+    if(event_types_ctor_table[event_type].iid)
+        nsIDOMEvent_QueryInterface(nsevent, event_types_ctor_table[event_type].iid, &iface);
 
-    for(i = 0; i < ARRAY_SIZE(types_table); i++) {
-        void *iface;
-        nsresult nsres = nsIDOMEvent_QueryInterface(nsevent, types_table[i].iid, &iface);
-        if(NS_SUCCEEDED(nsres)) {
-            /* Transfer the iface ownership to the ctor on success */
-            if(!(event = types_table[i].ctor(iface, nsevent, event_id, compat_mode)))
-                nsISupports_Release(iface);
-            return event;
-        }
-    }
-
-    return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, NULL, NULL, nsevent, event_id, compat_mode);
+    /* Transfer the iface ownership to the ctor on success */
+    if(!(event = event_types_ctor_table[event_type].ctor(iface, nsevent, event_id, compat_mode)) && iface)
+        nsISupports_Release(iface);
+    return event;
 }
 
 HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, compat_mode_t compat_mode, DOMEvent **ret_event)
 {
+    event_type_t event_type = EVENT_TYPE_EVENT;
     eventid_t event_id = EVENTID_LAST;
     DOMEvent *event;
     nsAString nsstr;
     nsresult nsres;
+    unsigned i;
 
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMEvent_GetType(nsevent, &nsstr);
@@ -3047,7 +3053,17 @@ HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, compat_mode_t compat_mod
     }
     nsAString_Finish(&nsstr);
 
-    event = alloc_event(nsevent, compat_mode, event_id);
+    for(i = 0; i < ARRAY_SIZE(event_types_ctor_table); i++) {
+        void *iface;
+        if(event_types_ctor_table[i].iid &&
+           nsIDOMEvent_QueryInterface(nsevent, event_types_ctor_table[i].iid, &iface) == NS_OK) {
+            nsISupports_Release(iface);
+            event_type = i;
+            break;
+        }
+    }
+
+    event = alloc_event(nsevent, compat_mode, event_type, event_id);
     if(!event)
         return E_OUTOFMEMORY;
 
@@ -3058,10 +3074,12 @@ HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, compat_mode_t compat_mod
 
 HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOMEvent **ret_event)
 {
+    event_type_t event_type = EVENT_TYPE_EVENT;
     nsIDOMEvent *nsevent;
     DOMEvent *event;
     nsAString nsstr;
     nsresult nsres;
+    unsigned i;
 
     nsAString_InitDepend(&nsstr, type);
     nsres = nsIDOMHTMLDocument_CreateEvent(doc->nsdoc, &nsstr, &nsevent);
@@ -3071,7 +3089,15 @@ HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOM
         return E_FAIL;
     }
 
-    event = alloc_event(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), EVENTID_LAST);
+    for(i = 0; i < ARRAY_SIZE(event_types); i++) {
+        if(!wcsicmp(type, event_types[i])) {
+            event_type = i;
+            break;
+        }
+    }
+
+    event = alloc_event(nsevent, dispex_compat_mode(&doc->node.event_target.dispex),
+                        event_type, EVENTID_LAST);
     nsIDOMEvent_Release(nsevent);
     if(!event)
         return E_OUTOFMEMORY;
@@ -3095,7 +3121,7 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
         return E_FAIL;
     }
 
-    event = alloc_event(nsevent, doc->document_mode, event_id);
+    event = alloc_event(nsevent, doc->document_mode, event_info[event_id].type, event_id);
     if(!event)
         return E_OUTOFMEMORY;
 
