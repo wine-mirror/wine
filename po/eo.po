@@ -13259,12 +13259,6 @@ msgstr "Papera &Grando:"
 msgid "Duplex:"
 msgstr "Duobla:"
 
-#: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
-msgid "Setup"
-msgstr "&Agordi"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Regno"

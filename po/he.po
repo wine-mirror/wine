@@ -13627,12 +13627,6 @@ msgstr "גודל ה&נייר:"
 msgid "Duplex:"
 msgstr "דו־צדדי:"
 
-#: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
-msgid "Setup"
-msgstr "ה&גדרה"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "תחום"

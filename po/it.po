@@ -13725,12 +13725,6 @@ msgstr "&Dimensione del foglio:"
 msgid "Duplex:"
 msgstr "Fronte retro:"
 
-#: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
-msgid "Setup"
-msgstr "&Configura"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Dominio"

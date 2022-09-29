@@ -46,7 +46,6 @@ FONT 8, "MS Shell Dlg"
 STRINGTABLE
 {
  IDS_DPI "#msgctxt#unit: dots/inch#dpi"
- IDS_SETUP "Setup"
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

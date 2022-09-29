@@ -12516,10 +12516,6 @@ msgstr "용지 크기(&Z):"
 msgid "Duplex:"
 msgstr "양면:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "설정"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "영역"

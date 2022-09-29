@@ -13606,12 +13606,6 @@ msgstr "ح&جم الصفحة:"
 msgid "Duplex:"
 msgstr "مزدوج:"
 
-#: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
-msgid "Setup"
-msgstr "&إعداد"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "حقل"

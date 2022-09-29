@@ -13609,12 +13609,6 @@ msgstr "Veličina papira:"
 msgid "Duplex:"
 msgstr "Duplex:"
 
-#: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
-msgid "Setup"
-msgstr "&Postavke"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Domena"

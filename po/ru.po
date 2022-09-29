@@ -12970,10 +12970,6 @@ msgstr "&Размер бумаги:"
 msgid "Duplex:"
 msgstr "Двухсторонняя печать:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "Настройка"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Домен"

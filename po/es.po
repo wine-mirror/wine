@@ -13134,10 +13134,6 @@ msgstr "&Tamaño de papel:"
 msgid "Duplex:"
 msgstr "Dúplex:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "Configuración"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Dominio"

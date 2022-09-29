@@ -12872,10 +12872,6 @@ msgstr "කඩදාසි තරම:"
 msgid "Duplex:"
 msgstr "ද්වීපත:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "පිහිටුම"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "බල ප්‍රදේශය"

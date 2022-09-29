@@ -13661,12 +13661,6 @@ msgstr "Papír &méret:"
 msgid "Duplex:"
 msgstr "Duplex:"
 
-#: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
-msgid "Setup"
-msgstr "&Beállítás"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Csoport"

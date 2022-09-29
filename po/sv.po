@@ -13443,10 +13443,6 @@ msgstr "Papperssto&rlek:"
 msgid "Duplex:"
 msgstr "Dubbelsidig:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "Inställningar"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Domän"

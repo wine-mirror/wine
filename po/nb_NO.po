@@ -13338,10 +13338,6 @@ msgstr "Papir&størrelse:"
 msgid "Duplex:"
 msgstr "Retning:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "Oppsett"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Område"

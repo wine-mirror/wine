@@ -12541,10 +12541,6 @@ msgstr "Paper Si&ze:"
 msgid "Duplex:"
 msgstr "Duplex:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "Setup"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Realm"

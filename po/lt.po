@@ -12542,10 +12542,6 @@ msgstr "Popieriaus &dydis:"
 msgid "Duplex:"
 msgstr "Dvigubas:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "Nuostatos"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Sritis"

@@ -12486,10 +12486,6 @@ msgstr "纸张大小(&Z):"
 msgid "Duplex:"
 msgstr "双面:"
 
-#: dlls/wineps.drv/wineps.rc:50
-msgid "Setup"
-msgstr "设置"
-
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Realm"
