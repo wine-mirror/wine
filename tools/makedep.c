@@ -3176,8 +3176,8 @@ static void output_module( struct makefile *make )
 
         if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
 
-        strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, IMPORT_TYPE_DELAYED, make->is_cross ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, make->is_cross ));
+        strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, IMPORT_TYPE_DELAYED, make->is_cross ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, make->is_cross ) );
 
         if (!make->use_msvcrt)
