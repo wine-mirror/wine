@@ -3243,7 +3243,7 @@ static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, 
     TRACE("iface %p, msg %s, targetOrigin %s, transfer %s\n", iface, debugstr_variant(&msg),
           debugstr_w(targetOrigin), debugstr_variant(&transfer));
 
-    if(V_VT(&transfer) != VT_EMPTY)
+    if(V_VT(&transfer) != VT_EMPTY && V_VT(&transfer) != VT_ERROR)
         FIXME("transfer not implemented, ignoring\n");
 
     hres = check_target_origin(window, targetOrigin);
