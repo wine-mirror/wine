@@ -34,6 +34,21 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
+WINE_DECLARE_DEBUG_CHANNEL(tiff);
+
+static void tiff_error_handler( const char *module, const char *format, va_list args )
+{
+    if (!ERR_ON(tiff)) return;
+    if (wine_dbg_vlog( __WINE_DBCL_ERR, &__wine_dbch_tiff, module, format, args ) != -1)
+        __wine_dbg_output( "\n" );
+}
+
+static void tiff_warning_handler( const char *module, const char *format, va_list args )
+{
+    if (!WARN_ON(tiff)) return;
+    if (wine_dbg_vlog( __WINE_DBCL_WARN, &__wine_dbch_tiff, module, format, args ) != -1)
+        __wine_dbg_output( "\n" );
+}
 
 static tsize_t tiff_stream_read(thandle_t client_data, tdata_t data, tsize_t size)
 {
@@ -1077,6 +1092,8 @@ HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **re
     info->block_format = GUID_ContainerFormatTiff;
     info->clsid = CLSID_WICTiffDecoder;
 
+    TIFFSetErrorHandler( tiff_error_handler );
+    TIFFSetWarningHandler( tiff_warning_handler );
     return S_OK;
 }
 
@@ -1316,5 +1333,7 @@ HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **re
 
     *result = &This->encoder;
 
+    TIFFSetErrorHandler( tiff_error_handler );
+    TIFFSetWarningHandler( tiff_warning_handler );
     return S_OK;
 }
