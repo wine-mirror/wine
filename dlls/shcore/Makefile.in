@@ -1,6 +1,7 @@
 MODULE    = shcore.dll
 IMPORTLIB = shcore
-IMPORTS   = user32 gdi32 ole32 advapi32
+IMPORTS   = advapi32
+DELAYIMPORTS = user32 ole32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
