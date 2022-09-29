@@ -68,6 +68,7 @@ typedef enum {
     EVENT_TYPE_DRAG,
     EVENT_TYPE_MESSAGE,
     EVENT_TYPE_PROGRESS,
+    EVENT_TYPE_STORAGE,
     EVENT_TYPE_CLIPBOARD
 } event_type_t;
 
@@ -78,8 +79,9 @@ static const WCHAR *event_types[] = {
     L"MouseEvent",
     L"Event", /* FIXME */
     L"Event", /* FIXME */
-    L"Event", /* We don't use Gecko's message events */
+    L"MessageEvent",
     L"ProgressEvent",
+    L"StorageEvent",
     L"Event"  /* FIXME */
 };
 
@@ -191,9 +193,9 @@ static const event_info_t event_info[] = {
         EVENT_FIXME},
     {L"selectstart",       EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSELECTSTART,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
-    {L"storage",           EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSTORAGE,
+    {L"storage",           EVENT_TYPE_STORAGE,   DISPID_EVMETH_ONSTORAGE,
         0},
-    {L"storagecommit",     EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSTORAGECOMMIT,
+    {L"storagecommit",     EVENT_TYPE_STORAGE,   DISPID_EVMETH_ONSTORAGECOMMIT,
         0},
     {L"submit",            EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSUBMIT,
         EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE},
