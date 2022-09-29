@@ -1,5 +1,5 @@
 MODULE    = regedit.exe
-IMPORTS   = advapi32
+IMPORTS   = advapi32 shcore
 DELAYIMPORTS = shlwapi shell32 comdlg32 comctl32 user32 gdi32
 
 EXTRADLLFLAGS = -mwindows -municode
