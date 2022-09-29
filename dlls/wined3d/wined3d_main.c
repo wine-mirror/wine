@@ -30,6 +30,7 @@
 #include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(vkd3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct wined3d_wndproc
@@ -470,6 +471,23 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 
     if (appkey) RegCloseKey( appkey );
     if (hkey) RegCloseKey( hkey );
+
+    if (!getenv( "VKD3D_DEBUG" ))
+    {
+        if (TRACE_ON(vkd3d)) putenv( "VKD3D_DEBUG=trace" );
+        else if (WARN_ON(vkd3d)) putenv( "VKD3D_DEBUG=warn" );
+        else if (FIXME_ON(vkd3d)) putenv( "VKD3D_DEBUG=fixme" );
+        else if (ERR_ON(vkd3d)) putenv( "VKD3D_DEBUG=err" );
+        else putenv( "VKD3D_DEBUG=none" );
+    }
+    if (!getenv( "VKD3D_SHADER_DEBUG" ))
+    {
+        if (TRACE_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=trace" );
+        else if (WARN_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=warn" );
+        else if (FIXME_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=fixme" );
+        else if (ERR_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=err" );
+        else putenv( "VKD3D_SHADER_DEBUG=none" );
+    }
 
     vkd3d_set_log_callback(vkd3d_log_callback);
 
