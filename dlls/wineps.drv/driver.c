@@ -23,6 +23,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -38,6 +39,18 @@
 #include "psdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
+
+typedef struct
+{
+    WORD cbSize;
+    WORD Reserved;
+    HANDLE hPrinter;
+    LPCWSTR pszPrinterName;
+    PDEVMODEW pdmIn;
+    PDEVMODEW pdmOut;
+    DWORD cbOut;
+    DWORD fMode;
+} DOCUMENTPROPERTYHEADERW;
 
 /* convert points to paper size units (10th of a millimeter) */
 static inline int paper_size_from_points( float size )
@@ -519,6 +532,94 @@ INT WINAPI DrvDocumentProperties(HWND hwnd, const WCHAR *device, DEVMODEW *outpu
     memcpy( output, &pi->Devmode->dmPublic,
             pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
   return IDOK;
+}
+
+/******************************************************************************
+ *           DrvDocumentPropertySheets (wineps.drv.@)
+ */
+LONG WINAPI DrvDocumentPropertySheets(PROPSHEETUI_INFO *info, LPARAM lparam)
+{
+    DOCUMENTPROPERTYHEADERW *dph;
+    PRINTERINFO *pi;
+
+    TRACE("(info=%p, lparam=%Id)\n", info, lparam);
+
+    dph = (DOCUMENTPROPERTYHEADERW *)(info ? info->lParamInit : lparam);
+
+    if (!(pi = PSDRV_FindPrinterInfo(dph->pszPrinterName))) return ERR_CPSUI_GETLASTERROR;
+
+    if (!info || info->Reason == PROPSHEETUI_REASON_INIT)
+    {
+        /* If dph->fMode == 0, return size of DEVMODE structure */
+        if (!dph->fMode || !dph->pdmOut)
+        {
+            dph->cbOut = pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra;
+            return dph->cbOut;
+        }
+
+        /* If DM_MODIFY is set, change settings in accordance with pdmIn */
+        if ((dph->fMode & DM_MODIFY) && dph->pdmIn)
+        {
+            TRACE("DM_MODIFY set. devIn->dmFields = %08lx\n", dph->pdmIn->dmFields);
+            PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODE *)dph->pdmIn, pi);
+        }
+
+        /* If DM_PROMPT is set, present modal dialog box */
+        if (dph->fMode & DM_PROMPT)
+        {
+            PROPSHEETPAGEW psp;
+            PSDRV_DLGINFO *di;
+
+            if (!info)
+            {
+                ERR("DM_PROMPT passed with NULL PROPSHEETUI_INFO\n");
+                return ERR_CPSUI_GETLASTERROR;
+            }
+
+            di = malloc(sizeof(*di));
+            if (!di)
+                return ERR_CPSUI_ALLOCMEM_FAILED;
+            info->UserData = (ULONG_PTR)di;
+
+            di->dlgdm = malloc(sizeof(*di->dlgdm));
+            if (!di->dlgdm)
+                return ERR_CPSUI_ALLOCMEM_FAILED;
+
+            memset(&psp, 0, sizeof(psp));
+            di->pi = pi;
+            *di->dlgdm = *pi->Devmode;
+            psp.dwSize = sizeof(psp);
+            psp.hInstance = PSDRV_hInstance;
+            psp.pszTemplate = L"PAPER";
+            psp.pszIcon = NULL;
+            psp.pfnDlgProc = PSDRV_PaperDlgProc;
+            psp.lParam = (LPARAM)di;
+
+            if (!info->pfnComPropSheet(info->hComPropSheet, CPSFUNC_ADD_PROPSHEETPAGEW, (LPARAM)&psp, 0))
+                return ERR_CPSUI_GETLASTERROR;
+        }
+    }
+
+    if (info && info->Reason == PROPSHEETUI_REASON_DESTROY)
+    {
+        if (info->UserData)
+            free(((PSDRV_DLGINFO *)info->UserData)->dlgdm);
+        free((void *)info->UserData);
+    }
+
+    if (!info || (info->Reason == PROPSHEETUI_REASON_DESTROY && lparam))
+    {
+        /* If DM_UPDATE is set, should write settings to environment and initialization file */
+        if (dph->fMode & DM_UPDATE)
+            FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
+
+        /* If DM_COPY is set, should write settings to pdmOut */
+        if (dph->pdmOut && (dph->fMode & (DM_COPY | DM_UPDATE)))
+            memcpy(dph->pdmOut, &pi->Devmode->dmPublic,
+                    pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra);
+    }
+
+    return CPSUI_OK;
 }
 
 /******************************************************************************
