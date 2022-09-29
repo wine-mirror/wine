@@ -395,9 +395,7 @@ interface IHTMLDOMConstructor : IDispatch
     [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]       \
     IDispatch *constructor()
 
-interface IHTMLCaret;
 interface IHTMLComputedStyle;
-interface IHTMLDocument2;
 interface IHTMLDocument7;
 interface IHTMLElement;
 interface IHTMLElement2;
@@ -414,14 +412,6 @@ interface IHTMLWindow5;
 interface IHTMLWindow6;
 interface IHTMLWindow7;
 interface IDOMEvent;
-interface IDisplayPointer;
-interface IDisplayServices;
-interface ILineInfo;
-interface IMarkupPointer;
-interface IMarkupContainer;
-interface ISegmentList;
-interface IHTMLChangeLog;
-interface IHTMLChangeSink;
 interface ISVGSVGElement;
 interface IHTMLDOMRange;
 interface IHTMLStyleSheet;
@@ -19574,6 +19564,8 @@ interface IHTMLFramesCollection2 : IDispatch
     HRESULT length([retval, out] LONG *p);
 }
 
+interface IHTMLDocument2;
+
 /*****************************************************************************
  *    IHTMLScreen interface
  */
@@ -28840,6 +28832,16 @@ interface IHTMLComputedStyle : IUnknown
     [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_OL)] HRESULT OL([retval, out] VARIANT_BOOL *p);
     HRESULT IsEqual([in] IHTMLComputedStyle *pComputedStyle,[out] VARIANT_BOOL *pfEqual);
 };
+
+interface IHTMLCaret;
+interface IDisplayPointer;
+interface IDisplayServices;
+interface ILineInfo;
+interface IMarkupPointer;
+interface IMarkupContainer;
+interface ISegmentList;
+interface IHTMLChangeLog;
+interface IHTMLChangeSink;
 
 /*****************************************************************************
  *    IDisplayPointer interface
