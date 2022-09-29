@@ -202,14 +202,17 @@ static const event_info_t event_info[] = {
     {L"timeout",           EVENT_TYPE_PROGRESS,  DISPID_EVPROP_TIMEOUT,
         EVENT_BIND_TO_TARGET},
     {L"unload",            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONUNLOAD,
-        EVENT_FIXME}
+        EVENT_FIXME},
+
+    /* EVENTID_LAST special entry */
+    {NULL,                 EVENT_TYPE_EVENT,     0, 0}
 };
 
-C_ASSERT(ARRAY_SIZE(event_info) == EVENTID_LAST);
+C_ASSERT(ARRAY_SIZE(event_info) - 1 == EVENTID_LAST);
 
 static eventid_t str_to_eid(const WCHAR *str)
 {
-    unsigned i, a = 0, b = ARRAY_SIZE(event_info);
+    unsigned i, a = 0, b = ARRAY_SIZE(event_info) - 1;
     int c;
 
     while(a < b) {
@@ -225,7 +228,7 @@ static eventid_t str_to_eid(const WCHAR *str)
 
 static eventid_t attr_to_eid(const WCHAR *str)
 {
-    unsigned i, a = 0, b = ARRAY_SIZE(event_info);
+    unsigned i, a = 0, b = ARRAY_SIZE(event_info) - 1;
     int c;
 
     if((str[0] != 'o' && str[0] != 'O') || (str[1] != 'n' && str[1] != 'N'))
@@ -262,7 +265,7 @@ static listener_container_t *get_listener_container(EventTarget *event_target, c
         return NULL;
 
     eid = str_to_eid(type);
-    if(eid != EVENTID_LAST && (event_info[eid].flags & EVENT_FIXME))
+    if(event_info[eid].flags & EVENT_FIXME)
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
 
     type_len = lstrlenW(type);
@@ -1687,18 +1690,16 @@ static HRESULT WINAPI DOMMouseEvent_get_fromElement(IDOMMouseEvent *iface, IHTML
     DOMMouseEvent *This = impl_from_IDOMMouseEvent(iface);
     eventid_t event_id = This->ui_event.event.event_id;
     IEventTarget  *related_target = NULL;
+    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(event_id != EVENTID_LAST) {
-        HRESULT hres = S_OK;
-        if(event_info[event_id].flags & EVENT_MOUSE_FROM_RELATED)
-            hres = IDOMMouseEvent_get_relatedTarget(&This->IDOMMouseEvent_iface, &related_target);
-        else if(event_info[event_id].flags & EVENT_MOUSE_TO_RELATED)
-            hres = IDOMEvent_get_target(&This->ui_event.event.IDOMEvent_iface, &related_target);
-        if(FAILED(hres))
-            return hres;
-    }
+    if(event_info[event_id].flags & EVENT_MOUSE_FROM_RELATED)
+        hres = IDOMMouseEvent_get_relatedTarget(&This->IDOMMouseEvent_iface, &related_target);
+    else if(event_info[event_id].flags & EVENT_MOUSE_TO_RELATED)
+        hres = IDOMEvent_get_target(&This->ui_event.event.IDOMEvent_iface, &related_target);
+    if(FAILED(hres))
+        return hres;
 
     if(!related_target) {
         *p = NULL;
@@ -1714,18 +1715,16 @@ static HRESULT WINAPI DOMMouseEvent_get_toElement(IDOMMouseEvent *iface, IHTMLEl
     DOMMouseEvent *This = impl_from_IDOMMouseEvent(iface);
     eventid_t event_id = This->ui_event.event.event_id;
     IEventTarget  *related_target = NULL;
+    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(event_id != EVENTID_LAST) {
-        HRESULT hres = S_OK;
-        if(event_info[event_id].flags & EVENT_MOUSE_TO_RELATED)
-            hres = IDOMMouseEvent_get_relatedTarget(&This->IDOMMouseEvent_iface, &related_target);
-        else if(event_info[event_id].flags & EVENT_MOUSE_FROM_RELATED)
-            hres = IDOMEvent_get_target(&This->ui_event.event.IDOMEvent_iface, &related_target);
-        if(FAILED(hres))
-            return hres;
-    }
+    if(event_info[event_id].flags & EVENT_MOUSE_TO_RELATED)
+        hres = IDOMMouseEvent_get_relatedTarget(&This->IDOMMouseEvent_iface, &related_target);
+    else if(event_info[event_id].flags & EVENT_MOUSE_FROM_RELATED)
+        hres = IDOMEvent_get_target(&This->ui_event.event.IDOMEvent_iface, &related_target);
+    if(FAILED(hres))
+        return hres;
 
     if(!related_target) {
         *p = NULL;
@@ -3393,9 +3392,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
     if(listeners != listeners_buf)
         heap_free(listeners);
 
-    if(event->phase != DEP_CAPTURING_PHASE && event->event_id != EVENTID_LAST
-       && event_info[event->event_id].dispid && (vtbl = dispex_get_vtbl(&event_target->dispex))
-       && vtbl->get_cp_container)
+    if(event->phase != DEP_CAPTURING_PHASE && event_info[event->event_id].dispid
+       && (vtbl = dispex_get_vtbl(&event_target->dispex)) && vtbl->get_cp_container)
         cp_container = vtbl->get_cp_container(&event_target->dispex);
     if(cp_container) {
         if(cp_container->cps) {
@@ -3533,7 +3531,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
             IHTMLEventObj_Release(prev_event);
     }
 
-    if(event->event_id != EVENTID_LAST && (event_info[event->event_id].flags & EVENT_HASDEFAULTHANDLERS)) {
+    if(event_info[event->event_id].flags & EVENT_HASDEFAULTHANDLERS) {
         BOOL prevent_default = event->prevent_default;
         for(i = 0; !prevent_default && i < chain_cnt; i++) {
             vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
@@ -3571,7 +3569,7 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
      * but we already dispatched event to all relevant targets. Stop event
      * propagation here to avoid events being dispatched multiple times.
      */
-    if(event->event_id != EVENTID_LAST && (event_info[event->event_id].flags & EVENT_BIND_TO_TARGET))
+    if(event_info[event->event_id].flags & EVENT_BIND_TO_TARGET)
         nsIDOMEvent_StopPropagation(event->nsevent);
 }
 
