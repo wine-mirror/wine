@@ -359,6 +359,7 @@ typedef HRESULT (*dispex_hook_invoke_t)(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,
 typedef struct {
     DISPID dispid;
     dispex_hook_invoke_t invoke;
+    const WCHAR *name;
 } dispex_hook_t;
 
 struct DispatchEx {

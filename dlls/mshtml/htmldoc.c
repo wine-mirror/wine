@@ -5975,6 +5975,7 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
 static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t document2_hooks[] = {
+        {DISPID_IHTMLDOCUMENT2_URL,      NULL, L"URL"},
         {DISPID_IHTMLDOCUMENT2_LOCATION, HTMLDocumentNode_location_hook},
         {DISPID_UNKNOWN}
     };
@@ -6307,6 +6308,7 @@ static const tid_t HTMLDocumentObj_iface_tids[] = {
 static void HTMLDocumentObj_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t document2_hooks[] = {
+        {DISPID_IHTMLDOCUMENT2_URL,      NULL, L"URL"},
         {DISPID_IHTMLDOCUMENT2_LOCATION, HTMLDocumentObj_location_hook},
         {DISPID_UNKNOWN}
     };

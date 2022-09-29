@@ -270,16 +270,20 @@ static BOOL is_arg_type_supported(VARTYPE vt)
 }
 
 static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti,
-                          dispex_hook_invoke_t hook)
+                          dispex_hook_invoke_t hook, const WCHAR *name_override)
 {
     func_info_t *info;
     BSTR name;
     HRESULT hres;
 
-    hres = ITypeInfo_GetDocumentation(dti, desc->memid, &name, NULL, NULL, NULL);
-    if(FAILED(hres)) {
-        WARN("GetDocumentation failed: %08lx\n", hres);
-        return;
+    if(name_override)
+        name = SysAllocString(name_override);
+    else {
+        hres = ITypeInfo_GetDocumentation(dti, desc->memid, &name, NULL, NULL, NULL);
+        if(FAILED(hres)) {
+            WARN("GetDocumentation failed: %08lx\n", hres);
+            return;
+        }
     }
 
     for(info = data->funcs; info < data->funcs+data->func_cnt; info++) {
@@ -441,9 +445,9 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
                 hook = NULL;
         }
 
-        if(!hook || hook->invoke) {
+        if(!hook || hook->invoke || hook->name) {
             add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo,
-                          hook ? hook->invoke : NULL);
+                          hook ? hook->invoke : NULL, hook ? hook->name : NULL);
         }
 
         ITypeInfo_ReleaseFuncDesc(typeinfo, funcdesc);

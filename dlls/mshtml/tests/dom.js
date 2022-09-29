@@ -18,6 +18,11 @@
 
 var tests = [];
 
+sync_test("url", function() {
+    ok(document.URL === "http://winetest.example.org/index.html?dom.js", "document.URL = " + document.URL);
+    ok(!("documentURI" in document), "documentURI in document");
+});
+
 sync_test("input_selection", function() {
     var input = document.createElement("input");
     input.type = "text";
