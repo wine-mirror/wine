@@ -2315,10 +2315,10 @@ static const BYTE modulus1[] = { 0,0,0,1,1,1,1,1 };
 static const BYTE modulus2[] = { 1,1,1,1,1,0,0,0 };
 static const BYTE modulus3[] = { 0x80,1,1,1,1,0,0,0 };
 static const BYTE modulus4[] = { 1,1,1,1,1,0,0,0x80 };
-static const BYTE mod1_encoded[] = { 0x30,0x0f,0x02,0x08,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x00,0x02,0x03,0x01,0x00,0x01 };
-static const BYTE mod2_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x01,0x00,0x01 };
-static const BYTE mod3_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x80,0x02,0x03,0x01,0x00,0x01 };
-static const BYTE mod4_encoded[] = { 0x30,0x10,0x02,0x09,0x00,0x80,0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x01,0x00,0x01 };
+static const BYTE mod1_encoded[] = { 0x30,0x0f,0x02,0x08,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x00,0x02,0x03,0x02,0x00,0x01 };
+static const BYTE mod2_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x02,0x00,0x01 };
+static const BYTE mod3_encoded[] = { 0x30,0x0c,0x02,0x05,0x01,0x01,0x01,0x01,0x80,0x02,0x03,0x02,0x00,0x01 };
+static const BYTE mod4_encoded[] = { 0x30,0x10,0x02,0x09,0x00,0x80,0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x02,0x00,0x01 };
 
 struct EncodedRSAPubKey
 {
@@ -2351,7 +2351,7 @@ static void test_encodeRsaPublicKey(DWORD dwEncoding)
     hdr->aiKeyAlg = CALG_RSA_KEYX;
     rsaPubKey->magic = 0x31415352;
     rsaPubKey->bitlen = sizeof(modulus1) * 8;
-    rsaPubKey->pubexp = 65537;
+    rsaPubKey->pubexp = 131073;
     memcpy(toEncode + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY), modulus1,
      sizeof(modulus1));
 
@@ -2480,7 +2480,7 @@ static void test_decodeRsaPublicKey(DWORD dwEncoding)
              "Expected magic RSA1, got %08lx\n", rsaPubKey->magic);
             ok(rsaPubKey->bitlen == rsaPubKeys[i].decodedModulusLen * 8,
              "Wrong bit len %ld\n", rsaPubKey->bitlen);
-            ok(rsaPubKey->pubexp == 65537, "Expected pubexp 65537, got %ld\n",
+            ok(rsaPubKey->pubexp == 131073, "Expected pubexp 131073, got %ld\n",
              rsaPubKey->pubexp);
             ok(!memcmp(buf + sizeof(BLOBHEADER) + sizeof(RSAPUBKEY),
              rsaPubKeys[i].modulus, rsaPubKeys[i].decodedModulusLen),
@@ -2497,7 +2497,7 @@ static void test_encodeRsaPublicKey_Bcrypt(DWORD dwEncoding)
     BOOL ret;
     BYTE *buf = NULL;
     DWORD bufSize = 0, i;
-    BYTE pubexp[] = {0x01,0x00,0x01,0x00}; /* 65537 */
+    BYTE pubexp[] = {0x01,0x00,0x02,0x00}; /* 131073 */
 
     /* Verify that the Magic value doesn't matter */
     hdr->Magic = 1;
@@ -2568,7 +2568,7 @@ static void test_decodeRsaPublicKey_Bcrypt(DWORD dwEncoding)
         if (ret)
         {
             BCRYPT_RSAKEY_BLOB *hdr = (BCRYPT_RSAKEY_BLOB *)buf;
-            BYTE pubexp[] = {0xff,0xff,0xff,0xff}, pubexp_expected[] = {0x01,0x00,0x01};
+            BYTE pubexp[] = {0xff,0xff,0xff,0xcc}, pubexp_expected[] = {0x01,0x00,0x02};
             /* CNG_RSA_PUBLIC_KEY_BLOB stores the exponent
              * in big-endian format, so we need to convert it to little-endian
              */
@@ -2584,13 +2584,13 @@ static void test_decodeRsaPublicKey_Bcrypt(DWORD dwEncoding)
             /* Windows decodes the exponent to 3 bytes, since it will fit.
              * Our implementation currently unconditionally decodes to a DWORD (4 bytes)
              */
-            todo_wine ok(hdr->cbPublicExp == 3, "Expected cbPublicExp 3, got %ld\n", hdr->cbPublicExp);
+            ok(hdr->cbPublicExp == 3, "Expected cbPublicExp 3, got %ld\n", hdr->cbPublicExp);
             ok(hdr->cbModulus == rsaPubKeys[i].decodedModulusLen,
               "Wrong modulus len %ld\n", hdr->cbModulus);
             ok(hdr->cbPrime1 == 0,"Wrong cbPrime1 %ld\n", hdr->cbPrime1);
             ok(hdr->cbPrime2 == 0,"Wrong cbPrime2 %ld\n", hdr->cbPrime2);
             ok(!memcmp(pubexp, pubexp_expected, sizeof(pubexp_expected)), "Wrong exponent\n");
-            todo_wine ok(pubexp[3] == 0xff, "Got %02x\n", pubexp[3]);
+            ok(pubexp[3] == 0xcc, "Got %02x\n", pubexp[3]);
 
             leModulus = malloc(hdr->cbModulus);
              /*

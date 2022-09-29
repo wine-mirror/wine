@@ -3874,7 +3874,7 @@ static BOOL WINAPI CRYPT_AsnDecodeCertPolicyConstraints(
 
 struct DECODED_RSA_PUB_KEY
 {
-    DWORD              pubexp;
+    CRYPT_INTEGER_BLOB pubexp;
     CRYPT_INTEGER_BLOB modulus;
 };
 
@@ -3893,12 +3893,23 @@ static BOOL CRYPT_raw_decode_rsa_pub_key(struct DECODED_RSA_PUB_KEY **decodedKey
        FALSE, TRUE, offsetof(struct DECODED_RSA_PUB_KEY, modulus.pbData),
        0 },
      { ASN_INTEGER, offsetof(struct DECODED_RSA_PUB_KEY, pubexp),
-       CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+       CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+       FALSE, TRUE, offsetof(struct DECODED_RSA_PUB_KEY, pubexp.pbData),
+       0 },
     };
 
     ret = CRYPT_AsnDecodeSequence(items, ARRAY_SIZE(items),
      pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, decodedKey,
      size, NULL, NULL);
+
+    if (ret && (*decodedKey)->pubexp.cbData > sizeof(DWORD))
+    {
+        WARN("Unexpected exponent length %lu.\n", (*decodedKey)->pubexp.cbData);
+        LocalFree(*decodedKey);
+        SetLastError(CRYPT_E_ASN1_LARGE);
+        ret = FALSE;
+    }
+
     return ret;
 }
 
@@ -3920,7 +3931,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey_Bcrypt(DWORD dwCertEncodingType,
         if (ret)
         {
             /* Header, exponent, and modulus */
-            DWORD bytesNeeded = sizeof(BCRYPT_RSAKEY_BLOB) + sizeof(DWORD) +
+            DWORD bytesNeeded = sizeof(BCRYPT_RSAKEY_BLOB) + decodedKey->pubexp.cbData +
              decodedKey->modulus.cbData;
 
             if (!pvStructInfo)
@@ -3939,7 +3950,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey_Bcrypt(DWORD dwCertEncodingType,
                 hdr = pvStructInfo;
                 hdr->Magic = BCRYPT_RSAPUBLIC_MAGIC;
                 hdr->BitLength = decodedKey->modulus.cbData * 8;
-                hdr->cbPublicExp = sizeof(DWORD);
+                hdr->cbPublicExp = decodedKey->pubexp.cbData;
                 hdr->cbModulus = decodedKey->modulus.cbData;
                 hdr->cbPrime1 = 0;
                 hdr->cbPrime2 = 0;
@@ -3947,9 +3958,9 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey_Bcrypt(DWORD dwCertEncodingType,
                  * in big-endian format, so we need to convert from little-endian
                  */
                 CRYPT_CopyReversed((BYTE *)pvStructInfo + sizeof(BCRYPT_RSAKEY_BLOB),
-                 (BYTE *)&decodedKey->pubexp, sizeof(DWORD));
+                 decodedKey->pubexp.pbData, hdr->cbPublicExp);
                 CRYPT_CopyReversed((BYTE *)pvStructInfo + sizeof(BCRYPT_RSAKEY_BLOB) +
-                 sizeof(DWORD), decodedKey->modulus.pbData,
+                 hdr->cbPublicExp, decodedKey->modulus.pbData,
                  decodedKey->modulus.cbData);
             }
             LocalFree(decodedKey);
@@ -3984,13 +3995,13 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
             if (!pvStructInfo)
             {
                 *pcbStructInfo = bytesNeeded;
-                ret = TRUE;
             }
             else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
              pvStructInfo, pcbStructInfo, bytesNeeded)))
             {
                 BLOBHEADER *hdr;
                 RSAPUBKEY *rsaPubKey;
+                unsigned int i;
 
                 if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
                     pvStructInfo = *(BYTE **)pvStructInfo;
@@ -4002,7 +4013,11 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
                 rsaPubKey = (RSAPUBKEY *)((BYTE *)pvStructInfo +
                  sizeof(BLOBHEADER));
                 rsaPubKey->magic = RSA1_MAGIC;
-                rsaPubKey->pubexp = decodedKey->pubexp;
+                rsaPubKey->pubexp = 0;
+                assert(decodedKey->pubexp.cbData <= sizeof(rsaPubKey->pubexp));
+                for (i = 0; i < decodedKey->pubexp.cbData; ++i)
+                    rsaPubKey->pubexp |= decodedKey->pubexp.pbData[i] << (i * 8);
+
                 rsaPubKey->bitlen = decodedKey->modulus.cbData * 8;
                 memcpy((BYTE *)pvStructInfo + sizeof(BLOBHEADER) +
                  sizeof(RSAPUBKEY), decodedKey->modulus.pbData,
