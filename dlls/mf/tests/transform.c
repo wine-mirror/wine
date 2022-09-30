@@ -344,6 +344,7 @@ static void check_mft_get_attributes(IMFTransform *transform, const struct attri
     }
 
     hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
+    todo_wine_if(expect_output_attributes && hr == E_NOTIMPL)
     ok(hr == (expect_output_attributes ? S_OK : E_NOTIMPL)
             || broken(hr == MF_E_UNSUPPORTED_REPRESENTATION) /* Win7 */,
             "GetOutputStreamAttributes returned %#lx\n", hr);
@@ -4401,7 +4402,9 @@ static void test_wmv_decoder(void)
 
     check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_attributes, TRUE);
+    todo_wine
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
+    todo_wine
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_output_info);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);

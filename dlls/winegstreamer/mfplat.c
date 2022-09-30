@@ -37,6 +37,7 @@ DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x2
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_MEDIATYPE_GUID(MFAudioFormat_RAW_AAC,WAVE_FORMAT_RAW_AAC1);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_VC1S,MAKEFOURCC('V','C','1','S'));
 
 struct class_factory
 {
@@ -252,6 +253,33 @@ HRESULT mfplat_DllRegisterServer(void)
         {MFMediaType_Video, MFVideoFormat_YVYU},
     };
 
+    MFT_REGISTER_TYPE_INFO wmv_decoder_input_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_WMV1},
+        {MFMediaType_Video, MFVideoFormat_WMV2},
+        {MFMediaType_Video, MFVideoFormat_WMV3},
+        {MFMediaType_Video, MEDIASUBTYPE_WMVP},
+        {MFMediaType_Video, MEDIASUBTYPE_WVP2},
+        {MFMediaType_Video, MEDIASUBTYPE_WMVR},
+        {MFMediaType_Video, MEDIASUBTYPE_WMVA},
+        {MFMediaType_Video, MFVideoFormat_WVC1},
+        {MFMediaType_Video, MFVideoFormat_VC1S},
+    };
+    MFT_REGISTER_TYPE_INFO wmv_decoder_output_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_YV12},
+        {MFMediaType_Video, MFVideoFormat_YUY2},
+        {MFMediaType_Video, MFVideoFormat_UYVY},
+        {MFMediaType_Video, MFVideoFormat_YVYU},
+        {MFMediaType_Video, MFVideoFormat_NV11},
+        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, DMOVideoFormat_RGB32},
+        {MFMediaType_Video, DMOVideoFormat_RGB24},
+        {MFMediaType_Video, DMOVideoFormat_RGB565},
+        {MFMediaType_Video, DMOVideoFormat_RGB555},
+        {MFMediaType_Video, DMOVideoFormat_RGB8},
+    };
+
     MFT_REGISTER_TYPE_INFO color_convert_input_types[] =
     {
         {MFMediaType_Video, MFVideoFormat_YV12},
@@ -337,6 +365,16 @@ HRESULT mfplat_DllRegisterServer(void)
             h264_decoder_input_types,
             ARRAY_SIZE(h264_decoder_output_types),
             h264_decoder_output_types,
+        },
+        {
+            CLSID_WMVDecoderMFT,
+            MFT_CATEGORY_VIDEO_DECODER,
+            L"WMVideo Decoder MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(wmv_decoder_input_types),
+            wmv_decoder_input_types,
+            ARRAY_SIZE(wmv_decoder_output_types),
+            wmv_decoder_output_types,
         },
         {
             CLSID_VideoProcessorMFT,

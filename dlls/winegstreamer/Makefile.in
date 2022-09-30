@@ -24,7 +24,8 @@ C_SRCS = \
 	wg_transform.c \
 	wm_asyncreader.c \
 	wm_reader.c \
-	wma_decoder.c
+	wma_decoder.c \
+	wmv_decoder.c
 
 IDL_SRCS = \
 	winegstreamer_classes.idl

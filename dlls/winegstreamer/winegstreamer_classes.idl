@@ -83,6 +83,12 @@ coclass CMSAACDecMFT {}
 
 [
     threading(both),
+    uuid(82d353df-90bd-4382-8bc2-3f6192b76e34)
+]
+coclass CWMVDecMediaObject {}
+
+[
+    threading(both),
     uuid(62ce7e72-4c71-4d20-b15d-452831a87d9d)
 ]
 coclass CMSH264DecoderMFT {}

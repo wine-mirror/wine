@@ -215,6 +215,7 @@ F:	dlls/winegstreamer/video_processor.c
 F:	dlls/winegstreamer/wg_sample.c
 F:	dlls/winegstreamer/wg_transform.c
 F:	dlls/winegstreamer/wma_decoder.c
+F:	dlls/winegstreamer/wmv_decoder.c
 
 Microsoft C Runtime
 M:	Piotr Caban <piotr@codeweavers.com>
