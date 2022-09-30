@@ -894,6 +894,13 @@ static void dump_mf_media_buffer(IMFMediaBuffer *buffer, const struct buffer_des
         buffer_desc->dump(data, length, &buffer_desc->rect, output);
     else
     {
+        if (buffer_desc->length == -1)
+        {
+            ret = WriteFile(output, &length, sizeof(length), &written, NULL);
+            ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+            ok(written == sizeof(length), "written %lu bytes\n", written);
+        }
+
         ret = WriteFile(output, data, length, &written, NULL);
         ok(ret, "WriteFile failed, error %lu\n", GetLastError());
         ok(written == length, "written %lu bytes\n", written);
@@ -930,14 +937,21 @@ static void dump_mf_sample_collection(IMFCollection *samples, const struct sampl
 static DWORD check_mf_media_buffer_(int line, IMFMediaBuffer *buffer, const struct buffer_desc *expect,
         const BYTE **expect_data, DWORD *expect_data_len)
 {
-    DWORD length, diff = 0;
+    DWORD length, diff = 0, expect_length = expect->length;
     HRESULT hr;
     BYTE *data;
+
+    if (expect_length == -1)
+    {
+        expect_length = *(DWORD *)*expect_data;
+        *expect_data = *expect_data + sizeof(DWORD);
+        *expect_data_len = *expect_data_len - sizeof(DWORD);
+    }
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &length);
     ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
     todo_wine_if(expect->todo_length)
-    ok_(__FILE__, line)(length == expect->length, "got length %#lx\n", length);
+    ok_(__FILE__, line)(length == expect_length, "got length %#lx\n", length);
 
     if (*expect_data_len < length)
         todo_wine_if(expect->todo_length)
@@ -968,8 +982,9 @@ struct check_mf_sample_context
 static void check_mf_sample_buffer(IMFMediaBuffer *buffer, const struct buffer_desc *expect, void *context)
 {
     struct check_mf_sample_context *ctx = context;
+    DWORD expect_length = expect->length == -1 ? *(DWORD *)ctx->data : expect->length;
     ctx->diff += check_mf_media_buffer_(ctx->line, buffer, expect, &ctx->data, &ctx->data_len);
-    ctx->total_length += expect->length;
+    ctx->total_length += expect_length;
 }
 
 #define check_mf_sample(a, b, c, d) check_mf_sample_(__LINE__, a, b, c, d)
@@ -1021,8 +1036,8 @@ static DWORD check_mf_sample_(int line, IMFSample *sample, const struct sample_d
     ok_(__FILE__, line)(*expect_data_len >= ctx.total_length,
             "missing %#lx data\n", ctx.total_length - *expect_data_len);
 
-    *expect_data = *expect_data + min(total_length, *expect_data_len);
-    *expect_data_len = *expect_data_len - min(total_length, *expect_data_len);
+    *expect_data = ctx.data;
+    *expect_data_len = ctx.data_len;
 
     return ctx.diff / buffer_count;
 }
@@ -1622,11 +1637,35 @@ static void test_aac_encoder(void)
     const MFT_OUTPUT_STREAM_INFO initial_output_info = {0}, output_info = {.cbSize = 0x600};
     const MFT_INPUT_STREAM_INFO input_info = {0};
 
+    const struct buffer_desc output_buffer_desc[] =
+    {
+        {.length = -1 /* variable */},
+    };
+    const struct attribute_desc output_sample_attributes[] =
+    {
+        ATTR_UINT32(MFSampleExtension_CleanPoint, 1),
+        {0},
+    };
+    const struct sample_desc output_sample_desc[] =
+    {
+        {
+            .repeat_count = 88,
+            .attributes = output_sample_attributes,
+            .sample_time = 0, .sample_duration = 113823,
+            .buffer_count = 1, .buffers = output_buffer_desc,
+        },
+    };
+
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_AAC};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_PCM};
+    IMFSample *input_sample, *output_sample;
+    IMFCollection *output_samples;
+    ULONG i, ret, audio_data_len;
+    DWORD length, output_status;
     IMFTransform *transform;
+    const BYTE *audio_data;
     HRESULT hr;
-    ULONG ret;
+    LONG ref;
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
@@ -1662,6 +1701,63 @@ static void test_aac_encoder(void)
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
 
+    if (!has_video_processor)
+    {
+        win_skip("Skipping AAC encoder tests on Win7\n");
+        goto done;
+    }
+
+    load_resource(L"audiodata.bin", &audio_data, &audio_data_len);
+    ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
+
+    input_sample = create_sample(audio_data, audio_data_len);
+    hr = IMFSample_SetSampleTime(input_sample, 0);
+    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(input_sample, 10000000);
+    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+    ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
+    ref = IMFSample_Release(input_sample);
+    ok(ref <= 1, "Release returned %ld\n", ref);
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    output_sample = create_sample(NULL, output_info.cbSize);
+    for (i = 0; SUCCEEDED(hr = check_mft_process_output(transform, output_sample, &output_status)); i++)
+    {
+        winetest_push_context("%lu", i);
+        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+        hr = IMFCollection_AddElement(output_samples, (IUnknown *)output_sample);
+        ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+        ref = IMFSample_Release(output_sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+        output_sample = create_sample(NULL, output_info.cbSize);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ok(i == 88, "got %lu output samples\n", i);
+
+    ret = check_mf_sample_collection(output_samples, output_sample_desc, L"aacencdata.bin");
+    ok(ret == 0, "got %lu%% diff\n", ret);
+    IMFCollection_Release(output_samples);
+
+    output_sample = create_sample(NULL, output_info.cbSize);
+    hr = check_mft_process_output(transform, output_sample, &output_status);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+    hr = IMFSample_GetTotalLength(output_sample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+done:
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
 
