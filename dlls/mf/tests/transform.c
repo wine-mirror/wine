@@ -444,6 +444,51 @@ static void check_mft_set_input_type_required_(int line, IMFTransform *transform
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
 }
 
+static void check_mft_set_input_type(IMFTransform *transform, const struct attribute_desc *attributes)
+{
+    IMFMediaType *media_type;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+
+    IMFMediaType_Release(media_type);
+}
+
+#define check_mft_get_input_current_type(a, b) check_mft_get_input_current_type_(a, b, FALSE, FALSE)
+static void check_mft_get_input_current_type_(IMFTransform *transform, const struct attribute_desc *attributes,
+        BOOL todo_current, BOOL todo_compare)
+{
+    HRESULT hr, expect_hr = attributes ? S_OK : MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType *media_type, *current_type;
+    BOOL result;
+
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &current_type);
+    todo_wine_if(todo_current)
+    ok(hr == expect_hr, "GetInputCurrentType returned hr %#lx.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    hr = IMFMediaType_Compare(current_type, (IMFAttributes *)media_type,
+            MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Compare returned hr %#lx.\n", hr);
+    todo_wine_if(todo_compare)
+    ok(result, "got result %u.\n", !!result);
+
+    IMFMediaType_Release(media_type);
+    IMFMediaType_Release(current_type);
+}
+
 #define check_mft_set_output_type_required(a, b) check_mft_set_output_type_required_(__LINE__, a, b)
 static void check_mft_set_output_type_required_(int line, IMFTransform *transform, const struct attribute_desc *attributes)
 {
@@ -472,6 +517,52 @@ static void check_mft_set_output_type_required_(int line, IMFTransform *transfor
     ok_(__FILE__, line)(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ref = IMFMediaType_Release(media_type);
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
+}
+
+static void check_mft_set_output_type(IMFTransform *transform, const struct attribute_desc *attributes,
+        HRESULT expect_hr)
+{
+    IMFMediaType *media_type;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
+
+    IMFMediaType_Release(media_type);
+}
+
+#define check_mft_get_output_current_type(a, b) check_mft_get_output_current_type_(a, b, FALSE, FALSE)
+static void check_mft_get_output_current_type_(IMFTransform *transform, const struct attribute_desc *attributes,
+        BOOL todo_current, BOOL todo_compare)
+{
+    HRESULT hr, expect_hr = attributes ? S_OK : MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType *media_type, *current_type;
+    BOOL result;
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &current_type);
+    todo_wine_if(todo_current)
+    ok(hr == expect_hr, "GetOutputCurrentType returned hr %#lx.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    init_media_type(media_type, attributes, -1);
+
+    hr = IMFMediaType_Compare(current_type, (IMFAttributes *)media_type,
+            MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Compare returned hr %#lx.\n", hr);
+    todo_wine_if(todo_compare)
+    ok(result, "got result %u.\n", !!result);
+
+    IMFMediaType_Release(media_type);
+    IMFMediaType_Release(current_type);
 }
 
 #define check_mft_process_output(a, b, c) check_mft_process_output_(__LINE__, a, b, c)
@@ -1102,17 +1193,8 @@ static void test_sample_copier(void)
     hr = IMFTransform_GetOutputAvailableType(copier, 1, 0, &mediatype);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFTransform_GetInputCurrentType(copier, 0, &mediatype);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetInputCurrentType(copier, 1, &mediatype);
-    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputCurrentType(copier, 0, &mediatype);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputCurrentType(copier, 1, &mediatype);
-    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    check_mft_get_input_current_type(copier, NULL);
+    check_mft_get_output_current_type(copier, NULL);
 
     hr = MFCreateSample(&sample);
     ok(hr == S_OK, "Failed to create a sample, hr %#lx.\n", hr);
@@ -1156,8 +1238,7 @@ static void test_sample_copier(void)
     ok(hr == S_OK, "Failed to get current type, hr %#lx.\n", hr);
     IMFMediaType_Release(mediatype2);
 
-    hr = IMFTransform_GetInputCurrentType(copier, 0, &mediatype2);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
+    check_mft_get_input_current_type(copier, NULL);
 
     hr = IMFTransform_GetInputStatus(copier, 0, &flags);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
@@ -1543,7 +1624,6 @@ static void test_aac_encoder(void)
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_AAC};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_PCM};
-    IMFMediaType *media_type;
     IMFTransform *transform;
     HRESULT hr;
     ULONG ret;
@@ -1571,37 +1651,13 @@ static void test_aac_encoder(void)
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &initial_output_info);
 
-    check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
-
     check_mft_set_output_type_required(transform, output_type_desc);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
 
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
-
-    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
-    ok(hr == S_OK, "GetInputCurrentType returned %#lx.\n", hr);
-    check_media_type(media_type, expect_input_type_desc, -1);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret <= 1, "Release returned %lu\n", ret);
-
-    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    ok(hr == S_OK, "GetOutputCurrentType returned %#lx.\n", hr);
-    check_media_type(media_type, expect_output_type_desc, -1);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret <= 1, "Release returned %lu\n", ret);
+    check_mft_set_input_type_required(transform, input_type_desc);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type(transform, expect_input_type_desc);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -1790,24 +1846,12 @@ static void test_aac_decoder(void)
             "%lu input media types\n", i);
 
     /* setting output media type first doesn't work */
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
+    check_mft_get_output_current_type(transform, NULL);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type(transform, input_type_desc);
 
     /* check new output media types */
 
@@ -1828,14 +1872,8 @@ static void test_aac_decoder(void)
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu input media types\n", i);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type(transform, output_type_desc);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -1907,6 +1945,31 @@ static void test_wma_encoder(void)
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003, .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size, .required = TRUE),
         ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 22050 * 8),
+        ATTR_UINT32(MF_MT_AUDIO_CHANNEL_MASK, 3),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size),
+        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
         {0},
     };
     const MFT_OUTPUT_STREAM_INFO output_info =
@@ -1998,14 +2061,12 @@ static void test_wma_encoder(void)
     ok(ret == 0, "Release returned %lu\n", ret);
 
     check_mft_set_output_type_required(transform, output_type_desc);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
 
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_input_type_required(transform, input_type_desc);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type(transform, expect_input_type_desc);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -2182,6 +2243,31 @@ static void test_wma_decoder(void)
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (16 / 8) * 22050, .required = TRUE),
         {0},
     };
+    const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
+        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        {0},
+    };
+    static const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 22050 * 4),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
     const MFT_INPUT_STREAM_INFO input_info =
     {
         .cbSize = wmaenc_block_size,
@@ -2290,24 +2376,12 @@ static void test_wma_decoder(void)
     ok(i == 4, "%lu input media types\n", i);
 
     /* setting output media type first doesn't work */
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
+    check_mft_get_output_current_type_(transform, NULL, TRUE, FALSE);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type_(transform, expect_input_type_desc, TRUE, FALSE);
 
     check_mft_get_input_stream_info(transform, NULL);
     check_mft_get_output_stream_info(transform, NULL);
@@ -2328,14 +2402,8 @@ static void test_wma_decoder(void)
     ok(i == 2, "%lu output media types\n", i);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, TRUE, FALSE);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -2623,6 +2691,32 @@ static void test_h264_decoder(void)
         ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
         {0},
     };
+    const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, input_width, input_height),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 0),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 0),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 0),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0),
+        ATTR_UINT32(MF_MT_COMPRESSED, 1),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, input_width, input_height),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 2, 1),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 3840),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3840 * input_height * 3 / 2),
+        ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0),
+        {0},
+    };
     static const struct attribute_desc new_output_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -2630,6 +2724,17 @@ static void test_h264_decoder(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_RATIO(MF_MT_FRAME_RATE, 1, 1),
         ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 2),
+        {0},
+    };
+    static const struct attribute_desc expect_new_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 1, 1),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 2),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0),
         {0},
     };
     static const MFVideoArea actual_aperture = {.Area={82,84}};
@@ -2806,18 +2911,10 @@ static void test_h264_decoder(void)
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#lx\n", hr);
-    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx\n", hr);
 
     /* setting output media type first doesn't work */
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, default_outputs[0], -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
+    check_mft_get_output_current_type(transform, NULL);
 
     /* check available input types */
 
@@ -2835,14 +2932,8 @@ static void test_h264_decoder(void)
     ok(i == 2 || broken(i == 1) /* Win7 */, "%lu input media types\n", i);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type_(transform, expect_input_type_desc, TRUE, FALSE);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -2863,20 +2954,8 @@ static void test_h264_decoder(void)
     ok(i == 5, "%lu output media types\n", i);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
-
-    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
-    check_media_type(media_type, output_type_desc, -1);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
 
     /* check that the output media type we've selected don't change the enumeration */
 
@@ -2966,13 +3045,7 @@ static void test_h264_decoder(void)
     ok(i == 5, "%lu output media types\n", i);
 
     /* current output type is still the one we selected */
-    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
-    check_media_type(media_type, output_type_desc, -1);
-    hr = IMFMediaType_GetItemType(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "GetItemType returned %#lx\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
 
     hr = MFCreateCollection(&output_samples);
     ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
@@ -3002,13 +3075,7 @@ static void test_h264_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 1, "Release returned %lu\n", ret);
 
-    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
-    check_media_type(media_type, new_output_type_desc, -1);
-    hr = IMFMediaType_GetItemType(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "GetItemType returned %#lx\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_get_output_current_type_(transform, expect_new_output_type_desc, FALSE, TRUE);
 
     output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -3176,6 +3243,32 @@ static void test_audio_convert(void)
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (16 / 8) * 44100, .required = TRUE),
         {0},
     };
+    static const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 22050 * 8),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_CHANNEL_MASK, 3),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100 * 4),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        {0},
+    };
     const MFT_OUTPUT_STREAM_INFO output_info =
     {
         .cbSize = 4,
@@ -3285,24 +3378,12 @@ static void test_audio_convert(void)
     ok(i == 2, "%lu input media types\n", i);
 
     /* setting output media type first doesn't work */
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
+    check_mft_get_output_current_type(transform, NULL);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type_(transform, expect_input_type_desc, FALSE, TRUE);
 
     check_mft_get_input_stream_info(transform, NULL);
     check_mft_get_output_stream_info(transform, NULL);
@@ -3323,14 +3404,8 @@ static void test_audio_convert(void)
     ok(i == 4, "%lu output media types\n", i);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -3561,6 +3636,31 @@ static void test_color_convert(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         {0},
     };
+    const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        {0},
+    };
     const MFT_OUTPUT_STREAM_INFO output_info =
     {
         .cbSize = actual_width * actual_height * 4,
@@ -3666,24 +3766,12 @@ static void test_color_convert(void)
     ok(i == 20, "%lu input media types\n", i);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type_(transform, expect_input_type_desc, FALSE, TRUE);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
@@ -3977,17 +4065,8 @@ static void test_video_processor(void)
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetInputCurrentType(transform, 1, &media_type);
-    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
-    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    check_mft_get_input_current_type(transform, NULL);
+    check_mft_get_output_current_type(transform, NULL);
 
     check_mft_get_input_stream_info(transform, &initial_input_info);
     check_mft_get_output_stream_info(transform, &initial_output_info);
@@ -4260,24 +4339,12 @@ static void test_video_processor(void)
     ok(i == 22 || i == 30 || broken(i == 26) /* w1064v1507 */, "%lu input media types\n", i);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type(transform, input_type_desc);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 1, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type(transform, output_type_desc);
 
     input_info.cbSize = actual_width * actual_height * 3 / 2;
     output_info.cbSize = actual_width * actual_height * 4;
@@ -4470,6 +4537,28 @@ static void test_mp3_decoder(void)
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * (16 / 8) * 22050, .required = TRUE),
         {0},
     };
+    const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_MP3),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        {0},
+    };
+    static const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 22050 * 4),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        {0},
+    };
     const MFT_OUTPUT_STREAM_INFO output_info =
     {
         .cbSize = mp3dec_block_size,
@@ -4568,24 +4657,12 @@ static void test_mp3_decoder(void)
     ok(i == ARRAY_SIZE(expect_available_inputs), "%lu input media types\n", i);
 
     /* setting output media type first doesn't work */
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
+    check_mft_get_output_current_type(transform, NULL);
 
     check_mft_set_input_type_required(transform, input_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, input_type_desc, -1);
-    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type(transform, expect_input_type_desc);
 
     check_mft_get_input_stream_info(transform, NULL);
     check_mft_get_output_stream_info(transform, NULL);
@@ -4606,14 +4683,8 @@ static void test_mp3_decoder(void)
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu output media types\n", i);
 
     check_mft_set_output_type_required(transform, output_type_desc);
-
-    hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
-    init_media_type(media_type, output_type_desc, -1);
-    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
-    ret = IMFMediaType_Release(media_type);
-    ok(ret == 0, "Release returned %lu\n", ret);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
 
     check_mft_get_input_stream_info(transform, &input_info);
     check_mft_get_output_stream_info(transform, &output_info);
