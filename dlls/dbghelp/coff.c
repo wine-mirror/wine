@@ -114,8 +114,7 @@ static int coff_add_file(struct CoffFileSet* coff_files, struct module* module,
     file = coff_files->files + coff_files->nfiles;
     file->startaddr = 0xffffffff;
     file->endaddr   = 0;
-    file->compiland = symt_new_compiland(module, 0,
-                                         source_new(module, NULL, filename));
+    file->compiland = symt_new_compiland(module, source_new(module, NULL, filename));
     file->linetab_offset = -1;
     file->linecnt = 0;
     file->entries = NULL;

@@ -699,8 +699,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
         {
         case ELF_STT_FILE:
             if (symname)
-                compiland = symt_new_compiland(module, sym.st_value,
-                                               source_new(module, NULL, symname));
+                compiland = symt_new_compiland(module, source_new(module, NULL, symname));
             else
                 compiland = NULL;
             continue;

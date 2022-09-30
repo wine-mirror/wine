@@ -2504,14 +2504,14 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 
         case S_OBJNAME:
             TRACE("S-ObjName-V3 %s\n", sym->objname_v3.name);
-            compiland = symt_new_compiland(msc_dbg->module, 0 /* FIXME */,
+            compiland = symt_new_compiland(msc_dbg->module,
                                            source_new(msc_dbg->module, NULL,
                                                       sym->objname_v3.name));
             break;
 
         case S_OBJNAME_ST:
             TRACE("S-ObjName-V1 %s\n", terminate_string(&sym->objname_v1.p_name));
-            compiland = symt_new_compiland(msc_dbg->module, 0 /* FIXME */,
+            compiland = symt_new_compiland(msc_dbg->module,
                                            source_new(msc_dbg->module, NULL,
                                                       terminate_string(&sym->objname_v1.p_name)));
             break;

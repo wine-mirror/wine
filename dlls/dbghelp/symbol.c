@@ -228,8 +228,7 @@ struct symt_module* symt_new_module(struct module* module)
     return sym;
 }
 
-struct symt_compiland* symt_new_compiland(struct module* module, 
-                                          ULONG_PTR address, unsigned src_idx)
+struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_idx)
 {
     struct symt_compiland*    sym;
     struct symt_compiland**   p;
@@ -240,7 +239,6 @@ struct symt_compiland* symt_new_compiland(struct module* module,
     {
         sym->symt.tag  = SymTagCompiland;
         sym->container = module->top;
-        sym->address   = address;
         sym->source    = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
         sym->user      = NULL;
