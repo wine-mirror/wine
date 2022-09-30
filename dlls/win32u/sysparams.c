@@ -169,15 +169,6 @@ static const WCHAR displayW[] = {'D','i','s','p','l','a','y',0};
 static const WCHAR monitorW[] = {'M','o','n','i','t','o','r',0};
 static const WCHAR yesW[] = {'Y','e','s',0};
 static const WCHAR noW[] = {'N','o',0};
-static const WCHAR bits_per_pelW[] = {'B','i','t','s','P','e','r','P','e','l',0};
-static const WCHAR x_resolutionW[] = {'X','R','e','s','o','l','u','t','i','o','n',0};
-static const WCHAR y_resolutionW[] = {'Y','R','e','s','o','l','u','t','i','o','n',0};
-static const WCHAR v_refreshW[] = {'V','R','e','f','r','e','s','h',0};
-static const WCHAR flagsW[] = {'F','l','a','g','s',0};
-static const WCHAR x_panningW[] = {'X','P','a','n','n','i','n','g',0};
-static const WCHAR y_panningW[] = {'Y','P','a','n','n','i','n','g',0};
-static const WCHAR orientationW[] = {'O','r','i','e','n','t','a','t','i','o','n',0};
-static const WCHAR fixed_outputW[] = {'F','i','x','e','d','O','u','t','p','u','t',0};
 static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
@@ -443,84 +434,30 @@ static void adapter_release( struct adapter *adapter )
     }
 }
 
+C_ASSERT(sizeof(DEVMODEW) - offsetof(DEVMODEW, dmFields) == 0x94);
+
 static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *mode )
 {
-    WCHAR bufferW[MAX_PATH];
+    WCHAR bufferW[MAX_PATH] = {0};
     char buffer[MAX_PATH];
-    BOOL ret = TRUE;
-    HKEY hkey;
 
     sprintf( buffer, "Modes\\%08X", index );
-    reg_delete_tree( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR) );
-    if (!(hkey = reg_create_key( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR),
-                                 REG_OPTION_VOLATILE, NULL )))
-        return FALSE;
-
-#define set_mode_field( name, field, flag )                                                      \
-    if ((mode->dmFields & (flag)) &&                                                             \
-        !(ret = set_reg_value( hkey, (name), REG_DWORD, &mode->field,                            \
-                               sizeof(mode->field) )))                                           \
-        goto done
-
-    set_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
-    set_mode_field( x_resolutionW, dmPelsWidth, DM_PELSWIDTH );
-    set_mode_field( y_resolutionW, dmPelsHeight, DM_PELSHEIGHT );
-    set_mode_field( v_refreshW, dmDisplayFrequency, DM_DISPLAYFREQUENCY );
-    set_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
-    set_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
-    set_mode_field( fixed_outputW, dmDisplayFixedOutput, DM_DISPLAYFIXEDOUTPUT );
-    if (index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS)
-    {
-        set_mode_field( x_panningW, dmPosition.x, DM_POSITION );
-        set_mode_field( y_panningW, dmPosition.y, DM_POSITION );
-    }
-
-#undef set_mode_field
-
-done:
-    NtClose( hkey );
-    return ret;
+    asciiz_to_unicode( bufferW, buffer );
+    return set_reg_value( adapter_key, bufferW, REG_BINARY, &mode->dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
 }
 
 static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
 {
-    char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+    char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(*mode)])];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buf;
-    WCHAR bufferW[MAX_PATH];
+    WCHAR bufferW[MAX_PATH] = {0};
     char buffer[MAX_PATH];
-    HKEY hkey;
 
     sprintf( buffer, "Modes\\%08X", index );
-    if (!(hkey = reg_open_key( adapter_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR) )))
-        return FALSE;
+    asciiz_to_unicode( bufferW, buffer );
+    if (!query_reg_value( adapter_key, bufferW, value, sizeof(value_buf) )) return FALSE;
 
-#define query_mode_field( name, field, flag )                                                      \
-    do                                                                                             \
-    {                                                                                              \
-        if (query_reg_value( hkey, (name), value, sizeof(value_buf) ) &&                           \
-            value->Type == REG_DWORD)                                                              \
-        {                                                                                          \
-            mode->field = *(const DWORD *)value->Data;                                             \
-            mode->dmFields |= (flag);                                                              \
-        }                                                                                          \
-    } while (0)
-
-    query_mode_field( bits_per_pelW, dmBitsPerPel, DM_BITSPERPEL );
-    query_mode_field( x_resolutionW, dmPelsWidth, DM_PELSWIDTH );
-    query_mode_field( y_resolutionW, dmPelsHeight, DM_PELSHEIGHT );
-    query_mode_field( v_refreshW, dmDisplayFrequency, DM_DISPLAYFREQUENCY );
-    query_mode_field( flagsW, dmDisplayFlags, DM_DISPLAYFLAGS );
-    query_mode_field( orientationW, dmDisplayOrientation, DM_DISPLAYORIENTATION );
-    query_mode_field( fixed_outputW, dmDisplayFixedOutput, DM_DISPLAYFIXEDOUTPUT );
-    if (index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS)
-    {
-        query_mode_field( x_panningW, dmPosition.x, DM_POSITION );
-        query_mode_field( y_panningW, dmPosition.y, DM_POSITION );
-    }
-
-#undef query_mode_field
-
-    NtClose( hkey );
+    memcpy( &mode->dmFields, value->Data, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
     return TRUE;
 }
 
