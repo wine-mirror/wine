@@ -143,6 +143,7 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         {
         case DataIsGlobal:
         case DataIsFileStatic:
+        case DataIsStaticLocal:
             *addr = ((const struct symt_data*)type)->u.var.offset;
             break;
         default: return FALSE;

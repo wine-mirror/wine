@@ -192,7 +192,7 @@ struct symt_data
     struct symt*                type;
     union                                       /* depends on kind */
     {
-        /* DataIs{Global, FileStatic}:
+        /* DataIs{Global, FileStatic, StaticLocal}:
          *      with loc.kind
          *              loc_absolute    loc.offset is address
          *              loc_tlsrel      loc.offset is TLS index address
