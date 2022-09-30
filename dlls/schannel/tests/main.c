@@ -122,7 +122,8 @@ static void testInitialize(void)
     status = pSpUserModeInitialize(SECPKG_INTERFACE_VERSION, &Version,
                                    &pUserTables, &cUserTables);
     ok(status == STATUS_SUCCESS, "status: 0x%lx\n", status);
-    ok(Version == SECPKG_INTERFACE_VERSION, "Version: 0x%lx\n", Version);
+    ok(Version == SECPKG_INTERFACE_VERSION || Version == SECPKG_INTERFACE_VERSION_2 /* win11 */,
+       "Version: 0x%lx\n", Version);
     ok(cUserTables == 2 ||
        broken(cUserTables == 4), /* Win2k */
        "cUserTables: %ld\n", cUserTables);
