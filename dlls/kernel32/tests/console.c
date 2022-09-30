@@ -4272,12 +4272,12 @@ static void test_GetConsoleTitleW(void)
 
     ret = GetConsoleTitleW(buf, ARRAY_SIZE(buf));
     ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
-    todo_wine ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
+    ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
     ok(!wcscmp(buf, str), "Title = %s\n", wine_dbgstr_w(buf));
 
     ret = GetConsoleTitleW(buf, 2);
     ok(ret, "GetConsoleTitleW failed: %lu\n", GetLastError());
-    todo_wine ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
+    ok(ret == wcslen(str), "Got string length %lu, expected %Iu\n", ret, wcslen(str));
     if (!skip_nt) ok(!wcscmp(buf, L"t"), "Title = %s\n", wine_dbgstr_w(buf));
 
     ret = GetConsoleTitleW(buf, 4);
@@ -4289,7 +4289,7 @@ static void test_GetConsoleTitleW(void)
     ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
 
     ret = GetConsoleTitleW(buf, ARRAY_SIZE(buf));
-    todo_wine ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
+    ok(!ret, "Unexpected string length; error %lu\n", GetLastError());
 }
 
 static void test_file_info(HANDLE input, HANDLE output)

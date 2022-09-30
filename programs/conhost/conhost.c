@@ -2675,12 +2675,16 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_GET_TITLE:
         {
-            WCHAR *result;
+            size_t title_len, str_size;
+            struct condrv_title_params *params;
             if (in_size) return STATUS_INVALID_PARAMETER;
+            title_len = console->title ? wcslen( console->title ) : 0;
+            str_size = min( *out_size - sizeof(*params), title_len * sizeof(WCHAR) );
+            *out_size = sizeof(*params) + str_size;
+            if (!(params = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
             TRACE( "returning title %s\n", debugstr_w(console->title) );
-            *out_size = min( *out_size, console->title ? wcslen( console->title ) * sizeof(WCHAR) : 0 );
-            if (!(result = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
-            if (*out_size) memcpy( result, console->title, *out_size );
+            if (str_size) memcpy( params->buffer, console->title, str_size );
+            params->title_len = title_len;
             return STATUS_SUCCESS;
         }
 
