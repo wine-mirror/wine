@@ -267,7 +267,7 @@ void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc,
     }
 }
 
-static void check_mft_optional_methods(IMFTransform *transform)
+static void check_mft_optional_methods(IMFTransform *transform, DWORD output_count)
 {
     DWORD in_id, out_id, in_count, out_count, in_min, in_max, out_min, out_max;
     PROPVARIANT propvar = {.vt = VT_EMPTY};
@@ -279,14 +279,14 @@ static void check_mft_optional_methods(IMFTransform *transform)
     ok(hr == S_OK, "GetStreamLimits returned %#lx\n", hr);
     ok(in_min == 1, "got input_min %lu\n", in_min);
     ok(in_max == 1, "got input_max %lu\n", in_max);
-    ok(out_min == 1, "got output_min %lu\n", out_min);
-    ok(out_max == 1, "got output_max %lu\n", out_max);
+    ok(out_min == output_count, "got output_min %lu\n", out_min);
+    ok(out_max == output_count, "got output_max %lu\n", out_max);
 
     in_count = out_count = 0xdeadbeef;
     hr = IMFTransform_GetStreamCount(transform, &in_count, &out_count);
     ok(hr == S_OK, "GetStreamCount returned %#lx\n", hr);
     ok(in_count == 1, "got input_count %lu\n", in_count);
-    ok(out_count == 1, "got output_count %lu\n", out_count);
+    ok(out_count == output_count, "got output_count %lu\n", out_count);
 
     in_count = out_count = 1;
     in_id = out_id = 0xdeadbeef;
@@ -1184,7 +1184,7 @@ static void test_sample_copier(void)
     check_interface(copier, &IID_IPropertyStore, FALSE);
     check_interface(copier, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(copier);
+    check_mft_optional_methods(copier, 1);
     check_mft_get_attributes(copier, expect_transform_attributes, FALSE);
 
     /* Available types. */
@@ -1687,7 +1687,7 @@ static void test_aac_encoder(void)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &initial_output_info);
@@ -1938,7 +1938,7 @@ static void test_aac_decoder(void)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, FALSE);
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &output_info);
@@ -2220,7 +2220,7 @@ static void test_wma_encoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -2525,7 +2525,7 @@ static void test_wma_decoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -3069,7 +3069,7 @@ static void test_h264_decoder(void)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, TRUE);
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &initial_output_info);
@@ -3517,7 +3517,7 @@ static void test_audio_convert(void)
     check_interface(transform, &IID_IPropertyBag, TRUE);
     /* check_interface(transform, &IID_IWMResamplerProps, TRUE); */
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -3634,6 +3634,357 @@ static void test_audio_convert(void)
     ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
+static void test_wmv_encoder(void)
+{
+    const GUID *const class_id = &CLSID_CWMVXEncMediaObject;
+    const struct transform_info expect_mft_info =
+    {
+        .name = L"WMVideo8 Encoder MFT",
+        .major_type = &MFMediaType_Video,
+        .inputs =
+        {
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_I420},
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_NV11},
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &MFVideoFormat_YUY2},
+            {.subtype = &MFVideoFormat_UYVY},
+            {.subtype = &MFVideoFormat_YVYU},
+            {.subtype = &MFVideoFormat_YVU9},
+            {.subtype = &DMOVideoFormat_RGB32},
+            {.subtype = &DMOVideoFormat_RGB24},
+            {.subtype = &DMOVideoFormat_RGB565},
+            {.subtype = &DMOVideoFormat_RGB555},
+            {.subtype = &DMOVideoFormat_RGB8},
+        },
+        .outputs =
+        {
+            {.subtype = &MFVideoFormat_WMV1},
+            {.subtype = &MFVideoFormat_WMV2},
+        },
+    };
+    const struct transform_info expect_dmo_info =
+    {
+        .name = L"WMVideo8 Encoder DMO",
+        .major_type = &MEDIATYPE_Video,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_IYUV},
+            {.subtype = &MEDIASUBTYPE_I420},
+            {.subtype = &MEDIASUBTYPE_YV12},
+            {.subtype = &MEDIASUBTYPE_NV11},
+            {.subtype = &MEDIASUBTYPE_NV12},
+            {.subtype = &MEDIASUBTYPE_YUY2},
+            {.subtype = &MEDIASUBTYPE_UYVY},
+            {.subtype = &MEDIASUBTYPE_YVYU},
+            {.subtype = &MEDIASUBTYPE_YVU9},
+            {.subtype = &MEDIASUBTYPE_RGB32},
+            {.subtype = &MEDIASUBTYPE_RGB24},
+            {.subtype = &MEDIASUBTYPE_RGB565},
+            {.subtype = &MEDIASUBTYPE_RGB555},
+            {.subtype = &MEDIASUBTYPE_RGB8},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_WMV1},
+            {.subtype = &MEDIASUBTYPE_WMV2},
+        },
+    };
+
+    static const media_type_desc expect_available_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV11),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_UYVY),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YVYU),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB24),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB565),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB555),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MEDIASUBTYPE_RGB8),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+    };
+    static const media_type_desc expect_available_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV2),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+            ATTR_UINT32(MF_MT_TRANSFER_FUNCTION, 0),
+            ATTR_UINT32(MF_MT_VIDEO_PRIMARIES, 0),
+            ATTR_UINT32(MF_MT_YUV_MATRIX, 0),
+        },
+    };
+
+    static const DWORD actual_width = 96, actual_height = 96;
+    const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height), /* required for SetOutputType */
+        {0},
+    };
+    const struct attribute_desc output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001, .required = TRUE),
+        ATTR_UINT32(MF_MT_AVG_BITRATE, 193540, .required = TRUE),
+        {0},
+    };
+
+    const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_UINT32(MF_MT_AVG_BITRATE, 193540),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        {0},
+    };
+    static const MFT_OUTPUT_STREAM_INFO empty_output_info =
+    {
+        .dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER,
+    };
+    static const MFT_INPUT_STREAM_INFO empty_input_info =
+    {
+        .dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER,
+    };
+    static const MFT_OUTPUT_STREAM_INFO expect_output_info =
+    {
+        .dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER,
+        .cbSize = 0x8000,
+        .cbAlignment = 1,
+    };
+    static const MFT_INPUT_STREAM_INFO expect_input_info =
+    {
+        .dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER,
+        .cbSize = 0x3600,
+        .cbAlignment = 1,
+    };
+
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_WMV1};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    IMFMediaType *media_type;
+    IMFTransform *transform;
+    ULONG i, ret;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("wmvenc");
+
+    if (!check_mft_enum(MFT_CATEGORY_VIDEO_ENCODER, &input_type, &output_type, class_id))
+        goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
+
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, TRUE);
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IPropertyBag, TRUE);
+
+    check_mft_optional_methods(transform, 2);
+    check_mft_get_attributes(transform, NULL, FALSE);
+    check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_input_info);
+    check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_output_info);
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("in 0 %lu", i);
+        ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
+    ok(i == ARRAY_SIZE(expect_available_inputs), "%lu input media types\n", i);
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %lu", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+    ok(i == ARRAY_SIZE(expect_available_outputs), "%lu output media types\n", i);
+
+    check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
+    check_mft_get_output_current_type(transform, NULL);
+
+    check_mft_set_input_type_required(transform, input_type_desc);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type_(transform, expect_input_type_desc, FALSE, TRUE);
+
+    check_mft_set_output_type_required(transform, output_type_desc);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
+
+    check_mft_get_input_stream_info(transform, S_OK, &expect_input_info);
+    check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -3925,7 +4276,7 @@ static void test_wmv_decoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_attributes, TRUE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_output_info);
@@ -4243,7 +4594,7 @@ static void test_color_convert(void)
     check_interface(transform, &IID_IMFRealTimeClient, TRUE);
     /* check_interface(transform, &IID_IWMColorConvProps, TRUE); */
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -4759,7 +5110,7 @@ static void test_video_processor(void)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, TRUE);
     check_mft_get_input_stream_info(transform, S_OK, &initial_input_info);
     check_mft_get_output_stream_info(transform, S_OK, &initial_output_info);
@@ -5142,7 +5493,7 @@ static void test_mp3_decoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform);
+    check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -5290,6 +5641,7 @@ START_TEST(transform)
     test_wma_encoder();
     test_wma_decoder();
     test_h264_decoder();
+    test_wmv_encoder();
     test_wmv_decoder();
     test_audio_convert();
     test_color_convert();
