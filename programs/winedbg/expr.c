@@ -628,7 +628,7 @@ BOOL expr_print(const struct expr* exp)
     {
     case EXPR_TYPE_CAST:
         dbg_printf("((");
-        types_print_type(&exp->un.cast.cast_to, FALSE);
+        types_print_type(&exp->un.cast.cast_to, FALSE, NULL);
         dbg_printf(")");
         expr_print(exp->un.cast.expr);
         dbg_printf(")");

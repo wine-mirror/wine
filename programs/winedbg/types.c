@@ -576,7 +576,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         dbg_printf("Function ");
         print_bare_address(&lvalue->addr);
         dbg_printf(": ");
-        types_print_type(&type, FALSE);
+        types_print_type(&type, FALSE, NULL);
         break;
     case SymTagTypedef:
         lvalue_field = *lvalue;
@@ -600,7 +600,7 @@ static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
     type.module = sym->ModBase;
     type.id = sym->TypeIndex;
     dbg_printf("Mod: %0*Ix ID: %08lx\n", ADDRWIDTH, type.module, type.id);
-    types_print_type(&type, TRUE);
+    types_print_type(&type, TRUE, FALSE);
     dbg_printf("\n");
     return TRUE;
 }
@@ -621,13 +621,14 @@ BOOL print_types(void)
     return FALSE;
 }
 
-BOOL types_print_type(const struct dbg_type* type, BOOL details)
+BOOL types_print_type(const struct dbg_type* type, BOOL details, const WCHAR* varname)
 {
     WCHAR*              ptr;
     const WCHAR*        name;
     DWORD               tag, udt, count, bitoffset, bt;
     DWORD64             bitlen;
     struct dbg_type     subtype;
+    BOOL                printed = FALSE;
 
     if (type->id == dbg_itype_none || !types_get_info(type, TI_GET_SYMTAG, &tag))
     {
@@ -650,7 +651,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         break;
     case SymTagPointerType:
         types_get_info(type, TI_GET_TYPE, &subtype);
-        types_print_type(&subtype, FALSE);
+        types_print_type(&subtype, FALSE, NULL);
         dbg_printf("*");
         break;
     case SymTagUDT:
@@ -689,10 +690,9 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
                         if (types_get_info(&type_elt, TI_GET_TYPE, &type_elt))
                         {
                             /* print details of embedded UDT:s */
-                            types_print_type(&type_elt, types_get_info(&type_elt, TI_GET_UDTKIND, &udt));
+                            types_print_type(&type_elt, types_get_info(&type_elt, TI_GET_UDTKIND, &udt), ptr);
                         }
-                        else dbg_printf("<unknown>");
-                        dbg_printf(" %ls", ptr);
+                        else dbg_printf("<unknown> %ls", ptr);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         if (bitlen != ~(DWORD64)0)
                             dbg_printf(" : %I64u", bitlen);
@@ -707,12 +707,15 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         }
         break;
     case SymTagArrayType:
-        types_get_info(type, TI_GET_TYPE, &subtype);
-        types_print_type(&subtype, FALSE);
-        if (types_get_info(type, TI_GET_COUNT, &count))
-            dbg_printf(" %ls[%ld]", name, count);
-        else
-            dbg_printf(" %ls[]", name);
+        if (types_get_info(type, TI_GET_TYPE, &subtype))
+        {
+            types_print_type(&subtype, FALSE, varname);
+            if (types_get_info(type, TI_GET_COUNT, &count))
+                dbg_printf("[%ld]", count);
+            else
+                dbg_printf("[]");
+            printed = TRUE;
+        }
         break;
     case SymTagEnum:
         dbg_printf("enum %ls", name);
@@ -767,14 +770,15 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         /* is the returned type the same object as function sig itself ? */
         if (subtype.id != type->id)
         {
-            types_print_type(&subtype, FALSE);
+            types_print_type(&subtype, FALSE, NULL);
         }
         else
         {
             subtype.module = 0;
             dbg_printf("<ret_type=self>");
         }
-        dbg_printf(" (*%ls)(", name);
+        dbg_printf(" (*%ls)(", varname ? varname : L"");
+        printed = TRUE;
         if (types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
         {
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
@@ -792,7 +796,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
                     {
                         subtype.id = fcp->ChildId[i];
                         types_get_info(&subtype, TI_GET_TYPE, &subtype);
-                        types_print_type(&subtype, FALSE);
+                        types_print_type(&subtype, FALSE, NULL);
                         if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
                     }
                 }
@@ -806,7 +810,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         if (details && types_get_info(type, TI_GET_TYPE, &subtype))
         {
             dbg_printf("typedef %ls => ", name);
-            types_print_type(&subtype, FALSE);
+            types_print_type(&subtype, FALSE, NULL);
         }
         else dbg_printf("%ls", name);
         break;
@@ -814,6 +818,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         WINE_ERR("Unknown type %lu for %ls\n", tag, name);
         break;
     }
+    if (varname && !printed) dbg_printf(" %ls", varname);
 
     HeapFree(GetProcessHeap(), 0, ptr);
     return TRUE;

@@ -448,7 +448,7 @@ extern void             symbol_read_symtable(const char* filename, ULONG_PTR off
 extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr);
 extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE64* ret);
 extern void             symbol_info(const char* str);
-extern void             symbol_print_local(const SYMBOL_INFO* sym, DWORD_PTR base, BOOL detailed);
+extern void             symbol_print_localvalue(const SYMBOL_INFO* sym, DWORD_PTR base, BOOL detailed);
 extern BOOL             symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
 struct sgv_data;
@@ -486,7 +486,7 @@ extern enum dbg_start   tgt_module_load(const char* name, BOOL keep);
 
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);
-extern BOOL             types_print_type(const struct dbg_type*, BOOL details);
+extern BOOL             types_print_type(const struct dbg_type*, BOOL details, const WCHAR* varname);
 extern BOOL             print_types(void);
 extern dbg_lgint_t      types_extract_as_integer(const struct dbg_lvalue*);
 extern dbg_lgint_t      types_extract_as_lgint(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
