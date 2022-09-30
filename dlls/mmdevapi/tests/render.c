@@ -1034,11 +1034,12 @@ static void test_clock(int share)
      * BufferSize must be rounded up, maximum 2s says MSDN
      * but it is rounded down modulo fragment ! */
     if (share)
-    ok(gbsize == bufsize,
-       "BufferSize %u at rate %lu\n", gbsize, pwfx->nSamplesPerSec);
+        ok(gbsize == bufsize,
+           "BufferSize %u at rate %lu\n", gbsize, pwfx->nSamplesPerSec);
     else
-    ok(gbsize == parts * fragment || gbsize == MulDiv(bufsize, 1, 1024) * 1024,
-       "BufferSize %u misfits fragment size %u at rate %lu\n", gbsize, fragment, pwfx->nSamplesPerSec);
+        flaky
+        ok(gbsize == parts * fragment || gbsize == MulDiv(bufsize, 1, 1024) * 1024,
+           "BufferSize %u misfits fragment size %u at rate %lu\n", gbsize, fragment, pwfx->nSamplesPerSec);
 
     /* In shared mode, GetCurrentPadding decreases in multiples of
      * fragment size (i.e. updated only at period ticks), whereas
@@ -1111,6 +1112,7 @@ static void test_clock(int share)
     ok(hr == S_OK, "GetPosition failed: %08lx\n", hr);
     ok(pos > 0, "Position %u vs. last %u\n", (UINT)pos,0);
     /* in rare cases is slept*1.1 not enough with dmix */
+    flaky
     ok(pos*1000/freq <= slept*1.4, "Position %u too far after playing %ums\n", (UINT)pos, slept);
     last = pos;
 
@@ -2211,6 +2213,7 @@ static void test_worst_case(void)
 
         for(i = 0; i <= 99; i++){ /* 100 x 10ms = 1 second */
             r = WaitForSingleObject(event, 60 + defp / 10000);
+            flaky_wine
             ok(r == WAIT_OBJECT_0, "Wait iteration %d gave %lx\n", i, r);
 
             /* the app has nearly one period time to feed data */
