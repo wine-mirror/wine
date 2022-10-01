@@ -419,6 +419,75 @@ static void test_find_pin(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_pin_info(void)
+{
+    IBaseFilter *filter = create_mpeg_layer3_decoder();
+    PIN_DIRECTION dir;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!wcscmp(info.achName, L"XForm In"), "Got name %s.\n", debugstr_w(info.achName));
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(id, L"In"), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, NULL);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
+    ok(!wcscmp(info.achName, L"XForm Out"), "Got name %s.\n", debugstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(id, L"Out"), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, NULL);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(mpeglayer3)
 {
     IBaseFilter *filter;
@@ -438,6 +507,7 @@ START_TEST(mpeglayer3)
     test_unconnected_filter_state();
     test_enum_pins();
     test_find_pin();
+    test_pin_info();
 
     CoUninitialize();
 }
