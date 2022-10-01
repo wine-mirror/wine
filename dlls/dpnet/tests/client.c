@@ -320,6 +320,7 @@ static void test_enum_hosts(void)
     lastAsyncHandle = 0xdeadbeef;
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async2, 0);
     ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08lx\n", hr);
+    flaky
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08lx\n", lastAsyncCode);
     todo_wine ok(lastAsyncHandle == async2, "got 0x%08lx\n", async2);
 
@@ -750,7 +751,9 @@ static void test_enum_hosts_peer(void)
     lastAsyncHandle = 0xdeadbeef;
     hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async2, 0);
     todo_wine ok(hr == S_OK, "IDirectPlay8Peer_CancelAsyncOperation failed with 0x%08lx\n", hr);
+    flaky
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08lx\n", lastAsyncCode);
+    flaky
     todo_wine ok(lastAsyncHandle == async2, "got 0x%08lx\n", async2);
 
     IDirectPlay8Peer_Release(peer2);
