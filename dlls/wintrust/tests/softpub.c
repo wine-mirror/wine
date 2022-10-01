@@ -1831,7 +1831,7 @@ static void test_multiple_signatures(void)
     ok(prov->cbStruct == sizeof(*prov), "Got size %lu.\n", prov->cbStruct);
     ok(prov->csSigners == 1, "Got %lu.\n", prov->csSigners);
     todo_wine ok(prov->pSigSettings == &settings, "Got %p, expected %p.\n", prov->pSigSettings, &settings);
-    todo_wine ok(!!prov->pSigState, "Got %p, expected %p.\n", prov->pSigSettings, &settings);
+    ok(!!prov->pSigState, "Got %p, expected %p.\n", prov->pSigSettings, &settings);
     if (prov->cbStruct == sizeof(*prov) && prov->pSigState)
     {
         ok(prov->pSigState->cbStruct == sizeof(*prov->pSigState)

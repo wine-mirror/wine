@@ -832,14 +832,32 @@ static DWORD WINTRUST_VerifySigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 
 HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
 {
-    DWORD err;
+    DWORD err = ERROR_SUCCESS;
 
     TRACE("(%p)\n", data);
 
     if (!data->padwTrustStepErrors)
         return S_FALSE;
 
-    if (data->hMsg)
+    if (data->pSigState)
+    {
+        /* We did not initialize this, probably an unsupported usage. */
+        FIXME("pSigState %p already initialized.\n", data->pSigState);
+    }
+    if (!(data->pSigState = data->psPfns->pfnAlloc(sizeof(*data->pSigState))))
+    {
+        err = ERROR_OUTOFMEMORY;
+    }
+    else
+    {
+        data->pSigState->cbStruct = sizeof(*data->pSigState);
+        data->pSigState->fSupportMultiSig = TRUE;
+        data->pSigState->dwCryptoPolicySupport = WSS_SIGTRUST_SUPPORT | WSS_OBJTRUST_SUPPORT | WSS_CERTTRUST_SUPPORT;
+        if (data->hMsg)
+            data->pSigState->hPrimarySig = CryptMsgDuplicate(data->hMsg);
+    }
+
+    if (!err && data->hMsg)
     {
         DWORD signerCount, size;
 
@@ -859,8 +877,7 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
         else
             err = TRUST_E_NOSIGNATURE;
     }
-    else
-        err = ERROR_SUCCESS;
+
     if (err)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_SIGPROV] = err;
     return !err ? S_OK : S_FALSE;
@@ -1375,6 +1392,13 @@ HRESULT WINAPI SoftpubCleanup(CRYPT_PROVIDER_DATA *data)
         data->psPfns->pfnFree(data->u.pPDSip->psIndirectData);
     }
 
+    if (WVT_ISINSTRUCT(CRYPT_PROVIDER_DATA, data->cbStruct, pSigState) && data->pSigState)
+    {
+        CryptMsgClose(data->pSigState->hPrimarySig);
+        for (i = 0; i < data->pSigState->cSecondarySigs; ++i)
+            CryptMsgClose(data->pSigState->rhSecondarySigs[i]);
+        data->psPfns->pfnFree(data->pSigState);
+    }
     CryptMsgClose(data->hMsg);
 
     if (data->fOpenedFile &&
