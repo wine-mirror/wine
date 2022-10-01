@@ -257,6 +257,127 @@ static void test_unconnected_filter_state(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_enum_pins(void)
+{
+    IBaseFilter *filter = create_mpeg_layer3_decoder();
+    IEnumPins *enum1, *enum2;
+    ULONG count, ref;
+    IPin *pins[3];
+    HRESULT hr;
+
+    ref = get_refcount(filter);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IBaseFilter_EnumPins(filter, NULL);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, NULL, NULL);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(pins[0]);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    IPin_Release(pins[0]);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(pins[0]);
+    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    IPin_Release(pins[0]);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+    IPin_Release(pins[1]);
+
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 3, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+    IPin_Release(pins[1]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 3);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum2, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IPin_Release(pins[0]);
+
+    IEnumPins_Release(enum2);
+    IEnumPins_Release(enum1);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(mpeglayer3)
 {
     IBaseFilter *filter;
@@ -274,6 +395,7 @@ START_TEST(mpeglayer3)
     test_interfaces();
     test_aggregation();
     test_unconnected_filter_state();
+    test_enum_pins();
 
     CoUninitialize();
 }
