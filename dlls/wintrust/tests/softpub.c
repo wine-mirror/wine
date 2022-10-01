@@ -1830,7 +1830,7 @@ static void test_multiple_signatures(void)
     prov = (CRYPT_PROVIDER_DATA *)data.hWVTStateData;
     ok(prov->cbStruct == sizeof(*prov), "Got size %lu.\n", prov->cbStruct);
     ok(prov->csSigners == 1, "Got %lu.\n", prov->csSigners);
-    todo_wine ok(prov->pSigSettings == &settings, "Got %p, expected %p.\n", prov->pSigSettings, &settings);
+    ok(prov->pSigSettings == &settings, "Got %p, expected %p.\n", prov->pSigSettings, &settings);
     ok(!!prov->pSigState, "Got %p, expected %p.\n", prov->pSigSettings, &settings);
     if (prov->cbStruct == sizeof(*prov) && prov->pSigState)
     {
@@ -1867,7 +1867,7 @@ static void test_multiple_signatures(void)
     settings.dwVerifiedSigIndex = 0xcccccccc;
     status = WinVerifyTrust(NULL, &WVTPolicyGUID, &data);
     todo_wine ok(status == CERT_E_UNTRUSTEDROOT || status == CERT_E_CHAINING, "Failed, ret %#lx\n", status);
-    todo_wine ok(settings.cSecondarySigs == 2, "Got %lu.\n", settings.cSecondarySigs);
+    ok(settings.cSecondarySigs == 2, "Got %lu.\n", settings.cSecondarySigs);
     todo_wine ok(settings.dwVerifiedSigIndex == 2, "Got %lu.\n", settings.dwVerifiedSigIndex);
 
     data.dwStateAction = WTD_STATEACTION_CLOSE;
@@ -1881,7 +1881,7 @@ static void test_multiple_signatures(void)
     settings.dwIndex = 1;
     status = WinVerifyTrust(NULL, &WVTPolicyGUID, &data);
     todo_wine ok(status == CERT_E_UNTRUSTEDROOT || status == CERT_E_CHAINING, "Failed, ret %#lx\n", status);
-    todo_wine ok(settings.cSecondarySigs == 2, "Got %lu.\n", settings.cSecondarySigs);
+    ok(settings.cSecondarySigs == 2, "Got %lu.\n", settings.cSecondarySigs);
     todo_wine ok(settings.dwVerifiedSigIndex == 1, "Got %lu.\n", settings.dwVerifiedSigIndex);
     settings.dwIndex = 0;
 

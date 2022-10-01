@@ -909,6 +909,11 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
             data->pSigState->hPrimarySig = CryptMsgDuplicate(data->hMsg);
             load_secondary_signatures(data, data->pSigState->hPrimarySig);
         }
+        if (data->pSigSettings)
+        {
+            if (data->pSigSettings->dwFlags & WSS_GET_SECONDARY_SIG_COUNT)
+                data->pSigSettings->cSecondarySigs = data->pSigState->cSecondarySigs;
+        }
     }
 
     if (!err && data->hMsg)
