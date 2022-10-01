@@ -1840,7 +1840,7 @@ static void test_multiple_signatures(void)
         ok(prov->pSigState->fSupportMultiSig, "Got %d.\n", prov->pSigState->fSupportMultiSig);
         ok(prov->pSigState->dwCryptoPolicySupport == (WSS_SIGTRUST_SUPPORT | WSS_OBJTRUST_SUPPORT
                 | WSS_CERTTRUST_SUPPORT), "Got %#lx.\n", prov->pSigState->dwCryptoPolicySupport);
-        todo_wine ok(prov->pSigState->cSecondarySigs == 2, "Got %lu.\n", prov->pSigState->cSecondarySigs);
+        ok(prov->pSigState->cSecondarySigs == 2, "Got %lu.\n", prov->pSigState->cSecondarySigs);
 
         size = sizeof(buf);
         bret = CryptMsgGetParam(prov->pSigState->hPrimarySig, CMSG_SIGNER_CERT_INFO_PARAM, 0, buf, &size);
