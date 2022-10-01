@@ -1348,6 +1348,7 @@ static DWORD WINAPI test_default_ime_window_cb(void *arg)
        broken(!testcase->top_level_window /* Vista */) ,
        "Expected IME window existence\n");
     DestroyWindow(hwnd1);
+    flaky
     ok(!IsWindow(ime_wnd), "Expected no IME windows\n");
     return 1;
 }
