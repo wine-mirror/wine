@@ -3297,6 +3297,7 @@ static void test_wndproc_windowed(void)
     if (thread_params.running_in_foreground)
     {
         tmp = GetForegroundWindow();
+        flaky
         ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
                 thread_params.dummy_window, tmp);
     }
