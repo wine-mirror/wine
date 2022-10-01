@@ -421,8 +421,7 @@ __ASM_GLOBAL_FUNC( raise_exception,
 #elif defined(__aarch64__)
 __ASM_GLOBAL_FUNC( raise_exception,
                    "stp x29, x30, [sp, #-32]!\n\t"
-                   __ASM_SEH(".seh_stackalloc 32\n\t")
-                   __ASM_SEH(".seh_save_fplr 0\n\t")
+                   __ASM_SEH(".seh_save_fplr_x 32\n\t")
                    __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_def_cfa x29, 32\n\t")
                    __ASM_CFI(".cfi_offset x30, -24\n\t")
