@@ -6120,6 +6120,7 @@ static void test_swapchain_window_styles(void)
         exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
         ok(style == tests[i].expected_style, "Got unexpected style %#lx, expected %#lx.\n",
                 style, tests[i].expected_style);
+        flaky_if(i == 4)
         ok(exstyle == tests[i].expected_exstyle, "Got unexpected exstyle %#lx, expected %#lx.\n",
                 exstyle, tests[i].expected_exstyle);
 
@@ -6136,6 +6137,7 @@ static void test_swapchain_window_styles(void)
         exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
         ok(style == tests[i].expected_style, "Got unexpected style %#lx, expected %#lx.\n",
                 style, tests[i].expected_style);
+        flaky_if(i == 4)
         ok(exstyle == tests[i].expected_exstyle, "Got unexpected exstyle %#lx, expected %#lx.\n",
                 exstyle, tests[i].expected_exstyle);
 
@@ -6164,6 +6166,7 @@ static void test_swapchain_window_styles(void)
         exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
         ok(style == tests[i].expected_style, "Got unexpected style %#lx, expected %#lx.\n",
                 style, tests[i].expected_style);
+        flaky_if(i == 4)
         ok(exstyle == tests[i].expected_exstyle, "Got unexpected exstyle %#lx, expected %#lx.\n",
                 exstyle, tests[i].expected_exstyle);
 
@@ -6190,7 +6193,7 @@ static void test_swapchain_window_styles(void)
             exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
             todo_wine ok(style == tests[i].expected_style, "Got unexpected style %#lx, expected %#lx.\n",
                     style, tests[i].expected_style);
-            todo_wine
+            flaky_if(i == 4) todo_wine
             ok(exstyle == tests[i].expected_exstyle, "Got unexpected exstyle %#lx, expected %#lx.\n",
                     exstyle, tests[i].expected_exstyle);
         }
@@ -6206,7 +6209,7 @@ static void test_swapchain_window_styles(void)
         exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
         todo_wine ok(style == tests[i].expected_style, "Got unexpected style %#lx, expected %#lx.\n",
                 style, tests[i].expected_style);
-        todo_wine
+        flaky_if(i == 4) todo_wine
         ok(exstyle == tests[i].expected_exstyle, "Got unexpected exstyle %#lx, expected %#lx.\n",
                 exstyle, tests[i].expected_exstyle);
 
