@@ -5817,6 +5817,7 @@ static BOOL check_message(const struct message *expected,
 
 static LRESULT CALLBACK test_wndproc(HWND hwnd, unsigned int message, WPARAM wparam, LPARAM lparam)
 {
+    flaky
     ok(!expect_no_messages, "Got unexpected message %#x, hwnd %p, wparam %#Ix, lparam %#Ix.\n",
             message, hwnd, wparam, lparam);
 
