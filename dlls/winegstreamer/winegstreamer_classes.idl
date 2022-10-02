@@ -36,6 +36,13 @@ coclass AviSplitter {}
 coclass CMpegAudioCodec {}
 
 [
+    helpstring("MPEG Layer-3 Decoder"),
+    threading(both),
+    uuid(38be3000-dbf4-11d0-860e-00a024cfef6d)
+]
+coclass mpeg_layer3_decoder {}
+
+[
     helpstring("MPEG-I Stream Splitter"),
     threading(both),
     uuid(336475d0-942a-11ce-a870-00aa002feab5)

@@ -19,6 +19,7 @@
  */
 
 #include "gst_private.h"
+#include "gst_guids.h"
 
 #include "mferror.h"
 #include "mpegtype.h"
@@ -730,6 +731,51 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
     object->IMpegAudioDecoder_iface.lpVtbl = &mpeg_audio_decoder_vtbl;
 
     TRACE("Created MPEG audio decoder %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
+    return hr;
+}
+
+static HRESULT mpeg_layer3_decoder_sink_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static HRESULT mpeg_layer3_decoder_source_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static HRESULT mpeg_layer3_decoder_source_get_media_type(struct transform *filter, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    return VFW_S_NO_MORE_ITEMS;
+}
+
+static HRESULT mpeg_layer3_decoder_source_decide_buffer_size(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
+{
+    return S_OK;
+}
+
+static const struct transform_ops mpeg_layer3_decoder_transform_ops =
+{
+    mpeg_layer3_decoder_sink_query_accept,
+    mpeg_layer3_decoder_source_query_accept,
+    mpeg_layer3_decoder_source_get_media_type,
+    mpeg_layer3_decoder_source_decide_buffer_size,
+};
+
+HRESULT mpeg_layer3_decoder_create(IUnknown *outer, IUnknown **out)
+{
+    struct transform *object;
+    HRESULT hr;
+
+    hr = transform_create(outer, &CLSID_mpeg_layer3_decoder, &mpeg_layer3_decoder_transform_ops, &object);
+    if (FAILED(hr))
+        return hr;
+
+    wcscpy(object->sink.pin.name, L"XForm In");
+    wcscpy(object->source.pin.name, L"XForm Out");
+
+    TRACE("Created MPEG layer-3 decoder %p.\n", object);
     *out = &object->filter.IUnknown_inner;
     return hr;
 }
