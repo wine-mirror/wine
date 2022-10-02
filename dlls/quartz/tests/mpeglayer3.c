@@ -19,10 +19,114 @@
 
 #define COBJMACROS
 #include "dshow.h"
+#include "mmreg.h"
 #include "wine/test.h"
 
 #include "initguid.h"
 DEFINE_GUID(CLSID_mpeg_layer3_decoder, 0x38be3000, 0xdbf4, 0x11d0, 0x86, 0x0e, 0x00, 0xa0, 0x24, 0xcf, 0xef, 0x6d);
+
+static const MPEG1WAVEFORMAT mp1_format =
+{
+    .wfx.wFormatTag = WAVE_FORMAT_MPEG,
+    .wfx.nChannels = 1,
+    .wfx.nSamplesPerSec = 32000,
+    .wfx.nBlockAlign = 48,
+    .wfx.nAvgBytesPerSec = 4000,
+    .wfx.cbSize = sizeof(MPEG1WAVEFORMAT) - sizeof(WAVEFORMATEX),
+    .fwHeadLayer = ACM_MPEG_LAYER1,
+    .dwHeadBitrate = 32000,
+    .fwHeadMode = ACM_MPEG_SINGLECHANNEL,
+    .fwHeadFlags = ACM_MPEG_ID_MPEG1,
+};
+
+static const AM_MEDIA_TYPE mp1_mt =
+{
+    /* MEDIATYPE_Audio, MEDIASUBTYPE_MPEG1AudioPayload, FORMAT_WaveFormatEx */
+    .majortype = {0x73647561, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0x00000050, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .bFixedSizeSamples = TRUE,
+    .lSampleSize = 1,
+    .formattype = {0x05589f81, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(MPEG1WAVEFORMAT),
+    .pbFormat = (BYTE *)&mp1_format,
+};
+
+static const MPEG1WAVEFORMAT mp2_format =
+{
+    .wfx.wFormatTag = WAVE_FORMAT_MPEG,
+    .wfx.nChannels = 1,
+    .wfx.nSamplesPerSec = 32000,
+    .wfx.nBlockAlign = 144,
+    .wfx.nAvgBytesPerSec = 4000,
+    .wfx.cbSize = sizeof(MPEG1WAVEFORMAT) - sizeof(WAVEFORMATEX),
+    .fwHeadLayer = ACM_MPEG_LAYER2,
+    .dwHeadBitrate = 32000,
+    .fwHeadMode = ACM_MPEG_SINGLECHANNEL,
+    .fwHeadFlags = ACM_MPEG_ID_MPEG1,
+};
+
+static const AM_MEDIA_TYPE mp2_mt =
+{
+    /* MEDIATYPE_Audio, MEDIASUBTYPE_MPEG1AudioPayload, FORMAT_WaveFormatEx */
+    .majortype = {0x73647561, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0x00000050, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .bFixedSizeSamples = TRUE,
+    .lSampleSize = 1,
+    .formattype = {0x05589f81, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(MPEG1WAVEFORMAT),
+    .pbFormat = (BYTE *)&mp2_format,
+};
+
+static const MPEG1WAVEFORMAT mp3_format0 =
+{
+    .wfx.wFormatTag = WAVE_FORMAT_MPEG,
+    .wfx.nChannels = 1,
+    .wfx.nSamplesPerSec = 32000,
+    .wfx.nBlockAlign = 144,
+    .wfx.nAvgBytesPerSec = 4000,
+    .wfx.cbSize = sizeof(MPEG1WAVEFORMAT) - sizeof(WAVEFORMATEX),
+    .fwHeadLayer = ACM_MPEG_LAYER3,
+    .dwHeadBitrate = 32000,
+    .fwHeadMode = ACM_MPEG_SINGLECHANNEL,
+    .fwHeadFlags = ACM_MPEG_ID_MPEG1,
+};
+
+static const AM_MEDIA_TYPE mp3_mt0 =
+{
+    /* MEDIATYPE_Audio, MEDIASUBTYPE_MPEG1AudioPayload, FORMAT_WaveFormatEx */
+    .majortype = {0x73647561, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0x00000050, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .bFixedSizeSamples = TRUE,
+    .lSampleSize = 1,
+    .formattype = {0x05589f81, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(MPEG1WAVEFORMAT),
+    .pbFormat = (BYTE *)&mp3_format0,
+};
+
+static const MPEGLAYER3WAVEFORMAT mp3_format1 =
+{
+    .wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3,
+    .wfx.nChannels = 1,
+    .wfx.nSamplesPerSec = 32000,
+    .wfx.nBlockAlign = 144,
+    .wfx.nAvgBytesPerSec = 4000,
+    .wfx.cbSize = sizeof(MPEGLAYER3WAVEFORMAT) - sizeof(WAVEFORMATEX),
+    .wID = MPEGLAYER3_ID_MPEG,
+    .nBlockSize = 144,
+    .nFramesPerBlock = 1,
+};
+
+static const AM_MEDIA_TYPE mp3_mt1 =
+{
+    /* MEDIATYPE_Audio, MEDIASUBTYPE_MP3, FORMAT_WaveFormatEx */
+    .majortype = {0x73647561, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {WAVE_FORMAT_MPEGLAYER3, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .bFixedSizeSamples = TRUE,
+    .lSampleSize = 1,
+    .formattype = {0x05589f81, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(MPEGLAYER3WAVEFORMAT),
+    .pbFormat = (BYTE *)&mp3_format1,
+};
 
 static IBaseFilter *create_mpeg_layer3_decoder(void)
 {
@@ -31,6 +135,26 @@ static IBaseFilter *create_mpeg_layer3_decoder(void)
             &IID_IBaseFilter, (void **)&filter);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     return filter;
+}
+
+static void init_pcm_mt(AM_MEDIA_TYPE *mt, WAVEFORMATEX *format,
+        WORD channels, DWORD sample_rate, WORD depth)
+{
+    memset(format, 0, sizeof(WAVEFORMATEX));
+    format->wFormatTag = WAVE_FORMAT_PCM;
+    format->nChannels = channels;
+    format->nSamplesPerSec = sample_rate;
+    format->wBitsPerSample = depth;
+    format->nBlockAlign = channels * depth / 8;
+    format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+    mt->majortype = MEDIATYPE_Audio;
+    mt->subtype = MEDIASUBTYPE_PCM;
+    mt->bFixedSizeSamples = TRUE;
+    mt->lSampleSize = format->nBlockAlign;
+    mt->formattype = FORMAT_WaveFormatEx;
+    mt->cbFormat = sizeof(WAVEFORMATEX);
+    mt->pbFormat = (BYTE *)format;
 }
 
 static ULONG get_refcount(void *iface)
@@ -563,6 +687,58 @@ static void test_enum_media_types(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_media_types(void)
+{
+    IBaseFilter *filter = create_mpeg_layer3_decoder();
+    WAVEFORMATEX format;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, L"In", &pin);
+
+    hr = IPin_QueryAccept(pin, &mp3_mt1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    mt = mp3_mt1;
+    mt.subtype = MEDIASUBTYPE_PCM;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_QueryAccept(pin, &mp1_mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IPin_QueryAccept(pin, &mp2_mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IPin_QueryAccept(pin, &mp3_mt0);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    mt = mp3_mt1;
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    mt = mp3_mt1;
+    mt.formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, L"Out", &pin);
+
+    init_pcm_mt(&mt, &format, 1, 32000, 16);
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(mpeglayer3)
 {
     IBaseFilter *filter;
@@ -584,6 +760,7 @@ START_TEST(mpeglayer3)
     test_find_pin();
     test_pin_info();
     test_enum_media_types();
+    test_media_types();
 
     CoUninitialize();
 }
