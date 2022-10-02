@@ -881,13 +881,16 @@ static void test_connect_pin(void)
 {
     IBaseFilter *filter = create_mpeg_layer3_decoder();
     struct testfilter testsource;
+    WAVEFORMATEX expect_format;
     IPin *sink, *source, *peer;
+    IEnumMediaTypes *enummt;
+    AM_MEDIA_TYPE expect_mt;
     WAVEFORMATEX req_format;
     IMediaControl *control;
+    AM_MEDIA_TYPE mt, *pmt;
     IMemInputPin *meminput;
     AM_MEDIA_TYPE req_mt;
     IFilterGraph2 *graph;
-    AM_MEDIA_TYPE mt;
     HRESULT hr;
     ULONG ref;
 
@@ -991,6 +994,29 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_EnumMediaTypes(source, &enummt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    init_pcm_mt(&expect_mt, &expect_format, 1, 32000, 16);
+    expect_mt.lSampleSize = 2304;
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
+                "Media types didn't match.\n");
+        ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(WAVEFORMATEX)),
+                "Format blocks didn't match.\n");
+
+        DeleteMediaType(pmt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
 
     test_sink_allocator(meminput);
 
