@@ -921,9 +921,9 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     /* Earlier versions used 16 buffers of lSampleSize bytes,
      * later versions use 8 buffers of lSampleSize * 4 bytes. */
-    todo_wine ok(props.cBuffers == 16 || props.cBuffers == 8, "Got %ld buffers.\n", props.cBuffers);
-    todo_wine ok(props.cbBuffer == 2222 || props.cbBuffer == 8888, "Got size %ld.\n", props.cbBuffer);
-    todo_wine ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(props.cBuffers == 16 || props.cBuffers == 8, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == 2222 || props.cbBuffer == 8888, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
@@ -933,7 +933,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         IMediaSample_Release(sample);
 
@@ -963,9 +963,9 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     /* Earlier versions used 16 buffers of lSampleSize bytes,
      * later versions use 8 buffers of lSampleSize * 4 bytes. */
-    todo_wine ok(props.cBuffers == 16 || props.cBuffers == 8, "Got %ld buffers.\n", props.cBuffers);
-    todo_wine ok(props.cbBuffer == 2222 || props.cbBuffer == 8888, "Got size %ld.\n", props.cbBuffer);
-    todo_wine ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(props.cBuffers == 16 || props.cBuffers == 8, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == 2222 || props.cbBuffer == 8888, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
 
     IFilterGraph2_Disconnect(graph, source);

@@ -803,7 +803,13 @@ static HRESULT mpeg_layer3_decoder_source_get_media_type(struct transform *filte
 
 static HRESULT mpeg_layer3_decoder_source_decide_buffer_size(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
 {
-    return S_OK;
+    ALLOCATOR_PROPERTIES ret_props;
+
+    props->cBuffers = max(props->cBuffers, 8);
+    props->cbBuffer = max(props->cbBuffer, filter->source.pin.mt.lSampleSize * 4);
+    props->cbAlign = max(props->cbAlign, 1);
+
+    return IMemAllocator_SetProperties(allocator, props, &ret_props);
 }
 
 static const struct transform_ops mpeg_layer3_decoder_transform_ops =
