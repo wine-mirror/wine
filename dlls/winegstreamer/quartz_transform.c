@@ -754,6 +754,13 @@ static HRESULT mpeg_layer3_decoder_sink_query_accept(struct transform *filter, c
 
 static HRESULT mpeg_layer3_decoder_source_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
 {
+    if (!filter->sink.pin.peer)
+        return S_FALSE;
+
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio)
+            || !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM))
+        return S_FALSE;
+
     return S_OK;
 }
 

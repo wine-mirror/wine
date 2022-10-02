@@ -767,7 +767,7 @@ static void test_media_types(void)
 
     init_pcm_mt(&mt, &format, 1, 32000, 16);
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IPin_Release(pin);
 
@@ -928,12 +928,12 @@ static void test_connect_pin(void)
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_mt.majortype = GUID_NULL;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_mt.subtype = GUID_NULL;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
