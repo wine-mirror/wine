@@ -1021,8 +1021,7 @@ const char *asm_globl( const char *func )
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-        buffer = strmake( "\t.globl %s%s\n%s%s:", target.cpu == CPU_i386 ? "_" : "", func,
-                          target.cpu == CPU_i386 ? "_" : "", func );
+        buffer = strmake( "\t.globl %s\n%s:", asm_name( func ), asm_name( func ) );
         break;
     default:
         buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
