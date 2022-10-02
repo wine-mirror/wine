@@ -737,6 +737,18 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
 
 static HRESULT mpeg_layer3_decoder_sink_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
 {
+    const MPEGLAYER3WAVEFORMAT *format;
+
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
+            || mt->cbFormat < sizeof(MPEGLAYER3WAVEFORMAT))
+        return S_FALSE;
+
+    format = (const MPEGLAYER3WAVEFORMAT *)mt->pbFormat;
+
+    if (format->wfx.wFormatTag != WAVE_FORMAT_MPEGLAYER3)
+        return S_FALSE;
+
     return S_OK;
 }
 

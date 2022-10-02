@@ -707,23 +707,23 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPin_QueryAccept(pin, &mp1_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IPin_QueryAccept(pin, &mp2_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IPin_QueryAccept(pin, &mp3_mt0);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     mt = mp3_mt1;
     mt.majortype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     mt = mp3_mt1;
     mt.formattype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IPin_Release(pin);
 
