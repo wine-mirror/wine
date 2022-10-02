@@ -1902,7 +1902,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             {
                 output( "\n\t.section \".idata$6\"\n" );
                 output( ".L__wine_import_name:\n" );
-                output( "\t.short %d\n", odp->ordinal );
+                output( "\t.short %d\n", odp->hint );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), name );
             }
 
