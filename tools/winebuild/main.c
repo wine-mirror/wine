@@ -669,10 +669,10 @@ int main(int argc, char **argv)
     case MODE_IMPLIB:
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
-        output_static_lib( spec, files );
+        output_import_lib( spec, files );
         break;
     case MODE_STATICLIB:
-        output_static_lib( NULL, files );
+        output_static_lib( output_file_name, files, 1 );
         break;
     case MODE_BUILTIN:
         if (!files.count) fatal_error( "missing file argument for --builtin option\n" );

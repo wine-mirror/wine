@@ -1552,7 +1552,7 @@ static void assemble_files( const char *prefix )
 }
 
 /* build a library from the current asm files and any additional object files in argv */
-static void build_library( const char *output_name, struct strarray files, int create )
+void output_static_lib( const char *output_name, struct strarray files, int create )
 {
     struct strarray args;
 
@@ -1582,7 +1582,7 @@ static void build_library( const char *output_name, struct strarray files, int c
 }
 
 /* create a Windows-style import library */
-static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec )
+static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
 {
     struct strarray args;
     char *def_file;
@@ -1623,10 +1623,12 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec )
     }
 
     spawn( args );
+
+    if (files.count) output_static_lib( output_file_name, files, 0 );
 }
 
 /* create a Unix-style import library */
-static void build_unix_import_lib( DLLSPEC *spec )
+static void build_unix_import_lib( DLLSPEC *spec, struct strarray files )
 {
     int i, total;
     const char *name, *prefix;
@@ -1679,19 +1681,13 @@ static void build_unix_import_lib( DLLSPEC *spec )
 
     assemble_files( spec->file_name );
     free( dll_name );
+
+    output_static_lib( output_file_name, files, 1 );
 }
 
 /* output an import library for a Win32 module and additional object files */
-void output_static_lib( DLLSPEC *spec, struct strarray files )
+void output_import_lib( DLLSPEC *spec, struct strarray files )
 {
-    if (is_pe())
-    {
-        if (spec) build_windows_import_lib( output_file_name, spec );
-        if (files.count || !spec) build_library( output_file_name, files, !spec );
-    }
-    else
-    {
-        if (spec) build_unix_import_lib( spec );
-        build_library( output_file_name, files, 1 );
-    }
+    if (!is_pe()) build_unix_import_lib( spec, files );
+    else build_windows_import_lib( output_file_name, spec, files );
 }
