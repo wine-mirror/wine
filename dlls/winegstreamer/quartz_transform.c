@@ -766,7 +766,39 @@ static HRESULT mpeg_layer3_decoder_source_query_accept(struct transform *filter,
 
 static HRESULT mpeg_layer3_decoder_source_get_media_type(struct transform *filter, unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    return VFW_S_NO_MORE_ITEMS;
+    const MPEGLAYER3WAVEFORMAT *input_format;
+    WAVEFORMATEX *output_format;
+
+    if (!filter->sink.pin.peer)
+        return VFW_S_NO_MORE_ITEMS;
+
+    if (index > 0)
+        return VFW_S_NO_MORE_ITEMS;
+
+    input_format = (const MPEGLAYER3WAVEFORMAT *)filter->sink.pin.mt.pbFormat;
+
+    output_format = CoTaskMemAlloc(sizeof(*output_format));
+    if (!output_format)
+        return E_OUTOFMEMORY;
+
+    memset(output_format, 0, sizeof(*output_format));
+    output_format->wFormatTag = WAVE_FORMAT_PCM;
+    output_format->nSamplesPerSec = input_format->wfx.nSamplesPerSec;
+    output_format->nChannels = input_format->wfx.nChannels;
+    output_format->wBitsPerSample = 16;
+    output_format->nBlockAlign = output_format->nChannels * output_format->wBitsPerSample / 8;
+    output_format->nAvgBytesPerSec = output_format->nBlockAlign * output_format->nSamplesPerSec;
+
+    memset(mt, 0, sizeof(*mt));
+    mt->majortype = MEDIATYPE_Audio;
+    mt->subtype = MEDIASUBTYPE_PCM;
+    mt->bFixedSizeSamples = TRUE;
+    mt->lSampleSize = 1152 * output_format->nBlockAlign;
+    mt->formattype = FORMAT_WaveFormatEx;
+    mt->cbFormat = sizeof(*output_format);
+    mt->pbFormat = (BYTE *)output_format;
+
+    return S_OK;
 }
 
 static HRESULT mpeg_layer3_decoder_source_decide_buffer_size(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
