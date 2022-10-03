@@ -24,9 +24,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gamebar);
 
+static EventRegistrationToken dummy_token = {.value = 0xdeadbeef};
+
 struct gamebar_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IGameBarStatics IGameBarStatics_iface;
     LONG ref;
 };
 
@@ -47,6 +50,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGameBarStatics ))
+    {
+        *out = &impl->IGameBarStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -109,9 +119,78 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( statics, IGameBarStatics, struct gamebar_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI statics_add_VisibilityChanged( IGameBarStatics *iface,
+                                                     IEventHandler_IInspectable *handler,
+                                                     EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub.\n", iface, handler, token );
+    *token = dummy_token;
+    return S_OK;
+}
+
+static HRESULT WINAPI statics_remove_VisibilityChanged( IGameBarStatics *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub.\n", iface, token.value );
+    return S_OK;
+}
+
+static HRESULT WINAPI statics_add_IsInputRedirectedChanged( IGameBarStatics *iface,
+                                                            IEventHandler_IInspectable *handler,
+                                                            EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub.\n", iface, handler, token );
+    *token = dummy_token;
+    return S_OK;
+}
+
+static HRESULT WINAPI statics_remove_IsInputRedirectedChanged( IGameBarStatics *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub.\n", iface, token.value );
+    return S_OK;
+}
+
+static HRESULT WINAPI statics_get_Visible( IGameBarStatics *iface, BOOLEAN *value)
+{
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = FALSE;
+    return S_OK;
+}
+
+static HRESULT WINAPI statics_get_IsInputRedirected( IGameBarStatics *iface, BOOLEAN *value )
+{
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = FALSE;
+    return S_OK;
+}
+
+static const struct IGameBarStaticsVtbl statics_vtbl =
+{
+    statics_QueryInterface,
+    statics_AddRef,
+    statics_Release,
+    /* IInspectable methods */
+    statics_GetIids,
+    statics_GetRuntimeClassName,
+    statics_GetTrustLevel,
+    /* IGameBarStatics methods */
+    statics_add_VisibilityChanged,
+    statics_remove_VisibilityChanged,
+    statics_add_IsInputRedirectedChanged,
+    statics_remove_IsInputRedirectedChanged,
+    statics_get_Visible,
+    statics_get_IsInputRedirected,
+};
+
 static struct gamebar_statics gamebar_statics =
 {
     {&factory_vtbl},
+    {&statics_vtbl},
     1,
 };
 

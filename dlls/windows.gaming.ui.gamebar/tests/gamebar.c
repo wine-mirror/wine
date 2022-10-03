@@ -48,7 +48,9 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_GameBarStatics(void)
 {
     static const WCHAR *gamebar_statics_name = L"Windows.Gaming.UI.GameBar";
+    IGameBarStatics *gamebar_statics;
     IActivationFactory *factory;
+    BOOLEAN value;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -69,6 +71,27 @@ static void test_GameBarStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IGameBarStatics, (void **)&gamebar_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IGameBarStatics_get_Visible( gamebar_statics, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+
+    value = TRUE;
+    hr = IGameBarStatics_get_Visible( gamebar_statics, &value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !value, "got %d.\n", value );
+
+    hr = IGameBarStatics_get_IsInputRedirected( gamebar_statics, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+
+    value = TRUE;
+    hr = IGameBarStatics_get_IsInputRedirected( gamebar_statics, &value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !value, "got %d.\n", value );
+
+    ref = IGameBarStatics_Release( gamebar_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
