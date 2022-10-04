@@ -154,9 +154,6 @@ static void test_DeviceInformation( void )
     stopped_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!stopped_handler.event, "failed to create event, got error %lu\n", GetLastError() );
 
-    hr = RoInitialize( RO_INIT_MULTITHREADED );
-    ok( hr == S_OK, "got hr %#lx\n", hr );
-
     hr = WindowsCreateString( device_info_name, wcslen( device_info_name ), &str );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
@@ -233,11 +230,74 @@ skip_device_statics2:
 done:
     WindowsDeleteString( str );
     CloseHandle( stopped_handler.event );
+}
 
-    RoUninitialize();
+static void test_DeviceAccessInformation( void )
+{
+    static const WCHAR *device_access_info_name = L"Windows.Devices.Enumeration.DeviceAccessInformation";
+    static const WCHAR *device_info_name = L"Windows.Devices.Enumeration.DeviceInformation";
+    IDeviceAccessInformationStatics *statics;
+    IActivationFactory *factory, *factory2;
+    IDeviceAccessInformation *access_info;
+    enum DeviceAccessStatus access_status;
+    HSTRING str;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = WindowsCreateString( device_access_info_name, wcslen( device_access_info_name ), &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered.\n", wine_dbgstr_w(device_access_info_name) );
+        return;
+    }
+
+    hr = WindowsCreateString( device_info_name, wcslen( device_info_name ), &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory2 );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    ok( factory != factory2, "Got the same factory.\n" );
+    IActivationFactory_Release( factory2 );
+
+    check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_IDeviceAccessInformation, FALSE );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IDeviceAccessInformationStatics, (void **)&statics );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+
+    hr = IDeviceAccessInformationStatics_CreateFromDeviceClass( statics, DeviceClass_AudioCapture, &access_info );
+    todo_wine ok( hr == S_OK || broken( hr == RPC_E_CALL_COMPLETE ) /* broken on some Testbot machines */, "got hr %#lx\n", hr );
+
+    if (hr == S_OK)
+    {
+        hr = IDeviceAccessInformation_get_CurrentStatus( access_info, &access_status );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        ok( access_status == DeviceAccessStatus_Allowed, "got %d.\n", access_status );
+        ref = IDeviceAccessInformation_Release( access_info );
+        ok( !ref, "got ref %lu\n", ref );
+    }
+
+    ref = IDeviceAccessInformationStatics_Release( statics );
+    ok( ref == 2, "got ref %lu\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %lu\n", ref );
 }
 
 START_TEST( devices )
 {
+    HRESULT hr;
+
+    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+
     test_DeviceInformation();
+    test_DeviceAccessInformation();
+
+    RoUninitialize();
 }

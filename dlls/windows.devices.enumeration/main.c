@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
 
-static const char *debugstr_hstring( HSTRING hstr )
+const char *debugstr_hstring( HSTRING hstr )
 {
     const WCHAR *str;
     UINT32 len;
@@ -395,8 +395,18 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID riid, void **out )
 
 HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **factory )
 {
+    const WCHAR *buffer = WindowsGetStringRawBuffer( classid, NULL );
+
     TRACE( "classid %s, factory %p.\n", debugstr_hstring( classid ), factory );
-    *factory = &device_information_statics.IActivationFactory_iface;
-    IUnknown_AddRef( *factory );
-    return S_OK;
+
+    *factory = NULL;
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_Devices_Enumeration_DeviceInformation ))
+        IActivationFactory_QueryInterface( &device_information_statics.IActivationFactory_iface,
+                &IID_IActivationFactory, (void **)factory );
+    else if (!wcscmp( buffer, RuntimeClass_Windows_Devices_Enumeration_DeviceAccessInformation ))
+        IActivationFactory_QueryInterface( device_access_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (*factory) return S_OK;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }

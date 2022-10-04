@@ -2,6 +2,7 @@ MODULE = windows.devices.enumeration.dll
 IMPORTS = combase uuid
 
 C_SRCS = \
+	access.c \
 	event_handlers.c \
 	main.c
 

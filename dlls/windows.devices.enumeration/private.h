@@ -39,6 +39,10 @@
 
 #include "wine/list.h"
 
+extern IActivationFactory *device_access_factory;
+
+extern const char *debugstr_hstring( HSTRING hstr );
+
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
 HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *token );
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );
