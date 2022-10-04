@@ -3038,8 +3038,13 @@ static HRESULT WINAPI FolderView2_GetViewModeAndIconSize(IFolderView2 *iface, FO
     int *size)
 {
     IShellViewImpl *This = impl_from_IFolderView2(iface);
+
     FIXME("(%p)->(%p %p), stub\n", This, mode, size);
-    return E_NOTIMPL;
+
+    *size = 16; /* FIXME */
+    *mode = This->FolderSettings.ViewMode;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderView2_SetGroupSubsetCount(IFolderView2 *iface, UINT visible_rows)
