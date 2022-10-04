@@ -784,6 +784,8 @@ struct testfilter
     unsigned int got_sample;
     LONG sample_size;
     LONG sample_actual;
+    REFERENCE_TIME sample_start_time;
+    REFERENCE_TIME sample_stop_time;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -860,6 +862,8 @@ static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const A
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    REFERENCE_TIME start, stop;
+    HRESULT hr;
 
     ++filter->got_sample;
 
@@ -867,6 +871,16 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     {
         filter->sample_size = IMediaSample_GetSize(sample);
         filter->sample_actual = IMediaSample_GetActualDataLength(sample);
+    }
+
+    start = 0xdeadbeef;
+    stop = 0xdeadbeef;
+    hr = IMediaSample_GetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (filter->got_sample == 1)
+    {
+        filter->sample_start_time = start;
+        filter->sample_stop_time = stop;
     }
 
     return S_OK;
@@ -1019,6 +1033,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
 static void test_sample_processing(IMediaControl *control,
         IMemInputPin *meminput, struct testfilter *testsink)
 {
+    REFERENCE_TIME start, stop;
     IMemAllocator *allocator;
     IMediaSample *sample;
     HRESULT hr;
@@ -1054,6 +1069,9 @@ static void test_sample_processing(IMediaControl *control,
     hr = IMediaSample_SetActualDataLength(sample, 144);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    hr = IMediaSample_SetTime(sample, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     hr = IMemInputPin_Receive(meminput, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMemInputPin_Receive(meminput, sample);
@@ -1065,6 +1083,63 @@ static void test_sample_processing(IMediaControl *control,
             "Got size %lu.\n", testsink->sample_size);
     ok(testsink->sample_actual == 2304 || testsink->sample_actual == 4608,
             "Got valid size %lu.\n", testsink->sample_actual);
+    ok(testsink->sample_start_time == 0, "Got start time %s.\n",
+            wine_dbgstr_longlong(testsink->sample_start_time));
+    ok(testsink->sample_stop_time == (testsink->sample_actual == 2304 ? 360000 : 720000),
+            "Got stop time %s.\n", wine_dbgstr_longlong(testsink->sample_stop_time));
+    testsink->got_sample = 0;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    start = 22222;
+    hr = IMediaSample_SetTime(sample, &start, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_Receive(meminput, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMemInputPin_Receive(meminput, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMemInputPin_Receive(meminput, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsink->got_sample >= 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    ok(testsink->sample_size == 2304 || testsink->sample_size == 9216,
+            "Got size %lu.\n", testsink->sample_size);
+    ok(testsink->sample_actual == 2304 || testsink->sample_actual == 4608,
+            "Got valid size %lu.\n", testsink->sample_actual);
+    ok(testsink->sample_start_time == 22222, "Got start time %s.\n",
+            wine_dbgstr_longlong(testsink->sample_start_time));
+    ok(testsink->sample_stop_time == (testsink->sample_actual == 2304 ? 382222 : 742222),
+            "Got stop time %s.\n", wine_dbgstr_longlong(testsink->sample_stop_time));
+    testsink->got_sample = 0;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    start = 22222;
+    stop = 33333;
+    hr = IMediaSample_SetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_Receive(meminput, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMemInputPin_Receive(meminput, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMemInputPin_Receive(meminput, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsink->got_sample >= 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    ok(testsink->sample_size == 2304 || testsink->sample_size == 9216,
+            "Got size %lu.\n", testsink->sample_size);
+    ok(testsink->sample_actual == 2304 || testsink->sample_actual == 4608,
+            "Got valid size %lu.\n", testsink->sample_actual);
+    ok(testsink->sample_start_time == 22222, "Got start time %s.\n",
+            wine_dbgstr_longlong(testsink->sample_start_time));
+    ok(testsink->sample_stop_time == (testsink->sample_actual == 2304 ? 382222 : 742222),
+            "Got stop time %s.\n", wine_dbgstr_longlong(testsink->sample_stop_time));
     testsink->got_sample = 0;
 
     hr = IMediaControl_Stop(control);
