@@ -272,7 +272,7 @@ static void test_DeviceAccessInformation( void )
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceAccessInformationStatics_CreateFromDeviceClass( statics, DeviceClass_AudioCapture, &access_info );
-    todo_wine ok( hr == S_OK || broken( hr == RPC_E_CALL_COMPLETE ) /* broken on some Testbot machines */, "got hr %#lx\n", hr );
+    ok( hr == S_OK || broken( hr == RPC_E_CALL_COMPLETE ) /* broken on some Testbot machines */, "got hr %#lx\n", hr );
 
     if (hr == S_OK)
     {

@@ -23,6 +23,137 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
+struct device_access_information
+{
+    IDeviceAccessInformation IDeviceAccessInformation_iface;
+    LONG ref;
+};
+
+static inline struct device_access_information *impl_from_IDeviceAccessInformation( IDeviceAccessInformation *iface )
+{
+    return CONTAINING_RECORD( iface, struct device_access_information, IDeviceAccessInformation_iface );
+}
+
+static HRESULT WINAPI device_access_information_QueryInterface( IDeviceAccessInformation *iface,
+                                                                REFIID iid, void **out )
+{
+    struct device_access_information *impl = impl_from_IDeviceAccessInformation( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IDeviceAccessInformation ))
+    {
+        IInspectable_AddRef( (*out = &impl->IDeviceAccessInformation_iface) );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI device_access_information_AddRef( IDeviceAccessInformation *iface )
+{
+    struct device_access_information *impl = impl_from_IDeviceAccessInformation( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI device_access_information_Release( IDeviceAccessInformation *iface )
+{
+    struct device_access_information *impl = impl_from_IDeviceAccessInformation( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref)
+        free( impl );
+
+    return ref;
+}
+
+static HRESULT WINAPI device_access_information_GetIids( IDeviceAccessInformation *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_access_information_GetRuntimeClassName( IDeviceAccessInformation *iface,
+                                                                     HSTRING *class_name )
+{
+    return WindowsCreateString( RuntimeClass_Windows_Devices_Enumeration_DeviceAccessInformation,
+                                ARRAY_SIZE(RuntimeClass_Windows_Devices_Enumeration_DeviceAccessInformation),
+                                class_name );
+}
+
+static HRESULT WINAPI device_access_information_GetTrustLevel( IDeviceAccessInformation *iface,
+                                                               TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_access_information_add_AccessChanged(
+    IDeviceAccessInformation *iface, ITypedEventHandler_DeviceAccessInformation_DeviceAccessChangedEventArgs *handler,
+    EventRegistrationToken *cookie )
+{
+    static EventRegistrationToken dummy_token = {.value = 0xdeadbeef};
+
+    FIXME( "iface %p, handler %p, cookie %p stub.\n", iface, handler, cookie);
+
+    *cookie = dummy_token;
+    return S_OK;
+}
+
+static HRESULT WINAPI device_access_information_remove_AccessChanged( IDeviceAccessInformation *iface,
+                                                                      EventRegistrationToken cookie )
+{
+    FIXME( "iface %p, cookie %#I64x stub.\n", iface, cookie.value);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI device_access_information_CurrentStatus( IDeviceAccessInformation *iface,
+                                                               enum DeviceAccessStatus *status )
+{
+    FIXME( "iface %p, status %p stub.\n", iface, status );
+
+    *status = DeviceAccessStatus_Allowed;
+    return S_OK;
+}
+
+static const struct IDeviceAccessInformationVtbl device_access_information_vtbl =
+{
+    device_access_information_QueryInterface,
+    device_access_information_AddRef,
+    device_access_information_Release,
+    /* IInspectable methods */
+    device_access_information_GetIids,
+    device_access_information_GetRuntimeClassName,
+    device_access_information_GetTrustLevel,
+    /* IDeviceAccessInformation methods */
+    device_access_information_add_AccessChanged,
+    device_access_information_remove_AccessChanged,
+    device_access_information_CurrentStatus,
+};
+
+static HRESULT device_access_information_create( IDeviceAccessInformation **out )
+{
+    struct device_access_information *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    impl->IDeviceAccessInformation_iface.lpVtbl = &device_access_information_vtbl;
+    impl->ref = 1;
+
+    *out = &impl->IDeviceAccessInformation_iface;
+    TRACE( "created device_access_information %p.\n", *out );
+    return S_OK;
+}
+
 struct device_access_information_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -120,7 +251,7 @@ static HRESULT WINAPI statics_CreateFromId( IDeviceAccessInformationStatics *ifa
 {
     FIXME( "device_id %s, value %p stub.\n", debugstr_hstring( device_id ), value );
 
-    return E_NOTIMPL;
+    return device_access_information_create( value );
 }
 
 static HRESULT WINAPI statics_CreateFromDeviceClassId( IDeviceAccessInformationStatics *iface,
@@ -128,7 +259,7 @@ static HRESULT WINAPI statics_CreateFromDeviceClassId( IDeviceAccessInformationS
 {
     FIXME( "device_class_id %s, value %p stub.\n", debugstr_guid( &device_class_id ), value );
 
-    return E_NOTIMPL;
+    return device_access_information_create( value );
 }
 
 static HRESULT WINAPI statics_CreateFromDeviceClass( IDeviceAccessInformationStatics *iface,
@@ -136,7 +267,7 @@ static HRESULT WINAPI statics_CreateFromDeviceClass( IDeviceAccessInformationSta
 {
     FIXME( "device_class %d, value %p stub.\n", device_class, value );
 
-    return E_NOTIMPL;
+    return device_access_information_create( value );
 }
 
 static const struct IDeviceAccessInformationStaticsVtbl statics_vtbl =
