@@ -77,6 +77,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(virtual_ranges);
 
 struct preload_info
 {
@@ -189,6 +190,7 @@ static struct list teb_list = LIST_INIT( teb_list );
 #define ROUND_SIZE(addr,size) (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) do { if (TRACE_ON(virtual)) dump_view(view); } while (0)
+#define VIRTUAL_DEBUG_DUMP_RANGES() do { if (TRACE_ON(virtual_ranges)) dump_free_ranges(); } while (0)
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -711,6 +713,12 @@ static struct range_entry *free_ranges_lower_bound( void *addr )
     return begin;
 }
 
+static void dump_free_ranges(void)
+{
+    struct range_entry *r;
+    for (r = free_ranges; r != free_ranges_end; ++r)
+        TRACE_(virtual_ranges)("%p - %p.\n", r->base, r->end);
+}
 
 /***********************************************************************
  *           free_ranges_insert_view
@@ -737,10 +745,14 @@ static void free_ranges_insert_view( struct file_view *view )
     if (range->end == view_base && next->base >= view_end)
         view_end = view_base;
 
-    TRACE( "%p - %p, aligned %p - %p.\n", view->base, (char *)view->base + view->size, view_base, view_end );
+    TRACE_(virtual_ranges)( "%p - %p, aligned %p - %p.\n",
+                            view->base, (char *)view->base + view->size, view_base, view_end );
 
     if (view_end <= view_base)
+    {
+        VIRTUAL_DEBUG_DUMP_RANGES();
         return;
+    }
 
     /* this should never happen */
     if (range->base > view_base || range->end < view_end)
@@ -768,15 +780,18 @@ static void free_ranges_insert_view( struct file_view *view )
         else
             range->base = view_end;
 
-        if (range->base < range->end) return;
-
+        if (range->base < range->end)
+        {
+            VIRTUAL_DEBUG_DUMP_RANGES();
+            return;
+        }
         /* and possibly remove it if it's now empty */
         memmove( range, next, (free_ranges_end - next) * sizeof(struct range_entry) );
         free_ranges_end -= 1;
         assert( free_ranges_end - free_ranges > 0 );
     }
+    VIRTUAL_DEBUG_DUMP_RANGES();
 }
-
 
 /***********************************************************************
  *           free_ranges_remove_view
@@ -803,11 +818,14 @@ static void free_ranges_remove_view( struct file_view *view )
     if (next_view_base && next_view_base < view_end && next_view_end > view_base)
         view_end = next_view_base;
 
-    TRACE( "%p - %p, aligned %p - %p.\n", view->base, (char *)view->base + view->size, view_base, view_end );
+    TRACE_(virtual_ranges)( "%p - %p, aligned %p - %p.\n",
+                            view->base, (char *)view->base + view->size, view_base, view_end );
 
     if (view_end <= view_base)
+    {
+        VIRTUAL_DEBUG_DUMP_RANGES();
         return;
-
+    }
     /* free_ranges initial value is such that the view is either inside range or before another one. */
     assert( range != free_ranges_end );
     assert( range->end > view_base || next != free_ranges_end );
@@ -849,6 +867,7 @@ static void free_ranges_remove_view( struct file_view *view )
         range->base = view_base;
         range->end = view_end;
     }
+    VIRTUAL_DEBUG_DUMP_RANGES();
 }
 
 
