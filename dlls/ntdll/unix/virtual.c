@@ -1153,7 +1153,7 @@ static inline UINT_PTR get_zero_bits_mask( ULONG_PTR zero_bits )
 {
     unsigned int shift;
 
-    if (zero_bits == 0) return ~(UINT_PTR)0;
+    if (zero_bits == 0) return 0;
 
     if (zero_bits < 32) shift = 32 + zero_bits;
     else
@@ -1901,7 +1901,7 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
  * virtual_mutex must be held by caller.
  */
 static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
-                          int top_down, unsigned int vprot, ULONG_PTR zero_bits )
+                          int top_down, unsigned int vprot, ULONG_PTR limit )
 {
     void *ptr;
     NTSTATUS status;
@@ -1921,7 +1921,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 
         alloc.size = size;
         alloc.top_down = top_down;
-        alloc.limit = (void*)(get_zero_bits_mask( zero_bits ) & (UINT_PTR)user_space_limit);
+        alloc.limit = limit ? (void*)(limit & (UINT_PTR)user_space_limit) : user_space_limit;
 
         if (mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
         {
@@ -1932,7 +1932,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
             goto done;
         }
 
-        if (zero_bits)
+        if (limit)
         {
             if (!(ptr = map_free_area( address_space_start, alloc.limit, size,
                                        top_down, get_unix_prot(vprot) )))
@@ -2457,9 +2457,9 @@ static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **ad
     if ((ULONG_PTR)base != image_info->base) base = NULL;
 
     if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
+        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ) );
 
-    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
+    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ));
     if (status) goto done;
 
     status = map_image_into_view( view, filename, unix_fd, base, image_info->header_size,
@@ -2582,7 +2582,7 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR z
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
+    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ) );
     if (res) goto done;
 
     TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
@@ -3124,7 +3124,8 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SI
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
     if ((status = map_view( &view, NULL, size + extra_size, FALSE,
-                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, zero_bits )) != STATUS_SUCCESS)
+                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, get_zero_bits_mask( zero_bits ) ))
+                            != STATUS_SUCCESS)
         goto done;
 
 #ifdef VALGRIND_STACK_REGISTER
@@ -3825,7 +3826,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
 
             if (vprot & VPROT_WRITECOPY) status = STATUS_INVALID_PAGE_PROTECTION;
             else if (is_dos_memory) status = allocate_dos_memory( &view, vprot );
-            else status = map_view( &view, base, size, type & MEM_TOP_DOWN, vprot, zero_bits );
+            else status = map_view( &view, base, size, type & MEM_TOP_DOWN, vprot, get_zero_bits_mask( zero_bits ) );
 
             if (status == STATUS_SUCCESS) base = view->base;
         }
