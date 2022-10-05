@@ -224,28 +224,28 @@ sub get_func_args($$$)
 #
 sub GenerateThunk($$$)
 {
-    my ($name, $func_ref, $prefix) = @_;
-    my $call_args = get_func_args( $func_ref, 0, 0 );
+    my ($name, $func, $prefix) = @_;
+    my $call_args = get_func_args( $func, 0, 0 );
 
-    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref, 0 );
+    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func, 0 );
     $ret .= "\n{\n";
     # special case for functions that take an HDC as first parameter
-    if (@{$func_ref->[1]} && get_arg_type( ${$func_ref->[1]}[0] ) eq "HDC")
+    if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC")
     {
-        my $pname = get_arg_name( ${$func_ref->[1]}[0] );
+        my $pname = get_arg_name( ${$func->[1]}[0] );
         $ret .= "  const struct opengl_funcs *funcs = get_dc_funcs( $pname );\n";
-        $ret .= "  " . get_func_trace( $name, $func_ref ) if $gen_traces;
+        $ret .= "  " . get_func_trace( $name, $func ) if $gen_traces;
         $ret .= "  if (!funcs || !funcs->$prefix.p_$name) return";
-        $ret .= " 0" unless is_void_func( $func_ref );
+        $ret .= " 0" unless is_void_func( $func );
         $ret .= ";\n";
     }
     else
     {
         $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-        $ret .= "  " . get_func_trace( $name, $func_ref ) if $gen_traces;
+        $ret .= "  " . get_func_trace( $name, $func ) if $gen_traces;
     }
     $ret .= "  ";
-    $ret .= "return " unless is_void_func( $func_ref );
+    $ret .= "return " unless is_void_func( $func );
     $ret .= "funcs->$prefix.p_$name($call_args);\n";
     $ret .= "}\n\n";
     return $ret;
@@ -253,18 +253,18 @@ sub GenerateThunk($$$)
 
 sub generate_null_func($$$)
 {
-    my ($name, $func_ref, $callconv) = @_;
+    my ($name, $func, $callconv) = @_;
     my $ret;
 
     return "" if $name eq "glDebugEntry";
 
-    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func_ref, 1 );
+    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func, 1 );
     $ret .= " {";
     if ($name eq "glGetError")
     {
         $ret .= " return GL_INVALID_OPERATION;";
     }
-    elsif (!is_void_func( $func_ref ))
+    elsif (!is_void_func( $func ))
     {
         $ret .= " return 0;";
     }
@@ -800,8 +800,8 @@ print EXT $wrappers;
 print EXT "\nconst OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
-    my $func_ref = $ext_functions{$_};
-    printf EXT "  { \"%s\", \"%s\", %s }", $_, join(" ", sort @{$func_ref->[2]}), $_;
+    my $func = $ext_functions{$_};
+    printf EXT "  { \"%s\", \"%s\", %s }", $_, join(" ", sort @{$func->[2]}), $_;
     if ($i != $count-1) {
         print EXT ",";
     }
