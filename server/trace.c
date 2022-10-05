@@ -189,6 +189,12 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",zero_bits=", &call->virtual_alloc.zero_bits );
         fprintf( stderr, ",op_type=%x,prot=%x", call->virtual_alloc.op_type, call->virtual_alloc.prot );
         break;
+    case APC_VIRTUAL_ALLOC_EX:
+        dump_uint64( "APC_VIRTUAL_ALLOC,addr==", &call->virtual_alloc_ex.addr );
+        dump_uint64( ",size=", &call->virtual_alloc_ex.size );
+        dump_uint64( ",limit=", &call->virtual_alloc_ex.limit );
+        fprintf( stderr, ",op_type=%x,prot=%x", call->virtual_alloc_ex.op_type, call->virtual_alloc_ex.prot );
+        break;
     case APC_VIRTUAL_FREE:
         dump_uint64( "APC_VIRTUAL_FREE,addr=", &call->virtual_free.addr );
         dump_uint64( ",size=", &call->virtual_free.size );

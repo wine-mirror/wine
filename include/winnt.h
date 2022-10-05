@@ -759,6 +759,13 @@ typedef struct _MEMORY_BASIC_INFORMATION
     DWORD    Type;
 } MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
 
+typedef struct _MEM_ADDRESS_REQUIREMENTS
+{
+  void      *LowestStartingAddress;
+  void      *HighestEndingAddress;
+  SIZE_T     Alignment;
+} MEM_ADDRESS_REQUIREMENTS, *PMEM_ADDRESS_REQUIREMENTS;
+
 #define MEM_EXTENDED_PARAMETER_TYPE_BITS 8
 
 typedef enum MEM_EXTENDED_PARAMETER_TYPE {

@@ -493,6 +493,7 @@ enum apc_type
     APC_USER,
     APC_ASYNC_IO,
     APC_VIRTUAL_ALLOC,
+    APC_VIRTUAL_ALLOC_EX,
     APC_VIRTUAL_FREE,
     APC_VIRTUAL_QUERY,
     APC_VIRTUAL_PROTECT,
@@ -534,6 +535,15 @@ typedef union
         mem_size_t       zero_bits;    /* number of zero high bits */
         unsigned int     prot;         /* memory protection flags */
     } virtual_alloc;
+    struct
+    {
+        enum apc_type    type;         /* APC_VIRTUAL_ALLOC */
+        unsigned int     op_type;      /* type of operation */
+        client_ptr_t     addr;         /* requested address */
+        mem_size_t       size;         /* allocation size */
+        mem_size_t       limit;        /* allocation address limit */
+        unsigned int     prot;         /* memory protection flags */
+    } virtual_alloc_ex;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_FREE */
@@ -629,6 +639,13 @@ typedef union
         client_ptr_t     addr;      /* resulting address */
         mem_size_t       size;      /* resulting size */
     } virtual_alloc;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
+        unsigned int     status;    /* status returned by call */
+        client_ptr_t     addr;      /* resulting address */
+        mem_size_t       size;      /* resulting size */
+    } virtual_alloc_ex;
     struct
     {
         enum apc_type    type;      /* APC_VIRTUAL_FREE */

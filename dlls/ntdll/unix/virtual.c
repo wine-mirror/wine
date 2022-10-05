@@ -1921,7 +1921,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 
         alloc.size = size;
         alloc.top_down = top_down;
-        alloc.limit = limit ? (void*)(limit & (UINT_PTR)user_space_limit) : user_space_limit;
+        alloc.limit = limit ? min( (void *)(limit + 1), user_space_limit ) : user_space_limit;
 
         if (mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
         {
@@ -3894,11 +3894,78 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
                                            ULONG protect, MEM_EXTENDED_PARAMETER *parameters,
                                            ULONG count )
 {
+    ULONG_PTR limit = 0;
+
+    TRACE("%p %p %08lx %x %08x %p %u\n", process, *ret, *size_ptr, type, protect, parameters, count );
+
     if (count && !parameters) return STATUS_INVALID_PARAMETER;
 
-    if (count) FIXME( "Ignoring %d extended parameters %p\n", count, parameters );
+    if (count)
+    {
+        MEM_ADDRESS_REQUIREMENTS *r = NULL;
+        unsigned int i;
 
-    return NtAllocateVirtualMemory( process, ret, 0, size_ptr, type, protect );
+        for (i = 0; i < count; ++i)
+        {
+            if (parameters[i].Type == MemExtendedParameterInvalidType || parameters[i].Type >= MemExtendedParameterMax)
+            {
+                WARN( "Invalid parameter type %d.\n", parameters[i].Type );
+                return STATUS_INVALID_PARAMETER;
+            }
+            if (parameters[i].Type != MemExtendedParameterAddressRequirements)
+            {
+                FIXME( "Parameter type %d is not supported.\n", parameters[i].Type );
+                continue;
+            }
+            if (r)
+            {
+                WARN( "Duplicate parameter.\n" );
+                return STATUS_INVALID_PARAMETER;
+            }
+            r = (MEM_ADDRESS_REQUIREMENTS *)parameters[i].Pointer;
+
+            if (r->LowestStartingAddress || r->Alignment)
+                FIXME( "Not supported requirements LowestStartingAddress %p, Alignment %p.\n",
+                       r->LowestStartingAddress, (void *)r->Alignment );
+
+            limit = (ULONG_PTR)r->HighestEndingAddress;
+            if (limit && (*ret || limit > (ULONG_PTR)user_space_limit || ((limit + 1) & (page_mask - 1))))
+            {
+                WARN( "Invalid limit %p.\n", r->HighestEndingAddress);
+                return STATUS_INVALID_PARAMETER;
+            }
+            TRACE( "limit %p.\n", (void *)limit );
+        }
+    }
+
+    if (!*size_ptr) return STATUS_INVALID_PARAMETER;
+
+    if (process != NtCurrentProcess())
+    {
+        apc_call_t call;
+        apc_result_t result;
+        NTSTATUS status;
+
+        memset( &call, 0, sizeof(call) );
+
+        call.virtual_alloc_ex.type         = APC_VIRTUAL_ALLOC_EX;
+        call.virtual_alloc_ex.addr         = wine_server_client_ptr( *ret );
+        call.virtual_alloc_ex.size         = *size_ptr;
+        call.virtual_alloc_ex.limit        = limit;
+        call.virtual_alloc_ex.op_type      = type;
+        call.virtual_alloc_ex.prot         = protect;
+        status = server_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_alloc_ex.status == STATUS_SUCCESS)
+        {
+            *ret      = wine_server_get_ptr( result.virtual_alloc_ex.addr );
+            *size_ptr = result.virtual_alloc_ex.size;
+        }
+        return result.virtual_alloc_ex.status;
+    }
+
+    return allocate_virtual_memory( ret, size_ptr, type, protect, limit );
 }
 
 

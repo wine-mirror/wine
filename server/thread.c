@@ -1713,6 +1713,7 @@ DECL_HANDLER(queue_apc)
         thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT );
         break;
     case APC_VIRTUAL_ALLOC:
+    case APC_VIRTUAL_ALLOC_EX:
     case APC_VIRTUAL_FREE:
     case APC_VIRTUAL_PROTECT:
     case APC_VIRTUAL_FLUSH:
