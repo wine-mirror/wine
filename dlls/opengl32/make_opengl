@@ -171,41 +171,70 @@ sub ConvertType($)
     return $ret;
 }
 
+sub get_func_trace($$)
+{
+    my ($name, $func) = @_;
+    my $trace_fmt = "";
+    my $trace_arg = "";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        my $pname = get_arg_name( $arg );
+        my $param = $arg->textContent();
+        if ($param =~ /\*/ || $param =~ /\[/)
+        {
+            $trace_fmt .= ", %p";
+            $trace_arg .= ", $pname";
+        }
+        elsif (defined $arg_types{$ptype})
+        {
+            my $format = ${$arg_types{$ptype}}[1];
+            $trace_fmt .= ", " . ($format =~ /^%/ ? $format : "%s");
+            $trace_arg .= ", " . (sprintf $format =~ /^%/ ? "%s" : $format, $pname);
+        }
+        else { printf "Unknown type %s in %s\n", $param, $name; }
+    }
+    $trace_fmt =~ s/^, //;
+    return "TRACE( \"($trace_fmt)\\n\"$trace_arg );\n";
+}
+
+sub get_func_args($$$)
+{
+    my ($func, $decl_args, $convert_args) = @_;
+    my $ret = "";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $pname = get_arg_name( $arg );
+        if ($decl_args)
+        {
+            $ret .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
+        }
+        else
+        {
+            $ret .= " $pname,";
+        }
+    }
+    $ret =~ s/,$/ /;
+    $ret ||= "void" if $decl_args;
+    return $ret;
+}
+
 #
 # This functions generates the thunk for a given function.
 #
 sub GenerateThunk($$$)
 {
     my ($name, $func_ref, $prefix) = @_;
-    my $call_arg = "";
-    my $trace_call_arg = "";
-    my $trace_arg = "";
+    my $call_args = get_func_args( $func_ref, 0, 0 );
 
     my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref, 0 );
-    foreach my $arg (@{$func_ref->[1]}) {
-        my $ptype = get_arg_type( $arg );
-        my $pname = get_arg_name( $arg );
-        my $param = $arg->textContent();
-        $call_arg .= " " . $pname . ",";
-        if ($param =~ /\*/ || $param =~ /\[/) {
-            $trace_arg .= ", %p";
-            $trace_call_arg .= ", " . $pname;
-        } elsif (defined $arg_types{$ptype}) {
-            my $format = ${$arg_types{$ptype}}[1];
-            $trace_arg .= ", " . ($format =~ /^%/ ? $format : "%s");
-            $trace_call_arg .= ", " . sprintf $format =~ /^%/ ? "%s" : $format, $pname;
-        }
-        else { printf "Unknown type %s in %s\n", $param, $name; }
-    }
-    $call_arg =~ s/,$/ /;
-    $trace_arg =~ s/^, //;
     $ret .= "\n{\n";
     # special case for functions that take an HDC as first parameter
     if (@{$func_ref->[1]} && get_arg_type( ${$func_ref->[1]}[0] ) eq "HDC")
     {
         my $pname = get_arg_name( ${$func_ref->[1]}[0] );
         $ret .= "  const struct opengl_funcs *funcs = get_dc_funcs( $pname );\n";
-        $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "  " . get_func_trace( $name, $func_ref ) if $gen_traces;
         $ret .= "  if (!funcs || !funcs->$prefix.p_$name) return";
         $ret .= " 0" unless is_void_func( $func_ref );
         $ret .= ";\n";
@@ -213,11 +242,11 @@ sub GenerateThunk($$$)
     else
     {
         $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-        $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "  " . get_func_trace( $name, $func_ref ) if $gen_traces;
     }
     $ret .= "  ";
     $ret .= "return " unless is_void_func( $func_ref );
-    $ret .= "funcs->$prefix.p_$name($call_arg);\n";
+    $ret .= "funcs->$prefix.p_$name($call_args);\n";
     $ret .= "}\n\n";
     return $ret;
 }
