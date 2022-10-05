@@ -398,7 +398,6 @@ struct uia_provider {
     LONG ref;
 
     IRawElementProviderSimple *elprov;
-    IWineUiaNode *node;
 };
 
 static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *iface)
@@ -436,13 +435,7 @@ static ULONG WINAPI uia_provider_Release(IWineUiaProvider *iface)
     TRACE("%p, refcount %ld\n", prov, ref);
     if (!ref)
     {
-        if (prov->node)
-        {
-            IWineUiaNode_Release(prov->node);
-            uia_stop_client_thread();
-        }
-        else
-            IRawElementProviderSimple_Release(prov->elprov);
+        IRawElementProviderSimple_Release(prov->elprov);
         heap_free(prov);
     }
 
@@ -655,17 +648,6 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
     TRACE("%p, %p, %p\n", iface, prop_info, ret_val);
 
     VariantInit(ret_val);
-    if (prov->node)
-    {
-        if (prop_info->type == UIAutomationType_Element || prop_info->type == UIAutomationType_ElementArray)
-        {
-            FIXME("Element property types currently unsupported for nested nodes.\n");
-            return E_NOTIMPL;
-        }
-
-        return IWineUiaNode_get_prop_val(prov->node, prop_info->guid, ret_val);
-    }
-
     switch (prop_info->prop_type)
     {
     case PROP_TYPE_ELEM_PROP:
@@ -924,10 +906,90 @@ static void uia_stop_client_thread(void)
     LeaveCriticalSection(&client_thread_cs);
 }
 
+/*
+ * IWineUiaProvider interface for nested node providers.
+ *
+ * Nested node providers represent an HUIANODE that resides in another
+ * thread or process. We retrieve values from this HUIANODE through the
+ * IWineUiaNode interface.
+ */
+struct uia_nested_node_provider {
+    IWineUiaProvider IWineUiaProvider_iface;
+    LONG ref;
+
+    IWineUiaNode *nested_node;
+};
+
+static inline struct uia_nested_node_provider *impl_from_nested_node_IWineUiaProvider(IWineUiaProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_nested_node_provider, IWineUiaProvider_iface);
+}
+
+static HRESULT WINAPI uia_nested_node_provider_QueryInterface(IWineUiaProvider *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IWineUiaProvider) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IWineUiaProvider_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_nested_node_provider_AddRef(IWineUiaProvider *iface)
+{
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+    ULONG ref = InterlockedIncrement(&prov->ref);
+
+    TRACE("%p, refcount %ld\n", prov, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_nested_node_provider_Release(IWineUiaProvider *iface)
+{
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+    ULONG ref = InterlockedDecrement(&prov->ref);
+
+    TRACE("%p, refcount %ld\n", prov, ref);
+    if (!ref)
+    {
+        IWineUiaNode_Release(prov->nested_node);
+        uia_stop_client_thread();
+        heap_free(prov);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_nested_node_provider_get_prop_val(IWineUiaProvider *iface,
+        const struct uia_prop_info *prop_info, VARIANT *ret_val)
+{
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+
+    TRACE("%p, %p, %p\n", iface, prop_info, ret_val);
+
+    VariantInit(ret_val);
+    if (prop_info->type == UIAutomationType_Element || prop_info->type == UIAutomationType_ElementArray)
+    {
+        FIXME("Element property types currently unsupported for nested nodes.\n");
+        return E_NOTIMPL;
+    }
+
+    return IWineUiaNode_get_prop_val(prov->nested_node, prop_info->guid, ret_val);
+}
+
+static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
+    uia_nested_node_provider_QueryInterface,
+    uia_nested_node_provider_AddRef,
+    uia_nested_node_provider_Release,
+    uia_nested_node_provider_get_prop_val,
+};
+
 static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESULT lr)
 {
+    struct uia_nested_node_provider *prov;
     IGlobalInterfaceTable *git;
-    struct uia_provider *prov;
     IWineUiaNode *nested_node;
     HRESULT hr;
 
@@ -942,8 +1004,8 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
     if (!prov)
         return E_OUTOFMEMORY;
 
-    prov->IWineUiaProvider_iface.lpVtbl = &uia_provider_vtbl;
-    prov->node = nested_node;
+    prov->IWineUiaProvider_iface.lpVtbl = &uia_nested_node_provider_vtbl;
+    prov->nested_node = nested_node;
     prov->ref = 1;
     node->prov = &prov->IWineUiaProvider_iface;
 
