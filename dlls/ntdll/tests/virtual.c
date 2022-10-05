@@ -423,6 +423,169 @@ static void test_NtAllocateVirtualMemoryEx(void)
     }
 }
 
+static void test_NtAllocateVirtualMemoryEx_address_requirements(void)
+{
+    MEM_EXTENDED_PARAMETER ext[2];
+    MEM_ADDRESS_REQUIREMENTS a;
+    NTSTATUS status;
+    SYSTEM_INFO si;
+    SIZE_T size;
+    void *addr;
+
+    if (!pNtAllocateVirtualMemoryEx)
+    {
+        win_skip("NtAllocateVirtualMemoryEx() is missing\n");
+        return;
+    }
+
+    GetSystemInfo(&si);
+
+    memset(&ext, 0, sizeof(ext));
+    ext[0].Type = 0;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE | MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    memset(&ext, 0, sizeof(ext));
+    ext[0].Type = MemExtendedParameterMax;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE | MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    memset(&a, 0, sizeof(a));
+    ext[0].Type = MemExtendedParameterAddressRequirements;
+    ext[0].Pointer = &a;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE | MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+
+    ext[1] = ext[0];
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE | MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, ext, 2);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.LowestStartingAddress = NULL;
+    a.Alignment = 0;
+
+    a.HighestEndingAddress = (void *)(0x20001000 + 1);
+    size = 0x10000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20001000 - 2);
+    size = 0x10000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20000800 - 1);
+    size = 0x10000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (char *)si.lpMaximumApplicationAddress + 0x1000;
+    size = 0x10000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (char *)si.lpMaximumApplicationAddress;
+    size = 0x10000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20001000 - 1);
+    size = 0x40000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    ok(!((ULONG_PTR)addr & 0xffff), "Unexpected addr %p.\n", addr);
+    ok((ULONG_PTR)addr + size <= 0x20001000, "Unexpected addr %p.\n", addr);
+
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+
+
+    size = 0x40000;
+    a.HighestEndingAddress = (void *)(0x20001000 - 1);
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 24, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE);
+    ok(status == STATUS_INVALID_PARAMETER_3 || status == STATUS_INVALID_PARAMETER,
+            "Unexpected status %08lx.\n", status);
+
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0xffffffff, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE);
+    if (is_win64 || is_wow64)
+        ok(!status || status == STATUS_CONFLICTING_ADDRESSES, "Unexpected status %08lx.\n", status);
+    else
+        ok(status == STATUS_INVALID_PARAMETER_3 || status == STATUS_INVALID_PARAMETER,
+                "Unexpected status %08lx.\n", status);
+
+    if (!status)
+    {
+        size = 0;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+        ok(!status, "Unexpected status %08lx.\n", status);
+    }
+
+    a.HighestEndingAddress = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status || status == STATUS_CONFLICTING_ADDRESSES, "Unexpected status %08lx.\n", status);
+    if (!status)
+    {
+        size = 0;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+        ok(!status, "Unexpected status %08lx.\n", status);
+    }
+
+
+    a.HighestEndingAddress = (void *)(0x20001000 - 1);
+    a.Alignment = 0x10000;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    ok(!((ULONG_PTR)addr & 0xffff), "Unexpected addr %p.\n", addr);
+    ok((ULONG_PTR)addr + size < 0x20001000, "Unexpected addr %p.\n", addr);
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+}
+
 struct test_stack_size_thread_args
 {
     DWORD expect_committed;
@@ -1708,6 +1871,7 @@ START_TEST(virtual)
 
     test_NtAllocateVirtualMemory();
     test_NtAllocateVirtualMemoryEx();
+    test_NtAllocateVirtualMemoryEx_address_requirements();
     test_NtFreeVirtualMemory();
     test_RtlCreateUserStack();
     test_NtMapViewOfSection();
