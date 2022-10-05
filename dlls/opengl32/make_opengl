@@ -219,6 +219,14 @@ sub get_func_args($$$)
     return $ret;
 }
 
+sub get_func_ret($$)
+{
+    my ($func, $convert_args) = @_;
+    my $ret = $convert_args ? ConvertType( $func->[0] ) : $func->[0]->textContent();
+    $ret =~ s/ $//;
+    return $ret;
+}
+
 #
 # This functions generates the thunk for a given function.
 #
@@ -226,8 +234,11 @@ sub GenerateThunk($$$)
 {
     my ($name, $func, $prefix) = @_;
     my $call_args = get_func_args( $func, 0, 0 );
+    my $decl_args = get_func_args( $func, 1, 0 );
+    my $func_ret = get_func_ret( $func, 0 );
+    my $ret = "";
 
-    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func, 0 );
+    $ret .= "$func_ret WINAPI $name($decl_args)";
     $ret .= "\n{\n";
     # special case for functions that take an HDC as first parameter
     if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC")
@@ -254,11 +265,13 @@ sub GenerateThunk($$$)
 sub generate_null_func($$$)
 {
     my ($name, $func, $callconv) = @_;
-    my $ret;
+    my $decl_args = get_func_args( $func, 1, 1 );
+    my $func_ret = get_func_ret( $func, 1 );
+    my $ret = "";
 
     return "" if $name eq "glDebugEntry";
 
-    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func, 1 );
+    $ret .= "static $func_ret$callconv null_$name($decl_args)";
     $ret .= " {";
     if ($name eq "glGetError")
     {
@@ -311,22 +324,6 @@ sub get_arg_name($)
     my $p = shift;
     my @name = $p->findnodes("./name");
     return $name[0]->textContent();
-}
-
-sub get_func_proto($$$$)
-{
-    my ($format, $name, $func, $convert_args) = @_;
-    die "unknown func $name" unless defined $func->[0];
-    my $proto = $convert_args ? ConvertType( $func->[0] ) : $func->[0]->textContent();
-    $proto =~ s/ $//;
-    my $args = "";
-    foreach my $arg (@{$func->[1]})
-    {
-        $args .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
-    }
-    $args =~ s/,$/ /;
-    $args ||= "void";
-    return sprintf $format, $proto, $name, $args;
 }
 
 #
@@ -646,7 +643,9 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
     next unless defined $supported_wgl_functions{$_};
-    print HEADER get_func_proto("        %-10s (WINAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
+    my $decl_args = get_func_args( $wgl_functions{$_}, 1, 1 );
+    my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
+    printf HEADER "        %-10s (WINAPI *p_$_)($decl_args);\n", $func_ret;
 }
 print HEADER "    } wgl;\n\n";
 
@@ -654,14 +653,18 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
     next if $_ eq "glDebugEntry";
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $norm_functions{$_}, 1);
+    my $decl_args = get_func_args( $norm_functions{$_}, 1, 1 );
+    my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
+    printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
 }
 print HEADER "    } gl;\n\n";
 
 print HEADER "    struct\n    {\n";
 foreach (sort keys %ext_functions)
 {
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $ext_functions{$_}, 1);
+    my $decl_args = get_func_args( $ext_functions{$_}, 1, 1 );
+    my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
+    printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
 }
 print HEADER "    } ext;\n";
 print HEADER "};\n\n";
@@ -708,7 +711,9 @@ print HEADER "\n";
 
 foreach (sort keys %norm_functions)
 {
-    printf HEADER "%s;\n", get_func_proto("%-10s GLAPIENTRY %s(%s)", $_, $norm_functions{$_}, 0);
+    my $decl_args = get_func_args( $norm_functions{$_}, 1, 0 );
+    my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
+    printf HEADER "%-10s GLAPIENTRY $_($decl_args);\n", $func_ret;
 }
 
 print HEADER "\n#endif /* __WINE_WGL_H */\n";
@@ -787,7 +792,9 @@ print EXT "const int extension_registry_size = $count;\n\n";
 foreach (sort keys %ext_functions) {
     if (needs_wrapper( $_, $ext_functions{$_} ))
     {
-        $wrappers .= get_func_proto("extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $_, $ext_functions{$_}, 0);
+        my $decl_args = get_func_args( $ext_functions{$_}, 1, 0 );
+        my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
+        $wrappers .= "extern $func_ret WINAPI $_($decl_args) DECLSPEC_HIDDEN;\n";
     }
     else
     {
