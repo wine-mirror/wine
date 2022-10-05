@@ -5294,57 +5294,53 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     Provider_child.runtime_id[1] = 2;
     Provider_child.frag_root = NULL;
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
-    todo_wine ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx\n", hr);
+    ok(hr == E_FAIL || broken(hr == S_OK), "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
         hr = UiaHUiaNodeFromVariant(&v, &node2);
         ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
         UiaNodeRelease(node2);
     }
-    if (hr != E_NOTIMPL)
-        ok_method_sequence(node_from_hwnd5, "node_from_hwnd5");
+
+    ok_method_sequence(node_from_hwnd5, "node_from_hwnd5");
 
     /* RuntimeId check succeeds, we'll get a nested node. */
     Provider_child.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
 
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = UiaHUiaNodeFromVariant(&v, &node2);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            /*
-             * Even though this is a nested node, without any additional
-             * providers, it will not have the 'Nested' prefix.
-             */
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
-            VariantClear(&v);
-        }
-
-        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
-        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
-        ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
-
-        UiaNodeRelease(node2);
-
         /*
-         * There is a delay between nested nodes being released and the
-         * corresponding IRawElementProviderSimple release on newer Windows
-         * versions.
+         * Even though this is a nested node, without any additional
+         * providers, it will not have the 'Nested' prefix.
          */
-        if (Provider_child.ref != 1)
-            Sleep(50);
-        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+        VariantClear(&v);
     }
 
+    hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+    ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
+
+    UiaNodeRelease(node2);
+
+    /*
+     * There is a delay between nested nodes being released and the
+     * corresponding IRawElementProviderSimple release on newer Windows
+     * versions.
+     */
+    if (Provider_child.ref != 1)
+        Sleep(50);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
 
     /*
      * Returned nested elements with an HWND will have client-side providers
@@ -5355,42 +5351,39 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     /* Only sent on Win7. */
     SET_EXPECT(winproc_GETOBJECT_CLIENT);
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
 
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = UiaHUiaNodeFromVariant(&v, &node2);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            memset(buf, 0, sizeof(buf));
+        memset(buf, 0, sizeof(buf));
 
-            ok(get_nested_provider_desc(V_BSTR(&v), L"Main", TRUE, buf), "Failed to get nested provider description\n");
-            check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
-            /* Win10v1507 and below have the nested provider as 'Hwnd'. */
-            if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
-                check_node_provider_desc(buf, L"Hwnd", L"Provider_child", TRUE);
-            else
-                check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
+        ok(get_nested_provider_desc(V_BSTR(&v), L"Main", TRUE, buf), "Failed to get nested provider description\n");
+        check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
+        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
+            check_node_provider_desc(buf, L"Hwnd", L"Provider_child", TRUE);
+        else
+            check_node_provider_desc(buf, L"Main", L"Provider_child", TRUE);
 
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
-            check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
-            check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, FALSE);
-            VariantClear(&v);
-        }
-
-        ok_method_sequence(node_from_hwnd7, "node_from_hwnd7");
-        UiaNodeRelease(node2);
-
-        if (Provider_child.ref != 1)
-            Sleep(50);
-        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, FALSE);
+        VariantClear(&v);
     }
+
+    ok_method_sequence(node_from_hwnd7, "node_from_hwnd7");
+    UiaNodeRelease(node2);
+
+    if (Provider_child.ref != 1)
+        Sleep(50);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     /* Win10v1809 can be slow to call Release on Provider. */
@@ -5452,68 +5445,65 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     Provider_child.hwnd = NULL;
     Provider_child.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
 
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        hr = UiaHUiaNodeFromVariant(&v, &node2);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
-            VariantClear(&v);
-        }
-
-        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
-        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
-        ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
-
-        /* Get a new node for the same provider. */
-        hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        ok(Provider_child.ref == 3, "Unexpected refcnt %ld\n", Provider_child.ref);
-
-        hr = UiaHUiaNodeFromVariant(&v, &node3);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        hr = UiaGetPropertyValue(node3, UIA_ProviderDescriptionPropertyId, &v);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        if (SUCCEEDED(hr))
-        {
-            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
-            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
-            VariantClear(&v);
-        }
-
-        hr = UiaGetPropertyValue(node3, UIA_ControlTypePropertyId, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
-        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
-        ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
-
-        /*
-         * Both node2 and node3 represent Provider_child, one call to
-         * UiaDisconnectProvider disconnects both.
-         */
-        hr = pUiaDisconnectProvider(&Provider_child.IRawElementProviderSimple_iface);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
-
-        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
-        ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
-
-        hr = UiaGetPropertyValue(node3, UIA_ControlTypePropertyId, &v);
-        ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
-        ok_method_sequence(disconnect_prov1, "disconnect_prov1");
-
-        ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
-        ok(UiaNodeRelease(node3), "UiaNodeRelease returned FALSE\n");
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+        VariantClear(&v);
     }
+
+    hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+    ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
+
+    /* Get a new node for the same provider. */
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(Provider_child.ref == 3, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    hr = UiaHUiaNodeFromVariant(&v, &node3);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = UiaGetPropertyValue(node3, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+        VariantClear(&v);
+    }
+
+    hr = UiaGetPropertyValue(node3, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+    ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+    ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
+
+    /*
+     * Both node2 and node3 represent Provider_child, one call to
+     * UiaDisconnectProvider disconnects both.
+     */
+    hr = pUiaDisconnectProvider(&Provider_child.IRawElementProviderSimple_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+    ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
+
+    hr = UiaGetPropertyValue(node3, UIA_ControlTypePropertyId, &v);
+    ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
+    ok_method_sequence(disconnect_prov1, "disconnect_prov1");
+
+    ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
+    ok(UiaNodeRelease(node3), "UiaNodeRelease returned FALSE\n");
 
     /*
      * Returns same failure code as UiaGetRuntimeId when we fail to get a

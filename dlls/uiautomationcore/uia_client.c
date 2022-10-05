@@ -492,18 +492,6 @@ static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
 /*
  * IWineUiaProvider interface.
  */
-struct uia_provider {
-    IWineUiaProvider IWineUiaProvider_iface;
-    LONG ref;
-
-    IRawElementProviderSimple *elprov;
-};
-
-static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *iface)
-{
-    return CONTAINING_RECORD(iface, struct uia_provider, IWineUiaProvider_iface);
-}
-
 static HRESULT WINAPI uia_provider_QueryInterface(IWineUiaProvider *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -632,15 +620,26 @@ static HRESULT uia_provider_get_elem_prop_val(struct uia_provider *prov,
 
         hr = IUnknown_QueryInterface(V_UNKNOWN(&v), &IID_IRawElementProviderSimple,
                 (void **)&elprov);
+        VariantClear(&v);
         if (FAILED(hr))
             goto exit;
 
         hr = UiaNodeFromProvider(elprov, &node);
+        IRawElementProviderSimple_Release(elprov);
         if (SUCCEEDED(hr))
         {
-            get_variant_for_node(node, ret_val);
-            VariantClear(&v);
-            IRawElementProviderSimple_Release(elprov);
+            if (prov->return_nested_node)
+            {
+                LRESULT lr = uia_lresult_from_node(node);
+
+                if (!lr)
+                    return E_FAIL;
+
+                V_VT(ret_val) = VT_I4;
+                V_I4(ret_val) = lr;
+            }
+            else
+                get_variant_for_node(node, ret_val);
         }
         break;
     }
@@ -1071,21 +1070,48 @@ static ULONG WINAPI uia_nested_node_provider_Release(IWineUiaProvider *iface)
     return ref;
 }
 
+static HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode);
 static HRESULT WINAPI uia_nested_node_provider_get_prop_val(IWineUiaProvider *iface,
         const struct uia_prop_info *prop_info, VARIANT *ret_val)
 {
     struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+    HRESULT hr;
+    VARIANT v;
 
     TRACE("%p, %p, %p\n", iface, prop_info, ret_val);
 
     VariantInit(ret_val);
-    if (prop_info->type == UIAutomationType_Element || prop_info->type == UIAutomationType_ElementArray)
+    if (prop_info->type == UIAutomationType_ElementArray)
     {
-        FIXME("Element property types currently unsupported for nested nodes.\n");
+        FIXME("Element array property types currently unsupported for nested nodes.\n");
         return E_NOTIMPL;
     }
 
-    return IWineUiaNode_get_prop_val(prov->nested_node, prop_info->guid, ret_val);
+    hr = IWineUiaNode_get_prop_val(prov->nested_node, prop_info->guid, &v);
+    if (FAILED(hr))
+        return hr;
+
+    switch (prop_info->type)
+    {
+    case UIAutomationType_Element:
+    {
+        HUIANODE node;
+
+        hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node);
+        if (FAILED(hr))
+            return hr;
+
+        get_variant_for_node(node, ret_val);
+        VariantClear(&v);
+        break;
+    }
+
+    default:
+        *ret_val = v;
+        break;
+    }
+
+    return S_OK;
 }
 
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
@@ -1120,6 +1146,7 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
     if (unwrap)
     {
         struct uia_node *node_data = unsafe_impl_from_IWineUiaNode(nested_node);
+        struct uia_provider *prov_data;
 
         if (!node_data)
         {
@@ -1131,6 +1158,8 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
         IWineUiaProvider_AddRef(node_data->prov);
         provider_iface = node_data->prov;
         git_cookie = node_data->git_cookie;
+        prov_data = impl_from_IWineUiaProvider(node_data->prov);
+        prov_data->return_nested_node = FALSE;
 
         node_data->git_cookie = 0;
         IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
@@ -1171,6 +1200,34 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
     node->git_cookie = git_cookie;
 
     return S_OK;
+}
+
+static HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
+{
+    struct uia_node *node;
+    HRESULT hr;
+
+    *huianode = NULL;
+    node = heap_alloc_zero(sizeof(*node));
+    if (!node)
+        return E_OUTOFMEMORY;
+
+    node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
+    list_init(&node->prov_thread_list_entry);
+    list_init(&node->node_map_list_entry);
+    node->ref = 1;
+
+    uia_start_client_thread();
+    hr = create_wine_uia_nested_node_provider(node, lr, FALSE);
+    if (FAILED(hr))
+    {
+        heap_free(node);
+        return hr;
+    }
+
+    *huianode = (void *)&node->IWineUiaNode_iface;
+
+    return hr;
 }
 
 /*

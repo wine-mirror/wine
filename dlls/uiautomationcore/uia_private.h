@@ -50,6 +50,19 @@ static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)
     return CONTAINING_RECORD(iface, struct uia_node, IWineUiaNode_iface);
 }
 
+struct uia_provider {
+    IWineUiaProvider IWineUiaProvider_iface;
+    LONG ref;
+
+    IRawElementProviderSimple *elprov;
+    BOOL return_nested_node;
+};
+
+static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_provider, IWineUiaProvider_iface);
+}
+
 /* uia_client.c */
 int uia_compare_runtime_ids(SAFEARRAY *sa1, SAFEARRAY *sa2) DECLSPEC_HIDDEN;
 
@@ -59,3 +72,4 @@ const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_H
 /* uia_provider.c */
 void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;
 void uia_provider_thread_remove_node(HUIANODE node) DECLSPEC_HIDDEN;
+LRESULT uia_lresult_from_node(HUIANODE huianode) DECLSPEC_HIDDEN;

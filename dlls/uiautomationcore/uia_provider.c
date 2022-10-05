@@ -1231,10 +1231,11 @@ exit:
 static HRESULT uia_provider_thread_add_node(HUIANODE node)
 {
     struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+    struct uia_provider *prov_data = impl_from_IWineUiaProvider(node_data->prov);
     SAFEARRAY *sa;
     HRESULT hr;
 
-    node_data->nested_node = TRUE;
+    node_data->nested_node = prov_data->return_nested_node = TRUE;
     hr = UiaGetRuntimeId(node, &sa);
     if (FAILED(hr))
         return hr;
@@ -1427,7 +1428,7 @@ void uia_stop_provider_thread(void)
  * Automation has to work regardless of whether or not COM is initialized on
  * the thread calling UiaReturnRawElementProvider.
  */
-static LRESULT uia_lresult_from_node(HUIANODE huianode)
+LRESULT uia_lresult_from_node(HUIANODE huianode)
 {
     if (!uia_start_provider_thread())
     {
