@@ -685,4 +685,11 @@ struct __server_request_info32
     struct __server_iovec32 data[__SERVER_MAX_DATA];
 };
 
+typedef struct
+{
+  ULONG LowestStartingAddress;
+  ULONG HighestEndingAddress;
+  ULONG Alignment;
+} MEM_ADDRESS_REQUIREMENTS32;
+
 #endif /* __WOW64_STRUCT32_H */
