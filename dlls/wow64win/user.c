@@ -1008,6 +1008,12 @@ static NTSTATUS WINAPI wow64_NtUserCallVulkanDebugUtilsCallback( void *arg, ULON
     return 0;
 }
 
+static NTSTATUS WINAPI wow64_NtUserCallOpenGLDebugMessageCallback( void *arg, ULONG size )
+{
+    FIXME( "\n" );
+    return 0;
+}
+
 static NTSTATUS WINAPI wow64_NtUserDriverCallbackFirst0( void *arg, ULONG size )
 {
     return dispatch_callback( NtUserDriverCallbackFirst + 0, arg, size );
@@ -1085,6 +1091,8 @@ user_callback user_callbacks[] =
     /* Vulkan support */
     wow64_NtUserCallVulkanDebugReportCallback,
     wow64_NtUserCallVulkanDebugUtilsCallback,
+    /* OpenGL support */
+    wow64_NtUserCallOpenGLDebugMessageCallback,
     /* Driver-specific callbacks */
     wow64_NtUserDriverCallbackFirst0,
     wow64_NtUserDriverCallbackFirst1,

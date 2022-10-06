@@ -22,25 +22,19 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
 #include <math.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "winreg.h"
-#include "wingdi.h"
-#include "winternl.h"
-#include "winnt.h"
+#include "ntuser.h"
 
 #include "opengl_ext.h"
 
 #include "unixlib.h"
 
-#include "wine/gdi_driver.h"
 #include "wine/glu.h"
 #include "wine/debug.h"
 
@@ -1714,12 +1708,50 @@ const GLubyte * WINAPI glGetString( GLenum name )
 }
 
 /* wrapper for glDebugMessageCallback* functions */
-static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,
-                                       GLsizei length, const GLchar *message,const void *userParam )
+typedef void (WINAPI *gl_debug_cb)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
+
+struct wine_gl_debug_message_params
 {
+    gl_debug_cb user_callback;
+    const void *user_data;
+
+    GLenum source;
+    GLenum type;
+    GLuint id;
+    GLenum severity;
+    GLsizei length;
+    const GLchar *message;
+};
+
+static BOOL WINAPI call_opengl_debug_message_callback( struct wine_gl_debug_message_params *params, ULONG size )
+{
+    params->user_callback( params->source, params->type, params->id, params->severity,
+                           params->length, params->message, params->user_data );
+    return TRUE;
+}
+
+static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,
+                                       GLsizei length, const GLchar *message, const void *userParam )
+{
+    struct wine_gl_debug_message_params params =
+    {
+        .source = source,
+        .type = type,
+        .id = id,
+        .severity = severity,
+        .length = length,
+        .message = message,
+    };
+    void **kernel_callback_table;
+    BOOL (WINAPI *callback)( struct wine_gl_debug_message_params *params, ULONG size );
+
     struct wgl_handle *ptr = (struct wgl_handle *)userParam;
-    if (!ptr->u.context->debug_callback) return;
-    ptr->u.context->debug_callback( source, type, id, severity, length, message, ptr->u.context->debug_user );
+    if (!(params.user_callback = ptr->u.context->debug_callback)) return;
+    params.user_data = ptr->u.context->debug_user;
+
+    kernel_callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
+    callback = kernel_callback_table[NtUserCallOpenGLDebugMessageCallback];
+    callback( &params, sizeof(params) );
 }
 
 /***********************************************************************
@@ -1772,10 +1804,15 @@ void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *user
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
+    void **kernel_callback_table;
+
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
         NtCurrentTeb()->glTable = &null_opengl_funcs;
+
+        kernel_callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
+        kernel_callback_table[NtUserCallOpenGLDebugMessageCallback] = call_opengl_debug_message_callback;
         break;
     case DLL_THREAD_ATTACH:
         NtCurrentTeb()->glTable = &null_opengl_funcs;

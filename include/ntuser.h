@@ -52,6 +52,8 @@ enum
     /* Vulkan support */
     NtUserCallVulkanDebugReportCallback,
     NtUserCallVulkanDebugUtilsCallback,
+    /* OpenGL support */
+    NtUserCallOpenGLDebugMessageCallback,
     /* Driver-specific callbacks */
     NtUserDriverCallbackFirst,
     NtUserDriverCallbackLast = NtUserDriverCallbackFirst + 9,
