@@ -2774,8 +2774,49 @@ static HRESULT WINAPI FolderView_ItemCount(IFolderView2 *iface, UINT flags, int 
 static HRESULT WINAPI FolderView_Items(IFolderView2 *iface, UINT flags, REFIID riid, void **ppv)
 {
     IShellViewImpl *This = impl_from_IFolderView2(iface);
-    FIXME("(%p)->(%u %s %p), stub\n", This, flags, debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    int count, i;
+    ITEMIDLIST **pidl;
+    LVITEMW item;
+    HRESULT hr;
+
+    if (!IsEqualIID(riid, &IID_IShellItemArray))
+    {
+        FIXME("%s is not supported\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    if (flags != SVGIO_ALLVIEW)
+        FIXME("some flags unsupported, %x\n", flags & ~SVGIO_ALLVIEW);
+
+    count = SendMessageW(This->hWndList, LVM_GETITEMCOUNT, 0, 0);
+    if (!count)
+    {
+        FIXME("Folder is empty\n");
+        return E_FAIL;
+    }
+
+    pidl = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*pidl));
+    if (!pidl) return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; i++)
+    {
+        item.mask = LVIF_PARAM;
+        item.iItem = i;
+        if (!SendMessageW(This->hWndList, LVM_GETITEMW, 0, (LPARAM)&item))
+        {
+            FIXME("LVM_GETITEMW(%d) failed\n" ,i);
+            HeapFree(GetProcessHeap(), 0, pidl);
+            return E_FAIL;
+        }
+
+        pidl[i] = (ITEMIDLIST *)item.lParam;
+    }
+
+    hr = SHCreateShellItemArray(NULL, This->pSFParent, count, (LPCITEMIDLIST *)pidl, (IShellItemArray **)ppv);
+
+    HeapFree(GetProcessHeap(), 0, pidl);
+
+    return hr;
 }
 
 static HRESULT WINAPI FolderView_GetSelectionMarkedItem(IFolderView2 *iface, int *item)
