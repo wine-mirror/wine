@@ -38,10 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
-struct wgl_handle wgl_handles[MAX_WGL_HANDLES];
-static struct wgl_handle *next_free;
-static unsigned int handle_count;
-
 static CRITICAL_SECTION wgl_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -50,6 +46,50 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": wgl_section") }
 };
 static CRITICAL_SECTION wgl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+/* handle management */
+
+enum wgl_handle_type
+{
+    HANDLE_PBUFFER = 0 << 12,
+    HANDLE_CONTEXT = 1 << 12,
+    HANDLE_CONTEXT_V3 = 3 << 12,
+    HANDLE_TYPE_MASK = 15 << 12
+};
+
+struct opengl_context
+{
+    DWORD tid;                   /* thread that the context is current in */
+    void (CALLBACK *debug_callback)( GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void * ); /* debug callback */
+    const void *debug_user;      /* debug user parameter */
+    GLubyte *extensions;         /* extension string */
+    GLuint *disabled_exts;       /* indices of disabled extensions */
+    struct wgl_context *drv_ctx; /* driver context */
+};
+
+struct wgl_handle
+{
+    UINT handle;
+    struct opengl_funcs *funcs;
+    union
+    {
+        struct opengl_context *context; /* for HANDLE_CONTEXT */
+        struct wgl_pbuffer *pbuffer;    /* for HANDLE_PBUFFER */
+        struct wgl_handle *next;        /* for free handles */
+    } u;
+};
+
+#define MAX_WGL_HANDLES 1024
+static struct wgl_handle wgl_handles[MAX_WGL_HANDLES];
+static struct wgl_handle *next_free;
+static unsigned int handle_count;
+
+/* the current context is assumed valid and doesn't need locking */
+static inline struct wgl_handle *get_current_context_ptr(void)
+{
+    if (!NtCurrentTeb()->glCurrentRC) return NULL;
+    return &wgl_handles[LOWORD(NtCurrentTeb()->glCurrentRC) & ~HANDLE_TYPE_MASK];
+}
 
 static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
 {
@@ -498,8 +538,8 @@ static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
             {
                 if (prev) prev->u.context->tid = 0;
                 ptr->u.context->tid = GetCurrentThreadId();
-                ptr->u.context->draw_dc = hdc;
-                ptr->u.context->read_dc = hdc;
+                NtCurrentTeb()->glReserved1[0] = hdc;
+                NtCurrentTeb()->glReserved1[1] = hdc;
                 NtCurrentTeb()->glCurrentRC = hglrc;
                 NtCurrentTeb()->glTable = ptr->funcs;
             }
@@ -672,8 +712,8 @@ static BOOL wrap_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hgl
             {
                 if (prev) prev->u.context->tid = 0;
                 ptr->u.context->tid = GetCurrentThreadId();
-                ptr->u.context->draw_dc = draw_hdc;
-                ptr->u.context->read_dc = read_hdc;
+                NtCurrentTeb()->glReserved1[0] = draw_hdc;
+                NtCurrentTeb()->glReserved1[1] = read_hdc;
                 NtCurrentTeb()->glCurrentRC = hglrc;
                 NtCurrentTeb()->glTable = ptr->funcs;
             }

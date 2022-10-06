@@ -50,10 +50,8 @@ static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
  */
 HDC WINAPI wglGetCurrentReadDCARB(void)
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-
-    if (!ptr) return 0;
-    return ptr->u.context->read_dc;
+    if (!NtCurrentTeb()->glCurrentRC) return 0;
+    return NtCurrentTeb()->glReserved1[1];
 }
 
 /***********************************************************************
@@ -61,10 +59,8 @@ HDC WINAPI wglGetCurrentReadDCARB(void)
  */
 HDC WINAPI wglGetCurrentDC(void)
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-
-    if (!ptr) return 0;
-    return ptr->u.context->draw_dc;
+    if (!NtCurrentTeb()->glCurrentRC) return 0;
+    return NtCurrentTeb()->glReserved1[0];
 }
 
 /***********************************************************************
