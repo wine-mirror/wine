@@ -1236,15 +1236,14 @@ BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
  */
 static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD listBase, BOOL unicode )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
      GLYPHMETRICS gm;
      unsigned int glyph, size = 0;
      void *bitmap = NULL, *gl_bitmap = NULL;
      int org_alignment;
      BOOL ret = TRUE;
 
-     funcs->gl.p_glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
-     funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+     glGetIntegerv( GL_UNPACK_ALIGNMENT, &org_alignment );
+     glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
      for (glyph = first; glyph < first + count; glyph++) {
          unsigned int needed_size, height, width, width_int;
@@ -1317,20 +1316,18 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              }
          }
 
-         funcs->gl.p_glNewList(listBase++, GL_COMPILE);
+         glNewList( listBase++, GL_COMPILE );
          if (needed_size != 0) {
-             funcs->gl.p_glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
-                     0 - gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
-                     gm.gmCellIncX, gm.gmCellIncY,
-                     gl_bitmap);
+             glBitmap( gm.gmBlackBoxX, gm.gmBlackBoxY, 0 - gm.gmptGlyphOrigin.x,
+                       (int)gm.gmBlackBoxY - gm.gmptGlyphOrigin.y, gm.gmCellIncX, gm.gmCellIncY, gl_bitmap );
          } else {
              /* This is the case of 'empty' glyphs like the space character */
-             funcs->gl.p_glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
+             glBitmap( 0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL );
          }
-         funcs->gl.p_glEndList();
+         glEndList();
      }
 
-     funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+     glPixelStorei( GL_UNPACK_ALIGNMENT, org_alignment );
      HeapFree(GetProcessHeap(), 0, bitmap);
      HeapFree(GetProcessHeap(), 0, gl_bitmap);
      return ret;
