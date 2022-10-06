@@ -93,6 +93,8 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
     NTSTATUS status;
     SIZE_T alloc_size = count * sizeof(*params);
     MEM_EXTENDED_PARAMETER *params64;
+    BOOL set_highest_address = (!*addr32 && process == GetCurrentProcess());
+    BOOL add_address_requirements = set_highest_address;
     MEM_ADDRESS_REQUIREMENTS *buf;
     unsigned int i;
 
@@ -101,24 +103,49 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
     for (i = 0; i < count; ++i)
     {
         if (params[i].Type == MemExtendedParameterAddressRequirements)
+        {
             alloc_size += sizeof(MEM_ADDRESS_REQUIREMENTS);
+            add_address_requirements = FALSE;
+        }
         else if (params[i].Type && params[i].Type < MemExtendedParameterMax)
+        {
             FIXME( "Unsupported parameter type %d.\n", params[i].Type);
+        }
     }
 
+    if (add_address_requirements)
+        alloc_size += sizeof(*params) + sizeof(MEM_ADDRESS_REQUIREMENTS);
     params64 = Wow64AllocateTemp( alloc_size );
     memcpy( params64, params, count * sizeof(*params64) );
-    buf = (MEM_ADDRESS_REQUIREMENTS *)((char *)params64 + count * sizeof(*params64));
+    if (add_address_requirements)
+    {
+        buf = (MEM_ADDRESS_REQUIREMENTS *)((char *)params64 + (count + 1) * sizeof(*params64));
+        params64[count].Type = MemExtendedParameterAddressRequirements;
+        params64[count].Pointer = buf;
+        memset(buf, 0, sizeof(*buf));
+        buf->HighestEndingAddress = (void *)highest_user_address;
+        ++buf;
+    }
+    else
+    {
+        buf = (MEM_ADDRESS_REQUIREMENTS *)((char *)params64 + count * sizeof(*params64));
+    }
     for (i = 0; i < count; ++i)
     {
         if (params64[i].Type == MemExtendedParameterAddressRequirements)
         {
             MEM_ADDRESS_REQUIREMENTS32 *p = (MEM_ADDRESS_REQUIREMENTS32 *)params[i].Pointer;
 
-            if (p->HighestEndingAddress > highest_user_address) return STATUS_INVALID_PARAMETER;
-
             buf->LowestStartingAddress = ULongToPtr(p->LowestStartingAddress);
-            buf->HighestEndingAddress = ULongToPtr(p->HighestEndingAddress);
+            if (p->HighestEndingAddress)
+            {
+                if (p->HighestEndingAddress > highest_user_address) return STATUS_INVALID_PARAMETER;
+                buf->HighestEndingAddress = ULongToPtr(p->HighestEndingAddress);
+            }
+            else
+            {
+                buf->HighestEndingAddress = set_highest_address ? (void *)highest_user_address : NULL;
+            }
             buf->Alignment = p->Alignment;
             params64[i].Pointer = buf;
             ++buf;
@@ -126,7 +153,7 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
     }
 
     status = NtAllocateVirtualMemoryEx( process, addr_32to64( &addr, addr32 ), size_32to64( &size, size32 ),
-                                        type, protect, params64, count );
+                                        type, protect, params64, count + add_address_requirements );
     if (!status)
     {
         put_addr( addr32, addr );
