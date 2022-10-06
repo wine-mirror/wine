@@ -179,6 +179,26 @@ my %manual_wow64_thunks =
      "wglMakeContextCurrentARB" => 1,
      "wglMakeCurrent" => 1,
     );
+my %pointer_array_count =
+    (
+     "glCompileShaderIncludeARB" => "count",
+     "glCreateShaderProgramv" => "count",
+     "glGetUniformIndices" => "uniformCount",
+     "glMultiDrawElements" => "drawcount",
+     "glMultiDrawElementsBaseVertex" => "drawcount",
+     "glMultiDrawElementsEXT" => "primcount",
+     "glMultiModeDrawElementsIBM" => "primcount",
+     "glTransformFeedbackVaryings" => "count",
+     "glTransformFeedbackVaryingsEXT" => "count",
+     "glShaderSource" => "count",
+     "glShaderSourceARB" => "count",
+     "glBindBuffersRange" => "count",
+     "glBindVertexBuffers" => "count",
+     "glDrawCommandsNV" => "count",
+     "glVertexArrayVertexBuffers" => "count",
+     "glDrawCommandsStatesNV" => "count",
+     "glListDrawCommandsStatesClientNV" => "count",
+    );
 
 #
 # Used to convert some types
@@ -364,7 +384,7 @@ sub generate_wow64_thunk($$$)
         my $ptype = get_wow64_arg_type( $arg );
         my $pname = get_arg_name( $arg );
         $ret .= "        $ptype $pname;\n";
-        $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|\[)/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
+        $need_manual_thunk = 1 if ($arg->textContent() =~ /(\*.*\*|\[)/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/) && !defined $pointer_array_count{$_};
     }
     if (!is_void_func($func))
     {
@@ -403,6 +423,15 @@ sub generate_wow64_thunk($$$)
     }
 
     $ret .= "    NTSTATUS status;\n";
+
+    foreach my $arg (@{$func->[1]})
+    {
+        next unless $arg->textContent() =~ /\*.*\*/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
+        next unless defined $pointer_array_count{$_};
+        my $pname = get_arg_name( $arg );
+        $ret .= "    params.$pname = copy_wow64_ptr32s( (UINT_PTR)params32->$pname, params32->$pointer_array_count{$_} );\n";
+    }
+
     $ret .= "    status = $prefix\_$name( &params );\n";
     if (!is_void_func( $func ))
     {
@@ -410,6 +439,15 @@ sub generate_wow64_thunk($$$)
         $ret .= "(UINT_PTR)" if get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
         $ret .= "params.ret;\n";
     }
+
+    foreach my $arg (@{$func->[1]})
+    {
+        next unless $arg->textContent() =~ /\*.*\*/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
+        next unless defined $pointer_array_count{$_};
+        my $pname = get_arg_name( $arg );
+        $ret .= "    free( (void *)params.$pname );\n";
+    }
+
     $ret .= "    return status;\n";
     $ret .= "}\n\n";
 

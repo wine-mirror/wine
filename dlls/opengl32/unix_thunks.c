@@ -30337,8 +30337,13 @@ static NTSTATUS wow64_ext_glBindBuffersRange( void *args )
         .count = params32->count,
         .buffers = ULongToPtr(params32->buffers),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.offsets = copy_wow64_ptr32s( (UINT_PTR)params32->offsets, params32->count );
+    params.sizes = copy_wow64_ptr32s( (UINT_PTR)params32->sizes, params32->count );
+    status = ext_glBindBuffersRange( &params );
+    free( (void *)params.offsets );
+    free( (void *)params.sizes );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glBindFragDataLocation( void *args )
@@ -30495,8 +30500,11 @@ static NTSTATUS wow64_ext_glBindVertexBuffers( void *args )
         .buffers = ULongToPtr(params32->buffers),
         .strides = ULongToPtr(params32->strides),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.offsets = copy_wow64_ptr32s( (UINT_PTR)params32->offsets, params32->count );
+    status = ext_glBindVertexBuffers( &params );
+    free( (void *)params.offsets );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glBindVideoCaptureStreamBufferNV( void *args )
@@ -31728,8 +31736,11 @@ static NTSTATUS wow64_ext_glCompileShaderIncludeARB( void *args )
         .count = params32->count,
         .length = ULongToPtr(params32->length),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.path = copy_wow64_ptr32s( (UINT_PTR)params32->path, params32->count );
+    status = ext_glCompileShaderIncludeARB( &params );
+    free( (void *)params.path );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glCompressedMultiTexImage1DEXT( void *args )
@@ -33073,8 +33084,12 @@ static NTSTATUS wow64_ext_glCreateShaderProgramv( void *args )
         .type = params32->type,
         .count = params32->count,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.strings = copy_wow64_ptr32s( (UINT_PTR)params32->strings, params32->count );
+    status = ext_glCreateShaderProgramv( &params );
+    params32->ret = params.ret;
+    free( (void *)params.strings );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glCreateStatesNV( void *args )
@@ -34150,8 +34165,11 @@ static NTSTATUS wow64_ext_glDrawCommandsNV( void *args )
         .sizes = ULongToPtr(params32->sizes),
         .count = params32->count,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indirects = copy_wow64_ptr32s( (UINT_PTR)params32->indirects, params32->count );
+    status = ext_glDrawCommandsNV( &params );
+    free( (void *)params.indirects );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glDrawCommandsStatesAddressNV( void *args )
@@ -34196,8 +34214,11 @@ static NTSTATUS wow64_ext_glDrawCommandsStatesNV( void *args )
         .fbos = ULongToPtr(params32->fbos),
         .count = params32->count,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indirects = copy_wow64_ptr32s( (UINT_PTR)params32->indirects, params32->count );
+    status = ext_glDrawCommandsStatesNV( &params );
+    free( (void *)params.indirects );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glDrawElementsBaseVertex( void *args )
@@ -41899,8 +41920,11 @@ static NTSTATUS wow64_ext_glGetUniformIndices( void *args )
         .uniformCount = params32->uniformCount,
         .uniformIndices = ULongToPtr(params32->uniformIndices),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.uniformNames = copy_wow64_ptr32s( (UINT_PTR)params32->uniformNames, params32->uniformCount );
+    status = ext_glGetUniformIndices( &params );
+    free( (void *)params.uniformNames );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glGetUniformLocation( void *args )
@@ -44411,8 +44435,11 @@ static NTSTATUS wow64_ext_glListDrawCommandsStatesClientNV( void *args )
         .fbos = ULongToPtr(params32->fbos),
         .count = params32->count,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indirects = copy_wow64_ptr32s( (UINT_PTR)params32->indirects, params32->count );
+    status = ext_glListDrawCommandsStatesClientNV( &params );
+    free( (void *)params.indirects );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glListParameterfvSGIX( void *args )
@@ -45597,8 +45624,11 @@ static NTSTATUS wow64_ext_glMultiDrawElements( void *args )
         .type = params32->type,
         .drawcount = params32->drawcount,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indices = copy_wow64_ptr32s( (UINT_PTR)params32->indices, params32->drawcount );
+    status = ext_glMultiDrawElements( &params );
+    free( (void *)params.indices );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glMultiDrawElementsBaseVertex( void *args )
@@ -45620,8 +45650,11 @@ static NTSTATUS wow64_ext_glMultiDrawElementsBaseVertex( void *args )
         .drawcount = params32->drawcount,
         .basevertex = ULongToPtr(params32->basevertex),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indices = copy_wow64_ptr32s( (UINT_PTR)params32->indices, params32->drawcount );
+    status = ext_glMultiDrawElementsBaseVertex( &params );
+    free( (void *)params.indices );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glMultiDrawElementsEXT( void *args )
@@ -45641,8 +45674,11 @@ static NTSTATUS wow64_ext_glMultiDrawElementsEXT( void *args )
         .type = params32->type,
         .primcount = params32->primcount,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indices = copy_wow64_ptr32s( (UINT_PTR)params32->indices, params32->primcount );
+    status = ext_glMultiDrawElementsEXT( &params );
+    free( (void *)params.indices );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glMultiDrawElementsIndirect( void *args )
@@ -45900,8 +45936,11 @@ static NTSTATUS wow64_ext_glMultiModeDrawElementsIBM( void *args )
         .primcount = params32->primcount,
         .modestride = params32->modestride,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.indices = copy_wow64_ptr32s( (UINT_PTR)params32->indices, params32->primcount );
+    status = ext_glMultiModeDrawElementsIBM( &params );
+    free( (void *)params.indices );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glMultiTexCoord1bvOES( void *args )
@@ -52761,8 +52800,11 @@ static NTSTATUS wow64_ext_glShaderSource( void *args )
         .count = params32->count,
         .length = ULongToPtr(params32->length),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.string = copy_wow64_ptr32s( (UINT_PTR)params32->string, params32->count );
+    status = ext_glShaderSource( &params );
+    free( (void *)params.string );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glShaderSourceARB( void *args )
@@ -52780,8 +52822,11 @@ static NTSTATUS wow64_ext_glShaderSourceARB( void *args )
         .count = params32->count,
         .length = ULongToPtr(params32->length),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.string = copy_wow64_ptr32s( (UINT_PTR)params32->string, params32->count );
+    status = ext_glShaderSourceARB( &params );
+    free( (void *)params.string );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glShadingRateImagePaletteNV( void *args )
@@ -54719,8 +54764,11 @@ static NTSTATUS wow64_ext_glTransformFeedbackVaryings( void *args )
         .count = params32->count,
         .bufferMode = params32->bufferMode,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.varyings = copy_wow64_ptr32s( (UINT_PTR)params32->varyings, params32->count );
+    status = ext_glTransformFeedbackVaryings( &params );
+    free( (void *)params.varyings );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glTransformFeedbackVaryingsEXT( void *args )
@@ -54738,8 +54786,11 @@ static NTSTATUS wow64_ext_glTransformFeedbackVaryingsEXT( void *args )
         .count = params32->count,
         .bufferMode = params32->bufferMode,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.varyings = copy_wow64_ptr32s( (UINT_PTR)params32->varyings, params32->count );
+    status = ext_glTransformFeedbackVaryingsEXT( &params );
+    free( (void *)params.varyings );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glTransformFeedbackVaryingsNV( void *args )
@@ -56971,8 +57022,11 @@ static NTSTATUS wow64_ext_glVertexArrayVertexBuffers( void *args )
         .buffers = ULongToPtr(params32->buffers),
         .strides = ULongToPtr(params32->strides),
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    params.offsets = copy_wow64_ptr32s( (UINT_PTR)params32->offsets, params32->count );
+    status = ext_glVertexArrayVertexBuffers( &params );
+    free( (void *)params.offsets );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glVertexArrayVertexOffsetEXT( void *args )
