@@ -104,7 +104,7 @@ static struct wgl_handle *get_handle_ptr( HANDLE handle, enum wgl_handle_type ty
     if (index < handle_count && ULongToHandle(wgl_handles[index].handle) == handle)
         return &wgl_handles[index];
 
-    SetLastError( ERROR_INVALID_HANDLE );
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
     return NULL;
 }
 
@@ -124,7 +124,7 @@ static HANDLE alloc_handle( enum wgl_handle_type type, struct opengl_funcs *func
         ptr->u.context = user_ptr;
         handle = next_handle( ptr, type );
     }
-    else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+    else RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
     return handle;
 }
 
@@ -545,7 +545,7 @@ static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
     if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
     {
-        if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
+        if (src->funcs != dst->funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         else ret = src->funcs->wgl.p_wglCopyContext( src->u.context->drv_ctx, dst->u.context->drv_ctx, mask );
     }
     return ret;
@@ -592,7 +592,7 @@ static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
         }
         else
         {
-            SetLastError( ERROR_BUSY );
+            RtlSetLastWin32Error( ERROR_BUSY );
             ret = FALSE;
         }
     }
@@ -605,7 +605,7 @@ static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
     }
     else if (!hdc)
     {
-        SetLastError( ERROR_INVALID_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         ret = FALSE;
     }
     return ret;
@@ -618,7 +618,7 @@ static BOOL wrap_wglDeleteContext( HGLRC hglrc )
     if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
     if (ptr->u.context->tid && ptr->u.context->tid != GetCurrentThreadId())
     {
-        SetLastError( ERROR_BUSY );
+        RtlSetLastWin32Error( ERROR_BUSY );
         return FALSE;
     }
     if (hglrc == NtCurrentTeb()->glCurrentRC) wrap_wglMakeCurrent( 0, 0 );
@@ -638,7 +638,7 @@ static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
     if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
     if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
     {
-        if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
+        if (src->funcs != dst->funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         else ret = src->funcs->wgl.p_wglShareLists( src->u.context->drv_ctx, dst->u.context->drv_ctx );
     }
     return ret;
@@ -661,13 +661,13 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
 
     if (!funcs)
     {
-        SetLastError( ERROR_DC_NOT_FOUND );
+        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
         return 0;
     }
     if (!funcs->ext.p_wglCreateContextAttribsARB) return 0;
     if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT )))
     {
-        SetLastError( ERROR_INVALID_OPERATION );
+        RtlSetLastWin32Error( ERROR_INVALID_OPERATION );
         return 0;
     }
     if ((drv_ctx = funcs->ext.p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->u.context->drv_ctx : NULL, attribs )))
@@ -752,7 +752,7 @@ static BOOL wrap_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hgl
         }
         else
         {
-            SetLastError( ERROR_BUSY );
+            RtlSetLastWin32Error( ERROR_BUSY );
             ret = FALSE;
         }
     }
