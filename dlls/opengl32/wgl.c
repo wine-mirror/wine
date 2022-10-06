@@ -429,10 +429,10 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
 
          if (needed_size > size) {
              size = needed_size;
-             HeapFree(GetProcessHeap(), 0, bitmap);
-             HeapFree(GetProcessHeap(), 0, gl_bitmap);
-             bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-             gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+             free( bitmap );
+             free( gl_bitmap );
+             bitmap = calloc( 1, size );
+             gl_bitmap = calloc( 1, size );
          }
          if (needed_size != 0) {
              if (unicode)
@@ -496,8 +496,8 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
      }
 
      glPixelStorei( GL_UNPACK_ALIGNMENT, org_alignment );
-     HeapFree(GetProcessHeap(), 0, bitmap);
-     HeapFree(GetProcessHeap(), 0, gl_bitmap);
+     free( bitmap );
+     free( gl_bitmap );
      return ret;
 }
 
@@ -658,7 +658,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
         if(needed == GDI_ERROR)
             goto error;
 
-        buf = HeapAlloc(GetProcessHeap(), 0, needed);
+        buf = malloc( needed );
 
         if(unicode)
             GetGlyphOutlineW(hdc, glyph, GGO_NATIVE, &gm, needed, buf, &identity);
@@ -692,8 +692,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 
         while(!vertices)
         {
-            if(vertex_total != -1)
-                vertices = HeapAlloc(GetProcessHeap(), 0, vertex_total * 3 * sizeof(GLdouble));
+            if (vertex_total != -1) vertices = malloc( vertex_total * 3 * sizeof(GLdouble) );
             vertex_total = 0;
 
             pph = (TTPOLYGONHEADER*)buf;
@@ -767,7 +766,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                 curve[2].y = (curve[1].y + curve[2].y)/2;
                             }
                             num = bezier_approximate(curve, NULL, deviation);
-                            points = HeapAlloc(GetProcessHeap(), 0, num*sizeof(bezier_vector));
+                            points = malloc( num * sizeof(bezier_vector) );
                             num = bezier_approximate(curve, points, deviation);
                             vertex_total += num;
                             if(vertices)
@@ -783,7 +782,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                     vertices += 3;
                                 }
                             }
-                            HeapFree(GetProcessHeap(), 0, points);
+                            free( points );
                             previous[0] = curve[2].x;
                             previous[1] = curve[2].y;
                         }
@@ -808,8 +807,8 @@ error_in_list:
         if (format == WGL_FONT_POLYGONS) gluTessEndPolygon( tess );
         glTranslated( (GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0 );
         glEndList();
-        HeapFree(GetProcessHeap(), 0, buf);
-        HeapFree(GetProcessHeap(), 0, vertices);
+        free( buf );
+        free( vertices );
     }
 
  error:
