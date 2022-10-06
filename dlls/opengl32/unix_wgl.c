@@ -483,27 +483,6 @@ static HGLRC wrap_wglCreateContext( HDC hdc )
     return ret;
 }
 
-static BOOL wrap_wglDeleteContext( HGLRC hglrc )
-{
-    struct wgl_handle *ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT );
-
-    if (!ptr) return FALSE;
-
-    if (ptr->u.context->tid && ptr->u.context->tid != GetCurrentThreadId())
-    {
-        SetLastError( ERROR_BUSY );
-        release_handle_ptr( ptr );
-        return FALSE;
-    }
-    if (hglrc == NtCurrentTeb()->glCurrentRC) wglMakeCurrent( 0, 0 );
-    ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
-    HeapFree( GetProcessHeap(), 0, ptr->u.context->disabled_exts );
-    HeapFree( GetProcessHeap(), 0, ptr->u.context->extensions );
-    HeapFree( GetProcessHeap(), 0, ptr->u.context );
-    free_handle_ptr( ptr );
-    return TRUE;
-}
-
 static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
@@ -545,6 +524,27 @@ static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
         ret = FALSE;
     }
     return ret;
+}
+
+static BOOL wrap_wglDeleteContext( HGLRC hglrc )
+{
+    struct wgl_handle *ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT );
+
+    if (!ptr) return FALSE;
+
+    if (ptr->u.context->tid && ptr->u.context->tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_BUSY );
+        release_handle_ptr( ptr );
+        return FALSE;
+    }
+    if (hglrc == NtCurrentTeb()->glCurrentRC) wrap_wglMakeCurrent( 0, 0 );
+    ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
+    HeapFree( GetProcessHeap(), 0, ptr->u.context->disabled_exts );
+    HeapFree( GetProcessHeap(), 0, ptr->u.context->extensions );
+    HeapFree( GetProcessHeap(), 0, ptr->u.context );
+    free_handle_ptr( ptr );
+    return TRUE;
 }
 
 static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
