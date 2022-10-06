@@ -3031,7 +3031,7 @@ static HRESULT WINAPI FolderView2_SetViewModeAndIconSize(IFolderView2 *iface, FO
 {
     IShellViewImpl *This = impl_from_IFolderView2(iface);
     FIXME("(%p)->(%d %d), stub\n", This, mode, size);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderView2_GetViewModeAndIconSize(IFolderView2 *iface, FOLDERVIEWMODE *mode,
