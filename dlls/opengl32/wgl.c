@@ -772,22 +772,6 @@ const GLubyte * WINAPI glGetStringi(GLenum name, GLuint index)
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext, size_t len )
 {
-    if (!list)
-    {
-        const char *gl_ext;
-        unsigned int i;
-        GLint extensions_count;
-
-        glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
-        for (i = 0; i < extensions_count; ++i)
-        {
-            gl_ext = (const char *)glGetStringi(GL_EXTENSIONS, i);
-            if (!strncmp(gl_ext, ext, len) && !gl_ext[len])
-                return TRUE;
-        }
-        return FALSE;
-    }
-
     while (list)
     {
         while (*list == ' ') list++;
@@ -851,23 +835,51 @@ static BOOL check_extension_support( const char *extension, const char *availabl
     return FALSE;
 }
 
+static char *build_extension_list(void)
+{
+    GLint len = 0, capacity, i, extensions_count;
+    char *extension, *tmp, *available_extensions;
+
+    glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
+    capacity = 128 * extensions_count;
+
+    if (!(available_extensions = HeapAlloc( GetProcessHeap(), 0, capacity ))) return NULL;
+    for (i = 0; i < extensions_count; ++i)
+    {
+        extension = (char *)glGetStringi( GL_EXTENSIONS, i );
+        capacity = max( capacity, len + strlen( extension ) + 2 );
+        if (!(tmp = HeapReAlloc( GetProcessHeap(), 0, available_extensions, capacity ))) break;
+        available_extensions = tmp;
+        len += sprintf( available_extensions + len, "%s ", extension );
+    }
+    if (len) available_extensions[len - 1] = 0;
+
+    return available_extensions;
+}
+
+static char *heap_strdup( const char *str )
+{
+    int len = strlen( str ) + 1;
+    char *ret = HeapAlloc( GetProcessHeap(), 0, len );
+    memcpy( ret, str, len );
+    return ret;
+}
+
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported( const char *extension )
 {
     enum wgl_handle_type type = get_current_context_type();
-    const char *gl_ext_string = NULL;
+    char *available_extensions = NULL;
+    BOOL ret = FALSE;
 
-    if (type == HANDLE_CONTEXT)
-    {
-        gl_ext_string = (const char *)glGetString( GL_EXTENSIONS );
-        if (!gl_ext_string)
-        {
-            ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
-            return FALSE;
-        }
-    }
+    if (type == HANDLE_CONTEXT) available_extensions = heap_strdup( (const char *)glGetString( GL_EXTENSIONS ) );
+    if (!available_extensions) available_extensions = build_extension_list();
 
-    return check_extension_support( extension, gl_ext_string );
+    if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
+    else ret = check_extension_support( extension, available_extensions );
+
+    HeapFree( GetProcessHeap(), 0, available_extensions );
+    return ret;
 }
 
 /***********************************************************************
