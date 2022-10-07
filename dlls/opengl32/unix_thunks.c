@@ -841,6 +841,14 @@ static NTSTATUS gl_glGetFloatv( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS gl_glGetIntegerv( void *args )
+{
+    struct glGetIntegerv_params *params = args;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    funcs->gl.p_glGetIntegerv( params->pname, params->data );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS gl_glGetLightfv( void *args )
 {
     struct glGetLightfv_params *params = args;
@@ -934,6 +942,14 @@ static NTSTATUS gl_glGetPolygonStipple( void *args )
     struct glGetPolygonStipple_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     funcs->gl.p_glGetPolygonStipple( params->mask );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS gl_glGetString( void *args )
+{
+    struct glGetString_params *params = args;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    params->ret = funcs->gl.p_glGetString( params->name );
     return STATUS_SUCCESS;
 }
 
@@ -2780,6 +2796,7 @@ const unixlib_function_t __wine_unix_call_funcs[] =
     &gl_glGetDoublev,
     &gl_glGetError,
     &gl_glGetFloatv,
+    &gl_glGetIntegerv,
     &gl_glGetLightfv,
     &gl_glGetLightiv,
     &gl_glGetMapdv,
@@ -2792,6 +2809,7 @@ const unixlib_function_t __wine_unix_call_funcs[] =
     &gl_glGetPixelMapusv,
     &gl_glGetPointerv,
     &gl_glGetPolygonStipple,
+    &gl_glGetString,
     &gl_glGetTexEnvfv,
     &gl_glGetTexEnviv,
     &gl_glGetTexGendv,

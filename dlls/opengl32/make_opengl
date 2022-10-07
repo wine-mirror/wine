@@ -935,7 +935,6 @@ print OUT "#include \"wine/unixlib.h\"\n\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
     print OUT generate_func_params($_, $norm_functions{$_});
 }
 
@@ -944,7 +943,6 @@ print OUT "{\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
     printf OUT "    unix_%s,\n", $_;
 }
 print OUT "};\n\n";
@@ -1005,7 +1003,6 @@ print OUT "#include \"opengl_ext.h\"\n\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
     print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
 }
 
@@ -1014,7 +1011,6 @@ print OUT "{\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
     printf OUT "    &gl_%s,\n", $_;
 }
 print OUT "};\n";

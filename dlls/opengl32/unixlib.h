@@ -669,6 +669,12 @@ struct glGetFloatv_params
     GLfloat *data;
 };
 
+struct glGetIntegerv_params
+{
+    GLenum pname;
+    GLint *data;
+};
+
 struct glGetLightfv_params
 {
     GLenum light;
@@ -745,6 +751,12 @@ struct glGetPointerv_params
 struct glGetPolygonStipple_params
 {
     GLubyte *mask;
+};
+
+struct glGetString_params
+{
+    GLenum name;
+    const GLubyte *ret;
 };
 
 struct glGetTexEnvfv_params
@@ -2247,6 +2259,7 @@ enum unix_funcs
     unix_glGetDoublev,
     unix_glGetError,
     unix_glGetFloatv,
+    unix_glGetIntegerv,
     unix_glGetLightfv,
     unix_glGetLightiv,
     unix_glGetMapdv,
@@ -2259,6 +2272,7 @@ enum unix_funcs
     unix_glGetPixelMapusv,
     unix_glGetPointerv,
     unix_glGetPolygonStipple,
+    unix_glGetString,
     unix_glGetTexEnvfv,
     unix_glGetTexEnviv,
     unix_glGetTexGendv,

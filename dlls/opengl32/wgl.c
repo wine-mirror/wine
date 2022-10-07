@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <math.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -35,6 +37,9 @@
 #include "winnt.h"
 
 #include "opengl_ext.h"
+
+#include "unixlib.h"
+
 #include "wine/gdi_driver.h"
 #include "wine/glu.h"
 #include "wine/debug.h"
@@ -835,27 +840,32 @@ static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLui
 
 void WINAPI glGetIntegerv(GLenum pname, GLint *data)
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct glGetIntegerv_params args = { .pname = pname, .data = data, };
+    NTSTATUS status;
 
-    TRACE("(%d, %p)\n", pname, data);
+    TRACE( "pname %d, data %p\n", pname, data );
+
     if (pname == GL_NUM_EXTENSIONS)
     {
         struct wgl_handle *ptr = get_current_context_ptr();
+        GLuint **disabled = &ptr->u.context->disabled_exts;
 
-        if (ptr->u.context->disabled_exts ||
-            filter_extensions(NULL, NULL, &ptr->u.context->disabled_exts))
+        if (*disabled || filter_extensions( NULL, NULL, disabled ))
         {
-            const GLuint *disabled_exts = ptr->u.context->disabled_exts;
+            const GLuint *disabled_exts = *disabled;
             GLint count, disabled_count = 0;
 
-            funcs->gl.p_glGetIntegerv(pname, &count);
+            args.data = &count;
+            if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#x\n", status );
+
             while (*disabled_exts++ != ~0u)
                 disabled_count++;
             *data = count - disabled_count;
             return;
         }
     }
-    funcs->gl.p_glGetIntegerv(pname, data);
+
+    if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#x\n", status );
 }
 
 const GLubyte * WINAPI glGetStringi(GLenum name, GLuint index)
@@ -1739,17 +1749,22 @@ GLint WINAPI glDebugEntry( GLint unknown1, GLint unknown2 )
  */
 const GLubyte * WINAPI glGetString( GLenum name )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    const GLubyte *ret = funcs->gl.p_glGetString( name );
+    struct glGetString_params args = { .name = name, };
+    NTSTATUS status;
 
-    if (name == GL_EXTENSIONS && ret)
+    TRACE( "name %d\n", name );
+
+    if ((status = UNIX_CALL( glGetString, &args ))) WARN( "glGetString returned %#x\n", status );
+
+    if (name == GL_EXTENSIONS && args.ret)
     {
         struct wgl_handle *ptr = get_current_context_ptr();
-        if (ptr->u.context->extensions ||
-            filter_extensions((const char *)ret, &ptr->u.context->extensions, &ptr->u.context->disabled_exts))
-            ret = ptr->u.context->extensions;
+        GLubyte **extensions = &ptr->u.context->extensions;
+        GLuint **disabled = &ptr->u.context->disabled_exts;
+        if (*extensions || filter_extensions( (const char *)args.ret, extensions, disabled )) return *extensions;
     }
-    return ret;
+
+    return args.ret;
 }
 
 /* wrapper for glDebugMessageCallback* functions */
