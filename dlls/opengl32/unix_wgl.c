@@ -35,8 +35,6 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
-
 struct wgl_handle wgl_handles[MAX_WGL_HANDLES];
 static struct wgl_handle *next_free;
 static unsigned int handle_count;
@@ -107,7 +105,7 @@ static void free_handle_ptr( struct wgl_handle *ptr )
     LeaveCriticalSection( &wgl_section );
 }
 
-BOOL WINAPI wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
+static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 {
     struct wgl_handle *src, *dst;
     BOOL ret = FALSE;
@@ -123,7 +121,7 @@ BOOL WINAPI wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     return ret;
 }
 
-HGLRC WINAPI wglCreateContext( HDC hdc )
+static HGLRC wrap_wglCreateContext( HDC hdc )
 {
     HGLRC ret = 0;
     struct wgl_context *drv_ctx;
@@ -142,7 +140,7 @@ HGLRC WINAPI wglCreateContext( HDC hdc )
     return ret;
 }
 
-BOOL WINAPI wglDeleteContext( HGLRC hglrc )
+static BOOL wrap_wglDeleteContext( HGLRC hglrc )
 {
     struct wgl_handle *ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT );
 
@@ -163,7 +161,7 @@ BOOL WINAPI wglDeleteContext( HGLRC hglrc )
     return TRUE;
 }
 
-BOOL WINAPI wglMakeCurrent( HDC hdc, HGLRC hglrc )
+static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
     struct wgl_handle *ptr, *prev = get_current_context_ptr();
@@ -206,7 +204,7 @@ BOOL WINAPI wglMakeCurrent( HDC hdc, HGLRC hglrc )
     return ret;
 }
 
-BOOL WINAPI wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
+static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
 {
     BOOL ret = FALSE;
     struct wgl_handle *src, *dst;
@@ -222,7 +220,7 @@ BOOL WINAPI wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
     return ret;
 }
 
-BOOL WINAPI wglBindTexImageARB( HPBUFFERARB handle, int buffer )
+static BOOL wrap_wglBindTexImageARB( HPBUFFERARB handle, int buffer )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
     BOOL ret;
@@ -233,7 +231,7 @@ BOOL WINAPI wglBindTexImageARB( HPBUFFERARB handle, int buffer )
     return ret;
 }
 
-HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
+static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
 {
     HGLRC ret = 0;
     struct wgl_context *drv_ctx;
@@ -281,7 +279,7 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
     return ret;
 }
 
-HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
+static HPBUFFERARB wrap_wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
 {
     HPBUFFERARB ret;
     struct wgl_pbuffer *pbuffer;
@@ -294,7 +292,7 @@ HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int heig
     return ret;
 }
 
-BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
+static BOOL wrap_wglDestroyPbufferARB( HPBUFFERARB handle )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
 
@@ -304,7 +302,7 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
     return TRUE;
 }
 
-HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB handle )
+static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
     HDC ret;
@@ -315,7 +313,7 @@ HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB handle )
     return ret;
 }
 
-BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+static BOOL wrap_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
     struct wgl_handle *ptr, *prev = get_current_context_ptr();
@@ -354,7 +352,7 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
     return ret;
 }
 
-BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
+static BOOL wrap_wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
     BOOL ret;
@@ -365,7 +363,7 @@ BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
     return ret;
 }
 
-int WINAPI wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
+static int wrap_wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
     BOOL ret;
@@ -376,7 +374,7 @@ int WINAPI wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
     return ret;
 }
 
-BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
+static BOOL wrap_wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
     BOOL ret;
@@ -387,7 +385,7 @@ BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
     return ret;
 }
 
-BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
+static BOOL wrap_wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
 {
     struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
     BOOL ret;
@@ -422,38 +420,162 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     callback( &params, sizeof(params) );
 }
 
-void WINAPI glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
+static void WINAPI wrap_glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
 {
     struct wgl_handle *ptr = get_current_context_ptr();
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
 
-    TRACE( "(%p, %p)\n", callback, userParam );
+    if (!funcs->ext.p_glDebugMessageCallback) return;
 
     ptr->u.context->debug_callback = callback;
     ptr->u.context->debug_user     = userParam;
     funcs->ext.p_glDebugMessageCallback( gl_debug_message_callback, ptr );
 }
 
-void WINAPI glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
+static void WINAPI wrap_glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
 {
     struct wgl_handle *ptr = get_current_context_ptr();
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
 
-    TRACE( "(%p, %p)\n", callback, userParam );
+    if (!funcs->ext.p_glDebugMessageCallbackAMD) return;
 
     ptr->u.context->debug_callback = callback;
     ptr->u.context->debug_user     = userParam;
     funcs->ext.p_glDebugMessageCallbackAMD( gl_debug_message_callback, ptr );
 }
 
-void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
+static void WINAPI wrap_glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
 {
     struct wgl_handle *ptr = get_current_context_ptr();
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
 
-    TRACE( "(%p, %p)\n", callback, userParam );
+    if (!funcs->ext.p_glDebugMessageCallbackARB) return;
 
     ptr->u.context->debug_callback = callback;
     ptr->u.context->debug_user     = userParam;
     funcs->ext.p_glDebugMessageCallbackARB( gl_debug_message_callback, ptr );
+}
+
+NTSTATUS wgl_wglCopyContext( void *args )
+{
+    struct wglCopyContext_params *params = args;
+    params->ret = wrap_wglCopyContext( params->hglrcSrc, params->hglrcDst, params->mask );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglCreateContext( void *args )
+{
+    struct wglCreateContext_params *params = args;
+    params->ret = wrap_wglCreateContext( params->hDc );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglDeleteContext( void *args )
+{
+    struct wglDeleteContext_params *params = args;
+    params->ret = wrap_wglDeleteContext( params->oldContext );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglMakeCurrent( void *args )
+{
+    struct wglMakeCurrent_params *params = args;
+    params->ret = wrap_wglMakeCurrent( params->hDc, params->newContext );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglShareLists( void *args )
+{
+    struct wglShareLists_params *params = args;
+    params->ret = wrap_wglShareLists( params->hrcSrvShare, params->hrcSrvSource );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_glDebugMessageCallback( void *args )
+{
+    struct glDebugMessageCallback_params *params = args;
+    wrap_glDebugMessageCallback( params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+NTSTATUS ext_glDebugMessageCallbackAMD( void *args )
+{
+    struct glDebugMessageCallbackAMD_params *params = args;
+    wrap_glDebugMessageCallbackAMD( params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+NTSTATUS ext_glDebugMessageCallbackARB( void *args )
+{
+    struct glDebugMessageCallbackARB_params *params = args;
+    wrap_glDebugMessageCallbackARB( params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglBindTexImageARB( void *args )
+{
+    struct wglBindTexImageARB_params *params = args;
+    params->ret = wrap_wglBindTexImageARB( params->hPbuffer, params->iBuffer );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglCreateContextAttribsARB( void *args )
+{
+    struct wglCreateContextAttribsARB_params *params = args;
+    params->ret = wrap_wglCreateContextAttribsARB( params->hDC, params->hShareContext, params->attribList );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglCreatePbufferARB( void *args )
+{
+    struct wglCreatePbufferARB_params *params = args;
+    params->ret = wrap_wglCreatePbufferARB( params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglDestroyPbufferARB( void *args )
+{
+    struct wglDestroyPbufferARB_params *params = args;
+    params->ret = wrap_wglDestroyPbufferARB( params->hPbuffer );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglGetPbufferDCARB( void *args )
+{
+    struct wglGetPbufferDCARB_params *params = args;
+    params->ret = wrap_wglGetPbufferDCARB( params->hPbuffer );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglMakeContextCurrentARB( void *args )
+{
+    struct wglMakeContextCurrentARB_params *params = args;
+    params->ret = wrap_wglMakeContextCurrentARB( params->hDrawDC, params->hReadDC, params->hglrc );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglQueryPbufferARB( void *args )
+{
+    struct wglQueryPbufferARB_params *params = args;
+    params->ret = wrap_wglQueryPbufferARB( params->hPbuffer, params->iAttribute, params->piValue );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglReleasePbufferDCARB( void *args )
+{
+    struct wglReleasePbufferDCARB_params *params = args;
+    params->ret = wrap_wglReleasePbufferDCARB( params->hPbuffer, params->hDC );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglReleaseTexImageARB( void *args )
+{
+    struct wglReleaseTexImageARB_params *params = args;
+    params->ret = wrap_wglReleaseTexImageARB( params->hPbuffer, params->iBuffer );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglSetPbufferAttribARB( void *args )
+{
+    struct wglSetPbufferAttribARB_params *params = args;
+    params->ret = wrap_wglSetPbufferAttribARB( params->hPbuffer, params->piAttribList );
+    return STATUS_SUCCESS;
 }

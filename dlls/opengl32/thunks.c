@@ -17,6 +17,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
+BOOL WINAPI wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
+{
+    struct wglCopyContext_params args = { .hglrcSrc = hglrcSrc, .hglrcDst = hglrcDst, .mask = mask, };
+    NTSTATUS status;
+    TRACE( "hglrcSrc %p, hglrcDst %p, mask %u\n", hglrcSrc, hglrcDst, mask );
+    if ((status = UNIX_CALL( wglCopyContext, &args ))) WARN( "wglCopyContext returned %#x\n", status );
+    return args.ret;
+}
+
+HGLRC WINAPI wglCreateContext( HDC hDc )
+{
+    struct wglCreateContext_params args = { .hDc = hDc, };
+    NTSTATUS status;
+    TRACE( "hDc %p\n", hDc );
+    if ((status = UNIX_CALL( wglCreateContext, &args ))) WARN( "wglCreateContext returned %#x\n", status );
+    return args.ret;
+}
+
+BOOL WINAPI wglDeleteContext( HGLRC oldContext )
+{
+    struct wglDeleteContext_params args = { .oldContext = oldContext, };
+    NTSTATUS status;
+    TRACE( "oldContext %p\n", oldContext );
+    if ((status = UNIX_CALL( wglDeleteContext, &args ))) WARN( "wglDeleteContext returned %#x\n", status );
+    return args.ret;
+}
+
 int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd )
 {
     struct wglDescribePixelFormat_params args = { .hdc = hdc, .ipfd = ipfd, .cjpfd = cjpfd, .ppfd = ppfd, };
@@ -26,12 +53,30 @@ int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDES
     return args.ret;
 }
 
+BOOL WINAPI wglMakeCurrent( HDC hDc, HGLRC newContext )
+{
+    struct wglMakeCurrent_params args = { .hDc = hDc, .newContext = newContext, };
+    NTSTATUS status;
+    TRACE( "hDc %p, newContext %p\n", hDc, newContext );
+    if ((status = UNIX_CALL( wglMakeCurrent, &args ))) WARN( "wglMakeCurrent returned %#x\n", status );
+    return args.ret;
+}
+
 BOOL WINAPI wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd )
 {
     struct wglSetPixelFormat_params args = { .hdc = hdc, .ipfd = ipfd, .ppfd = ppfd, };
     NTSTATUS status;
     TRACE( "hdc %p, ipfd %d, ppfd %p\n", hdc, ipfd, ppfd );
     if ((status = UNIX_CALL( wglSetPixelFormat, &args ))) WARN( "wglSetPixelFormat returned %#x\n", status );
+    return args.ret;
+}
+
+BOOL WINAPI wglShareLists( HGLRC hrcSrvShare, HGLRC hrcSrvSource )
+{
+    struct wglShareLists_params args = { .hrcSrvShare = hrcSrvShare, .hrcSrvSource = hrcSrvSource, };
+    NTSTATUS status;
+    TRACE( "hrcSrvShare %p, hrcSrvSource %p\n", hrcSrvShare, hrcSrvSource );
+    if ((status = UNIX_CALL( wglShareLists, &args ))) WARN( "wglShareLists returned %#x\n", status );
     return args.ret;
 }
 
@@ -5416,6 +5461,30 @@ static void WINAPI glCurrentPaletteMatrixARB( GLint index )
     NTSTATUS status;
     TRACE( "index %d\n", index );
     if ((status = UNIX_CALL( glCurrentPaletteMatrixARB, &args ))) WARN( "glCurrentPaletteMatrixARB returned %#x\n", status );
+}
+
+static void WINAPI glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
+{
+    struct glDebugMessageCallback_params args = { .callback = callback, .userParam = userParam, };
+    NTSTATUS status;
+    TRACE( "callback %p, userParam %p\n", callback, userParam );
+    if ((status = UNIX_CALL( glDebugMessageCallback, &args ))) WARN( "glDebugMessageCallback returned %#x\n", status );
+}
+
+static void WINAPI glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
+{
+    struct glDebugMessageCallbackAMD_params args = { .callback = callback, .userParam = userParam, };
+    NTSTATUS status;
+    TRACE( "callback %p, userParam %p\n", callback, userParam );
+    if ((status = UNIX_CALL( glDebugMessageCallbackAMD, &args ))) WARN( "glDebugMessageCallbackAMD returned %#x\n", status );
+}
+
+static void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
+{
+    struct glDebugMessageCallbackARB_params args = { .callback = callback, .userParam = userParam, };
+    NTSTATUS status;
+    TRACE( "callback %p, userParam %p\n", callback, userParam );
+    if ((status = UNIX_CALL( glDebugMessageCallbackARB, &args ))) WARN( "glDebugMessageCallbackARB returned %#x\n", status );
 }
 
 static void WINAPI glDebugMessageControl( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
@@ -24187,12 +24256,48 @@ static void * WINAPI wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloa
     return args.ret;
 }
 
+static BOOL WINAPI wglBindTexImageARB( HPBUFFERARB hPbuffer, int iBuffer )
+{
+    struct wglBindTexImageARB_params args = { .hPbuffer = hPbuffer, .iBuffer = iBuffer, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p, iBuffer %d\n", hPbuffer, iBuffer );
+    if ((status = UNIX_CALL( wglBindTexImageARB, &args ))) WARN( "wglBindTexImageARB returned %#x\n", status );
+    return args.ret;
+}
+
 static BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats )
 {
     struct wglChoosePixelFormatARB_params args = { .hdc = hdc, .piAttribIList = piAttribIList, .pfAttribFList = pfAttribFList, .nMaxFormats = nMaxFormats, .piFormats = piFormats, .nNumFormats = nNumFormats, };
     NTSTATUS status;
     TRACE( "hdc %p, piAttribIList %p, pfAttribFList %p, nMaxFormats %u, piFormats %p, nNumFormats %p\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats );
     if ((status = UNIX_CALL( wglChoosePixelFormatARB, &args ))) WARN( "wglChoosePixelFormatARB returned %#x\n", status );
+    return args.ret;
+}
+
+static HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList )
+{
+    struct wglCreateContextAttribsARB_params args = { .hDC = hDC, .hShareContext = hShareContext, .attribList = attribList, };
+    NTSTATUS status;
+    TRACE( "hDC %p, hShareContext %p, attribList %p\n", hDC, hShareContext, attribList );
+    if ((status = UNIX_CALL( wglCreateContextAttribsARB, &args ))) WARN( "wglCreateContextAttribsARB returned %#x\n", status );
+    return args.ret;
+}
+
+static HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList )
+{
+    struct wglCreatePbufferARB_params args = { .hDC = hDC, .iPixelFormat = iPixelFormat, .iWidth = iWidth, .iHeight = iHeight, .piAttribList = piAttribList, };
+    NTSTATUS status;
+    TRACE( "hDC %p, iPixelFormat %d, iWidth %d, iHeight %d, piAttribList %p\n", hDC, iPixelFormat, iWidth, iHeight, piAttribList );
+    if ((status = UNIX_CALL( wglCreatePbufferARB, &args ))) WARN( "wglCreatePbufferARB returned %#x\n", status );
+    return args.ret;
+}
+
+static BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB hPbuffer )
+{
+    struct wglDestroyPbufferARB_params args = { .hPbuffer = hPbuffer, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p\n", hPbuffer );
+    if ((status = UNIX_CALL( wglDestroyPbufferARB, &args ))) WARN( "wglDestroyPbufferARB returned %#x\n", status );
     return args.ret;
 }
 
@@ -24219,6 +24324,15 @@ static const char * WINAPI wglGetExtensionsStringEXT(void)
     NTSTATUS status;
     TRACE( "\n" );
     if ((status = UNIX_CALL( wglGetExtensionsStringEXT, &args ))) WARN( "wglGetExtensionsStringEXT returned %#x\n", status );
+    return args.ret;
+}
+
+static HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB hPbuffer )
+{
+    struct wglGetPbufferDCARB_params args = { .hPbuffer = hPbuffer, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p\n", hPbuffer );
+    if ((status = UNIX_CALL( wglGetPbufferDCARB, &args ))) WARN( "wglGetPbufferDCARB returned %#x\n", status );
     return args.ret;
 }
 
@@ -24249,6 +24363,15 @@ static int WINAPI wglGetSwapIntervalEXT(void)
     return args.ret;
 }
 
+static BOOL WINAPI wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, HGLRC hglrc )
+{
+    struct wglMakeContextCurrentARB_params args = { .hDrawDC = hDrawDC, .hReadDC = hReadDC, .hglrc = hglrc, };
+    NTSTATUS status;
+    TRACE( "hDrawDC %p, hReadDC %p, hglrc %p\n", hDrawDC, hReadDC, hglrc );
+    if ((status = UNIX_CALL( wglMakeContextCurrentARB, &args ))) WARN( "wglMakeContextCurrentARB returned %#x\n", status );
+    return args.ret;
+}
+
 static BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
 {
     struct wglQueryCurrentRendererIntegerWINE_params args = { .attribute = attribute, .value = value, };
@@ -24264,6 +24387,15 @@ static const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute
     NTSTATUS status;
     TRACE( "attribute %d\n", attribute );
     if ((status = UNIX_CALL( wglQueryCurrentRendererStringWINE, &args ))) WARN( "wglQueryCurrentRendererStringWINE returned %#x\n", status );
+    return args.ret;
+}
+
+static BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB hPbuffer, int iAttribute, int *piValue )
+{
+    struct wglQueryPbufferARB_params args = { .hPbuffer = hPbuffer, .iAttribute = iAttribute, .piValue = piValue, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p, iAttribute %d, piValue %p\n", hPbuffer, iAttribute, piValue );
+    if ((status = UNIX_CALL( wglQueryPbufferARB, &args ))) WARN( "wglQueryPbufferARB returned %#x\n", status );
     return args.ret;
 }
 
@@ -24285,6 +24417,33 @@ static const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer,
     return args.ret;
 }
 
+static int WINAPI wglReleasePbufferDCARB( HPBUFFERARB hPbuffer, HDC hDC )
+{
+    struct wglReleasePbufferDCARB_params args = { .hPbuffer = hPbuffer, .hDC = hDC, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p, hDC %p\n", hPbuffer, hDC );
+    if ((status = UNIX_CALL( wglReleasePbufferDCARB, &args ))) WARN( "wglReleasePbufferDCARB returned %#x\n", status );
+    return args.ret;
+}
+
+static BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB hPbuffer, int iBuffer )
+{
+    struct wglReleaseTexImageARB_params args = { .hPbuffer = hPbuffer, .iBuffer = iBuffer, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p, iBuffer %d\n", hPbuffer, iBuffer );
+    if ((status = UNIX_CALL( wglReleaseTexImageARB, &args ))) WARN( "wglReleaseTexImageARB returned %#x\n", status );
+    return args.ret;
+}
+
+static BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB hPbuffer, const int *piAttribList )
+{
+    struct wglSetPbufferAttribARB_params args = { .hPbuffer = hPbuffer, .piAttribList = piAttribList, };
+    NTSTATUS status;
+    TRACE( "hPbuffer %p, piAttribList %p\n", hPbuffer, piAttribList );
+    if ((status = UNIX_CALL( wglSetPbufferAttribARB, &args ))) WARN( "wglSetPbufferAttribARB returned %#x\n", status );
+    return args.ret;
+}
+
 static BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format )
 {
     struct wglSetPixelFormatWINE_params args = { .hdc = hdc, .format = format, };
@@ -24303,21 +24462,8 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
     return args.ret;
 }
 
-extern void WINAPI glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam ) DECLSPEC_HIDDEN;
-extern void WINAPI glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam ) DECLSPEC_HIDDEN;
-extern void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam ) DECLSPEC_HIDDEN;
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglBindTexImageARB( HPBUFFERARB hPbuffer, int iBuffer ) DECLSPEC_HIDDEN;
-extern HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList ) DECLSPEC_HIDDEN;
-extern HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB hPbuffer ) DECLSPEC_HIDDEN;
 extern HDC WINAPI wglGetCurrentReadDCARB(void) DECLSPEC_HIDDEN;
-extern HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB hPbuffer ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, HGLRC hglrc ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB hPbuffer, int iAttribute, int *piValue ) DECLSPEC_HIDDEN;
-extern int WINAPI wglReleasePbufferDCARB( HPBUFFERARB hPbuffer, HDC hDC ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB hPbuffer, int iBuffer ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB hPbuffer, const int *piAttribList ) DECLSPEC_HIDDEN;
 
 const int extension_registry_size = 2694;
 const OpenGL_extension extension_registry[2694] =

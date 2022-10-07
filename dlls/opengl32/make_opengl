@@ -140,6 +140,36 @@ my %khronos_types =
      "khronos_uint32_t" => "unsigned int",
      "khronos_float_t" => "float",
     );
+
+my %manual_win_functions =
+    (
+     "glDebugEntry" => 1,
+     "wglChoosePixelFormat" => 1,
+     "wglCreateLayerContext" => 1,
+     "wglDescribeLayerPlane" => 1,
+     "wglGetCurrentContext" => 1,
+     "wglGetCurrentDC" => 1,
+     "wglGetDefaultProcAddress" => 1,
+     "wglGetLayerPaletteEntries" => 1,
+     "wglRealizeLayerPalette" => 1,
+     "wglSetLayerPaletteEntries" => 1,
+     "wglSwapLayerBuffers" => 1,
+     "wglUseFontBitmapsA" => 1,
+     "wglUseFontBitmapsW" => 1,
+     "wglUseFontOutlinesA" => 1,
+     "wglUseFontOutlinesW" => 1,
+    );
+my %manual_win_thunks =
+    (
+     "glGetIntegerv" => 1,
+     "glGetString" => 1,
+     "glGetStringi" => 1,
+     "wglGetCurrentReadDCARB" => 1,
+     "wglGetPixelFormat" => 1,
+     "wglGetProcAddress" => 1,
+     "wglSwapBuffers" => 1,
+    );
+
 #
 # Used to convert some types
 #
@@ -419,25 +449,6 @@ my %wgl_functions;
 my %gl_enums;
 my (%gl_types, @gl_types);  # also use an array to preserve declaration order
 
-my %manual_win_functions =
-    (
-     "glDebugEntry" => 1,
-     "wglChoosePixelFormat" => 1,
-     "wglCreateLayerContext" => 1,
-     "wglDescribeLayerPlane" => 1,
-     "wglGetCurrentContext" => 1,
-     "wglGetCurrentDC" => 1,
-     "wglGetDefaultProcAddress" => 1,
-     "wglGetLayerPaletteEntries" => 1,
-     "wglRealizeLayerPalette" => 1,
-     "wglSetLayerPaletteEntries" => 1,
-     "wglSwapLayerBuffers" => 1,
-     "wglUseFontBitmapsA" => 1,
-     "wglUseFontBitmapsW" => 1,
-     "wglUseFontOutlinesA" => 1,
-     "wglUseFontOutlinesW" => 1,
-    );
-
 my %remapped_wgl_functions =
     (
      "ChoosePixelFormat" => "wglChoosePixelFormat",
@@ -498,23 +509,10 @@ sub is_supported_api($)
 # some functions need a hand-written wrapper
 sub needs_wrapper($$)
 {
-    my %funcs =
-        (
-         "glDebugEntry" => 1,
-         "glDebugMessageCallback" => 1,
-         "glDebugMessageCallbackAMD" => 1,
-         "glDebugMessageCallbackARB" => 1,
-         "glGetIntegerv" => 1,
-         "glGetString" => 1,
-         "glGetStringi" => 1,
-         "wglGetCurrentReadDCARB" => 1,
-         "wglGetPixelFormat" => 1,
-         "wglGetProcAddress" => 1,
-         "wglSwapBuffers" => 1,
-        );
     my ($name, $func) = @_;
 
-    return 1 if defined $funcs{$name};
+    return 1 if $name =~ /^glDebugMessageCallback/;
+
     # check if return value needs special handling
     (my $type = $func->[0]->textContent()) =~ s/ $//;
     return 1 if defined $remap_types{$type};
@@ -881,26 +879,26 @@ print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $wgl_functions{$_} );
+    next if defined $manual_win_thunks{$_};
     print OUT "\n" . generate_win_thunk($_, $wgl_functions{$_});
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
+    next if defined $manual_win_thunks{$_};
     print OUT "\n" . generate_win_thunk($_, $norm_functions{$_});
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $ext_functions{$_} );
+    next if defined $manual_win_thunks{$_};
     print OUT "\nstatic " . generate_win_thunk($_, $ext_functions{$_});
 }
 print OUT "\n";
 
 foreach (sort keys %ext_functions)
 {
-    next unless defined $manual_win_functions{$_} || needs_wrapper( $_, $ext_functions{$_} );
+    next unless defined $manual_win_functions{$_} || $manual_win_thunks{$_};
     my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
     my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
     printf OUT "extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $func_ret, $_, $decl_args;
@@ -941,6 +939,21 @@ print OUT "#include \"opengl_ext.h\"\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
+    next unless needs_wrapper( $_, $wgl_functions{$_} );
+    print OUT "extern NTSTATUS wgl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+}
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless needs_wrapper( $_, $ext_functions{$_} );
+    print OUT "extern NTSTATUS ext_$_( void *args ) DECLSPEC_HIDDEN;\n";
+}
+print OUT "\n";
+
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $wgl_functions{$_} );
     print OUT generate_unix_thunk($_, $wgl_functions{$_}, "wgl");
 }
 foreach (sort keys %norm_functions)
@@ -951,6 +964,7 @@ foreach (sort keys %norm_functions)
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $ext_functions{$_} );
     print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
 }
 

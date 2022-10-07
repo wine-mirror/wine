@@ -13,30 +13,24 @@
 
 #include "opengl_ext.h"
 
-static NTSTATUS wgl_wglCopyContext( void *args )
-{
-    struct wglCopyContext_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->wgl.p_wglCopyContext( (struct wgl_context *)params->hglrcSrc, (struct wgl_context *)params->hglrcDst, params->mask );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wgl_wglCreateContext( void *args )
-{
-    struct wglCreateContext_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
-    if (!funcs || !funcs->wgl.p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
-    params->ret = (HGLRC)funcs->wgl.p_wglCreateContext( params->hDc );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wgl_wglDeleteContext( void *args )
-{
-    struct wglDeleteContext_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->wgl.p_wglDeleteContext( (struct wgl_context *)params->oldContext );
-    return STATUS_SUCCESS;
-}
+extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wgl_wglShareLists( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glDebugMessageCallback( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glDebugMessageCallbackARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglBindTexImageARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglDestroyPbufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglGetPbufferDCARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglMakeContextCurrentARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglQueryPbufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglReleasePbufferDCARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglReleaseTexImageARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglSetPbufferAttribARB( void *args ) DECLSPEC_HIDDEN;
 
 static NTSTATUS wgl_wglDescribePixelFormat( void *args )
 {
@@ -64,29 +58,12 @@ static NTSTATUS wgl_wglGetProcAddress( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wgl_wglMakeCurrent( void *args )
-{
-    struct wglMakeCurrent_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
-    if (!funcs || !funcs->wgl.p_wglMakeCurrent) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->wgl.p_wglMakeCurrent( params->hDc, (struct wgl_context *)params->newContext );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS wgl_wglSetPixelFormat( void *args )
 {
     struct wglSetPixelFormat_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
     if (!funcs || !funcs->wgl.p_wglSetPixelFormat) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->wgl.p_wglSetPixelFormat( params->hdc, params->ipfd, params->ppfd );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wgl_wglShareLists( void *args )
-{
-    struct wglShareLists_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->wgl.p_wglShareLists( (struct wgl_context *)params->hrcSrvShare, (struct wgl_context *)params->hrcSrvSource );
     return STATUS_SUCCESS;
 }
 
@@ -5448,30 +5425,6 @@ static NTSTATUS ext_glCurrentPaletteMatrixARB( void *args )
     struct glCurrentPaletteMatrixARB_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     funcs->ext.p_glCurrentPaletteMatrixARB( params->index );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_glDebugMessageCallback( void *args )
-{
-    struct glDebugMessageCallback_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    funcs->ext.p_glDebugMessageCallback( params->callback, params->userParam );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_glDebugMessageCallbackAMD( void *args )
-{
-    struct glDebugMessageCallbackAMD_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    funcs->ext.p_glDebugMessageCallbackAMD( params->callback, params->userParam );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_glDebugMessageCallbackARB( void *args )
-{
-    struct glDebugMessageCallbackARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    funcs->ext.p_glDebugMessageCallbackARB( params->callback, params->userParam );
     return STATUS_SUCCESS;
 }
 
@@ -24098,46 +24051,12 @@ static NTSTATUS ext_wglAllocateMemoryNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglBindTexImageARB( void *args )
-{
-    struct wglBindTexImageARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglBindTexImageARB( (struct wgl_pbuffer *)params->hPbuffer, params->iBuffer );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS ext_wglChoosePixelFormatARB( void *args )
 {
     struct wglChoosePixelFormatARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
     if (!funcs || !funcs->ext.p_wglChoosePixelFormatARB) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->ext.p_wglChoosePixelFormatARB( params->hdc, params->piAttribIList, params->pfAttribFList, params->nMaxFormats, params->piFormats, params->nNumFormats );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglCreateContextAttribsARB( void *args )
-{
-    struct wglCreateContextAttribsARB_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
-    if (!funcs || !funcs->ext.p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
-    params->ret = (HGLRC)funcs->ext.p_wglCreateContextAttribsARB( params->hDC, (struct wgl_context *)params->hShareContext, params->attribList );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglCreatePbufferARB( void *args )
-{
-    struct wglCreatePbufferARB_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
-    if (!funcs || !funcs->ext.p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
-    params->ret = (HPBUFFERARB)funcs->ext.p_wglCreatePbufferARB( params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglDestroyPbufferARB( void *args )
-{
-    struct wglDestroyPbufferARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglDestroyPbufferARB( (struct wgl_pbuffer *)params->hPbuffer );
     return STATUS_SUCCESS;
 }
 
@@ -24174,14 +24093,6 @@ static NTSTATUS ext_wglGetExtensionsStringEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglGetPbufferDCARB( void *args )
-{
-    struct wglGetPbufferDCARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglGetPbufferDCARB( (struct wgl_pbuffer *)params->hPbuffer );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS ext_wglGetPixelFormatAttribfvARB( void *args )
 {
     struct wglGetPixelFormatAttribfvARB_params *params = args;
@@ -24208,15 +24119,6 @@ static NTSTATUS ext_wglGetSwapIntervalEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglMakeContextCurrentARB( void *args )
-{
-    struct wglMakeContextCurrentARB_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDrawDC );
-    if (!funcs || !funcs->ext.p_wglMakeContextCurrentARB) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->ext.p_wglMakeContextCurrentARB( params->hDrawDC, params->hReadDC, (struct wgl_context *)params->hglrc );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS ext_wglQueryCurrentRendererIntegerWINE( void *args )
 {
     struct wglQueryCurrentRendererIntegerWINE_params *params = args;
@@ -24230,14 +24132,6 @@ static NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args )
     struct wglQueryCurrentRendererStringWINE_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     params->ret = funcs->ext.p_wglQueryCurrentRendererStringWINE( params->attribute );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglQueryPbufferARB( void *args )
-{
-    struct wglQueryPbufferARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglQueryPbufferARB( (struct wgl_pbuffer *)params->hPbuffer, params->iAttribute, params->piValue );
     return STATUS_SUCCESS;
 }
 
@@ -24256,30 +24150,6 @@ static NTSTATUS ext_wglQueryRendererStringWINE( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( params->dc );
     if (!funcs || !funcs->ext.p_wglQueryRendererStringWINE) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->ext.p_wglQueryRendererStringWINE( params->dc, params->renderer, params->attribute );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglReleasePbufferDCARB( void *args )
-{
-    struct wglReleasePbufferDCARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglReleasePbufferDCARB( (struct wgl_pbuffer *)params->hPbuffer, params->hDC );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglReleaseTexImageARB( void *args )
-{
-    struct wglReleaseTexImageARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglReleaseTexImageARB( (struct wgl_pbuffer *)params->hPbuffer, params->iBuffer );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_wglSetPbufferAttribARB( void *args )
-{
-    struct wglSetPbufferAttribARB_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_wglSetPbufferAttribARB( (struct wgl_pbuffer *)params->hPbuffer, params->piAttribList );
     return STATUS_SUCCESS;
 }
 
