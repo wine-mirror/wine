@@ -381,18 +381,23 @@ my %wgl_functions;
 my %gl_enums;
 my (%gl_types, @gl_types);  # also use an array to preserve declaration order
 
-my %supported_wgl_functions =
+my %manual_win_functions =
     (
-     "wglCopyContext" => 1,
-     "wglCreateContext" => 1,
-     "wglDeleteContext" => 1,
-     "wglDescribePixelFormat" => 1,
-     "wglGetPixelFormat" => 1,
-     "wglGetProcAddress" => 1,
-     "wglMakeCurrent" => 1,
-     "wglSetPixelFormat" => 1,
-     "wglShareLists" => 1,
-     "wglSwapBuffers" => 1,
+     "glDebugEntry" => 1,
+     "wglChoosePixelFormat" => 1,
+     "wglCreateLayerContext" => 1,
+     "wglDescribeLayerPlane" => 1,
+     "wglGetCurrentContext" => 1,
+     "wglGetCurrentDC" => 1,
+     "wglGetDefaultProcAddress" => 1,
+     "wglGetLayerPaletteEntries" => 1,
+     "wglRealizeLayerPalette" => 1,
+     "wglSetLayerPaletteEntries" => 1,
+     "wglSwapLayerBuffers" => 1,
+     "wglUseFontBitmapsA" => 1,
+     "wglUseFontBitmapsW" => 1,
+     "wglUseFontOutlinesA" => 1,
+     "wglUseFontOutlinesW" => 1,
     );
 
 my %remapped_wgl_functions =
@@ -642,7 +647,7 @@ print HEADER "struct opengl_funcs\n{\n";
 print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
-    next unless defined $supported_wgl_functions{$_};
+    next if defined $manual_win_functions{$_};
     my $decl_args = get_func_args( $wgl_functions{$_}, 1, 1 );
     my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
     printf HEADER "        %-10s (WINAPI *p_$_)($decl_args);\n", $func_ret;
@@ -652,7 +657,7 @@ print HEADER "    } wgl;\n\n";
 print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
-    next if $_ eq "glDebugEntry";
+    next if defined $manual_win_functions{$_};
     my $decl_args = get_func_args( $norm_functions{$_}, 1, 1 );
     my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
     printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
@@ -662,6 +667,7 @@ print HEADER "    } gl;\n\n";
 print HEADER "    struct\n    {\n";
 foreach (sort keys %ext_functions)
 {
+    next if defined $manual_win_functions{$_};
     my $decl_args = get_func_args( $ext_functions{$_}, 1, 1 );
     my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
     printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
@@ -672,7 +678,7 @@ print HEADER "};\n\n";
 print HEADER "#define ALL_WGL_FUNCS";
 foreach (sort keys %norm_functions)
 {
-    next if $_ eq "glDebugEntry";
+    next if defined $manual_win_functions{$_};
     printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
 }
 print HEADER "\n\n";
@@ -724,10 +730,12 @@ close HEADER;
 #
 open(SPEC, ">$spec_file") or die "cannot create $spec_file";
 
-foreach (sort keys %norm_functions) {
+foreach (sort keys %norm_functions)
+{
     printf SPEC "%s\n", generate_spec_entry( $_, $norm_functions{$_} );
 }
-foreach (sort keys %wgl_functions) {
+foreach (sort keys %wgl_functions)
+{
     printf SPEC "%s\n", generate_spec_entry( $_, $wgl_functions{$_} );
 }
 
@@ -749,32 +757,47 @@ $file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n" if $gen_traces;
 open(NORM, ">$norm_file") or die "cannot create $norm_file";
 print NORM $file_header;
 
-foreach (sort keys %norm_functions) {
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
     next if needs_wrapper( $_, $norm_functions{$_} );
     print NORM GenerateThunk($_, $norm_functions{$_}, "gl");
 }
 
-foreach (sort keys %wgl_functions) {
-    next unless defined $supported_wgl_functions{$_};
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
     print NORM generate_null_func($_, $wgl_functions{$_}, " WINAPI");
 }
-foreach (sort keys %norm_functions) {
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
     print NORM generate_null_func($_, $norm_functions{$_}, "");
 }
-foreach (sort keys %ext_functions) {
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
     print NORM generate_null_func($_, $ext_functions{$_}, "");
 }
 
 print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";
 foreach (sort keys %wgl_functions)
 {
-    next unless defined $supported_wgl_functions{$_};
+    next if defined $manual_win_functions{$_};
     print NORM "        null_$_,\n";
 }
 print NORM "    },\n    {\n";
-foreach (sort keys %norm_functions) { print NORM "        null_$_,\n" unless $_ eq "glDebugEntry"; }
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print NORM "        null_$_,\n";
+}
 print NORM "    },\n    {\n";
-foreach (sort keys %ext_functions) { print NORM "        null_$_,\n"; }
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print NORM "        null_$_,\n";
+}
 print NORM "    }\n};\n";
 
 close(NORM);
