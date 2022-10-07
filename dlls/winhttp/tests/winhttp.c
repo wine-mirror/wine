@@ -3425,8 +3425,51 @@ static void test_websocket(int port)
     connection = WinHttpConnect(session, L"ws.ifelse.io", 0, 0);
     ok(connection != NULL, "got %lu\n", GetLastError());
 
+    size = 0xdeadbeef;
+    ret = WinHttpQueryOption(session, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(size == sizeof(DWORD), "got %lu.\n", size);
+    ok(value == 32768, "got %lu.\n", value);
+
+    value = 65535;
+    ret = WinHttpSetOption(session, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, sizeof(DWORD));
+    ok(ret, "got %lu\n", GetLastError());
+
     request = WinHttpOpenRequest(connection, L"GET", L"/", NULL, NULL, NULL, 0);
     ok(request != NULL, "got %lu\n", GetLastError());
+
+    size = 0xdeadbeef;
+    ret = WinHttpQueryOption(session, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(size == sizeof(DWORD), "got %lu.\n", size);
+    ok(value == 65535 || broken( value == WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE ) /* Win8 */, "got %lu.\n", value);
+
+    size = 0xdeadbeef;
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(size == sizeof(DWORD), "got %lu.\n", size);
+    ok(value == 65535 || broken( value == WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE ), "got %lu.\n", value);
+
+    value = 1048576;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, sizeof(DWORD));
+    ok(ret, "got %lu\n", GetLastError());
+
+    size = 0xdeadbeef;
+    ret = WinHttpQueryOption(session, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(size == sizeof(DWORD), "got %lu.\n", size);
+    ok(value == 65535 || broken( value == WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE ) /* Win8 */, "got %lu.\n", value);
+
+    size = 0xdeadbeef;
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(size == sizeof(DWORD), "got %lu.\n", size);
+    ok(value == 1048576, "got %lu.\n", value);
+
+    size = 0xdeadbeef;
+    ret = WinHttpQueryOption(connection, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE, "got %lu\n", GetLastError());
 
     size = sizeof(value);
     ret = WinHttpQueryOption(session, WINHTTP_OPTION_WEB_SOCKET_KEEPALIVE_INTERVAL, &value, &size);
@@ -3461,6 +3504,16 @@ static void test_websocket(int port)
 
     socket = pWinHttpWebSocketCompleteUpgrade(request, 0);
     ok(socket != NULL, "got %lu\n", GetLastError());
+
+    size = sizeof(value);
+    ret = WinHttpQueryOption(socket, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, &size);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE, "got %lu\n", GetLastError());
+
+    value = 65535;
+    ret = WinHttpSetOption(socket, WINHTTP_OPTION_WEB_SOCKET_RECEIVE_BUFFER_SIZE, &value, sizeof(DWORD));
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE, "got %lu\n", GetLastError());
 
     value = 20000;
     ret = WinHttpSetOption(socket, WINHTTP_OPTION_WEB_SOCKET_KEEPALIVE_INTERVAL, &value, 2);

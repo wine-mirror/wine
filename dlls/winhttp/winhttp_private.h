@@ -85,6 +85,7 @@ struct session
     HANDLE unload_event;
     DWORD secure_protocols;
     DWORD passport_flags;
+    unsigned int websocket_receive_buffer_size;
 };
 
 struct connect
@@ -215,6 +216,7 @@ struct request
         WCHAR *username;
         WCHAR *password;
     } creds[TARGET_MAX][SCHEME_MAX];
+    unsigned int websocket_receive_buffer_size;
 };
 
 enum socket_state
