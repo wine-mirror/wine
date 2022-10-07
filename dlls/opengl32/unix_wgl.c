@@ -1050,3 +1050,38 @@ NTSTATUS WINAPI thread_attach( void *args )
     NtCurrentTeb()->glTable = &null_opengl_funcs;
     return STATUS_SUCCESS;
 }
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
+
+NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
+{
+    struct
+    {
+        GLenum fontTarget;
+        PTR32 fontName;
+        GLbitfield fontStyle;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+        GLuint baseAndCount[2];
+        GLenum ret;
+    } *params32 = args;
+    struct glPathGlyphIndexRangeNV_params params =
+    {
+        .fontTarget = params32->fontTarget,
+        .fontName = ULongToPtr(params32->fontName),
+        .fontStyle = params32->fontStyle,
+        .pathParameterTemplate = params32->pathParameterTemplate,
+        .emScale = params32->emScale,
+        .baseAndCount = {params32->baseAndCount[0], params32->baseAndCount[1]},
+    };
+    NTSTATUS status;
+    if ((status = ext_glPathGlyphIndexRangeNV( &params ))) return status;
+    params32->ret = params.ret;
+    return status;
+}
+
+#endif

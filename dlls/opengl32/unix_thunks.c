@@ -14753,7 +14753,7 @@ static NTSTATUS ext_glPathGlyphIndexArrayNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glPathGlyphIndexRangeNV( void *args )
+NTSTATUS ext_glPathGlyphIndexRangeNV( void *args )
 {
     struct glPathGlyphIndexRangeNV_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -48613,30 +48613,6 @@ static NTSTATUS wow64_ext_glPathGlyphIndexArrayNV( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
-{
-    struct
-    {
-        GLenum fontTarget;
-        PTR32 fontName;
-        GLbitfield fontStyle;
-        GLuint pathParameterTemplate;
-        GLfloat emScale;
-        PTR32 baseAndCount;
-        GLenum ret;
-    } *params32 = args;
-    struct glPathGlyphIndexRangeNV_params params =
-    {
-        .fontTarget = params32->fontTarget,
-        .fontName = ULongToPtr(params32->fontName),
-        .fontStyle = params32->fontStyle,
-        .pathParameterTemplate = params32->pathParameterTemplate,
-        .emScale = params32->emScale,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_glPathGlyphRangeNV( void *args )
 {
     struct
@@ -61112,6 +61088,7 @@ static NTSTATUS wow64_ext_wglSetPixelFormatWINE( void *args )
     return status;
 }
 
+extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {

@@ -167,6 +167,10 @@ my %manual_win_thunks =
      "wglGetProcAddress" => 1,
      "wglSwapBuffers" => 1,
     );
+my %manual_wow64_thunks =
+    (
+     "glPathGlyphIndexRangeNV" => 1,
+    );
 
 #
 # Used to convert some types
@@ -258,7 +262,7 @@ sub generate_unix_thunk($$$)
     my $func_ret = get_func_ret( $func, 0 );
     my $ret = "";
 
-    $ret .= "static NTSTATUS $prefix\_$name( void *args )\n";
+    $ret .= "NTSTATUS $prefix\_$name( void *args )\n";
     $ret .= "{\n";
     $ret .= "    struct $name\_params *params = args;\n" unless !$call_args && is_void_func( $func );
     # special case for functions that take an HDC as first parameter
@@ -1058,18 +1062,21 @@ foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
     next if needs_wrapper( $_, $wgl_functions{$_} );
+    print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $wgl_functions{$_}, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     next if needs_wrapper( $_, $norm_functions{$_} );
+    print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
     next if needs_wrapper( $_, $ext_functions{$_} );
+    print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
 }
 
@@ -1099,20 +1106,39 @@ print OUT "typedef ULONG PTR32;\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if !needs_wow64_thunk($_, $wgl_functions{$_});
+    next if !needs_wow64_thunk($_, $wgl_functions{$_}) || defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $wgl_functions{$_}, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if !needs_wow64_thunk($_, $norm_functions{$_});
+    next if !needs_wow64_thunk($_, $norm_functions{$_}) || defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $norm_functions{$_}, "gl");
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if !needs_wow64_thunk($_, $ext_functions{$_});
+    next if !needs_wow64_thunk($_, $ext_functions{$_}) || defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $ext_functions{$_}, "ext");
+}
+
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wow64_wgl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+}
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wow64_gl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+}
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless defined $manual_wow64_thunks{$_};
+    print OUT "extern NTSTATUS wow64_ext_$_( void *args ) DECLSPEC_HIDDEN;\n";
 }
 
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
@@ -1121,7 +1147,7 @@ print OUT "    &thread_attach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    if (needs_wow64_thunk($_, $wgl_functions{$_}))
+    if (needs_wow64_thunk($_, $wgl_functions{$_}) || defined $manual_wow64_thunks{$_})
     {
         printf OUT "    &wow64_wgl_%s,\n", $_;
     }
@@ -1133,7 +1159,7 @@ foreach (sort keys %wgl_functions)
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    if (needs_wow64_thunk($_, $norm_functions{$_}))
+    if (needs_wow64_thunk($_, $norm_functions{$_}) || defined $manual_wow64_thunks{$_})
     {
         printf OUT "    &wow64_gl_%s,\n", $_;
     }
@@ -1145,7 +1171,7 @@ foreach (sort keys %norm_functions)
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    if (needs_wow64_thunk($_, $ext_functions{$_}))
+    if (needs_wow64_thunk($_, $ext_functions{$_}) || defined $manual_wow64_thunks{$_})
     {
         printf OUT "    &wow64_ext_%s,\n", $_;
     }
