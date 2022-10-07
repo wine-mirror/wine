@@ -252,6 +252,7 @@ struct socket
 {
     struct object_header hdr;
     struct request *request;
+    int keepalive_interval;
     enum socket_state state;
     struct queue send_q;
     struct queue recv_q;
