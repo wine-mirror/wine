@@ -16,6 +16,75 @@
 #include "wine/wgl.h"
 #include "wine/unixlib.h"
 
+struct wglCopyContext_params
+{
+    HGLRC hglrcSrc;
+    HGLRC hglrcDst;
+    UINT mask;
+    BOOL ret;
+};
+
+struct wglCreateContext_params
+{
+    HDC hDc;
+    HGLRC ret;
+};
+
+struct wglDeleteContext_params
+{
+    HGLRC oldContext;
+    BOOL ret;
+};
+
+struct wglDescribePixelFormat_params
+{
+    HDC hdc;
+    int ipfd;
+    UINT cjpfd;
+    PIXELFORMATDESCRIPTOR *ppfd;
+    int ret;
+};
+
+struct wglGetPixelFormat_params
+{
+    HDC hdc;
+    int ret;
+};
+
+struct wglGetProcAddress_params
+{
+    LPCSTR lpszProc;
+    PROC ret;
+};
+
+struct wglMakeCurrent_params
+{
+    HDC hDc;
+    HGLRC newContext;
+    BOOL ret;
+};
+
+struct wglSetPixelFormat_params
+{
+    HDC hdc;
+    int ipfd;
+    const PIXELFORMATDESCRIPTOR *ppfd;
+    BOOL ret;
+};
+
+struct wglShareLists_params
+{
+    HGLRC hrcSrvShare;
+    HGLRC hrcSrvSource;
+    BOOL ret;
+};
+
+struct wglSwapBuffers_params
+{
+    HDC hdc;
+    BOOL ret;
+};
+
 struct glAccum_params
 {
     GLenum op;
@@ -22224,6 +22293,16 @@ struct wglSwapIntervalEXT_params
 
 enum unix_funcs
 {
+    unix_wglCopyContext,
+    unix_wglCreateContext,
+    unix_wglDeleteContext,
+    unix_wglDescribePixelFormat,
+    unix_wglGetPixelFormat,
+    unix_wglGetProcAddress,
+    unix_wglMakeCurrent,
+    unix_wglSetPixelFormat,
+    unix_wglShareLists,
+    unix_wglSwapBuffers,
     unix_glAccum,
     unix_glAlphaFunc,
     unix_glAreTexturesResident,

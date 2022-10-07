@@ -508,6 +508,9 @@ sub needs_wrapper($$)
          "glGetString" => 1,
          "glGetStringi" => 1,
          "wglGetCurrentReadDCARB" => 1,
+         "wglGetPixelFormat" => 1,
+         "wglGetProcAddress" => 1,
+         "wglSwapBuffers" => 1,
         );
     my ($name, $func) = @_;
 
@@ -799,6 +802,11 @@ print OUT "#include \"wingdi.h\"\n\n";
 print OUT "#include \"wine/wgl.h\"\n";
 print OUT "#include \"wine/unixlib.h\"\n\n";
 
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_func_params($_, $wgl_functions{$_});
+}
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -812,6 +820,11 @@ foreach (sort keys %ext_functions)
 
 print OUT "enum unix_funcs\n";
 print OUT "{\n";
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    printf OUT "    unix_%s,\n", $_;
+}
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -851,6 +864,12 @@ print OUT "#include \"opengl_ext.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $wgl_functions{$_} );
+    print OUT "\n" . generate_win_thunk($_, $wgl_functions{$_});
+}
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -905,6 +924,11 @@ print OUT "#include \"wingdi.h\"\n\n";
 print OUT "#include \"unixlib.h\"\n\n";
 print OUT "#include \"opengl_ext.h\"\n\n";
 
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_unix_thunk($_, $wgl_functions{$_}, "wgl");
+}
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -918,6 +942,11 @@ foreach (sort keys %ext_functions)
 
 print OUT "const unixlib_function_t __wine_unix_call_funcs[] =\n";
 print OUT "{\n";
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    printf OUT "    &wgl_%s,\n", $_;
+}
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};

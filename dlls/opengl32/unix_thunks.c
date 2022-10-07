@@ -13,6 +13,92 @@
 
 #include "opengl_ext.h"
 
+static NTSTATUS wgl_wglCopyContext( void *args )
+{
+    struct wglCopyContext_params *params = args;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    params->ret = funcs->wgl.p_wglCopyContext( (struct wgl_context *)params->hglrcSrc, (struct wgl_context *)params->hglrcDst, params->mask );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglCreateContext( void *args )
+{
+    struct wglCreateContext_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
+    if (!funcs || !funcs->wgl.p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
+    params->ret = (HGLRC)funcs->wgl.p_wglCreateContext( params->hDc );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglDeleteContext( void *args )
+{
+    struct wglDeleteContext_params *params = args;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    params->ret = funcs->wgl.p_wglDeleteContext( (struct wgl_context *)params->oldContext );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglDescribePixelFormat( void *args )
+{
+    struct wglDescribePixelFormat_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
+    if (!funcs || !funcs->wgl.p_wglDescribePixelFormat) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->wgl.p_wglDescribePixelFormat( params->hdc, params->ipfd, params->cjpfd, params->ppfd );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglGetPixelFormat( void *args )
+{
+    struct wglGetPixelFormat_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
+    if (!funcs || !funcs->wgl.p_wglGetPixelFormat) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->wgl.p_wglGetPixelFormat( params->hdc );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglGetProcAddress( void *args )
+{
+    struct wglGetProcAddress_params *params = args;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    params->ret = funcs->wgl.p_wglGetProcAddress( params->lpszProc );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglMakeCurrent( void *args )
+{
+    struct wglMakeCurrent_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
+    if (!funcs || !funcs->wgl.p_wglMakeCurrent) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->wgl.p_wglMakeCurrent( params->hDc, (struct wgl_context *)params->newContext );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglSetPixelFormat( void *args )
+{
+    struct wglSetPixelFormat_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
+    if (!funcs || !funcs->wgl.p_wglSetPixelFormat) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->wgl.p_wglSetPixelFormat( params->hdc, params->ipfd, params->ppfd );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglShareLists( void *args )
+{
+    struct wglShareLists_params *params = args;
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    params->ret = funcs->wgl.p_wglShareLists( (struct wgl_context *)params->hrcSrvShare, (struct wgl_context *)params->hrcSrvSource );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglSwapBuffers( void *args )
+{
+    struct wglSwapBuffers_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
+    if (!funcs || !funcs->wgl.p_wglSwapBuffers) return STATUS_NOT_IMPLEMENTED;
+    params->ret = funcs->wgl.p_wglSwapBuffers( params->hdc );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS gl_glAccum( void *args )
 {
     struct glAccum_params *params = args;
@@ -24216,6 +24302,16 @@ static NTSTATUS ext_wglSwapIntervalEXT( void *args )
 
 const unixlib_function_t __wine_unix_call_funcs[] =
 {
+    &wgl_wglCopyContext,
+    &wgl_wglCreateContext,
+    &wgl_wglDeleteContext,
+    &wgl_wglDescribePixelFormat,
+    &wgl_wglGetPixelFormat,
+    &wgl_wglGetProcAddress,
+    &wgl_wglMakeCurrent,
+    &wgl_wglSetPixelFormat,
+    &wgl_wglShareLists,
+    &wgl_wglSwapBuffers,
     &gl_glAccum,
     &gl_glAlphaFunc,
     &gl_glAreTexturesResident,

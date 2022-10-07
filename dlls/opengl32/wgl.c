@@ -442,16 +442,6 @@ HGLRC WINAPI wglGetCurrentContext(void)
 }
 
 /***********************************************************************
- *		wglDescribePixelFormat (OPENGL32.@)
- */
-INT WINAPI wglDescribePixelFormat(HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR *descr )
-{
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return 0;
-    return funcs->wgl.p_wglDescribePixelFormat( hdc, format, size, descr );
-}
-
-/***********************************************************************
  *		wglChoosePixelFormat (OPENGL32.@)
  */
 INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
@@ -626,23 +616,18 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
  */
 INT WINAPI wglGetPixelFormat(HDC hdc)
 {
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs)
-    {
-        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
-        return 0;
-    }
-    return funcs->wgl.p_wglGetPixelFormat( hdc );
-}
+    struct wglGetPixelFormat_params args = { .hdc = hdc, };
+    NTSTATUS status;
 
-/***********************************************************************
- *		 wglSetPixelFormat(OPENGL32.@)
- */
-BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
-{
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return FALSE;
-    return funcs->wgl.p_wglSetPixelFormat( hdc, format, descr );
+    TRACE( "hdc %p\n", hdc );
+
+    if ((status = UNIX_CALL( wglGetPixelFormat, &args )))
+    {
+        WARN( "wglGetPixelFormat returned %#x\n", status );
+        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+    }
+
+    return args.ret;
 }
 
 /***********************************************************************
@@ -650,12 +635,11 @@ BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR 
  */
 BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
 {
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    struct wglSwapBuffers_params args = { .hdc = hdc, };
+    NTSTATUS status;
 
-    if (!funcs || !funcs->wgl.p_wglSwapBuffers) return FALSE;
-    if (!funcs->wgl.p_wglSwapBuffers( hdc )) return FALSE;
-
-    if (TRACE_ON(fps))
+    if ((status = UNIX_CALL( wglSwapBuffers, &args ))) WARN( "wglSwapBuffers returned %#x\n", status );
+    else if (TRACE_ON(fps))
     {
         static long prev_time, start_time;
         static unsigned long frames, frames_total;
@@ -673,7 +657,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
             if (start_time == 0) start_time = time;
         }
     }
-    return TRUE;
+
+    return args.ret;
 }
 
 /***********************************************************************

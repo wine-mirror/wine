@@ -17,6 +17,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
+int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd )
+{
+    struct wglDescribePixelFormat_params args = { .hdc = hdc, .ipfd = ipfd, .cjpfd = cjpfd, .ppfd = ppfd, };
+    NTSTATUS status;
+    TRACE( "hdc %p, ipfd %d, cjpfd %u, ppfd %p\n", hdc, ipfd, cjpfd, ppfd );
+    if ((status = UNIX_CALL( wglDescribePixelFormat, &args ))) WARN( "wglDescribePixelFormat returned %#x\n", status );
+    return args.ret;
+}
+
+BOOL WINAPI wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd )
+{
+    struct wglSetPixelFormat_params args = { .hdc = hdc, .ipfd = ipfd, .ppfd = ppfd, };
+    NTSTATUS status;
+    TRACE( "hdc %p, ipfd %d, ppfd %p\n", hdc, ipfd, ppfd );
+    if ((status = UNIX_CALL( wglSetPixelFormat, &args ))) WARN( "wglSetPixelFormat returned %#x\n", status );
+    return args.ret;
+}
+
 void WINAPI glAccum( GLenum op, GLfloat value )
 {
     struct glAccum_params args = { .op = op, .value = value, };

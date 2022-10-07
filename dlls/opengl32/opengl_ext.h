@@ -43,4 +43,6 @@ static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
     return funcs;
 }
 
+extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
+
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */
