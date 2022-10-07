@@ -3689,7 +3689,7 @@ static void texture_resource_sub_resource_get_map_pitch(struct wined3d_resource 
 }
 
 static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
-        void **map_ptr, const struct wined3d_box *box, DWORD flags)
+        void **map_ptr, const struct wined3d_box *box, uint32_t flags)
 {
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_device *device = resource->device;

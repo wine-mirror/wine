@@ -4393,7 +4393,7 @@ struct wined3d_resource_ops
     void (*resource_sub_resource_get_map_pitch)(struct wined3d_resource *resource,
             unsigned int sub_resource_idx, unsigned int *row_pitch, unsigned int *slice_pitch);
     HRESULT (*resource_sub_resource_map)(struct wined3d_resource *resource, unsigned int sub_resource_idx,
-            void **map_ptr, const struct wined3d_box *box, DWORD flags);
+            void **map_ptr, const struct wined3d_box *box, uint32_t flags);
     HRESULT (*resource_sub_resource_unmap)(struct wined3d_resource *resource, unsigned int sub_resource_idx);
 };
 
