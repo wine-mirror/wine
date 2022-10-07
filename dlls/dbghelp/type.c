@@ -983,6 +983,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagLabel:
         case SymTagInlineSite:
         case SymTagCustom:
+        case SymTagPublicSymbol:
+        case SymTagThunk:
             return FALSE;
         }
         break;
