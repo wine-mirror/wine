@@ -862,9 +862,9 @@ extern struct symt_block*
                                          struct symt_block* block, 
                                          unsigned pc, unsigned len) DECLSPEC_HIDDEN;
 extern struct symt_block*
-                    symt_close_func_block(struct module* module, 
+                    symt_close_func_block(struct module* module,
                                           const struct symt_function* func,
-                                          struct symt_block* block, unsigned pc) DECLSPEC_HIDDEN;
+                                          struct symt_block* block) DECLSPEC_HIDDEN;
 extern struct symt_hierarchy_point*
                     symt_add_function_point(struct module* module, 
                                             struct symt_function* func,

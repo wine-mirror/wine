@@ -2312,9 +2312,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
         }
     }
 
-    symt_close_func_block(subpgm->ctx->module_ctx->module, subpgm->current_func, subpgm->current_block, 0);
-    subpgm->current_block = symt_check_tag(subpgm->current_block->container, SymTagBlock) ?
-        (struct symt_block*)subpgm->current_block->container : NULL;
+    subpgm->current_block = symt_close_func_block(subpgm->ctx->module_ctx->module, subpgm->current_func, subpgm->current_block);
 }
 
 static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)

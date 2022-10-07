@@ -549,14 +549,13 @@ struct symt_block* symt_open_func_block(struct module* module,
     return block;
 }
 
-struct symt_block* symt_close_func_block(struct module* module, 
+struct symt_block* symt_close_func_block(struct module* module,
                                          const struct symt_function* func,
-                                         struct symt_block* block, unsigned pc)
+                                         struct symt_block* block)
 {
     assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
 
-    if (pc) block->size = func->address + pc - block->address;
-    return (block->container->tag == SymTagBlock) ? 
+    return (block->container->tag == SymTagBlock) ?
         CONTAINING_RECORD(block->container, struct symt_block, symt) : NULL;
 }
 

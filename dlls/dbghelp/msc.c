@@ -2472,7 +2472,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_END:
             if (block)
             {
-                block = symt_close_func_block(msc_dbg->module, curr_func, block, 0);
+                block = symt_close_func_block(msc_dbg->module, curr_func, block);
             }
             else if (top_func)
             {
