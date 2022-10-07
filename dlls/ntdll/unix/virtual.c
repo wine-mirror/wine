@@ -3738,7 +3738,7 @@ void virtual_set_large_address_space(void)
  * NtAllocateVirtualMemory[Ex] implementation.
  */
 static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG type, ULONG protect,
-                                         ULONG_PTR limit )
+                                         ULONG_PTR limit, ULONG_PTR align )
 {
     void *base;
     unsigned int vprot;
@@ -3800,7 +3800,7 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
             if (vprot & VPROT_WRITECOPY) status = STATUS_INVALID_PAGE_PROTECTION;
             else if (is_dos_memory) status = allocate_dos_memory( &view, vprot );
             else status = map_view( &view, base, size, type & MEM_TOP_DOWN, vprot, limit,
-                                    granularity_mask );
+                                    align ? align - 1 : granularity_mask );
 
             if (status == STATUS_SUCCESS) base = view->base;
         }
@@ -3888,7 +3888,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     else
         limit = 0;
 
-    return allocate_virtual_memory( ret, size_ptr, type, protect, limit );
+    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, 0 );
 }
 
 
@@ -3901,6 +3901,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
                                            ULONG count )
 {
     ULONG_PTR limit = 0;
+    ULONG_PTR align = 0;
 
     TRACE("%p %p %08lx %x %08x %p %u\n", process, *ret, *size_ptr, type, protect, parameters, count );
 
@@ -3930,9 +3931,19 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
             }
             r = (MEM_ADDRESS_REQUIREMENTS *)parameters[i].Pointer;
 
-            if (r->LowestStartingAddress || r->Alignment)
+            if (r->LowestStartingAddress)
                 FIXME( "Not supported requirements LowestStartingAddress %p, Alignment %p.\n",
                        r->LowestStartingAddress, (void *)r->Alignment );
+
+            if (r->Alignment)
+            {
+                if (*ret || (r->Alignment & (r->Alignment - 1)) || r->Alignment - 1 < granularity_mask)
+                {
+                    WARN( "Invalid alignment %lu.\n", r->Alignment );
+                    return STATUS_INVALID_PARAMETER;
+                }
+                align = r->Alignment;
+            }
 
             limit = (ULONG_PTR)r->HighestEndingAddress;
             if (limit && (*ret || limit > (ULONG_PTR)user_space_limit || ((limit + 1) & (page_mask - 1))))
@@ -3940,7 +3951,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
                 WARN( "Invalid limit %p.\n", r->HighestEndingAddress);
                 return STATUS_INVALID_PARAMETER;
             }
-            TRACE( "limit %p.\n", (void *)limit );
+            TRACE( "limit %p, align %p.\n", (void *)limit, (void *)align );
         }
     }
 
@@ -3958,6 +3969,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
         call.virtual_alloc_ex.addr         = wine_server_client_ptr( *ret );
         call.virtual_alloc_ex.size         = *size_ptr;
         call.virtual_alloc_ex.limit        = limit;
+        call.virtual_alloc_ex.align        = align;
         call.virtual_alloc_ex.op_type      = type;
         call.virtual_alloc_ex.prot         = protect;
         status = server_queue_process_apc( process, &call, &result );
@@ -3971,7 +3983,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
         return result.virtual_alloc_ex.status;
     }
 
-    return allocate_virtual_memory( ret, size_ptr, type, protect, limit );
+    return allocate_virtual_memory( ret, size_ptr, type, protect, limit, align );
 }
 
 

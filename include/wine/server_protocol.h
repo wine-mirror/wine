@@ -526,6 +526,7 @@ typedef union
         client_ptr_t     addr;
         mem_size_t       size;
         mem_size_t       limit;
+        mem_size_t       align;
         unsigned int     prot;
     } virtual_alloc_ex;
     struct
@@ -6355,7 +6356,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 757
+#define SERVER_PROTOCOL_VERSION 758
 
 /* ### protocol_version end ### */
 

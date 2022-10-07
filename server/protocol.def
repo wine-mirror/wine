@@ -542,6 +542,7 @@ typedef union
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
         mem_size_t       limit;        /* allocation address limit */
+        mem_size_t       align;        /* allocation alignment */
         unsigned int     prot;         /* memory protection flags */
     } virtual_alloc_ex;
     struct

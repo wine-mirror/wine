@@ -584,6 +584,48 @@ static void test_NtAllocateVirtualMemoryEx_address_requirements(void)
     size = 0;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
     ok(!status, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = (void *)(0x20001000 - 1);
+    a.Alignment = 0x20000000;
+    size = 0x2000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_NO_MEMORY, "Unexpected status %08lx.\n", status);
+
+    a.HighestEndingAddress = NULL;
+    a.Alignment = 0x8000;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.Alignment = 0x30000;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    a.Alignment = 0x40000;
+    size = 0x1000;
+    addr = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(!status, "Unexpected status %08lx.\n", status);
+    ok(!((ULONG_PTR)addr & 0x3ffff), "Unexpected addr %p.\n", addr);
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(!status, "Unexpected status %08lx.\n", status);
+
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr, &size, MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE, ext, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
 }
 
 struct test_stack_size_thread_args
