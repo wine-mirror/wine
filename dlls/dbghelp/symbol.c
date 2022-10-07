@@ -303,9 +303,8 @@ struct symt_data* symt_new_global_variable(struct module* module,
         if (type && size && symt_get_info(module, type, TI_GET_LENGTH, &tsz))
         {
             if (tsz != size)
-                FIXME("Size mismatch for %s.%s between type (%s) and src (%Iu)\n",
-                      debugstr_w(module->modulename), name,
-                      wine_dbgstr_longlong(tsz), size);
+                FIXME("Size mismatch for %s.%s between type (%I64u) and src (%Iu)\n",
+                      debugstr_w(module->modulename), name, tsz, size);
         }
         symt_add_module_ht(module, (struct symt_ht*)sym);
         p = vector_add(compiland ? &compiland->vchildren : &module->top->vchildren, &module->pool);
@@ -887,9 +886,8 @@ static void symt_fill_sym_info(struct module_pair* pair,
     else
         symbol_setname(sym_info, name);
 
-    TRACE_(dbghelp_symt)("%p => %s %lu %s\n",
-                         sym, sym_info->Name, sym_info->Size,
-                         wine_dbgstr_longlong(sym_info->Address));
+    TRACE_(dbghelp_symt)("%p => %s %lu %I64x\n",
+                         sym, sym_info->Name, sym_info->Size, sym_info->Address);
 }
 
 struct sym_enum
@@ -1414,9 +1412,8 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
     BOOL                ret;
     PWSTR               maskW = NULL;
 
-    TRACE("(%p %s %s %p %p)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), debugstr_a(Mask),
-          EnumSymbolsCallback, UserContext);
+    TRACE("(%p %I64x %s %p %p)\n",
+          hProcess, BaseOfDll, debugstr_a(Mask), EnumSymbolsCallback, UserContext);
 
     if (Mask)
     {
@@ -2489,10 +2486,9 @@ BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
     LPWSTR      maskW = NULL;
     BOOLEAN     ret;
 
-    TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask,
-          wine_dbgstr_longlong(Address), EnumSymbolsCallback,
-          UserContext, Options);
+    TRACE("(%p %I64x %lu %lu %s %I64x %p %p %lx)\n",
+          hProcess, BaseOfDll, Index, SymTag, Mask,
+          Address, EnumSymbolsCallback, UserContext, Options);
 
     if (Mask)
     {
@@ -2518,10 +2514,9 @@ BOOL WINAPI SymSearchW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
 {
     struct sym_enumW    sew;
 
-    TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, debugstr_w(Mask),
-          wine_dbgstr_longlong(Address), EnumSymbolsCallback,
-          UserContext, Options);
+    TRACE("(%p %I64x %lu %lu %s %I64x %p %p %lx)\n",
+          hProcess, BaseOfDll, Index, SymTag, debugstr_w(Mask),
+          Address, EnumSymbolsCallback, UserContext, Options);
 
     sew.ctx = UserContext;
     sew.cb = EnumSymbolsCallback;
@@ -2540,7 +2535,7 @@ BOOL WINAPI SymAddSymbol(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR name,
 {
     struct module_pair  pair;
 
-    TRACE("(%p %s %s %lu)\n", hProcess, wine_dbgstr_a(name), wine_dbgstr_longlong(addr), size);
+    TRACE("(%p %s %I64x %lu)\n", hProcess, wine_dbgstr_a(name), addr, size);
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
 
@@ -2556,7 +2551,7 @@ BOOL WINAPI SymAddSymbolW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR nameW,
 {
     char       name[MAX_SYM_NAME];
 
-    TRACE("(%p %s %s %lu)\n", hProcess, wine_dbgstr_w(nameW), wine_dbgstr_longlong(addr), size);
+    TRACE("(%p %s %I64x %lu)\n", hProcess, wine_dbgstr_w(nameW), addr, size);
 
     WideCharToMultiByte(CP_ACP, 0, nameW, -1, name, ARRAY_SIZE(name), NULL, NULL);
 
@@ -2663,8 +2658,8 @@ BOOL WINAPI SymGetLineFromNameW64(HANDLE hProcess, PCWSTR ModuleName, PCWSTR Fil
  */
 BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBOL_INFO symbol)
 {
-    FIXME("hProcess = %p, BaseOfDll = %s, index = %ld, symbol = %p\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), index, symbol);
+    FIXME("hProcess = %p, BaseOfDll = %I64x, index = %ld, symbol = %p\n",
+          hProcess, BaseOfDll, index, symbol);
 
     return FALSE;
 }
@@ -2675,8 +2670,8 @@ BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBO
  */
 BOOL WINAPI SymFromIndexW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBOL_INFOW symbol)
 {
-    FIXME("hProcess = %p, BaseOfDll = %s, index = %ld, symbol = %p\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), index, symbol);
+    FIXME("hProcess = %p, BaseOfDll = %I64x, index = %ld, symbol = %p\n",
+          hProcess, BaseOfDll, index, symbol);
 
     return FALSE;
 }

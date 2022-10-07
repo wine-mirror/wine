@@ -588,7 +588,7 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
 
     case DW_FORM_data8:
         attr->u.lluvalue = dwarf2_get_u8(data);
-        TRACE("data8<%s>\n", wine_dbgstr_longlong(attr->u.uvalue));
+        TRACE("data8<%Ix>\n", attr->u.uvalue);
         break;
 
     case DW_FORM_ref1:
@@ -671,7 +671,7 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
 
     case DW_FORM_sec_offset:
         attr->u.lluvalue = dwarf2_get_addr(data, ctx->head.offset_size);
-        TRACE("sec_offset<%s>\n", wine_dbgstr_longlong(attr->u.lluvalue));
+        TRACE("sec_offset<%I64x>\n", attr->u.lluvalue);
         break;
 
     case DW_FORM_GNU_ref_alt:
@@ -3685,7 +3685,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
             tmp = 0;
             if (!sw_read_mem(csw, stack[sp], &tmp, module->format_info[DFI_DWARF]->u.dwarf2_info->word_size))
             {
-                ERR("Couldn't read memory at %s\n", wine_dbgstr_longlong(stack[sp]));
+                ERR("Couldn't read memory at %I64x\n", stack[sp]);
                 tmp = 0;
             }
             stack[sp] = tmp;
@@ -3735,7 +3735,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
             sz = dwarf2_parse_byte(&ctx);
             if (!sw_read_mem(csw, stack[sp], &tmp, sz))
             {
-                ERR("Couldn't read memory at %s\n", wine_dbgstr_longlong(stack[sp]));
+                ERR("Couldn't read memory at %I64x\n", stack[sp]);
                 tmp = 0;
             }
             /* do integral promotion */
@@ -3769,7 +3769,7 @@ static void apply_frame_state(const struct module* module, struct cpu_stack_walk
         *cfa = eval_expression(module, csw, (const unsigned char*)state->cfa_offset, context);
         if (!sw_read_mem(csw, *cfa, cfa, csw->cpu->word_size))
         {
-            WARN("Couldn't read memory at %s\n", wine_dbgstr_longlong(*cfa));
+            WARN("Couldn't read memory at %I64x\n", *cfa);
             return;
         }
         break;

@@ -297,9 +297,8 @@ DECLSPEC_HIDDEN BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             DWORD base = msc_dbg->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
             nampnt = coff_get_name(coff_sym, coff_strtab);
 
-            TRACE("%d: %s %s\n",
-                  i, wine_dbgstr_longlong(msc_dbg->module->module.BaseOfImage + base + coff_sym->Value),
-                  nampnt);
+            TRACE("%d: %I64x %s\n",
+                  i, msc_dbg->module->module.BaseOfImage + base + coff_sym->Value, nampnt);
             TRACE("\tAdding global symbol %s (sect=%s)\n",
                   nampnt, msc_dbg->sectp[coff_sym->SectionNumber - 1].Name);
 
@@ -344,9 +343,8 @@ DECLSPEC_HIDDEN BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
              */
             nampnt = coff_get_name(coff_sym, coff_strtab);
 
-            TRACE("%d: %s %s\n",
-                  i, wine_dbgstr_longlong(msc_dbg->module->module.BaseOfImage + base + coff_sym->Value),
-                  nampnt);
+            TRACE("%d: %I64x %s\n",
+                  i, msc_dbg->module->module.BaseOfImage + base + coff_sym->Value, nampnt);
             TRACE("\tAdding global data symbol %s\n", nampnt);
 
             /*

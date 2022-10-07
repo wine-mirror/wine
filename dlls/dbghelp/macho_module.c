@@ -1154,11 +1154,11 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 symt_get_info(module, &sym->symt, TI_GET_LENGTH,   &size);
                 symt_get_info(module, &sym->symt, TI_GET_DATAKIND, &kind);
                 if (size && kind == (ste->is_global ? DataIsGlobal : DataIsFileStatic))
-                    FIXME("Duplicate in %s: %s<%08Ix> %s<%s-%s>\n",
+                    FIXME("Duplicate in %s: %s<%08Ix> %s<%I64x-%I64x>\n",
                           debugstr_w(module->modulename),
                           ste->ht_elt.name, ste->addr,
                           sym->hash_elt.name,
-                          wine_dbgstr_longlong(addr), wine_dbgstr_longlong(size));
+                          addr, size);
             }
         }
     }
@@ -1622,7 +1622,7 @@ static BOOL macho_enum_modules_internal(const struct process* pcs,
     }
     if (!image_infos.infos64.infoArray)
         goto done;
-    TRACE("Process has %u image infos at %s\n", image_infos.infos64.infoArrayCount, wine_dbgstr_longlong(image_infos.infos64.infoArray));
+    TRACE("Process has %u image infos at %I64x\n", image_infos.infos64.infoArrayCount, image_infos.infos64.infoArray);
 
     if (pcs->is_64bit)
         len = sizeof(info_array->info64);

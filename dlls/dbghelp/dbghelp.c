@@ -104,7 +104,7 @@ BOOL validate_addr64(DWORD64 addr)
 {
     if (sizeof(void*) == sizeof(int) && (addr >> 32))
     {
-        FIXME("Unsupported address %s\n", wine_dbgstr_longlong(addr));
+        FIXME("Unsupported address %I64x\n", addr);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -135,7 +135,7 @@ const char* wine_dbgstr_addr(const ADDRESS64* addr)
     switch (addr->Mode)
     {
     case AddrModeFlat:
-        return wine_dbg_sprintf("flat<%s>", wine_dbgstr_longlong(addr->Offset));
+        return wine_dbg_sprintf("flat<%I64x>", addr->Offset);
     case AddrMode1616:
         return wine_dbg_sprintf("1616<%04x:%04lx>", addr->Segment, (DWORD)addr->Offset);
     case AddrMode1632:
@@ -858,24 +858,22 @@ BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
 /***********************************************************************
  *		SymRegisterCallback64 (DBGHELP.@)
  */
-BOOL WINAPI SymRegisterCallback64(HANDLE hProcess, 
+BOOL WINAPI SymRegisterCallback64(HANDLE hProcess,
                                   PSYMBOL_REGISTERED_CALLBACK64 CallbackFunction,
                                   ULONG64 UserContext)
 {
-    TRACE("(%p, %p, %s)\n", 
-          hProcess, CallbackFunction, wine_dbgstr_longlong(UserContext));
+    TRACE("(%p, %p, %I64x)\n", hProcess, CallbackFunction, UserContext);
     return sym_register_cb(hProcess, CallbackFunction, NULL, UserContext, FALSE);
 }
 
 /***********************************************************************
  *		SymRegisterCallbackW64 (DBGHELP.@)
  */
-BOOL WINAPI SymRegisterCallbackW64(HANDLE hProcess, 
+BOOL WINAPI SymRegisterCallbackW64(HANDLE hProcess,
                                    PSYMBOL_REGISTERED_CALLBACK64 CallbackFunction,
                                    ULONG64 UserContext)
 {
-    TRACE("(%p, %p, %s)\n", 
-          hProcess, CallbackFunction, wine_dbgstr_longlong(UserContext));
+    TRACE("(%p, %p, %I64x)\n", hProcess, CallbackFunction, UserContext);
     return sym_register_cb(hProcess, CallbackFunction, NULL, UserContext, TRUE);
 }
 

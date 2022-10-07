@@ -55,8 +55,8 @@ static DWORD64 WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS64*
         FIXME("Unsupported (yet) mode (%x)\n", addr->Mode);
         return 0;
     }
-    FIXME("Failed to linearize address %04x:%s (mode %x)\n",
-          addr->Segment, wine_dbgstr_longlong(addr->Offset), addr->Mode);
+    FIXME("Failed to linearize address %04x:%I64x (mode %x)\n",
+          addr->Segment, addr->Offset, addr->Mode);
     return 0;
 }
 
@@ -362,7 +362,7 @@ BOOL WINAPI SymRegisterFunctionEntryCallback64(HANDLE hProc,
                                                PSYMBOL_FUNCENTRY_CALLBACK64 cb,
                                                ULONG64 user)
 {
-    FIXME("(%p %p %s): stub!\n", hProc, cb, wine_dbgstr_longlong(user));
+    FIXME("(%p %p %I64x): stub!\n", hProc, cb, user);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

@@ -186,10 +186,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->next = pcs->lmodules;
     pcs->lmodules = module;
 
-    TRACE("=> %s %s-%s %s\n",
-          get_module_type(type, virtual),
-	  wine_dbgstr_longlong(mod_addr), wine_dbgstr_longlong(mod_addr + size),
-          debugstr_w(name));
+    TRACE("=> %s %I64x-%I64x %s\n",
+          get_module_type(type, virtual), mod_addr, mod_addr + size, debugstr_w(name));
 
     pool_init(&module->pool, 65536);
 
@@ -858,9 +856,9 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
     unsigned    len;
     DWORD64     ret;
 
-    TRACE("(%p %p %s %s %s %08lx %p %08lx)\n",
+    TRACE("(%p %p %s %s %I64x %08lx %p %08lx)\n",
           hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
-          wine_dbgstr_longlong(BaseOfDll), DllSize, Data, Flags);
+          BaseOfDll, DllSize, Data, Flags);
 
     if (ImageName)
     {
@@ -895,9 +893,9 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     struct module*      module = NULL;
     struct module*      altmodule;
 
-    TRACE("(%p %p %s %s %s %08lx %p %08lx)\n",
+    TRACE("(%p %p %s %s %I64x %08lx %p %08lx)\n",
           hProcess, hFile, debugstr_w(wImageName), debugstr_w(wModuleName),
-          wine_dbgstr_longlong(BaseOfDll), SizeOfDll, Data, Flags);
+          BaseOfDll, SizeOfDll, Data, Flags);
 
     if (Data)
         FIXME("Unsupported load data parameter %p for %s\n",
@@ -1402,7 +1400,7 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
     struct module*      module;
     IMAGEHLP_MODULEW64  miw64;
 
-    TRACE("%p %s %p\n", hProcess, wine_dbgstr_longlong(dwAddr), ModuleInfo);
+    TRACE("%p %I64x %p\n", hProcess, dwAddr, ModuleInfo);
 
     if (!pcs) return FALSE;
     if (ModuleInfo->SizeOfStruct > sizeof(*ModuleInfo)) return FALSE;

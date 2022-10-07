@@ -163,13 +163,13 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s cSwitch=%p nSwitch=%p\n",
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%I64u cSwitch=%p nSwitch=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
-          wine_dbgstr_longlong(curr_count),
+          curr_count,
           (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch);
 
     /* if we're at first call (which doesn't actually unwind, it just computes ReturnPC,
@@ -403,8 +403,8 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
                 frame->AddrStack.Offset = context->x86.Esp;
                 frame->AddrFrame.Offset = context->x86.Ebp;
                 if (frame->AddrReturn.Offset != context->x86.Eip)
-                    FIXME("new PC=%s different from Eip=%lx\n",
-                          wine_dbgstr_longlong(frame->AddrReturn.Offset), context->x86.Eip);
+                    FIXME("new PC=%I64x different from Eip=%lx\n",
+                          frame->AddrReturn.Offset, context->x86.Eip);
                 frame->AddrPC.Offset = context->x86.Eip;
             }
         }
@@ -493,13 +493,13 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
         frame->FuncTableEntry = NULL;
 
     inc_curr_count();
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s cSwitch=%p nSwitch=%p FuncTable=%p\n",
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%I64u cSwitch=%p nSwitch=%p FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
-          wine_dbgstr_longlong(curr_count),
+          curr_count,
           (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch, frame->FuncTableEntry);
 
     return TRUE;

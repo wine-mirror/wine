@@ -479,9 +479,7 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
     DWORD64             size;
     unsigned int        i;
 
-    TRACE("(%p %s %p %p)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), EnumSymbolsCallback,
-          UserContext);
+    TRACE("(%p %I64x %p %p)\n", hProcess, BaseOfDll, EnumSymbolsCallback, UserContext);
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
 

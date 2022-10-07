@@ -93,13 +93,13 @@ static BOOL arm64_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s\n",
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%I64u\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : "ARM64",
-          wine_dbgstr_longlong(curr_count));
+          curr_count);
 
     if (curr_mode == stm_start)
     {
@@ -133,13 +133,13 @@ static BOOL arm64_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
     frame->Virtual = TRUE;
     inc_curr_count();
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s FuncTable=%p\n",
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%I64u FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : "ARM64",
-          wine_dbgstr_longlong(curr_count),
+          curr_count,
           frame->FuncTableEntry);
 
     return TRUE;

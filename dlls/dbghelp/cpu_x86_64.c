@@ -471,7 +471,7 @@ static BOOL default_unwind(struct cpu_stack_walk* csw, CONTEXT* context)
 {
     if (!sw_read_mem(csw, context->Rsp, &context->Rip, sizeof(DWORD64)))
     {
-        WARN("Cannot read new frame offset %s\n", wine_dbgstr_longlong(context->Rsp));
+        WARN("Cannot read new frame offset %I64x\n", context->Rsp);
         return FALSE;
     }
     context->Rsp += sizeof(DWORD64);
@@ -649,13 +649,13 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
     if (curr_mode >= stm_done) return FALSE;
     assert(!csw->is32);
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s\n",
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%I64u\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : "64bit",
-          wine_dbgstr_longlong(curr_count));
+          curr_count);
 
     if (curr_mode == stm_start)
     {
@@ -705,13 +705,13 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
     frame->Virtual = TRUE;
     curr_count++;
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s FuncTable=%p\n",
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%I64u FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : "64bit",
-          wine_dbgstr_longlong(curr_count),
+          curr_count,
           frame->FuncTableEntry);
 
     return TRUE;
