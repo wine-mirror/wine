@@ -2165,6 +2165,14 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     int bytes_sent;
     DWORD ret, len;
 
+    if (request->flags & REQUEST_FLAG_WEBSOCKET_UPGRADE
+        && request->websocket_set_send_buffer_size < MIN_WEBSOCKET_SEND_BUFFER_SIZE)
+    {
+        WARN( "Invalid send buffer size %u.\n", request->websocket_set_send_buffer_size );
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+        goto end;
+    }
+
     drain_content( request );
     clear_response_headers( request );
 
@@ -2185,6 +2193,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     }
     if (request->flags & REQUEST_FLAG_WEBSOCKET_UPGRADE)
     {
+        request->websocket_send_buffer_size = request->websocket_set_send_buffer_size;
         process_header( request, L"Upgrade", L"websocket", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
         process_header( request, L"Connection", L"Upgrade", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
         process_header( request, L"Sec-WebSocket-Version", L"13", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
@@ -3245,6 +3254,7 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     socket->hdr.notify_mask = request->hdr.notify_mask;
     socket->hdr.context = context;
     socket->keepalive_interval = 30000;
+    socket->send_buffer_size = request->websocket_send_buffer_size;
     InitializeSRWLock( &socket->send_lock );
     init_queue( &socket->send_q );
     init_queue( &socket->recv_q );
@@ -3316,13 +3326,13 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
     }
 
     buffer_size = len + offset + 4;
-    assert( buffer_size - len < MAX_FRAME_BUFFER_SIZE );
-    if (buffer_size > socket->send_frame_buffer_size && socket->send_frame_buffer_size < MAX_FRAME_BUFFER_SIZE)
+    assert( buffer_size - len < socket->send_buffer_size );
+    if (buffer_size > socket->send_frame_buffer_size && socket->send_frame_buffer_size < socket->send_buffer_size)
     {
         DWORD new_size;
         void *new;
 
-        new_size = min( buffer_size, MAX_FRAME_BUFFER_SIZE );
+        new_size = min( buffer_size, socket->send_buffer_size );
         if (!(new = realloc( socket->send_frame_buffer, new_size )))
         {
             ERR( "out of memory, buffer_size %lu\n", buffer_size);
@@ -3352,7 +3362,7 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
     socket->client_buffer_offset = 0;
     while (socket->send_remaining_size)
     {
-        len = min( buflen, MAX_FRAME_BUFFER_SIZE - offset );
+        len = min( buflen, socket->send_buffer_size - offset );
         for (i = 0; i < len; ++i)
         {
             socket->send_frame_buffer[offset++] = buf[socket->client_buffer_offset++]
@@ -3396,7 +3406,7 @@ static DWORD complete_send_frame( struct socket *socket, WSAOVERLAPPED *ovr, con
 
     while (socket->send_remaining_size)
     {
-        len = min( socket->send_remaining_size, MAX_FRAME_BUFFER_SIZE );
+        len = min( socket->send_remaining_size, socket->send_buffer_size );
         for (i = 0; i < len; ++i)
         {
             socket->send_frame_buffer[i] = buf[socket->client_buffer_offset++]

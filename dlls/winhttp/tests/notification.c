@@ -113,6 +113,7 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
 
     status_ok   = (info->test[info->index].status == status);
     function_ok = (info->test[info->index].function == info->function);
+
     ok( status_ok, "%u: expected status %#x got %#lx\n", info->line, info->test[info->index].status, status );
     ok(function_ok, "%u: expected function %u got %u\n", info->line, info->test[info->index].function, info->function);
 
@@ -663,6 +664,7 @@ static const struct notification websocket_test[] =
 {
     { winhttp_connect,                    WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
     { winhttp_open_request,               WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
+    { winhttp_send_request,               WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, NF_SIGNAL },
     { winhttp_send_request,               WINHTTP_CALLBACK_STATUS_RESOLVING_NAME },
     { winhttp_send_request,               WINHTTP_CALLBACK_STATUS_NAME_RESOLVED },
     { winhttp_send_request,               WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER },
@@ -796,7 +798,7 @@ static void test_websocket(BOOL secure)
     WINHTTP_WEB_SOCKET_ASYNC_RESULT *result;
     WINHTTP_WEB_SOCKET_STATUS *ws_status;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
-    DWORD size, status, err;
+    DWORD size, status, err, value;
     BOOL ret, unload = TRUE;
     struct info info, *context = &info;
     unsigned char *big_buffer;
@@ -871,6 +873,20 @@ static void test_websocket(BOOL secure)
     ok( ret, "got %lu\n", GetLastError() );
 
     setup_test( &info, winhttp_send_request, __LINE__ );
+
+    value = 15;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE, &value, sizeof(DWORD));
+    ok(ret, "got %lu\n", GetLastError());
+    ret = WinHttpSendRequest( request, NULL, 0, NULL, 0, 0, 0 );
+    err = GetLastError();
+    ok( ret, "got err %lu.\n", err );
+
+    WaitForSingleObject( info.wait, INFINITE );
+
+    value = 32768;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE, &value, sizeof(DWORD));
+    ok(ret, "got %lu\n", GetLastError());
+
     SetLastError( 0xdeadbeef );
     ret = WinHttpSendRequest( request, NULL, 0, NULL, 0, 0, 0 );
     err = GetLastError();

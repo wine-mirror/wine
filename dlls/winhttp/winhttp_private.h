@@ -86,6 +86,7 @@ struct session
     DWORD secure_protocols;
     DWORD passport_flags;
     unsigned int websocket_receive_buffer_size;
+    unsigned int websocket_send_buffer_size;
 };
 
 struct connect
@@ -217,6 +218,7 @@ struct request
         WCHAR *password;
     } creds[TARGET_MAX][SCHEME_MAX];
     unsigned int websocket_receive_buffer_size;
+    unsigned int websocket_send_buffer_size, websocket_set_send_buffer_size;
 };
 
 enum socket_state
@@ -255,6 +257,7 @@ struct socket
     struct object_header hdr;
     struct request *request;
     int keepalive_interval;
+    unsigned int send_buffer_size;
     enum socket_state state;
     struct queue send_q;
     struct queue recv_q;
@@ -446,6 +449,6 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
 
 extern HINSTANCE winhttp_instance DECLSPEC_HIDDEN;
 
-#define MAX_FRAME_BUFFER_SIZE 65536
+#define MIN_WEBSOCKET_SEND_BUFFER_SIZE 16
 
 #endif /* _WINE_WINHTTP_PRIVATE_H_ */

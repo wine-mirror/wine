@@ -151,6 +151,13 @@ static BOOL session_query_option( struct object_header *hdr, DWORD option, void 
         *buflen = sizeof(DWORD);
         return TRUE;
 
+    case WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE:
+        if (!validate_buffer( buffer, buflen, sizeof(DWORD) )) return FALSE;
+
+        *(DWORD *)buffer = session->websocket_send_buffer_size;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+
     default:
         FIXME( "unimplemented option %lu\n", option );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -256,6 +263,22 @@ static BOOL session_set_option( struct object_header *hdr, DWORD option, void *b
         return TRUE;
     }
 
+    case WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE:
+    {
+        DWORD buffer_size;
+
+        if (buflen != sizeof(buffer_size))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+
+        buffer_size = *(DWORD *)buffer;
+        TRACE( "%#lx\n", buffer_size );
+        session->websocket_send_buffer_size = buffer_size;
+        return TRUE;
+    }
+
     default:
         FIXME( "unimplemented option %lu\n", option );
         SetLastError( ERROR_WINHTTP_INVALID_OPTION );
@@ -294,6 +317,7 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->receive_timeout = DEFAULT_RECEIVE_TIMEOUT;
     session->receive_response_timeout = DEFAULT_RECEIVE_RESPONSE_TIMEOUT;
     session->websocket_receive_buffer_size = 32768;
+    session->websocket_send_buffer_size = 32768;
     list_init( &session->cookie_cache );
     InitializeCriticalSection( &session->cs );
     session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": session.cs");
@@ -873,6 +897,13 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         *buflen = sizeof(DWORD);
         return TRUE;
 
+    case WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE:
+        if (!validate_buffer( buffer, buflen, sizeof(DWORD) )) return FALSE;
+
+        *(DWORD *)buffer = request->websocket_set_send_buffer_size;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+
     default:
         FIXME( "unimplemented option %lu\n", option );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1125,6 +1156,21 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
         return TRUE;
     }
 
+    case WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE:
+    {
+        DWORD buffer_size;
+
+        if (buflen != sizeof(buffer_size))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+
+        buffer_size = *(DWORD *)buffer;
+        request->websocket_set_send_buffer_size = buffer_size;
+        TRACE( "Websocket send buffer size %lu.\n", buffer_size);
+        return TRUE;
+    }
 
     default:
         FIXME( "unimplemented option %lu\n", option );
@@ -1223,6 +1269,8 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, const WCHAR *verb, cons
     request->receive_response_timeout = connect->session->receive_response_timeout;
     request->max_redirects = 10;
     request->websocket_receive_buffer_size = connect->session->websocket_receive_buffer_size;
+    request->websocket_send_buffer_size = connect->session->websocket_send_buffer_size;
+    request->websocket_set_send_buffer_size = request->websocket_send_buffer_size;
 
     if (!verb || !verb[0]) verb = L"GET";
     if (!(request->verb = strdupW( verb ))) goto end;
