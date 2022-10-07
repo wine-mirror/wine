@@ -171,9 +171,9 @@ sub ConvertType($)
     return $ret;
 }
 
-sub get_func_trace($$)
+sub get_func_trace($$$)
 {
-    my ($name, $func) = @_;
+    my ($name, $func, $param_names) = @_;
     my $trace_fmt = "";
     my $trace_arg = "";
     foreach my $arg (@{$func->[1]})
@@ -183,24 +183,29 @@ sub get_func_trace($$)
         my $param = $arg->textContent();
         if ($param =~ /\*/ || $param =~ /\[/)
         {
-            $trace_fmt .= ", %p";
+            $trace_fmt .= ", ";
+            $trace_fmt .= "$pname " if $param_names;
+            $trace_fmt .= "%p";
             $trace_arg .= ", $pname";
         }
         elsif (defined $arg_types{$ptype})
         {
             my $format = ${$arg_types{$ptype}}[1];
-            $trace_fmt .= ", " . ($format =~ /^%/ ? $format : "%s");
+            $trace_fmt .= ", ";
+            $trace_fmt .= "$pname " if $param_names;
+            $trace_fmt .= ($format =~ /^%/ ? $format : "%s");
             $trace_arg .= ", " . (sprintf $format =~ /^%/ ? "%s" : $format, $pname);
         }
         else { printf "Unknown type %s in %s\n", $param, $name; }
     }
     $trace_fmt =~ s/^, //;
-    return "TRACE( \"($trace_fmt)\\n\"$trace_arg );\n";
+    $trace_fmt = "($trace_fmt)" unless $param_names;
+    return "TRACE( \"$trace_fmt\\n\"$trace_arg );\n";
 }
 
-sub get_func_args($$$)
+sub get_func_args($$$$)
 {
-    my ($func, $decl_args, $convert_args) = @_;
+    my ($func, $decl_args, $convert_args, $prefix) = @_;
     my $ret = "";
     foreach my $arg (@{$func->[1]})
     {
@@ -211,7 +216,7 @@ sub get_func_args($$$)
         }
         else
         {
-            $ret .= " $pname,";
+            $ret .= " $prefix$pname,";
         }
     }
     $ret =~ s/,$/ /;
@@ -233,8 +238,8 @@ sub get_func_ret($$)
 sub GenerateThunk($$$)
 {
     my ($name, $func, $prefix) = @_;
-    my $call_args = get_func_args( $func, 0, 0 );
-    my $decl_args = get_func_args( $func, 1, 0 );
+    my $call_args = get_func_args( $func, 0, 0, "" );
+    my $decl_args = get_func_args( $func, 1, 0, "" );
     my $func_ret = get_func_ret( $func, 0 );
     my $ret = "";
 
@@ -245,7 +250,7 @@ sub GenerateThunk($$$)
     {
         my $pname = get_arg_name( ${$func->[1]}[0] );
         $ret .= "  const struct opengl_funcs *funcs = get_dc_funcs( $pname );\n";
-        $ret .= "  " . get_func_trace( $name, $func ) if $gen_traces;
+        $ret .= "  " . get_func_trace( $name, $func, 0 ) if $gen_traces;
         $ret .= "  if (!funcs || !funcs->$prefix.p_$name) return";
         $ret .= " 0" unless is_void_func( $func );
         $ret .= ";\n";
@@ -253,7 +258,7 @@ sub GenerateThunk($$$)
     else
     {
         $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-        $ret .= "  " . get_func_trace( $name, $func ) if $gen_traces;
+        $ret .= "  " . get_func_trace( $name, $func, 0 ) if $gen_traces;
     }
     $ret .= "  ";
     $ret .= "return " unless is_void_func( $func );
@@ -262,10 +267,67 @@ sub GenerateThunk($$$)
     return $ret;
 }
 
+sub generate_unix_thunk($$$)
+{
+    my ($name, $func, $prefix) = @_;
+    my $call_args = get_func_args( $func, 0, 0, "params->" );
+    my $func_ret = get_func_ret( $func, 0 );
+    my $ret = "";
+
+    $ret .= "static NTSTATUS $prefix\_$name( void *args )\n";
+    $ret .= "{\n";
+    $ret .= "    struct $name\_params *params = args;\n" unless !$call_args && is_void_func( $func );
+    # special case for functions that take an HDC as first parameter
+    if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC")
+    {
+        my $pname = get_arg_name( ${$func->[1]}[0] );
+        $ret .= "    const struct opengl_funcs *funcs = get_dc_funcs( params->$pname );\n";
+        $ret .= "    if (!funcs || !funcs->$prefix.p_$name) return STATUS_NOT_IMPLEMENTED;\n";
+    }
+    else
+    {
+        $ret .= "    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
+    }
+    $ret .= "    ";
+    $ret .= "params->ret = " unless is_void_func( $func );
+    $ret .= "funcs->$prefix.p_$name($call_args);\n";
+    $ret .= "    return STATUS_SUCCESS;\n";
+    $ret .= "}\n\n";
+
+    return $ret;
+}
+
+sub generate_win_thunk($$)
+{
+    my ($name, $func) = @_;
+    my $decl_args = get_func_args( $func, 1, 0, "" );
+    my $func_ret = get_func_ret( $func, 0 );
+    my $params = "";
+    my $ret = "";
+
+    $ret .= "$func_ret WINAPI $name($decl_args)\n";
+    $ret .= "{\n";
+    $ret .= "    struct $name\_params args";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $pname = get_arg_name( $arg );
+        $params .= " .$pname = $pname,";
+    }
+    $ret .= ($params ? " = {$params }" : is_void_func( $func ) ? "" : " = {0}");
+    $ret .= ";\n";
+    $ret .= "    NTSTATUS status;\n";
+    $ret .= "    " . get_func_trace( $name, $func, 1 ) if $gen_traces;
+    $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#x\\n\", status );\n";
+    $ret .= "    return args.ret;\n" unless is_void_func($func);
+    $ret .= "}\n";
+
+    return $ret;
+}
+
 sub generate_null_func($$$)
 {
     my ($name, $func, $callconv) = @_;
-    my $decl_args = get_func_args( $func, 1, 1 );
+    my $decl_args = get_func_args( $func, 1, 1, "" );
     my $func_ret = get_func_ret( $func, 1 );
     my $ret = "";
 
@@ -303,6 +365,20 @@ sub generate_spec_entry($$)
     }
     $args = substr($args,1,-1);
     return "@ stdcall $_($args)";
+}
+
+sub generate_func_params($$)
+{
+    my ($name, $func) = @_;
+    my $ret = "";
+    $ret .= sprintf "struct %s_params\n{\n", $name;
+    foreach my $arg (@{$func->[1]})
+    {
+        $ret .= sprintf "    %s;\n", $arg->textContent();
+    }
+    $ret .= sprintf "    %sret;\n", $func->[0]->textContent() unless is_void_func($func);
+    $ret .= "};\n\n";
+    return $ret;
 }
 
 sub is_void_func($)
@@ -648,7 +724,7 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    my $decl_args = get_func_args( $wgl_functions{$_}, 1, 1 );
+    my $decl_args = get_func_args( $wgl_functions{$_}, 1, 1, "" );
     my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
     printf HEADER "        %-10s (WINAPI *p_$_)($decl_args);\n", $func_ret;
 }
@@ -658,7 +734,7 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    my $decl_args = get_func_args( $norm_functions{$_}, 1, 1 );
+    my $decl_args = get_func_args( $norm_functions{$_}, 1, 1, "" );
     my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
     printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
 }
@@ -668,7 +744,7 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    my $decl_args = get_func_args( $ext_functions{$_}, 1, 1 );
+    my $decl_args = get_func_args( $ext_functions{$_}, 1, 1, "" );
     my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
     printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
 }
@@ -717,7 +793,7 @@ print HEADER "\n";
 
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 1, 0 );
+    my $decl_args = get_func_args( $norm_functions{$_}, 1, 0, "" );
     my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
     printf HEADER "%-10s GLAPIENTRY $_($decl_args);\n", $func_ret;
 }
@@ -749,20 +825,11 @@ my $file_header =
 "#include \"opengl_ext.h\"\n" .
 "#include \"wine/debug.h\"\n\n";
 
-$file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n" if $gen_traces;
-
 #
 # After the spec file, the opengl_norm.c file
 #
 open(NORM, ">$norm_file") or die "cannot create $norm_file";
 print NORM $file_header;
-
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
-    print NORM GenerateThunk($_, $norm_functions{$_}, "gl");
-}
 
 foreach (sort keys %wgl_functions)
 {
@@ -802,6 +869,8 @@ print NORM "    }\n};\n";
 
 close(NORM);
 
+$file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n" if $gen_traces;
+
 #
 # Finally, more complex, the opengl_ext.c file
 #
@@ -815,7 +884,7 @@ print EXT "const int extension_registry_size = $count;\n\n";
 foreach (sort keys %ext_functions) {
     if (needs_wrapper( $_, $ext_functions{$_} ))
     {
-        my $decl_args = get_func_args( $ext_functions{$_}, 1, 0 );
+        my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
         my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
         $wrappers .= "extern $func_ret WINAPI $_($decl_args) DECLSPEC_HIDDEN;\n";
     }
@@ -841,3 +910,113 @@ foreach (sort keys %ext_functions) {
 print EXT "};\n";
 
 close(EXT);
+
+
+#
+# Generate the unixlib.h file
+#
+open OUT, ">unixlib.h" or die "cannot create unixlib.h";
+print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
+print OUT "#ifndef __WINE_OPENGL32_UNIXLIB_H\n";
+print OUT "#define __WINE_OPENGL32_UNIXLIB_H\n\n";
+
+print OUT "#include <stdarg.h>\n";
+print OUT "#include <stddef.h>\n\n";
+
+print OUT "#include \"ntstatus.h\"\n";
+print OUT "#define WIN32_NO_STATUS\n";
+print OUT "#include \"windef.h\"\n";
+print OUT "#include \"winbase.h\"\n";
+print OUT "#include \"winternl.h\"\n";
+print OUT "#include \"wingdi.h\"\n\n";
+print OUT "#include \"wine/wgl.h\"\n";
+print OUT "#include \"wine/unixlib.h\"\n\n";
+
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $norm_functions{$_} );
+    print OUT generate_func_params($_, $norm_functions{$_});
+}
+
+print OUT "enum unix_funcs\n";
+print OUT "{\n";
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $norm_functions{$_} );
+    printf OUT "    unix_%s,\n", $_;
+}
+print OUT "};\n\n";
+
+print OUT "typedef NTSTATUS (*unixlib_function_t)( void *args );\n";
+print OUT "extern const unixlib_function_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;\n";
+print OUT "#define UNIX_CALL( func, params ) __wine_unix_call_funcs[unix_ ## func]( params )\n";
+
+print OUT "\n#endif /* __WINE_OPENGL32_UNIXLIB_H */\n";
+close OUT;
+
+#
+# Generate the thunks.c file
+#
+open OUT, ">thunks.c" or die "cannot create thunks.c";
+print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
+
+print OUT "#include <stdarg.h>\n";
+print OUT "#include <stddef.h>\n\n";
+
+print OUT "#include \"ntstatus.h\"\n";
+print OUT "#define WIN32_NO_STATUS\n";
+print OUT "#include \"windef.h\"\n";
+print OUT "#include \"winbase.h\"\n";
+print OUT "#include \"wingdi.h\"\n\n";
+
+print OUT "#include \"unixlib.h\"\n\n";
+print OUT "#include \"wine/debug.h\"\n\n";
+print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
+
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $norm_functions{$_} );
+    print OUT "\n" . generate_win_thunk($_, $norm_functions{$_});
+}
+
+close OUT;
+
+#
+# Generate the unix_thunks.c file
+#
+open OUT, ">unix_thunks.c" or die "cannot create unix_thunks.c";
+print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
+
+print OUT "#include <stdarg.h>\n";
+print OUT "#include <stddef.h>\n\n";
+
+print OUT "#include \"ntstatus.h\"\n";
+print OUT "#define WIN32_NO_STATUS\n";
+print OUT "#include \"windef.h\"\n";
+print OUT "#include \"winbase.h\"\n";
+print OUT "#include \"wingdi.h\"\n\n";
+
+print OUT "#include \"unixlib.h\"\n\n";
+print OUT "#include \"opengl_ext.h\"\n\n";
+
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $norm_functions{$_} );
+    print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
+}
+
+print OUT "const unixlib_function_t __wine_unix_call_funcs[] =\n";
+print OUT "{\n";
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $norm_functions{$_} );
+    printf OUT "    &gl_%s,\n", $_;
+}
+print OUT "};\n";
+
+close OUT;

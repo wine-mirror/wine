@@ -9,6 +9,8 @@ EXTRADLLFLAGS = -Wl,--image-base,0x7a800000 -mcygwin
 C_SRCS = \
 	opengl_ext.c \
 	opengl_norm.c \
+	thunks.c \
+	unix_thunks.c \
 	wgl.c
 
 RC_SRCS = version.rc
