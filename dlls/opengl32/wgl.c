@@ -762,10 +762,10 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
 static GLuint *filter_extensions_index( const char *disabled )
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    unsigned int i = 0, j, disabled_size;
-    const char *ext, *end, *gl_ext;
-    GLuint *disabled_exts, *tmp;
+    GLuint *disabled_index;
     GLint extensions_count;
+    unsigned int i = 0, j;
+    const char *ext;
 
     if (!funcs->ext.p_glGetStringi)
     {
@@ -775,51 +775,27 @@ static GLuint *filter_extensions_index( const char *disabled )
     }
 
     funcs->gl.p_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
-    disabled_size = 2;
-    disabled_exts = HeapAlloc( GetProcessHeap(), 0, disabled_size * sizeof(*disabled_exts) );
-    if (!disabled_exts) return NULL;
+    disabled_index = HeapAlloc( GetProcessHeap(), 0, extensions_count * sizeof(*disabled_index) );
+    if (!disabled_index) return NULL;
 
     TRACE( "GL_EXTENSIONS:\n" );
 
     for (j = 0; j < extensions_count; ++j)
     {
-        gl_ext = (const char *)funcs->ext.p_glGetStringi( GL_EXTENSIONS, j );
-        ext = disabled;
-
-        for (;;)
+        ext = (const char *)funcs->ext.p_glGetStringi( GL_EXTENSIONS, j );
+        if (!has_extension( disabled, ext, strlen( ext ) ))
         {
-            while (*ext == ' ') ext++;
-            if (!*ext)
-            {
-                TRACE( "++ %s\n", gl_ext );
-                break;
-            }
-            if (!(end = strchr( ext, ' ' ))) end = ext + strlen( ext );
-
-            if (!strncmp( gl_ext, ext, end - ext ) && !gl_ext[end - ext])
-            {
-                if (i + 1 == disabled_size)
-                {
-                    disabled_size *= 2;
-                    if (!(tmp = HeapReAlloc( GetProcessHeap(), 0, disabled_exts, disabled_size * sizeof(*disabled_exts) )))
-                    {
-                        disabled_exts[i] = ~0u;
-                        return disabled_exts;
-                    }
-                    disabled_exts = tmp;
-                }
-
-                TRACE( "-- %s (disabled by config)\n", gl_ext );
-                disabled_exts[i++] = j;
-                break;
-            }
-
-            ext = end;
+            TRACE( "++ %s\n", ext );
+        }
+        else
+        {
+            TRACE( "-- %s (disabled by config)\n", ext );
+            disabled_index[i++] = j;
         }
     }
 
-    disabled_exts[i] = ~0u;
-    return disabled_exts;
+    disabled_index[i] = ~0u;
+    return disabled_index;
 }
 
 /* build the extension string by filtering out the disabled extensions */
