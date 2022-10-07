@@ -376,11 +376,12 @@ static HRESULT is_valid_name(const WCHAR *str, unsigned int *out)
     if (!is_namestartchar(*str++))
         return WC_E_NAMECHARACTER;
 
-    while (*str++)
+    while (*str)
     {
         if (!is_namechar(*str))
             return WC_E_NAMECHARACTER;
         len++;
+        str++;
     }
 
     *out = len;

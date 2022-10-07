@@ -2145,6 +2145,14 @@ static void test_WriteDocType(void)
     hr = IXmlWriter_WriteDocType(writer, L"a", pubidW, NULL, NULL);
     ok(hr == WC_E_PUBLICID, "Unexpected hr %#lx.\n", hr);
 
+    /* Invalid multi-character string */
+    hr = IXmlWriter_WriteDocType(writer, L":ax>m", NULL, NULL, NULL);
+    ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    /* Valid multi-character string */
+    hr = IXmlWriter_WriteDocType(writer, L"root", NULL, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     IStream_Release(stream);
 
     for (i = 0; i < ARRAY_SIZE(doctype_tests); i++)
