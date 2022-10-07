@@ -25335,6 +25335,20 @@ enum unix_funcs
     unix_wglSwapIntervalEXT,
 };
 
+typedef void (WINAPI *gl_debug_cb)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
+struct wine_gl_debug_message_params
+{
+    gl_debug_cb user_callback;
+    const void *user_data;
+
+    GLenum source;
+    GLenum type;
+    GLuint id;
+    GLenum severity;
+    GLsizei length;
+    const GLchar *message;
+};
+
 typedef NTSTATUS (*unixlib_function_t)( void *args );
 extern const unixlib_function_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
 #define UNIX_CALL( func, params ) __wine_unix_call_funcs[unix_ ## func]( params )

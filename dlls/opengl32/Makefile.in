@@ -9,6 +9,7 @@ EXTRADLLFLAGS = -Wl,--image-base,0x7a800000 -mcygwin
 C_SRCS = \
 	thunks.c \
 	unix_thunks.c \
+	unix_wgl.c \
 	wgl.c
 
 RC_SRCS = version.rc
