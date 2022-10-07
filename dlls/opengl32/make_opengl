@@ -17,7 +17,7 @@ use XML::LibXML;
 #     - opengl_version is the OpenGL version emulated by the library
 #       (can be 1.0 to 1.5). The default is 1.1.
 #
-# This script generates the three following files :
+# This script generates the following files :
 #
 #     - opengl32.spec : the spec file giving all the exported functions
 #       of the OpenGL32.DLL library. These functions are the one an
@@ -25,17 +25,9 @@ use XML::LibXML;
 #       defined in the OpenGL core for the version defined by
 #       'opengl_version').
 #
-#     - opengl_norm.c : this file contains the thunks for all OpenGL
-#       functions that are defined in 'opengl32.spec'. The corresponding
-#       functions NEED to be defined in Linux's libGL or the library
-#       won't be able to be linked in.
-#
 #     - opengl_ext.c : in this file are stored thunks for ALL possible
 #       OpenGL extensions (at least, all the extensions that are defined
-#       in the OpenGL extension registry). Contrary to 'opengl_norm.c',
-#       you do not need to have these extensions in your libGL to have
-#       OpenGL work (as they are resolved at run-time using
-#       glXGetProcAddressARB).
+#       in the OpenGL extension registry).
 #
 #     - include/wine/wgl_driver.h: definitions for the tables of OpenGL functions.
 #
@@ -62,7 +54,6 @@ use XML::LibXML;
 # Files to generate
 #
 my $spec_file = "opengl32.spec";
-my $norm_file = "opengl_norm.c";
 my $ext_file  = "opengl_ext.c";
 my $wgl_driver_file = "../../include/wine/wgl_driver.h";
 my $wgl_file = "../../include/wine/wgl.h";
@@ -71,7 +62,7 @@ my $wgl_file = "../../include/wine/wgl.h";
 my $gen_traces = 1;
 
 #
-# List of categories to put in the 'opengl_norm.c' file
+# List of norm categories
 #
 my %cat_1_0 = ( "GL_VERSION_1_0" => 1 );
 my %cat_1_1 = ( %cat_1_0, "GL_VERSION_1_1" => 1 );
@@ -825,50 +816,6 @@ my $file_header =
 "#include \"opengl_ext.h\"\n" .
 "#include \"wine/debug.h\"\n\n";
 
-#
-# After the spec file, the opengl_norm.c file
-#
-open(NORM, ">$norm_file") or die "cannot create $norm_file";
-print NORM $file_header;
-
-foreach (sort keys %wgl_functions)
-{
-    next if defined $manual_win_functions{$_};
-    print NORM generate_null_func($_, $wgl_functions{$_}, " WINAPI");
-}
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    print NORM generate_null_func($_, $norm_functions{$_}, "");
-}
-foreach (sort keys %ext_functions)
-{
-    next if defined $manual_win_functions{$_};
-    print NORM generate_null_func($_, $ext_functions{$_}, "");
-}
-
-print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";
-foreach (sort keys %wgl_functions)
-{
-    next if defined $manual_win_functions{$_};
-    print NORM "        null_$_,\n";
-}
-print NORM "    },\n    {\n";
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    print NORM "        null_$_,\n";
-}
-print NORM "    },\n    {\n";
-foreach (sort keys %ext_functions)
-{
-    next if defined $manual_win_functions{$_};
-    print NORM "        null_$_,\n";
-}
-print NORM "    }\n};\n";
-
-close(NORM);
-
 $file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n" if $gen_traces;
 
 #
@@ -1013,6 +960,49 @@ foreach (sort keys %norm_functions)
     next if defined $manual_win_functions{$_};
     printf OUT "    &gl_%s,\n", $_;
 }
+print OUT "};\n";
+print OUT "\n";
+
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_null_func($_, $wgl_functions{$_}, " WINAPI");
+}
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_null_func($_, $norm_functions{$_}, "");
+}
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_null_func($_, $ext_functions{$_}, "");
+}
+print OUT "\n";
+
+print OUT "struct opengl_funcs null_opengl_funcs =\n";
+print OUT "{\n";
+print OUT "    {\n";
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT "        null_$_,\n";
+}
+print OUT "    },\n";
+print OUT "    {\n";
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT "        null_$_,\n";
+}
+print OUT "    },\n";
+print OUT "    {\n";
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT "        null_$_,\n";
+}
+print OUT "    },\n";
 print OUT "};\n";
 
 close OUT;
