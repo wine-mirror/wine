@@ -239,6 +239,7 @@ struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_id
     {
         sym->symt.tag  = SymTagCompiland;
         sym->container = module->top;
+        sym->address   = 0;
         sym->source    = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
         sym->user      = NULL;

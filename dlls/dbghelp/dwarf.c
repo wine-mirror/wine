@@ -2970,7 +2970,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
             struct vector*              children;
             dwarf2_debug_info_t*        child = NULL;
             unsigned int                i;
-            struct attribute            stmt_list;
+            struct attribute            stmt_list, low_pc;
             struct attribute            comp_dir;
             struct attribute            language;
 
@@ -2981,6 +2981,9 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
             if (!dwarf2_find_attribute(di, DW_AT_comp_dir, &comp_dir))
                 comp_dir.u.string = NULL;
 
+            if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc))
+                low_pc.u.uvalue = 0;
+
             if (!dwarf2_find_attribute(di, DW_AT_language, &language))
                 language.u.uvalue = DW_LANG_C;
 
@@ -2988,6 +2991,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
 
             ctx->compiland = symt_new_compiland(ctx->module_ctx->module,
                                                 source_new(ctx->module_ctx->module, comp_dir.u.string, name.u.string));
+            ctx->compiland->address = ctx->module_ctx->load_offset + low_pc.u.uvalue;
             dwarf2_cache_cuhead(ctx->module_ctx->module->format_info[DFI_DWARF]->u.dwarf2_info, ctx->compiland, &ctx->head);
             di->symt = &ctx->compiland->symt;
             children = dwarf2_get_di_children(di);
