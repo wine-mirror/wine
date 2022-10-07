@@ -630,7 +630,7 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     {
         if (filter && message != WM_DISPLAYCHANGE)
         {
-            TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
+            TRACE("Filtering message: window %p, message %#x, wparam %#Ix, lparam %#Ix.\n",
                     window, message, wparam, lparam);
 
             if (unicode)

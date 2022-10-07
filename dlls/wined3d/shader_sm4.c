@@ -1717,7 +1717,7 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     }
     if (!len || remaining < len)
     {
-        WARN("Read invalid length %u (remaining %lu).\n", len, remaining);
+        WARN("Read invalid length %u (remaining %Iu).\n", len, remaining);
         goto fail;
     }
     --len;
@@ -1920,7 +1920,7 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 
         if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(DWORD), data_size))
         {
-            WARN("Invalid chunk offset %#x (data size %#lx).\n", chunk_offset, data_size);
+            WARN("Invalid chunk offset %#x (data size %#Ix).\n", chunk_offset, data_size);
             return E_FAIL;
         }
 
@@ -1931,7 +1931,7 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 
         if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
         {
-            WARN("Invalid chunk size %#x (data size %#lx, chunk offset %#x).\n",
+            WARN("Invalid chunk size %#x (data size %#Ix, chunk offset %#x).\n",
                     chunk_size, data_size, chunk_offset);
             return E_FAIL;
         }

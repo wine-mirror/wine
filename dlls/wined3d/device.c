@@ -1112,7 +1112,7 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
     GLsizeiptr buffer_offset = 0;
     GLuint id = 0;
 
-    TRACE("device_gl %p, context_gl %p, size %lu, binding %#x, usage %#x, coherent %#x, flags %#x, bo %p.\n",
+    TRACE("device_gl %p, context_gl %p, size %Iu, binding %#x, usage %#x, coherent %#x, flags %#x, bo %p.\n",
             device_gl, context_gl, size, binding, usage, coherent, flags, bo);
 
     if (gl_info->supported[ARB_BUFFER_STORAGE])

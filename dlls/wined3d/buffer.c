@@ -282,7 +282,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
         DWORD_PTR idx = (data + i) % buffer->stride;
         if (buffer->conversion_map[idx] != conversion_type)
         {
-            TRACE("Byte %lu in vertex changed:\n", idx);
+            TRACE("Byte %Iu in vertex changed:\n", idx);
             TRACE("    It was type %#x, is %#x now.\n", buffer->conversion_map[idx], conversion_type);
             ret = TRUE;
             buffer->conversion_map[idx] = conversion_type;

@@ -781,7 +781,7 @@ static void wined3d_bo_slab_vk_free_slice(struct wined3d_bo_slab_vk *slab,
     struct wined3d_bo_slab_vk_key key;
     struct wine_rb_entry *entry;
 
-    TRACE("slab %p, idx %lu, context_vk %p.\n", slab, idx, context_vk);
+    TRACE("slab %p, idx %Iu, context_vk %p.\n", slab, idx, context_vk);
 
     wined3d_device_vk_allocator_lock(device_vk);
 
@@ -819,7 +819,7 @@ static void wined3d_context_vk_destroy_bo_slab_slice(struct wined3d_context_vk *
 
     if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
     {
-        ERR("Leaking slab %p, slice %#lx.\n", slab, idx);
+        ERR("Leaking slab %p, slice %#Ix.\n", slab, idx);
         return;
     }
 
