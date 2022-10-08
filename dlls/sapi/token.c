@@ -784,6 +784,7 @@ struct object_token
     LONG ref;
 
     HKEY token_key;
+    WCHAR *token_id;
 };
 
 static struct object_token *impl_from_ISpObjectToken( ISpObjectToken *iface )
@@ -831,6 +832,7 @@ static ULONG WINAPI token_Release( ISpObjectToken *iface )
     if (!ref)
     {
         if (This->token_key) RegCloseKey( This->token_key );
+        free(This->token_id);
         heap_free( This );
     }
 
@@ -950,6 +952,7 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
     if (res) return SPERR_NOT_FOUND;
 
     This->token_key = key;
+    This->token_id = wcsdup(token_id);
 
     return S_OK;
 }
@@ -1075,6 +1078,7 @@ HRESULT token_create( IUnknown *outer, REFIID iid, void **obj )
     This->ref = 1;
 
     This->token_key = NULL;
+    This->token_id = NULL;
 
     hr = ISpObjectToken_QueryInterface( &This->ISpObjectToken_iface, iid, obj );
 
