@@ -960,8 +960,28 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
 static HRESULT WINAPI token_GetId( ISpObjectToken *iface,
                                    LPWSTR *token_id )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+
+    TRACE( "%p, %p\n", This, token_id);
+
+    if (!This->token_key)
+        return SPERR_UNINITIALIZED;
+
+    if (!token_id)
+        return E_POINTER;
+
+    if (!This->token_id)
+    {
+        FIXME("Loading default category not supported.\n");
+        return E_POINTER;
+    }
+
+    *token_id = CoTaskMemAlloc( (wcslen(This->token_id) + 1) * sizeof(WCHAR));
+    if (!*token_id)
+        return E_OUTOFMEMORY;
+
+    wcscpy(*token_id, This->token_id);
+    return S_OK;
 }
 
 static HRESULT WINAPI token_GetCategory( ISpObjectToken *iface,

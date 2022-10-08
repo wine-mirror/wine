@@ -185,11 +185,11 @@ static void test_object_token(void)
     ok( hr == S_OK, "got %08lx\n", hr );
 
     hr = ISpObjectToken_GetId( token, NULL );
-    todo_wine ok( hr == SPERR_UNINITIALIZED, "got %08lx\n", hr );
+    ok( hr == SPERR_UNINITIALIZED, "got %08lx\n", hr );
 
     tempW = (LPWSTR)0xdeadbeef;
     hr = ISpObjectToken_GetId( token, &tempW );
-    todo_wine ok( hr == SPERR_UNINITIALIZED, "got %08lx\n", hr );
+    ok( hr == SPERR_UNINITIALIZED, "got %08lx\n", hr );
     ok( tempW == (LPWSTR)0xdeadbeef, "got %s\n", wine_dbgstr_w(tempW) );
 
     hr = ISpObjectToken_GetCategory( token, NULL );
@@ -220,15 +220,15 @@ static void test_object_token(void)
     ok( hr == SPERR_ALREADY_INITIALIZED, "got %08lx\n", hr );
 
     hr = ISpObjectToken_GetId( token, NULL );
-    todo_wine ok( hr == E_POINTER, "got %08lx\n", hr );
+    ok( hr == E_POINTER, "got %08lx\n", hr );
 
     hr = ISpObjectToken_GetCategory( token, NULL );
     todo_wine ok( hr == E_POINTER, "got %08lx\n", hr );
 
     tempW = NULL;
     hr = ISpObjectToken_GetId( token, &tempW );
-    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine ok( tempW != NULL, "got %p\n", tempW );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempW != NULL, "got %p\n", tempW );
     if (tempW) {
         ok( !wcscmp(tempW, L"HKEY_LOCAL_MACHINE\\SOFTWARE"), "got %s\n",
             wine_dbgstr_w(tempW) );
@@ -268,8 +268,8 @@ static void test_object_token(void)
 
     tempW = NULL;
     hr = ISpObjectToken_GetId( token, &tempW );
-    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine ok( tempW != NULL, "got %p\n", tempW );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempW != NULL, "got %p\n", tempW );
     if (tempW) {
         ok( !wcsncmp(tempW, token_id, wcslen(token_id)),
             "got %s (expected %s)\n", wine_dbgstr_w(tempW), wine_dbgstr_w(token_id) );
