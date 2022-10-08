@@ -760,13 +760,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         if (CGDisplayModeGetWidth(mode1) != CGDisplayModeGetWidth(mode2)) return FALSE;
         if (CGDisplayModeGetHeight(mode1) != CGDisplayModeGetHeight(mode2)) return FALSE;
-
-#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-        if (&CGDisplayModeGetPixelWidth != NULL &&
-            CGDisplayModeGetPixelWidth(mode1) != CGDisplayModeGetPixelWidth(mode2)) return FALSE;
-        if (&CGDisplayModeGetPixelHeight != NULL &&
-            CGDisplayModeGetPixelHeight(mode1) != CGDisplayModeGetPixelHeight(mode2)) return FALSE;
-#endif
+        if (CGDisplayModeGetPixelWidth(mode1) != CGDisplayModeGetPixelWidth(mode2)) return FALSE;
+        if (CGDisplayModeGetPixelHeight(mode1) != CGDisplayModeGetPixelHeight(mode2)) return FALSE;
 
         encoding1 = [(NSString*)CGDisplayModeCopyPixelEncoding(mode1) autorelease];
         encoding2 = [(NSString*)CGDisplayModeCopyPixelEncoding(mode2) autorelease];
@@ -791,12 +786,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
     - (NSArray*)modesMatchingMode:(CGDisplayModeRef)mode forDisplay:(CGDirectDisplayID)displayID
     {
         NSMutableArray* ret = [NSMutableArray array];
-        NSDictionary* options = nil;
-
-#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-        options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:TRUE]
-                                              forKey:(NSString*)kCGDisplayShowDuplicateLowResolutionModes];
-#endif
+        NSDictionary* options = @{ (NSString*)kCGDisplayShowDuplicateLowResolutionModes: @YES };
 
         NSArray *modes = [(NSArray*)CGDisplayCopyAllDisplayModes(displayID, (CFDictionaryRef)options) autorelease];
         for (id candidateModeObject in modes)
