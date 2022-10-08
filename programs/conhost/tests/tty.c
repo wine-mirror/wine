@@ -1337,6 +1337,9 @@ static void test_read_console_control(void)
     /* test simple behavior */
     for (ctrl = 0; ctrl < ' '; ctrl++)
     {
+        DWORD state;
+        SHORT cc;
+
         /* don't play with fire */
         if (ctrl == 0 || ctrl == 3 || ctrl == '\n' || ctrl == 27) continue;
 
@@ -1359,10 +1362,13 @@ static void test_read_console_control(void)
         strcpy(buf, "def."); buf[3] = ctrl;
         write_console_pipe(buf);
         wcscpy(bufw, L"abcdef."); bufw[6] = (WCHAR)ctrl;
-        child_expect_read_control_result(child_pipe, bufw,
-                                         (ctrl == '\t' || ctrl == '\r') ? 0
-                                         : ((ctrl == 30 || ctrl == 31) ? (LEFT_CTRL_PRESSED | SHIFT_PRESSED)
-                                            : LEFT_CTRL_PRESSED));
+        /* ^H requires special handling */
+        cc = (ctrl == 8) ? 0x0200 : VkKeyScanA(ctrl);
+        if (cc == -1) cc = 0;
+        state = 0;
+        if (cc & 0x0100) state |= SHIFT_PRESSED;
+        if (cc & 0x0200) state |= LEFT_CTRL_PRESSED;
+        child_expect_read_control_result(child_pipe, bufw, state);
         skip_sequence("\x1b[?25l"); /* hide cursor */
         expect_output_sequence("def");
         skip_sequence("\x1b[?25h"); /* show cursor */
