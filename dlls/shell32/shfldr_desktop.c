@@ -38,6 +38,7 @@
 #include "ole2.h"
 #include "shlguid.h"
 
+#include "wininet.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shresdef.h"
@@ -938,4 +939,212 @@ HRESULT WINAPI ISF_Desktop_Constructor (
     }
 
     return IShellFolder2_QueryInterface( &cached_sf->IShellFolder2_iface, riid, ppv );
+}
+
+static HRESULT WINAPI active_desktop_QueryInterface(IActiveDesktop *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IActiveDesktop)
+            || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+    }
+
+    if (*obj)
+    {
+        IUnknown_AddRef((IUnknown *)*obj);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI active_desktop_AddRef(IActiveDesktop *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI active_desktop_Release(IActiveDesktop *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI active_desktop_ApplyChanges(IActiveDesktop *iface, DWORD flags)
+{
+    FIXME("%p, %#lx.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetWallpaper(IActiveDesktop *iface, PWSTR wallpaper, UINT length, DWORD flags)
+{
+    FIXME("%p, %p, %u, %#lx.\n", iface, wallpaper, length, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_SetWallpaper(IActiveDesktop *iface, PCWSTR wallpaper, DWORD reserved)
+{
+    FIXME("%p, %s, %#lx.\n", iface, debugstr_w(wallpaper), reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetWallpaperOptions(IActiveDesktop *iface, LPWALLPAPEROPT options, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, options, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_SetWallpaperOptions(IActiveDesktop *iface, LPCWALLPAPEROPT options, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, options, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetPattern(IActiveDesktop *iface, PWSTR pattern, UINT length, DWORD reserved)
+{
+    FIXME("%p, %p, %u, %#lx.\n", iface, pattern, length, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_SetPattern(IActiveDesktop *iface, PCWSTR pattern, DWORD reserved)
+{
+    FIXME("%p, %s, %#lx.\n", iface, debugstr_w(pattern), reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetDesktopItemOptions(IActiveDesktop *iface, LPCOMPONENTSOPT options, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, options, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_SetDesktopItemOptions(IActiveDesktop *iface, LPCCOMPONENTSOPT options, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, options, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_AddDesktopItem(IActiveDesktop *iface, LPCCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_AddDesktopItemWithUI(IActiveDesktop *iface, HWND hwnd, LPCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %p, %p, %#lx.\n", iface, hwnd, component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_ModifyDesktopItem(IActiveDesktop *iface, LPCCOMPONENT component, DWORD flags)
+{
+    FIXME("%p, %p, %#lx.\n", iface, component, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_RemoveDesktopItem(IActiveDesktop *iface, LPCCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetDesktopItemCount(IActiveDesktop *iface, int *count, DWORD reserved)
+{
+    FIXME("%p, %p, %#lx.\n", iface, count, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetDesktopItem(IActiveDesktop *iface, int index, LPCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %d, %p, %#lx.\n", iface, index, component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetDesktopItemByID(IActiveDesktop *iface, ULONG_PTR id, LPCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %Ix, %p, %#lx.\n", iface, id, component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GenerateDesktopItemHtml(IActiveDesktop *iface, PCWSTR filename, LPCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %s, %p, %#lx.\n", iface, debugstr_w(filename), component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_AddUrl(IActiveDesktop *iface, HWND hwnd, PCWSTR source, LPCOMPONENT component, DWORD flags)
+{
+    FIXME("%p, %p, %s, %p, %#lx.\n", iface, hwnd, debugstr_w(source), component, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI active_desktop_GetDesktopItemBySource(IActiveDesktop *iface, PCWSTR source, LPCOMPONENT component, DWORD reserved)
+{
+    FIXME("%p, %s, %p, %#lx.\n", iface, debugstr_w(source), component, reserved);
+
+    return E_NOTIMPL;
+}
+
+static const IActiveDesktopVtbl active_desktop_vtbl =
+{
+    active_desktop_QueryInterface,
+    active_desktop_AddRef,
+    active_desktop_Release,
+    active_desktop_ApplyChanges,
+    active_desktop_GetWallpaper,
+    active_desktop_SetWallpaper,
+    active_desktop_GetWallpaperOptions,
+    active_desktop_SetWallpaperOptions,
+    active_desktop_GetPattern,
+    active_desktop_SetPattern,
+    active_desktop_GetDesktopItemOptions,
+    active_desktop_SetDesktopItemOptions,
+    active_desktop_AddDesktopItem,
+    active_desktop_AddDesktopItemWithUI,
+    active_desktop_ModifyDesktopItem,
+    active_desktop_RemoveDesktopItem,
+    active_desktop_GetDesktopItemCount,
+    active_desktop_GetDesktopItem,
+    active_desktop_GetDesktopItemByID,
+    active_desktop_GenerateDesktopItemHtml,
+    active_desktop_AddUrl,
+    active_desktop_GetDesktopItemBySource,
+};
+
+HRESULT WINAPI ActiveDesktop_Constructor(IUnknown *outer, REFIID riid, void **obj)
+{
+    static IActiveDesktop object = { &active_desktop_vtbl };
+    HRESULT hr;
+
+    TRACE("%p, %s, %p.\n", outer, debugstr_guid(riid), obj);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    hr = IUnknown_QueryInterface(&object, riid, obj);
+    IUnknown_Release(&object);
+
+    return hr;
 }

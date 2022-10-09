@@ -87,6 +87,7 @@ static const struct {
 	{&CLSID_DestinationList, CustomDestinationList_Constructor},
 	{&CLSID_ShellImageDataFactory, ShellImageDataFactory_Constructor},
 	{&CLSID_FileOperation, IFileOperation_Constructor},
+	{&CLSID_ActiveDesktop, ActiveDesktop_Constructor},
 	{NULL, NULL}
 };
 

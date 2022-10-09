@@ -178,3 +178,8 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
     threading(apartment),
     uuid(3ad05575-8857-4850-9277-11b85bdb8e09)
 ] coclass FileOperation { interface IFileOperation; }
+
+[
+    threading(apartment),
+    uuid(75048700-ef1f-11d0-9888-006097deacf9)
+] coclass ActiveDesktop { interface IActiveDesktop; }
