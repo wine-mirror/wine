@@ -754,6 +754,104 @@ DECLARE_INTERFACE_(IProgressDialog,IUnknown)
 #define IProgressDialog_Timer(p,a,b)                      (p)->lpVtbl->Timer(p,a,b)
 #endif
 
+#ifdef _WININET_
+
+typedef struct _tagWALLPAPEROPT
+{
+    DWORD dwSize;
+    DWORD dwStyle;
+} WALLPAPEROPT, *LPWALLPAPEROPT;
+
+typedef const WALLPAPEROPT *LPCWALLPAPEROPT;
+
+typedef struct _tagCOMPPOS
+{
+    DWORD dwSize;
+    int iLeft;
+    int iTop;
+    DWORD dwWidth;
+    DWORD dwHeight;
+    int izIndex;
+    BOOL fCanResize;
+    BOOL fCanResizeX;
+    BOOL fCanResizeY;
+    int iPreferredLeftPercent;
+    int iPreferredTopPercent;
+} COMPPOS, *LPCOMPPOS;
+
+typedef const COMPPOS *LPCCOMPPOS;
+
+typedef struct _tagCOMPSTATEINFO
+{
+    DWORD dwSize;
+    int iLeft;
+    int iTop;
+    DWORD dwWidth;
+    DWORD dwHeight;
+    DWORD dwItemState;
+} COMPSTATEINFO, *LPCOMPSTATEINFO;
+
+typedef const COMPSTATEINFO *LPCCOMPSTATEINFO;
+
+typedef struct _tagCOMPONENT
+{
+    DWORD dwSize;
+    DWORD dwID;
+    int iComponentType;
+    BOOL fChecked;
+    BOOL fDirty;
+    BOOL fNoScroll;
+    COMPPOS cpPos;
+    WCHAR wszFriendlyName[MAX_PATH];
+    WCHAR wszSource[INTERNET_MAX_URL_LENGTH];
+    WCHAR wszSubscribedURL[INTERNET_MAX_URL_LENGTH];
+    DWORD dwCurItemState;
+    COMPSTATEINFO csiOriginal;
+    COMPSTATEINFO csiRestored;
+} COMPONENT, *LPCOMPONENT;
+
+typedef const COMPONENT *LPCCOMPONENT;
+
+typedef struct _tagCOMPONENTSOPT
+{
+    DWORD dwSize;
+    BOOL fEnableComponents;
+    BOOL fActiveDesktop;
+} COMPONENTSOPT, *LPCOMPONENTSOPT;
+
+typedef const COMPONENTSOPT *LPCCOMPONENTSOPT;
+
+#define INTERFACE IActiveDesktop
+DECLARE_INTERFACE_(IActiveDesktop, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **obj) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /*** IActiveDesktop ***/
+    STDMETHOD(ApplyChanges)(THIS_ DWORD flags) PURE;
+    STDMETHOD(GetWallpaper)(THIS_ PWSTR wallpaper, UINT length, DWORD flags) PURE;
+    STDMETHOD(SetWallpaper)(THIS_ PCWSTR wallpaper, DWORD reserved) PURE;
+    STDMETHOD(GetWallpaperOptions)(THIS_ LPWALLPAPEROPT options, DWORD reserved) PURE;
+    STDMETHOD(SetWallpaperOptions)(THIS_ LPCWALLPAPEROPT options, DWORD reserved) PURE;
+    STDMETHOD(GetPattern)(THIS_ PWSTR pattern, UINT length, DWORD reserved) PURE;
+    STDMETHOD(SetPattern)(THIS_ PCWSTR pattern, DWORD reserved) PURE;
+    STDMETHOD(GetDesktopItemOptions)(THIS_ LPCOMPONENTSOPT options, DWORD reserved) PURE;
+    STDMETHOD(SetDesktopItemOptions)(THIS_ LPCCOMPONENTSOPT options, DWORD reserved) PURE;
+    STDMETHOD(AddDesktopItem)(THIS_ LPCCOMPONENT component, DWORD reserved) PURE;
+    STDMETHOD(AddDesktopItemWithUI)(THIS_ HWND hwnd, LPCOMPONENT component, DWORD reserved) PURE;
+    STDMETHOD(ModifyDesktopItem)(THIS_ LPCCOMPONENT component, DWORD flags) PURE;
+    STDMETHOD(RemoveDesktopItem)(THIS_ LPCCOMPONENT component, DWORD reserved) PURE;
+    STDMETHOD(GetDesktopItemCount)(THIS_ int *count, DWORD reserved) PURE;
+    STDMETHOD(GetDesktopItem)(THIS_ int index, LPCOMPONENT component, DWORD reserved) PURE;
+    STDMETHOD(GetDesktopItemByID)(THIS_ ULONG_PTR id, LPCOMPONENT component, DWORD reserved) PURE;
+    STDMETHOD(GenerateDesktopItemHtml)(THIS_ PCWSTR filename, LPCOMPONENT component, DWORD reserved) PURE;
+    STDMETHOD(AddUrl)(THIS_ HWND hwnd, PCWSTR source, LPCOMPONENT component, DWORD flags) PURE;
+    STDMETHOD(GetDesktopItemBySource)(THIS_ PCWSTR source, LPCOMPONENT component, DWORD reserved) PURE;
+};
+#undef INTERFACE
+
+#endif /* _WININET_ */
 
 /****************************************************************************
 * SHAddToRecentDocs API
