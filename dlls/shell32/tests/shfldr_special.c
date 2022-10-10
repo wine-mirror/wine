@@ -39,6 +39,76 @@ static inline BOOL SHELL_OsIsUnicode(void)
     return !(GetVersion() & 0x80000000);
 }
 
+/* Tests for My Computer */
+static void test_parse_for_my_computer(void)
+{
+    WCHAR path[] = { '\\','\\','?','\\','C',':','\\',0 };
+    IShellFolder *mycomp, *sf;
+    WCHAR *drive = path + 4;
+    ITEMIDLIST *pidl;
+    DWORD eaten;
+    HRESULT hr;
+
+    hr = SHGetDesktopFolder(&sf);
+    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%lx\n", hr);
+    if (hr != S_OK) return;
+    hr = SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
+    ok(hr == S_OK, "SHGetSpecialFolderLocation failed with error 0x%lx\n", hr);
+    if (hr != S_OK)
+    {
+        IShellFolder_Release(sf);
+        return;
+    }
+    hr = IShellFolder_BindToObject(sf, pidl, NULL, &IID_IShellFolder, (void**)&mycomp);
+    ok(hr == S_OK, "IShellFolder::BindToObject failed with error 0x%lx\n", hr);
+    IShellFolder_Release(sf);
+    ILFree(pidl);
+    if (hr != S_OK) return;
+
+    while (drive[0] <= 'Z' && GetDriveTypeW(drive) == DRIVE_NO_ROOT_DIR) drive[0]++;
+    if (drive[0] > 'Z')
+    {
+        skip("No drive found, skipping My Computer tests...\n");
+        goto done;
+    }
+
+    pidl = NULL;
+    eaten = 0xdeadbeef;
+    hr = IShellFolder_ParseDisplayName(mycomp, NULL, NULL, drive, &eaten, &pidl, NULL);
+    ok(hr == S_OK, "IShellFolder::ParseDisplayName failed with error 0x%lx\n", hr);
+    todo_wine
+    ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
+    ok(pidl != NULL, "pidl is NULL\n");
+    ILFree(pidl);
+
+    /* \\?\ prefix is not valid */
+    pidl = NULL;
+    eaten = 0xdeadbeef;
+    hr = IShellFolder_ParseDisplayName(mycomp, NULL, NULL, path, &eaten, &pidl, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IShellFolder::ParseDisplayName should have failed with E_INVALIDARG, got 0x%08lx\n", hr);
+    todo_wine
+    ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
+    ok(pidl == NULL, "pidl is not NULL\n");
+    ILFree(pidl);
+
+    /* Try without backslash */
+    drive[2] = '\0';
+    pidl = NULL;
+    eaten = 0xdeadbeef;
+    hr = IShellFolder_ParseDisplayName(mycomp, NULL, NULL, drive, &eaten, &pidl, NULL);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* WinXP */,
+       "IShellFolder::ParseDisplayName failed with error 0x%lx\n", hr);
+    todo_wine
+    ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
+    todo_wine
+    ok(pidl != NULL || broken(!pidl) /* WinXP */, "pidl is NULL\n");
+    ILFree(pidl);
+
+done:
+    IShellFolder_Release(mycomp);
+}
+
 /* Tests for My Network Places */
 static void test_parse_for_entire_network(void)
 {
@@ -294,6 +364,7 @@ static void test_desktop_displaynameof(void)
 
 START_TEST(shfldr_special)
 {
+    test_parse_for_my_computer();
     test_parse_for_entire_network();
     test_parse_for_control_panel();
     test_printers_folder();
