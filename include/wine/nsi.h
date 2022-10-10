@@ -54,11 +54,9 @@ struct nsi_ndis_ifinfo_dynamic
     UINT mtu;
     ULONG64 xmit_speed;
     ULONG64 rcv_speed;
-    ULONG64 in_errors;
+    ULONG64 unk2[3];
     ULONG64 in_discards;
-    ULONG64 out_errors;
-    ULONG64 out_discards;
-    ULONG64 unk2;
+    ULONG64 in_errors;
     ULONG64 in_octets;
     ULONG64 in_ucast_pkts;
     ULONG64 in_mcast_pkts;
@@ -67,7 +65,8 @@ struct nsi_ndis_ifinfo_dynamic
     ULONG64 out_ucast_pkts;
     ULONG64 out_mcast_pkts;
     ULONG64 out_bcast_pkts;
-    ULONG64 unk3[2];
+    ULONG64 out_errors;
+    ULONG64 out_discards;
     ULONG64 in_ucast_octs;
     ULONG64 in_mcast_octs;
     ULONG64 in_bcast_octs;
