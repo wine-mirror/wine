@@ -346,12 +346,6 @@ HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **pr
     return S_OK;
 }
 
-HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *provider)
-{
-    FIXME("(%p): stub\n", provider);
-    return E_NOTIMPL;
-}
-
 /***********************************************************************
  *          DllMain (uiautomationcore.@)
  */

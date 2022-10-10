@@ -29,6 +29,7 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD, IRawElementProviderSimple **);
+static HRESULT (WINAPI *pUiaDisconnectProvider)(IRawElementProviderSimple *);
 
 #define DEFINE_EXPECT(func) \
     static int expect_ ## func = 0, called_ ## func = 0
@@ -5083,6 +5084,74 @@ static const struct prov_method_sequence node_from_hwnd8[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence node_from_hwnd9[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    /* Only done in Windows 8+. */
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    /* These three are only done on Windows 7. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_ProviderDescriptionPropertyId */
+    { 0 }
+};
+
+static const struct prov_method_sequence disconnect_prov1[] = {
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { 0 }
+};
+
+static const struct prov_method_sequence disconnect_prov2[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT },
+    { 0 }
+};
+
+static const struct prov_method_sequence disconnect_prov3[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { 0 }
+};
+
+static const struct prov_method_sequence disconnect_prov4[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { 0 }
+};
+
 static void test_UiaNodeFromHandle_client_proc(void)
 {
     APTTYPEQUALIFIER apt_qualifier;
@@ -5157,8 +5226,8 @@ static void test_UiaNodeFromHandle_client_proc(void)
 
 static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
 {
+    HUIANODE node, node2, node3;
     HWND hwnd = (HWND)param;
-    HUIANODE node, node2;
     WCHAR buf[2048];
     HRESULT hr;
     VARIANT v;
@@ -5329,6 +5398,160 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
         Sleep(50);
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
 
+    if (!pUiaDisconnectProvider)
+    {
+        win_skip("UiaDisconnectProvider not exported by uiautomationcore.dll\n");
+        goto exit;
+    }
+
+    /*
+     * UiaDisconnectProvider tests.
+     */
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = hwnd;
+    Provider.runtime_id[0] = Provider.runtime_id[1] = 0;
+    Provider.frag_root = NULL;
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    hr = UiaNodeFromHandle(hwnd, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        memset(buf, 0, sizeof(buf));
+
+        ok(get_nested_provider_desc(V_BSTR(&v), L"Main", FALSE, buf), "Failed to get nested provider description\n");
+        check_node_provider_desc_prefix(buf, GetCurrentProcessId(), hwnd);
+        /* Win10v1507 and below have the nested provider as 'Hwnd'. */
+        if (get_provider_desc(buf, L"Hwnd(parent link):", NULL))
+            check_node_provider_desc(buf, L"Hwnd", L"Provider", TRUE);
+        else
+            check_node_provider_desc(buf, L"Main", L"Provider", TRUE);
+
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+
+    ok_method_sequence(node_from_hwnd3, "node_from_hwnd3");
+
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_uia_prop_val(UIA_ControlTypePropertyId, UIAutomationType_Int, &v);
+
+    /* Nodes returned from a nested node will be tracked and disconnectable. */
+    Provider_child.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider_child.runtime_id[0] = UiaAppendRuntimeId;
+    Provider_child.runtime_id[1] = 2;
+    Provider_child.hwnd = NULL;
+    Provider_child.frag_root = &Provider.IRawElementProviderFragmentRoot_iface;
+    hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = UiaHUiaNodeFromVariant(&v, &node2);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        hr = UiaGetPropertyValue(node2, UIA_ProviderDescriptionPropertyId, &v);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+            VariantClear(&v);
+        }
+
+        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+        ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
+
+        /* Get a new node for the same provider. */
+        hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(Provider_child.ref == 3, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+        hr = UiaHUiaNodeFromVariant(&v, &node3);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        hr = UiaGetPropertyValue(node3, UIA_ProviderDescriptionPropertyId, &v);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), NULL);
+            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider_child", TRUE);
+            VariantClear(&v);
+        }
+
+        hr = UiaGetPropertyValue(node3, UIA_ControlTypePropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v));
+        ok_method_sequence(node_from_hwnd6, "node_from_hwnd6");
+
+        /*
+         * Both node2 and node3 represent Provider_child, one call to
+         * UiaDisconnectProvider disconnects both.
+         */
+        hr = pUiaDisconnectProvider(&Provider_child.IRawElementProviderSimple_iface);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+        hr = UiaGetPropertyValue(node2, UIA_ControlTypePropertyId, &v);
+        ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
+
+        hr = UiaGetPropertyValue(node3, UIA_ControlTypePropertyId, &v);
+        ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
+        ok_method_sequence(disconnect_prov1, "disconnect_prov1");
+
+        ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
+        ok(UiaNodeRelease(node3), "UiaNodeRelease returned FALSE\n");
+    }
+
+    /*
+     * Returns same failure code as UiaGetRuntimeId when we fail to get a
+     * fragment root for AppendRuntimeId.
+     */
+    Provider.hwnd = NULL;
+    Provider.runtime_id[0] = UiaAppendRuntimeId;
+    Provider.runtime_id[1] = 2;
+    Provider.frag_root = NULL;
+    hr = pUiaDisconnectProvider(&Provider.IRawElementProviderSimple_iface);
+    ok(hr == E_FAIL, "Unexpected hr %#lx\n", hr);
+    ok_method_sequence(disconnect_prov2, "disconnect_prov2");
+
+    /*
+     * Comparisons for disconnection are only based on RuntimeId comparisons,
+     * not interface pointer values. If an interface returns a NULL RuntimeId,
+     * no disconnection will occur.
+     */
+    Provider.runtime_id[0] = Provider.runtime_id[1] = 0;
+    hr = pUiaDisconnectProvider(&Provider.IRawElementProviderSimple_iface);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx\n", hr);
+    ok_method_sequence(disconnect_prov3, "disconnect_prov3");
+
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    check_uia_prop_val(UIA_ControlTypePropertyId, UIAutomationType_Int, &v);
+
+    /* Finally, disconnect node. */
+    Provider.hwnd = hwnd;
+    hr = pUiaDisconnectProvider(&Provider.IRawElementProviderSimple_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    hr = UiaGetPropertyValue(node, UIA_ControlTypePropertyId, &v);
+    ok(hr == UIA_E_ELEMENTNOTAVAILABLE, "Unexpected hr %#lx\n", hr);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok_method_sequence(disconnect_prov4, "disconnect_prov4");
+
+exit:
     CoUninitialize();
 
     return 0;
@@ -5438,6 +5661,57 @@ static void test_UiaNodeFromHandle(const char *name)
     ok_method_sequence(node_from_hwnd1, "node_from_hwnd1");
 
     todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+
+    /*
+     * COM initialized, but provider passed into UiaReturnRawElementProvider
+     * on Win8+ will have its RuntimeId queried for UiaDisconnectProvider.
+     * It will fail due to the lack of a valid fragment root, and we'll fall
+     * back to an MSAA proxy. On Win7, RuntimeId isn't queried because the
+     * disconnection functions weren't implemented yet.
+     */
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = NULL;
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    node = (void *)0xdeadbeef;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    SET_EXPECT_MULTI(winproc_GETOBJECT_CLIENT, 2);
+    Provider.frag_root = NULL;
+    Provider.runtime_id[0] = UiaAppendRuntimeId;
+    Provider.runtime_id[1] = 1;
+    hr = UiaNodeFromHandle(hwnd, &node);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 1 || broken(Provider.ref == 2), "Unexpected refcnt %ld\n", Provider.ref);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    hr = UiaGetPropertyValue(node, UIA_ProviderDescriptionPropertyId, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+
+        if (get_provider_desc(V_BSTR(&v), L"Annotation:", NULL))
+        {
+            check_node_provider_desc(V_BSTR(&v), L"Annotation", NULL, FALSE);
+            check_node_provider_desc(V_BSTR(&v), L"Main", NULL, FALSE);
+        }
+        else
+            check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
+
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+    ok_method_sequence(node_from_hwnd9, "node_from_hwnd9");
+    todo_wine ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    /*
+     * Bug on Windows 8 through Win10v1709 - if we have a RuntimeId failure,
+     * refcount doesn't get decremented.
+     */
+    ok(Provider.ref == 1 || broken(Provider.ref == 2), "Unexpected refcnt %ld\n", Provider.ref);
+    if (Provider.ref == 2)
+        IRawElementProviderSimple_Release(&Provider.IRawElementProviderSimple_iface);
+
     CoUninitialize();
 
     /*
@@ -5470,6 +5744,15 @@ static void test_UiaNodeFromHandle(const char *name)
     }
 
     ok_method_sequence(node_from_hwnd2, "node_from_hwnd2");
+
+    /* For same-thread HWND nodes, no disconnection will occur. */
+    if (pUiaDisconnectProvider)
+    {
+        hr = pUiaDisconnectProvider(&Provider.IRawElementProviderSimple_iface);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+        ok_method_sequence(disconnect_prov4, "disconnect_prov4");
+    }
 
     /*
      * This is relevant too: Since we don't get a 'nested' node, all calls
@@ -5616,6 +5899,9 @@ START_TEST(uiautomation)
     }
     pImmDisableIME = NULL;
     FreeLibrary(hModuleImm32);
+
+    if (uia_dll)
+        pUiaDisconnectProvider = (void *)GetProcAddress(uia_dll, "UiaDisconnectProvider");
 
     argc = winetest_get_mainargs(&argv);
     if (argc == 3)

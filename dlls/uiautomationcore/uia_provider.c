@@ -1155,18 +1155,58 @@ void uia_provider_thread_remove_node(HUIANODE node)
     EnterCriticalSection(&provider_thread_cs);
     list_remove(&node_data->prov_thread_list_entry);
     list_init(&node_data->prov_thread_list_entry);
+    SafeArrayDestroy(node_data->runtime_id);
+    node_data->runtime_id = NULL;
+    LeaveCriticalSection(&provider_thread_cs);
+}
+
+static void uia_provider_thread_disconnect_node(SAFEARRAY *sa)
+{
+    struct list *cursor, *cursor2;
+    struct uia_node *node_data;
+
+    EnterCriticalSection(&provider_thread_cs);
+
+    /* Provider thread hasn't been started, no nodes to disconnect. */
+    if (!provider_thread.ref)
+        goto exit;
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &provider_thread.nodes_list)
+    {
+        node_data = LIST_ENTRY(cursor, struct uia_node, prov_thread_list_entry);
+
+        if (node_data->runtime_id)
+        {
+            if (!uia_compare_runtime_ids(sa, node_data->runtime_id))
+            {
+                list_remove(cursor);
+                list_init(&node_data->prov_thread_list_entry);
+                IWineUiaNode_disconnect(&node_data->IWineUiaNode_iface);
+                SafeArrayDestroy(node_data->runtime_id);
+                node_data->runtime_id = NULL;
+            }
+        }
+    }
+
+exit:
     LeaveCriticalSection(&provider_thread_cs);
 }
 
 static HRESULT uia_provider_thread_add_node(HUIANODE node)
 {
     struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    node_data->nested_node = TRUE;
+    hr = UiaGetRuntimeId(node, &sa);
+    if (FAILED(hr))
+        return hr;
 
     TRACE("Adding node %p\n", node);
 
-    node_data->nested_node = TRUE;
-
     EnterCriticalSection(&provider_thread_cs);
+    node_data->runtime_id = sa;
     list_add_tail(&provider_thread.nodes_list, &node_data->prov_thread_list_entry);
     LeaveCriticalSection(&provider_thread_cs);
 
@@ -1362,4 +1402,34 @@ LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wparam,
     }
 
     return uia_lresult_from_node(node);
+}
+
+/***********************************************************************
+ *          UiaDisconnectProvider (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *elprov)
+{
+    SAFEARRAY *sa;
+    HUIANODE node;
+    HRESULT hr;
+
+    TRACE("(%p)\n", elprov);
+
+    hr = UiaNodeFromProvider(elprov, &node);
+    if (FAILED(hr))
+        return hr;
+
+    hr = UiaGetRuntimeId(node, &sa);
+    UiaNodeRelease(node);
+    if (FAILED(hr))
+        return hr;
+
+    if (!sa)
+        return E_INVALIDARG;
+
+    uia_provider_thread_disconnect_node(sa);
+
+    SafeArrayDestroy(sa);
+
+    return S_OK;
 }

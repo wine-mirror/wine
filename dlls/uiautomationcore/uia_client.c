@@ -49,6 +49,54 @@ static HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems)
     return S_OK;
 }
 
+int uia_compare_runtime_ids(SAFEARRAY *sa1, SAFEARRAY *sa2)
+{
+    LONG i, idx, lbound[2], elems[2];
+    int val[2];
+    HRESULT hr;
+
+    hr = get_safearray_bounds(sa1, &lbound[0], &elems[0]);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get safearray bounds from sa1 with hr %#lx\n", hr);
+        return -1;
+    }
+
+    hr = get_safearray_bounds(sa2, &lbound[1], &elems[1]);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get safearray bounds from sa2 with hr %#lx\n", hr);
+        return -1;
+    }
+
+    if (elems[0] != elems[1])
+        return (elems[0] > elems[1]) - (elems[0] < elems[1]);
+
+    for (i = 0; i < elems[0]; i++)
+    {
+        idx = lbound[0] + i;
+        hr = SafeArrayGetElement(sa1, &idx, &val[0]);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get element from sa1 with hr %#lx\n", hr);
+            return -1;
+        }
+
+        idx = lbound[1] + i;
+        hr = SafeArrayGetElement(sa2, &idx, &val[1]);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get element from sa2 with hr %#lx\n", hr);
+            return -1;
+        }
+
+        if (val[0] != val[1])
+            return (val[0] > val[1]) - (val[0] < val[1]);
+    }
+
+    return 0;
+}
+
 static void clear_uia_node_ptr_safearray(SAFEARRAY *sa, LONG elems)
 {
     HUIANODE node;
@@ -312,7 +360,8 @@ static ULONG WINAPI uia_node_Release(IWineUiaNode *iface)
             }
         }
 
-        IWineUiaProvider_Release(node->prov);
+        if (node->prov)
+            IWineUiaProvider_Release(node->prov);
         if (!list_empty(&node->prov_thread_list_entry))
             uia_provider_thread_remove_node((HUIANODE)iface);
         if (node->nested_node)
@@ -327,6 +376,12 @@ static ULONG WINAPI uia_node_Release(IWineUiaNode *iface)
 static HRESULT WINAPI uia_node_get_provider(IWineUiaNode *iface, IWineUiaProvider **out_prov)
 {
     struct uia_node *node = impl_from_IWineUiaNode(iface);
+
+    if (node->disconnected)
+    {
+        *out_prov = NULL;
+        return UIA_E_ELEMENTNOTAVAILABLE;
+    }
 
     if (node->git_cookie)
     {
@@ -360,10 +415,17 @@ static HRESULT WINAPI uia_node_get_prop_val(IWineUiaNode *iface, const GUID *pro
         VARIANT *ret_val)
 {
     int prop_id = UiaLookupId(AutomationIdentifierType_Property, prop_guid);
+    struct uia_node *node = impl_from_IWineUiaNode(iface);
     HRESULT hr;
     VARIANT v;
 
     TRACE("%p, %s, %p\n", iface, debugstr_guid(prop_guid), ret_val);
+
+    if (node->disconnected)
+    {
+        VariantInit(ret_val);
+        return UIA_E_ELEMENTNOTAVAILABLE;
+    }
 
     hr = UiaGetPropertyValue((HUIANODE)iface, prop_id, &v);
 
@@ -376,12 +438,47 @@ static HRESULT WINAPI uia_node_get_prop_val(IWineUiaNode *iface, const GUID *pro
     return hr;
 }
 
+static HRESULT WINAPI uia_node_disconnect(IWineUiaNode *iface)
+{
+    struct uia_node *node = impl_from_IWineUiaNode(iface);
+
+    TRACE("%p\n", node);
+
+    if (node->disconnected)
+    {
+        ERR("Attempted to disconnect node which was already disconnected.\n");
+        return E_FAIL;
+    }
+
+    if (node->git_cookie)
+    {
+        IGlobalInterfaceTable *git;
+        HRESULT hr;
+
+        hr = get_global_interface_table(&git);
+        if (SUCCEEDED(hr))
+        {
+            hr = IGlobalInterfaceTable_RevokeInterfaceFromGlobal(git, node->git_cookie);
+            if (FAILED(hr))
+                WARN("Failed to get revoke provider interface from Global Interface Table, hr %#lx\n", hr);
+        }
+        node->git_cookie = 0;
+    }
+
+    IWineUiaProvider_Release(node->prov);
+    node->prov = NULL;
+    node->disconnected = TRUE;
+
+    return S_OK;
+}
+
 static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_QueryInterface,
     uia_node_AddRef,
     uia_node_Release,
     uia_node_get_provider,
     uia_node_get_prop_val,
+    uia_node_disconnect,
 };
 
 static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)

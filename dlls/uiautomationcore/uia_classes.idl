@@ -56,5 +56,6 @@ library UIA_wine_private
     {
         HRESULT get_provider([out, retval]IWineUiaProvider **out_prov);
         HRESULT get_prop_val([in]const GUID *prop_guid, [out, retval]VARIANT *ret_val);
+        HRESULT disconnect();
     }
 }

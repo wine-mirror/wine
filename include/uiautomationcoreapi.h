@@ -398,6 +398,7 @@ BOOL WINAPI UiaNodeRelease(HUIANODE huianode);
 HRESULT WINAPI UiaGetRuntimeId(HUIANODE huianode, SAFEARRAY **runtime_id);
 HRESULT WINAPI UiaHUiaNodeFromVariant(VARIANT *in_val, HUIANODE *huianode);
 HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode);
+HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *elprov);
 
 #ifdef __cplusplus
 }
