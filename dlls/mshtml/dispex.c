@@ -85,6 +85,7 @@ typedef struct {
 } dynamic_prop_t;
 
 #define DYNPROP_DELETED    0x01
+#define DYNPROP_HIDDEN     0x02
 
 typedef struct {
     DispatchEx dispex;
@@ -702,6 +703,8 @@ HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VA
     if(FAILED(hres))
         return hres;
 
+    if(alloc)
+        prop->flags |= DYNPROP_HIDDEN;
     *ret = &prop->var;
     return S_OK;
 }
@@ -715,6 +718,7 @@ HRESULT dispex_get_dynid(DispatchEx *This, const WCHAR *name, DISPID *id)
     if(FAILED(hres))
         return hres;
 
+    prop->flags |= DYNPROP_HIDDEN;
     *id = DISPID_DYNPROP_0 + (prop - This->dynamic_data->props);
     return S_OK;
 }
@@ -1860,7 +1864,8 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 
 static HRESULT next_dynamic_id(DispatchEx *dispex, DWORD idx, DISPID *ret_id)
 {
-    while(idx < dispex->dynamic_data->prop_cnt && dispex->dynamic_data->props[idx].flags & DYNPROP_DELETED)
+    while(idx < dispex->dynamic_data->prop_cnt &&
+          (dispex->dynamic_data->props[idx].flags & (DYNPROP_DELETED | DYNPROP_HIDDEN)))
         idx++;
 
     if(idx == dispex->dynamic_data->prop_cnt) {

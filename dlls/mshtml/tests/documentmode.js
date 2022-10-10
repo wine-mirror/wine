@@ -635,6 +635,8 @@ sync_test("JS objs", function() {
 });
 
 sync_test("for..in", function() {
+    var v = document.documentMode, found = 0, r;
+
     function ctor() {}
     ctor.prototype.test2 = true;
 
@@ -642,7 +644,7 @@ sync_test("for..in", function() {
     obj.test1 = true;
 
     i = 0;
-    for(var r in obj) {
+    for(r in obj) {
         ctor.prototype.test3 = true;
         arr[r] = true;
         i++;
@@ -652,10 +654,22 @@ sync_test("for..in", function() {
     ok(arr["test1"] === true, "arr[test1] !== true");
     ok(arr["test2"] === true, "arr[test2] !== true");
     ok(arr["test3"] === true, "arr[test3] !== true");
+
+    for(r in document)
+        if(r === "ondragstart")
+            found++;
+    ok(found === 1, "ondragstart enumerated " + found + " times in document");
+    document.ondragstart = "";
+    found = 0;
+    for(r in document)
+        if(r === "ondragstart")
+            found++;
+    ok(found === 1, "ondragstart enumerated " + found + " times in document after set to empty string");
 });
 
 sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
+    var found;
 
     var id_elem = document.getElementById("testid");
     ok(id_elem.tagName === "FORM", "id_elem.tagName = " + id_elem.tagName);
@@ -665,6 +679,32 @@ sync_test("elem_by_id", function() {
         ok(id_elem === name_elem, "id_elem != id_elem");
     else
         ok(name_elem === null, "name_elem != null");
+
+    id_elem = window.testid;
+    ok(id_elem.tagName === "FORM", "window.testid = " + id_elem);
+
+    name_elem = document.testname;
+    ok(name_elem.tagName === "FORM", "document.testname = " + name_elem);
+
+    for(id_elem in window)
+        ok(id_elem !== "testid" && id_elem != "testname", id_elem + " was enumerated in window");
+    window.testid = 137;
+    found = false;
+    for(id_elem in window) {
+        ok(id_elem != "testname", id_elem + " was enumerated in window after set to 137");
+        if(id_elem === "testid")
+            found = true;
+    }
+    ok(found, "testid was not enumerated in window after set to 137");
+
+    found = false;
+    for(id_elem in document) {
+        ok(id_elem !== "testid", "testid was enumerated in document");
+        if(id_elem === "testname")
+            found = true;
+    }
+    todo_wine.
+    ok(found, "testname was not enumerated in document");
 });
 
 sync_test("doc_mode", function() {
