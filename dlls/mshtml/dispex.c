@@ -1909,6 +1909,8 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
             }
             func++;
         }
+
+        id = DISPID_STARTENUM;
     }
 
     if(This->info->desc->vtbl && This->info->desc->vtbl->next_dispid) {
