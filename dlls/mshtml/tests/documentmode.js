@@ -703,7 +703,6 @@ sync_test("elem_by_id", function() {
         if(id_elem === "testname")
             found = true;
     }
-    todo_wine.
     ok(found, "testname was not enumerated in document");
 });
 

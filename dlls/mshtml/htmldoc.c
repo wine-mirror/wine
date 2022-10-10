@@ -5890,6 +5890,74 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     return S_OK;
 }
 
+static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+{
+    DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    nsIDOMNodeList *node_list;
+    const PRUnichar *name;
+    nsIDOMElement *nselem;
+    nsIDOMNode *nsnode;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
+    UINT32 i;
+
+    if(!This->nsdoc)
+        return S_FALSE;
+
+    while(idx < This->elem_vars_cnt) {
+        hres = has_elem_name(This->nsdoc, This->elem_vars[idx]);
+        if(SUCCEEDED(hres)) {
+            *pid = idx + MSHTML_DISPID_CUSTOM_MIN;
+            return S_OK;
+        }
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+        idx++;
+    }
+
+    /* Populate possibly missing DISPIDs */
+    nsAString_InitDepend(&nsstr, L"[name]");
+    nsres = nsIDOMHTMLDocument_QuerySelectorAll(This->nsdoc, &nsstr, &node_list);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    for(i = 0, hres = S_OK; SUCCEEDED(hres); i++) {
+        nsres = nsIDOMNodeList_Item(node_list, i, &nsnode);
+        if(NS_FAILED(nsres)) {
+            hres = map_nsresult(nsres);
+            break;
+        }
+        if(!nsnode)
+            break;
+
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
+        nsIDOMNode_Release(nsnode);
+        if(nsres != S_OK)
+            continue;
+
+        nsres = get_elem_attr_value(nselem, L"name", &nsstr, &name);
+        nsIDOMElement_Release(nselem);
+        if(NS_FAILED(nsres))
+            hres = map_nsresult(nsres);
+        else {
+            hres = dispid_from_elem_name(This, name, &id);
+            nsAString_Finish(&nsstr);
+        }
+    }
+    nsIDOMNodeList_Release(node_list);
+    if(FAILED(hres))
+        return hres;
+
+    if(idx >= This->elem_vars_cnt)
+        return S_FALSE;
+
+    *pid = idx + MSHTML_DISPID_CUSTOM_MIN;
+    return S_OK;
+}
+
 static compat_mode_t HTMLDocumentNode_get_compat_mode(DispatchEx *dispex)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
@@ -5948,7 +6016,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         HTMLDocumentNode_get_name,
         HTMLDocumentNode_invoke,
         NULL,
-        NULL,
+        HTMLDocumentNode_next_dispid,
         HTMLDocumentNode_get_compat_mode,
         NULL
     },
