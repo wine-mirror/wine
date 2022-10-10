@@ -4818,30 +4818,30 @@ static inline HTMLDocument *impl_from_IDispatchEx(IDispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDocument, IDispatchEx_iface);
 }
 
-static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, BSTR name, DISPID *dispid)
+static HRESULT has_elem_name(nsIDOMHTMLDocument *nsdoc, const WCHAR *name)
 {
     nsIDOMNodeList *node_list;
     nsAString name_str;
-    UINT32 len;
-    unsigned i;
     nsresult nsres;
-
-    if(!This->nsdoc)
-        return DISP_E_UNKNOWNNAME;
+    UINT32 len;
 
     nsAString_InitDepend(&name_str, name);
-    nsres = nsIDOMHTMLDocument_GetElementsByName(This->nsdoc, &name_str, &node_list);
+    nsres = nsIDOMHTMLDocument_GetElementsByName(nsdoc, &name_str, &node_list);
     nsAString_Finish(&name_str);
     if(NS_FAILED(nsres))
-        return E_FAIL;
+        return map_nsresult(nsres);
 
     nsres = nsIDOMNodeList_GetLength(node_list, &len);
     nsIDOMNodeList_Release(node_list);
     if(NS_FAILED(nsres))
-        return E_FAIL;
+        return map_nsresult(nsres);
 
-    if(!len)
-        return DISP_E_UNKNOWNNAME;
+    return len ? S_OK : DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, const WCHAR *name, DISPID *dispid)
+{
+    unsigned i;
 
     for(i=0; i < This->elem_vars_cnt; i++) {
         if(!wcscmp(name, This->elem_vars[i])) {
@@ -4943,7 +4943,12 @@ static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName,
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    return  dispid_from_elem_name(This->doc_node, bstrName, pid);
+    if(This->doc_node->nsdoc) {
+        hres = has_elem_name(This->doc_node->nsdoc, bstrName);
+        if(SUCCEEDED(hres))
+            hres = dispid_from_elem_name(This->doc_node, bstrName, pid);
+    }
+    return hres;
 }
 
 static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
