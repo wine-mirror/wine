@@ -1559,6 +1559,7 @@ inobj.test2 = true;
 
 tmp = 0;
 for(iter in inobj) {
+    forinTestObj.prototype.test4 = true;
     arr[iter] = true;
     tmp++;
 }
@@ -1567,6 +1568,7 @@ ok(tmp === 3, "for..in tmp = " + tmp);
 ok(arr["test1"] === true, "arr[test1] !== true");
 ok(arr["test2"] === true, "arr[test2] !== true");
 ok(arr["test3"] === true, "arr[test3] !== true");
+ok(arr["test4"] !== true, "arr[test4] === true");
 
 ok((delete inobj.test1) === true, "delete inobj.test1 returned false");
 ok(!("test1" in inobj), "test1 is still in inobj after delete");

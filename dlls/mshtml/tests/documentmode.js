@@ -634,6 +634,26 @@ sync_test("JS objs", function() {
     test_parses("if(false) { o.if; }", v >= 9);
 });
 
+sync_test("for..in", function() {
+    function ctor() {}
+    ctor.prototype.test2 = true;
+
+    var arr = new Array(), obj = new ctor(), i, r;
+    obj.test1 = true;
+
+    i = 0;
+    for(var r in obj) {
+        ctor.prototype.test3 = true;
+        arr[r] = true;
+        i++;
+    }
+
+    ok(i === 3, "enum did " + i + " iterations");
+    ok(arr["test1"] === true, "arr[test1] !== true");
+    ok(arr["test2"] === true, "arr[test2] !== true");
+    ok(arr["test3"] === true, "arr[test3] !== true");
+});
+
 sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
 

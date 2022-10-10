@@ -2492,15 +2492,15 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
     DWORD idx = id;
     HRESULT hres;
 
-    if(id == DISPID_STARTENUM) {
+    if(id == DISPID_STARTENUM || idx >= obj->prop_cnt) {
         hres = (enum_type == JSDISP_ENUM_ALL) ? fill_protrefs(obj) : fill_props(obj);
         if(FAILED(hres))
             return hres;
-        idx = 0;
+        if(id == DISPID_STARTENUM)
+            idx = 0;
+        if(idx >= obj->prop_cnt)
+            return S_FALSE;
     }
-
-    if(idx >= obj->prop_cnt)
-        return S_FALSE;
 
     for(iter = &obj->props[idx]; iter < obj->props + obj->prop_cnt; iter++) {
         if(iter->type == PROP_DELETED)
@@ -2512,6 +2512,9 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
         *ret = prop_to_id(obj, iter);
         return S_OK;
     }
+
+    if(obj->ctx->html_mode)
+        return jsdisp_next_prop(obj, prop_to_id(obj, iter - 1), enum_type, ret);
 
     return S_FALSE;
 }
