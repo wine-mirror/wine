@@ -151,7 +151,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
                 DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
-    WCHAR szElement[MAX_PATH];
+    WCHAR c, szElement[MAX_PATH];
     LPCWSTR szNext = NULL;
     LPITEMIDLIST pidlTemp = NULL;
     PARSEDURLW urldata;
@@ -179,7 +179,8 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
         SHCLSIDFromStringW (szElement + 2, &clsid);
         pidlTemp = _ILCreateGuid (PT_GUID, &clsid);
     }
-    else if (PathGetDriveNumberW (lpszDisplayName) >= 0)
+    /* we can't use PathGetDriveNumberW because we can't have the \\?\ prefix */
+    else if ((c = towupper(lpszDisplayName[0])) >= 'A' && c <= 'Z' && lpszDisplayName[1] == ':')
     {
         /* it's a filesystem path with a drive. Let MyComputer/UnixDosFolder parse it */
         pidlTemp = _ILCreateMyComputer ();

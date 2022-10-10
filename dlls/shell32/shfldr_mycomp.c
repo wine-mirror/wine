@@ -189,7 +189,7 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName (IShellFolder2 *iface,
     IMyComputerFolderImpl *This = impl_from_IShellFolder2(iface);
     HRESULT hr = E_INVALIDARG;
     LPCWSTR szNext = NULL;
-    WCHAR szElement[MAX_PATH];
+    WCHAR c, szElement[MAX_PATH];
     LPITEMIDLIST pidlTemp = NULL;
     CLSID clsid;
 
@@ -209,13 +209,17 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName (IShellFolder2 *iface,
         SHCLSIDFromStringW (szElement + 2, &clsid);
         pidlTemp = _ILCreateGuid (PT_GUID, &clsid);
     }
-    /* do we have an absolute path name ? */
-    else if (PathGetDriveNumberW (lpszDisplayName) >= 0 &&
-              lpszDisplayName[2] == (WCHAR) '\\')
+    /* we can't use PathGetDriveNumberW because we can't have the \\?\ prefix */
+    else if ((c = towupper(lpszDisplayName[0])) >= 'A' && c <= 'Z' &&
+             lpszDisplayName[1] == ':' &&
+             (lpszDisplayName[2] == '\\' || lpszDisplayName[2] == '\0'))
     {
-        szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
-        /* make drive letter uppercase to enable PIDL comparison */
-        szElement[0] = toupper(szElement[0]);
+        /* drive letter has to be uppercase to enable PIDL comparison */
+        szElement[0] = c;
+        szElement[1] = ':';
+        szElement[2] = '\\';
+        szElement[3] = '\0';
+        szNext = &lpszDisplayName[2] + (lpszDisplayName[2] == '\\');
         pidlTemp = _ILCreateDrive (szElement);
     }
 
@@ -224,7 +228,7 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName (IShellFolder2 *iface,
         hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc, &pidlTemp,
                               (LPOLESTR) szNext, pchEaten, pdwAttributes);
     }
-    else
+    else if (pidlTemp)
     {
         if (pdwAttributes && *pdwAttributes)
             SHELL32_GetItemAttributes (&This->IShellFolder2_iface, pidlTemp, pdwAttributes);

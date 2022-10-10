@@ -85,7 +85,6 @@ static void test_parse_for_my_computer(void)
     pidl = NULL;
     eaten = 0xdeadbeef;
     hr = IShellFolder_ParseDisplayName(mycomp, NULL, NULL, path, &eaten, &pidl, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "IShellFolder::ParseDisplayName should have failed with E_INVALIDARG, got 0x%08lx\n", hr);
     todo_wine
     ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
@@ -101,7 +100,6 @@ static void test_parse_for_my_computer(void)
        "IShellFolder::ParseDisplayName failed with error 0x%lx\n", hr);
     todo_wine
     ok(eaten == 0xdeadbeef, "eaten should not have been set to %lu\n", eaten);
-    todo_wine
     ok(pidl != NULL || broken(!pidl) /* WinXP */, "pidl is NULL\n");
     ILFree(pidl);
 
