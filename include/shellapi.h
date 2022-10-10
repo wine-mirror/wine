@@ -385,10 +385,10 @@ void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lp
 #define NIN_SELECT              (WM_USER+0)
 #define NINF_KEY                1
 #define NIN_KEYSELECT           (NIN_SELECT|NINF_KEY)  /* WM_USER+1 */
-#define NIN_BALOONSHOW          (WM_USER+2)
-#define NIN_BALOONHIDE          (WM_USER+3)
-#define NIN_BALOONTIMEOUT       (WM_USER+4)
-#define NIN_BALOONCLICK         (WM_USER+5)
+#define NIN_BALLOONSHOW         (WM_USER+2)
+#define NIN_BALLOONHIDE         (WM_USER+3)
+#define NIN_BALLOONTIMEOUT      (WM_USER+4)
+#define NIN_BALLOONUSERCLICK    (WM_USER+5)
 #define NIN_POPUPOPEN           (WM_USER+6)
 #define NIN_POPUPCLOSE          (WM_USER+7)
 
