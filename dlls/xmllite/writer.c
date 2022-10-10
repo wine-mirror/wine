@@ -250,7 +250,6 @@ static struct element *pop_element(xmlwriter *writer)
 
 static WCHAR *writer_strndupW(const xmlwriter *writer, const WCHAR *str, int len)
 {
-    size_t size;
     WCHAR *ret;
 
     if (!str)
@@ -259,9 +258,12 @@ static WCHAR *writer_strndupW(const xmlwriter *writer, const WCHAR *str, int len
     if (len == -1)
         len = lstrlenW(str);
 
-    size = (len + 1) * sizeof(WCHAR);
-    ret = writer_alloc(writer, size);
-    if (ret) memcpy(ret, str, size);
+    ret = writer_alloc(writer, (len + 1) * sizeof(WCHAR));
+    if (ret)
+    {
+        memcpy(ret, str, len * sizeof(WCHAR));
+        ret[len] = 0;
+    }
 
     return ret;
 }
