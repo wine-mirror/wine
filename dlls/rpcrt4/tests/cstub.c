@@ -1527,7 +1527,7 @@ static void test_ChannelBufferRefCount(IPSFactoryBuffer *ppsf)
 
     NdrProxyInitialize(proxy_if1, &rpcMessage, &stubMessage, &stubDesc, 0);
     /* stubMessage should add its own refcount on test_chanbuf */
-    todo_wine ok(test_chanbuf.RefCount == 2, "got %ld\n", test_chanbuf.RefCount);
+    ok(test_chanbuf.RefCount == 2, "got %ld\n", test_chanbuf.RefCount);
     ok(stubMessage.pRpcChannelBuffer != NULL, "NULL pRocChannelBuffer\n");
 
     /* stubMessage doesn't add its own refcounts on proxy_if1 or proxy_buffer,
@@ -1536,17 +1536,17 @@ static void test_ChannelBufferRefCount(IPSFactoryBuffer *ppsf)
      * this unadvise could be reentrant to Invoke because SendReceive pumps STA messages.
      * The source would then erase that conection point entry and Release the proxy. */
     IRpcProxyBuffer_Disconnect(proxy_buffer);
-    todo_wine ok(test_chanbuf.RefCount == 1, "got %ld\n", test_chanbuf.RefCount);
+    ok(test_chanbuf.RefCount == 1, "got %ld\n", test_chanbuf.RefCount);
     IRpcProxyBuffer_Release(proxy_buffer);
     refs = IUnknown_Release(proxy_if1);
     ok(refs == 0, "got %ld\n", refs);
-    todo_wine ok(test_chanbuf.RefCount == 1, "got %ld\n", test_chanbuf.RefCount);
+    ok(test_chanbuf.RefCount == 1, "got %ld\n", test_chanbuf.RefCount);
 
     /* NdrProxyFreeBuffer must not dereference the the now-freed proxy_if1,
      * yet should still free the remaining reference on test_chanbuf */
     NdrProxyFreeBuffer(proxy_if1, &stubMessage);
     ok(test_chanbuf.RefCount == 0, "got %ld\n", test_chanbuf.RefCount);
-    todo_wine ok(!stubMessage.pRpcChannelBuffer, "dangling pRpcChannelBuffer = %p\n", stubMessage.pRpcChannelBuffer);
+    ok(!stubMessage.pRpcChannelBuffer, "dangling pRpcChannelBuffer = %p\n", stubMessage.pRpcChannelBuffer);
 }
 
 START_TEST( cstub )

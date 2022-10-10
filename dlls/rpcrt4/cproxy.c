@@ -454,6 +454,9 @@ static void StdProxy_GetChannel(LPVOID iface,
   StdProxyImpl *This = impl_from_proxy_obj( iface );
   TRACE("(%p)->GetChannel(%p) %s\n",This,ppChannel,This->name);
 
+  if(This->pChannel)
+    IRpcChannelBuffer_AddRef(This->pChannel);
+
   *ppChannel = This->pChannel;
 }
 
@@ -585,6 +588,8 @@ void WINAPI NdrProxyFreeBuffer(void *This,
                                  (RPCOLEMESSAGE*)pStubMsg->RpcMsg);
     pStubMsg->fBufferValid = TRUE;
   }
+  IRpcChannelBuffer_Release(pStubMsg->pRpcChannelBuffer);
+  pStubMsg->pRpcChannelBuffer = NULL;
 }
 
 /***********************************************************************
