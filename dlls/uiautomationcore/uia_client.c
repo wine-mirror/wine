@@ -851,6 +851,7 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
 
     node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
     list_init(&node->prov_thread_list_entry);
+    list_init(&node->node_map_list_entry);
     node->ref = 1;
 
     *huianode = (void *)&node->IWineUiaNode_iface;
@@ -1228,6 +1229,7 @@ HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
     node->hwnd = hwnd;
     node->IWineUiaNode_iface.lpVtbl = &uia_node_vtbl;
     list_init(&node->prov_thread_list_entry);
+    list_init(&node->node_map_list_entry);
     node->ref = 1;
 
     hr = uia_get_provider_from_hwnd(node);

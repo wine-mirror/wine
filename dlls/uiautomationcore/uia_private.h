@@ -40,9 +40,9 @@ struct uia_node {
     HWND hwnd;
     BOOL nested_node;
     BOOL disconnected;
-    /* This RuntimeId is used as a comparison for UiaDisconnectProvider(). */
-    SAFEARRAY *runtime_id;
     struct list prov_thread_list_entry;
+    struct list node_map_list_entry;
+    struct uia_provider_thread_map_entry *map;
 };
 
 static inline struct uia_node *impl_from_IWineUiaNode(IWineUiaNode *iface)

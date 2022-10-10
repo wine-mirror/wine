@@ -21,6 +21,7 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/rbtree.h"
 #include "initguid.h"
 #include "wine/iaccessible2.h"
 
@@ -1130,6 +1131,7 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
  */
 struct uia_provider_thread
 {
+    struct rb_tree node_map;
     struct list nodes_list;
     HANDLE hthread;
     HWND hwnd;
@@ -1146,6 +1148,20 @@ static CRITICAL_SECTION_DEBUG provider_thread_cs_debug =
 };
 static CRITICAL_SECTION provider_thread_cs = { &provider_thread_cs_debug, -1, 0, 0, 0, 0 };
 
+struct uia_provider_thread_map_entry
+{
+    struct rb_entry entry;
+
+    SAFEARRAY *runtime_id;
+    struct list nodes_list;
+};
+
+static int uia_runtime_id_compare(const void *key, const struct rb_entry *entry)
+{
+    struct uia_provider_thread_map_entry *prov_entry = RB_ENTRY_VALUE(entry, struct uia_provider_thread_map_entry, entry);
+    return uia_compare_runtime_ids(prov_entry->runtime_id, (SAFEARRAY *)key);
+}
+
 void uia_provider_thread_remove_node(HUIANODE node)
 {
     struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
@@ -1153,17 +1169,28 @@ void uia_provider_thread_remove_node(HUIANODE node)
     TRACE("Removing node %p\n", node);
 
     EnterCriticalSection(&provider_thread_cs);
+
     list_remove(&node_data->prov_thread_list_entry);
     list_init(&node_data->prov_thread_list_entry);
-    SafeArrayDestroy(node_data->runtime_id);
-    node_data->runtime_id = NULL;
+    if (!list_empty(&node_data->node_map_list_entry))
+    {
+        list_remove(&node_data->node_map_list_entry);
+        list_init(&node_data->node_map_list_entry);
+        if (list_empty(&node_data->map->nodes_list))
+        {
+            rb_remove(&provider_thread.node_map, &node_data->map->entry);
+            SafeArrayDestroy(node_data->map->runtime_id);
+            heap_free(node_data->map);
+        }
+        node_data->map = NULL;
+    }
+
     LeaveCriticalSection(&provider_thread_cs);
 }
 
 static void uia_provider_thread_disconnect_node(SAFEARRAY *sa)
 {
-    struct list *cursor, *cursor2;
-    struct uia_node *node_data;
+    struct rb_entry *rb_entry;
 
     EnterCriticalSection(&provider_thread_cs);
 
@@ -1171,21 +1198,30 @@ static void uia_provider_thread_disconnect_node(SAFEARRAY *sa)
     if (!provider_thread.ref)
         goto exit;
 
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &provider_thread.nodes_list)
+    rb_entry = rb_get(&provider_thread.node_map, sa);
+    if (rb_entry)
     {
-        node_data = LIST_ENTRY(cursor, struct uia_node, prov_thread_list_entry);
+        struct uia_provider_thread_map_entry *prov_map;
+        struct list *cursor, *cursor2;
+        struct uia_node *node_data;
 
-        if (node_data->runtime_id)
+        prov_map = RB_ENTRY_VALUE(rb_entry, struct uia_provider_thread_map_entry, entry);
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &prov_map->nodes_list)
         {
-            if (!uia_compare_runtime_ids(sa, node_data->runtime_id))
-            {
-                list_remove(cursor);
-                list_init(&node_data->prov_thread_list_entry);
-                IWineUiaNode_disconnect(&node_data->IWineUiaNode_iface);
-                SafeArrayDestroy(node_data->runtime_id);
-                node_data->runtime_id = NULL;
-            }
+            node_data = LIST_ENTRY(cursor, struct uia_node, node_map_list_entry);
+
+            list_remove(cursor);
+            list_remove(&node_data->prov_thread_list_entry);
+            list_init(&node_data->prov_thread_list_entry);
+            list_init(&node_data->node_map_list_entry);
+            node_data->map = NULL;
+
+            IWineUiaNode_disconnect(&node_data->IWineUiaNode_iface);
         }
+
+        rb_remove(&provider_thread.node_map, &prov_map->entry);
+        SafeArrayDestroy(prov_map->runtime_id);
+        heap_free(prov_map);
     }
 
 exit:
@@ -1206,8 +1242,38 @@ static HRESULT uia_provider_thread_add_node(HUIANODE node)
     TRACE("Adding node %p\n", node);
 
     EnterCriticalSection(&provider_thread_cs);
-    node_data->runtime_id = sa;
     list_add_tail(&provider_thread.nodes_list, &node_data->prov_thread_list_entry);
+
+    /* If we have a runtime ID, create an entry in the rb tree. */
+    if (sa)
+    {
+        struct uia_provider_thread_map_entry *prov_map;
+        struct rb_entry *rb_entry;
+
+        if ((rb_entry = rb_get(&provider_thread.node_map, sa)))
+        {
+            prov_map = RB_ENTRY_VALUE(rb_entry, struct uia_provider_thread_map_entry, entry);
+            SafeArrayDestroy(sa);
+        }
+        else
+        {
+            prov_map = heap_alloc_zero(sizeof(*prov_map));
+            if (!prov_map)
+            {
+                SafeArrayDestroy(sa);
+                LeaveCriticalSection(&provider_thread_cs);
+                return E_OUTOFMEMORY;
+            }
+
+            prov_map->runtime_id = sa;
+            list_init(&prov_map->nodes_list);
+            rb_put(&provider_thread.node_map, sa, &prov_map->entry);
+        }
+
+        list_add_tail(&prov_map->nodes_list, &node_data->node_map_list_entry);
+        node_data->map = prov_map;
+    }
+
     LeaveCriticalSection(&provider_thread_cs);
 
     return S_OK;
@@ -1311,6 +1377,7 @@ static BOOL uia_start_provider_thread(void)
                 (const WCHAR *)uia_start_provider_thread, &hmodule);
 
         list_init(&provider_thread.nodes_list);
+        rb_init(&provider_thread.node_map, uia_runtime_id_compare);
         events[0] = ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (!(provider_thread.hthread = CreateThread(NULL, 0, uia_provider_thread_proc,
                 ready_event, 0, NULL)))
