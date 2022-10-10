@@ -610,15 +610,41 @@ HRESULT builtin_set_const(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
     return S_OK;
 }
 
+static HRESULT fill_props(jsdisp_t *obj)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    if(obj->builtin_info->idx_length) {
+        unsigned i = 0, len = obj->builtin_info->idx_length(obj);
+        WCHAR name[12];
+
+        for(i = 0; i < len; i++) {
+            swprintf(name, ARRAY_SIZE(name), L"%u", i);
+            hres = find_prop_name(obj, string_hash(name), name, FALSE, &prop);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT fill_protrefs(jsdisp_t *This)
 {
     dispex_prop_t *iter, *prop;
     HRESULT hres;
 
+    hres = fill_props(This);
+    if(FAILED(hres))
+        return hres;
+
     if(!This->prototype)
         return S_OK;
 
-    fill_protrefs(This->prototype);
+    hres = fill_protrefs(This->prototype);
+    if(FAILED(hres))
+        return hres;
 
     for(iter = This->prototype->props; iter < This->prototype->props+This->prototype->prop_cnt; iter++) {
         hres = find_prop_name(This, iter->hash, iter->name, FALSE, &prop);
@@ -2467,23 +2493,9 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
     HRESULT hres;
 
     if(id == DISPID_STARTENUM) {
-        if(obj->builtin_info->idx_length) {
-            unsigned i = 0, len = obj->builtin_info->idx_length(obj);
-            WCHAR name[12];
-
-            for(i = 0; i < len; i++) {
-                swprintf(name, ARRAY_SIZE(name), L"%d", i);
-                hres = find_prop_name(obj, string_hash(name), name, FALSE, &iter);
-                if(FAILED(hres))
-                    return hres;
-            }
-        }
-
-        if (enum_type == JSDISP_ENUM_ALL) {
-            hres = fill_protrefs(obj);
-            if(FAILED(hres))
-                return hres;
-        }
+        hres = (enum_type == JSDISP_ENUM_ALL) ? fill_protrefs(obj) : fill_props(obj);
+        if(FAILED(hres))
+            return hres;
         idx = 0;
     }
 
