@@ -186,7 +186,6 @@ struct heap
     DWORD            force_flags;   /* 0044/0074 */
     /* end of the Windows 10 compatible struct layout */
 
-    BOOL             shared;        /* System shared heap */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
     struct list      large_list;    /* Large blocks list */
@@ -753,7 +752,7 @@ static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *
         list_remove( &subheap->entry );
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
-    else if (!heap->shared)
+    else
     {
         /* keep room for a full committed block as hysteresis */
         subheap_decommit( heap, subheap, (char *)(entry + 1) + (COMMIT_MASK + 1) );
@@ -921,7 +920,6 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         if (!commitSize) commitSize = COMMIT_MASK + 1;
         totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4GB */
         if (totalSize < commitSize) totalSize = commitSize;
-        if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
         commitSize = min( totalSize, (commitSize + COMMIT_MASK) & ~COMMIT_MASK );
 
         /* allocate the memory block */
@@ -955,7 +953,6 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         heap->ffeeffee      = 0xffeeffee;
         heap->auto_flags    = (flags & HEAP_GROWABLE);
         heap->flags         = (flags & ~HEAP_SHARED);
-        heap->shared        = (flags & HEAP_SHARED) != 0;
         heap->magic         = HEAP_MAGIC;
         heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
         heap->min_size      = commitSize;
@@ -992,19 +989,6 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         {
             RtlInitializeCriticalSection( &heap->cs );
             heap->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": heap.cs");
-        }
-
-        if (heap->shared)
-        {
-            /* let's assume that only one thread at a time will try to do this */
-            HANDLE sem = heap->cs.LockSemaphore;
-            if (!sem) NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 );
-
-            NtDuplicateObject( NtCurrentProcess(), sem, NtCurrentProcess(), &sem, 0, 0,
-                               DUPLICATE_MAKE_GLOBAL | DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE );
-            heap->cs.LockSemaphore = sem;
-            RtlFreeHeap( process_heap, 0, heap->cs.DebugInfo );
-            heap->cs.DebugInfo = NULL;
         }
     }
 
