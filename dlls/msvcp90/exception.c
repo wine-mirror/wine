@@ -1216,6 +1216,15 @@ void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
     return;
 }
 #endif
+
+/*********************************************************************
+ * ?__ExceptionPtrToBool@@YA_NPBX@Z
+ * ?__ExceptionPtrToBool@@YA_NPEBX@Z
+ */
+bool __cdecl __ExceptionPtrToBool(exception_ptr *ep)
+{
+    return !!ep->rec;
+}
 #endif
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
