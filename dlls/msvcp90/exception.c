@@ -1309,6 +1309,14 @@ void __cdecl __ExceptionPtrCopyException(exception_ptr *ep,
 }
 #endif
 
+/*********************************************************************
+ * ?__ExceptionPtrCompare@@YA_NPBX0@Z
+ * ?__ExceptionPtrCompare@@YA_NPEBX0@Z
+ */
+bool __cdecl __ExceptionPtrCompare(const exception_ptr *ep1, const exception_ptr *ep2)
+{
+    return ep1->rec == ep2->rec;
+}
 #endif
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
