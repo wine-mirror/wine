@@ -887,6 +887,28 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleMode( HANDLE handle, DWORD *mode )
 
 
 /***********************************************************************
+ *	GetConsoleOriginalTitleA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleOriginalTitleA( LPSTR title, DWORD size )
+{
+    FIXME( ": (%p, %lu) stub!\n", title, size );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/***********************************************************************
+ *	GetConsoleOriginalTitleW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleOriginalTitleW( LPWSTR title, DWORD size )
+{
+    FIXME( ": (%p, %lu) stub!\n", title, size );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
+/***********************************************************************
  *	GetConsoleOutputCP   (kernelbase.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetConsoleOutputCP(void)

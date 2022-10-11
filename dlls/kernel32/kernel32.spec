@@ -610,8 +610,8 @@
 @ stdcall GetConsoleKeyboardLayoutNameW(ptr)
 @ stdcall -import GetConsoleMode(long ptr)
 @ stub GetConsoleNlsMode
-# @ stub GetConsoleOriginalTitleA
-# @ stub GetConsoleOriginalTitleW
+@ stdcall -import GetConsoleOriginalTitleA(ptr long)
+@ stdcall -import GetConsoleOriginalTitleW(ptr long)
 @ stdcall -import GetConsoleOutputCP()
 @ stdcall -import GetConsoleProcessList(ptr long)
 @ stdcall -import GetConsoleScreenBufferInfo(long ptr)

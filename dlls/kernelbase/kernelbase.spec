@@ -466,6 +466,8 @@
 @ stdcall GetConsoleInputExeNameA(long ptr)
 @ stdcall GetConsoleInputExeNameW(long ptr)
 @ stdcall GetConsoleMode(long ptr)
+@ stdcall GetConsoleOriginalTitleA(ptr long)
+@ stdcall GetConsoleOriginalTitleW(ptr long)
 @ stdcall GetConsoleOutputCP()
 @ stdcall GetConsoleProcessList(ptr long)
 @ stdcall GetConsoleScreenBufferInfo(long ptr)
