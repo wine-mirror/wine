@@ -1013,6 +1013,21 @@ void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
         HeapFree(GetProcessHeap(), 0, ep->ref);
     }
 }
+
+/*********************************************************************
+ * ?__ExceptionPtrCopy@@YAXPAXPBX@Z
+ * ?__ExceptionPtrCopy@@YAXPEAXPEBX@Z
+ */
+void __cdecl __ExceptionPtrCopy(exception_ptr *ep, const exception_ptr *copy)
+{
+    TRACE("(%p %p)\n", ep, copy);
+
+    /* don't destroy object stored in ep */
+    *ep = *copy;
+    if (ep->ref)
+        InterlockedIncrement(copy->ref);
+}
+
 #endif
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
