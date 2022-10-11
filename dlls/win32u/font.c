@@ -1555,31 +1555,56 @@ static const char system_link_tahoma_sc[] =
     "SIMSUN.TTC,SimSun\0"
     "MINGLIU.TTC,PMingLiu\0"
     "MSGOTHIC.TTC,MS UI Gothic\0"
-    "BATANG.TTC,Batang\0";
+    "BATANG.TTC,Batang\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
 
 static const char system_link_tahoma_tc[] =
     "MINGLIU.TTC,PMingLiu\0"
     "SIMSUN.TTC,SimSun\0"
     "MSGOTHIC.TTC,MS UI Gothic\0"
-    "BATANG.TTC,Batang\0";
+    "BATANG.TTC,Batang\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
 
 static const char system_link_tahoma_jp[] =
     "MSGOTHIC.TTC,MS UI Gothic\0"
     "MINGLIU.TTC,PMingLiU\0"
     "SIMSUN.TTC,SimSun\0"
-    "GULIM.TTC,Gulim\0";
+    "GULIM.TTC,Gulim\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
 
 static const char system_link_tahoma_kr[] =
     "GULIM.TTC,Gulim\0"
     "MSGOTHIC.TTC,MS UI Gothic\0"
     "MINGLIU.TTC,PMingLiU\0"
-    "SIMSUN.TTC,SimSun\0";
+    "SIMSUN.TTC,SimSun\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
 
 static const char system_link_tahoma_non_cjk[] =
     "MSGOTHIC.TTC,MS UI Gothic\0"
     "MINGLIU.TTC,PMingLiU\0"
     "SIMSUN.TTC,SimSun\0"
-    "GULIM.TTC,Gulim\0";
+    "GULIM.TTC,Gulim\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
 
 static const char system_link_ms_ui_gothic[] =
     "MICROSS.TTF,Microsoft Sans Serif\0"
