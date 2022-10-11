@@ -1044,6 +1044,29 @@ void __cdecl __ExceptionPtrAssign(exception_ptr *ep, const exception_ptr *assign
     if (ep->ref)
         InterlockedIncrement(ep->ref);
 }
+
+/*********************************************************************
+ * ?__ExceptionPtrRethrow@@YAXPBX@Z
+ * ?__ExceptionPtrRethrow@@YAXPEBX@Z
+ */
+void __cdecl __ExceptionPtrRethrow(const exception_ptr *ep)
+{
+    TRACE("(%p)\n", ep);
+
+    if (!ep->rec)
+    {
+        static const char *exception_msg = "bad exception";
+        exception e;
+
+        MSVCP_exception_ctor(&e, &exception_msg);
+        _CxxThrowException(&e, &exception_cxx_type);
+        return;
+    }
+
+    RaiseException(ep->rec->ExceptionCode, ep->rec->ExceptionFlags & (~EH_UNWINDING),
+            ep->rec->NumberParameters, ep->rec->ExceptionInformation);
+}
+
 #endif
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
