@@ -648,6 +648,8 @@ NTSTATUS wg_transform_push_data(void *args)
         GST_BUFFER_DURATION(buffer) = sample->duration * 100;
     if (!(sample->flags & WG_SAMPLE_FLAG_SYNC_POINT))
         GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+    if (sample->flags & WG_SAMPLE_FLAG_DISCONTINUITY)
+        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
     gst_atomic_queue_push(transform->input_queue, buffer);
 
     params->result = S_OK;
@@ -781,6 +783,8 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
     }
     if (!GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
         sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+    if (GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DISCONT))
+        sample->flags |= WG_SAMPLE_FLAG_DISCONTINUITY;
 
     if (needs_copy)
     {

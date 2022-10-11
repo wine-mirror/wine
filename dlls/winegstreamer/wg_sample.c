@@ -277,6 +277,8 @@ HRESULT wg_transform_push_mf(struct wg_transform *transform, IMFSample *sample,
     }
     if (SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value)) && value)
         wg_sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+    if (SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_Discontinuity, &value)) && value)
+        wg_sample->flags |= WG_SAMPLE_FLAG_DISCONTINUITY;
 
     wg_sample_queue_begin_append(queue, wg_sample);
     hr = wg_transform_push_data(transform, wg_sample);
@@ -320,6 +322,8 @@ HRESULT wg_transform_read_mf(struct wg_transform *transform, IMFSample *sample,
         IMFSample_SetSampleDuration(sample, wg_sample->duration);
     if (wg_sample->flags & WG_SAMPLE_FLAG_SYNC_POINT)
         IMFSample_SetUINT32(sample, &MFSampleExtension_CleanPoint, 1);
+    if (wg_sample->flags & WG_SAMPLE_FLAG_DISCONTINUITY)
+        IMFSample_SetUINT32(sample, &MFSampleExtension_Discontinuity, 1);
 
     if (SUCCEEDED(hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer)))
     {
@@ -354,6 +358,8 @@ HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sampl
 
     if (IMediaSample_IsSyncPoint(sample->u.quartz.sample) == S_OK)
         wg_sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+    if (IMediaSample_IsDiscontinuity(sample->u.quartz.sample) == S_OK)
+        wg_sample->flags |= WG_SAMPLE_FLAG_DISCONTINUITY;
 
     wg_sample_queue_begin_append(queue, wg_sample);
     hr = wg_transform_push_data(transform, wg_sample);
@@ -397,6 +403,8 @@ HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sampl
 
     value = !!(wg_sample->flags & WG_SAMPLE_FLAG_SYNC_POINT);
     IMediaSample_SetSyncPoint(sample->u.quartz.sample, value);
+    value = !!(wg_sample->flags & WG_SAMPLE_FLAG_DISCONTINUITY);
+    IMediaSample_SetDiscontinuity(sample->u.quartz.sample, value);
 
     return S_OK;
 }
