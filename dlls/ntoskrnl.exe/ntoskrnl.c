@@ -2569,6 +2569,15 @@ LONG WINAPI KeInsertQueue(PRKQUEUE Queue, PLIST_ENTRY Entry)
     return 0;
 }
 
+/***********************************************************************
+ *           KeInsertQueueDpc   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI KeInsertQueueDpc(PRKDPC Dpc, PVOID SystemArgument1, PVOID SystemArgument2)
+{
+    FIXME( "stub: (%p %p %p)\n", Dpc, SystemArgument1, SystemArgument2 );
+    return TRUE;
+}
+
 /**********************************************************************
  *           KeQueryActiveProcessors   (NTOSKRNL.EXE.@)
  *
