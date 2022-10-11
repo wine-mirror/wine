@@ -1551,6 +1551,78 @@ static const struct font_links_defaults_list
     }
 };
 
+static const char system_link_tahoma_sc[] =
+    "SIMSUN.TTC,SimSun\0"
+    "MINGLIU.TTC,PMingLiu\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "BATANG.TTC,Batang\0";
+
+static const char system_link_tahoma_tc[] =
+    "MINGLIU.TTC,PMingLiu\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "BATANG.TTC,Batang\0";
+
+static const char system_link_tahoma_jp[] =
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "GULIM.TTC,Gulim\0";
+
+static const char system_link_tahoma_kr[] =
+    "GULIM.TTC,Gulim\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0";
+
+static const char system_link_tahoma_non_cjk[] =
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "GULIM.TTC,Gulim\0";
+
+static const struct system_link_reg
+{
+    const WCHAR *font_name;
+    const char *link_sc;
+    DWORD link_sc_len;
+    const char *link_tc;
+    DWORD link_tc_len;
+    const char *link_jp;
+    DWORD link_jp_len;
+    const char *link_kr;
+    DWORD link_kr_len;
+    const char *link_non_cjk;
+    DWORD link_non_cjk_len;
+}
+default_system_link[] =
+{
+    {
+        tahomaW,
+        system_link_tahoma_sc,      sizeof(system_link_tahoma_sc),
+        system_link_tahoma_tc,      sizeof(system_link_tahoma_tc),
+        system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
+        system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
+        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
+    },
+    {
+        microsoft_sans_serifW,
+        system_link_tahoma_sc,      sizeof(system_link_tahoma_sc),
+        system_link_tahoma_tc,      sizeof(system_link_tahoma_tc),
+        system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
+        system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
+        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
+    },
+    {
+        lucida_sans_unicodeW,
+        system_link_tahoma_sc,      sizeof(system_link_tahoma_sc),
+        system_link_tahoma_tc,      sizeof(system_link_tahoma_tc),
+        system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
+        system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
+        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
+    },
+};
+
 static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
 {
     struct gdi_font_family *family;
@@ -2646,63 +2718,41 @@ static void set_multi_value_key( HKEY hkey, const WCHAR *name, const char *value
 
 static void update_font_system_link_info(void)
 {
-    static const char system_link_simplified_chinese[] =
-        "SIMSUN.TTC,SimSun\0"
-        "MINGLIU.TTC,PMingLiu\0"
-        "MSGOTHIC.TTC,MS UI Gothic\0"
-        "BATANG.TTC,Batang\0";
-    static const char system_link_traditional_chinese[] =
-        "MINGLIU.TTC,PMingLiu\0"
-        "SIMSUN.TTC,SimSun\0"
-        "MSGOTHIC.TTC,MS UI Gothic\0"
-        "BATANG.TTC,Batang\0";
-    static const char system_link_japanese[] =
-        "MSGOTHIC.TTC,MS UI Gothic\0"
-        "MINGLIU.TTC,PMingLiU\0"
-        "SIMSUN.TTC,SimSun\0"
-        "GULIM.TTC,Gulim\0";
-    static const char system_link_korean[] =
-        "GULIM.TTC,Gulim\0"
-        "MSGOTHIC.TTC,MS UI Gothic\0"
-        "MINGLIU.TTC,PMingLiU\0"
-        "SIMSUN.TTC,SimSun\0";
-    static const char system_link_non_cjk[] =
-        "MSGOTHIC.TTC,MS UI Gothic\0"
-        "MINGLIU.TTC,PMingLiU\0"
-        "SIMSUN.TTC,SimSun\0"
-        "GULIM.TTC,Gulim\0";
     HKEY hkey;
 
     if ((hkey = reg_create_key( NULL, system_link_keyW, sizeof(system_link_keyW), 0, NULL )))
     {
         const char *link;
-        DWORD len;
+        DWORD len, i;
 
-        switch (ansi_cp.CodePage)
+        for (i = 0; i < ARRAY_SIZE(default_system_link); ++i)
         {
-        case 932:
-            link = system_link_japanese;
-            len = sizeof(system_link_japanese);
-            break;
-        case 936:
-            link = system_link_simplified_chinese;
-            len = sizeof(system_link_simplified_chinese);
-            break;
-        case 949:
-            link = system_link_korean;
-            len = sizeof(system_link_korean);
-            break;
-        case 950:
-            link = system_link_traditional_chinese;
-            len = sizeof(system_link_traditional_chinese);
-            break;
-        default:
-            link = system_link_non_cjk;
-            len = sizeof(system_link_non_cjk);
+            const struct system_link_reg *link_reg = &default_system_link[i];
+
+            switch (ansi_cp.CodePage)
+            {
+            case 932:
+                link = link_reg->link_jp;
+                len = link_reg->link_jp_len;
+                break;
+            case 936:
+                link = link_reg->link_sc;
+                len = link_reg->link_sc_len;
+                break;
+            case 949:
+                link = link_reg->link_kr;
+                len = link_reg->link_kr_len;
+                break;
+            case 950:
+                link = link_reg->link_tc;
+                len = link_reg->link_tc_len;
+                break;
+            default:
+                link = link_reg->link_non_cjk;
+                len = link_reg->link_non_cjk_len;
+            }
+            set_multi_value_key(hkey, link_reg->font_name, link, len);
         }
-        set_multi_value_key(hkey, lucida_sans_unicodeW, link, len);
-        set_multi_value_key(hkey, microsoft_sans_serifW, link, len);
-        set_multi_value_key(hkey, tahomaW, link, len);
         NtClose( hkey );
     }
 }
