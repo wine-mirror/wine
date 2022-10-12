@@ -718,7 +718,7 @@ static HRESULT uia_provider_get_elem_prop_val(struct uia_provider *prov,
         if (FAILED(hr))
             goto exit;
 
-        hr = UiaNodeFromProvider(elprov, &node);
+        hr = create_uia_node_from_elprov(elprov, &node, !prov->return_nested_node);
         IRawElementProviderSimple_Release(elprov);
         if (SUCCEEDED(hr))
         {
@@ -897,10 +897,9 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
     return S_OK;
 }
 
-/***********************************************************************
- *          UiaNodeFromProvider (uiautomationcore.@)
- */
-HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *huianode)
+static HRESULT uia_get_provider_from_hwnd(struct uia_node *node);
+HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
+        BOOL get_hwnd_providers)
 {
     static const int unsupported_prov_opts = ProviderOptions_ProviderOwnsSetFocus | ProviderOptions_HasNativeIAccessible |
         ProviderOptions_UseClientCoordinates;
@@ -909,12 +908,7 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
     int prov_type;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", elprov, huianode);
-
-    if (!elprov || !huianode)
-        return E_INVALIDARG;
-
-    *huianode = NULL;
+    *out_node = NULL;
 
     hr = IRawElementProviderSimple_get_ProviderOptions(elprov, &prov_opts);
     if (FAILED(hr))
@@ -951,6 +945,9 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
         return hr;
     }
 
+    if (node->hwnd && get_hwnd_providers)
+        uia_get_provider_from_hwnd(node);
+
     hr = prepare_uia_node(node);
     if (FAILED(hr))
     {
@@ -958,9 +955,22 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
         return hr;
     }
 
-    *huianode = (void *)&node->IWineUiaNode_iface;
+    *out_node = (void *)&node->IWineUiaNode_iface;
 
     return S_OK;
+}
+
+/***********************************************************************
+ *          UiaNodeFromProvider (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *huianode)
+{
+    TRACE("(%p, %p)\n", elprov, huianode);
+
+    if (!elprov || !huianode)
+        return E_INVALIDARG;
+
+    return create_uia_node_from_elprov(elprov, huianode, TRUE);
 }
 
 /*
@@ -1276,6 +1286,14 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
         prov_type = PROV_TYPE_OVERRIDE;
     else
         prov_type = PROV_TYPE_MAIN;
+
+    if (node->prov[prov_type])
+    {
+        TRACE("Already have a provider of type %d for this node.\n", prov_type);
+        IWineUiaNode_Release(nested_node);
+        uia_stop_client_thread();
+        return S_OK;
+    }
 
     /*
      * If we're retrieving a node from an HWND that belongs to the same thread
