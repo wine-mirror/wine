@@ -44,6 +44,7 @@ library UIA_wine_private
     interface IWineUiaProvider : IUnknown
     {
         HRESULT get_prop_val([in]const struct uia_prop_info *prop_info, [out, retval]VARIANT *ret_val);
+        HRESULT get_prov_opts([out, retval]int *out_opts);
     }
 
     [

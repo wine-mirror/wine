@@ -4988,7 +4988,7 @@ static const struct prov_method_sequence node_from_hwnd3[] = {
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
 };
@@ -5040,7 +5040,7 @@ static const struct prov_method_sequence node_from_hwnd6[] = {
     { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
-    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     /* Next two are only done on Win10v1809+. */
     { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
@@ -5060,7 +5060,7 @@ static const struct prov_method_sequence node_from_hwnd7[] = {
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
@@ -5078,7 +5078,7 @@ static const struct prov_method_sequence node_from_hwnd8[] = {
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ControlTypePropertyId */
     { 0 }

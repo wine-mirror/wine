@@ -333,6 +333,22 @@ int get_node_provider_type_at_idx(struct uia_node *node, int idx)
     return 0;
 }
 
+static HRESULT get_prov_opts_from_node_provider(IWineUiaNode *node, int idx, int *out_opts)
+{
+    IWineUiaProvider *prov;
+    HRESULT hr;
+
+    *out_opts = 0;
+    hr = IWineUiaNode_get_provider(node, idx, &prov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWineUiaProvider_get_prov_opts(prov, out_opts);
+    IWineUiaProvider_Release(prov);
+
+    return hr;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -839,11 +855,28 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
     return S_OK;
 }
 
+static HRESULT WINAPI uia_provider_get_prov_opts(IWineUiaProvider *iface, int *out_opts)
+{
+    struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
+    enum ProviderOptions prov_opts;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, out_opts);
+
+    *out_opts = 0;
+    hr = IRawElementProviderSimple_get_ProviderOptions(prov->elprov, &prov_opts);
+    if (SUCCEEDED(hr))
+        *out_opts = prov_opts;
+
+    return S_OK;
+}
+
 static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_QueryInterface,
     uia_provider_AddRef,
     uia_provider_Release,
     uia_provider_get_prop_val,
+    uia_provider_get_prov_opts,
 };
 
 static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov,
@@ -1186,11 +1219,21 @@ static HRESULT WINAPI uia_nested_node_provider_get_prop_val(IWineUiaProvider *if
     return S_OK;
 }
 
+static HRESULT WINAPI uia_nested_node_provider_get_prov_opts(IWineUiaProvider *iface, int *out_opts)
+{
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+
+    TRACE("%p, %p\n", iface, out_opts);
+
+    return get_prov_opts_from_node_provider(prov->nested_node, 0, out_opts);
+}
+
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_QueryInterface,
     uia_nested_node_provider_AddRef,
     uia_nested_node_provider_Release,
     uia_nested_node_provider_get_prop_val,
+    uia_nested_node_provider_get_prov_opts,
 };
 
 static BOOL is_nested_node_provider(IWineUiaProvider *iface)
@@ -1208,6 +1251,7 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
     struct uia_nested_node_provider *prov;
     IGlobalInterfaceTable *git;
     IWineUiaNode *nested_node;
+    int prov_opts, prov_type;
     DWORD git_cookie;
     HRESULT hr;
 
@@ -1217,6 +1261,21 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
         uia_stop_client_thread();
         return hr;
     }
+
+    hr = get_prov_opts_from_node_provider(nested_node, 0, &prov_opts);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get provider options for node %p with hr %#lx\n", nested_node, hr);
+        IWineUiaNode_Release(nested_node);
+        uia_stop_client_thread();
+        return hr;
+    }
+
+    /* Nested nodes can only serve as override or main providers. */
+    if (prov_opts & ProviderOptions_OverrideProvider)
+        prov_type = PROV_TYPE_OVERRIDE;
+    else
+        prov_type = PROV_TYPE_MAIN;
 
     /*
      * If we're retrieving a node from an HWND that belongs to the same thread
@@ -1276,8 +1335,8 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
         }
     }
 
-    node->prov[PROV_TYPE_MAIN] = provider_iface;
-    node->git_cookie[PROV_TYPE_MAIN] = git_cookie;
+    node->prov[prov_type] = provider_iface;
+    node->git_cookie[prov_type] = git_cookie;
     node->prov_count++;
 
     return S_OK;
