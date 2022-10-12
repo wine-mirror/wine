@@ -4168,8 +4168,8 @@ HRESULT CDECL wined3d_device_context_blt(struct wined3d_device_context *context,
         return E_NOTIMPL;
     }
 
-    wined3d_device_context_emit_blt_sub_resource(&dst_texture->resource.device->cs->c, &dst_texture->resource,
-            dst_sub_resource_idx, &dst_box, &src_texture->resource, src_sub_resource_idx, &src_box, flags, fx, filter);
+    wined3d_device_context_emit_blt_sub_resource(context, &dst_texture->resource, dst_sub_resource_idx,
+            &dst_box, &src_texture->resource, src_sub_resource_idx, &src_box, flags, fx, filter);
 
     if (dst_texture->dirty_regions)
         wined3d_texture_add_dirty_region(dst_texture, dst_sub_resource_idx, &dst_box);
