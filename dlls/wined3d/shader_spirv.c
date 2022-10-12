@@ -25,6 +25,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 static const struct wined3d_shader_backend_ops spirv_shader_backend_vk;
 
+static const struct vkd3d_shader_compile_option spirv_compile_options[] =
+{
+    {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_3},
+};
+
 struct shader_spirv_resource_bindings
 {
     struct vkd3d_shader_resource_binding *bindings;
@@ -266,8 +271,8 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
     info.source.size = shader_desc->byte_code_size;
     info.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
-    info.options = NULL;
-    info.option_count = 0;
+    info.options = spirv_compile_options;
+    info.option_count = ARRAY_SIZE(spirv_compile_options);
     info.log_level = VKD3D_SHADER_LOG_WARNING;
     info.source_name = NULL;
 
@@ -596,6 +601,8 @@ static enum wined3d_data_type wined3d_data_type_from_vkd3d(enum vkd3d_shader_res
             return WINED3D_DATA_UINT;
         case VKD3D_SHADER_RESOURCE_DATA_FLOAT:
             return WINED3D_DATA_FLOAT;
+        case VKD3D_SHADER_RESOURCE_DATA_MIXED:
+            return WINED3D_DATA_UINT;
         default:
             FIXME("Unhandled resource data type %#x.\n", t);
             return WINED3D_DATA_FLOAT;
@@ -703,8 +710,8 @@ static void shader_spirv_scan_shader(struct wined3d_shader *shader,
     info.source.size = shader->byte_code_size;
     info.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
-    info.options = NULL;
-    info.option_count = 0;
+    info.options = spirv_compile_options;
+    info.option_count = ARRAY_SIZE(spirv_compile_options);
     info.log_level = VKD3D_SHADER_LOG_WARNING;
     info.source_name = NULL;
 
