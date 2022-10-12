@@ -728,7 +728,7 @@ const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
 }
 
 /* return the stdcall-decorated name for an entry point */
-static const char *get_abi_name( const ORDDEF *odp, const char *name )
+const char *get_abi_name( const ORDDEF *odp, const char *name )
 {
     static char *buffer;
     char *ret;

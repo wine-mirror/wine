@@ -1630,8 +1630,169 @@ static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struc
 /* create a Windows-style import library */
 static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
 {
-    if (verbose) fprintf( stderr, "Not implemented, falling back to dlltool.\n" );
-    build_dlltool_import_lib( output_file_name, spec, files );
+    char *dll_name, *import_desc, *import_name;
+    struct strarray objs = empty_strarray;
+    int i, total, by_name;
+    const char *name;
+
+    if (strendswith( lib_name, ".delay.a" ))
+    {
+        if (verbose) fprintf( stderr, "Not implemented, falling back to dlltool.\n" );
+        build_dlltool_import_lib( output_file_name, spec, files );
+        return;
+    }
+
+    /* make sure assemble_files doesn't strip suffixes */
+    dll_name = encode_dll_name( spec->file_name );
+    for (i = 0; i < strlen( dll_name ); ++i) if (dll_name[i] == '.') dll_name[i] = '_';
+
+    import_desc = strmake( "__wine_import_%s_desc", dll_name );
+    import_name = strmake( "__wine_import_%s_name", dll_name );
+
+    new_output_as_file();
+
+    output( "\n\t.section \".idata$2\"\n" );
+    output( "%s\n", asm_globl( import_desc ) );
+    output_rva( ".L__wine_import_names" );               /* OriginalFirstThunk */
+    output( "\t.long 0\n" );                             /* TimeDateStamp */
+    output( "\t.long 0\n" );                             /* ForwarderChain */
+    output_rva( "%s", asm_name( import_name ) );         /* Name */
+    output_rva( ".L__wine_import_addrs" );               /* FirstThunk */
+
+    output( "\n\t.section \".idata$4\"\n" );
+    output( ".L__wine_import_names:\n" );                /* OriginalFirstThunk head */
+
+    output( "\n\t.section \".idata$5\"\n" );
+    output( ".L__wine_import_addrs:\n" );                /* FirstThunk head */
+
+    /* _head suffix to keep this object sections first */
+    assemble_files( strmake( "%s_head", dll_name ) );
+    strarray_addall( &objs, as_files );
+    as_files = empty_strarray;
+
+    new_output_as_file();
+
+    output( "\n\t.section \".idata$4\"\n" );
+    output( "\t%s 0\n", get_asm_ptr_keyword() );         /* OriginalFirstThunk tail */
+    output( "\n\t.section \".idata$5\"\n" );
+    output( "\t%s 0\n", get_asm_ptr_keyword() );         /* FirstThunk tail */
+    output( "\n\t.section \".idata$7\"\n" );
+    output( "%s\n", asm_globl( import_name ) );
+    output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
+
+    /* _tail suffix to keep this object sections last */
+    assemble_files( strmake( "%s_tail", dll_name ) );
+    strarray_addall( &objs, as_files );
+    as_files = empty_strarray;
+
+    for (i = total = 0; i < spec->nb_entry_points; i++)
+    {
+        const ORDDEF *odp = &spec->entry_points[i];
+        const char *abi_name;
+        char *imp_name;
+
+        if (odp->name) name = odp->name;
+        else if (odp->export_name) name = odp->export_name;
+        else continue;
+
+        if (odp->flags & FLAG_PRIVATE) continue;
+        total++;
+
+        /* C++ mangled names cannot be imported */
+        if (strpbrk( name, "?@" )) continue;
+
+        switch (odp->type)
+        {
+        case TYPE_VARARGS:
+        case TYPE_CDECL:
+        case TYPE_STDCALL:
+            by_name = odp->name && !(odp->flags & FLAG_ORDINAL);
+            abi_name = get_abi_name( odp, name );
+            imp_name = strmake( "%s_imp_%s", target.cpu != CPU_i386 ? "_" : "",
+                                asm_name( abi_name ) );
+
+            new_output_as_file();
+
+            output( "\n\t.text\n" );
+            output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
+            output( "%s\n", asm_globl( abi_name ) );
+            output( "\t%s\n", func_declaration( abi_name ) );
+
+            switch (target.cpu)
+            {
+            case CPU_i386:
+                output( "\tjmp *%s\n", asm_name( imp_name ) );
+                break;
+            case CPU_x86_64:
+                output( "\tjmp *%s(%%rip)\n", asm_name( imp_name ) );
+                break;
+            case CPU_ARM:
+                output( "\tldr IP, 1f\n" );
+                output( "\tldr PC, [IP]\n" );
+                output( "1:\t.long %s\n", asm_name( imp_name ) );
+                break;
+            case CPU_ARM64:
+                output( "\tadrp x16, %s\n", arm64_page( asm_name( imp_name ) ) );
+                output( "\tadd x16, x16, #%s\n", arm64_pageoff( asm_name( imp_name ) ) );
+                output( "\tbr x16\n" );
+                break;
+            }
+
+            output( "\n\t.section \".idata$4\"\n" );
+            if (by_name)
+            {
+                output_rva( ".L__wine_import_name" );
+                if (get_ptr_size() == 8) output( "\t.long 0\n" );
+            }
+            else
+            {
+                if (get_ptr_size() == 4) output( "\t.long 0x8000%04x\n", odp->ordinal );
+                else output( "\t.quad 0x800000000000%04x\n", odp->ordinal );
+            }
+
+            output( "\n\t.section \".idata$5\"\n" );
+            output( "%s\n", asm_globl( imp_name ) );
+            if (by_name)
+            {
+                output_rva( ".L__wine_import_name" );
+                if (get_ptr_size() == 8) output( "\t.long 0\n" );
+            }
+            else
+            {
+                if (get_ptr_size() == 4) output( "\t.long 0x8000%04x\n", odp->ordinal );
+                else output( "\t.quad 0x800000000000%04x\n", odp->ordinal );
+            }
+
+            if (by_name)
+            {
+                output( "\n\t.section \".idata$6\"\n" );
+                output( ".L__wine_import_name:\n" );
+                output( "\t.short %d\n", odp->ordinal );
+                output( "\t%s \"%s\"\n", get_asm_string_keyword(), name );
+            }
+
+            /* reference head object to always pull its sections */
+            output( "\n\t.section \".idata$7\"\n" );
+            output_rva( "%s", asm_name( import_desc ) );
+
+            free( imp_name );
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    /* _syms suffix to keep these objects sections in between _head and _tail */
+    assemble_files( strmake( "%s_syms", dll_name ) );
+    strarray_addall( &objs, as_files );
+    as_files = objs;
+
+    free( import_desc );
+    free( import_name );
+    free( dll_name );
+
+    output_static_lib( output_file_name, files, 1 );
 }
 
 /* create a Unix-style import library */
