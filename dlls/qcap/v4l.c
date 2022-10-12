@@ -528,8 +528,8 @@ static NTSTATUS v4l_device_create( void *args )
             else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE
                     || frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS)
             {
-                max_fps = frmival.stepwise.max.denominator / frmival.stepwise.max.numerator;
-                min_fps = frmival.stepwise.min.denominator / frmival.stepwise.min.numerator;
+                min_fps = frmival.stepwise.max.denominator / frmival.stepwise.max.numerator;
+                max_fps = frmival.stepwise.min.denominator / frmival.stepwise.min.numerator;
             }
         }
         else
