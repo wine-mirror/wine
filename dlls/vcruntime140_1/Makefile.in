@@ -1,4 +1,5 @@
-MODULE = vcruntime140_1.dll
+MODULE  = vcruntime140_1.dll
+IMPORTS = vcruntime140
 
 C_SRCS = \
 	except_x86_64.c
