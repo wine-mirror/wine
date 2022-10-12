@@ -1510,7 +1510,8 @@ static void test_multi_encoder_impl(const struct bitmap_data **srcs, const CLSID
                         hr = IWICBitmapFrameEncode_WriteSource_Proxy(frameencode, &src_obj->IWICBitmapSource_iface, rc);
                         if (!set_size && rc->Width < 0)
                             todo_wine
-                            ok(hr == WINCODEC_ERR_SOURCERECTDOESNOTMATCHDIMENSIONS,
+                            ok(hr == WINCODEC_ERR_SOURCERECTDOESNOTMATCHDIMENSIONS ||
+                               hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW) /* win11 */,
                                "WriteSource_Proxy(%dx%d) got unexpected hr %lx (%s)\n", rc->Width, rc->Height, hr, name);
                         else
                             ok(hr == S_OK, "WriteSource_Proxy failed, %dx%d, hr=%lx (%s)\n", rc->Width, rc->Height, hr, name);
