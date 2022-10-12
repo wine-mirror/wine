@@ -353,6 +353,7 @@ struct testfilter
 {
     struct strmbase_filter filter;
     struct strmbase_sink sink;
+    HANDLE got_sample;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -371,6 +372,8 @@ static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, un
 static void testfilter_destroy(struct strmbase_filter *iface)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface);
+
+    CloseHandle(filter->got_sample);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
 }
@@ -396,6 +399,17 @@ static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, 
 
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    REFERENCE_TIME start, end;
+    HRESULT hr;
+
+    if (winetest_debug > 1) trace("Receive()\n");
+
+    hr = IMediaSample_GetTime(sample, &start, &end);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    SetEvent(filter->got_sample);
+
     return S_OK;
 }
 
@@ -411,13 +425,16 @@ static void testfilter_init(struct testfilter *filter)
     memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
+    filter->got_sample = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
-static void test_filter_state(IMediaControl *control, IMemAllocator *allocator)
+static void test_filter_state(IMediaControl *control, struct testfilter *filter)
 {
+    IMemAllocator *allocator = filter->sink.pAllocator;
     IMediaSample *sample;
     OAFilterState state;
     HRESULT hr;
+    DWORD ret;
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -439,6 +456,13 @@ static void test_filter_state(IMediaControl *control, IMemAllocator *allocator)
 
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* starting up the webcam can be a little slow */
+    ret = WaitForSingleObject(filter->got_sample, 5000);
+    ok(!ret, "Got %lu.\n", ret);
+
+    ret = WaitForSingleObject(filter->got_sample, 1000);
+    ok(!ret, "Got %lu.\n", ret);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -547,7 +571,7 @@ static void test_connect_pin(IBaseFilter *filter, IPin *source)
 
     ok(!!testsink.sink.pAllocator, "Expected to be assigned an allocator.\n");
 
-    test_filter_state(control, testsink.sink.pAllocator);
+    test_filter_state(control, &testsink);
 
     hr = IPin_ConnectedTo(source, &peer);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
