@@ -387,8 +387,8 @@ static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
     caps->media_type.cbFormat = sizeof(VIDEOINFOHEADER);
     /* We reallocate the caps array, so pbFormat has to be set after all caps
      * have been enumerated. */
-    caps->config.MaxFrameInterval = 10000000 * max_fps;
-    caps->config.MinFrameInterval = 10000000 * min_fps;
+    caps->config.MaxFrameInterval = 10000000 / max_fps;
+    caps->config.MinFrameInterval = 10000000 / min_fps;
     caps->config.MaxOutputSize.cx = width;
     caps->config.MaxOutputSize.cy = height;
     caps->config.MinOutputSize.cx = width;
