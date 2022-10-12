@@ -32,6 +32,7 @@ namespace Windows.Devices.Enumeration {
     typedef enum DeviceInformationKind DeviceInformationKind;
     typedef enum DeviceWatcherStatus DeviceWatcherStatus;
     typedef enum Panel Panel;
+    typedef enum DeviceAccessStatus DeviceAccessStatus;
 
     interface IDeviceInformation;
     interface IDeviceInformationStatics;
@@ -45,6 +46,8 @@ namespace Windows.Devices.Enumeration {
     runtimeclass DeviceThumbnail;
     runtimeclass DeviceWatcher;
     runtimeclass EnclosureLocation;
+    runtimeclass DeviceAccessChangedEventArgs;
+    runtimeclass DeviceAccessInformation;
 
     declare
     {
@@ -61,6 +64,7 @@ namespace Windows.Devices.Enumeration {
         interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, Windows.Devices.Enumeration.DeviceInformation *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, Windows.Devices.Enumeration.DeviceInformationUpdate *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceAccessInformation *, Windows.Devices.Enumeration.DeviceAccessChangedEventArgs *>;
     }
 }
 
@@ -113,6 +117,15 @@ namespace Windows.Devices.Enumeration {
         Bottom  = 4,
         Left    = 5,
         Right   = 6,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum DeviceAccessStatus
+    {
+        Unspecified    = 0,
+        Allowed        = 1,
+        DeniedByUser   = 2,
+        DeniedBySystem = 3,
     };
 
     [
@@ -206,6 +219,51 @@ namespace Windows.Devices.Enumeration {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Enumeration.DeviceAccessChangedEventArgs),
+        uuid(deda0bcc-4f9d-4f58-9dba-a9bc800408d5)
+    ]
+    interface IDeviceAccessChangedEventArgs : IInspectable
+    {
+        [propget] HRESULT Status([out, retval] Windows.Devices.Enumeration.DeviceAccessStatus *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Devices.Enumeration.DeviceAccessChangedEventArgs),
+        uuid(82523262-934b-4b30-a178-adc39f2f2be3)
+    ]
+    interface IDeviceAccessChangedEventArgs2 : IInspectable
+        requires Windows.Devices.Enumeration.IDeviceAccessChangedEventArgs
+    {
+        [propget] HRESULT Id([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Enumeration.DeviceAccessInformation),
+        uuid(0baa9a73-6de5-4915-8ddd-9a0554a6f545)
+    ]
+    interface IDeviceAccessInformation : IInspectable
+    {
+        [eventadd] HRESULT AccessChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceAccessInformation *, Windows.Devices.Enumeration.DeviceAccessChangedEventArgs *> *handler, [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT AccessChanged([in] EventRegistrationToken cookie);
+        [propget] HRESULT CurrentStatus([out, retval] Windows.Devices.Enumeration.DeviceAccessStatus *status);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Enumeration.DeviceAccessInformation),
+        uuid(574bd3d3-5f30-45cd-8a94-724fe5973084),
+    ]
+    interface IDeviceAccessInformationStatics : IInspectable
+    {
+        HRESULT CreateFromId([in] HSTRING device_id, [out, retval] Windows.Devices.Enumeration.DeviceAccessInformation **value);
+        HRESULT CreateFromDeviceClassId([in] GUID device_class_id, [out, retval] Windows.Devices.Enumeration.DeviceAccessInformation **value);
+        HRESULT CreateFromDeviceClass([in] Windows.Devices.Enumeration.DeviceClass device_class, [out, retval] Windows.Devices.Enumeration.DeviceAccessInformation **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Devices.Enumeration.IDeviceInformationStatics, Windows.Foundation.UniversalApiContract, 1.0),
         static(Windows.Devices.Enumeration.IDeviceInformationStatics2, Windows.Foundation.UniversalApiContract, 1.0),
@@ -265,4 +323,26 @@ namespace Windows.Devices.Enumeration {
     {
         [default] interface Windows.Devices.Enumeration.IEnclosureLocation;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DeviceAccessChangedEventArgs
+    {
+        [default] interface Windows.Devices.Enumeration.IDeviceAccessChangedEventArgs;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Devices.Enumeration.IDeviceAccessChangedEventArgs2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Enumeration.IDeviceAccessInformationStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass DeviceAccessInformation
+    {
+        [default] interface Windows.Devices.Enumeration.IDeviceAccessInformation;
+    }
+
 }
