@@ -523,6 +523,17 @@ static HRESULT WINAPI uia_node_disconnect(IWineUiaNode *iface)
     return S_OK;
 }
 
+static HRESULT WINAPI uia_node_get_hwnd(IWineUiaNode *iface, ULONG *out_hwnd)
+{
+    struct uia_node *node = impl_from_IWineUiaNode(iface);
+
+    TRACE("%p, %p\n", node, out_hwnd);
+
+    *out_hwnd = HandleToUlong(node->hwnd);
+
+    return S_OK;
+}
+
 static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_QueryInterface,
     uia_node_AddRef,
@@ -530,6 +541,7 @@ static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_get_provider,
     uia_node_get_prop_val,
     uia_node_disconnect,
+    uia_node_get_hwnd,
 };
 
 static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
@@ -1351,6 +1363,15 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
             IWineUiaProvider_Release(&prov->IWineUiaProvider_iface);
             return hr;
         }
+
+        if (!node->hwnd)
+        {
+            ULONG hwnd;
+
+            hr = IWineUiaNode_get_hwnd(nested_node, &hwnd);
+            if (SUCCEEDED(hr))
+                node->hwnd = UlongToHandle(hwnd);
+        }
     }
 
     node->prov[prov_type] = provider_iface;
@@ -1381,6 +1402,13 @@ static HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
     {
         heap_free(node);
         return hr;
+    }
+
+    if (node->hwnd)
+    {
+        hr = uia_get_provider_from_hwnd(node);
+        if (FAILED(hr))
+            WARN("uia_get_provider_from_hwnd failed with hr %#lx\n", hr);
     }
 
     hr = prepare_uia_node(node);

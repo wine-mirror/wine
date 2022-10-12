@@ -5061,12 +5061,12 @@ static const struct prov_method_sequence node_from_hwnd7[] = {
     { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
-    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
 };
@@ -5352,7 +5352,7 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     SET_EXPECT(winproc_GETOBJECT_CLIENT);
     hr = UiaGetPropertyValue(node, UIA_LabeledByPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
     ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
 
