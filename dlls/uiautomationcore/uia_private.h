@@ -30,12 +30,35 @@ enum uia_prop_type {
     PROP_TYPE_SPECIAL,
 };
 
+/*
+ * HUIANODEs that have an associated HWND are able to pull data from up to 4
+ * different providers:
+ *
+ * - Override providers are used to override values from all other providers.
+ * - Main providers are the base provider for an HUIANODE.
+ * - Nonclient providers are used to represent the nonclient area of the HWND.
+ * - HWND providers are used to represent data from the HWND as a whole, such
+ *   as the bounding box.
+ *
+ * When a property is requested from the node, each provider is queried in
+ * descending order starting with the override provider until either one
+ * returns a property or there are no more providers to query.
+ */
+enum uia_node_prov_type {
+    PROV_TYPE_OVERRIDE,
+    PROV_TYPE_MAIN,
+    PROV_TYPE_NONCLIENT,
+    PROV_TYPE_HWND,
+    PROV_TYPE_COUNT,
+};
+
 struct uia_node {
     IWineUiaNode IWineUiaNode_iface;
     LONG ref;
 
-    IWineUiaProvider *prov;
-    DWORD git_cookie;
+    IWineUiaProvider *prov[PROV_TYPE_COUNT];
+    DWORD git_cookie[PROV_TYPE_COUNT];
+    int prov_count;
 
     HWND hwnd;
     BOOL nested_node;
@@ -65,6 +88,7 @@ static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *
 
 /* uia_client.c */
 int uia_compare_runtime_ids(SAFEARRAY *sa1, SAFEARRAY *sa2) DECLSPEC_HIDDEN;
+int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
 
 /* uia_ids.c */
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;
