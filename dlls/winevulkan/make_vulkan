@@ -587,10 +587,7 @@ class VkFunction(object):
             vk_param = VkParam.from_xml(param, types)
             params.append(vk_param)
 
-        func = VkFunction(_type=func_type, name=func_name, params=params)
-        for param in params:
-            param.set_conversions(func)
-        return func
+        return VkFunction(_type=func_type, name=func_name, params=params)
 
     def get_conversions(self):
         """ Get a list of conversion functions required for this function if any.
@@ -813,7 +810,7 @@ class VkFunction(object):
         # Call any win_to_host conversion calls.
         unwrap = self.thunk_type == ThunkType.PUBLIC
         for p in self.params:
-            if p.needs_input_conversion(conv) and (conv or (unwrap and p.needs_unwrapping())):
+            if p.needs_input_conversion(conv, unwrap):
                 body += p.copy(Direction.INPUT, conv, unwrap, prefix=params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
@@ -834,11 +831,8 @@ class VkFunction(object):
             body += "    {0}result = {1}{2}({3});\n".format(params_prefix, func_prefix, self.name, params)
 
         # Call any host_to_win conversion calls.
-        if conv:
-            for p in self.params:
-                if not p.needs_output_conversion(conv):
-                    continue
-
+        for p in self.params:
+            if p.needs_output_conversion(conv, unwrap):
                 body += p.copy(Direction.OUTPUT, conv, unwrap, prefix=params_prefix)
 
         if needs_alloc:
@@ -1483,33 +1477,6 @@ class VkParam(VkVariable):
 
         return VkParam(type_info, const=const, pointer=pointer, name=name, array_len=array_len, dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
 
-    def set_conversions(self, func):
-        """ Internal helper function to configure any needed conversion functions. """
-
-        self.func = func
-        self.input_conv = None
-        self.input_unwrap = None
-        self.output_conv = None
-        self.output_unwrap = None
-
-        unwrap = func.thunk_type == ThunkType.PUBLIC;
-
-        # Input functions require win to host conversion.
-        if self._direction in [Direction.INPUT, Direction.INPUT_OUTPUT]:
-            if unwrap and self.needs_unwrapping():
-                self.input_unwrap = ConversionFunction(self, Direction.INPUT, False, True)
-                self.input_conv = ConversionFunction(self, Direction.INPUT, True, True)
-            elif self.needs_conversion():
-                self.input_conv = ConversionFunction(self, Direction.INPUT, True, unwrap or not self.needs_unwrapping())
-
-        # Output functions require host to win conversion.
-        if self._direction in [Direction.INPUT_OUTPUT, Direction.OUTPUT]:
-            if unwrap and self.needs_unwrapping():
-                self.output_conv = ConversionFunction(self, Direction.OUTPUT, False)
-                self.output_conv = ConversionFunction(self, Direction.OUTPUT, True)
-            elif self.needs_conversion():
-                self.output_conv = ConversionFunction(self, Direction.OUTPUT, True, unwrap or not self.needs_unwrapping())
-
     def _set_direction(self):
         """ Internal helper function to set parameter direction (input/output/input_output). """
 
@@ -1688,14 +1655,23 @@ class VkParam(VkVariable):
                 conversions.extend(m.get_conversions(func))
 
         # Conversion requirements for the 'parent' parameter.
-        if self.input_unwrap is not None:
-            conversions.append(self.input_unwrap)
-        if self.input_conv is not None:
-            conversions.append(self.input_conv)
-        if self.output_unwrap is not None:
-            conversions.append(self.output_unwrap)
-        if self.output_conv is not None:
-            conversions.append(self.output_conv)
+        unwrap = func.thunk_type == ThunkType.PUBLIC;
+
+        # Input functions require win to host conversion.
+        if self._direction in [Direction.INPUT, Direction.INPUT_OUTPUT]:
+            if unwrap and self.needs_unwrapping():
+                conversions.append(ConversionFunction(self, Direction.INPUT, False, True))
+                conversions.append(ConversionFunction(self, Direction.INPUT, True, True))
+            elif self.needs_conversion():
+                conversions.append(ConversionFunction(self, Direction.INPUT, True, unwrap or not self.needs_unwrapping()))
+
+        # Output functions require host to win conversion.
+        if self._direction in [Direction.INPUT_OUTPUT, Direction.OUTPUT]:
+            if unwrap and self.needs_unwrapping():
+                conversions.append(ConversionFunction(self, Direction.OUTPUT, False))
+                conversions.append(ConversionFunction(self, Direction.OUTPUT, True))
+            elif self.needs_conversion():
+                conversions.append(ConversionFunction(self, Direction.OUTPUT, True, unwrap or not self.needs_unwrapping()))
 
         return conversions
 
@@ -1737,11 +1713,19 @@ class VkParam(VkVariable):
 
         return False
 
-    def needs_input_conversion(self, conv):
-        return (self.input_conv if conv else self.input_unwrap) is not None
+    def needs_input_conversion(self, conv, unwrap):
+        if not self._direction in [Direction.INPUT, Direction.INPUT_OUTPUT]:
+            return False
+        if unwrap and self.needs_unwrapping():
+            return True
+        return conv and self.needs_conversion()
 
-    def needs_output_conversion(self, conv):
-        return (self.output_conv if conv else self.output_unwrap) is not None
+    def needs_output_conversion(self, conv, unwrap):
+        if not self._direction in [Direction.OUTPUT, Direction.INPUT_OUTPUT]:
+            return False
+        if unwrap and self.needs_unwrapping():
+            return True
+        return conv and self.needs_conversion()
 
     def spec(self):
         """ Generate spec file entry for this parameter. """
