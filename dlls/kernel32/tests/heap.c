@@ -1813,6 +1813,23 @@ static void test_GlobalAlloc(void)
         mem = GlobalFree( mem );
         ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
     }
+
+    ptr = HeapAlloc( GetProcessHeap(), 0, 16 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalHandle( ptr );
+    ok( !!tmp_mem, "GlobalHandle failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == ptr, "GlobalHandle returned unexpected handle\n" );
+    tmp_ptr = (void *)0xdeadbeef;
+    tmp_flags = 0xdeadbeef;
+    ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, ptr, (void **)&tmp_ptr, &tmp_flags );
+    ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_ptr == (void *)0xdeadbeef, "got user value %p\n", tmp_ptr );
+    ok( tmp_flags == 0, "got user flags %#lx\n", tmp_flags );
+    ret = HeapFree( GetProcessHeap(), 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 }
 
 static void test_LocalAlloc(void)
@@ -1833,6 +1850,7 @@ static void test_LocalAlloc(void)
     HLOCAL locals[0x10000];
     HLOCAL mem, tmp_mem;
     BYTE *ptr, *tmp_ptr;
+    ULONG tmp_flags;
     UINT i, flags;
     SIZE_T size;
     BOOL ret;
@@ -2162,6 +2180,23 @@ static void test_LocalAlloc(void)
         mem = LocalFree( mem );
         ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
     }
+
+    ptr = HeapAlloc( GetProcessHeap(), 0, 16 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalHandle( ptr );
+    ok( !!tmp_mem, "LocalHandle failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == ptr, "LocalHandle returned unexpected handle\n" );
+    tmp_ptr = (void *)0xdeadbeef;
+    tmp_flags = 0xdeadbeef;
+    ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, ptr, (void **)&tmp_ptr, &tmp_flags );
+    ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_ptr == (void *)0xdeadbeef, "got user value %p\n", tmp_ptr );
+    ok( tmp_flags == 0, "got user flags %#lx\n", tmp_flags );
+    ret = HeapFree( GetProcessHeap(), 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 }
 
 static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags, DWORD alloc_flags )
