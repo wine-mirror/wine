@@ -15043,10 +15043,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Korvaa...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "&Uusi...\tCtrl+N"
+msgstr "&Siirry...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15089,17 +15087,15 @@ msgstr "Y&lä:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Siirry riville"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "Sulkulistan numero"
+msgstr "&Rivinumero:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Siirry"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15165,7 +15161,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15242,7 +15238,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Rivi %ld, sarake %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
