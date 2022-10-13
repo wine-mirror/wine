@@ -711,7 +711,6 @@ sync_test("elem_by_id", function() {
         var tag = tags[i];
         document.body.innerHTML = '<' + tag + ' id="testid" name="testname"></' + tag + '><' + tag + ' id="foobar"></' + tag + '>';
         ok("testname" in document, tag + " did not expose testname");
-        todo_wine.
         ok("testid" in document, tag + " did not expose testid");
         ok(!("foobar" in document), tag + " exposed foobar");
     }
@@ -722,9 +721,7 @@ sync_test("elem_by_id", function() {
         var tag = tags[i];
         document.body.innerHTML = '<' + tag + ' id="testid" name="testname"></' + tag + '><' + tag + ' id="foobar"></' + tag + '>';
         ok("testname" in document, tag + " did not expose testname");
-        todo_wine.
         ok("testid" in document, tag + " did not expose testid");
-        todo_wine.
         ok("foobar" in document, tag + " did not expose foobar");
     }
 

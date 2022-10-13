@@ -4846,6 +4846,41 @@ static HRESULT has_elem_name(nsIDOMHTMLDocument *nsdoc, const WCHAR *name)
     return S_OK;
 }
 
+static HRESULT get_elem_by_name_or_id(nsIDOMHTMLDocument *nsdoc, const WCHAR *name, nsIDOMElement **ret)
+{
+    static const WCHAR fmt[] = L":-moz-any(embed,form,iframe,img):-moz-any([name=\"%s\"],[id=\"%s\"][name]),"
+                               L":-moz-any(applet,object):-moz-any([name=\"%s\"],[id=\"%s\"])";
+    WCHAR buf[384], *selector = buf;
+    nsAString selector_str;
+    nsIDOMElement *nselem;
+    nsresult nsres;
+    size_t len;
+
+    len = wcslen(name) * 4 + ARRAY_SIZE(fmt) - 8 /* %s */;
+    if(len > ARRAY_SIZE(buf) && !(selector = heap_alloc(len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+    swprintf(selector, len, fmt, name, name, name, name);
+
+    nsAString_InitDepend(&selector_str, selector);
+    nsres = nsIDOMHTMLDocument_QuerySelector(nsdoc, &selector_str, &nselem);
+    nsAString_Finish(&selector_str);
+    if(selector != buf)
+        heap_free(selector);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    if(ret) {
+        *ret = nselem;
+        return S_OK;
+    }
+
+    if(nselem) {
+        nsIDOMElement_Release(nselem);
+        return S_OK;
+    }
+    return DISP_E_UNKNOWNNAME;
+}
+
 static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, const WCHAR *name, DISPID *dispid)
 {
     unsigned i;
@@ -4951,7 +4986,7 @@ static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName,
         return hres;
 
     if(This->doc_node->nsdoc) {
-        hres = has_elem_name(This->doc_node->nsdoc, bstrName);
+        hres = get_elem_by_name_or_id(This->doc_node->nsdoc, bstrName, NULL);
         if(SUCCEEDED(hres))
             hres = dispid_from_elem_name(This->doc_node, bstrName, pid);
     }
@@ -5859,12 +5894,9 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
-    nsIDOMNodeList *node_list;
-    nsAString name_str;
-    nsIDOMNode *nsnode;
+    nsIDOMElement *nselem;
     HTMLDOMNode *node;
     unsigned i;
-    nsresult nsres;
     HRESULT hres;
 
     if(flags != DISPATCH_PROPERTYGET && flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET)) {
@@ -5877,18 +5909,14 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     if(!This->nsdoc || i >= This->elem_vars_cnt)
         return DISP_E_MEMBERNOTFOUND;
 
-    nsAString_InitDepend(&name_str, This->elem_vars[i]);
-    nsres = nsIDOMHTMLDocument_GetElementsByName(This->nsdoc, &name_str, &node_list);
-    nsAString_Finish(&name_str);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
-
-    nsres = nsIDOMNodeList_Item(node_list, 0, &nsnode);
-    nsIDOMNodeList_Release(node_list);
-    if(NS_FAILED(nsres) || !nsnode)
+    hres = get_elem_by_name_or_id(This->nsdoc, This->elem_vars[i], &nselem);
+    if(FAILED(hres))
+        return hres;
+    if(!nselem)
         return DISP_E_MEMBERNOTFOUND;
 
-    hres = get_node(nsnode, TRUE, &node);
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
+    nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
 
