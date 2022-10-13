@@ -2487,8 +2487,8 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
         user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, &current_mode );
         adapter_release( adapter );
 
-        send_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
-                      MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ) );
+        send_notify_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
+                             MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ), FALSE );
         send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
                               MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ),
                               SMTO_ABORTIFHUNG, 2000, FALSE );
