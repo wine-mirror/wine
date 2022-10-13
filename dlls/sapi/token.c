@@ -504,6 +504,7 @@ struct token_enum
     BOOL init;
     WCHAR *req, *opt;
     ULONG count;
+    HKEY key;
 };
 
 static struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
@@ -517,9 +518,11 @@ static HRESULT WINAPI token_category_EnumTokens( ISpObjectTokenCategory *iface,
 {
     struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
     ISpObjectTokenEnumBuilder *builder;
+    struct token_enum *tokenenum;
+    struct data_key *this_data_key;
     HRESULT hr;
 
-    FIXME( "(%p)->(%s %s %p): semi-stub\n", This, debugstr_w( req ), debugstr_w( opt ), enum_tokens );
+    TRACE( "(%p)->(%s %s %p)\n", This, debugstr_w( req ), debugstr_w( opt ), enum_tokens );
 
     if (!This->data_key) return SPERR_UNINITIALIZED;
 
@@ -530,7 +533,15 @@ static HRESULT WINAPI token_category_EnumTokens( ISpObjectTokenCategory *iface,
     hr = ISpObjectTokenEnumBuilder_SetAttribs( builder, req, opt );
     if (FAILED(hr)) goto fail;
 
-    /* FIXME: Build the enumerator */
+    this_data_key = impl_from_ISpRegDataKey( This->data_key );
+
+    tokenenum = impl_from_ISpObjectTokenEnumBuilder( builder );
+
+    if (!RegOpenKeyExW( this_data_key->key, L"Tokens", 0, KEY_ALL_ACCESS, &tokenenum->key ))
+    {
+        RegQueryInfoKeyW(tokenenum->key, NULL, NULL, NULL, &tokenenum->count, NULL, NULL,
+                NULL, NULL, NULL, NULL, NULL);
+    }
 
     hr = ISpObjectTokenEnumBuilder_QueryInterface( builder, &IID_IEnumSpObjectTokens,
                                                    (void **)enum_tokens );
@@ -664,6 +675,8 @@ static ULONG WINAPI token_enum_Release( ISpObjectTokenEnumBuilder *iface )
 
     if (!ref)
     {
+        if (This->key)
+            RegCloseKey(This->key);
         heap_free( This->req );
         heap_free( This->opt );
         heap_free( This );
@@ -816,6 +829,7 @@ HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
     This->opt = NULL;
     This->init = FALSE;
     This->count = 0;
+    This->key = NULL;
 
     hr = ISpObjectTokenEnumBuilder_QueryInterface( &This->ISpObjectTokenEnumBuilder_iface, iid, obj );
 
