@@ -496,6 +496,21 @@ static HRESULT WINAPI token_category_GetDataKey( ISpObjectTokenCategory *iface,
     return E_NOTIMPL;
 }
 
+struct token_enum
+{
+    ISpObjectTokenEnumBuilder ISpObjectTokenEnumBuilder_iface;
+    LONG ref;
+
+    BOOL init;
+    WCHAR *req, *opt;
+    ULONG count;
+};
+
+static struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
+{
+    return CONTAINING_RECORD( iface, struct token_enum, ISpObjectTokenEnumBuilder_iface );
+}
+
 static HRESULT WINAPI token_category_EnumTokens( ISpObjectTokenCategory *iface,
                                                  LPCWSTR req, LPCWSTR opt,
                                                  IEnumSpObjectTokens **enum_tokens )
@@ -608,21 +623,6 @@ HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj )
 
     ISpObjectTokenCategory_Release( &This->ISpObjectTokenCategory_iface );
     return hr;
-}
-
-struct token_enum
-{
-    ISpObjectTokenEnumBuilder ISpObjectTokenEnumBuilder_iface;
-    LONG ref;
-
-    BOOL init;
-    WCHAR *req, *opt;
-    ULONG count;
-};
-
-static struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
-{
-    return CONTAINING_RECORD( iface, struct token_enum, ISpObjectTokenEnumBuilder_iface );
 }
 
 static HRESULT WINAPI token_enum_QueryInterface( ISpObjectTokenEnumBuilder *iface,
