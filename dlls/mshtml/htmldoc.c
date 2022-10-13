@@ -4981,7 +4981,7 @@ static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName,
     HTMLDocument *This = impl_from_IDispatchEx(iface);
     HRESULT hres;
 
-    hres = IDispatchEx_GetDispID(This->dispex, bstrName, grfdex, pid);
+    hres = IDispatchEx_GetDispID(This->dispex, bstrName, grfdex & ~fdexNameEnsure, pid);
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
@@ -4990,6 +4990,9 @@ static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName,
         if(SUCCEEDED(hres))
             hres = dispid_from_elem_name(This->doc_node, bstrName, pid);
     }
+
+    if(hres == DISP_E_UNKNOWNNAME && (grfdex & fdexNameEnsure))
+        hres = IDispatchEx_GetDispID(This->dispex, bstrName, grfdex, pid);
     return hres;
 }
 
@@ -5899,10 +5902,8 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     unsigned i;
     HRESULT hres;
 
-    if(flags != DISPATCH_PROPERTYGET && flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET)) {
-        FIXME("unsupported flags %x\n", flags);
-        return E_NOTIMPL;
-    }
+    if(flags != DISPATCH_PROPERTYGET && flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
+        return MSHTML_E_INVALID_PROPERTY;
 
     i = id - MSHTML_DISPID_CUSTOM_MIN;
 

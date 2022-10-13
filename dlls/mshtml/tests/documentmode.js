@@ -669,13 +669,13 @@ sync_test("for..in", function() {
 
 sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
-    var found, i;
+    var v = document.documentMode, found, i;
 
     var id_elem = document.getElementById("testid");
     ok(id_elem.tagName === "FORM", "id_elem.tagName = " + id_elem.tagName);
 
     var name_elem = document.getElementById("testname");
-    if(document.documentMode < 8)
+    if(v < 8)
         ok(id_elem === name_elem, "id_elem != id_elem");
     else
         ok(name_elem === null, "name_elem != null");
@@ -704,6 +704,51 @@ sync_test("elem_by_id", function() {
             found = true;
     }
     ok(found, "testname was not enumerated in document");
+
+    try {
+        document.testname();
+        ok(false, "document.testname() did not throw exception");
+    }catch(e) {
+        ok(e.number === 0xa01b6 - 0x80000000, "document.testname() threw = " + e.number);
+    }
+
+    try {
+        document.testname = "foo";
+        ok(v >= 9, "Setting document.testname did not throw exception");
+
+        id_elem = document.testid;
+        ok(id_elem.tagName === "FORM", "document.testid after set = " + id_elem);
+        name_elem = document.testname;
+        ok(name_elem === "foo", "document.testname after set = " + name_elem);
+    }catch(e) {
+        todo_wine_if(v >= 9).
+        ok(v < 9 && e.number === 0xa01b6 - 0x80000000, "Setting document.testname threw = " + e.number);
+    }
+
+    try {
+        document.testid = "bar";
+        ok(v >= 9, "Setting document.testid did not throw exception");
+
+        id_elem = document.testid;
+        ok(id_elem === "bar", "document.testid after both set = " + id_elem);
+        name_elem = document.testname;
+        ok(name_elem === "foo", "document.testname after both set = " + name_elem);
+
+        found = false, name_elem = false;
+        for(id_elem in document) {
+            if(id_elem === "testid")
+                found = true;
+            if(id_elem === "testname")
+                name_elem = true;
+        }
+        ok(found, "testid was not enumerated in document after both set");
+        ok(name_elem, "testname was not enumerated in document after both set");
+        delete document.testid;
+        delete document.testname;
+    }catch(e) {
+        todo_wine_if(v >= 9).
+        ok(v < 9 && e.number === 0xa01b6 - 0x80000000, "Setting document.testid threw = " + e.number);
+    }
 
     // these tags expose name as props, and id only if they have a name
     var tags = [ "embed", "form", "iframe", "img" ];
