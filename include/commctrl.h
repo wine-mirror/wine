@@ -3605,6 +3605,8 @@ typedef struct tagLVCOLUMNW
 #define LVCOLUMN_V1_SIZE WINELIB_NAME_AW(LVCOLUMN_V1_SIZE)
 
 #define LV_COLUMN       LVCOLUMN
+#define LV_COLUMNA      LVCOLUMNA
+#define LV_COLUMNW      LVCOLUMNW
 
 
 typedef struct tagNMLISTVIEW
