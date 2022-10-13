@@ -215,7 +215,7 @@ PKEVENT WINAPI IoCreateSynchronizationEvent( UNICODE_STRING *name, HANDLE *ret_h
     KEVENT *event;
     NTSTATUS ret;
 
-    TRACE( "(%p %p)\n", name, ret_handle );
+    TRACE( "(%s %p)\n", debugstr_us(name), ret_handle );
 
     InitializeObjectAttributes( &attr, name, 0, 0, NULL );
     ret = NtCreateEvent( &handle, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, TRUE );
@@ -223,7 +223,7 @@ PKEVENT WINAPI IoCreateSynchronizationEvent( UNICODE_STRING *name, HANDLE *ret_h
 
     if (kernel_object_from_handle( handle, ExEventObjectType, (void**)&event ))
     {
-        NtClose( handle);
+        NtClose( handle );
         return NULL;
     }
 
