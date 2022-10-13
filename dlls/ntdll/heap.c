@@ -256,12 +256,19 @@ static inline UINT block_get_size( const struct block *block )
     return block_size * ALIGNMENT;
 }
 
-static inline void block_set_size( struct block *block, UINT block_flags, UINT block_size )
+static inline void block_set_size( struct block *block, UINT block_size )
 {
     block_size /= ALIGNMENT;
-    if (block_flags & BLOCK_FLAG_FREE) block->tail_size = block_size >> 16;
+    if (block_get_flags( block ) & BLOCK_FLAG_FREE) block->tail_size = block_size >> 16;
     block->block_size = block_size;
-    block->block_flags = block_flags;
+}
+
+static inline void block_set_flags( struct block *block, BYTE clear, BYTE set )
+{
+    UINT block_size = block_get_size( block );
+    block->block_flags &= ~clear;
+    block->block_flags |= set;
+    block_set_size( block, block_size );
 }
 
 static inline void *subheap_base( const SUBHEAP *subheap )
@@ -682,7 +689,8 @@ static void create_free_block( struct heap *heap, SUBHEAP *subheap, struct block
 
     valgrind_make_writable( block, sizeof(*entry) );
     block_set_type( block, ARENA_FREE_MAGIC );
-    block_set_size( block, BLOCK_FLAG_FREE, block_size );
+    block_set_flags( block, ~0, BLOCK_FLAG_FREE );
+    block_set_size( block, block_size );
 
     /* If debugging, erase the freed block content */
 
@@ -695,14 +703,14 @@ static void create_free_block( struct heap *heap, SUBHEAP *subheap, struct block
         struct entry *next_entry = (struct entry *)next;
         list_remove( &next_entry->entry );
         block_size += block_get_size( next );
-        block_set_size( block, BLOCK_FLAG_FREE, block_size );
+        block_set_size( block, block_size );
         mark_block_free( next_entry, sizeof(*next_entry), flags );
     }
 
     if ((next = next_block( subheap, block )))
     {
         /* set the next block PREV_FREE flag and back pointer */
-        block_set_size( next, BLOCK_FLAG_PREV_FREE, block_get_size( next ) );
+        block_set_flags( next, 0, BLOCK_FLAG_PREV_FREE );
         valgrind_make_writable( (struct block **)next - 1, sizeof(struct block *) );
         *((struct block **)next - 1) = block;
     }
@@ -760,21 +768,21 @@ static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *
 }
 
 
-static inline void shrink_used_block( struct heap *heap, SUBHEAP *subheap, struct block *block, UINT flags,
+static inline void shrink_used_block( struct heap *heap, SUBHEAP *subheap, struct block *block,
                                       SIZE_T old_block_size, SIZE_T block_size, SIZE_T size )
 {
     if (old_block_size >= block_size + HEAP_MIN_BLOCK_SIZE)
     {
-        block_set_size( block, flags, block_size );
+        block_set_size( block, block_size );
         block->tail_size = block_size - sizeof(*block) - size;
         create_free_block( heap, subheap, next_block( subheap, block ), old_block_size - block_size );
     }
     else
     {
         struct block *next;
-        block_set_size( block, flags, old_block_size );
+        block_set_size( block, old_block_size );
         block->tail_size = old_block_size - sizeof(*block) - size;
-        if ((next = next_block( subheap, block ))) next->block_flags &= ~BLOCK_FLAG_PREV_FREE;
+        if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
     }
 }
 
@@ -804,7 +812,8 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
     arena->block_size = (char *)address + total_size - (char *)block;
 
     block_set_type( block, ARENA_LARGE_MAGIC );
-    block_set_size( block, BLOCK_FLAG_LARGE, 0 );
+    block_set_flags( block, ~0, BLOCK_FLAG_LARGE );
+    block_set_size( block, 0 );
     list_add_tail( &heap->large_list, &arena->entry );
     valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
                             arena->block_size - sizeof(*block) - arena->data_size );
@@ -968,7 +977,8 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         list_init( &heap->free_lists[0].entry );
         for (i = 0, pEntry = heap->free_lists; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
         {
-            block_set_size( &pEntry->block, BLOCK_FLAG_FREE_LINK, 0 );
+            block_set_flags( &pEntry->block, ~0, BLOCK_FLAG_FREE_LINK );
+            block_set_size( &pEntry->block, 0 );
             block_set_type( &pEntry->block, ARENA_FREE_MAGIC );
             if (i) list_add_after( &pEntry[-1].entry, &pEntry->entry );
         }
@@ -1510,7 +1520,8 @@ static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T size, void
     old_block_size = block_get_size( block );
 
     block_set_type( block, ARENA_INUSE_MAGIC );
-    shrink_used_block( heap, subheap, block, 0, old_block_size, block_size, size );
+    block_set_flags( block, ~0, 0 );
+    shrink_used_block( heap, subheap, block, old_block_size, block_size, size );
     initialize_block( block + 1, size, flags );
     mark_block_tail( block, flags );
 
@@ -1632,7 +1643,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
     }
 
     valgrind_notify_resize( block + 1, old_size, size );
-    shrink_used_block( heap, subheap, block, block_get_flags( block ), old_block_size, block_size, size );
+    shrink_used_block( heap, subheap, block, old_block_size, block_size, size );
 
     if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
     mark_block_tail( block, flags );
