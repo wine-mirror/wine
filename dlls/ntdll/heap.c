@@ -2044,7 +2044,7 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
 BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void *user_value )
 {
     struct block *block;
-    BOOLEAN ret = TRUE;
+    BOOLEAN ret = FALSE;
     struct heap *heap;
     SUBHEAP *subheap;
     char *tmp;
@@ -2054,17 +2054,22 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
     if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
 
     heap_lock( heap, flags );
-    if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) ret = FALSE;
+    if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap )))
+        WARN( "Failed to find block %p in heap %p\n", ptr, handle );
+    else if (!(block_get_flags( block ) & BLOCK_FLAG_USER_INFO))
+        WARN( "Block %p wasn't allocated with user info\n", ptr );
     else if (!subheap)
     {
         ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         large->user_value = user_value;
+        ret = TRUE;
     }
     else
     {
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
         if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
         *(void **)tmp = user_value;
+        ret = TRUE;
     }
     heap_unlock( heap, flags );
 

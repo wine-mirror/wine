@@ -343,7 +343,7 @@ UINT WINAPI LocalFlags( HLOCAL handle )
  */
 HLOCAL WINAPI LocalHandle( const void *ptr )
 {
-    HLOCAL handle;
+    HLOCAL handle = (HANDLE)ptr;
     ULONG flags;
 
     TRACE_(globalmem)( "ptr %p\n", ptr );

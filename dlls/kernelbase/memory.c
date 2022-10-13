@@ -835,7 +835,7 @@ HGLOBAL WINAPI DECLSPEC_HOTPATCH GlobalFree( HLOCAL handle )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
 {
-    DWORD heap_flags = HEAP_ADD_USER_INFO;
+    DWORD heap_flags = 0x200 | HEAP_ADD_USER_INFO;
     HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
     HLOCAL handle;
@@ -974,7 +974,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT flags )
 {
-    DWORD heap_flags = HEAP_ADD_USER_INFO | HEAP_NO_SERIALIZE;
+    DWORD heap_flags = 0x200 | HEAP_ADD_USER_INFO | HEAP_NO_SERIALIZE;
     HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
     HLOCAL ret = 0;
