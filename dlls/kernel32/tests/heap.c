@@ -2361,15 +2361,12 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         SetLastError( 0xdeadbeef );
         ret = pRtlSetUserFlagsHeap( heap, 0, ptr0, 0, 0x1000 );
         ok( !ret, "RtlSetUserFlagsHeap succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         ret = pRtlSetUserFlagsHeap( heap, 0, ptr0, 0x100, 0 );
         ok( !ret, "RtlSetUserFlagsHeap succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
         ret = pRtlSetUserFlagsHeap( heap, 0, ptr0, 0x400, 0x200 );
-        todo_wine
         ok( ret, "RtlSetUserFlagsHeap failed, error %lu\n", GetLastError() );
 
         tmp_ptr = NULL;
@@ -2377,7 +2374,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
         ok( tmp_ptr == (void *)0xdeadbeef, "got ptr %p\n", tmp_ptr );
-        todo_wine
         ok( tmp_flags == 0xa00 || broken(tmp_flags == 0xc00) /* w1064v1507 */,
             "got flags %#lx\n", tmp_flags );
 
@@ -2391,7 +2387,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
         ok( tmp_ptr == (void *)0xdeadbee0, "got ptr %p\n", tmp_ptr );
-        todo_wine
         ok( tmp_flags == 0xa00 || broken(tmp_flags == 0xc00) /* w1064v1507 */,
             "got flags %#lx\n", tmp_flags );
 
