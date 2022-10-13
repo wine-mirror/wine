@@ -181,13 +181,25 @@ static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
     TRACE(" BEGIN\n" );
     while (items--)
     {
+        char *caption, caption_buf[4];
         HINSTANCE16 instance = hInst;
         SEGPTR segptr;
 
         template = DIALOG_GetControl16( template, &info );
         segptr = MapLS( info.data );
+
+        caption = (char *)info.windowName;
+        if (caption && IS_INTRESOURCE(caption))
+        {
+            caption_buf[0] = 0xff;
+            caption_buf[1] = PtrToUlong( caption );
+            caption_buf[2] = PtrToUlong( caption ) >> 8;
+            caption_buf[3] = 0;
+            caption = caption_buf;
+        }
+
         hwndCtrl = WIN_Handle32( CreateWindowEx16( WS_EX_NOPARENTNOTIFY,
-                                                   info.className, info.windowName,
+                                                   info.className, caption,
                                                    info.style | WS_CHILD,
                                                    MulDiv(info.x, dlgInfo->xBaseUnit, 4),
                                                    MulDiv(info.y, dlgInfo->yBaseUnit, 8),
