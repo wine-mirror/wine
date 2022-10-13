@@ -317,11 +317,6 @@ HRESULT WINAPI UiaRaiseAutomationPropertyChangedEvent(IRawElementProviderSimple 
     return S_OK;
 }
 
-void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
-{
-    FIXME("(%p): stub\n", callback);
-}
-
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **provider)
 {
     struct hwnd_host_provider *host_prov;

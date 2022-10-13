@@ -909,7 +909,7 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
     return S_OK;
 }
 
-static HRESULT uia_get_provider_from_hwnd(struct uia_node *node);
+static HRESULT uia_get_providers_for_hwnd(struct uia_node *node);
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers)
 {
@@ -958,7 +958,11 @@ HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE 
     }
 
     if (node->hwnd && get_hwnd_providers)
-        uia_get_provider_from_hwnd(node);
+    {
+        hr = uia_get_providers_for_hwnd(node);
+        if (FAILED(hr))
+            WARN("uia_get_providers_for_hwnd failed with hr %#lx\n", hr);
+    }
 
     hr = prepare_uia_node(node);
     if (FAILED(hr))
@@ -1406,9 +1410,9 @@ static HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
 
     if (node->hwnd)
     {
-        hr = uia_get_provider_from_hwnd(node);
+        hr = uia_get_providers_for_hwnd(node);
         if (FAILED(hr))
-            WARN("uia_get_provider_from_hwnd failed with hr %#lx\n", hr);
+            WARN("uia_get_providers_for_hwnd failed with hr %#lx\n", hr);
     }
 
     hr = prepare_uia_node(node);
@@ -1445,9 +1449,8 @@ static HRESULT uia_get_provider_from_hwnd(struct uia_node *node)
 
     if (!args.lr)
     {
-        FIXME("No native UIA provider for hwnd %p, MSAA proxy currently unimplemented.\n", node->hwnd);
         uia_stop_client_thread();
-        return E_NOTIMPL;
+        return S_FALSE;
     }
 
     args.unwrap = GetCurrentThreadId() == GetWindowThreadProcessId(node->hwnd, NULL);
@@ -1482,7 +1485,7 @@ HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
     list_init(&node->node_map_list_entry);
     node->ref = 1;
 
-    hr = uia_get_provider_from_hwnd(node);
+    hr = uia_get_providers_for_hwnd(node);
     if (FAILED(hr))
     {
         heap_free(node);
@@ -1775,4 +1778,136 @@ HRESULT WINAPI UiaHUiaNodeFromVariant(VARIANT *in_val, HUIANODE *huianode)
     }
 
     return S_OK;
+}
+
+static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderType prov_type)
+{
+    switch (prov_type)
+    {
+    case ProviderType_Proxy:
+        FIXME("Default ProviderType_Proxy MSAA provider unimplemented.\n");
+        break;
+
+    case ProviderType_NonClientArea:
+        FIXME("Default ProviderType_NonClientArea provider unimplemented.\n");
+        break;
+
+    case ProviderType_BaseHwnd:
+        FIXME("Default ProviderType_BaseHwnd provider unimplemented.\n");
+        break;
+
+    default:
+        break;
+    }
+
+    return NULL;
+}
+
+static UiaProviderCallback *uia_provider_callback = default_uia_provider_callback;
+
+static HRESULT uia_get_clientside_provider(struct uia_node *node, int prov_type,
+        int node_prov_type)
+{
+    IRawElementProviderSimple *elprov;
+    LONG lbound, elems;
+    SAFEARRAY *sa;
+    IUnknown *unk;
+    VARTYPE vt;
+    HRESULT hr;
+
+    if (!(sa = uia_provider_callback(node->hwnd, prov_type)))
+        return S_OK;
+
+    hr = SafeArrayGetVartype(sa, &vt);
+    if (FAILED(hr) || (vt != VT_UNKNOWN))
+        goto exit;
+
+    hr = get_safearray_bounds(sa, &lbound, &elems);
+    if (FAILED(hr))
+        goto exit;
+
+    /* Returned SAFEARRAY can only have 1 element. */
+    if (elems != 1)
+    {
+        WARN("Invalid element count %ld for returned SAFEARRAY\n", elems);
+        goto exit;
+    }
+
+    hr = SafeArrayGetElement(sa, &lbound, &unk);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IUnknown_QueryInterface(unk, &IID_IRawElementProviderSimple, (void **)&elprov);
+    IUnknown_Release(unk);
+    if (FAILED(hr) || !elprov)
+    {
+        WARN("Failed to get IRawElementProviderSimple from returned SAFEARRAY.\n");
+        hr = S_OK;
+        goto exit;
+    }
+
+    hr = create_wine_uia_provider(node, elprov, node_prov_type);
+    IRawElementProviderSimple_Release(elprov);
+
+exit:
+    if (FAILED(hr))
+        WARN("Failed to get clientside provider, hr %#lx\n", hr);
+    SafeArrayDestroy(sa);
+    return hr;
+}
+
+static HRESULT uia_get_providers_for_hwnd(struct uia_node *node)
+{
+    HRESULT hr;
+
+    hr = uia_get_provider_from_hwnd(node);
+    if (FAILED(hr))
+        return hr;
+
+    if (!node->prov[PROV_TYPE_MAIN])
+    {
+        hr = uia_get_clientside_provider(node, ProviderType_Proxy, PROV_TYPE_MAIN);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    if (!node->prov[PROV_TYPE_OVERRIDE])
+        FIXME("Override provider callback currently unimplemented.\n");
+
+    if (!node->prov[PROV_TYPE_NONCLIENT])
+    {
+        hr = uia_get_clientside_provider(node, ProviderType_NonClientArea, PROV_TYPE_NONCLIENT);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    if (!node->prov[PROV_TYPE_HWND])
+    {
+        hr = uia_get_clientside_provider(node, ProviderType_BaseHwnd, PROV_TYPE_HWND);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    if (!node->prov_count)
+    {
+        if (uia_provider_callback == default_uia_provider_callback)
+            return E_NOTIMPL;
+        else
+            return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *          UiaRegisterProviderCallback (uiautomationcore.@)
+ */
+void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
+{
+    TRACE("(%p)\n", callback);
+
+    if (callback)
+        uia_provider_callback = callback;
+    else
+        uia_provider_callback = default_uia_provider_callback;
 }
