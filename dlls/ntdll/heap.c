@@ -92,7 +92,10 @@ C_ASSERT( sizeof(struct block) == 8 );
 #define BLOCK_FLAG_PREV_FREE   0x00000002
 #define BLOCK_FLAG_FREE_LINK   0x00000003
 #define BLOCK_FLAG_LARGE       0x00000004
+#define BLOCK_FLAG_USER_INFO   0x00000010 /* user flags up to 0xf0 */
+#define BLOCK_FLAG_USER_MASK   0x000000f0
 
+#define BLOCK_USER_FLAGS( heap_flags ) (((heap_flags) >> 4) & BLOCK_FLAG_USER_MASK)
 
 /* entry to link free blocks in free lists */
 
@@ -212,6 +215,7 @@ C_ASSERT( offsetof(struct heap, subheap) <= COMMIT_MASK );
 /* some undocumented flags (names are made up) */
 #define HEAP_PRIVATE          0x00001000
 #define HEAP_ADD_USER_INFO    0x00000100
+#define HEAP_USER_FLAGS_MASK  0x00000f00
 #define HEAP_PAGE_ALLOCS      0x01000000
 #define HEAP_VALIDATE         0x10000000
 #define HEAP_VALIDATE_ALL     0x20000000
@@ -469,7 +473,7 @@ static RTL_CRITICAL_SECTION_DEBUG process_heap_cs_debug =
 static inline ULONG heap_get_flags( const struct heap *heap, ULONG flags )
 {
     if (flags & (HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED)) flags |= HEAP_CHECKING_ENABLED;
-    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY | HEAP_CHECKING_ENABLED | HEAP_ADD_USER_INFO;
+    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY | HEAP_CHECKING_ENABLED | HEAP_USER_FLAGS_MASK;
     return heap->flags | flags;
 }
 
@@ -812,7 +816,7 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
     arena->block_size = (char *)address + total_size - (char *)block;
 
     block_set_type( block, ARENA_LARGE_MAGIC );
-    block_set_flags( block, ~0, BLOCK_FLAG_LARGE );
+    block_set_flags( block, ~0, BLOCK_FLAG_LARGE | BLOCK_USER_FLAGS( flags ) );
     block_set_size( block, 0 );
     list_add_tail( &heap->large_list, &arena->entry );
     valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
@@ -896,7 +900,7 @@ static BOOL validate_large_block( const struct heap *heap, const struct block *b
         err = "invalid block alignment";
     else if (block_get_size( block ))
         err = "invalid block size";
-    else if (block_get_flags( block ) != BLOCK_FLAG_LARGE)
+    else if (!(block_get_flags( block ) & BLOCK_FLAG_LARGE))
         err = "invalid block flags";
     else if (block_get_type( block ) != ARENA_LARGE_MAGIC)
         err = "invalid block type";
@@ -1520,7 +1524,7 @@ static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T size, void
     old_block_size = block_get_size( block );
 
     block_set_type( block, ARENA_INUSE_MAGIC );
-    block_set_flags( block, ~0, 0 );
+    block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, subheap, block, old_block_size, block_size, size );
     initialize_block( block + 1, size, flags );
     mark_block_tail( block, flags );
@@ -1643,6 +1647,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
     }
 
     valgrind_notify_resize( block + 1, old_size, size );
+    block_set_flags( block, BLOCK_FLAG_USER_MASK, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, subheap, block, old_block_size, block_size, size );
 
     if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
