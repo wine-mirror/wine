@@ -96,6 +96,7 @@ C_ASSERT( sizeof(struct block) == 8 );
 #define BLOCK_FLAG_USER_MASK   0x000000f0
 
 #define BLOCK_USER_FLAGS( heap_flags ) (((heap_flags) >> 4) & BLOCK_FLAG_USER_MASK)
+#define HEAP_USER_FLAGS( block_flags ) (((block_flags) & BLOCK_FLAG_USER_MASK) << 4)
 
 /* entry to link free blocks in free lists */
 
@@ -2008,6 +2009,7 @@ NTSTATUS WINAPI RtlSetHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS inf
  */
 BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void **user_value, ULONG *user_flags )
 {
+    NTSTATUS status = STATUS_SUCCESS;
     struct block *block;
     struct heap *heap;
     SUBHEAP *subheap;
@@ -2016,26 +2018,36 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     TRACE( "handle %p, flags %#x, ptr %p, user_value %p, user_flags %p semi-stub!\n",
            handle, flags, ptr, user_value, user_flags );
 
-    *user_value = 0;
     *user_flags = 0;
 
     if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
 
     heap_lock( heap, flags );
-    if ((block = unsafe_block_from_ptr( heap, ptr, &subheap )) && !subheap)
+    if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap )))
+    {
+        WARN( "Failed to find block %p in heap %p\n", ptr, handle );
+        status = STATUS_INVALID_PARAMETER;
+        *user_value = 0;
+    }
+    else if (!(*user_flags = HEAP_USER_FLAGS(block_get_flags( block ))))
+        WARN( "Block %p wasn't allocated with user info\n", ptr );
+    else if (!subheap)
     {
         const ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
+        *user_flags = *user_flags & ~HEAP_ADD_USER_INFO;
         *user_value = large->user_value;
     }
-    else if (block)
+    else
     {
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
         if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
+        *user_flags = *user_flags & ~HEAP_ADD_USER_INFO;
         *user_value = *(void **)tmp;
     }
     heap_unlock( heap, flags );
 
-    return TRUE;
+    heap_set_status( heap, flags, status );
+    return !status;
 }
 
 /***********************************************************************

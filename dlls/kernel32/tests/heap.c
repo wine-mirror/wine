@@ -1411,7 +1411,6 @@ static void test_GlobalAlloc(void)
         ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, entry->ptr, (void **)&tmp_mem, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
         ok( tmp_mem == mem, "got user ptr %p\n", tmp_mem );
-        todo_wine
         ok( tmp_flags == 0x200, "got user flags %#lx\n", tmp_flags );
 
         ret = pRtlSetUserValueHeap( GetProcessHeap(), 0, entry->ptr, invalid_mem );
@@ -1568,7 +1567,6 @@ static void test_GlobalAlloc(void)
         SetLastError( 0xdeadbeef );
         tmp_mem = GlobalHandle( mem );
         ok( !tmp_mem, "GlobalHandle succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     }
 
@@ -1603,13 +1601,10 @@ static void test_GlobalAlloc(void)
         SetLastError( 0xdeadbeef );
         tmp_mem = GlobalHandle( invalid_mem );
         ok( !tmp_mem, "GlobalHandle succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, invalid_mem, (void **)&tmp_ptr, &tmp_flags );
-        todo_wine
         ok( !ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
     }
 
@@ -1647,7 +1642,6 @@ static void test_GlobalAlloc(void)
     SetLastError( 0xdeadbeef );
     tmp_mem = GlobalHandle( invalid_ptr );
     ok( !tmp_mem, "GlobalHandle succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     if (0) /* crashes */
     {
@@ -1819,13 +1813,11 @@ static void test_GlobalAlloc(void)
     SetLastError( 0xdeadbeef );
     tmp_mem = GlobalHandle( ptr );
     ok( !!tmp_mem, "GlobalHandle failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( tmp_mem == ptr, "GlobalHandle returned unexpected handle\n" );
     tmp_ptr = (void *)0xdeadbeef;
     tmp_flags = 0xdeadbeef;
     ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, ptr, (void **)&tmp_ptr, &tmp_flags );
     ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( tmp_ptr == (void *)0xdeadbeef, "got user value %p\n", tmp_ptr );
     ok( tmp_flags == 0, "got user flags %#lx\n", tmp_flags );
     ret = HeapFree( GetProcessHeap(), 0, ptr );
@@ -1971,7 +1963,6 @@ static void test_LocalAlloc(void)
         SetLastError( 0xdeadbeef );
         tmp_mem = LocalHandle( mem );
         ok( !tmp_mem, "LocalHandle succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     }
 
@@ -2005,7 +1996,6 @@ static void test_LocalAlloc(void)
         SetLastError( 0xdeadbeef );
         tmp_mem = LocalHandle( invalid_mem );
         ok( !tmp_mem, "LocalHandle succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     }
 
@@ -2186,13 +2176,11 @@ static void test_LocalAlloc(void)
     SetLastError( 0xdeadbeef );
     tmp_mem = LocalHandle( ptr );
     ok( !!tmp_mem, "LocalHandle failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( tmp_mem == ptr, "LocalHandle returned unexpected handle\n" );
     tmp_ptr = (void *)0xdeadbeef;
     tmp_flags = 0xdeadbeef;
     ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, ptr, (void **)&tmp_ptr, &tmp_flags );
     ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( tmp_ptr == (void *)0xdeadbeef, "got user value %p\n", tmp_ptr );
     ok( tmp_flags == 0, "got user flags %#lx\n", tmp_flags );
     ret = HeapFree( GetProcessHeap(), 0, ptr );
@@ -2359,7 +2347,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
         ok( tmp_ptr == NULL, "got ptr %p\n", tmp_ptr );
-        todo_wine
         ok( tmp_flags == 0xc00, "got flags %#lx\n", tmp_flags );
 
         tmp_ptr = (void *)0xdeadbeef;
@@ -2367,7 +2354,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ret = pRtlGetUserInfoHeap( heap, 0, ptr1, (void **)&tmp_ptr, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
         ok( tmp_ptr == NULL, "got ptr %p\n", tmp_ptr );
-        todo_wine
         ok( tmp_flags == 0x200, "got flags %#lx\n", tmp_flags );
 
         ret = pRtlSetUserValueHeap( heap, 0, ptr0, (void *)0xdeadbeef );
