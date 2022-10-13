@@ -4820,23 +4820,30 @@ static inline HTMLDocument *impl_from_IDispatchEx(IDispatchEx *iface)
 
 static HRESULT has_elem_name(nsIDOMHTMLDocument *nsdoc, const WCHAR *name)
 {
-    nsIDOMNodeList *node_list;
-    nsAString name_str;
+    static const WCHAR fmt[] = L":-moz-any(applet,embed,form,iframe,img,object)[name=\"%s\"]";
+    WCHAR buf[128], *selector = buf;
+    nsAString selector_str;
+    nsIDOMElement *nselem;
     nsresult nsres;
-    UINT32 len;
+    size_t len;
 
-    nsAString_InitDepend(&name_str, name);
-    nsres = nsIDOMHTMLDocument_GetElementsByName(nsdoc, &name_str, &node_list);
-    nsAString_Finish(&name_str);
+    len = wcslen(name) + ARRAY_SIZE(fmt) - 2 /* %s */;
+    if(len > ARRAY_SIZE(buf) && !(selector = heap_alloc(len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+    swprintf(selector, len, fmt, name);
+
+    nsAString_InitDepend(&selector_str, selector);
+    nsres = nsIDOMHTMLDocument_QuerySelector(nsdoc, &selector_str, &nselem);
+    nsAString_Finish(&selector_str);
+    if(selector != buf)
+        heap_free(selector);
     if(NS_FAILED(nsres))
         return map_nsresult(nsres);
 
-    nsres = nsIDOMNodeList_GetLength(node_list, &len);
-    nsIDOMNodeList_Release(node_list);
-    if(NS_FAILED(nsres))
-        return map_nsresult(nsres);
-
-    return len ? S_OK : DISP_E_UNKNOWNNAME;
+    if(!nselem)
+        return DISP_E_UNKNOWNNAME;
+    nsIDOMElement_Release(nselem);
+    return S_OK;
 }
 
 static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, const WCHAR *name, DISPID *dispid)
@@ -5918,7 +5925,7 @@ static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, DISPI
     }
 
     /* Populate possibly missing DISPIDs */
-    nsAString_InitDepend(&nsstr, L"[name]");
+    nsAString_InitDepend(&nsstr, L":-moz-any(applet,embed,form,iframe,img,object)[name]");
     nsres = nsIDOMHTMLDocument_QuerySelectorAll(This->nsdoc, &nsstr, &node_list);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres))

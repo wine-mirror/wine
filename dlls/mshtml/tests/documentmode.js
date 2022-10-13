@@ -669,7 +669,7 @@ sync_test("for..in", function() {
 
 sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
-    var found;
+    var found, i;
 
     var id_elem = document.getElementById("testid");
     ok(id_elem.tagName === "FORM", "id_elem.tagName = " + id_elem.tagName);
@@ -704,6 +704,39 @@ sync_test("elem_by_id", function() {
             found = true;
     }
     ok(found, "testname was not enumerated in document");
+
+    // these tags expose name as props, and id only if they have a name
+    var tags = [ "embed", "form", "iframe", "img" ];
+    for(i in tags) {
+        var tag = tags[i];
+        document.body.innerHTML = '<' + tag + ' id="testid" name="testname"></' + tag + '><' + tag + ' id="foobar"></' + tag + '>';
+        ok("testname" in document, tag + " did not expose testname");
+        todo_wine.
+        ok("testid" in document, tag + " did not expose testid");
+        ok(!("foobar" in document), tag + " exposed foobar");
+    }
+
+    // these tags always expose their id as well as name (we don't test applet because it makes Windows pop up a dialog box)
+    tags = [ "object" ];
+    for(i in tags) {
+        var tag = tags[i];
+        document.body.innerHTML = '<' + tag + ' id="testid" name="testname"></' + tag + '><' + tag + ' id="foobar"></' + tag + '>';
+        ok("testname" in document, tag + " did not expose testname");
+        todo_wine.
+        ok("testid" in document, tag + " did not expose testid");
+        todo_wine.
+        ok("foobar" in document, tag + " did not expose foobar");
+    }
+
+    // all other tags don't expose props for either id or name, test a few of them here
+    tags = [ "a", "b", "body", "center", "div", "frame", "h2", "head", "html", "input", "meta", "p", "span", "style", "table", "winetest" ];
+    for(i in tags) {
+        var tag = tags[i];
+        document.body.innerHTML = '<' + tag + ' id="testid" name="testname"></' + tag + '><' + tag + ' id="foobar"></' + tag + '>';
+        ok(!("testname" in document), tag + " exposed testname");
+        ok(!("testid" in document), tag + " exposed testid");
+        ok(!("foobar" in document), tag + " exposed foobar");
+    }
 });
 
 sync_test("doc_mode", function() {
