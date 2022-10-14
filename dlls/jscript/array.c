@@ -93,7 +93,7 @@ static HRESULT set_length(jsdisp_t *obj, DWORD length)
     return jsdisp_propput_name(obj, L"length", jsval_number(length));
 }
 
-static WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
+WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
 {
     if(!idx) {
         *ptr = '0';

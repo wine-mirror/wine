@@ -1960,7 +1960,7 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         [[[,2,undefined,3,{prop:0},],undefined,"  "],"[\n  null,\n  2,\n  null,\n  3,\n  {\n    \"prop\": 0\n  },\n  null\n]"]
     ];
 
-    var i, s, v;
+    var i, s, v, t;
 
     for(i=0; i < stringify_tests.length; i++) {
         s = JSON.stringify.apply(null, stringify_tests[i][0]);
@@ -2043,6 +2043,61 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         v = JSON.parse(parse_tests[i][0]);
         ok(json_cmp(v, parse_tests[i][1]), "parse[" + i + "] returned " + v + ", expected " + parse_tests[i][1]);
     }
+
+    v = [ [-1, "b"], {"length": -2, "0": -4, "1": -5}, [{}], [{"x": [null]}] ];
+    s =
+    '{' +
+        '"foo": true,' +
+        '"bar": [],' +
+        '"baz": "remove_me",' +
+        '"obj": {' +
+        '    "arr": [ [1, "b"], {"length": 2, "0": 4, "1": 5}, [{}], [{"x": [null]}] ],' +
+        '    "": "empty"' +
+        '},' +
+        '"last": false' +
+    '}';
+    o = JSON.parse(s), t = JSON.parse(s), i = new Object();
+    i[""] = t;
+    delete t.baz;   /* baz gets removed */
+    t.obj.arr = v;  /* has negative values */
+
+    var walk_expect = [
+        [ o, "foo", true ],
+        [ o, "bar", [] ],
+        [ o, "baz", "remove_me" ],
+        [ [1, "b"], "0", 1 ],
+        [ [-1, "b"], "1", "b" ],
+        [ [ [-1, "b"], {"length": 2, "0": 4, "1": 5}, [{}], [{"x": [null]}] ], "0", [-1, "b"] ],
+        [ {"length": 2, "0": 4, "1": 5}, "length", 2 ],
+        [ {"length": -2, "0": 4, "1": 5}, "0", 4 ],
+        [ {"length": -2, "0": -4, "1": 5}, "1", 5 ],
+        [ v, "1", {"length": -2, "0": -4, "1": -5} ],
+        [ [{}], "0", {} ],
+        [ v, "2", [{}] ],
+        [ [null], "0", null ],
+        [ {"x": [null]}, "x", [null] ],
+        [ [{"x": [null]}], "0", {"x": [null]} ],
+        [ v, "3", [{"x": [null]}] ],
+        [ { "arr": v, "": "empty" }, "arr", v ],
+        [ { "arr": v, "": "empty" }, "", "empty" ],
+        [ t, "obj", { "arr": v, "": "empty" } ],
+        [ t, "last", false ],
+        [ i, "", t ]
+    ];
+    i = 0;
+    v = JSON.parse(s, function(prop, value) {
+        var a = [this, prop, value];
+        ok(json_cmp(a, walk_expect[i]), "[walk step " + i + "] got [" + a + "], expected [" + walk_expect[i] + "]");
+        i++;
+        return (typeof value === 'number') ? -value : (value === "remove_me" ? undefined : value);
+    });
+    ok(i === walk_expect.length, "parse with reviver walked " + i + " steps, expected " + walk_expect.length);
+    ok(json_cmp(v, t), "parse with reviver returned wrong object");
+
+    v = JSON.parse('true', function(prop, value) { return prop === "" ? undefined : value; });
+    ok(v === undefined, "parse with reviver removing last prop returned " + v);
+    v = JSON.parse('true', function(prop, value) { return prop === "" ? false : value; });
+    ok(v === false, "parse with reviver setting last prop to false returned " + v);
 })();
 
 var func = function  (a) {

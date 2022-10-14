@@ -267,19 +267,103 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
     return E_FAIL;
 }
 
+struct transform_json_object_ctx
+{
+    script_ctx_t *ctx;
+    IDispatch *reviver;
+    HRESULT hres;
+};
+
+static jsval_t transform_json_object(struct transform_json_object_ctx *proc_ctx, jsdisp_t *holder, jsstr_t *name)
+{
+    jsval_t res, args[2];
+    const WCHAR *str;
+
+    if(!(str = jsstr_flatten(name)))
+        proc_ctx->hres = E_OUTOFMEMORY;
+    else
+        proc_ctx->hres = jsdisp_propget_name(holder, str, &args[1]);
+    if(FAILED(proc_ctx->hres))
+        return jsval_undefined();
+
+    if(is_object_instance(args[1])) {
+        jsdisp_t *obj = to_jsdisp(get_object(args[1]));
+        jsstr_t *jsstr;
+        DISPID id;
+        BOOL b;
+
+        if(!obj) {
+            FIXME("non-JS obj in JSON object: %p\n", get_object(args[1]));
+            proc_ctx->hres = E_NOTIMPL;
+            return jsval_undefined();
+        }else if(is_class(obj, JSCLASS_ARRAY)) {
+            unsigned i, length = array_get_length(obj);
+            WCHAR buf[14], *buf_end;
+
+            buf_end = buf + ARRAY_SIZE(buf) - 1;
+            *buf_end-- = 0;
+            for(i = 0; i < length; i++) {
+                str = idx_to_str(i, buf_end);
+                if(!(jsstr = jsstr_alloc(str))) {
+                    proc_ctx->hres = E_OUTOFMEMORY;
+                    return jsval_undefined();
+                }
+                res = transform_json_object(proc_ctx, obj, jsstr);
+                jsstr_release(jsstr);
+                if(is_undefined(res)) {
+                    if(FAILED(proc_ctx->hres))
+                        return jsval_undefined();
+                    if(FAILED(jsdisp_get_id(obj, str, 0, &id)))
+                        continue;
+                    proc_ctx->hres = disp_delete((IDispatch*)&obj->IDispatchEx_iface, id, &b);
+                }else {
+                    proc_ctx->hres = jsdisp_define_data_property(obj, str, PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, res);
+                    jsval_release(res);
+                }
+                if(FAILED(proc_ctx->hres))
+                    return jsval_undefined();
+            }
+        }else {
+            id = DISPID_STARTENUM;
+            for(;;) {
+                proc_ctx->hres = jsdisp_next_prop(obj, id, JSDISP_ENUM_OWN_ENUMERABLE, &id);
+                if(proc_ctx->hres == S_FALSE)
+                    break;
+                if(FAILED(proc_ctx->hres) || FAILED(proc_ctx->hres = jsdisp_get_prop_name(obj, id, &jsstr)))
+                    return jsval_undefined();
+                res = transform_json_object(proc_ctx, obj, jsstr);
+                if(is_undefined(res)) {
+                    if(SUCCEEDED(proc_ctx->hres))
+                        proc_ctx->hres = disp_delete((IDispatch*)&obj->IDispatchEx_iface, id, &b);
+                }else {
+                    if(!(str = jsstr_flatten(jsstr)))
+                        proc_ctx->hres = E_OUTOFMEMORY;
+                    else
+                        proc_ctx->hres = jsdisp_define_data_property(obj, str, PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, res);
+                    jsval_release(res);
+                }
+                jsstr_release(jsstr);
+                if(FAILED(proc_ctx->hres))
+                    return jsval_undefined();
+            }
+        }
+    }
+
+    args[0] = jsval_string(name);
+    proc_ctx->hres = disp_call_value(proc_ctx->ctx, proc_ctx->reviver, (IDispatch*)&holder->IDispatchEx_iface,
+                                     DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+    return FAILED(proc_ctx->hres) ? jsval_undefined() : res;
+}
+
 /* ECMA-262 5.1 Edition    15.12.2 */
 static HRESULT JSON_parse(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     json_parse_ctx_t parse_ctx;
     const WCHAR *buf;
+    jsdisp_t *root;
     jsstr_t *str;
     jsval_t ret;
     HRESULT hres;
-
-    if(argc != 1) {
-        FIXME("Unsupported args\n");
-        return E_INVALIDARG;
-    }
 
     hres = to_flat_string(ctx, argv[0], &str, &buf);
     if(FAILED(hres))
@@ -293,11 +377,37 @@ static HRESULT JSON_parse(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
     hres = parse_json_value(&parse_ctx, &ret);
     if(SUCCEEDED(hres) && skip_spaces(&parse_ctx)) {
         FIXME("syntax error\n");
+        jsval_release(ret);
         hres = E_FAIL;
     }
     jsstr_release(str);
     if(FAILED(hres))
         return hres;
+
+    /* FIXME: check IsCallable */
+    if(argc > 1 && is_object_instance(argv[1])) {
+        hres = create_object(ctx, NULL, &root);
+        if(FAILED(hres)) {
+            jsval_release(ret);
+            return hres;
+        }
+        hres = jsdisp_define_data_property(root, L"", PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, ret);
+        jsval_release(ret);
+
+        if(SUCCEEDED(hres)) {
+            struct transform_json_object_ctx proc_ctx = { ctx, get_object(argv[1]), S_OK };
+            if(!(str = jsstr_alloc(L"")))
+                hres = E_OUTOFMEMORY;
+            else {
+                ret = transform_json_object(&proc_ctx, root, str);
+                jsstr_release(str);
+                hres = proc_ctx.hres;
+            }
+        }
+        jsdisp_release(root);
+        if(FAILED(hres))
+            return hres;
+    }
 
     if(r)
         *r = ret;
