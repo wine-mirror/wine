@@ -2025,7 +2025,7 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         for(var prop in x) {
             if(!x.hasOwnProperty(prop))
                 continue;
-            if(!x.hasOwnProperty(prop))
+            if(!y.hasOwnProperty(prop))
                 return false;
             if(!json_cmp(x[prop], y[prop]))
                 return false;
