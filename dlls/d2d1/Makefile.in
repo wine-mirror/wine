@@ -21,5 +21,3 @@ C_SRCS = \
 	wic_render_target.c
 
 RC_SRCS = version.rc
-
-geometry_EXTRADEFS = $(EXCESS_PRECISION_CFLAGS)

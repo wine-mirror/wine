@@ -997,8 +997,6 @@ then
           esac
         fi
 
-        WINE_TRY_CROSSCFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
-
         if test "x$enable_werror" = "xyes"
         then
             WINE_TRY_CROSSCFLAGS([-Werror])
@@ -1846,11 +1844,6 @@ then
   WINE_TRY_CFLAGS([-Wunused-but-set-parameter])
   WINE_TRY_CFLAGS([-Wvla])
   WINE_TRY_CFLAGS([-Wwrite-strings])
-
-  if test -z "$CROSSTARGET"
-  then
-    WINE_TRY_CFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
-  fi
 
   dnl Check for noisy string.h
   WINE_TRY_CFLAGS([-Wpointer-arith],

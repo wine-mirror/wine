@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize "O2,no-strict-aliasing,excess-precision=standard"
+#endif
+
 #include "d2d1_private.h"
 #include <float.h>
 
