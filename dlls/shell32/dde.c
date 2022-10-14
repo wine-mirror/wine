@@ -91,20 +91,30 @@ static inline BOOL Dde_OnWildConnect(HSZ hszTopic, HSZ hszService)
     return FALSE;
 }
 
+static WCHAR *combine_path(const WCHAR *directory, const WCHAR *name, const WCHAR *extension)
+{
+    WCHAR *path;
+    int len;
+
+    len = wcslen(directory) + 1 + wcslen(name);
+    if (extension) len += wcslen(extension);
+    path = malloc((len + 1) * sizeof(WCHAR));
+
+    PathCombineW(path, directory, name);
+
+    if (extension)
+        wcscat(path, extension);
+
+    return path;
+}
+
 /* Returned string must be freed by caller */
 static WCHAR *get_programs_path(const WCHAR *name)
 {
     WCHAR *programs, *path;
-    int len;
 
     SHGetKnownFolderPath(&FOLDERID_Programs, 0, NULL, &programs);
-
-    len = lstrlenW(programs) + 1 + lstrlenW(name);
-    path = malloc((len + 1) * sizeof(*path));
-    lstrcpyW(path, programs);
-    lstrcatW(path, L"/");
-    lstrcatW(path, name);
-
+    path = combine_path(programs, name, NULL);
     CoTaskMemFree(programs);
 
     return path;
@@ -265,16 +275,15 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         }
         if (argc >= 2)
         {
-            len = lstrlenW(last_group) + 1 + lstrlenW(argv[1]) + 5;
-            name = malloc(len * sizeof(*name));
-            swprintf( name, len, L"%s/%s.lnk", last_group, argv[1] );
+            name = combine_path(last_group, argv[1], L".lnk");
         }
         else
         {
-            const WCHAR *filename = PathFindFileNameW(argv[0]);
-            len = PathFindExtensionW(filename) - filename;
-            name = malloc((lstrlenW(last_group) + 1 + len + 5) * sizeof(*name));
-            swprintf( name, lstrlenW(last_group) + 1 + len + 5, L"%s/%.*s.lnk", last_group, len, filename );
+            WCHAR *filename = wcsdup(PathFindFileNameW(argv[0]));
+            WCHAR *ext = PathFindExtensionW(filename);
+            *ext = '\0';
+            name = combine_path(last_group, filename, L".lnk");
+            free(filename);
         }
         hres = IPersistFile_Save(file, name, TRUE);
 
@@ -291,12 +300,8 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        len = lstrlenW(last_group) + 1 + lstrlenW(argv[0]) + 5;
-        name = malloc(len * sizeof(*name));
-        swprintf( name, len, L"%s/%s.lnk", last_group, argv[0]);
-
+        name = combine_path(last_group, argv[0], L".lnk");
         ret = DeleteFileW(name);
-
         free(name);
 
         if (!ret) return DDE_FNOTPROCESSED;
