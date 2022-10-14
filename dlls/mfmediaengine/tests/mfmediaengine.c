@@ -28,6 +28,7 @@
 #include "mfmediaengine.h"
 #include "mferror.h"
 #include "dxgi.h"
+#include "d3d11.h"
 #include "initguid.h"
 #include "mmdeviceapi.h"
 #include "audiosessiontypes.h"
@@ -35,6 +36,9 @@
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
+static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
+        D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
 
 static IMFMediaEngineClassFactory *factory;
 
@@ -62,12 +66,104 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
+static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+{
+    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+
+    /* skip BMP header from the dump */
+    size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
+    *length = *length + size;
+    expect = expect + size;
+
+    for (y = 0; y < height; y++, data += width * 4, expect += width * 4)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x++)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[4 * x + 0] - (int)data[4 * x + 0]);
+            diff += abs((int)expect[4 * x + 1] - (int)data[4 * x + 1]);
+            diff += abs((int)expect[4 * x + 2] - (int)data[4 * x + 2]);
+        }
+    }
+
+    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3;
+    return diff * 100 / 256 / size;
+}
+
+static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+{
+    DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    static const char magic[2] = "BM";
+    struct
+    {
+        DWORD length;
+        DWORD reserved;
+        DWORD offset;
+        BITMAPINFOHEADER biHeader;
+    } header =
+    {
+        .length = length + sizeof(header) + 2, .offset = sizeof(header) + 2,
+        .biHeader =
+        {
+            .biSize = sizeof(BITMAPINFOHEADER), .biWidth = width, .biHeight = height, .biPlanes = 1,
+            .biBitCount = 32, .biCompression = BI_RGB, .biSizeImage = width * height * 4,
+        },
+    };
+    DWORD written;
+    BOOL ret;
+
+    ret = WriteFile(output, magic, sizeof(magic), &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == sizeof(magic), "written %lu bytes\n", written);
+    ret = WriteFile(output, &header, sizeof(header), &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == sizeof(header), "written %lu bytes\n", written);
+    ret = WriteFile(output, data, length, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == length, "written %lu bytes\n", written);
+}
+
+#define check_rgb32_data(a, b, c, d, e) check_rgb32_data_(__LINE__, a, b, c, d, e)
+static void check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data, DWORD length, const RECT *rect, BOOL todo)
+{
+    WCHAR output_path[MAX_PATH];
+    const BYTE *expect_data;
+    HRSRC resource;
+    HANDLE output;
+    DWORD diff;
+
+    GetTempPathW(ARRAY_SIZE(output_path), output_path);
+    lstrcatW(output_path, filename);
+    output = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+    dump_rgb32(data, length, rect, output);
+    trace("created %s\n", debugstr_w(output_path));
+    CloseHandle(output);
+
+    resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    expect_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+
+    diff = compare_rgb32(data, &length, rect, expect_data);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(diff == 0, "Unexpected %lu%% diff\n", diff);
+}
+
 static void init_functions(void)
 {
-    HMODULE mod = GetModuleHandleA("mfplat.dll");
+    HMODULE mod;
 
 #define X(f) p##f = (void*)GetProcAddress(mod, #f)
-    X(MFCreateDXGIDeviceManager);
+    if ((mod = GetModuleHandleA("mfplat.dll")))
+    {
+        X(MFCreateDXGIDeviceManager);
+    }
+
+    if ((mod = LoadLibraryA("d3d11.dll")))
+    {
+        X(D3D11CreateDevice);
+    }
 #undef X
 }
 
@@ -136,6 +232,34 @@ static struct media_engine_notify *create_callback(void)
     object->refcount = 1;
 
     return object;
+}
+
+static ID3D11Device *create_d3d11_device(void)
+{
+    static const D3D_FEATURE_LEVEL default_feature_level[] =
+    {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+    };
+    const D3D_FEATURE_LEVEL *feature_level;
+    unsigned int feature_level_count;
+    ID3D11Device *device;
+
+    feature_level = default_feature_level;
+    feature_level_count = ARRAY_SIZE(default_feature_level);
+
+    if (SUCCEEDED(pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0,
+            feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL)))
+        return device;
+    if (SUCCEEDED(pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_WARP, NULL, 0,
+            feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL)))
+        return device;
+    if (SUCCEEDED(pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_REFERENCE, NULL, 0,
+            feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL)))
+        return device;
+
+    return NULL;
 }
 
 static IMFMediaEngine *create_media_engine(IMFMediaEngineNotify *callback, IMFDXGIDeviceManager *manager, UINT32 output_format)
@@ -972,6 +1096,224 @@ static void test_audio_configuration(void)
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
+static IMFByteStream *load_resource(const WCHAR *name, const WCHAR *mime)
+{
+    IMFAttributes *attributes;
+    const BYTE *resource_data;
+    IMFByteStream *stream;
+    ULONG resource_len;
+    HRSRC resource;
+    HRESULT hr;
+
+    resource = FindResourceW(NULL, name, (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW %s failed, error %lu\n", debugstr_w(name), GetLastError());
+    resource_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    resource_len = SizeofResource(GetModuleHandleW(NULL), resource);
+
+    hr = MFCreateTempFile(MF_ACCESSMODE_READWRITE, MF_OPENMODE_DELETE_IF_EXIST, MF_FILEFLAGS_NONE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_Write(stream, resource_data, resource_len, &resource_len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_SetCurrentPosition(stream, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, mime);
+    ok(hr == S_OK, "Failed to set string value, hr %#lx.\n", hr);
+    IMFAttributes_Release(attributes);
+
+    return stream;
+}
+
+struct test_transfer_notify
+{
+    IMFMediaEngineNotify IMFMediaEngineNotify_iface;
+
+    IMFMediaEngineEx *media_engine;
+    HANDLE ready_event;
+    HRESULT error;
+};
+
+static HRESULT WINAPI test_transfer_notify_QueryInterface(IMFMediaEngineNotify *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown)
+            || IsEqualIID(riid, &IID_IMFMediaEngineNotify))
+    {
+        *obj = iface;
+        IMFMediaEngineNotify_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_transfer_notify_AddRef(IMFMediaEngineNotify *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_transfer_notify_Release(IMFMediaEngineNotify *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_transfer_notify_EventNotify(IMFMediaEngineNotify *iface, DWORD event, DWORD_PTR param1, DWORD param2)
+{
+    struct test_transfer_notify *notify = CONTAINING_RECORD(iface, struct test_transfer_notify, IMFMediaEngineNotify_iface);
+    IMFMediaEngineEx *media_engine = notify->media_engine;
+    DWORD width, height;
+    HRESULT hr;
+    BOOL ret;
+
+    switch (event)
+    {
+    case MF_MEDIA_ENGINE_EVENT_CANPLAY:
+        hr = IMFMediaEngineEx_Play(media_engine);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        break;
+
+    case MF_MEDIA_ENGINE_EVENT_FORMATCHANGE:
+        ret = IMFMediaEngineEx_HasVideo(media_engine);
+        ok(ret, "Unexpected HasVideo %u.\n", ret);
+        hr = IMFMediaEngineEx_GetNativeVideoSize(media_engine, &width, &height);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(width == 64, "Unexpected width %lu.\n", width);
+        ok(height == 64, "Unexpected height %lu.\n", height);
+        break;
+
+    case MF_MEDIA_ENGINE_EVENT_ERROR:
+        ok(broken(param2 == MF_E_UNSUPPORTED_BYTESTREAM_TYPE), "Unexpected error %#lx\n", param2);
+        notify->error = param2;
+        /* fallthrough */
+    case MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY:
+    case MF_MEDIA_ENGINE_EVENT_TIMEUPDATE:
+        SetEvent(notify->ready_event);
+        break;
+    }
+
+    return S_OK;
+}
+
+static IMFMediaEngineNotifyVtbl test_transfer_notify_vtbl =
+{
+    test_transfer_notify_QueryInterface,
+    test_transfer_notify_AddRef,
+    test_transfer_notify_Release,
+    test_transfer_notify_EventNotify,
+};
+
+static void test_TransferVideoFrames(void)
+{
+    struct test_transfer_notify notify = {{&test_transfer_notify_vtbl}};
+    WCHAR url[] = {L"i420-64x64.avi"};
+    ID3D11Texture2D *texture, *rb_texture;
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    IMFMediaEngineEx *media_engine;
+    IMFDXGIDeviceManager *manager;
+    ID3D11DeviceContext *context;
+    D3D11_TEXTURE2D_DESC desc;
+    IMFByteStream *stream;
+    ID3D11Device *device;
+    RECT dst_rect;
+    UINT token;
+    HRESULT hr;
+    DWORD res;
+
+    stream = load_resource(L"i420-64x64.avi", L"video/avi");
+
+    notify.ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!notify.ready_event, "CreateEventW failed, error %lu\n", GetLastError());
+
+    if (!(device = create_d3d11_device()))
+    {
+        skip("Failed to create a D3D11 device, skipping tests.\n");
+        return;
+    }
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)device, token);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    media_engine = create_media_engine_ex(&notify.IMFMediaEngineNotify_iface,
+            manager, DXGI_FORMAT_B8G8R8X8_UNORM);
+
+    IMFDXGIDeviceManager_Release(manager);
+
+    if (!(notify.media_engine = media_engine))
+        return;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.SampleDesc.Count = 1;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFByteStream_Release(stream);
+
+    res = WaitForSingleObject(notify.ready_event, 5000);
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    if (FAILED(notify.error))
+    {
+        win_skip("Media engine reported error %#lx, skipping tests.\n", notify.error);
+        goto done;
+    }
+
+    /* FIXME: Wine first video frame is often full of garbage, wait for another update */
+    res = WaitForSingleObject(notify.ready_event, 500);
+    /* It's also missing the MF_MEDIA_ENGINE_EVENT_TIMEUPDATE notifications */
+    todo_wine
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify.media_engine, (IUnknown *)texture, NULL, NULL, NULL);
+    ok(hr == S_OK || broken(hr == E_POINTER) /* w1064v1507 */, "Unexpected hr %#lx.\n", hr);
+    if (hr == E_POINTER)
+        goto done;
+
+    ID3D11Texture2D_GetDesc(texture, &desc);
+    desc.Usage = D3D11_USAGE_STAGING;
+    desc.BindFlags = 0;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &rb_texture);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)rb_texture,
+            0, 0, 0, 0, (ID3D11Resource *)texture, 0, NULL);
+
+    memset(&map_desc, 0, sizeof(map_desc));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)rb_texture, 0, D3D11_MAP_READ, 0, &map_desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!map_desc.pData, "got pData %p\n", map_desc.pData);
+    ok(map_desc.DepthPitch == 16384, "got DepthPitch %u\n", map_desc.DepthPitch);
+    ok(map_desc.RowPitch == desc.Width * 4, "got RowPitch %u\n", map_desc.RowPitch);
+    check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect, TRUE);
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)rb_texture, 0);
+
+    ID3D11DeviceContext_Release(context);
+    ID3D11Texture2D_Release(rb_texture);
+
+done:
+    IMFMediaEngineEx_Shutdown(media_engine);
+    IMFMediaEngineEx_Release(media_engine);
+
+    ID3D11Texture2D_Release(texture);
+    ID3D11Device_Release(device);
+
+    CloseHandle(notify.ready_event);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -1002,6 +1344,7 @@ START_TEST(mfmediaengine)
     test_time_range();
     test_SetSourceFromByteStream();
     test_audio_configuration();
+    test_TransferVideoFrames();
 
     IMFMediaEngineClassFactory_Release(factory);
 

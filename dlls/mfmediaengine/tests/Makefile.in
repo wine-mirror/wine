@@ -3,3 +3,5 @@ IMPORTS   = ole32 mfplat oleaut32 mfuuid uuid
 
 C_SRCS = \
 	mfmediaengine.c
+
+RC_SRCS = resource.rc
