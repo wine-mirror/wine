@@ -334,7 +334,7 @@ struct nsi_tcp_conn_key
 struct nsi_tcp_conn_dynamic
 {
     UINT state;
-    UINT unk[3];
+    UINT unk[4];
 };
 
 struct nsi_tcp_conn_static
