@@ -100,6 +100,7 @@ static const struct column col_compsys[] =
     { L"Description",               CIM_STRING },
     { L"Domain",                    CIM_STRING },
     { L"DomainRole",                CIM_UINT16 },
+    { L"HypervisorPresent",         CIM_BOOLEAN },
     { L"Manufacturer",              CIM_STRING },
     { L"Model",                     CIM_STRING },
     { L"Name",                      CIM_STRING|COL_FLAG_DYNAMIC },
@@ -541,6 +542,7 @@ struct record_computersystem
     const WCHAR *description;
     const WCHAR *domain;
     UINT16       domainrole;
+    int          hypervisorpresent;
     const WCHAR *manufacturer;
     const WCHAR *model;
     const WCHAR *name;
@@ -1669,6 +1671,7 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     rec->description            = L"AT/AT COMPATIBLE";
     rec->domain                 = L"WORKGROUP";
     rec->domainrole             = 0; /* standalone workstation */
+    rec->hypervisorpresent      = 0;
     rec->manufacturer           = get_compsysproduct_vendor( buf, len );
     rec->model                  = get_compsysproduct_name( buf, len );
     rec->name                   = get_computername();

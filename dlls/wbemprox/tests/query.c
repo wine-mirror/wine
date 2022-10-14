@@ -751,6 +751,17 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
         trace( "numlogicalprocessors %ld\n", V_I4( &value ) );
     }
 
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( obj, L"HypervisorPresent", 0, &value, &type, NULL );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* win7 testbot */, "got %#lx\n", hr );
+    if (hr == S_OK)
+    {
+        ok( V_VT( &value ) == VT_BOOL, "unexpected variant type %#x\n", V_VT( &value ) );
+        ok( type == CIM_BOOLEAN, "unexpected type %#lx\n", type );
+        trace( "HypervisorPresent %d\n", V_BOOL( &value ) );
+    }
+
     check_property( obj, L"NumberOfProcessors", VT_I4, CIM_UINT32 );
     check_property( obj, L"SystemType", VT_BSTR, CIM_STRING );
 
