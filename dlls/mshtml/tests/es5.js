@@ -1188,6 +1188,23 @@ sync_test("bind", function() {
     ok(t != a, "t == a");
 
     ok(Function.prototype.bind.length === 1, "Function.prototype.bind.length = " + Function.prototype.bind.length);
+
+    ((function() { ok(this === window, "bind() this = " + this); }).bind())();
+    ((function() { ok(this === window, "bind(undefined) = " + this); }).bind(undefined))();
+    ((function() { ok(this === window, "bind(nullDisp) = " + this); }).bind(external.nullDisp))();
+    ((function() {
+        ok(typeof(this) === "object", "bind(42) typeof(this) = " + typeof(this));
+        ok(this.valueOf() === 42, "bind(42) this = " + this);
+    }).bind(42))();
+
+    r = (Object.prototype.toString.bind())();
+    ok(r === "[object Undefined]", "toString.bind() returned " + r);
+    r = (Object.prototype.toString.bind(undefined))();
+    ok(r === "[object Undefined]", "toString.bind(undefined) returned " + r);
+    r = (Object.prototype.toString.bind(null))();
+    ok(r === "[object Null]", "toString.bind(null) returned " + r);
+    r = (Object.prototype.toString.bind(external.nullDisp))();
+    ok(r === "[object Null]", "toString.bind(nullDisp) returned " + r);
 });
 
 sync_test("keys", function() {
