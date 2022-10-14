@@ -54,6 +54,19 @@ static const char *debugstr_hsz( HSZ hsz )
     return debugstr_w( buffer );
 }
 
+static WCHAR *strndupW(const WCHAR *src, DWORD len)
+{
+    WCHAR *dest;
+    if (!src) return NULL;
+    dest = heap_alloc((len + 1) * sizeof(*dest));
+    if (dest)
+    {
+        memcpy(dest, src, len * sizeof(WCHAR));
+        dest[len] = '\0';
+    }
+    return dest;
+}
+
 static inline BOOL Dde_OnConnect(HSZ hszTopic, HSZ hszService)
 {
     if ((hszTopic == hszProgmanTopic) && (hszService == hszProgmanService))
