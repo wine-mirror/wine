@@ -494,196 +494,190 @@ static USHORT fs32_sel;  /* selector for %fs in 32-bit mode */
  * Definitions for Dwarf unwind tables
  */
 
-enum dwarf_call_frame_info
-{
-    DW_CFA_advance_loc = 0x40,
-    DW_CFA_offset = 0x80,
-    DW_CFA_restore = 0xc0,
-    DW_CFA_nop = 0x00,
-    DW_CFA_set_loc = 0x01,
-    DW_CFA_advance_loc1 = 0x02,
-    DW_CFA_advance_loc2 = 0x03,
-    DW_CFA_advance_loc4 = 0x04,
-    DW_CFA_offset_extended = 0x05,
-    DW_CFA_restore_extended = 0x06,
-    DW_CFA_undefined = 0x07,
-    DW_CFA_same_value = 0x08,
-    DW_CFA_register = 0x09,
-    DW_CFA_remember_state = 0x0a,
-    DW_CFA_restore_state = 0x0b,
-    DW_CFA_def_cfa = 0x0c,
-    DW_CFA_def_cfa_register = 0x0d,
-    DW_CFA_def_cfa_offset = 0x0e,
-    DW_CFA_def_cfa_expression = 0x0f,
-    DW_CFA_expression = 0x10,
-    DW_CFA_offset_extended_sf = 0x11,
-    DW_CFA_def_cfa_sf = 0x12,
-    DW_CFA_def_cfa_offset_sf = 0x13,
-    DW_CFA_val_offset = 0x14,
-    DW_CFA_val_offset_sf = 0x15,
-    DW_CFA_val_expression = 0x16,
-};
+#define DW_CFA_advance_loc 0x40
+#define DW_CFA_offset 0x80
+#define DW_CFA_restore 0xc0
+#define DW_CFA_nop 0x00
+#define DW_CFA_set_loc 0x01
+#define DW_CFA_advance_loc1 0x02
+#define DW_CFA_advance_loc2 0x03
+#define DW_CFA_advance_loc4 0x04
+#define DW_CFA_offset_extended 0x05
+#define DW_CFA_restore_extended 0x06
+#define DW_CFA_undefined 0x07
+#define DW_CFA_same_value 0x08
+#define DW_CFA_register 0x09
+#define DW_CFA_remember_state 0x0a
+#define DW_CFA_restore_state 0x0b
+#define DW_CFA_def_cfa 0x0c
+#define DW_CFA_def_cfa_register 0x0d
+#define DW_CFA_def_cfa_offset 0x0e
+#define DW_CFA_def_cfa_expression 0x0f
+#define DW_CFA_expression 0x10
+#define DW_CFA_offset_extended_sf 0x11
+#define DW_CFA_def_cfa_sf 0x12
+#define DW_CFA_def_cfa_offset_sf 0x13
+#define DW_CFA_val_offset 0x14
+#define DW_CFA_val_offset_sf 0x15
+#define DW_CFA_val_expression 0x16
 
-enum dwarf_operation
-{
-    DW_OP_addr                 = 0x03,
-    DW_OP_deref                = 0x06,
-    DW_OP_const1u              = 0x08,
-    DW_OP_const1s              = 0x09,
-    DW_OP_const2u              = 0x0a,
-    DW_OP_const2s              = 0x0b,
-    DW_OP_const4u              = 0x0c,
-    DW_OP_const4s              = 0x0d,
-    DW_OP_const8u              = 0x0e,
-    DW_OP_const8s              = 0x0f,
-    DW_OP_constu               = 0x10,
-    DW_OP_consts               = 0x11,
-    DW_OP_dup                  = 0x12,
-    DW_OP_drop                 = 0x13,
-    DW_OP_over                 = 0x14,
-    DW_OP_pick                 = 0x15,
-    DW_OP_swap                 = 0x16,
-    DW_OP_rot                  = 0x17,
-    DW_OP_xderef               = 0x18,
-    DW_OP_abs                  = 0x19,
-    DW_OP_and                  = 0x1a,
-    DW_OP_div                  = 0x1b,
-    DW_OP_minus                = 0x1c,
-    DW_OP_mod                  = 0x1d,
-    DW_OP_mul                  = 0x1e,
-    DW_OP_neg                  = 0x1f,
-    DW_OP_not                  = 0x20,
-    DW_OP_or                   = 0x21,
-    DW_OP_plus                 = 0x22,
-    DW_OP_plus_uconst          = 0x23,
-    DW_OP_shl                  = 0x24,
-    DW_OP_shr                  = 0x25,
-    DW_OP_shra                 = 0x26,
-    DW_OP_xor                  = 0x27,
-    DW_OP_bra                  = 0x28,
-    DW_OP_eq                   = 0x29,
-    DW_OP_ge                   = 0x2a,
-    DW_OP_gt                   = 0x2b,
-    DW_OP_le                   = 0x2c,
-    DW_OP_lt                   = 0x2d,
-    DW_OP_ne                   = 0x2e,
-    DW_OP_skip                 = 0x2f,
-    DW_OP_lit0                 = 0x30,
-    DW_OP_lit1                 = 0x31,
-    DW_OP_lit2                 = 0x32,
-    DW_OP_lit3                 = 0x33,
-    DW_OP_lit4                 = 0x34,
-    DW_OP_lit5                 = 0x35,
-    DW_OP_lit6                 = 0x36,
-    DW_OP_lit7                 = 0x37,
-    DW_OP_lit8                 = 0x38,
-    DW_OP_lit9                 = 0x39,
-    DW_OP_lit10                = 0x3a,
-    DW_OP_lit11                = 0x3b,
-    DW_OP_lit12                = 0x3c,
-    DW_OP_lit13                = 0x3d,
-    DW_OP_lit14                = 0x3e,
-    DW_OP_lit15                = 0x3f,
-    DW_OP_lit16                = 0x40,
-    DW_OP_lit17                = 0x41,
-    DW_OP_lit18                = 0x42,
-    DW_OP_lit19                = 0x43,
-    DW_OP_lit20                = 0x44,
-    DW_OP_lit21                = 0x45,
-    DW_OP_lit22                = 0x46,
-    DW_OP_lit23                = 0x47,
-    DW_OP_lit24                = 0x48,
-    DW_OP_lit25                = 0x49,
-    DW_OP_lit26                = 0x4a,
-    DW_OP_lit27                = 0x4b,
-    DW_OP_lit28                = 0x4c,
-    DW_OP_lit29                = 0x4d,
-    DW_OP_lit30                = 0x4e,
-    DW_OP_lit31                = 0x4f,
-    DW_OP_reg0                 = 0x50,
-    DW_OP_reg1                 = 0x51,
-    DW_OP_reg2                 = 0x52,
-    DW_OP_reg3                 = 0x53,
-    DW_OP_reg4                 = 0x54,
-    DW_OP_reg5                 = 0x55,
-    DW_OP_reg6                 = 0x56,
-    DW_OP_reg7                 = 0x57,
-    DW_OP_reg8                 = 0x58,
-    DW_OP_reg9                 = 0x59,
-    DW_OP_reg10                = 0x5a,
-    DW_OP_reg11                = 0x5b,
-    DW_OP_reg12                = 0x5c,
-    DW_OP_reg13                = 0x5d,
-    DW_OP_reg14                = 0x5e,
-    DW_OP_reg15                = 0x5f,
-    DW_OP_reg16                = 0x60,
-    DW_OP_reg17                = 0x61,
-    DW_OP_reg18                = 0x62,
-    DW_OP_reg19                = 0x63,
-    DW_OP_reg20                = 0x64,
-    DW_OP_reg21                = 0x65,
-    DW_OP_reg22                = 0x66,
-    DW_OP_reg23                = 0x67,
-    DW_OP_reg24                = 0x68,
-    DW_OP_reg25                = 0x69,
-    DW_OP_reg26                = 0x6a,
-    DW_OP_reg27                = 0x6b,
-    DW_OP_reg28                = 0x6c,
-    DW_OP_reg29                = 0x6d,
-    DW_OP_reg30                = 0x6e,
-    DW_OP_reg31                = 0x6f,
-    DW_OP_breg0                = 0x70,
-    DW_OP_breg1                = 0x71,
-    DW_OP_breg2                = 0x72,
-    DW_OP_breg3                = 0x73,
-    DW_OP_breg4                = 0x74,
-    DW_OP_breg5                = 0x75,
-    DW_OP_breg6                = 0x76,
-    DW_OP_breg7                = 0x77,
-    DW_OP_breg8                = 0x78,
-    DW_OP_breg9                = 0x79,
-    DW_OP_breg10               = 0x7a,
-    DW_OP_breg11               = 0x7b,
-    DW_OP_breg12               = 0x7c,
-    DW_OP_breg13               = 0x7d,
-    DW_OP_breg14               = 0x7e,
-    DW_OP_breg15               = 0x7f,
-    DW_OP_breg16               = 0x80,
-    DW_OP_breg17               = 0x81,
-    DW_OP_breg18               = 0x82,
-    DW_OP_breg19               = 0x83,
-    DW_OP_breg20               = 0x84,
-    DW_OP_breg21               = 0x85,
-    DW_OP_breg22               = 0x86,
-    DW_OP_breg23               = 0x87,
-    DW_OP_breg24               = 0x88,
-    DW_OP_breg25               = 0x89,
-    DW_OP_breg26               = 0x8a,
-    DW_OP_breg27               = 0x8b,
-    DW_OP_breg28               = 0x8c,
-    DW_OP_breg29               = 0x8d,
-    DW_OP_breg30               = 0x8e,
-    DW_OP_breg31               = 0x8f,
-    DW_OP_regx                 = 0x90,
-    DW_OP_fbreg                = 0x91,
-    DW_OP_bregx                = 0x92,
-    DW_OP_piece                = 0x93,
-    DW_OP_deref_size           = 0x94,
-    DW_OP_xderef_size          = 0x95,
-    DW_OP_nop                  = 0x96,
-    DW_OP_push_object_address  = 0x97,
-    DW_OP_call2                = 0x98,
-    DW_OP_call4                = 0x99,
-    DW_OP_call_ref             = 0x9a,
-    DW_OP_form_tls_address     = 0x9b,
-    DW_OP_call_frame_cfa       = 0x9c,
-    DW_OP_bit_piece            = 0x9d,
-    DW_OP_lo_user              = 0xe0,
-    DW_OP_hi_user              = 0xff,
-    DW_OP_GNU_push_tls_address = 0xe0,
-    DW_OP_GNU_uninit           = 0xf0,
-    DW_OP_GNU_encoded_addr     = 0xf1,
-};
+#define DW_OP_addr                 0x03
+#define DW_OP_deref                0x06
+#define DW_OP_const1u              0x08
+#define DW_OP_const1s              0x09
+#define DW_OP_const2u              0x0a
+#define DW_OP_const2s              0x0b
+#define DW_OP_const4u              0x0c
+#define DW_OP_const4s              0x0d
+#define DW_OP_const8u              0x0e
+#define DW_OP_const8s              0x0f
+#define DW_OP_constu               0x10
+#define DW_OP_consts               0x11
+#define DW_OP_dup                  0x12
+#define DW_OP_drop                 0x13
+#define DW_OP_over                 0x14
+#define DW_OP_pick                 0x15
+#define DW_OP_swap                 0x16
+#define DW_OP_rot                  0x17
+#define DW_OP_xderef               0x18
+#define DW_OP_abs                  0x19
+#define DW_OP_and                  0x1a
+#define DW_OP_div                  0x1b
+#define DW_OP_minus                0x1c
+#define DW_OP_mod                  0x1d
+#define DW_OP_mul                  0x1e
+#define DW_OP_neg                  0x1f
+#define DW_OP_not                  0x20
+#define DW_OP_or                   0x21
+#define DW_OP_plus                 0x22
+#define DW_OP_plus_uconst          0x23
+#define DW_OP_shl                  0x24
+#define DW_OP_shr                  0x25
+#define DW_OP_shra                 0x26
+#define DW_OP_xor                  0x27
+#define DW_OP_bra                  0x28
+#define DW_OP_eq                   0x29
+#define DW_OP_ge                   0x2a
+#define DW_OP_gt                   0x2b
+#define DW_OP_le                   0x2c
+#define DW_OP_lt                   0x2d
+#define DW_OP_ne                   0x2e
+#define DW_OP_skip                 0x2f
+#define DW_OP_lit0                 0x30
+#define DW_OP_lit1                 0x31
+#define DW_OP_lit2                 0x32
+#define DW_OP_lit3                 0x33
+#define DW_OP_lit4                 0x34
+#define DW_OP_lit5                 0x35
+#define DW_OP_lit6                 0x36
+#define DW_OP_lit7                 0x37
+#define DW_OP_lit8                 0x38
+#define DW_OP_lit9                 0x39
+#define DW_OP_lit10                0x3a
+#define DW_OP_lit11                0x3b
+#define DW_OP_lit12                0x3c
+#define DW_OP_lit13                0x3d
+#define DW_OP_lit14                0x3e
+#define DW_OP_lit15                0x3f
+#define DW_OP_lit16                0x40
+#define DW_OP_lit17                0x41
+#define DW_OP_lit18                0x42
+#define DW_OP_lit19                0x43
+#define DW_OP_lit20                0x44
+#define DW_OP_lit21                0x45
+#define DW_OP_lit22                0x46
+#define DW_OP_lit23                0x47
+#define DW_OP_lit24                0x48
+#define DW_OP_lit25                0x49
+#define DW_OP_lit26                0x4a
+#define DW_OP_lit27                0x4b
+#define DW_OP_lit28                0x4c
+#define DW_OP_lit29                0x4d
+#define DW_OP_lit30                0x4e
+#define DW_OP_lit31                0x4f
+#define DW_OP_reg0                 0x50
+#define DW_OP_reg1                 0x51
+#define DW_OP_reg2                 0x52
+#define DW_OP_reg3                 0x53
+#define DW_OP_reg4                 0x54
+#define DW_OP_reg5                 0x55
+#define DW_OP_reg6                 0x56
+#define DW_OP_reg7                 0x57
+#define DW_OP_reg8                 0x58
+#define DW_OP_reg9                 0x59
+#define DW_OP_reg10                0x5a
+#define DW_OP_reg11                0x5b
+#define DW_OP_reg12                0x5c
+#define DW_OP_reg13                0x5d
+#define DW_OP_reg14                0x5e
+#define DW_OP_reg15                0x5f
+#define DW_OP_reg16                0x60
+#define DW_OP_reg17                0x61
+#define DW_OP_reg18                0x62
+#define DW_OP_reg19                0x63
+#define DW_OP_reg20                0x64
+#define DW_OP_reg21                0x65
+#define DW_OP_reg22                0x66
+#define DW_OP_reg23                0x67
+#define DW_OP_reg24                0x68
+#define DW_OP_reg25                0x69
+#define DW_OP_reg26                0x6a
+#define DW_OP_reg27                0x6b
+#define DW_OP_reg28                0x6c
+#define DW_OP_reg29                0x6d
+#define DW_OP_reg30                0x6e
+#define DW_OP_reg31                0x6f
+#define DW_OP_breg0                0x70
+#define DW_OP_breg1                0x71
+#define DW_OP_breg2                0x72
+#define DW_OP_breg3                0x73
+#define DW_OP_breg4                0x74
+#define DW_OP_breg5                0x75
+#define DW_OP_breg6                0x76
+#define DW_OP_breg7                0x77
+#define DW_OP_breg8                0x78
+#define DW_OP_breg9                0x79
+#define DW_OP_breg10               0x7a
+#define DW_OP_breg11               0x7b
+#define DW_OP_breg12               0x7c
+#define DW_OP_breg13               0x7d
+#define DW_OP_breg14               0x7e
+#define DW_OP_breg15               0x7f
+#define DW_OP_breg16               0x80
+#define DW_OP_breg17               0x81
+#define DW_OP_breg18               0x82
+#define DW_OP_breg19               0x83
+#define DW_OP_breg20               0x84
+#define DW_OP_breg21               0x85
+#define DW_OP_breg22               0x86
+#define DW_OP_breg23               0x87
+#define DW_OP_breg24               0x88
+#define DW_OP_breg25               0x89
+#define DW_OP_breg26               0x8a
+#define DW_OP_breg27               0x8b
+#define DW_OP_breg28               0x8c
+#define DW_OP_breg29               0x8d
+#define DW_OP_breg30               0x8e
+#define DW_OP_breg31               0x8f
+#define DW_OP_regx                 0x90
+#define DW_OP_fbreg                0x91
+#define DW_OP_bregx                0x92
+#define DW_OP_piece                0x93
+#define DW_OP_deref_size           0x94
+#define DW_OP_xderef_size          0x95
+#define DW_OP_nop                  0x96
+#define DW_OP_push_object_address  0x97
+#define DW_OP_call2                0x98
+#define DW_OP_call4                0x99
+#define DW_OP_call_ref             0x9a
+#define DW_OP_form_tls_address     0x9b
+#define DW_OP_call_frame_cfa       0x9c
+#define DW_OP_bit_piece            0x9d
+#define DW_OP_lo_user              0xe0
+#define DW_OP_hi_user              0xff
+#define DW_OP_GNU_push_tls_address 0xe0
+#define DW_OP_GNU_uninit           0xf0
+#define DW_OP_GNU_encoded_addr     0xf1
 
 #define DW_EH_PE_native   0x00
 #define DW_EH_PE_uleb128  0x01
@@ -894,7 +888,7 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
 {
     while (ptr < end && info->ip < last_ip + info->signal_frame)
     {
-        enum dwarf_call_frame_info op = *ptr++;
+        const unsigned char op = *ptr++;
 
         if (op & 0xc0)
         {
@@ -3345,6 +3339,33 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    "call *%rsi" )
 
+#define DW_OP_rcx DW_OP_breg2
+#define DW_OP_rbp DW_OP_breg6
+#define DW_OP_rsp DW_OP_breg7
+
+#define DW_REG_rbx 0x03
+#define DW_REG_rsi 0x04
+#define DW_REG_rdi 0x05
+#define DW_REG_rbp 0x06
+#define DW_REG_rsp 0x07
+#define DW_REG_r12 0x0c
+#define DW_REG_r13 0x0d
+#define DW_REG_r14 0x0e
+#define DW_REG_r15 0x0f
+#define DW_REG_rip 0x10
+
+#define __ASM_CFI_STR(...) #__VA_ARGS__
+#define __ASM_CFI_ESC(...) \
+    __ASM_CFI(".cfi_escape " __ASM_CFI_STR(__VA_ARGS__) "\n\t")
+#define __ASM_CFI_CFA_IS_AT1(base, offset) \
+    __ASM_CFI_ESC(DW_CFA_def_cfa_expression, 0x03, DW_OP_ ## base, offset, DW_OP_deref)
+#define __ASM_CFI_REG_IS_AT1(reg, base, offset) \
+   __ASM_CFI_ESC(DW_CFA_expression, DW_REG_ ## reg, 0x02, DW_OP_ ## base, offset)
+#define __ASM_CFI_CFA_IS_AT2(base, lo, hi) \
+    __ASM_CFI_ESC(DW_CFA_def_cfa_expression, 0x04, DW_OP_ ## base, lo, hi, DW_OP_deref)
+#define __ASM_CFI_REG_IS_AT2(reg, base, lo, hi) \
+   __ASM_CFI_ESC(DW_CFA_expression, DW_REG_ ## reg, 0x03, DW_OP_ ## base, lo, hi)
+
 /***********************************************************************
  *           __wine_syscall_dispatcher
  */
@@ -3352,28 +3373,42 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq %gs:0x30,%rcx\n\t"
                    "movq 0x328(%rcx),%rcx\n\t"     /* amd64_thread_data()->syscall_frame */
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
                    "pushfq\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    "popq 0x80(%rcx)\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    "movl $0,0x94(%rcx)\n\t"        /* frame->restore_flags */
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_prolog_end") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movq %rax,0x00(%rcx)\n\t"
                    "movq %rbx,0x08(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(rbx, rcx, 0x08)
                    "movq %rdx,0x18(%rcx)\n\t"
                    "movq %rsi,0x20(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(rsi, rcx, 0x20)
                    "movq %rdi,0x28(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(rdi, rcx, 0x28)
                    "movq %r12,0x50(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r12, rcx, 0xd0, 0x00)
                    "movq %r13,0x58(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r13, rcx, 0xd8, 0x00)
                    "movq %r14,0x60(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r14, rcx, 0xe0, 0x00)
                    "movq %r15,0x68(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r15, rcx, 0xe8, 0x00)
                    "movw %cs,0x78(%rcx)\n\t"
                    "movw %ds,0x7a(%rcx)\n\t"
                    "movw %es,0x7c(%rcx)\n\t"
                    "movw %fs,0x7e(%rcx)\n\t"
                    "movq %rsp,0x88(%rcx)\n\t"
+                   __ASM_CFI_CFA_IS_AT2(rcx, 0x88, 0x01)
+                   __ASM_CFI_REG_IS_AT2(rsp, rcx, 0x88, 0x01)
                    "movw %ss,0x90(%rcx)\n\t"
                    "movw %gs,0x92(%rcx)\n\t"
                    "movq %rbp,0x98(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
                    /* Legends of Runeterra hooks the first system call return instruction, and
                     * depends on us returning to it. Adjust the return address accordingly. */
                    "subq $0xb,0x70(%rcx)\n\t"
@@ -3397,7 +3432,20 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "1:\txsave64 0xc0(%rcx)\n\t"
                    "jmp 3f\n"
                    "2:\tfxsave64 0xc0(%rcx)\n"
+                   /* remember state when $rcx is pointing to "frame" */
+                   __ASM_CFI(".cfi_remember_state\n\t")
                    "3:\tleaq 0x98(%rcx),%rbp\n\t"
+                   __ASM_CFI_CFA_IS_AT1(rbp, 0x70)
+                   __ASM_CFI_REG_IS_AT1(rsp, rbp, 0x70)
+                   __ASM_CFI_REG_IS_AT1(rip, rbp, 0x58)
+                   __ASM_CFI_REG_IS_AT2(rbx, rbp, 0xf0, 0x7e)
+                   __ASM_CFI_REG_IS_AT2(rsi, rbp, 0x88, 0x7f)
+                   __ASM_CFI_REG_IS_AT2(rdi, rbp, 0x90, 0x7f)
+                   __ASM_CFI_REG_IS_AT2(r12, rbp, 0xb8, 0x7f)
+                   __ASM_CFI_REG_IS_AT1(r13, rbp, 0x40)
+                   __ASM_CFI_REG_IS_AT1(r14, rbp, 0x48)
+                   __ASM_CFI_REG_IS_AT1(r15, rbp, 0x50)
+                   __ASM_CFI_REG_IS_AT1(rbp, rbp, 0x00)
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 2f\n\t"
@@ -3439,6 +3487,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq (%rbx),%r10\n\t"          /* table->ServiceTable */
                    "callq *(%r10,%rax,8)\n\t"
                    "leaq -0x98(%rbp),%rcx\n"
+                   /* $rcx is now pointing to "frame" again */
+                   __ASM_CFI(".cfi_restore_state\n\t")
                    "2:\tmovl 0x94(%rcx),%edx\n\t"  /* frame->restore_flags */
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
@@ -3459,27 +3509,48 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jmp 4f\n"
                    "3:\tfxrstor64 0xc0(%rcx)\n"
                    "4:\tmovq 0x98(%rcx),%rbp\n\t"
+                   __ASM_CFI(".cfi_same_value rbp\n\t")
                    "movq 0x68(%rcx),%r15\n\t"
+                   __ASM_CFI(".cfi_same_value r15\n\t")
                    "movq 0x60(%rcx),%r14\n\t"
+                   __ASM_CFI(".cfi_same_value r14\n\t")
                    "movq 0x58(%rcx),%r13\n\t"
+                   __ASM_CFI(".cfi_same_value r13\n\t")
                    "movq 0x50(%rcx),%r12\n\t"
+                   __ASM_CFI(".cfi_same_value r12\n\t")
                    "movq 0x28(%rcx),%rdi\n\t"
+                   __ASM_CFI(".cfi_same_value rdi\n\t")
                    "movq 0x20(%rcx),%rsi\n\t"
+                   __ASM_CFI(".cfi_same_value rsi\n\t")
                    "movq 0x08(%rcx),%rbx\n\t"
+                   __ASM_CFI(".cfi_same_value rbx\n\t")
                    "testl $0x3,%edx\n\t"           /* CONTEXT_CONTROL | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
                    "movq 0x80(%rcx),%r11\n\t"      /* frame->eflags */
                    "pushq %r11\n\t"
                    "popfq\n\t"
                    "movq 0x88(%rcx),%rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")
+                   __ASM_CFI(".cfi_same_value rsp\n\t")
                    "movq 0x70(%rcx),%rcx\n\t"      /* frame->rip */
+                   __ASM_CFI(".cfi_register rip, rcx\n\t")
                    "jmpq *%rcx\n\t"
+                   /* $rcx is now pointing to "frame" again */
+                   __ASM_CFI(".cfi_restore_state\n\t")
+                   /* remember state when $rcx is pointing to "frame" */
+                   __ASM_CFI(".cfi_remember_state\n\t")
                    "1:\tleaq 0x70(%rcx),%rsp\n\t"
+                   __ASM_CFI_CFA_IS_AT1(rsp, 0x18)
+                   __ASM_CFI_REG_IS_AT1(rsp, rsp, 0x18)
+                   __ASM_CFI_REG_IS_AT1(rip, rsp, 0x00)
                    "testl $0x2,%edx\n\t"           /* CONTEXT_INTEGER */
                    "jnz 1f\n\t"
                    "movq 0x10(%rsp),%r11\n\t"      /* frame->eflags */
                    "movq (%rsp),%rcx\n\t"          /* frame->rip */
+                   __ASM_CFI(".cfi_register rip, rcx\n\t")
                    "iretq\n"
+                   __ASM_CFI_REG_IS_AT1(rip, rsp, 0x00)
                    "1:\tmovq 0x00(%rcx),%rax\n\t"
                    "movq 0x18(%rcx),%rdx\n\t"
                    "movq 0x30(%rcx),%r8\n\t"
@@ -3488,8 +3559,21 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x48(%rcx),%r11\n\t"
                    "movq 0x10(%rcx),%rcx\n"
                    "iretq\n"
+                   __ASM_CFI_CFA_IS_AT1(rbp, 0x70)
+                   __ASM_CFI_REG_IS_AT1(rsp, rbp, 0x70)
+                   __ASM_CFI_REG_IS_AT1(rip, rbp, 0x58)
+                   __ASM_CFI_REG_IS_AT2(rbx, rbp, 0xf0, 0x7e)
+                   __ASM_CFI_REG_IS_AT2(rsi, rbp, 0x88, 0x7f)
+                   __ASM_CFI_REG_IS_AT2(rdi, rbp, 0x90, 0x7f)
+                   __ASM_CFI_REG_IS_AT2(r12, rbp, 0xb8, 0x7f)
+                   __ASM_CFI_REG_IS_AT1(r13, rbp, 0x40)
+                   __ASM_CFI_REG_IS_AT1(r14, rbp, 0x48)
+                   __ASM_CFI_REG_IS_AT1(r15, rbp, 0x50)
+                   __ASM_CFI_REG_IS_AT1(rbp, rbp, 0x00)
                    "5:\tmovl $0xc000000d,%edx\n\t" /* STATUS_INVALID_PARAMETER */
                    "movq %rsp,%rcx\n\t"
+                   /* $rcx is now pointing to "frame" again */
+                   __ASM_CFI(".cfi_restore_state\n\t")
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
