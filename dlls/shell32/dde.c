@@ -91,16 +91,32 @@ static inline BOOL Dde_OnWildConnect(HSZ hszTopic, HSZ hszService)
     return FALSE;
 }
 
-static WCHAR *combine_path(const WCHAR *directory, const WCHAR *name, const WCHAR *extension)
+static WCHAR *combine_path(const WCHAR *directory, const WCHAR *name, const WCHAR *extension, BOOL sanitize)
 {
     WCHAR *path;
-    int len;
+    int len, i;
 
     len = wcslen(directory) + 1 + wcslen(name);
     if (extension) len += wcslen(extension);
     path = malloc((len + 1) * sizeof(WCHAR));
 
-    PathCombineW(path, directory, name);
+    if (sanitize)
+    {
+        WCHAR *sanitized_name = wcsdup(name);
+
+        for (i = 0; i < wcslen(name); i++)
+        {
+            if (name[i] < ' ' || wcschr(L"*/:<>?\\|", name[i]))
+                sanitized_name[i] = '_';
+        }
+
+        PathCombineW(path, directory, sanitized_name);
+        free(sanitized_name);
+    }
+    else
+    {
+        PathCombineW(path, directory, name);
+    }
 
     if (extension)
         wcscat(path, extension);
@@ -109,12 +125,12 @@ static WCHAR *combine_path(const WCHAR *directory, const WCHAR *name, const WCHA
 }
 
 /* Returned string must be freed by caller */
-static WCHAR *get_programs_path(const WCHAR *name)
+static WCHAR *get_programs_path(const WCHAR *name, BOOL sanitize)
 {
     WCHAR *programs, *path;
 
     SHGetKnownFolderPath(&FOLDERID_Programs, 0, NULL, &programs);
-    path = combine_path(programs, name, NULL);
+    path = combine_path(programs, name, NULL, sanitize);
     CoTaskMemFree(programs);
 
     return path;
@@ -134,7 +150,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
         HDDEDATA ret;
 
         groups_data[0] = 0;
-        programs = get_programs_path(L"*");
+        programs = get_programs_path(L"*", FALSE);
         hfind = FindFirstFileW(programs, &finddata);
         if (hfind)
         {
@@ -185,7 +201,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        path = get_programs_path(argv[0]);
+        path = get_programs_path(argv[0], TRUE);
 
         CreateDirectoryW(path, NULL);
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
@@ -201,7 +217,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        path = get_programs_path(argv[0]);
+        path = get_programs_path(argv[0], TRUE);
 
         path2 = malloc((lstrlenW(path) + 2) * sizeof(*path));
         lstrcpyW(path2, path);
@@ -226,7 +242,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
          * ignore its actual value. */
         if (argc < 2) return DDE_FNOTPROCESSED;
 
-        path = get_programs_path(argv[0]);
+        path = get_programs_path(argv[0], TRUE);
 
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
@@ -275,14 +291,14 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         }
         if (argc >= 2)
         {
-            name = combine_path(last_group, argv[1], L".lnk");
+            name = combine_path(last_group, argv[1], L".lnk", TRUE);
         }
         else
         {
             WCHAR *filename = wcsdup(PathFindFileNameW(argv[0]));
             WCHAR *ext = PathFindExtensionW(filename);
             *ext = '\0';
-            name = combine_path(last_group, filename, L".lnk");
+            name = combine_path(last_group, filename, L".lnk", TRUE);
             free(filename);
         }
         hres = IPersistFile_Save(file, name, TRUE);
@@ -300,7 +316,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        name = combine_path(last_group, argv[0], L".lnk");
+        name = combine_path(last_group, argv[0], L".lnk", FALSE);
         ret = DeleteFileW(name);
         free(name);
 

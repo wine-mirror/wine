@@ -459,8 +459,7 @@ static void test_name_sanitization(DWORD instance, HCONV hConv)
     error = dde_execute(instance, hConv, buf);
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %#x\n", error);
     sprintf(buf, "Group%s", sanitized_name);
-    todo_wine ok(check_exists(buf), "directory not created\n");
-    if (!check_exists(buf)) return;
+    ok(check_exists(buf), "directory not created\n");
     ok(check_window_exists(buf), "window not created\n");
 
     sprintf(buf, "[ShowGroup(\"Group%s\", 0)]", original_name);
