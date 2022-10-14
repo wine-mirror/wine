@@ -580,11 +580,12 @@ static void test_progressive_device(void)
         MAKEFOURCC('N','V','1','2'),
     };
 
-    static const D3DFORMAT support_rt_formats[] =
+    static const D3DFORMAT supported_rt_formats[] =
     {
         D3DFMT_X8R8G8B8,
         MAKEFOURCC('N','V','1','2'),
         D3DFMT_YUY2,
+        D3DFMT_A2R10G10B10,
     };
 
     window = create_window();
@@ -647,7 +648,7 @@ static void test_progressive_device(void)
         ok(count > 0, "Unexpected format count %u.\n", count);
         for (j = 0; j < count; ++j)
         {
-            ok(check_format_list(rt_formats[j], support_rt_formats, ARRAY_SIZE(support_rt_formats)),
+            ok(check_format_list(rt_formats[j], supported_rt_formats, ARRAY_SIZE(supported_rt_formats)),
                     "Unexpected rt format %#x for input format %#x.\n", rt_formats[j], input_formats[i]);
         }
         CoTaskMemFree(rt_formats);
