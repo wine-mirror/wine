@@ -77,15 +77,13 @@ static unsigned int read_int(const unsigned char *buffer)
 #define EMRCASE(x) case x: printf("%-20s %08x\n", #x, length); break
 #define EMRPLUSCASE(x) case x: printf("    %-20s %04x %08x %08x\n", #x, (UINT)header->Flags, (UINT)header->Size, (UINT)header->DataSize); break
 
-static unsigned offset = 0;
-
-static int dump_emfrecord(void)
+static unsigned long dump_emfrecord(unsigned long offset)
 {
     const unsigned char*        ptr;
     unsigned int type, length, i;
 
     ptr = PRD(offset, 8);
-    if (!ptr) return -1;
+    if (!ptr) return 0;
 
     type = read_int(ptr);
     length = read_int(ptr + 4);
@@ -277,7 +275,7 @@ static int dump_emfrecord(void)
                 }
 
                 if (length<sizeof(*header) || header->Size%4)
-                    return -1;
+                    return 0;
 
                 length -= sizeof(*header);
                 offset += sizeof(*header);
@@ -286,7 +284,7 @@ static int dump_emfrecord(void)
                 {
                     if (i%16 == 0)
                         printf("       ");
-                    if (!(ptr = PRD(offset, 4))) return -1;
+                    if (!(ptr = PRD(offset, 4))) return 0;
                     length -= 4;
                     offset += 4;
                     printf("%08x ", read_int(ptr));
@@ -295,7 +293,7 @@ static int dump_emfrecord(void)
                 }
             }
 
-            return 0;
+            return offset;
         }
 
         break;
@@ -463,7 +461,7 @@ static int dump_emfrecord(void)
     }
 
     if ( (length < 8) || (length % 4) )
-        return -1;
+        return 0;
 
     length -= 8;
 
@@ -473,14 +471,14 @@ static int dump_emfrecord(void)
     {
          if (i%16 == 0)
              printf("   ");
-         if (!(ptr = PRD(offset, 4))) return -1;
+         if (!(ptr = PRD(offset, 4))) return 0;
          offset += 4;
          printf("%08x ", read_int(ptr));
          if ( (i % 16 == 12) || (i + 4 == length))
              printf("\n");
     }
 
-    return 0;
+    return offset;
 }
 
 enum FileSig get_kind_emf(void)
@@ -495,6 +493,6 @@ enum FileSig get_kind_emf(void)
 
 void emf_dump(void)
 {
-    offset = 0;
-    while (!dump_emfrecord());
+    unsigned long offset = 0;
+    while ((offset = dump_emfrecord(offset)));
 }
