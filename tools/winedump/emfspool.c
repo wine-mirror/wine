@@ -61,6 +61,14 @@ typedef struct
     unsigned int cjSize;
 } record_hdr;
 
+static inline void print_longlong(ULONGLONG value)
+{
+    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
+        printf("0x%lx%08lx", (unsigned long)(value >> 32), (unsigned long)value);
+    else
+        printf("0x%lx", (unsigned long)value);
+}
+
 static const WCHAR* read_wstr(unsigned long off)
 {
     const WCHAR *beg, *end;
@@ -130,6 +138,20 @@ static unsigned long dump_emfspool_record(unsigned long off)
     {
         unsigned long emf_off = off + sizeof(*hdr);
         while ((emf_off = dump_emfrecord("    ", emf_off)) && emf_off < off + sizeof(*hdr) + hdr->cjSize);
+        break;
+    }
+
+    case EMRI_METAFILE_EXT:
+    case EMRI_BW_METAFILE_EXT:
+    {
+        const ULONGLONG *emf_off = PRD(off + sizeof(*hdr), sizeof(*emf_off));
+        if (!emf_off)
+            fatal("truncated file\n");
+        printf("  %-20s ", "offset");
+        print_longlong(*emf_off);
+        printf(" (absolute position ");
+        print_longlong(off - *emf_off);
+        printf(")\n");
         break;
     }
 
