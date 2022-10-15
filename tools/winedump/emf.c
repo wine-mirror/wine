@@ -77,7 +77,7 @@ static unsigned int read_int(const unsigned char *buffer)
 #define EMRCASE(x) case x: printf("%-20s %08x\n", #x, length); break
 #define EMRPLUSCASE(x) case x: printf("    %-20s %04x %08x %08x\n", #x, (UINT)header->Flags, (UINT)header->Size, (UINT)header->DataSize); break
 
-static unsigned long dump_emfrecord(unsigned long offset)
+unsigned long dump_emfrecord(unsigned long offset)
 {
     const unsigned char*        ptr;
     unsigned int type, length, i;

@@ -120,7 +120,24 @@ static unsigned long dump_emfspool_record(unsigned long off)
         break;
     }
 
-    dump_data((const unsigned char *)(hdr + 1), hdr->cjSize, "");
+    switch (hdr->ulID)
+    {
+    case EMRI_METAFILE:
+    case EMRI_FORM_METAFILE:
+    case EMRI_BW_METAFILE:
+    case EMRI_BW_FORM_METAFILE:
+    case EMRI_METAFILE_DATA:
+    {
+        unsigned long emf_off = off + sizeof(*hdr);
+        while ((emf_off = dump_emfrecord(emf_off)) && emf_off < off + sizeof(*hdr) + hdr->cjSize);
+        break;
+    }
+
+    default:
+        dump_data((const unsigned char *)(hdr + 1), hdr->cjSize, "");
+        break;
+    }
+
     return off + sizeof(*hdr) + hdr->cjSize;
 }
 
