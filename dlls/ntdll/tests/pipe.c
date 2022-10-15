@@ -2608,6 +2608,93 @@ static void test_security_info(void)
     HeapFree(GetProcessHeap(), 0, local_sid);
 }
 
+static void subtest_empty_name_pipe_operations(HANDLE handle)
+{
+    static const struct fsctl_test {
+        const char *name;
+        ULONG code;
+        NTSTATUS status;
+        NTSTATUS status_broken;
+    } fsctl_tests[] = {
+#define FSCTL_TEST(code, ...) { #code, code, __VA_ARGS__ }
+        FSCTL_TEST(FSCTL_PIPE_ASSIGN_EVENT,             STATUS_NOT_SUPPORTED),
+        FSCTL_TEST(FSCTL_PIPE_DISCONNECT,               STATUS_PIPE_DISCONNECTED),
+        FSCTL_TEST(FSCTL_PIPE_LISTEN,                   STATUS_ILLEGAL_FUNCTION),
+        FSCTL_TEST(FSCTL_PIPE_QUERY_EVENT,              STATUS_NOT_SUPPORTED),
+        FSCTL_TEST(FSCTL_PIPE_TRANSCEIVE,               STATUS_PIPE_DISCONNECTED),
+        FSCTL_TEST(FSCTL_PIPE_IMPERSONATE,              STATUS_ILLEGAL_FUNCTION),
+        FSCTL_TEST(FSCTL_PIPE_SET_CLIENT_PROCESS,       STATUS_NOT_SUPPORTED),
+        FSCTL_TEST(FSCTL_PIPE_QUERY_CLIENT_PROCESS,     STATUS_INVALID_PARAMETER, /* win10 1507 */ STATUS_PIPE_DISCONNECTED),
+#undef FSCTL_TEST
+    };
+    FILE_PIPE_PEEK_BUFFER peek_buf;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    char buffer[1024];
+    NTSTATUS status;
+    ULONG peer_pid;
+    HANDLE event;
+    size_t i;
+
+    event = NULL;
+    InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
+    status = NtCreateEvent(&event, GENERIC_ALL, &attr, NotificationEvent, FALSE);
+    ok(status == STATUS_SUCCESS, "NtCreateEvent returned %#lx\n", status);
+
+    status = NtReadFile(handle, event, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "NtReadFile on \\Device\\NamedPipe: got %#lx\n", status);
+
+    status = NtWriteFile(handle, event, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "NtWriteFile on \\Device\\NamedPipe: got %#lx\n", status);
+
+    status = NtFsControlFile(handle, event, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0, &peek_buf, sizeof(peek_buf));
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject(event, INFINITE);
+        status = io.Status;
+    }
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "FSCTL_PIPE_PEEK on \\Device\\NamedPipe: got %lx\n", status);
+
+    status = NtFsControlFile(handle, event, NULL, NULL, &io, FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE, (void *)"ClientProcessId", sizeof("ClientProcessId"), &peer_pid, sizeof(peer_pid));
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject(event, INFINITE);
+        status = io.Status;
+    }
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE ClientProcessId on \\Device\\NamedPipe: got %lx\n", status);
+
+    status = NtFsControlFile(handle, event, NULL, NULL, &io, FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE, (void *)"ServerProcessId", sizeof("ServerProcessId"), &peer_pid, sizeof(peer_pid));
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject(event, INFINITE);
+        status = io.Status;
+    }
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE ServerProcessId on \\Device\\NamedPipe: got %lx\n", status);
+
+    for (i = 0; i < ARRAY_SIZE(fsctl_tests); i++)
+    {
+        const struct fsctl_test *ft = &fsctl_tests[i];
+
+        status = NtFsControlFile(handle, event, NULL, NULL, &io, ft->code, 0, 0, 0, 0);
+        if (status == STATUS_PENDING)
+        {
+            WaitForSingleObject(event, INFINITE);
+            status = io.Status;
+        }
+        todo_wine_if(ft->status != STATUS_NOT_SUPPORTED)
+        ok(status == ft->status || (ft->status_broken && broken(status == ft->status_broken)),
+           "NtFsControlFile(%s) on \\Device\\NamedPipe: expected %#lx, got %#lx\n",
+           ft->name, ft->status, status);
+    }
+
+    NtClose(event);
+}
+
 static void test_empty_name(void)
 {
     static const LARGE_INTEGER zero_timeout = {{ 0 }};
@@ -2637,13 +2724,15 @@ static void test_empty_name(void)
     attr.RootDirectory            = 0;
     attr.ObjectName               = &name;
 
-    status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
+    status = NtCreateFile(&hdirectory, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
     ok(!status, "Got unexpected status %#lx.\n", status);
 
     pRtlInitUnicodeString(&name, L"nonexistent_pipe");
     status = wait_pipe(hdirectory, &name, &zero_timeout);
     todo_wine ok(status == STATUS_ILLEGAL_FUNCTION, "unexpected status for FSCTL_PIPE_WAIT on \\Device\\NamedPipe: %#lx\n", status);
+
+    subtest_empty_name_pipe_operations(hdirectory);
 
     name.Buffer = NULL;
     name.Length = 0;
@@ -2677,13 +2766,15 @@ static void test_empty_name(void)
     status = pNtCreateDirectoryObject(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr);
     todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#lx.\n", status);
 
-    status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
+    status = NtCreateFile(&hdirectory, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
     ok(!status, "Got unexpected status %#lx.\n", status);
 
     pRtlInitUnicodeString(&name, L"nonexistent_pipe");
     status = wait_pipe(hdirectory, &name, &zero_timeout);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "unexpected status for FSCTL_PIPE_WAIT on \\Device\\NamedPipe\\: %#lx\n", status);
+
+    subtest_empty_name_pipe_operations(hdirectory);
 
     name.Buffer = NULL;
     name.Length = 0;
