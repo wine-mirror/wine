@@ -233,6 +233,7 @@ struct sock
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
     unsigned int        bound : 1;   /* is the socket bound? */
     unsigned int        reset : 1;   /* did we get a TCP reset? */
+    unsigned int        reuseaddr : 1; /* winsock SO_REUSEADDR option value */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -1545,6 +1546,7 @@ static struct sock *create_socket(void)
     sock->nonblocking = 0;
     sock->bound = 0;
     sock->reset = 0;
+    sock->reuseaddr = 0;
     sock->rcvbuf = 0;
     sock->sndbuf = 0;
     sock->rcvtimeo = 0;
@@ -2720,14 +2722,8 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
         {
-            if (errno == EADDRINUSE)
-            {
-                int reuse;
-                socklen_t len = sizeof(reuse);
-
-                if (!getsockopt( unix_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, &len ) && reuse)
-                    errno = EACCES;
-            }
+            if (errno == EADDRINUSE && sock->reuseaddr)
+                errno = EACCES;
 
             set_error( sock_get_ntstatus( errno ) );
             return;
@@ -2925,6 +2921,8 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 #endif
         if (ret)
             set_error( sock_get_ntstatus( errno ) );
+        else
+            sock->reuseaddr = !!reuse;
         return;
     }
 
@@ -3018,7 +3016,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_WINE_GET_SO_REUSEADDR:
     {
         int reuse;
-        socklen_t len = sizeof(reuse);
 
         if (!get_reply_max_size())
         {
@@ -3026,10 +3023,8 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return;
         }
 
-        if (!getsockopt( unix_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, &len ))
-            set_reply_data( &reuse, min( sizeof(reuse), get_reply_max_size() ));
-        else
-            set_error( sock_get_ntstatus( errno ) );
+        reuse = sock->reuseaddr;
+        set_reply_data( &reuse, min( sizeof(reuse), get_reply_max_size() ));
         return;
     }
 
