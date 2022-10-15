@@ -49,7 +49,7 @@ static const char *debugstr_wn(const WCHAR *wstr, unsigned int n)
     i = 0;
     p = buf;
     *p++ = '\"';
-    while (i < n && i < sizeof(buf) - 2 && wstr[i])
+    while (i < n && i < sizeof(buf) - 3 && wstr[i])
     {
         if (wstr[i] < 127) *p++ = wstr[i];
         else *p++ = '.';
