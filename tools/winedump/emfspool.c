@@ -129,7 +129,7 @@ static unsigned long dump_emfspool_record(unsigned long off)
     case EMRI_METAFILE_DATA:
     {
         unsigned long emf_off = off + sizeof(*hdr);
-        while ((emf_off = dump_emfrecord(emf_off)) && emf_off < off + sizeof(*hdr) + hdr->cjSize);
+        while ((emf_off = dump_emfrecord("    ", emf_off)) && emf_off < off + sizeof(*hdr) + hdr->cjSize);
         break;
     }
 

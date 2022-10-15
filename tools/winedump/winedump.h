@@ -248,7 +248,7 @@ void	        dbg_dump( void );
 enum FileSig    get_kind_lnk(void);
 void	        lnk_dump( void );
 enum FileSig    get_kind_emf(void);
-unsigned long   dump_emfrecord(unsigned long offset);
+unsigned long   dump_emfrecord(const char *pfx, unsigned long offset);
 void            emf_dump( void );
 enum FileSig    get_kind_emfspool(void);
 void            emfspool_dump(void);

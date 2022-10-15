@@ -74,10 +74,11 @@ static unsigned int read_int(const unsigned char *buffer)
      + (buffer[3]<<24);
 }
 
-#define EMRCASE(x) case x: printf("%-20s %08x\n", #x, length); break
-#define EMRPLUSCASE(x) case x: printf("    %-20s %04x %08x %08x\n", #x, (UINT)header->Flags, (UINT)header->Size, (UINT)header->DataSize); break
+#define EMRCASE(x) case x: printf("%s%-20s %08x\n", pfx, #x, length); break
+#define EMRPLUSCASE(x) case x: printf("%s    %-20s %04x %08x %08x\n", pfx, #x, \
+        (UINT)header->Flags, (UINT)header->Size, (UINT)header->DataSize); break
 
-unsigned long dump_emfrecord(unsigned long offset)
+unsigned long dump_emfrecord(const char *pfx, unsigned long offset)
 {
     const unsigned char*        ptr;
     unsigned int type, length, i;
@@ -94,12 +95,12 @@ unsigned long dump_emfrecord(unsigned long offset)
     {
         const ENHMETAHEADER *header = PRD(offset, sizeof(*header));
 
-        printf("%-20s %08x\n", "EMR_HEADER", length);
-        printf("bounds (%s) frame (%s) signature %#x version %#x bytes %#x records %#x\n"
-               "handles %#x reserved %#x palette entries %#x px %dx%d mm %dx%d μm %dx%d opengl %d description %s\n",
-               debugstr_rect( &header->rclBounds ), debugstr_rect( &header->rclFrame ),
+        printf("%s%-20s %08x\n", pfx, "EMR_HEADER", length);
+        printf("%sbounds (%s) frame (%s) signature %#x version %#x bytes %#x records %#x\n"
+               "%shandles %#x reserved %#x palette entries %#x px %dx%d mm %dx%d μm %dx%d opengl %d description %s\n",
+               pfx, debugstr_rect( &header->rclBounds ), debugstr_rect( &header->rclFrame ),
                (UINT)header->dSignature, (UINT)header->nVersion, (UINT)header->nBytes,
-               (UINT)header->nRecords, (UINT)header->nHandles, header->sReserved, (UINT)header->nPalEntries,
+               (UINT)header->nRecords, pfx, (UINT)header->nHandles, header->sReserved, (UINT)header->nPalEntries,
                (UINT)header->szlDevice.cx, (UINT)header->szlDevice.cy,
                (UINT)header->szlMillimeters.cx, (UINT)header->szlMillimeters.cy,
                (UINT)header->szlMicrometers.cx, (UINT)header->szlMicrometers.cy,
@@ -141,8 +142,8 @@ unsigned long dump_emfrecord(unsigned long offset)
     {
         const EMRINTERSECTCLIPRECT *clip = PRD(offset, sizeof(*clip));
 
-        printf("%-20s %08x\n", "EMR_INTERSECTCLIPRECT", length);
-        printf("rect %s\n", debugstr_rect( &clip->rclClip ));
+        printf("%s%-20s %08x\n", pfx, "EMR_INTERSECTCLIPRECT", length);
+        printf("%srect %s\n", pfx, debugstr_rect( &clip->rclClip ));
         break;
     }
 
@@ -187,7 +188,7 @@ unsigned long dump_emfrecord(unsigned long offset)
 
     case EMR_GDICOMMENT:
     {
-        printf("%-20s %08x\n", "EMR_GDICOMMENT", length);
+        printf("%s%-20s %08x\n", pfx, "EMR_GDICOMMENT", length);
 
         /* Handle EMF+ records */
         if (length >= 16 && !memcmp((char*)PRD(offset + 12, sizeof(unsigned int)), "EMF+", 4))
@@ -198,7 +199,7 @@ unsigned long dump_emfrecord(unsigned long offset)
             offset += 8;
             length -= 8;
             data_size = PRD(offset, sizeof(*data_size));
-            printf("data size = %x\n", *data_size);
+            printf("%sdata size = %x\n", pfx, *data_size);
             offset += 8;
             length -= 8;
 
@@ -269,8 +270,8 @@ unsigned long dump_emfrecord(unsigned long offset)
                 EMRPLUSCASE(EmfPlusRecordTotal);
 
                 default:
-                    printf("    unknown EMF+ record %x %04x %08x\n",
-                           (UINT)header->Type, (UINT)header->Flags, (UINT)header->Size);
+                    printf("%s    unknown EMF+ record %x %04x %08x\n",
+                           pfx, (UINT)header->Type, (UINT)header->Flags, (UINT)header->Size);
                     break;
                 }
 
@@ -283,7 +284,7 @@ unsigned long dump_emfrecord(unsigned long offset)
                 for (i=0; i<header->Size-sizeof(*header); i+=4)
                 {
                     if (i%16 == 0)
-                        printf("       ");
+                        printf("%s       ", pfx);
                     if (!(ptr = PRD(offset, 4))) return 0;
                     length -= 4;
                     offset += 4;
@@ -314,10 +315,10 @@ unsigned long dump_emfrecord(unsigned long offset)
         if (length >= sizeof(*clip) + sizeof(*data))
             rc_count = data->rdh.nCount;
 
-        printf("%-20s %08x\n", "EMR_EXTSELECTCLIPRGN", length);
-        printf("mode %d, rects %d\n", (UINT)clip->iMode, rc_count);
+        printf("%s%-20s %08x\n", pfx, "EMR_EXTSELECTCLIPRGN", length);
+        printf("%smode %d, rects %d\n", pfx, (UINT)clip->iMode, rc_count);
         for (i = 0, rc = (const RECTL *)data->Buffer; i < rc_count; i++)
-            printf(" (%s)", debugstr_rect( &rc[i] ));
+            printf("%s (%s)", pfx, debugstr_rect( &rc[i] ));
         if (rc_count != 0) printf("\n");
         break;
     }
@@ -329,19 +330,19 @@ unsigned long dump_emfrecord(unsigned long offset)
         const EMRSTRETCHBLT *blt = PRD(offset, sizeof(*blt));
         const BITMAPINFOHEADER *bmih = (const BITMAPINFOHEADER *)((const unsigned char *)blt + blt->offBmiSrc);
 
-        printf("%-20s %08x\n", "EMR_STRETCHBLT", length);
-        printf("bounds (%s) dst %d,%d %dx%d src %d,%d %dx%d rop %#x xform (%f, %f, %f, %f, %f, %f)\n"
-               "bk_color %#x usage %#x bmi_offset %#x bmi_size %#x bits_offset %#x bits_size %#x\n",
-               debugstr_rect( &blt->rclBounds ), (UINT)blt->xDest, (UINT)blt->yDest, (UINT)blt->cxDest, (UINT)blt->cyDest,
+        printf("%s%-20s %08x\n", pfx, "EMR_STRETCHBLT", length);
+        printf("%sbounds (%s) dst %d,%d %dx%d src %d,%d %dx%d rop %#x xform (%f, %f, %f, %f, %f, %f)\n"
+               "%sbk_color %#x usage %#x bmi_offset %#x bmi_size %#x bits_offset %#x bits_size %#x\n",
+               pfx, debugstr_rect( &blt->rclBounds ), (UINT)blt->xDest, (UINT)blt->yDest, (UINT)blt->cxDest, (UINT)blt->cyDest,
                (UINT)blt->xSrc, (UINT)blt->ySrc, (UINT)blt->cxSrc, (UINT)blt->cySrc, (UINT)blt->dwRop,
                blt->xformSrc.eM11, blt->xformSrc.eM12, blt->xformSrc.eM21,
                blt->xformSrc.eM22, blt->xformSrc.eDx, blt->xformSrc.eDy,
-               (UINT)blt->crBkColorSrc, (UINT)blt->iUsageSrc, (UINT)blt->offBmiSrc, (UINT)blt->cbBmiSrc,
+               pfx, (UINT)blt->crBkColorSrc, (UINT)blt->iUsageSrc, (UINT)blt->offBmiSrc, (UINT)blt->cbBmiSrc,
                (UINT)blt->offBitsSrc, (UINT)blt->cbBitsSrc);
-        printf("BITMAPINFOHEADER biSize %#x biWidth %d biHeight %d biPlanes %d biBitCount %d biCompression %#x\n"
-               "biSizeImage %#x biXPelsPerMeter %d biYPelsPerMeter %d biClrUsed %#x biClrImportant %#x\n",
-               (UINT)bmih->biSize, (UINT)bmih->biWidth, (UINT)bmih->biHeight, (UINT)bmih->biPlanes,
-               (UINT)bmih->biBitCount, (UINT)bmih->biCompression, (UINT)bmih->biSizeImage,
+        printf("%sBITMAPINFOHEADER biSize %#x biWidth %d biHeight %d biPlanes %d biBitCount %d biCompression %#x\n"
+               "%sbiSizeImage %#x biXPelsPerMeter %d biYPelsPerMeter %d biClrUsed %#x biClrImportant %#x\n",
+               pfx, (UINT)bmih->biSize, (UINT)bmih->biWidth, (UINT)bmih->biHeight, (UINT)bmih->biPlanes,
+               (UINT)bmih->biBitCount, (UINT)bmih->biCompression, pfx, (UINT)bmih->biSizeImage,
                (UINT)bmih->biXPelsPerMeter, (UINT)bmih->biYPelsPerMeter, (UINT)bmih->biClrUsed,
                (UINT)bmih->biClrImportant);
         break;
@@ -357,9 +358,9 @@ unsigned long dump_emfrecord(unsigned long offset)
         const EMREXTCREATEFONTINDIRECTW *pf = PRD(offset, sizeof(*pf));
         const LOGFONTW *plf = &pf->elfw.elfLogFont;
 
-        printf("%-20s %08x\n", "EMR_EXTCREATEFONTINDIRECTW", length);
-        printf("(%d %d %d %d %x out %d clip %x quality %d charset %d) %s %s %s %s\n",
-               (UINT)plf->lfHeight, (UINT)plf->lfWidth, (UINT)plf->lfEscapement, (UINT)plf->lfOrientation,
+        printf("%s%-20s %08x\n", pfx, "EMR_EXTCREATEFONTINDIRECTW", length);
+        printf("%s(%d %d %d %d %x out %d clip %x quality %d charset %d) %s %s %s %s\n",
+               pfx, (UINT)plf->lfHeight, (UINT)plf->lfWidth, (UINT)plf->lfEscapement, (UINT)plf->lfOrientation,
                (UINT)plf->lfPitchAndFamily, (UINT)plf->lfOutPrecision, (UINT)plf->lfClipPrecision,
                plf->lfQuality, plf->lfCharSet,
                debugstr_wn(plf->lfFaceName, LF_FACESIZE),
@@ -376,13 +377,13 @@ unsigned long dump_emfrecord(unsigned long offset)
         const EMREXTTEXTOUTW *etoW = PRD(offset, sizeof(*etoW));
         const int *dx = (const int *)((const BYTE *)etoW + etoW->emrtext.offDx);
 
-        printf("%-20s %08x\n", "EMR_EXTTEXTOUTW", length);
-        printf("bounds (%s) mode %#x x_scale %f y_scale %f pt (%d,%d) rect (%s) flags %#x, %s\n",
-               debugstr_rect( &etoW->rclBounds ), (UINT)etoW->iGraphicsMode, etoW->exScale, etoW->eyScale,
+        printf("%s%-20s %08x\n", pfx, "EMR_EXTTEXTOUTW", length);
+        printf("%sbounds (%s) mode %#x x_scale %f y_scale %f pt (%d,%d) rect (%s) flags %#x, %s\n",
+               pfx, debugstr_rect( &etoW->rclBounds ), (UINT)etoW->iGraphicsMode, etoW->exScale, etoW->eyScale,
                (UINT)etoW->emrtext.ptlReference.x, (UINT)etoW->emrtext.ptlReference.y,
                debugstr_rect( &etoW->emrtext.rcl ), (UINT)etoW->emrtext.fOptions,
                debugstr_wn((LPCWSTR)((const BYTE *)etoW + etoW->emrtext.offString), etoW->emrtext.nChars));
-        printf("dx_offset %u {", (UINT)etoW->emrtext.offDx);
+        printf("%sdx_offset %u {", pfx, (UINT)etoW->emrtext.offDx);
         for (i = 0; i < etoW->emrtext.nChars; ++i)
         {
             printf("%d", dx[i]);
@@ -428,19 +429,19 @@ unsigned long dump_emfrecord(unsigned long offset)
         const EMRALPHABLEND *blend = PRD(offset, sizeof(*blend));
         const BITMAPINFOHEADER *bmih = (const BITMAPINFOHEADER *)((const unsigned char *)blend + blend->offBmiSrc);
 
-        printf("%-20s %08x\n", "EMR_ALPHABLEND", length);
-        printf("bounds (%s) dst %d,%d %dx%d src %d,%d %dx%d rop %#x xform (%f, %f, %f, %f, %f, %f)\n"
-               "bk_color %#x usage %#x bmi_offset %#x bmi_size %#x bits_offset %#x bits_size %#x\n",
-               debugstr_rect( &blend->rclBounds ), (UINT)blend->xDest, (UINT)blend->yDest, (UINT)blend->cxDest, (UINT)blend->cyDest,
+        printf("%s%-20s %08x\n", pfx, "EMR_ALPHABLEND", length);
+        printf("%sbounds (%s) dst %d,%d %dx%d src %d,%d %dx%d rop %#x xform (%f, %f, %f, %f, %f, %f)\n"
+               "%sbk_color %#x usage %#x bmi_offset %#x bmi_size %#x bits_offset %#x bits_size %#x\n",
+               pfx, debugstr_rect( &blend->rclBounds ), (UINT)blend->xDest, (UINT)blend->yDest, (UINT)blend->cxDest, (UINT)blend->cyDest,
                (UINT)blend->xSrc, (UINT)blend->ySrc, (UINT)blend->cxSrc, (UINT)blend->cySrc,
                (UINT)blend->dwRop, blend->xformSrc.eM11, blend->xformSrc.eM12, blend->xformSrc.eM21,
                blend->xformSrc.eM22, blend->xformSrc.eDx, blend->xformSrc.eDy,
-               (UINT)blend->crBkColorSrc, (UINT)blend->iUsageSrc, (UINT)blend->offBmiSrc,
+               pfx, (UINT)blend->crBkColorSrc, (UINT)blend->iUsageSrc, (UINT)blend->offBmiSrc,
                (UINT)blend->cbBmiSrc, (UINT)blend->offBitsSrc, (UINT)blend->cbBitsSrc);
-        printf("BITMAPINFOHEADER biSize %#x biWidth %d biHeight %d biPlanes %d biBitCount %d biCompression %#x\n"
-               "biSizeImage %#x biXPelsPerMeter %d biYPelsPerMeter %d biClrUsed %#x biClrImportant %#x\n",
-               (UINT)bmih->biSize, (UINT)bmih->biWidth, (UINT)bmih->biHeight, (UINT)bmih->biPlanes,
-               (UINT)bmih->biBitCount, (UINT)bmih->biCompression, (UINT)bmih->biSizeImage,
+        printf("%sBITMAPINFOHEADER biSize %#x biWidth %d biHeight %d biPlanes %d biBitCount %d biCompression %#x\n"
+               "%sbiSizeImage %#x biXPelsPerMeter %d biYPelsPerMeter %d biClrUsed %#x biClrImportant %#x\n",
+               pfx, (UINT)bmih->biSize, (UINT)bmih->biWidth, (UINT)bmih->biHeight, (UINT)bmih->biPlanes,
+               (UINT)bmih->biBitCount, (UINT)bmih->biCompression, pfx, (UINT)bmih->biSizeImage,
                (UINT)bmih->biXPelsPerMeter, (UINT)bmih->biYPelsPerMeter, (UINT)bmih->biClrUsed,
                (UINT)bmih->biClrImportant);
         break;
@@ -456,7 +457,7 @@ unsigned long dump_emfrecord(unsigned long offset)
     EMRCASE(EMR_CREATECOLORSPACEW);
 
     default:
-        printf("%u %08x\n", type, length);
+        printf("%s%u %08x\n", pfx, type, length);
         break;
     }
 
@@ -470,7 +471,7 @@ unsigned long dump_emfrecord(unsigned long offset)
     for(i=0; i<length; i+=4)
     {
          if (i%16 == 0)
-             printf("   ");
+             printf("%s   ", pfx);
          if (!(ptr = PRD(offset, 4))) return 0;
          offset += 4;
          printf("%08x ", read_int(ptr));
@@ -494,5 +495,5 @@ enum FileSig get_kind_emf(void)
 void emf_dump(void)
 {
     unsigned long offset = 0;
-    while ((offset = dump_emfrecord(offset)));
+    while ((offset = dump_emfrecord("", offset)));
 }
