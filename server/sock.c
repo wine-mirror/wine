@@ -2905,6 +2905,29 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return;
     }
 
+    /* BSD socket SO_REUSEADDR is not 100% compatible to winsock semantics;
+     * however, using it the BSD way fixes bug 8513 and seems to be what
+     * most programmers assume, anyway */
+    case IOCTL_AFD_WINE_SET_SO_REUSEADDR:
+    {
+        int reuse, ret;
+
+        if (get_req_data_size() < sizeof(reuse))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+
+        reuse = *(int *)get_req_data();
+        ret = setsockopt( unix_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse) );
+#ifdef __APPLE__
+        if (!ret) ret = setsockopt( unix_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse) );
+#endif
+        if (ret)
+            set_error( sock_get_ntstatus( errno ) );
+        return;
+    }
+
     case IOCTL_AFD_WINE_GET_SO_SNDBUF:
     {
         int sndbuf = sock->sndbuf;
@@ -2989,6 +3012,24 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             time = (current_time - sock->connect_time) / 10000000;
 
         set_reply_data( &time, sizeof(time) );
+        return;
+    }
+
+    case IOCTL_AFD_WINE_GET_SO_REUSEADDR:
+    {
+        int reuse;
+        socklen_t len = sizeof(reuse);
+
+        if (!get_reply_max_size())
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+
+        if (!getsockopt( unix_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, &len ))
+            set_reply_data( &reuse, min( sizeof(reuse), get_reply_max_size() ));
+        else
+            set_error( sock_get_ntstatus( errno ) );
         return;
     }
 
