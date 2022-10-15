@@ -2795,6 +2795,94 @@ static void test_empty_name(void)
     CloseHandle(hdirectory);
 }
 
+struct pipe_name_test {
+    const WCHAR *name;
+    NTSTATUS status;
+    BOOL todo;
+    const WCHAR *no_open_name;
+};
+
+static void subtest_pipe_name(const struct pipe_name_test *pnt)
+{
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER timeout;
+    IO_STATUS_BLOCK iosb;
+    HANDLE pipe, client;
+    UNICODE_STRING name;
+    NTSTATUS status;
+
+    pRtlInitUnicodeString(&name, pnt->name);
+    InitializeObjectAttributes(&attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    timeout.QuadPart = -100000000;
+    pipe = NULL;
+    status = pNtCreateNamedPipeFile(&pipe,
+                                    GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                                    &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                    FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
+                                    0, 0, 0, 3, 4096, 4096, &timeout);
+    todo_wine_if(pnt->todo)
+    ok(status == pnt->status, "Expected status %#lx, got %#lx\n", pnt->status, status);
+
+    if (!NT_SUCCESS(status))
+    {
+        ok(pipe == NULL, "expected NULL handle, got %p\n", pipe);
+        return;
+    }
+
+    ok(pipe != NULL, "expected non-NULL handle, got %p\n", client);
+
+    client = NULL;
+    status = NtCreateFile(&client, SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0);
+    ok(status == STATUS_SUCCESS, "Expected success, got %#lx\n", status);
+    ok(client != NULL, "expected non-NULL handle, got %p\n", client);
+    NtClose(client);
+
+    if (pnt->no_open_name)
+    {
+        OBJECT_ATTRIBUTES no_open_attr;
+        UNICODE_STRING no_open_name;
+
+        pRtlInitUnicodeString(&no_open_name, pnt->no_open_name);
+        InitializeObjectAttributes(&no_open_attr, &no_open_name, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        client = NULL;
+        status = NtCreateFile(&client, SYNCHRONIZE, &no_open_attr, &iosb, NULL, 0,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0);
+        ok(status == STATUS_OBJECT_NAME_NOT_FOUND,
+           "Expected STATUS_OBJECT_NAME_NOT_FOUND opening %s, got %#lx\n",
+           debugstr_wn(no_open_name.Buffer, no_open_name.Length / sizeof(WCHAR)), status);
+        ok(client == NULL, "expected NULL handle, got %p\n", client);
+    }
+
+    NtClose(pipe);
+}
+
+static void test_pipe_names(void)
+{
+    static const struct pipe_name_test tests[] = {
+        { L"\\Device\\NamedPipe"                 , STATUS_OBJECT_NAME_INVALID, TRUE },
+        { L"\\Device\\NamedPipe\\"               , STATUS_OBJECT_NAME_INVALID, TRUE },
+        { L"\\Device\\NamedPipe\\\\"             , STATUS_SUCCESS },
+        { L"\\Device\\NamedPipe\\wine-test\\"    , STATUS_SUCCESS, 0, L"\\Device\\NamedPipe\\wine-test" },
+        { L"\\Device\\NamedPipe\\wine/test"      , STATUS_SUCCESS, 0, L"\\Device\\NamedPipe\\wine\\test" },
+        { L"\\Device\\NamedPipe\\wine:test"      , STATUS_SUCCESS },
+        { L"\\Device\\NamedPipe\\wine\\.\\test"  , STATUS_SUCCESS, 0, L"\\Device\\NamedPipe\\wine\\test" },
+        { L"\\Device\\NamedPipe\\wine\\..\\test" , STATUS_SUCCESS, 0, L"\\Device\\NamedPipe\\test" },
+        { L"\\Device\\NamedPipe\\..\\wine-test"  , STATUS_SUCCESS },
+        { L"\\Device\\NamedPipe\\!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", STATUS_SUCCESS },
+    };
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        const struct pipe_name_test *pnt = &tests[i];
+
+        winetest_push_context("test %Iu: %s", i, debugstr_w(pnt->name));
+        subtest_pipe_name(pnt);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(pipe)
 {
     if (!init_func_ptrs())
@@ -2854,6 +2942,7 @@ START_TEST(pipe)
     test_file_info();
     test_security_info();
     test_empty_name();
+    test_pipe_names();
 
     pipe_for_each_state(create_pipe_server, connect_pipe, test_pipe_state);
     pipe_for_each_state(create_pipe_server, connect_and_write_pipe, test_pipe_with_data_state);
