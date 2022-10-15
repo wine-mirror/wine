@@ -682,6 +682,17 @@ static void test_CreateNamedPipe(int pipemode)
     CloseHandle(hFile);
     CloseHandle(hnp);
 
+    hnp = CreateNamedPipeA("\\\\.\\pipe\\trailingslash\\", PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE, 1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "failed to create pipe, error %lu\n", GetLastError());
+    hFile = CreateFileA("\\\\.\\pipe\\trailingslash", 0, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hFile == INVALID_HANDLE_VALUE, "expected opening pipe to fail\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %lu\n", GetLastError());
+    hFile = CreateFileA("\\\\.\\pipe\\trailingslash\\", 0, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "failed to open pipe, error %lu\n", GetLastError());
+    CloseHandle(hFile);
+    CloseHandle(hnp);
+
     if (winetest_debug > 1) trace("test_CreateNamedPipe returning\n");
 }
 
