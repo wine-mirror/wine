@@ -255,6 +255,7 @@ dumpers[] =
     {SIG_MDMP,          get_kind_mdmp,  mdmp_dump},
     {SIG_LNK,           get_kind_lnk,   lnk_dump},
     {SIG_EMF,           get_kind_emf,   emf_dump},
+    {SIG_EMFSPOOL,      get_kind_emfspool, emfspool_dump},
     {SIG_MF,            get_kind_mf,    mf_dump},
     {SIG_FNT,           get_kind_fnt,   fnt_dump},
     {SIG_TLB,           get_kind_tlb,   tlb_dump},

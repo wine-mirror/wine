@@ -214,7 +214,7 @@ const char *get_machine_str(int mach);
 
 /* file dumping functions */
 enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_PDB, SIG_NE, SIG_LE, SIG_MDMP, SIG_COFFLIB, SIG_LNK,
-              SIG_EMF, SIG_MF, SIG_FNT, SIG_TLB, SIG_NLS};
+              SIG_EMF, SIG_EMFSPOOL, SIG_MF, SIG_FNT, SIG_TLB, SIG_NLS};
 
 const void*	PRD(unsigned long prd, unsigned long len);
 unsigned long	Offset(const void* ptr);
@@ -249,6 +249,8 @@ enum FileSig    get_kind_lnk(void);
 void	        lnk_dump( void );
 enum FileSig    get_kind_emf(void);
 void            emf_dump( void );
+enum FileSig    get_kind_emfspool(void);
+void            emfspool_dump(void);
 enum FileSig    get_kind_mf(void);
 void            mf_dump(void);
 enum FileSig    get_kind_pdb(void);
