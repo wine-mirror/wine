@@ -2329,6 +2329,7 @@ static void test_video_window(void)
     WNDCLASSA window_class = {0};
     struct testfilter source;
     LONG width, height, l;
+    ULONG_PTR background;
     IVideoWindow *window;
     IBaseFilter *filter;
     HWND hwnd, our_hwnd;
@@ -2365,6 +2366,9 @@ static void test_video_window(void)
 
     tid = GetWindowThreadProcessId(hwnd, NULL);
     ok(tid == GetCurrentThreadId(), "Expected tid %#lx, got %#lx.\n", GetCurrentThreadId(), tid);
+
+    background = GetClassLongPtrW(hwnd, GCLP_HBRBACKGROUND);
+    todo_wine ok(!background, "Expected NULL brush, got %#Ix\n", background);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IVideoWindow, (void **)&window);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
