@@ -402,7 +402,7 @@ static const char *normalize_arch( const char *arch )
         { "arm" },
     };
 
-    for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(map); i++)
         for (j = 0; map[i][j]; j++)
             if (!strncmp( arch, map[i][j], strlen(map[i][j]) ))
                 return map[i][0];
@@ -1201,7 +1201,7 @@ static struct file *load_file( const char *name )
     input_file_name = file->name;
     input_line = 0;
 
-    for (i = 0; i < sizeof(parse_functions) / sizeof(parse_functions[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(parse_functions); i++)
     {
         if (!strendswith( name, parse_functions[i].ext )) continue;
         parse_functions[i].parse( file, f );
@@ -2585,7 +2585,7 @@ static void output_uninstall_rules( struct makefile *make )
     }
     strarray_qsort( &uninstall_dirs, cmp_string_length );
     output( "\t-rmdir" );
-    for (i = 0; i < sizeof(dirs_order)/sizeof(dirs_order[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(dirs_order); i++)
     {
         for (j = 0; j < uninstall_dirs.count; j++)
         {
@@ -2767,7 +2767,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     if (find_include_file( make, strmake( "%s.h", obj ))) source->file->flags |= FLAG_IDL_HEADER;
     if (!source->file->flags) return;
 
-    for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(idl_outputs); i++)
     {
         if (!(source->file->flags & idl_outputs[i].flag)) continue;
         dest = strmake( "%s%s", obj, idl_outputs[i].ext );
@@ -4026,7 +4026,7 @@ static void output_silent_rules(void)
     unsigned int i;
 
     output( "V = 0\n" );
-    for (i = 0; i < sizeof(cmds) / sizeof(cmds[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cmds); i++)
     {
         output( "quiet_%s = $(quiet_%s_$(V))\n", cmds[i], cmds[i] );
         output( "quiet_%s_0 = @echo \"  %-5s \" $@;\n", cmds[i], cmds[i] );
