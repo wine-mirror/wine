@@ -2368,7 +2368,7 @@ static void test_video_window(void)
     ok(tid == GetCurrentThreadId(), "Expected tid %#lx, got %#lx.\n", GetCurrentThreadId(), tid);
 
     background = GetClassLongPtrW(hwnd, GCLP_HBRBACKGROUND);
-    todo_wine ok(!background, "Expected NULL brush, got %#Ix\n", background);
+    ok(!background, "Expected NULL brush, got %#Ix\n", background);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IVideoWindow, (void **)&window);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

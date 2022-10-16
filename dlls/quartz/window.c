@@ -101,7 +101,6 @@ HRESULT video_window_create_window(struct video_window *window)
 
     winclass.lpfnWndProc = WndProcW;
     winclass.cbWndExtra = sizeof(window);
-    winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
     winclass.lpszClassName = class_name;
     if (!RegisterClassW(&winclass) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
     {
