@@ -1110,7 +1110,7 @@ static void test_WM_STYLECHANGED(void)
         {TOOLTIPS_CLASSA, wm_stylechanged_seq},
         {TRACKBAR_CLASSA, wm_stylechanged_trackbar_seq, TRUE},
         {WC_TREEVIEWA, wm_stylechanged_seq},
-        {UPDOWN_CLASSA, wm_stylechanged_seq, TRUE},
+        {UPDOWN_CLASSA, wm_stylechanged_seq},
         {WC_SCROLLBARA, wm_stylechanged_seq},
     };
 

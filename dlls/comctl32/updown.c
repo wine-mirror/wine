@@ -955,10 +955,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    break;
 
         case WM_STYLECHANGED:
-            if (wParam == GWL_STYLE) {
+            if (wParam == GWL_STYLE)
                 infoPtr->dwStyle = ((LPSTYLESTRUCT)lParam)->styleNew;
-	        InvalidateRect (infoPtr->Self, NULL, FALSE);
-            }
             break;
 
         case WM_THEMECHANGED:
