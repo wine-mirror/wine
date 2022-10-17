@@ -1562,7 +1562,7 @@ static HRESULT WINAPI HTMLDocument_execCommand(IHTMLDocument2 *iface, BSTR cmdID
         return OLECMDERR_E_NOTSUPPORTED;
 
     V_VT(&ret) = VT_EMPTY;
-    hres = IOleCommandTarget_Exec(&This->IOleCommandTarget_iface, &CGID_MSHTML, cmdid,
+    hres = IOleCommandTarget_Exec(&This->doc_node->IOleCommandTarget_iface, &CGID_MSHTML, cmdid,
             showUI ? 0 : OLECMDEXECOPT_DONTPROMPTUSER, &value, &ret);
     if(FAILED(hres))
         return hres;
@@ -5625,8 +5625,6 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleInPlaceObjectWindowless_iface;
     else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid))
         *ppv = &This->IOleInPlaceObjectWindowless_iface;
-    else if(IsEqualGUID(&IID_IOleCommandTarget, riid))
-        *ppv = &This->IOleCommandTarget_iface;
     else if(IsEqualGUID(&IID_IOleControl, riid))
         *ppv = &This->IOleControl_iface;
     else if(IsEqualGUID(&DIID_DispHTMLDocument, riid))
@@ -5709,7 +5707,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->outer_unk = outer;
     doc->dispex = dispex;
 
-    HTMLDocument_OleCmd_Init(doc);
     HTMLDocument_OleObj_Init(doc);
 }
 
@@ -5743,6 +5740,8 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IPersistHistory_iface;
     else if(IsEqualGUID(&IID_IHlinkTarget, riid))
         *ppv = &This->IHlinkTarget_iface;
+    else if(IsEqualGUID(&IID_IOleCommandTarget, riid))
+        *ppv = &This->IOleCommandTarget_iface;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &This->IServiceProvider_iface;
     else if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
@@ -6136,6 +6135,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->basedoc.IHTMLDocument2_iface, HTMLDocumentNode_cpc);
     HTMLDocumentNode_Persist_Init(doc);
     HTMLDocumentNode_Service_Init(doc);
+    HTMLDocumentNode_OleCmd_Init(doc);
     HTMLDocumentNode_SecMgr_Init(doc);
 
     list_init(&doc->selection_list);
@@ -6268,6 +6268,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IPersistHistory_iface;
     }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
         *ppv = &This->IHlinkTarget_iface;
+    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        *ppv = &This->IOleCommandTarget_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
@@ -6498,6 +6500,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     ConnectionPointContainer_Init(&doc->cp_container, &doc->IUnknown_inner, HTMLDocumentObj_cpc);
     HTMLDocumentObj_Persist_Init(doc);
     HTMLDocumentObj_Service_Init(doc);
+    HTMLDocumentObj_OleCmd_Init(doc);
     TargetContainer_Init(doc);
     doc->is_mhtml = is_mhtml;
 

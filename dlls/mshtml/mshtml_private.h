@@ -652,7 +652,6 @@ struct HTMLDocument {
     IOleDocument                IOleDocument_iface;
     IOleInPlaceActiveObject     IOleInPlaceActiveObject_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
-    IOleCommandTarget           IOleCommandTarget_iface;
     IOleControl                 IOleControl_iface;
     IDispatchEx                 IDispatchEx_iface;
     ISupportErrorInfo           ISupportErrorInfo_iface;
@@ -702,6 +701,7 @@ struct HTMLDocumentObj {
     IPersistStreamInit IPersistStreamInit_iface;
     IPersistHistory IPersistHistory_iface;
     IHlinkTarget IHlinkTarget_iface;
+    IOleCommandTarget IOleCommandTarget_iface;
     IServiceProvider IServiceProvider_iface;
     ITargetContainer ITargetContainer_iface;
 
@@ -902,6 +902,7 @@ struct HTMLDocumentNode {
     IPersistStreamInit           IPersistStreamInit_iface;
     IPersistHistory              IPersistHistory_iface;
     IHlinkTarget                 IHlinkTarget_iface;
+    IOleCommandTarget            IOleCommandTarget_iface;
     IServiceProvider             IServiceProvider_iface;
     IInternetHostSecurityManager IInternetHostSecurityManager_iface;
 
@@ -969,16 +970,17 @@ void detach_dom_implementation(IHTMLDOMImplementation*) DECLSPEC_HIDDEN;
 HRESULT create_html_storage(HTMLInnerWindow*,BOOL,IHTMLStorage**) DECLSPEC_HIDDEN;
 void detach_html_storage(IHTMLStorage*) DECLSPEC_HIDDEN;
 
-void HTMLDocument_OleCmd_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleObj_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 
 void HTMLDocument_View_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Persist_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Service_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
+void HTMLDocumentObj_OleCmd_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
 void HTMLDocumentNode_Persist_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_Service_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+void HTMLDocumentNode_OleCmd_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement*,IHTMLCurrentStyle**) DECLSPEC_HIDDEN;
