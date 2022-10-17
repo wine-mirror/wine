@@ -1602,7 +1602,7 @@ static HRESULT WINAPI PHClientSite_GetContainer(IOleClientSite *iface, IOleConta
         return E_UNEXPECTED;
     }
 
-    *ppContainer = &This->doc->basedoc.IOleContainer_iface;
+    *ppContainer = &This->doc->IOleContainer_iface;
     IOleContainer_AddRef(*ppContainer);
     return S_OK;
 }

@@ -5613,30 +5613,10 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IDocumentSelector_iface;
     else if(IsEqualGUID(&IID_IDocumentEvent, riid))
         *ppv = &This->IDocumentEvent_iface;
-    else if(IsEqualGUID(&IID_IOleObject, riid))
-        *ppv = &This->IOleObject_iface;
-    else if(IsEqualGUID(&IID_IOleDocument, riid))
-        *ppv = &This->IOleDocument_iface;
-    else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid))
-        *ppv = &This->IOleInPlaceActiveObject_iface;
-    else if(IsEqualGUID(&IID_IOleWindow, riid))
-        *ppv = &This->IOleInPlaceActiveObject_iface;
-    else if(IsEqualGUID(&IID_IOleInPlaceObject, riid))
-        *ppv = &This->IOleInPlaceObjectWindowless_iface;
-    else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid))
-        *ppv = &This->IOleInPlaceObjectWindowless_iface;
-    else if(IsEqualGUID(&IID_IOleControl, riid))
-        *ppv = &This->IOleControl_iface;
     else if(IsEqualGUID(&DIID_DispHTMLDocument, riid))
         *ppv = &This->IHTMLDocument2_iface;
     else if(IsEqualGUID(&IID_ISupportErrorInfo, riid))
         *ppv = &This->ISupportErrorInfo_iface;
-    else if(IsEqualGUID(&IID_IObjectWithSite, riid))
-        *ppv = &This->IObjectWithSite_iface;
-    else if(IsEqualGUID(&IID_IOleContainer, riid))
-        *ppv = &This->IOleContainer_iface;
-    else if(IsEqualGUID(&IID_IObjectSafety, riid))
-        *ppv = &This->IObjectSafety_iface;
     else if(IsEqualGUID(&IID_IProvideClassInfo, riid))
         *ppv = &This->IProvideMultipleClassInfo_iface;
     else if(IsEqualGUID(&IID_IProvideClassInfo2, riid))
@@ -5706,8 +5686,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
 
     doc->outer_unk = outer;
     doc->dispex = dispex;
-
-    HTMLDocument_OleObj_Init(doc);
 }
 
 static inline HTMLDocumentNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
@@ -5742,6 +5720,26 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHlinkTarget_iface;
     else if(IsEqualGUID(&IID_IOleCommandTarget, riid))
         *ppv = &This->IOleCommandTarget_iface;
+    else if(IsEqualGUID(&IID_IOleObject, riid))
+        *ppv = &This->IOleObject_iface;
+    else if(IsEqualGUID(&IID_IOleDocument, riid))
+        *ppv = &This->IOleDocument_iface;
+    else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid))
+        *ppv = &This->IOleInPlaceActiveObject_iface;
+    else if(IsEqualGUID(&IID_IOleWindow, riid))
+        *ppv = &This->IOleInPlaceActiveObject_iface;
+    else if(IsEqualGUID(&IID_IOleInPlaceObject, riid))
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid))
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    else if(IsEqualGUID(&IID_IOleControl, riid))
+        *ppv = &This->IOleControl_iface;
+    else if(IsEqualGUID(&IID_IObjectWithSite, riid))
+        *ppv = &This->IObjectWithSite_iface;
+    else if(IsEqualGUID(&IID_IOleContainer, riid))
+        *ppv = &This->IOleContainer_iface;
+    else if(IsEqualGUID(&IID_IObjectSafety, riid))
+        *ppv = &This->IObjectSafety_iface;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &This->IServiceProvider_iface;
     else if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
@@ -6136,6 +6134,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     HTMLDocumentNode_Persist_Init(doc);
     HTMLDocumentNode_Service_Init(doc);
     HTMLDocumentNode_OleCmd_Init(doc);
+    HTMLDocumentNode_OleObj_Init(doc);
     HTMLDocumentNode_SecMgr_Init(doc);
 
     list_init(&doc->selection_list);
@@ -6270,6 +6269,26 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IHlinkTarget_iface;
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         *ppv = &This->IOleCommandTarget_iface;
+    }else if(IsEqualGUID(&IID_IOleObject, riid)) {
+        *ppv = &This->IOleObject_iface;
+    }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
+        *ppv = &This->IOleDocument_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
+        *ppv = &This->IOleInPlaceActiveObject_iface;
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        *ppv = &This->IOleInPlaceActiveObject_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
+        *ppv = &This->IOleControl_iface;
+    }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
+        *ppv = &This->IObjectWithSite_iface;
+    }else if(IsEqualGUID(&IID_IOleContainer, riid)) {
+        *ppv = &This->IOleContainer_iface;
+    }else if(IsEqualGUID(&IID_IObjectSafety, riid)) {
+        *ppv = &This->IObjectSafety_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
@@ -6318,11 +6337,11 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
         if(This->view_sink)
             IAdviseSink_Release(This->view_sink);
         if(This->client)
-            IOleObject_SetClientSite(&This->basedoc.IOleObject_iface, NULL);
+            IOleObject_SetClientSite(&This->IOleObject_iface, NULL);
         if(This->hostui)
             ICustomDoc_SetUIHandler(&This->ICustomDoc_iface, NULL);
         if(This->in_place_active)
-            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->basedoc.IOleInPlaceObjectWindowless_iface);
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->IOleInPlaceObjectWindowless_iface);
         if(This->ipsite)
             IOleDocumentView_SetInPlaceSite(&This->IOleDocumentView_iface, NULL);
         if(This->undomgr)
@@ -6501,6 +6520,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     HTMLDocumentObj_Persist_Init(doc);
     HTMLDocumentObj_Service_Init(doc);
     HTMLDocumentObj_OleCmd_Init(doc);
+    HTMLDocumentObj_OleObj_Init(doc);
     TargetContainer_Init(doc);
     doc->is_mhtml = is_mhtml;
 

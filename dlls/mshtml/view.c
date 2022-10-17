@@ -541,7 +541,7 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
         ShowWindow(This->hwnd, SW_HIDE);
 
         if(This->in_place_active)
-            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->basedoc.IOleInPlaceObjectWindowless_iface);
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->IOleInPlaceObjectWindowless_iface);
 
         if(This->ip_window) {
             IOleInPlaceUIWindow_Release(This->ip_window);
@@ -612,8 +612,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
-            call_set_active_object((IOleInPlaceUIWindow*)This->frame,
-                    &This->basedoc.IOleInPlaceActiveObject_iface);
+            call_set_active_object((IOleInPlaceUIWindow*)This->frame, &This->IOleInPlaceActiveObject_iface);
         }else {
             FIXME("OnUIActivate failed: %08lx\n", hres);
             IOleInPlaceFrame_Release(This->frame);
@@ -625,14 +624,14 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         if(This->hostui) {
             hres = IDocHostUIHandler_ShowUI(This->hostui,
                     This->nscontainer->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
-                    &This->basedoc.IOleInPlaceActiveObject_iface, &This->IOleCommandTarget_iface,
+                    &This->IOleInPlaceActiveObject_iface, &This->IOleCommandTarget_iface,
                     This->frame, This->ip_window);
             if(FAILED(hres))
                 IDocHostUIHandler_HideUI(This->hostui);
         }
 
         if(This->ip_window)
-            call_set_active_object(This->ip_window, &This->basedoc.IOleInPlaceActiveObject_iface);
+            call_set_active_object(This->ip_window, &This->IOleInPlaceActiveObject_iface);
 
         SetRectEmpty(&rcBorderWidths);
         IOleInPlaceFrame_SetBorderSpace(This->frame, &rcBorderWidths);

@@ -685,7 +685,7 @@ static HRESULT WINAPI DocObjPersistMoniker_Load(IPersistMoniker *iface, BOOL fFu
             hres = IUnknown_QueryInterface(unk, &IID_IOleClientSite, (void**)&client);
             if(SUCCEEDED(hres)) {
                 TRACE("Got client site %p\n", client);
-                IOleObject_SetClientSite(&This->basedoc.IOleObject_iface, client);
+                IOleObject_SetClientSite(&This->IOleObject_iface, client);
                 IOleClientSite_Release(client);
             }
 
@@ -1508,7 +1508,7 @@ static HRESULT WINAPI DocNodeHlinkTarget_Navigate(IHlinkTarget *iface, DWORD grf
         FIXME("JumpLocation not supported\n");
 
     if(This->basedoc.doc_obj->client)
-        return IOleObject_DoVerb(&This->basedoc.IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
+        return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
 
     return IHlinkTarget_Navigate(&This->basedoc.doc_obj->IHlinkTarget_iface, grfHLNF, pwzJumpLocation);
 }
@@ -1602,7 +1602,7 @@ static HRESULT WINAPI DocObjHlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfH
         return S_OK;
     }
 
-    return IOleObject_DoVerb(&This->basedoc.IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
+    return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
 }
 
 static HRESULT WINAPI DocObjHlinkTarget_GetMoniker(IHlinkTarget *iface, LPCWSTR pwzLocation, DWORD dwAssign,

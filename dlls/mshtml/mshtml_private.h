@@ -648,16 +648,8 @@ struct HTMLDocument {
     IHTMLDocument7              IHTMLDocument7_iface;
     IDocumentSelector           IDocumentSelector_iface;
     IDocumentEvent              IDocumentEvent_iface;
-    IOleObject                  IOleObject_iface;
-    IOleDocument                IOleDocument_iface;
-    IOleInPlaceActiveObject     IOleInPlaceActiveObject_iface;
-    IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
-    IOleControl                 IOleControl_iface;
     IDispatchEx                 IDispatchEx_iface;
     ISupportErrorInfo           ISupportErrorInfo_iface;
-    IObjectWithSite             IObjectWithSite_iface;
-    IOleContainer               IOleContainer_iface;
-    IObjectSafety               IObjectSafety_iface;
     IProvideMultipleClassInfo   IProvideMultipleClassInfo_iface;
     IMarkupServices             IMarkupServices_iface;
     IMarkupContainer            IMarkupContainer_iface;
@@ -702,6 +694,14 @@ struct HTMLDocumentObj {
     IPersistHistory IPersistHistory_iface;
     IHlinkTarget IHlinkTarget_iface;
     IOleCommandTarget IOleCommandTarget_iface;
+    IOleObject IOleObject_iface;
+    IOleDocument IOleDocument_iface;
+    IOleControl IOleControl_iface;
+    IOleInPlaceActiveObject IOleInPlaceActiveObject_iface;
+    IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
+    IObjectWithSite IObjectWithSite_iface;
+    IOleContainer IOleContainer_iface;
+    IObjectSafety IObjectSafety_iface;
     IServiceProvider IServiceProvider_iface;
     ITargetContainer ITargetContainer_iface;
 
@@ -903,6 +903,14 @@ struct HTMLDocumentNode {
     IPersistHistory              IPersistHistory_iface;
     IHlinkTarget                 IHlinkTarget_iface;
     IOleCommandTarget            IOleCommandTarget_iface;
+    IOleObject                   IOleObject_iface;
+    IOleDocument                 IOleDocument_iface;
+    IOleControl                  IOleControl_iface;
+    IOleInPlaceActiveObject      IOleInPlaceActiveObject_iface;
+    IOleInPlaceObjectWindowless  IOleInPlaceObjectWindowless_iface;
+    IObjectWithSite              IObjectWithSite_iface;
+    IOleContainer                IOleContainer_iface;
+    IObjectSafety                IObjectSafety_iface;
     IServiceProvider             IServiceProvider_iface;
     IInternetHostSecurityManager IInternetHostSecurityManager_iface;
 
@@ -970,17 +978,17 @@ void detach_dom_implementation(IHTMLDOMImplementation*) DECLSPEC_HIDDEN;
 HRESULT create_html_storage(HTMLInnerWindow*,BOOL,IHTMLStorage**) DECLSPEC_HIDDEN;
 void detach_html_storage(IHTMLStorage*) DECLSPEC_HIDDEN;
 
-void HTMLDocument_OleObj_Init(HTMLDocument*) DECLSPEC_HIDDEN;
-
 void HTMLDocument_View_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Persist_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Service_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_OleCmd_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
+void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
 void HTMLDocumentNode_Persist_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_Service_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_OleCmd_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+void HTMLDocumentNode_OleObj_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement*,IHTMLCurrentStyle**) DECLSPEC_HIDDEN;

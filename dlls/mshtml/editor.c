@@ -1266,11 +1266,11 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
 
         if(doc->hostui)
             IDocHostUIHandler_ShowUI(doc->hostui, DOCHOSTUITYPE_AUTHOR,
-                    &doc->basedoc.IOleInPlaceActiveObject_iface, &doc->IOleCommandTarget_iface,
+                    &doc->IOleInPlaceActiveObject_iface, &doc->IOleCommandTarget_iface,
                     doc->frame, doc->ip_window);
 
         if(doc->ip_window)
-            call_set_active_object(doc->ip_window, &doc->basedoc.IOleInPlaceActiveObject_iface);
+            call_set_active_object(doc->ip_window, &doc->IOleInPlaceActiveObject_iface);
 
         SetRectEmpty(&rcBorderWidths);
         if(doc->frame)
