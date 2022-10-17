@@ -8205,24 +8205,21 @@ static void test_UiaNavigate(void)
     tree_struct = NULL;
     out_req = NULL;
     hr = UiaNavigate(node, NavigateDirection_Parent, (struct UiaCondition *)&UiaTrueCondition, &cache_req, &out_req, &tree_struct);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-    todo_wine ok(!!out_req, "out_req == NULL\n");
-    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
-    todo_wine ok(Provider2.ref == 2, "Unexpected refcnt %ld\n", Provider2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+    ok(Provider2.ref == 2, "Unexpected refcnt %ld\n", Provider2.ref);
 
-    if (SUCCEEDED(hr))
-    {
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = exp_elems[1] = 1;
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
 
-        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
 
-        SafeArrayDestroy(out_req);
-        SysFreeString(tree_struct);
-        ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
-        ok_method_sequence(nav_seq14, "nav_seq14");
-    }
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+    ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
+    ok_method_sequence(nav_seq14, "nav_seq14");
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
