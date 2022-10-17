@@ -3247,7 +3247,6 @@ static INT TAB_StyleChanged(TAB_INFO *infoPtr, WPARAM wStyleType,
     infoPtr->dwStyle = lpss->styleNew;
 
     TAB_SetItemBounds (infoPtr);
-    InvalidateRect(infoPtr->hwnd, NULL, TRUE);
 
     return 0;
 }

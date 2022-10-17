@@ -1105,7 +1105,7 @@ static void test_WM_STYLECHANGED(void)
         {WC_STATICA, wm_stylechanged_seq},
         {STATUSCLASSNAMEA, wm_stylechanged_seq},
         {"SysLink", wm_stylechanged_seq},
-        {WC_TABCONTROLA, wm_stylechanged_seq, TRUE},
+        {WC_TABCONTROLA, wm_stylechanged_seq},
         {TOOLBARCLASSNAMEA, wm_stylechanged_seq},
         {TOOLTIPS_CLASSA, wm_stylechanged_seq},
         {TRACKBAR_CLASSA, wm_stylechanged_trackbar_seq, TRUE},
