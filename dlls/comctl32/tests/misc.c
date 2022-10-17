@@ -997,17 +997,171 @@ static void test_themed_background(void)
         pSetThreadDpiAwarenessContext(old_context);
 }
 
+static WNDPROC old_proc;
+
+static const struct message wm_stylechanged_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {0}
+};
+
+static const struct message wm_stylechanged_repaint_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {WM_PAINT, sent},
+    {WM_ERASEBKGND, sent | defwinproc},
+    {0}
+};
+
+static const struct message wm_stylechanged_combox_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {WM_ERASEBKGND, sent | defwinproc},
+    {WM_PAINT, sent},
+    {0}
+};
+
+static const struct message wm_stylechanged_pager_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {WM_PAINT, sent},
+    {WM_NCPAINT, sent | defwinproc},
+    {WM_ERASEBKGND, sent | defwinproc},
+    {0}
+};
+
+static const struct message wm_stylechanged_progress_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {WM_PAINT, sent | optional}, /* WM_PAINT and WM_ERASEBKGND are missing with comctl32 v5 */
+    {WM_ERASEBKGND, sent | defwinproc | optional},
+    {0}
+};
+
+static const struct message wm_stylechanged_trackbar_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {WM_PAINT, sent | defwinproc},
+    {WM_PAINT, sent},
+    {0}
+};
+
+static LRESULT WINAPI test_wm_stylechanged_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    static int defwndproc_counter = 0;
+    struct message msg = {0};
+    LRESULT ret;
+
+    if (message == WM_STYLECHANGED
+        || message == WM_PAINT
+        || message == WM_ERASEBKGND
+        || message == WM_NCPAINT)
+    {
+        msg.message = message;
+        msg.flags = sent | wparam | lparam;
+        if (defwndproc_counter)
+            msg.flags |= defwinproc;
+        msg.wParam = wp;
+        msg.lParam = lp;
+        add_message(sequences, CHILD_SEQ_INDEX, &msg);
+    }
+
+    ++defwndproc_counter;
+    ret = CallWindowProcA(old_proc, hwnd, message, wp, lp);
+    --defwndproc_counter;
+    return ret;
+}
+
+static void test_WM_STYLECHANGED(void)
+{
+    HWND parent, hwnd;
+    STYLESTRUCT style;
+    unsigned int i;
+
+    static const struct test
+    {
+        const CHAR *class_name;
+        const struct message *seq;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {ANIMATE_CLASSA, wm_stylechanged_seq, TRUE},
+        {WC_BUTTONA, wm_stylechanged_seq},
+        {WC_COMBOBOXA, wm_stylechanged_combox_seq, TRUE},
+        {WC_COMBOBOXEXA, wm_stylechanged_seq},
+        {DATETIMEPICK_CLASSA, wm_stylechanged_seq, TRUE},
+        {WC_EDITA, wm_stylechanged_seq},
+        {WC_HEADERA, wm_stylechanged_repaint_seq, TRUE},
+        {HOTKEY_CLASSA, wm_stylechanged_seq},
+        {WC_IPADDRESSA, wm_stylechanged_seq},
+        {WC_LISTBOXA, wm_stylechanged_repaint_seq, TRUE},
+        {WC_LISTVIEWA, wm_stylechanged_seq, TRUE},
+        {MONTHCAL_CLASSA, wm_stylechanged_repaint_seq, TRUE},
+        {WC_NATIVEFONTCTLA, wm_stylechanged_seq},
+        {WC_PAGESCROLLERA, wm_stylechanged_pager_seq, TRUE},
+        {PROGRESS_CLASSA, wm_stylechanged_progress_seq},
+        {REBARCLASSNAMEA, wm_stylechanged_seq},
+        {WC_STATICA, wm_stylechanged_seq},
+        {STATUSCLASSNAMEA, wm_stylechanged_seq},
+        {"SysLink", wm_stylechanged_seq, TRUE},
+        {WC_TABCONTROLA, wm_stylechanged_seq, TRUE},
+        {TOOLBARCLASSNAMEA, wm_stylechanged_seq},
+        {TOOLTIPS_CLASSA, wm_stylechanged_seq},
+        {TRACKBAR_CLASSA, wm_stylechanged_trackbar_seq, TRUE},
+        {WC_TREEVIEWA, wm_stylechanged_seq, TRUE},
+        {UPDOWN_CLASSA, wm_stylechanged_seq, TRUE},
+        {WC_SCROLLBARA, wm_stylechanged_seq},
+    };
+
+    parent = CreateWindowA(WC_STATICA, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
+                           0, 0, 0, 0);
+    ok(parent != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("%s", tests[i].class_name);
+
+        hwnd = CreateWindowA(tests[i].class_name, "test", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50,
+                             parent, 0, 0, 0);
+        /* SysLink is unavailable in comctl32 v5 */
+        if (!hwnd && !lstrcmpA(tests[i].class_name, "SysLink"))
+        {
+            winetest_pop_context();
+            continue;
+        }
+        ok(hwnd != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
+        old_proc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)test_wm_stylechanged_proc);
+        ok(old_proc != NULL, "SetWindowLongPtrA failed, error %lu.\n", GetLastError());
+        flush_events();
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        style.styleOld = GetWindowLongA(hwnd, GWL_STYLE);
+        style.styleNew = style.styleOld | WS_TABSTOP;
+        SendMessageA(hwnd, WM_STYLECHANGED, GWL_STYLE, (LPARAM)&style);
+        flush_events();
+        ok_sequence(sequences, CHILD_SEQ_INDEX, tests[i].seq, "WM_STYLECHANGED", tests[i].todo);
+
+        DestroyWindow(hwnd);
+        winetest_pop_context();
+    }
+
+    DestroyWindow(parent);
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
 
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
     if(!InitFunctionPtrs())
         return;
 
     test_GetPtrAW();
     test_Alloc();
     test_comctl32_classes(FALSE);
+    test_WM_STYLECHANGED();
 
     FreeLibrary(hComctl32);
 
@@ -1015,7 +1169,6 @@ START_TEST(misc)
         return;
     if(!init_functions_v6())
         return;
-    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_comctl32_classes(TRUE);
     test_builtin_classes();
@@ -1023,6 +1176,7 @@ START_TEST(misc)
     test_themed_background();
     test_WM_THEMECHANGED();
     test_WM_SYSCOLORCHANGE();
+    test_WM_STYLECHANGED();
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
