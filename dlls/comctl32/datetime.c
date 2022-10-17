@@ -1528,8 +1528,6 @@ DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, const STYLESTRU
 	DestroyWindow(infoPtr->hUpdown);
 	infoPtr->hUpdown = 0;
     }
-
-    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
     return 0;
 }
 

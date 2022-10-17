@@ -1090,7 +1090,7 @@ static void test_WM_STYLECHANGED(void)
         {WC_BUTTONA, wm_stylechanged_seq},
         {WC_COMBOBOXA, wm_stylechanged_combox_seq, TRUE},
         {WC_COMBOBOXEXA, wm_stylechanged_seq},
-        {DATETIMEPICK_CLASSA, wm_stylechanged_seq, TRUE},
+        {DATETIMEPICK_CLASSA, wm_stylechanged_seq},
         {WC_EDITA, wm_stylechanged_seq},
         {WC_HEADERA, wm_stylechanged_repaint_seq, TRUE},
         {HOTKEY_CLASSA, wm_stylechanged_seq},
