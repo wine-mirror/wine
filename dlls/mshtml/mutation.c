@@ -280,7 +280,7 @@ static void parse_complete(HTMLDocumentObj *doc)
     call_explorer_69(doc);
     if(doc->view_sink)
         IAdviseSink_OnViewChange(doc->view_sink, DVASPECT_CONTENT, -1);
-    call_property_onchanged(&doc->basedoc.cp_container, 1005);
+    call_property_onchanged(&doc->cp_container, 1005);
     call_explorer_69(doc);
 
     if(doc->webbrowser && doc->nscontainer->usermode != EDITMODE && !(doc->basedoc.window->load_flags & BINDING_REFRESH))

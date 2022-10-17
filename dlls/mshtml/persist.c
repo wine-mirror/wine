@@ -433,7 +433,7 @@ static void notif_readystate(HTMLOuterWindow *window)
     window->readystate_pending = FALSE;
 
     if(is_main_content_window(window))
-        call_property_onchanged(&window->browser->doc->basedoc.cp_container, DISPID_READYSTATE);
+        call_property_onchanged(&window->browser->doc->cp_container, DISPID_READYSTATE);
 
     hres = create_document_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, &event);
     if(SUCCEEDED(hres)) {

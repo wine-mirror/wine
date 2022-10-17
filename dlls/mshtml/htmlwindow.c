@@ -128,7 +128,7 @@ static void detach_inner_window(HTMLInnerWindow *window)
     }
 
     if(outer_window && is_main_content_window(outer_window))
-        window->doc->basedoc.cp_container.forward_container = NULL;
+        window->doc->cp_container.forward_container = NULL;
 
     if(doc)
         detach_document_node(doc);

@@ -852,7 +852,8 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
     if(FAILED(hres))
         return hres;
 
-    call_property_onchanged(&This->cp_container, DISPID_IHTMLDOCUMENT2_DESIGNMODE);
+    call_property_onchanged(This == &This->doc_obj->basedoc ? &This->doc_obj->cp_container : &This->doc_node->cp_container,
+                            DISPID_IHTMLDOCUMENT2_DESIGNMODE);
     return S_OK;
 }
 
@@ -4769,12 +4770,12 @@ static const IDocumentEventVtbl DocumentEventVtbl = {
     DocumentEvent_createEvent
 };
 
-static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
+static void HTMLDocumentNode_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument2((IHTMLDocument2*)iface);
+    HTMLDocumentNode *This = CONTAINING_RECORD((IHTMLDocument2*)iface, HTMLDocumentNode, basedoc.IHTMLDocument2_iface);
 
-    if(This->window)
-        update_doc_cp_events(This->doc_node, cp);
+    if(This->basedoc.window)
+        update_doc_cp_events(This, cp);
 }
 
 static inline HTMLDocument *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
@@ -5640,8 +5641,6 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleControl_iface;
     else if(IsEqualGUID(&IID_IHlinkTarget, riid))
         *ppv = &This->IHlinkTarget_iface;
-    else if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
-        *ppv = &This->cp_container.IConnectionPointContainer_iface;
     else if(IsEqualGUID(&IID_IPersistStreamInit, riid))
         *ppv = &This->IPersistStreamInit_iface;
     else if(IsEqualGUID(&DIID_DispHTMLDocument, riid))
@@ -5694,14 +5693,14 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
-static cp_static_data_t HTMLDocumentEvents_data = { HTMLDocumentEvents_tid, HTMLDocument_on_advise };
-static cp_static_data_t HTMLDocumentEvents2_data = { HTMLDocumentEvents2_tid, HTMLDocument_on_advise, TRUE };
+static cp_static_data_t HTMLDocumentNodeEvents_data = { HTMLDocumentEvents_tid, HTMLDocumentNode_on_advise };
+static cp_static_data_t HTMLDocumentNodeEvents2_data = { HTMLDocumentEvents2_tid, HTMLDocumentNode_on_advise, TRUE };
 
-static const cpc_entry_t HTMLDocument_cpc[] = {
-    {&IID_IDispatch, &HTMLDocumentEvents_data},
+static const cpc_entry_t HTMLDocumentNode_cpc[] = {
+    {&IID_IDispatch, &HTMLDocumentNodeEvents_data},
     {&IID_IPropertyNotifySink},
-    {&DIID_HTMLDocumentEvents, &HTMLDocumentEvents_data},
-    {&DIID_HTMLDocumentEvents2, &HTMLDocumentEvents2_data},
+    {&DIID_HTMLDocumentEvents, &HTMLDocumentNodeEvents_data},
+    {&DIID_HTMLDocumentEvents2, &HTMLDocumentNodeEvents2_data},
     {NULL}
 };
 
@@ -5730,8 +5729,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     HTMLDocument_OleCmd_Init(doc);
     HTMLDocument_OleObj_Init(doc);
     HTMLDocument_Service_Init(doc);
-
-    ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface, HTMLDocument_cpc);
 }
 
 static inline HTMLDocumentNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
@@ -5750,6 +5747,8 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IInternetHostSecurityManager, riid))
         *ppv = &This->IInternetHostSecurityManager_iface;
+    else if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
+        *ppv = &This->cp_container.IConnectionPointContainer_iface;
     else
         return HTMLDOMNode_QI(&This->node, riid, ppv);
 
@@ -5809,7 +5808,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     TRACE("(%p)\n", This);
 
     heap_free(This->event_vector);
-    ConnectionPointContainer_Destroy(&This->basedoc.cp_container);
+    ConnectionPointContainer_Destroy(&This->cp_container);
 }
 
 static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -5846,7 +5845,7 @@ static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     &CLSID_HTMLDocument,
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
-    HTMLDocument_cpc,
+    HTMLDocumentNode_cpc,
     HTMLDocumentNode_clone,
     NULL,
     NULL,
@@ -6028,7 +6027,7 @@ static ConnectionPointContainer *HTMLDocumentNode_get_cp_container(DispatchEx *d
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
     ConnectionPointContainer *container = This->basedoc.doc_obj
-        ? &This->basedoc.doc_obj->basedoc.cp_container : &This->basedoc.cp_container;
+        ? &This->basedoc.doc_obj->cp_container : &This->cp_container;
     IConnectionPointContainer_AddRef(&container->IConnectionPointContainer_iface);
     return container;
 }
@@ -6068,7 +6067,7 @@ static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
     &CLSID_HTMLDocument,
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
-    HTMLDocument_cpc,
+    HTMLDocumentNode_cpc,
     HTMLDocumentFragment_clone
 };
 
@@ -6136,6 +6135,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
 
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
             &doc->node.event_target.dispex.IDispatchEx_iface);
+    ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->basedoc.IHTMLDocument2_iface, HTMLDocumentNode_cpc);
     HTMLDocumentNode_SecMgr_Init(doc);
 
     list_init(&doc->selection_list);
@@ -6162,7 +6162,7 @@ HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, H
     }
 
     if(!doc_obj->basedoc.window || (window && is_main_content_window(window->base.outer_window)))
-        doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
+        doc->cp_container.forward_container = &doc_obj->cp_container;
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc, &HTMLDocumentNode_dispex);
 
@@ -6256,6 +6256,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
         *ppv = &This->ITargetContainer_iface;
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        *ppv = &This->cp_container.IConnectionPointContainer_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -6317,7 +6319,7 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
         heap_free(This->mime);
 
         remove_target_tasks(This->task_magic);
-        ConnectionPointContainer_Destroy(&This->basedoc.cp_container);
+        ConnectionPointContainer_Destroy(&This->cp_container);
         release_dispex(&This->dispex);
 
         if(This->nscontainer)
@@ -6401,6 +6403,25 @@ static const ICustomDocVtbl CustomDocVtbl = {
     CustomDoc_SetUIHandler
 };
 
+static void HTMLDocumentObj_on_advise(IUnknown *iface, cp_static_data_t *cp)
+{
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
+
+    if(This->basedoc.window && This->basedoc.doc_node)
+        update_doc_cp_events(This->basedoc.doc_node, cp);
+}
+
+static cp_static_data_t HTMLDocumentObjEvents_data = { HTMLDocumentEvents_tid, HTMLDocumentObj_on_advise };
+static cp_static_data_t HTMLDocumentObjEvents2_data = { HTMLDocumentEvents2_tid, HTMLDocumentObj_on_advise, TRUE };
+
+static const cpc_entry_t HTMLDocumentObj_cpc[] = {
+    {&IID_IDispatch, &HTMLDocumentObjEvents_data},
+    {&IID_IPropertyNotifySink},
+    {&DIID_HTMLDocumentEvents, &HTMLDocumentObjEvents_data},
+    {&DIID_HTMLDocumentEvents2, &HTMLDocumentObjEvents2_data},
+    {NULL}
+};
+
 static HRESULT HTMLDocumentObj_location_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp, VARIANT *res,
         EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -6458,6 +6479,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
 
     init_dispatch(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex, COMPAT_MODE_QUIRKS);
     init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_inner, &doc->dispex.IDispatchEx_iface);
+    ConnectionPointContainer_Init(&doc->cp_container, &doc->IUnknown_inner, HTMLDocumentObj_cpc);
     TargetContainer_Init(doc);
     doc->is_mhtml = is_mhtml;
 

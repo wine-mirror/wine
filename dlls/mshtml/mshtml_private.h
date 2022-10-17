@@ -679,8 +679,6 @@ struct HTMLDocument {
     HTMLDocumentNode *doc_node;
 
     HTMLOuterWindow *window;
-
-    ConnectionPointContainer cp_container;
 };
 
 static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
@@ -727,6 +725,7 @@ struct HTMLDocumentObj {
     IUnknown *browser_service;
     IOleAdviseHolder *advise_holder;
 
+    ConnectionPointContainer cp_container;
     DOCHOSTUIINFO hostinfo;
 
     IOleUndoManager *undomgr;
@@ -903,6 +902,7 @@ struct HTMLDocumentNode {
 
     LONG ref;
 
+    ConnectionPointContainer cp_container;
     HTMLInnerWindow *window;
 
     GeckoBrowser *browser;
