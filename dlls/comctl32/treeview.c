@@ -5627,7 +5627,6 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TREEVIEW_EndEditLabelNow(infoPtr, TRUE);
     TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
     TREEVIEW_UpdateScrollBars(infoPtr);
-    TREEVIEW_Invalidate(infoPtr, NULL);
 
     return 0;
 }
