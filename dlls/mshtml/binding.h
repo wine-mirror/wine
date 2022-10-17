@@ -144,7 +144,7 @@ HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLS
 HRESULT create_doc_uri(IUri*,nsWineURI**) DECLSPEC_HIDDEN;
 HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsIInputStream*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLOuterWindow*,IMoniker*,IUri*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
-void prepare_for_binding(HTMLDocument*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
+void prepare_for_binding(HTMLDocumentObj*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
 HRESULT load_uri(HTMLOuterWindow*,IUri*,DWORD) DECLSPEC_HIDDEN;
 HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,request_data_t*,IHTMLWindow2**) DECLSPEC_HIDDEN;

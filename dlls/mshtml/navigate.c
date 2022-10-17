@@ -2236,7 +2236,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         return hres;
     }
 
-    prepare_for_binding(&window->browser->doc->basedoc, mon, flags);
+    prepare_for_binding(window->browser->doc, mon, flags);
 
     hres = IUri_GetScheme(uri, &scheme);
     if(hres == S_OK && scheme == URL_SCHEME_JAVASCRIPT) {

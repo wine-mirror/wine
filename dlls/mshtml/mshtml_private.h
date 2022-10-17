@@ -648,18 +648,12 @@ struct HTMLDocument {
     IHTMLDocument7              IHTMLDocument7_iface;
     IDocumentSelector           IDocumentSelector_iface;
     IDocumentEvent              IDocumentEvent_iface;
-    IPersistMoniker             IPersistMoniker_iface;
-    IPersistFile                IPersistFile_iface;
-    IPersistHistory             IPersistHistory_iface;
-    IMonikerProp                IMonikerProp_iface;
     IOleObject                  IOleObject_iface;
     IOleDocument                IOleDocument_iface;
     IOleInPlaceActiveObject     IOleInPlaceActiveObject_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
     IOleCommandTarget           IOleCommandTarget_iface;
     IOleControl                 IOleControl_iface;
-    IHlinkTarget                IHlinkTarget_iface;
-    IPersistStreamInit          IPersistStreamInit_iface;
     IDispatchEx                 IDispatchEx_iface;
     ISupportErrorInfo           ISupportErrorInfo_iface;
     IObjectWithSite             IObjectWithSite_iface;
@@ -702,6 +696,12 @@ struct HTMLDocumentObj {
     ICustomDoc ICustomDoc_iface;
     IOleDocumentView IOleDocumentView_iface;
     IViewObjectEx IViewObjectEx_iface;
+    IPersistMoniker IPersistMoniker_iface;
+    IPersistFile IPersistFile_iface;
+    IMonikerProp IMonikerProp_iface;
+    IPersistStreamInit IPersistStreamInit_iface;
+    IPersistHistory IPersistHistory_iface;
+    IHlinkTarget IHlinkTarget_iface;
     IServiceProvider IServiceProvider_iface;
     ITargetContainer ITargetContainer_iface;
 
@@ -896,6 +896,12 @@ struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
+    IPersistMoniker              IPersistMoniker_iface;
+    IPersistFile                 IPersistFile_iface;
+    IMonikerProp                 IMonikerProp_iface;
+    IPersistStreamInit           IPersistStreamInit_iface;
+    IPersistHistory              IPersistHistory_iface;
+    IHlinkTarget                 IHlinkTarget_iface;
     IServiceProvider             IServiceProvider_iface;
     IInternetHostSecurityManager IInternetHostSecurityManager_iface;
 
@@ -963,14 +969,15 @@ void detach_dom_implementation(IHTMLDOMImplementation*) DECLSPEC_HIDDEN;
 HRESULT create_html_storage(HTMLInnerWindow*,BOOL,IHTMLStorage**) DECLSPEC_HIDDEN;
 void detach_html_storage(IHTMLStorage*) DECLSPEC_HIDDEN;
 
-void HTMLDocument_Persist_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleCmd_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleObj_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 
 void HTMLDocument_View_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
+void HTMLDocumentObj_Persist_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Service_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
+void HTMLDocumentNode_Persist_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_Service_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 

@@ -5613,14 +5613,6 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IDocumentSelector_iface;
     else if(IsEqualGUID(&IID_IDocumentEvent, riid))
         *ppv = &This->IDocumentEvent_iface;
-    else if(IsEqualGUID(&IID_IPersist, riid))
-        *ppv = &This->IPersistFile_iface;
-    else if(IsEqualGUID(&IID_IPersistMoniker, riid))
-        *ppv = &This->IPersistMoniker_iface;
-    else if(IsEqualGUID(&IID_IPersistFile, riid))
-        *ppv = &This->IPersistFile_iface;
-    else if(IsEqualGUID(&IID_IMonikerProp, riid))
-        *ppv = &This->IMonikerProp_iface;
     else if(IsEqualGUID(&IID_IOleObject, riid))
         *ppv = &This->IOleObject_iface;
     else if(IsEqualGUID(&IID_IOleDocument, riid))
@@ -5637,16 +5629,10 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleCommandTarget_iface;
     else if(IsEqualGUID(&IID_IOleControl, riid))
         *ppv = &This->IOleControl_iface;
-    else if(IsEqualGUID(&IID_IHlinkTarget, riid))
-        *ppv = &This->IHlinkTarget_iface;
-    else if(IsEqualGUID(&IID_IPersistStreamInit, riid))
-        *ppv = &This->IPersistStreamInit_iface;
     else if(IsEqualGUID(&DIID_DispHTMLDocument, riid))
         *ppv = &This->IHTMLDocument2_iface;
     else if(IsEqualGUID(&IID_ISupportErrorInfo, riid))
         *ppv = &This->ISupportErrorInfo_iface;
-    else if(IsEqualGUID(&IID_IPersistHistory, riid))
-        *ppv = &This->IPersistHistory_iface;
     else if(IsEqualGUID(&IID_IObjectWithSite, riid))
         *ppv = &This->IObjectWithSite_iface;
     else if(IsEqualGUID(&IID_IOleContainer, riid))
@@ -5723,7 +5709,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->outer_unk = outer;
     doc->dispex = dispex;
 
-    HTMLDocument_Persist_Init(doc);
     HTMLDocument_OleCmd_Init(doc);
     HTMLDocument_OleObj_Init(doc);
 }
@@ -5744,6 +5729,20 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IInternetHostSecurityManager, riid))
         *ppv = &This->IInternetHostSecurityManager_iface;
+    else if(IsEqualGUID(&IID_IPersist, riid))
+        *ppv = &This->IPersistFile_iface;
+    else if(IsEqualGUID(&IID_IPersistMoniker, riid))
+        *ppv = &This->IPersistMoniker_iface;
+    else if(IsEqualGUID(&IID_IPersistFile, riid))
+        *ppv = &This->IPersistFile_iface;
+    else if(IsEqualGUID(&IID_IMonikerProp, riid))
+        *ppv = &This->IMonikerProp_iface;
+    else if(IsEqualGUID(&IID_IPersistStreamInit, riid))
+        *ppv = &This->IPersistStreamInit_iface;
+    else if(IsEqualGUID(&IID_IPersistHistory, riid))
+        *ppv = &This->IPersistHistory_iface;
+    else if(IsEqualGUID(&IID_IHlinkTarget, riid))
+        *ppv = &This->IHlinkTarget_iface;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &This->IServiceProvider_iface;
     else if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
@@ -6135,6 +6134,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
             &doc->node.event_target.dispex.IDispatchEx_iface);
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->basedoc.IHTMLDocument2_iface, HTMLDocumentNode_cpc);
+    HTMLDocumentNode_Persist_Init(doc);
     HTMLDocumentNode_Service_Init(doc);
     HTMLDocumentNode_SecMgr_Init(doc);
 
@@ -6254,6 +6254,20 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
         *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IPersist, riid)) {
+        *ppv = &This->IPersistFile_iface;
+    }else if(IsEqualGUID(&IID_IPersistMoniker, riid)) {
+        *ppv = &This->IPersistMoniker_iface;
+    }else if(IsEqualGUID(&IID_IPersistFile, riid)) {
+        *ppv = &This->IPersistFile_iface;
+    }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
+        *ppv = &This->IMonikerProp_iface;
+    }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
+        *ppv = &This->IPersistStreamInit_iface;
+    }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
+        *ppv = &This->IPersistHistory_iface;
+    }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
+        *ppv = &This->IHlinkTarget_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
@@ -6482,6 +6496,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     init_dispatch(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex, COMPAT_MODE_QUIRKS);
     init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_inner, &doc->dispex.IDispatchEx_iface);
     ConnectionPointContainer_Init(&doc->cp_container, &doc->IUnknown_inner, HTMLDocumentObj_cpc);
+    HTMLDocumentObj_Persist_Init(doc);
     HTMLDocumentObj_Service_Init(doc);
     TargetContainer_Init(doc);
     doc->is_mhtml = is_mhtml;

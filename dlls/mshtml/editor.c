@@ -1249,7 +1249,7 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
         }
     }
 
-    hres = IPersistMoniker_Load(&doc->basedoc.IPersistMoniker_iface, TRUE, mon, NULL, 0);
+    hres = IPersistMoniker_Load(&doc->IPersistMoniker_iface, TRUE, mon, NULL, 0);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
