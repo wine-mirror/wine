@@ -1096,7 +1096,7 @@ static void test_WM_STYLECHANGED(void)
         {HOTKEY_CLASSA, wm_stylechanged_seq},
         {WC_IPADDRESSA, wm_stylechanged_seq},
         {WC_LISTBOXA, wm_stylechanged_repaint_seq, TRUE},
-        {WC_LISTVIEWA, wm_stylechanged_seq, TRUE},
+        {WC_LISTVIEWA, wm_stylechanged_seq},
         {MONTHCAL_CLASSA, wm_stylechanged_repaint_seq, TRUE},
         {WC_NATIVEFONTCTLA, wm_stylechanged_seq},
         {WC_PAGESCROLLERA, wm_stylechanged_pager_seq, TRUE},

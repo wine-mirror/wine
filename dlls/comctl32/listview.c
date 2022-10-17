@@ -11298,9 +11298,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     /* add scrollbars if needed */
     LISTVIEW_UpdateScroll(infoPtr);
 
-    /* invalidate client area + erase background */
-    LISTVIEW_InvalidateList(infoPtr);
-
     return 0;
 }
 
