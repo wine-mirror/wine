@@ -407,6 +407,8 @@ HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode);
 HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *elprov);
 HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cache_req, enum NormalizeState normalize_state,
         struct UiaCondition *normalize_cond, SAFEARRAY **out_req, BSTR *tree_struct);
+HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct UiaCondition *nav_condition,
+        struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct);
 
 #ifdef __cplusplus
 }

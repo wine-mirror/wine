@@ -2127,3 +2127,14 @@ HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cac
 
     return S_OK;
 }
+
+/***********************************************************************
+ *          UiaNavigate (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct UiaCondition *nav_condition,
+        struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct)
+{
+    FIXME("(%p, %u, %p, %p, %p, %p): stub\n", huianode, dir, nav_condition, cache_req, out_req,
+            tree_struct);
+    return E_NOTIMPL;
+}
