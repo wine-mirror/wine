@@ -5633,8 +5633,6 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IOleInPlaceObjectWindowless_iface;
     else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid))
         *ppv = &This->IOleInPlaceObjectWindowless_iface;
-    else if(IsEqualGUID(&IID_IServiceProvider, riid))
-        *ppv = &This->IServiceProvider_iface;
     else if(IsEqualGUID(&IID_IOleCommandTarget, riid))
         *ppv = &This->IOleCommandTarget_iface;
     else if(IsEqualGUID(&IID_IOleControl, riid))
@@ -5728,7 +5726,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     HTMLDocument_Persist_Init(doc);
     HTMLDocument_OleCmd_Init(doc);
     HTMLDocument_OleObj_Init(doc);
-    HTMLDocument_Service_Init(doc);
 }
 
 static inline HTMLDocumentNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
@@ -5747,6 +5744,8 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IInternetHostSecurityManager, riid))
         *ppv = &This->IInternetHostSecurityManager_iface;
+    else if(IsEqualGUID(&IID_IServiceProvider, riid))
+        *ppv = &This->IServiceProvider_iface;
     else if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
         *ppv = &This->cp_container.IConnectionPointContainer_iface;
     else
@@ -6136,6 +6135,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
             &doc->node.event_target.dispex.IDispatchEx_iface);
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->basedoc.IHTMLDocument2_iface, HTMLDocumentNode_cpc);
+    HTMLDocumentNode_Service_Init(doc);
     HTMLDocumentNode_SecMgr_Init(doc);
 
     list_init(&doc->selection_list);
@@ -6254,6 +6254,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IViewObjectEx_iface;
     }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
         *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = &This->IServiceProvider_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
         *ppv = &This->ITargetContainer_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
@@ -6480,6 +6482,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     init_dispatch(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex, COMPAT_MODE_QUIRKS);
     init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_inner, &doc->dispex.IDispatchEx_iface);
     ConnectionPointContainer_Init(&doc->cp_container, &doc->IUnknown_inner, HTMLDocumentObj_cpc);
+    HTMLDocumentObj_Service_Init(doc);
     TargetContainer_Init(doc);
     doc->is_mhtml = is_mhtml;
 
