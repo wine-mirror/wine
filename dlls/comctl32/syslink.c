@@ -1676,11 +1676,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     case WM_STYLECHANGED:
         if (wParam == GWL_STYLE)
-        {
             infoPtr->Style = ((LPSTYLESTRUCT)lParam)->styleNew;
-
-            InvalidateRect(infoPtr->Self, NULL, TRUE);
-        }
         return 0;
 
     case WM_CREATE:
