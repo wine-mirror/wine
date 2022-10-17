@@ -596,6 +596,18 @@ static HRESULT prepare_uia_node(struct uia_node *node)
     int i, prov_idx;
     HRESULT hr;
 
+    /* Get the provider index for the provider that created the node. */
+    for (i = prov_idx = 0; i < PROV_TYPE_COUNT; i++)
+    {
+        if (i == node->creator_prov_type)
+        {
+            node->creator_prov_idx = prov_idx;
+            break;
+        }
+        else if (node->prov[i])
+            prov_idx++;
+    }
+
     /*
      * HUIANODEs can only have one 'parent link' provider, which handles
      * parent and sibling navigation for the entire HUIANODE. Each provider is
@@ -659,6 +671,62 @@ static HRESULT prepare_uia_node(struct uia_node *node)
     return S_OK;
 }
 
+static BOOL node_creator_is_parent_link(struct uia_node *node)
+{
+    if (node->creator_prov_idx == node->parent_link_idx)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+static HRESULT get_sibling_from_node_provider(struct uia_node *node, int prov_idx, int nav_dir,
+        VARIANT *out_node)
+{
+    HUIANODE tmp_node;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = get_navigate_from_node_provider(&node->IWineUiaNode_iface, prov_idx, nav_dir, &v);
+    if (FAILED(hr))
+        return hr;
+
+    hr = UiaHUiaNodeFromVariant(&v, &tmp_node);
+    if (FAILED(hr))
+        goto exit;
+
+    while (1)
+    {
+        struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)tmp_node);
+
+        /*
+         * If our sibling provider is the parent link of it's HUIANODE, then
+         * it is a valid sibling of this node.
+         */
+        if (node_creator_is_parent_link(node_data))
+            break;
+
+        /*
+         * If our sibling provider is not the parent link of it's HUIANODE, we
+         * need to try the next sibling.
+         */
+        hr = get_navigate_from_node_provider((IWineUiaNode *)tmp_node, node_data->creator_prov_idx, nav_dir, &v);
+        UiaNodeRelease(tmp_node);
+        if (FAILED(hr))
+            return hr;
+
+        tmp_node = NULL;
+        hr = UiaHUiaNodeFromVariant(&v, &tmp_node);
+        if (FAILED(hr))
+            break;
+    }
+
+exit:
+    if (tmp_node)
+        *out_node = v;
+
+    return S_OK;
+}
+
 static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node)
 {
     HRESULT hr;
@@ -671,24 +739,32 @@ static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *o
     {
     case NavigateDirection_FirstChild:
     case NavigateDirection_LastChild:
-    case NavigateDirection_NextSibling:
-    case NavigateDirection_PreviousSibling:
         FIXME("Unimplemented NavigateDirection %d\n", nav_dir);
         return E_NOTIMPL;
+
+    case NavigateDirection_NextSibling:
+    case NavigateDirection_PreviousSibling:
+        hr = get_sibling_from_node_provider(node, node->parent_link_idx, nav_dir, &v);
+        if (FAILED(hr))
+            WARN("Sibling navigation failed with hr %#lx\n", hr);
+        break;
 
     case NavigateDirection_Parent:
         hr = get_navigate_from_node_provider(&node->IWineUiaNode_iface, node->parent_link_idx, nav_dir, &v);
         if (FAILED(hr))
             WARN("Parent navigation failed with hr %#lx\n", hr);
-
-        hr = UiaHUiaNodeFromVariant(&v, out_node);
-        if (FAILED(hr))
-            *out_node = NULL;
         break;
 
     default:
         WARN("Invalid NavigateDirection %d\n", nav_dir);
         return E_INVALIDARG;
+    }
+
+    if (V_VT(&v) != VT_EMPTY)
+    {
+        hr = UiaHUiaNodeFromVariant(&v, (HUIANODE *)out_node);
+        if (FAILED(hr))
+            WARN("UiaHUiaNodeFromVariant failed with hr %#lx\n", hr);
     }
 
     return S_OK;
@@ -1082,6 +1158,8 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
     prov->elprov = elprov;
     prov->ref = 1;
     node->prov[prov_type] = &prov->IWineUiaProvider_iface;
+    if (!node->prov_count)
+        node->creator_prov_type = prov_type;
     node->prov_count++;
 
     IRawElementProviderSimple_AddRef(elprov);
@@ -1595,6 +1673,8 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
 
     node->prov[prov_type] = provider_iface;
     node->git_cookie[prov_type] = git_cookie;
+    if (!node->prov_count)
+        node->creator_prov_type = prov_type;
     node->prov_count++;
 
     return S_OK;
