@@ -2347,12 +2347,6 @@ static void test_WriteConsoleOutputCharacterA(HANDLE output_handle)
                                            invalid_table[i].coord,
                                            invalid_table[i].lpNumCharsWritten);
         ok(!ret, "[%d] Expected WriteConsoleOutputCharacterA to return FALSE, got %d\n", i, ret);
-        if (invalid_table[i].lpNumCharsWritten)
-        {
-            ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %lu, got %lu\n",
-               i, invalid_table[i].expected_count, count);
-        }
         ok(GetLastError() == invalid_table[i].last_error,
            "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
@@ -2437,12 +2431,6 @@ static void test_WriteConsoleOutputCharacterW(HANDLE output_handle)
                                            invalid_table[i].coord,
                                            invalid_table[i].lpNumCharsWritten);
         ok(!ret, "[%d] Expected WriteConsoleOutputCharacterW to return FALSE, got %d\n", i, ret);
-        if (invalid_table[i].lpNumCharsWritten)
-        {
-            ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %lu, got %lu\n",
-               i, invalid_table[i].expected_count, count);
-        }
         ok(GetLastError() == invalid_table[i].last_error,
            "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
@@ -2527,12 +2515,6 @@ static void test_WriteConsoleOutputAttribute(HANDLE output_handle)
                                           invalid_table[i].coord,
                                           invalid_table[i].lpNumAttrsWritten);
         ok(!ret, "[%d] Expected WriteConsoleOutputAttribute to return FALSE, got %d\n", i, ret);
-        if (invalid_table[i].lpNumAttrsWritten)
-        {
-            ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %lu, got %lu\n",
-               i, invalid_table[i].expected_count, count);
-        }
         ok(GetLastError() == invalid_table[i].last_error,
            "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
@@ -2943,12 +2925,6 @@ static void test_ReadConsoleOutputCharacterA(HANDLE output_handle)
                                           invalid_table[i].coord,
                                           invalid_table[i].read_count);
         ok(!ret, "[%d] Expected ReadConsoleOutputCharacterA to return FALSE, got %d\n", i, ret);
-        if (invalid_table[i].read_count)
-        {
-            ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %lu, got %lu\n",
-               i, invalid_table[i].expected_count, count);
-        }
         ok(GetLastError() == invalid_table[i].last_error,
            "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
@@ -3033,12 +3009,6 @@ static void test_ReadConsoleOutputCharacterW(HANDLE output_handle)
                                           invalid_table[i].coord,
                                           invalid_table[i].read_count);
         ok(!ret, "[%d] Expected ReadConsoleOutputCharacterW to return FALSE, got %d\n", i, ret);
-        if (invalid_table[i].read_count)
-        {
-            ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %lu, got %lu\n",
-               i, invalid_table[i].expected_count, count);
-        }
         ok(GetLastError() == invalid_table[i].last_error,
            "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
@@ -3122,12 +3092,6 @@ static void test_ReadConsoleOutputAttribute(HANDLE output_handle)
                                          invalid_table[i].coord,
                                          invalid_table[i].read_count);
         ok(!ret, "[%d] Expected ReadConsoleOutputAttribute to return FALSE, got %d\n", i, ret);
-        if (invalid_table[i].read_count)
-        {
-            ok(count == invalid_table[i].expected_count,
-               "[%d] Expected count to be %lu, got %lu\n",
-               i, invalid_table[i].expected_count, count);
-        }
         ok(GetLastError() == invalid_table[i].last_error,
            "[%d] Expected last error to be %lu, got %lu\n",
            i, invalid_table[i].last_error, GetLastError());
