@@ -808,10 +808,49 @@ static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *o
 
     case NavigateDirection_NextSibling:
     case NavigateDirection_PreviousSibling:
+    {
+        struct uia_node *node_data;
+        HUIANODE parent;
+        VARIANT tmp;
+
         hr = get_sibling_from_node_provider(node, node->parent_link_idx, nav_dir, &v);
         if (FAILED(hr))
+        {
             WARN("Sibling navigation failed with hr %#lx\n", hr);
+            break;
+        }
+
+        if (V_VT(&v) != VT_EMPTY)
+            break;
+
+        hr = get_navigate_from_node_provider(&node->IWineUiaNode_iface, node->parent_link_idx,
+                NavigateDirection_Parent, &tmp);
+        if (FAILED(hr))
+        {
+            WARN("Parent navigation failed with hr %#lx\n", hr);
+            break;
+        }
+
+        hr = UiaHUiaNodeFromVariant(&tmp, &parent);
+        if (FAILED(hr))
+            break;
+
+        /*
+         * If the parent node has multiple providers, attempt to get a sibling
+         * from one of them.
+         */
+        node_data = impl_from_IWineUiaNode((IWineUiaNode *)parent);
+        if (node_data->prov_count > 1)
+        {
+            if (nav_dir == NavigateDirection_NextSibling)
+                hr = get_child_for_node(node_data, node_data->creator_prov_idx - 1, NavigateDirection_FirstChild, &v);
+            else
+                hr = get_child_for_node(node_data, node_data->creator_prov_idx + 1, NavigateDirection_LastChild, &v);
+        }
+
+        UiaNodeRelease(parent);
         break;
+    }
 
     case NavigateDirection_Parent:
         hr = get_navigate_from_node_provider(&node->IWineUiaNode_iface, node->parent_link_idx, nav_dir, &v);
