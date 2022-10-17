@@ -727,6 +727,64 @@ exit:
     return S_OK;
 }
 
+static HRESULT get_child_for_node(struct uia_node *node, int start_prov_idx, int nav_dir, VARIANT *out_node)
+{
+    int prov_idx = start_prov_idx;
+    HUIANODE tmp_node = NULL;
+    HRESULT hr;
+    VARIANT v;
+
+    while ((prov_idx >= 0) && (prov_idx < node->prov_count))
+    {
+        struct uia_node *node_data;
+
+        hr = get_navigate_from_node_provider(&node->IWineUiaNode_iface, prov_idx, nav_dir, &v);
+        if (FAILED(hr))
+            return hr;
+
+        if (nav_dir == NavigateDirection_FirstChild)
+            prov_idx--;
+        else
+            prov_idx++;
+
+        /* If we failed to get a child, try the next provider. */
+        hr = UiaHUiaNodeFromVariant(&v, &tmp_node);
+        if (FAILED(hr))
+            continue;
+
+        node_data = impl_from_IWineUiaNode((IWineUiaNode *)tmp_node);
+
+        /* This child is the parent link of its node, so we can return it. */
+        if (node_creator_is_parent_link(node_data))
+            break;
+
+        /*
+         * If the first child provider isn't the parent link of it's HUIANODE,
+         * we need to check the child provider for any valid siblings.
+         */
+        if (nav_dir == NavigateDirection_FirstChild)
+            hr = get_sibling_from_node_provider(node_data, node_data->creator_prov_idx,
+                    NavigateDirection_NextSibling, &v);
+        else
+            hr = get_sibling_from_node_provider(node_data, node_data->creator_prov_idx,
+                    NavigateDirection_PreviousSibling, &v);
+
+        UiaNodeRelease(tmp_node);
+        if (FAILED(hr))
+            return hr;
+
+        /* If we got a valid sibling from the child provider, return it. */
+        hr = UiaHUiaNodeFromVariant(&v, &tmp_node);
+        if (SUCCEEDED(hr))
+            break;
+    }
+
+    if (tmp_node)
+        *out_node = v;
+
+    return S_OK;
+}
+
 static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node)
 {
     HRESULT hr;
@@ -739,8 +797,14 @@ static HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *o
     {
     case NavigateDirection_FirstChild:
     case NavigateDirection_LastChild:
-        FIXME("Unimplemented NavigateDirection %d\n", nav_dir);
-        return E_NOTIMPL;
+        /* First child always comes from last provider index. */
+        if (nav_dir == NavigateDirection_FirstChild)
+            hr = get_child_for_node(node, node->prov_count - 1, nav_dir, &v);
+        else
+            hr = get_child_for_node(node, 0, nav_dir, &v);
+        if (FAILED(hr))
+            WARN("Child navigation failed with hr %#lx\n", hr);
+        break;
 
     case NavigateDirection_NextSibling:
     case NavigateDirection_PreviousSibling:
