@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-06-09 03:15+0800\n"
+"PO-Revision-Date: 2022-10-17 16:35+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -1321,10 +1321,8 @@ msgid "Options"
 msgstr "選項"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
-msgstr "預設"
+msgstr "預設值"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -14913,10 +14911,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "取代(&R)...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "新增(&N)...\tCtrl+N"
+msgstr "移至(&G)...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -14959,17 +14955,15 @@ msgstr "上(&T):"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "移至行"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "CRL 號碼"
+msgstr "行號(&L):"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "移至"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15035,7 +15029,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15112,7 +15106,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "第 %ld 列，第 %ld 行"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -15719,56 +15713,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:67
-#, fuzzy
-#| msgid ""
-#| "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
-#| "f]\n"
-#| "\n"
-#| "  Adds a key to the registry or adds a new value to a given registry "
-#| "key.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to add or, if either [/v] or [/ve] is specified,\n"
-#| "     the key in which to add the new registry data.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  /v <value_name>\n"
-#| "     The name of the registry value to add.\n"
-#| "\n"
-#| "  /ve\n"
-#| "     Add an unnamed registry value. This option modifies the (Default)\n"
-#| "     registry value.\n"
-#| "\n"
-#| "  /t <type>\n"
-#| "     The type of data to add to the registry. If [/t] is specified,\n"
-#| "     <type> must be one of the following:\n"
-#| "\n"
-#| "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-#| "         REG_DWORD | REG_BINARY   | REG_NONE\n"
-#| "\n"
-#| "     If [/t] is not specified, the default data type is REG_SZ.\n"
-#| "\n"
-#| "  /s <separator>\n"
-#| "     The character used to separate strings in REG_MULTI_SZ data.\n"
-#| "     If [/s] is not specified, the default separator is \\0.\n"
-#| "\n"
-#| "  /d <data>\n"
-#| "     The data to add to the new registry value.\n"
-#| "\n"
-#| "  /f\n"
-#| "     Modify the registry without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
@@ -15849,7 +15793,7 @@ msgstr ""
 "     <類型> 必須是下列的其中一個:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"         REG_DWORD | REG_QWORD    | REG_BINARY   | REG_NONE\n"
 "\n"
 "     如果未指定 [/t]，資料類型將預設為 REG_SZ。\n"
 "\n"
@@ -16288,10 +16232,8 @@ msgstr "DWORD 值(&D)"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "DWORD 值(&D)"
+msgstr "QWORD 值(&Q)"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -16840,16 +16782,12 @@ msgid "Collapse"
 msgstr "摺疊"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "新增一個新的 32 位元值"
+msgstr "新增一個新的 64 位元值"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "編輯 DWORD"
+msgstr "編輯 QWORD"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
