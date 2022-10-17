@@ -1086,7 +1086,7 @@ static void test_WM_STYLECHANGED(void)
     }
     tests[] =
     {
-        {ANIMATE_CLASSA, wm_stylechanged_seq, TRUE},
+        {ANIMATE_CLASSA, wm_stylechanged_seq},
         {WC_BUTTONA, wm_stylechanged_seq},
         {WC_COMBOBOXA, wm_stylechanged_combox_seq, TRUE},
         {WC_COMBOBOXEXA, wm_stylechanged_seq},

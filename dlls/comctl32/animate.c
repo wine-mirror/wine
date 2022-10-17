@@ -866,8 +866,6 @@ static LRESULT ANIMATE_StyleChanged(ANIMATE_INFO *infoPtr, WPARAM wStyleType, co
     if (wStyleType != GWL_STYLE) return 0;
   
     infoPtr->dwStyle = lpss->styleNew;
-
-    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
     return 0;
 }
 
