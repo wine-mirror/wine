@@ -249,7 +249,7 @@ static char *get_nls_dir(void)
     dir = malloc( dir_size );
     if (dir)
     {
-        if (sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), dir, &dir_size, NULL, 0 ))
+        if (sysctl( pathname, ARRAY_SIZE( pathname ), dir, &dir_size, NULL, 0 ))
         {
             free( dir );
             dir = NULL;
