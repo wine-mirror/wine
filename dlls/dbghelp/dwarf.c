@@ -2185,7 +2185,6 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             dwarf2_debug_info_t* di)
 {
     struct attribute    name;
-    ULONG_PTR           low_pc, high_pc;
     struct symt*        ret_type;
     struct symt_function_signature* sig_type;
     struct symt_inlinesite* inlined;
@@ -2197,9 +2196,9 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if (!dwarf2_read_range(subpgm->ctx, di, &low_pc, &high_pc))
+    if ((adranges = dwarf2_get_ranges(di, &num_adranges)) == NULL)
     {
-        WARN("cannot read range\n");
+        WARN("cannot read ranges\n");
         return;
     }
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
@@ -2216,20 +2215,14 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   subpgm->top_func,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
-                                  subpgm->ctx->module_ctx->load_offset + low_pc,
-                                  &sig_type->symt);
+                                  adranges[0].low, &sig_type->symt);
     subpgm->current_func = (struct symt_function*)inlined;
     subpgm->current_block = NULL;
 
-    if ((adranges = dwarf2_get_ranges(di, &num_adranges)) != NULL)
-    {
-        for (i = 0; i < num_adranges; ++i)
-            symt_add_inlinesite_range(subpgm->ctx->module_ctx->module, inlined,
-                                      adranges[i].low, adranges[i].high);
-        free(adranges);
-    }
-    else
-        WARN("cannot read ranges\n");
+    for (i = 0; i < num_adranges; ++i)
+        symt_add_inlinesite_range(subpgm->ctx->module_ctx->module, inlined,
+                                  adranges[i].low, adranges[i].high);
+    free(adranges);
 
     children = dwarf2_get_di_children(di);
     if (children) for (i = 0; i < vector_length(children); i++)
