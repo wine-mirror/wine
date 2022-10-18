@@ -150,7 +150,7 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         }
         break;
     case SymTagBlock:
-        *addr = ((const struct symt_block*)type)->address;
+        *addr = ((const struct symt_block*)type)->ranges[0].low;
         break;
     case SymTagFunction:
         *addr = ((const struct symt_function*)type)->address;
@@ -819,7 +819,15 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD64) = ((const struct symt_function*)type)->size;
             break;
         case SymTagBlock:
-            X(DWORD64) = ((const struct symt_block*)type)->size;
+            /* When there are several ranges available, we can only return one contiguous chunk of memory.
+             * We return only the first range. It will lead to not report the other ranges
+             * being part of the block, but it will not return gaps (between the ranges) as being
+             * part of the block.
+             * So favor a correct (yet incomplete) value than an incorrect one.
+             */
+            if (((const struct symt_block*)type)->num_ranges > 1)
+                WARN("Only returning first range from multiple ranges\n");
+            X(DWORD64) = ((const struct symt_block*)type)->ranges[0].high - ((const struct symt_block*)type)->ranges[0].low;
             break;
         case SymTagPointerType:
             X(DWORD64) = ((const struct symt_pointer*)type)->size;

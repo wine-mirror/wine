@@ -1206,80 +1206,6 @@ static const char* dwarf2_get_cpp_name(dwarf2_debug_info_t* di, const char* name
     return last;
 }
 
-/******************************************************************
- *		dwarf2_read_range
- *
- * read a range for a given debug_info (either using AT_range attribute, in which
- * case we don't return all the details, or using AT_low_pc & AT_high_pc attributes)
- * in all cases, range is relative to beginning of compilation unit
- */
-static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_info_t* di,
-                              ULONG_PTR* plow, ULONG_PTR* phigh)
-{
-    struct attribute            range;
-
-    if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
-    {
-        dwarf2_traverse_context_t   traverse;
-        ULONG_PTR                   low, high;
-        const ULONG_PTR             UMAX = ~(ULONG_PTR)0u;
-
-        traverse.data = ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
-        traverse.end_data = ctx->module_ctx->sections[section_ranges].address +
-            ctx->module_ctx->sections[section_ranges].size;
-
-        *plow  = UMAX;
-        *phigh = 0;
-        while (traverse.data + 2 * ctx->head.word_size < traverse.end_data)
-        {
-            low = dwarf2_parse_addr_head(&traverse, &ctx->head);
-            high = dwarf2_parse_addr_head(&traverse, &ctx->head);
-            if (low == 0 && high == 0) break;
-            if (low == (ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
-                FIXME("unsupported yet (base address selection)\n");
-            /* range values are relative to start of compilation unit */
-            low += ctx->compiland->address - ctx->module_ctx->load_offset;
-            high += ctx->compiland->address - ctx->module_ctx->load_offset;
-            if (low  < *plow)  *plow = low;
-            if (high > *phigh) *phigh = high;
-        }
-        if (*plow == UMAX || *phigh == 0) {WARN("no entry found\n"); return FALSE;}
-        if (*plow == *phigh) {WARN("entry found, but low=high %Ix %Ix\n", low, high); return FALSE;}
-
-        return TRUE;
-    }
-    else
-    {
-        struct attribute            low_pc;
-        struct attribute            high_pc;
-
-        if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) ||
-            !dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc))
-            return FALSE;
-        *plow = low_pc.u.uvalue;
-        *phigh = high_pc.u.uvalue;
-        if (ctx->head.version >= 4)
-            switch (high_pc.form)
-            {
-            case DW_FORM_addr:
-                break;
-            case DW_FORM_data1:
-            case DW_FORM_data2:
-            case DW_FORM_data4:
-            case DW_FORM_data8:
-            case DW_FORM_sdata:
-            case DW_FORM_udata:
-                /* From dwarf4 on, when FORM's class is constant, high_pc is an offset from low_pc */
-                *phigh += *plow;
-                break;
-            default:
-                FIXME("Unsupported class for high_pc\n");
-                break;
-            }
-        return TRUE;
-    }
-}
-
 static unsigned dwarf2_get_num_ranges(const dwarf2_debug_info_t* di)
 {
     struct attribute            range;
@@ -2260,22 +2186,51 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
 					  dwarf2_debug_info_t* di)
 {
-    ULONG_PTR           low_pc, high_pc;
+    unsigned int        num_ranges;
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if (!dwarf2_read_range(subpgm->ctx, di, &low_pc, &high_pc))
+    num_ranges = dwarf2_get_num_ranges(di);
+    if (!num_ranges)
     {
-        WARN("no range\n");
+        WARN("no ranges\n");
         return;
     }
 
-    subpgm->current_block = symt_open_func_block(subpgm->ctx->module_ctx->module, subpgm->current_func, subpgm->current_block,
-                                                 subpgm->ctx->module_ctx->load_offset + low_pc - subpgm->current_func->address,
-                                                 high_pc - low_pc);
+    /* Dwarf tends to keep the structure of the C/C++ program, and emits DW_TAG_lexical_block
+     * for every block in source program.
+     * With inlining and other optimizations, code for a block no longer lies in a contiguous
+     * chunk of memory. It's hence described with (potentially) multiple chunks of memory.
+     * Then each variable of each block is attached to its block. (A)
+     *
+     * PDB on the other hand no longer emits block information, and merge variable information
+     * at function level (actually function and each inline site).
+     * For example, if several variables of same name exist in different blocks of a function,
+     * only one entry for that name will exist. The information stored in (A) will point
+     * to the correct instance as defined by C/C++ scoping rules.
+     *
+     * (A) in all cases, there is information telling for each address of the function if a
+     *     variable is accessible, and if so, how to get its value.
+     *
+     * DbgHelp only exposes a contiguous chunk of memory for a block.
+     *
+     * => Store internaly all the ranges of addresses in a block, but only expose the size
+     *    of the first chunk of memory.
+     *    Otherwise, it would break the rule: blocks' chunks don't overlap.
+     * Note: This could mislead some programs using the blocks' address and size information.
+     *       That's very unlikely to happen (most will use the APIs from DbgHelp, which will
+     *       hide this information to the caller).
+     */
+    subpgm->current_block = symt_open_func_block(subpgm->ctx->module_ctx->module, subpgm->current_func,
+                                                 subpgm->current_block, num_ranges);
+    if (!dwarf2_fill_ranges(di, subpgm->current_block->ranges, num_ranges))
+    {
+        FIXME("Unexpected situation\n");
+        subpgm->current_block->num_ranges = 0;
+    }
 
     children = dwarf2_get_di_children(di);
     if (children) for (i = 0; i < vector_length(children); i++)

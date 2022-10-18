@@ -523,21 +523,21 @@ struct symt_data* symt_add_func_constant(struct module* module,
     return locsym;
 }
 
-struct symt_block* symt_open_func_block(struct module* module, 
+struct symt_block* symt_open_func_block(struct module* module,
                                         struct symt_function* func,
-                                        struct symt_block* parent_block, 
-                                        unsigned pc, unsigned len)
+                                        struct symt_block* parent_block,
+                                        unsigned num_ranges)
 {
     struct symt_block*  block;
     struct symt**       p;
 
     assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
-
+    assert(num_ranges > 0);
     assert(!parent_block || parent_block->symt.tag == SymTagBlock);
-    block = pool_alloc(&module->pool, sizeof(*block));
+
+    block = pool_alloc(&module->pool, sizeof(*block) + num_ranges * sizeof(block->ranges[0]));
     block->symt.tag = SymTagBlock;
-    block->address  = func->address + pc;
-    block->size     = len;
+    block->num_ranges = num_ranges;
     block->container = parent_block ? &parent_block->symt : &func->symt;
     vector_init(&block->vchildren, sizeof(struct symt*), 4);
     if (parent_block)
@@ -1131,10 +1131,15 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
         case SymTagBlock:
             {
                 struct symt_block*  block = (struct symt_block*)lsym;
-                if (pc < block->address || block->address + block->size <= pc)
-                    continue;
-                if (!symt_enum_locals_helper(pair, match, se, func, &block->vchildren))
-                    return FALSE;
+                unsigned j;
+                for (j = 0; j < block->num_ranges; j++)
+                {
+                    if (pc >= block->ranges[j].low && pc < block->ranges[j].high)
+                    {
+                        if (!symt_enum_locals_helper(pair, match, se, func, &block->vchildren))
+                            return FALSE;
+                    }
+                }
             }
             break;
         case SymTagData:

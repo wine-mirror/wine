@@ -1374,15 +1374,16 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
         case N_LBRAC:
             if (curr_func)
             {
-                block = symt_open_func_block(module, curr_func, block,
-                                             n_value, 0);
+                block = symt_open_func_block(module, curr_func, block, 1);
+                block->ranges[0].low = curr_func->address + n_value;
+                block->ranges[0].high = 0; /* will be set by N_RBRAC */
                 pending_flush(&pending_block, module, curr_func, block);
             }
             break;
         case N_RBRAC:
             if (curr_func)
             {
-                block->size = curr_func->address + n_value - block->address;
+                block->ranges[0].high = curr_func->address + n_value;
                 block = symt_close_func_block(module, curr_func, block);
             }
             break;
