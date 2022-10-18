@@ -2065,11 +2065,10 @@ unsigned char* CDECL _mbslwr(unsigned char* s)
   return ret;
 }
 
-
 /*********************************************************************
- *              _mbslwr_s(MSVCRT.@)
+ *              _mbslwr_s_l(MSVCRT.@)
  */
-int CDECL _mbslwr_s(unsigned char* s, size_t len)
+int CDECL _mbslwr_s_l(unsigned char* s, size_t len, _locale_t locale)
 {
   if (!s && !len)
   {
@@ -2080,12 +2079,13 @@ int CDECL _mbslwr_s(unsigned char* s, size_t len)
     *_errno() = EINVAL;
     return EINVAL;
   }
+
   if (get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     for ( ; *s && len > 0; len--)
     {
-      c = _mbctolower(_mbsnextc(s));
+      c = _mbctolower_l(_mbsnextc_l(s, locale), locale);
       /* Note that I assume that the size of the character is unchanged */
       if (c > 255)
       {
@@ -2095,7 +2095,12 @@ int CDECL _mbslwr_s(unsigned char* s, size_t len)
       *s++=c;
     }
   }
-  else for ( ; *s && len > 0; s++, len--) *s = _tolower_l(*s, NULL);
+  else
+  {
+    for ( ; *s && len > 0; s++, len--)
+      *s = _tolower_l(*s, locale);
+  }
+
   if (*s)
   {
     *s = '\0';
@@ -2105,6 +2110,13 @@ int CDECL _mbslwr_s(unsigned char* s, size_t len)
   return 0;
 }
 
+/*********************************************************************
+ *              _mbslwr_s(MSVCRT.@)
+ */
+int CDECL _mbslwr_s(unsigned char* str, size_t len)
+{
+  return _mbslwr_s_l(str, len, NULL);
+}
 
 /*********************************************************************
  *              _mbsupr(MSVCRT.@)
