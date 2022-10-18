@@ -2282,9 +2282,10 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (!info) return STATUS_ACCESS_VIOLATION;
         if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
 
-        if (handle == GetCurrentThread())
+        status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        if (handle == GetCurrentThread() || (!status && (HandleToULong(tbi.ClientId.UniqueThread) == GetCurrentThreadId())))
             WARN_(threadname)( "Thread renamed to %s\n", debugstr_us(&info->ThreadName) );
-        else if (!NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL ))
+        else if (!status)
             WARN_(threadname)( "Thread ID %04x renamed to %s\n", HandleToULong( tbi.ClientId.UniqueThread ), debugstr_us(&info->ThreadName) );
         else
             WARN_(threadname)( "Thread handle %p renamed to %s\n", handle, debugstr_us(&info->ThreadName) );
