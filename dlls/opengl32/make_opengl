@@ -25,10 +25,6 @@ use XML::LibXML;
 #       defined in the OpenGL core for the version defined by
 #       'opengl_version').
 #
-#     - opengl_ext.c : in this file are stored thunks for ALL possible
-#       OpenGL extensions (at least, all the extensions that are defined
-#       in the OpenGL extension registry).
-#
 #     - include/wine/wgl_driver.h: definitions for the tables of OpenGL functions.
 #
 #
@@ -54,7 +50,6 @@ use XML::LibXML;
 # Files to generate
 #
 my $spec_file = "opengl32.spec";
-my $ext_file  = "opengl_ext.c";
 my $wgl_driver_file = "../../include/wine/wgl_driver.h";
 my $wgl_file = "../../include/wine/wgl.h";
 
@@ -200,10 +195,15 @@ sub get_func_args($$$$)
     my $ret = "";
     foreach my $arg (@{$func->[1]})
     {
+        my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
         if ($decl_args)
         {
             $ret .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
+        }
+        elsif ($convert_args && defined $remap_types{$ptype})
+        {
+            $ret .= " ($remap_types{$ptype})$prefix$pname,";
         }
         else
         {
@@ -223,45 +223,10 @@ sub get_func_ret($$)
     return $ret;
 }
 
-#
-# This functions generates the thunk for a given function.
-#
-sub GenerateThunk($$$)
-{
-    my ($name, $func, $prefix) = @_;
-    my $call_args = get_func_args( $func, 0, 0, "" );
-    my $decl_args = get_func_args( $func, 1, 0, "" );
-    my $func_ret = get_func_ret( $func, 0 );
-    my $ret = "";
-
-    $ret .= "$func_ret WINAPI $name($decl_args)";
-    $ret .= "\n{\n";
-    # special case for functions that take an HDC as first parameter
-    if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC")
-    {
-        my $pname = get_arg_name( ${$func->[1]}[0] );
-        $ret .= "  const struct opengl_funcs *funcs = get_dc_funcs( $pname );\n";
-        $ret .= "  " . get_func_trace( $name, $func, 0 ) if $gen_traces;
-        $ret .= "  if (!funcs || !funcs->$prefix.p_$name) return";
-        $ret .= " 0" unless is_void_func( $func );
-        $ret .= ";\n";
-    }
-    else
-    {
-        $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-        $ret .= "  " . get_func_trace( $name, $func, 0 ) if $gen_traces;
-    }
-    $ret .= "  ";
-    $ret .= "return " unless is_void_func( $func );
-    $ret .= "funcs->$prefix.p_$name($call_args);\n";
-    $ret .= "}\n\n";
-    return $ret;
-}
-
 sub generate_unix_thunk($$$)
 {
     my ($name, $func, $prefix) = @_;
-    my $call_args = get_func_args( $func, 0, 0, "params->" );
+    my $call_args = get_func_args( $func, 0, 1, "params->" );
     my $func_ret = get_func_ret( $func, 0 );
     my $ret = "";
 
@@ -281,6 +246,7 @@ sub generate_unix_thunk($$$)
     }
     $ret .= "    ";
     $ret .= "params->ret = " unless is_void_func( $func );
+    $ret .= "($func_ret)" if defined $remap_types{$func_ret};
     $ret .= "funcs->$prefix.p_$name($call_args);\n";
     $ret .= "    return STATUS_SUCCESS;\n";
     $ret .= "}\n\n";
@@ -302,11 +268,16 @@ sub generate_win_thunk($$)
     foreach my $arg (@{$func->[1]})
     {
         my $pname = get_arg_name( $arg );
-        $params .= " .$pname = $pname,";
+        $params .= " .$pname = $pname," unless $arg->textContent() =~ /\[/;
     }
     $ret .= ($params ? " = {$params }" : is_void_func( $func ) ? "" : " = {0}");
     $ret .= ";\n";
     $ret .= "    NTSTATUS status;\n";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $pname = get_arg_name( $arg );
+        $ret .= "    memcpy( args.$pname, $pname, sizeof(args.$pname) );\n" if $arg->textContent() =~ /\[/;
+    }
     $ret .= "    " . get_func_trace( $name, $func, 1 ) if $gen_traces;
     $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#x\\n\", status );\n";
     $ret .= "    return args.ret;\n" unless is_void_func($func);
@@ -808,57 +779,6 @@ foreach (sort keys %wgl_functions)
 
 close(SPEC);
 
-my $file_header =
-"/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n" .
-"#include \"config.h\"\n" .
-"#include <stdarg.h>\n" .
-"#include \"winternl.h\"\n" .
-"#include \"opengl_ext.h\"\n" .
-"#include \"wine/debug.h\"\n\n";
-
-$file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n" if $gen_traces;
-
-#
-# Finally, more complex, the opengl_ext.c file
-#
-open(EXT, ">$ext_file") or die "cannot create $ext_file";
-print EXT $file_header;
-
-# The thunks themselves....
-my $count = keys %ext_functions;
-my $wrappers = "";
-print EXT "const int extension_registry_size = $count;\n\n";
-foreach (sort keys %ext_functions) {
-    if (needs_wrapper( $_, $ext_functions{$_} ))
-    {
-        my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
-        my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
-        $wrappers .= "extern $func_ret WINAPI $_($decl_args) DECLSPEC_HIDDEN;\n";
-    }
-    else
-    {
-        print EXT "static " . GenerateThunk($_, $ext_functions{$_}, "ext");
-    }
-}
-print EXT $wrappers;
-
-# Then the table giving the string <-> function correspondence */
-print EXT "\nconst OpenGL_extension extension_registry[$count] = {\n";
-my $i = 0;
-foreach (sort keys %ext_functions) {
-    my $func = $ext_functions{$_};
-    printf EXT "  { \"%s\", \"%s\", %s }", $_, join(" ", sort @{$func->[2]}), $_;
-    if ($i != $count-1) {
-        print EXT ",";
-    }
-    $i++;
-    print EXT "\n";
-}
-print EXT "};\n";
-
-close(EXT);
-
-
 #
 # Generate the unixlib.h file
 #
@@ -884,10 +804,20 @@ foreach (sort keys %norm_functions)
     next if defined $manual_win_functions{$_};
     print OUT generate_func_params($_, $norm_functions{$_});
 }
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_func_params($_, $ext_functions{$_});
+}
 
 print OUT "enum unix_funcs\n";
 print OUT "{\n";
 foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    printf OUT "    unix_%s,\n", $_;
+}
+foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
     printf OUT "    unix_%s,\n", $_;
@@ -917,6 +847,7 @@ print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"wingdi.h\"\n\n";
 
 print OUT "#include \"unixlib.h\"\n\n";
+print OUT "#include \"opengl_ext.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 
@@ -926,6 +857,33 @@ foreach (sort keys %norm_functions)
     next if needs_wrapper( $_, $norm_functions{$_} );
     print OUT "\n" . generate_win_thunk($_, $norm_functions{$_});
 }
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $ext_functions{$_} );
+    print OUT "\nstatic " . generate_win_thunk($_, $ext_functions{$_});
+}
+print OUT "\n";
+
+foreach (sort keys %ext_functions)
+{
+    next unless defined $manual_win_functions{$_} || needs_wrapper( $_, $ext_functions{$_} );
+    my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
+    my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
+    printf OUT "extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $func_ret, $_, $decl_args;
+}
+
+# Then the table giving the string <-> function correspondence */
+my $count = keys %ext_functions;
+print OUT "\nconst int extension_registry_size = $count;\n";
+print OUT "const OpenGL_extension extension_registry[$count] =\n";
+print OUT "{\n";
+foreach (sort keys %ext_functions)
+{
+    my $func = $ext_functions{$_};
+    printf OUT "    { \"%s\", \"%s\", %s },\n", $_, join(" ", sort @{$func->[2]}), $_;
+}
+print OUT "};\n";
 
 close OUT;
 
@@ -952,6 +910,11 @@ foreach (sort keys %norm_functions)
     next if defined $manual_win_functions{$_};
     print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
 }
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
+}
 
 print OUT "const unixlib_function_t __wine_unix_call_funcs[] =\n";
 print OUT "{\n";
@@ -959,6 +922,11 @@ foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     printf OUT "    &gl_%s,\n", $_;
+}
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    printf OUT "    &ext_%s,\n", $_;
 }
 print OUT "};\n";
 print OUT "\n";

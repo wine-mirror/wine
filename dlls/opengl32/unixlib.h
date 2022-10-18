@@ -2153,6 +2153,20075 @@ struct glViewport_params
     GLsizei height;
 };
 
+struct glAccumxOES_params
+{
+    GLenum op;
+    GLfixed value;
+};
+
+struct glAcquireKeyedMutexWin32EXT_params
+{
+    GLuint memory;
+    GLuint64 key;
+    GLuint timeout;
+    GLboolean ret;
+};
+
+struct glActiveProgramEXT_params
+{
+    GLuint program;
+};
+
+struct glActiveShaderProgram_params
+{
+    GLuint pipeline;
+    GLuint program;
+};
+
+struct glActiveStencilFaceEXT_params
+{
+    GLenum face;
+};
+
+struct glActiveTexture_params
+{
+    GLenum texture;
+};
+
+struct glActiveTextureARB_params
+{
+    GLenum texture;
+};
+
+struct glActiveVaryingNV_params
+{
+    GLuint program;
+    const GLchar *name;
+};
+
+struct glAlphaFragmentOp1ATI_params
+{
+    GLenum op;
+    GLuint dst;
+    GLuint dstMod;
+    GLuint arg1;
+    GLuint arg1Rep;
+    GLuint arg1Mod;
+};
+
+struct glAlphaFragmentOp2ATI_params
+{
+    GLenum op;
+    GLuint dst;
+    GLuint dstMod;
+    GLuint arg1;
+    GLuint arg1Rep;
+    GLuint arg1Mod;
+    GLuint arg2;
+    GLuint arg2Rep;
+    GLuint arg2Mod;
+};
+
+struct glAlphaFragmentOp3ATI_params
+{
+    GLenum op;
+    GLuint dst;
+    GLuint dstMod;
+    GLuint arg1;
+    GLuint arg1Rep;
+    GLuint arg1Mod;
+    GLuint arg2;
+    GLuint arg2Rep;
+    GLuint arg2Mod;
+    GLuint arg3;
+    GLuint arg3Rep;
+    GLuint arg3Mod;
+};
+
+struct glAlphaFuncxOES_params
+{
+    GLenum func;
+    GLfixed ref;
+};
+
+struct glAlphaToCoverageDitherControlNV_params
+{
+    GLenum mode;
+};
+
+struct glApplyFramebufferAttachmentCMAAINTEL_params
+{
+};
+
+struct glApplyTextureEXT_params
+{
+    GLenum mode;
+};
+
+struct glAreProgramsResidentNV_params
+{
+    GLsizei n;
+    const GLuint *programs;
+    GLboolean *residences;
+    GLboolean ret;
+};
+
+struct glAreTexturesResidentEXT_params
+{
+    GLsizei n;
+    const GLuint *textures;
+    GLboolean *residences;
+    GLboolean ret;
+};
+
+struct glArrayElementEXT_params
+{
+    GLint i;
+};
+
+struct glArrayObjectATI_params
+{
+    GLenum array;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLuint buffer;
+    GLuint offset;
+};
+
+struct glAsyncCopyBufferSubDataNVX_params
+{
+    GLsizei waitSemaphoreCount;
+    const GLuint *waitSemaphoreArray;
+    const GLuint64 *fenceValueArray;
+    GLuint readGpu;
+    GLbitfield writeGpuMask;
+    GLuint readBuffer;
+    GLuint writeBuffer;
+    GLintptr readOffset;
+    GLintptr writeOffset;
+    GLsizeiptr size;
+    GLsizei signalSemaphoreCount;
+    const GLuint *signalSemaphoreArray;
+    const GLuint64 *signalValueArray;
+    GLuint ret;
+};
+
+struct glAsyncCopyImageSubDataNVX_params
+{
+    GLsizei waitSemaphoreCount;
+    const GLuint *waitSemaphoreArray;
+    const GLuint64 *waitValueArray;
+    GLuint srcGpu;
+    GLbitfield dstGpuMask;
+    GLuint srcName;
+    GLenum srcTarget;
+    GLint srcLevel;
+    GLint srcX;
+    GLint srcY;
+    GLint srcZ;
+    GLuint dstName;
+    GLenum dstTarget;
+    GLint dstLevel;
+    GLint dstX;
+    GLint dstY;
+    GLint dstZ;
+    GLsizei srcWidth;
+    GLsizei srcHeight;
+    GLsizei srcDepth;
+    GLsizei signalSemaphoreCount;
+    const GLuint *signalSemaphoreArray;
+    const GLuint64 *signalValueArray;
+    GLuint ret;
+};
+
+struct glAsyncMarkerSGIX_params
+{
+    GLuint marker;
+};
+
+struct glAttachObjectARB_params
+{
+    GLhandleARB containerObj;
+    GLhandleARB obj;
+};
+
+struct glAttachShader_params
+{
+    GLuint program;
+    GLuint shader;
+};
+
+struct glBeginConditionalRender_params
+{
+    GLuint id;
+    GLenum mode;
+};
+
+struct glBeginConditionalRenderNV_params
+{
+    GLuint id;
+    GLenum mode;
+};
+
+struct glBeginConditionalRenderNVX_params
+{
+    GLuint id;
+};
+
+struct glBeginFragmentShaderATI_params
+{
+};
+
+struct glBeginOcclusionQueryNV_params
+{
+    GLuint id;
+};
+
+struct glBeginPerfMonitorAMD_params
+{
+    GLuint monitor;
+};
+
+struct glBeginPerfQueryINTEL_params
+{
+    GLuint queryHandle;
+};
+
+struct glBeginQuery_params
+{
+    GLenum target;
+    GLuint id;
+};
+
+struct glBeginQueryARB_params
+{
+    GLenum target;
+    GLuint id;
+};
+
+struct glBeginQueryIndexed_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint id;
+};
+
+struct glBeginTransformFeedback_params
+{
+    GLenum primitiveMode;
+};
+
+struct glBeginTransformFeedbackEXT_params
+{
+    GLenum primitiveMode;
+};
+
+struct glBeginTransformFeedbackNV_params
+{
+    GLenum primitiveMode;
+};
+
+struct glBeginVertexShaderEXT_params
+{
+};
+
+struct glBeginVideoCaptureNV_params
+{
+    GLuint video_capture_slot;
+};
+
+struct glBindAttribLocation_params
+{
+    GLuint program;
+    GLuint index;
+    const GLchar *name;
+};
+
+struct glBindAttribLocationARB_params
+{
+    GLhandleARB programObj;
+    GLuint index;
+    const GLcharARB *name;
+};
+
+struct glBindBuffer_params
+{
+    GLenum target;
+    GLuint buffer;
+};
+
+struct glBindBufferARB_params
+{
+    GLenum target;
+    GLuint buffer;
+};
+
+struct glBindBufferBase_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+};
+
+struct glBindBufferBaseEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+};
+
+struct glBindBufferBaseNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+};
+
+struct glBindBufferOffsetEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+    GLintptr offset;
+};
+
+struct glBindBufferOffsetNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+    GLintptr offset;
+};
+
+struct glBindBufferRange_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glBindBufferRangeEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glBindBufferRangeNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glBindBuffersBase_params
+{
+    GLenum target;
+    GLuint first;
+    GLsizei count;
+    const GLuint *buffers;
+};
+
+struct glBindBuffersRange_params
+{
+    GLenum target;
+    GLuint first;
+    GLsizei count;
+    const GLuint *buffers;
+    const GLintptr *offsets;
+    const GLsizeiptr *sizes;
+};
+
+struct glBindFragDataLocation_params
+{
+    GLuint program;
+    GLuint color;
+    const GLchar *name;
+};
+
+struct glBindFragDataLocationEXT_params
+{
+    GLuint program;
+    GLuint color;
+    const GLchar *name;
+};
+
+struct glBindFragDataLocationIndexed_params
+{
+    GLuint program;
+    GLuint colorNumber;
+    GLuint index;
+    const GLchar *name;
+};
+
+struct glBindFragmentShaderATI_params
+{
+    GLuint id;
+};
+
+struct glBindFramebuffer_params
+{
+    GLenum target;
+    GLuint framebuffer;
+};
+
+struct glBindFramebufferEXT_params
+{
+    GLenum target;
+    GLuint framebuffer;
+};
+
+struct glBindImageTexture_params
+{
+    GLuint unit;
+    GLuint texture;
+    GLint level;
+    GLboolean layered;
+    GLint layer;
+    GLenum access;
+    GLenum format;
+};
+
+struct glBindImageTextureEXT_params
+{
+    GLuint index;
+    GLuint texture;
+    GLint level;
+    GLboolean layered;
+    GLint layer;
+    GLenum access;
+    GLint format;
+};
+
+struct glBindImageTextures_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLuint *textures;
+};
+
+struct glBindLightParameterEXT_params
+{
+    GLenum light;
+    GLenum value;
+    GLuint ret;
+};
+
+struct glBindMaterialParameterEXT_params
+{
+    GLenum face;
+    GLenum value;
+    GLuint ret;
+};
+
+struct glBindMultiTextureEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLuint texture;
+};
+
+struct glBindParameterEXT_params
+{
+    GLenum value;
+    GLuint ret;
+};
+
+struct glBindProgramARB_params
+{
+    GLenum target;
+    GLuint program;
+};
+
+struct glBindProgramNV_params
+{
+    GLenum target;
+    GLuint id;
+};
+
+struct glBindProgramPipeline_params
+{
+    GLuint pipeline;
+};
+
+struct glBindRenderbuffer_params
+{
+    GLenum target;
+    GLuint renderbuffer;
+};
+
+struct glBindRenderbufferEXT_params
+{
+    GLenum target;
+    GLuint renderbuffer;
+};
+
+struct glBindSampler_params
+{
+    GLuint unit;
+    GLuint sampler;
+};
+
+struct glBindSamplers_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLuint *samplers;
+};
+
+struct glBindShadingRateImageNV_params
+{
+    GLuint texture;
+};
+
+struct glBindTexGenParameterEXT_params
+{
+    GLenum unit;
+    GLenum coord;
+    GLenum value;
+    GLuint ret;
+};
+
+struct glBindTextureEXT_params
+{
+    GLenum target;
+    GLuint texture;
+};
+
+struct glBindTextureUnit_params
+{
+    GLuint unit;
+    GLuint texture;
+};
+
+struct glBindTextureUnitParameterEXT_params
+{
+    GLenum unit;
+    GLenum value;
+    GLuint ret;
+};
+
+struct glBindTextures_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLuint *textures;
+};
+
+struct glBindTransformFeedback_params
+{
+    GLenum target;
+    GLuint id;
+};
+
+struct glBindTransformFeedbackNV_params
+{
+    GLenum target;
+    GLuint id;
+};
+
+struct glBindVertexArray_params
+{
+    GLuint array;
+};
+
+struct glBindVertexArrayAPPLE_params
+{
+    GLuint array;
+};
+
+struct glBindVertexBuffer_params
+{
+    GLuint bindingindex;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizei stride;
+};
+
+struct glBindVertexBuffers_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLuint *buffers;
+    const GLintptr *offsets;
+    const GLsizei *strides;
+};
+
+struct glBindVertexShaderEXT_params
+{
+    GLuint id;
+};
+
+struct glBindVideoCaptureStreamBufferNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum frame_region;
+    GLintptrARB offset;
+};
+
+struct glBindVideoCaptureStreamTextureNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum frame_region;
+    GLenum target;
+    GLuint texture;
+};
+
+struct glBinormal3bEXT_params
+{
+    GLbyte bx;
+    GLbyte by;
+    GLbyte bz;
+};
+
+struct glBinormal3bvEXT_params
+{
+    const GLbyte *v;
+};
+
+struct glBinormal3dEXT_params
+{
+    GLdouble bx;
+    GLdouble by;
+    GLdouble bz;
+};
+
+struct glBinormal3dvEXT_params
+{
+    const GLdouble *v;
+};
+
+struct glBinormal3fEXT_params
+{
+    GLfloat bx;
+    GLfloat by;
+    GLfloat bz;
+};
+
+struct glBinormal3fvEXT_params
+{
+    const GLfloat *v;
+};
+
+struct glBinormal3iEXT_params
+{
+    GLint bx;
+    GLint by;
+    GLint bz;
+};
+
+struct glBinormal3ivEXT_params
+{
+    const GLint *v;
+};
+
+struct glBinormal3sEXT_params
+{
+    GLshort bx;
+    GLshort by;
+    GLshort bz;
+};
+
+struct glBinormal3svEXT_params
+{
+    const GLshort *v;
+};
+
+struct glBinormalPointerEXT_params
+{
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glBitmapxOES_params
+{
+    GLsizei width;
+    GLsizei height;
+    GLfixed xorig;
+    GLfixed yorig;
+    GLfixed xmove;
+    GLfixed ymove;
+    const GLubyte *bitmap;
+};
+
+struct glBlendBarrierKHR_params
+{
+};
+
+struct glBlendBarrierNV_params
+{
+};
+
+struct glBlendColor_params
+{
+    GLfloat red;
+    GLfloat green;
+    GLfloat blue;
+    GLfloat alpha;
+};
+
+struct glBlendColorEXT_params
+{
+    GLfloat red;
+    GLfloat green;
+    GLfloat blue;
+    GLfloat alpha;
+};
+
+struct glBlendColorxOES_params
+{
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+    GLfixed alpha;
+};
+
+struct glBlendEquation_params
+{
+    GLenum mode;
+};
+
+struct glBlendEquationEXT_params
+{
+    GLenum mode;
+};
+
+struct glBlendEquationIndexedAMD_params
+{
+    GLuint buf;
+    GLenum mode;
+};
+
+struct glBlendEquationSeparate_params
+{
+    GLenum modeRGB;
+    GLenum modeAlpha;
+};
+
+struct glBlendEquationSeparateEXT_params
+{
+    GLenum modeRGB;
+    GLenum modeAlpha;
+};
+
+struct glBlendEquationSeparateIndexedAMD_params
+{
+    GLuint buf;
+    GLenum modeRGB;
+    GLenum modeAlpha;
+};
+
+struct glBlendEquationSeparatei_params
+{
+    GLuint buf;
+    GLenum modeRGB;
+    GLenum modeAlpha;
+};
+
+struct glBlendEquationSeparateiARB_params
+{
+    GLuint buf;
+    GLenum modeRGB;
+    GLenum modeAlpha;
+};
+
+struct glBlendEquationi_params
+{
+    GLuint buf;
+    GLenum mode;
+};
+
+struct glBlendEquationiARB_params
+{
+    GLuint buf;
+    GLenum mode;
+};
+
+struct glBlendFuncIndexedAMD_params
+{
+    GLuint buf;
+    GLenum src;
+    GLenum dst;
+};
+
+struct glBlendFuncSeparate_params
+{
+    GLenum sfactorRGB;
+    GLenum dfactorRGB;
+    GLenum sfactorAlpha;
+    GLenum dfactorAlpha;
+};
+
+struct glBlendFuncSeparateEXT_params
+{
+    GLenum sfactorRGB;
+    GLenum dfactorRGB;
+    GLenum sfactorAlpha;
+    GLenum dfactorAlpha;
+};
+
+struct glBlendFuncSeparateINGR_params
+{
+    GLenum sfactorRGB;
+    GLenum dfactorRGB;
+    GLenum sfactorAlpha;
+    GLenum dfactorAlpha;
+};
+
+struct glBlendFuncSeparateIndexedAMD_params
+{
+    GLuint buf;
+    GLenum srcRGB;
+    GLenum dstRGB;
+    GLenum srcAlpha;
+    GLenum dstAlpha;
+};
+
+struct glBlendFuncSeparatei_params
+{
+    GLuint buf;
+    GLenum srcRGB;
+    GLenum dstRGB;
+    GLenum srcAlpha;
+    GLenum dstAlpha;
+};
+
+struct glBlendFuncSeparateiARB_params
+{
+    GLuint buf;
+    GLenum srcRGB;
+    GLenum dstRGB;
+    GLenum srcAlpha;
+    GLenum dstAlpha;
+};
+
+struct glBlendFunci_params
+{
+    GLuint buf;
+    GLenum src;
+    GLenum dst;
+};
+
+struct glBlendFunciARB_params
+{
+    GLuint buf;
+    GLenum src;
+    GLenum dst;
+};
+
+struct glBlendParameteriNV_params
+{
+    GLenum pname;
+    GLint value;
+};
+
+struct glBlitFramebuffer_params
+{
+    GLint srcX0;
+    GLint srcY0;
+    GLint srcX1;
+    GLint srcY1;
+    GLint dstX0;
+    GLint dstY0;
+    GLint dstX1;
+    GLint dstY1;
+    GLbitfield mask;
+    GLenum filter;
+};
+
+struct glBlitFramebufferEXT_params
+{
+    GLint srcX0;
+    GLint srcY0;
+    GLint srcX1;
+    GLint srcY1;
+    GLint dstX0;
+    GLint dstY0;
+    GLint dstX1;
+    GLint dstY1;
+    GLbitfield mask;
+    GLenum filter;
+};
+
+struct glBlitNamedFramebuffer_params
+{
+    GLuint readFramebuffer;
+    GLuint drawFramebuffer;
+    GLint srcX0;
+    GLint srcY0;
+    GLint srcX1;
+    GLint srcY1;
+    GLint dstX0;
+    GLint dstY0;
+    GLint dstX1;
+    GLint dstY1;
+    GLbitfield mask;
+    GLenum filter;
+};
+
+struct glBufferAddressRangeNV_params
+{
+    GLenum pname;
+    GLuint index;
+    GLuint64EXT address;
+    GLsizeiptr length;
+};
+
+struct glBufferAttachMemoryNV_params
+{
+    GLenum target;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glBufferData_params
+{
+    GLenum target;
+    GLsizeiptr size;
+    const void *data;
+    GLenum usage;
+};
+
+struct glBufferDataARB_params
+{
+    GLenum target;
+    GLsizeiptrARB size;
+    const void *data;
+    GLenum usage;
+};
+
+struct glBufferPageCommitmentARB_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLboolean commit;
+};
+
+struct glBufferParameteriAPPLE_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glBufferRegionEnabled_params
+{
+    GLuint ret;
+};
+
+struct glBufferStorage_params
+{
+    GLenum target;
+    GLsizeiptr size;
+    const void *data;
+    GLbitfield flags;
+};
+
+struct glBufferStorageExternalEXT_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLeglClientBufferEXT clientBuffer;
+    GLbitfield flags;
+};
+
+struct glBufferStorageMemEXT_params
+{
+    GLenum target;
+    GLsizeiptr size;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glBufferSubData_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr size;
+    const void *data;
+};
+
+struct glBufferSubDataARB_params
+{
+    GLenum target;
+    GLintptrARB offset;
+    GLsizeiptrARB size;
+    const void *data;
+};
+
+struct glCallCommandListNV_params
+{
+    GLuint list;
+};
+
+struct glCheckFramebufferStatus_params
+{
+    GLenum target;
+    GLenum ret;
+};
+
+struct glCheckFramebufferStatusEXT_params
+{
+    GLenum target;
+    GLenum ret;
+};
+
+struct glCheckNamedFramebufferStatus_params
+{
+    GLuint framebuffer;
+    GLenum target;
+    GLenum ret;
+};
+
+struct glCheckNamedFramebufferStatusEXT_params
+{
+    GLuint framebuffer;
+    GLenum target;
+    GLenum ret;
+};
+
+struct glClampColor_params
+{
+    GLenum target;
+    GLenum clamp;
+};
+
+struct glClampColorARB_params
+{
+    GLenum target;
+    GLenum clamp;
+};
+
+struct glClearAccumxOES_params
+{
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+    GLfixed alpha;
+};
+
+struct glClearBufferData_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearBufferSubData_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearBufferfi_params
+{
+    GLenum buffer;
+    GLint drawbuffer;
+    GLfloat depth;
+    GLint stencil;
+};
+
+struct glClearBufferfv_params
+{
+    GLenum buffer;
+    GLint drawbuffer;
+    const GLfloat *value;
+};
+
+struct glClearBufferiv_params
+{
+    GLenum buffer;
+    GLint drawbuffer;
+    const GLint *value;
+};
+
+struct glClearBufferuiv_params
+{
+    GLenum buffer;
+    GLint drawbuffer;
+    const GLuint *value;
+};
+
+struct glClearColorIiEXT_params
+{
+    GLint red;
+    GLint green;
+    GLint blue;
+    GLint alpha;
+};
+
+struct glClearColorIuiEXT_params
+{
+    GLuint red;
+    GLuint green;
+    GLuint blue;
+    GLuint alpha;
+};
+
+struct glClearColorxOES_params
+{
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+    GLfixed alpha;
+};
+
+struct glClearDepthdNV_params
+{
+    GLdouble depth;
+};
+
+struct glClearDepthf_params
+{
+    GLfloat d;
+};
+
+struct glClearDepthfOES_params
+{
+    GLclampf depth;
+};
+
+struct glClearDepthxOES_params
+{
+    GLfixed depth;
+};
+
+struct glClearNamedBufferData_params
+{
+    GLuint buffer;
+    GLenum internalformat;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearNamedBufferDataEXT_params
+{
+    GLuint buffer;
+    GLenum internalformat;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearNamedBufferSubData_params
+{
+    GLuint buffer;
+    GLenum internalformat;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearNamedBufferSubDataEXT_params
+{
+    GLuint buffer;
+    GLenum internalformat;
+    GLsizeiptr offset;
+    GLsizeiptr size;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearNamedFramebufferfi_params
+{
+    GLuint framebuffer;
+    GLenum buffer;
+    GLint drawbuffer;
+    GLfloat depth;
+    GLint stencil;
+};
+
+struct glClearNamedFramebufferfv_params
+{
+    GLuint framebuffer;
+    GLenum buffer;
+    GLint drawbuffer;
+    const GLfloat *value;
+};
+
+struct glClearNamedFramebufferiv_params
+{
+    GLuint framebuffer;
+    GLenum buffer;
+    GLint drawbuffer;
+    const GLint *value;
+};
+
+struct glClearNamedFramebufferuiv_params
+{
+    GLuint framebuffer;
+    GLenum buffer;
+    GLint drawbuffer;
+    const GLuint *value;
+};
+
+struct glClearTexImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClearTexSubImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glClientActiveTexture_params
+{
+    GLenum texture;
+};
+
+struct glClientActiveTextureARB_params
+{
+    GLenum texture;
+};
+
+struct glClientActiveVertexStreamATI_params
+{
+    GLenum stream;
+};
+
+struct glClientAttribDefaultEXT_params
+{
+    GLbitfield mask;
+};
+
+struct glClientWaitSemaphoreui64NVX_params
+{
+    GLsizei fenceObjectCount;
+    const GLuint *semaphoreArray;
+    const GLuint64 *fenceValueArray;
+};
+
+struct glClientWaitSync_params
+{
+    GLsync sync;
+    GLbitfield flags;
+    GLuint64 timeout;
+    GLenum ret;
+};
+
+struct glClipControl_params
+{
+    GLenum origin;
+    GLenum depth;
+};
+
+struct glClipPlanefOES_params
+{
+    GLenum plane;
+    const GLfloat *equation;
+};
+
+struct glClipPlanexOES_params
+{
+    GLenum plane;
+    const GLfixed *equation;
+};
+
+struct glColor3fVertex3fSUN_params
+{
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glColor3fVertex3fvSUN_params
+{
+    const GLfloat *c;
+    const GLfloat *v;
+};
+
+struct glColor3hNV_params
+{
+    GLhalfNV red;
+    GLhalfNV green;
+    GLhalfNV blue;
+};
+
+struct glColor3hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glColor3xOES_params
+{
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+};
+
+struct glColor3xvOES_params
+{
+    const GLfixed *components;
+};
+
+struct glColor4fNormal3fVertex3fSUN_params
+{
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat a;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glColor4fNormal3fVertex3fvSUN_params
+{
+    const GLfloat *c;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glColor4hNV_params
+{
+    GLhalfNV red;
+    GLhalfNV green;
+    GLhalfNV blue;
+    GLhalfNV alpha;
+};
+
+struct glColor4hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glColor4ubVertex2fSUN_params
+{
+    GLubyte r;
+    GLubyte g;
+    GLubyte b;
+    GLubyte a;
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glColor4ubVertex2fvSUN_params
+{
+    const GLubyte *c;
+    const GLfloat *v;
+};
+
+struct glColor4ubVertex3fSUN_params
+{
+    GLubyte r;
+    GLubyte g;
+    GLubyte b;
+    GLubyte a;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glColor4ubVertex3fvSUN_params
+{
+    const GLubyte *c;
+    const GLfloat *v;
+};
+
+struct glColor4xOES_params
+{
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+    GLfixed alpha;
+};
+
+struct glColor4xvOES_params
+{
+    const GLfixed *components;
+};
+
+struct glColorFormatNV_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glColorFragmentOp1ATI_params
+{
+    GLenum op;
+    GLuint dst;
+    GLuint dstMask;
+    GLuint dstMod;
+    GLuint arg1;
+    GLuint arg1Rep;
+    GLuint arg1Mod;
+};
+
+struct glColorFragmentOp2ATI_params
+{
+    GLenum op;
+    GLuint dst;
+    GLuint dstMask;
+    GLuint dstMod;
+    GLuint arg1;
+    GLuint arg1Rep;
+    GLuint arg1Mod;
+    GLuint arg2;
+    GLuint arg2Rep;
+    GLuint arg2Mod;
+};
+
+struct glColorFragmentOp3ATI_params
+{
+    GLenum op;
+    GLuint dst;
+    GLuint dstMask;
+    GLuint dstMod;
+    GLuint arg1;
+    GLuint arg1Rep;
+    GLuint arg1Mod;
+    GLuint arg2;
+    GLuint arg2Rep;
+    GLuint arg2Mod;
+    GLuint arg3;
+    GLuint arg3Rep;
+    GLuint arg3Mod;
+};
+
+struct glColorMaskIndexedEXT_params
+{
+    GLuint index;
+    GLboolean r;
+    GLboolean g;
+    GLboolean b;
+    GLboolean a;
+};
+
+struct glColorMaski_params
+{
+    GLuint index;
+    GLboolean r;
+    GLboolean g;
+    GLboolean b;
+    GLboolean a;
+};
+
+struct glColorP3ui_params
+{
+    GLenum type;
+    GLuint color;
+};
+
+struct glColorP3uiv_params
+{
+    GLenum type;
+    const GLuint *color;
+};
+
+struct glColorP4ui_params
+{
+    GLenum type;
+    GLuint color;
+};
+
+struct glColorP4uiv_params
+{
+    GLenum type;
+    const GLuint *color;
+};
+
+struct glColorPointerEXT_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLsizei count;
+    const void *pointer;
+};
+
+struct glColorPointerListIBM_params
+{
+    GLint size;
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glColorPointervINTEL_params
+{
+    GLint size;
+    GLenum type;
+    const void **pointer;
+};
+
+struct glColorSubTable_params
+{
+    GLenum target;
+    GLsizei start;
+    GLsizei count;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glColorSubTableEXT_params
+{
+    GLenum target;
+    GLsizei start;
+    GLsizei count;
+    GLenum format;
+    GLenum type;
+    const void *data;
+};
+
+struct glColorTable_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *table;
+};
+
+struct glColorTableEXT_params
+{
+    GLenum target;
+    GLenum internalFormat;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *table;
+};
+
+struct glColorTableParameterfv_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glColorTableParameterfvSGI_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glColorTableParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glColorTableParameterivSGI_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glColorTableSGI_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *table;
+};
+
+struct glCombinerInputNV_params
+{
+    GLenum stage;
+    GLenum portion;
+    GLenum variable;
+    GLenum input;
+    GLenum mapping;
+    GLenum componentUsage;
+};
+
+struct glCombinerOutputNV_params
+{
+    GLenum stage;
+    GLenum portion;
+    GLenum abOutput;
+    GLenum cdOutput;
+    GLenum sumOutput;
+    GLenum scale;
+    GLenum bias;
+    GLboolean abDotProduct;
+    GLboolean cdDotProduct;
+    GLboolean muxSum;
+};
+
+struct glCombinerParameterfNV_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glCombinerParameterfvNV_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glCombinerParameteriNV_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glCombinerParameterivNV_params
+{
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glCombinerStageParameterfvNV_params
+{
+    GLenum stage;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glCommandListSegmentsNV_params
+{
+    GLuint list;
+    GLuint segments;
+};
+
+struct glCompileCommandListNV_params
+{
+    GLuint list;
+};
+
+struct glCompileShader_params
+{
+    GLuint shader;
+};
+
+struct glCompileShaderARB_params
+{
+    GLhandleARB shaderObj;
+};
+
+struct glCompileShaderIncludeARB_params
+{
+    GLuint shader;
+    GLsizei count;
+    const GLchar *const*path;
+    const GLint *length;
+};
+
+struct glCompressedMultiTexImage1DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLint border;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedMultiTexImage2DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedMultiTexImage3DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedMultiTexSubImage1DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedMultiTexSubImage2DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedMultiTexSubImage3DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedTexImage1D_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLint border;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexImage1DARB_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLint border;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexImage2D_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexImage2DARB_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexImage3D_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexImage3DARB_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexSubImage1D_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexSubImage1DARB_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexSubImage2D_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexSubImage2DARB_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexSubImage3D_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTexSubImage3DARB_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTextureImage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLint border;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedTextureImage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedTextureImage3DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedTextureSubImage1D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTextureSubImage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedTextureSubImage2D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTextureSubImage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glCompressedTextureSubImage3D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLsizei imageSize;
+    const void *data;
+};
+
+struct glCompressedTextureSubImage3DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLsizei imageSize;
+    const void *bits;
+};
+
+struct glConservativeRasterParameterfNV_params
+{
+    GLenum pname;
+    GLfloat value;
+};
+
+struct glConservativeRasterParameteriNV_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glConvolutionFilter1D_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *image;
+};
+
+struct glConvolutionFilter1DEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *image;
+};
+
+struct glConvolutionFilter2D_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *image;
+};
+
+struct glConvolutionFilter2DEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *image;
+};
+
+struct glConvolutionParameterf_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat params;
+};
+
+struct glConvolutionParameterfEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat params;
+};
+
+struct glConvolutionParameterfv_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glConvolutionParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glConvolutionParameteri_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint params;
+};
+
+struct glConvolutionParameteriEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint params;
+};
+
+struct glConvolutionParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glConvolutionParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glConvolutionParameterxOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glConvolutionParameterxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfixed *params;
+};
+
+struct glCopyBufferSubData_params
+{
+    GLenum readTarget;
+    GLenum writeTarget;
+    GLintptr readOffset;
+    GLintptr writeOffset;
+    GLsizeiptr size;
+};
+
+struct glCopyColorSubTable_params
+{
+    GLenum target;
+    GLsizei start;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyColorSubTableEXT_params
+{
+    GLenum target;
+    GLsizei start;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyColorTable_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyColorTableSGI_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyConvolutionFilter1D_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyConvolutionFilter1DEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyConvolutionFilter2D_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyConvolutionFilter2DEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyImageSubData_params
+{
+    GLuint srcName;
+    GLenum srcTarget;
+    GLint srcLevel;
+    GLint srcX;
+    GLint srcY;
+    GLint srcZ;
+    GLuint dstName;
+    GLenum dstTarget;
+    GLint dstLevel;
+    GLint dstX;
+    GLint dstY;
+    GLint dstZ;
+    GLsizei srcWidth;
+    GLsizei srcHeight;
+    GLsizei srcDepth;
+};
+
+struct glCopyImageSubDataNV_params
+{
+    GLuint srcName;
+    GLenum srcTarget;
+    GLint srcLevel;
+    GLint srcX;
+    GLint srcY;
+    GLint srcZ;
+    GLuint dstName;
+    GLenum dstTarget;
+    GLint dstLevel;
+    GLint dstX;
+    GLint dstY;
+    GLint dstZ;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+};
+
+struct glCopyMultiTexImage1DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLint border;
+};
+
+struct glCopyMultiTexImage2DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+};
+
+struct glCopyMultiTexSubImage1DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyMultiTexSubImage2DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyMultiTexSubImage3DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyNamedBufferSubData_params
+{
+    GLuint readBuffer;
+    GLuint writeBuffer;
+    GLintptr readOffset;
+    GLintptr writeOffset;
+    GLsizeiptr size;
+};
+
+struct glCopyPathNV_params
+{
+    GLuint resultPath;
+    GLuint srcPath;
+};
+
+struct glCopyTexImage1DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLint border;
+};
+
+struct glCopyTexImage2DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+};
+
+struct glCopyTexSubImage1DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyTexSubImage2DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyTexSubImage3D_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyTexSubImage3DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyTextureImage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLint border;
+};
+
+struct glCopyTextureImage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+};
+
+struct glCopyTextureSubImage1D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyTextureSubImage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+};
+
+struct glCopyTextureSubImage2D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyTextureSubImage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyTextureSubImage3D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCopyTextureSubImage3DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glCoverFillPathInstancedNV_params
+{
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLenum coverMode;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glCoverFillPathNV_params
+{
+    GLuint path;
+    GLenum coverMode;
+};
+
+struct glCoverStrokePathInstancedNV_params
+{
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLenum coverMode;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glCoverStrokePathNV_params
+{
+    GLuint path;
+    GLenum coverMode;
+};
+
+struct glCoverageModulationNV_params
+{
+    GLenum components;
+};
+
+struct glCoverageModulationTableNV_params
+{
+    GLsizei n;
+    const GLfloat *v;
+};
+
+struct glCreateBuffers_params
+{
+    GLsizei n;
+    GLuint *buffers;
+};
+
+struct glCreateCommandListsNV_params
+{
+    GLsizei n;
+    GLuint *lists;
+};
+
+struct glCreateFramebuffers_params
+{
+    GLsizei n;
+    GLuint *framebuffers;
+};
+
+struct glCreateMemoryObjectsEXT_params
+{
+    GLsizei n;
+    GLuint *memoryObjects;
+};
+
+struct glCreatePerfQueryINTEL_params
+{
+    GLuint queryId;
+    GLuint *queryHandle;
+};
+
+struct glCreateProgram_params
+{
+    GLuint ret;
+};
+
+struct glCreateProgramObjectARB_params
+{
+    GLhandleARB ret;
+};
+
+struct glCreateProgramPipelines_params
+{
+    GLsizei n;
+    GLuint *pipelines;
+};
+
+struct glCreateProgressFenceNVX_params
+{
+    GLuint ret;
+};
+
+struct glCreateQueries_params
+{
+    GLenum target;
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glCreateRenderbuffers_params
+{
+    GLsizei n;
+    GLuint *renderbuffers;
+};
+
+struct glCreateSamplers_params
+{
+    GLsizei n;
+    GLuint *samplers;
+};
+
+struct glCreateShader_params
+{
+    GLenum type;
+    GLuint ret;
+};
+
+struct glCreateShaderObjectARB_params
+{
+    GLenum shaderType;
+    GLhandleARB ret;
+};
+
+struct glCreateShaderProgramEXT_params
+{
+    GLenum type;
+    const GLchar *string;
+    GLuint ret;
+};
+
+struct glCreateShaderProgramv_params
+{
+    GLenum type;
+    GLsizei count;
+    const GLchar *const*strings;
+    GLuint ret;
+};
+
+struct glCreateStatesNV_params
+{
+    GLsizei n;
+    GLuint *states;
+};
+
+struct glCreateSyncFromCLeventARB_params
+{
+    struct _cl_context *context;
+    struct _cl_event *event;
+    GLbitfield flags;
+    GLsync ret;
+};
+
+struct glCreateTextures_params
+{
+    GLenum target;
+    GLsizei n;
+    GLuint *textures;
+};
+
+struct glCreateTransformFeedbacks_params
+{
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glCreateVertexArrays_params
+{
+    GLsizei n;
+    GLuint *arrays;
+};
+
+struct glCullParameterdvEXT_params
+{
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glCullParameterfvEXT_params
+{
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glCurrentPaletteMatrixARB_params
+{
+    GLint index;
+};
+
+struct glDebugMessageCallback_params
+{
+    GLDEBUGPROC callback;
+    const void *userParam;
+};
+
+struct glDebugMessageCallbackAMD_params
+{
+    GLDEBUGPROCAMD callback;
+    void *userParam;
+};
+
+struct glDebugMessageCallbackARB_params
+{
+    GLDEBUGPROCARB callback;
+    const void *userParam;
+};
+
+struct glDebugMessageControl_params
+{
+    GLenum source;
+    GLenum type;
+    GLenum severity;
+    GLsizei count;
+    const GLuint *ids;
+    GLboolean enabled;
+};
+
+struct glDebugMessageControlARB_params
+{
+    GLenum source;
+    GLenum type;
+    GLenum severity;
+    GLsizei count;
+    const GLuint *ids;
+    GLboolean enabled;
+};
+
+struct glDebugMessageEnableAMD_params
+{
+    GLenum category;
+    GLenum severity;
+    GLsizei count;
+    const GLuint *ids;
+    GLboolean enabled;
+};
+
+struct glDebugMessageInsert_params
+{
+    GLenum source;
+    GLenum type;
+    GLuint id;
+    GLenum severity;
+    GLsizei length;
+    const GLchar *buf;
+};
+
+struct glDebugMessageInsertAMD_params
+{
+    GLenum category;
+    GLenum severity;
+    GLuint id;
+    GLsizei length;
+    const GLchar *buf;
+};
+
+struct glDebugMessageInsertARB_params
+{
+    GLenum source;
+    GLenum type;
+    GLuint id;
+    GLenum severity;
+    GLsizei length;
+    const GLchar *buf;
+};
+
+struct glDeformSGIX_params
+{
+    GLbitfield mask;
+};
+
+struct glDeformationMap3dSGIX_params
+{
+    GLenum target;
+    GLdouble u1;
+    GLdouble u2;
+    GLint ustride;
+    GLint uorder;
+    GLdouble v1;
+    GLdouble v2;
+    GLint vstride;
+    GLint vorder;
+    GLdouble w1;
+    GLdouble w2;
+    GLint wstride;
+    GLint worder;
+    const GLdouble *points;
+};
+
+struct glDeformationMap3fSGIX_params
+{
+    GLenum target;
+    GLfloat u1;
+    GLfloat u2;
+    GLint ustride;
+    GLint uorder;
+    GLfloat v1;
+    GLfloat v2;
+    GLint vstride;
+    GLint vorder;
+    GLfloat w1;
+    GLfloat w2;
+    GLint wstride;
+    GLint worder;
+    const GLfloat *points;
+};
+
+struct glDeleteAsyncMarkersSGIX_params
+{
+    GLuint marker;
+    GLsizei range;
+};
+
+struct glDeleteBufferRegion_params
+{
+    GLenum region;
+};
+
+struct glDeleteBuffers_params
+{
+    GLsizei n;
+    const GLuint *buffers;
+};
+
+struct glDeleteBuffersARB_params
+{
+    GLsizei n;
+    const GLuint *buffers;
+};
+
+struct glDeleteCommandListsNV_params
+{
+    GLsizei n;
+    const GLuint *lists;
+};
+
+struct glDeleteFencesAPPLE_params
+{
+    GLsizei n;
+    const GLuint *fences;
+};
+
+struct glDeleteFencesNV_params
+{
+    GLsizei n;
+    const GLuint *fences;
+};
+
+struct glDeleteFragmentShaderATI_params
+{
+    GLuint id;
+};
+
+struct glDeleteFramebuffers_params
+{
+    GLsizei n;
+    const GLuint *framebuffers;
+};
+
+struct glDeleteFramebuffersEXT_params
+{
+    GLsizei n;
+    const GLuint *framebuffers;
+};
+
+struct glDeleteMemoryObjectsEXT_params
+{
+    GLsizei n;
+    const GLuint *memoryObjects;
+};
+
+struct glDeleteNamedStringARB_params
+{
+    GLint namelen;
+    const GLchar *name;
+};
+
+struct glDeleteNamesAMD_params
+{
+    GLenum identifier;
+    GLuint num;
+    const GLuint *names;
+};
+
+struct glDeleteObjectARB_params
+{
+    GLhandleARB obj;
+};
+
+struct glDeleteObjectBufferATI_params
+{
+    GLuint buffer;
+};
+
+struct glDeleteOcclusionQueriesNV_params
+{
+    GLsizei n;
+    const GLuint *ids;
+};
+
+struct glDeletePathsNV_params
+{
+    GLuint path;
+    GLsizei range;
+};
+
+struct glDeletePerfMonitorsAMD_params
+{
+    GLsizei n;
+    GLuint *monitors;
+};
+
+struct glDeletePerfQueryINTEL_params
+{
+    GLuint queryHandle;
+};
+
+struct glDeleteProgram_params
+{
+    GLuint program;
+};
+
+struct glDeleteProgramPipelines_params
+{
+    GLsizei n;
+    const GLuint *pipelines;
+};
+
+struct glDeleteProgramsARB_params
+{
+    GLsizei n;
+    const GLuint *programs;
+};
+
+struct glDeleteProgramsNV_params
+{
+    GLsizei n;
+    const GLuint *programs;
+};
+
+struct glDeleteQueries_params
+{
+    GLsizei n;
+    const GLuint *ids;
+};
+
+struct glDeleteQueriesARB_params
+{
+    GLsizei n;
+    const GLuint *ids;
+};
+
+struct glDeleteQueryResourceTagNV_params
+{
+    GLsizei n;
+    const GLint *tagIds;
+};
+
+struct glDeleteRenderbuffers_params
+{
+    GLsizei n;
+    const GLuint *renderbuffers;
+};
+
+struct glDeleteRenderbuffersEXT_params
+{
+    GLsizei n;
+    const GLuint *renderbuffers;
+};
+
+struct glDeleteSamplers_params
+{
+    GLsizei count;
+    const GLuint *samplers;
+};
+
+struct glDeleteSemaphoresEXT_params
+{
+    GLsizei n;
+    const GLuint *semaphores;
+};
+
+struct glDeleteShader_params
+{
+    GLuint shader;
+};
+
+struct glDeleteStatesNV_params
+{
+    GLsizei n;
+    const GLuint *states;
+};
+
+struct glDeleteSync_params
+{
+    GLsync sync;
+};
+
+struct glDeleteTexturesEXT_params
+{
+    GLsizei n;
+    const GLuint *textures;
+};
+
+struct glDeleteTransformFeedbacks_params
+{
+    GLsizei n;
+    const GLuint *ids;
+};
+
+struct glDeleteTransformFeedbacksNV_params
+{
+    GLsizei n;
+    const GLuint *ids;
+};
+
+struct glDeleteVertexArrays_params
+{
+    GLsizei n;
+    const GLuint *arrays;
+};
+
+struct glDeleteVertexArraysAPPLE_params
+{
+    GLsizei n;
+    const GLuint *arrays;
+};
+
+struct glDeleteVertexShaderEXT_params
+{
+    GLuint id;
+};
+
+struct glDepthBoundsEXT_params
+{
+    GLclampd zmin;
+    GLclampd zmax;
+};
+
+struct glDepthBoundsdNV_params
+{
+    GLdouble zmin;
+    GLdouble zmax;
+};
+
+struct glDepthRangeArraydvNV_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glDepthRangeArrayv_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glDepthRangeIndexed_params
+{
+    GLuint index;
+    GLdouble n;
+    GLdouble f;
+};
+
+struct glDepthRangeIndexeddNV_params
+{
+    GLuint index;
+    GLdouble n;
+    GLdouble f;
+};
+
+struct glDepthRangedNV_params
+{
+    GLdouble zNear;
+    GLdouble zFar;
+};
+
+struct glDepthRangef_params
+{
+    GLfloat n;
+    GLfloat f;
+};
+
+struct glDepthRangefOES_params
+{
+    GLclampf n;
+    GLclampf f;
+};
+
+struct glDepthRangexOES_params
+{
+    GLfixed n;
+    GLfixed f;
+};
+
+struct glDetachObjectARB_params
+{
+    GLhandleARB containerObj;
+    GLhandleARB attachedObj;
+};
+
+struct glDetachShader_params
+{
+    GLuint program;
+    GLuint shader;
+};
+
+struct glDetailTexFuncSGIS_params
+{
+    GLenum target;
+    GLsizei n;
+    const GLfloat *points;
+};
+
+struct glDisableClientStateIndexedEXT_params
+{
+    GLenum array;
+    GLuint index;
+};
+
+struct glDisableClientStateiEXT_params
+{
+    GLenum array;
+    GLuint index;
+};
+
+struct glDisableIndexedEXT_params
+{
+    GLenum target;
+    GLuint index;
+};
+
+struct glDisableVariantClientStateEXT_params
+{
+    GLuint id;
+};
+
+struct glDisableVertexArrayAttrib_params
+{
+    GLuint vaobj;
+    GLuint index;
+};
+
+struct glDisableVertexArrayAttribEXT_params
+{
+    GLuint vaobj;
+    GLuint index;
+};
+
+struct glDisableVertexArrayEXT_params
+{
+    GLuint vaobj;
+    GLenum array;
+};
+
+struct glDisableVertexAttribAPPLE_params
+{
+    GLuint index;
+    GLenum pname;
+};
+
+struct glDisableVertexAttribArray_params
+{
+    GLuint index;
+};
+
+struct glDisableVertexAttribArrayARB_params
+{
+    GLuint index;
+};
+
+struct glDisablei_params
+{
+    GLenum target;
+    GLuint index;
+};
+
+struct glDispatchCompute_params
+{
+    GLuint num_groups_x;
+    GLuint num_groups_y;
+    GLuint num_groups_z;
+};
+
+struct glDispatchComputeGroupSizeARB_params
+{
+    GLuint num_groups_x;
+    GLuint num_groups_y;
+    GLuint num_groups_z;
+    GLuint group_size_x;
+    GLuint group_size_y;
+    GLuint group_size_z;
+};
+
+struct glDispatchComputeIndirect_params
+{
+    GLintptr indirect;
+};
+
+struct glDrawArraysEXT_params
+{
+    GLenum mode;
+    GLint first;
+    GLsizei count;
+};
+
+struct glDrawArraysIndirect_params
+{
+    GLenum mode;
+    const void *indirect;
+};
+
+struct glDrawArraysInstanced_params
+{
+    GLenum mode;
+    GLint first;
+    GLsizei count;
+    GLsizei instancecount;
+};
+
+struct glDrawArraysInstancedARB_params
+{
+    GLenum mode;
+    GLint first;
+    GLsizei count;
+    GLsizei primcount;
+};
+
+struct glDrawArraysInstancedBaseInstance_params
+{
+    GLenum mode;
+    GLint first;
+    GLsizei count;
+    GLsizei instancecount;
+    GLuint baseinstance;
+};
+
+struct glDrawArraysInstancedEXT_params
+{
+    GLenum mode;
+    GLint start;
+    GLsizei count;
+    GLsizei primcount;
+};
+
+struct glDrawBufferRegion_params
+{
+    GLenum region;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+    GLint xDest;
+    GLint yDest;
+};
+
+struct glDrawBuffers_params
+{
+    GLsizei n;
+    const GLenum *bufs;
+};
+
+struct glDrawBuffersARB_params
+{
+    GLsizei n;
+    const GLenum *bufs;
+};
+
+struct glDrawBuffersATI_params
+{
+    GLsizei n;
+    const GLenum *bufs;
+};
+
+struct glDrawCommandsAddressNV_params
+{
+    GLenum primitiveMode;
+    const GLuint64 *indirects;
+    const GLsizei *sizes;
+    GLuint count;
+};
+
+struct glDrawCommandsNV_params
+{
+    GLenum primitiveMode;
+    GLuint buffer;
+    const GLintptr *indirects;
+    const GLsizei *sizes;
+    GLuint count;
+};
+
+struct glDrawCommandsStatesAddressNV_params
+{
+    const GLuint64 *indirects;
+    const GLsizei *sizes;
+    const GLuint *states;
+    const GLuint *fbos;
+    GLuint count;
+};
+
+struct glDrawCommandsStatesNV_params
+{
+    GLuint buffer;
+    const GLintptr *indirects;
+    const GLsizei *sizes;
+    const GLuint *states;
+    const GLuint *fbos;
+    GLuint count;
+};
+
+struct glDrawElementArrayAPPLE_params
+{
+    GLenum mode;
+    GLint first;
+    GLsizei count;
+};
+
+struct glDrawElementArrayATI_params
+{
+    GLenum mode;
+    GLsizei count;
+};
+
+struct glDrawElementsBaseVertex_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLint basevertex;
+};
+
+struct glDrawElementsIndirect_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+};
+
+struct glDrawElementsInstanced_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLsizei instancecount;
+};
+
+struct glDrawElementsInstancedARB_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLsizei primcount;
+};
+
+struct glDrawElementsInstancedBaseInstance_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLsizei instancecount;
+    GLuint baseinstance;
+};
+
+struct glDrawElementsInstancedBaseVertex_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLsizei instancecount;
+    GLint basevertex;
+};
+
+struct glDrawElementsInstancedBaseVertexBaseInstance_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLsizei instancecount;
+    GLint basevertex;
+    GLuint baseinstance;
+};
+
+struct glDrawElementsInstancedEXT_params
+{
+    GLenum mode;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLsizei primcount;
+};
+
+struct glDrawMeshArraysSUN_params
+{
+    GLenum mode;
+    GLint first;
+    GLsizei count;
+    GLsizei width;
+};
+
+struct glDrawMeshTasksIndirectNV_params
+{
+    GLintptr indirect;
+};
+
+struct glDrawMeshTasksNV_params
+{
+    GLuint first;
+    GLuint count;
+};
+
+struct glDrawRangeElementArrayAPPLE_params
+{
+    GLenum mode;
+    GLuint start;
+    GLuint end;
+    GLint first;
+    GLsizei count;
+};
+
+struct glDrawRangeElementArrayATI_params
+{
+    GLenum mode;
+    GLuint start;
+    GLuint end;
+    GLsizei count;
+};
+
+struct glDrawRangeElements_params
+{
+    GLenum mode;
+    GLuint start;
+    GLuint end;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+};
+
+struct glDrawRangeElementsBaseVertex_params
+{
+    GLenum mode;
+    GLuint start;
+    GLuint end;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+    GLint basevertex;
+};
+
+struct glDrawRangeElementsEXT_params
+{
+    GLenum mode;
+    GLuint start;
+    GLuint end;
+    GLsizei count;
+    GLenum type;
+    const void *indices;
+};
+
+struct glDrawTextureNV_params
+{
+    GLuint texture;
+    GLuint sampler;
+    GLfloat x0;
+    GLfloat y0;
+    GLfloat x1;
+    GLfloat y1;
+    GLfloat z;
+    GLfloat s0;
+    GLfloat t0;
+    GLfloat s1;
+    GLfloat t1;
+};
+
+struct glDrawTransformFeedback_params
+{
+    GLenum mode;
+    GLuint id;
+};
+
+struct glDrawTransformFeedbackInstanced_params
+{
+    GLenum mode;
+    GLuint id;
+    GLsizei instancecount;
+};
+
+struct glDrawTransformFeedbackNV_params
+{
+    GLenum mode;
+    GLuint id;
+};
+
+struct glDrawTransformFeedbackStream_params
+{
+    GLenum mode;
+    GLuint id;
+    GLuint stream;
+};
+
+struct glDrawTransformFeedbackStreamInstanced_params
+{
+    GLenum mode;
+    GLuint id;
+    GLuint stream;
+    GLsizei instancecount;
+};
+
+struct glDrawVkImageNV_params
+{
+    GLuint64 vkImage;
+    GLuint sampler;
+    GLfloat x0;
+    GLfloat y0;
+    GLfloat x1;
+    GLfloat y1;
+    GLfloat z;
+    GLfloat s0;
+    GLfloat t0;
+    GLfloat s1;
+    GLfloat t1;
+};
+
+struct glEGLImageTargetTexStorageEXT_params
+{
+    GLenum target;
+    GLeglImageOES image;
+    const GLint* attrib_list;
+};
+
+struct glEGLImageTargetTextureStorageEXT_params
+{
+    GLuint texture;
+    GLeglImageOES image;
+    const GLint* attrib_list;
+};
+
+struct glEdgeFlagFormatNV_params
+{
+    GLsizei stride;
+};
+
+struct glEdgeFlagPointerEXT_params
+{
+    GLsizei stride;
+    GLsizei count;
+    const GLboolean *pointer;
+};
+
+struct glEdgeFlagPointerListIBM_params
+{
+    GLint stride;
+    const GLboolean **pointer;
+    GLint ptrstride;
+};
+
+struct glElementPointerAPPLE_params
+{
+    GLenum type;
+    const void *pointer;
+};
+
+struct glElementPointerATI_params
+{
+    GLenum type;
+    const void *pointer;
+};
+
+struct glEnableClientStateIndexedEXT_params
+{
+    GLenum array;
+    GLuint index;
+};
+
+struct glEnableClientStateiEXT_params
+{
+    GLenum array;
+    GLuint index;
+};
+
+struct glEnableIndexedEXT_params
+{
+    GLenum target;
+    GLuint index;
+};
+
+struct glEnableVariantClientStateEXT_params
+{
+    GLuint id;
+};
+
+struct glEnableVertexArrayAttrib_params
+{
+    GLuint vaobj;
+    GLuint index;
+};
+
+struct glEnableVertexArrayAttribEXT_params
+{
+    GLuint vaobj;
+    GLuint index;
+};
+
+struct glEnableVertexArrayEXT_params
+{
+    GLuint vaobj;
+    GLenum array;
+};
+
+struct glEnableVertexAttribAPPLE_params
+{
+    GLuint index;
+    GLenum pname;
+};
+
+struct glEnableVertexAttribArray_params
+{
+    GLuint index;
+};
+
+struct glEnableVertexAttribArrayARB_params
+{
+    GLuint index;
+};
+
+struct glEnablei_params
+{
+    GLenum target;
+    GLuint index;
+};
+
+struct glEndConditionalRender_params
+{
+};
+
+struct glEndConditionalRenderNV_params
+{
+};
+
+struct glEndConditionalRenderNVX_params
+{
+};
+
+struct glEndFragmentShaderATI_params
+{
+};
+
+struct glEndOcclusionQueryNV_params
+{
+};
+
+struct glEndPerfMonitorAMD_params
+{
+    GLuint monitor;
+};
+
+struct glEndPerfQueryINTEL_params
+{
+    GLuint queryHandle;
+};
+
+struct glEndQuery_params
+{
+    GLenum target;
+};
+
+struct glEndQueryARB_params
+{
+    GLenum target;
+};
+
+struct glEndQueryIndexed_params
+{
+    GLenum target;
+    GLuint index;
+};
+
+struct glEndTransformFeedback_params
+{
+};
+
+struct glEndTransformFeedbackEXT_params
+{
+};
+
+struct glEndTransformFeedbackNV_params
+{
+};
+
+struct glEndVertexShaderEXT_params
+{
+};
+
+struct glEndVideoCaptureNV_params
+{
+    GLuint video_capture_slot;
+};
+
+struct glEvalCoord1xOES_params
+{
+    GLfixed u;
+};
+
+struct glEvalCoord1xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glEvalCoord2xOES_params
+{
+    GLfixed u;
+    GLfixed v;
+};
+
+struct glEvalCoord2xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glEvalMapsNV_params
+{
+    GLenum target;
+    GLenum mode;
+};
+
+struct glEvaluateDepthValuesARB_params
+{
+};
+
+struct glExecuteProgramNV_params
+{
+    GLenum target;
+    GLuint id;
+    const GLfloat *params;
+};
+
+struct glExtractComponentEXT_params
+{
+    GLuint res;
+    GLuint src;
+    GLuint num;
+};
+
+struct glFeedbackBufferxOES_params
+{
+    GLsizei n;
+    GLenum type;
+    const GLfixed *buffer;
+};
+
+struct glFenceSync_params
+{
+    GLenum condition;
+    GLbitfield flags;
+    GLsync ret;
+};
+
+struct glFinalCombinerInputNV_params
+{
+    GLenum variable;
+    GLenum input;
+    GLenum mapping;
+    GLenum componentUsage;
+};
+
+struct glFinishAsyncSGIX_params
+{
+    GLuint *markerp;
+    GLint ret;
+};
+
+struct glFinishFenceAPPLE_params
+{
+    GLuint fence;
+};
+
+struct glFinishFenceNV_params
+{
+    GLuint fence;
+};
+
+struct glFinishObjectAPPLE_params
+{
+    GLenum object;
+    GLint name;
+};
+
+struct glFinishTextureSUNX_params
+{
+};
+
+struct glFlushMappedBufferRange_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr length;
+};
+
+struct glFlushMappedBufferRangeAPPLE_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glFlushMappedNamedBufferRange_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr length;
+};
+
+struct glFlushMappedNamedBufferRangeEXT_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr length;
+};
+
+struct glFlushPixelDataRangeNV_params
+{
+    GLenum target;
+};
+
+struct glFlushRasterSGIX_params
+{
+};
+
+struct glFlushStaticDataIBM_params
+{
+    GLenum target;
+};
+
+struct glFlushVertexArrayRangeAPPLE_params
+{
+    GLsizei length;
+    void *pointer;
+};
+
+struct glFlushVertexArrayRangeNV_params
+{
+};
+
+struct glFogCoordFormatNV_params
+{
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glFogCoordPointer_params
+{
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glFogCoordPointerEXT_params
+{
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glFogCoordPointerListIBM_params
+{
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glFogCoordd_params
+{
+    GLdouble coord;
+};
+
+struct glFogCoorddEXT_params
+{
+    GLdouble coord;
+};
+
+struct glFogCoorddv_params
+{
+    const GLdouble *coord;
+};
+
+struct glFogCoorddvEXT_params
+{
+    const GLdouble *coord;
+};
+
+struct glFogCoordf_params
+{
+    GLfloat coord;
+};
+
+struct glFogCoordfEXT_params
+{
+    GLfloat coord;
+};
+
+struct glFogCoordfv_params
+{
+    const GLfloat *coord;
+};
+
+struct glFogCoordfvEXT_params
+{
+    const GLfloat *coord;
+};
+
+struct glFogCoordhNV_params
+{
+    GLhalfNV fog;
+};
+
+struct glFogCoordhvNV_params
+{
+    const GLhalfNV *fog;
+};
+
+struct glFogFuncSGIS_params
+{
+    GLsizei n;
+    const GLfloat *points;
+};
+
+struct glFogxOES_params
+{
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glFogxvOES_params
+{
+    GLenum pname;
+    const GLfixed *param;
+};
+
+struct glFragmentColorMaterialSGIX_params
+{
+    GLenum face;
+    GLenum mode;
+};
+
+struct glFragmentCoverageColorNV_params
+{
+    GLuint color;
+};
+
+struct glFragmentLightModelfSGIX_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glFragmentLightModelfvSGIX_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glFragmentLightModeliSGIX_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glFragmentLightModelivSGIX_params
+{
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glFragmentLightfSGIX_params
+{
+    GLenum light;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glFragmentLightfvSGIX_params
+{
+    GLenum light;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glFragmentLightiSGIX_params
+{
+    GLenum light;
+    GLenum pname;
+    GLint param;
+};
+
+struct glFragmentLightivSGIX_params
+{
+    GLenum light;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glFragmentMaterialfSGIX_params
+{
+    GLenum face;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glFragmentMaterialfvSGIX_params
+{
+    GLenum face;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glFragmentMaterialiSGIX_params
+{
+    GLenum face;
+    GLenum pname;
+    GLint param;
+};
+
+struct glFragmentMaterialivSGIX_params
+{
+    GLenum face;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glFrameTerminatorGREMEDY_params
+{
+};
+
+struct glFrameZoomSGIX_params
+{
+    GLint factor;
+};
+
+struct glFramebufferDrawBufferEXT_params
+{
+    GLuint framebuffer;
+    GLenum mode;
+};
+
+struct glFramebufferDrawBuffersEXT_params
+{
+    GLuint framebuffer;
+    GLsizei n;
+    const GLenum *bufs;
+};
+
+struct glFramebufferFetchBarrierEXT_params
+{
+};
+
+struct glFramebufferParameteri_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glFramebufferParameteriMESA_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glFramebufferReadBufferEXT_params
+{
+    GLuint framebuffer;
+    GLenum mode;
+};
+
+struct glFramebufferRenderbuffer_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum renderbuffertarget;
+    GLuint renderbuffer;
+};
+
+struct glFramebufferRenderbufferEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum renderbuffertarget;
+    GLuint renderbuffer;
+};
+
+struct glFramebufferSampleLocationsfvARB_params
+{
+    GLenum target;
+    GLuint start;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glFramebufferSampleLocationsfvNV_params
+{
+    GLenum target;
+    GLuint start;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glFramebufferSamplePositionsfvAMD_params
+{
+    GLenum target;
+    GLuint numsamples;
+    GLuint pixelindex;
+    const GLfloat *values;
+};
+
+struct glFramebufferTexture_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTexture1D_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTexture1DEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTexture2D_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTexture2DEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTexture3D_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+    GLint zoffset;
+};
+
+struct glFramebufferTexture3DEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+    GLint zoffset;
+};
+
+struct glFramebufferTextureARB_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTextureEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+};
+
+struct glFramebufferTextureFaceARB_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLenum face;
+};
+
+struct glFramebufferTextureFaceEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLenum face;
+};
+
+struct glFramebufferTextureLayer_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLint layer;
+};
+
+struct glFramebufferTextureLayerARB_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLint layer;
+};
+
+struct glFramebufferTextureLayerEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLint layer;
+};
+
+struct glFramebufferTextureMultiviewOVR_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLint baseViewIndex;
+    GLsizei numViews;
+};
+
+struct glFreeObjectBufferATI_params
+{
+    GLuint buffer;
+};
+
+struct glFrustumfOES_params
+{
+    GLfloat l;
+    GLfloat r;
+    GLfloat b;
+    GLfloat t;
+    GLfloat n;
+    GLfloat f;
+};
+
+struct glFrustumxOES_params
+{
+    GLfixed l;
+    GLfixed r;
+    GLfixed b;
+    GLfixed t;
+    GLfixed n;
+    GLfixed f;
+};
+
+struct glGenAsyncMarkersSGIX_params
+{
+    GLsizei range;
+    GLuint ret;
+};
+
+struct glGenBuffers_params
+{
+    GLsizei n;
+    GLuint *buffers;
+};
+
+struct glGenBuffersARB_params
+{
+    GLsizei n;
+    GLuint *buffers;
+};
+
+struct glGenFencesAPPLE_params
+{
+    GLsizei n;
+    GLuint *fences;
+};
+
+struct glGenFencesNV_params
+{
+    GLsizei n;
+    GLuint *fences;
+};
+
+struct glGenFragmentShadersATI_params
+{
+    GLuint range;
+    GLuint ret;
+};
+
+struct glGenFramebuffers_params
+{
+    GLsizei n;
+    GLuint *framebuffers;
+};
+
+struct glGenFramebuffersEXT_params
+{
+    GLsizei n;
+    GLuint *framebuffers;
+};
+
+struct glGenNamesAMD_params
+{
+    GLenum identifier;
+    GLuint num;
+    GLuint *names;
+};
+
+struct glGenOcclusionQueriesNV_params
+{
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glGenPathsNV_params
+{
+    GLsizei range;
+    GLuint ret;
+};
+
+struct glGenPerfMonitorsAMD_params
+{
+    GLsizei n;
+    GLuint *monitors;
+};
+
+struct glGenProgramPipelines_params
+{
+    GLsizei n;
+    GLuint *pipelines;
+};
+
+struct glGenProgramsARB_params
+{
+    GLsizei n;
+    GLuint *programs;
+};
+
+struct glGenProgramsNV_params
+{
+    GLsizei n;
+    GLuint *programs;
+};
+
+struct glGenQueries_params
+{
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glGenQueriesARB_params
+{
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glGenQueryResourceTagNV_params
+{
+    GLsizei n;
+    GLint *tagIds;
+};
+
+struct glGenRenderbuffers_params
+{
+    GLsizei n;
+    GLuint *renderbuffers;
+};
+
+struct glGenRenderbuffersEXT_params
+{
+    GLsizei n;
+    GLuint *renderbuffers;
+};
+
+struct glGenSamplers_params
+{
+    GLsizei count;
+    GLuint *samplers;
+};
+
+struct glGenSemaphoresEXT_params
+{
+    GLsizei n;
+    GLuint *semaphores;
+};
+
+struct glGenSymbolsEXT_params
+{
+    GLenum datatype;
+    GLenum storagetype;
+    GLenum range;
+    GLuint components;
+    GLuint ret;
+};
+
+struct glGenTexturesEXT_params
+{
+    GLsizei n;
+    GLuint *textures;
+};
+
+struct glGenTransformFeedbacks_params
+{
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glGenTransformFeedbacksNV_params
+{
+    GLsizei n;
+    GLuint *ids;
+};
+
+struct glGenVertexArrays_params
+{
+    GLsizei n;
+    GLuint *arrays;
+};
+
+struct glGenVertexArraysAPPLE_params
+{
+    GLsizei n;
+    GLuint *arrays;
+};
+
+struct glGenVertexShadersEXT_params
+{
+    GLuint range;
+    GLuint ret;
+};
+
+struct glGenerateMipmap_params
+{
+    GLenum target;
+};
+
+struct glGenerateMipmapEXT_params
+{
+    GLenum target;
+};
+
+struct glGenerateMultiTexMipmapEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+};
+
+struct glGenerateTextureMipmap_params
+{
+    GLuint texture;
+};
+
+struct glGenerateTextureMipmapEXT_params
+{
+    GLuint texture;
+    GLenum target;
+};
+
+struct glGetActiveAtomicCounterBufferiv_params
+{
+    GLuint program;
+    GLuint bufferIndex;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetActiveAttrib_params
+{
+    GLuint program;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLint *size;
+    GLenum *type;
+    GLchar *name;
+};
+
+struct glGetActiveAttribARB_params
+{
+    GLhandleARB programObj;
+    GLuint index;
+    GLsizei maxLength;
+    GLsizei *length;
+    GLint *size;
+    GLenum *type;
+    GLcharARB *name;
+};
+
+struct glGetActiveSubroutineName_params
+{
+    GLuint program;
+    GLenum shadertype;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *name;
+};
+
+struct glGetActiveSubroutineUniformName_params
+{
+    GLuint program;
+    GLenum shadertype;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *name;
+};
+
+struct glGetActiveSubroutineUniformiv_params
+{
+    GLuint program;
+    GLenum shadertype;
+    GLuint index;
+    GLenum pname;
+    GLint *values;
+};
+
+struct glGetActiveUniform_params
+{
+    GLuint program;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLint *size;
+    GLenum *type;
+    GLchar *name;
+};
+
+struct glGetActiveUniformARB_params
+{
+    GLhandleARB programObj;
+    GLuint index;
+    GLsizei maxLength;
+    GLsizei *length;
+    GLint *size;
+    GLenum *type;
+    GLcharARB *name;
+};
+
+struct glGetActiveUniformBlockName_params
+{
+    GLuint program;
+    GLuint uniformBlockIndex;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *uniformBlockName;
+};
+
+struct glGetActiveUniformBlockiv_params
+{
+    GLuint program;
+    GLuint uniformBlockIndex;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetActiveUniformName_params
+{
+    GLuint program;
+    GLuint uniformIndex;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *uniformName;
+};
+
+struct glGetActiveUniformsiv_params
+{
+    GLuint program;
+    GLsizei uniformCount;
+    const GLuint *uniformIndices;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetActiveVaryingNV_params
+{
+    GLuint program;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLsizei *size;
+    GLenum *type;
+    GLchar *name;
+};
+
+struct glGetArrayObjectfvATI_params
+{
+    GLenum array;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetArrayObjectivATI_params
+{
+    GLenum array;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetAttachedObjectsARB_params
+{
+    GLhandleARB containerObj;
+    GLsizei maxCount;
+    GLsizei *count;
+    GLhandleARB *obj;
+};
+
+struct glGetAttachedShaders_params
+{
+    GLuint program;
+    GLsizei maxCount;
+    GLsizei *count;
+    GLuint *shaders;
+};
+
+struct glGetAttribLocation_params
+{
+    GLuint program;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetAttribLocationARB_params
+{
+    GLhandleARB programObj;
+    const GLcharARB *name;
+    GLint ret;
+};
+
+struct glGetBooleanIndexedvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLboolean *data;
+};
+
+struct glGetBooleani_v_params
+{
+    GLenum target;
+    GLuint index;
+    GLboolean *data;
+};
+
+struct glGetBufferParameteri64v_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint64 *params;
+};
+
+struct glGetBufferParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetBufferParameterivARB_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetBufferParameterui64vNV_params
+{
+    GLenum target;
+    GLenum pname;
+    GLuint64EXT *params;
+};
+
+struct glGetBufferPointerv_params
+{
+    GLenum target;
+    GLenum pname;
+    void **params;
+};
+
+struct glGetBufferPointervARB_params
+{
+    GLenum target;
+    GLenum pname;
+    void **params;
+};
+
+struct glGetBufferSubData_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr size;
+    void *data;
+};
+
+struct glGetBufferSubDataARB_params
+{
+    GLenum target;
+    GLintptrARB offset;
+    GLsizeiptrARB size;
+    void *data;
+};
+
+struct glGetClipPlanefOES_params
+{
+    GLenum plane;
+    GLfloat *equation;
+};
+
+struct glGetClipPlanexOES_params
+{
+    GLenum plane;
+    GLfixed *equation;
+};
+
+struct glGetColorTable_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *table;
+};
+
+struct glGetColorTableEXT_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *data;
+};
+
+struct glGetColorTableParameterfv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetColorTableParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetColorTableParameterfvSGI_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetColorTableParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetColorTableParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetColorTableParameterivSGI_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetColorTableSGI_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *table;
+};
+
+struct glGetCombinerInputParameterfvNV_params
+{
+    GLenum stage;
+    GLenum portion;
+    GLenum variable;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetCombinerInputParameterivNV_params
+{
+    GLenum stage;
+    GLenum portion;
+    GLenum variable;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetCombinerOutputParameterfvNV_params
+{
+    GLenum stage;
+    GLenum portion;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetCombinerOutputParameterivNV_params
+{
+    GLenum stage;
+    GLenum portion;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetCombinerStageParameterfvNV_params
+{
+    GLenum stage;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetCommandHeaderNV_params
+{
+    GLenum tokenID;
+    GLuint size;
+    GLuint ret;
+};
+
+struct glGetCompressedMultiTexImageEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint lod;
+    void *img;
+};
+
+struct glGetCompressedTexImage_params
+{
+    GLenum target;
+    GLint level;
+    void *img;
+};
+
+struct glGetCompressedTexImageARB_params
+{
+    GLenum target;
+    GLint level;
+    void *img;
+};
+
+struct glGetCompressedTextureImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLsizei bufSize;
+    void *pixels;
+};
+
+struct glGetCompressedTextureImageEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint lod;
+    void *img;
+};
+
+struct glGetCompressedTextureSubImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLsizei bufSize;
+    void *pixels;
+};
+
+struct glGetConvolutionFilter_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *image;
+};
+
+struct glGetConvolutionFilterEXT_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *image;
+};
+
+struct glGetConvolutionParameterfv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetConvolutionParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetConvolutionParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetConvolutionParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetConvolutionParameterxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetCoverageModulationTableNV_params
+{
+    GLsizei bufSize;
+    GLfloat *v;
+};
+
+struct glGetDebugMessageLog_params
+{
+    GLuint count;
+    GLsizei bufSize;
+    GLenum *sources;
+    GLenum *types;
+    GLuint *ids;
+    GLenum *severities;
+    GLsizei *lengths;
+    GLchar *messageLog;
+    GLuint ret;
+};
+
+struct glGetDebugMessageLogAMD_params
+{
+    GLuint count;
+    GLsizei bufSize;
+    GLenum *categories;
+    GLuint *severities;
+    GLuint *ids;
+    GLsizei *lengths;
+    GLchar *message;
+    GLuint ret;
+};
+
+struct glGetDebugMessageLogARB_params
+{
+    GLuint count;
+    GLsizei bufSize;
+    GLenum *sources;
+    GLenum *types;
+    GLuint *ids;
+    GLenum *severities;
+    GLsizei *lengths;
+    GLchar *messageLog;
+    GLuint ret;
+};
+
+struct glGetDetailTexFuncSGIS_params
+{
+    GLenum target;
+    GLfloat *points;
+};
+
+struct glGetDoubleIndexedvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble *data;
+};
+
+struct glGetDoublei_v_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble *data;
+};
+
+struct glGetDoublei_vEXT_params
+{
+    GLenum pname;
+    GLuint index;
+    GLdouble *params;
+};
+
+struct glGetFenceivNV_params
+{
+    GLuint fence;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFinalCombinerInputParameterfvNV_params
+{
+    GLenum variable;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetFinalCombinerInputParameterivNV_params
+{
+    GLenum variable;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFirstPerfQueryIdINTEL_params
+{
+    GLuint *queryId;
+};
+
+struct glGetFixedvOES_params
+{
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetFloatIndexedvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat *data;
+};
+
+struct glGetFloati_v_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat *data;
+};
+
+struct glGetFloati_vEXT_params
+{
+    GLenum pname;
+    GLuint index;
+    GLfloat *params;
+};
+
+struct glGetFogFuncSGIS_params
+{
+    GLfloat *points;
+};
+
+struct glGetFragDataIndex_params
+{
+    GLuint program;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetFragDataLocation_params
+{
+    GLuint program;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetFragDataLocationEXT_params
+{
+    GLuint program;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetFragmentLightfvSGIX_params
+{
+    GLenum light;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetFragmentLightivSGIX_params
+{
+    GLenum light;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFragmentMaterialfvSGIX_params
+{
+    GLenum face;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetFragmentMaterialivSGIX_params
+{
+    GLenum face;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFramebufferAttachmentParameteriv_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFramebufferAttachmentParameterivEXT_params
+{
+    GLenum target;
+    GLenum attachment;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFramebufferParameterfvAMD_params
+{
+    GLenum target;
+    GLenum pname;
+    GLuint numsamples;
+    GLuint pixelindex;
+    GLsizei size;
+    GLfloat *values;
+};
+
+struct glGetFramebufferParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFramebufferParameterivEXT_params
+{
+    GLuint framebuffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetFramebufferParameterivMESA_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetGraphicsResetStatus_params
+{
+    GLenum ret;
+};
+
+struct glGetGraphicsResetStatusARB_params
+{
+    GLenum ret;
+};
+
+struct glGetHandleARB_params
+{
+    GLenum pname;
+    GLhandleARB ret;
+};
+
+struct glGetHistogram_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    void *values;
+};
+
+struct glGetHistogramEXT_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    void *values;
+};
+
+struct glGetHistogramParameterfv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetHistogramParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetHistogramParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetHistogramParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetHistogramParameterxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetImageHandleARB_params
+{
+    GLuint texture;
+    GLint level;
+    GLboolean layered;
+    GLint layer;
+    GLenum format;
+    GLuint64 ret;
+};
+
+struct glGetImageHandleNV_params
+{
+    GLuint texture;
+    GLint level;
+    GLboolean layered;
+    GLint layer;
+    GLenum format;
+    GLuint64 ret;
+};
+
+struct glGetImageTransformParameterfvHP_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetImageTransformParameterivHP_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetInfoLogARB_params
+{
+    GLhandleARB obj;
+    GLsizei maxLength;
+    GLsizei *length;
+    GLcharARB *infoLog;
+};
+
+struct glGetInstrumentsSGIX_params
+{
+    GLint ret;
+};
+
+struct glGetInteger64i_v_params
+{
+    GLenum target;
+    GLuint index;
+    GLint64 *data;
+};
+
+struct glGetInteger64v_params
+{
+    GLenum pname;
+    GLint64 *data;
+};
+
+struct glGetIntegerIndexedvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLint *data;
+};
+
+struct glGetIntegeri_v_params
+{
+    GLenum target;
+    GLuint index;
+    GLint *data;
+};
+
+struct glGetIntegerui64i_vNV_params
+{
+    GLenum value;
+    GLuint index;
+    GLuint64EXT *result;
+};
+
+struct glGetIntegerui64vNV_params
+{
+    GLenum value;
+    GLuint64EXT *result;
+};
+
+struct glGetInternalformatSampleivNV_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei samples;
+    GLenum pname;
+    GLsizei count;
+    GLint *params;
+};
+
+struct glGetInternalformati64v_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLenum pname;
+    GLsizei count;
+    GLint64 *params;
+};
+
+struct glGetInternalformativ_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLenum pname;
+    GLsizei count;
+    GLint *params;
+};
+
+struct glGetInvariantBooleanvEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLboolean *data;
+};
+
+struct glGetInvariantFloatvEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLfloat *data;
+};
+
+struct glGetInvariantIntegervEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLint *data;
+};
+
+struct glGetLightxOES_params
+{
+    GLenum light;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetListParameterfvSGIX_params
+{
+    GLuint list;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetListParameterivSGIX_params
+{
+    GLuint list;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetLocalConstantBooleanvEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLboolean *data;
+};
+
+struct glGetLocalConstantFloatvEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLfloat *data;
+};
+
+struct glGetLocalConstantIntegervEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLint *data;
+};
+
+struct glGetMapAttribParameterfvNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMapAttribParameterivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMapControlPointsNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum type;
+    GLsizei ustride;
+    GLsizei vstride;
+    GLboolean packed;
+    void *points;
+};
+
+struct glGetMapParameterfvNV_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMapParameterivNV_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMapxvOES_params
+{
+    GLenum target;
+    GLenum query;
+    GLfixed *v;
+};
+
+struct glGetMaterialxOES_params
+{
+    GLenum face;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glGetMemoryObjectDetachedResourcesuivNV_params
+{
+    GLuint memory;
+    GLenum pname;
+    GLint first;
+    GLsizei count;
+    GLuint *params;
+};
+
+struct glGetMemoryObjectParameterivEXT_params
+{
+    GLuint memoryObject;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMinmax_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    void *values;
+};
+
+struct glGetMinmaxEXT_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    void *values;
+};
+
+struct glGetMinmaxParameterfv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMinmaxParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMinmaxParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMinmaxParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMultiTexEnvfvEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMultiTexEnvivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMultiTexGendvEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetMultiTexGenfvEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMultiTexGenivEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMultiTexImageEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum format;
+    GLenum type;
+    void *pixels;
+};
+
+struct glGetMultiTexLevelParameterfvEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMultiTexLevelParameterivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMultiTexParameterIivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMultiTexParameterIuivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetMultiTexParameterfvEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetMultiTexParameterivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetMultisamplefv_params
+{
+    GLenum pname;
+    GLuint index;
+    GLfloat *val;
+};
+
+struct glGetMultisamplefvNV_params
+{
+    GLenum pname;
+    GLuint index;
+    GLfloat *val;
+};
+
+struct glGetNamedBufferParameteri64v_params
+{
+    GLuint buffer;
+    GLenum pname;
+    GLint64 *params;
+};
+
+struct glGetNamedBufferParameteriv_params
+{
+    GLuint buffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedBufferParameterivEXT_params
+{
+    GLuint buffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedBufferParameterui64vNV_params
+{
+    GLuint buffer;
+    GLenum pname;
+    GLuint64EXT *params;
+};
+
+struct glGetNamedBufferPointerv_params
+{
+    GLuint buffer;
+    GLenum pname;
+    void **params;
+};
+
+struct glGetNamedBufferPointervEXT_params
+{
+    GLuint buffer;
+    GLenum pname;
+    void **params;
+};
+
+struct glGetNamedBufferSubData_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    void *data;
+};
+
+struct glGetNamedBufferSubDataEXT_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    void *data;
+};
+
+struct glGetNamedFramebufferAttachmentParameteriv_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedFramebufferAttachmentParameterivEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedFramebufferParameterfvAMD_params
+{
+    GLuint framebuffer;
+    GLenum pname;
+    GLuint numsamples;
+    GLuint pixelindex;
+    GLsizei size;
+    GLfloat *values;
+};
+
+struct glGetNamedFramebufferParameteriv_params
+{
+    GLuint framebuffer;
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetNamedFramebufferParameterivEXT_params
+{
+    GLuint framebuffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedProgramLocalParameterIivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLint *params;
+};
+
+struct glGetNamedProgramLocalParameterIuivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLuint *params;
+};
+
+struct glGetNamedProgramLocalParameterdvEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLdouble *params;
+};
+
+struct glGetNamedProgramLocalParameterfvEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLfloat *params;
+};
+
+struct glGetNamedProgramStringEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLenum pname;
+    void *string;
+};
+
+struct glGetNamedProgramivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedRenderbufferParameteriv_params
+{
+    GLuint renderbuffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedRenderbufferParameterivEXT_params
+{
+    GLuint renderbuffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNamedStringARB_params
+{
+    GLint namelen;
+    const GLchar *name;
+    GLsizei bufSize;
+    GLint *stringlen;
+    GLchar *string;
+};
+
+struct glGetNamedStringivARB_params
+{
+    GLint namelen;
+    const GLchar *name;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetNextPerfQueryIdINTEL_params
+{
+    GLuint queryId;
+    GLuint *nextQueryId;
+};
+
+struct glGetObjectBufferfvATI_params
+{
+    GLuint buffer;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetObjectBufferivATI_params
+{
+    GLuint buffer;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetObjectLabel_params
+{
+    GLenum identifier;
+    GLuint name;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *label;
+};
+
+struct glGetObjectLabelEXT_params
+{
+    GLenum type;
+    GLuint object;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *label;
+};
+
+struct glGetObjectParameterfvARB_params
+{
+    GLhandleARB obj;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetObjectParameterivAPPLE_params
+{
+    GLenum objectType;
+    GLuint name;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetObjectParameterivARB_params
+{
+    GLhandleARB obj;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetObjectPtrLabel_params
+{
+    const void *ptr;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *label;
+};
+
+struct glGetOcclusionQueryivNV_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetOcclusionQueryuivNV_params
+{
+    GLuint id;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetPathColorGenfvNV_params
+{
+    GLenum color;
+    GLenum pname;
+    GLfloat *value;
+};
+
+struct glGetPathColorGenivNV_params
+{
+    GLenum color;
+    GLenum pname;
+    GLint *value;
+};
+
+struct glGetPathCommandsNV_params
+{
+    GLuint path;
+    GLubyte *commands;
+};
+
+struct glGetPathCoordsNV_params
+{
+    GLuint path;
+    GLfloat *coords;
+};
+
+struct glGetPathDashArrayNV_params
+{
+    GLuint path;
+    GLfloat *dashArray;
+};
+
+struct glGetPathLengthNV_params
+{
+    GLuint path;
+    GLsizei startSegment;
+    GLsizei numSegments;
+    GLfloat ret;
+};
+
+struct glGetPathMetricRangeNV_params
+{
+    GLbitfield metricQueryMask;
+    GLuint firstPathName;
+    GLsizei numPaths;
+    GLsizei stride;
+    GLfloat *metrics;
+};
+
+struct glGetPathMetricsNV_params
+{
+    GLbitfield metricQueryMask;
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLsizei stride;
+    GLfloat *metrics;
+};
+
+struct glGetPathParameterfvNV_params
+{
+    GLuint path;
+    GLenum pname;
+    GLfloat *value;
+};
+
+struct glGetPathParameterivNV_params
+{
+    GLuint path;
+    GLenum pname;
+    GLint *value;
+};
+
+struct glGetPathSpacingNV_params
+{
+    GLenum pathListMode;
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLfloat advanceScale;
+    GLfloat kerningScale;
+    GLenum transformType;
+    GLfloat *returnedSpacing;
+};
+
+struct glGetPathTexGenfvNV_params
+{
+    GLenum texCoordSet;
+    GLenum pname;
+    GLfloat *value;
+};
+
+struct glGetPathTexGenivNV_params
+{
+    GLenum texCoordSet;
+    GLenum pname;
+    GLint *value;
+};
+
+struct glGetPerfCounterInfoINTEL_params
+{
+    GLuint queryId;
+    GLuint counterId;
+    GLuint counterNameLength;
+    GLchar *counterName;
+    GLuint counterDescLength;
+    GLchar *counterDesc;
+    GLuint *counterOffset;
+    GLuint *counterDataSize;
+    GLuint *counterTypeEnum;
+    GLuint *counterDataTypeEnum;
+    GLuint64 *rawCounterMaxValue;
+};
+
+struct glGetPerfMonitorCounterDataAMD_params
+{
+    GLuint monitor;
+    GLenum pname;
+    GLsizei dataSize;
+    GLuint *data;
+    GLint *bytesWritten;
+};
+
+struct glGetPerfMonitorCounterInfoAMD_params
+{
+    GLuint group;
+    GLuint counter;
+    GLenum pname;
+    void *data;
+};
+
+struct glGetPerfMonitorCounterStringAMD_params
+{
+    GLuint group;
+    GLuint counter;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *counterString;
+};
+
+struct glGetPerfMonitorCountersAMD_params
+{
+    GLuint group;
+    GLint *numCounters;
+    GLint *maxActiveCounters;
+    GLsizei counterSize;
+    GLuint *counters;
+};
+
+struct glGetPerfMonitorGroupStringAMD_params
+{
+    GLuint group;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *groupString;
+};
+
+struct glGetPerfMonitorGroupsAMD_params
+{
+    GLint *numGroups;
+    GLsizei groupsSize;
+    GLuint *groups;
+};
+
+struct glGetPerfQueryDataINTEL_params
+{
+    GLuint queryHandle;
+    GLuint flags;
+    GLsizei dataSize;
+    void *data;
+    GLuint *bytesWritten;
+};
+
+struct glGetPerfQueryIdByNameINTEL_params
+{
+    GLchar *queryName;
+    GLuint *queryId;
+};
+
+struct glGetPerfQueryInfoINTEL_params
+{
+    GLuint queryId;
+    GLuint queryNameLength;
+    GLchar *queryName;
+    GLuint *dataSize;
+    GLuint *noCounters;
+    GLuint *noInstances;
+    GLuint *capsMask;
+};
+
+struct glGetPixelMapxv_params
+{
+    GLenum map;
+    GLint size;
+    GLfixed *values;
+};
+
+struct glGetPixelTexGenParameterfvSGIS_params
+{
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetPixelTexGenParameterivSGIS_params
+{
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetPixelTransformParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetPixelTransformParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetPointerIndexedvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    void **data;
+};
+
+struct glGetPointeri_vEXT_params
+{
+    GLenum pname;
+    GLuint index;
+    void **params;
+};
+
+struct glGetPointervEXT_params
+{
+    GLenum pname;
+    void **params;
+};
+
+struct glGetProgramBinary_params
+{
+    GLuint program;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLenum *binaryFormat;
+    void *binary;
+};
+
+struct glGetProgramEnvParameterIivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLint *params;
+};
+
+struct glGetProgramEnvParameterIuivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint *params;
+};
+
+struct glGetProgramEnvParameterdvARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble *params;
+};
+
+struct glGetProgramEnvParameterfvARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat *params;
+};
+
+struct glGetProgramInfoLog_params
+{
+    GLuint program;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *infoLog;
+};
+
+struct glGetProgramInterfaceiv_params
+{
+    GLuint program;
+    GLenum programInterface;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetProgramLocalParameterIivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLint *params;
+};
+
+struct glGetProgramLocalParameterIuivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint *params;
+};
+
+struct glGetProgramLocalParameterdvARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble *params;
+};
+
+struct glGetProgramLocalParameterfvARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat *params;
+};
+
+struct glGetProgramNamedParameterdvNV_params
+{
+    GLuint id;
+    GLsizei len;
+    const GLubyte *name;
+    GLdouble *params;
+};
+
+struct glGetProgramNamedParameterfvNV_params
+{
+    GLuint id;
+    GLsizei len;
+    const GLubyte *name;
+    GLfloat *params;
+};
+
+struct glGetProgramParameterdvNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetProgramParameterfvNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetProgramPipelineInfoLog_params
+{
+    GLuint pipeline;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *infoLog;
+};
+
+struct glGetProgramPipelineiv_params
+{
+    GLuint pipeline;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetProgramResourceIndex_params
+{
+    GLuint program;
+    GLenum programInterface;
+    const GLchar *name;
+    GLuint ret;
+};
+
+struct glGetProgramResourceLocation_params
+{
+    GLuint program;
+    GLenum programInterface;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetProgramResourceLocationIndex_params
+{
+    GLuint program;
+    GLenum programInterface;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetProgramResourceName_params
+{
+    GLuint program;
+    GLenum programInterface;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *name;
+};
+
+struct glGetProgramResourcefvNV_params
+{
+    GLuint program;
+    GLenum programInterface;
+    GLuint index;
+    GLsizei propCount;
+    const GLenum *props;
+    GLsizei count;
+    GLsizei *length;
+    GLfloat *params;
+};
+
+struct glGetProgramResourceiv_params
+{
+    GLuint program;
+    GLenum programInterface;
+    GLuint index;
+    GLsizei propCount;
+    const GLenum *props;
+    GLsizei count;
+    GLsizei *length;
+    GLint *params;
+};
+
+struct glGetProgramStageiv_params
+{
+    GLuint program;
+    GLenum shadertype;
+    GLenum pname;
+    GLint *values;
+};
+
+struct glGetProgramStringARB_params
+{
+    GLenum target;
+    GLenum pname;
+    void *string;
+};
+
+struct glGetProgramStringNV_params
+{
+    GLuint id;
+    GLenum pname;
+    GLubyte *program;
+};
+
+struct glGetProgramSubroutineParameteruivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint *param;
+};
+
+struct glGetProgramiv_params
+{
+    GLuint program;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetProgramivARB_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetProgramivNV_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetQueryBufferObjecti64v_params
+{
+    GLuint id;
+    GLuint buffer;
+    GLenum pname;
+    GLintptr offset;
+};
+
+struct glGetQueryBufferObjectiv_params
+{
+    GLuint id;
+    GLuint buffer;
+    GLenum pname;
+    GLintptr offset;
+};
+
+struct glGetQueryBufferObjectui64v_params
+{
+    GLuint id;
+    GLuint buffer;
+    GLenum pname;
+    GLintptr offset;
+};
+
+struct glGetQueryBufferObjectuiv_params
+{
+    GLuint id;
+    GLuint buffer;
+    GLenum pname;
+    GLintptr offset;
+};
+
+struct glGetQueryIndexediv_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetQueryObjecti64v_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint64 *params;
+};
+
+struct glGetQueryObjecti64vEXT_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint64 *params;
+};
+
+struct glGetQueryObjectiv_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetQueryObjectivARB_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetQueryObjectui64v_params
+{
+    GLuint id;
+    GLenum pname;
+    GLuint64 *params;
+};
+
+struct glGetQueryObjectui64vEXT_params
+{
+    GLuint id;
+    GLenum pname;
+    GLuint64 *params;
+};
+
+struct glGetQueryObjectuiv_params
+{
+    GLuint id;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetQueryObjectuivARB_params
+{
+    GLuint id;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetQueryiv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetQueryivARB_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetRenderbufferParameteriv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetRenderbufferParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetSamplerParameterIiv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetSamplerParameterIuiv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetSamplerParameterfv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetSamplerParameteriv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetSemaphoreParameterui64vEXT_params
+{
+    GLuint semaphore;
+    GLenum pname;
+    GLuint64 *params;
+};
+
+struct glGetSeparableFilter_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *row;
+    void *column;
+    void *span;
+};
+
+struct glGetSeparableFilterEXT_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    void *row;
+    void *column;
+    void *span;
+};
+
+struct glGetShaderInfoLog_params
+{
+    GLuint shader;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *infoLog;
+};
+
+struct glGetShaderPrecisionFormat_params
+{
+    GLenum shadertype;
+    GLenum precisiontype;
+    GLint *range;
+    GLint *precision;
+};
+
+struct glGetShaderSource_params
+{
+    GLuint shader;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLchar *source;
+};
+
+struct glGetShaderSourceARB_params
+{
+    GLhandleARB obj;
+    GLsizei maxLength;
+    GLsizei *length;
+    GLcharARB *source;
+};
+
+struct glGetShaderiv_params
+{
+    GLuint shader;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetShadingRateImagePaletteNV_params
+{
+    GLuint viewport;
+    GLuint entry;
+    GLenum *rate;
+};
+
+struct glGetShadingRateSampleLocationivNV_params
+{
+    GLenum rate;
+    GLuint samples;
+    GLuint index;
+    GLint *location;
+};
+
+struct glGetSharpenTexFuncSGIS_params
+{
+    GLenum target;
+    GLfloat *points;
+};
+
+struct glGetStageIndexNV_params
+{
+    GLenum shadertype;
+    GLushort ret;
+};
+
+struct glGetStringi_params
+{
+    GLenum name;
+    GLuint index;
+    const GLubyte *ret;
+};
+
+struct glGetSubroutineIndex_params
+{
+    GLuint program;
+    GLenum shadertype;
+    const GLchar *name;
+    GLuint ret;
+};
+
+struct glGetSubroutineUniformLocation_params
+{
+    GLuint program;
+    GLenum shadertype;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetSynciv_params
+{
+    GLsync sync;
+    GLenum pname;
+    GLsizei count;
+    GLsizei *length;
+    GLint *values;
+};
+
+struct glGetTexBumpParameterfvATI_params
+{
+    GLenum pname;
+    GLfloat *param;
+};
+
+struct glGetTexBumpParameterivATI_params
+{
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetTexEnvxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetTexFilterFuncSGIS_params
+{
+    GLenum target;
+    GLenum filter;
+    GLfloat *weights;
+};
+
+struct glGetTexGenxvOES_params
+{
+    GLenum coord;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetTexLevelParameterxvOES_params
+{
+    GLenum target;
+    GLint level;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetTexParameterIiv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTexParameterIivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTexParameterIuiv_params
+{
+    GLenum target;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetTexParameterIuivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetTexParameterPointervAPPLE_params
+{
+    GLenum target;
+    GLenum pname;
+    void **params;
+};
+
+struct glGetTexParameterxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed *params;
+};
+
+struct glGetTextureHandleARB_params
+{
+    GLuint texture;
+    GLuint64 ret;
+};
+
+struct glGetTextureHandleNV_params
+{
+    GLuint texture;
+    GLuint64 ret;
+};
+
+struct glGetTextureImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *pixels;
+};
+
+struct glGetTextureImageEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum format;
+    GLenum type;
+    void *pixels;
+};
+
+struct glGetTextureLevelParameterfv_params
+{
+    GLuint texture;
+    GLint level;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetTextureLevelParameterfvEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetTextureLevelParameteriv_params
+{
+    GLuint texture;
+    GLint level;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTextureLevelParameterivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTextureParameterIiv_params
+{
+    GLuint texture;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTextureParameterIivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTextureParameterIuiv_params
+{
+    GLuint texture;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetTextureParameterIuivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetTextureParameterfv_params
+{
+    GLuint texture;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetTextureParameterfvEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetTextureParameteriv_params
+{
+    GLuint texture;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTextureParameterivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTextureSamplerHandleARB_params
+{
+    GLuint texture;
+    GLuint sampler;
+    GLuint64 ret;
+};
+
+struct glGetTextureSamplerHandleNV_params
+{
+    GLuint texture;
+    GLuint sampler;
+    GLuint64 ret;
+};
+
+struct glGetTextureSubImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *pixels;
+};
+
+struct glGetTrackMatrixivNV_params
+{
+    GLenum target;
+    GLuint address;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetTransformFeedbackVarying_params
+{
+    GLuint program;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLsizei *size;
+    GLenum *type;
+    GLchar *name;
+};
+
+struct glGetTransformFeedbackVaryingEXT_params
+{
+    GLuint program;
+    GLuint index;
+    GLsizei bufSize;
+    GLsizei *length;
+    GLsizei *size;
+    GLenum *type;
+    GLchar *name;
+};
+
+struct glGetTransformFeedbackVaryingNV_params
+{
+    GLuint program;
+    GLuint index;
+    GLint *location;
+};
+
+struct glGetTransformFeedbacki64_v_params
+{
+    GLuint xfb;
+    GLenum pname;
+    GLuint index;
+    GLint64 *param;
+};
+
+struct glGetTransformFeedbacki_v_params
+{
+    GLuint xfb;
+    GLenum pname;
+    GLuint index;
+    GLint *param;
+};
+
+struct glGetTransformFeedbackiv_params
+{
+    GLuint xfb;
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetUniformBlockIndex_params
+{
+    GLuint program;
+    const GLchar *uniformBlockName;
+    GLuint ret;
+};
+
+struct glGetUniformBufferSizeEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLint ret;
+};
+
+struct glGetUniformIndices_params
+{
+    GLuint program;
+    GLsizei uniformCount;
+    const GLchar *const*uniformNames;
+    GLuint *uniformIndices;
+};
+
+struct glGetUniformLocation_params
+{
+    GLuint program;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetUniformLocationARB_params
+{
+    GLhandleARB programObj;
+    const GLcharARB *name;
+    GLint ret;
+};
+
+struct glGetUniformOffsetEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLintptr ret;
+};
+
+struct glGetUniformSubroutineuiv_params
+{
+    GLenum shadertype;
+    GLint location;
+    GLuint *params;
+};
+
+struct glGetUniformdv_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble *params;
+};
+
+struct glGetUniformfv_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat *params;
+};
+
+struct glGetUniformfvARB_params
+{
+    GLhandleARB programObj;
+    GLint location;
+    GLfloat *params;
+};
+
+struct glGetUniformi64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLint64 *params;
+};
+
+struct glGetUniformi64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLint64EXT *params;
+};
+
+struct glGetUniformiv_params
+{
+    GLuint program;
+    GLint location;
+    GLint *params;
+};
+
+struct glGetUniformivARB_params
+{
+    GLhandleARB programObj;
+    GLint location;
+    GLint *params;
+};
+
+struct glGetUniformui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 *params;
+};
+
+struct glGetUniformui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64EXT *params;
+};
+
+struct glGetUniformuiv_params
+{
+    GLuint program;
+    GLint location;
+    GLuint *params;
+};
+
+struct glGetUniformuivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLuint *params;
+};
+
+struct glGetUnsignedBytei_vEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLubyte *data;
+};
+
+struct glGetUnsignedBytevEXT_params
+{
+    GLenum pname;
+    GLubyte *data;
+};
+
+struct glGetVariantArrayObjectfvATI_params
+{
+    GLuint id;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetVariantArrayObjectivATI_params
+{
+    GLuint id;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVariantBooleanvEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLboolean *data;
+};
+
+struct glGetVariantFloatvEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLfloat *data;
+};
+
+struct glGetVariantIntegervEXT_params
+{
+    GLuint id;
+    GLenum value;
+    GLint *data;
+};
+
+struct glGetVariantPointervEXT_params
+{
+    GLuint id;
+    GLenum value;
+    void **data;
+};
+
+struct glGetVaryingLocationNV_params
+{
+    GLuint program;
+    const GLchar *name;
+    GLint ret;
+};
+
+struct glGetVertexArrayIndexed64iv_params
+{
+    GLuint vaobj;
+    GLuint index;
+    GLenum pname;
+    GLint64 *param;
+};
+
+struct glGetVertexArrayIndexediv_params
+{
+    GLuint vaobj;
+    GLuint index;
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetVertexArrayIntegeri_vEXT_params
+{
+    GLuint vaobj;
+    GLuint index;
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetVertexArrayIntegervEXT_params
+{
+    GLuint vaobj;
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetVertexArrayPointeri_vEXT_params
+{
+    GLuint vaobj;
+    GLuint index;
+    GLenum pname;
+    void **param;
+};
+
+struct glGetVertexArrayPointervEXT_params
+{
+    GLuint vaobj;
+    GLenum pname;
+    void **param;
+};
+
+struct glGetVertexArrayiv_params
+{
+    GLuint vaobj;
+    GLenum pname;
+    GLint *param;
+};
+
+struct glGetVertexAttribArrayObjectfvATI_params
+{
+    GLuint index;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetVertexAttribArrayObjectivATI_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVertexAttribIiv_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVertexAttribIivEXT_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVertexAttribIuiv_params
+{
+    GLuint index;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetVertexAttribIuivEXT_params
+{
+    GLuint index;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetVertexAttribLdv_params
+{
+    GLuint index;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetVertexAttribLdvEXT_params
+{
+    GLuint index;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetVertexAttribLi64vNV_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint64EXT *params;
+};
+
+struct glGetVertexAttribLui64vARB_params
+{
+    GLuint index;
+    GLenum pname;
+    GLuint64EXT *params;
+};
+
+struct glGetVertexAttribLui64vNV_params
+{
+    GLuint index;
+    GLenum pname;
+    GLuint64EXT *params;
+};
+
+struct glGetVertexAttribPointerv_params
+{
+    GLuint index;
+    GLenum pname;
+    void **pointer;
+};
+
+struct glGetVertexAttribPointervARB_params
+{
+    GLuint index;
+    GLenum pname;
+    void **pointer;
+};
+
+struct glGetVertexAttribPointervNV_params
+{
+    GLuint index;
+    GLenum pname;
+    void **pointer;
+};
+
+struct glGetVertexAttribdv_params
+{
+    GLuint index;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetVertexAttribdvARB_params
+{
+    GLuint index;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetVertexAttribdvNV_params
+{
+    GLuint index;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetVertexAttribfv_params
+{
+    GLuint index;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetVertexAttribfvARB_params
+{
+    GLuint index;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetVertexAttribfvNV_params
+{
+    GLuint index;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetVertexAttribiv_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVertexAttribivARB_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVertexAttribivNV_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVideoCaptureStreamdvNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum pname;
+    GLdouble *params;
+};
+
+struct glGetVideoCaptureStreamfvNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum pname;
+    GLfloat *params;
+};
+
+struct glGetVideoCaptureStreamivNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVideoCaptureivNV_params
+{
+    GLuint video_capture_slot;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVideoi64vNV_params
+{
+    GLuint video_slot;
+    GLenum pname;
+    GLint64EXT *params;
+};
+
+struct glGetVideoivNV_params
+{
+    GLuint video_slot;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glGetVideoui64vNV_params
+{
+    GLuint video_slot;
+    GLenum pname;
+    GLuint64EXT *params;
+};
+
+struct glGetVideouivNV_params
+{
+    GLuint video_slot;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glGetVkProcAddrNV_params
+{
+    const GLchar *name;
+    GLVULKANPROCNV ret;
+};
+
+struct glGetnColorTable_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *table;
+};
+
+struct glGetnColorTableARB_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *table;
+};
+
+struct glGetnCompressedTexImage_params
+{
+    GLenum target;
+    GLint lod;
+    GLsizei bufSize;
+    void *pixels;
+};
+
+struct glGetnCompressedTexImageARB_params
+{
+    GLenum target;
+    GLint lod;
+    GLsizei bufSize;
+    void *img;
+};
+
+struct glGetnConvolutionFilter_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *image;
+};
+
+struct glGetnConvolutionFilterARB_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *image;
+};
+
+struct glGetnHistogram_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *values;
+};
+
+struct glGetnHistogramARB_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *values;
+};
+
+struct glGetnMapdv_params
+{
+    GLenum target;
+    GLenum query;
+    GLsizei bufSize;
+    GLdouble *v;
+};
+
+struct glGetnMapdvARB_params
+{
+    GLenum target;
+    GLenum query;
+    GLsizei bufSize;
+    GLdouble *v;
+};
+
+struct glGetnMapfv_params
+{
+    GLenum target;
+    GLenum query;
+    GLsizei bufSize;
+    GLfloat *v;
+};
+
+struct glGetnMapfvARB_params
+{
+    GLenum target;
+    GLenum query;
+    GLsizei bufSize;
+    GLfloat *v;
+};
+
+struct glGetnMapiv_params
+{
+    GLenum target;
+    GLenum query;
+    GLsizei bufSize;
+    GLint *v;
+};
+
+struct glGetnMapivARB_params
+{
+    GLenum target;
+    GLenum query;
+    GLsizei bufSize;
+    GLint *v;
+};
+
+struct glGetnMinmax_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *values;
+};
+
+struct glGetnMinmaxARB_params
+{
+    GLenum target;
+    GLboolean reset;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *values;
+};
+
+struct glGetnPixelMapfv_params
+{
+    GLenum map;
+    GLsizei bufSize;
+    GLfloat *values;
+};
+
+struct glGetnPixelMapfvARB_params
+{
+    GLenum map;
+    GLsizei bufSize;
+    GLfloat *values;
+};
+
+struct glGetnPixelMapuiv_params
+{
+    GLenum map;
+    GLsizei bufSize;
+    GLuint *values;
+};
+
+struct glGetnPixelMapuivARB_params
+{
+    GLenum map;
+    GLsizei bufSize;
+    GLuint *values;
+};
+
+struct glGetnPixelMapusv_params
+{
+    GLenum map;
+    GLsizei bufSize;
+    GLushort *values;
+};
+
+struct glGetnPixelMapusvARB_params
+{
+    GLenum map;
+    GLsizei bufSize;
+    GLushort *values;
+};
+
+struct glGetnPolygonStipple_params
+{
+    GLsizei bufSize;
+    GLubyte *pattern;
+};
+
+struct glGetnPolygonStippleARB_params
+{
+    GLsizei bufSize;
+    GLubyte *pattern;
+};
+
+struct glGetnSeparableFilter_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    GLsizei rowBufSize;
+    void *row;
+    GLsizei columnBufSize;
+    void *column;
+    void *span;
+};
+
+struct glGetnSeparableFilterARB_params
+{
+    GLenum target;
+    GLenum format;
+    GLenum type;
+    GLsizei rowBufSize;
+    void *row;
+    GLsizei columnBufSize;
+    void *column;
+    void *span;
+};
+
+struct glGetnTexImage_params
+{
+    GLenum target;
+    GLint level;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *pixels;
+};
+
+struct glGetnTexImageARB_params
+{
+    GLenum target;
+    GLint level;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *img;
+};
+
+struct glGetnUniformdv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLdouble *params;
+};
+
+struct glGetnUniformdvARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLdouble *params;
+};
+
+struct glGetnUniformfv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLfloat *params;
+};
+
+struct glGetnUniformfvARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLfloat *params;
+};
+
+struct glGetnUniformi64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLint64 *params;
+};
+
+struct glGetnUniformiv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLint *params;
+};
+
+struct glGetnUniformivARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLint *params;
+};
+
+struct glGetnUniformui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLuint64 *params;
+};
+
+struct glGetnUniformuiv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLuint *params;
+};
+
+struct glGetnUniformuivARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei bufSize;
+    GLuint *params;
+};
+
+struct glGlobalAlphaFactorbSUN_params
+{
+    GLbyte factor;
+};
+
+struct glGlobalAlphaFactordSUN_params
+{
+    GLdouble factor;
+};
+
+struct glGlobalAlphaFactorfSUN_params
+{
+    GLfloat factor;
+};
+
+struct glGlobalAlphaFactoriSUN_params
+{
+    GLint factor;
+};
+
+struct glGlobalAlphaFactorsSUN_params
+{
+    GLshort factor;
+};
+
+struct glGlobalAlphaFactorubSUN_params
+{
+    GLubyte factor;
+};
+
+struct glGlobalAlphaFactoruiSUN_params
+{
+    GLuint factor;
+};
+
+struct glGlobalAlphaFactorusSUN_params
+{
+    GLushort factor;
+};
+
+struct glHintPGI_params
+{
+    GLenum target;
+    GLint mode;
+};
+
+struct glHistogram_params
+{
+    GLenum target;
+    GLsizei width;
+    GLenum internalformat;
+    GLboolean sink;
+};
+
+struct glHistogramEXT_params
+{
+    GLenum target;
+    GLsizei width;
+    GLenum internalformat;
+    GLboolean sink;
+};
+
+struct glIglooInterfaceSGIX_params
+{
+    GLenum pname;
+    const void *params;
+};
+
+struct glImageTransformParameterfHP_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glImageTransformParameterfvHP_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glImageTransformParameteriHP_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glImageTransformParameterivHP_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glImportMemoryFdEXT_params
+{
+    GLuint memory;
+    GLuint64 size;
+    GLenum handleType;
+    GLint fd;
+};
+
+struct glImportMemoryWin32HandleEXT_params
+{
+    GLuint memory;
+    GLuint64 size;
+    GLenum handleType;
+    void *handle;
+};
+
+struct glImportMemoryWin32NameEXT_params
+{
+    GLuint memory;
+    GLuint64 size;
+    GLenum handleType;
+    const void *name;
+};
+
+struct glImportSemaphoreFdEXT_params
+{
+    GLuint semaphore;
+    GLenum handleType;
+    GLint fd;
+};
+
+struct glImportSemaphoreWin32HandleEXT_params
+{
+    GLuint semaphore;
+    GLenum handleType;
+    void *handle;
+};
+
+struct glImportSemaphoreWin32NameEXT_params
+{
+    GLuint semaphore;
+    GLenum handleType;
+    const void *name;
+};
+
+struct glImportSyncEXT_params
+{
+    GLenum external_sync_type;
+    GLintptr external_sync;
+    GLbitfield flags;
+    GLsync ret;
+};
+
+struct glIndexFormatNV_params
+{
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glIndexFuncEXT_params
+{
+    GLenum func;
+    GLclampf ref;
+};
+
+struct glIndexMaterialEXT_params
+{
+    GLenum face;
+    GLenum mode;
+};
+
+struct glIndexPointerEXT_params
+{
+    GLenum type;
+    GLsizei stride;
+    GLsizei count;
+    const void *pointer;
+};
+
+struct glIndexPointerListIBM_params
+{
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glIndexxOES_params
+{
+    GLfixed component;
+};
+
+struct glIndexxvOES_params
+{
+    const GLfixed *component;
+};
+
+struct glInsertComponentEXT_params
+{
+    GLuint res;
+    GLuint src;
+    GLuint num;
+};
+
+struct glInsertEventMarkerEXT_params
+{
+    GLsizei length;
+    const GLchar *marker;
+};
+
+struct glInstrumentsBufferSGIX_params
+{
+    GLsizei size;
+    GLint *buffer;
+};
+
+struct glInterpolatePathsNV_params
+{
+    GLuint resultPath;
+    GLuint pathA;
+    GLuint pathB;
+    GLfloat weight;
+};
+
+struct glInvalidateBufferData_params
+{
+    GLuint buffer;
+};
+
+struct glInvalidateBufferSubData_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr length;
+};
+
+struct glInvalidateFramebuffer_params
+{
+    GLenum target;
+    GLsizei numAttachments;
+    const GLenum *attachments;
+};
+
+struct glInvalidateNamedFramebufferData_params
+{
+    GLuint framebuffer;
+    GLsizei numAttachments;
+    const GLenum *attachments;
+};
+
+struct glInvalidateNamedFramebufferSubData_params
+{
+    GLuint framebuffer;
+    GLsizei numAttachments;
+    const GLenum *attachments;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glInvalidateSubFramebuffer_params
+{
+    GLenum target;
+    GLsizei numAttachments;
+    const GLenum *attachments;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glInvalidateTexImage_params
+{
+    GLuint texture;
+    GLint level;
+};
+
+struct glInvalidateTexSubImage_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+};
+
+struct glIsAsyncMarkerSGIX_params
+{
+    GLuint marker;
+    GLboolean ret;
+};
+
+struct glIsBuffer_params
+{
+    GLuint buffer;
+    GLboolean ret;
+};
+
+struct glIsBufferARB_params
+{
+    GLuint buffer;
+    GLboolean ret;
+};
+
+struct glIsBufferResidentNV_params
+{
+    GLenum target;
+    GLboolean ret;
+};
+
+struct glIsCommandListNV_params
+{
+    GLuint list;
+    GLboolean ret;
+};
+
+struct glIsEnabledIndexedEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLboolean ret;
+};
+
+struct glIsEnabledi_params
+{
+    GLenum target;
+    GLuint index;
+    GLboolean ret;
+};
+
+struct glIsFenceAPPLE_params
+{
+    GLuint fence;
+    GLboolean ret;
+};
+
+struct glIsFenceNV_params
+{
+    GLuint fence;
+    GLboolean ret;
+};
+
+struct glIsFramebuffer_params
+{
+    GLuint framebuffer;
+    GLboolean ret;
+};
+
+struct glIsFramebufferEXT_params
+{
+    GLuint framebuffer;
+    GLboolean ret;
+};
+
+struct glIsImageHandleResidentARB_params
+{
+    GLuint64 handle;
+    GLboolean ret;
+};
+
+struct glIsImageHandleResidentNV_params
+{
+    GLuint64 handle;
+    GLboolean ret;
+};
+
+struct glIsMemoryObjectEXT_params
+{
+    GLuint memoryObject;
+    GLboolean ret;
+};
+
+struct glIsNameAMD_params
+{
+    GLenum identifier;
+    GLuint name;
+    GLboolean ret;
+};
+
+struct glIsNamedBufferResidentNV_params
+{
+    GLuint buffer;
+    GLboolean ret;
+};
+
+struct glIsNamedStringARB_params
+{
+    GLint namelen;
+    const GLchar *name;
+    GLboolean ret;
+};
+
+struct glIsObjectBufferATI_params
+{
+    GLuint buffer;
+    GLboolean ret;
+};
+
+struct glIsOcclusionQueryNV_params
+{
+    GLuint id;
+    GLboolean ret;
+};
+
+struct glIsPathNV_params
+{
+    GLuint path;
+    GLboolean ret;
+};
+
+struct glIsPointInFillPathNV_params
+{
+    GLuint path;
+    GLuint mask;
+    GLfloat x;
+    GLfloat y;
+    GLboolean ret;
+};
+
+struct glIsPointInStrokePathNV_params
+{
+    GLuint path;
+    GLfloat x;
+    GLfloat y;
+    GLboolean ret;
+};
+
+struct glIsProgram_params
+{
+    GLuint program;
+    GLboolean ret;
+};
+
+struct glIsProgramARB_params
+{
+    GLuint program;
+    GLboolean ret;
+};
+
+struct glIsProgramNV_params
+{
+    GLuint id;
+    GLboolean ret;
+};
+
+struct glIsProgramPipeline_params
+{
+    GLuint pipeline;
+    GLboolean ret;
+};
+
+struct glIsQuery_params
+{
+    GLuint id;
+    GLboolean ret;
+};
+
+struct glIsQueryARB_params
+{
+    GLuint id;
+    GLboolean ret;
+};
+
+struct glIsRenderbuffer_params
+{
+    GLuint renderbuffer;
+    GLboolean ret;
+};
+
+struct glIsRenderbufferEXT_params
+{
+    GLuint renderbuffer;
+    GLboolean ret;
+};
+
+struct glIsSampler_params
+{
+    GLuint sampler;
+    GLboolean ret;
+};
+
+struct glIsSemaphoreEXT_params
+{
+    GLuint semaphore;
+    GLboolean ret;
+};
+
+struct glIsShader_params
+{
+    GLuint shader;
+    GLboolean ret;
+};
+
+struct glIsStateNV_params
+{
+    GLuint state;
+    GLboolean ret;
+};
+
+struct glIsSync_params
+{
+    GLsync sync;
+    GLboolean ret;
+};
+
+struct glIsTextureEXT_params
+{
+    GLuint texture;
+    GLboolean ret;
+};
+
+struct glIsTextureHandleResidentARB_params
+{
+    GLuint64 handle;
+    GLboolean ret;
+};
+
+struct glIsTextureHandleResidentNV_params
+{
+    GLuint64 handle;
+    GLboolean ret;
+};
+
+struct glIsTransformFeedback_params
+{
+    GLuint id;
+    GLboolean ret;
+};
+
+struct glIsTransformFeedbackNV_params
+{
+    GLuint id;
+    GLboolean ret;
+};
+
+struct glIsVariantEnabledEXT_params
+{
+    GLuint id;
+    GLenum cap;
+    GLboolean ret;
+};
+
+struct glIsVertexArray_params
+{
+    GLuint array;
+    GLboolean ret;
+};
+
+struct glIsVertexArrayAPPLE_params
+{
+    GLuint array;
+    GLboolean ret;
+};
+
+struct glIsVertexAttribEnabledAPPLE_params
+{
+    GLuint index;
+    GLenum pname;
+    GLboolean ret;
+};
+
+struct glLGPUCopyImageSubDataNVX_params
+{
+    GLuint sourceGpu;
+    GLbitfield destinationGpuMask;
+    GLuint srcName;
+    GLenum srcTarget;
+    GLint srcLevel;
+    GLint srcX;
+    GLint srxY;
+    GLint srcZ;
+    GLuint dstName;
+    GLenum dstTarget;
+    GLint dstLevel;
+    GLint dstX;
+    GLint dstY;
+    GLint dstZ;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+};
+
+struct glLGPUInterlockNVX_params
+{
+};
+
+struct glLGPUNamedBufferSubDataNVX_params
+{
+    GLbitfield gpuMask;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    const void *data;
+};
+
+struct glLabelObjectEXT_params
+{
+    GLenum type;
+    GLuint object;
+    GLsizei length;
+    const GLchar *label;
+};
+
+struct glLightEnviSGIX_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glLightModelxOES_params
+{
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glLightModelxvOES_params
+{
+    GLenum pname;
+    const GLfixed *param;
+};
+
+struct glLightxOES_params
+{
+    GLenum light;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glLightxvOES_params
+{
+    GLenum light;
+    GLenum pname;
+    const GLfixed *params;
+};
+
+struct glLineWidthxOES_params
+{
+    GLfixed width;
+};
+
+struct glLinkProgram_params
+{
+    GLuint program;
+};
+
+struct glLinkProgramARB_params
+{
+    GLhandleARB programObj;
+};
+
+struct glListDrawCommandsStatesClientNV_params
+{
+    GLuint list;
+    GLuint segment;
+    const void **indirects;
+    const GLsizei *sizes;
+    const GLuint *states;
+    const GLuint *fbos;
+    GLuint count;
+};
+
+struct glListParameterfSGIX_params
+{
+    GLuint list;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glListParameterfvSGIX_params
+{
+    GLuint list;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glListParameteriSGIX_params
+{
+    GLuint list;
+    GLenum pname;
+    GLint param;
+};
+
+struct glListParameterivSGIX_params
+{
+    GLuint list;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glLoadIdentityDeformationMapSGIX_params
+{
+    GLbitfield mask;
+};
+
+struct glLoadMatrixxOES_params
+{
+    const GLfixed *m;
+};
+
+struct glLoadProgramNV_params
+{
+    GLenum target;
+    GLuint id;
+    GLsizei len;
+    const GLubyte *program;
+};
+
+struct glLoadTransposeMatrixd_params
+{
+    const GLdouble *m;
+};
+
+struct glLoadTransposeMatrixdARB_params
+{
+    const GLdouble *m;
+};
+
+struct glLoadTransposeMatrixf_params
+{
+    const GLfloat *m;
+};
+
+struct glLoadTransposeMatrixfARB_params
+{
+    const GLfloat *m;
+};
+
+struct glLoadTransposeMatrixxOES_params
+{
+    const GLfixed *m;
+};
+
+struct glLockArraysEXT_params
+{
+    GLint first;
+    GLsizei count;
+};
+
+struct glMTexCoord2fSGIS_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+};
+
+struct glMTexCoord2fvSGIS_params
+{
+    GLenum target;
+    GLfloat * v;
+};
+
+struct glMakeBufferNonResidentNV_params
+{
+    GLenum target;
+};
+
+struct glMakeBufferResidentNV_params
+{
+    GLenum target;
+    GLenum access;
+};
+
+struct glMakeImageHandleNonResidentARB_params
+{
+    GLuint64 handle;
+};
+
+struct glMakeImageHandleNonResidentNV_params
+{
+    GLuint64 handle;
+};
+
+struct glMakeImageHandleResidentARB_params
+{
+    GLuint64 handle;
+    GLenum access;
+};
+
+struct glMakeImageHandleResidentNV_params
+{
+    GLuint64 handle;
+    GLenum access;
+};
+
+struct glMakeNamedBufferNonResidentNV_params
+{
+    GLuint buffer;
+};
+
+struct glMakeNamedBufferResidentNV_params
+{
+    GLuint buffer;
+    GLenum access;
+};
+
+struct glMakeTextureHandleNonResidentARB_params
+{
+    GLuint64 handle;
+};
+
+struct glMakeTextureHandleNonResidentNV_params
+{
+    GLuint64 handle;
+};
+
+struct glMakeTextureHandleResidentARB_params
+{
+    GLuint64 handle;
+};
+
+struct glMakeTextureHandleResidentNV_params
+{
+    GLuint64 handle;
+};
+
+struct glMap1xOES_params
+{
+    GLenum target;
+    GLfixed u1;
+    GLfixed u2;
+    GLint stride;
+    GLint order;
+    GLfixed points;
+};
+
+struct glMap2xOES_params
+{
+    GLenum target;
+    GLfixed u1;
+    GLfixed u2;
+    GLint ustride;
+    GLint uorder;
+    GLfixed v1;
+    GLfixed v2;
+    GLint vstride;
+    GLint vorder;
+    GLfixed points;
+};
+
+struct glMapBuffer_params
+{
+    GLenum target;
+    GLenum access;
+    void *ret;
+};
+
+struct glMapBufferARB_params
+{
+    GLenum target;
+    GLenum access;
+    void *ret;
+};
+
+struct glMapBufferRange_params
+{
+    GLenum target;
+    GLintptr offset;
+    GLsizeiptr length;
+    GLbitfield access;
+    void *ret;
+};
+
+struct glMapControlPointsNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLenum type;
+    GLsizei ustride;
+    GLsizei vstride;
+    GLint uorder;
+    GLint vorder;
+    GLboolean packed;
+    const void *points;
+};
+
+struct glMapGrid1xOES_params
+{
+    GLint n;
+    GLfixed u1;
+    GLfixed u2;
+};
+
+struct glMapGrid2xOES_params
+{
+    GLint n;
+    GLfixed u1;
+    GLfixed u2;
+    GLfixed v1;
+    GLfixed v2;
+};
+
+struct glMapNamedBuffer_params
+{
+    GLuint buffer;
+    GLenum access;
+    void *ret;
+};
+
+struct glMapNamedBufferEXT_params
+{
+    GLuint buffer;
+    GLenum access;
+    void *ret;
+};
+
+struct glMapNamedBufferRange_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr length;
+    GLbitfield access;
+    void *ret;
+};
+
+struct glMapNamedBufferRangeEXT_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr length;
+    GLbitfield access;
+    void *ret;
+};
+
+struct glMapObjectBufferATI_params
+{
+    GLuint buffer;
+    void *ret;
+};
+
+struct glMapParameterfvNV_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glMapParameterivNV_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glMapTexture2DINTEL_params
+{
+    GLuint texture;
+    GLint level;
+    GLbitfield access;
+    GLint *stride;
+    GLenum *layout;
+    void *ret;
+};
+
+struct glMapVertexAttrib1dAPPLE_params
+{
+    GLuint index;
+    GLuint size;
+    GLdouble u1;
+    GLdouble u2;
+    GLint stride;
+    GLint order;
+    const GLdouble *points;
+};
+
+struct glMapVertexAttrib1fAPPLE_params
+{
+    GLuint index;
+    GLuint size;
+    GLfloat u1;
+    GLfloat u2;
+    GLint stride;
+    GLint order;
+    const GLfloat *points;
+};
+
+struct glMapVertexAttrib2dAPPLE_params
+{
+    GLuint index;
+    GLuint size;
+    GLdouble u1;
+    GLdouble u2;
+    GLint ustride;
+    GLint uorder;
+    GLdouble v1;
+    GLdouble v2;
+    GLint vstride;
+    GLint vorder;
+    const GLdouble *points;
+};
+
+struct glMapVertexAttrib2fAPPLE_params
+{
+    GLuint index;
+    GLuint size;
+    GLfloat u1;
+    GLfloat u2;
+    GLint ustride;
+    GLint uorder;
+    GLfloat v1;
+    GLfloat v2;
+    GLint vstride;
+    GLint vorder;
+    const GLfloat *points;
+};
+
+struct glMaterialxOES_params
+{
+    GLenum face;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glMaterialxvOES_params
+{
+    GLenum face;
+    GLenum pname;
+    const GLfixed *param;
+};
+
+struct glMatrixFrustumEXT_params
+{
+    GLenum mode;
+    GLdouble left;
+    GLdouble right;
+    GLdouble bottom;
+    GLdouble top;
+    GLdouble zNear;
+    GLdouble zFar;
+};
+
+struct glMatrixIndexPointerARB_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glMatrixIndexubvARB_params
+{
+    GLint size;
+    const GLubyte *indices;
+};
+
+struct glMatrixIndexuivARB_params
+{
+    GLint size;
+    const GLuint *indices;
+};
+
+struct glMatrixIndexusvARB_params
+{
+    GLint size;
+    const GLushort *indices;
+};
+
+struct glMatrixLoad3x2fNV_params
+{
+    GLenum matrixMode;
+    const GLfloat *m;
+};
+
+struct glMatrixLoad3x3fNV_params
+{
+    GLenum matrixMode;
+    const GLfloat *m;
+};
+
+struct glMatrixLoadIdentityEXT_params
+{
+    GLenum mode;
+};
+
+struct glMatrixLoadTranspose3x3fNV_params
+{
+    GLenum matrixMode;
+    const GLfloat *m;
+};
+
+struct glMatrixLoadTransposedEXT_params
+{
+    GLenum mode;
+    const GLdouble *m;
+};
+
+struct glMatrixLoadTransposefEXT_params
+{
+    GLenum mode;
+    const GLfloat *m;
+};
+
+struct glMatrixLoaddEXT_params
+{
+    GLenum mode;
+    const GLdouble *m;
+};
+
+struct glMatrixLoadfEXT_params
+{
+    GLenum mode;
+    const GLfloat *m;
+};
+
+struct glMatrixMult3x2fNV_params
+{
+    GLenum matrixMode;
+    const GLfloat *m;
+};
+
+struct glMatrixMult3x3fNV_params
+{
+    GLenum matrixMode;
+    const GLfloat *m;
+};
+
+struct glMatrixMultTranspose3x3fNV_params
+{
+    GLenum matrixMode;
+    const GLfloat *m;
+};
+
+struct glMatrixMultTransposedEXT_params
+{
+    GLenum mode;
+    const GLdouble *m;
+};
+
+struct glMatrixMultTransposefEXT_params
+{
+    GLenum mode;
+    const GLfloat *m;
+};
+
+struct glMatrixMultdEXT_params
+{
+    GLenum mode;
+    const GLdouble *m;
+};
+
+struct glMatrixMultfEXT_params
+{
+    GLenum mode;
+    const GLfloat *m;
+};
+
+struct glMatrixOrthoEXT_params
+{
+    GLenum mode;
+    GLdouble left;
+    GLdouble right;
+    GLdouble bottom;
+    GLdouble top;
+    GLdouble zNear;
+    GLdouble zFar;
+};
+
+struct glMatrixPopEXT_params
+{
+    GLenum mode;
+};
+
+struct glMatrixPushEXT_params
+{
+    GLenum mode;
+};
+
+struct glMatrixRotatedEXT_params
+{
+    GLenum mode;
+    GLdouble angle;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glMatrixRotatefEXT_params
+{
+    GLenum mode;
+    GLfloat angle;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glMatrixScaledEXT_params
+{
+    GLenum mode;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glMatrixScalefEXT_params
+{
+    GLenum mode;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glMatrixTranslatedEXT_params
+{
+    GLenum mode;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glMatrixTranslatefEXT_params
+{
+    GLenum mode;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glMaxShaderCompilerThreadsARB_params
+{
+    GLuint count;
+};
+
+struct glMaxShaderCompilerThreadsKHR_params
+{
+    GLuint count;
+};
+
+struct glMemoryBarrier_params
+{
+    GLbitfield barriers;
+};
+
+struct glMemoryBarrierByRegion_params
+{
+    GLbitfield barriers;
+};
+
+struct glMemoryBarrierEXT_params
+{
+    GLbitfield barriers;
+};
+
+struct glMemoryObjectParameterivEXT_params
+{
+    GLuint memoryObject;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glMinSampleShading_params
+{
+    GLfloat value;
+};
+
+struct glMinSampleShadingARB_params
+{
+    GLfloat value;
+};
+
+struct glMinmax_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLboolean sink;
+};
+
+struct glMinmaxEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLboolean sink;
+};
+
+struct glMultMatrixxOES_params
+{
+    const GLfixed *m;
+};
+
+struct glMultTransposeMatrixd_params
+{
+    const GLdouble *m;
+};
+
+struct glMultTransposeMatrixdARB_params
+{
+    const GLdouble *m;
+};
+
+struct glMultTransposeMatrixf_params
+{
+    const GLfloat *m;
+};
+
+struct glMultTransposeMatrixfARB_params
+{
+    const GLfloat *m;
+};
+
+struct glMultTransposeMatrixxOES_params
+{
+    const GLfixed *m;
+};
+
+struct glMultiDrawArrays_params
+{
+    GLenum mode;
+    const GLint *first;
+    const GLsizei *count;
+    GLsizei drawcount;
+};
+
+struct glMultiDrawArraysEXT_params
+{
+    GLenum mode;
+    const GLint *first;
+    const GLsizei *count;
+    GLsizei primcount;
+};
+
+struct glMultiDrawArraysIndirect_params
+{
+    GLenum mode;
+    const void *indirect;
+    GLsizei drawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawArraysIndirectAMD_params
+{
+    GLenum mode;
+    const void *indirect;
+    GLsizei primcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawArraysIndirectBindlessCountNV_params
+{
+    GLenum mode;
+    const void *indirect;
+    GLsizei drawCount;
+    GLsizei maxDrawCount;
+    GLsizei stride;
+    GLint vertexBufferCount;
+};
+
+struct glMultiDrawArraysIndirectBindlessNV_params
+{
+    GLenum mode;
+    const void *indirect;
+    GLsizei drawCount;
+    GLsizei stride;
+    GLint vertexBufferCount;
+};
+
+struct glMultiDrawArraysIndirectCount_params
+{
+    GLenum mode;
+    const void *indirect;
+    GLintptr drawcount;
+    GLsizei maxdrawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawArraysIndirectCountARB_params
+{
+    GLenum mode;
+    const void *indirect;
+    GLintptr drawcount;
+    GLsizei maxdrawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawElementArrayAPPLE_params
+{
+    GLenum mode;
+    const GLint *first;
+    const GLsizei *count;
+    GLsizei primcount;
+};
+
+struct glMultiDrawElements_params
+{
+    GLenum mode;
+    const GLsizei *count;
+    GLenum type;
+    const void *const*indices;
+    GLsizei drawcount;
+};
+
+struct glMultiDrawElementsBaseVertex_params
+{
+    GLenum mode;
+    const GLsizei *count;
+    GLenum type;
+    const void *const*indices;
+    GLsizei drawcount;
+    const GLint *basevertex;
+};
+
+struct glMultiDrawElementsEXT_params
+{
+    GLenum mode;
+    const GLsizei *count;
+    GLenum type;
+    const void *const*indices;
+    GLsizei primcount;
+};
+
+struct glMultiDrawElementsIndirect_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+    GLsizei drawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawElementsIndirectAMD_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+    GLsizei primcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawElementsIndirectBindlessCountNV_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+    GLsizei drawCount;
+    GLsizei maxDrawCount;
+    GLsizei stride;
+    GLint vertexBufferCount;
+};
+
+struct glMultiDrawElementsIndirectBindlessNV_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+    GLsizei drawCount;
+    GLsizei stride;
+    GLint vertexBufferCount;
+};
+
+struct glMultiDrawElementsIndirectCount_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+    GLintptr drawcount;
+    GLsizei maxdrawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawElementsIndirectCountARB_params
+{
+    GLenum mode;
+    GLenum type;
+    const void *indirect;
+    GLintptr drawcount;
+    GLsizei maxdrawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawMeshTasksIndirectCountNV_params
+{
+    GLintptr indirect;
+    GLintptr drawcount;
+    GLsizei maxdrawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawMeshTasksIndirectNV_params
+{
+    GLintptr indirect;
+    GLsizei drawcount;
+    GLsizei stride;
+};
+
+struct glMultiDrawRangeElementArrayAPPLE_params
+{
+    GLenum mode;
+    GLuint start;
+    GLuint end;
+    const GLint *first;
+    const GLsizei *count;
+    GLsizei primcount;
+};
+
+struct glMultiModeDrawArraysIBM_params
+{
+    const GLenum *mode;
+    const GLint *first;
+    const GLsizei *count;
+    GLsizei primcount;
+    GLint modestride;
+};
+
+struct glMultiModeDrawElementsIBM_params
+{
+    const GLenum *mode;
+    const GLsizei *count;
+    GLenum type;
+    const void *const*indices;
+    GLsizei primcount;
+    GLint modestride;
+};
+
+struct glMultiTexBufferEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+};
+
+struct glMultiTexCoord1bOES_params
+{
+    GLenum texture;
+    GLbyte s;
+};
+
+struct glMultiTexCoord1bvOES_params
+{
+    GLenum texture;
+    const GLbyte *coords;
+};
+
+struct glMultiTexCoord1d_params
+{
+    GLenum target;
+    GLdouble s;
+};
+
+struct glMultiTexCoord1dARB_params
+{
+    GLenum target;
+    GLdouble s;
+};
+
+struct glMultiTexCoord1dSGIS_params
+{
+    GLenum target;
+    GLdouble s;
+};
+
+struct glMultiTexCoord1dv_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord1dvARB_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord1dvSGIS_params
+{
+    GLenum target;
+    GLdouble * v;
+};
+
+struct glMultiTexCoord1f_params
+{
+    GLenum target;
+    GLfloat s;
+};
+
+struct glMultiTexCoord1fARB_params
+{
+    GLenum target;
+    GLfloat s;
+};
+
+struct glMultiTexCoord1fSGIS_params
+{
+    GLenum target;
+    GLfloat s;
+};
+
+struct glMultiTexCoord1fv_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord1fvARB_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord1fvSGIS_params
+{
+    GLenum target;
+    const GLfloat * v;
+};
+
+struct glMultiTexCoord1hNV_params
+{
+    GLenum target;
+    GLhalfNV s;
+};
+
+struct glMultiTexCoord1hvNV_params
+{
+    GLenum target;
+    const GLhalfNV *v;
+};
+
+struct glMultiTexCoord1i_params
+{
+    GLenum target;
+    GLint s;
+};
+
+struct glMultiTexCoord1iARB_params
+{
+    GLenum target;
+    GLint s;
+};
+
+struct glMultiTexCoord1iSGIS_params
+{
+    GLenum target;
+    GLint s;
+};
+
+struct glMultiTexCoord1iv_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord1ivARB_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord1ivSGIS_params
+{
+    GLenum target;
+    GLint * v;
+};
+
+struct glMultiTexCoord1s_params
+{
+    GLenum target;
+    GLshort s;
+};
+
+struct glMultiTexCoord1sARB_params
+{
+    GLenum target;
+    GLshort s;
+};
+
+struct glMultiTexCoord1sSGIS_params
+{
+    GLenum target;
+    GLshort s;
+};
+
+struct glMultiTexCoord1sv_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord1svARB_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord1svSGIS_params
+{
+    GLenum target;
+    GLshort * v;
+};
+
+struct glMultiTexCoord1xOES_params
+{
+    GLenum texture;
+    GLfixed s;
+};
+
+struct glMultiTexCoord1xvOES_params
+{
+    GLenum texture;
+    const GLfixed *coords;
+};
+
+struct glMultiTexCoord2bOES_params
+{
+    GLenum texture;
+    GLbyte s;
+    GLbyte t;
+};
+
+struct glMultiTexCoord2bvOES_params
+{
+    GLenum texture;
+    const GLbyte *coords;
+};
+
+struct glMultiTexCoord2d_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+};
+
+struct glMultiTexCoord2dARB_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+};
+
+struct glMultiTexCoord2dSGIS_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+};
+
+struct glMultiTexCoord2dv_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord2dvARB_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord2dvSGIS_params
+{
+    GLenum target;
+    GLdouble * v;
+};
+
+struct glMultiTexCoord2f_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+};
+
+struct glMultiTexCoord2fARB_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+};
+
+struct glMultiTexCoord2fSGIS_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+};
+
+struct glMultiTexCoord2fv_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord2fvARB_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord2fvSGIS_params
+{
+    GLenum target;
+    GLfloat * v;
+};
+
+struct glMultiTexCoord2hNV_params
+{
+    GLenum target;
+    GLhalfNV s;
+    GLhalfNV t;
+};
+
+struct glMultiTexCoord2hvNV_params
+{
+    GLenum target;
+    const GLhalfNV *v;
+};
+
+struct glMultiTexCoord2i_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+};
+
+struct glMultiTexCoord2iARB_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+};
+
+struct glMultiTexCoord2iSGIS_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+};
+
+struct glMultiTexCoord2iv_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord2ivARB_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord2ivSGIS_params
+{
+    GLenum target;
+    GLint * v;
+};
+
+struct glMultiTexCoord2s_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+};
+
+struct glMultiTexCoord2sARB_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+};
+
+struct glMultiTexCoord2sSGIS_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+};
+
+struct glMultiTexCoord2sv_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord2svARB_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord2svSGIS_params
+{
+    GLenum target;
+    GLshort * v;
+};
+
+struct glMultiTexCoord2xOES_params
+{
+    GLenum texture;
+    GLfixed s;
+    GLfixed t;
+};
+
+struct glMultiTexCoord2xvOES_params
+{
+    GLenum texture;
+    const GLfixed *coords;
+};
+
+struct glMultiTexCoord3bOES_params
+{
+    GLenum texture;
+    GLbyte s;
+    GLbyte t;
+    GLbyte r;
+};
+
+struct glMultiTexCoord3bvOES_params
+{
+    GLenum texture;
+    const GLbyte *coords;
+};
+
+struct glMultiTexCoord3d_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+    GLdouble r;
+};
+
+struct glMultiTexCoord3dARB_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+    GLdouble r;
+};
+
+struct glMultiTexCoord3dSGIS_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+    GLdouble r;
+};
+
+struct glMultiTexCoord3dv_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord3dvARB_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord3dvSGIS_params
+{
+    GLenum target;
+    GLdouble * v;
+};
+
+struct glMultiTexCoord3f_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+};
+
+struct glMultiTexCoord3fARB_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+};
+
+struct glMultiTexCoord3fSGIS_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+};
+
+struct glMultiTexCoord3fv_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord3fvARB_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord3fvSGIS_params
+{
+    GLenum target;
+    GLfloat * v;
+};
+
+struct glMultiTexCoord3hNV_params
+{
+    GLenum target;
+    GLhalfNV s;
+    GLhalfNV t;
+    GLhalfNV r;
+};
+
+struct glMultiTexCoord3hvNV_params
+{
+    GLenum target;
+    const GLhalfNV *v;
+};
+
+struct glMultiTexCoord3i_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+    GLint r;
+};
+
+struct glMultiTexCoord3iARB_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+    GLint r;
+};
+
+struct glMultiTexCoord3iSGIS_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+    GLint r;
+};
+
+struct glMultiTexCoord3iv_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord3ivARB_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord3ivSGIS_params
+{
+    GLenum target;
+    GLint * v;
+};
+
+struct glMultiTexCoord3s_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+    GLshort r;
+};
+
+struct glMultiTexCoord3sARB_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+    GLshort r;
+};
+
+struct glMultiTexCoord3sSGIS_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+    GLshort r;
+};
+
+struct glMultiTexCoord3sv_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord3svARB_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord3svSGIS_params
+{
+    GLenum target;
+    GLshort * v;
+};
+
+struct glMultiTexCoord3xOES_params
+{
+    GLenum texture;
+    GLfixed s;
+    GLfixed t;
+    GLfixed r;
+};
+
+struct glMultiTexCoord3xvOES_params
+{
+    GLenum texture;
+    const GLfixed *coords;
+};
+
+struct glMultiTexCoord4bOES_params
+{
+    GLenum texture;
+    GLbyte s;
+    GLbyte t;
+    GLbyte r;
+    GLbyte q;
+};
+
+struct glMultiTexCoord4bvOES_params
+{
+    GLenum texture;
+    const GLbyte *coords;
+};
+
+struct glMultiTexCoord4d_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+    GLdouble r;
+    GLdouble q;
+};
+
+struct glMultiTexCoord4dARB_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+    GLdouble r;
+    GLdouble q;
+};
+
+struct glMultiTexCoord4dSGIS_params
+{
+    GLenum target;
+    GLdouble s;
+    GLdouble t;
+    GLdouble r;
+    GLdouble q;
+};
+
+struct glMultiTexCoord4dv_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord4dvARB_params
+{
+    GLenum target;
+    const GLdouble *v;
+};
+
+struct glMultiTexCoord4dvSGIS_params
+{
+    GLenum target;
+    GLdouble * v;
+};
+
+struct glMultiTexCoord4f_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+    GLfloat q;
+};
+
+struct glMultiTexCoord4fARB_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+    GLfloat q;
+};
+
+struct glMultiTexCoord4fSGIS_params
+{
+    GLenum target;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+    GLfloat q;
+};
+
+struct glMultiTexCoord4fv_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord4fvARB_params
+{
+    GLenum target;
+    const GLfloat *v;
+};
+
+struct glMultiTexCoord4fvSGIS_params
+{
+    GLenum target;
+    GLfloat * v;
+};
+
+struct glMultiTexCoord4hNV_params
+{
+    GLenum target;
+    GLhalfNV s;
+    GLhalfNV t;
+    GLhalfNV r;
+    GLhalfNV q;
+};
+
+struct glMultiTexCoord4hvNV_params
+{
+    GLenum target;
+    const GLhalfNV *v;
+};
+
+struct glMultiTexCoord4i_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+    GLint r;
+    GLint q;
+};
+
+struct glMultiTexCoord4iARB_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+    GLint r;
+    GLint q;
+};
+
+struct glMultiTexCoord4iSGIS_params
+{
+    GLenum target;
+    GLint s;
+    GLint t;
+    GLint r;
+    GLint q;
+};
+
+struct glMultiTexCoord4iv_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord4ivARB_params
+{
+    GLenum target;
+    const GLint *v;
+};
+
+struct glMultiTexCoord4ivSGIS_params
+{
+    GLenum target;
+    GLint * v;
+};
+
+struct glMultiTexCoord4s_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+    GLshort r;
+    GLshort q;
+};
+
+struct glMultiTexCoord4sARB_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+    GLshort r;
+    GLshort q;
+};
+
+struct glMultiTexCoord4sSGIS_params
+{
+    GLenum target;
+    GLshort s;
+    GLshort t;
+    GLshort r;
+    GLshort q;
+};
+
+struct glMultiTexCoord4sv_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord4svARB_params
+{
+    GLenum target;
+    const GLshort *v;
+};
+
+struct glMultiTexCoord4svSGIS_params
+{
+    GLenum target;
+    GLshort * v;
+};
+
+struct glMultiTexCoord4xOES_params
+{
+    GLenum texture;
+    GLfixed s;
+    GLfixed t;
+    GLfixed r;
+    GLfixed q;
+};
+
+struct glMultiTexCoord4xvOES_params
+{
+    GLenum texture;
+    const GLfixed *coords;
+};
+
+struct glMultiTexCoordP1ui_params
+{
+    GLenum texture;
+    GLenum type;
+    GLuint coords;
+};
+
+struct glMultiTexCoordP1uiv_params
+{
+    GLenum texture;
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glMultiTexCoordP2ui_params
+{
+    GLenum texture;
+    GLenum type;
+    GLuint coords;
+};
+
+struct glMultiTexCoordP2uiv_params
+{
+    GLenum texture;
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glMultiTexCoordP3ui_params
+{
+    GLenum texture;
+    GLenum type;
+    GLuint coords;
+};
+
+struct glMultiTexCoordP3uiv_params
+{
+    GLenum texture;
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glMultiTexCoordP4ui_params
+{
+    GLenum texture;
+    GLenum type;
+    GLuint coords;
+};
+
+struct glMultiTexCoordP4uiv_params
+{
+    GLenum texture;
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glMultiTexCoordPointerEXT_params
+{
+    GLenum texunit;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glMultiTexCoordPointerSGIS_params
+{
+    GLenum target;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLvoid * pointer;
+};
+
+struct glMultiTexEnvfEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glMultiTexEnvfvEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glMultiTexEnviEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glMultiTexEnvivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glMultiTexGendEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    GLdouble param;
+};
+
+struct glMultiTexGendvEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    const GLdouble *params;
+};
+
+struct glMultiTexGenfEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glMultiTexGenfvEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glMultiTexGeniEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    GLint param;
+};
+
+struct glMultiTexGenivEXT_params
+{
+    GLenum texunit;
+    GLenum coord;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glMultiTexImage1DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glMultiTexImage2DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glMultiTexImage3DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glMultiTexParameterIivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glMultiTexParameterIuivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    const GLuint *params;
+};
+
+struct glMultiTexParameterfEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glMultiTexParameterfvEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glMultiTexParameteriEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glMultiTexParameterivEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glMultiTexRenderbufferEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLuint renderbuffer;
+};
+
+struct glMultiTexSubImage1DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glMultiTexSubImage2DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glMultiTexSubImage3DEXT_params
+{
+    GLenum texunit;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glMulticastBarrierNV_params
+{
+};
+
+struct glMulticastBlitFramebufferNV_params
+{
+    GLuint srcGpu;
+    GLuint dstGpu;
+    GLint srcX0;
+    GLint srcY0;
+    GLint srcX1;
+    GLint srcY1;
+    GLint dstX0;
+    GLint dstY0;
+    GLint dstX1;
+    GLint dstY1;
+    GLbitfield mask;
+    GLenum filter;
+};
+
+struct glMulticastBufferSubDataNV_params
+{
+    GLbitfield gpuMask;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    const void *data;
+};
+
+struct glMulticastCopyBufferSubDataNV_params
+{
+    GLuint readGpu;
+    GLbitfield writeGpuMask;
+    GLuint readBuffer;
+    GLuint writeBuffer;
+    GLintptr readOffset;
+    GLintptr writeOffset;
+    GLsizeiptr size;
+};
+
+struct glMulticastCopyImageSubDataNV_params
+{
+    GLuint srcGpu;
+    GLbitfield dstGpuMask;
+    GLuint srcName;
+    GLenum srcTarget;
+    GLint srcLevel;
+    GLint srcX;
+    GLint srcY;
+    GLint srcZ;
+    GLuint dstName;
+    GLenum dstTarget;
+    GLint dstLevel;
+    GLint dstX;
+    GLint dstY;
+    GLint dstZ;
+    GLsizei srcWidth;
+    GLsizei srcHeight;
+    GLsizei srcDepth;
+};
+
+struct glMulticastFramebufferSampleLocationsfvNV_params
+{
+    GLuint gpu;
+    GLuint framebuffer;
+    GLuint start;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glMulticastGetQueryObjecti64vNV_params
+{
+    GLuint gpu;
+    GLuint id;
+    GLenum pname;
+    GLint64 *params;
+};
+
+struct glMulticastGetQueryObjectivNV_params
+{
+    GLuint gpu;
+    GLuint id;
+    GLenum pname;
+    GLint *params;
+};
+
+struct glMulticastGetQueryObjectui64vNV_params
+{
+    GLuint gpu;
+    GLuint id;
+    GLenum pname;
+    GLuint64 *params;
+};
+
+struct glMulticastGetQueryObjectuivNV_params
+{
+    GLuint gpu;
+    GLuint id;
+    GLenum pname;
+    GLuint *params;
+};
+
+struct glMulticastScissorArrayvNVX_params
+{
+    GLuint gpu;
+    GLuint first;
+    GLsizei count;
+    const GLint *v;
+};
+
+struct glMulticastViewportArrayvNVX_params
+{
+    GLuint gpu;
+    GLuint first;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glMulticastViewportPositionWScaleNVX_params
+{
+    GLuint gpu;
+    GLuint index;
+    GLfloat xcoeff;
+    GLfloat ycoeff;
+};
+
+struct glMulticastWaitSyncNV_params
+{
+    GLuint signalGpu;
+    GLbitfield waitGpuMask;
+};
+
+struct glNamedBufferAttachMemoryNV_params
+{
+    GLuint buffer;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glNamedBufferData_params
+{
+    GLuint buffer;
+    GLsizeiptr size;
+    const void *data;
+    GLenum usage;
+};
+
+struct glNamedBufferDataEXT_params
+{
+    GLuint buffer;
+    GLsizeiptr size;
+    const void *data;
+    GLenum usage;
+};
+
+struct glNamedBufferPageCommitmentARB_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLboolean commit;
+};
+
+struct glNamedBufferPageCommitmentEXT_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLboolean commit;
+};
+
+struct glNamedBufferStorage_params
+{
+    GLuint buffer;
+    GLsizeiptr size;
+    const void *data;
+    GLbitfield flags;
+};
+
+struct glNamedBufferStorageEXT_params
+{
+    GLuint buffer;
+    GLsizeiptr size;
+    const void *data;
+    GLbitfield flags;
+};
+
+struct glNamedBufferStorageExternalEXT_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    GLeglClientBufferEXT clientBuffer;
+    GLbitfield flags;
+};
+
+struct glNamedBufferStorageMemEXT_params
+{
+    GLuint buffer;
+    GLsizeiptr size;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glNamedBufferSubData_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    const void *data;
+};
+
+struct glNamedBufferSubDataEXT_params
+{
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+    const void *data;
+};
+
+struct glNamedCopyBufferSubDataEXT_params
+{
+    GLuint readBuffer;
+    GLuint writeBuffer;
+    GLintptr readOffset;
+    GLintptr writeOffset;
+    GLsizeiptr size;
+};
+
+struct glNamedFramebufferDrawBuffer_params
+{
+    GLuint framebuffer;
+    GLenum buf;
+};
+
+struct glNamedFramebufferDrawBuffers_params
+{
+    GLuint framebuffer;
+    GLsizei n;
+    const GLenum *bufs;
+};
+
+struct glNamedFramebufferParameteri_params
+{
+    GLuint framebuffer;
+    GLenum pname;
+    GLint param;
+};
+
+struct glNamedFramebufferParameteriEXT_params
+{
+    GLuint framebuffer;
+    GLenum pname;
+    GLint param;
+};
+
+struct glNamedFramebufferReadBuffer_params
+{
+    GLuint framebuffer;
+    GLenum src;
+};
+
+struct glNamedFramebufferRenderbuffer_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum renderbuffertarget;
+    GLuint renderbuffer;
+};
+
+struct glNamedFramebufferRenderbufferEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum renderbuffertarget;
+    GLuint renderbuffer;
+};
+
+struct glNamedFramebufferSampleLocationsfvARB_params
+{
+    GLuint framebuffer;
+    GLuint start;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glNamedFramebufferSampleLocationsfvNV_params
+{
+    GLuint framebuffer;
+    GLuint start;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glNamedFramebufferSamplePositionsfvAMD_params
+{
+    GLuint framebuffer;
+    GLuint numsamples;
+    GLuint pixelindex;
+    const GLfloat *values;
+};
+
+struct glNamedFramebufferTexture_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+};
+
+struct glNamedFramebufferTexture1DEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+};
+
+struct glNamedFramebufferTexture2DEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+};
+
+struct glNamedFramebufferTexture3DEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLenum textarget;
+    GLuint texture;
+    GLint level;
+    GLint zoffset;
+};
+
+struct glNamedFramebufferTextureEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+};
+
+struct glNamedFramebufferTextureFaceEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLenum face;
+};
+
+struct glNamedFramebufferTextureLayer_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLint layer;
+};
+
+struct glNamedFramebufferTextureLayerEXT_params
+{
+    GLuint framebuffer;
+    GLenum attachment;
+    GLuint texture;
+    GLint level;
+    GLint layer;
+};
+
+struct glNamedProgramLocalParameter4dEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glNamedProgramLocalParameter4dvEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    const GLdouble *params;
+};
+
+struct glNamedProgramLocalParameter4fEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glNamedProgramLocalParameter4fvEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    const GLfloat *params;
+};
+
+struct glNamedProgramLocalParameterI4iEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glNamedProgramLocalParameterI4ivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    const GLint *params;
+};
+
+struct glNamedProgramLocalParameterI4uiEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+    GLuint w;
+};
+
+struct glNamedProgramLocalParameterI4uivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    const GLuint *params;
+};
+
+struct glNamedProgramLocalParameters4fvEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLfloat *params;
+};
+
+struct glNamedProgramLocalParametersI4ivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLint *params;
+};
+
+struct glNamedProgramLocalParametersI4uivEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLuint *params;
+};
+
+struct glNamedProgramStringEXT_params
+{
+    GLuint program;
+    GLenum target;
+    GLenum format;
+    GLsizei len;
+    const void *string;
+};
+
+struct glNamedRenderbufferStorage_params
+{
+    GLuint renderbuffer;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glNamedRenderbufferStorageEXT_params
+{
+    GLuint renderbuffer;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glNamedRenderbufferStorageMultisample_params
+{
+    GLuint renderbuffer;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glNamedRenderbufferStorageMultisampleAdvancedAMD_params
+{
+    GLuint renderbuffer;
+    GLsizei samples;
+    GLsizei storageSamples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glNamedRenderbufferStorageMultisampleCoverageEXT_params
+{
+    GLuint renderbuffer;
+    GLsizei coverageSamples;
+    GLsizei colorSamples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glNamedRenderbufferStorageMultisampleEXT_params
+{
+    GLuint renderbuffer;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glNamedStringARB_params
+{
+    GLenum type;
+    GLint namelen;
+    const GLchar *name;
+    GLint stringlen;
+    const GLchar *string;
+};
+
+struct glNewBufferRegion_params
+{
+    GLenum type;
+    GLuint ret;
+};
+
+struct glNewObjectBufferATI_params
+{
+    GLsizei size;
+    const void *pointer;
+    GLenum usage;
+    GLuint ret;
+};
+
+struct glNormal3fVertex3fSUN_params
+{
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glNormal3fVertex3fvSUN_params
+{
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glNormal3hNV_params
+{
+    GLhalfNV nx;
+    GLhalfNV ny;
+    GLhalfNV nz;
+};
+
+struct glNormal3hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glNormal3xOES_params
+{
+    GLfixed nx;
+    GLfixed ny;
+    GLfixed nz;
+};
+
+struct glNormal3xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glNormalFormatNV_params
+{
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glNormalP3ui_params
+{
+    GLenum type;
+    GLuint coords;
+};
+
+struct glNormalP3uiv_params
+{
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glNormalPointerEXT_params
+{
+    GLenum type;
+    GLsizei stride;
+    GLsizei count;
+    const void *pointer;
+};
+
+struct glNormalPointerListIBM_params
+{
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glNormalPointervINTEL_params
+{
+    GLenum type;
+    const void **pointer;
+};
+
+struct glNormalStream3bATI_params
+{
+    GLenum stream;
+    GLbyte nx;
+    GLbyte ny;
+    GLbyte nz;
+};
+
+struct glNormalStream3bvATI_params
+{
+    GLenum stream;
+    const GLbyte *coords;
+};
+
+struct glNormalStream3dATI_params
+{
+    GLenum stream;
+    GLdouble nx;
+    GLdouble ny;
+    GLdouble nz;
+};
+
+struct glNormalStream3dvATI_params
+{
+    GLenum stream;
+    const GLdouble *coords;
+};
+
+struct glNormalStream3fATI_params
+{
+    GLenum stream;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+};
+
+struct glNormalStream3fvATI_params
+{
+    GLenum stream;
+    const GLfloat *coords;
+};
+
+struct glNormalStream3iATI_params
+{
+    GLenum stream;
+    GLint nx;
+    GLint ny;
+    GLint nz;
+};
+
+struct glNormalStream3ivATI_params
+{
+    GLenum stream;
+    const GLint *coords;
+};
+
+struct glNormalStream3sATI_params
+{
+    GLenum stream;
+    GLshort nx;
+    GLshort ny;
+    GLshort nz;
+};
+
+struct glNormalStream3svATI_params
+{
+    GLenum stream;
+    const GLshort *coords;
+};
+
+struct glObjectLabel_params
+{
+    GLenum identifier;
+    GLuint name;
+    GLsizei length;
+    const GLchar *label;
+};
+
+struct glObjectPtrLabel_params
+{
+    const void *ptr;
+    GLsizei length;
+    const GLchar *label;
+};
+
+struct glObjectPurgeableAPPLE_params
+{
+    GLenum objectType;
+    GLuint name;
+    GLenum option;
+    GLenum ret;
+};
+
+struct glObjectUnpurgeableAPPLE_params
+{
+    GLenum objectType;
+    GLuint name;
+    GLenum option;
+    GLenum ret;
+};
+
+struct glOrthofOES_params
+{
+    GLfloat l;
+    GLfloat r;
+    GLfloat b;
+    GLfloat t;
+    GLfloat n;
+    GLfloat f;
+};
+
+struct glOrthoxOES_params
+{
+    GLfixed l;
+    GLfixed r;
+    GLfixed b;
+    GLfixed t;
+    GLfixed n;
+    GLfixed f;
+};
+
+struct glPNTrianglesfATI_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPNTrianglesiATI_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glPassTexCoordATI_params
+{
+    GLuint dst;
+    GLuint coord;
+    GLenum swizzle;
+};
+
+struct glPassThroughxOES_params
+{
+    GLfixed token;
+};
+
+struct glPatchParameterfv_params
+{
+    GLenum pname;
+    const GLfloat *values;
+};
+
+struct glPatchParameteri_params
+{
+    GLenum pname;
+    GLint value;
+};
+
+struct glPathColorGenNV_params
+{
+    GLenum color;
+    GLenum genMode;
+    GLenum colorFormat;
+    const GLfloat *coeffs;
+};
+
+struct glPathCommandsNV_params
+{
+    GLuint path;
+    GLsizei numCommands;
+    const GLubyte *commands;
+    GLsizei numCoords;
+    GLenum coordType;
+    const void *coords;
+};
+
+struct glPathCoordsNV_params
+{
+    GLuint path;
+    GLsizei numCoords;
+    GLenum coordType;
+    const void *coords;
+};
+
+struct glPathCoverDepthFuncNV_params
+{
+    GLenum func;
+};
+
+struct glPathDashArrayNV_params
+{
+    GLuint path;
+    GLsizei dashCount;
+    const GLfloat *dashArray;
+};
+
+struct glPathFogGenNV_params
+{
+    GLenum genMode;
+};
+
+struct glPathGlyphIndexArrayNV_params
+{
+    GLuint firstPathName;
+    GLenum fontTarget;
+    const void *fontName;
+    GLbitfield fontStyle;
+    GLuint firstGlyphIndex;
+    GLsizei numGlyphs;
+    GLuint pathParameterTemplate;
+    GLfloat emScale;
+    GLenum ret;
+};
+
+struct glPathGlyphIndexRangeNV_params
+{
+    GLenum fontTarget;
+    const void *fontName;
+    GLbitfield fontStyle;
+    GLuint pathParameterTemplate;
+    GLfloat emScale;
+    GLuint baseAndCount[2];
+    GLenum ret;
+};
+
+struct glPathGlyphRangeNV_params
+{
+    GLuint firstPathName;
+    GLenum fontTarget;
+    const void *fontName;
+    GLbitfield fontStyle;
+    GLuint firstGlyph;
+    GLsizei numGlyphs;
+    GLenum handleMissingGlyphs;
+    GLuint pathParameterTemplate;
+    GLfloat emScale;
+};
+
+struct glPathGlyphsNV_params
+{
+    GLuint firstPathName;
+    GLenum fontTarget;
+    const void *fontName;
+    GLbitfield fontStyle;
+    GLsizei numGlyphs;
+    GLenum type;
+    const void *charcodes;
+    GLenum handleMissingGlyphs;
+    GLuint pathParameterTemplate;
+    GLfloat emScale;
+};
+
+struct glPathMemoryGlyphIndexArrayNV_params
+{
+    GLuint firstPathName;
+    GLenum fontTarget;
+    GLsizeiptr fontSize;
+    const void *fontData;
+    GLsizei faceIndex;
+    GLuint firstGlyphIndex;
+    GLsizei numGlyphs;
+    GLuint pathParameterTemplate;
+    GLfloat emScale;
+    GLenum ret;
+};
+
+struct glPathParameterfNV_params
+{
+    GLuint path;
+    GLenum pname;
+    GLfloat value;
+};
+
+struct glPathParameterfvNV_params
+{
+    GLuint path;
+    GLenum pname;
+    const GLfloat *value;
+};
+
+struct glPathParameteriNV_params
+{
+    GLuint path;
+    GLenum pname;
+    GLint value;
+};
+
+struct glPathParameterivNV_params
+{
+    GLuint path;
+    GLenum pname;
+    const GLint *value;
+};
+
+struct glPathStencilDepthOffsetNV_params
+{
+    GLfloat factor;
+    GLfloat units;
+};
+
+struct glPathStencilFuncNV_params
+{
+    GLenum func;
+    GLint ref;
+    GLuint mask;
+};
+
+struct glPathStringNV_params
+{
+    GLuint path;
+    GLenum format;
+    GLsizei length;
+    const void *pathString;
+};
+
+struct glPathSubCommandsNV_params
+{
+    GLuint path;
+    GLsizei commandStart;
+    GLsizei commandsToDelete;
+    GLsizei numCommands;
+    const GLubyte *commands;
+    GLsizei numCoords;
+    GLenum coordType;
+    const void *coords;
+};
+
+struct glPathSubCoordsNV_params
+{
+    GLuint path;
+    GLsizei coordStart;
+    GLsizei numCoords;
+    GLenum coordType;
+    const void *coords;
+};
+
+struct glPathTexGenNV_params
+{
+    GLenum texCoordSet;
+    GLenum genMode;
+    GLint components;
+    const GLfloat *coeffs;
+};
+
+struct glPauseTransformFeedback_params
+{
+};
+
+struct glPauseTransformFeedbackNV_params
+{
+};
+
+struct glPixelDataRangeNV_params
+{
+    GLenum target;
+    GLsizei length;
+    const void *pointer;
+};
+
+struct glPixelMapx_params
+{
+    GLenum map;
+    GLint size;
+    const GLfixed *values;
+};
+
+struct glPixelStorex_params
+{
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glPixelTexGenParameterfSGIS_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPixelTexGenParameterfvSGIS_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glPixelTexGenParameteriSGIS_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glPixelTexGenParameterivSGIS_params
+{
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glPixelTexGenSGIX_params
+{
+    GLenum mode;
+};
+
+struct glPixelTransferxOES_params
+{
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glPixelTransformParameterfEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPixelTransformParameterfvEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glPixelTransformParameteriEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glPixelTransformParameterivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glPixelZoomxOES_params
+{
+    GLfixed xfactor;
+    GLfixed yfactor;
+};
+
+struct glPointAlongPathNV_params
+{
+    GLuint path;
+    GLsizei startSegment;
+    GLsizei numSegments;
+    GLfloat distance;
+    GLfloat *x;
+    GLfloat *y;
+    GLfloat *tangentX;
+    GLfloat *tangentY;
+    GLboolean ret;
+};
+
+struct glPointParameterf_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPointParameterfARB_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPointParameterfEXT_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPointParameterfSGIS_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glPointParameterfv_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glPointParameterfvARB_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glPointParameterfvEXT_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glPointParameterfvSGIS_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glPointParameteri_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glPointParameteriNV_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glPointParameteriv_params
+{
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glPointParameterivNV_params
+{
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glPointParameterxvOES_params
+{
+    GLenum pname;
+    const GLfixed *params;
+};
+
+struct glPointSizexOES_params
+{
+    GLfixed size;
+};
+
+struct glPollAsyncSGIX_params
+{
+    GLuint *markerp;
+    GLint ret;
+};
+
+struct glPollInstrumentsSGIX_params
+{
+    GLint *marker_p;
+    GLint ret;
+};
+
+struct glPolygonOffsetClamp_params
+{
+    GLfloat factor;
+    GLfloat units;
+    GLfloat clamp;
+};
+
+struct glPolygonOffsetClampEXT_params
+{
+    GLfloat factor;
+    GLfloat units;
+    GLfloat clamp;
+};
+
+struct glPolygonOffsetEXT_params
+{
+    GLfloat factor;
+    GLfloat bias;
+};
+
+struct glPolygonOffsetxOES_params
+{
+    GLfixed factor;
+    GLfixed units;
+};
+
+struct glPopDebugGroup_params
+{
+};
+
+struct glPopGroupMarkerEXT_params
+{
+};
+
+struct glPresentFrameDualFillNV_params
+{
+    GLuint video_slot;
+    GLuint64EXT minPresentTime;
+    GLuint beginPresentTimeId;
+    GLuint presentDurationId;
+    GLenum type;
+    GLenum target0;
+    GLuint fill0;
+    GLenum target1;
+    GLuint fill1;
+    GLenum target2;
+    GLuint fill2;
+    GLenum target3;
+    GLuint fill3;
+};
+
+struct glPresentFrameKeyedNV_params
+{
+    GLuint video_slot;
+    GLuint64EXT minPresentTime;
+    GLuint beginPresentTimeId;
+    GLuint presentDurationId;
+    GLenum type;
+    GLenum target0;
+    GLuint fill0;
+    GLuint key0;
+    GLenum target1;
+    GLuint fill1;
+    GLuint key1;
+};
+
+struct glPrimitiveBoundingBoxARB_params
+{
+    GLfloat minX;
+    GLfloat minY;
+    GLfloat minZ;
+    GLfloat minW;
+    GLfloat maxX;
+    GLfloat maxY;
+    GLfloat maxZ;
+    GLfloat maxW;
+};
+
+struct glPrimitiveRestartIndex_params
+{
+    GLuint index;
+};
+
+struct glPrimitiveRestartIndexNV_params
+{
+    GLuint index;
+};
+
+struct glPrimitiveRestartNV_params
+{
+};
+
+struct glPrioritizeTexturesEXT_params
+{
+    GLsizei n;
+    const GLuint *textures;
+    const GLclampf *priorities;
+};
+
+struct glPrioritizeTexturesxOES_params
+{
+    GLsizei n;
+    const GLuint *textures;
+    const GLfixed *priorities;
+};
+
+struct glProgramBinary_params
+{
+    GLuint program;
+    GLenum binaryFormat;
+    const void *binary;
+    GLsizei length;
+};
+
+struct glProgramBufferParametersIivNV_params
+{
+    GLenum target;
+    GLuint bindingIndex;
+    GLuint wordIndex;
+    GLsizei count;
+    const GLint *params;
+};
+
+struct glProgramBufferParametersIuivNV_params
+{
+    GLenum target;
+    GLuint bindingIndex;
+    GLuint wordIndex;
+    GLsizei count;
+    const GLuint *params;
+};
+
+struct glProgramBufferParametersfvNV_params
+{
+    GLenum target;
+    GLuint bindingIndex;
+    GLuint wordIndex;
+    GLsizei count;
+    const GLfloat *params;
+};
+
+struct glProgramEnvParameter4dARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glProgramEnvParameter4dvARB_params
+{
+    GLenum target;
+    GLuint index;
+    const GLdouble *params;
+};
+
+struct glProgramEnvParameter4fARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glProgramEnvParameter4fvARB_params
+{
+    GLenum target;
+    GLuint index;
+    const GLfloat *params;
+};
+
+struct glProgramEnvParameterI4iNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glProgramEnvParameterI4ivNV_params
+{
+    GLenum target;
+    GLuint index;
+    const GLint *params;
+};
+
+struct glProgramEnvParameterI4uiNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+    GLuint w;
+};
+
+struct glProgramEnvParameterI4uivNV_params
+{
+    GLenum target;
+    GLuint index;
+    const GLuint *params;
+};
+
+struct glProgramEnvParameters4fvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLfloat *params;
+};
+
+struct glProgramEnvParametersI4ivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLint *params;
+};
+
+struct glProgramEnvParametersI4uivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLuint *params;
+};
+
+struct glProgramLocalParameter4dARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glProgramLocalParameter4dvARB_params
+{
+    GLenum target;
+    GLuint index;
+    const GLdouble *params;
+};
+
+struct glProgramLocalParameter4fARB_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glProgramLocalParameter4fvARB_params
+{
+    GLenum target;
+    GLuint index;
+    const GLfloat *params;
+};
+
+struct glProgramLocalParameterI4iNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glProgramLocalParameterI4ivNV_params
+{
+    GLenum target;
+    GLuint index;
+    const GLint *params;
+};
+
+struct glProgramLocalParameterI4uiNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+    GLuint w;
+};
+
+struct glProgramLocalParameterI4uivNV_params
+{
+    GLenum target;
+    GLuint index;
+    const GLuint *params;
+};
+
+struct glProgramLocalParameters4fvEXT_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLfloat *params;
+};
+
+struct glProgramLocalParametersI4ivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLint *params;
+};
+
+struct glProgramLocalParametersI4uivNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLuint *params;
+};
+
+struct glProgramNamedParameter4dNV_params
+{
+    GLuint id;
+    GLsizei len;
+    const GLubyte *name;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glProgramNamedParameter4dvNV_params
+{
+    GLuint id;
+    GLsizei len;
+    const GLubyte *name;
+    const GLdouble *v;
+};
+
+struct glProgramNamedParameter4fNV_params
+{
+    GLuint id;
+    GLsizei len;
+    const GLubyte *name;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glProgramNamedParameter4fvNV_params
+{
+    GLuint id;
+    GLsizei len;
+    const GLubyte *name;
+    const GLfloat *v;
+};
+
+struct glProgramParameter4dNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glProgramParameter4dvNV_params
+{
+    GLenum target;
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glProgramParameter4fNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glProgramParameter4fvNV_params
+{
+    GLenum target;
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glProgramParameteri_params
+{
+    GLuint program;
+    GLenum pname;
+    GLint value;
+};
+
+struct glProgramParameteriARB_params
+{
+    GLuint program;
+    GLenum pname;
+    GLint value;
+};
+
+struct glProgramParameteriEXT_params
+{
+    GLuint program;
+    GLenum pname;
+    GLint value;
+};
+
+struct glProgramParameters4dvNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glProgramParameters4fvNV_params
+{
+    GLenum target;
+    GLuint index;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glProgramPathFragmentInputGenNV_params
+{
+    GLuint program;
+    GLint location;
+    GLenum genMode;
+    GLint components;
+    const GLfloat *coeffs;
+};
+
+struct glProgramStringARB_params
+{
+    GLenum target;
+    GLenum format;
+    GLsizei len;
+    const void *string;
+};
+
+struct glProgramSubroutineParametersuivNV_params
+{
+    GLenum target;
+    GLsizei count;
+    const GLuint *params;
+};
+
+struct glProgramUniform1d_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble v0;
+};
+
+struct glProgramUniform1dEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble x;
+};
+
+struct glProgramUniform1dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform1dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform1f_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+};
+
+struct glProgramUniform1fEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+};
+
+struct glProgramUniform1fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform1fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform1i_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+};
+
+struct glProgramUniform1i64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLint64 x;
+};
+
+struct glProgramUniform1i64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLint64EXT x;
+};
+
+struct glProgramUniform1i64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glProgramUniform1i64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glProgramUniform1iEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+};
+
+struct glProgramUniform1iv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform1ivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform1ui_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+};
+
+struct glProgramUniform1ui64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 x;
+};
+
+struct glProgramUniform1ui64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64EXT x;
+};
+
+struct glProgramUniform1ui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glProgramUniform1ui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glProgramUniform1uiEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+};
+
+struct glProgramUniform1uiv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform1uivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform2d_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble v0;
+    GLdouble v1;
+};
+
+struct glProgramUniform2dEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glProgramUniform2dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform2dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform2f_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+};
+
+struct glProgramUniform2fEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+};
+
+struct glProgramUniform2fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform2fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform2i_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+    GLint v1;
+};
+
+struct glProgramUniform2i64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLint64 x;
+    GLint64 y;
+};
+
+struct glProgramUniform2i64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLint64EXT x;
+    GLint64EXT y;
+};
+
+struct glProgramUniform2i64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glProgramUniform2i64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glProgramUniform2iEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+    GLint v1;
+};
+
+struct glProgramUniform2iv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform2ivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform2ui_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+};
+
+struct glProgramUniform2ui64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 x;
+    GLuint64 y;
+};
+
+struct glProgramUniform2ui64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64EXT x;
+    GLuint64EXT y;
+};
+
+struct glProgramUniform2ui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glProgramUniform2ui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glProgramUniform2uiEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+};
+
+struct glProgramUniform2uiv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform2uivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform3d_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble v0;
+    GLdouble v1;
+    GLdouble v2;
+};
+
+struct glProgramUniform3dEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glProgramUniform3dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform3dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform3f_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+};
+
+struct glProgramUniform3fEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+};
+
+struct glProgramUniform3fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform3fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform3i_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+};
+
+struct glProgramUniform3i64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLint64 x;
+    GLint64 y;
+    GLint64 z;
+};
+
+struct glProgramUniform3i64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLint64EXT x;
+    GLint64EXT y;
+    GLint64EXT z;
+};
+
+struct glProgramUniform3i64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glProgramUniform3i64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glProgramUniform3iEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+};
+
+struct glProgramUniform3iv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform3ivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform3ui_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+};
+
+struct glProgramUniform3ui64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 x;
+    GLuint64 y;
+    GLuint64 z;
+};
+
+struct glProgramUniform3ui64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64EXT x;
+    GLuint64EXT y;
+    GLuint64EXT z;
+};
+
+struct glProgramUniform3ui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glProgramUniform3ui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glProgramUniform3uiEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+};
+
+struct glProgramUniform3uiv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform3uivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform4d_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble v0;
+    GLdouble v1;
+    GLdouble v2;
+    GLdouble v3;
+};
+
+struct glProgramUniform4dEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glProgramUniform4dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform4dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glProgramUniform4f_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+    GLfloat v3;
+};
+
+struct glProgramUniform4fEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+    GLfloat v3;
+};
+
+struct glProgramUniform4fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform4fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glProgramUniform4i_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+    GLint v3;
+};
+
+struct glProgramUniform4i64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLint64 x;
+    GLint64 y;
+    GLint64 z;
+    GLint64 w;
+};
+
+struct glProgramUniform4i64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLint64EXT x;
+    GLint64EXT y;
+    GLint64EXT z;
+    GLint64EXT w;
+};
+
+struct glProgramUniform4i64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glProgramUniform4i64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glProgramUniform4iEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+    GLint v3;
+};
+
+struct glProgramUniform4iv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform4ivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glProgramUniform4ui_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+    GLuint v3;
+};
+
+struct glProgramUniform4ui64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 x;
+    GLuint64 y;
+    GLuint64 z;
+    GLuint64 w;
+};
+
+struct glProgramUniform4ui64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64EXT x;
+    GLuint64EXT y;
+    GLuint64EXT z;
+    GLuint64EXT w;
+};
+
+struct glProgramUniform4ui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glProgramUniform4ui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glProgramUniform4uiEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+    GLuint v3;
+};
+
+struct glProgramUniform4uiv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniform4uivEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glProgramUniformHandleui64ARB_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 value;
+};
+
+struct glProgramUniformHandleui64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64 value;
+};
+
+struct glProgramUniformHandleui64vARB_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64 *values;
+};
+
+struct glProgramUniformHandleui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64 *values;
+};
+
+struct glProgramUniformMatrix2dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix2dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix2fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix2fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix2x3dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix2x3dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix2x3fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix2x3fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix2x4dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix2x4dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix2x4fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix2x4fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix3dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix3dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix3fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix3fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix3x2dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix3x2dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix3x2fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix3x2fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix3x4dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix3x4dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix3x4fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix3x4fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix4dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix4dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix4fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix4fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix4x2dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix4x2dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix4x2fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix4x2fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix4x3dv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix4x3dvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glProgramUniformMatrix4x3fv_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformMatrix4x3fvEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glProgramUniformui64NV_params
+{
+    GLuint program;
+    GLint location;
+    GLuint64EXT value;
+};
+
+struct glProgramUniformui64vNV_params
+{
+    GLuint program;
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glProgramVertexLimitNV_params
+{
+    GLenum target;
+    GLint limit;
+};
+
+struct glProvokingVertex_params
+{
+    GLenum mode;
+};
+
+struct glProvokingVertexEXT_params
+{
+    GLenum mode;
+};
+
+struct glPushClientAttribDefaultEXT_params
+{
+    GLbitfield mask;
+};
+
+struct glPushDebugGroup_params
+{
+    GLenum source;
+    GLuint id;
+    GLsizei length;
+    const GLchar *message;
+};
+
+struct glPushGroupMarkerEXT_params
+{
+    GLsizei length;
+    const GLchar *marker;
+};
+
+struct glQueryCounter_params
+{
+    GLuint id;
+    GLenum target;
+};
+
+struct glQueryMatrixxOES_params
+{
+    GLfixed *mantissa;
+    GLint *exponent;
+    GLbitfield ret;
+};
+
+struct glQueryObjectParameteruiAMD_params
+{
+    GLenum target;
+    GLuint id;
+    GLenum pname;
+    GLuint param;
+};
+
+struct glQueryResourceNV_params
+{
+    GLenum queryType;
+    GLint tagId;
+    GLuint count;
+    GLint *buffer;
+    GLint ret;
+};
+
+struct glQueryResourceTagNV_params
+{
+    GLint tagId;
+    const GLchar *tagString;
+};
+
+struct glRasterPos2xOES_params
+{
+    GLfixed x;
+    GLfixed y;
+};
+
+struct glRasterPos2xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glRasterPos3xOES_params
+{
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+};
+
+struct glRasterPos3xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glRasterPos4xOES_params
+{
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+    GLfixed w;
+};
+
+struct glRasterPos4xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glRasterSamplesEXT_params
+{
+    GLuint samples;
+    GLboolean fixedsamplelocations;
+};
+
+struct glReadBufferRegion_params
+{
+    GLenum region;
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glReadInstrumentsSGIX_params
+{
+    GLint marker;
+};
+
+struct glReadnPixels_params
+{
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *data;
+};
+
+struct glReadnPixelsARB_params
+{
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    GLsizei bufSize;
+    void *data;
+};
+
+struct glRectxOES_params
+{
+    GLfixed x1;
+    GLfixed y1;
+    GLfixed x2;
+    GLfixed y2;
+};
+
+struct glRectxvOES_params
+{
+    const GLfixed *v1;
+    const GLfixed *v2;
+};
+
+struct glReferencePlaneSGIX_params
+{
+    const GLdouble *equation;
+};
+
+struct glReleaseKeyedMutexWin32EXT_params
+{
+    GLuint memory;
+    GLuint64 key;
+    GLboolean ret;
+};
+
+struct glReleaseShaderCompiler_params
+{
+};
+
+struct glRenderGpuMaskNV_params
+{
+    GLbitfield mask;
+};
+
+struct glRenderbufferStorage_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glRenderbufferStorageEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glRenderbufferStorageMultisample_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glRenderbufferStorageMultisampleAdvancedAMD_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLsizei storageSamples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glRenderbufferStorageMultisampleCoverageNV_params
+{
+    GLenum target;
+    GLsizei coverageSamples;
+    GLsizei colorSamples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glRenderbufferStorageMultisampleEXT_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glReplacementCodePointerSUN_params
+{
+    GLenum type;
+    GLsizei stride;
+    const void **pointer;
+};
+
+struct glReplacementCodeubSUN_params
+{
+    GLubyte code;
+};
+
+struct glReplacementCodeubvSUN_params
+{
+    const GLubyte *code;
+};
+
+struct glReplacementCodeuiColor3fVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiColor3fVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *c;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiColor4fNormal3fVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat a;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiColor4fNormal3fVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *c;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiColor4ubVertex3fSUN_params
+{
+    GLuint rc;
+    GLubyte r;
+    GLubyte g;
+    GLubyte b;
+    GLubyte a;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiColor4ubVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLubyte *c;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiNormal3fVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiNormal3fVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiSUN_params
+{
+    GLuint code;
+};
+
+struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat a;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *tc;
+    const GLfloat *c;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat s;
+    GLfloat t;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *tc;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiTexCoord2fVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat s;
+    GLfloat t;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiTexCoord2fVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *tc;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuiVertex3fSUN_params
+{
+    GLuint rc;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glReplacementCodeuiVertex3fvSUN_params
+{
+    const GLuint *rc;
+    const GLfloat *v;
+};
+
+struct glReplacementCodeuivSUN_params
+{
+    const GLuint *code;
+};
+
+struct glReplacementCodeusSUN_params
+{
+    GLushort code;
+};
+
+struct glReplacementCodeusvSUN_params
+{
+    const GLushort *code;
+};
+
+struct glRequestResidentProgramsNV_params
+{
+    GLsizei n;
+    const GLuint *programs;
+};
+
+struct glResetHistogram_params
+{
+    GLenum target;
+};
+
+struct glResetHistogramEXT_params
+{
+    GLenum target;
+};
+
+struct glResetMemoryObjectParameterNV_params
+{
+    GLuint memory;
+    GLenum pname;
+};
+
+struct glResetMinmax_params
+{
+    GLenum target;
+};
+
+struct glResetMinmaxEXT_params
+{
+    GLenum target;
+};
+
+struct glResizeBuffersMESA_params
+{
+};
+
+struct glResolveDepthValuesNV_params
+{
+};
+
+struct glResumeTransformFeedback_params
+{
+};
+
+struct glResumeTransformFeedbackNV_params
+{
+};
+
+struct glRotatexOES_params
+{
+    GLfixed angle;
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+};
+
+struct glSampleCoverage_params
+{
+    GLfloat value;
+    GLboolean invert;
+};
+
+struct glSampleCoverageARB_params
+{
+    GLfloat value;
+    GLboolean invert;
+};
+
+struct glSampleMapATI_params
+{
+    GLuint dst;
+    GLuint interp;
+    GLenum swizzle;
+};
+
+struct glSampleMaskEXT_params
+{
+    GLclampf value;
+    GLboolean invert;
+};
+
+struct glSampleMaskIndexedNV_params
+{
+    GLuint index;
+    GLbitfield mask;
+};
+
+struct glSampleMaskSGIS_params
+{
+    GLclampf value;
+    GLboolean invert;
+};
+
+struct glSampleMaski_params
+{
+    GLuint maskNumber;
+    GLbitfield mask;
+};
+
+struct glSamplePatternEXT_params
+{
+    GLenum pattern;
+};
+
+struct glSamplePatternSGIS_params
+{
+    GLenum pattern;
+};
+
+struct glSamplerParameterIiv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    const GLint *param;
+};
+
+struct glSamplerParameterIuiv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    const GLuint *param;
+};
+
+struct glSamplerParameterf_params
+{
+    GLuint sampler;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glSamplerParameterfv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    const GLfloat *param;
+};
+
+struct glSamplerParameteri_params
+{
+    GLuint sampler;
+    GLenum pname;
+    GLint param;
+};
+
+struct glSamplerParameteriv_params
+{
+    GLuint sampler;
+    GLenum pname;
+    const GLint *param;
+};
+
+struct glScalexOES_params
+{
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+};
+
+struct glScissorArrayv_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLint *v;
+};
+
+struct glScissorExclusiveArrayvNV_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLint *v;
+};
+
+struct glScissorExclusiveNV_params
+{
+    GLint x;
+    GLint y;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glScissorIndexed_params
+{
+    GLuint index;
+    GLint left;
+    GLint bottom;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glScissorIndexedv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glSecondaryColor3b_params
+{
+    GLbyte red;
+    GLbyte green;
+    GLbyte blue;
+};
+
+struct glSecondaryColor3bEXT_params
+{
+    GLbyte red;
+    GLbyte green;
+    GLbyte blue;
+};
+
+struct glSecondaryColor3bv_params
+{
+    const GLbyte *v;
+};
+
+struct glSecondaryColor3bvEXT_params
+{
+    const GLbyte *v;
+};
+
+struct glSecondaryColor3d_params
+{
+    GLdouble red;
+    GLdouble green;
+    GLdouble blue;
+};
+
+struct glSecondaryColor3dEXT_params
+{
+    GLdouble red;
+    GLdouble green;
+    GLdouble blue;
+};
+
+struct glSecondaryColor3dv_params
+{
+    const GLdouble *v;
+};
+
+struct glSecondaryColor3dvEXT_params
+{
+    const GLdouble *v;
+};
+
+struct glSecondaryColor3f_params
+{
+    GLfloat red;
+    GLfloat green;
+    GLfloat blue;
+};
+
+struct glSecondaryColor3fEXT_params
+{
+    GLfloat red;
+    GLfloat green;
+    GLfloat blue;
+};
+
+struct glSecondaryColor3fv_params
+{
+    const GLfloat *v;
+};
+
+struct glSecondaryColor3fvEXT_params
+{
+    const GLfloat *v;
+};
+
+struct glSecondaryColor3hNV_params
+{
+    GLhalfNV red;
+    GLhalfNV green;
+    GLhalfNV blue;
+};
+
+struct glSecondaryColor3hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glSecondaryColor3i_params
+{
+    GLint red;
+    GLint green;
+    GLint blue;
+};
+
+struct glSecondaryColor3iEXT_params
+{
+    GLint red;
+    GLint green;
+    GLint blue;
+};
+
+struct glSecondaryColor3iv_params
+{
+    const GLint *v;
+};
+
+struct glSecondaryColor3ivEXT_params
+{
+    const GLint *v;
+};
+
+struct glSecondaryColor3s_params
+{
+    GLshort red;
+    GLshort green;
+    GLshort blue;
+};
+
+struct glSecondaryColor3sEXT_params
+{
+    GLshort red;
+    GLshort green;
+    GLshort blue;
+};
+
+struct glSecondaryColor3sv_params
+{
+    const GLshort *v;
+};
+
+struct glSecondaryColor3svEXT_params
+{
+    const GLshort *v;
+};
+
+struct glSecondaryColor3ub_params
+{
+    GLubyte red;
+    GLubyte green;
+    GLubyte blue;
+};
+
+struct glSecondaryColor3ubEXT_params
+{
+    GLubyte red;
+    GLubyte green;
+    GLubyte blue;
+};
+
+struct glSecondaryColor3ubv_params
+{
+    const GLubyte *v;
+};
+
+struct glSecondaryColor3ubvEXT_params
+{
+    const GLubyte *v;
+};
+
+struct glSecondaryColor3ui_params
+{
+    GLuint red;
+    GLuint green;
+    GLuint blue;
+};
+
+struct glSecondaryColor3uiEXT_params
+{
+    GLuint red;
+    GLuint green;
+    GLuint blue;
+};
+
+struct glSecondaryColor3uiv_params
+{
+    const GLuint *v;
+};
+
+struct glSecondaryColor3uivEXT_params
+{
+    const GLuint *v;
+};
+
+struct glSecondaryColor3us_params
+{
+    GLushort red;
+    GLushort green;
+    GLushort blue;
+};
+
+struct glSecondaryColor3usEXT_params
+{
+    GLushort red;
+    GLushort green;
+    GLushort blue;
+};
+
+struct glSecondaryColor3usv_params
+{
+    const GLushort *v;
+};
+
+struct glSecondaryColor3usvEXT_params
+{
+    const GLushort *v;
+};
+
+struct glSecondaryColorFormatNV_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glSecondaryColorP3ui_params
+{
+    GLenum type;
+    GLuint color;
+};
+
+struct glSecondaryColorP3uiv_params
+{
+    GLenum type;
+    const GLuint *color;
+};
+
+struct glSecondaryColorPointer_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glSecondaryColorPointerEXT_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glSecondaryColorPointerListIBM_params
+{
+    GLint size;
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glSelectPerfMonitorCountersAMD_params
+{
+    GLuint monitor;
+    GLboolean enable;
+    GLuint group;
+    GLint numCounters;
+    GLuint *counterList;
+};
+
+struct glSelectTextureCoordSetSGIS_params
+{
+    GLenum target;
+};
+
+struct glSelectTextureSGIS_params
+{
+    GLenum target;
+};
+
+struct glSemaphoreParameterui64vEXT_params
+{
+    GLuint semaphore;
+    GLenum pname;
+    const GLuint64 *params;
+};
+
+struct glSeparableFilter2D_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *row;
+    const void *column;
+};
+
+struct glSeparableFilter2DEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *row;
+    const void *column;
+};
+
+struct glSetFenceAPPLE_params
+{
+    GLuint fence;
+};
+
+struct glSetFenceNV_params
+{
+    GLuint fence;
+    GLenum condition;
+};
+
+struct glSetFragmentShaderConstantATI_params
+{
+    GLuint dst;
+    const GLfloat *value;
+};
+
+struct glSetInvariantEXT_params
+{
+    GLuint id;
+    GLenum type;
+    const void *addr;
+};
+
+struct glSetLocalConstantEXT_params
+{
+    GLuint id;
+    GLenum type;
+    const void *addr;
+};
+
+struct glSetMultisamplefvAMD_params
+{
+    GLenum pname;
+    GLuint index;
+    const GLfloat *val;
+};
+
+struct glShaderBinary_params
+{
+    GLsizei count;
+    const GLuint *shaders;
+    GLenum binaryformat;
+    const void *binary;
+    GLsizei length;
+};
+
+struct glShaderOp1EXT_params
+{
+    GLenum op;
+    GLuint res;
+    GLuint arg1;
+};
+
+struct glShaderOp2EXT_params
+{
+    GLenum op;
+    GLuint res;
+    GLuint arg1;
+    GLuint arg2;
+};
+
+struct glShaderOp3EXT_params
+{
+    GLenum op;
+    GLuint res;
+    GLuint arg1;
+    GLuint arg2;
+    GLuint arg3;
+};
+
+struct glShaderSource_params
+{
+    GLuint shader;
+    GLsizei count;
+    const GLchar *const*string;
+    const GLint *length;
+};
+
+struct glShaderSourceARB_params
+{
+    GLhandleARB shaderObj;
+    GLsizei count;
+    const GLcharARB **string;
+    const GLint *length;
+};
+
+struct glShaderStorageBlockBinding_params
+{
+    GLuint program;
+    GLuint storageBlockIndex;
+    GLuint storageBlockBinding;
+};
+
+struct glShadingRateImageBarrierNV_params
+{
+    GLboolean synchronize;
+};
+
+struct glShadingRateImagePaletteNV_params
+{
+    GLuint viewport;
+    GLuint first;
+    GLsizei count;
+    const GLenum *rates;
+};
+
+struct glShadingRateSampleOrderCustomNV_params
+{
+    GLenum rate;
+    GLuint samples;
+    const GLint *locations;
+};
+
+struct glShadingRateSampleOrderNV_params
+{
+    GLenum order;
+};
+
+struct glSharpenTexFuncSGIS_params
+{
+    GLenum target;
+    GLsizei n;
+    const GLfloat *points;
+};
+
+struct glSignalSemaphoreEXT_params
+{
+    GLuint semaphore;
+    GLuint numBufferBarriers;
+    const GLuint *buffers;
+    GLuint numTextureBarriers;
+    const GLuint *textures;
+    const GLenum *dstLayouts;
+};
+
+struct glSignalSemaphoreui64NVX_params
+{
+    GLuint signalGpu;
+    GLsizei fenceObjectCount;
+    const GLuint *semaphoreArray;
+    const GLuint64 *fenceValueArray;
+};
+
+struct glSignalVkFenceNV_params
+{
+    GLuint64 vkFence;
+};
+
+struct glSignalVkSemaphoreNV_params
+{
+    GLuint64 vkSemaphore;
+};
+
+struct glSpecializeShader_params
+{
+    GLuint shader;
+    const GLchar *pEntryPoint;
+    GLuint numSpecializationConstants;
+    const GLuint *pConstantIndex;
+    const GLuint *pConstantValue;
+};
+
+struct glSpecializeShaderARB_params
+{
+    GLuint shader;
+    const GLchar *pEntryPoint;
+    GLuint numSpecializationConstants;
+    const GLuint *pConstantIndex;
+    const GLuint *pConstantValue;
+};
+
+struct glSpriteParameterfSGIX_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glSpriteParameterfvSGIX_params
+{
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glSpriteParameteriSGIX_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glSpriteParameterivSGIX_params
+{
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glStartInstrumentsSGIX_params
+{
+};
+
+struct glStateCaptureNV_params
+{
+    GLuint state;
+    GLenum mode;
+};
+
+struct glStencilClearTagEXT_params
+{
+    GLsizei stencilTagBits;
+    GLuint stencilClearTag;
+};
+
+struct glStencilFillPathInstancedNV_params
+{
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLenum fillMode;
+    GLuint mask;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glStencilFillPathNV_params
+{
+    GLuint path;
+    GLenum fillMode;
+    GLuint mask;
+};
+
+struct glStencilFuncSeparate_params
+{
+    GLenum face;
+    GLenum func;
+    GLint ref;
+    GLuint mask;
+};
+
+struct glStencilFuncSeparateATI_params
+{
+    GLenum frontfunc;
+    GLenum backfunc;
+    GLint ref;
+    GLuint mask;
+};
+
+struct glStencilMaskSeparate_params
+{
+    GLenum face;
+    GLuint mask;
+};
+
+struct glStencilOpSeparate_params
+{
+    GLenum face;
+    GLenum sfail;
+    GLenum dpfail;
+    GLenum dppass;
+};
+
+struct glStencilOpSeparateATI_params
+{
+    GLenum face;
+    GLenum sfail;
+    GLenum dpfail;
+    GLenum dppass;
+};
+
+struct glStencilOpValueAMD_params
+{
+    GLenum face;
+    GLuint value;
+};
+
+struct glStencilStrokePathInstancedNV_params
+{
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLint reference;
+    GLuint mask;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glStencilStrokePathNV_params
+{
+    GLuint path;
+    GLint reference;
+    GLuint mask;
+};
+
+struct glStencilThenCoverFillPathInstancedNV_params
+{
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLenum fillMode;
+    GLuint mask;
+    GLenum coverMode;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glStencilThenCoverFillPathNV_params
+{
+    GLuint path;
+    GLenum fillMode;
+    GLuint mask;
+    GLenum coverMode;
+};
+
+struct glStencilThenCoverStrokePathInstancedNV_params
+{
+    GLsizei numPaths;
+    GLenum pathNameType;
+    const void *paths;
+    GLuint pathBase;
+    GLint reference;
+    GLuint mask;
+    GLenum coverMode;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glStencilThenCoverStrokePathNV_params
+{
+    GLuint path;
+    GLint reference;
+    GLuint mask;
+    GLenum coverMode;
+};
+
+struct glStopInstrumentsSGIX_params
+{
+    GLint marker;
+};
+
+struct glStringMarkerGREMEDY_params
+{
+    GLsizei len;
+    const void *string;
+};
+
+struct glSubpixelPrecisionBiasNV_params
+{
+    GLuint xbits;
+    GLuint ybits;
+};
+
+struct glSwizzleEXT_params
+{
+    GLuint res;
+    GLuint in;
+    GLenum outX;
+    GLenum outY;
+    GLenum outZ;
+    GLenum outW;
+};
+
+struct glSyncTextureINTEL_params
+{
+    GLuint texture;
+};
+
+struct glTagSampleBufferSGIX_params
+{
+};
+
+struct glTangent3bEXT_params
+{
+    GLbyte tx;
+    GLbyte ty;
+    GLbyte tz;
+};
+
+struct glTangent3bvEXT_params
+{
+    const GLbyte *v;
+};
+
+struct glTangent3dEXT_params
+{
+    GLdouble tx;
+    GLdouble ty;
+    GLdouble tz;
+};
+
+struct glTangent3dvEXT_params
+{
+    const GLdouble *v;
+};
+
+struct glTangent3fEXT_params
+{
+    GLfloat tx;
+    GLfloat ty;
+    GLfloat tz;
+};
+
+struct glTangent3fvEXT_params
+{
+    const GLfloat *v;
+};
+
+struct glTangent3iEXT_params
+{
+    GLint tx;
+    GLint ty;
+    GLint tz;
+};
+
+struct glTangent3ivEXT_params
+{
+    const GLint *v;
+};
+
+struct glTangent3sEXT_params
+{
+    GLshort tx;
+    GLshort ty;
+    GLshort tz;
+};
+
+struct glTangent3svEXT_params
+{
+    const GLshort *v;
+};
+
+struct glTangentPointerEXT_params
+{
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glTbufferMask3DFX_params
+{
+    GLuint mask;
+};
+
+struct glTessellationFactorAMD_params
+{
+    GLfloat factor;
+};
+
+struct glTessellationModeAMD_params
+{
+    GLenum mode;
+};
+
+struct glTestFenceAPPLE_params
+{
+    GLuint fence;
+    GLboolean ret;
+};
+
+struct glTestFenceNV_params
+{
+    GLuint fence;
+    GLboolean ret;
+};
+
+struct glTestObjectAPPLE_params
+{
+    GLenum object;
+    GLuint name;
+    GLboolean ret;
+};
+
+struct glTexAttachMemoryNV_params
+{
+    GLenum target;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTexBuffer_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+};
+
+struct glTexBufferARB_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+};
+
+struct glTexBufferEXT_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+};
+
+struct glTexBufferRange_params
+{
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glTexBumpParameterfvATI_params
+{
+    GLenum pname;
+    const GLfloat *param;
+};
+
+struct glTexBumpParameterivATI_params
+{
+    GLenum pname;
+    const GLint *param;
+};
+
+struct glTexCoord1bOES_params
+{
+    GLbyte s;
+};
+
+struct glTexCoord1bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glTexCoord1hNV_params
+{
+    GLhalfNV s;
+};
+
+struct glTexCoord1hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glTexCoord1xOES_params
+{
+    GLfixed s;
+};
+
+struct glTexCoord1xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glTexCoord2bOES_params
+{
+    GLbyte s;
+    GLbyte t;
+};
+
+struct glTexCoord2bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glTexCoord2fColor3fVertex3fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glTexCoord2fColor3fVertex3fvSUN_params
+{
+    const GLfloat *tc;
+    const GLfloat *c;
+    const GLfloat *v;
+};
+
+struct glTexCoord2fColor4fNormal3fVertex3fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat a;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glTexCoord2fColor4fNormal3fVertex3fvSUN_params
+{
+    const GLfloat *tc;
+    const GLfloat *c;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glTexCoord2fColor4ubVertex3fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLubyte r;
+    GLubyte g;
+    GLubyte b;
+    GLubyte a;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glTexCoord2fColor4ubVertex3fvSUN_params
+{
+    const GLfloat *tc;
+    const GLubyte *c;
+    const GLfloat *v;
+};
+
+struct glTexCoord2fNormal3fVertex3fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glTexCoord2fNormal3fVertex3fvSUN_params
+{
+    const GLfloat *tc;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glTexCoord2fVertex3fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glTexCoord2fVertex3fvSUN_params
+{
+    const GLfloat *tc;
+    const GLfloat *v;
+};
+
+struct glTexCoord2hNV_params
+{
+    GLhalfNV s;
+    GLhalfNV t;
+};
+
+struct glTexCoord2hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glTexCoord2xOES_params
+{
+    GLfixed s;
+    GLfixed t;
+};
+
+struct glTexCoord2xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glTexCoord3bOES_params
+{
+    GLbyte s;
+    GLbyte t;
+    GLbyte r;
+};
+
+struct glTexCoord3bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glTexCoord3hNV_params
+{
+    GLhalfNV s;
+    GLhalfNV t;
+    GLhalfNV r;
+};
+
+struct glTexCoord3hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glTexCoord3xOES_params
+{
+    GLfixed s;
+    GLfixed t;
+    GLfixed r;
+};
+
+struct glTexCoord3xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glTexCoord4bOES_params
+{
+    GLbyte s;
+    GLbyte t;
+    GLbyte r;
+    GLbyte q;
+};
+
+struct glTexCoord4bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glTexCoord4fColor4fNormal3fVertex4fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLfloat p;
+    GLfloat q;
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+    GLfloat a;
+    GLfloat nx;
+    GLfloat ny;
+    GLfloat nz;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glTexCoord4fColor4fNormal3fVertex4fvSUN_params
+{
+    const GLfloat *tc;
+    const GLfloat *c;
+    const GLfloat *n;
+    const GLfloat *v;
+};
+
+struct glTexCoord4fVertex4fSUN_params
+{
+    GLfloat s;
+    GLfloat t;
+    GLfloat p;
+    GLfloat q;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glTexCoord4fVertex4fvSUN_params
+{
+    const GLfloat *tc;
+    const GLfloat *v;
+};
+
+struct glTexCoord4hNV_params
+{
+    GLhalfNV s;
+    GLhalfNV t;
+    GLhalfNV r;
+    GLhalfNV q;
+};
+
+struct glTexCoord4hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glTexCoord4xOES_params
+{
+    GLfixed s;
+    GLfixed t;
+    GLfixed r;
+    GLfixed q;
+};
+
+struct glTexCoord4xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glTexCoordFormatNV_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glTexCoordP1ui_params
+{
+    GLenum type;
+    GLuint coords;
+};
+
+struct glTexCoordP1uiv_params
+{
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glTexCoordP2ui_params
+{
+    GLenum type;
+    GLuint coords;
+};
+
+struct glTexCoordP2uiv_params
+{
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glTexCoordP3ui_params
+{
+    GLenum type;
+    GLuint coords;
+};
+
+struct glTexCoordP3uiv_params
+{
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glTexCoordP4ui_params
+{
+    GLenum type;
+    GLuint coords;
+};
+
+struct glTexCoordP4uiv_params
+{
+    GLenum type;
+    const GLuint *coords;
+};
+
+struct glTexCoordPointerEXT_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLsizei count;
+    const void *pointer;
+};
+
+struct glTexCoordPointerListIBM_params
+{
+    GLint size;
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glTexCoordPointervINTEL_params
+{
+    GLint size;
+    GLenum type;
+    const void **pointer;
+};
+
+struct glTexEnvxOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glTexEnvxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfixed *params;
+};
+
+struct glTexFilterFuncSGIS_params
+{
+    GLenum target;
+    GLenum filter;
+    GLsizei n;
+    const GLfloat *weights;
+};
+
+struct glTexGenxOES_params
+{
+    GLenum coord;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glTexGenxvOES_params
+{
+    GLenum coord;
+    GLenum pname;
+    const GLfixed *params;
+};
+
+struct glTexImage2DMultisample_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTexImage2DMultisampleCoverageNV_params
+{
+    GLenum target;
+    GLsizei coverageSamples;
+    GLsizei colorSamples;
+    GLint internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedSampleLocations;
+};
+
+struct glTexImage3D_params
+{
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexImage3DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexImage3DMultisample_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTexImage3DMultisampleCoverageNV_params
+{
+    GLenum target;
+    GLsizei coverageSamples;
+    GLsizei colorSamples;
+    GLint internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedSampleLocations;
+};
+
+struct glTexImage4DSGIS_params
+{
+    GLenum target;
+    GLint level;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLsizei size4d;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexPageCommitmentARB_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean commit;
+};
+
+struct glTexParameterIiv_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glTexParameterIivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glTexParameterIuiv_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLuint *params;
+};
+
+struct glTexParameterIuivEXT_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLuint *params;
+};
+
+struct glTexParameterxOES_params
+{
+    GLenum target;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glTexParameterxvOES_params
+{
+    GLenum target;
+    GLenum pname;
+    const GLfixed *params;
+};
+
+struct glTexRenderbufferNV_params
+{
+    GLenum target;
+    GLuint renderbuffer;
+};
+
+struct glTexStorage1D_params
+{
+    GLenum target;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+};
+
+struct glTexStorage2D_params
+{
+    GLenum target;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glTexStorage2DMultisample_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTexStorage3D_params
+{
+    GLenum target;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+};
+
+struct glTexStorage3DMultisample_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTexStorageMem1DEXT_params
+{
+    GLenum target;
+    GLsizei levels;
+    GLenum internalFormat;
+    GLsizei width;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTexStorageMem2DEXT_params
+{
+    GLenum target;
+    GLsizei levels;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTexStorageMem2DMultisampleEXT_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedSampleLocations;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTexStorageMem3DEXT_params
+{
+    GLenum target;
+    GLsizei levels;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTexStorageMem3DMultisampleEXT_params
+{
+    GLenum target;
+    GLsizei samples;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedSampleLocations;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTexStorageSparseAMD_params
+{
+    GLenum target;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLsizei layers;
+    GLbitfield flags;
+};
+
+struct glTexSubImage1DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexSubImage2DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexSubImage3D_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexSubImage3DEXT_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTexSubImage4DSGIS_params
+{
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLint woffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLsizei size4d;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureAttachMemoryNV_params
+{
+    GLuint texture;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTextureBarrier_params
+{
+};
+
+struct glTextureBarrierNV_params
+{
+};
+
+struct glTextureBuffer_params
+{
+    GLuint texture;
+    GLenum internalformat;
+    GLuint buffer;
+};
+
+struct glTextureBufferEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+};
+
+struct glTextureBufferRange_params
+{
+    GLuint texture;
+    GLenum internalformat;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glTextureBufferRangeEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum internalformat;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glTextureColorMaskSGIS_params
+{
+    GLboolean red;
+    GLboolean green;
+    GLboolean blue;
+    GLboolean alpha;
+};
+
+struct glTextureImage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureImage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureImage2DMultisampleCoverageNV_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei coverageSamples;
+    GLsizei colorSamples;
+    GLint internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedSampleLocations;
+};
+
+struct glTextureImage2DMultisampleNV_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei samples;
+    GLint internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedSampleLocations;
+};
+
+struct glTextureImage3DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLint border;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureImage3DMultisampleCoverageNV_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei coverageSamples;
+    GLsizei colorSamples;
+    GLint internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedSampleLocations;
+};
+
+struct glTextureImage3DMultisampleNV_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei samples;
+    GLint internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedSampleLocations;
+};
+
+struct glTextureLightEXT_params
+{
+    GLenum pname;
+};
+
+struct glTextureMaterialEXT_params
+{
+    GLenum face;
+    GLenum mode;
+};
+
+struct glTextureNormalEXT_params
+{
+    GLenum mode;
+};
+
+struct glTexturePageCommitmentEXT_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean commit;
+};
+
+struct glTextureParameterIiv_params
+{
+    GLuint texture;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glTextureParameterIivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glTextureParameterIuiv_params
+{
+    GLuint texture;
+    GLenum pname;
+    const GLuint *params;
+};
+
+struct glTextureParameterIuivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    const GLuint *params;
+};
+
+struct glTextureParameterf_params
+{
+    GLuint texture;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glTextureParameterfEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glTextureParameterfv_params
+{
+    GLuint texture;
+    GLenum pname;
+    const GLfloat *param;
+};
+
+struct glTextureParameterfvEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glTextureParameteri_params
+{
+    GLuint texture;
+    GLenum pname;
+    GLint param;
+};
+
+struct glTextureParameteriEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    GLint param;
+};
+
+struct glTextureParameteriv_params
+{
+    GLuint texture;
+    GLenum pname;
+    const GLint *param;
+};
+
+struct glTextureParameterivEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glTextureRangeAPPLE_params
+{
+    GLenum target;
+    GLsizei length;
+    const void *pointer;
+};
+
+struct glTextureRenderbufferEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLuint renderbuffer;
+};
+
+struct glTextureStorage1D_params
+{
+    GLuint texture;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+};
+
+struct glTextureStorage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+};
+
+struct glTextureStorage2D_params
+{
+    GLuint texture;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glTextureStorage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+};
+
+struct glTextureStorage2DMultisample_params
+{
+    GLuint texture;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTextureStorage2DMultisampleEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTextureStorage3D_params
+{
+    GLuint texture;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+};
+
+struct glTextureStorage3DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei levels;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+};
+
+struct glTextureStorage3DMultisample_params
+{
+    GLuint texture;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTextureStorage3DMultisampleEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLsizei samples;
+    GLenum internalformat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedsamplelocations;
+};
+
+struct glTextureStorageMem1DEXT_params
+{
+    GLuint texture;
+    GLsizei levels;
+    GLenum internalFormat;
+    GLsizei width;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTextureStorageMem2DEXT_params
+{
+    GLuint texture;
+    GLsizei levels;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTextureStorageMem2DMultisampleEXT_params
+{
+    GLuint texture;
+    GLsizei samples;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLboolean fixedSampleLocations;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTextureStorageMem3DEXT_params
+{
+    GLuint texture;
+    GLsizei levels;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTextureStorageMem3DMultisampleEXT_params
+{
+    GLuint texture;
+    GLsizei samples;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLboolean fixedSampleLocations;
+    GLuint memory;
+    GLuint64 offset;
+};
+
+struct glTextureStorageSparseAMD_params
+{
+    GLuint texture;
+    GLenum target;
+    GLenum internalFormat;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLsizei layers;
+    GLbitfield flags;
+};
+
+struct glTextureSubImage1D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureSubImage1DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLsizei width;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureSubImage2D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureSubImage2DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLsizei width;
+    GLsizei height;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureSubImage3D_params
+{
+    GLuint texture;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureSubImage3DEXT_params
+{
+    GLuint texture;
+    GLenum target;
+    GLint level;
+    GLint xoffset;
+    GLint yoffset;
+    GLint zoffset;
+    GLsizei width;
+    GLsizei height;
+    GLsizei depth;
+    GLenum format;
+    GLenum type;
+    const void *pixels;
+};
+
+struct glTextureView_params
+{
+    GLuint texture;
+    GLenum target;
+    GLuint origtexture;
+    GLenum internalformat;
+    GLuint minlevel;
+    GLuint numlevels;
+    GLuint minlayer;
+    GLuint numlayers;
+};
+
+struct glTrackMatrixNV_params
+{
+    GLenum target;
+    GLuint address;
+    GLenum matrix;
+    GLenum transform;
+};
+
+struct glTransformFeedbackAttribsNV_params
+{
+    GLsizei count;
+    const GLint *attribs;
+    GLenum bufferMode;
+};
+
+struct glTransformFeedbackBufferBase_params
+{
+    GLuint xfb;
+    GLuint index;
+    GLuint buffer;
+};
+
+struct glTransformFeedbackBufferRange_params
+{
+    GLuint xfb;
+    GLuint index;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizeiptr size;
+};
+
+struct glTransformFeedbackStreamAttribsNV_params
+{
+    GLsizei count;
+    const GLint *attribs;
+    GLsizei nbuffers;
+    const GLint *bufstreams;
+    GLenum bufferMode;
+};
+
+struct glTransformFeedbackVaryings_params
+{
+    GLuint program;
+    GLsizei count;
+    const GLchar *const*varyings;
+    GLenum bufferMode;
+};
+
+struct glTransformFeedbackVaryingsEXT_params
+{
+    GLuint program;
+    GLsizei count;
+    const GLchar *const*varyings;
+    GLenum bufferMode;
+};
+
+struct glTransformFeedbackVaryingsNV_params
+{
+    GLuint program;
+    GLsizei count;
+    const GLint *locations;
+    GLenum bufferMode;
+};
+
+struct glTransformPathNV_params
+{
+    GLuint resultPath;
+    GLuint srcPath;
+    GLenum transformType;
+    const GLfloat *transformValues;
+};
+
+struct glTranslatexOES_params
+{
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+};
+
+struct glUniform1d_params
+{
+    GLint location;
+    GLdouble x;
+};
+
+struct glUniform1dv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glUniform1f_params
+{
+    GLint location;
+    GLfloat v0;
+};
+
+struct glUniform1fARB_params
+{
+    GLint location;
+    GLfloat v0;
+};
+
+struct glUniform1fv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform1fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform1i_params
+{
+    GLint location;
+    GLint v0;
+};
+
+struct glUniform1i64ARB_params
+{
+    GLint location;
+    GLint64 x;
+};
+
+struct glUniform1i64NV_params
+{
+    GLint location;
+    GLint64EXT x;
+};
+
+struct glUniform1i64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glUniform1i64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glUniform1iARB_params
+{
+    GLint location;
+    GLint v0;
+};
+
+struct glUniform1iv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform1ivARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform1ui_params
+{
+    GLint location;
+    GLuint v0;
+};
+
+struct glUniform1ui64ARB_params
+{
+    GLint location;
+    GLuint64 x;
+};
+
+struct glUniform1ui64NV_params
+{
+    GLint location;
+    GLuint64EXT x;
+};
+
+struct glUniform1ui64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glUniform1ui64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glUniform1uiEXT_params
+{
+    GLint location;
+    GLuint v0;
+};
+
+struct glUniform1uiv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform1uivEXT_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform2d_params
+{
+    GLint location;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glUniform2dv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glUniform2f_params
+{
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+};
+
+struct glUniform2fARB_params
+{
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+};
+
+struct glUniform2fv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform2fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform2i_params
+{
+    GLint location;
+    GLint v0;
+    GLint v1;
+};
+
+struct glUniform2i64ARB_params
+{
+    GLint location;
+    GLint64 x;
+    GLint64 y;
+};
+
+struct glUniform2i64NV_params
+{
+    GLint location;
+    GLint64EXT x;
+    GLint64EXT y;
+};
+
+struct glUniform2i64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glUniform2i64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glUniform2iARB_params
+{
+    GLint location;
+    GLint v0;
+    GLint v1;
+};
+
+struct glUniform2iv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform2ivARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform2ui_params
+{
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+};
+
+struct glUniform2ui64ARB_params
+{
+    GLint location;
+    GLuint64 x;
+    GLuint64 y;
+};
+
+struct glUniform2ui64NV_params
+{
+    GLint location;
+    GLuint64EXT x;
+    GLuint64EXT y;
+};
+
+struct glUniform2ui64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glUniform2ui64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glUniform2uiEXT_params
+{
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+};
+
+struct glUniform2uiv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform2uivEXT_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform3d_params
+{
+    GLint location;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glUniform3dv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glUniform3f_params
+{
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+};
+
+struct glUniform3fARB_params
+{
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+};
+
+struct glUniform3fv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform3fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform3i_params
+{
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+};
+
+struct glUniform3i64ARB_params
+{
+    GLint location;
+    GLint64 x;
+    GLint64 y;
+    GLint64 z;
+};
+
+struct glUniform3i64NV_params
+{
+    GLint location;
+    GLint64EXT x;
+    GLint64EXT y;
+    GLint64EXT z;
+};
+
+struct glUniform3i64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glUniform3i64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glUniform3iARB_params
+{
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+};
+
+struct glUniform3iv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform3ivARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform3ui_params
+{
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+};
+
+struct glUniform3ui64ARB_params
+{
+    GLint location;
+    GLuint64 x;
+    GLuint64 y;
+    GLuint64 z;
+};
+
+struct glUniform3ui64NV_params
+{
+    GLint location;
+    GLuint64EXT x;
+    GLuint64EXT y;
+    GLuint64EXT z;
+};
+
+struct glUniform3ui64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glUniform3ui64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glUniform3uiEXT_params
+{
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+};
+
+struct glUniform3uiv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform3uivEXT_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform4d_params
+{
+    GLint location;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glUniform4dv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLdouble *value;
+};
+
+struct glUniform4f_params
+{
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+    GLfloat v3;
+};
+
+struct glUniform4fARB_params
+{
+    GLint location;
+    GLfloat v0;
+    GLfloat v1;
+    GLfloat v2;
+    GLfloat v3;
+};
+
+struct glUniform4fv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform4fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLfloat *value;
+};
+
+struct glUniform4i_params
+{
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+    GLint v3;
+};
+
+struct glUniform4i64ARB_params
+{
+    GLint location;
+    GLint64 x;
+    GLint64 y;
+    GLint64 z;
+    GLint64 w;
+};
+
+struct glUniform4i64NV_params
+{
+    GLint location;
+    GLint64EXT x;
+    GLint64EXT y;
+    GLint64EXT z;
+    GLint64EXT w;
+};
+
+struct glUniform4i64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64 *value;
+};
+
+struct glUniform4i64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint64EXT *value;
+};
+
+struct glUniform4iARB_params
+{
+    GLint location;
+    GLint v0;
+    GLint v1;
+    GLint v2;
+    GLint v3;
+};
+
+struct glUniform4iv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform4ivARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLint *value;
+};
+
+struct glUniform4ui_params
+{
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+    GLuint v3;
+};
+
+struct glUniform4ui64ARB_params
+{
+    GLint location;
+    GLuint64 x;
+    GLuint64 y;
+    GLuint64 z;
+    GLuint64 w;
+};
+
+struct glUniform4ui64NV_params
+{
+    GLint location;
+    GLuint64EXT x;
+    GLuint64EXT y;
+    GLuint64EXT z;
+    GLuint64EXT w;
+};
+
+struct glUniform4ui64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glUniform4ui64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glUniform4uiEXT_params
+{
+    GLint location;
+    GLuint v0;
+    GLuint v1;
+    GLuint v2;
+    GLuint v3;
+};
+
+struct glUniform4uiv_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniform4uivEXT_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint *value;
+};
+
+struct glUniformBlockBinding_params
+{
+    GLuint program;
+    GLuint uniformBlockIndex;
+    GLuint uniformBlockBinding;
+};
+
+struct glUniformBufferEXT_params
+{
+    GLuint program;
+    GLint location;
+    GLuint buffer;
+};
+
+struct glUniformHandleui64ARB_params
+{
+    GLint location;
+    GLuint64 value;
+};
+
+struct glUniformHandleui64NV_params
+{
+    GLint location;
+    GLuint64 value;
+};
+
+struct glUniformHandleui64vARB_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glUniformHandleui64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64 *value;
+};
+
+struct glUniformMatrix2dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix2fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix2fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix2x3dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix2x3fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix2x4dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix2x4fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix3dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix3fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix3fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix3x2dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix3x2fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix3x4dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix3x4fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix4dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix4fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix4fvARB_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix4x2dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix4x2fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformMatrix4x3dv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLdouble *value;
+};
+
+struct glUniformMatrix4x3fv_params
+{
+    GLint location;
+    GLsizei count;
+    GLboolean transpose;
+    const GLfloat *value;
+};
+
+struct glUniformSubroutinesuiv_params
+{
+    GLenum shadertype;
+    GLsizei count;
+    const GLuint *indices;
+};
+
+struct glUniformui64NV_params
+{
+    GLint location;
+    GLuint64EXT value;
+};
+
+struct glUniformui64vNV_params
+{
+    GLint location;
+    GLsizei count;
+    const GLuint64EXT *value;
+};
+
+struct glUnlockArraysEXT_params
+{
+};
+
+struct glUnmapBuffer_params
+{
+    GLenum target;
+    GLboolean ret;
+};
+
+struct glUnmapBufferARB_params
+{
+    GLenum target;
+    GLboolean ret;
+};
+
+struct glUnmapNamedBuffer_params
+{
+    GLuint buffer;
+    GLboolean ret;
+};
+
+struct glUnmapNamedBufferEXT_params
+{
+    GLuint buffer;
+    GLboolean ret;
+};
+
+struct glUnmapObjectBufferATI_params
+{
+    GLuint buffer;
+};
+
+struct glUnmapTexture2DINTEL_params
+{
+    GLuint texture;
+    GLint level;
+};
+
+struct glUpdateObjectBufferATI_params
+{
+    GLuint buffer;
+    GLuint offset;
+    GLsizei size;
+    const void *pointer;
+    GLenum preserve;
+};
+
+struct glUploadGpuMaskNVX_params
+{
+    GLbitfield mask;
+};
+
+struct glUseProgram_params
+{
+    GLuint program;
+};
+
+struct glUseProgramObjectARB_params
+{
+    GLhandleARB programObj;
+};
+
+struct glUseProgramStages_params
+{
+    GLuint pipeline;
+    GLbitfield stages;
+    GLuint program;
+};
+
+struct glUseShaderProgramEXT_params
+{
+    GLenum type;
+    GLuint program;
+};
+
+struct glVDPAUFiniNV_params
+{
+};
+
+struct glVDPAUGetSurfaceivNV_params
+{
+    GLvdpauSurfaceNV surface;
+    GLenum pname;
+    GLsizei count;
+    GLsizei *length;
+    GLint *values;
+};
+
+struct glVDPAUInitNV_params
+{
+    const void *vdpDevice;
+    const void *getProcAddress;
+};
+
+struct glVDPAUIsSurfaceNV_params
+{
+    GLvdpauSurfaceNV surface;
+    GLboolean ret;
+};
+
+struct glVDPAUMapSurfacesNV_params
+{
+    GLsizei numSurfaces;
+    const GLvdpauSurfaceNV *surfaces;
+};
+
+struct glVDPAURegisterOutputSurfaceNV_params
+{
+    const void *vdpSurface;
+    GLenum target;
+    GLsizei numTextureNames;
+    const GLuint *textureNames;
+    GLvdpauSurfaceNV ret;
+};
+
+struct glVDPAURegisterVideoSurfaceNV_params
+{
+    const void *vdpSurface;
+    GLenum target;
+    GLsizei numTextureNames;
+    const GLuint *textureNames;
+    GLvdpauSurfaceNV ret;
+};
+
+struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params
+{
+    const void *vdpSurface;
+    GLenum target;
+    GLsizei numTextureNames;
+    const GLuint *textureNames;
+    GLboolean isFrameStructure;
+    GLvdpauSurfaceNV ret;
+};
+
+struct glVDPAUSurfaceAccessNV_params
+{
+    GLvdpauSurfaceNV surface;
+    GLenum access;
+};
+
+struct glVDPAUUnmapSurfacesNV_params
+{
+    GLsizei numSurface;
+    const GLvdpauSurfaceNV *surfaces;
+};
+
+struct glVDPAUUnregisterSurfaceNV_params
+{
+    GLvdpauSurfaceNV surface;
+};
+
+struct glValidateProgram_params
+{
+    GLuint program;
+};
+
+struct glValidateProgramARB_params
+{
+    GLhandleARB programObj;
+};
+
+struct glValidateProgramPipeline_params
+{
+    GLuint pipeline;
+};
+
+struct glVariantArrayObjectATI_params
+{
+    GLuint id;
+    GLenum type;
+    GLsizei stride;
+    GLuint buffer;
+    GLuint offset;
+};
+
+struct glVariantPointerEXT_params
+{
+    GLuint id;
+    GLenum type;
+    GLuint stride;
+    const void *addr;
+};
+
+struct glVariantbvEXT_params
+{
+    GLuint id;
+    const GLbyte *addr;
+};
+
+struct glVariantdvEXT_params
+{
+    GLuint id;
+    const GLdouble *addr;
+};
+
+struct glVariantfvEXT_params
+{
+    GLuint id;
+    const GLfloat *addr;
+};
+
+struct glVariantivEXT_params
+{
+    GLuint id;
+    const GLint *addr;
+};
+
+struct glVariantsvEXT_params
+{
+    GLuint id;
+    const GLshort *addr;
+};
+
+struct glVariantubvEXT_params
+{
+    GLuint id;
+    const GLubyte *addr;
+};
+
+struct glVariantuivEXT_params
+{
+    GLuint id;
+    const GLuint *addr;
+};
+
+struct glVariantusvEXT_params
+{
+    GLuint id;
+    const GLushort *addr;
+};
+
+struct glVertex2bOES_params
+{
+    GLbyte x;
+    GLbyte y;
+};
+
+struct glVertex2bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glVertex2hNV_params
+{
+    GLhalfNV x;
+    GLhalfNV y;
+};
+
+struct glVertex2hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glVertex2xOES_params
+{
+    GLfixed x;
+};
+
+struct glVertex2xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glVertex3bOES_params
+{
+    GLbyte x;
+    GLbyte y;
+    GLbyte z;
+};
+
+struct glVertex3bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glVertex3hNV_params
+{
+    GLhalfNV x;
+    GLhalfNV y;
+    GLhalfNV z;
+};
+
+struct glVertex3hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glVertex3xOES_params
+{
+    GLfixed x;
+    GLfixed y;
+};
+
+struct glVertex3xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glVertex4bOES_params
+{
+    GLbyte x;
+    GLbyte y;
+    GLbyte z;
+    GLbyte w;
+};
+
+struct glVertex4bvOES_params
+{
+    const GLbyte *coords;
+};
+
+struct glVertex4hNV_params
+{
+    GLhalfNV x;
+    GLhalfNV y;
+    GLhalfNV z;
+    GLhalfNV w;
+};
+
+struct glVertex4hvNV_params
+{
+    const GLhalfNV *v;
+};
+
+struct glVertex4xOES_params
+{
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+};
+
+struct glVertex4xvOES_params
+{
+    const GLfixed *coords;
+};
+
+struct glVertexArrayAttribBinding_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLuint bindingindex;
+};
+
+struct glVertexArrayAttribFormat_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLuint relativeoffset;
+};
+
+struct glVertexArrayAttribIFormat_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLuint relativeoffset;
+};
+
+struct glVertexArrayAttribLFormat_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLuint relativeoffset;
+};
+
+struct glVertexArrayBindVertexBufferEXT_params
+{
+    GLuint vaobj;
+    GLuint bindingindex;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizei stride;
+};
+
+struct glVertexArrayBindingDivisor_params
+{
+    GLuint vaobj;
+    GLuint bindingindex;
+    GLuint divisor;
+};
+
+struct glVertexArrayColorOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayEdgeFlagOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayElementBuffer_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+};
+
+struct glVertexArrayFogCoordOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayIndexOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayMultiTexCoordOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLenum texunit;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayNormalOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayParameteriAPPLE_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glVertexArrayRangeAPPLE_params
+{
+    GLsizei length;
+    void *pointer;
+};
+
+struct glVertexArrayRangeNV_params
+{
+    GLsizei length;
+    const void *pointer;
+};
+
+struct glVertexArraySecondaryColorOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayTexCoordOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayVertexAttribBindingEXT_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLuint bindingindex;
+};
+
+struct glVertexArrayVertexAttribDivisorEXT_params
+{
+    GLuint vaobj;
+    GLuint index;
+    GLuint divisor;
+};
+
+struct glVertexArrayVertexAttribFormatEXT_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLuint relativeoffset;
+};
+
+struct glVertexArrayVertexAttribIFormatEXT_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLuint relativeoffset;
+};
+
+struct glVertexArrayVertexAttribIOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayVertexAttribLFormatEXT_params
+{
+    GLuint vaobj;
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLuint relativeoffset;
+};
+
+struct glVertexArrayVertexAttribLOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayVertexAttribOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexArrayVertexBindingDivisorEXT_params
+{
+    GLuint vaobj;
+    GLuint bindingindex;
+    GLuint divisor;
+};
+
+struct glVertexArrayVertexBuffer_params
+{
+    GLuint vaobj;
+    GLuint bindingindex;
+    GLuint buffer;
+    GLintptr offset;
+    GLsizei stride;
+};
+
+struct glVertexArrayVertexBuffers_params
+{
+    GLuint vaobj;
+    GLuint first;
+    GLsizei count;
+    const GLuint *buffers;
+    const GLintptr *offsets;
+    const GLsizei *strides;
+};
+
+struct glVertexArrayVertexOffsetEXT_params
+{
+    GLuint vaobj;
+    GLuint buffer;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLintptr offset;
+};
+
+struct glVertexAttrib1d_params
+{
+    GLuint index;
+    GLdouble x;
+};
+
+struct glVertexAttrib1dARB_params
+{
+    GLuint index;
+    GLdouble x;
+};
+
+struct glVertexAttrib1dNV_params
+{
+    GLuint index;
+    GLdouble x;
+};
+
+struct glVertexAttrib1dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib1dvARB_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib1dvNV_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib1f_params
+{
+    GLuint index;
+    GLfloat x;
+};
+
+struct glVertexAttrib1fARB_params
+{
+    GLuint index;
+    GLfloat x;
+};
+
+struct glVertexAttrib1fNV_params
+{
+    GLuint index;
+    GLfloat x;
+};
+
+struct glVertexAttrib1fv_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib1fvARB_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib1fvNV_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib1hNV_params
+{
+    GLuint index;
+    GLhalfNV x;
+};
+
+struct glVertexAttrib1hvNV_params
+{
+    GLuint index;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttrib1s_params
+{
+    GLuint index;
+    GLshort x;
+};
+
+struct glVertexAttrib1sARB_params
+{
+    GLuint index;
+    GLshort x;
+};
+
+struct glVertexAttrib1sNV_params
+{
+    GLuint index;
+    GLshort x;
+};
+
+struct glVertexAttrib1sv_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib1svARB_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib1svNV_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib2d_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glVertexAttrib2dARB_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glVertexAttrib2dNV_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glVertexAttrib2dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib2dvARB_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib2dvNV_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib2f_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glVertexAttrib2fARB_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glVertexAttrib2fNV_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glVertexAttrib2fv_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib2fvARB_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib2fvNV_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib2hNV_params
+{
+    GLuint index;
+    GLhalfNV x;
+    GLhalfNV y;
+};
+
+struct glVertexAttrib2hvNV_params
+{
+    GLuint index;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttrib2s_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+};
+
+struct glVertexAttrib2sARB_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+};
+
+struct glVertexAttrib2sNV_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+};
+
+struct glVertexAttrib2sv_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib2svARB_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib2svNV_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib3d_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glVertexAttrib3dARB_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glVertexAttrib3dNV_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glVertexAttrib3dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib3dvARB_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib3dvNV_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib3f_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glVertexAttrib3fARB_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glVertexAttrib3fNV_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glVertexAttrib3fv_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib3fvARB_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib3fvNV_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib3hNV_params
+{
+    GLuint index;
+    GLhalfNV x;
+    GLhalfNV y;
+    GLhalfNV z;
+};
+
+struct glVertexAttrib3hvNV_params
+{
+    GLuint index;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttrib3s_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glVertexAttrib3sARB_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glVertexAttrib3sNV_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glVertexAttrib3sv_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib3svARB_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib3svNV_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib4Nbv_params
+{
+    GLuint index;
+    const GLbyte *v;
+};
+
+struct glVertexAttrib4NbvARB_params
+{
+    GLuint index;
+    const GLbyte *v;
+};
+
+struct glVertexAttrib4Niv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttrib4NivARB_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttrib4Nsv_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib4NsvARB_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib4Nub_params
+{
+    GLuint index;
+    GLubyte x;
+    GLubyte y;
+    GLubyte z;
+    GLubyte w;
+};
+
+struct glVertexAttrib4NubARB_params
+{
+    GLuint index;
+    GLubyte x;
+    GLubyte y;
+    GLubyte z;
+    GLubyte w;
+};
+
+struct glVertexAttrib4Nubv_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttrib4NubvARB_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttrib4Nuiv_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttrib4NuivARB_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttrib4Nusv_params
+{
+    GLuint index;
+    const GLushort *v;
+};
+
+struct glVertexAttrib4NusvARB_params
+{
+    GLuint index;
+    const GLushort *v;
+};
+
+struct glVertexAttrib4bv_params
+{
+    GLuint index;
+    const GLbyte *v;
+};
+
+struct glVertexAttrib4bvARB_params
+{
+    GLuint index;
+    const GLbyte *v;
+};
+
+struct glVertexAttrib4d_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glVertexAttrib4dARB_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glVertexAttrib4dNV_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glVertexAttrib4dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib4dvARB_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib4dvNV_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttrib4f_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glVertexAttrib4fARB_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glVertexAttrib4fNV_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glVertexAttrib4fv_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib4fvARB_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib4fvNV_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glVertexAttrib4hNV_params
+{
+    GLuint index;
+    GLhalfNV x;
+    GLhalfNV y;
+    GLhalfNV z;
+    GLhalfNV w;
+};
+
+struct glVertexAttrib4hvNV_params
+{
+    GLuint index;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttrib4iv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttrib4ivARB_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttrib4s_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+    GLshort w;
+};
+
+struct glVertexAttrib4sARB_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+    GLshort w;
+};
+
+struct glVertexAttrib4sNV_params
+{
+    GLuint index;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+    GLshort w;
+};
+
+struct glVertexAttrib4sv_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib4svARB_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib4svNV_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttrib4ubNV_params
+{
+    GLuint index;
+    GLubyte x;
+    GLubyte y;
+    GLubyte z;
+    GLubyte w;
+};
+
+struct glVertexAttrib4ubv_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttrib4ubvARB_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttrib4ubvNV_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttrib4uiv_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttrib4uivARB_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttrib4usv_params
+{
+    GLuint index;
+    const GLushort *v;
+};
+
+struct glVertexAttrib4usvARB_params
+{
+    GLuint index;
+    const GLushort *v;
+};
+
+struct glVertexAttribArrayObjectATI_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
+    GLuint buffer;
+    GLuint offset;
+};
+
+struct glVertexAttribBinding_params
+{
+    GLuint attribindex;
+    GLuint bindingindex;
+};
+
+struct glVertexAttribDivisor_params
+{
+    GLuint index;
+    GLuint divisor;
+};
+
+struct glVertexAttribDivisorARB_params
+{
+    GLuint index;
+    GLuint divisor;
+};
+
+struct glVertexAttribFormat_params
+{
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLuint relativeoffset;
+};
+
+struct glVertexAttribFormatNV_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
+};
+
+struct glVertexAttribI1i_params
+{
+    GLuint index;
+    GLint x;
+};
+
+struct glVertexAttribI1iEXT_params
+{
+    GLuint index;
+    GLint x;
+};
+
+struct glVertexAttribI1iv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI1ivEXT_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI1ui_params
+{
+    GLuint index;
+    GLuint x;
+};
+
+struct glVertexAttribI1uiEXT_params
+{
+    GLuint index;
+    GLuint x;
+};
+
+struct glVertexAttribI1uiv_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI1uivEXT_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI2i_params
+{
+    GLuint index;
+    GLint x;
+    GLint y;
+};
+
+struct glVertexAttribI2iEXT_params
+{
+    GLuint index;
+    GLint x;
+    GLint y;
+};
+
+struct glVertexAttribI2iv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI2ivEXT_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI2ui_params
+{
+    GLuint index;
+    GLuint x;
+    GLuint y;
+};
+
+struct glVertexAttribI2uiEXT_params
+{
+    GLuint index;
+    GLuint x;
+    GLuint y;
+};
+
+struct glVertexAttribI2uiv_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI2uivEXT_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI3i_params
+{
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+};
+
+struct glVertexAttribI3iEXT_params
+{
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+};
+
+struct glVertexAttribI3iv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI3ivEXT_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI3ui_params
+{
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+};
+
+struct glVertexAttribI3uiEXT_params
+{
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+};
+
+struct glVertexAttribI3uiv_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI3uivEXT_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI4bv_params
+{
+    GLuint index;
+    const GLbyte *v;
+};
+
+struct glVertexAttribI4bvEXT_params
+{
+    GLuint index;
+    const GLbyte *v;
+};
+
+struct glVertexAttribI4i_params
+{
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glVertexAttribI4iEXT_params
+{
+    GLuint index;
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glVertexAttribI4iv_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI4ivEXT_params
+{
+    GLuint index;
+    const GLint *v;
+};
+
+struct glVertexAttribI4sv_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttribI4svEXT_params
+{
+    GLuint index;
+    const GLshort *v;
+};
+
+struct glVertexAttribI4ubv_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttribI4ubvEXT_params
+{
+    GLuint index;
+    const GLubyte *v;
+};
+
+struct glVertexAttribI4ui_params
+{
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+    GLuint w;
+};
+
+struct glVertexAttribI4uiEXT_params
+{
+    GLuint index;
+    GLuint x;
+    GLuint y;
+    GLuint z;
+    GLuint w;
+};
+
+struct glVertexAttribI4uiv_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI4uivEXT_params
+{
+    GLuint index;
+    const GLuint *v;
+};
+
+struct glVertexAttribI4usv_params
+{
+    GLuint index;
+    const GLushort *v;
+};
+
+struct glVertexAttribI4usvEXT_params
+{
+    GLuint index;
+    const GLushort *v;
+};
+
+struct glVertexAttribIFormat_params
+{
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLuint relativeoffset;
+};
+
+struct glVertexAttribIFormatNV_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glVertexAttribIPointer_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribIPointerEXT_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribL1d_params
+{
+    GLuint index;
+    GLdouble x;
+};
+
+struct glVertexAttribL1dEXT_params
+{
+    GLuint index;
+    GLdouble x;
+};
+
+struct glVertexAttribL1dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL1dvEXT_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL1i64NV_params
+{
+    GLuint index;
+    GLint64EXT x;
+};
+
+struct glVertexAttribL1i64vNV_params
+{
+    GLuint index;
+    const GLint64EXT *v;
+};
+
+struct glVertexAttribL1ui64ARB_params
+{
+    GLuint index;
+    GLuint64EXT x;
+};
+
+struct glVertexAttribL1ui64NV_params
+{
+    GLuint index;
+    GLuint64EXT x;
+};
+
+struct glVertexAttribL1ui64vARB_params
+{
+    GLuint index;
+    const GLuint64EXT *v;
+};
+
+struct glVertexAttribL1ui64vNV_params
+{
+    GLuint index;
+    const GLuint64EXT *v;
+};
+
+struct glVertexAttribL2d_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glVertexAttribL2dEXT_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glVertexAttribL2dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL2dvEXT_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL2i64NV_params
+{
+    GLuint index;
+    GLint64EXT x;
+    GLint64EXT y;
+};
+
+struct glVertexAttribL2i64vNV_params
+{
+    GLuint index;
+    const GLint64EXT *v;
+};
+
+struct glVertexAttribL2ui64NV_params
+{
+    GLuint index;
+    GLuint64EXT x;
+    GLuint64EXT y;
+};
+
+struct glVertexAttribL2ui64vNV_params
+{
+    GLuint index;
+    const GLuint64EXT *v;
+};
+
+struct glVertexAttribL3d_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glVertexAttribL3dEXT_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glVertexAttribL3dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL3dvEXT_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL3i64NV_params
+{
+    GLuint index;
+    GLint64EXT x;
+    GLint64EXT y;
+    GLint64EXT z;
+};
+
+struct glVertexAttribL3i64vNV_params
+{
+    GLuint index;
+    const GLint64EXT *v;
+};
+
+struct glVertexAttribL3ui64NV_params
+{
+    GLuint index;
+    GLuint64EXT x;
+    GLuint64EXT y;
+    GLuint64EXT z;
+};
+
+struct glVertexAttribL3ui64vNV_params
+{
+    GLuint index;
+    const GLuint64EXT *v;
+};
+
+struct glVertexAttribL4d_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glVertexAttribL4dEXT_params
+{
+    GLuint index;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glVertexAttribL4dv_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL4dvEXT_params
+{
+    GLuint index;
+    const GLdouble *v;
+};
+
+struct glVertexAttribL4i64NV_params
+{
+    GLuint index;
+    GLint64EXT x;
+    GLint64EXT y;
+    GLint64EXT z;
+    GLint64EXT w;
+};
+
+struct glVertexAttribL4i64vNV_params
+{
+    GLuint index;
+    const GLint64EXT *v;
+};
+
+struct glVertexAttribL4ui64NV_params
+{
+    GLuint index;
+    GLuint64EXT x;
+    GLuint64EXT y;
+    GLuint64EXT z;
+    GLuint64EXT w;
+};
+
+struct glVertexAttribL4ui64vNV_params
+{
+    GLuint index;
+    const GLuint64EXT *v;
+};
+
+struct glVertexAttribLFormat_params
+{
+    GLuint attribindex;
+    GLint size;
+    GLenum type;
+    GLuint relativeoffset;
+};
+
+struct glVertexAttribLFormatNV_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glVertexAttribLPointer_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribLPointerEXT_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribP1ui_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    GLuint value;
+};
+
+struct glVertexAttribP1uiv_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    const GLuint *value;
+};
+
+struct glVertexAttribP2ui_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    GLuint value;
+};
+
+struct glVertexAttribP2uiv_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    const GLuint *value;
+};
+
+struct glVertexAttribP3ui_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    GLuint value;
+};
+
+struct glVertexAttribP3uiv_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    const GLuint *value;
+};
+
+struct glVertexAttribP4ui_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    GLuint value;
+};
+
+struct glVertexAttribP4uiv_params
+{
+    GLuint index;
+    GLenum type;
+    GLboolean normalized;
+    const GLuint *value;
+};
+
+struct glVertexAttribParameteriAMD_params
+{
+    GLuint index;
+    GLenum pname;
+    GLint param;
+};
+
+struct glVertexAttribPointer_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribPointerARB_params
+{
+    GLuint index;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribPointerNV_params
+{
+    GLuint index;
+    GLint fsize;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexAttribs1dvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glVertexAttribs1fvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glVertexAttribs1hvNV_params
+{
+    GLuint index;
+    GLsizei n;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttribs1svNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLshort *v;
+};
+
+struct glVertexAttribs2dvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glVertexAttribs2fvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glVertexAttribs2hvNV_params
+{
+    GLuint index;
+    GLsizei n;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttribs2svNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLshort *v;
+};
+
+struct glVertexAttribs3dvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glVertexAttribs3fvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glVertexAttribs3hvNV_params
+{
+    GLuint index;
+    GLsizei n;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttribs3svNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLshort *v;
+};
+
+struct glVertexAttribs4dvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLdouble *v;
+};
+
+struct glVertexAttribs4fvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glVertexAttribs4hvNV_params
+{
+    GLuint index;
+    GLsizei n;
+    const GLhalfNV *v;
+};
+
+struct glVertexAttribs4svNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLshort *v;
+};
+
+struct glVertexAttribs4ubvNV_params
+{
+    GLuint index;
+    GLsizei count;
+    const GLubyte *v;
+};
+
+struct glVertexBindingDivisor_params
+{
+    GLuint bindingindex;
+    GLuint divisor;
+};
+
+struct glVertexBlendARB_params
+{
+    GLint count;
+};
+
+struct glVertexBlendEnvfATI_params
+{
+    GLenum pname;
+    GLfloat param;
+};
+
+struct glVertexBlendEnviATI_params
+{
+    GLenum pname;
+    GLint param;
+};
+
+struct glVertexFormatNV_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+};
+
+struct glVertexP2ui_params
+{
+    GLenum type;
+    GLuint value;
+};
+
+struct glVertexP2uiv_params
+{
+    GLenum type;
+    const GLuint *value;
+};
+
+struct glVertexP3ui_params
+{
+    GLenum type;
+    GLuint value;
+};
+
+struct glVertexP3uiv_params
+{
+    GLenum type;
+    const GLuint *value;
+};
+
+struct glVertexP4ui_params
+{
+    GLenum type;
+    GLuint value;
+};
+
+struct glVertexP4uiv_params
+{
+    GLenum type;
+    const GLuint *value;
+};
+
+struct glVertexPointerEXT_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    GLsizei count;
+    const void *pointer;
+};
+
+struct glVertexPointerListIBM_params
+{
+    GLint size;
+    GLenum type;
+    GLint stride;
+    const void **pointer;
+    GLint ptrstride;
+};
+
+struct glVertexPointervINTEL_params
+{
+    GLint size;
+    GLenum type;
+    const void **pointer;
+};
+
+struct glVertexStream1dATI_params
+{
+    GLenum stream;
+    GLdouble x;
+};
+
+struct glVertexStream1dvATI_params
+{
+    GLenum stream;
+    const GLdouble *coords;
+};
+
+struct glVertexStream1fATI_params
+{
+    GLenum stream;
+    GLfloat x;
+};
+
+struct glVertexStream1fvATI_params
+{
+    GLenum stream;
+    const GLfloat *coords;
+};
+
+struct glVertexStream1iATI_params
+{
+    GLenum stream;
+    GLint x;
+};
+
+struct glVertexStream1ivATI_params
+{
+    GLenum stream;
+    const GLint *coords;
+};
+
+struct glVertexStream1sATI_params
+{
+    GLenum stream;
+    GLshort x;
+};
+
+struct glVertexStream1svATI_params
+{
+    GLenum stream;
+    const GLshort *coords;
+};
+
+struct glVertexStream2dATI_params
+{
+    GLenum stream;
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glVertexStream2dvATI_params
+{
+    GLenum stream;
+    const GLdouble *coords;
+};
+
+struct glVertexStream2fATI_params
+{
+    GLenum stream;
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glVertexStream2fvATI_params
+{
+    GLenum stream;
+    const GLfloat *coords;
+};
+
+struct glVertexStream2iATI_params
+{
+    GLenum stream;
+    GLint x;
+    GLint y;
+};
+
+struct glVertexStream2ivATI_params
+{
+    GLenum stream;
+    const GLint *coords;
+};
+
+struct glVertexStream2sATI_params
+{
+    GLenum stream;
+    GLshort x;
+    GLshort y;
+};
+
+struct glVertexStream2svATI_params
+{
+    GLenum stream;
+    const GLshort *coords;
+};
+
+struct glVertexStream3dATI_params
+{
+    GLenum stream;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glVertexStream3dvATI_params
+{
+    GLenum stream;
+    const GLdouble *coords;
+};
+
+struct glVertexStream3fATI_params
+{
+    GLenum stream;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glVertexStream3fvATI_params
+{
+    GLenum stream;
+    const GLfloat *coords;
+};
+
+struct glVertexStream3iATI_params
+{
+    GLenum stream;
+    GLint x;
+    GLint y;
+    GLint z;
+};
+
+struct glVertexStream3ivATI_params
+{
+    GLenum stream;
+    const GLint *coords;
+};
+
+struct glVertexStream3sATI_params
+{
+    GLenum stream;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glVertexStream3svATI_params
+{
+    GLenum stream;
+    const GLshort *coords;
+};
+
+struct glVertexStream4dATI_params
+{
+    GLenum stream;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glVertexStream4dvATI_params
+{
+    GLenum stream;
+    const GLdouble *coords;
+};
+
+struct glVertexStream4fATI_params
+{
+    GLenum stream;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glVertexStream4fvATI_params
+{
+    GLenum stream;
+    const GLfloat *coords;
+};
+
+struct glVertexStream4iATI_params
+{
+    GLenum stream;
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glVertexStream4ivATI_params
+{
+    GLenum stream;
+    const GLint *coords;
+};
+
+struct glVertexStream4sATI_params
+{
+    GLenum stream;
+    GLshort x;
+    GLshort y;
+    GLshort z;
+    GLshort w;
+};
+
+struct glVertexStream4svATI_params
+{
+    GLenum stream;
+    const GLshort *coords;
+};
+
+struct glVertexWeightPointerEXT_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glVertexWeightfEXT_params
+{
+    GLfloat weight;
+};
+
+struct glVertexWeightfvEXT_params
+{
+    const GLfloat *weight;
+};
+
+struct glVertexWeighthNV_params
+{
+    GLhalfNV weight;
+};
+
+struct glVertexWeighthvNV_params
+{
+    const GLhalfNV *weight;
+};
+
+struct glVideoCaptureNV_params
+{
+    GLuint video_capture_slot;
+    GLuint *sequence_num;
+    GLuint64EXT *capture_time;
+    GLenum ret;
+};
+
+struct glVideoCaptureStreamParameterdvNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum pname;
+    const GLdouble *params;
+};
+
+struct glVideoCaptureStreamParameterfvNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum pname;
+    const GLfloat *params;
+};
+
+struct glVideoCaptureStreamParameterivNV_params
+{
+    GLuint video_capture_slot;
+    GLuint stream;
+    GLenum pname;
+    const GLint *params;
+};
+
+struct glViewportArrayv_params
+{
+    GLuint first;
+    GLsizei count;
+    const GLfloat *v;
+};
+
+struct glViewportIndexedf_params
+{
+    GLuint index;
+    GLfloat x;
+    GLfloat y;
+    GLfloat w;
+    GLfloat h;
+};
+
+struct glViewportIndexedfv_params
+{
+    GLuint index;
+    const GLfloat *v;
+};
+
+struct glViewportPositionWScaleNV_params
+{
+    GLuint index;
+    GLfloat xcoeff;
+    GLfloat ycoeff;
+};
+
+struct glViewportSwizzleNV_params
+{
+    GLuint index;
+    GLenum swizzlex;
+    GLenum swizzley;
+    GLenum swizzlez;
+    GLenum swizzlew;
+};
+
+struct glWaitSemaphoreEXT_params
+{
+    GLuint semaphore;
+    GLuint numBufferBarriers;
+    const GLuint *buffers;
+    GLuint numTextureBarriers;
+    const GLuint *textures;
+    const GLenum *srcLayouts;
+};
+
+struct glWaitSemaphoreui64NVX_params
+{
+    GLuint waitGpu;
+    GLsizei fenceObjectCount;
+    const GLuint *semaphoreArray;
+    const GLuint64 *fenceValueArray;
+};
+
+struct glWaitSync_params
+{
+    GLsync sync;
+    GLbitfield flags;
+    GLuint64 timeout;
+};
+
+struct glWaitVkSemaphoreNV_params
+{
+    GLuint64 vkSemaphore;
+};
+
+struct glWeightPathsNV_params
+{
+    GLuint resultPath;
+    GLsizei numPaths;
+    const GLuint *paths;
+    const GLfloat *weights;
+};
+
+struct glWeightPointerARB_params
+{
+    GLint size;
+    GLenum type;
+    GLsizei stride;
+    const void *pointer;
+};
+
+struct glWeightbvARB_params
+{
+    GLint size;
+    const GLbyte *weights;
+};
+
+struct glWeightdvARB_params
+{
+    GLint size;
+    const GLdouble *weights;
+};
+
+struct glWeightfvARB_params
+{
+    GLint size;
+    const GLfloat *weights;
+};
+
+struct glWeightivARB_params
+{
+    GLint size;
+    const GLint *weights;
+};
+
+struct glWeightsvARB_params
+{
+    GLint size;
+    const GLshort *weights;
+};
+
+struct glWeightubvARB_params
+{
+    GLint size;
+    const GLubyte *weights;
+};
+
+struct glWeightuivARB_params
+{
+    GLint size;
+    const GLuint *weights;
+};
+
+struct glWeightusvARB_params
+{
+    GLint size;
+    const GLushort *weights;
+};
+
+struct glWindowPos2d_params
+{
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glWindowPos2dARB_params
+{
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glWindowPos2dMESA_params
+{
+    GLdouble x;
+    GLdouble y;
+};
+
+struct glWindowPos2dv_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos2dvARB_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos2dvMESA_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos2f_params
+{
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glWindowPos2fARB_params
+{
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glWindowPos2fMESA_params
+{
+    GLfloat x;
+    GLfloat y;
+};
+
+struct glWindowPos2fv_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos2fvARB_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos2fvMESA_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos2i_params
+{
+    GLint x;
+    GLint y;
+};
+
+struct glWindowPos2iARB_params
+{
+    GLint x;
+    GLint y;
+};
+
+struct glWindowPos2iMESA_params
+{
+    GLint x;
+    GLint y;
+};
+
+struct glWindowPos2iv_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos2ivARB_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos2ivMESA_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos2s_params
+{
+    GLshort x;
+    GLshort y;
+};
+
+struct glWindowPos2sARB_params
+{
+    GLshort x;
+    GLshort y;
+};
+
+struct glWindowPos2sMESA_params
+{
+    GLshort x;
+    GLshort y;
+};
+
+struct glWindowPos2sv_params
+{
+    const GLshort *v;
+};
+
+struct glWindowPos2svARB_params
+{
+    const GLshort *v;
+};
+
+struct glWindowPos2svMESA_params
+{
+    const GLshort *v;
+};
+
+struct glWindowPos3d_params
+{
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glWindowPos3dARB_params
+{
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glWindowPos3dMESA_params
+{
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
+
+struct glWindowPos3dv_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos3dvARB_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos3dvMESA_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos3f_params
+{
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glWindowPos3fARB_params
+{
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glWindowPos3fMESA_params
+{
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+};
+
+struct glWindowPos3fv_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos3fvARB_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos3fvMESA_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos3i_params
+{
+    GLint x;
+    GLint y;
+    GLint z;
+};
+
+struct glWindowPos3iARB_params
+{
+    GLint x;
+    GLint y;
+    GLint z;
+};
+
+struct glWindowPos3iMESA_params
+{
+    GLint x;
+    GLint y;
+    GLint z;
+};
+
+struct glWindowPos3iv_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos3ivARB_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos3ivMESA_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos3s_params
+{
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glWindowPos3sARB_params
+{
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glWindowPos3sMESA_params
+{
+    GLshort x;
+    GLshort y;
+    GLshort z;
+};
+
+struct glWindowPos3sv_params
+{
+    const GLshort *v;
+};
+
+struct glWindowPos3svARB_params
+{
+    const GLshort *v;
+};
+
+struct glWindowPos3svMESA_params
+{
+    const GLshort *v;
+};
+
+struct glWindowPos4dMESA_params
+{
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+    GLdouble w;
+};
+
+struct glWindowPos4dvMESA_params
+{
+    const GLdouble *v;
+};
+
+struct glWindowPos4fMESA_params
+{
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat w;
+};
+
+struct glWindowPos4fvMESA_params
+{
+    const GLfloat *v;
+};
+
+struct glWindowPos4iMESA_params
+{
+    GLint x;
+    GLint y;
+    GLint z;
+    GLint w;
+};
+
+struct glWindowPos4ivMESA_params
+{
+    const GLint *v;
+};
+
+struct glWindowPos4sMESA_params
+{
+    GLshort x;
+    GLshort y;
+    GLshort z;
+    GLshort w;
+};
+
+struct glWindowPos4svMESA_params
+{
+    const GLshort *v;
+};
+
+struct glWindowRectanglesEXT_params
+{
+    GLenum mode;
+    GLsizei count;
+    const GLint *box;
+};
+
+struct glWriteMaskEXT_params
+{
+    GLuint res;
+    GLuint in;
+    GLenum outX;
+    GLenum outY;
+    GLenum outZ;
+    GLenum outW;
+};
+
+struct wglAllocateMemoryNV_params
+{
+    GLsizei size;
+    GLfloat readfreq;
+    GLfloat writefreq;
+    GLfloat priority;
+    void *ret;
+};
+
+struct wglBindTexImageARB_params
+{
+    HPBUFFERARB hPbuffer;
+    int iBuffer;
+    BOOL ret;
+};
+
+struct wglChoosePixelFormatARB_params
+{
+    HDC hdc;
+    const int *piAttribIList;
+    const FLOAT *pfAttribFList;
+    UINT nMaxFormats;
+    int *piFormats;
+    UINT *nNumFormats;
+    BOOL ret;
+};
+
+struct wglCreateContextAttribsARB_params
+{
+    HDC hDC;
+    HGLRC hShareContext;
+    const int *attribList;
+    HGLRC ret;
+};
+
+struct wglCreatePbufferARB_params
+{
+    HDC hDC;
+    int iPixelFormat;
+    int iWidth;
+    int iHeight;
+    const int *piAttribList;
+    HPBUFFERARB ret;
+};
+
+struct wglDestroyPbufferARB_params
+{
+    HPBUFFERARB hPbuffer;
+    BOOL ret;
+};
+
+struct wglFreeMemoryNV_params
+{
+    void *pointer;
+};
+
+struct wglGetCurrentReadDCARB_params
+{
+    HDC ret;
+};
+
+struct wglGetExtensionsStringARB_params
+{
+    HDC hdc;
+    const char *ret;
+};
+
+struct wglGetExtensionsStringEXT_params
+{
+    const char *ret;
+};
+
+struct wglGetPbufferDCARB_params
+{
+    HPBUFFERARB hPbuffer;
+    HDC ret;
+};
+
+struct wglGetPixelFormatAttribfvARB_params
+{
+    HDC hdc;
+    int iPixelFormat;
+    int iLayerPlane;
+    UINT nAttributes;
+    const int *piAttributes;
+    FLOAT *pfValues;
+    BOOL ret;
+};
+
+struct wglGetPixelFormatAttribivARB_params
+{
+    HDC hdc;
+    int iPixelFormat;
+    int iLayerPlane;
+    UINT nAttributes;
+    const int *piAttributes;
+    int *piValues;
+    BOOL ret;
+};
+
+struct wglGetSwapIntervalEXT_params
+{
+    int ret;
+};
+
+struct wglMakeContextCurrentARB_params
+{
+    HDC hDrawDC;
+    HDC hReadDC;
+    HGLRC hglrc;
+    BOOL ret;
+};
+
+struct wglQueryCurrentRendererIntegerWINE_params
+{
+    GLenum attribute;
+    GLuint *value;
+    BOOL ret;
+};
+
+struct wglQueryCurrentRendererStringWINE_params
+{
+    GLenum attribute;
+    const GLchar *ret;
+};
+
+struct wglQueryPbufferARB_params
+{
+    HPBUFFERARB hPbuffer;
+    int iAttribute;
+    int *piValue;
+    BOOL ret;
+};
+
+struct wglQueryRendererIntegerWINE_params
+{
+    HDC dc;
+    GLint renderer;
+    GLenum attribute;
+    GLuint *value;
+    BOOL ret;
+};
+
+struct wglQueryRendererStringWINE_params
+{
+    HDC dc;
+    GLint renderer;
+    GLenum attribute;
+    const GLchar *ret;
+};
+
+struct wglReleasePbufferDCARB_params
+{
+    HPBUFFERARB hPbuffer;
+    HDC hDC;
+    int ret;
+};
+
+struct wglReleaseTexImageARB_params
+{
+    HPBUFFERARB hPbuffer;
+    int iBuffer;
+    BOOL ret;
+};
+
+struct wglSetPbufferAttribARB_params
+{
+    HPBUFFERARB hPbuffer;
+    const int *piAttribList;
+    BOOL ret;
+};
+
+struct wglSetPixelFormatWINE_params
+{
+    HDC hdc;
+    int format;
+    BOOL ret;
+};
+
+struct wglSwapIntervalEXT_params
+{
+    int interval;
+    BOOL ret;
+};
+
 enum unix_funcs
 {
     unix_glAccum,
@@ -2491,6 +22560,2700 @@ enum unix_funcs
     unix_glVertex4sv,
     unix_glVertexPointer,
     unix_glViewport,
+    unix_glAccumxOES,
+    unix_glAcquireKeyedMutexWin32EXT,
+    unix_glActiveProgramEXT,
+    unix_glActiveShaderProgram,
+    unix_glActiveStencilFaceEXT,
+    unix_glActiveTexture,
+    unix_glActiveTextureARB,
+    unix_glActiveVaryingNV,
+    unix_glAlphaFragmentOp1ATI,
+    unix_glAlphaFragmentOp2ATI,
+    unix_glAlphaFragmentOp3ATI,
+    unix_glAlphaFuncxOES,
+    unix_glAlphaToCoverageDitherControlNV,
+    unix_glApplyFramebufferAttachmentCMAAINTEL,
+    unix_glApplyTextureEXT,
+    unix_glAreProgramsResidentNV,
+    unix_glAreTexturesResidentEXT,
+    unix_glArrayElementEXT,
+    unix_glArrayObjectATI,
+    unix_glAsyncCopyBufferSubDataNVX,
+    unix_glAsyncCopyImageSubDataNVX,
+    unix_glAsyncMarkerSGIX,
+    unix_glAttachObjectARB,
+    unix_glAttachShader,
+    unix_glBeginConditionalRender,
+    unix_glBeginConditionalRenderNV,
+    unix_glBeginConditionalRenderNVX,
+    unix_glBeginFragmentShaderATI,
+    unix_glBeginOcclusionQueryNV,
+    unix_glBeginPerfMonitorAMD,
+    unix_glBeginPerfQueryINTEL,
+    unix_glBeginQuery,
+    unix_glBeginQueryARB,
+    unix_glBeginQueryIndexed,
+    unix_glBeginTransformFeedback,
+    unix_glBeginTransformFeedbackEXT,
+    unix_glBeginTransformFeedbackNV,
+    unix_glBeginVertexShaderEXT,
+    unix_glBeginVideoCaptureNV,
+    unix_glBindAttribLocation,
+    unix_glBindAttribLocationARB,
+    unix_glBindBuffer,
+    unix_glBindBufferARB,
+    unix_glBindBufferBase,
+    unix_glBindBufferBaseEXT,
+    unix_glBindBufferBaseNV,
+    unix_glBindBufferOffsetEXT,
+    unix_glBindBufferOffsetNV,
+    unix_glBindBufferRange,
+    unix_glBindBufferRangeEXT,
+    unix_glBindBufferRangeNV,
+    unix_glBindBuffersBase,
+    unix_glBindBuffersRange,
+    unix_glBindFragDataLocation,
+    unix_glBindFragDataLocationEXT,
+    unix_glBindFragDataLocationIndexed,
+    unix_glBindFragmentShaderATI,
+    unix_glBindFramebuffer,
+    unix_glBindFramebufferEXT,
+    unix_glBindImageTexture,
+    unix_glBindImageTextureEXT,
+    unix_glBindImageTextures,
+    unix_glBindLightParameterEXT,
+    unix_glBindMaterialParameterEXT,
+    unix_glBindMultiTextureEXT,
+    unix_glBindParameterEXT,
+    unix_glBindProgramARB,
+    unix_glBindProgramNV,
+    unix_glBindProgramPipeline,
+    unix_glBindRenderbuffer,
+    unix_glBindRenderbufferEXT,
+    unix_glBindSampler,
+    unix_glBindSamplers,
+    unix_glBindShadingRateImageNV,
+    unix_glBindTexGenParameterEXT,
+    unix_glBindTextureEXT,
+    unix_glBindTextureUnit,
+    unix_glBindTextureUnitParameterEXT,
+    unix_glBindTextures,
+    unix_glBindTransformFeedback,
+    unix_glBindTransformFeedbackNV,
+    unix_glBindVertexArray,
+    unix_glBindVertexArrayAPPLE,
+    unix_glBindVertexBuffer,
+    unix_glBindVertexBuffers,
+    unix_glBindVertexShaderEXT,
+    unix_glBindVideoCaptureStreamBufferNV,
+    unix_glBindVideoCaptureStreamTextureNV,
+    unix_glBinormal3bEXT,
+    unix_glBinormal3bvEXT,
+    unix_glBinormal3dEXT,
+    unix_glBinormal3dvEXT,
+    unix_glBinormal3fEXT,
+    unix_glBinormal3fvEXT,
+    unix_glBinormal3iEXT,
+    unix_glBinormal3ivEXT,
+    unix_glBinormal3sEXT,
+    unix_glBinormal3svEXT,
+    unix_glBinormalPointerEXT,
+    unix_glBitmapxOES,
+    unix_glBlendBarrierKHR,
+    unix_glBlendBarrierNV,
+    unix_glBlendColor,
+    unix_glBlendColorEXT,
+    unix_glBlendColorxOES,
+    unix_glBlendEquation,
+    unix_glBlendEquationEXT,
+    unix_glBlendEquationIndexedAMD,
+    unix_glBlendEquationSeparate,
+    unix_glBlendEquationSeparateEXT,
+    unix_glBlendEquationSeparateIndexedAMD,
+    unix_glBlendEquationSeparatei,
+    unix_glBlendEquationSeparateiARB,
+    unix_glBlendEquationi,
+    unix_glBlendEquationiARB,
+    unix_glBlendFuncIndexedAMD,
+    unix_glBlendFuncSeparate,
+    unix_glBlendFuncSeparateEXT,
+    unix_glBlendFuncSeparateINGR,
+    unix_glBlendFuncSeparateIndexedAMD,
+    unix_glBlendFuncSeparatei,
+    unix_glBlendFuncSeparateiARB,
+    unix_glBlendFunci,
+    unix_glBlendFunciARB,
+    unix_glBlendParameteriNV,
+    unix_glBlitFramebuffer,
+    unix_glBlitFramebufferEXT,
+    unix_glBlitNamedFramebuffer,
+    unix_glBufferAddressRangeNV,
+    unix_glBufferAttachMemoryNV,
+    unix_glBufferData,
+    unix_glBufferDataARB,
+    unix_glBufferPageCommitmentARB,
+    unix_glBufferParameteriAPPLE,
+    unix_glBufferRegionEnabled,
+    unix_glBufferStorage,
+    unix_glBufferStorageExternalEXT,
+    unix_glBufferStorageMemEXT,
+    unix_glBufferSubData,
+    unix_glBufferSubDataARB,
+    unix_glCallCommandListNV,
+    unix_glCheckFramebufferStatus,
+    unix_glCheckFramebufferStatusEXT,
+    unix_glCheckNamedFramebufferStatus,
+    unix_glCheckNamedFramebufferStatusEXT,
+    unix_glClampColor,
+    unix_glClampColorARB,
+    unix_glClearAccumxOES,
+    unix_glClearBufferData,
+    unix_glClearBufferSubData,
+    unix_glClearBufferfi,
+    unix_glClearBufferfv,
+    unix_glClearBufferiv,
+    unix_glClearBufferuiv,
+    unix_glClearColorIiEXT,
+    unix_glClearColorIuiEXT,
+    unix_glClearColorxOES,
+    unix_glClearDepthdNV,
+    unix_glClearDepthf,
+    unix_glClearDepthfOES,
+    unix_glClearDepthxOES,
+    unix_glClearNamedBufferData,
+    unix_glClearNamedBufferDataEXT,
+    unix_glClearNamedBufferSubData,
+    unix_glClearNamedBufferSubDataEXT,
+    unix_glClearNamedFramebufferfi,
+    unix_glClearNamedFramebufferfv,
+    unix_glClearNamedFramebufferiv,
+    unix_glClearNamedFramebufferuiv,
+    unix_glClearTexImage,
+    unix_glClearTexSubImage,
+    unix_glClientActiveTexture,
+    unix_glClientActiveTextureARB,
+    unix_glClientActiveVertexStreamATI,
+    unix_glClientAttribDefaultEXT,
+    unix_glClientWaitSemaphoreui64NVX,
+    unix_glClientWaitSync,
+    unix_glClipControl,
+    unix_glClipPlanefOES,
+    unix_glClipPlanexOES,
+    unix_glColor3fVertex3fSUN,
+    unix_glColor3fVertex3fvSUN,
+    unix_glColor3hNV,
+    unix_glColor3hvNV,
+    unix_glColor3xOES,
+    unix_glColor3xvOES,
+    unix_glColor4fNormal3fVertex3fSUN,
+    unix_glColor4fNormal3fVertex3fvSUN,
+    unix_glColor4hNV,
+    unix_glColor4hvNV,
+    unix_glColor4ubVertex2fSUN,
+    unix_glColor4ubVertex2fvSUN,
+    unix_glColor4ubVertex3fSUN,
+    unix_glColor4ubVertex3fvSUN,
+    unix_glColor4xOES,
+    unix_glColor4xvOES,
+    unix_glColorFormatNV,
+    unix_glColorFragmentOp1ATI,
+    unix_glColorFragmentOp2ATI,
+    unix_glColorFragmentOp3ATI,
+    unix_glColorMaskIndexedEXT,
+    unix_glColorMaski,
+    unix_glColorP3ui,
+    unix_glColorP3uiv,
+    unix_glColorP4ui,
+    unix_glColorP4uiv,
+    unix_glColorPointerEXT,
+    unix_glColorPointerListIBM,
+    unix_glColorPointervINTEL,
+    unix_glColorSubTable,
+    unix_glColorSubTableEXT,
+    unix_glColorTable,
+    unix_glColorTableEXT,
+    unix_glColorTableParameterfv,
+    unix_glColorTableParameterfvSGI,
+    unix_glColorTableParameteriv,
+    unix_glColorTableParameterivSGI,
+    unix_glColorTableSGI,
+    unix_glCombinerInputNV,
+    unix_glCombinerOutputNV,
+    unix_glCombinerParameterfNV,
+    unix_glCombinerParameterfvNV,
+    unix_glCombinerParameteriNV,
+    unix_glCombinerParameterivNV,
+    unix_glCombinerStageParameterfvNV,
+    unix_glCommandListSegmentsNV,
+    unix_glCompileCommandListNV,
+    unix_glCompileShader,
+    unix_glCompileShaderARB,
+    unix_glCompileShaderIncludeARB,
+    unix_glCompressedMultiTexImage1DEXT,
+    unix_glCompressedMultiTexImage2DEXT,
+    unix_glCompressedMultiTexImage3DEXT,
+    unix_glCompressedMultiTexSubImage1DEXT,
+    unix_glCompressedMultiTexSubImage2DEXT,
+    unix_glCompressedMultiTexSubImage3DEXT,
+    unix_glCompressedTexImage1D,
+    unix_glCompressedTexImage1DARB,
+    unix_glCompressedTexImage2D,
+    unix_glCompressedTexImage2DARB,
+    unix_glCompressedTexImage3D,
+    unix_glCompressedTexImage3DARB,
+    unix_glCompressedTexSubImage1D,
+    unix_glCompressedTexSubImage1DARB,
+    unix_glCompressedTexSubImage2D,
+    unix_glCompressedTexSubImage2DARB,
+    unix_glCompressedTexSubImage3D,
+    unix_glCompressedTexSubImage3DARB,
+    unix_glCompressedTextureImage1DEXT,
+    unix_glCompressedTextureImage2DEXT,
+    unix_glCompressedTextureImage3DEXT,
+    unix_glCompressedTextureSubImage1D,
+    unix_glCompressedTextureSubImage1DEXT,
+    unix_glCompressedTextureSubImage2D,
+    unix_glCompressedTextureSubImage2DEXT,
+    unix_glCompressedTextureSubImage3D,
+    unix_glCompressedTextureSubImage3DEXT,
+    unix_glConservativeRasterParameterfNV,
+    unix_glConservativeRasterParameteriNV,
+    unix_glConvolutionFilter1D,
+    unix_glConvolutionFilter1DEXT,
+    unix_glConvolutionFilter2D,
+    unix_glConvolutionFilter2DEXT,
+    unix_glConvolutionParameterf,
+    unix_glConvolutionParameterfEXT,
+    unix_glConvolutionParameterfv,
+    unix_glConvolutionParameterfvEXT,
+    unix_glConvolutionParameteri,
+    unix_glConvolutionParameteriEXT,
+    unix_glConvolutionParameteriv,
+    unix_glConvolutionParameterivEXT,
+    unix_glConvolutionParameterxOES,
+    unix_glConvolutionParameterxvOES,
+    unix_glCopyBufferSubData,
+    unix_glCopyColorSubTable,
+    unix_glCopyColorSubTableEXT,
+    unix_glCopyColorTable,
+    unix_glCopyColorTableSGI,
+    unix_glCopyConvolutionFilter1D,
+    unix_glCopyConvolutionFilter1DEXT,
+    unix_glCopyConvolutionFilter2D,
+    unix_glCopyConvolutionFilter2DEXT,
+    unix_glCopyImageSubData,
+    unix_glCopyImageSubDataNV,
+    unix_glCopyMultiTexImage1DEXT,
+    unix_glCopyMultiTexImage2DEXT,
+    unix_glCopyMultiTexSubImage1DEXT,
+    unix_glCopyMultiTexSubImage2DEXT,
+    unix_glCopyMultiTexSubImage3DEXT,
+    unix_glCopyNamedBufferSubData,
+    unix_glCopyPathNV,
+    unix_glCopyTexImage1DEXT,
+    unix_glCopyTexImage2DEXT,
+    unix_glCopyTexSubImage1DEXT,
+    unix_glCopyTexSubImage2DEXT,
+    unix_glCopyTexSubImage3D,
+    unix_glCopyTexSubImage3DEXT,
+    unix_glCopyTextureImage1DEXT,
+    unix_glCopyTextureImage2DEXT,
+    unix_glCopyTextureSubImage1D,
+    unix_glCopyTextureSubImage1DEXT,
+    unix_glCopyTextureSubImage2D,
+    unix_glCopyTextureSubImage2DEXT,
+    unix_glCopyTextureSubImage3D,
+    unix_glCopyTextureSubImage3DEXT,
+    unix_glCoverFillPathInstancedNV,
+    unix_glCoverFillPathNV,
+    unix_glCoverStrokePathInstancedNV,
+    unix_glCoverStrokePathNV,
+    unix_glCoverageModulationNV,
+    unix_glCoverageModulationTableNV,
+    unix_glCreateBuffers,
+    unix_glCreateCommandListsNV,
+    unix_glCreateFramebuffers,
+    unix_glCreateMemoryObjectsEXT,
+    unix_glCreatePerfQueryINTEL,
+    unix_glCreateProgram,
+    unix_glCreateProgramObjectARB,
+    unix_glCreateProgramPipelines,
+    unix_glCreateProgressFenceNVX,
+    unix_glCreateQueries,
+    unix_glCreateRenderbuffers,
+    unix_glCreateSamplers,
+    unix_glCreateShader,
+    unix_glCreateShaderObjectARB,
+    unix_glCreateShaderProgramEXT,
+    unix_glCreateShaderProgramv,
+    unix_glCreateStatesNV,
+    unix_glCreateSyncFromCLeventARB,
+    unix_glCreateTextures,
+    unix_glCreateTransformFeedbacks,
+    unix_glCreateVertexArrays,
+    unix_glCullParameterdvEXT,
+    unix_glCullParameterfvEXT,
+    unix_glCurrentPaletteMatrixARB,
+    unix_glDebugMessageCallback,
+    unix_glDebugMessageCallbackAMD,
+    unix_glDebugMessageCallbackARB,
+    unix_glDebugMessageControl,
+    unix_glDebugMessageControlARB,
+    unix_glDebugMessageEnableAMD,
+    unix_glDebugMessageInsert,
+    unix_glDebugMessageInsertAMD,
+    unix_glDebugMessageInsertARB,
+    unix_glDeformSGIX,
+    unix_glDeformationMap3dSGIX,
+    unix_glDeformationMap3fSGIX,
+    unix_glDeleteAsyncMarkersSGIX,
+    unix_glDeleteBufferRegion,
+    unix_glDeleteBuffers,
+    unix_glDeleteBuffersARB,
+    unix_glDeleteCommandListsNV,
+    unix_glDeleteFencesAPPLE,
+    unix_glDeleteFencesNV,
+    unix_glDeleteFragmentShaderATI,
+    unix_glDeleteFramebuffers,
+    unix_glDeleteFramebuffersEXT,
+    unix_glDeleteMemoryObjectsEXT,
+    unix_glDeleteNamedStringARB,
+    unix_glDeleteNamesAMD,
+    unix_glDeleteObjectARB,
+    unix_glDeleteObjectBufferATI,
+    unix_glDeleteOcclusionQueriesNV,
+    unix_glDeletePathsNV,
+    unix_glDeletePerfMonitorsAMD,
+    unix_glDeletePerfQueryINTEL,
+    unix_glDeleteProgram,
+    unix_glDeleteProgramPipelines,
+    unix_glDeleteProgramsARB,
+    unix_glDeleteProgramsNV,
+    unix_glDeleteQueries,
+    unix_glDeleteQueriesARB,
+    unix_glDeleteQueryResourceTagNV,
+    unix_glDeleteRenderbuffers,
+    unix_glDeleteRenderbuffersEXT,
+    unix_glDeleteSamplers,
+    unix_glDeleteSemaphoresEXT,
+    unix_glDeleteShader,
+    unix_glDeleteStatesNV,
+    unix_glDeleteSync,
+    unix_glDeleteTexturesEXT,
+    unix_glDeleteTransformFeedbacks,
+    unix_glDeleteTransformFeedbacksNV,
+    unix_glDeleteVertexArrays,
+    unix_glDeleteVertexArraysAPPLE,
+    unix_glDeleteVertexShaderEXT,
+    unix_glDepthBoundsEXT,
+    unix_glDepthBoundsdNV,
+    unix_glDepthRangeArraydvNV,
+    unix_glDepthRangeArrayv,
+    unix_glDepthRangeIndexed,
+    unix_glDepthRangeIndexeddNV,
+    unix_glDepthRangedNV,
+    unix_glDepthRangef,
+    unix_glDepthRangefOES,
+    unix_glDepthRangexOES,
+    unix_glDetachObjectARB,
+    unix_glDetachShader,
+    unix_glDetailTexFuncSGIS,
+    unix_glDisableClientStateIndexedEXT,
+    unix_glDisableClientStateiEXT,
+    unix_glDisableIndexedEXT,
+    unix_glDisableVariantClientStateEXT,
+    unix_glDisableVertexArrayAttrib,
+    unix_glDisableVertexArrayAttribEXT,
+    unix_glDisableVertexArrayEXT,
+    unix_glDisableVertexAttribAPPLE,
+    unix_glDisableVertexAttribArray,
+    unix_glDisableVertexAttribArrayARB,
+    unix_glDisablei,
+    unix_glDispatchCompute,
+    unix_glDispatchComputeGroupSizeARB,
+    unix_glDispatchComputeIndirect,
+    unix_glDrawArraysEXT,
+    unix_glDrawArraysIndirect,
+    unix_glDrawArraysInstanced,
+    unix_glDrawArraysInstancedARB,
+    unix_glDrawArraysInstancedBaseInstance,
+    unix_glDrawArraysInstancedEXT,
+    unix_glDrawBufferRegion,
+    unix_glDrawBuffers,
+    unix_glDrawBuffersARB,
+    unix_glDrawBuffersATI,
+    unix_glDrawCommandsAddressNV,
+    unix_glDrawCommandsNV,
+    unix_glDrawCommandsStatesAddressNV,
+    unix_glDrawCommandsStatesNV,
+    unix_glDrawElementArrayAPPLE,
+    unix_glDrawElementArrayATI,
+    unix_glDrawElementsBaseVertex,
+    unix_glDrawElementsIndirect,
+    unix_glDrawElementsInstanced,
+    unix_glDrawElementsInstancedARB,
+    unix_glDrawElementsInstancedBaseInstance,
+    unix_glDrawElementsInstancedBaseVertex,
+    unix_glDrawElementsInstancedBaseVertexBaseInstance,
+    unix_glDrawElementsInstancedEXT,
+    unix_glDrawMeshArraysSUN,
+    unix_glDrawMeshTasksIndirectNV,
+    unix_glDrawMeshTasksNV,
+    unix_glDrawRangeElementArrayAPPLE,
+    unix_glDrawRangeElementArrayATI,
+    unix_glDrawRangeElements,
+    unix_glDrawRangeElementsBaseVertex,
+    unix_glDrawRangeElementsEXT,
+    unix_glDrawTextureNV,
+    unix_glDrawTransformFeedback,
+    unix_glDrawTransformFeedbackInstanced,
+    unix_glDrawTransformFeedbackNV,
+    unix_glDrawTransformFeedbackStream,
+    unix_glDrawTransformFeedbackStreamInstanced,
+    unix_glDrawVkImageNV,
+    unix_glEGLImageTargetTexStorageEXT,
+    unix_glEGLImageTargetTextureStorageEXT,
+    unix_glEdgeFlagFormatNV,
+    unix_glEdgeFlagPointerEXT,
+    unix_glEdgeFlagPointerListIBM,
+    unix_glElementPointerAPPLE,
+    unix_glElementPointerATI,
+    unix_glEnableClientStateIndexedEXT,
+    unix_glEnableClientStateiEXT,
+    unix_glEnableIndexedEXT,
+    unix_glEnableVariantClientStateEXT,
+    unix_glEnableVertexArrayAttrib,
+    unix_glEnableVertexArrayAttribEXT,
+    unix_glEnableVertexArrayEXT,
+    unix_glEnableVertexAttribAPPLE,
+    unix_glEnableVertexAttribArray,
+    unix_glEnableVertexAttribArrayARB,
+    unix_glEnablei,
+    unix_glEndConditionalRender,
+    unix_glEndConditionalRenderNV,
+    unix_glEndConditionalRenderNVX,
+    unix_glEndFragmentShaderATI,
+    unix_glEndOcclusionQueryNV,
+    unix_glEndPerfMonitorAMD,
+    unix_glEndPerfQueryINTEL,
+    unix_glEndQuery,
+    unix_glEndQueryARB,
+    unix_glEndQueryIndexed,
+    unix_glEndTransformFeedback,
+    unix_glEndTransformFeedbackEXT,
+    unix_glEndTransformFeedbackNV,
+    unix_glEndVertexShaderEXT,
+    unix_glEndVideoCaptureNV,
+    unix_glEvalCoord1xOES,
+    unix_glEvalCoord1xvOES,
+    unix_glEvalCoord2xOES,
+    unix_glEvalCoord2xvOES,
+    unix_glEvalMapsNV,
+    unix_glEvaluateDepthValuesARB,
+    unix_glExecuteProgramNV,
+    unix_glExtractComponentEXT,
+    unix_glFeedbackBufferxOES,
+    unix_glFenceSync,
+    unix_glFinalCombinerInputNV,
+    unix_glFinishAsyncSGIX,
+    unix_glFinishFenceAPPLE,
+    unix_glFinishFenceNV,
+    unix_glFinishObjectAPPLE,
+    unix_glFinishTextureSUNX,
+    unix_glFlushMappedBufferRange,
+    unix_glFlushMappedBufferRangeAPPLE,
+    unix_glFlushMappedNamedBufferRange,
+    unix_glFlushMappedNamedBufferRangeEXT,
+    unix_glFlushPixelDataRangeNV,
+    unix_glFlushRasterSGIX,
+    unix_glFlushStaticDataIBM,
+    unix_glFlushVertexArrayRangeAPPLE,
+    unix_glFlushVertexArrayRangeNV,
+    unix_glFogCoordFormatNV,
+    unix_glFogCoordPointer,
+    unix_glFogCoordPointerEXT,
+    unix_glFogCoordPointerListIBM,
+    unix_glFogCoordd,
+    unix_glFogCoorddEXT,
+    unix_glFogCoorddv,
+    unix_glFogCoorddvEXT,
+    unix_glFogCoordf,
+    unix_glFogCoordfEXT,
+    unix_glFogCoordfv,
+    unix_glFogCoordfvEXT,
+    unix_glFogCoordhNV,
+    unix_glFogCoordhvNV,
+    unix_glFogFuncSGIS,
+    unix_glFogxOES,
+    unix_glFogxvOES,
+    unix_glFragmentColorMaterialSGIX,
+    unix_glFragmentCoverageColorNV,
+    unix_glFragmentLightModelfSGIX,
+    unix_glFragmentLightModelfvSGIX,
+    unix_glFragmentLightModeliSGIX,
+    unix_glFragmentLightModelivSGIX,
+    unix_glFragmentLightfSGIX,
+    unix_glFragmentLightfvSGIX,
+    unix_glFragmentLightiSGIX,
+    unix_glFragmentLightivSGIX,
+    unix_glFragmentMaterialfSGIX,
+    unix_glFragmentMaterialfvSGIX,
+    unix_glFragmentMaterialiSGIX,
+    unix_glFragmentMaterialivSGIX,
+    unix_glFrameTerminatorGREMEDY,
+    unix_glFrameZoomSGIX,
+    unix_glFramebufferDrawBufferEXT,
+    unix_glFramebufferDrawBuffersEXT,
+    unix_glFramebufferFetchBarrierEXT,
+    unix_glFramebufferParameteri,
+    unix_glFramebufferParameteriMESA,
+    unix_glFramebufferReadBufferEXT,
+    unix_glFramebufferRenderbuffer,
+    unix_glFramebufferRenderbufferEXT,
+    unix_glFramebufferSampleLocationsfvARB,
+    unix_glFramebufferSampleLocationsfvNV,
+    unix_glFramebufferSamplePositionsfvAMD,
+    unix_glFramebufferTexture,
+    unix_glFramebufferTexture1D,
+    unix_glFramebufferTexture1DEXT,
+    unix_glFramebufferTexture2D,
+    unix_glFramebufferTexture2DEXT,
+    unix_glFramebufferTexture3D,
+    unix_glFramebufferTexture3DEXT,
+    unix_glFramebufferTextureARB,
+    unix_glFramebufferTextureEXT,
+    unix_glFramebufferTextureFaceARB,
+    unix_glFramebufferTextureFaceEXT,
+    unix_glFramebufferTextureLayer,
+    unix_glFramebufferTextureLayerARB,
+    unix_glFramebufferTextureLayerEXT,
+    unix_glFramebufferTextureMultiviewOVR,
+    unix_glFreeObjectBufferATI,
+    unix_glFrustumfOES,
+    unix_glFrustumxOES,
+    unix_glGenAsyncMarkersSGIX,
+    unix_glGenBuffers,
+    unix_glGenBuffersARB,
+    unix_glGenFencesAPPLE,
+    unix_glGenFencesNV,
+    unix_glGenFragmentShadersATI,
+    unix_glGenFramebuffers,
+    unix_glGenFramebuffersEXT,
+    unix_glGenNamesAMD,
+    unix_glGenOcclusionQueriesNV,
+    unix_glGenPathsNV,
+    unix_glGenPerfMonitorsAMD,
+    unix_glGenProgramPipelines,
+    unix_glGenProgramsARB,
+    unix_glGenProgramsNV,
+    unix_glGenQueries,
+    unix_glGenQueriesARB,
+    unix_glGenQueryResourceTagNV,
+    unix_glGenRenderbuffers,
+    unix_glGenRenderbuffersEXT,
+    unix_glGenSamplers,
+    unix_glGenSemaphoresEXT,
+    unix_glGenSymbolsEXT,
+    unix_glGenTexturesEXT,
+    unix_glGenTransformFeedbacks,
+    unix_glGenTransformFeedbacksNV,
+    unix_glGenVertexArrays,
+    unix_glGenVertexArraysAPPLE,
+    unix_glGenVertexShadersEXT,
+    unix_glGenerateMipmap,
+    unix_glGenerateMipmapEXT,
+    unix_glGenerateMultiTexMipmapEXT,
+    unix_glGenerateTextureMipmap,
+    unix_glGenerateTextureMipmapEXT,
+    unix_glGetActiveAtomicCounterBufferiv,
+    unix_glGetActiveAttrib,
+    unix_glGetActiveAttribARB,
+    unix_glGetActiveSubroutineName,
+    unix_glGetActiveSubroutineUniformName,
+    unix_glGetActiveSubroutineUniformiv,
+    unix_glGetActiveUniform,
+    unix_glGetActiveUniformARB,
+    unix_glGetActiveUniformBlockName,
+    unix_glGetActiveUniformBlockiv,
+    unix_glGetActiveUniformName,
+    unix_glGetActiveUniformsiv,
+    unix_glGetActiveVaryingNV,
+    unix_glGetArrayObjectfvATI,
+    unix_glGetArrayObjectivATI,
+    unix_glGetAttachedObjectsARB,
+    unix_glGetAttachedShaders,
+    unix_glGetAttribLocation,
+    unix_glGetAttribLocationARB,
+    unix_glGetBooleanIndexedvEXT,
+    unix_glGetBooleani_v,
+    unix_glGetBufferParameteri64v,
+    unix_glGetBufferParameteriv,
+    unix_glGetBufferParameterivARB,
+    unix_glGetBufferParameterui64vNV,
+    unix_glGetBufferPointerv,
+    unix_glGetBufferPointervARB,
+    unix_glGetBufferSubData,
+    unix_glGetBufferSubDataARB,
+    unix_glGetClipPlanefOES,
+    unix_glGetClipPlanexOES,
+    unix_glGetColorTable,
+    unix_glGetColorTableEXT,
+    unix_glGetColorTableParameterfv,
+    unix_glGetColorTableParameterfvEXT,
+    unix_glGetColorTableParameterfvSGI,
+    unix_glGetColorTableParameteriv,
+    unix_glGetColorTableParameterivEXT,
+    unix_glGetColorTableParameterivSGI,
+    unix_glGetColorTableSGI,
+    unix_glGetCombinerInputParameterfvNV,
+    unix_glGetCombinerInputParameterivNV,
+    unix_glGetCombinerOutputParameterfvNV,
+    unix_glGetCombinerOutputParameterivNV,
+    unix_glGetCombinerStageParameterfvNV,
+    unix_glGetCommandHeaderNV,
+    unix_glGetCompressedMultiTexImageEXT,
+    unix_glGetCompressedTexImage,
+    unix_glGetCompressedTexImageARB,
+    unix_glGetCompressedTextureImage,
+    unix_glGetCompressedTextureImageEXT,
+    unix_glGetCompressedTextureSubImage,
+    unix_glGetConvolutionFilter,
+    unix_glGetConvolutionFilterEXT,
+    unix_glGetConvolutionParameterfv,
+    unix_glGetConvolutionParameterfvEXT,
+    unix_glGetConvolutionParameteriv,
+    unix_glGetConvolutionParameterivEXT,
+    unix_glGetConvolutionParameterxvOES,
+    unix_glGetCoverageModulationTableNV,
+    unix_glGetDebugMessageLog,
+    unix_glGetDebugMessageLogAMD,
+    unix_glGetDebugMessageLogARB,
+    unix_glGetDetailTexFuncSGIS,
+    unix_glGetDoubleIndexedvEXT,
+    unix_glGetDoublei_v,
+    unix_glGetDoublei_vEXT,
+    unix_glGetFenceivNV,
+    unix_glGetFinalCombinerInputParameterfvNV,
+    unix_glGetFinalCombinerInputParameterivNV,
+    unix_glGetFirstPerfQueryIdINTEL,
+    unix_glGetFixedvOES,
+    unix_glGetFloatIndexedvEXT,
+    unix_glGetFloati_v,
+    unix_glGetFloati_vEXT,
+    unix_glGetFogFuncSGIS,
+    unix_glGetFragDataIndex,
+    unix_glGetFragDataLocation,
+    unix_glGetFragDataLocationEXT,
+    unix_glGetFragmentLightfvSGIX,
+    unix_glGetFragmentLightivSGIX,
+    unix_glGetFragmentMaterialfvSGIX,
+    unix_glGetFragmentMaterialivSGIX,
+    unix_glGetFramebufferAttachmentParameteriv,
+    unix_glGetFramebufferAttachmentParameterivEXT,
+    unix_glGetFramebufferParameterfvAMD,
+    unix_glGetFramebufferParameteriv,
+    unix_glGetFramebufferParameterivEXT,
+    unix_glGetFramebufferParameterivMESA,
+    unix_glGetGraphicsResetStatus,
+    unix_glGetGraphicsResetStatusARB,
+    unix_glGetHandleARB,
+    unix_glGetHistogram,
+    unix_glGetHistogramEXT,
+    unix_glGetHistogramParameterfv,
+    unix_glGetHistogramParameterfvEXT,
+    unix_glGetHistogramParameteriv,
+    unix_glGetHistogramParameterivEXT,
+    unix_glGetHistogramParameterxvOES,
+    unix_glGetImageHandleARB,
+    unix_glGetImageHandleNV,
+    unix_glGetImageTransformParameterfvHP,
+    unix_glGetImageTransformParameterivHP,
+    unix_glGetInfoLogARB,
+    unix_glGetInstrumentsSGIX,
+    unix_glGetInteger64i_v,
+    unix_glGetInteger64v,
+    unix_glGetIntegerIndexedvEXT,
+    unix_glGetIntegeri_v,
+    unix_glGetIntegerui64i_vNV,
+    unix_glGetIntegerui64vNV,
+    unix_glGetInternalformatSampleivNV,
+    unix_glGetInternalformati64v,
+    unix_glGetInternalformativ,
+    unix_glGetInvariantBooleanvEXT,
+    unix_glGetInvariantFloatvEXT,
+    unix_glGetInvariantIntegervEXT,
+    unix_glGetLightxOES,
+    unix_glGetListParameterfvSGIX,
+    unix_glGetListParameterivSGIX,
+    unix_glGetLocalConstantBooleanvEXT,
+    unix_glGetLocalConstantFloatvEXT,
+    unix_glGetLocalConstantIntegervEXT,
+    unix_glGetMapAttribParameterfvNV,
+    unix_glGetMapAttribParameterivNV,
+    unix_glGetMapControlPointsNV,
+    unix_glGetMapParameterfvNV,
+    unix_glGetMapParameterivNV,
+    unix_glGetMapxvOES,
+    unix_glGetMaterialxOES,
+    unix_glGetMemoryObjectDetachedResourcesuivNV,
+    unix_glGetMemoryObjectParameterivEXT,
+    unix_glGetMinmax,
+    unix_glGetMinmaxEXT,
+    unix_glGetMinmaxParameterfv,
+    unix_glGetMinmaxParameterfvEXT,
+    unix_glGetMinmaxParameteriv,
+    unix_glGetMinmaxParameterivEXT,
+    unix_glGetMultiTexEnvfvEXT,
+    unix_glGetMultiTexEnvivEXT,
+    unix_glGetMultiTexGendvEXT,
+    unix_glGetMultiTexGenfvEXT,
+    unix_glGetMultiTexGenivEXT,
+    unix_glGetMultiTexImageEXT,
+    unix_glGetMultiTexLevelParameterfvEXT,
+    unix_glGetMultiTexLevelParameterivEXT,
+    unix_glGetMultiTexParameterIivEXT,
+    unix_glGetMultiTexParameterIuivEXT,
+    unix_glGetMultiTexParameterfvEXT,
+    unix_glGetMultiTexParameterivEXT,
+    unix_glGetMultisamplefv,
+    unix_glGetMultisamplefvNV,
+    unix_glGetNamedBufferParameteri64v,
+    unix_glGetNamedBufferParameteriv,
+    unix_glGetNamedBufferParameterivEXT,
+    unix_glGetNamedBufferParameterui64vNV,
+    unix_glGetNamedBufferPointerv,
+    unix_glGetNamedBufferPointervEXT,
+    unix_glGetNamedBufferSubData,
+    unix_glGetNamedBufferSubDataEXT,
+    unix_glGetNamedFramebufferAttachmentParameteriv,
+    unix_glGetNamedFramebufferAttachmentParameterivEXT,
+    unix_glGetNamedFramebufferParameterfvAMD,
+    unix_glGetNamedFramebufferParameteriv,
+    unix_glGetNamedFramebufferParameterivEXT,
+    unix_glGetNamedProgramLocalParameterIivEXT,
+    unix_glGetNamedProgramLocalParameterIuivEXT,
+    unix_glGetNamedProgramLocalParameterdvEXT,
+    unix_glGetNamedProgramLocalParameterfvEXT,
+    unix_glGetNamedProgramStringEXT,
+    unix_glGetNamedProgramivEXT,
+    unix_glGetNamedRenderbufferParameteriv,
+    unix_glGetNamedRenderbufferParameterivEXT,
+    unix_glGetNamedStringARB,
+    unix_glGetNamedStringivARB,
+    unix_glGetNextPerfQueryIdINTEL,
+    unix_glGetObjectBufferfvATI,
+    unix_glGetObjectBufferivATI,
+    unix_glGetObjectLabel,
+    unix_glGetObjectLabelEXT,
+    unix_glGetObjectParameterfvARB,
+    unix_glGetObjectParameterivAPPLE,
+    unix_glGetObjectParameterivARB,
+    unix_glGetObjectPtrLabel,
+    unix_glGetOcclusionQueryivNV,
+    unix_glGetOcclusionQueryuivNV,
+    unix_glGetPathColorGenfvNV,
+    unix_glGetPathColorGenivNV,
+    unix_glGetPathCommandsNV,
+    unix_glGetPathCoordsNV,
+    unix_glGetPathDashArrayNV,
+    unix_glGetPathLengthNV,
+    unix_glGetPathMetricRangeNV,
+    unix_glGetPathMetricsNV,
+    unix_glGetPathParameterfvNV,
+    unix_glGetPathParameterivNV,
+    unix_glGetPathSpacingNV,
+    unix_glGetPathTexGenfvNV,
+    unix_glGetPathTexGenivNV,
+    unix_glGetPerfCounterInfoINTEL,
+    unix_glGetPerfMonitorCounterDataAMD,
+    unix_glGetPerfMonitorCounterInfoAMD,
+    unix_glGetPerfMonitorCounterStringAMD,
+    unix_glGetPerfMonitorCountersAMD,
+    unix_glGetPerfMonitorGroupStringAMD,
+    unix_glGetPerfMonitorGroupsAMD,
+    unix_glGetPerfQueryDataINTEL,
+    unix_glGetPerfQueryIdByNameINTEL,
+    unix_glGetPerfQueryInfoINTEL,
+    unix_glGetPixelMapxv,
+    unix_glGetPixelTexGenParameterfvSGIS,
+    unix_glGetPixelTexGenParameterivSGIS,
+    unix_glGetPixelTransformParameterfvEXT,
+    unix_glGetPixelTransformParameterivEXT,
+    unix_glGetPointerIndexedvEXT,
+    unix_glGetPointeri_vEXT,
+    unix_glGetPointervEXT,
+    unix_glGetProgramBinary,
+    unix_glGetProgramEnvParameterIivNV,
+    unix_glGetProgramEnvParameterIuivNV,
+    unix_glGetProgramEnvParameterdvARB,
+    unix_glGetProgramEnvParameterfvARB,
+    unix_glGetProgramInfoLog,
+    unix_glGetProgramInterfaceiv,
+    unix_glGetProgramLocalParameterIivNV,
+    unix_glGetProgramLocalParameterIuivNV,
+    unix_glGetProgramLocalParameterdvARB,
+    unix_glGetProgramLocalParameterfvARB,
+    unix_glGetProgramNamedParameterdvNV,
+    unix_glGetProgramNamedParameterfvNV,
+    unix_glGetProgramParameterdvNV,
+    unix_glGetProgramParameterfvNV,
+    unix_glGetProgramPipelineInfoLog,
+    unix_glGetProgramPipelineiv,
+    unix_glGetProgramResourceIndex,
+    unix_glGetProgramResourceLocation,
+    unix_glGetProgramResourceLocationIndex,
+    unix_glGetProgramResourceName,
+    unix_glGetProgramResourcefvNV,
+    unix_glGetProgramResourceiv,
+    unix_glGetProgramStageiv,
+    unix_glGetProgramStringARB,
+    unix_glGetProgramStringNV,
+    unix_glGetProgramSubroutineParameteruivNV,
+    unix_glGetProgramiv,
+    unix_glGetProgramivARB,
+    unix_glGetProgramivNV,
+    unix_glGetQueryBufferObjecti64v,
+    unix_glGetQueryBufferObjectiv,
+    unix_glGetQueryBufferObjectui64v,
+    unix_glGetQueryBufferObjectuiv,
+    unix_glGetQueryIndexediv,
+    unix_glGetQueryObjecti64v,
+    unix_glGetQueryObjecti64vEXT,
+    unix_glGetQueryObjectiv,
+    unix_glGetQueryObjectivARB,
+    unix_glGetQueryObjectui64v,
+    unix_glGetQueryObjectui64vEXT,
+    unix_glGetQueryObjectuiv,
+    unix_glGetQueryObjectuivARB,
+    unix_glGetQueryiv,
+    unix_glGetQueryivARB,
+    unix_glGetRenderbufferParameteriv,
+    unix_glGetRenderbufferParameterivEXT,
+    unix_glGetSamplerParameterIiv,
+    unix_glGetSamplerParameterIuiv,
+    unix_glGetSamplerParameterfv,
+    unix_glGetSamplerParameteriv,
+    unix_glGetSemaphoreParameterui64vEXT,
+    unix_glGetSeparableFilter,
+    unix_glGetSeparableFilterEXT,
+    unix_glGetShaderInfoLog,
+    unix_glGetShaderPrecisionFormat,
+    unix_glGetShaderSource,
+    unix_glGetShaderSourceARB,
+    unix_glGetShaderiv,
+    unix_glGetShadingRateImagePaletteNV,
+    unix_glGetShadingRateSampleLocationivNV,
+    unix_glGetSharpenTexFuncSGIS,
+    unix_glGetStageIndexNV,
+    unix_glGetStringi,
+    unix_glGetSubroutineIndex,
+    unix_glGetSubroutineUniformLocation,
+    unix_glGetSynciv,
+    unix_glGetTexBumpParameterfvATI,
+    unix_glGetTexBumpParameterivATI,
+    unix_glGetTexEnvxvOES,
+    unix_glGetTexFilterFuncSGIS,
+    unix_glGetTexGenxvOES,
+    unix_glGetTexLevelParameterxvOES,
+    unix_glGetTexParameterIiv,
+    unix_glGetTexParameterIivEXT,
+    unix_glGetTexParameterIuiv,
+    unix_glGetTexParameterIuivEXT,
+    unix_glGetTexParameterPointervAPPLE,
+    unix_glGetTexParameterxvOES,
+    unix_glGetTextureHandleARB,
+    unix_glGetTextureHandleNV,
+    unix_glGetTextureImage,
+    unix_glGetTextureImageEXT,
+    unix_glGetTextureLevelParameterfv,
+    unix_glGetTextureLevelParameterfvEXT,
+    unix_glGetTextureLevelParameteriv,
+    unix_glGetTextureLevelParameterivEXT,
+    unix_glGetTextureParameterIiv,
+    unix_glGetTextureParameterIivEXT,
+    unix_glGetTextureParameterIuiv,
+    unix_glGetTextureParameterIuivEXT,
+    unix_glGetTextureParameterfv,
+    unix_glGetTextureParameterfvEXT,
+    unix_glGetTextureParameteriv,
+    unix_glGetTextureParameterivEXT,
+    unix_glGetTextureSamplerHandleARB,
+    unix_glGetTextureSamplerHandleNV,
+    unix_glGetTextureSubImage,
+    unix_glGetTrackMatrixivNV,
+    unix_glGetTransformFeedbackVarying,
+    unix_glGetTransformFeedbackVaryingEXT,
+    unix_glGetTransformFeedbackVaryingNV,
+    unix_glGetTransformFeedbacki64_v,
+    unix_glGetTransformFeedbacki_v,
+    unix_glGetTransformFeedbackiv,
+    unix_glGetUniformBlockIndex,
+    unix_glGetUniformBufferSizeEXT,
+    unix_glGetUniformIndices,
+    unix_glGetUniformLocation,
+    unix_glGetUniformLocationARB,
+    unix_glGetUniformOffsetEXT,
+    unix_glGetUniformSubroutineuiv,
+    unix_glGetUniformdv,
+    unix_glGetUniformfv,
+    unix_glGetUniformfvARB,
+    unix_glGetUniformi64vARB,
+    unix_glGetUniformi64vNV,
+    unix_glGetUniformiv,
+    unix_glGetUniformivARB,
+    unix_glGetUniformui64vARB,
+    unix_glGetUniformui64vNV,
+    unix_glGetUniformuiv,
+    unix_glGetUniformuivEXT,
+    unix_glGetUnsignedBytei_vEXT,
+    unix_glGetUnsignedBytevEXT,
+    unix_glGetVariantArrayObjectfvATI,
+    unix_glGetVariantArrayObjectivATI,
+    unix_glGetVariantBooleanvEXT,
+    unix_glGetVariantFloatvEXT,
+    unix_glGetVariantIntegervEXT,
+    unix_glGetVariantPointervEXT,
+    unix_glGetVaryingLocationNV,
+    unix_glGetVertexArrayIndexed64iv,
+    unix_glGetVertexArrayIndexediv,
+    unix_glGetVertexArrayIntegeri_vEXT,
+    unix_glGetVertexArrayIntegervEXT,
+    unix_glGetVertexArrayPointeri_vEXT,
+    unix_glGetVertexArrayPointervEXT,
+    unix_glGetVertexArrayiv,
+    unix_glGetVertexAttribArrayObjectfvATI,
+    unix_glGetVertexAttribArrayObjectivATI,
+    unix_glGetVertexAttribIiv,
+    unix_glGetVertexAttribIivEXT,
+    unix_glGetVertexAttribIuiv,
+    unix_glGetVertexAttribIuivEXT,
+    unix_glGetVertexAttribLdv,
+    unix_glGetVertexAttribLdvEXT,
+    unix_glGetVertexAttribLi64vNV,
+    unix_glGetVertexAttribLui64vARB,
+    unix_glGetVertexAttribLui64vNV,
+    unix_glGetVertexAttribPointerv,
+    unix_glGetVertexAttribPointervARB,
+    unix_glGetVertexAttribPointervNV,
+    unix_glGetVertexAttribdv,
+    unix_glGetVertexAttribdvARB,
+    unix_glGetVertexAttribdvNV,
+    unix_glGetVertexAttribfv,
+    unix_glGetVertexAttribfvARB,
+    unix_glGetVertexAttribfvNV,
+    unix_glGetVertexAttribiv,
+    unix_glGetVertexAttribivARB,
+    unix_glGetVertexAttribivNV,
+    unix_glGetVideoCaptureStreamdvNV,
+    unix_glGetVideoCaptureStreamfvNV,
+    unix_glGetVideoCaptureStreamivNV,
+    unix_glGetVideoCaptureivNV,
+    unix_glGetVideoi64vNV,
+    unix_glGetVideoivNV,
+    unix_glGetVideoui64vNV,
+    unix_glGetVideouivNV,
+    unix_glGetVkProcAddrNV,
+    unix_glGetnColorTable,
+    unix_glGetnColorTableARB,
+    unix_glGetnCompressedTexImage,
+    unix_glGetnCompressedTexImageARB,
+    unix_glGetnConvolutionFilter,
+    unix_glGetnConvolutionFilterARB,
+    unix_glGetnHistogram,
+    unix_glGetnHistogramARB,
+    unix_glGetnMapdv,
+    unix_glGetnMapdvARB,
+    unix_glGetnMapfv,
+    unix_glGetnMapfvARB,
+    unix_glGetnMapiv,
+    unix_glGetnMapivARB,
+    unix_glGetnMinmax,
+    unix_glGetnMinmaxARB,
+    unix_glGetnPixelMapfv,
+    unix_glGetnPixelMapfvARB,
+    unix_glGetnPixelMapuiv,
+    unix_glGetnPixelMapuivARB,
+    unix_glGetnPixelMapusv,
+    unix_glGetnPixelMapusvARB,
+    unix_glGetnPolygonStipple,
+    unix_glGetnPolygonStippleARB,
+    unix_glGetnSeparableFilter,
+    unix_glGetnSeparableFilterARB,
+    unix_glGetnTexImage,
+    unix_glGetnTexImageARB,
+    unix_glGetnUniformdv,
+    unix_glGetnUniformdvARB,
+    unix_glGetnUniformfv,
+    unix_glGetnUniformfvARB,
+    unix_glGetnUniformi64vARB,
+    unix_glGetnUniformiv,
+    unix_glGetnUniformivARB,
+    unix_glGetnUniformui64vARB,
+    unix_glGetnUniformuiv,
+    unix_glGetnUniformuivARB,
+    unix_glGlobalAlphaFactorbSUN,
+    unix_glGlobalAlphaFactordSUN,
+    unix_glGlobalAlphaFactorfSUN,
+    unix_glGlobalAlphaFactoriSUN,
+    unix_glGlobalAlphaFactorsSUN,
+    unix_glGlobalAlphaFactorubSUN,
+    unix_glGlobalAlphaFactoruiSUN,
+    unix_glGlobalAlphaFactorusSUN,
+    unix_glHintPGI,
+    unix_glHistogram,
+    unix_glHistogramEXT,
+    unix_glIglooInterfaceSGIX,
+    unix_glImageTransformParameterfHP,
+    unix_glImageTransformParameterfvHP,
+    unix_glImageTransformParameteriHP,
+    unix_glImageTransformParameterivHP,
+    unix_glImportMemoryFdEXT,
+    unix_glImportMemoryWin32HandleEXT,
+    unix_glImportMemoryWin32NameEXT,
+    unix_glImportSemaphoreFdEXT,
+    unix_glImportSemaphoreWin32HandleEXT,
+    unix_glImportSemaphoreWin32NameEXT,
+    unix_glImportSyncEXT,
+    unix_glIndexFormatNV,
+    unix_glIndexFuncEXT,
+    unix_glIndexMaterialEXT,
+    unix_glIndexPointerEXT,
+    unix_glIndexPointerListIBM,
+    unix_glIndexxOES,
+    unix_glIndexxvOES,
+    unix_glInsertComponentEXT,
+    unix_glInsertEventMarkerEXT,
+    unix_glInstrumentsBufferSGIX,
+    unix_glInterpolatePathsNV,
+    unix_glInvalidateBufferData,
+    unix_glInvalidateBufferSubData,
+    unix_glInvalidateFramebuffer,
+    unix_glInvalidateNamedFramebufferData,
+    unix_glInvalidateNamedFramebufferSubData,
+    unix_glInvalidateSubFramebuffer,
+    unix_glInvalidateTexImage,
+    unix_glInvalidateTexSubImage,
+    unix_glIsAsyncMarkerSGIX,
+    unix_glIsBuffer,
+    unix_glIsBufferARB,
+    unix_glIsBufferResidentNV,
+    unix_glIsCommandListNV,
+    unix_glIsEnabledIndexedEXT,
+    unix_glIsEnabledi,
+    unix_glIsFenceAPPLE,
+    unix_glIsFenceNV,
+    unix_glIsFramebuffer,
+    unix_glIsFramebufferEXT,
+    unix_glIsImageHandleResidentARB,
+    unix_glIsImageHandleResidentNV,
+    unix_glIsMemoryObjectEXT,
+    unix_glIsNameAMD,
+    unix_glIsNamedBufferResidentNV,
+    unix_glIsNamedStringARB,
+    unix_glIsObjectBufferATI,
+    unix_glIsOcclusionQueryNV,
+    unix_glIsPathNV,
+    unix_glIsPointInFillPathNV,
+    unix_glIsPointInStrokePathNV,
+    unix_glIsProgram,
+    unix_glIsProgramARB,
+    unix_glIsProgramNV,
+    unix_glIsProgramPipeline,
+    unix_glIsQuery,
+    unix_glIsQueryARB,
+    unix_glIsRenderbuffer,
+    unix_glIsRenderbufferEXT,
+    unix_glIsSampler,
+    unix_glIsSemaphoreEXT,
+    unix_glIsShader,
+    unix_glIsStateNV,
+    unix_glIsSync,
+    unix_glIsTextureEXT,
+    unix_glIsTextureHandleResidentARB,
+    unix_glIsTextureHandleResidentNV,
+    unix_glIsTransformFeedback,
+    unix_glIsTransformFeedbackNV,
+    unix_glIsVariantEnabledEXT,
+    unix_glIsVertexArray,
+    unix_glIsVertexArrayAPPLE,
+    unix_glIsVertexAttribEnabledAPPLE,
+    unix_glLGPUCopyImageSubDataNVX,
+    unix_glLGPUInterlockNVX,
+    unix_glLGPUNamedBufferSubDataNVX,
+    unix_glLabelObjectEXT,
+    unix_glLightEnviSGIX,
+    unix_glLightModelxOES,
+    unix_glLightModelxvOES,
+    unix_glLightxOES,
+    unix_glLightxvOES,
+    unix_glLineWidthxOES,
+    unix_glLinkProgram,
+    unix_glLinkProgramARB,
+    unix_glListDrawCommandsStatesClientNV,
+    unix_glListParameterfSGIX,
+    unix_glListParameterfvSGIX,
+    unix_glListParameteriSGIX,
+    unix_glListParameterivSGIX,
+    unix_glLoadIdentityDeformationMapSGIX,
+    unix_glLoadMatrixxOES,
+    unix_glLoadProgramNV,
+    unix_glLoadTransposeMatrixd,
+    unix_glLoadTransposeMatrixdARB,
+    unix_glLoadTransposeMatrixf,
+    unix_glLoadTransposeMatrixfARB,
+    unix_glLoadTransposeMatrixxOES,
+    unix_glLockArraysEXT,
+    unix_glMTexCoord2fSGIS,
+    unix_glMTexCoord2fvSGIS,
+    unix_glMakeBufferNonResidentNV,
+    unix_glMakeBufferResidentNV,
+    unix_glMakeImageHandleNonResidentARB,
+    unix_glMakeImageHandleNonResidentNV,
+    unix_glMakeImageHandleResidentARB,
+    unix_glMakeImageHandleResidentNV,
+    unix_glMakeNamedBufferNonResidentNV,
+    unix_glMakeNamedBufferResidentNV,
+    unix_glMakeTextureHandleNonResidentARB,
+    unix_glMakeTextureHandleNonResidentNV,
+    unix_glMakeTextureHandleResidentARB,
+    unix_glMakeTextureHandleResidentNV,
+    unix_glMap1xOES,
+    unix_glMap2xOES,
+    unix_glMapBuffer,
+    unix_glMapBufferARB,
+    unix_glMapBufferRange,
+    unix_glMapControlPointsNV,
+    unix_glMapGrid1xOES,
+    unix_glMapGrid2xOES,
+    unix_glMapNamedBuffer,
+    unix_glMapNamedBufferEXT,
+    unix_glMapNamedBufferRange,
+    unix_glMapNamedBufferRangeEXT,
+    unix_glMapObjectBufferATI,
+    unix_glMapParameterfvNV,
+    unix_glMapParameterivNV,
+    unix_glMapTexture2DINTEL,
+    unix_glMapVertexAttrib1dAPPLE,
+    unix_glMapVertexAttrib1fAPPLE,
+    unix_glMapVertexAttrib2dAPPLE,
+    unix_glMapVertexAttrib2fAPPLE,
+    unix_glMaterialxOES,
+    unix_glMaterialxvOES,
+    unix_glMatrixFrustumEXT,
+    unix_glMatrixIndexPointerARB,
+    unix_glMatrixIndexubvARB,
+    unix_glMatrixIndexuivARB,
+    unix_glMatrixIndexusvARB,
+    unix_glMatrixLoad3x2fNV,
+    unix_glMatrixLoad3x3fNV,
+    unix_glMatrixLoadIdentityEXT,
+    unix_glMatrixLoadTranspose3x3fNV,
+    unix_glMatrixLoadTransposedEXT,
+    unix_glMatrixLoadTransposefEXT,
+    unix_glMatrixLoaddEXT,
+    unix_glMatrixLoadfEXT,
+    unix_glMatrixMult3x2fNV,
+    unix_glMatrixMult3x3fNV,
+    unix_glMatrixMultTranspose3x3fNV,
+    unix_glMatrixMultTransposedEXT,
+    unix_glMatrixMultTransposefEXT,
+    unix_glMatrixMultdEXT,
+    unix_glMatrixMultfEXT,
+    unix_glMatrixOrthoEXT,
+    unix_glMatrixPopEXT,
+    unix_glMatrixPushEXT,
+    unix_glMatrixRotatedEXT,
+    unix_glMatrixRotatefEXT,
+    unix_glMatrixScaledEXT,
+    unix_glMatrixScalefEXT,
+    unix_glMatrixTranslatedEXT,
+    unix_glMatrixTranslatefEXT,
+    unix_glMaxShaderCompilerThreadsARB,
+    unix_glMaxShaderCompilerThreadsKHR,
+    unix_glMemoryBarrier,
+    unix_glMemoryBarrierByRegion,
+    unix_glMemoryBarrierEXT,
+    unix_glMemoryObjectParameterivEXT,
+    unix_glMinSampleShading,
+    unix_glMinSampleShadingARB,
+    unix_glMinmax,
+    unix_glMinmaxEXT,
+    unix_glMultMatrixxOES,
+    unix_glMultTransposeMatrixd,
+    unix_glMultTransposeMatrixdARB,
+    unix_glMultTransposeMatrixf,
+    unix_glMultTransposeMatrixfARB,
+    unix_glMultTransposeMatrixxOES,
+    unix_glMultiDrawArrays,
+    unix_glMultiDrawArraysEXT,
+    unix_glMultiDrawArraysIndirect,
+    unix_glMultiDrawArraysIndirectAMD,
+    unix_glMultiDrawArraysIndirectBindlessCountNV,
+    unix_glMultiDrawArraysIndirectBindlessNV,
+    unix_glMultiDrawArraysIndirectCount,
+    unix_glMultiDrawArraysIndirectCountARB,
+    unix_glMultiDrawElementArrayAPPLE,
+    unix_glMultiDrawElements,
+    unix_glMultiDrawElementsBaseVertex,
+    unix_glMultiDrawElementsEXT,
+    unix_glMultiDrawElementsIndirect,
+    unix_glMultiDrawElementsIndirectAMD,
+    unix_glMultiDrawElementsIndirectBindlessCountNV,
+    unix_glMultiDrawElementsIndirectBindlessNV,
+    unix_glMultiDrawElementsIndirectCount,
+    unix_glMultiDrawElementsIndirectCountARB,
+    unix_glMultiDrawMeshTasksIndirectCountNV,
+    unix_glMultiDrawMeshTasksIndirectNV,
+    unix_glMultiDrawRangeElementArrayAPPLE,
+    unix_glMultiModeDrawArraysIBM,
+    unix_glMultiModeDrawElementsIBM,
+    unix_glMultiTexBufferEXT,
+    unix_glMultiTexCoord1bOES,
+    unix_glMultiTexCoord1bvOES,
+    unix_glMultiTexCoord1d,
+    unix_glMultiTexCoord1dARB,
+    unix_glMultiTexCoord1dSGIS,
+    unix_glMultiTexCoord1dv,
+    unix_glMultiTexCoord1dvARB,
+    unix_glMultiTexCoord1dvSGIS,
+    unix_glMultiTexCoord1f,
+    unix_glMultiTexCoord1fARB,
+    unix_glMultiTexCoord1fSGIS,
+    unix_glMultiTexCoord1fv,
+    unix_glMultiTexCoord1fvARB,
+    unix_glMultiTexCoord1fvSGIS,
+    unix_glMultiTexCoord1hNV,
+    unix_glMultiTexCoord1hvNV,
+    unix_glMultiTexCoord1i,
+    unix_glMultiTexCoord1iARB,
+    unix_glMultiTexCoord1iSGIS,
+    unix_glMultiTexCoord1iv,
+    unix_glMultiTexCoord1ivARB,
+    unix_glMultiTexCoord1ivSGIS,
+    unix_glMultiTexCoord1s,
+    unix_glMultiTexCoord1sARB,
+    unix_glMultiTexCoord1sSGIS,
+    unix_glMultiTexCoord1sv,
+    unix_glMultiTexCoord1svARB,
+    unix_glMultiTexCoord1svSGIS,
+    unix_glMultiTexCoord1xOES,
+    unix_glMultiTexCoord1xvOES,
+    unix_glMultiTexCoord2bOES,
+    unix_glMultiTexCoord2bvOES,
+    unix_glMultiTexCoord2d,
+    unix_glMultiTexCoord2dARB,
+    unix_glMultiTexCoord2dSGIS,
+    unix_glMultiTexCoord2dv,
+    unix_glMultiTexCoord2dvARB,
+    unix_glMultiTexCoord2dvSGIS,
+    unix_glMultiTexCoord2f,
+    unix_glMultiTexCoord2fARB,
+    unix_glMultiTexCoord2fSGIS,
+    unix_glMultiTexCoord2fv,
+    unix_glMultiTexCoord2fvARB,
+    unix_glMultiTexCoord2fvSGIS,
+    unix_glMultiTexCoord2hNV,
+    unix_glMultiTexCoord2hvNV,
+    unix_glMultiTexCoord2i,
+    unix_glMultiTexCoord2iARB,
+    unix_glMultiTexCoord2iSGIS,
+    unix_glMultiTexCoord2iv,
+    unix_glMultiTexCoord2ivARB,
+    unix_glMultiTexCoord2ivSGIS,
+    unix_glMultiTexCoord2s,
+    unix_glMultiTexCoord2sARB,
+    unix_glMultiTexCoord2sSGIS,
+    unix_glMultiTexCoord2sv,
+    unix_glMultiTexCoord2svARB,
+    unix_glMultiTexCoord2svSGIS,
+    unix_glMultiTexCoord2xOES,
+    unix_glMultiTexCoord2xvOES,
+    unix_glMultiTexCoord3bOES,
+    unix_glMultiTexCoord3bvOES,
+    unix_glMultiTexCoord3d,
+    unix_glMultiTexCoord3dARB,
+    unix_glMultiTexCoord3dSGIS,
+    unix_glMultiTexCoord3dv,
+    unix_glMultiTexCoord3dvARB,
+    unix_glMultiTexCoord3dvSGIS,
+    unix_glMultiTexCoord3f,
+    unix_glMultiTexCoord3fARB,
+    unix_glMultiTexCoord3fSGIS,
+    unix_glMultiTexCoord3fv,
+    unix_glMultiTexCoord3fvARB,
+    unix_glMultiTexCoord3fvSGIS,
+    unix_glMultiTexCoord3hNV,
+    unix_glMultiTexCoord3hvNV,
+    unix_glMultiTexCoord3i,
+    unix_glMultiTexCoord3iARB,
+    unix_glMultiTexCoord3iSGIS,
+    unix_glMultiTexCoord3iv,
+    unix_glMultiTexCoord3ivARB,
+    unix_glMultiTexCoord3ivSGIS,
+    unix_glMultiTexCoord3s,
+    unix_glMultiTexCoord3sARB,
+    unix_glMultiTexCoord3sSGIS,
+    unix_glMultiTexCoord3sv,
+    unix_glMultiTexCoord3svARB,
+    unix_glMultiTexCoord3svSGIS,
+    unix_glMultiTexCoord3xOES,
+    unix_glMultiTexCoord3xvOES,
+    unix_glMultiTexCoord4bOES,
+    unix_glMultiTexCoord4bvOES,
+    unix_glMultiTexCoord4d,
+    unix_glMultiTexCoord4dARB,
+    unix_glMultiTexCoord4dSGIS,
+    unix_glMultiTexCoord4dv,
+    unix_glMultiTexCoord4dvARB,
+    unix_glMultiTexCoord4dvSGIS,
+    unix_glMultiTexCoord4f,
+    unix_glMultiTexCoord4fARB,
+    unix_glMultiTexCoord4fSGIS,
+    unix_glMultiTexCoord4fv,
+    unix_glMultiTexCoord4fvARB,
+    unix_glMultiTexCoord4fvSGIS,
+    unix_glMultiTexCoord4hNV,
+    unix_glMultiTexCoord4hvNV,
+    unix_glMultiTexCoord4i,
+    unix_glMultiTexCoord4iARB,
+    unix_glMultiTexCoord4iSGIS,
+    unix_glMultiTexCoord4iv,
+    unix_glMultiTexCoord4ivARB,
+    unix_glMultiTexCoord4ivSGIS,
+    unix_glMultiTexCoord4s,
+    unix_glMultiTexCoord4sARB,
+    unix_glMultiTexCoord4sSGIS,
+    unix_glMultiTexCoord4sv,
+    unix_glMultiTexCoord4svARB,
+    unix_glMultiTexCoord4svSGIS,
+    unix_glMultiTexCoord4xOES,
+    unix_glMultiTexCoord4xvOES,
+    unix_glMultiTexCoordP1ui,
+    unix_glMultiTexCoordP1uiv,
+    unix_glMultiTexCoordP2ui,
+    unix_glMultiTexCoordP2uiv,
+    unix_glMultiTexCoordP3ui,
+    unix_glMultiTexCoordP3uiv,
+    unix_glMultiTexCoordP4ui,
+    unix_glMultiTexCoordP4uiv,
+    unix_glMultiTexCoordPointerEXT,
+    unix_glMultiTexCoordPointerSGIS,
+    unix_glMultiTexEnvfEXT,
+    unix_glMultiTexEnvfvEXT,
+    unix_glMultiTexEnviEXT,
+    unix_glMultiTexEnvivEXT,
+    unix_glMultiTexGendEXT,
+    unix_glMultiTexGendvEXT,
+    unix_glMultiTexGenfEXT,
+    unix_glMultiTexGenfvEXT,
+    unix_glMultiTexGeniEXT,
+    unix_glMultiTexGenivEXT,
+    unix_glMultiTexImage1DEXT,
+    unix_glMultiTexImage2DEXT,
+    unix_glMultiTexImage3DEXT,
+    unix_glMultiTexParameterIivEXT,
+    unix_glMultiTexParameterIuivEXT,
+    unix_glMultiTexParameterfEXT,
+    unix_glMultiTexParameterfvEXT,
+    unix_glMultiTexParameteriEXT,
+    unix_glMultiTexParameterivEXT,
+    unix_glMultiTexRenderbufferEXT,
+    unix_glMultiTexSubImage1DEXT,
+    unix_glMultiTexSubImage2DEXT,
+    unix_glMultiTexSubImage3DEXT,
+    unix_glMulticastBarrierNV,
+    unix_glMulticastBlitFramebufferNV,
+    unix_glMulticastBufferSubDataNV,
+    unix_glMulticastCopyBufferSubDataNV,
+    unix_glMulticastCopyImageSubDataNV,
+    unix_glMulticastFramebufferSampleLocationsfvNV,
+    unix_glMulticastGetQueryObjecti64vNV,
+    unix_glMulticastGetQueryObjectivNV,
+    unix_glMulticastGetQueryObjectui64vNV,
+    unix_glMulticastGetQueryObjectuivNV,
+    unix_glMulticastScissorArrayvNVX,
+    unix_glMulticastViewportArrayvNVX,
+    unix_glMulticastViewportPositionWScaleNVX,
+    unix_glMulticastWaitSyncNV,
+    unix_glNamedBufferAttachMemoryNV,
+    unix_glNamedBufferData,
+    unix_glNamedBufferDataEXT,
+    unix_glNamedBufferPageCommitmentARB,
+    unix_glNamedBufferPageCommitmentEXT,
+    unix_glNamedBufferStorage,
+    unix_glNamedBufferStorageEXT,
+    unix_glNamedBufferStorageExternalEXT,
+    unix_glNamedBufferStorageMemEXT,
+    unix_glNamedBufferSubData,
+    unix_glNamedBufferSubDataEXT,
+    unix_glNamedCopyBufferSubDataEXT,
+    unix_glNamedFramebufferDrawBuffer,
+    unix_glNamedFramebufferDrawBuffers,
+    unix_glNamedFramebufferParameteri,
+    unix_glNamedFramebufferParameteriEXT,
+    unix_glNamedFramebufferReadBuffer,
+    unix_glNamedFramebufferRenderbuffer,
+    unix_glNamedFramebufferRenderbufferEXT,
+    unix_glNamedFramebufferSampleLocationsfvARB,
+    unix_glNamedFramebufferSampleLocationsfvNV,
+    unix_glNamedFramebufferSamplePositionsfvAMD,
+    unix_glNamedFramebufferTexture,
+    unix_glNamedFramebufferTexture1DEXT,
+    unix_glNamedFramebufferTexture2DEXT,
+    unix_glNamedFramebufferTexture3DEXT,
+    unix_glNamedFramebufferTextureEXT,
+    unix_glNamedFramebufferTextureFaceEXT,
+    unix_glNamedFramebufferTextureLayer,
+    unix_glNamedFramebufferTextureLayerEXT,
+    unix_glNamedProgramLocalParameter4dEXT,
+    unix_glNamedProgramLocalParameter4dvEXT,
+    unix_glNamedProgramLocalParameter4fEXT,
+    unix_glNamedProgramLocalParameter4fvEXT,
+    unix_glNamedProgramLocalParameterI4iEXT,
+    unix_glNamedProgramLocalParameterI4ivEXT,
+    unix_glNamedProgramLocalParameterI4uiEXT,
+    unix_glNamedProgramLocalParameterI4uivEXT,
+    unix_glNamedProgramLocalParameters4fvEXT,
+    unix_glNamedProgramLocalParametersI4ivEXT,
+    unix_glNamedProgramLocalParametersI4uivEXT,
+    unix_glNamedProgramStringEXT,
+    unix_glNamedRenderbufferStorage,
+    unix_glNamedRenderbufferStorageEXT,
+    unix_glNamedRenderbufferStorageMultisample,
+    unix_glNamedRenderbufferStorageMultisampleAdvancedAMD,
+    unix_glNamedRenderbufferStorageMultisampleCoverageEXT,
+    unix_glNamedRenderbufferStorageMultisampleEXT,
+    unix_glNamedStringARB,
+    unix_glNewBufferRegion,
+    unix_glNewObjectBufferATI,
+    unix_glNormal3fVertex3fSUN,
+    unix_glNormal3fVertex3fvSUN,
+    unix_glNormal3hNV,
+    unix_glNormal3hvNV,
+    unix_glNormal3xOES,
+    unix_glNormal3xvOES,
+    unix_glNormalFormatNV,
+    unix_glNormalP3ui,
+    unix_glNormalP3uiv,
+    unix_glNormalPointerEXT,
+    unix_glNormalPointerListIBM,
+    unix_glNormalPointervINTEL,
+    unix_glNormalStream3bATI,
+    unix_glNormalStream3bvATI,
+    unix_glNormalStream3dATI,
+    unix_glNormalStream3dvATI,
+    unix_glNormalStream3fATI,
+    unix_glNormalStream3fvATI,
+    unix_glNormalStream3iATI,
+    unix_glNormalStream3ivATI,
+    unix_glNormalStream3sATI,
+    unix_glNormalStream3svATI,
+    unix_glObjectLabel,
+    unix_glObjectPtrLabel,
+    unix_glObjectPurgeableAPPLE,
+    unix_glObjectUnpurgeableAPPLE,
+    unix_glOrthofOES,
+    unix_glOrthoxOES,
+    unix_glPNTrianglesfATI,
+    unix_glPNTrianglesiATI,
+    unix_glPassTexCoordATI,
+    unix_glPassThroughxOES,
+    unix_glPatchParameterfv,
+    unix_glPatchParameteri,
+    unix_glPathColorGenNV,
+    unix_glPathCommandsNV,
+    unix_glPathCoordsNV,
+    unix_glPathCoverDepthFuncNV,
+    unix_glPathDashArrayNV,
+    unix_glPathFogGenNV,
+    unix_glPathGlyphIndexArrayNV,
+    unix_glPathGlyphIndexRangeNV,
+    unix_glPathGlyphRangeNV,
+    unix_glPathGlyphsNV,
+    unix_glPathMemoryGlyphIndexArrayNV,
+    unix_glPathParameterfNV,
+    unix_glPathParameterfvNV,
+    unix_glPathParameteriNV,
+    unix_glPathParameterivNV,
+    unix_glPathStencilDepthOffsetNV,
+    unix_glPathStencilFuncNV,
+    unix_glPathStringNV,
+    unix_glPathSubCommandsNV,
+    unix_glPathSubCoordsNV,
+    unix_glPathTexGenNV,
+    unix_glPauseTransformFeedback,
+    unix_glPauseTransformFeedbackNV,
+    unix_glPixelDataRangeNV,
+    unix_glPixelMapx,
+    unix_glPixelStorex,
+    unix_glPixelTexGenParameterfSGIS,
+    unix_glPixelTexGenParameterfvSGIS,
+    unix_glPixelTexGenParameteriSGIS,
+    unix_glPixelTexGenParameterivSGIS,
+    unix_glPixelTexGenSGIX,
+    unix_glPixelTransferxOES,
+    unix_glPixelTransformParameterfEXT,
+    unix_glPixelTransformParameterfvEXT,
+    unix_glPixelTransformParameteriEXT,
+    unix_glPixelTransformParameterivEXT,
+    unix_glPixelZoomxOES,
+    unix_glPointAlongPathNV,
+    unix_glPointParameterf,
+    unix_glPointParameterfARB,
+    unix_glPointParameterfEXT,
+    unix_glPointParameterfSGIS,
+    unix_glPointParameterfv,
+    unix_glPointParameterfvARB,
+    unix_glPointParameterfvEXT,
+    unix_glPointParameterfvSGIS,
+    unix_glPointParameteri,
+    unix_glPointParameteriNV,
+    unix_glPointParameteriv,
+    unix_glPointParameterivNV,
+    unix_glPointParameterxvOES,
+    unix_glPointSizexOES,
+    unix_glPollAsyncSGIX,
+    unix_glPollInstrumentsSGIX,
+    unix_glPolygonOffsetClamp,
+    unix_glPolygonOffsetClampEXT,
+    unix_glPolygonOffsetEXT,
+    unix_glPolygonOffsetxOES,
+    unix_glPopDebugGroup,
+    unix_glPopGroupMarkerEXT,
+    unix_glPresentFrameDualFillNV,
+    unix_glPresentFrameKeyedNV,
+    unix_glPrimitiveBoundingBoxARB,
+    unix_glPrimitiveRestartIndex,
+    unix_glPrimitiveRestartIndexNV,
+    unix_glPrimitiveRestartNV,
+    unix_glPrioritizeTexturesEXT,
+    unix_glPrioritizeTexturesxOES,
+    unix_glProgramBinary,
+    unix_glProgramBufferParametersIivNV,
+    unix_glProgramBufferParametersIuivNV,
+    unix_glProgramBufferParametersfvNV,
+    unix_glProgramEnvParameter4dARB,
+    unix_glProgramEnvParameter4dvARB,
+    unix_glProgramEnvParameter4fARB,
+    unix_glProgramEnvParameter4fvARB,
+    unix_glProgramEnvParameterI4iNV,
+    unix_glProgramEnvParameterI4ivNV,
+    unix_glProgramEnvParameterI4uiNV,
+    unix_glProgramEnvParameterI4uivNV,
+    unix_glProgramEnvParameters4fvEXT,
+    unix_glProgramEnvParametersI4ivNV,
+    unix_glProgramEnvParametersI4uivNV,
+    unix_glProgramLocalParameter4dARB,
+    unix_glProgramLocalParameter4dvARB,
+    unix_glProgramLocalParameter4fARB,
+    unix_glProgramLocalParameter4fvARB,
+    unix_glProgramLocalParameterI4iNV,
+    unix_glProgramLocalParameterI4ivNV,
+    unix_glProgramLocalParameterI4uiNV,
+    unix_glProgramLocalParameterI4uivNV,
+    unix_glProgramLocalParameters4fvEXT,
+    unix_glProgramLocalParametersI4ivNV,
+    unix_glProgramLocalParametersI4uivNV,
+    unix_glProgramNamedParameter4dNV,
+    unix_glProgramNamedParameter4dvNV,
+    unix_glProgramNamedParameter4fNV,
+    unix_glProgramNamedParameter4fvNV,
+    unix_glProgramParameter4dNV,
+    unix_glProgramParameter4dvNV,
+    unix_glProgramParameter4fNV,
+    unix_glProgramParameter4fvNV,
+    unix_glProgramParameteri,
+    unix_glProgramParameteriARB,
+    unix_glProgramParameteriEXT,
+    unix_glProgramParameters4dvNV,
+    unix_glProgramParameters4fvNV,
+    unix_glProgramPathFragmentInputGenNV,
+    unix_glProgramStringARB,
+    unix_glProgramSubroutineParametersuivNV,
+    unix_glProgramUniform1d,
+    unix_glProgramUniform1dEXT,
+    unix_glProgramUniform1dv,
+    unix_glProgramUniform1dvEXT,
+    unix_glProgramUniform1f,
+    unix_glProgramUniform1fEXT,
+    unix_glProgramUniform1fv,
+    unix_glProgramUniform1fvEXT,
+    unix_glProgramUniform1i,
+    unix_glProgramUniform1i64ARB,
+    unix_glProgramUniform1i64NV,
+    unix_glProgramUniform1i64vARB,
+    unix_glProgramUniform1i64vNV,
+    unix_glProgramUniform1iEXT,
+    unix_glProgramUniform1iv,
+    unix_glProgramUniform1ivEXT,
+    unix_glProgramUniform1ui,
+    unix_glProgramUniform1ui64ARB,
+    unix_glProgramUniform1ui64NV,
+    unix_glProgramUniform1ui64vARB,
+    unix_glProgramUniform1ui64vNV,
+    unix_glProgramUniform1uiEXT,
+    unix_glProgramUniform1uiv,
+    unix_glProgramUniform1uivEXT,
+    unix_glProgramUniform2d,
+    unix_glProgramUniform2dEXT,
+    unix_glProgramUniform2dv,
+    unix_glProgramUniform2dvEXT,
+    unix_glProgramUniform2f,
+    unix_glProgramUniform2fEXT,
+    unix_glProgramUniform2fv,
+    unix_glProgramUniform2fvEXT,
+    unix_glProgramUniform2i,
+    unix_glProgramUniform2i64ARB,
+    unix_glProgramUniform2i64NV,
+    unix_glProgramUniform2i64vARB,
+    unix_glProgramUniform2i64vNV,
+    unix_glProgramUniform2iEXT,
+    unix_glProgramUniform2iv,
+    unix_glProgramUniform2ivEXT,
+    unix_glProgramUniform2ui,
+    unix_glProgramUniform2ui64ARB,
+    unix_glProgramUniform2ui64NV,
+    unix_glProgramUniform2ui64vARB,
+    unix_glProgramUniform2ui64vNV,
+    unix_glProgramUniform2uiEXT,
+    unix_glProgramUniform2uiv,
+    unix_glProgramUniform2uivEXT,
+    unix_glProgramUniform3d,
+    unix_glProgramUniform3dEXT,
+    unix_glProgramUniform3dv,
+    unix_glProgramUniform3dvEXT,
+    unix_glProgramUniform3f,
+    unix_glProgramUniform3fEXT,
+    unix_glProgramUniform3fv,
+    unix_glProgramUniform3fvEXT,
+    unix_glProgramUniform3i,
+    unix_glProgramUniform3i64ARB,
+    unix_glProgramUniform3i64NV,
+    unix_glProgramUniform3i64vARB,
+    unix_glProgramUniform3i64vNV,
+    unix_glProgramUniform3iEXT,
+    unix_glProgramUniform3iv,
+    unix_glProgramUniform3ivEXT,
+    unix_glProgramUniform3ui,
+    unix_glProgramUniform3ui64ARB,
+    unix_glProgramUniform3ui64NV,
+    unix_glProgramUniform3ui64vARB,
+    unix_glProgramUniform3ui64vNV,
+    unix_glProgramUniform3uiEXT,
+    unix_glProgramUniform3uiv,
+    unix_glProgramUniform3uivEXT,
+    unix_glProgramUniform4d,
+    unix_glProgramUniform4dEXT,
+    unix_glProgramUniform4dv,
+    unix_glProgramUniform4dvEXT,
+    unix_glProgramUniform4f,
+    unix_glProgramUniform4fEXT,
+    unix_glProgramUniform4fv,
+    unix_glProgramUniform4fvEXT,
+    unix_glProgramUniform4i,
+    unix_glProgramUniform4i64ARB,
+    unix_glProgramUniform4i64NV,
+    unix_glProgramUniform4i64vARB,
+    unix_glProgramUniform4i64vNV,
+    unix_glProgramUniform4iEXT,
+    unix_glProgramUniform4iv,
+    unix_glProgramUniform4ivEXT,
+    unix_glProgramUniform4ui,
+    unix_glProgramUniform4ui64ARB,
+    unix_glProgramUniform4ui64NV,
+    unix_glProgramUniform4ui64vARB,
+    unix_glProgramUniform4ui64vNV,
+    unix_glProgramUniform4uiEXT,
+    unix_glProgramUniform4uiv,
+    unix_glProgramUniform4uivEXT,
+    unix_glProgramUniformHandleui64ARB,
+    unix_glProgramUniformHandleui64NV,
+    unix_glProgramUniformHandleui64vARB,
+    unix_glProgramUniformHandleui64vNV,
+    unix_glProgramUniformMatrix2dv,
+    unix_glProgramUniformMatrix2dvEXT,
+    unix_glProgramUniformMatrix2fv,
+    unix_glProgramUniformMatrix2fvEXT,
+    unix_glProgramUniformMatrix2x3dv,
+    unix_glProgramUniformMatrix2x3dvEXT,
+    unix_glProgramUniformMatrix2x3fv,
+    unix_glProgramUniformMatrix2x3fvEXT,
+    unix_glProgramUniformMatrix2x4dv,
+    unix_glProgramUniformMatrix2x4dvEXT,
+    unix_glProgramUniformMatrix2x4fv,
+    unix_glProgramUniformMatrix2x4fvEXT,
+    unix_glProgramUniformMatrix3dv,
+    unix_glProgramUniformMatrix3dvEXT,
+    unix_glProgramUniformMatrix3fv,
+    unix_glProgramUniformMatrix3fvEXT,
+    unix_glProgramUniformMatrix3x2dv,
+    unix_glProgramUniformMatrix3x2dvEXT,
+    unix_glProgramUniformMatrix3x2fv,
+    unix_glProgramUniformMatrix3x2fvEXT,
+    unix_glProgramUniformMatrix3x4dv,
+    unix_glProgramUniformMatrix3x4dvEXT,
+    unix_glProgramUniformMatrix3x4fv,
+    unix_glProgramUniformMatrix3x4fvEXT,
+    unix_glProgramUniformMatrix4dv,
+    unix_glProgramUniformMatrix4dvEXT,
+    unix_glProgramUniformMatrix4fv,
+    unix_glProgramUniformMatrix4fvEXT,
+    unix_glProgramUniformMatrix4x2dv,
+    unix_glProgramUniformMatrix4x2dvEXT,
+    unix_glProgramUniformMatrix4x2fv,
+    unix_glProgramUniformMatrix4x2fvEXT,
+    unix_glProgramUniformMatrix4x3dv,
+    unix_glProgramUniformMatrix4x3dvEXT,
+    unix_glProgramUniformMatrix4x3fv,
+    unix_glProgramUniformMatrix4x3fvEXT,
+    unix_glProgramUniformui64NV,
+    unix_glProgramUniformui64vNV,
+    unix_glProgramVertexLimitNV,
+    unix_glProvokingVertex,
+    unix_glProvokingVertexEXT,
+    unix_glPushClientAttribDefaultEXT,
+    unix_glPushDebugGroup,
+    unix_glPushGroupMarkerEXT,
+    unix_glQueryCounter,
+    unix_glQueryMatrixxOES,
+    unix_glQueryObjectParameteruiAMD,
+    unix_glQueryResourceNV,
+    unix_glQueryResourceTagNV,
+    unix_glRasterPos2xOES,
+    unix_glRasterPos2xvOES,
+    unix_glRasterPos3xOES,
+    unix_glRasterPos3xvOES,
+    unix_glRasterPos4xOES,
+    unix_glRasterPos4xvOES,
+    unix_glRasterSamplesEXT,
+    unix_glReadBufferRegion,
+    unix_glReadInstrumentsSGIX,
+    unix_glReadnPixels,
+    unix_glReadnPixelsARB,
+    unix_glRectxOES,
+    unix_glRectxvOES,
+    unix_glReferencePlaneSGIX,
+    unix_glReleaseKeyedMutexWin32EXT,
+    unix_glReleaseShaderCompiler,
+    unix_glRenderGpuMaskNV,
+    unix_glRenderbufferStorage,
+    unix_glRenderbufferStorageEXT,
+    unix_glRenderbufferStorageMultisample,
+    unix_glRenderbufferStorageMultisampleAdvancedAMD,
+    unix_glRenderbufferStorageMultisampleCoverageNV,
+    unix_glRenderbufferStorageMultisampleEXT,
+    unix_glReplacementCodePointerSUN,
+    unix_glReplacementCodeubSUN,
+    unix_glReplacementCodeubvSUN,
+    unix_glReplacementCodeuiColor3fVertex3fSUN,
+    unix_glReplacementCodeuiColor3fVertex3fvSUN,
+    unix_glReplacementCodeuiColor4fNormal3fVertex3fSUN,
+    unix_glReplacementCodeuiColor4fNormal3fVertex3fvSUN,
+    unix_glReplacementCodeuiColor4ubVertex3fSUN,
+    unix_glReplacementCodeuiColor4ubVertex3fvSUN,
+    unix_glReplacementCodeuiNormal3fVertex3fSUN,
+    unix_glReplacementCodeuiNormal3fVertex3fvSUN,
+    unix_glReplacementCodeuiSUN,
+    unix_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN,
+    unix_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN,
+    unix_glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN,
+    unix_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN,
+    unix_glReplacementCodeuiTexCoord2fVertex3fSUN,
+    unix_glReplacementCodeuiTexCoord2fVertex3fvSUN,
+    unix_glReplacementCodeuiVertex3fSUN,
+    unix_glReplacementCodeuiVertex3fvSUN,
+    unix_glReplacementCodeuivSUN,
+    unix_glReplacementCodeusSUN,
+    unix_glReplacementCodeusvSUN,
+    unix_glRequestResidentProgramsNV,
+    unix_glResetHistogram,
+    unix_glResetHistogramEXT,
+    unix_glResetMemoryObjectParameterNV,
+    unix_glResetMinmax,
+    unix_glResetMinmaxEXT,
+    unix_glResizeBuffersMESA,
+    unix_glResolveDepthValuesNV,
+    unix_glResumeTransformFeedback,
+    unix_glResumeTransformFeedbackNV,
+    unix_glRotatexOES,
+    unix_glSampleCoverage,
+    unix_glSampleCoverageARB,
+    unix_glSampleMapATI,
+    unix_glSampleMaskEXT,
+    unix_glSampleMaskIndexedNV,
+    unix_glSampleMaskSGIS,
+    unix_glSampleMaski,
+    unix_glSamplePatternEXT,
+    unix_glSamplePatternSGIS,
+    unix_glSamplerParameterIiv,
+    unix_glSamplerParameterIuiv,
+    unix_glSamplerParameterf,
+    unix_glSamplerParameterfv,
+    unix_glSamplerParameteri,
+    unix_glSamplerParameteriv,
+    unix_glScalexOES,
+    unix_glScissorArrayv,
+    unix_glScissorExclusiveArrayvNV,
+    unix_glScissorExclusiveNV,
+    unix_glScissorIndexed,
+    unix_glScissorIndexedv,
+    unix_glSecondaryColor3b,
+    unix_glSecondaryColor3bEXT,
+    unix_glSecondaryColor3bv,
+    unix_glSecondaryColor3bvEXT,
+    unix_glSecondaryColor3d,
+    unix_glSecondaryColor3dEXT,
+    unix_glSecondaryColor3dv,
+    unix_glSecondaryColor3dvEXT,
+    unix_glSecondaryColor3f,
+    unix_glSecondaryColor3fEXT,
+    unix_glSecondaryColor3fv,
+    unix_glSecondaryColor3fvEXT,
+    unix_glSecondaryColor3hNV,
+    unix_glSecondaryColor3hvNV,
+    unix_glSecondaryColor3i,
+    unix_glSecondaryColor3iEXT,
+    unix_glSecondaryColor3iv,
+    unix_glSecondaryColor3ivEXT,
+    unix_glSecondaryColor3s,
+    unix_glSecondaryColor3sEXT,
+    unix_glSecondaryColor3sv,
+    unix_glSecondaryColor3svEXT,
+    unix_glSecondaryColor3ub,
+    unix_glSecondaryColor3ubEXT,
+    unix_glSecondaryColor3ubv,
+    unix_glSecondaryColor3ubvEXT,
+    unix_glSecondaryColor3ui,
+    unix_glSecondaryColor3uiEXT,
+    unix_glSecondaryColor3uiv,
+    unix_glSecondaryColor3uivEXT,
+    unix_glSecondaryColor3us,
+    unix_glSecondaryColor3usEXT,
+    unix_glSecondaryColor3usv,
+    unix_glSecondaryColor3usvEXT,
+    unix_glSecondaryColorFormatNV,
+    unix_glSecondaryColorP3ui,
+    unix_glSecondaryColorP3uiv,
+    unix_glSecondaryColorPointer,
+    unix_glSecondaryColorPointerEXT,
+    unix_glSecondaryColorPointerListIBM,
+    unix_glSelectPerfMonitorCountersAMD,
+    unix_glSelectTextureCoordSetSGIS,
+    unix_glSelectTextureSGIS,
+    unix_glSemaphoreParameterui64vEXT,
+    unix_glSeparableFilter2D,
+    unix_glSeparableFilter2DEXT,
+    unix_glSetFenceAPPLE,
+    unix_glSetFenceNV,
+    unix_glSetFragmentShaderConstantATI,
+    unix_glSetInvariantEXT,
+    unix_glSetLocalConstantEXT,
+    unix_glSetMultisamplefvAMD,
+    unix_glShaderBinary,
+    unix_glShaderOp1EXT,
+    unix_glShaderOp2EXT,
+    unix_glShaderOp3EXT,
+    unix_glShaderSource,
+    unix_glShaderSourceARB,
+    unix_glShaderStorageBlockBinding,
+    unix_glShadingRateImageBarrierNV,
+    unix_glShadingRateImagePaletteNV,
+    unix_glShadingRateSampleOrderCustomNV,
+    unix_glShadingRateSampleOrderNV,
+    unix_glSharpenTexFuncSGIS,
+    unix_glSignalSemaphoreEXT,
+    unix_glSignalSemaphoreui64NVX,
+    unix_glSignalVkFenceNV,
+    unix_glSignalVkSemaphoreNV,
+    unix_glSpecializeShader,
+    unix_glSpecializeShaderARB,
+    unix_glSpriteParameterfSGIX,
+    unix_glSpriteParameterfvSGIX,
+    unix_glSpriteParameteriSGIX,
+    unix_glSpriteParameterivSGIX,
+    unix_glStartInstrumentsSGIX,
+    unix_glStateCaptureNV,
+    unix_glStencilClearTagEXT,
+    unix_glStencilFillPathInstancedNV,
+    unix_glStencilFillPathNV,
+    unix_glStencilFuncSeparate,
+    unix_glStencilFuncSeparateATI,
+    unix_glStencilMaskSeparate,
+    unix_glStencilOpSeparate,
+    unix_glStencilOpSeparateATI,
+    unix_glStencilOpValueAMD,
+    unix_glStencilStrokePathInstancedNV,
+    unix_glStencilStrokePathNV,
+    unix_glStencilThenCoverFillPathInstancedNV,
+    unix_glStencilThenCoverFillPathNV,
+    unix_glStencilThenCoverStrokePathInstancedNV,
+    unix_glStencilThenCoverStrokePathNV,
+    unix_glStopInstrumentsSGIX,
+    unix_glStringMarkerGREMEDY,
+    unix_glSubpixelPrecisionBiasNV,
+    unix_glSwizzleEXT,
+    unix_glSyncTextureINTEL,
+    unix_glTagSampleBufferSGIX,
+    unix_glTangent3bEXT,
+    unix_glTangent3bvEXT,
+    unix_glTangent3dEXT,
+    unix_glTangent3dvEXT,
+    unix_glTangent3fEXT,
+    unix_glTangent3fvEXT,
+    unix_glTangent3iEXT,
+    unix_glTangent3ivEXT,
+    unix_glTangent3sEXT,
+    unix_glTangent3svEXT,
+    unix_glTangentPointerEXT,
+    unix_glTbufferMask3DFX,
+    unix_glTessellationFactorAMD,
+    unix_glTessellationModeAMD,
+    unix_glTestFenceAPPLE,
+    unix_glTestFenceNV,
+    unix_glTestObjectAPPLE,
+    unix_glTexAttachMemoryNV,
+    unix_glTexBuffer,
+    unix_glTexBufferARB,
+    unix_glTexBufferEXT,
+    unix_glTexBufferRange,
+    unix_glTexBumpParameterfvATI,
+    unix_glTexBumpParameterivATI,
+    unix_glTexCoord1bOES,
+    unix_glTexCoord1bvOES,
+    unix_glTexCoord1hNV,
+    unix_glTexCoord1hvNV,
+    unix_glTexCoord1xOES,
+    unix_glTexCoord1xvOES,
+    unix_glTexCoord2bOES,
+    unix_glTexCoord2bvOES,
+    unix_glTexCoord2fColor3fVertex3fSUN,
+    unix_glTexCoord2fColor3fVertex3fvSUN,
+    unix_glTexCoord2fColor4fNormal3fVertex3fSUN,
+    unix_glTexCoord2fColor4fNormal3fVertex3fvSUN,
+    unix_glTexCoord2fColor4ubVertex3fSUN,
+    unix_glTexCoord2fColor4ubVertex3fvSUN,
+    unix_glTexCoord2fNormal3fVertex3fSUN,
+    unix_glTexCoord2fNormal3fVertex3fvSUN,
+    unix_glTexCoord2fVertex3fSUN,
+    unix_glTexCoord2fVertex3fvSUN,
+    unix_glTexCoord2hNV,
+    unix_glTexCoord2hvNV,
+    unix_glTexCoord2xOES,
+    unix_glTexCoord2xvOES,
+    unix_glTexCoord3bOES,
+    unix_glTexCoord3bvOES,
+    unix_glTexCoord3hNV,
+    unix_glTexCoord3hvNV,
+    unix_glTexCoord3xOES,
+    unix_glTexCoord3xvOES,
+    unix_glTexCoord4bOES,
+    unix_glTexCoord4bvOES,
+    unix_glTexCoord4fColor4fNormal3fVertex4fSUN,
+    unix_glTexCoord4fColor4fNormal3fVertex4fvSUN,
+    unix_glTexCoord4fVertex4fSUN,
+    unix_glTexCoord4fVertex4fvSUN,
+    unix_glTexCoord4hNV,
+    unix_glTexCoord4hvNV,
+    unix_glTexCoord4xOES,
+    unix_glTexCoord4xvOES,
+    unix_glTexCoordFormatNV,
+    unix_glTexCoordP1ui,
+    unix_glTexCoordP1uiv,
+    unix_glTexCoordP2ui,
+    unix_glTexCoordP2uiv,
+    unix_glTexCoordP3ui,
+    unix_glTexCoordP3uiv,
+    unix_glTexCoordP4ui,
+    unix_glTexCoordP4uiv,
+    unix_glTexCoordPointerEXT,
+    unix_glTexCoordPointerListIBM,
+    unix_glTexCoordPointervINTEL,
+    unix_glTexEnvxOES,
+    unix_glTexEnvxvOES,
+    unix_glTexFilterFuncSGIS,
+    unix_glTexGenxOES,
+    unix_glTexGenxvOES,
+    unix_glTexImage2DMultisample,
+    unix_glTexImage2DMultisampleCoverageNV,
+    unix_glTexImage3D,
+    unix_glTexImage3DEXT,
+    unix_glTexImage3DMultisample,
+    unix_glTexImage3DMultisampleCoverageNV,
+    unix_glTexImage4DSGIS,
+    unix_glTexPageCommitmentARB,
+    unix_glTexParameterIiv,
+    unix_glTexParameterIivEXT,
+    unix_glTexParameterIuiv,
+    unix_glTexParameterIuivEXT,
+    unix_glTexParameterxOES,
+    unix_glTexParameterxvOES,
+    unix_glTexRenderbufferNV,
+    unix_glTexStorage1D,
+    unix_glTexStorage2D,
+    unix_glTexStorage2DMultisample,
+    unix_glTexStorage3D,
+    unix_glTexStorage3DMultisample,
+    unix_glTexStorageMem1DEXT,
+    unix_glTexStorageMem2DEXT,
+    unix_glTexStorageMem2DMultisampleEXT,
+    unix_glTexStorageMem3DEXT,
+    unix_glTexStorageMem3DMultisampleEXT,
+    unix_glTexStorageSparseAMD,
+    unix_glTexSubImage1DEXT,
+    unix_glTexSubImage2DEXT,
+    unix_glTexSubImage3D,
+    unix_glTexSubImage3DEXT,
+    unix_glTexSubImage4DSGIS,
+    unix_glTextureAttachMemoryNV,
+    unix_glTextureBarrier,
+    unix_glTextureBarrierNV,
+    unix_glTextureBuffer,
+    unix_glTextureBufferEXT,
+    unix_glTextureBufferRange,
+    unix_glTextureBufferRangeEXT,
+    unix_glTextureColorMaskSGIS,
+    unix_glTextureImage1DEXT,
+    unix_glTextureImage2DEXT,
+    unix_glTextureImage2DMultisampleCoverageNV,
+    unix_glTextureImage2DMultisampleNV,
+    unix_glTextureImage3DEXT,
+    unix_glTextureImage3DMultisampleCoverageNV,
+    unix_glTextureImage3DMultisampleNV,
+    unix_glTextureLightEXT,
+    unix_glTextureMaterialEXT,
+    unix_glTextureNormalEXT,
+    unix_glTexturePageCommitmentEXT,
+    unix_glTextureParameterIiv,
+    unix_glTextureParameterIivEXT,
+    unix_glTextureParameterIuiv,
+    unix_glTextureParameterIuivEXT,
+    unix_glTextureParameterf,
+    unix_glTextureParameterfEXT,
+    unix_glTextureParameterfv,
+    unix_glTextureParameterfvEXT,
+    unix_glTextureParameteri,
+    unix_glTextureParameteriEXT,
+    unix_glTextureParameteriv,
+    unix_glTextureParameterivEXT,
+    unix_glTextureRangeAPPLE,
+    unix_glTextureRenderbufferEXT,
+    unix_glTextureStorage1D,
+    unix_glTextureStorage1DEXT,
+    unix_glTextureStorage2D,
+    unix_glTextureStorage2DEXT,
+    unix_glTextureStorage2DMultisample,
+    unix_glTextureStorage2DMultisampleEXT,
+    unix_glTextureStorage3D,
+    unix_glTextureStorage3DEXT,
+    unix_glTextureStorage3DMultisample,
+    unix_glTextureStorage3DMultisampleEXT,
+    unix_glTextureStorageMem1DEXT,
+    unix_glTextureStorageMem2DEXT,
+    unix_glTextureStorageMem2DMultisampleEXT,
+    unix_glTextureStorageMem3DEXT,
+    unix_glTextureStorageMem3DMultisampleEXT,
+    unix_glTextureStorageSparseAMD,
+    unix_glTextureSubImage1D,
+    unix_glTextureSubImage1DEXT,
+    unix_glTextureSubImage2D,
+    unix_glTextureSubImage2DEXT,
+    unix_glTextureSubImage3D,
+    unix_glTextureSubImage3DEXT,
+    unix_glTextureView,
+    unix_glTrackMatrixNV,
+    unix_glTransformFeedbackAttribsNV,
+    unix_glTransformFeedbackBufferBase,
+    unix_glTransformFeedbackBufferRange,
+    unix_glTransformFeedbackStreamAttribsNV,
+    unix_glTransformFeedbackVaryings,
+    unix_glTransformFeedbackVaryingsEXT,
+    unix_glTransformFeedbackVaryingsNV,
+    unix_glTransformPathNV,
+    unix_glTranslatexOES,
+    unix_glUniform1d,
+    unix_glUniform1dv,
+    unix_glUniform1f,
+    unix_glUniform1fARB,
+    unix_glUniform1fv,
+    unix_glUniform1fvARB,
+    unix_glUniform1i,
+    unix_glUniform1i64ARB,
+    unix_glUniform1i64NV,
+    unix_glUniform1i64vARB,
+    unix_glUniform1i64vNV,
+    unix_glUniform1iARB,
+    unix_glUniform1iv,
+    unix_glUniform1ivARB,
+    unix_glUniform1ui,
+    unix_glUniform1ui64ARB,
+    unix_glUniform1ui64NV,
+    unix_glUniform1ui64vARB,
+    unix_glUniform1ui64vNV,
+    unix_glUniform1uiEXT,
+    unix_glUniform1uiv,
+    unix_glUniform1uivEXT,
+    unix_glUniform2d,
+    unix_glUniform2dv,
+    unix_glUniform2f,
+    unix_glUniform2fARB,
+    unix_glUniform2fv,
+    unix_glUniform2fvARB,
+    unix_glUniform2i,
+    unix_glUniform2i64ARB,
+    unix_glUniform2i64NV,
+    unix_glUniform2i64vARB,
+    unix_glUniform2i64vNV,
+    unix_glUniform2iARB,
+    unix_glUniform2iv,
+    unix_glUniform2ivARB,
+    unix_glUniform2ui,
+    unix_glUniform2ui64ARB,
+    unix_glUniform2ui64NV,
+    unix_glUniform2ui64vARB,
+    unix_glUniform2ui64vNV,
+    unix_glUniform2uiEXT,
+    unix_glUniform2uiv,
+    unix_glUniform2uivEXT,
+    unix_glUniform3d,
+    unix_glUniform3dv,
+    unix_glUniform3f,
+    unix_glUniform3fARB,
+    unix_glUniform3fv,
+    unix_glUniform3fvARB,
+    unix_glUniform3i,
+    unix_glUniform3i64ARB,
+    unix_glUniform3i64NV,
+    unix_glUniform3i64vARB,
+    unix_glUniform3i64vNV,
+    unix_glUniform3iARB,
+    unix_glUniform3iv,
+    unix_glUniform3ivARB,
+    unix_glUniform3ui,
+    unix_glUniform3ui64ARB,
+    unix_glUniform3ui64NV,
+    unix_glUniform3ui64vARB,
+    unix_glUniform3ui64vNV,
+    unix_glUniform3uiEXT,
+    unix_glUniform3uiv,
+    unix_glUniform3uivEXT,
+    unix_glUniform4d,
+    unix_glUniform4dv,
+    unix_glUniform4f,
+    unix_glUniform4fARB,
+    unix_glUniform4fv,
+    unix_glUniform4fvARB,
+    unix_glUniform4i,
+    unix_glUniform4i64ARB,
+    unix_glUniform4i64NV,
+    unix_glUniform4i64vARB,
+    unix_glUniform4i64vNV,
+    unix_glUniform4iARB,
+    unix_glUniform4iv,
+    unix_glUniform4ivARB,
+    unix_glUniform4ui,
+    unix_glUniform4ui64ARB,
+    unix_glUniform4ui64NV,
+    unix_glUniform4ui64vARB,
+    unix_glUniform4ui64vNV,
+    unix_glUniform4uiEXT,
+    unix_glUniform4uiv,
+    unix_glUniform4uivEXT,
+    unix_glUniformBlockBinding,
+    unix_glUniformBufferEXT,
+    unix_glUniformHandleui64ARB,
+    unix_glUniformHandleui64NV,
+    unix_glUniformHandleui64vARB,
+    unix_glUniformHandleui64vNV,
+    unix_glUniformMatrix2dv,
+    unix_glUniformMatrix2fv,
+    unix_glUniformMatrix2fvARB,
+    unix_glUniformMatrix2x3dv,
+    unix_glUniformMatrix2x3fv,
+    unix_glUniformMatrix2x4dv,
+    unix_glUniformMatrix2x4fv,
+    unix_glUniformMatrix3dv,
+    unix_glUniformMatrix3fv,
+    unix_glUniformMatrix3fvARB,
+    unix_glUniformMatrix3x2dv,
+    unix_glUniformMatrix3x2fv,
+    unix_glUniformMatrix3x4dv,
+    unix_glUniformMatrix3x4fv,
+    unix_glUniformMatrix4dv,
+    unix_glUniformMatrix4fv,
+    unix_glUniformMatrix4fvARB,
+    unix_glUniformMatrix4x2dv,
+    unix_glUniformMatrix4x2fv,
+    unix_glUniformMatrix4x3dv,
+    unix_glUniformMatrix4x3fv,
+    unix_glUniformSubroutinesuiv,
+    unix_glUniformui64NV,
+    unix_glUniformui64vNV,
+    unix_glUnlockArraysEXT,
+    unix_glUnmapBuffer,
+    unix_glUnmapBufferARB,
+    unix_glUnmapNamedBuffer,
+    unix_glUnmapNamedBufferEXT,
+    unix_glUnmapObjectBufferATI,
+    unix_glUnmapTexture2DINTEL,
+    unix_glUpdateObjectBufferATI,
+    unix_glUploadGpuMaskNVX,
+    unix_glUseProgram,
+    unix_glUseProgramObjectARB,
+    unix_glUseProgramStages,
+    unix_glUseShaderProgramEXT,
+    unix_glVDPAUFiniNV,
+    unix_glVDPAUGetSurfaceivNV,
+    unix_glVDPAUInitNV,
+    unix_glVDPAUIsSurfaceNV,
+    unix_glVDPAUMapSurfacesNV,
+    unix_glVDPAURegisterOutputSurfaceNV,
+    unix_glVDPAURegisterVideoSurfaceNV,
+    unix_glVDPAURegisterVideoSurfaceWithPictureStructureNV,
+    unix_glVDPAUSurfaceAccessNV,
+    unix_glVDPAUUnmapSurfacesNV,
+    unix_glVDPAUUnregisterSurfaceNV,
+    unix_glValidateProgram,
+    unix_glValidateProgramARB,
+    unix_glValidateProgramPipeline,
+    unix_glVariantArrayObjectATI,
+    unix_glVariantPointerEXT,
+    unix_glVariantbvEXT,
+    unix_glVariantdvEXT,
+    unix_glVariantfvEXT,
+    unix_glVariantivEXT,
+    unix_glVariantsvEXT,
+    unix_glVariantubvEXT,
+    unix_glVariantuivEXT,
+    unix_glVariantusvEXT,
+    unix_glVertex2bOES,
+    unix_glVertex2bvOES,
+    unix_glVertex2hNV,
+    unix_glVertex2hvNV,
+    unix_glVertex2xOES,
+    unix_glVertex2xvOES,
+    unix_glVertex3bOES,
+    unix_glVertex3bvOES,
+    unix_glVertex3hNV,
+    unix_glVertex3hvNV,
+    unix_glVertex3xOES,
+    unix_glVertex3xvOES,
+    unix_glVertex4bOES,
+    unix_glVertex4bvOES,
+    unix_glVertex4hNV,
+    unix_glVertex4hvNV,
+    unix_glVertex4xOES,
+    unix_glVertex4xvOES,
+    unix_glVertexArrayAttribBinding,
+    unix_glVertexArrayAttribFormat,
+    unix_glVertexArrayAttribIFormat,
+    unix_glVertexArrayAttribLFormat,
+    unix_glVertexArrayBindVertexBufferEXT,
+    unix_glVertexArrayBindingDivisor,
+    unix_glVertexArrayColorOffsetEXT,
+    unix_glVertexArrayEdgeFlagOffsetEXT,
+    unix_glVertexArrayElementBuffer,
+    unix_glVertexArrayFogCoordOffsetEXT,
+    unix_glVertexArrayIndexOffsetEXT,
+    unix_glVertexArrayMultiTexCoordOffsetEXT,
+    unix_glVertexArrayNormalOffsetEXT,
+    unix_glVertexArrayParameteriAPPLE,
+    unix_glVertexArrayRangeAPPLE,
+    unix_glVertexArrayRangeNV,
+    unix_glVertexArraySecondaryColorOffsetEXT,
+    unix_glVertexArrayTexCoordOffsetEXT,
+    unix_glVertexArrayVertexAttribBindingEXT,
+    unix_glVertexArrayVertexAttribDivisorEXT,
+    unix_glVertexArrayVertexAttribFormatEXT,
+    unix_glVertexArrayVertexAttribIFormatEXT,
+    unix_glVertexArrayVertexAttribIOffsetEXT,
+    unix_glVertexArrayVertexAttribLFormatEXT,
+    unix_glVertexArrayVertexAttribLOffsetEXT,
+    unix_glVertexArrayVertexAttribOffsetEXT,
+    unix_glVertexArrayVertexBindingDivisorEXT,
+    unix_glVertexArrayVertexBuffer,
+    unix_glVertexArrayVertexBuffers,
+    unix_glVertexArrayVertexOffsetEXT,
+    unix_glVertexAttrib1d,
+    unix_glVertexAttrib1dARB,
+    unix_glVertexAttrib1dNV,
+    unix_glVertexAttrib1dv,
+    unix_glVertexAttrib1dvARB,
+    unix_glVertexAttrib1dvNV,
+    unix_glVertexAttrib1f,
+    unix_glVertexAttrib1fARB,
+    unix_glVertexAttrib1fNV,
+    unix_glVertexAttrib1fv,
+    unix_glVertexAttrib1fvARB,
+    unix_glVertexAttrib1fvNV,
+    unix_glVertexAttrib1hNV,
+    unix_glVertexAttrib1hvNV,
+    unix_glVertexAttrib1s,
+    unix_glVertexAttrib1sARB,
+    unix_glVertexAttrib1sNV,
+    unix_glVertexAttrib1sv,
+    unix_glVertexAttrib1svARB,
+    unix_glVertexAttrib1svNV,
+    unix_glVertexAttrib2d,
+    unix_glVertexAttrib2dARB,
+    unix_glVertexAttrib2dNV,
+    unix_glVertexAttrib2dv,
+    unix_glVertexAttrib2dvARB,
+    unix_glVertexAttrib2dvNV,
+    unix_glVertexAttrib2f,
+    unix_glVertexAttrib2fARB,
+    unix_glVertexAttrib2fNV,
+    unix_glVertexAttrib2fv,
+    unix_glVertexAttrib2fvARB,
+    unix_glVertexAttrib2fvNV,
+    unix_glVertexAttrib2hNV,
+    unix_glVertexAttrib2hvNV,
+    unix_glVertexAttrib2s,
+    unix_glVertexAttrib2sARB,
+    unix_glVertexAttrib2sNV,
+    unix_glVertexAttrib2sv,
+    unix_glVertexAttrib2svARB,
+    unix_glVertexAttrib2svNV,
+    unix_glVertexAttrib3d,
+    unix_glVertexAttrib3dARB,
+    unix_glVertexAttrib3dNV,
+    unix_glVertexAttrib3dv,
+    unix_glVertexAttrib3dvARB,
+    unix_glVertexAttrib3dvNV,
+    unix_glVertexAttrib3f,
+    unix_glVertexAttrib3fARB,
+    unix_glVertexAttrib3fNV,
+    unix_glVertexAttrib3fv,
+    unix_glVertexAttrib3fvARB,
+    unix_glVertexAttrib3fvNV,
+    unix_glVertexAttrib3hNV,
+    unix_glVertexAttrib3hvNV,
+    unix_glVertexAttrib3s,
+    unix_glVertexAttrib3sARB,
+    unix_glVertexAttrib3sNV,
+    unix_glVertexAttrib3sv,
+    unix_glVertexAttrib3svARB,
+    unix_glVertexAttrib3svNV,
+    unix_glVertexAttrib4Nbv,
+    unix_glVertexAttrib4NbvARB,
+    unix_glVertexAttrib4Niv,
+    unix_glVertexAttrib4NivARB,
+    unix_glVertexAttrib4Nsv,
+    unix_glVertexAttrib4NsvARB,
+    unix_glVertexAttrib4Nub,
+    unix_glVertexAttrib4NubARB,
+    unix_glVertexAttrib4Nubv,
+    unix_glVertexAttrib4NubvARB,
+    unix_glVertexAttrib4Nuiv,
+    unix_glVertexAttrib4NuivARB,
+    unix_glVertexAttrib4Nusv,
+    unix_glVertexAttrib4NusvARB,
+    unix_glVertexAttrib4bv,
+    unix_glVertexAttrib4bvARB,
+    unix_glVertexAttrib4d,
+    unix_glVertexAttrib4dARB,
+    unix_glVertexAttrib4dNV,
+    unix_glVertexAttrib4dv,
+    unix_glVertexAttrib4dvARB,
+    unix_glVertexAttrib4dvNV,
+    unix_glVertexAttrib4f,
+    unix_glVertexAttrib4fARB,
+    unix_glVertexAttrib4fNV,
+    unix_glVertexAttrib4fv,
+    unix_glVertexAttrib4fvARB,
+    unix_glVertexAttrib4fvNV,
+    unix_glVertexAttrib4hNV,
+    unix_glVertexAttrib4hvNV,
+    unix_glVertexAttrib4iv,
+    unix_glVertexAttrib4ivARB,
+    unix_glVertexAttrib4s,
+    unix_glVertexAttrib4sARB,
+    unix_glVertexAttrib4sNV,
+    unix_glVertexAttrib4sv,
+    unix_glVertexAttrib4svARB,
+    unix_glVertexAttrib4svNV,
+    unix_glVertexAttrib4ubNV,
+    unix_glVertexAttrib4ubv,
+    unix_glVertexAttrib4ubvARB,
+    unix_glVertexAttrib4ubvNV,
+    unix_glVertexAttrib4uiv,
+    unix_glVertexAttrib4uivARB,
+    unix_glVertexAttrib4usv,
+    unix_glVertexAttrib4usvARB,
+    unix_glVertexAttribArrayObjectATI,
+    unix_glVertexAttribBinding,
+    unix_glVertexAttribDivisor,
+    unix_glVertexAttribDivisorARB,
+    unix_glVertexAttribFormat,
+    unix_glVertexAttribFormatNV,
+    unix_glVertexAttribI1i,
+    unix_glVertexAttribI1iEXT,
+    unix_glVertexAttribI1iv,
+    unix_glVertexAttribI1ivEXT,
+    unix_glVertexAttribI1ui,
+    unix_glVertexAttribI1uiEXT,
+    unix_glVertexAttribI1uiv,
+    unix_glVertexAttribI1uivEXT,
+    unix_glVertexAttribI2i,
+    unix_glVertexAttribI2iEXT,
+    unix_glVertexAttribI2iv,
+    unix_glVertexAttribI2ivEXT,
+    unix_glVertexAttribI2ui,
+    unix_glVertexAttribI2uiEXT,
+    unix_glVertexAttribI2uiv,
+    unix_glVertexAttribI2uivEXT,
+    unix_glVertexAttribI3i,
+    unix_glVertexAttribI3iEXT,
+    unix_glVertexAttribI3iv,
+    unix_glVertexAttribI3ivEXT,
+    unix_glVertexAttribI3ui,
+    unix_glVertexAttribI3uiEXT,
+    unix_glVertexAttribI3uiv,
+    unix_glVertexAttribI3uivEXT,
+    unix_glVertexAttribI4bv,
+    unix_glVertexAttribI4bvEXT,
+    unix_glVertexAttribI4i,
+    unix_glVertexAttribI4iEXT,
+    unix_glVertexAttribI4iv,
+    unix_glVertexAttribI4ivEXT,
+    unix_glVertexAttribI4sv,
+    unix_glVertexAttribI4svEXT,
+    unix_glVertexAttribI4ubv,
+    unix_glVertexAttribI4ubvEXT,
+    unix_glVertexAttribI4ui,
+    unix_glVertexAttribI4uiEXT,
+    unix_glVertexAttribI4uiv,
+    unix_glVertexAttribI4uivEXT,
+    unix_glVertexAttribI4usv,
+    unix_glVertexAttribI4usvEXT,
+    unix_glVertexAttribIFormat,
+    unix_glVertexAttribIFormatNV,
+    unix_glVertexAttribIPointer,
+    unix_glVertexAttribIPointerEXT,
+    unix_glVertexAttribL1d,
+    unix_glVertexAttribL1dEXT,
+    unix_glVertexAttribL1dv,
+    unix_glVertexAttribL1dvEXT,
+    unix_glVertexAttribL1i64NV,
+    unix_glVertexAttribL1i64vNV,
+    unix_glVertexAttribL1ui64ARB,
+    unix_glVertexAttribL1ui64NV,
+    unix_glVertexAttribL1ui64vARB,
+    unix_glVertexAttribL1ui64vNV,
+    unix_glVertexAttribL2d,
+    unix_glVertexAttribL2dEXT,
+    unix_glVertexAttribL2dv,
+    unix_glVertexAttribL2dvEXT,
+    unix_glVertexAttribL2i64NV,
+    unix_glVertexAttribL2i64vNV,
+    unix_glVertexAttribL2ui64NV,
+    unix_glVertexAttribL2ui64vNV,
+    unix_glVertexAttribL3d,
+    unix_glVertexAttribL3dEXT,
+    unix_glVertexAttribL3dv,
+    unix_glVertexAttribL3dvEXT,
+    unix_glVertexAttribL3i64NV,
+    unix_glVertexAttribL3i64vNV,
+    unix_glVertexAttribL3ui64NV,
+    unix_glVertexAttribL3ui64vNV,
+    unix_glVertexAttribL4d,
+    unix_glVertexAttribL4dEXT,
+    unix_glVertexAttribL4dv,
+    unix_glVertexAttribL4dvEXT,
+    unix_glVertexAttribL4i64NV,
+    unix_glVertexAttribL4i64vNV,
+    unix_glVertexAttribL4ui64NV,
+    unix_glVertexAttribL4ui64vNV,
+    unix_glVertexAttribLFormat,
+    unix_glVertexAttribLFormatNV,
+    unix_glVertexAttribLPointer,
+    unix_glVertexAttribLPointerEXT,
+    unix_glVertexAttribP1ui,
+    unix_glVertexAttribP1uiv,
+    unix_glVertexAttribP2ui,
+    unix_glVertexAttribP2uiv,
+    unix_glVertexAttribP3ui,
+    unix_glVertexAttribP3uiv,
+    unix_glVertexAttribP4ui,
+    unix_glVertexAttribP4uiv,
+    unix_glVertexAttribParameteriAMD,
+    unix_glVertexAttribPointer,
+    unix_glVertexAttribPointerARB,
+    unix_glVertexAttribPointerNV,
+    unix_glVertexAttribs1dvNV,
+    unix_glVertexAttribs1fvNV,
+    unix_glVertexAttribs1hvNV,
+    unix_glVertexAttribs1svNV,
+    unix_glVertexAttribs2dvNV,
+    unix_glVertexAttribs2fvNV,
+    unix_glVertexAttribs2hvNV,
+    unix_glVertexAttribs2svNV,
+    unix_glVertexAttribs3dvNV,
+    unix_glVertexAttribs3fvNV,
+    unix_glVertexAttribs3hvNV,
+    unix_glVertexAttribs3svNV,
+    unix_glVertexAttribs4dvNV,
+    unix_glVertexAttribs4fvNV,
+    unix_glVertexAttribs4hvNV,
+    unix_glVertexAttribs4svNV,
+    unix_glVertexAttribs4ubvNV,
+    unix_glVertexBindingDivisor,
+    unix_glVertexBlendARB,
+    unix_glVertexBlendEnvfATI,
+    unix_glVertexBlendEnviATI,
+    unix_glVertexFormatNV,
+    unix_glVertexP2ui,
+    unix_glVertexP2uiv,
+    unix_glVertexP3ui,
+    unix_glVertexP3uiv,
+    unix_glVertexP4ui,
+    unix_glVertexP4uiv,
+    unix_glVertexPointerEXT,
+    unix_glVertexPointerListIBM,
+    unix_glVertexPointervINTEL,
+    unix_glVertexStream1dATI,
+    unix_glVertexStream1dvATI,
+    unix_glVertexStream1fATI,
+    unix_glVertexStream1fvATI,
+    unix_glVertexStream1iATI,
+    unix_glVertexStream1ivATI,
+    unix_glVertexStream1sATI,
+    unix_glVertexStream1svATI,
+    unix_glVertexStream2dATI,
+    unix_glVertexStream2dvATI,
+    unix_glVertexStream2fATI,
+    unix_glVertexStream2fvATI,
+    unix_glVertexStream2iATI,
+    unix_glVertexStream2ivATI,
+    unix_glVertexStream2sATI,
+    unix_glVertexStream2svATI,
+    unix_glVertexStream3dATI,
+    unix_glVertexStream3dvATI,
+    unix_glVertexStream3fATI,
+    unix_glVertexStream3fvATI,
+    unix_glVertexStream3iATI,
+    unix_glVertexStream3ivATI,
+    unix_glVertexStream3sATI,
+    unix_glVertexStream3svATI,
+    unix_glVertexStream4dATI,
+    unix_glVertexStream4dvATI,
+    unix_glVertexStream4fATI,
+    unix_glVertexStream4fvATI,
+    unix_glVertexStream4iATI,
+    unix_glVertexStream4ivATI,
+    unix_glVertexStream4sATI,
+    unix_glVertexStream4svATI,
+    unix_glVertexWeightPointerEXT,
+    unix_glVertexWeightfEXT,
+    unix_glVertexWeightfvEXT,
+    unix_glVertexWeighthNV,
+    unix_glVertexWeighthvNV,
+    unix_glVideoCaptureNV,
+    unix_glVideoCaptureStreamParameterdvNV,
+    unix_glVideoCaptureStreamParameterfvNV,
+    unix_glVideoCaptureStreamParameterivNV,
+    unix_glViewportArrayv,
+    unix_glViewportIndexedf,
+    unix_glViewportIndexedfv,
+    unix_glViewportPositionWScaleNV,
+    unix_glViewportSwizzleNV,
+    unix_glWaitSemaphoreEXT,
+    unix_glWaitSemaphoreui64NVX,
+    unix_glWaitSync,
+    unix_glWaitVkSemaphoreNV,
+    unix_glWeightPathsNV,
+    unix_glWeightPointerARB,
+    unix_glWeightbvARB,
+    unix_glWeightdvARB,
+    unix_glWeightfvARB,
+    unix_glWeightivARB,
+    unix_glWeightsvARB,
+    unix_glWeightubvARB,
+    unix_glWeightuivARB,
+    unix_glWeightusvARB,
+    unix_glWindowPos2d,
+    unix_glWindowPos2dARB,
+    unix_glWindowPos2dMESA,
+    unix_glWindowPos2dv,
+    unix_glWindowPos2dvARB,
+    unix_glWindowPos2dvMESA,
+    unix_glWindowPos2f,
+    unix_glWindowPos2fARB,
+    unix_glWindowPos2fMESA,
+    unix_glWindowPos2fv,
+    unix_glWindowPos2fvARB,
+    unix_glWindowPos2fvMESA,
+    unix_glWindowPos2i,
+    unix_glWindowPos2iARB,
+    unix_glWindowPos2iMESA,
+    unix_glWindowPos2iv,
+    unix_glWindowPos2ivARB,
+    unix_glWindowPos2ivMESA,
+    unix_glWindowPos2s,
+    unix_glWindowPos2sARB,
+    unix_glWindowPos2sMESA,
+    unix_glWindowPos2sv,
+    unix_glWindowPos2svARB,
+    unix_glWindowPos2svMESA,
+    unix_glWindowPos3d,
+    unix_glWindowPos3dARB,
+    unix_glWindowPos3dMESA,
+    unix_glWindowPos3dv,
+    unix_glWindowPos3dvARB,
+    unix_glWindowPos3dvMESA,
+    unix_glWindowPos3f,
+    unix_glWindowPos3fARB,
+    unix_glWindowPos3fMESA,
+    unix_glWindowPos3fv,
+    unix_glWindowPos3fvARB,
+    unix_glWindowPos3fvMESA,
+    unix_glWindowPos3i,
+    unix_glWindowPos3iARB,
+    unix_glWindowPos3iMESA,
+    unix_glWindowPos3iv,
+    unix_glWindowPos3ivARB,
+    unix_glWindowPos3ivMESA,
+    unix_glWindowPos3s,
+    unix_glWindowPos3sARB,
+    unix_glWindowPos3sMESA,
+    unix_glWindowPos3sv,
+    unix_glWindowPos3svARB,
+    unix_glWindowPos3svMESA,
+    unix_glWindowPos4dMESA,
+    unix_glWindowPos4dvMESA,
+    unix_glWindowPos4fMESA,
+    unix_glWindowPos4fvMESA,
+    unix_glWindowPos4iMESA,
+    unix_glWindowPos4ivMESA,
+    unix_glWindowPos4sMESA,
+    unix_glWindowPos4svMESA,
+    unix_glWindowRectanglesEXT,
+    unix_glWriteMaskEXT,
+    unix_wglAllocateMemoryNV,
+    unix_wglBindTexImageARB,
+    unix_wglChoosePixelFormatARB,
+    unix_wglCreateContextAttribsARB,
+    unix_wglCreatePbufferARB,
+    unix_wglDestroyPbufferARB,
+    unix_wglFreeMemoryNV,
+    unix_wglGetCurrentReadDCARB,
+    unix_wglGetExtensionsStringARB,
+    unix_wglGetExtensionsStringEXT,
+    unix_wglGetPbufferDCARB,
+    unix_wglGetPixelFormatAttribfvARB,
+    unix_wglGetPixelFormatAttribivARB,
+    unix_wglGetSwapIntervalEXT,
+    unix_wglMakeContextCurrentARB,
+    unix_wglQueryCurrentRendererIntegerWINE,
+    unix_wglQueryCurrentRendererStringWINE,
+    unix_wglQueryPbufferARB,
+    unix_wglQueryRendererIntegerWINE,
+    unix_wglQueryRendererStringWINE,
+    unix_wglReleasePbufferDCARB,
+    unix_wglReleaseTexImageARB,
+    unix_wglSetPbufferAttribARB,
+    unix_wglSetPixelFormatWINE,
+    unix_wglSwapIntervalEXT,
 };
 
 typedef NTSTATUS (*unixlib_function_t)( void *args );

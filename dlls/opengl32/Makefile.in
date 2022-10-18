@@ -7,7 +7,6 @@ DELAYIMPORTS = glu32
 EXTRADLLFLAGS = -Wl,--image-base,0x7a800000 -mcygwin
 
 C_SRCS = \
-	opengl_ext.c \
 	thunks.c \
 	unix_thunks.c \
 	wgl.c
