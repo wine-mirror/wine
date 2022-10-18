@@ -1510,6 +1510,16 @@ static const WCHAR p_ming_li_uW[] =
     {'P','M','i','n','g','L','i','U',0};
 static const WCHAR batangW[] =
     {'B','a','t','a','n','g',0};
+static const WCHAR microsoft_jheng_heiW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','J','h','e','n','g','H','e','i',0};
+static const WCHAR microsoft_jheng_hei_boldW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','J','h','e','n','g','H','e','i',' ','B','o','l','d',0};
+static const WCHAR microsoft_jheng_hei_uiW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','J','h','e','n','g','H','e','i',' ','U','I',0};
+static const WCHAR microsoft_jheng_hei_ui_boldW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','J','h','e','n','g','H','e','i',' ','U','I',' ','B','o','l','d',0};
+static const WCHAR microsoft_jheng_hei_ui_lightW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','J','h','e','n','g','H','e','i',' ','U','I',' ','L','i','g','h','t',0};
 
 static const WCHAR * const font_links_list[] =
 {
@@ -1616,6 +1626,51 @@ static const char system_link_ms_ui_gothic[] =
     "MALGUN.TTF,Malgun Gothic\0"
     "SEGUISYM.TTF,Segoe UI Symbol\0";
 
+static const char system_link_microsoft_jheng_hei[] =
+    "SEGOEUI.TTF,Segoe UI\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "MSYH.TTC,Microsoft YaHei\0"
+    "MEIRYO.TTC,Meiryo\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_microsoft_jheng_hei_bold[] =
+    "SEGOEUIB.TTF,Segoe UI Bold\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "MSYHBD.TTC,Microsoft YaHei Bold\0"
+    "MEIRYOB.TTC,Meiryo Bold\0"
+    "MALGUNBD.TTF,Malgun Gothic Bold\0"
+    "YUGOTHB.TTC,Yu Gothic UI Bold\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_microsoft_jheng_hei_ui[] =
+    "SEGOEUI.TTF,Segoe UI\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MEIRYO.TTC,Meiryo UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_microsoft_jheng_hei_ui_bold[] =
+    "SEGOEUIB.TTF,Segoe UI Bold\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "MSYHBD.TTC,Microsoft YaHei UI Bold\0"
+    "MEIRYOB.TTC,Meiryo UI Bold\0"
+    "MALGUNBD.TTF,Malgun Gothic Bold\0"
+    "YUGOTHB.TTC,Yu Gothic UI Bold\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_microsoft_jheng_hei_ui_light[] =
+    "SEGOEUIL.TTF,Segoe UI Light\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "MSYHL.TTC,Microsoft YaHei UI Light\0"
+    "MEIRYO.TTC,Meiryo UI\0"
+    "MALGUNSL.TTF,Malgun Gothic Semilight\0"
+    "YUGOTHL.TTC,Yu Gothic UI Light\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
 static const struct system_link_reg
 {
     const WCHAR *font_name;
@@ -1657,7 +1712,12 @@ default_system_link[] =
         system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
         system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
     },
-    { ms_ui_gothicW, FALSE, system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic) },
+    { ms_ui_gothicW,                 FALSE, system_link_ms_ui_gothic,                 sizeof(system_link_ms_ui_gothic) },
+    { microsoft_jheng_heiW,          FALSE, system_link_microsoft_jheng_hei,          sizeof(system_link_microsoft_jheng_hei) },
+    { microsoft_jheng_hei_boldW,     FALSE, system_link_microsoft_jheng_hei_bold,     sizeof(system_link_microsoft_jheng_hei_bold) },
+    { microsoft_jheng_hei_uiW,       FALSE, system_link_microsoft_jheng_hei_ui,       sizeof(system_link_microsoft_jheng_hei_ui) },
+    { microsoft_jheng_hei_ui_boldW,  FALSE, system_link_microsoft_jheng_hei_ui_bold,  sizeof(system_link_microsoft_jheng_hei_ui_bold) },
+    { microsoft_jheng_hei_ui_lightW, FALSE, system_link_microsoft_jheng_hei_ui_light, sizeof(system_link_microsoft_jheng_hei_ui_light) },
 };
 
 static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
