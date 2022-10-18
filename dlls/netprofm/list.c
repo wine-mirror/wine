@@ -480,9 +480,17 @@ static HRESULT WINAPI network_GetConnectivity(
     INetwork *iface,
     NLM_CONNECTIVITY *pConnectivity )
 {
+    struct network *network = impl_from_INetwork( iface );
+
     FIXME( "%p, %p\n", iface, pConnectivity );
 
-    *pConnectivity = NLM_CONNECTIVITY_IPV4_INTERNET;
+    *pConnectivity = NLM_CONNECTIVITY_DISCONNECTED;
+
+    if (network->connected_to_internet)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV4_INTERNET;
+    else if (network->connected)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV4_LOCALNETWORK;
+
     return S_OK;
 }
 
@@ -1330,9 +1338,21 @@ static HRESULT WINAPI list_manager_GetConnectivity(
     INetworkListManager *iface,
     NLM_CONNECTIVITY *pConnectivity )
 {
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+    struct network *network;
+
     FIXME( "%p, %p\n", iface, pConnectivity );
 
-    *pConnectivity = NLM_CONNECTIVITY_IPV4_INTERNET;
+    *pConnectivity = NLM_CONNECTIVITY_DISCONNECTED;
+
+    LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
+    {
+        if (network->connected_to_internet)
+            *pConnectivity |= NLM_CONNECTIVITY_IPV4_INTERNET;
+        else if (network->connected)
+            *pConnectivity |= NLM_CONNECTIVITY_IPV4_LOCALNETWORK;
+    }
+
     return S_OK;
 }
 
@@ -1565,9 +1585,17 @@ static HRESULT WINAPI connection_GetConnectivity(
     INetworkConnection *iface,
     NLM_CONNECTIVITY *pConnectivity )
 {
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
     FIXME( "%p, %p\n", iface, pConnectivity );
 
-    *pConnectivity = NLM_CONNECTIVITY_IPV4_INTERNET;
+    *pConnectivity = NLM_CONNECTIVITY_DISCONNECTED;
+
+    if (connection->connected_to_internet)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV4_INTERNET;
+    else if (connection->connected)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV4_LOCALNETWORK;
+
     return S_OK;
 }
 
