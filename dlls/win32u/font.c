@@ -1500,6 +1500,10 @@ static const WCHAR microsoft_sans_serifW[] =
     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 static const WCHAR tahomaW[] =
     {'T','a','h','o','m','a',0};
+static const WCHAR ms_gothicW[] =
+    {'M','S',' ','G','o','t','h','i','c',0};
+static const WCHAR ms_p_gothicW[] =
+    {'M','S',' ','P','G','o','t','h','i','c',0};
 static const WCHAR ms_ui_gothicW[] =
     {'M','S',' ','U','I',' ','G','o','t','h','i','c',0};
 static const WCHAR sim_sunW[] =
@@ -1626,9 +1630,30 @@ static const char system_link_tahoma_non_cjk[] =
     "MALGUN.TTF,Malgun Gothic\0"
     "SEGUISYM.TTF,Segoe UI Symbol\0";
 
+static const char system_link_ms_gothic[] =
+    "MINGLIU.TTC,MingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "GULIM.TTC,GulimChe\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_ms_p_gothic[] =
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "GULIM.TTC,Gulim\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
 static const char system_link_ms_ui_gothic[] =
     "MICROSS.TTF,Microsoft Sans Serif\0"
-    "MINGLIU.TTC,PMingLiU\0""SIMSUN.TTC,SimSun\0"
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
     "GULIM.TTC,Gulim\0"
     "YUGOTHM.TTC,Yu Gothic UI\0"
     "MSJH.TTC,Microsoft JhengHei UI\0"
@@ -1793,6 +1818,8 @@ default_system_link[] =
         system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
         system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
     },
+    { ms_gothicW,                    FALSE, system_link_ms_gothic,                    sizeof(system_link_ms_gothic) },
+    { ms_p_gothicW,                  FALSE, system_link_ms_p_gothic,                  sizeof(system_link_ms_p_gothic) },
     { ms_ui_gothicW,                 FALSE, system_link_ms_ui_gothic,                 sizeof(system_link_ms_ui_gothic) },
     { microsoft_jheng_heiW,          FALSE, system_link_microsoft_jheng_hei,          sizeof(system_link_microsoft_jheng_hei) },
     { microsoft_jheng_hei_boldW,     FALSE, system_link_microsoft_jheng_hei_bold,     sizeof(system_link_microsoft_jheng_hei_bold) },
