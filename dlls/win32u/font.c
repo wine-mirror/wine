@@ -1506,8 +1506,18 @@ static const WCHAR sim_sunW[] =
     {'S','i','m','S','u','n',0};
 static const WCHAR gulimW[] =
     {'G','u','l','i','m',0};
+static const WCHAR ming_li_uW[] =
+    {'M','i','n','g','L','i','U',0};
 static const WCHAR p_ming_li_uW[] =
     {'P','M','i','n','g','L','i','U',0};
+static const WCHAR ming_li_u_hkscsW[] =
+    {'M','i','n','g','L','i','U','_','H','K','S','C','S',0};
+static const WCHAR ming_li_u_ext_bW[] =
+    {'M','i','n','g','L','i','U','-','E','x','t','B',0};
+static const WCHAR p_ming_li_u_ext_bW[] =
+    {'P','M','i','n','g','L','i','U','-','E','x','t','B',0};
+static const WCHAR ming_li_u_hkscs_ext_bW[] =
+    {'M','i','n','g','L','i','U','_','H','K','S','C','S','-','E','x','t','B',0};
 static const WCHAR batangW[] =
     {'B','a','t','a','n','g',0};
 static const WCHAR microsoft_jheng_heiW[] =
@@ -1671,6 +1681,77 @@ static const char system_link_microsoft_jheng_hei_ui_light[] =
     "YUGOTHL.TTC,Yu Gothic UI Light\0"
     "SEGUISYM.TTF,Segoe UI Symbol\0";
 
+static const char system_link_ming_li_u[] =
+    "MICROSS.TTF,Microsoft Sans Serif\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSMINCHO.TTC,MS Mincho\0"
+    "BATANG.TTC,BatangChe\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_p_ming_li_u[] =
+    "MICROSS.TTF,Microsoft Sans Serif\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSMINCHO.TTC,MS PMincho\0"
+    "BATANG.TTC,Batang\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_ming_li_u_hkscs[] =
+    "MICROSS.TTF,Microsoft Sans Serif\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSMINCHO.TTC,MS Mincho\0"
+    "BATANG.TTC,BatangChe\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_ming_li_u_ext_b[] =
+    "MICROSS.TTF,Microsoft Sans Serif\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSMINCHO.TTC,MS Mincho\0"
+    "BATANG.TTC,BatangChe\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_p_ming_li_u_ext_b[] =
+    "MICROSS.TTF,Microsoft Sans Serif\0"
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSMINCHO.TTC,MS PMincho\0"
+    "BATANG.TTC,Batang\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_ming_li_u_hkscs_ext_b[] =
+    "MICROSS.TTF,Microsoft Sans Serif\0"
+    "MINGLIU.TTC,MingLiU_HKSCS\0"
+    "MINGLIU.TTC,MingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "MSMINCHO.TTC,MS Mincho\0"
+    "BATANG.TTC,BatangChe\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
 static const struct system_link_reg
 {
     const WCHAR *font_name;
@@ -1718,6 +1799,12 @@ default_system_link[] =
     { microsoft_jheng_hei_uiW,       FALSE, system_link_microsoft_jheng_hei_ui,       sizeof(system_link_microsoft_jheng_hei_ui) },
     { microsoft_jheng_hei_ui_boldW,  FALSE, system_link_microsoft_jheng_hei_ui_bold,  sizeof(system_link_microsoft_jheng_hei_ui_bold) },
     { microsoft_jheng_hei_ui_lightW, FALSE, system_link_microsoft_jheng_hei_ui_light, sizeof(system_link_microsoft_jheng_hei_ui_light) },
+    { ming_li_uW,                    FALSE, system_link_ming_li_u,                    sizeof(system_link_ming_li_u) },
+    { p_ming_li_uW,                  FALSE, system_link_p_ming_li_u,                  sizeof(system_link_p_ming_li_u) },
+    { ming_li_u_hkscsW,              FALSE, system_link_ming_li_u_hkscs,              sizeof(system_link_ming_li_u_hkscs) },
+    { ming_li_u_ext_bW,              FALSE, system_link_ming_li_u_ext_b,              sizeof(system_link_ming_li_u_ext_b) },
+    { p_ming_li_u_ext_bW,            FALSE, system_link_p_ming_li_u_ext_b,            sizeof(system_link_p_ming_li_u_ext_b) },
+    { ming_li_u_hkscs_ext_bW,        FALSE, system_link_ming_li_u_hkscs_ext_b,        sizeof(system_link_ming_li_u_hkscs_ext_b) },
 };
 
 static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
