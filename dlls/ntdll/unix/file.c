@@ -1565,10 +1565,15 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
     attr_len = xattr_fget( fd, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
     if (attr_len != -1)
         *attr |= parse_samba_dos_attrib_data( attr_data, attr_len );
-    else if (errno != ENODATA && errno != ENOTSUP)
+    else
+    {
+        if (errno == ENOTSUP) return ret;
+#ifdef ENODATA
+        if (errno == ENODATA) return ret;
+#endif
         WARN( "Failed to get extended attribute " SAMBA_XATTR_DOS_ATTRIB ". errno %d (%s)\n",
               errno, strerror( errno ) );
-
+    }
     return ret;
 }
 
@@ -1653,10 +1658,15 @@ static int get_file_info( const char *path, struct stat *st, ULONG *attr )
     attr_len = xattr_get( path, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
     if (attr_len != -1)
         *attr |= parse_samba_dos_attrib_data( attr_data, attr_len );
-    else if (errno != ENODATA && errno != ENOTSUP)
+    else
+    {
+        if (errno == ENOTSUP) return ret;
+#ifdef ENODATA
+        if (errno == ENODATA) return ret;
+#endif
         WARN( "Failed to get extended attribute " SAMBA_XATTR_DOS_ATTRIB " from \"%s\". errno %d (%s)\n",
               path, errno, strerror( errno ) );
-
+    }
     return ret;
 }
 
