@@ -68,6 +68,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+#include "dwarf.h"
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -172,14 +174,146 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
 extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher );
 
 /***********************************************************************
- *           unwind_builtin_dll
+ *           dwarf_virtual_unwind
  *
  * Equivalent of RtlVirtualUnwind for builtin modules.
  */
-NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *context,
+                                      const struct dwarf_fde *fde, const struct dwarf_eh_bases *bases,
+                                      PEXCEPTION_ROUTINE *handler, void **handler_data )
 {
+    const struct dwarf_cie *cie;
+    const unsigned char *ptr, *augmentation, *end;
+    ULONG_PTR len, code_end;
+    struct frame_info info;
+    struct frame_state state_stack[MAX_SAVED_STATES];
+    int aug_z_format = 0;
+    unsigned char lsda_encoding = DW_EH_PE_omit;
+
+    memset( &info, 0, sizeof(info) );
+    info.state_stack = state_stack;
+    info.ip = (ULONG_PTR)bases->func;
+    *handler = NULL;
+
+    cie = (const struct dwarf_cie *)((const char *)&fde->cie_offset - fde->cie_offset);
+
+    /* parse the CIE first */
+
+    if (cie->version != 1 && cie->version != 3)
+    {
+        FIXME( "unknown CIE version %u at %p\n", cie->version, cie );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    ptr = cie->augmentation + strlen((const char *)cie->augmentation) + 1;
+
+    info.code_align = dwarf_get_uleb128( &ptr );
+    info.data_align = dwarf_get_sleb128( &ptr );
+    if (cie->version == 1)
+        info.retaddr_reg = *ptr++;
+    else
+        info.retaddr_reg = dwarf_get_uleb128( &ptr );
+    info.state.cfa_rule = RULE_CFA_OFFSET;
+
+    TRACE( "function %lx base %p cie %p len %x id %x version %x aug '%s' code_align %lu data_align %ld retaddr %s\n",
+           ip, bases->func, cie, cie->length, cie->id, cie->version, cie->augmentation,
+           info.code_align, info.data_align, dwarf_reg_names[info.retaddr_reg] );
+
+    end = NULL;
+    for (augmentation = cie->augmentation; *augmentation; augmentation++)
+    {
+        switch (*augmentation)
+        {
+        case 'z':
+            len = dwarf_get_uleb128( &ptr );
+            end = ptr + len;
+            aug_z_format = 1;
+            continue;
+        case 'L':
+            lsda_encoding = *ptr++;
+            continue;
+        case 'P':
+        {
+            unsigned char encoding = *ptr++;
+            *handler = (void *)dwarf_get_ptr( &ptr, encoding, bases );
+            continue;
+        }
+        case 'R':
+            info.fde_encoding = *ptr++;
+            continue;
+        case 'S':
+            info.signal_frame = 1;
+            continue;
+        }
+        FIXME( "unknown augmentation '%c'\n", *augmentation );
+        if (!end) return STATUS_INVALID_DISPOSITION;  /* cannot continue */
+        break;
+    }
+    if (end) ptr = end;
+
+    end = (const unsigned char *)(&cie->length + 1) + cie->length;
+    execute_cfa_instructions( ptr, end, ip, &info, bases );
+
+    ptr = (const unsigned char *)(fde + 1);
+    info.ip = dwarf_get_ptr( &ptr, info.fde_encoding, bases );  /* fde code start */
+    code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f, bases );  /* fde code length */
+
+    if (aug_z_format)  /* get length of augmentation data */
+    {
+        len = dwarf_get_uleb128( &ptr );
+        end = ptr + len;
+    }
+    else end = NULL;
+
+    *handler_data = (void *)dwarf_get_ptr( &ptr, lsda_encoding, bases );
+    if (end) ptr = end;
+
+    end = (const unsigned char *)(&fde->length + 1) + fde->length;
+    TRACE( "fde %p len %x personality %p lsda %p code %lx-%lx\n",
+           fde, fde->length, *handler, *handler_data, info.ip, code_end );
+    execute_cfa_instructions( ptr, end, ip, &info, bases );
+    *frame = context->Sp;
+    apply_frame_state( context, &info.state, bases );
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    /* Set Pc based on Lr; libunwind also does this as part of unw_step. */
+    context->Pc = context->u.s.Lr;
+
+    if (bases->func == (void *)raise_func_trampoline) {
+        /* raise_func_trampoline has a full CONTEXT stored on the stack;
+         * restore the original Lr value from there. The function we unwind
+         * to might be a leaf function that hasn't backed up its own original
+         * Lr value on the stack.
+         * We could also just restore the full context here without doing
+         * unw_step at all. */
+        const CONTEXT *next_ctx = (const CONTEXT *) *frame;
+        context->u.s.Lr = next_ctx->u.s.Lr;
+    }
+
+    TRACE( "next function pc=%016lx\n", context->Pc );
+    TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
+          context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
+    TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
+          context->u.s.X4, context->u.s.X5, context->u.s.X6, context->u.s.X7 );
+    TRACE("  x8=%016lx  x9=%016lx x10=%016lx x11=%016lx\n",
+          context->u.s.X8, context->u.s.X9, context->u.s.X10, context->u.s.X11 );
+    TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
+          context->u.s.X12, context->u.s.X13, context->u.s.X14, context->u.s.X15 );
+    TRACE(" x16=%016lx x17=%016lx x18=%016lx x19=%016lx\n",
+          context->u.s.X16, context->u.s.X17, context->u.s.X18, context->u.s.X19 );
+    TRACE(" x20=%016lx x21=%016lx x22=%016lx x23=%016lx\n",
+          context->u.s.X20, context->u.s.X21, context->u.s.X22, context->u.s.X23 );
+    TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
+          context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
+    TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
+          context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
+
+    return STATUS_SUCCESS;
+}
+
+
 #ifdef HAVE_LIBUNWIND
-    ULONG_PTR ip = context->Pc;
+static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEXT *context,
+                                          PEXCEPTION_ROUTINE *handler, void **handler_data )
+{
     unw_context_t unw_context;
     unw_cursor_t cursor;
     unw_proc_info_t info;
@@ -222,8 +356,8 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
     {
         TRACE( "no info found for %lx ip %lx-%lx, assuming leaf function\n",
                ip, info.start_ip, info.end_ip );
-        dispatch->LanguageHandler = NULL;
-        dispatch->EstablisherFrame = context->Sp;
+        *handler = NULL;
+        *frame = context->Sp;
         context->Pc = context->u.s.Lr;
         context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
         return STATUS_SUCCESS;
@@ -240,9 +374,9 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
         return STATUS_INVALID_DISPOSITION;
     }
 
-    dispatch->LanguageHandler  = (void *)info.handler;
-    dispatch->HandlerData      = (void *)info.lsda;
-    dispatch->EstablisherFrame = context->Sp;
+    *handler      = (void *)info.handler;
+    *handler_data = (void *)info.lsda;
+    *frame        = context->Sp;
 #ifdef __APPLE__
     {
         int i;
@@ -296,7 +430,7 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
          * Lr value on the stack.
          * We could also just restore the full context here without doing
          * unw_step at all. */
-        const CONTEXT *next_ctx = (const CONTEXT *) dispatch->EstablisherFrame;
+        const CONTEXT *next_ctx = (const CONTEXT *) *frame;
         context->u.s.Lr = next_ctx->u.s.Lr;
     }
 
@@ -318,6 +452,25 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
     TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
           context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
     return STATUS_SUCCESS;
+}
+#endif
+
+/***********************************************************************
+ *           unwind_builtin_dll
+ *
+ * Equivalent of RtlVirtualUnwind for builtin modules.
+ */
+NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+{
+    struct dwarf_eh_bases bases;
+    const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context->Pc - 1), &bases );
+
+    if (fde)
+        return dwarf_virtual_unwind( context->Pc, &dispatch->EstablisherFrame, context, fde,
+                                     &bases, &dispatch->LanguageHandler, &dispatch->HandlerData );
+#ifdef HAVE_LIBUNWIND
+    return libunwind_virtual_unwind( context->Pc, &dispatch->EstablisherFrame, context,
+                                     &dispatch->LanguageHandler, &dispatch->HandlerData );
 #else
     ERR("libunwind not available, unable to unwind\n");
     return STATUS_INVALID_DISPOSITION;
