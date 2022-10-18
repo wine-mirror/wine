@@ -1730,12 +1730,17 @@ static void test_InternetGetConnectedStateExW(void)
     }
 
     flags = 0;
-    buffer[0] = 0;
+    wcscpy(buffer, L"wine");
+    SetLastError(0xdeadbeef);
     res = pInternetGetConnectedStateExW(&flags, buffer, ARRAY_SIZE(buffer), 0);
     trace("Internet Connection: Flags 0x%02lx - Name '%s'\n", flags, wine_dbgstr_w(buffer));
     ok (flags & INTERNET_RAS_INSTALLED, "Missing RAS flag\n");
     if(!res) {
-        win_skip("InternetGetConnectedStateExW tests require a valid connection\n");
+        DWORD error = GetLastError();
+        ok(error == ERROR_SUCCESS, "Last error = %#lx\n", error);
+        ok(!buffer[0], "Expected empty connection name, got %s\n", wine_dbgstr_w(buffer));
+
+        skip("InternetGetConnectedStateExW tests require a valid connection\n");
         return;
     }
 

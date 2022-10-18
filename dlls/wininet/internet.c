@@ -1206,24 +1206,73 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
 BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnectionName,
                                          DWORD dwNameLen, DWORD dwReserved)
 {
+    IP_ADAPTER_ADDRESSES *buf = NULL, *aa;
+    ULONG size = 0;
+    DWORD status;
+
     TRACE("(%p, %p, %ld, 0x%08lx)\n", lpdwStatus, lpszConnectionName, dwNameLen, dwReserved);
 
     /* Must be zero */
     if(dwReserved)
         return FALSE;
 
-    if (lpdwStatus) {
-        WARN("always returning LAN connection and RAS installed.\n");
-        *lpdwStatus = INTERNET_CONNECTION_LAN | INTERNET_RAS_INSTALLED;
+    for (;;)
+    {
+        ULONG flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER |
+                      GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_INCLUDE_ALL_GATEWAYS;
+        ULONG errcode = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, buf, &size);
+
+        if (errcode == ERROR_SUCCESS)
+            break;
+        heap_free(buf);
+        if (errcode == ERROR_BUFFER_OVERFLOW && !(buf = heap_alloc(size)))
+            errcode = ERROR_NOT_ENOUGH_MEMORY;
+        if (errcode != ERROR_BUFFER_OVERFLOW)
+        {
+            if (errcode != ERROR_NO_DATA)
+            {
+                SetLastError(errcode);
+                return FALSE;
+            }
+            buf = NULL;
+            break;
+        }
     }
+
+    status = INTERNET_RAS_INSTALLED;
+    for (aa = buf; aa; aa = aa->Next)
+    {
+        /* Connected, but not necessarily to internet */
+        if (aa->FirstUnicastAddress)
+            status |= INTERNET_CONNECTION_OFFLINE;
+
+        /* Connected to internet */
+        if (aa->FirstGatewayAddress)
+        {
+            WARN("always returning LAN connection.\n");
+            status &= ~INTERNET_CONNECTION_OFFLINE;
+            status |= INTERNET_CONNECTION_LAN;
+            break;
+        }
+    }
+    heap_free(buf);
+
+    if (lpdwStatus) *lpdwStatus = status;
 
     /* When the buffer size is zero LoadStringW fills the buffer with a pointer to
      * the resource, avoid it as we must not change the buffer in this case */
-    if(lpszConnectionName && dwNameLen) {
+    if (lpszConnectionName && dwNameLen)
+    {
         *lpszConnectionName = '\0';
-        LoadStringW(WININET_hModule, IDS_LANCONNECTION, lpszConnectionName, dwNameLen);
+        if (status & INTERNET_CONNECTION_LAN)
+            LoadStringW(WININET_hModule, IDS_LANCONNECTION, lpszConnectionName, dwNameLen);
     }
 
+    if (!(status & (INTERNET_CONNECTION_LAN | INTERNET_CONNECTION_MODEM | INTERNET_CONNECTION_PROXY)))
+    {
+        SetLastError(ERROR_SUCCESS);
+        return FALSE;
+    }
     return TRUE;
 }
 
