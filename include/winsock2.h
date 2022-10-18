@@ -782,6 +782,7 @@ typedef struct _OVERLAPPED* LPWSAOVERLAPPED;
 #define WSATRY_AGAIN               (WSABASEERR + 1002)
 #define WSANO_RECOVERY             (WSABASEERR + 1003)
 #define WSANO_DATA                 (WSABASEERR + 1004)
+#define WSANO_ADDRESS              WSANO_DATA
 
 #define WSA_IO_PENDING             (ERROR_IO_PENDING)
 #define WSA_IO_INCOMPLETE          (ERROR_IO_INCOMPLETE)
