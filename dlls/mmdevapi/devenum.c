@@ -1163,6 +1163,8 @@ static DWORD WINAPI notif_thread_proc(void *user)
     WCHAR out_name[64], vout_name[64], in_name[64], vin_name[64];
     DWORD size;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_mmdevapi_notification");
+
     lstrcpyW(reg_key, drv_keyW);
     lstrcatW(reg_key, L"\\");
     lstrcatW(reg_key, drvs.module_name);

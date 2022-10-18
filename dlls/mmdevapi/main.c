@@ -381,6 +381,8 @@ static DWORD WINAPI activate_async_threadproc(void *user)
 {
     struct activate_async_op *op = user;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_mmdevapi_activate_async");
+
     IActivateAudioInterfaceCompletionHandler_ActivateCompleted(op->callback, &op->IActivateAudioInterfaceAsyncOperation_iface);
 
     IActivateAudioInterfaceAsyncOperation_Release(&op->IActivateAudioInterfaceAsyncOperation_iface);
