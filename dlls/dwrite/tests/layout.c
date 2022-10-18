@@ -5008,7 +5008,6 @@ static void test_MapCharacters(void)
     UINT32 mappedlength, vs_length;
     IDWriteFontFallback *fallback;
     IDWriteFactory2 *factory2;
-    IDWriteFactory *factory;
     IDWriteFont *font;
     WCHAR buffW[50];
     WCHAR name[64];
@@ -5019,12 +5018,10 @@ static void test_MapCharacters(void)
     WCHAR *ptr;
     HRESULT hr;
 
-    factory = create_factory();
-
-    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
-    IDWriteFactory_Release(factory);
-    if (hr != S_OK) {
-        win_skip("MapCharacters() is not supported\n");
+    factory2 = create_factory_iid(&IID_IDWriteFactory2);
+    if (!factory2)
+    {
+        win_skip("MapCharacters() is not supported.\n");
         return;
     }
 
@@ -5160,15 +5157,15 @@ static void test_MapCharacters(void)
     resource_loader = create_resource_file_loader();
     resource_collection_loader = create_resource_collection_loader(resource_loader);
 
-    hr = IDWriteFactory_RegisterFontFileLoader(factory, resource_loader);
+    hr = IDWriteFactory2_RegisterFontFileLoader(factory2, resource_loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IDWriteFactory_RegisterFontCollectionLoader(factory, resource_collection_loader);
+    hr = IDWriteFactory2_RegisterFontCollectionLoader(factory2, resource_collection_loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hrsrc = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
     ok(!!hrsrc, "Failed to find font resource\n");
 
-    hr = IDWriteFactory_CreateCustomFontCollection(factory, resource_collection_loader, &hrsrc, sizeof(hrsrc), &collection);
+    hr = IDWriteFactory2_CreateCustomFontCollection(factory2, resource_collection_loader, &hrsrc, sizeof(hrsrc), &collection);
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
     /* Variation selectors are skipped. */
@@ -5257,9 +5254,9 @@ static void test_MapCharacters(void)
 
     IDWriteFontCollection_Release(collection);
 
-    hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, resource_collection_loader);
+    hr = IDWriteFactory2_UnregisterFontCollectionLoader(factory2, resource_collection_loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IDWriteFactory_UnregisterFontFileLoader(factory, resource_loader);
+    hr = IDWriteFactory2_UnregisterFontFileLoader(factory2, resource_loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDWriteFontCollectionLoader_Release(resource_collection_loader);
