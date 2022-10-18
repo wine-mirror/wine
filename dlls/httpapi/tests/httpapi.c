@@ -1397,7 +1397,7 @@ static void test_v2_bound_port(void)
     ok(!ret, "Failed to bind to port\n");
     swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
     ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0);
-    ok(ret == ERROR_SHARING_VIOLATION, "Unexpected failure adding %s, error %u.\n", debugstr_w(url), ret);
+    todo_wine ok(ret == ERROR_SHARING_VIOLATION, "Unexpected failure adding %s, error %u.\n", debugstr_w(url), ret);
     shutdown(s2, SD_BOTH);
     closesocket(s2);
 
@@ -1407,8 +1407,8 @@ static void test_v2_bound_port(void)
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     ret = connect(s, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
-    ok(ret, "Connecting to socket succeeded, %lu.\n", GetLastError());
-    ok(GetLastError() == WSAECONNREFUSED, "Unexpected error connecting to socket, %lu.\n", GetLastError());
+    todo_wine ok(ret, "Connecting to socket succeeded, %lu.\n", GetLastError());
+    todo_wine ok(GetLastError() == WSAECONNREFUSED, "Unexpected error connecting to socket, %lu.\n", GetLastError());
 
     closesocket(s);
     ret = pHttpCloseRequestQueue(dummy_queue);
