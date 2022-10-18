@@ -2088,12 +2088,68 @@ static void test_so_reuseaddr(void)
     /* The connection is delivered to the first socket. */
     size = sizeof(saddr);
     s4 = accept(s1, (struct sockaddr*)&saddr, &size);
+    saddr.sin_port = htons(SERVERPORT + 1);
     ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
 
     closesocket(s1);
     closesocket(s2);
     closesocket(s3);
     closesocket(s4);
+
+    /* Test binding and listening on any addr together with loopback. */
+    s1 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    rc = bind(s1, (struct sockaddr *)&saddr, sizeof(saddr));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    rc = listen(s1, 1);
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    s2 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    rc = bind(s2, (struct sockaddr *)&saddr, sizeof(saddr));
+    todo_wine ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    rc = listen(s2, 1);
+    todo_wine ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    s3 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s3 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    rc = connect(s3, (struct sockaddr *)&saddr, sizeof(saddr));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    size = sizeof(saddr);
+    s4 = accept(s2, (struct sockaddr *)&saddr, &size);
+    saddr.sin_port        = htons(SERVERPORT + 1);
+    todo_wine ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    closesocket(s1);
+    closesocket(s2);
+    closesocket(s3);
+    closesocket(s4);
+
+    /* Test binding to INADDR_ANY on two sockets. */
+    s1 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    rc = bind(s1, (struct sockaddr *)&saddr, sizeof(saddr));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    s2 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEADDRINUSE, "got rc %d, error %d.\n", rc, WSAGetLastError());
+
+    closesocket(s1);
+    closesocket(s2);
 }
 
 #define IP_PKTINFO_LEN (sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(sizeof(struct in_pktinfo)))
