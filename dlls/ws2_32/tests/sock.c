@@ -2016,76 +2016,84 @@ static void test_set_getsockopt(void)
 static void test_so_reuseaddr(void)
 {
     struct sockaddr_in saddr;
-    SOCKET s1,s2;
-    unsigned int rc,reuse;
+    unsigned int rc, reuse;
+    SOCKET s1, s2, s3, s4;
     int size;
-    DWORD err;
 
     saddr.sin_family      = AF_INET;
     saddr.sin_port        = htons(SERVERPORT+1);
     saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
+    /* Test with SO_REUSEADDR on second socket only. */
     s1=socket(AF_INET, SOCK_STREAM, 0);
-    ok(s1!=INVALID_SOCKET, "socket() failed error: %d\n", WSAGetLastError());
+    ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
     rc = bind(s1, (struct sockaddr*)&saddr, sizeof(saddr));
-    ok(rc!=SOCKET_ERROR, "bind(s1) failed error: %d\n", WSAGetLastError());
+    ok(!rc, "got error %d.\n", WSAGetLastError());
 
-    s2=socket(AF_INET, SOCK_STREAM, 0);
-    ok(s2!=INVALID_SOCKET, "socket() failed error: %d\n", WSAGetLastError());
-
-    reuse=0x1234;
-    size=sizeof(reuse);
-    rc=getsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, &size );
-    ok(rc==0 && reuse==0,"wrong result in getsockopt(SO_REUSEADDR): rc=%d reuse=%d\n",rc,reuse);
-
-    rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
-    ok(rc==SOCKET_ERROR, "bind() succeeded\n");
+    s2 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
     reuse = 1;
     rc = setsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
-    ok(rc==0, "setsockopt() failed error: %d\n", WSAGetLastError());
+    ok(!rc, "got error %d.\n", WSAGetLastError());
 
-    /* On Win2k3 and above, all SO_REUSEADDR seems to do is to allow binding to
-     * a port immediately after closing another socket on that port, so
-     * basically following the BSD socket semantics here. */
     rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
-    if(rc==0)
-    {
-        int s3=socket(AF_INET, SOCK_STREAM, 0), s4;
+    ok(rc == SOCKET_ERROR, "got rc %d.\n", rc);
+    ok(WSAGetLastError() == WSAEACCES, "got error %d.\n", WSAGetLastError());
 
-        /* If we could bind again in the same port this is Windows version <= XP.
-         * Lets test if we can really connect to one of them. */
-        set_blocking(s1, FALSE);
-        set_blocking(s2, FALSE);
-        rc = listen(s1, 1);
-        ok(!rc, "listen() failed with error: %d\n", WSAGetLastError());
-        rc = listen(s2, 1);
-        ok(!rc, "listen() failed with error: %d\n", WSAGetLastError());
-        rc = connect(s3, (struct sockaddr*)&saddr, sizeof(saddr));
-        ok(!rc, "connecting to accepting socket failed %d\n", WSAGetLastError());
-
-        /* the delivery of the connection is random so we need to try on both sockets */
-        size = sizeof(saddr);
-        s4 = accept(s1, (struct sockaddr*)&saddr, &size);
-        if(s4 == INVALID_SOCKET)
-            s4 = accept(s2, (struct sockaddr*)&saddr, &size);
-        ok(s4 != INVALID_SOCKET, "none of the listening sockets could get the connection\n");
-
-        closesocket(s1);
-        closesocket(s3);
-        closesocket(s4);
-    }
-    else
-    {
-        err = WSAGetLastError();
-        ok(err==WSAEACCES, "expected 10013, got %ld\n", err);
-
-        closesocket(s1);
-        rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
-        ok(rc==0, "bind() failed error: %d\n", WSAGetLastError());
-    }
-
+    closesocket(s1);
     closesocket(s2);
+
+    /* Test with SO_REUSEADDR on both sockets. */
+    s1=socket(AF_INET, SOCK_STREAM, 0);
+    ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    reuse = 1;
+    rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    rc = bind(s1, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    s2 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    reuse=0x1234;
+    size=sizeof(reuse);
+    rc=getsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, &size);
+    ok(!rc && !reuse,"got rc %d, reuse %d.\n", rc, reuse);
+
+    rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(rc == SOCKET_ERROR, "got rc %d, error %d.\n", rc, WSAGetLastError());
+
+    reuse = 1;
+    rc = setsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    s3 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s3 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    /* Test if we can really connect to one of them. */
+    rc = listen(s1, 1);
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+    rc = listen(s2, 1);
+    todo_wine ok(!rc, "got error %d.\n", WSAGetLastError());
+    rc = connect(s3, (struct sockaddr*)&saddr, sizeof(saddr));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    /* The connection is delivered to the first socket. */
+    size = sizeof(saddr);
+    s4 = accept(s1, (struct sockaddr*)&saddr, &size);
+    ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    closesocket(s1);
+    closesocket(s2);
+    closesocket(s3);
+    closesocket(s4);
 }
 
 #define IP_PKTINFO_LEN (sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(sizeof(struct in_pktinfo)))
