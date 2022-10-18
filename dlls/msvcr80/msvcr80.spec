@@ -760,7 +760,7 @@
 @ cdecl _mbctokata(long)
 @ stub _mbctokata_l
 @ cdecl _mbctolower(long)
-@ stub _mbctolower_l
+@ cdecl _mbctolower_l(long ptr)
 @ cdecl _mbctombb(long)
 @ stub _mbctombb_l
 @ cdecl _mbctoupper(long)

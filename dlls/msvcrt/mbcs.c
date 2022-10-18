@@ -447,16 +447,24 @@ unsigned int CDECL _mbsnextc(const unsigned char* str)
 }
 
 /*********************************************************************
- *		_mbctolower(MSVCRT.@)
+ *		_mbctolower_l(MSVCRT.@)
  */
-unsigned int CDECL _mbctolower(unsigned int c)
+unsigned int CDECL _mbctolower_l(unsigned int c, _locale_t locale)
 {
-    if (_ismbblead(c))
+    if (_ismbblead_l(c, locale))
     {
       FIXME("Handle MBC chars\n");
       return c;
     }
-    return _tolower_l(c, NULL); /* ASCII CP or SB char */
+    return _tolower_l(c, locale); /* ASCII CP or SB char */
+}
+
+/*********************************************************************
+ *		_mbctolower(MSVCRT.@)
+ */
+unsigned int CDECL _mbctolower(unsigned int c)
+{
+    return _mbctolower_l(c, NULL);
 }
 
 /*********************************************************************
