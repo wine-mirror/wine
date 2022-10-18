@@ -159,8 +159,7 @@ static void test_GetDiskFreeSpaceA(void)
     ret = GetDiskFreeSpaceA("C:\\", &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     ok(ret, "GetDiskFreeSpaceA error %ld\n", GetLastError());
 
-    ret = GetVolumeNameForVolumeMountPointA("C:\\", volume_guid_path,
-       sizeof(volume_guid_path) / sizeof(volume_guid_path[0]));
+    ret = GetVolumeNameForVolumeMountPointA("C:\\", volume_guid_path, ARRAY_SIZE(volume_guid_path));
     ok(ret, "GetVolumeNameForVolumeMountPointA error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceA(volume_guid_path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
@@ -251,8 +250,7 @@ static void test_GetDiskFreeSpaceW(void)
     ret = GetDiskFreeSpaceW(c_drive_pathW, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
     ok(ret, "GetDiskFreeSpaceW error %ld\n", GetLastError());
 
-    ret = GetVolumeNameForVolumeMountPointW(c_drive_pathW, volume_guid_path,
-       sizeof(volume_guid_path) / sizeof(volume_guid_path[0]));
+    ret = GetVolumeNameForVolumeMountPointW(c_drive_pathW, volume_guid_path, ARRAY_SIZE(volume_guid_path));
     ok(ret, "GetVolumeNameForVolumeMountPointW error %ld\n", GetLastError());
 
     ret = GetDiskFreeSpaceW(volume_guid_path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
