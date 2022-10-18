@@ -147,7 +147,7 @@ static char *get_runtime_exedir(void)
     static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
     size_t dir_size = PATH_MAX;
     char *dir = malloc( dir_size );
-    if (dir && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), dir, &dir_size, NULL, 0 ))
+    if (dir && !sysctl( pathname, ARRAY_SIZE( pathname ), dir, &dir_size, NULL, 0 ))
         return dir;
     free( dir );
     return NULL;
