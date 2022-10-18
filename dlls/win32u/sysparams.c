@@ -406,13 +406,15 @@ void user_check_not_lock(void)
 
 static HANDLE get_display_device_init_mutex( void )
 {
-    static const WCHAR display_device_initW[] =
-        {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
-         '\\','d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t'};
-    UNICODE_STRING name = { sizeof(display_device_initW), sizeof(display_device_initW),
-        (WCHAR *)display_device_initW };
+    WCHAR bufferW[256];
+    UNICODE_STRING name = {.Buffer = bufferW};
     OBJECT_ATTRIBUTES attr;
+    char buffer[256];
     HANDLE mutex;
+
+    snprintf( buffer, ARRAY_SIZE(buffer), "\\Sessions\\%u\\BaseNamedObjects\\display_device_init",
+              NtCurrentTeb()->Peb->SessionId );
+    name.Length = name.MaximumLength = asciiz_to_unicode( bufferW, buffer );
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if (NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE ) < 0) return 0;
