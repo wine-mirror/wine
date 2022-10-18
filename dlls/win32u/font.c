@@ -1619,6 +1619,9 @@ static const char system_link_ms_ui_gothic[] =
 static const struct system_link_reg
 {
     const WCHAR *font_name;
+    BOOL locale_dependent;
+    const char *link_non_cjk;
+    DWORD link_non_cjk_len;
     const char *link_sc;
     DWORD link_sc_len;
     const char *link_tc;
@@ -1627,43 +1630,34 @@ static const struct system_link_reg
     DWORD link_jp_len;
     const char *link_kr;
     DWORD link_kr_len;
-    const char *link_non_cjk;
-    DWORD link_non_cjk_len;
 }
 default_system_link[] =
 {
     {
-        tahomaW,
+        tahomaW, TRUE,
+        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
         system_link_tahoma_sc,      sizeof(system_link_tahoma_sc),
         system_link_tahoma_tc,      sizeof(system_link_tahoma_tc),
         system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
         system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
-        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
     },
     {
-        microsoft_sans_serifW,
+        microsoft_sans_serifW, TRUE,
+        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
         system_link_tahoma_sc,      sizeof(system_link_tahoma_sc),
         system_link_tahoma_tc,      sizeof(system_link_tahoma_tc),
         system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
         system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
-        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
     },
     {
-        lucida_sans_unicodeW,
+        lucida_sans_unicodeW, TRUE,
+        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
         system_link_tahoma_sc,      sizeof(system_link_tahoma_sc),
         system_link_tahoma_tc,      sizeof(system_link_tahoma_tc),
         system_link_tahoma_jp,      sizeof(system_link_tahoma_jp),
         system_link_tahoma_kr,      sizeof(system_link_tahoma_kr),
-        system_link_tahoma_non_cjk, sizeof(system_link_tahoma_non_cjk),
     },
-    {
-        ms_ui_gothicW,
-        system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic),
-        system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic),
-        system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic),
-        system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic),
-        system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic),
-    },
+    { ms_ui_gothicW, FALSE, system_link_ms_ui_gothic, sizeof(system_link_ms_ui_gothic) },
 };
 
 static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
@@ -2772,27 +2766,30 @@ static void update_font_system_link_info(void)
         {
             const struct system_link_reg *link_reg = &default_system_link[i];
 
-            switch (ansi_cp.CodePage)
+            link = link_reg->link_non_cjk;
+            len = link_reg->link_non_cjk_len;
+
+            if (link_reg->locale_dependent)
             {
-            case 932:
-                link = link_reg->link_jp;
-                len = link_reg->link_jp_len;
-                break;
-            case 936:
-                link = link_reg->link_sc;
-                len = link_reg->link_sc_len;
-                break;
-            case 949:
-                link = link_reg->link_kr;
-                len = link_reg->link_kr_len;
-                break;
-            case 950:
-                link = link_reg->link_tc;
-                len = link_reg->link_tc_len;
-                break;
-            default:
-                link = link_reg->link_non_cjk;
-                len = link_reg->link_non_cjk_len;
+                switch (ansi_cp.CodePage)
+                {
+                case 932:
+                    link = link_reg->link_jp;
+                    len = link_reg->link_jp_len;
+                    break;
+                case 936:
+                    link = link_reg->link_sc;
+                    len = link_reg->link_sc_len;
+                    break;
+                case 949:
+                    link = link_reg->link_kr;
+                    len = link_reg->link_kr_len;
+                    break;
+                case 950:
+                    link = link_reg->link_tc;
+                    len = link_reg->link_tc_len;
+                    break;
+                }
             }
             set_multi_value_key(hkey, link_reg->font_name, link, len);
         }
