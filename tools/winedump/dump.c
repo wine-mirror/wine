@@ -202,6 +202,7 @@ const char *get_unicode_str( const WCHAR *str, int len )
     char *buffer;
     int i = 0;
 
+    if (!str) return "(null)";
     if (len == -1) len = strlenW( str );
     buffer = dump_want_n( len * 6 + 3);
     buffer[i++] = '"';
