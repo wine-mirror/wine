@@ -581,7 +581,7 @@ static void test_WM_THEMECHANGED(void)
         {TOOLTIPS_CLASSA, wm_themechanged_no_paint_seq},
         {TRACKBAR_CLASSA, wm_themechanged_paint_seq},
         {WC_TREEVIEWA, wm_themechanged_paint_erase_seq, 1, {0x1128}},
-        {UPDOWN_CLASSA, wm_themechanged_paint_erase_seq},
+        {UPDOWN_CLASSA, wm_themechanged_paint_erase_seq, 1, {WM_NCPAINT}},
         {WC_SCROLLBARA, wm_themechanged_paint_erase_seq, 1, {SBM_GETSCROLLINFO}},
     };
 
