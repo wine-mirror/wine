@@ -823,7 +823,7 @@
 @ cdecl _mbsupr(str)
 # stub _mbsupr_l(str ptr)
 @ cdecl _mbsupr_s(str long)
-# stub _mbsupr_s_l(str long ptr)
+@ cdecl _mbsupr_s_l(str long ptr)
 @ cdecl _mbtowc_l(ptr str long ptr)
 @ cdecl _memccpy(ptr ptr long long)
 @ cdecl _memicmp(str str long)

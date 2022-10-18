@@ -2145,11 +2145,10 @@ unsigned char* CDECL _mbsupr(unsigned char* s)
   return ret;
 }
 
-
 /*********************************************************************
- *              _mbsupr_s(MSVCRT.@)
+ *              _mbsupr_s_l(MSVCRT.@)
  */
-int CDECL _mbsupr_s(unsigned char* s, size_t len)
+int CDECL _mbsupr_s_l(unsigned char* s, size_t len, _locale_t locale)
 {
   if (!s && !len)
   {
@@ -2160,12 +2159,13 @@ int CDECL _mbsupr_s(unsigned char* s, size_t len)
     *_errno() = EINVAL;
     return EINVAL;
   }
+
   if (get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     for ( ; *s && len > 0; len--)
     {
-      c = _mbctoupper(_mbsnextc(s));
+      c = _mbctoupper_l(_mbsnextc_l(s, locale), locale);
       /* Note that I assume that the size of the character is unchanged */
       if (c > 255)
       {
@@ -2175,7 +2175,12 @@ int CDECL _mbsupr_s(unsigned char* s, size_t len)
       *s++=c;
     }
   }
-  else for ( ; *s && len > 0; s++, len--) *s = _toupper_l(*s, NULL);
+  else
+  {
+    for ( ; *s && len > 0; s++, len--)
+      *s = _toupper_l(*s, locale);
+  }
+
   if (*s)
   {
     *s = '\0';
@@ -2183,6 +2188,14 @@ int CDECL _mbsupr_s(unsigned char* s, size_t len)
     return EINVAL;
   }
   return 0;
+}
+
+/*********************************************************************
+ *              _mbsupr_s(MSVCRT.@)
+ */
+int CDECL _mbsupr_s(unsigned char* s, size_t len)
+{
+  return _mbsupr_s_l(s, len, NULL);
 }
 
 /*********************************************************************
