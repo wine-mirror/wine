@@ -764,7 +764,7 @@
 @ cdecl _mbctombb(long)
 @ stub _mbctombb_l
 @ cdecl _mbctoupper(long)
-@ stub _mbctoupper_l
+@ cdecl _mbctoupper_l(long ptr)
 @ extern _mbctype MSVCRT_mbctype
 @ stub _mblen_l
 @ cdecl _mbsbtype(str long)

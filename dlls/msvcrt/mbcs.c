@@ -468,16 +468,24 @@ unsigned int CDECL _mbctolower(unsigned int c)
 }
 
 /*********************************************************************
- *		_mbctoupper(MSVCRT.@)
+ *		_mbctoupper_l(MSVCRT.@)
  */
-unsigned int CDECL _mbctoupper(unsigned int c)
+unsigned int CDECL _mbctoupper_l(unsigned int c, _locale_t locale)
 {
-    if (_ismbblead(c))
+    if (_ismbblead_l(c, locale))
     {
       FIXME("Handle MBC chars\n");
       return c;
     }
-    return _toupper_l(c, NULL); /* ASCII CP or SB char */
+    return _toupper_l(c, locale); /* ASCII CP or SB char */
+}
+
+/*********************************************************************
+ *		_mbctoupper(MSVCRT.@)
+ */
+unsigned int CDECL _mbctoupper(unsigned int c)
+{
+    return _mbctoupper_l(c, NULL);
 }
 
 /*********************************************************************

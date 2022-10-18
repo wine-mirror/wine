@@ -709,7 +709,7 @@
 @ cdecl _mbctombb(long)
 # stub _mbctombb_l(long ptr)
 @ cdecl _mbctoupper(long)
-# stub _mbctoupper_l(long ptr)
+@ cdecl _mbctoupper_l(long ptr)
 @ extern _mbctype MSVCRT_mbctype
 # stub _mblen_l(str long ptr)
 @ cdecl _mbsbtype(str long)
