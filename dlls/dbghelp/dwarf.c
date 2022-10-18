@@ -1280,55 +1280,75 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
     }
 }
 
-static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsigned* num_ranges)
+static unsigned dwarf2_get_num_ranges(const dwarf2_debug_info_t* di)
 {
     struct attribute            range;
-    struct addr_range*          ranges;
-    struct addr_range*          new_ranges;
 
     if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
     {
         dwarf2_traverse_context_t   traverse;
-        unsigned alloc = 16;
-        ranges = malloc(sizeof(struct addr_range) * alloc);
-        if (!ranges) return NULL;
-        *num_ranges = 0;
+        unsigned num_ranges = 0;
 
         traverse.data = di->unit_ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
         traverse.end_data = di->unit_ctx->module_ctx->sections[section_ranges].address +
             di->unit_ctx->module_ctx->sections[section_ranges].size;
 
-        while (traverse.data + 2 * di->unit_ctx->head.word_size < traverse.end_data)
+        for (num_ranges = 0; traverse.data + 2 * di->unit_ctx->head.word_size < traverse.end_data; num_ranges++)
         {
             ULONG_PTR low = dwarf2_parse_addr_head(&traverse, &di->unit_ctx->head);
             ULONG_PTR high = dwarf2_parse_addr_head(&traverse, &di->unit_ctx->head);
             if (low == 0 && high == 0) break;
             if (low == (di->unit_ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
                 FIXME("unsupported yet (base address selection)\n");
-            if (*num_ranges >= alloc)
-            {
-                alloc *= 2;
-                new_ranges = realloc(ranges, sizeof(struct addr_range) * alloc);
-                if (!new_ranges)
-                {
-                    free(ranges);
-                    return NULL;
-                }
-                ranges = new_ranges;
-            }
-            ranges[*num_ranges].low = di->unit_ctx->compiland->address + low;
-            ranges[*num_ranges].high = di->unit_ctx->compiland->address + high;
-            (*num_ranges)++;
         }
+        return num_ranges;
     }
     else
     {
         struct attribute            low_pc;
         struct attribute            high_pc;
 
-        if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) ||
+        return dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) &&
+            dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc) ? 1 : 0;
+    }
+}
+
+/* nun_ranges must have been gotten from dwarf2_get_num_ranges() */
+static BOOL dwarf2_fill_ranges(const dwarf2_debug_info_t* di, struct addr_range* ranges, unsigned num_ranges)
+{
+    struct attribute            range;
+
+    if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
+    {
+        dwarf2_traverse_context_t   traverse;
+        unsigned                    index;
+
+        traverse.data = di->unit_ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
+        traverse.end_data = di->unit_ctx->module_ctx->sections[section_ranges].address +
+            di->unit_ctx->module_ctx->sections[section_ranges].size;
+
+        for (index = 0; traverse.data + 2 * di->unit_ctx->head.word_size < traverse.end_data; index++)
+        {
+            ULONG_PTR low = dwarf2_parse_addr_head(&traverse, &di->unit_ctx->head);
+            ULONG_PTR high = dwarf2_parse_addr_head(&traverse, &di->unit_ctx->head);
+            if (low == 0 && high == 0) break;
+            if (low == (di->unit_ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
+                FIXME("unsupported yet (base address selection)\n");
+            if (index >= num_ranges) return FALSE; /* sanity check */
+            ranges[index].low = di->unit_ctx->compiland->address + low;
+            ranges[index].high = di->unit_ctx->compiland->address + high;
+        }
+        return index == num_ranges; /* sanity check */
+    }
+    else
+    {
+        struct attribute            low_pc;
+        struct attribute            high_pc;
+
+        if (num_ranges != 1 || /* sanity check */
+            !dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) ||
             !dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc))
-            return NULL;
+            return FALSE;
         if (di->unit_ctx->head.version >= 4)
             switch (high_pc.form)
             {
@@ -1347,12 +1367,21 @@ static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsig
                 FIXME("Unsupported class for high_pc\n");
                 break;
             }
-        ranges = malloc(sizeof(struct addr_range));
-        if (!ranges) return NULL;
         ranges[0].low = di->unit_ctx->module_ctx->load_offset + low_pc.u.uvalue;
         ranges[0].high = di->unit_ctx->module_ctx->load_offset + high_pc.u.uvalue;
-        *num_ranges = 1;
     }
+    return TRUE;
+}
+
+static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsigned* num_ranges)
+{
+    unsigned nr = dwarf2_get_num_ranges(di);
+    struct addr_range* ranges;
+
+    if (nr == 0) return NULL;
+    ranges = malloc(nr * sizeof(ranges[0]));
+    if (!ranges || !dwarf2_fill_ranges(di, ranges, nr)) return NULL;
+    *num_ranges = nr;
     return ranges;
 }
 
