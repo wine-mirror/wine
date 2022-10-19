@@ -1344,18 +1344,25 @@ unsigned char * CDECL _mbsstr(const unsigned char *haystack, const unsigned char
 }
 
 /*********************************************************************
- *		_mbschr(MSVCRT.@)
- *
- * Find a multibyte character in a multibyte string.
+ *		_mbschr_l(MSVCRT.@)
  */
-unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
+unsigned char* CDECL _mbschr_l(const unsigned char* s, unsigned int x, _locale_t locale)
 {
-  if(get_mbcinfo()->ismbcodepage)
+  pthreadmbcinfo mbcinfo;
+
+  if(!MSVCRT_CHECK_PMT(s))
+    return NULL;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+  if(mbcinfo->ismbcodepage)
   {
     unsigned int c;
     while (1)
     {
-      c = _mbsnextc(s);
+      c = _mbsnextc_l(s, locale);
       if (c == x)
         return (unsigned char*)s;
       if (!c)
@@ -1364,6 +1371,14 @@ unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
     }
   }
   return u_strchr(s, x); /* ASCII CP */
+}
+
+/*********************************************************************
+ *		_mbschr(MSVCRT.@)
+ */
+unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
+{
+  return _mbschr_l(s, x, NULL);
 }
 
 /*********************************************************************
