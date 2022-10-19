@@ -2114,15 +2114,12 @@ unsigned char* CDECL _mbslwr(unsigned char* s)
  */
 int CDECL _mbslwr_s_l(unsigned char* s, size_t len, _locale_t locale)
 {
+  unsigned char *p = s;
+
   if (!s && !len)
-  {
     return 0;
-  }
-  else if (!s || !len)
-  {
-    *_errno() = EINVAL;
+  if (!MSVCRT_CHECK_PMT(s && len))
     return EINVAL;
-  }
 
   if (get_mbcinfo()->ismbcodepage)
   {
@@ -2145,12 +2142,12 @@ int CDECL _mbslwr_s_l(unsigned char* s, size_t len, _locale_t locale)
       *s = _tolower_l(*s, locale);
   }
 
-  if (*s)
+  if (!MSVCRT_CHECK_PMT(len))
   {
-    *s = '\0';
-    *_errno() = EINVAL;
+    *p = 0;
     return EINVAL;
   }
+  *s = 0;
   return 0;
 }
 

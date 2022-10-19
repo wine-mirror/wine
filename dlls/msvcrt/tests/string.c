@@ -2944,7 +2944,7 @@ static void test__mbslwr_s(void)
 
     memcpy(buffer, "ABCDEFGH", sizeof("ABCDEFGH"));
     errno = EBADF;
-    ret = p_mbslwr_s(buffer, 4);
+    ret = p_mbslwr_s(buffer, sizeof("ABCDEFGH") - 1);
     ok(ret == EINVAL, "Expected _mbslwr_s to return EINVAL, got %d\n", ret);
     ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
 
