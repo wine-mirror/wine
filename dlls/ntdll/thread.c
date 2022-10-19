@@ -179,6 +179,51 @@ int __cdecl __wine_dbg_output( const char *str )
 
 
 /***********************************************************************
+ *           set_native_thread_name
+ */
+void set_native_thread_name( DWORD tid, const char *name )
+{
+    THREAD_NAME_INFORMATION info;
+    HANDLE h = GetCurrentThread();
+    WCHAR nameW[64];
+
+    if (tid != -1)
+    {
+        OBJECT_ATTRIBUTES attr;
+        CLIENT_ID cid;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.Attributes = 0;
+        attr.ObjectName = NULL;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        cid.UniqueProcess = 0;
+        cid.UniqueThread = ULongToHandle( tid );
+
+        if (NtOpenThread( &h, THREAD_QUERY_LIMITED_INFORMATION, &attr, &cid )) return;
+    }
+
+    if (name)
+    {
+        mbstowcs( nameW, name, ARRAY_SIZE(nameW) );
+        nameW[ARRAY_SIZE(nameW) - 1] = '\0';
+    }
+    else
+    {
+        nameW[0] = '\0';
+    }
+
+    RtlInitUnicodeString( &info.ThreadName, nameW );
+    NtSetInformationThread( h, ThreadWineNativeThreadName, &info, sizeof(info) );
+
+    if (h != GetCurrentThread())
+        NtClose(h);
+}
+
+
+/***********************************************************************
  *           RtlExitUserThread  (NTDLL.@)
  */
 void WINAPI RtlExitUserThread( ULONG status )

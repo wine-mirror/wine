@@ -2304,6 +2304,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
     }
 
+    case ThreadWineNativeThreadName:
+    {
+        const THREAD_NAME_INFORMATION *info = data;
+
+        if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+
+        set_native_thread_name( handle, &info->ThreadName );
+        return STATUS_SUCCESS;
+    }
+
     case ThreadWow64Context:
         return set_thread_wow64_context( handle, data, length );
 
