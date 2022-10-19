@@ -2195,7 +2195,7 @@ struct wined3d_window_state
     bool set_style;
 };
 
-static DWORD WINAPI wined3d_set_window_state(void *ctx)
+static DWORD WINAPI set_window_state_thread(void *ctx)
 {
     struct wined3d_window_state *s = ctx;
     bool filter;
@@ -2218,12 +2218,28 @@ static DWORD WINAPI wined3d_set_window_state(void *ctx)
     return 0;
 }
 
+static void set_window_state(struct wined3d_window_state *s)
+{
+    DWORD window_tid = GetWindowThreadProcessId(s->window, NULL);
+    DWORD tid = GetCurrentThreadId();
+    HANDLE thread;
+
+    TRACE("Window %p belongs to thread %#x.\n", s->window, window_tid);
+    /* If the window belongs to a different thread, modifying the style and/or
+     * position can potentially deadlock if that thread isn't processing
+     * messages. */
+    if (window_tid == tid)
+        set_window_state_thread(s);
+    else if (!(thread = CreateThread(NULL, 0, set_window_state_thread, s, 0, NULL)))
+        ERR("Failed to create thread.\n");
+    else
+        CloseHandle(thread);
+}
+
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, int x, int y, int width, int height)
 {
     struct wined3d_window_state *s;
-    DWORD window_tid, tid;
-    HANDLE thread;
 
     TRACE("Setting up window %p for fullscreen mode.\n", window);
 
@@ -2264,20 +2280,7 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
     TRACE("Old style was %08x, %08x, setting to %08x, %08x.\n",
             state->style, state->exstyle, s->style, s->exstyle);
 
-    window_tid = GetWindowThreadProcessId(window, NULL);
-    tid = GetCurrentThreadId();
-
-    TRACE("Window %p belongs to thread %#x.\n", window, window_tid);
-    /* If the window belongs to a different thread, modifying the style and/or
-     * position can potentially deadlock if that thread isn't processing
-     * messages. */
-    if (window_tid == tid)
-        wined3d_set_window_state(s);
-    else if (!(thread = CreateThread(NULL, 0, wined3d_set_window_state, s, 0, NULL)))
-        ERR("Failed to create thread.\n");
-    else
-        CloseHandle(thread);
-
+    set_window_state(s);
     return WINED3D_OK;
 }
 
@@ -2285,9 +2288,7 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
         HWND window, const RECT *window_rect)
 {
     struct wined3d_window_state *s;
-    DWORD window_tid, tid;
     LONG style, exstyle;
-    HANDLE thread;
 
     if (!state->style && !state->exstyle)
         return;
@@ -2343,19 +2344,7 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
         s->flags |= (SWP_NOMOVE | SWP_NOSIZE);
     }
 
-    window_tid = GetWindowThreadProcessId(window, NULL);
-    tid = GetCurrentThreadId();
-
-    TRACE("Window %p belongs to thread %#x.\n", window, window_tid);
-    /* If the window belongs to a different thread, modifying the style and/or
-     * position can potentially deadlock if that thread isn't processing
-     * messages. */
-    if (window_tid == tid)
-        wined3d_set_window_state(s);
-    else if (!(thread = CreateThread(NULL, 0, wined3d_set_window_state, s, 0, NULL)))
-        ERR("Failed to create thread.\n");
-    else
-        CloseHandle(thread);
+    set_window_state(s);
 
     /* Delete the old values. */
     state->style = 0;
