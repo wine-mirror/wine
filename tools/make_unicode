@@ -479,7 +479,7 @@ my @locales =
  { name => "ar-AE", lcid => 0x00003801, sabbrevlangname => "ARU" },
  { name => "ar-BH", lcid => 0x00003c01, sabbrevlangname => "ARH" },
  { name => "ar-DJ" },
- { name => "ar-DZ", lcid => 0x00001401, sabbrevlangname => "ARG" },
+ { name => "ar-DZ", lcid => 0x00001401, sabbrevlangname => "ARG", nativedigits => "0123456789" },
  { name => "ar-EG", lcid => 0x00000c01, sabbrevlangname => "ARE" },
  { name => "ar-EH" },
  { name => "ar-ER" },
@@ -489,8 +489,8 @@ my @locales =
  { name => "ar-KM" },
  { name => "ar-KW", lcid => 0x00003401, sabbrevlangname => "ARK" },
  { name => "ar-LB", lcid => 0x00003001, sabbrevlangname => "ARB" },
- { name => "ar-LY", lcid => 0x00001001, sabbrevlangname => "ARL" },
- { name => "ar-MA", lcid => 0x00001801, sabbrevlangname => "ARM" },
+ { name => "ar-LY", lcid => 0x00001001, sabbrevlangname => "ARL", nativedigits => "0123456789" },
+ { name => "ar-MA", lcid => 0x00001801, sabbrevlangname => "ARM", nativedigits => "0123456789" },
  { name => "ar-MR" },
  { name => "ar-OM", lcid => 0x00002001, sabbrevlangname => "ARO" },
  { name => "ar-PS" },
@@ -501,7 +501,7 @@ my @locales =
  { name => "ar-SS" },
  { name => "ar-SY", lcid => 0x00002801, sabbrevlangname => "ARS" },
  { name => "ar-TD" },
- { name => "ar-TN", lcid => 0x00001c01, sabbrevlangname => "ART" },
+ { name => "ar-TN", lcid => 0x00001c01, sabbrevlangname => "ART", nativedigits => "0123456789" },
  { name => "ar-YE", lcid => 0x00002401, sabbrevlangname => "ARY" },
  { name => "arn", lcid => 0x0000007a, oemcp => 850, ebcdiccp => 20284, slist => ",", dir => "seed", sabbrevlangname => "MPD", sopentypelang => "MAP" },
  { name => "arn-CL", lcid => 0x0000047a, dir => "seed" },
@@ -622,7 +622,7 @@ my @locales =
  { name => "dsb-DE", lcid => 0x0000082e },
  { name => "dua" },
  { name => "dua-CM" },
- { name => "dv", lcid => 0x00000065, slist => "\x{060c}", group => 13, dir => "seed" },
+ { name => "dv", lcid => 0x00000065, slist => "\x{060c}", group => 13, dir => "seed", nativedigits => "0123456789" },
  { name => "dv-MV", lcid => 0x00000465, dir => "seed" },
  { name => "dyo" },
  { name => "dyo-SN" },
@@ -961,7 +961,7 @@ my @locales =
  { name => "jgo-CM" },
  { name => "jmc" },
  { name => "jmc-TZ" },
- { name => "jv", oemcp => 850 },
+ { name => "jv", oemcp => 850, nativedigits => "0123456789" },
  { name => "jv-ID", alias => "jv-Latn-ID" },
 ## name => "jv-Java" },
 ## name => "jv-Java-ID" },
@@ -1087,7 +1087,7 @@ my @locales =
  { name => "mn-Cyrl", lcid => 0x00007850, file => "mn", sabbrevlangname => "MNN" },
  { name => "mn-Cyrl-MN", alias => "mn-MN" },
  { name => "mn-MN", lcid => 0x00000450, sparent => "mn-Cyrl", group => 5 },
- { name => "mn-Mong", lcid => 0x00007c50, oemcp => 65001, slist => ",", group => 15, dir => "seed", sabbrevlangname => "MNG" },
+ { name => "mn-Mong", lcid => 0x00007c50, oemcp => 65001, slist => ",", group => 15, dir => "seed", sabbrevlangname => "MNG", nativedigits => "0123456789" },
  { name => "mn-Mong-CN", lcid => 0x00000850, dir => "seed" },
  { name => "mn-Mong-MN", lcid => 0x00000c50, dir => "seed", sabbrevlangname => "MNM" },
  { name => "mni", lcid => 0x00000058, slist => ",", sabbrevlangname => "ZZZ" },
@@ -1416,7 +1416,7 @@ my @locales =
 ## name => "tzm-Arab-MA", lcid => 0x0000045f },
 ## name => "tzm-Tfng", lcid => 0x0000785f },
 ## name => "tzm-Tfng-MA", lcid => 0x0000105f },
- { name => "ug", lcid => 0x00000080, oemcp => 720, slist => ",", group => 13, sopentypelang => "UYG" },
+ { name => "ug", lcid => 0x00000080, oemcp => 720, slist => ",", group => 13, sopentypelang => "UYG", nativedigits => "0123456789" },
  { name => "ug-Arab", alias => "ug" },
  { name => "ug-Arab-CN", alias => "ug-CN" },
  { name => "ug-CN", lcid => 0x00000480 },
@@ -1482,7 +1482,7 @@ my @locales =
  { name => "zgh-MA", alias => "zgh-Tfng-MA" },
  { name => "zgh-Tfng", file => "zgh" },
  { name => "zgh-Tfng-MA", file => "zgh_MA" },
- { name => "zh", lcid => 0x00007804, ireadinglayout => 2, oemcp => 936, slist => ",", sscripts => "Hani Hans", sabbrevlangname => "CHS", sopentypelang => "ZHS" },
+ { name => "zh", lcid => 0x00007804, ireadinglayout => 2, oemcp => 936, slist => ",", sscripts => "Hani Hans", sabbrevlangname => "CHS", sopentypelang => "ZHS", nativedigits => "0123456789" },
  { name => "zh-CN", lcid => 0x00000804, file => "zh_Hans_CN", sparent => "zh-Hans" },
  { name => "zh-CN_phoneb", lcid => 0x00050804, alias => "zh-CN" },
  { name => "zh-CN_stroke", lcid => 0x00020804, alias => "zh-CN" },
@@ -1490,8 +1490,8 @@ my @locales =
  { name => "zh-Hans-CN", alias => "zh-CN" },
  { name => "zh-Hans-CN-u-co-phonebk", alias => "zh-CN_phoneb" },
  { name => "zh-Hans-CN-u-co-stroke", alias => "zh-CN_stroke" },
- { name => "zh-Hans-HK", slist => ";" },
- { name => "zh-Hans-MO", slist => ";" },
+ { name => "zh-Hans-HK", slist => ";", nativedigits => "" },
+ { name => "zh-Hans-MO", slist => ";", nativedigits => "" },
  { name => "zh-Hans-SG", alias => "zh-SG" },
  { name => "zh-Hans-SG-u-co-phonebk", alias => "zh-SG_phoneb" },
  { name => "zh-Hans-SG-u-co-stroke", alias => "zh-SG_stroke" },
@@ -4726,7 +4726,7 @@ sub build_locale_data()
         my ($icurrency, $inegcurr) = parse_currency_format( $sname, $currencyformat );
         my ($ipospercent, $inegpercent) = parse_percent_format( $percentformat );
         my $native_numbering = loc_query( $loc, "/ldml/numbers/otherNumberingSystems/native" );
-        my @snativedigits = split //, xml_query( $numbers, "/supplementalData/numberingSystems/numberingSystem[\@id='$native_numbering']/\@digits" );
+        my @snativedigits = split //, (locale_entry( $loc, "nativedigits", "" ) || xml_query( $numbers, "/supplementalData/numberingSystems/numberingSystem[\@id='$native_numbering']/\@digits" ));
         my $digitsubstitution = !(ord($snativedigits[0]) >= 0x600 && ord($snativedigits[0]) <= 0x6ff);
         my $measure = defined xml_query( $suppl, "/supplementalData/measurementData/measurementSystem[\@type='US' and $territory_match]" );
         my $papersize = defined xml_query( $suppl, "/supplementalData/measurementData/paperSize[\@type='US-Letter' and $territory_match]" );
