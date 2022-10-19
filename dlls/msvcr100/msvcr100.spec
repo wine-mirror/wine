@@ -1009,7 +1009,7 @@
 @ cdecl _ismbslead(ptr ptr)
 @ cdecl _ismbslead_l(ptr ptr ptr)
 @ cdecl _ismbstrail(ptr ptr)
-@ stub _ismbstrail_l(ptr ptr ptr)
+@ cdecl _ismbstrail_l(ptr ptr ptr)
 @ cdecl _isnan(double)
 @ cdecl -arch=x86_64 _isnanf(float)
 @ cdecl _isprint_l(long ptr)

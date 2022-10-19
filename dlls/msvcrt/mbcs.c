@@ -1848,15 +1848,26 @@ int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
 }
 
 /*********************************************************************
+ *		_ismbstrail_l(MSVCRT.@)
+ */
+int CDECL _ismbstrail_l(const unsigned char* start, const unsigned char* str, _locale_t locale)
+{
+  if (!MSVCRT_CHECK_PMT(start && str))
+    return 0;
+
+  /* Note: this function doesn't check _ismbbtrail */
+  if ((str > start) && _ismbslead_l(start, str-1, locale))
+    return -1;
+  else
+    return 0;
+}
+
+/*********************************************************************
  *		_ismbstrail(MSVCRT.@)
  */
 int CDECL _ismbstrail(const unsigned char* start, const unsigned char* str)
 {
-  /* Note: this function doesn't check _ismbbtrail */
-  if ((str > start) && _ismbslead(start, str-1))
-    return -1;
-  else
-    return 0;
+  return _ismbstrail_l(start, str, NULL);
 }
 
 /*********************************************************************

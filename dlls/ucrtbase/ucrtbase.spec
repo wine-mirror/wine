@@ -501,7 +501,7 @@
 @ cdecl _ismbslead(ptr ptr)
 @ cdecl _ismbslead_l(ptr ptr ptr)
 @ cdecl _ismbstrail(ptr ptr)
-@ stub _ismbstrail_l
+@ cdecl _ismbstrail_l(ptr ptr ptr)
 @ cdecl _isnan(double)
 @ cdecl -arch=x86_64 _isnanf(float)
 @ cdecl _isprint_l(long ptr)
@@ -1100,7 +1100,7 @@
 @ cdecl _o__ismbslead(ptr ptr) _ismbslead
 @ cdecl _o__ismbslead_l(ptr ptr ptr) _ismbslead_l
 @ cdecl _o__ismbstrail(ptr ptr) _ismbstrail
-@ stub _o__ismbstrail_l
+@ cdecl _o__ismbstrail_l(ptr ptr ptr) _ismbstrail_l
 @ cdecl _o__iswctype_l(long long ptr) _iswctype_l
 @ cdecl _o__itoa(long ptr long) _itoa
 @ cdecl _o__itoa_s(long ptr long long) _itoa_s
