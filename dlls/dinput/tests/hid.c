@@ -40,6 +40,7 @@
 #include "cfgmgr32.h"
 #include "newdev.h"
 #include "dbt.h"
+#include "devguid.h"
 
 #include "objbase.h"
 
@@ -51,7 +52,6 @@
 #include "ddk/hidsdi.h"
 #include "ddk/hidpi.h"
 #include "ddk/hidport.h"
-#include "devguid.h"
 #include "dinput.h"
 #include "dinputd.h"
 #include "hidusage.h"
