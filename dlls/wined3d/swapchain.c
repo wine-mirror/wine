@@ -2200,8 +2200,6 @@ static DWORD WINAPI set_window_state_thread(void *ctx)
     struct wined3d_window_state *s = ctx;
     bool filter;
 
-    SetThreadDescription(GetCurrentThread(), L"wined3d_set_window_state");
-
     filter = wined3d_filter_messages(s->window, TRUE);
 
     if (s->set_style)
@@ -2229,11 +2227,18 @@ static void set_window_state(struct wined3d_window_state *s)
      * position can potentially deadlock if that thread isn't processing
      * messages. */
     if (window_tid == tid)
+    {
         set_window_state_thread(s);
-    else if (!(thread = CreateThread(NULL, 0, set_window_state_thread, s, 0, NULL)))
-        ERR("Failed to create thread.\n");
-    else
+    }
+    else if ((thread = CreateThread(NULL, 0, set_window_state_thread, s, 0, NULL)))
+    {
+        SetThreadDescription(thread, L"wined3d_set_window_state");
         CloseHandle(thread);
+    }
+    else
+    {
+        ERR("Failed to create thread.\n");
+    }
 }
 
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
