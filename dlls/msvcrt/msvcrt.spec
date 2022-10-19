@@ -699,7 +699,7 @@
 @ cdecl _mbcjmstojis(long)
 # stub _mbcjmstojis_l(long ptr)
 @ cdecl _mbclen(ptr)
-# stub _mbclen_l(ptr ptr)
+@ cdecl _mbclen_l(ptr ptr)
 @ cdecl _mbctohira(long)
 # stub _mbctohira_l(long ptr)
 @ cdecl _mbctokata(long)

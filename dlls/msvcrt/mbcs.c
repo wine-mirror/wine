@@ -644,11 +644,19 @@ unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cu
 }
 
 /*********************************************************************
+ *		_mbclen_l(MSVCRT.@)
+ */
+size_t CDECL _mbclen_l(const unsigned char* str, _locale_t locale)
+{
+    return _ismbblead_l(*str, locale) && str[1] ? 2 : 1;
+}
+
+/*********************************************************************
  *		_mbclen(MSVCRT.@)
  */
 size_t CDECL _mbclen(const unsigned char* str)
 {
-  return _ismbblead(*str) ? 2 : 1;
+    return _mbclen_l(str, NULL);
 }
 
 /*********************************************************************

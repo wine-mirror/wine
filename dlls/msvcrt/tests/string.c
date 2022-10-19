@@ -366,6 +366,7 @@ static void test_mbcp(void)
     expect_eq(_mbclen(mbstring), 2, int, "%d");
     expect_eq(_mbclen(&mbstring[2]), 2, int, "%d");
     expect_eq(_mbclen(&mbstring[3]), 1, int, "%d");
+    expect_eq(_mbclen(mbsonlylead), 1, int, "%d");
     expect_eq(_mbslen(mbstring2), 4, int, "%d");
     expect_eq(_mbslen(mbsonlylead), 0, int, "%d");          /* lead + NUL not counted as character */
     expect_eq(_mbslen(mbstring), 4, int, "%d");             /* lead + invalid trail counted */
