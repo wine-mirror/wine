@@ -365,7 +365,7 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
   {
     if(!(mbcinfo->mbctype[i + 1] & _M1))
     {
-      if(mbcinfo->mbctype[i] & (C1_UPPER|C1_LOWER))
+      if(mbcinfo->mbctype[i + 1] & (_SBUP | _SBLOW))
         mbcinfo->mbcasemap[i] = bufA[charcount];
       charcount++;
     }
