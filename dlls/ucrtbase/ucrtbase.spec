@@ -499,7 +499,7 @@
 @ cdecl _ismbcupper(long)
 @ cdecl _ismbcupper_l(long ptr)
 @ cdecl _ismbslead(ptr ptr)
-@ stub _ismbslead_l
+@ cdecl _ismbslead_l(ptr ptr ptr)
 @ cdecl _ismbstrail(ptr ptr)
 @ stub _ismbstrail_l
 @ cdecl _isnan(double)
@@ -1098,7 +1098,7 @@
 @ cdecl _o__ismbcupper(long) _ismbcupper
 @ cdecl _o__ismbcupper_l(long ptr) _ismbcupper_l
 @ cdecl _o__ismbslead(ptr ptr) _ismbslead
-@ stub _o__ismbslead_l
+@ cdecl _o__ismbslead_l(ptr ptr ptr) _ismbslead_l
 @ cdecl _o__ismbstrail(ptr ptr) _ismbstrail
 @ stub _o__ismbstrail_l
 @ cdecl _o__iswctype_l(long long ptr) _iswctype_l

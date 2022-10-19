@@ -1808,13 +1808,22 @@ int CDECL _ismbclegal(unsigned int c)
 }
 
 /*********************************************************************
- *		_ismbslead(MSVCRT.@)
+ *		_ismbslead_l(MSVCRT.@)
  */
-int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
+int CDECL _ismbslead_l(const unsigned char* start, const unsigned char* str, _locale_t locale)
 {
+  pthreadmbcinfo mbcinfo;
   int lead = 0;
 
-  if(!get_mbcinfo()->ismbcodepage)
+  if (!MSVCRT_CHECK_PMT(start && str))
+    return 0;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+
+  if(!mbcinfo->ismbcodepage)
     return 0;
 
   /* Lead bytes can also be trail bytes so we need to analyse the string
@@ -1823,11 +1832,19 @@ int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
   {
     if (!*start)
       return 0;
-    lead = !lead && _ismbblead(*start);
+    lead = !lead && _ismbblead_l(*start, locale);
     start++;
   }
 
   return lead ? -1 : 0;
+}
+
+/*********************************************************************
+ *		_ismbslead(MSVCRT.@)
+ */
+int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
+{
+  return _ismbslead_l(start, str, NULL);
 }
 
 /*********************************************************************
