@@ -3028,7 +3028,7 @@ static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* f
     return NULL;
 }
 
-static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame);
+static enum location_error compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame);
 
 static enum location_error loc_compute_frame(struct process* pcs,
                                              const struct module_format* modfmt,
@@ -3071,7 +3071,8 @@ static enum location_error loc_compute_frame(struct process* pcs,
                 }
                 break;
             case loc_dwarf2_frame_cfa:
-                if (!compute_call_frame_cfa(modfmt->module, ip + ((struct symt_compiland*)func->container)->address, frame)) return loc_err_internal;
+                err = compute_call_frame_cfa(modfmt->module, ip + ((struct symt_compiland*)func->container)->address, frame);
+                if (err < 0) return err;
                 break;
             default:
                 WARN("Unsupported frame kind %d\n", pframe->kind);
@@ -3866,11 +3867,11 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
     return TRUE;
 }
 
-static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame)
+static enum location_error compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame)
 {
     struct frame_info info;
 
-    if (!dwarf2_fetch_frame_info(module, module->cpu, ip, &info)) return FALSE;
+    if (!dwarf2_fetch_frame_info(module, module->cpu, ip, &info)) return loc_err_internal;
 
     /* beginning of function, or no available dwarf information ? */
     if (ip == info.ip || info.state.rules[info.retaddr_reg] == RULE_UNSET)
@@ -3888,11 +3889,15 @@ static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct l
         switch (info.state.cfa_rule)
         {
         case RULE_EXPRESSION:
-            FIXME("Too complex expression for frame_CFA resolution (RULE_EXPRESSION)\n");
-            return FALSE;
+            WARN("Too complex expression for frame_CFA resolution (RULE_EXPRESSION)\n");
+            return loc_err_too_complex;
         case RULE_VAL_EXPRESSION:
-            FIXME("Too complex expression for frame_CFA resolution (RULE_VAL_EXPRESSION)\n");
-            return FALSE;
+            /* unfortunately, we've seen at least construct like:
+             *     cfa := 'breg_x + offset; deref'
+             * which is an indirection too much for the DbgHelp API.
+             */
+            WARN("Too complex expression for frame_CFA resolution (RULE_VAL_EXPRESSION)\n");
+            return loc_err_too_complex;
         default:
             frame->kind = loc_regrel;
             frame->reg = module->cpu->map_dwarf_register(info.state.cfa_reg, module, TRUE);
@@ -3900,7 +3905,7 @@ static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct l
             break;
         }
     }
-    return TRUE;
+    return 0;
 }
 
 static void dwarf2_location_compute(struct process* pcs,
