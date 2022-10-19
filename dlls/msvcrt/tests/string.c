@@ -2879,7 +2879,7 @@ static void test__mbsupr_s(void)
 
     memcpy(buffer, "abcdefgh", sizeof("abcdefgh"));
     errno = EBADF;
-    ret = p_mbsupr_s(buffer, 4);
+    ret = p_mbsupr_s(buffer, sizeof("abcdefgh") - 1);
     ok(ret == EINVAL, "Expected _mbsupr_s to return EINVAL, got %d\n", ret);
     ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
 
