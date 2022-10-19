@@ -627,7 +627,7 @@
 @ stub _mbsdec_l
 @ cdecl _mbsdup(str) _strdup
 @ cdecl _mbsicmp(str str)
-@ stub _mbsicmp_l
+@ cdecl _mbsicmp_l(str str ptr)
 @ cdecl _mbsicoll(str str)
 @ cdecl _mbsicoll_l(str str ptr)
 @ cdecl _mbsinc(str)
@@ -1196,7 +1196,7 @@
 @ cdecl _o__mbsdec(ptr ptr) _mbsdec
 @ stub _o__mbsdec_l
 @ cdecl _o__mbsicmp(str str) _mbsicmp
-@ stub _o__mbsicmp_l
+@ cdecl _o__mbsicmp_l(str str ptr) _mbsicmp_l
 @ cdecl _o__mbsicoll(str str) _mbsicoll
 @ cdecl _o__mbsicoll_l(str str ptr) _mbsicoll_l
 @ cdecl _o__mbsinc(str) _mbsinc

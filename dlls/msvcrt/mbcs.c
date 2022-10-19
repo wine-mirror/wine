@@ -1098,11 +1098,20 @@ int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
 }
 
 /*********************************************************************
- *		_mbsicmp(MSVCRT.@)
+ *		_mbsicmp_l(MSVCRT.@)
  */
-int CDECL _mbsicmp(const unsigned char* str, const unsigned char* cmp)
+int CDECL _mbsicmp_l(const unsigned char* str, const unsigned char* cmp, _locale_t locale)
 {
-  if(get_mbcinfo()->ismbcodepage)
+  pthreadmbcinfo mbcinfo;
+
+  if(!MSVCRT_CHECK_PMT(str && cmp))
+    return _NLSCMPERROR;
+
+  if(!locale)
+    mbcinfo = get_mbcinfo();
+  else
+    mbcinfo = locale->mbcinfo;
+  if(mbcinfo->ismbcodepage)
   {
     unsigned int strc, cmpc;
     do {
@@ -1110,8 +1119,8 @@ int CDECL _mbsicmp(const unsigned char* str, const unsigned char* cmp)
         return *cmp ? -1 : 0;
       if(!*cmp)
         return 1;
-      strc = _mbctolower(_mbsnextc(str));
-      cmpc = _mbctolower(_mbsnextc(cmp));
+      strc = _mbctolower_l(_mbsnextc_l(str, locale), locale);
+      cmpc = _mbctolower_l(_mbsnextc_l(cmp, locale), locale);
       if(strc != cmpc)
         return strc < cmpc ? -1 : 1;
       str +=(strc > 255) ? 2 : 1;
@@ -1119,6 +1128,14 @@ int CDECL _mbsicmp(const unsigned char* str, const unsigned char* cmp)
     } while(1);
   }
   return u_strcasecmp(str, cmp); /* ASCII CP */
+}
+
+/*********************************************************************
+ *		_mbsicmp(MSVCRT.@)
+ */
+int CDECL _mbsicmp(const unsigned char* str, const unsigned char* cmp)
+{
+  return _mbsicmp_l(str, cmp, NULL);
 }
 
 /*********************************************************************

@@ -733,7 +733,7 @@
 @ cdecl _mbsdup(str) _strdup
 # stub _strdup_dbg(str long str long)
 @ cdecl _mbsicmp(str str)
-# stub _mbsicmp_l(str str ptr)
+@ cdecl _mbsicmp_l(str str ptr)
 @ cdecl _mbsicoll(str str)
 @ cdecl _mbsicoll_l(str str ptr)
 @ cdecl _mbsinc(str)
