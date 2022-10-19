@@ -982,7 +982,8 @@ int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, _locale_
 {
   pthreadmbcinfo mbcinfo;
 
-  if (!str || !cmp) return INT_MAX;
+  if (!MSVCRT_CHECK_PMT(str && cmp))
+    return _NLSCMPERROR;
 
   mbcinfo = locale ? locale->mbcinfo : get_mbcinfo();
 
