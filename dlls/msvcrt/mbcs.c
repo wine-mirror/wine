@@ -494,12 +494,34 @@ unsigned int CDECL _mbctolower(unsigned int c)
  */
 unsigned int CDECL _mbctoupper_l(unsigned int c, _locale_t locale)
 {
-    if (_ismbblead_l(c, locale))
+    unsigned char str[2], ret[2];
+    pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    if (c > 0xff)
     {
-      FIXME("Handle MBC chars\n");
-      return c;
+        if (!_ismbblead_l((c >> 8) & 0xff, locale))
+            return c;
+
+        str[0] = c >> 8;
+        str[1] = c;
+        switch(__crtLCMapStringA(mbcinfo->mblcid, LCMAP_UPPERCASE,
+                    (char*)str, 2, (char*)ret, 2, mbcinfo->mbcodepage, 0))
+        {
+        case 0:
+            return c;
+        case 1:
+            return ret[0];
+        default:
+            return ret[1] + (ret[0] << 8);
+        }
     }
-    return _toupper_l(c, locale); /* ASCII CP or SB char */
+
+    return mbcinfo->mbctype[c + 1] & _SBLOW ? mbcinfo->mbcasemap[c] : c;
 }
 
 /*********************************************************************

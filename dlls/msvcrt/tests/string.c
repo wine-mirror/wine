@@ -2839,6 +2839,7 @@ static void test__mbsupr_s(void)
 {
     errno_t ret;
     unsigned char buffer[20];
+    int cp = _getmbcp();
 
     if (!p_mbsupr_s)
     {
@@ -2890,6 +2891,13 @@ static void test__mbsupr_s(void)
        "Expected the output buffer to be \"ABCDEFGH\\0ijklmnop\", got \"%s\"\n",
        buffer);
 
+    _setmbcp(936);
+    memcpy(buffer, "\xa2\xa1\xa2\xa2q", sizeof("\xa2\xa1\xa2\xa2q"));
+    ret = p_mbsupr_s(buffer, sizeof(buffer));
+    ok(ret == 0, "Expected _mbsupr_s to return 0, got %d\n", ret);
+    ok(!memcmp(buffer, "\xa2\xf1\xa2\xf2Q", sizeof("\xa2\xf1\xa2\xf2Q")),
+            "got %s\n", debugstr_a((char*)buffer));
+    _setmbcp(cp);
 }
 
 static void test__mbslwr_s(void)
