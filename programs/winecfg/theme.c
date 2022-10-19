@@ -508,7 +508,7 @@ static struct
     {-1,                COLOR_INFOTEXT,         L"InfoText"      }, /* IDC_SYSPARAMS_TOOLTIP_TEXT */
     {-1,                COLOR_WINDOW,           L"Window"        }, /* IDC_SYSPARAMS_WINDOW */
     {-1,                COLOR_WINDOWTEXT,       L"WindowText"    }, /* IDC_SYSPARAMS_WINDOW_TEXT */
-    {SM_CXSIZE,         COLOR_ACTIVECAPTION,    L"ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
+    {SM_CYSIZE,         COLOR_ACTIVECAPTION,    L"ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
     {-1,                COLOR_CAPTIONTEXT,      L"TitleText"     }, /* IDC_SYSPARAMS_ACTIVE_TITLE_TEXT */
     {-1,                COLOR_INACTIVECAPTION,  L"InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
     {-1,                COLOR_INACTIVECAPTIONTEXT,L"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
