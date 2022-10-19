@@ -2646,7 +2646,8 @@ static void test_visual(void)
     RECT rect;
     BOOL ret;
 
-    toolbar = CreateWindowA(TOOLBARCLASSNAMEA, "", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hMainWnd, 0, 0, NULL);
+    toolbar = CreateWindowA(TOOLBARCLASSNAMEA, "", WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT, 0, 0, 50,
+                            50, hMainWnd, 0, 0, NULL);
     ok(!!toolbar, "Failed to create a toolbar window.\n");
 
     /* Test that the comctl32 55AA pattern brush is not used to draw checked background when theming is on */
