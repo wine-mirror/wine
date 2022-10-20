@@ -1066,8 +1066,9 @@ static void test_query_kerndebug(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
-    SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX skdi_ex;
-    SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
+    /* some Windows version expect alignment */
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX DECLSPEC_ALIGN(4) skdi_ex;
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION DECLSPEC_ALIGN(4) skdi;
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, 0, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
