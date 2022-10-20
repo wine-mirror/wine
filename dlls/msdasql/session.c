@@ -263,7 +263,7 @@ static BOOL is_variable_length(SQLSMALLINT type)
     return FALSE;
 }
 
-static BOOL is_fixed_legnth(SQLSMALLINT type)
+static BOOL is_fixed_length(SQLSMALLINT type)
 {
     switch(type)
     {
@@ -1059,7 +1059,7 @@ static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDIN
             if (ColumnDataNullable)
                 dbcolumn[i].dwFlags |= DBCOLUMNFLAGS_ISNULLABLE | DBCOLUMNFLAGS_MAYBENULL;
 
-            if (is_fixed_legnth(ColumnDataType))
+            if (is_fixed_length(ColumnDataType))
                 dbcolumn[i].dwFlags |= DBCOLUMNFLAGS_ISFIXEDLENGTH;
 
             ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_SCALE, NULL, 0, NULL, &length);
