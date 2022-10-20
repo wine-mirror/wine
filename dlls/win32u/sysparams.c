@@ -506,7 +506,26 @@ static BOOL adapter_set_registry_settings( const struct adapter *adapter, const 
 static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODEW *mode )
 {
     BOOL is_primary = !!(adapter->dev.state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
-    return user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, is_primary, mode );
+    HANDLE mutex;
+    HKEY hkey;
+    BOOL ret;
+
+    if ((ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, is_primary, mode ))) return TRUE;
+
+    /* default implementation: read current display settings from the registry. */
+
+    mutex = get_display_device_init_mutex();
+
+    if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) ))) ret = FALSE;
+    else if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
+    else
+    {
+        ret = read_adapter_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
+        NtClose( hkey );
+    }
+
+    release_display_device_init_mutex( mutex );
+    return ret;
 }
 
 static BOOL adapter_set_current_settings( const struct adapter *adapter, const DEVMODEW *mode )
@@ -2511,7 +2530,8 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
     if ((adapter = find_adapter( NULL )))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-        adapter_get_current_settings( adapter, &current_mode );
+
+        if (!adapter_get_current_settings( adapter, &current_mode )) WARN( "Failed to get primary adapter current display settings.\n" );
         adapter_release( adapter );
 
         send_notify_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,

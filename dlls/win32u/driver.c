@@ -761,7 +761,7 @@ static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_
 
 static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW mode )
 {
-    return FALSE;
+    return FALSE; /* use default implementation */
 }
 
 static BOOL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, BOOL force, void *param )
