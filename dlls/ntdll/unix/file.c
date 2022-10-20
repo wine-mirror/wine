@@ -6040,6 +6040,16 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
         break;
     }
 
+    case FSCTL_GET_REPARSE_POINT:
+        io->Information = 0;
+        if (out_buffer && out_size)
+        {
+            FIXME("FSCTL_GET_REPARSE_POINT semi-stub\n");
+            status = STATUS_NOT_A_REPARSE_POINT;
+        }
+        else status = STATUS_INVALID_USER_BUFFER;
+        break;
+
     case FSCTL_GET_OBJECT_ID:
     {
         FILE_OBJECTID_BUFFER *info = out_buffer;
