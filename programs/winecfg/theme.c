@@ -1107,6 +1107,24 @@ static void update_mime_types(HWND hDlg)
     set_reg_key(config_key, keypath(L"FileOpenAssociations"), L"Enable", state);
 }
 
+static BOOL CALLBACK update_window_pos_proc(HWND hwnd, LPARAM lp)
+{
+    RECT rect;
+
+    GetClientRect(hwnd, &rect);
+    AdjustWindowRectEx(&rect, GetWindowLongW(hwnd, GWL_STYLE), !!GetMenu(hwnd),
+                       GetWindowLongW(hwnd, GWL_EXSTYLE));
+    SetWindowPos(hwnd, 0, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
+                 SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+    return TRUE;
+}
+
+/* Adjust the rectangle for top-level windows because the new non-client metrics may be different */
+static void update_window_pos(void)
+{
+    EnumWindows(update_window_pos_proc, 0);
+}
+
 INT_PTR CALLBACK
 ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1261,6 +1279,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     read_shell_folder_link_targets();
                     update_shell_folder_listview(hDlg);
                     update_mime_types(hDlg);
+                    update_window_pos();
                     SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
                     break;
                 }
