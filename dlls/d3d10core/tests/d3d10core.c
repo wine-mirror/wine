@@ -4813,7 +4813,7 @@ static void test_pipeline_statistics_query(void)
     get_query_data(query, &data, sizeof(data));
 
     /* WARP devices randomly return all-zeroed structures as if the draw did not happen. Flushing and
-     * sleeping a second before ending the query reduces the likelyhood of hitting the bug a lot, but
+     * sleeping a second before ending the query reduces the likelihood of hitting the bug a lot, but
      * does not eliminate it entirely. To make things work reliably ignore such broken results. */
     if (is_warp_device(device) && !memcmp(&data, &zero_data, sizeof(data)))
     {
