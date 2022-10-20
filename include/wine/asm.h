@@ -41,6 +41,12 @@
 # define __ASM_CFI(str)
 #endif
 
+#if defined(__arm__) && defined(__ELF__) && defined(__GNUC__) && !defined(__SEH__) && !defined(__ARM_DWARF_EH__)
+# define __ASM_EHABI(str) str
+#else
+# define __ASM_EHABI(str)
+#endif
+
 #if defined(__SEH__) || (defined(_MSC_VER) && defined(__clang__) && (defined(__x86_64__) || defined(__aarch64__)))
 # if defined(__aarch64__) && defined(__clang_major__) && (__clang_major__ < 12 || defined(__apple_build_version__))
    /* Clang got support for aarch64 SEH assembly directives in Clang 12,
@@ -86,7 +92,7 @@
 #define __ASM_DEFINE_FUNC(name,code)  \
     __ASM_BLOCK_BEGIN(__LINE__) \
     asm(".text\n\t.align 4\n\t.globl " name "\n\t" __ASM_FUNC_TYPE(name) __ASM_SEH("\n\t.seh_proc " name) "\n" name ":\n\t" \
-        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") __ASM_SEH("\n\t.seh_endproc") __ASM_FUNC_SIZE(name)); \
+        __ASM_CFI(".cfi_startproc\n\t") __ASM_EHABI(".fnstart\n\t") code __ASM_CFI("\n\t.cfi_endproc") __ASM_EHABI("\n\t.fnend") __ASM_SEH("\n\t.seh_endproc") __ASM_FUNC_SIZE(name)); \
     __ASM_BLOCK_END
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)

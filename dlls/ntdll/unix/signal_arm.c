@@ -593,6 +593,11 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline,
                    "push {r3}\n\t" /* Original Sp */
                    __ASM_CFI(".cfi_escape 0x0f,0x03,0x7D,0x04,0x06\n\t") /* CFA, DW_OP_breg13 + 0x04, DW_OP_deref */
                    __ASM_CFI(".cfi_escape 0x10,0x0e,0x02,0x7D,0x0c\n\t") /* LR, DW_OP_breg13 + 0x0c */
+                   __ASM_EHABI(".save {sp}\n\t")
+                   __ASM_EHABI(".pad #-12\n\t")
+                   __ASM_EHABI(".save {pc}\n\t")
+                   __ASM_EHABI(".pad #8\n\t")
+                   __ASM_EHABI(".save {lr}\n\t")
                    /* We can't express restoring both Pc and Lr with CFI
                     * directives, but we manually load Lr from the stack
                     * in unwind_builtin_dll above. */
@@ -1171,6 +1176,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
  *           signal_start_thread
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
+                   __ASM_EHABI(".cantunwind\n\t")
                    "push {r4-r12,lr}\n\t"
                    /* store exit frame */
                    "str sp, [r3, #0x1d4]\n\t" /* arm_thread_data()->exit_frame */
@@ -1187,6 +1193,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
  *           signal_exit_thread
  */
 __ASM_GLOBAL_FUNC( signal_exit_thread,
+                   __ASM_EHABI(".cantunwind\n\t")
                    "ldr r3, [r2, #0x1d4]\n\t"  /* arm_thread_data()->exit_frame */
                    "mov ip, #0\n\t"
                    "str ip, [r2, #0x1d4]\n\t"
@@ -1200,6 +1207,7 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   __ASM_EHABI(".cantunwind\n\t")
                    "mrc p15, 0, r1, c13, c0, 2\n\t" /* NtCurrentTeb() */
                    "ldr r1, [r1, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
                    "add r0, r1, #0x10\n\t"
@@ -1276,6 +1284,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
  *           __wine_setjmpex
  */
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
+                   __ASM_EHABI(".cantunwind\n\t")
                    "stm r0, {r1,r4-r11}\n"         /* jmp_buf->Frame,R4..R11 */
                    "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                    "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
@@ -1293,6 +1302,7 @@ __ASM_GLOBAL_FUNC( __wine_setjmpex,
  *           __wine_longjmp
  */
 __ASM_GLOBAL_FUNC( __wine_longjmp,
+                   __ASM_EHABI(".cantunwind\n\t")
                    "ldm r0, {r3-r11}\n\t"          /* jmp_buf->Frame,R4..R11 */
                    "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                    "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
