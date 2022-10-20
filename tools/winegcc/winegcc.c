@@ -464,7 +464,7 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
             strarray_add( &flags, "-static-libgcc" );
 
         if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
-            strarray_add(&link_args, strmake("-Wl,-pdb,%s", opts->debug_file));
+            strarray_add(&link_args, strmake("-Wl,--pdb=%s", opts->debug_file));
 
         if (opts->out_implib)
             strarray_add(&link_args, strmake("-Wl,--out-implib,%s", opts->out_implib));
