@@ -163,7 +163,7 @@ finish:
 /*********************************************************************
  *		_putenv_s (MSVCRT.@)
  */
-int CDECL _putenv_s(const char *name, const char *value)
+errno_t CDECL _putenv_s(const char *name, const char *value)
 {
     int ret;
 
