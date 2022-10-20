@@ -1534,7 +1534,7 @@ static void test_ChannelBufferRefCount(IPSFactoryBuffer *ppsf)
      * so it's possible these are freed out from under it.
      * E.g. an event sink might unadvise upon receiving the event it was waiting for;
      * this unadvise could be reentrant to Invoke because SendReceive pumps STA messages.
-     * The source would then erase that conection point entry and Release the proxy. */
+     * The source would then erase that connection point entry and Release the proxy. */
     IRpcProxyBuffer_Disconnect(proxy_buffer);
     ok(test_chanbuf.RefCount == 1, "got %ld\n", test_chanbuf.RefCount);
     IRpcProxyBuffer_Release(proxy_buffer);
@@ -1542,7 +1542,7 @@ static void test_ChannelBufferRefCount(IPSFactoryBuffer *ppsf)
     ok(refs == 0, "got %ld\n", refs);
     ok(test_chanbuf.RefCount == 1, "got %ld\n", test_chanbuf.RefCount);
 
-    /* NdrProxyFreeBuffer must not dereference the the now-freed proxy_if1,
+    /* NdrProxyFreeBuffer must not dereference the now-freed proxy_if1,
      * yet should still free the remaining reference on test_chanbuf */
     NdrProxyFreeBuffer(proxy_if1, &stubMessage);
     ok(test_chanbuf.RefCount == 0, "got %ld\n", test_chanbuf.RefCount);
