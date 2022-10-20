@@ -815,12 +815,8 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
 
     if (status)
     {
-        if (status == -2)
-            report (R_ERROR, "Cannot run %s error %u", test->exename, err);
-        else
-            err = status;
         close_temp_file( subname, subfile );
-        return err;
+        return status == -2 ? err : status;
     }
 
     buffer = flush_temp_file( subname, subfile, &total );
