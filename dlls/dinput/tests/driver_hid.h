@@ -348,7 +348,7 @@ static inline void winetest_cleanup_( const char *file )
 
     if (winetest_debug)
     {
-        kprintf( "%04lx:%s: %ld tests executed (%ld marked as todo, %ld %s), %ld skipped.\n",
+        kprintf( "%04lx:%s: %ld tests executed (%ld marked as todo, 0 as flaky, %ld %s), %ld skipped.\n",
                  (DWORD)(DWORD_PTR)PsGetCurrentProcessId(), test_name,
                  successes + failures + todo_successes + todo_failures, todo_successes, failures + todo_failures,
                  (failures + todo_failures != 1) ? "failures" : "failure", skipped );
