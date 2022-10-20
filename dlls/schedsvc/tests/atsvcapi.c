@@ -42,7 +42,7 @@ static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
 
     if (winetest_debug)
     {
-        fprintf(stdout, "%04lx:atsvcapi: 1 tests executed (0 marked as todo, %d %s), %d skipped.\n",
+        fprintf(stdout, "%04lx:atsvcapi: 1 tests executed (0 marked as todo, 0 as flaky, %d %s), %d skipped.\n",
                 GetCurrentProcessId(), test_failures, test_failures != 1 ? "failures" : "failure", test_skipped);
         fflush(stdout);
     }
