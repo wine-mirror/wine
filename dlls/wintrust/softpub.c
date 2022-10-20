@@ -855,7 +855,7 @@ static void load_secondary_signatures(CRYPT_PROVIDER_DATA *data, HCRYPTMSG msg)
 
         if (!(s->rhSecondarySigs = data->psPfns->pfnAlloc(attrs->rgAttr[i].cValue * sizeof(*s->rhSecondarySigs))))
         {
-            ERR("No memory");
+            ERR("No memory.\n");
             goto done;
         }
         s->cSecondarySigs = 0;
