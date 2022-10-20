@@ -385,7 +385,7 @@ static IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pc
 {
 	IDefClFImpl* lpclf;
 
-	lpclf = heap_alloc(sizeof(*lpclf));
+	lpclf = malloc(sizeof(*lpclf));
 	lpclf->ref = 1;
 	lpclf->IClassFactory_iface.lpVtbl = &dclfvt;
 	lpclf->lpfnCI = lpfnCI;
@@ -445,7 +445,7 @@ static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 	  if (This->pcRefDll) InterlockedDecrement(This->pcRefDll);
 
 	  TRACE("-- destroying IClassFactory(%p)\n",This);
-	  heap_free(This);
+	  free(This);
 	}
 
 	return refCount;
@@ -580,7 +580,7 @@ UINT WINAPI DragQueryFileA(
             LPWSTR lpszFileW = NULL;
 
             if(lpszFile && lFile != 0xFFFFFFFF) {
-                lpszFileW = heap_alloc(lLength*sizeof(WCHAR));
+                lpszFileW = malloc(lLength * sizeof(WCHAR));
                 if(lpszFileW == NULL) {
                     goto end;
                 }
@@ -589,7 +589,7 @@ UINT WINAPI DragQueryFileA(
 
             if(lpszFileW) {
                 WideCharToMultiByte(CP_ACP, 0, lpszFileW, -1, lpszFile, lLength, 0, NULL);
-                heap_free(lpszFileW);
+                free(lpszFileW);
             }
             goto end;
         }
@@ -635,7 +635,7 @@ UINT WINAPI DragQueryFileW(
             LPSTR lpszFileA = NULL;
 
             if(lpszwFile && lFile != 0xFFFFFFFF) {
-                lpszFileA = heap_alloc(lLength);
+                lpszFileA = malloc(lLength);
                 if(lpszFileA == NULL) {
                     goto end;
                 }
@@ -644,7 +644,7 @@ UINT WINAPI DragQueryFileW(
 
             if(lpszFileA) {
                 MultiByteToWideChar(CP_ACP, 0, lpszFileA, -1, lpszwFile, lLength);
-                heap_free(lpszFileA);
+                free(lpszFileA);
             }
             goto end;
         }
@@ -876,8 +876,8 @@ static ULONG WINAPI ShellImageData_Release(IShellImageData *iface)
     if (!ref)
     {
         GdipDisposeImage(This->image);
-        heap_free(This->path);
-        SHFree(This);
+        free(This->path);
+        free(This);
     }
 
     return ref;
@@ -1247,12 +1247,12 @@ static HRESULT create_shellimagedata_from_path(const WCHAR *path, IShellImageDat
 {
     ShellImageData *This;
 
-    This = SHAlloc(sizeof(*This));
+    This = malloc(sizeof(*This));
 
     This->IShellImageData_iface.lpVtbl = &ShellImageDataVtbl;
     This->ref = 1;
 
-    This->path = strdupW(path);
+    This->path = wcsdup(path);
     This->image = NULL;
 
     *data = &This->IShellImageData_iface;
