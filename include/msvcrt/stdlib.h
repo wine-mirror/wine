@@ -178,6 +178,7 @@ _ACRTIMP int           __cdecl _makepath_s(char*,size_t,const char*,const char*,
 _ACRTIMP size_t        __cdecl _mbstrlen(const char*);
 _ACRTIMP _onexit_t     __cdecl _onexit(_onexit_t);
 _ACRTIMP int           __cdecl _putenv(const char*);
+_ACRTIMP errno_t       __cdecl _putenv_s(const char*,const char*);
 #ifndef _rotl
 _ACRTIMP unsigned int  __cdecl _rotl(unsigned int,int);
 #endif
