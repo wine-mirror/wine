@@ -3319,8 +3319,7 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
         pFunc = GetProcAddress( hMod, routineNameA.Buffer );
         if (!pFunc)
         {
-           hMod = GetModuleHandleW( halW );
-
+           hMod = LoadLibraryW( halW );
            if (hMod) pFunc = GetProcAddress( hMod, routineNameA.Buffer );
         }
         RtlFreeAnsiString( &routineNameA );
