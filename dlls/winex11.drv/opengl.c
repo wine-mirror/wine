@@ -1350,7 +1350,11 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
 #endif
     else
     {
-        WARN("XComposite is not available, using GLXPixmap hack\n");
+        static unsigned int once;
+
+        if (!once++)
+            ERR_(winediag)("XComposite is not available, using GLXPixmap hack.\n");
+        WARN("XComposite is not available, using GLXPixmap hack.\n");
 
         gl->type = DC_GL_PIXMAP_WIN;
         gl->pixmap = XCreatePixmap( gdi_display, root_window, width, height, visual->depth );
