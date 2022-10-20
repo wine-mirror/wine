@@ -244,7 +244,7 @@ static ULONG WINAPI FolderItemVerbImpl_Release(FolderItemVerb *iface)
     {
         IContextMenu_Release(This->contextmenu);
         SysFreeString(This->name);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -356,7 +356,7 @@ static HRESULT FolderItemVerb_Constructor(IContextMenu *contextmenu, BSTR name, 
 
     TRACE("%p, %s\n", contextmenu, debugstr_w(name));
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -414,7 +414,7 @@ static ULONG WINAPI FolderItemVerbsImpl_Release(FolderItemVerbs *iface)
     {
         IContextMenu_Release(This->contextmenu);
         DestroyMenu(This->hMenu);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -588,7 +588,7 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
 
     *verbs = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -623,7 +623,7 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
     return S_OK;
 
 failed:
-    heap_free(This);
+    free(This);
     return hr;
 }
 
@@ -671,7 +671,7 @@ static ULONG WINAPI ShellLinkObject_Release(IShellLinkDual2 *iface)
     if (!ref)
     {
         if (This->shell_link) IShellLinkW_Release(This->shell_link);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -899,7 +899,7 @@ static HRESULT ShellLinkObject_Constructor(FolderItemImpl *item, IShellLinkDual2
 
     *link = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
     This->IShellLinkDual2_iface.lpVtbl = &ShellLinkObjectVtbl;
     This->ref = 1;
@@ -909,7 +909,7 @@ static HRESULT ShellLinkObject_Constructor(FolderItemImpl *item, IShellLinkDual2
                           &IID_IShellLinkW, (LPVOID*)&This->shell_link);
     if (FAILED(hr))
     {
-        heap_free(This);
+        free(This);
         return hr;
     }
 
@@ -918,7 +918,7 @@ static HRESULT ShellLinkObject_Constructor(FolderItemImpl *item, IShellLinkDual2
     if (FAILED(hr))
     {
         IShellLinkW_Release(This->shell_link);
-        heap_free(This);
+        free(This);
         return hr;
     }
 
@@ -927,7 +927,7 @@ static HRESULT ShellLinkObject_Constructor(FolderItemImpl *item, IShellLinkDual2
     if (FAILED(hr))
     {
         IShellLinkW_Release(This->shell_link);
-        heap_free(This);
+        free(This);
         return hr;
     }
 
@@ -979,8 +979,8 @@ static ULONG WINAPI FolderItemImpl_Release(FolderItem2 *iface)
     if (!ref)
     {
         Folder3_Release(&This->folder->Folder3_iface);
-        heap_free(This->path);
-        heap_free(This);
+        free(This->path);
+        free(This);
     }
     return ref;
 }
@@ -1295,14 +1295,14 @@ static HRESULT FolderItem_Constructor(FolderImpl *folder, const WCHAR *path, Fol
 
     *item = NULL;
 
-    This = heap_alloc_zero(sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
     This->FolderItem2_iface.lpVtbl = &FolderItemImpl_Vtbl;
     This->ref = 1;
     if (path)
-        This->path = strdupW(path);
+        This->path = wcsdup(path);
 
     This->folder = folder;
     Folder3_AddRef(&folder->Folder3_iface);
@@ -1362,8 +1362,8 @@ static ULONG WINAPI FolderItemsImpl_Release(FolderItems3 *iface)
         Folder3_Release(&This->folder->Folder3_iface);
         for (i = 0; i < This->item_count; i++)
             SysFreeString(This->item_names[i]);
-        heap_free(This->item_names);
-        heap_free(This);
+        free(This->item_names);
+        free(This);
     }
     return ref;
 }
@@ -1623,7 +1623,7 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
 
     *ret = NULL;
 
-    This = heap_alloc_zero(sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -1650,13 +1650,13 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
         LPITEMIDLIST *pidls;
         ULONG fetched;
 
-        pidls = heap_alloc(This->item_count * sizeof(*pidls));
-        This->item_names = heap_alloc_zero(This->item_count * sizeof(*This->item_names));
+        pidls = malloc(This->item_count * sizeof(*pidls));
+        This->item_names = calloc(This->item_count, sizeof(*This->item_names));
 
         if (!pidls || !This->item_names)
         {
-            heap_free(pidls);
-            heap_free(This->item_names);
+            free(pidls);
+            free(This->item_names);
             hr = E_OUTOFMEMORY;
             goto failed;
         }
@@ -1674,7 +1674,7 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
 
             ILFree(pidls[i]);
         }
-        heap_free(pidls);
+        free(pidls);
     }
     IEnumIDList_Release(enumidlist);
 
@@ -1735,7 +1735,7 @@ static ULONG WINAPI FolderImpl_Release(Folder3 *iface)
         SysFreeString(This->path);
         IShellFolder2_Release(This->folder);
         IDispatch_Release(This->application);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -2005,7 +2005,7 @@ static HRESULT Folder_Constructor(IShellFolder2 *folder, LPITEMIDLIST pidl, Fold
 
     *ret = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -2072,7 +2072,7 @@ static ULONG WINAPI ShellDispatch_Release(IShellDispatch6 *iface)
     TRACE("(%p), new refcount=%li\n", iface, ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -2620,7 +2620,7 @@ HRESULT WINAPI IShellDispatch_Constructor(IUnknown *outer, REFIID riid, void **p
 
     if (outer) return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
     This->IShellDispatch6_iface.lpVtbl = &ShellDispatchVtbl;
     This->ref = 1;
