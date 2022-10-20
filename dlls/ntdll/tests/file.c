@@ -5326,6 +5326,37 @@ static void test_mailslot_name(void)
     CloseHandle( device );
 }
 
+static void test_reparse_points(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    HANDLE handle;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+    unsigned char reparse_data[1];
+
+    pRtlInitUnicodeString( &nameW, L"\\??\\C:\\" );
+    InitializeObjectAttributes( &attr, &nameW, 0, NULL, NULL );
+
+    status = pNtOpenFile( &handle, READ_CONTROL, &attr, &io, 0, 0 );
+    ok( !status, "open %s failed %#lx\n", wine_dbgstr_w(nameW.Buffer), status );
+
+    status = pNtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, NULL, 0 );
+    todo_wine
+    ok( status == STATUS_INVALID_USER_BUFFER, "expected %#lx, got %#lx\n", STATUS_INVALID_USER_BUFFER, status );
+
+    status = pNtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, reparse_data, 0 );
+    todo_wine
+    ok( status == STATUS_INVALID_USER_BUFFER, "expected %#lx, got %#lx\n", STATUS_INVALID_USER_BUFFER, status );
+
+    /* a volume cannot be a reparse point by definition */
+    status = pNtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, reparse_data, 1 );
+    todo_wine
+    ok( status == STATUS_NOT_A_REPARSE_POINT, "expected %#lx, got %#lx\n", STATUS_NOT_A_REPARSE_POINT, status );
+
+    CloseHandle( handle );
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -5399,4 +5430,5 @@ START_TEST(file)
     test_query_ea();
     test_flush_buffers_file();
     test_mailslot_name();
+    test_reparse_points();
 }
