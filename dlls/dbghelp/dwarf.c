@@ -2201,7 +2201,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
     }
 
     /* Dwarf tends to keep the structure of the C/C++ program, and emits DW_TAG_lexical_block
-     * for every block in source program.
+     * for every block the in source program.
      * With inlining and other optimizations, code for a block no longer lies in a contiguous
      * chunk of memory. It's hence described with (potentially) multiple chunks of memory.
      * Then each variable of each block is attached to its block. (A)
@@ -2217,7 +2217,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
      *
      * DbgHelp only exposes a contiguous chunk of memory for a block.
      *
-     * => Store internaly all the ranges of addresses in a block, but only expose the size
+     * => Store internally all the ranges of addresses in a block, but only expose the size
      *    of the first chunk of memory.
      *    Otherwise, it would break the rule: blocks' chunks don't overlap.
      * Note: This could mislead some programs using the blocks' address and size information.

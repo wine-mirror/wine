@@ -271,11 +271,11 @@ struct symt_data
  *     address in one of its ranges
  *
  * Notes:
- *   (A): shall evolve but storage is native is awkward: from PGO testing, the
+ *   (A): shall evolve but storage in native is awkward: from PGO testing, the
  *        top function is stored with its first range of address; all the others
  *        are stored as blocks, children of compiland, but which lexical parent
  *        is the top function. This breaks the natural assumption that
- *        children <> lexical parent is symetrical.
+ *        children <> lexical parent is symmetrical.
  *   (B): see dwarf.c for some gory discrepancies between native & builtin
  *        DbgHelp.
  */
