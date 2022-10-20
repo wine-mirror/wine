@@ -1953,7 +1953,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             loc.offset += subpgm->ctx->module_ctx->load_offset;
             if (subpgm->top_func)
             {
-                if (ext.u.uvalue) WARN("unexpected global inside a functionn");
+                if (ext.u.uvalue) WARN("unexpected global inside a function\n");
                 symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
                                     DataIsStaticLocal, &loc, subpgm->current_block,
                                     param_type, dwarf2_get_cpp_name(di, name.u.string));
