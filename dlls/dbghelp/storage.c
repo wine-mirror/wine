@@ -43,6 +43,11 @@ void* pool_alloc(struct pool* pool, size_t len)
     return HeapAlloc(pool->heap, 0, len);
 }
 
+void* pool_realloc(struct pool* pool, void* ptr, size_t len)
+{
+    return ptr ? HeapReAlloc(pool->heap, 0, ptr, len) : pool_alloc(pool, len);
+}
+
 char* pool_strdup(struct pool* pool, const char* str)
 {
     char* ret;
@@ -90,32 +95,25 @@ void* vector_at(const struct vector* v, unsigned pos)
 
 void* vector_add(struct vector* v, struct pool* pool)
 {
-    unsigned    ncurr = v->num_elts++;
-
-    /* check that we don't wrap around */
-    assert(v->num_elts > ncurr);
-    if (ncurr == (v->num_buckets << v->shift))
+    if (v->num_elts == (v->num_buckets << v->shift))
     {
-        if(v->num_buckets == v->buckets_allocated)
+        if (v->num_buckets == v->buckets_allocated)
         {
             /* Double the bucket cache, so it scales well with big vectors.*/
-            unsigned    new_reserved;
+            unsigned    new_reserved = v->buckets_allocated ? v->buckets_allocated * 2 : 1;
             void*       new;
 
-            new_reserved = 2*v->buckets_allocated;
-            if(new_reserved == 0) new_reserved = 1;
-
-            /* Don't even try to resize memory.
-               Pool datastructure is very inefficient with reallocs. */
-            new = pool_alloc(pool, new_reserved * sizeof(void*));
-            memcpy(new, v->buckets, v->buckets_allocated * sizeof(void*));
+            new = pool_realloc(pool, v->buckets, new_reserved * sizeof(void*));
+            if (!new) return NULL;
             v->buckets = new;
             v->buckets_allocated = new_reserved;
         }
         v->buckets[v->num_buckets] = pool_alloc(pool, v->elt_size << v->shift);
+        if (!v->buckets[v->num_buckets]) return NULL;
+        v->num_elts++;
         return v->buckets[v->num_buckets++];
     }
-    return vector_at(v, ncurr);
+    return vector_at(v, v->num_elts++);
 }
 
 /* We construct the sparse array as two vectors (of equal size)

@@ -42,6 +42,7 @@ struct pool /* poor's man */
 void     pool_init(struct pool* a, size_t arena_size) DECLSPEC_HIDDEN;
 void     pool_destroy(struct pool* a) DECLSPEC_HIDDEN;
 void*    pool_alloc(struct pool* a, size_t len) DECLSPEC_HIDDEN;
+void*    pool_realloc(struct pool* a, void* ptr, size_t len) DECLSPEC_HIDDEN;
 char*    pool_strdup(struct pool* a, const char* str) DECLSPEC_HIDDEN;
 
 struct vector
