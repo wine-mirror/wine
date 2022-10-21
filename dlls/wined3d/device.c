@@ -5509,6 +5509,21 @@ BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
     return oldVisible;
 }
 
+static void mark_managed_resource_dirty(struct wined3d_resource *resource)
+{
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int i;
+
+        if (texture->dirty_regions)
+        {
+            for (i = 0; i < texture->layer_count; ++i)
+                wined3d_texture_add_dirty_region(texture, i, NULL);
+        }
+    }
+}
+
 void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
 {
     struct wined3d_resource *resource, *cursor;
@@ -5527,17 +5542,7 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
                 wined3d_cs_emit_unload_resource(device->cs, resource);
             }
 
-            if (resource->type != WINED3D_RTYPE_BUFFER)
-            {
-                struct wined3d_texture *texture = texture_from_resource(resource);
-                unsigned int i;
-
-                if (texture->dirty_regions)
-                {
-                    for (i = 0; i < texture->layer_count; ++i)
-                        wined3d_texture_add_dirty_region(texture, i, NULL);
-                }
-            }
+            mark_managed_resource_dirty(resource);
         }
     }
 }
