@@ -5829,6 +5829,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         {
             TRACE("Unloading resource %p.\n", resource);
             wined3d_cs_emit_unload_resource(device->cs, resource);
+
+            if (resource->usage & WINED3DUSAGE_MANAGED)
+                mark_managed_resource_dirty(resource);
         }
 
         device->adapter->adapter_ops->adapter_uninit_3d(device);
