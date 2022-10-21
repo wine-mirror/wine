@@ -191,6 +191,41 @@ static void test_default_token_id(void)
     ISpObjectTokenCategory_Release( cat );
 }
 
+static void tests_token_voices(void)
+{
+    ISpObjectTokenCategory *cat;
+    HRESULT hr;
+    IEnumSpObjectTokens *tokens;
+    ISpObjectToken *item;
+    ULONG fetched = 0;
+    ULONG count;
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenCategory, (void **)&cat );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenCategory_SetId( cat, SPCAT_VOICES, FALSE );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenCategory_EnumTokens(cat, NULL, NULL, &tokens);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = IEnumSpObjectTokens_GetCount( tokens, &count );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( count != 0, "got %lu\n", count );
+    ISpObjectTokenCategory_Release( cat );
+
+    hr = IEnumSpObjectTokens_Item(tokens, 0, &item);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpObjectToken_Release(item);
+
+    hr = IEnumSpObjectTokens_Next(tokens, 1, &item, &fetched);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpObjectToken_Release(item);
+
+    IEnumSpObjectTokens_Release(tokens);
+}
+
 static void test_object_token(void)
 {
     ISpObjectToken *token;
@@ -331,5 +366,6 @@ START_TEST(token)
     test_token_enum();
     test_default_token_id();
     test_object_token();
+    tests_token_voices();
     CoUninitialize();
 }
