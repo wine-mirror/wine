@@ -25,100 +25,22 @@
 #include "wine/debug.h"
 
 #include "dbghelp_private.h"
-#ifdef USE_STATS
-#include <math.h>
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-struct pool_arena
+void pool_init(struct pool* pool, size_t arena_size)
 {
-    struct list entry;
-    char       *current;
-    char       *end;
-};
-
-void pool_init(struct pool* a, size_t arena_size)
-{
-    list_init( &a->arena_list );
-    list_init( &a->arena_full );
-    a->arena_size = arena_size;
+    pool->heap = HeapCreate(HEAP_NO_SERIALIZE, arena_size, 0);
 }
 
 void pool_destroy(struct pool* pool)
 {
-    struct pool_arena*  arena;
-    struct pool_arena*  next;
-
-#ifdef USE_STATS
-    size_t alloc, used, num;
-
-    alloc = used = num = 0;
-    LIST_FOR_EACH_ENTRY( arena, &pool->arena_list, struct pool_arena, entry )
-    {
-        alloc += arena->end - (char *)arena;
-        used += arena->current - (char*)arena;
-        num++;
-    }
-    LIST_FOR_EACH_ENTRY( arena, &pool->arena_full, struct pool_arena, entry )
-    {
-        alloc += arena->end - (char *)arena;
-        used += arena->current - (char*)arena;
-        num++;
-    }
-    if (alloc == 0) alloc = 1;      /* avoid division by zero */
-    FIXME("STATS: pool %p has allocated %u kbytes, used %u kbytes in %u arenas, non-allocation ratio: %.2f%%\n",
-          pool, (unsigned)(alloc >> 10), (unsigned)(used >> 10), (unsigned)num,
-          100.0 - (float)used / (float)alloc * 100.0);
-#endif
-
-    LIST_FOR_EACH_ENTRY_SAFE( arena, next, &pool->arena_list, struct pool_arena, entry )
-    {
-        list_remove( &arena->entry );
-        HeapFree(GetProcessHeap(), 0, arena);
-    }
-    LIST_FOR_EACH_ENTRY_SAFE( arena, next, &pool->arena_full, struct pool_arena, entry )
-    {
-        list_remove( &arena->entry );
-        HeapFree(GetProcessHeap(), 0, arena);
-    }
+    HeapDestroy(pool->heap);
 }
 
 void* pool_alloc(struct pool* pool, size_t len)
 {
-    struct pool_arena*  arena;
-    void*               ret;
-    size_t size;
-
-    len = (len + 3) & ~3; /* round up size on DWORD boundary */
-
-    LIST_FOR_EACH_ENTRY( arena, &pool->arena_list, struct pool_arena, entry )
-    {
-        if (arena->end - arena->current >= len)
-        {
-            ret = arena->current;
-            arena->current += len;
-            if (arena->current + 16 >= arena->end)
-            {
-                list_remove( &arena->entry );
-                list_add_tail( &pool->arena_full, &arena->entry );
-            }
-            return ret;
-        }
-    }
-
-    size = max( pool->arena_size, len );
-    arena = HeapAlloc(GetProcessHeap(), 0, size + sizeof(struct pool_arena));
-    if (!arena) return NULL;
-
-    ret = arena + 1;
-    arena->current = (char*)ret + len;
-    arena->end = (char*)ret + size;
-    if (arena->current + 16 >= arena->end)
-        list_add_tail( &pool->arena_full, &arena->entry );
-    else
-        list_add_head( &pool->arena_list, &arena->entry );
-    return ret;
+    return HeapAlloc(pool->heap, 0, len);
 }
 
 char* pool_strdup(struct pool* pool, const char* str)

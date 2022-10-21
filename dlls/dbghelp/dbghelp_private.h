@@ -34,13 +34,9 @@
 
 #include "cvconst.h"
 
-/* #define USE_STATS */
-
 struct pool /* poor's man */
 {
-    struct list arena_list;
-    struct list arena_full;
-    size_t      arena_size;
+    HANDLE      heap;
 };
 
 void     pool_init(struct pool* a, size_t arena_size) DECLSPEC_HIDDEN;
