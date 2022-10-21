@@ -281,8 +281,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
 
         if (This->index_buffer)
             wined3d_buffer_decref(This->index_buffer);
-        if (This->vertex_buffer)
-            wined3d_buffer_decref(This->vertex_buffer);
+        wined3d_streaming_buffer_cleanup(&This->vertex_buffer);
 
         wined3d_device_context_set_rendertarget_views(This->immediate_context, 0, 1, &null_rtv, FALSE);
 
@@ -3391,44 +3390,6 @@ static HRESULT WINAPI d3d_device2_MultiplyTransform(IDirect3DDevice2 *iface,
  *  DDERR_INVALIDPARAMS if Vertices is NULL
  *
  *****************************************************************************/
-
-/* The caller is responsible for wined3d locking */
-static HRESULT d3d_device_prepare_vertex_buffer(struct d3d_device *device, UINT min_size)
-{
-    HRESULT hr;
-
-    if (device->vertex_buffer_size < min_size || !device->vertex_buffer)
-    {
-        UINT size = max(device->vertex_buffer_size * 2, min_size);
-        struct wined3d_buffer_desc desc;
-        struct wined3d_buffer *buffer;
-
-        TRACE("Growing vertex buffer to %u bytes\n", size);
-
-        desc.byte_width = size;
-        desc.usage = WINED3DUSAGE_DYNAMIC;
-        desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
-        desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_W;
-        desc.misc_flags = 0;
-        desc.structure_byte_stride = 0;
-
-        if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &desc,
-                NULL, NULL, &ddraw_null_wined3d_parent_ops, &buffer)))
-        {
-            ERR("Failed to create vertex buffer, hr %#lx.\n", hr);
-            return hr;
-        }
-
-        if (device->vertex_buffer)
-            wined3d_buffer_decref(device->vertex_buffer);
-
-        device->vertex_buffer = buffer;
-        device->vertex_buffer_size = size;
-        device->vertex_buffer_pos = 0;
-    }
-    return D3D_OK;
-}
-
 static void d3d_device_sync_rendertarget(struct d3d_device *device)
 {
     struct wined3d_rendertarget_view *rtv;
@@ -3475,10 +3436,7 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
         DWORD vertex_count, DWORD flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    struct wined3d_map_desc wined3d_map_desc;
-    struct wined3d_box wined3d_box = {0};
-    UINT stride, vb_pos, size, align;
-    struct wined3d_resource *vb;
+    UINT stride, vb_pos, size;
     HRESULT hr;
 
     TRACE("iface %p, primitive_type %#x, fvf %#lx, vertices %p, vertex_count %lu, flags %#lx.\n",
@@ -3495,29 +3453,12 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     size = vertex_count * stride;
 
     wined3d_mutex_lock();
-    hr = d3d_device_prepare_vertex_buffer(device, size);
-    if (FAILED(hr))
+
+    if (FAILED(hr = wined3d_streaming_buffer_upload(device->wined3d_device,
+            &device->vertex_buffer, vertices, size, stride, &vb_pos)))
         goto done;
 
-    vb_pos = device->vertex_buffer_pos;
-    align = vb_pos % stride;
-    if (align) align = stride - align;
-    if (vb_pos + size + align > device->vertex_buffer_size)
-        vb_pos = 0;
-    else
-        vb_pos += align;
-
-    wined3d_box.left = vb_pos;
-    wined3d_box.right = vb_pos + size;
-    vb = wined3d_buffer_get_resource(device->vertex_buffer);
-    if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
-        goto done;
-    memcpy(wined3d_map_desc.data, vertices, size);
-    wined3d_resource_unmap(vb, 0);
-    device->vertex_buffer_pos = vb_pos + size;
-
-    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer, 0, stride);
+    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer.buffer, 0, stride);
     if (FAILED(hr))
         goto done;
 
@@ -3674,8 +3615,8 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     UINT vtx_size = stride * vertex_count, idx_size = index_count * sizeof(*indices);
     struct wined3d_map_desc wined3d_map_desc;
     struct wined3d_box wined3d_box = {0};
-    struct wined3d_resource *ib, *vb;
-    UINT vb_pos, ib_pos, align;
+    struct wined3d_resource *ib;
+    UINT vb_pos, ib_pos;
 
     TRACE("iface %p, primitive_type %#x, fvf %#lx, vertices %p, vertex_count %lu, "
             "indices %p, index_count %lu, flags %#lx.\n",
@@ -3690,27 +3631,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     /* Set the D3DDevice's FVF */
     wined3d_mutex_lock();
 
-    hr = d3d_device_prepare_vertex_buffer(device, vtx_size);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_streaming_buffer_upload(device->wined3d_device,
+            &device->vertex_buffer, vertices, vtx_size, stride, &vb_pos)))
         goto done;
-
-    vb_pos = device->vertex_buffer_pos;
-    align = vb_pos % stride;
-    if (align) align = stride - align;
-    if (vb_pos + vtx_size + align > device->vertex_buffer_size)
-        vb_pos = 0;
-    else
-        vb_pos += align;
-
-    wined3d_box.left = vb_pos;
-    wined3d_box.right = vb_pos + vtx_size;
-    vb = wined3d_buffer_get_resource(device->vertex_buffer);
-    if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
-        goto done;
-    memcpy(wined3d_map_desc.data, vertices, vtx_size);
-    wined3d_resource_unmap(vb, 0);
-    device->vertex_buffer_pos = vb_pos + vtx_size;
 
     hr = d3d_device_prepare_index_buffer(device, idx_size);
     if (FAILED(hr))
@@ -3729,7 +3652,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     wined3d_resource_unmap(ib, 0);
     device->index_buffer_pos = ib_pos + idx_size;
 
-    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer, 0, stride);
+    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer.buffer, 0, stride);
     if (FAILED(hr))
         goto done;
     wined3d_stateblock_set_index_buffer(device->state, device->index_buffer, WINED3DFMT_R16_UINT);
@@ -4022,10 +3945,8 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
     HRESULT hr;
     UINT dst_stride = get_flexible_vertex_size(fvf);
     UINT dst_size = dst_stride * vertex_count;
-    struct wined3d_map_desc wined3d_map_desc;
-    struct wined3d_box wined3d_box = {0};
-    struct wined3d_resource *vb;
-    UINT vb_pos, align;
+    void *dst_data;
+    UINT vb_pos;
 
     TRACE("iface %p, primitive_type %#x, fvf %#lx, strided_data %p, vertex_count %lu, flags %#lx.\n",
             iface, primitive_type, fvf, strided_data, vertex_count, flags);
@@ -4037,29 +3958,14 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
     }
 
     wined3d_mutex_lock();
-    hr = d3d_device_prepare_vertex_buffer(device, dst_size);
-    if (FAILED(hr))
+
+    if (FAILED(hr = wined3d_streaming_buffer_map(device->wined3d_device,
+            &device->vertex_buffer, dst_size, dst_stride, &vb_pos, &dst_data)))
         goto done;
+    pack_strided_data(dst_data, vertex_count, strided_data, fvf);
+    wined3d_streaming_buffer_unmap(&device->vertex_buffer);
 
-    vb_pos = device->vertex_buffer_pos;
-    align = vb_pos % dst_stride;
-    if (align) align = dst_stride - align;
-    if (vb_pos + dst_size + align > device->vertex_buffer_size)
-        vb_pos = 0;
-    else
-        vb_pos += align;
-
-    wined3d_box.left = vb_pos;
-    wined3d_box.right = vb_pos + dst_size;
-    vb = wined3d_buffer_get_resource(device->vertex_buffer);
-    if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
-        goto done;
-    pack_strided_data(wined3d_map_desc.data, vertex_count, strided_data, fvf);
-    wined3d_resource_unmap(vb, 0);
-    device->vertex_buffer_pos = vb_pos + dst_size;
-
-    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer, 0, dst_stride);
+    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer.buffer, 0, dst_stride);
     if (FAILED(hr))
         goto done;
     wined3d_stateblock_set_vertex_declaration(device->state, ddraw_find_decl(device->ddraw, fvf));
@@ -4139,8 +4045,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     UINT idx_size = index_count * sizeof(WORD);
     struct wined3d_map_desc wined3d_map_desc;
     struct wined3d_box wined3d_box = {0};
-    struct wined3d_resource *ib, *vb;
-    UINT vb_pos, align;
+    struct wined3d_resource *ib;
+    void *dst_data;
+    UINT vb_pos;
     UINT ib_pos;
     HRESULT hr;
 
@@ -4156,27 +4063,11 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
 
     wined3d_mutex_lock();
 
-    hr = d3d_device_prepare_vertex_buffer(device, vtx_dst_size);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_streaming_buffer_map(device->wined3d_device,
+            &device->vertex_buffer, vtx_dst_size, vtx_dst_stride, &vb_pos, &dst_data)))
         goto done;
-
-    vb_pos = device->vertex_buffer_pos;
-    align = vb_pos % vtx_dst_stride;
-    if (align) align = vtx_dst_stride - align;
-    if (vb_pos + vtx_dst_size + align > device->vertex_buffer_size)
-        vb_pos = 0;
-    else
-        vb_pos += align;
-
-    wined3d_box.left = vb_pos;
-    wined3d_box.right = vb_pos + vtx_dst_size;
-    vb = wined3d_buffer_get_resource(device->vertex_buffer);
-    if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
-        goto done;
-    pack_strided_data(wined3d_map_desc.data, vertex_count, strided_data, fvf);
-    wined3d_resource_unmap(vb, 0);
-    device->vertex_buffer_pos = vb_pos + vtx_dst_size;
+    pack_strided_data(dst_data, vertex_count, strided_data, fvf);
+    wined3d_streaming_buffer_unmap(&device->vertex_buffer);
 
     hr = d3d_device_prepare_index_buffer(device, idx_size);
     if (FAILED(hr))
@@ -4195,7 +4086,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_resource_unmap(ib, 0);
     device->index_buffer_pos = ib_pos + idx_size;
 
-    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer, 0, vtx_dst_stride);
+    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer.buffer, 0, vtx_dst_stride);
     if (FAILED(hr))
         goto done;
     wined3d_stateblock_set_index_buffer(device->state, device->index_buffer, WINED3DFMT_R16_UINT);
@@ -7051,6 +6942,8 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
     device->update_state = device->state = ddraw->state;
     device->stateblock_state = ddraw->stateblock_state;
     wined3d_stateblock_incref(ddraw->state);
+
+    wined3d_streaming_buffer_init(&device->vertex_buffer, WINED3D_BIND_VERTEX_BUFFER);
 
     /* Render to the back buffer */
     rtv = ddraw_surface_get_rendertarget_view(target);

@@ -339,9 +339,7 @@ struct d3d_device
     UINT index_buffer_size;
     UINT index_buffer_pos;
 
-    struct wined3d_buffer *vertex_buffer;
-    UINT vertex_buffer_size;
-    UINT vertex_buffer_pos;
+    struct wined3d_streaming_buffer vertex_buffer;
 
     /* Viewport management */
     struct list viewport_list;
