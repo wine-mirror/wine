@@ -186,19 +186,24 @@ int CDECL _putenv_s(const char *name, const char *value)
 /*********************************************************************
  *		_wputenv_s (MSVCRT.@)
  */
-int CDECL _wputenv_s(const wchar_t *name, const wchar_t *value)
+errno_t CDECL _wputenv_s(const wchar_t *name, const wchar_t *value)
 {
-    int ret;
+    errno_t ret = 0;
 
     TRACE("%s %s\n", debugstr_w(name), debugstr_w(value));
 
     if (!MSVCRT_CHECK_PMT(name != NULL)) return -1;
     if (!MSVCRT_CHECK_PMT(value != NULL)) return -1;
 
-    ret = SetEnvironmentVariableW(name, value[0] ? value : NULL) ? 0 : -1;
-
-    /* _putenv returns success on deletion of nonexistent variable, unlike [Rtl]SetEnvironmentVariable */
-    if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
+    if (!SetEnvironmentVariableW(name, value[0] ? value : NULL))
+    {
+        /* _putenv returns success on deletion of nonexistent variable */
+        if (GetLastError() != ERROR_ENVVAR_NOT_FOUND)
+        {
+            msvcrt_set_errno(GetLastError());
+            ret = *_errno();
+        }
+    }
 
     MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
     MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
