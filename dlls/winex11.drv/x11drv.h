@@ -710,7 +710,7 @@ struct x11drv_settings_handler
      * Following functions use this id to identify the device.
      *
      * Return FALSE if the device cannot be found and TRUE on success */
-    BOOL (*get_id)(const WCHAR *device_name, ULONG_PTR *id);
+    BOOL (*get_id)(const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id);
 
     /* get_modes() will be called to get a list of supported modes of the device of id in modes
      * with respect to flags, which could be 0, EDS_RAWMODE or EDS_ROTATEDMODE. If the implementation
@@ -751,7 +751,6 @@ extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_fullscreen(void) DECLSPEC_HIDDEN;
 extern BOOL is_detached_mode(const DEVMODEW *) DECLSPEC_HIDDEN;
 extern BOOL create_desktop_win_data( Window win ) DECLSPEC_HIDDEN;
-extern BOOL get_primary_adapter(WCHAR *) DECLSPEC_HIDDEN;
 void X11DRV_Settings_Init(void) DECLSPEC_HIDDEN;
 
 void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;

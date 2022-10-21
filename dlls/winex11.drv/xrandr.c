@@ -144,17 +144,12 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 }
 
 /* XRandR 1.0 display settings handler */
-static BOOL xrandr10_get_id( const WCHAR *device_name, ULONG_PTR *id )
+static BOOL xrandr10_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id )
 {
-    WCHAR primary_adapter[CCHDEVICENAME];
-
-    if (!get_primary_adapter( primary_adapter ))
-        return FALSE;
-
     /* RandR 1.0 only supports changing the primary adapter settings.
      * For non-primary adapters, an id is still provided but getting
      * and changing non-primary adapters' settings will be ignored. */
-    *id = !wcsicmp( device_name, primary_adapter ) ? 1 : 0;
+    *id = is_primary ? 1 : 0;
     return TRUE;
 }
 
@@ -1224,7 +1219,7 @@ static void xrandr14_register_event_handlers(void)
 }
 
 /* XRandR 1.4 display settings handler */
-static BOOL xrandr14_get_id( const WCHAR *device_name, ULONG_PTR *id )
+static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id )
 {
     struct current_mode *tmp_modes, *new_current_modes = NULL;
     INT gpu_count, adapter_count, new_current_mode_count = 0;

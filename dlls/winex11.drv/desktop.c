@@ -123,13 +123,9 @@ BOOL is_virtual_desktop(void)
 }
 
 /* Virtual desktop display settings handler */
-static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, ULONG_PTR *id )
+static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id )
 {
-    WCHAR primary_adapter[CCHDEVICENAME];
-
-    if (!get_primary_adapter( primary_adapter ) || wcsicmp( primary_adapter, device_name ))
-        return FALSE;
-
+    if (!is_primary) return FALSE;
     *id = 0;
     return TRUE;
 }

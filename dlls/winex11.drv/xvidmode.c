@@ -85,17 +85,12 @@ static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 }
 
 /* XF86VidMode display settings handler */
-static BOOL xf86vm_get_id(const WCHAR *device_name, ULONG_PTR *id)
+static BOOL xf86vm_get_id(const WCHAR *device_name, BOOL is_primary, ULONG_PTR *id)
 {
-    WCHAR primary_adapter[CCHDEVICENAME];
-
-    if (!get_primary_adapter( primary_adapter ))
-        return FALSE;
-
     /* XVidMode only supports changing the primary adapter settings.
      * For non-primary adapters, an id is still provided but getting
      * and changing non-primary adapters' settings will be ignored. */
-    *id = !wcsicmp( device_name, primary_adapter ) ? 1 : 0;
+    *id = is_primary ? 1 : 0;
     return TRUE;
 }
 
