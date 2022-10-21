@@ -6521,13 +6521,13 @@ static BOOL CRYPT_AsnDecodeOCSPBasicResponseEntriesArray(const BYTE *pbEncoded,
      dwFlags, NULL, pvStructInfo, pcbStructInfo, pcbDecoded);
 }
 
-static BOOL CRYPT_AsnDecodeResponderID(const BYTE *pbEncoded,
+static BOOL CRYPT_AsnDecodeResponderIDByName(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
     OCSP_BASIC_RESPONSE_INFO *info = pvStructInfo;
-    BYTE tag = pbEncoded[0] & ~3, choice = pbEncoded[0] & 3;
-    DWORD decodedLen, dataLen, lenBytes, bytesNeeded = sizeof(*info), len;
+    DWORD dataLen, decodedLen, lenBytes, bytesNeeded = sizeof(*info);
+    BYTE tag = pbEncoded[0] & ~3;
     CERT_NAME_BLOB *blob;
 
     if (tag != (ASN_CONTEXT | ASN_CONSTRUCTOR))
@@ -6536,15 +6536,78 @@ static BOOL CRYPT_AsnDecodeResponderID(const BYTE *pbEncoded,
         SetLastError(CRYPT_E_ASN1_BADTAG);
         return FALSE;
     }
-    if (choice > 2)
+
+    if (!CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen))
+        return FALSE;
+    lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+    cbEncoded -= 1 + lenBytes;
+
+    if (dataLen > cbEncoded)
     {
-        WARN("Unexpected choice %02x\n", choice);
-        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+    pbEncoded += 1 + lenBytes;
+    decodedLen = 1 + lenBytes + dataLen;
+
+    if (pbEncoded[0] != ASN_SEQUENCE)
+    {
+        WARN("Unexpected tag %02x %02x\n", pbEncoded[0], pbEncoded[1]);
+        SetLastError(CRYPT_E_ASN1_BADTAG);
         return FALSE;
     }
 
+    if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG)) bytesNeeded += dataLen;
     if (pvStructInfo && *pcbStructInfo >= bytesNeeded)
-        info->dwResponderIdChoice = choice;
+    {
+        info->dwResponderIdChoice = 1;
+
+        blob = &info->u.ByNameResponderId;
+        blob->cbData = dataLen;
+        if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
+            blob->pbData = (BYTE *)pbEncoded;
+        else if (blob->cbData)
+        {
+            blob->pbData = (BYTE *)(info + 1);
+            memcpy(blob->pbData, pbEncoded, blob->cbData);
+        }
+    }
+
+    if (pcbDecoded)
+        *pcbDecoded = decodedLen;
+
+    if (!pvStructInfo)
+    {
+        *pcbStructInfo = bytesNeeded;
+        return TRUE;
+    }
+
+    if (*pcbStructInfo < bytesNeeded)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        *pcbStructInfo = bytesNeeded;
+        return FALSE;
+    }
+
+    *pcbStructInfo = bytesNeeded;
+    return TRUE;
+}
+
+static BOOL CRYPT_AsnDecodeResponderIDByKey(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    OCSP_BASIC_RESPONSE_INFO *info = pvStructInfo;
+    DWORD dataLen, decodedLen, lenBytes, bytesNeeded = sizeof(*info), len;
+    BYTE tag = pbEncoded[0] & ~3;
+    CRYPT_HASH_BLOB *blob;
+
+    if (tag != (ASN_CONTEXT | ASN_CONSTRUCTOR))
+    {
+        WARN("Unexpected tag %02x\n", tag);
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
 
     if (!CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen))
         return FALSE;
@@ -6581,7 +6644,8 @@ static BOOL CRYPT_AsnDecodeResponderID(const BYTE *pbEncoded,
     if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG)) bytesNeeded += len;
     if (pvStructInfo && *pcbStructInfo >= bytesNeeded)
     {
-        blob = &info->u.ByNameResponderId;
+        info->dwResponderIdChoice = 2;
+        blob = &info->u.ByKeyResponderId;
         blob->cbData = len;
         if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
             blob->pbData = (BYTE *)pbEncoded;
@@ -6610,6 +6674,28 @@ static BOOL CRYPT_AsnDecodeResponderID(const BYTE *pbEncoded,
 
     *pcbStructInfo = bytesNeeded;
     return TRUE;
+}
+
+static BOOL CRYPT_AsnDecodeResponderID(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BYTE choice = pbEncoded[0] & 3;
+
+    TRACE("choice %02x\n", choice);
+    switch (choice)
+    {
+    case 1:
+        return CRYPT_AsnDecodeResponderIDByName(pbEncoded, cbEncoded, dwFlags,
+                pvStructInfo, pcbStructInfo, pcbDecoded);
+    case 2:
+        return CRYPT_AsnDecodeResponderIDByKey(pbEncoded, cbEncoded, dwFlags,
+                pvStructInfo, pcbStructInfo, pcbDecoded);
+    default:
+        WARN("Unexpected choice %02x\n", choice);
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        return FALSE;
+    }
 }
 
 static BOOL WINAPI CRYPT_AsnDecodeOCSPBasicResponse(DWORD dwCertEncodingType,
