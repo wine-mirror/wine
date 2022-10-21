@@ -390,7 +390,7 @@ static LONG apply_display_settings( DEVMODEW *displays, ULONG_PTR *ids, BOOL do_
  *      ChangeDisplaySettings  (X11DRV.@)
  *
  */
-LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     INT left_most = INT_MAX, top_most = INT_MAX;
     LONG count, ret = DISP_CHANGE_BADPARAM;

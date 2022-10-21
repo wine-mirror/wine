@@ -2422,6 +2422,7 @@ static BOOL all_detached_settings( const DEVMODEW *displays )
 static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmode,
                                     HWND hwnd, DWORD flags, void *lparam )
 {
+    WCHAR primary_name[CCHDEVICENAME];
     struct adapter *adapter;
     DEVMODEW *displays;
     LONG ret;
@@ -2438,7 +2439,14 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
 
     place_all_displays( displays );
 
-    ret = user_driver->pChangeDisplaySettings( displays, hwnd, flags, lparam );
+    if (!(adapter = find_adapter( NULL ))) primary_name[0] = 0;
+    else
+    {
+        wcscpy( primary_name, adapter->dev.device_name );
+        adapter_release( adapter );
+    }
+
+    ret = user_driver->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
 
     free( displays );
     if (ret) return ret;

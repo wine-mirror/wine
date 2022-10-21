@@ -753,7 +753,7 @@ static void nulldrv_UpdateClipboard(void)
 {
 }
 
-static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd,
+static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
                                            DWORD flags, LPVOID lparam )
 {
     return DISP_CHANGE_FAILED;
@@ -1066,10 +1066,10 @@ static SHORT loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
-static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd,
+static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
                                              DWORD flags, LPVOID lparam )
 {
-    return load_driver()->pChangeDisplaySettings( displays, hwnd, flags, lparam );
+    return load_driver()->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
 }
 
 static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW mode )

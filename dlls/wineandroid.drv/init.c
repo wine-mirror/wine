@@ -262,9 +262,9 @@ static BOOL CDECL ANDROID_DeleteDC( PHYSDEV dev )
 /***********************************************************************
  *           ANDROID_ChangeDisplaySettings
  */
-LONG ANDROID_ChangeDisplaySettings( LPDEVMODEW displays, HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG ANDROID_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    FIXME( "(%p,%p,0x%08x,%p)\n", displays, hwnd, flags, lpvoid );
+    FIXME( "(%p,%s,%p,0x%08x,%p)\n", displays, debugstr_w(primary_name), hwnd, flags, lpvoid );
     return DISP_CHANGE_SUCCESSFUL;
 }
 

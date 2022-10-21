@@ -769,7 +769,7 @@ static CGDisplayModeRef find_best_display_mode(DEVMODEW *devmode, CFArrayRef dis
  *              ChangeDisplaySettings  (MACDRV.@)
  *
  */
-LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, HWND hwnd, DWORD flags, LPVOID lpvoid)
+LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid)
 {
     WCHAR primary_adapter[CCHDEVICENAME];
     LONG ret = DISP_CHANGE_SUCCESSFUL;
@@ -781,7 +781,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, HWND hwnd, DWORD flags, L
     struct display_mode_descriptor *desc;
     CGDisplayModeRef best_display_mode;
 
-    TRACE("%p %p 0x%08x %p\n", displays, hwnd, flags, lpvoid);
+    TRACE("%p %s %p 0x%08x %p\n", displays, debugstr_w(primary_name), hwnd, flags, lpvoid);
 
     init_original_display_mode();
 
