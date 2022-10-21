@@ -1552,6 +1552,10 @@ static const WCHAR meiryo_uiW[] =
     {'M','e','i','r','y','o',' ','U','I',0};
 static const WCHAR meiryo_ui_boldW[] =
     {'M','e','i','r','y','o',' ','U','I',' ','B','o','l','d',0};
+static const WCHAR ms_minchoW[] =
+    {'M','S',' ','M','i','n','c','h','o',0};
+static const WCHAR ms_p_minchoW[] =
+    {'M','S',' ','P','M','i','n','c','h','o',0};
 
 static const WCHAR * const font_links_list[] =
 {
@@ -1866,6 +1870,26 @@ static const char system_link_meiryo_ui_bold[] =
     "MALGUNBD.TTF,Malgun Gothic Bold\0"
     "SEGUISYM.TTF,Segoe UI Symbol\0";
 
+static const char system_link_ms_mincho[] =
+    "MINGLIU.TTC,MingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "BATANG.TTC,Batang\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_ms_p_mincho[] =
+    "MINGLIU.TTC,PMingLiU\0"
+    "SIMSUN.TTC,SimSun\0"
+    "BATANG.TTC,Batang\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSJH.TTC,Microsoft JhengHei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
 static const struct system_link_reg
 {
     const WCHAR *font_name;
@@ -1930,6 +1954,8 @@ default_system_link[] =
     { meiryo_boldW,                  FALSE, system_link_meiryo_bold,                  sizeof(system_link_meiryo_bold) },
     { meiryo_uiW,                    FALSE, system_link_meiryo_ui,                    sizeof(system_link_meiryo_ui) },
     { meiryo_ui_boldW,               FALSE, system_link_meiryo_ui_bold,               sizeof(system_link_meiryo_ui_bold) },
+    { ms_minchoW,                    FALSE, system_link_ms_mincho,                    sizeof(system_link_ms_mincho) },
+    { ms_p_minchoW,                  FALSE, system_link_ms_p_mincho,                  sizeof(system_link_ms_p_mincho) },
 };
 
 static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
