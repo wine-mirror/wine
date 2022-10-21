@@ -335,11 +335,7 @@ struct d3d_device
     struct ddraw *ddraw;
     IUnknown *rt_iface;
 
-    struct wined3d_buffer *index_buffer;
-    UINT index_buffer_size;
-    UINT index_buffer_pos;
-
-    struct wined3d_streaming_buffer vertex_buffer;
+    struct wined3d_streaming_buffer vertex_buffer, index_buffer;
 
     /* Viewport management */
     struct list viewport_list;
