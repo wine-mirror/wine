@@ -28,6 +28,7 @@
  * causes visible results in games can be tested in a way that does not depend on pixel exactness
  */
 
+#include <stdbool.h>
 #include <limits.h>
 #include <math.h>
 
@@ -49,6 +50,14 @@ struct vec3
 struct vec4
 {
     float x, y, z, w;
+};
+
+struct d3d9_test_context
+{
+    HWND window;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *backbuffer;
 };
 
 static HWND create_window(void)
@@ -249,8 +258,9 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
     return ret;
 }
 
-#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b)
-static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color)
+#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b, false)
+#define check_rt_color_todo(a, b) check_rt_color_(__LINE__, a, b, true)
+static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color, bool todo)
 {
     unsigned int color = 0xdeadbeef;
     struct surface_readback rb;
@@ -274,7 +284,8 @@ static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR e
             break;
     }
     release_surface_readback(&rb);
-    ok_(__FILE__, line)(color == expected_color, "Got unexpected color 0x%08x.\n", color);
+    todo_wine_if (todo)
+        ok_(__FILE__, line)(color == expected_color, "Got unexpected color 0x%08x.\n", color);
 }
 
 static IDirect3DDevice9 *create_device(IDirect3D9 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
@@ -313,6 +324,101 @@ static void cleanup_device(IDirect3DDevice9 *device)
         ok(!ref, "Unexpected refcount %lu.\n", ref);
         DestroyWindow(present_parameters.hDeviceWindow);
     }
+}
+
+static bool init_test_context(struct d3d9_test_context *context)
+{
+    HRESULT hr;
+
+    memset(context, 0, sizeof(*context));
+
+    context->window = create_window();
+    context->d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!context->d3d, "Failed to create a D3D object.\n");
+    if (!(context->device = create_device(context->d3d, context->window, context->window, TRUE)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(context->d3d);
+        DestroyWindow(context->window);
+        return false;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(context->device, 0, &context->backbuffer);
+    ok(hr == S_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+    return true;
+}
+
+#define release_test_context(a) release_test_context_(__LINE__, a)
+static void release_test_context_(unsigned int line, struct d3d9_test_context *context)
+{
+    ULONG refcount;
+
+    IDirect3DSurface9_Release(context->backbuffer);
+    refcount = IDirect3DDevice9_Release(context->device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3D9_Release(context->d3d);
+    ok(!refcount, "D3D object has %lu references left.\n", refcount);
+    DestroyWindow(context->window);
+}
+
+static void draw_textured_quad(struct d3d9_test_context *context, IDirect3DTexture9 *texture)
+{
+    IDirect3DDevice9 *device = context->device;
+    HRESULT hr;
+
+    static const struct
+    {
+        struct vec3 position;
+        struct vec2 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
+    };
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad, sizeof(*quad));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+}
+
+static HRESULT reset_device(struct d3d9_test_context *context)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    HRESULT hr;
+
+    IDirect3DSurface9_Release(context->backbuffer);
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = context->window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    hr = IDirect3DDevice9_Reset(context->device, &present_parameters);
+
+    if (SUCCEEDED(hr))
+        IDirect3DDevice9_GetRenderTarget(context->device, 0, &context->backbuffer);
+
+    return hr;
 }
 
 static void test_sanity(void)
@@ -3899,6 +4005,15 @@ static void fill_surface(IDirect3DSurface9 *surface, DWORD color, DWORD flags)
     }
     hr = IDirect3DSurface9_UnlockRect(surface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+}
+
+static void fill_texture(IDirect3DTexture9 *texture, DWORD color, DWORD flags)
+{
+    IDirect3DSurface9 *surface;
+
+    IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    fill_surface(surface, color, flags);
+    IDirect3DSurface9_Release(surface);
 }
 
 static void stretchrect_test(void)
@@ -27723,6 +27838,37 @@ static void test_filling_convention(void)
     DestroyWindow(window);
 }
 
+static void test_managed_reset(void)
+{
+    struct d3d9_test_context context;
+    IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    fill_texture(texture, 0x0000ff00, 0);
+
+    draw_textured_quad(&context, texture);
+    check_rt_color(context.backbuffer, 0x0000ff00);
+
+    hr = reset_device(&context);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    draw_textured_quad(&context, texture);
+    check_rt_color_todo(context.backbuffer, 0x0000ff00);
+
+    IDirect3DTexture9_Release(texture);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -27874,4 +28020,5 @@ START_TEST(visual)
     test_sample_mask();
     test_dynamic_map_synchronization();
     test_filling_convention();
+    test_managed_reset();
 }
