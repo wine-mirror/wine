@@ -3748,8 +3748,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
             && !(flags & WINED3D_MAP_NO_DIRTY_UPDATE) && !texture_level)
         wined3d_texture_dirty_region_add(texture, sub_resource_idx / texture->level_count, box);
 
-    if (flags & WINED3D_MAP_WRITE
-            && (!(flags & WINED3D_MAP_NO_DIRTY_UPDATE) || (resource->usage & WINED3DUSAGE_DYNAMIC)))
+    if (flags & WINED3D_MAP_WRITE)
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
 
     wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, resource->map_binding);
