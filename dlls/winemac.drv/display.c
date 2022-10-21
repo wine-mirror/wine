@@ -685,24 +685,6 @@ void check_retina_status(void)
     }
 }
 
-static BOOL get_primary_adapter(WCHAR *name)
-{
-    DISPLAY_DEVICEW dd;
-    DWORD i;
-
-    dd.cb = sizeof(dd);
-    for (i = 0; !NtUserEnumDisplayDevices(NULL, i, &dd, 0); ++i)
-    {
-        if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-        {
-            lstrcpyW(name, dd.DeviceName);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
 static BOOL is_detached_mode(const DEVMODEW *mode)
 {
     return mode->dmFields & DM_POSITION &&
@@ -771,7 +753,6 @@ static CGDisplayModeRef find_best_display_mode(DEVMODEW *devmode, CFArrayRef dis
  */
 LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid)
 {
-    WCHAR primary_adapter[CCHDEVICENAME];
     LONG ret = DISP_CHANGE_SUCCESSFUL;
     DEVMODEW *mode;
     int bpp;
@@ -784,9 +765,6 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
     TRACE("%p %s %p 0x%08x %p\n", displays, debugstr_w(primary_name), hwnd, flags, lpvoid);
 
     init_original_display_mode();
-
-    if (!get_primary_adapter(primary_adapter))
-        return DISP_CHANGE_FAILED;
 
     if (macdrv_get_displays(&macdrv_displays, &num_displays))
         return DISP_CHANGE_FAILED;
@@ -804,7 +782,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
 
     for (mode = displays; mode->dmSize && !ret; mode = NEXT_DEVMODEW(mode))
     {
-        if (wcsicmp(primary_adapter, mode->dmDeviceName))
+        if (wcsicmp(primary_name, mode->dmDeviceName))
         {
             FIXME("Changing non-primary adapter settings is currently unsupported.\n");
             continue;
