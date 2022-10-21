@@ -759,7 +759,7 @@ static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_
     return DISP_CHANGE_FAILED;
 }
 
-static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW mode )
+static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW mode )
 {
     return FALSE;
 }
@@ -1072,9 +1072,9 @@ static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primar
     return load_driver()->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
 }
 
-static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW mode )
+static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW mode )
 {
-    return load_driver()->pGetCurrentDisplaySettings( name, mode );
+    return load_driver()->pGetCurrentDisplaySettings( name, is_primary, mode );
 }
 
 static void loaderdrv_SetCursor( HCURSOR cursor )

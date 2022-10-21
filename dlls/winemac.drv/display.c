@@ -893,7 +893,7 @@ static DEVMODEW *display_get_modes(CGDirectDisplayID display_id, int *modes_coun
  *              GetCurrentDisplaySettings  (MACDRV.@)
  *
  */
-BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, LPDEVMODEW devmode)
+BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, BOOL is_primary, LPDEVMODEW devmode)
 {
     struct macdrv_display *displays = NULL;
     int num_displays, display_idx;
@@ -901,7 +901,7 @@ BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, LPDEVMODEW devmode)
     CGDirectDisplayID display_id;
     WCHAR *end;
 
-    TRACE("%s, %p + %hu\n", debugstr_w(devname), devmode, devmode->dmSize);
+    TRACE("%s, %u, %p + %hu\n", debugstr_w(devname), is_primary, devmode, devmode->dmSize);
 
     init_original_display_mode();
 

@@ -503,6 +503,12 @@ static BOOL adapter_set_registry_settings( const struct adapter *adapter, const 
     return ret;
 }
 
+static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODEW *mode )
+{
+    BOOL is_primary = !!(adapter->dev.state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    return user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, is_primary, mode );
+}
+
 static int mode_compare(const void *p1, const void *p2)
 {
     BOOL a_interlaced, b_interlaced, a_stretched, b_stretched;
@@ -2174,7 +2180,8 @@ static BOOL adapter_get_full_mode( const struct adapter *adapter, const DEVMODEW
     if (!is_detached_mode( full_mode ) && (!full_mode->dmPelsWidth || !full_mode->dmPelsHeight || !(full_mode->dmFields & DM_POSITION)))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-        if (!user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, &current_mode )) return FALSE;
+
+        if (!adapter_get_current_settings( adapter, &current_mode )) return FALSE;
         if (!full_mode->dmPelsWidth) full_mode->dmPelsWidth = current_mode.dmPelsWidth;
         if (!full_mode->dmPelsHeight) full_mode->dmPelsHeight = current_mode.dmPelsHeight;
         if (!(full_mode->dmFields & DM_POSITION))
@@ -2215,7 +2222,7 @@ static DEVMODEW *get_display_settings( const WCHAR *devname, const DEVMODEW *dev
         else
         {
             if (!devname) ret = adapter_get_registry_settings( adapter, mode );
-            else ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, mode );
+            else ret = adapter_get_current_settings( adapter, mode );
             if (!ret) goto done;
         }
 
@@ -2457,7 +2464,7 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
     if ((adapter = find_adapter( NULL )))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-        user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, &current_mode );
+        adapter_get_current_settings( adapter, &current_mode );
         adapter_release( adapter );
 
         send_notify_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
@@ -2502,7 +2509,7 @@ static BOOL adapter_enum_display_settings( const struct adapter *adapter, DWORD 
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     const DEVMODEW *adapter_mode;
 
-    if (!(flags & EDS_ROTATEDMODE) && !user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, &current_mode ))
+    if (!(flags & EDS_ROTATEDMODE) && !adapter_get_current_settings( adapter, &current_mode ))
     {
         WARN( "Failed to query current display mode for EDS_ROTATEDMODE flag.\n" );
         return FALSE;
@@ -2550,7 +2557,7 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     devmode->dmDriverExtra = 0;
 
     if (index == ENUM_REGISTRY_SETTINGS) ret = adapter_get_registry_settings( adapter, devmode );
-    else if (index == ENUM_CURRENT_SETTINGS) ret = user_driver->pGetCurrentDisplaySettings( adapter->dev.device_name, devmode );
+    else if (index == ENUM_CURRENT_SETTINGS) ret = adapter_get_current_settings( adapter, devmode );
     else ret = adapter_enum_display_settings( adapter, index, devmode, flags );
     adapter_release( adapter );
 

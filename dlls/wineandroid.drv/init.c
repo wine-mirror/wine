@@ -306,7 +306,7 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
 /***********************************************************************
  *           ANDROID_GetCurrentDisplaySettings
  */
-BOOL ANDROID_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW devmode )
+BOOL ANDROID_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode )
 {
     devmode->u2.dmDisplayFlags = 0;
     devmode->u1.s2.dmPosition.x = 0;

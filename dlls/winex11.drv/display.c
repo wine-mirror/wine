@@ -266,7 +266,7 @@ static DWORD get_display_depth(ULONG_PTR display_id)
  *      GetCurrentDisplaySettings  (X11DRV.@)
  *
  */
-BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, LPDEVMODEW devmode )
+BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode )
 {
     DEVMODEW mode;
     ULONG_PTR id;
