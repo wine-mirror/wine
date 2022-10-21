@@ -2788,6 +2788,10 @@ HRESULT __cdecl wined3d_stateblock_set_vs_consts_f(struct wined3d_stateblock *st
 HRESULT __cdecl wined3d_stateblock_set_vs_consts_i(struct wined3d_stateblock *stateblock,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants);
 
+HRESULT __cdecl wined3d_streaming_buffer_map(struct wined3d_device *device,
+        struct wined3d_streaming_buffer *buffer, unsigned int size, unsigned int stride,
+        unsigned int *ret_pos, void **ret_data);
+void __cdecl wined3d_streaming_buffer_unmap(struct wined3d_streaming_buffer *buffer);
 HRESULT __cdecl wined3d_streaming_buffer_upload(struct wined3d_device *device, struct wined3d_streaming_buffer *buffer,
         const void *data, unsigned int size, unsigned int stride, unsigned int *pos);
 

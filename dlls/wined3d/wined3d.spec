@@ -260,6 +260,8 @@
 @ cdecl wined3d_stateblock_set_vs_consts_f(ptr long long ptr)
 @ cdecl wined3d_stateblock_set_vs_consts_i(ptr long long ptr)
 
+@ cdecl wined3d_streaming_buffer_map(ptr ptr long long ptr ptr)
+@ cdecl wined3d_streaming_buffer_unmap(ptr)
 @ cdecl wined3d_streaming_buffer_upload(ptr ptr ptr long long ptr)
 
 @ cdecl wined3d_swapchain_create(ptr ptr ptr ptr ptr ptr)
