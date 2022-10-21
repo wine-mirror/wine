@@ -1544,6 +1544,14 @@ static const WCHAR yu_gothic_ui_semilightW[] =
     {'Y','u',' ','G','o','t','h','i','c',' ','U','I',' ','S','e','m','i','l','i','g','h','t',0};
 static const WCHAR yu_gothic_ui_semiboldW[] =
     {'Y','u',' ','G','o','t','h','i','c',' ','U','I',' ','S','e','m','i','b','o','l','d',0};
+static const WCHAR meiryoW[] =
+    {'M','e','i','r','y','o',0};
+static const WCHAR meiryo_boldW[] =
+    {'M','e','i','r','y','o',' ','B','o','l','d',0};
+static const WCHAR meiryo_uiW[] =
+    {'M','e','i','r','y','o',' ','U','I',0};
+static const WCHAR meiryo_ui_boldW[] =
+    {'M','e','i','r','y','o',' ','U','I',' ','B','o','l','d',0};
 
 static const WCHAR * const font_links_list[] =
 {
@@ -1822,6 +1830,42 @@ static const char system_link_yu_gothic_ui_semibold[] =
     "MALGUN.TTF,Malgun Gothic\0"
     "SEGUISYM.TTF,Segoe UI Symbol\0";
 
+static const char system_link_meiryo[] =
+    "SEGOEUI.TTF,Segoe UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MSJH.TTC,Microsoft JhengHei\0"
+    "MSYH.TTC,Microsoft YaHei\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_meiryo_bold[] =
+    "SEGOEUIB.TTF,Segoe UI Bold\0"
+    "YUGOTHB.TTC,Yu Gothic UI Bold\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MSJHBD.TTC,Microsoft Jhenghei Bold\0"
+    "MSYHBD.TTC,Microsoft YaHei Bold\0"
+    "MALGUNBD.TTF,Malgun Gothic Bold\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_meiryo_ui[] =
+    "SEGOEUI.TTF,Segoe UI\0"
+    "YUGOTHM.TTC,Yu Gothic UI\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MSJH.TTC,Microsoft Jhenghei UI\0"
+    "MSYH.TTC,Microsoft YaHei UI\0"
+    "MALGUN.TTF,Malgun Gothic\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
+static const char system_link_meiryo_ui_bold[] =
+    "SEGOEUIB.TTF,Segoe UI Bold\0"
+    "YUGOTHB.TTC,Yu Gothic UI Bold\0"
+    "MSGOTHIC.TTC,MS UI Gothic\0"
+    "MSJHBD.TTC,Microsoft Jhenghei UI Bold\0"
+    "MSYHBD.TTC,Microsoft YaHei UI Bold\0"
+    "MALGUNBD.TTF,Malgun Gothic Bold\0"
+    "SEGUISYM.TTF,Segoe UI Symbol\0";
+
 static const struct system_link_reg
 {
     const WCHAR *font_name;
@@ -1882,6 +1926,10 @@ default_system_link[] =
     { yu_gothic_ui_lightW,           FALSE, system_link_yu_gothic_ui_light,           sizeof(system_link_yu_gothic_ui_light) },
     { yu_gothic_ui_semiboldW,        FALSE, system_link_yu_gothic_ui_semibold,        sizeof(system_link_yu_gothic_ui_semibold) },
     { yu_gothic_ui_semilightW,       FALSE, system_link_yu_gothic_ui_semilight,       sizeof(system_link_yu_gothic_ui_semilight) },
+    { meiryoW,                       FALSE, system_link_meiryo,                       sizeof(system_link_meiryo) },
+    { meiryo_boldW,                  FALSE, system_link_meiryo_bold,                  sizeof(system_link_meiryo_bold) },
+    { meiryo_uiW,                    FALSE, system_link_meiryo_ui,                    sizeof(system_link_meiryo_ui) },
+    { meiryo_ui_boldW,               FALSE, system_link_meiryo_ui_bold,               sizeof(system_link_meiryo_ui_bold) },
 };
 
 static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
