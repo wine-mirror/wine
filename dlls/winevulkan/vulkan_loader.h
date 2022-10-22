@@ -24,6 +24,7 @@
 #define WIN32_NO_STATUS
 #include <stdarg.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"

@@ -762,15 +762,17 @@ class VkFunction(object):
 
     def loader_body(self):
         body = "    struct {0}_params params;\n".format(self.name)
+        body += "    NTSTATUS status;\n"
         for p in self.params:
             body += "    params.{0} = {0};\n".format(p.name)
         body += "    ";
 
         # Call the Unix function.
         if self.needs_direct_call():
-            body += "p_vk_direct_unix_call(unix_handle, unix_{0}, &params);\n".format(self.name)
+            body += "status = p_vk_direct_unix_call(unix_handle, unix_{0}, &params);\n".format(self.name)
         else:
-            body += "vk_unix_call(unix_{0}, &params);\n".format(self.name)
+            body += "status = vk_unix_call(unix_{0}, &params);\n".format(self.name)
+        body += "    assert(!status);\n"
         if self.type != "void":
             body += "    return params.result;\n"
         return body
