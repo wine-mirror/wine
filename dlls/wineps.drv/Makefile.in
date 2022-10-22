@@ -55,6 +55,7 @@ C_SRCS = \
 	init.c \
 	pen.c \
 	ppd.c \
+	printproc.c \
 	ps.c \
 	text.c \
 	type1.c \
