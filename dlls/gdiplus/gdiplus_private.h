@@ -371,7 +371,7 @@ struct GpImage{
     UINT frame_count, current_frame;
     ColorPalette *palette;
     REAL xres, yres;
-    LONG busy;
+    SRWLOCK lock;
 };
 
 #define EmfPlusObjectTableSize 64
@@ -613,17 +613,14 @@ GpStatus gdip_format_string(HDC hdc,
 
 void get_log_fontW(const GpFont *, GpGraphics *, LOGFONTW *) DECLSPEC_HIDDEN;
 
-static inline BOOL image_lock(GpImage *image, BOOL *unlock)
+static inline BOOL image_lock(GpImage *image)
 {
-    LONG tid = GetCurrentThreadId(), owner_tid;
-    owner_tid = InterlockedCompareExchange(&image->busy, tid, 0);
-    *unlock = !owner_tid;
-    return !owner_tid || owner_tid==tid;
+    return TryAcquireSRWLockExclusive(&image->lock);
 }
 
-static inline void image_unlock(GpImage *image, BOOL unlock)
+static inline void image_unlock(GpImage *image)
 {
-    if (unlock) image->busy = 0;
+    ReleaseSRWLockExclusive(&image->lock);
 }
 
 static inline void set_rect(GpRectF *rect, REAL x, REAL y, REAL width, REAL height)
