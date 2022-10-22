@@ -197,8 +197,8 @@ errno_t CDECL _wputenv_s(const wchar_t *name, const wchar_t *value)
 
     TRACE("%s %s\n", debugstr_w(name), debugstr_w(value));
 
-    if (!MSVCRT_CHECK_PMT(name != NULL)) return -1;
-    if (!MSVCRT_CHECK_PMT(value != NULL)) return -1;
+    if (!MSVCRT_CHECK_PMT(name != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
 
     if (!SetEnvironmentVariableW(name, value[0] ? value : NULL))
     {

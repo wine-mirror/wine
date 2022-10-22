@@ -19,6 +19,7 @@
  */
 
 #include "wine/test.h"
+#include <errno.h>
 #include <stdlib.h>
 #include <process.h>
 
@@ -45,8 +46,10 @@ static const char *a_very_long_env_string =
 
 static char ***(__cdecl *p__p__environ)(void);
 static WCHAR ***(__cdecl *p__p__wenviron)(void);
-static void (*p_get_environ)(char ***);
-static void (*p_get_wenviron)(WCHAR ***);
+static void (__cdecl *p_get_environ)(char ***);
+static void (__cdecl *p_get_wenviron)(WCHAR ***);
+static errno_t (__cdecl *p_putenv_s)(const char*, const char*);
+static errno_t (__cdecl *p_wputenv_s)(const wchar_t*, const wchar_t*);
 
 static char ***p_environ;
 static WCHAR ***p_wenviron;
@@ -61,6 +64,8 @@ static void init(void)
     p_wenviron = (void *)GetProcAddress(hmod, "_wenviron");
     p_get_environ = (void *)GetProcAddress(hmod, "_get_environ");
     p_get_wenviron = (void *)GetProcAddress(hmod, "_get_wenviron");
+    p_putenv_s = (void *)GetProcAddress(hmod, "_putenv_s");
+    p_wputenv_s = (void *)GetProcAddress(hmod, "_wputenv_s");
 }
 
 static void test_system(void)
@@ -237,6 +242,8 @@ static void test__wenviron(void)
 
 static void test_environment_manipulation(void)
 {
+    errno_t ret;
+
     ok( _putenv("cat=") == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
     ok( _putenv("cat=dog") == 0, "failed setting cat=dog\n" );
     ok( strcmp(getenv("cat"), "dog") == 0, "getenv did not return 'dog'\n" );
@@ -247,6 +254,34 @@ static void test_environment_manipulation(void)
     ok( _putenv(a_very_long_env_string) == 0, "_putenv failed for long environment string\n");
 
     ok( getenv("nonexistent") == NULL, "getenv should fail with nonexistent var name\n" );
+
+    if (p_putenv_s)
+    {
+        ret = p_putenv_s(NULL, "dog");
+        ok( ret == EINVAL, "_putenv_s returned %d\n", ret);
+        ret = p_putenv_s("cat", NULL);
+        ok( ret == EINVAL, "_putenv_s returned %d\n", ret);
+        ret = p_putenv_s("a=b", NULL);
+        ok( ret == EINVAL, "_putenv_s returned %d\n", ret);
+        ret = p_putenv_s("cat", "a=b");
+        ok( !ret, "_putenv_s returned %d\n", ret);
+        ret = p_putenv_s("cat", "");
+        ok( !ret, "_putenv_s returned %d\n", ret);
+    }
+
+    if (p_wputenv_s)
+    {
+        ret = p_wputenv_s(NULL, L"dog");
+        ok( ret == EINVAL, "_wputenv_s returned %d\n", ret);
+        ret = p_wputenv_s(L"cat", NULL);
+        ok( ret == EINVAL, "_wputenv_s returned %d\n", ret);
+        ret = p_wputenv_s(L"a=b", NULL);
+        ok( ret == EINVAL, "_wputenv_s returned %d\n", ret);
+        ret = p_wputenv_s(L"cat", L"a=b");
+        ok( !ret, "_wputenv_s returned %d\n", ret);
+        ret = p_wputenv_s(L"cat", L"");
+        ok( !ret, "_wputenv_s returned %d\n", ret);
+    }
 }
 
 START_TEST(environ)
