@@ -131,12 +131,12 @@ struct joystick
     UINT timer;
     DWORD threshold;
     BOOL changed;
-    ULONG last_check;
 };
 
 static DIDEVICEINSTANCEW instances[16];
 static struct joystick joysticks[16];
 static IDirectInput8W *dinput;
+static ULONG last_check;
 
 static BOOL CALLBACK enum_instances( const DIDEVICEINSTANCEW *instance, void *context )
 {
@@ -342,9 +342,9 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetDevCapsW( UINT_PTR id, JOYCAPSW *caps, U
 
     EnterCriticalSection( &joystick_cs );
 
-    if (!(device = joysticks[id].device) && (ticks - joysticks[id].last_check) >= 2000)
+    if (!(device = joysticks[id].device) && (ticks - last_check) >= 2000)
     {
-        joysticks[id].last_check = ticks;
+        last_check = ticks;
         find_joysticks();
     }
 
@@ -477,9 +477,9 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx( UINT id, JOYINFOEX *info )
 
     EnterCriticalSection( &joystick_cs );
 
-    if (!(device = joysticks[id].device) && (ticks - joysticks[id].last_check) >= 2000)
+    if (!(device = joysticks[id].device) && (ticks - last_check) >= 2000)
     {
-        joysticks[id].last_check = ticks;
+        last_check = ticks;
         find_joysticks();
     }
 
