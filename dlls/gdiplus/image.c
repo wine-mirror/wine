@@ -5530,7 +5530,7 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
     int src_x_offset, src_y_offset;
     LPBYTE src_origin;
     UINT x, y, width, height;
-    BitmapData src_lock, dst_lock;
+    BitmapData dst_lock;
     GpStatus stat;
     BOOL unlock;
 
@@ -5577,14 +5577,6 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
 
     stat = GdipCreateBitmapFromScan0(width, height, 0, bitmap->format, NULL, &new_bitmap);
 
-    if (stat != Ok)
-    {
-        image_unlock(image, unlock);
-        return stat;
-    }
-
-    stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, bitmap->format, &src_lock);
-
     if (stat == Ok)
     {
         stat = GdipBitmapLockBits(new_bitmap, NULL, ImageLockModeWrite, bitmap->format, &dst_lock);
@@ -5594,14 +5586,14 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
             LPBYTE src_row, src_pixel;
             LPBYTE dst_row, dst_pixel;
 
-            src_origin = src_lock.Scan0;
+            src_origin = bitmap->bits;
             if (flip_x) src_origin += bytesperpixel * (bitmap->width - 1);
-            if (flip_y) src_origin += src_lock.Stride * (bitmap->height - 1);
+            if (flip_y) src_origin += bitmap->stride * (bitmap->height - 1);
 
             if (rotate_90)
             {
-                if (flip_y) src_x_offset = -src_lock.Stride;
-                else src_x_offset = src_lock.Stride;
+                if (flip_y) src_x_offset = -bitmap->stride;
+                else src_x_offset = bitmap->stride;
                 if (flip_x) src_y_offset = -bytesperpixel;
                 else src_y_offset = bytesperpixel;
             }
@@ -5609,8 +5601,8 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
             {
                 if (flip_x) src_x_offset = -bytesperpixel;
                 else src_x_offset = bytesperpixel;
-                if (flip_y) src_y_offset = -src_lock.Stride;
-                else src_y_offset = src_lock.Stride;
+                if (flip_y) src_y_offset = -bitmap->stride;
+                else src_y_offset = bitmap->stride;
             }
 
             src_row = src_origin;
@@ -5631,15 +5623,10 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
             }
 
             GdipBitmapUnlockBits(new_bitmap, &dst_lock);
+            move_bitmap(bitmap, new_bitmap, FALSE);
         }
-
-        GdipBitmapUnlockBits(bitmap, &src_lock);
+        else GdipDisposeImage(&new_bitmap->image);
     }
-
-    if (stat == Ok)
-        move_bitmap(bitmap, new_bitmap, FALSE);
-    else
-        GdipDisposeImage(&new_bitmap->image);
 
     image_unlock(image, unlock);
     return stat;
