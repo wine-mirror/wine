@@ -3799,6 +3799,7 @@ static GpStatus decode_image_wic(IStream *stream, REFGUID container,
 
 static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
 {
+    size_t obj_size, body_offset;
     GpImage *new_image;
     GpStatus status;
 
@@ -3806,15 +3807,24 @@ static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
     if(status != Ok)
         return status;
 
-    new_image->busy = image->busy;
+    if (image->type == ImageTypeBitmap)
+        obj_size = sizeof(GpBitmap);
+    else if (image->type == ImageTypeMetafile)
+        obj_size = sizeof(GpMetafile);
+    else
+    {
+        ERR("unknown image type: %d\n", image->type);
+        GdipDisposeImage(new_image);
+        return GenericError;
+    }
+
     memcpy(&new_image->format, &image->format, sizeof(GUID));
     new_image->encoder = image->encoder;
     image->encoder = NULL;
     free_image_data(image);
-    if (image->type == ImageTypeBitmap)
-        *(GpBitmap *)image = *(GpBitmap *)new_image;
-    else if (image->type == ImageTypeMetafile)
-        *(GpMetafile *)image = *(GpMetafile *)new_image;
+    memcpy(image, new_image, FIELD_OFFSET(GpImage, busy));
+    body_offset = RTL_SIZEOF_THROUGH_FIELD(GpImage, busy);
+    memcpy((char *)image + body_offset, (char *)new_image + body_offset, obj_size - body_offset);
     new_image->type = ~0;
     heap_free(new_image);
     return Ok;
