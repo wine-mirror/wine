@@ -260,16 +260,6 @@ static struct base_device *find_device_from_fd(int fd)
     return NULL;
 }
 
-static struct base_device *find_device_from_udev(struct udev_device *dev)
-{
-    struct base_device *impl;
-
-    LIST_FOR_EACH_ENTRY(impl, &device_list, struct base_device, unix_device.entry)
-        if (impl->udev_device == dev) return impl;
-
-    return NULL;
-}
-
 static void hidraw_device_destroy(struct unix_device *iface)
 {
     struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
@@ -1745,7 +1735,7 @@ static void process_monitor_event(struct udev_monitor *monitor)
         udev_add_device(dev, -1);
     else
     {
-        impl = find_device_from_udev(dev);
+        impl = find_device_from_devnode(udev_device_get_devnode(dev));
         if (impl) bus_event_queue_device_removed(&event_queue, &impl->unix_device);
         else WARN("failed to find device for udev device %p\n", dev);
     }
