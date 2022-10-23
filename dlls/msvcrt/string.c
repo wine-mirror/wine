@@ -1328,9 +1328,9 @@ char* CDECL strcpy(char *dst, const char *src)
 int CDECL strcpy_s( char* dst, size_t elem, const char* src )
 {
     size_t i;
-    if(!elem) return EINVAL;
-    if(!dst) return EINVAL;
-    if(!src)
+    if (!MSVCRT_CHECK_PMT(dst != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(elem != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
     {
         dst[0] = '\0';
         return EINVAL;
@@ -1340,6 +1340,7 @@ int CDECL strcpy_s( char* dst, size_t elem, const char* src )
     {
         if((dst[i] = src[i]) == '\0') return 0;
     }
+    MSVCRT_INVALID_PMT("dst[elem] is too small", ERANGE);
     dst[0] = '\0';
     return ERANGE;
 }
