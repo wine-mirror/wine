@@ -495,7 +495,7 @@
 @ cdecl _ismbcspace(long)
 @ cdecl _ismbcspace_l(long ptr)
 @ cdecl _ismbcsymbol(long)
-@ stub _ismbcsymbol_l
+@ cdecl _ismbcsymbol_l(long ptr)
 @ cdecl _ismbcupper(long)
 @ cdecl _ismbcupper_l(long ptr)
 @ cdecl _ismbslead(ptr ptr)
@@ -1094,7 +1094,7 @@
 @ cdecl _o__ismbcspace(long) _ismbcspace
 @ cdecl _o__ismbcspace_l(long ptr) _ismbcspace_l
 @ cdecl _o__ismbcsymbol(long) _ismbcsymbol
-@ stub _o__ismbcsymbol_l
+@ cdecl _o__ismbcsymbol_l(long ptr) _ismbcsymbol_l
 @ cdecl _o__ismbcupper(long) _ismbcupper
 @ cdecl _o__ismbcupper_l(long ptr) _ismbcupper_l
 @ cdecl _o__ismbslead(ptr ptr) _ismbslead

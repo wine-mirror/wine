@@ -115,11 +115,6 @@ static wchar_t msvcrt_mbc_to_wc_l(unsigned int ch, _locale_t locale)
     return chW;
 }
 
-static wchar_t msvcrt_mbc_to_wc(unsigned int ch)
-{
-    return msvcrt_mbc_to_wc_l(ch, NULL);
-}
-
 static inline size_t u_strlen( const unsigned char *str )
 {
   return strlen( (const char*) str );
@@ -1640,11 +1635,11 @@ int CDECL _ismbcupper(unsigned int ch)
 }
 
 /*********************************************************************
- *              _ismbcsymbol(MSVCRT.@)
+ *              _ismbcsymbol_l(MSVCRT.@)
  */
-int CDECL _ismbcsymbol(unsigned int ch)
+int CDECL _ismbcsymbol_l(unsigned int ch, _locale_t locale)
 {
-    wchar_t wch = msvcrt_mbc_to_wc( ch );
+    wchar_t wch = msvcrt_mbc_to_wc_l( ch, locale );
     WORD ctype;
     if (!GetStringTypeW(CT_CTYPE3, &wch, 1, &ctype))
     {
@@ -1652,6 +1647,14 @@ int CDECL _ismbcsymbol(unsigned int ch)
         return 0;
     }
     return ((ctype & C3_SYMBOL) != 0);
+}
+
+/*********************************************************************
+ *              _ismbcsymbol(MSVCRT.@)
+ */
+int CDECL _ismbcsymbol(unsigned int ch)
+{
+    return _ismbcsymbol_l(ch, NULL);
 }
 
 /*********************************************************************

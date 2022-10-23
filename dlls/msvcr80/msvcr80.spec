@@ -675,7 +675,7 @@
 @ cdecl _ismbcspace(long)
 @ cdecl _ismbcspace_l(long ptr)
 @ cdecl _ismbcsymbol(long)
-@ stub _ismbcsymbol_l
+@ cdecl _ismbcsymbol_l(long ptr)
 @ cdecl _ismbcupper(long)
 @ cdecl _ismbcupper_l(long ptr)
 @ cdecl _ismbslead(ptr ptr)
