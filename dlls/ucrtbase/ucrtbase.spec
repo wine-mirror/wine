@@ -631,7 +631,7 @@
 @ cdecl _mbsicoll(str str)
 @ cdecl _mbsicoll_l(str str ptr)
 @ cdecl _mbsinc(str)
-@ stub _mbsinc_l
+@ cdecl _mbsinc_l(str ptr)
 @ cdecl _mbslen(str)
 @ cdecl _mbslen_l(str ptr)
 @ cdecl _mbslwr(str)
@@ -1200,7 +1200,7 @@
 @ cdecl _o__mbsicoll(str str) _mbsicoll
 @ cdecl _o__mbsicoll_l(str str ptr) _mbsicoll_l
 @ cdecl _o__mbsinc(str) _mbsinc
-@ stub _o__mbsinc_l
+@ cdecl _o__mbsinc_l(str ptr) _mbsinc_l
 @ cdecl _o__mbslen(str) _mbslen
 @ cdecl _o__mbslen_l(str ptr) _mbslen_l
 @ cdecl _o__mbslwr(str) _mbslwr

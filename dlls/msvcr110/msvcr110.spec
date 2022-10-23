@@ -1473,7 +1473,7 @@
 @ cdecl _mbsicoll(str str)
 @ cdecl _mbsicoll_l(str str ptr)
 @ cdecl _mbsinc(str)
-@ stub _mbsinc_l
+@ cdecl _mbsinc_l(str ptr)
 @ cdecl _mbslen(str)
 @ cdecl _mbslen_l(str ptr)
 @ cdecl _mbslwr(str)

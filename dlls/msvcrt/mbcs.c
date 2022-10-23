@@ -655,11 +655,19 @@ size_t CDECL _mbclen(const unsigned char* str)
 }
 
 /*********************************************************************
+ *		_mbsinc_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbsinc_l(const unsigned char* str, _locale_t locale)
+{
+    return (unsigned char *)(str + _mbclen_l(str, locale));
+}
+
+/*********************************************************************
  *		_mbsinc(MSVCRT.@)
  */
 unsigned char* CDECL _mbsinc(const unsigned char* str)
 {
-  return (unsigned char *)(str + _mbclen(str));
+    return _mbsinc_l(str, NULL);
 }
 
 /*********************************************************************
