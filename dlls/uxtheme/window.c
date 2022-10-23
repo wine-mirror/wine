@@ -22,11 +22,70 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "uxthemedll.h"
+#include "vssym32.h"
+
+static void uxtheme_draw_menu_button(HTHEME theme, HWND hwnd, HDC hdc, enum NONCLIENT_BUTTON_TYPE type,
+                                     RECT rect, BOOL down, BOOL grayed)
+{
+    int part, state;
+
+    switch (type)
+    {
+    case MENU_CLOSE_BUTTON:
+        part = WP_MDICLOSEBUTTON;
+        break;
+    case MENU_MIN_BUTTON:
+        part = WP_MDIMINBUTTON;
+        break;
+    case MENU_RESTORE_BUTTON:
+        part = WP_MDIRESTOREBUTTON;
+        break;
+    case MENU_HELP_BUTTON:
+        part = WP_MDIHELPBUTTON;
+        break;
+    /* There is no WP_MDIMAXBUTTON */
+    default:
+        user_api.pNonClientButtonDraw(hwnd, hdc, type, rect, down, grayed);
+        return;
+    }
+
+    if (grayed)
+        state = MINBS_DISABLED;
+    else if (down)
+        state = MINBS_PUSHED;
+    else
+        state = MINBS_NORMAL;
+
+    if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
+        DrawThemeParentBackground(hwnd, hdc, &rect);
+    DrawThemeBackground(theme, hdc, part, state, &rect, NULL);
+}
 
 void WINAPI UXTHEME_NonClientButtonDraw(HWND hwnd, HDC hdc, enum NONCLIENT_BUTTON_TYPE type,
                                         RECT rect, BOOL down, BOOL grayed)
 {
-    user_api.pNonClientButtonDraw(hwnd, hdc, type, rect, down, grayed);
+    HTHEME theme;
+
+    theme = OpenThemeDataForDpi(NULL, L"Window", GetDpiForWindow(hwnd));
+    if (!theme)
+    {
+        user_api.pNonClientButtonDraw(hwnd, hdc, type, rect, down, grayed);
+        return;
+    }
+
+    switch (type)
+    {
+    case MENU_CLOSE_BUTTON:
+    case MENU_MIN_BUTTON:
+    case MENU_MAX_BUTTON:
+    case MENU_RESTORE_BUTTON:
+    case MENU_HELP_BUTTON:
+        uxtheme_draw_menu_button(theme, hwnd, hdc, type, rect, down, grayed);
+        break;
+    }
+
+    CloseThemeData(theme);
 }
