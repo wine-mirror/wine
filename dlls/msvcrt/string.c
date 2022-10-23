@@ -1350,9 +1350,9 @@ int CDECL strcpy_s( char* dst, size_t elem, const char* src )
 int CDECL strcat_s( char* dst, size_t elem, const char* src )
 {
     size_t i, j;
-    if(!dst) return EINVAL;
-    if(elem == 0) return EINVAL;
-    if(!src)
+    if (!MSVCRT_CHECK_PMT(dst != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(elem != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
     {
         dst[0] = '\0';
         return EINVAL;
@@ -1369,6 +1369,7 @@ int CDECL strcat_s( char* dst, size_t elem, const char* src )
         }
     }
     /* Set the first element to 0, not the first element after the skipped part */
+    MSVCRT_INVALID_PMT("dst[elem] is too small", ERANGE);
     dst[0] = '\0';
     return ERANGE;
 }
