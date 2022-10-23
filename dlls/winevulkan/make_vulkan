@@ -860,7 +860,18 @@ class VkFunction(object):
     def thunk(self, prefix=None, conv=False):
         thunk = "NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
         thunk += "{\n"
-        thunk += "    struct {0}_params *params = args;\n".format(self.name)
+        if conv:
+            thunk += "    struct\n"
+            thunk += "    {\n"
+            for p in self.params:
+                thunk += "        {0};\n".format(p.definition(is_member=True))
+            if self.extra_param:
+                thunk += "        void *{0};\n".format(self.extra_param)
+            if self.type != "void":
+                thunk += "        {0} result;\n".format(self.type)
+            thunk += "    } *params = args;\n"
+        else:
+            thunk += "    struct {0}_params *params = args;\n".format(self.name)
         thunk += self.body(conv=conv, unwrap=self.thunk_type == ThunkType.PUBLIC, params_prefix="params->")
         thunk += "}\n\n"
         return thunk

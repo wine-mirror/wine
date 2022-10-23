@@ -10648,7 +10648,13 @@ static NTSTATUS thunk64_vkAcquireNextImage2KHR(void *args)
 
 static NTSTATUS thunk32_vkAcquireNextImage2KHR(void *args)
 {
-    struct vkAcquireNextImage2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAcquireNextImageInfoKHR *pAcquireInfo;
+        uint32_t *pImageIndex;
+        VkResult result;
+    } *params = args;
     VkAcquireNextImageInfoKHR_host pAcquireInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pAcquireInfo, params->pImageIndex);
@@ -10676,7 +10682,16 @@ static NTSTATUS thunk64_vkAcquireNextImageKHR(void *args)
 
 static NTSTATUS thunk32_vkAcquireNextImageKHR(void *args)
 {
-    struct vkAcquireNextImageKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+        uint64_t DECLSPEC_ALIGN(8) timeout;
+        VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        uint32_t *pImageIndex;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), wine_dbgstr_longlong(params->timeout), wine_dbgstr_longlong(params->semaphore), wine_dbgstr_longlong(params->fence), params->pImageIndex);
 
@@ -10702,7 +10717,13 @@ static NTSTATUS thunk64_vkAcquirePerformanceConfigurationINTEL(void *args)
 
 static NTSTATUS thunk32_vkAcquirePerformanceConfigurationINTEL(void *args)
 {
-    struct vkAcquirePerformanceConfigurationINTEL_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPerformanceConfigurationAcquireInfoINTEL *pAcquireInfo;
+        VkPerformanceConfigurationINTEL *pConfiguration;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pAcquireInfo, params->pConfiguration);
 
@@ -10728,7 +10749,12 @@ static NTSTATUS thunk64_vkAcquireProfilingLockKHR(void *args)
 
 static NTSTATUS thunk32_vkAcquireProfilingLockKHR(void *args)
 {
-    struct vkAcquireProfilingLockKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAcquireProfilingLockInfoKHR *pInfo;
+        VkResult result;
+    } *params = args;
     VkAcquireProfilingLockInfoKHR_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -10756,7 +10782,13 @@ static NTSTATUS thunk64_vkAllocateCommandBuffers(void *args)
 
 static NTSTATUS thunk32_vkAllocateCommandBuffers(void *args)
 {
-    struct vkAllocateCommandBuffers_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkCommandBufferAllocateInfo *pAllocateInfo;
+        VkCommandBuffer *pCommandBuffers;
+        VkResult result;
+    } *params = args;
     VkCommandBufferAllocateInfo_host pAllocateInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pCommandBuffers);
@@ -10784,7 +10816,13 @@ static NTSTATUS thunk64_vkAllocateDescriptorSets(void *args)
 
 static NTSTATUS thunk32_vkAllocateDescriptorSets(void *args)
 {
-    struct vkAllocateDescriptorSets_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorSetAllocateInfo *pAllocateInfo;
+        VkDescriptorSet *pDescriptorSets;
+        VkResult result;
+    } *params = args;
     VkDescriptorSetAllocateInfo_host pAllocateInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pDescriptorSets);
@@ -10812,7 +10850,14 @@ static NTSTATUS thunk64_vkAllocateMemory(void *args)
 
 static NTSTATUS thunk32_vkAllocateMemory(void *args)
 {
-    struct vkAllocateMemory_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkMemoryAllocateInfo *pAllocateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDeviceMemory *pMemory;
+        VkResult result;
+    } *params = args;
     VkMemoryAllocateInfo_host pAllocateInfo_host;
     struct conversion_context ctx;
 
@@ -10843,7 +10888,12 @@ static NTSTATUS thunk64_vkBeginCommandBuffer(void *args)
 
 static NTSTATUS thunk32_vkBeginCommandBuffer(void *args)
 {
-    struct vkBeginCommandBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCommandBufferBeginInfo *pBeginInfo;
+        VkResult result;
+    } *params = args;
     VkCommandBufferBeginInfo_host pBeginInfo_host;
     struct conversion_context ctx;
 
@@ -10874,7 +10924,13 @@ static NTSTATUS thunk64_vkBindAccelerationStructureMemoryNV(void *args)
 
 static NTSTATUS thunk32_vkBindAccelerationStructureMemoryNV(void *args)
 {
-    struct vkBindAccelerationStructureMemoryNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t bindInfoCount;
+        const VkBindAccelerationStructureMemoryInfoNV *pBindInfos;
+        VkResult result;
+    } *params = args;
     const VkBindAccelerationStructureMemoryInfoNV_host *pBindInfos_host;
     struct conversion_context ctx;
 
@@ -10905,7 +10961,14 @@ static NTSTATUS thunk64_vkBindBufferMemory(void *args)
 
 static NTSTATUS thunk32_vkBindBufferMemory(void *args)
 {
-    struct vkBindBufferMemory_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+        VkDeviceSize DECLSPEC_ALIGN(8) memoryOffset;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
@@ -10931,7 +10994,13 @@ static NTSTATUS thunk64_vkBindBufferMemory2(void *args)
 
 static NTSTATUS thunk32_vkBindBufferMemory2(void *args)
 {
-    struct vkBindBufferMemory2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t bindInfoCount;
+        const VkBindBufferMemoryInfo *pBindInfos;
+        VkResult result;
+    } *params = args;
     const VkBindBufferMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
@@ -10962,7 +11031,13 @@ static NTSTATUS thunk64_vkBindBufferMemory2KHR(void *args)
 
 static NTSTATUS thunk32_vkBindBufferMemory2KHR(void *args)
 {
-    struct vkBindBufferMemory2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t bindInfoCount;
+        const VkBindBufferMemoryInfo *pBindInfos;
+        VkResult result;
+    } *params = args;
     const VkBindBufferMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
@@ -10993,7 +11068,14 @@ static NTSTATUS thunk64_vkBindImageMemory(void *args)
 
 static NTSTATUS thunk32_vkBindImageMemory(void *args)
 {
-    struct vkBindImageMemory_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+        VkDeviceSize DECLSPEC_ALIGN(8) memoryOffset;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->image), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
@@ -11019,7 +11101,13 @@ static NTSTATUS thunk64_vkBindImageMemory2(void *args)
 
 static NTSTATUS thunk32_vkBindImageMemory2(void *args)
 {
-    struct vkBindImageMemory2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t bindInfoCount;
+        const VkBindImageMemoryInfo *pBindInfos;
+        VkResult result;
+    } *params = args;
     const VkBindImageMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
@@ -11050,7 +11138,13 @@ static NTSTATUS thunk64_vkBindImageMemory2KHR(void *args)
 
 static NTSTATUS thunk32_vkBindImageMemory2KHR(void *args)
 {
-    struct vkBindImageMemory2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t bindInfoCount;
+        const VkBindImageMemoryInfo *pBindInfos;
+        VkResult result;
+    } *params = args;
     const VkBindImageMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
@@ -11081,7 +11175,15 @@ static NTSTATUS thunk64_vkBindOpticalFlowSessionImageNV(void *args)
 
 static NTSTATUS thunk32_vkBindOpticalFlowSessionImageNV(void *args)
 {
-    struct vkBindOpticalFlowSessionImageNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkOpticalFlowSessionNV DECLSPEC_ALIGN(8) session;
+        VkOpticalFlowSessionBindingPointNV bindingPoint;
+        VkImageView DECLSPEC_ALIGN(8) view;
+        VkImageLayout layout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->session), params->bindingPoint, wine_dbgstr_longlong(params->view), params->layout);
 
@@ -11107,7 +11209,15 @@ static NTSTATUS thunk64_vkBuildAccelerationStructuresKHR(void *args)
 
 static NTSTATUS thunk32_vkBuildAccelerationStructuresKHR(void *args)
 {
-    struct vkBuildAccelerationStructuresKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        uint32_t infoCount;
+        const VkAccelerationStructureBuildGeometryInfoKHR *pInfos;
+        const VkAccelerationStructureBuildRangeInfoKHR * const*ppBuildRangeInfos;
+        VkResult result;
+    } *params = args;
     const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
     struct conversion_context ctx;
 
@@ -11138,7 +11248,14 @@ static NTSTATUS thunk64_vkBuildMicromapsEXT(void *args)
 
 static NTSTATUS thunk32_vkBuildMicromapsEXT(void *args)
 {
-    struct vkBuildMicromapsEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        uint32_t infoCount;
+        const VkMicromapBuildInfoEXT *pInfos;
+        VkResult result;
+    } *params = args;
     const VkMicromapBuildInfoEXT_host *pInfos_host;
     struct conversion_context ctx;
 
@@ -11169,7 +11286,11 @@ static NTSTATUS thunk64_vkCmdBeginConditionalRenderingEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginConditionalRenderingEXT(void *args)
 {
-    struct vkCmdBeginConditionalRenderingEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkConditionalRenderingBeginInfoEXT *pConditionalRenderingBegin;
+    } *params = args;
     VkConditionalRenderingBeginInfoEXT_host pConditionalRenderingBegin_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pConditionalRenderingBegin);
@@ -11197,7 +11318,11 @@ static NTSTATUS thunk64_vkCmdBeginDebugUtilsLabelEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginDebugUtilsLabelEXT(void *args)
 {
-    struct vkCmdBeginDebugUtilsLabelEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkDebugUtilsLabelEXT *pLabelInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pLabelInfo);
 
@@ -11223,7 +11348,13 @@ static NTSTATUS thunk64_vkCmdBeginQuery(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginQuery(void *args)
 {
-    struct vkCmdBeginQuery_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+        VkQueryControlFlags flags;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query, params->flags);
 
@@ -11249,7 +11380,14 @@ static NTSTATUS thunk64_vkCmdBeginQueryIndexedEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginQueryIndexedEXT(void *args)
 {
-    struct vkCmdBeginQueryIndexedEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+        VkQueryControlFlags flags;
+        uint32_t index;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %#x, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query, params->flags, params->index);
 
@@ -11275,7 +11413,12 @@ static NTSTATUS thunk64_vkCmdBeginRenderPass(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginRenderPass(void *args)
 {
-    struct vkCmdBeginRenderPass_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkRenderPassBeginInfo *pRenderPassBegin;
+        VkSubpassContents contents;
+    } *params = args;
     VkRenderPassBeginInfo_host pRenderPassBegin_host;
 
     TRACE("%p, %p, %#x\n", params->commandBuffer, params->pRenderPassBegin, params->contents);
@@ -11303,7 +11446,12 @@ static NTSTATUS thunk64_vkCmdBeginRenderPass2(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginRenderPass2(void *args)
 {
-    struct vkCmdBeginRenderPass2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkRenderPassBeginInfo *pRenderPassBegin;
+        const VkSubpassBeginInfo *pSubpassBeginInfo;
+    } *params = args;
     VkRenderPassBeginInfo_host pRenderPassBegin_host;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
@@ -11331,7 +11479,12 @@ static NTSTATUS thunk64_vkCmdBeginRenderPass2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginRenderPass2KHR(void *args)
 {
-    struct vkCmdBeginRenderPass2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkRenderPassBeginInfo *pRenderPassBegin;
+        const VkSubpassBeginInfo *pSubpassBeginInfo;
+    } *params = args;
     VkRenderPassBeginInfo_host pRenderPassBegin_host;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
@@ -11359,7 +11512,11 @@ static NTSTATUS thunk64_vkCmdBeginRendering(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginRendering(void *args)
 {
-    struct vkCmdBeginRendering_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkRenderingInfo *pRenderingInfo;
+    } *params = args;
     VkRenderingInfo_host pRenderingInfo_host;
     struct conversion_context ctx;
 
@@ -11390,7 +11547,11 @@ static NTSTATUS thunk64_vkCmdBeginRenderingKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginRenderingKHR(void *args)
 {
-    struct vkCmdBeginRenderingKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkRenderingInfo *pRenderingInfo;
+    } *params = args;
     VkRenderingInfo_host pRenderingInfo_host;
     struct conversion_context ctx;
 
@@ -11421,7 +11582,14 @@ static NTSTATUS thunk64_vkCmdBeginTransformFeedbackEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBeginTransformFeedbackEXT(void *args)
 {
-    struct vkCmdBeginTransformFeedbackEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstCounterBuffer;
+        uint32_t counterBufferCount;
+        const VkBuffer *pCounterBuffers;
+        const VkDeviceSize *pCounterBufferOffsets;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p, %p\n", params->commandBuffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
 
@@ -11447,7 +11615,17 @@ static NTSTATUS thunk64_vkCmdBindDescriptorSets(void *args)
 
 static NTSTATUS thunk32_vkCmdBindDescriptorSets(void *args)
 {
-    struct vkCmdBindDescriptorSets_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineBindPoint pipelineBindPoint;
+        VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+        uint32_t firstSet;
+        uint32_t descriptorSetCount;
+        const VkDescriptorSet *pDescriptorSets;
+        uint32_t dynamicOffsetCount;
+        const uint32_t *pDynamicOffsets;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, %u, %u, %p, %u, %p\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->layout), params->firstSet, params->descriptorSetCount, params->pDescriptorSets, params->dynamicOffsetCount, params->pDynamicOffsets);
 
@@ -11473,7 +11651,13 @@ static NTSTATUS thunk64_vkCmdBindIndexBuffer(void *args)
 
 static NTSTATUS thunk32_vkCmdBindIndexBuffer(void *args)
 {
-    struct vkCmdBindIndexBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkIndexType indexType;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->indexType);
 
@@ -11499,7 +11683,12 @@ static NTSTATUS thunk64_vkCmdBindInvocationMaskHUAWEI(void *args)
 
 static NTSTATUS thunk32_vkCmdBindInvocationMaskHUAWEI(void *args)
 {
-    struct vkCmdBindInvocationMaskHUAWEI_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImageView DECLSPEC_ALIGN(8) imageView;
+        VkImageLayout imageLayout;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->imageView), params->imageLayout);
 
@@ -11525,7 +11714,12 @@ static NTSTATUS thunk64_vkCmdBindPipeline(void *args)
 
 static NTSTATUS thunk32_vkCmdBindPipeline(void *args)
 {
-    struct vkCmdBindPipeline_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineBindPoint pipelineBindPoint;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->pipeline));
 
@@ -11551,7 +11745,13 @@ static NTSTATUS thunk64_vkCmdBindPipelineShaderGroupNV(void *args)
 
 static NTSTATUS thunk32_vkCmdBindPipelineShaderGroupNV(void *args)
 {
-    struct vkCmdBindPipelineShaderGroupNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineBindPoint pipelineBindPoint;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        uint32_t groupIndex;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, %u\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->pipeline), params->groupIndex);
 
@@ -11577,7 +11777,12 @@ static NTSTATUS thunk64_vkCmdBindShadingRateImageNV(void *args)
 
 static NTSTATUS thunk32_vkCmdBindShadingRateImageNV(void *args)
 {
-    struct vkCmdBindShadingRateImageNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImageView DECLSPEC_ALIGN(8) imageView;
+        VkImageLayout imageLayout;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->imageView), params->imageLayout);
 
@@ -11603,7 +11808,15 @@ static NTSTATUS thunk64_vkCmdBindTransformFeedbackBuffersEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBindTransformFeedbackBuffersEXT(void *args)
 {
-    struct vkCmdBindTransformFeedbackBuffersEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstBinding;
+        uint32_t bindingCount;
+        const VkBuffer *pBuffers;
+        const VkDeviceSize *pOffsets;
+        const VkDeviceSize *pSizes;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes);
 
@@ -11629,7 +11842,14 @@ static NTSTATUS thunk64_vkCmdBindVertexBuffers(void *args)
 
 static NTSTATUS thunk32_vkCmdBindVertexBuffers(void *args)
 {
-    struct vkCmdBindVertexBuffers_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstBinding;
+        uint32_t bindingCount;
+        const VkBuffer *pBuffers;
+        const VkDeviceSize *pOffsets;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets);
 
@@ -11655,7 +11875,16 @@ static NTSTATUS thunk64_vkCmdBindVertexBuffers2(void *args)
 
 static NTSTATUS thunk32_vkCmdBindVertexBuffers2(void *args)
 {
-    struct vkCmdBindVertexBuffers2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstBinding;
+        uint32_t bindingCount;
+        const VkBuffer *pBuffers;
+        const VkDeviceSize *pOffsets;
+        const VkDeviceSize *pSizes;
+        const VkDeviceSize *pStrides;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p, %p, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
 
@@ -11681,7 +11910,16 @@ static NTSTATUS thunk64_vkCmdBindVertexBuffers2EXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBindVertexBuffers2EXT(void *args)
 {
-    struct vkCmdBindVertexBuffers2EXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstBinding;
+        uint32_t bindingCount;
+        const VkBuffer *pBuffers;
+        const VkDeviceSize *pOffsets;
+        const VkDeviceSize *pSizes;
+        const VkDeviceSize *pStrides;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p, %p, %p, %p\n", params->commandBuffer, params->firstBinding, params->bindingCount, params->pBuffers, params->pOffsets, params->pSizes, params->pStrides);
 
@@ -11707,7 +11945,17 @@ static NTSTATUS thunk64_vkCmdBlitImage(void *args)
 
 static NTSTATUS thunk32_vkCmdBlitImage(void *args)
 {
-    struct vkCmdBlitImage_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImage DECLSPEC_ALIGN(8) srcImage;
+        VkImageLayout srcImageLayout;
+        VkImage DECLSPEC_ALIGN(8) dstImage;
+        VkImageLayout dstImageLayout;
+        uint32_t regionCount;
+        const VkImageBlit *pRegions;
+        VkFilter filter;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions, params->filter);
 
@@ -11733,7 +11981,11 @@ static NTSTATUS thunk64_vkCmdBlitImage2(void *args)
 
 static NTSTATUS thunk32_vkCmdBlitImage2(void *args)
 {
-    struct vkCmdBlitImage2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkBlitImageInfo2 *pBlitImageInfo;
+    } *params = args;
     VkBlitImageInfo2_host pBlitImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
@@ -11761,7 +12013,11 @@ static NTSTATUS thunk64_vkCmdBlitImage2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdBlitImage2KHR(void *args)
 {
-    struct vkCmdBlitImage2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkBlitImageInfo2 *pBlitImageInfo;
+    } *params = args;
     VkBlitImageInfo2_host pBlitImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
@@ -11789,7 +12045,18 @@ static NTSTATUS thunk64_vkCmdBuildAccelerationStructureNV(void *args)
 
 static NTSTATUS thunk32_vkCmdBuildAccelerationStructureNV(void *args)
 {
-    struct vkCmdBuildAccelerationStructureNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkAccelerationStructureInfoNV *pInfo;
+        VkBuffer DECLSPEC_ALIGN(8) instanceData;
+        VkDeviceSize DECLSPEC_ALIGN(8) instanceOffset;
+        VkBool32 update;
+        VkAccelerationStructureNV DECLSPEC_ALIGN(8) dst;
+        VkAccelerationStructureNV DECLSPEC_ALIGN(8) src;
+        VkBuffer DECLSPEC_ALIGN(8) scratch;
+        VkDeviceSize DECLSPEC_ALIGN(8) scratchOffset;
+    } *params = args;
     VkAccelerationStructureInfoNV_host pInfo_host;
     struct conversion_context ctx;
 
@@ -11820,7 +12087,15 @@ static NTSTATUS thunk64_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
 {
-    struct vkCmdBuildAccelerationStructuresIndirectKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t infoCount;
+        const VkAccelerationStructureBuildGeometryInfoKHR *pInfos;
+        const VkDeviceAddress *pIndirectDeviceAddresses;
+        const uint32_t *pIndirectStrides;
+        const uint32_t * const*ppMaxPrimitiveCounts;
+    } *params = args;
     const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
     struct conversion_context ctx;
 
@@ -11851,7 +12126,13 @@ static NTSTATUS thunk64_vkCmdBuildAccelerationStructuresKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdBuildAccelerationStructuresKHR(void *args)
 {
-    struct vkCmdBuildAccelerationStructuresKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t infoCount;
+        const VkAccelerationStructureBuildGeometryInfoKHR *pInfos;
+        const VkAccelerationStructureBuildRangeInfoKHR * const*ppBuildRangeInfos;
+    } *params = args;
     const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
     struct conversion_context ctx;
 
@@ -11882,7 +12163,12 @@ static NTSTATUS thunk64_vkCmdBuildMicromapsEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdBuildMicromapsEXT(void *args)
 {
-    struct vkCmdBuildMicromapsEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t infoCount;
+        const VkMicromapBuildInfoEXT *pInfos;
+    } *params = args;
     const VkMicromapBuildInfoEXT_host *pInfos_host;
     struct conversion_context ctx;
 
@@ -11913,7 +12199,14 @@ static NTSTATUS thunk64_vkCmdClearAttachments(void *args)
 
 static NTSTATUS thunk32_vkCmdClearAttachments(void *args)
 {
-    struct vkCmdClearAttachments_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t attachmentCount;
+        const VkClearAttachment *pAttachments;
+        uint32_t rectCount;
+        const VkClearRect *pRects;
+    } *params = args;
 
     TRACE("%p, %u, %p, %u, %p\n", params->commandBuffer, params->attachmentCount, params->pAttachments, params->rectCount, params->pRects);
 
@@ -11939,7 +12232,15 @@ static NTSTATUS thunk64_vkCmdClearColorImage(void *args)
 
 static NTSTATUS thunk32_vkCmdClearColorImage(void *args)
 {
-    struct vkCmdClearColorImage_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImage DECLSPEC_ALIGN(8) image;
+        VkImageLayout imageLayout;
+        const VkClearColorValue *pColor;
+        uint32_t rangeCount;
+        const VkImageSubresourceRange *pRanges;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, %p, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->image), params->imageLayout, params->pColor, params->rangeCount, params->pRanges);
 
@@ -11965,7 +12266,15 @@ static NTSTATUS thunk64_vkCmdClearDepthStencilImage(void *args)
 
 static NTSTATUS thunk32_vkCmdClearDepthStencilImage(void *args)
 {
-    struct vkCmdClearDepthStencilImage_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImage DECLSPEC_ALIGN(8) image;
+        VkImageLayout imageLayout;
+        const VkClearDepthStencilValue *pDepthStencil;
+        uint32_t rangeCount;
+        const VkImageSubresourceRange *pRanges;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, %p, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->image), params->imageLayout, params->pDepthStencil, params->rangeCount, params->pRanges);
 
@@ -11991,7 +12300,11 @@ static NTSTATUS thunk64_vkCmdCopyAccelerationStructureKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyAccelerationStructureKHR(void *args)
 {
-    struct vkCmdCopyAccelerationStructureKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyAccelerationStructureInfoKHR *pInfo;
+    } *params = args;
     VkCopyAccelerationStructureInfoKHR_host pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
@@ -12019,7 +12332,13 @@ static NTSTATUS thunk64_vkCmdCopyAccelerationStructureNV(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyAccelerationStructureNV(void *args)
 {
-    struct vkCmdCopyAccelerationStructureNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkAccelerationStructureNV DECLSPEC_ALIGN(8) dst;
+        VkAccelerationStructureNV DECLSPEC_ALIGN(8) src;
+        VkCopyAccelerationStructureModeKHR mode;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->dst), wine_dbgstr_longlong(params->src), params->mode);
 
@@ -12045,7 +12364,11 @@ static NTSTATUS thunk64_vkCmdCopyAccelerationStructureToMemoryKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyAccelerationStructureToMemoryKHR(void *args)
 {
-    struct vkCmdCopyAccelerationStructureToMemoryKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyAccelerationStructureToMemoryInfoKHR *pInfo;
+    } *params = args;
     VkCopyAccelerationStructureToMemoryInfoKHR_host pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
@@ -12073,7 +12396,14 @@ static NTSTATUS thunk64_vkCmdCopyBuffer(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyBuffer(void *args)
 {
-    struct vkCmdCopyBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) srcBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        uint32_t regionCount;
+        const VkBufferCopy *pRegions;
+    } *params = args;
     const VkBufferCopy_host *pRegions_host;
     struct conversion_context ctx;
 
@@ -12104,7 +12434,11 @@ static NTSTATUS thunk64_vkCmdCopyBuffer2(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyBuffer2(void *args)
 {
-    struct vkCmdCopyBuffer2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyBufferInfo2 *pCopyBufferInfo;
+    } *params = args;
     VkCopyBufferInfo2_host pCopyBufferInfo_host;
     struct conversion_context ctx;
 
@@ -12135,7 +12469,11 @@ static NTSTATUS thunk64_vkCmdCopyBuffer2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyBuffer2KHR(void *args)
 {
-    struct vkCmdCopyBuffer2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyBufferInfo2 *pCopyBufferInfo;
+    } *params = args;
     VkCopyBufferInfo2_host pCopyBufferInfo_host;
     struct conversion_context ctx;
 
@@ -12166,7 +12504,15 @@ static NTSTATUS thunk64_vkCmdCopyBufferToImage(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyBufferToImage(void *args)
 {
-    struct vkCmdCopyBufferToImage_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) srcBuffer;
+        VkImage DECLSPEC_ALIGN(8) dstImage;
+        VkImageLayout dstImageLayout;
+        uint32_t regionCount;
+        const VkBufferImageCopy *pRegions;
+    } *params = args;
     const VkBufferImageCopy_host *pRegions_host;
     struct conversion_context ctx;
 
@@ -12197,7 +12543,11 @@ static NTSTATUS thunk64_vkCmdCopyBufferToImage2(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyBufferToImage2(void *args)
 {
-    struct vkCmdCopyBufferToImage2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyBufferToImageInfo2 *pCopyBufferToImageInfo;
+    } *params = args;
     VkCopyBufferToImageInfo2_host pCopyBufferToImageInfo_host;
     struct conversion_context ctx;
 
@@ -12228,7 +12578,11 @@ static NTSTATUS thunk64_vkCmdCopyBufferToImage2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyBufferToImage2KHR(void *args)
 {
-    struct vkCmdCopyBufferToImage2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyBufferToImageInfo2 *pCopyBufferToImageInfo;
+    } *params = args;
     VkCopyBufferToImageInfo2_host pCopyBufferToImageInfo_host;
     struct conversion_context ctx;
 
@@ -12259,7 +12613,16 @@ static NTSTATUS thunk64_vkCmdCopyImage(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyImage(void *args)
 {
-    struct vkCmdCopyImage_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImage DECLSPEC_ALIGN(8) srcImage;
+        VkImageLayout srcImageLayout;
+        VkImage DECLSPEC_ALIGN(8) dstImage;
+        VkImageLayout dstImageLayout;
+        uint32_t regionCount;
+        const VkImageCopy *pRegions;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
 
@@ -12285,7 +12648,11 @@ static NTSTATUS thunk64_vkCmdCopyImage2(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyImage2(void *args)
 {
-    struct vkCmdCopyImage2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyImageInfo2 *pCopyImageInfo;
+    } *params = args;
     VkCopyImageInfo2_host pCopyImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
@@ -12313,7 +12680,11 @@ static NTSTATUS thunk64_vkCmdCopyImage2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyImage2KHR(void *args)
 {
-    struct vkCmdCopyImage2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyImageInfo2 *pCopyImageInfo;
+    } *params = args;
     VkCopyImageInfo2_host pCopyImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
@@ -12341,7 +12712,15 @@ static NTSTATUS thunk64_vkCmdCopyImageToBuffer(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyImageToBuffer(void *args)
 {
-    struct vkCmdCopyImageToBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImage DECLSPEC_ALIGN(8) srcImage;
+        VkImageLayout srcImageLayout;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        uint32_t regionCount;
+        const VkBufferImageCopy *pRegions;
+    } *params = args;
     const VkBufferImageCopy_host *pRegions_host;
     struct conversion_context ctx;
 
@@ -12372,7 +12751,11 @@ static NTSTATUS thunk64_vkCmdCopyImageToBuffer2(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyImageToBuffer2(void *args)
 {
-    struct vkCmdCopyImageToBuffer2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyImageToBufferInfo2 *pCopyImageToBufferInfo;
+    } *params = args;
     VkCopyImageToBufferInfo2_host pCopyImageToBufferInfo_host;
     struct conversion_context ctx;
 
@@ -12403,7 +12786,11 @@ static NTSTATUS thunk64_vkCmdCopyImageToBuffer2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyImageToBuffer2KHR(void *args)
 {
-    struct vkCmdCopyImageToBuffer2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyImageToBufferInfo2 *pCopyImageToBufferInfo;
+    } *params = args;
     VkCopyImageToBufferInfo2_host pCopyImageToBufferInfo_host;
     struct conversion_context ctx;
 
@@ -12434,7 +12821,13 @@ static NTSTATUS thunk64_vkCmdCopyMemoryIndirectNV(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyMemoryIndirectNV(void *args)
 {
-    struct vkCmdCopyMemoryIndirectNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkDeviceAddress DECLSPEC_ALIGN(8) copyBufferAddress;
+        uint32_t copyCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->copyBufferAddress), params->copyCount, params->stride);
 
@@ -12460,7 +12853,11 @@ static NTSTATUS thunk64_vkCmdCopyMemoryToAccelerationStructureKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyMemoryToAccelerationStructureKHR(void *args)
 {
-    struct vkCmdCopyMemoryToAccelerationStructureKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo;
+    } *params = args;
     VkCopyMemoryToAccelerationStructureInfoKHR_host pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
@@ -12488,7 +12885,16 @@ static NTSTATUS thunk64_vkCmdCopyMemoryToImageIndirectNV(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyMemoryToImageIndirectNV(void *args)
 {
-    struct vkCmdCopyMemoryToImageIndirectNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkDeviceAddress DECLSPEC_ALIGN(8) copyBufferAddress;
+        uint32_t copyCount;
+        uint32_t stride;
+        VkImage DECLSPEC_ALIGN(8) dstImage;
+        VkImageLayout dstImageLayout;
+        const VkImageSubresourceLayers *pImageSubresources;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u, 0x%s, %#x, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->copyBufferAddress), params->copyCount, params->stride, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->pImageSubresources);
 
@@ -12514,7 +12920,11 @@ static NTSTATUS thunk64_vkCmdCopyMemoryToMicromapEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyMemoryToMicromapEXT(void *args)
 {
-    struct vkCmdCopyMemoryToMicromapEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyMemoryToMicromapInfoEXT *pInfo;
+    } *params = args;
     VkCopyMemoryToMicromapInfoEXT_host pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
@@ -12542,7 +12952,11 @@ static NTSTATUS thunk64_vkCmdCopyMicromapEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyMicromapEXT(void *args)
 {
-    struct vkCmdCopyMicromapEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyMicromapInfoEXT *pInfo;
+    } *params = args;
     VkCopyMicromapInfoEXT_host pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
@@ -12570,7 +12984,11 @@ static NTSTATUS thunk64_vkCmdCopyMicromapToMemoryEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyMicromapToMemoryEXT(void *args)
 {
-    struct vkCmdCopyMicromapToMemoryEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCopyMicromapToMemoryInfoEXT *pInfo;
+    } *params = args;
     VkCopyMicromapToMemoryInfoEXT_host pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
@@ -12598,7 +13016,17 @@ static NTSTATUS thunk64_vkCmdCopyQueryPoolResults(void *args)
 
 static NTSTATUS thunk32_vkCmdCopyQueryPoolResults(void *args)
 {
-    struct vkCmdCopyQueryPoolResults_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+        uint32_t queryCount;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) dstOffset;
+        VkDeviceSize DECLSPEC_ALIGN(8) stride;
+        VkQueryResultFlags flags;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u, 0x%s, 0x%s, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), wine_dbgstr_longlong(params->stride), params->flags);
 
@@ -12624,7 +13052,11 @@ static NTSTATUS thunk64_vkCmdCuLaunchKernelNVX(void *args)
 
 static NTSTATUS thunk32_vkCmdCuLaunchKernelNVX(void *args)
 {
-    struct vkCmdCuLaunchKernelNVX_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkCuLaunchInfoNVX *pLaunchInfo;
+    } *params = args;
     VkCuLaunchInfoNVX_host pLaunchInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pLaunchInfo);
@@ -12652,7 +13084,11 @@ static NTSTATUS thunk64_vkCmdDebugMarkerBeginEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDebugMarkerBeginEXT(void *args)
 {
-    struct vkCmdDebugMarkerBeginEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkDebugMarkerMarkerInfoEXT *pMarkerInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
 
@@ -12678,7 +13114,10 @@ static NTSTATUS thunk64_vkCmdDebugMarkerEndEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDebugMarkerEndEXT(void *args)
 {
-    struct vkCmdDebugMarkerEndEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -12704,7 +13143,11 @@ static NTSTATUS thunk64_vkCmdDebugMarkerInsertEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDebugMarkerInsertEXT(void *args)
 {
-    struct vkCmdDebugMarkerInsertEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkDebugMarkerMarkerInfoEXT *pMarkerInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
 
@@ -12730,7 +13173,13 @@ static NTSTATUS thunk64_vkCmdDecompressMemoryIndirectCountNV(void *args)
 
 static NTSTATUS thunk32_vkCmdDecompressMemoryIndirectCountNV(void *args)
 {
-    struct vkCmdDecompressMemoryIndirectCountNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkDeviceAddress DECLSPEC_ALIGN(8) indirectCommandsAddress;
+        VkDeviceAddress DECLSPEC_ALIGN(8) indirectCommandsCountAddress;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->indirectCommandsAddress), wine_dbgstr_longlong(params->indirectCommandsCountAddress), params->stride);
 
@@ -12756,7 +13205,12 @@ static NTSTATUS thunk64_vkCmdDecompressMemoryNV(void *args)
 
 static NTSTATUS thunk32_vkCmdDecompressMemoryNV(void *args)
 {
-    struct vkCmdDecompressMemoryNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t decompressRegionCount;
+        const VkDecompressMemoryRegionNV *pDecompressMemoryRegions;
+    } *params = args;
     const VkDecompressMemoryRegionNV_host *pDecompressMemoryRegions_host;
     struct conversion_context ctx;
 
@@ -12787,7 +13241,13 @@ static NTSTATUS thunk64_vkCmdDispatch(void *args)
 
 static NTSTATUS thunk32_vkCmdDispatch(void *args)
 {
-    struct vkCmdDispatch_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t groupCountX;
+        uint32_t groupCountY;
+        uint32_t groupCountZ;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u\n", params->commandBuffer, params->groupCountX, params->groupCountY, params->groupCountZ);
 
@@ -12813,7 +13273,16 @@ static NTSTATUS thunk64_vkCmdDispatchBase(void *args)
 
 static NTSTATUS thunk32_vkCmdDispatchBase(void *args)
 {
-    struct vkCmdDispatchBase_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t baseGroupX;
+        uint32_t baseGroupY;
+        uint32_t baseGroupZ;
+        uint32_t groupCountX;
+        uint32_t groupCountY;
+        uint32_t groupCountZ;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u, %u, %u, %u\n", params->commandBuffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
 
@@ -12839,7 +13308,16 @@ static NTSTATUS thunk64_vkCmdDispatchBaseKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdDispatchBaseKHR(void *args)
 {
-    struct vkCmdDispatchBaseKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t baseGroupX;
+        uint32_t baseGroupY;
+        uint32_t baseGroupZ;
+        uint32_t groupCountX;
+        uint32_t groupCountY;
+        uint32_t groupCountZ;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u, %u, %u, %u\n", params->commandBuffer, params->baseGroupX, params->baseGroupY, params->baseGroupZ, params->groupCountX, params->groupCountY, params->groupCountZ);
 
@@ -12865,7 +13343,12 @@ static NTSTATUS thunk64_vkCmdDispatchIndirect(void *args)
 
 static NTSTATUS thunk32_vkCmdDispatchIndirect(void *args)
 {
-    struct vkCmdDispatchIndirect_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset));
 
@@ -12891,7 +13374,14 @@ static NTSTATUS thunk64_vkCmdDraw(void *args)
 
 static NTSTATUS thunk32_vkCmdDraw(void *args)
 {
-    struct vkCmdDraw_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t vertexCount;
+        uint32_t instanceCount;
+        uint32_t firstVertex;
+        uint32_t firstInstance;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u, %u\n", params->commandBuffer, params->vertexCount, params->instanceCount, params->firstVertex, params->firstInstance);
 
@@ -12917,7 +13407,15 @@ static NTSTATUS thunk64_vkCmdDrawIndexed(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndexed(void *args)
 {
-    struct vkCmdDrawIndexed_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t indexCount;
+        uint32_t instanceCount;
+        uint32_t firstIndex;
+        int32_t vertexOffset;
+        uint32_t firstInstance;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u, %d, %u\n", params->commandBuffer, params->indexCount, params->instanceCount, params->firstIndex, params->vertexOffset, params->firstInstance);
 
@@ -12943,7 +13441,14 @@ static NTSTATUS thunk64_vkCmdDrawIndexedIndirect(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndexedIndirect(void *args)
 {
-    struct vkCmdDrawIndexedIndirect_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        uint32_t drawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
 
@@ -12969,7 +13474,16 @@ static NTSTATUS thunk64_vkCmdDrawIndexedIndirectCount(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndexedIndirectCount(void *args)
 {
-    struct vkCmdDrawIndexedIndirectCount_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -12995,7 +13509,16 @@ static NTSTATUS thunk64_vkCmdDrawIndexedIndirectCountAMD(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndexedIndirectCountAMD(void *args)
 {
-    struct vkCmdDrawIndexedIndirectCountAMD_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13021,7 +13544,16 @@ static NTSTATUS thunk64_vkCmdDrawIndexedIndirectCountKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndexedIndirectCountKHR(void *args)
 {
-    struct vkCmdDrawIndexedIndirectCountKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13047,7 +13579,14 @@ static NTSTATUS thunk64_vkCmdDrawIndirect(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndirect(void *args)
 {
-    struct vkCmdDrawIndirect_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        uint32_t drawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
 
@@ -13073,7 +13612,16 @@ static NTSTATUS thunk64_vkCmdDrawIndirectByteCountEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndirectByteCountEXT(void *args)
 {
-    struct vkCmdDrawIndirectByteCountEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t instanceCount;
+        uint32_t firstInstance;
+        VkBuffer DECLSPEC_ALIGN(8) counterBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) counterBufferOffset;
+        uint32_t counterOffset;
+        uint32_t vertexStride;
+    } *params = args;
 
     TRACE("%p, %u, %u, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, params->instanceCount, params->firstInstance, wine_dbgstr_longlong(params->counterBuffer), wine_dbgstr_longlong(params->counterBufferOffset), params->counterOffset, params->vertexStride);
 
@@ -13099,7 +13647,16 @@ static NTSTATUS thunk64_vkCmdDrawIndirectCount(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndirectCount(void *args)
 {
-    struct vkCmdDrawIndirectCount_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13125,7 +13682,16 @@ static NTSTATUS thunk64_vkCmdDrawIndirectCountAMD(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndirectCountAMD(void *args)
 {
-    struct vkCmdDrawIndirectCountAMD_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13151,7 +13717,16 @@ static NTSTATUS thunk64_vkCmdDrawIndirectCountKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawIndirectCountKHR(void *args)
 {
-    struct vkCmdDrawIndirectCountKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13177,7 +13752,13 @@ static NTSTATUS thunk64_vkCmdDrawMeshTasksEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMeshTasksEXT(void *args)
 {
-    struct vkCmdDrawMeshTasksEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t groupCountX;
+        uint32_t groupCountY;
+        uint32_t groupCountZ;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u\n", params->commandBuffer, params->groupCountX, params->groupCountY, params->groupCountZ);
 
@@ -13203,7 +13784,16 @@ static NTSTATUS thunk64_vkCmdDrawMeshTasksIndirectCountEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMeshTasksIndirectCountEXT(void *args)
 {
-    struct vkCmdDrawMeshTasksIndirectCountEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13229,7 +13819,16 @@ static NTSTATUS thunk64_vkCmdDrawMeshTasksIndirectCountNV(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMeshTasksIndirectCountNV(void *args)
 {
-    struct vkCmdDrawMeshTasksIndirectCountNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkBuffer DECLSPEC_ALIGN(8) countBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) countBufferOffset;
+        uint32_t maxDrawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->countBuffer), wine_dbgstr_longlong(params->countBufferOffset), params->maxDrawCount, params->stride);
 
@@ -13255,7 +13854,14 @@ static NTSTATUS thunk64_vkCmdDrawMeshTasksIndirectEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMeshTasksIndirectEXT(void *args)
 {
-    struct vkCmdDrawMeshTasksIndirectEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        uint32_t drawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
 
@@ -13281,7 +13887,14 @@ static NTSTATUS thunk64_vkCmdDrawMeshTasksIndirectNV(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMeshTasksIndirectNV(void *args)
 {
-    struct vkCmdDrawMeshTasksIndirectNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        uint32_t drawCount;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->offset), params->drawCount, params->stride);
 
@@ -13307,7 +13920,12 @@ static NTSTATUS thunk64_vkCmdDrawMeshTasksNV(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMeshTasksNV(void *args)
 {
-    struct vkCmdDrawMeshTasksNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t taskCount;
+        uint32_t firstTask;
+    } *params = args;
 
     TRACE("%p, %u, %u\n", params->commandBuffer, params->taskCount, params->firstTask);
 
@@ -13333,7 +13951,15 @@ static NTSTATUS thunk64_vkCmdDrawMultiEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMultiEXT(void *args)
 {
-    struct vkCmdDrawMultiEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t drawCount;
+        const VkMultiDrawInfoEXT *pVertexInfo;
+        uint32_t instanceCount;
+        uint32_t firstInstance;
+        uint32_t stride;
+    } *params = args;
 
     TRACE("%p, %u, %p, %u, %u, %u\n", params->commandBuffer, params->drawCount, params->pVertexInfo, params->instanceCount, params->firstInstance, params->stride);
 
@@ -13359,7 +13985,16 @@ static NTSTATUS thunk64_vkCmdDrawMultiIndexedEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdDrawMultiIndexedEXT(void *args)
 {
-    struct vkCmdDrawMultiIndexedEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t drawCount;
+        const VkMultiDrawIndexedInfoEXT *pIndexInfo;
+        uint32_t instanceCount;
+        uint32_t firstInstance;
+        uint32_t stride;
+        const int32_t *pVertexOffset;
+    } *params = args;
 
     TRACE("%p, %u, %p, %u, %u, %u, %p\n", params->commandBuffer, params->drawCount, params->pIndexInfo, params->instanceCount, params->firstInstance, params->stride, params->pVertexOffset);
 
@@ -13385,7 +14020,10 @@ static NTSTATUS thunk64_vkCmdEndConditionalRenderingEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdEndConditionalRenderingEXT(void *args)
 {
-    struct vkCmdEndConditionalRenderingEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -13411,7 +14049,10 @@ static NTSTATUS thunk64_vkCmdEndDebugUtilsLabelEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdEndDebugUtilsLabelEXT(void *args)
 {
-    struct vkCmdEndDebugUtilsLabelEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -13437,7 +14078,12 @@ static NTSTATUS thunk64_vkCmdEndQuery(void *args)
 
 static NTSTATUS thunk32_vkCmdEndQuery(void *args)
 {
-    struct vkCmdEndQuery_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query);
 
@@ -13463,7 +14109,13 @@ static NTSTATUS thunk64_vkCmdEndQueryIndexedEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdEndQueryIndexedEXT(void *args)
 {
-    struct vkCmdEndQueryIndexedEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+        uint32_t index;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->query, params->index);
 
@@ -13489,7 +14141,10 @@ static NTSTATUS thunk64_vkCmdEndRenderPass(void *args)
 
 static NTSTATUS thunk32_vkCmdEndRenderPass(void *args)
 {
-    struct vkCmdEndRenderPass_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -13515,7 +14170,11 @@ static NTSTATUS thunk64_vkCmdEndRenderPass2(void *args)
 
 static NTSTATUS thunk32_vkCmdEndRenderPass2(void *args)
 {
-    struct vkCmdEndRenderPass2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkSubpassEndInfo *pSubpassEndInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pSubpassEndInfo);
 
@@ -13541,7 +14200,11 @@ static NTSTATUS thunk64_vkCmdEndRenderPass2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdEndRenderPass2KHR(void *args)
 {
-    struct vkCmdEndRenderPass2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkSubpassEndInfo *pSubpassEndInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pSubpassEndInfo);
 
@@ -13567,7 +14230,10 @@ static NTSTATUS thunk64_vkCmdEndRendering(void *args)
 
 static NTSTATUS thunk32_vkCmdEndRendering(void *args)
 {
-    struct vkCmdEndRendering_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -13593,7 +14259,10 @@ static NTSTATUS thunk64_vkCmdEndRenderingKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdEndRenderingKHR(void *args)
 {
-    struct vkCmdEndRenderingKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -13619,7 +14288,14 @@ static NTSTATUS thunk64_vkCmdEndTransformFeedbackEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdEndTransformFeedbackEXT(void *args)
 {
-    struct vkCmdEndTransformFeedbackEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstCounterBuffer;
+        uint32_t counterBufferCount;
+        const VkBuffer *pCounterBuffers;
+        const VkDeviceSize *pCounterBufferOffsets;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p, %p\n", params->commandBuffer, params->firstCounterBuffer, params->counterBufferCount, params->pCounterBuffers, params->pCounterBufferOffsets);
 
@@ -13650,7 +14326,12 @@ static NTSTATUS thunk64_vkCmdExecuteCommands(void *args)
 
 static NTSTATUS thunk32_vkCmdExecuteCommands(void *args)
 {
-    struct vkCmdExecuteCommands_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t commandBufferCount;
+        const VkCommandBuffer *pCommandBuffers;
+    } *params = args;
     const VkCommandBuffer *pCommandBuffers_host;
     struct conversion_context ctx;
 
@@ -13681,7 +14362,12 @@ static NTSTATUS thunk64_vkCmdExecuteGeneratedCommandsNV(void *args)
 
 static NTSTATUS thunk32_vkCmdExecuteGeneratedCommandsNV(void *args)
 {
-    struct vkCmdExecuteGeneratedCommandsNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 isPreprocessed;
+        const VkGeneratedCommandsInfoNV *pGeneratedCommandsInfo;
+    } *params = args;
     VkGeneratedCommandsInfoNV_host pGeneratedCommandsInfo_host;
     struct conversion_context ctx;
 
@@ -13712,7 +14398,14 @@ static NTSTATUS thunk64_vkCmdFillBuffer(void *args)
 
 static NTSTATUS thunk32_vkCmdFillBuffer(void *args)
 {
-    struct vkCmdFillBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) dstOffset;
+        VkDeviceSize DECLSPEC_ALIGN(8) size;
+        uint32_t data;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), wine_dbgstr_longlong(params->size), params->data);
 
@@ -13738,7 +14431,11 @@ static NTSTATUS thunk64_vkCmdInsertDebugUtilsLabelEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdInsertDebugUtilsLabelEXT(void *args)
 {
-    struct vkCmdInsertDebugUtilsLabelEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkDebugUtilsLabelEXT *pLabelInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pLabelInfo);
 
@@ -13764,7 +14461,11 @@ static NTSTATUS thunk64_vkCmdNextSubpass(void *args)
 
 static NTSTATUS thunk32_vkCmdNextSubpass(void *args)
 {
-    struct vkCmdNextSubpass_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkSubpassContents contents;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->contents);
 
@@ -13790,7 +14491,12 @@ static NTSTATUS thunk64_vkCmdNextSubpass2(void *args)
 
 static NTSTATUS thunk32_vkCmdNextSubpass2(void *args)
 {
-    struct vkCmdNextSubpass2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkSubpassBeginInfo *pSubpassBeginInfo;
+        const VkSubpassEndInfo *pSubpassEndInfo;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
 
@@ -13816,7 +14522,12 @@ static NTSTATUS thunk64_vkCmdNextSubpass2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdNextSubpass2KHR(void *args)
 {
-    struct vkCmdNextSubpass2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkSubpassBeginInfo *pSubpassBeginInfo;
+        const VkSubpassEndInfo *pSubpassEndInfo;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pSubpassBeginInfo, params->pSubpassEndInfo);
 
@@ -13842,7 +14553,12 @@ static NTSTATUS thunk64_vkCmdOpticalFlowExecuteNV(void *args)
 
 static NTSTATUS thunk32_vkCmdOpticalFlowExecuteNV(void *args)
 {
-    struct vkCmdOpticalFlowExecuteNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkOpticalFlowSessionNV DECLSPEC_ALIGN(8) session;
+        const VkOpticalFlowExecuteInfoNV *pExecuteInfo;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->session), params->pExecuteInfo);
 
@@ -13868,7 +14584,19 @@ static NTSTATUS thunk64_vkCmdPipelineBarrier(void *args)
 
 static NTSTATUS thunk32_vkCmdPipelineBarrier(void *args)
 {
-    struct vkCmdPipelineBarrier_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineStageFlags srcStageMask;
+        VkPipelineStageFlags dstStageMask;
+        VkDependencyFlags dependencyFlags;
+        uint32_t memoryBarrierCount;
+        const VkMemoryBarrier *pMemoryBarriers;
+        uint32_t bufferMemoryBarrierCount;
+        const VkBufferMemoryBarrier *pBufferMemoryBarriers;
+        uint32_t imageMemoryBarrierCount;
+        const VkImageMemoryBarrier *pImageMemoryBarriers;
+    } *params = args;
     const VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
     const VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
     struct conversion_context ctx;
@@ -13901,7 +14629,11 @@ static NTSTATUS thunk64_vkCmdPipelineBarrier2(void *args)
 
 static NTSTATUS thunk32_vkCmdPipelineBarrier2(void *args)
 {
-    struct vkCmdPipelineBarrier2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkDependencyInfo *pDependencyInfo;
+    } *params = args;
     VkDependencyInfo_host pDependencyInfo_host;
     struct conversion_context ctx;
 
@@ -13932,7 +14664,11 @@ static NTSTATUS thunk64_vkCmdPipelineBarrier2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdPipelineBarrier2KHR(void *args)
 {
-    struct vkCmdPipelineBarrier2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkDependencyInfo *pDependencyInfo;
+    } *params = args;
     VkDependencyInfo_host pDependencyInfo_host;
     struct conversion_context ctx;
 
@@ -13963,7 +14699,11 @@ static NTSTATUS thunk64_vkCmdPreprocessGeneratedCommandsNV(void *args)
 
 static NTSTATUS thunk32_vkCmdPreprocessGeneratedCommandsNV(void *args)
 {
-    struct vkCmdPreprocessGeneratedCommandsNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkGeneratedCommandsInfoNV *pGeneratedCommandsInfo;
+    } *params = args;
     VkGeneratedCommandsInfoNV_host pGeneratedCommandsInfo_host;
     struct conversion_context ctx;
 
@@ -13994,7 +14734,15 @@ static NTSTATUS thunk64_vkCmdPushConstants(void *args)
 
 static NTSTATUS thunk32_vkCmdPushConstants(void *args)
 {
-    struct vkCmdPushConstants_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+        VkShaderStageFlags stageFlags;
+        uint32_t offset;
+        uint32_t size;
+        const void *pValues;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, %u, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->layout), params->stageFlags, params->offset, params->size, params->pValues);
 
@@ -14020,7 +14768,15 @@ static NTSTATUS thunk64_vkCmdPushDescriptorSetKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdPushDescriptorSetKHR(void *args)
 {
-    struct vkCmdPushDescriptorSetKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineBindPoint pipelineBindPoint;
+        VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+        uint32_t set;
+        uint32_t descriptorWriteCount;
+        const VkWriteDescriptorSet *pDescriptorWrites;
+    } *params = args;
     const VkWriteDescriptorSet_host *pDescriptorWrites_host;
     struct conversion_context ctx;
 
@@ -14051,7 +14807,14 @@ static NTSTATUS thunk64_vkCmdPushDescriptorSetWithTemplateKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdPushDescriptorSetWithTemplateKHR(void *args)
 {
-    struct vkCmdPushDescriptorSetWithTemplateKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkDescriptorUpdateTemplate DECLSPEC_ALIGN(8) descriptorUpdateTemplate;
+        VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+        uint32_t set;
+        const void *pData;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->descriptorUpdateTemplate), wine_dbgstr_longlong(params->layout), params->set, params->pData);
 
@@ -14077,7 +14840,12 @@ static NTSTATUS thunk64_vkCmdResetEvent(void *args)
 
 static NTSTATUS thunk32_vkCmdResetEvent(void *args)
 {
-    struct vkCmdResetEvent_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkPipelineStageFlags stageMask;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->stageMask);
 
@@ -14103,7 +14871,12 @@ static NTSTATUS thunk64_vkCmdResetEvent2(void *args)
 
 static NTSTATUS thunk32_vkCmdResetEvent2(void *args)
 {
-    struct vkCmdResetEvent2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkPipelineStageFlags2 stageMask;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->event), wine_dbgstr_longlong(params->stageMask));
 
@@ -14129,7 +14902,12 @@ static NTSTATUS thunk64_vkCmdResetEvent2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdResetEvent2KHR(void *args)
 {
-    struct vkCmdResetEvent2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkPipelineStageFlags2 stageMask;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->event), wine_dbgstr_longlong(params->stageMask));
 
@@ -14155,7 +14933,13 @@ static NTSTATUS thunk64_vkCmdResetQueryPool(void *args)
 
 static NTSTATUS thunk32_vkCmdResetQueryPool(void *args)
 {
-    struct vkCmdResetQueryPool_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+        uint32_t queryCount;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount);
 
@@ -14181,7 +14965,16 @@ static NTSTATUS thunk64_vkCmdResolveImage(void *args)
 
 static NTSTATUS thunk32_vkCmdResolveImage(void *args)
 {
-    struct vkCmdResolveImage_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkImage DECLSPEC_ALIGN(8) srcImage;
+        VkImageLayout srcImageLayout;
+        VkImage DECLSPEC_ALIGN(8) dstImage;
+        VkImageLayout dstImageLayout;
+        uint32_t regionCount;
+        const VkImageResolve *pRegions;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
 
@@ -14207,7 +15000,11 @@ static NTSTATUS thunk64_vkCmdResolveImage2(void *args)
 
 static NTSTATUS thunk32_vkCmdResolveImage2(void *args)
 {
-    struct vkCmdResolveImage2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkResolveImageInfo2 *pResolveImageInfo;
+    } *params = args;
     VkResolveImageInfo2_host pResolveImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
@@ -14235,7 +15032,11 @@ static NTSTATUS thunk64_vkCmdResolveImage2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdResolveImage2KHR(void *args)
 {
-    struct vkCmdResolveImage2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkResolveImageInfo2 *pResolveImageInfo;
+    } *params = args;
     VkResolveImageInfo2_host pResolveImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
@@ -14263,7 +15064,11 @@ static NTSTATUS thunk64_vkCmdSetAlphaToCoverageEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetAlphaToCoverageEnableEXT(void *args)
 {
-    struct vkCmdSetAlphaToCoverageEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 alphaToCoverageEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->alphaToCoverageEnable);
 
@@ -14289,7 +15094,11 @@ static NTSTATUS thunk64_vkCmdSetAlphaToOneEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetAlphaToOneEnableEXT(void *args)
 {
-    struct vkCmdSetAlphaToOneEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 alphaToOneEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->alphaToOneEnable);
 
@@ -14315,7 +15124,11 @@ static NTSTATUS thunk64_vkCmdSetBlendConstants(void *args)
 
 static NTSTATUS thunk32_vkCmdSetBlendConstants(void *args)
 {
-    struct vkCmdSetBlendConstants_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const float *blendConstants;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->blendConstants);
 
@@ -14341,7 +15154,11 @@ static NTSTATUS thunk64_vkCmdSetCheckpointNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCheckpointNV(void *args)
 {
-    struct vkCmdSetCheckpointNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const void *pCheckpointMarker;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCheckpointMarker);
 
@@ -14367,7 +15184,13 @@ static NTSTATUS thunk64_vkCmdSetCoarseSampleOrderNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoarseSampleOrderNV(void *args)
 {
-    struct vkCmdSetCoarseSampleOrderNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCoarseSampleOrderTypeNV sampleOrderType;
+        uint32_t customSampleOrderCount;
+        const VkCoarseSampleOrderCustomNV *pCustomSampleOrders;
+    } *params = args;
 
     TRACE("%p, %#x, %u, %p\n", params->commandBuffer, params->sampleOrderType, params->customSampleOrderCount, params->pCustomSampleOrders);
 
@@ -14393,7 +15216,13 @@ static NTSTATUS thunk64_vkCmdSetColorBlendAdvancedEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetColorBlendAdvancedEXT(void *args)
 {
-    struct vkCmdSetColorBlendAdvancedEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstAttachment;
+        uint32_t attachmentCount;
+        const VkColorBlendAdvancedEXT *pColorBlendAdvanced;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstAttachment, params->attachmentCount, params->pColorBlendAdvanced);
 
@@ -14419,7 +15248,13 @@ static NTSTATUS thunk64_vkCmdSetColorBlendEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetColorBlendEnableEXT(void *args)
 {
-    struct vkCmdSetColorBlendEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstAttachment;
+        uint32_t attachmentCount;
+        const VkBool32 *pColorBlendEnables;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstAttachment, params->attachmentCount, params->pColorBlendEnables);
 
@@ -14445,7 +15280,13 @@ static NTSTATUS thunk64_vkCmdSetColorBlendEquationEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetColorBlendEquationEXT(void *args)
 {
-    struct vkCmdSetColorBlendEquationEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstAttachment;
+        uint32_t attachmentCount;
+        const VkColorBlendEquationEXT *pColorBlendEquations;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstAttachment, params->attachmentCount, params->pColorBlendEquations);
 
@@ -14471,7 +15312,12 @@ static NTSTATUS thunk64_vkCmdSetColorWriteEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetColorWriteEnableEXT(void *args)
 {
-    struct vkCmdSetColorWriteEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t attachmentCount;
+        const VkBool32 *pColorWriteEnables;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->attachmentCount, params->pColorWriteEnables);
 
@@ -14497,7 +15343,13 @@ static NTSTATUS thunk64_vkCmdSetColorWriteMaskEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetColorWriteMaskEXT(void *args)
 {
-    struct vkCmdSetColorWriteMaskEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstAttachment;
+        uint32_t attachmentCount;
+        const VkColorComponentFlags *pColorWriteMasks;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstAttachment, params->attachmentCount, params->pColorWriteMasks);
 
@@ -14523,7 +15375,11 @@ static NTSTATUS thunk64_vkCmdSetConservativeRasterizationModeEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetConservativeRasterizationModeEXT(void *args)
 {
-    struct vkCmdSetConservativeRasterizationModeEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkConservativeRasterizationModeEXT conservativeRasterizationMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->conservativeRasterizationMode);
 
@@ -14549,7 +15405,11 @@ static NTSTATUS thunk64_vkCmdSetCoverageModulationModeNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoverageModulationModeNV(void *args)
 {
-    struct vkCmdSetCoverageModulationModeNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCoverageModulationModeNV coverageModulationMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->coverageModulationMode);
 
@@ -14575,7 +15435,11 @@ static NTSTATUS thunk64_vkCmdSetCoverageModulationTableEnableNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoverageModulationTableEnableNV(void *args)
 {
-    struct vkCmdSetCoverageModulationTableEnableNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 coverageModulationTableEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->coverageModulationTableEnable);
 
@@ -14601,7 +15465,12 @@ static NTSTATUS thunk64_vkCmdSetCoverageModulationTableNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoverageModulationTableNV(void *args)
 {
-    struct vkCmdSetCoverageModulationTableNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t coverageModulationTableCount;
+        const float *pCoverageModulationTable;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->coverageModulationTableCount, params->pCoverageModulationTable);
 
@@ -14627,7 +15496,11 @@ static NTSTATUS thunk64_vkCmdSetCoverageReductionModeNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoverageReductionModeNV(void *args)
 {
-    struct vkCmdSetCoverageReductionModeNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCoverageReductionModeNV coverageReductionMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->coverageReductionMode);
 
@@ -14653,7 +15526,11 @@ static NTSTATUS thunk64_vkCmdSetCoverageToColorEnableNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoverageToColorEnableNV(void *args)
 {
-    struct vkCmdSetCoverageToColorEnableNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 coverageToColorEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->coverageToColorEnable);
 
@@ -14679,7 +15556,11 @@ static NTSTATUS thunk64_vkCmdSetCoverageToColorLocationNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCoverageToColorLocationNV(void *args)
 {
-    struct vkCmdSetCoverageToColorLocationNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t coverageToColorLocation;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->coverageToColorLocation);
 
@@ -14705,7 +15586,11 @@ static NTSTATUS thunk64_vkCmdSetCullMode(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCullMode(void *args)
 {
-    struct vkCmdSetCullMode_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCullModeFlags cullMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->cullMode);
 
@@ -14731,7 +15616,11 @@ static NTSTATUS thunk64_vkCmdSetCullModeEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetCullModeEXT(void *args)
 {
-    struct vkCmdSetCullModeEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCullModeFlags cullMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->cullMode);
 
@@ -14757,7 +15646,13 @@ static NTSTATUS thunk64_vkCmdSetDepthBias(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthBias(void *args)
 {
-    struct vkCmdSetDepthBias_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        float depthBiasConstantFactor;
+        float depthBiasClamp;
+        float depthBiasSlopeFactor;
+    } *params = args;
 
     TRACE("%p, %f, %f, %f\n", params->commandBuffer, params->depthBiasConstantFactor, params->depthBiasClamp, params->depthBiasSlopeFactor);
 
@@ -14783,7 +15678,11 @@ static NTSTATUS thunk64_vkCmdSetDepthBiasEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthBiasEnable(void *args)
 {
-    struct vkCmdSetDepthBiasEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthBiasEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthBiasEnable);
 
@@ -14809,7 +15708,11 @@ static NTSTATUS thunk64_vkCmdSetDepthBiasEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthBiasEnableEXT(void *args)
 {
-    struct vkCmdSetDepthBiasEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthBiasEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthBiasEnable);
 
@@ -14835,7 +15738,12 @@ static NTSTATUS thunk64_vkCmdSetDepthBounds(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthBounds(void *args)
 {
-    struct vkCmdSetDepthBounds_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        float minDepthBounds;
+        float maxDepthBounds;
+    } *params = args;
 
     TRACE("%p, %f, %f\n", params->commandBuffer, params->minDepthBounds, params->maxDepthBounds);
 
@@ -14861,7 +15769,11 @@ static NTSTATUS thunk64_vkCmdSetDepthBoundsTestEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthBoundsTestEnable(void *args)
 {
-    struct vkCmdSetDepthBoundsTestEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthBoundsTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthBoundsTestEnable);
 
@@ -14887,7 +15799,11 @@ static NTSTATUS thunk64_vkCmdSetDepthBoundsTestEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthBoundsTestEnableEXT(void *args)
 {
-    struct vkCmdSetDepthBoundsTestEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthBoundsTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthBoundsTestEnable);
 
@@ -14913,7 +15829,11 @@ static NTSTATUS thunk64_vkCmdSetDepthClampEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthClampEnableEXT(void *args)
 {
-    struct vkCmdSetDepthClampEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthClampEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthClampEnable);
 
@@ -14939,7 +15859,11 @@ static NTSTATUS thunk64_vkCmdSetDepthClipEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthClipEnableEXT(void *args)
 {
-    struct vkCmdSetDepthClipEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthClipEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthClipEnable);
 
@@ -14965,7 +15889,11 @@ static NTSTATUS thunk64_vkCmdSetDepthClipNegativeOneToOneEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthClipNegativeOneToOneEXT(void *args)
 {
-    struct vkCmdSetDepthClipNegativeOneToOneEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 negativeOneToOne;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->negativeOneToOne);
 
@@ -14991,7 +15919,11 @@ static NTSTATUS thunk64_vkCmdSetDepthCompareOp(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthCompareOp(void *args)
 {
-    struct vkCmdSetDepthCompareOp_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCompareOp depthCompareOp;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->depthCompareOp);
 
@@ -15017,7 +15949,11 @@ static NTSTATUS thunk64_vkCmdSetDepthCompareOpEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthCompareOpEXT(void *args)
 {
-    struct vkCmdSetDepthCompareOpEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCompareOp depthCompareOp;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->depthCompareOp);
 
@@ -15043,7 +15979,11 @@ static NTSTATUS thunk64_vkCmdSetDepthTestEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthTestEnable(void *args)
 {
-    struct vkCmdSetDepthTestEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthTestEnable);
 
@@ -15069,7 +16009,11 @@ static NTSTATUS thunk64_vkCmdSetDepthTestEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthTestEnableEXT(void *args)
 {
-    struct vkCmdSetDepthTestEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthTestEnable);
 
@@ -15095,7 +16039,11 @@ static NTSTATUS thunk64_vkCmdSetDepthWriteEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthWriteEnable(void *args)
 {
-    struct vkCmdSetDepthWriteEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthWriteEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthWriteEnable);
 
@@ -15121,7 +16069,11 @@ static NTSTATUS thunk64_vkCmdSetDepthWriteEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDepthWriteEnableEXT(void *args)
 {
-    struct vkCmdSetDepthWriteEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 depthWriteEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->depthWriteEnable);
 
@@ -15147,7 +16099,11 @@ static NTSTATUS thunk64_vkCmdSetDeviceMask(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDeviceMask(void *args)
 {
-    struct vkCmdSetDeviceMask_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t deviceMask;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->deviceMask);
 
@@ -15173,7 +16129,11 @@ static NTSTATUS thunk64_vkCmdSetDeviceMaskKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDeviceMaskKHR(void *args)
 {
-    struct vkCmdSetDeviceMaskKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t deviceMask;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->deviceMask);
 
@@ -15199,7 +16159,13 @@ static NTSTATUS thunk64_vkCmdSetDiscardRectangleEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetDiscardRectangleEXT(void *args)
 {
-    struct vkCmdSetDiscardRectangleEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstDiscardRectangle;
+        uint32_t discardRectangleCount;
+        const VkRect2D *pDiscardRectangles;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstDiscardRectangle, params->discardRectangleCount, params->pDiscardRectangles);
 
@@ -15225,7 +16191,12 @@ static NTSTATUS thunk64_vkCmdSetEvent(void *args)
 
 static NTSTATUS thunk32_vkCmdSetEvent(void *args)
 {
-    struct vkCmdSetEvent_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkPipelineStageFlags stageMask;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->stageMask);
 
@@ -15251,7 +16222,12 @@ static NTSTATUS thunk64_vkCmdSetEvent2(void *args)
 
 static NTSTATUS thunk32_vkCmdSetEvent2(void *args)
 {
-    struct vkCmdSetEvent2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        const VkDependencyInfo *pDependencyInfo;
+    } *params = args;
     VkDependencyInfo_host pDependencyInfo_host;
     struct conversion_context ctx;
 
@@ -15282,7 +16258,12 @@ static NTSTATUS thunk64_vkCmdSetEvent2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdSetEvent2KHR(void *args)
 {
-    struct vkCmdSetEvent2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        const VkDependencyInfo *pDependencyInfo;
+    } *params = args;
     VkDependencyInfo_host pDependencyInfo_host;
     struct conversion_context ctx;
 
@@ -15313,7 +16294,13 @@ static NTSTATUS thunk64_vkCmdSetExclusiveScissorNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetExclusiveScissorNV(void *args)
 {
-    struct vkCmdSetExclusiveScissorNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstExclusiveScissor;
+        uint32_t exclusiveScissorCount;
+        const VkRect2D *pExclusiveScissors;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstExclusiveScissor, params->exclusiveScissorCount, params->pExclusiveScissors);
 
@@ -15339,7 +16326,11 @@ static NTSTATUS thunk64_vkCmdSetExtraPrimitiveOverestimationSizeEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetExtraPrimitiveOverestimationSizeEXT(void *args)
 {
-    struct vkCmdSetExtraPrimitiveOverestimationSizeEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        float extraPrimitiveOverestimationSize;
+    } *params = args;
 
     TRACE("%p, %f\n", params->commandBuffer, params->extraPrimitiveOverestimationSize);
 
@@ -15365,7 +16356,12 @@ static NTSTATUS thunk64_vkCmdSetFragmentShadingRateEnumNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetFragmentShadingRateEnumNV(void *args)
 {
-    struct vkCmdSetFragmentShadingRateEnumNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkFragmentShadingRateNV shadingRate;
+        const VkFragmentShadingRateCombinerOpKHR *combinerOps;
+    } *params = args;
 
     TRACE("%p, %#x, %p\n", params->commandBuffer, params->shadingRate, params->combinerOps);
 
@@ -15391,7 +16387,12 @@ static NTSTATUS thunk64_vkCmdSetFragmentShadingRateKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdSetFragmentShadingRateKHR(void *args)
 {
-    struct vkCmdSetFragmentShadingRateKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkExtent2D *pFragmentSize;
+        const VkFragmentShadingRateCombinerOpKHR *combinerOps;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pFragmentSize, params->combinerOps);
 
@@ -15417,7 +16418,11 @@ static NTSTATUS thunk64_vkCmdSetFrontFace(void *args)
 
 static NTSTATUS thunk32_vkCmdSetFrontFace(void *args)
 {
-    struct vkCmdSetFrontFace_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkFrontFace frontFace;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->frontFace);
 
@@ -15443,7 +16448,11 @@ static NTSTATUS thunk64_vkCmdSetFrontFaceEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetFrontFaceEXT(void *args)
 {
-    struct vkCmdSetFrontFaceEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkFrontFace frontFace;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->frontFace);
 
@@ -15469,7 +16478,11 @@ static NTSTATUS thunk64_vkCmdSetLineRasterizationModeEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetLineRasterizationModeEXT(void *args)
 {
-    struct vkCmdSetLineRasterizationModeEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkLineRasterizationModeEXT lineRasterizationMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->lineRasterizationMode);
 
@@ -15495,7 +16508,12 @@ static NTSTATUS thunk64_vkCmdSetLineStippleEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetLineStippleEXT(void *args)
 {
-    struct vkCmdSetLineStippleEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t lineStippleFactor;
+        uint16_t lineStipplePattern;
+    } *params = args;
 
     TRACE("%p, %u, %u\n", params->commandBuffer, params->lineStippleFactor, params->lineStipplePattern);
 
@@ -15521,7 +16539,11 @@ static NTSTATUS thunk64_vkCmdSetLineStippleEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetLineStippleEnableEXT(void *args)
 {
-    struct vkCmdSetLineStippleEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 stippledLineEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->stippledLineEnable);
 
@@ -15547,7 +16569,11 @@ static NTSTATUS thunk64_vkCmdSetLineWidth(void *args)
 
 static NTSTATUS thunk32_vkCmdSetLineWidth(void *args)
 {
-    struct vkCmdSetLineWidth_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        float lineWidth;
+    } *params = args;
 
     TRACE("%p, %f\n", params->commandBuffer, params->lineWidth);
 
@@ -15573,7 +16599,11 @@ static NTSTATUS thunk64_vkCmdSetLogicOpEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetLogicOpEXT(void *args)
 {
-    struct vkCmdSetLogicOpEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkLogicOp logicOp;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->logicOp);
 
@@ -15599,7 +16629,11 @@ static NTSTATUS thunk64_vkCmdSetLogicOpEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetLogicOpEnableEXT(void *args)
 {
-    struct vkCmdSetLogicOpEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 logicOpEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->logicOpEnable);
 
@@ -15625,7 +16659,11 @@ static NTSTATUS thunk64_vkCmdSetPatchControlPointsEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPatchControlPointsEXT(void *args)
 {
-    struct vkCmdSetPatchControlPointsEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t patchControlPoints;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->patchControlPoints);
 
@@ -15651,7 +16689,12 @@ static NTSTATUS thunk64_vkCmdSetPerformanceMarkerINTEL(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPerformanceMarkerINTEL(void *args)
 {
-    struct vkCmdSetPerformanceMarkerINTEL_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkPerformanceMarkerInfoINTEL *pMarkerInfo;
+        VkResult result;
+    } *params = args;
     VkPerformanceMarkerInfoINTEL_host pMarkerInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
@@ -15679,7 +16722,12 @@ static NTSTATUS thunk64_vkCmdSetPerformanceOverrideINTEL(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPerformanceOverrideINTEL(void *args)
 {
-    struct vkCmdSetPerformanceOverrideINTEL_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkPerformanceOverrideInfoINTEL *pOverrideInfo;
+        VkResult result;
+    } *params = args;
     VkPerformanceOverrideInfoINTEL_host pOverrideInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pOverrideInfo);
@@ -15707,7 +16755,12 @@ static NTSTATUS thunk64_vkCmdSetPerformanceStreamMarkerINTEL(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPerformanceStreamMarkerINTEL(void *args)
 {
-    struct vkCmdSetPerformanceStreamMarkerINTEL_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkPerformanceStreamMarkerInfoINTEL *pMarkerInfo;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
 
@@ -15733,7 +16786,11 @@ static NTSTATUS thunk64_vkCmdSetPolygonModeEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPolygonModeEXT(void *args)
 {
-    struct vkCmdSetPolygonModeEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPolygonMode polygonMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->polygonMode);
 
@@ -15759,7 +16816,11 @@ static NTSTATUS thunk64_vkCmdSetPrimitiveRestartEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPrimitiveRestartEnable(void *args)
 {
-    struct vkCmdSetPrimitiveRestartEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 primitiveRestartEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->primitiveRestartEnable);
 
@@ -15785,7 +16846,11 @@ static NTSTATUS thunk64_vkCmdSetPrimitiveRestartEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPrimitiveRestartEnableEXT(void *args)
 {
-    struct vkCmdSetPrimitiveRestartEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 primitiveRestartEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->primitiveRestartEnable);
 
@@ -15811,7 +16876,11 @@ static NTSTATUS thunk64_vkCmdSetPrimitiveTopology(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPrimitiveTopology(void *args)
 {
-    struct vkCmdSetPrimitiveTopology_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPrimitiveTopology primitiveTopology;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->primitiveTopology);
 
@@ -15837,7 +16906,11 @@ static NTSTATUS thunk64_vkCmdSetPrimitiveTopologyEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetPrimitiveTopologyEXT(void *args)
 {
-    struct vkCmdSetPrimitiveTopologyEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPrimitiveTopology primitiveTopology;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->primitiveTopology);
 
@@ -15863,7 +16936,11 @@ static NTSTATUS thunk64_vkCmdSetProvokingVertexModeEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetProvokingVertexModeEXT(void *args)
 {
-    struct vkCmdSetProvokingVertexModeEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkProvokingVertexModeEXT provokingVertexMode;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->provokingVertexMode);
 
@@ -15889,7 +16966,11 @@ static NTSTATUS thunk64_vkCmdSetRasterizationSamplesEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetRasterizationSamplesEXT(void *args)
 {
-    struct vkCmdSetRasterizationSamplesEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkSampleCountFlagBits rasterizationSamples;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->rasterizationSamples);
 
@@ -15915,7 +16996,11 @@ static NTSTATUS thunk64_vkCmdSetRasterizationStreamEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetRasterizationStreamEXT(void *args)
 {
-    struct vkCmdSetRasterizationStreamEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t rasterizationStream;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->rasterizationStream);
 
@@ -15941,7 +17026,11 @@ static NTSTATUS thunk64_vkCmdSetRasterizerDiscardEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetRasterizerDiscardEnable(void *args)
 {
-    struct vkCmdSetRasterizerDiscardEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 rasterizerDiscardEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->rasterizerDiscardEnable);
 
@@ -15967,7 +17056,11 @@ static NTSTATUS thunk64_vkCmdSetRasterizerDiscardEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetRasterizerDiscardEnableEXT(void *args)
 {
-    struct vkCmdSetRasterizerDiscardEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 rasterizerDiscardEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->rasterizerDiscardEnable);
 
@@ -15993,7 +17086,11 @@ static NTSTATUS thunk64_vkCmdSetRayTracingPipelineStackSizeKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdSetRayTracingPipelineStackSizeKHR(void *args)
 {
-    struct vkCmdSetRayTracingPipelineStackSizeKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t pipelineStackSize;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->pipelineStackSize);
 
@@ -16019,7 +17116,11 @@ static NTSTATUS thunk64_vkCmdSetRepresentativeFragmentTestEnableNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetRepresentativeFragmentTestEnableNV(void *args)
 {
-    struct vkCmdSetRepresentativeFragmentTestEnableNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 representativeFragmentTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->representativeFragmentTestEnable);
 
@@ -16045,7 +17146,11 @@ static NTSTATUS thunk64_vkCmdSetSampleLocationsEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetSampleLocationsEXT(void *args)
 {
-    struct vkCmdSetSampleLocationsEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkSampleLocationsInfoEXT *pSampleLocationsInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pSampleLocationsInfo);
 
@@ -16071,7 +17176,11 @@ static NTSTATUS thunk64_vkCmdSetSampleLocationsEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetSampleLocationsEnableEXT(void *args)
 {
-    struct vkCmdSetSampleLocationsEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 sampleLocationsEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->sampleLocationsEnable);
 
@@ -16097,7 +17206,12 @@ static NTSTATUS thunk64_vkCmdSetSampleMaskEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetSampleMaskEXT(void *args)
 {
-    struct vkCmdSetSampleMaskEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkSampleCountFlagBits samples;
+        const VkSampleMask *pSampleMask;
+    } *params = args;
 
     TRACE("%p, %#x, %p\n", params->commandBuffer, params->samples, params->pSampleMask);
 
@@ -16123,7 +17237,13 @@ static NTSTATUS thunk64_vkCmdSetScissor(void *args)
 
 static NTSTATUS thunk32_vkCmdSetScissor(void *args)
 {
-    struct vkCmdSetScissor_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstScissor;
+        uint32_t scissorCount;
+        const VkRect2D *pScissors;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstScissor, params->scissorCount, params->pScissors);
 
@@ -16149,7 +17269,12 @@ static NTSTATUS thunk64_vkCmdSetScissorWithCount(void *args)
 
 static NTSTATUS thunk32_vkCmdSetScissorWithCount(void *args)
 {
-    struct vkCmdSetScissorWithCount_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t scissorCount;
+        const VkRect2D *pScissors;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->scissorCount, params->pScissors);
 
@@ -16175,7 +17300,12 @@ static NTSTATUS thunk64_vkCmdSetScissorWithCountEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetScissorWithCountEXT(void *args)
 {
-    struct vkCmdSetScissorWithCountEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t scissorCount;
+        const VkRect2D *pScissors;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->scissorCount, params->pScissors);
 
@@ -16201,7 +17331,11 @@ static NTSTATUS thunk64_vkCmdSetShadingRateImageEnableNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetShadingRateImageEnableNV(void *args)
 {
-    struct vkCmdSetShadingRateImageEnableNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 shadingRateImageEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->shadingRateImageEnable);
 
@@ -16227,7 +17361,12 @@ static NTSTATUS thunk64_vkCmdSetStencilCompareMask(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilCompareMask(void *args)
 {
-    struct vkCmdSetStencilCompareMask_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkStencilFaceFlags faceMask;
+        uint32_t compareMask;
+    } *params = args;
 
     TRACE("%p, %#x, %u\n", params->commandBuffer, params->faceMask, params->compareMask);
 
@@ -16253,7 +17392,15 @@ static NTSTATUS thunk64_vkCmdSetStencilOp(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilOp(void *args)
 {
-    struct vkCmdSetStencilOp_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkStencilFaceFlags faceMask;
+        VkStencilOp failOp;
+        VkStencilOp passOp;
+        VkStencilOp depthFailOp;
+        VkCompareOp compareOp;
+    } *params = args;
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x\n", params->commandBuffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
 
@@ -16279,7 +17426,15 @@ static NTSTATUS thunk64_vkCmdSetStencilOpEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilOpEXT(void *args)
 {
-    struct vkCmdSetStencilOpEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkStencilFaceFlags faceMask;
+        VkStencilOp failOp;
+        VkStencilOp passOp;
+        VkStencilOp depthFailOp;
+        VkCompareOp compareOp;
+    } *params = args;
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x\n", params->commandBuffer, params->faceMask, params->failOp, params->passOp, params->depthFailOp, params->compareOp);
 
@@ -16305,7 +17460,12 @@ static NTSTATUS thunk64_vkCmdSetStencilReference(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilReference(void *args)
 {
-    struct vkCmdSetStencilReference_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkStencilFaceFlags faceMask;
+        uint32_t reference;
+    } *params = args;
 
     TRACE("%p, %#x, %u\n", params->commandBuffer, params->faceMask, params->reference);
 
@@ -16331,7 +17491,11 @@ static NTSTATUS thunk64_vkCmdSetStencilTestEnable(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilTestEnable(void *args)
 {
-    struct vkCmdSetStencilTestEnable_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 stencilTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->stencilTestEnable);
 
@@ -16357,7 +17521,11 @@ static NTSTATUS thunk64_vkCmdSetStencilTestEnableEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilTestEnableEXT(void *args)
 {
-    struct vkCmdSetStencilTestEnableEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 stencilTestEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->stencilTestEnable);
 
@@ -16383,7 +17551,12 @@ static NTSTATUS thunk64_vkCmdSetStencilWriteMask(void *args)
 
 static NTSTATUS thunk32_vkCmdSetStencilWriteMask(void *args)
 {
-    struct vkCmdSetStencilWriteMask_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkStencilFaceFlags faceMask;
+        uint32_t writeMask;
+    } *params = args;
 
     TRACE("%p, %#x, %u\n", params->commandBuffer, params->faceMask, params->writeMask);
 
@@ -16409,7 +17582,11 @@ static NTSTATUS thunk64_vkCmdSetTessellationDomainOriginEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetTessellationDomainOriginEXT(void *args)
 {
-    struct vkCmdSetTessellationDomainOriginEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkTessellationDomainOrigin domainOrigin;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->domainOrigin);
 
@@ -16435,7 +17612,14 @@ static NTSTATUS thunk64_vkCmdSetVertexInputEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetVertexInputEXT(void *args)
 {
-    struct vkCmdSetVertexInputEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t vertexBindingDescriptionCount;
+        const VkVertexInputBindingDescription2EXT *pVertexBindingDescriptions;
+        uint32_t vertexAttributeDescriptionCount;
+        const VkVertexInputAttributeDescription2EXT *pVertexAttributeDescriptions;
+    } *params = args;
 
     TRACE("%p, %u, %p, %u, %p\n", params->commandBuffer, params->vertexBindingDescriptionCount, params->pVertexBindingDescriptions, params->vertexAttributeDescriptionCount, params->pVertexAttributeDescriptions);
 
@@ -16461,7 +17645,13 @@ static NTSTATUS thunk64_vkCmdSetViewport(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewport(void *args)
 {
-    struct vkCmdSetViewport_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstViewport;
+        uint32_t viewportCount;
+        const VkViewport *pViewports;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pViewports);
 
@@ -16487,7 +17677,13 @@ static NTSTATUS thunk64_vkCmdSetViewportShadingRatePaletteNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewportShadingRatePaletteNV(void *args)
 {
-    struct vkCmdSetViewportShadingRatePaletteNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstViewport;
+        uint32_t viewportCount;
+        const VkShadingRatePaletteNV *pShadingRatePalettes;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pShadingRatePalettes);
 
@@ -16513,7 +17709,13 @@ static NTSTATUS thunk64_vkCmdSetViewportSwizzleNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewportSwizzleNV(void *args)
 {
-    struct vkCmdSetViewportSwizzleNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstViewport;
+        uint32_t viewportCount;
+        const VkViewportSwizzleNV *pViewportSwizzles;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pViewportSwizzles);
 
@@ -16539,7 +17741,11 @@ static NTSTATUS thunk64_vkCmdSetViewportWScalingEnableNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewportWScalingEnableNV(void *args)
 {
-    struct vkCmdSetViewportWScalingEnableNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBool32 viewportWScalingEnable;
+    } *params = args;
 
     TRACE("%p, %u\n", params->commandBuffer, params->viewportWScalingEnable);
 
@@ -16565,7 +17771,13 @@ static NTSTATUS thunk64_vkCmdSetViewportWScalingNV(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewportWScalingNV(void *args)
 {
-    struct vkCmdSetViewportWScalingNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t firstViewport;
+        uint32_t viewportCount;
+        const VkViewportWScalingNV *pViewportWScalings;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pViewportWScalings);
 
@@ -16591,7 +17803,12 @@ static NTSTATUS thunk64_vkCmdSetViewportWithCount(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewportWithCount(void *args)
 {
-    struct vkCmdSetViewportWithCount_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t viewportCount;
+        const VkViewport *pViewports;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->viewportCount, params->pViewports);
 
@@ -16617,7 +17834,12 @@ static NTSTATUS thunk64_vkCmdSetViewportWithCountEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdSetViewportWithCountEXT(void *args)
 {
-    struct vkCmdSetViewportWithCountEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t viewportCount;
+        const VkViewport *pViewports;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->viewportCount, params->pViewports);
 
@@ -16643,7 +17865,10 @@ static NTSTATUS thunk64_vkCmdSubpassShadingHUAWEI(void *args)
 
 static NTSTATUS thunk32_vkCmdSubpassShadingHUAWEI(void *args)
 {
-    struct vkCmdSubpassShadingHUAWEI_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -16669,7 +17894,11 @@ static NTSTATUS thunk64_vkCmdTraceRaysIndirect2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdTraceRaysIndirect2KHR(void *args)
 {
-    struct vkCmdTraceRaysIndirect2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkDeviceAddress DECLSPEC_ALIGN(8) indirectDeviceAddress;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->indirectDeviceAddress));
 
@@ -16695,7 +17924,15 @@ static NTSTATUS thunk64_vkCmdTraceRaysIndirectKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdTraceRaysIndirectKHR(void *args)
 {
-    struct vkCmdTraceRaysIndirectKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable;
+        const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable;
+        const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable;
+        const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable;
+        VkDeviceAddress DECLSPEC_ALIGN(8) indirectDeviceAddress;
+    } *params = args;
     VkStridedDeviceAddressRegionKHR_host pRaygenShaderBindingTable_host;
     VkStridedDeviceAddressRegionKHR_host pMissShaderBindingTable_host;
     VkStridedDeviceAddressRegionKHR_host pHitShaderBindingTable_host;
@@ -16729,7 +17966,17 @@ static NTSTATUS thunk64_vkCmdTraceRaysKHR(void *args)
 
 static NTSTATUS thunk32_vkCmdTraceRaysKHR(void *args)
 {
-    struct vkCmdTraceRaysKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable;
+        const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable;
+        const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable;
+        const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+    } *params = args;
     VkStridedDeviceAddressRegionKHR_host pRaygenShaderBindingTable_host;
     VkStridedDeviceAddressRegionKHR_host pMissShaderBindingTable_host;
     VkStridedDeviceAddressRegionKHR_host pHitShaderBindingTable_host;
@@ -16763,7 +18010,24 @@ static NTSTATUS thunk64_vkCmdTraceRaysNV(void *args)
 
 static NTSTATUS thunk32_vkCmdTraceRaysNV(void *args)
 {
-    struct vkCmdTraceRaysNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) raygenShaderBindingTableBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) raygenShaderBindingOffset;
+        VkBuffer DECLSPEC_ALIGN(8) missShaderBindingTableBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) missShaderBindingOffset;
+        VkDeviceSize DECLSPEC_ALIGN(8) missShaderBindingStride;
+        VkBuffer DECLSPEC_ALIGN(8) hitShaderBindingTableBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) hitShaderBindingOffset;
+        VkDeviceSize DECLSPEC_ALIGN(8) hitShaderBindingStride;
+        VkBuffer DECLSPEC_ALIGN(8) callableShaderBindingTableBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) callableShaderBindingOffset;
+        VkDeviceSize DECLSPEC_ALIGN(8) callableShaderBindingStride;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, 0x%s, %u, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->raygenShaderBindingTableBuffer), wine_dbgstr_longlong(params->raygenShaderBindingOffset), wine_dbgstr_longlong(params->missShaderBindingTableBuffer), wine_dbgstr_longlong(params->missShaderBindingOffset), wine_dbgstr_longlong(params->missShaderBindingStride), wine_dbgstr_longlong(params->hitShaderBindingTableBuffer), wine_dbgstr_longlong(params->hitShaderBindingOffset), wine_dbgstr_longlong(params->hitShaderBindingStride), wine_dbgstr_longlong(params->callableShaderBindingTableBuffer), wine_dbgstr_longlong(params->callableShaderBindingOffset), wine_dbgstr_longlong(params->callableShaderBindingStride), params->width, params->height, params->depth);
 
@@ -16789,7 +18053,14 @@ static NTSTATUS thunk64_vkCmdUpdateBuffer(void *args)
 
 static NTSTATUS thunk32_vkCmdUpdateBuffer(void *args)
 {
-    struct vkCmdUpdateBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) dstOffset;
+        VkDeviceSize DECLSPEC_ALIGN(8) dataSize;
+        const void *pData;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), wine_dbgstr_longlong(params->dataSize), params->pData);
 
@@ -16815,7 +18086,20 @@ static NTSTATUS thunk64_vkCmdWaitEvents(void *args)
 
 static NTSTATUS thunk32_vkCmdWaitEvents(void *args)
 {
-    struct vkCmdWaitEvents_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t eventCount;
+        const VkEvent *pEvents;
+        VkPipelineStageFlags srcStageMask;
+        VkPipelineStageFlags dstStageMask;
+        uint32_t memoryBarrierCount;
+        const VkMemoryBarrier *pMemoryBarriers;
+        uint32_t bufferMemoryBarrierCount;
+        const VkBufferMemoryBarrier *pBufferMemoryBarriers;
+        uint32_t imageMemoryBarrierCount;
+        const VkImageMemoryBarrier *pImageMemoryBarriers;
+    } *params = args;
     const VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
     const VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
     struct conversion_context ctx;
@@ -16848,7 +18132,13 @@ static NTSTATUS thunk64_vkCmdWaitEvents2(void *args)
 
 static NTSTATUS thunk32_vkCmdWaitEvents2(void *args)
 {
-    struct vkCmdWaitEvents2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t eventCount;
+        const VkEvent *pEvents;
+        const VkDependencyInfo *pDependencyInfos;
+    } *params = args;
     const VkDependencyInfo_host *pDependencyInfos_host;
     struct conversion_context ctx;
 
@@ -16879,7 +18169,13 @@ static NTSTATUS thunk64_vkCmdWaitEvents2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdWaitEvents2KHR(void *args)
 {
-    struct vkCmdWaitEvents2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t eventCount;
+        const VkEvent *pEvents;
+        const VkDependencyInfo *pDependencyInfos;
+    } *params = args;
     const VkDependencyInfo_host *pDependencyInfos_host;
     struct conversion_context ctx;
 
@@ -16910,7 +18206,15 @@ static NTSTATUS thunk64_vkCmdWriteAccelerationStructuresPropertiesKHR(void *args
 
 static NTSTATUS thunk32_vkCmdWriteAccelerationStructuresPropertiesKHR(void *args)
 {
-    struct vkCmdWriteAccelerationStructuresPropertiesKHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t accelerationStructureCount;
+        const VkAccelerationStructureKHR *pAccelerationStructures;
+        VkQueryType queryType;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+    } *params = args;
 
     TRACE("%p, %u, %p, %#x, 0x%s, %u\n", params->commandBuffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, wine_dbgstr_longlong(params->queryPool), params->firstQuery);
 
@@ -16936,7 +18240,15 @@ static NTSTATUS thunk64_vkCmdWriteAccelerationStructuresPropertiesNV(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteAccelerationStructuresPropertiesNV(void *args)
 {
-    struct vkCmdWriteAccelerationStructuresPropertiesNV_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t accelerationStructureCount;
+        const VkAccelerationStructureNV *pAccelerationStructures;
+        VkQueryType queryType;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+    } *params = args;
 
     TRACE("%p, %u, %p, %#x, 0x%s, %u\n", params->commandBuffer, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, wine_dbgstr_longlong(params->queryPool), params->firstQuery);
 
@@ -16962,7 +18274,14 @@ static NTSTATUS thunk64_vkCmdWriteBufferMarker2AMD(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteBufferMarker2AMD(void *args)
 {
-    struct vkCmdWriteBufferMarker2AMD_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineStageFlags2 stage;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) dstOffset;
+        uint32_t marker;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->stage), wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), params->marker);
 
@@ -16988,7 +18307,14 @@ static NTSTATUS thunk64_vkCmdWriteBufferMarkerAMD(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteBufferMarkerAMD(void *args)
 {
-    struct vkCmdWriteBufferMarkerAMD_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineStageFlagBits pipelineStage;
+        VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
+        VkDeviceSize DECLSPEC_ALIGN(8) dstOffset;
+        uint32_t marker;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, 0x%s, %u\n", params->commandBuffer, params->pipelineStage, wine_dbgstr_longlong(params->dstBuffer), wine_dbgstr_longlong(params->dstOffset), params->marker);
 
@@ -17014,7 +18340,15 @@ static NTSTATUS thunk64_vkCmdWriteMicromapsPropertiesEXT(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteMicromapsPropertiesEXT(void *args)
 {
-    struct vkCmdWriteMicromapsPropertiesEXT_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        uint32_t micromapCount;
+        const VkMicromapEXT *pMicromaps;
+        VkQueryType queryType;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+    } *params = args;
 
     TRACE("%p, %u, %p, %#x, 0x%s, %u\n", params->commandBuffer, params->micromapCount, params->pMicromaps, params->queryType, wine_dbgstr_longlong(params->queryPool), params->firstQuery);
 
@@ -17040,7 +18374,13 @@ static NTSTATUS thunk64_vkCmdWriteTimestamp(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteTimestamp(void *args)
 {
-    struct vkCmdWriteTimestamp_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineStageFlagBits pipelineStage;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, %u\n", params->commandBuffer, params->pipelineStage, wine_dbgstr_longlong(params->queryPool), params->query);
 
@@ -17066,7 +18406,13 @@ static NTSTATUS thunk64_vkCmdWriteTimestamp2(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteTimestamp2(void *args)
 {
-    struct vkCmdWriteTimestamp2_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineStageFlags2 stage;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->stage), wine_dbgstr_longlong(params->queryPool), params->query);
 
@@ -17092,7 +18438,13 @@ static NTSTATUS thunk64_vkCmdWriteTimestamp2KHR(void *args)
 
 static NTSTATUS thunk32_vkCmdWriteTimestamp2KHR(void *args)
 {
-    struct vkCmdWriteTimestamp2KHR_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkPipelineStageFlags2 stage;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t query;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->stage), wine_dbgstr_longlong(params->queryPool), params->query);
 
@@ -17118,7 +18470,13 @@ static NTSTATUS thunk64_vkCompileDeferredNV(void *args)
 
 static NTSTATUS thunk32_vkCompileDeferredNV(void *args)
 {
-    struct vkCompileDeferredNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        uint32_t shader;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u\n", params->device, wine_dbgstr_longlong(params->pipeline), params->shader);
 
@@ -17144,7 +18502,13 @@ static NTSTATUS thunk64_vkCopyAccelerationStructureKHR(void *args)
 
 static NTSTATUS thunk32_vkCopyAccelerationStructureKHR(void *args)
 {
-    struct vkCopyAccelerationStructureKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        const VkCopyAccelerationStructureInfoKHR *pInfo;
+        VkResult result;
+    } *params = args;
     VkCopyAccelerationStructureInfoKHR_host pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
@@ -17172,7 +18536,13 @@ static NTSTATUS thunk64_vkCopyAccelerationStructureToMemoryKHR(void *args)
 
 static NTSTATUS thunk32_vkCopyAccelerationStructureToMemoryKHR(void *args)
 {
-    struct vkCopyAccelerationStructureToMemoryKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        const VkCopyAccelerationStructureToMemoryInfoKHR *pInfo;
+        VkResult result;
+    } *params = args;
     VkCopyAccelerationStructureToMemoryInfoKHR_host pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
@@ -17200,7 +18570,13 @@ static NTSTATUS thunk64_vkCopyMemoryToAccelerationStructureKHR(void *args)
 
 static NTSTATUS thunk32_vkCopyMemoryToAccelerationStructureKHR(void *args)
 {
-    struct vkCopyMemoryToAccelerationStructureKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo;
+        VkResult result;
+    } *params = args;
     VkCopyMemoryToAccelerationStructureInfoKHR_host pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
@@ -17228,7 +18604,13 @@ static NTSTATUS thunk64_vkCopyMemoryToMicromapEXT(void *args)
 
 static NTSTATUS thunk32_vkCopyMemoryToMicromapEXT(void *args)
 {
-    struct vkCopyMemoryToMicromapEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        const VkCopyMemoryToMicromapInfoEXT *pInfo;
+        VkResult result;
+    } *params = args;
     VkCopyMemoryToMicromapInfoEXT_host pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
@@ -17256,7 +18638,13 @@ static NTSTATUS thunk64_vkCopyMicromapEXT(void *args)
 
 static NTSTATUS thunk32_vkCopyMicromapEXT(void *args)
 {
-    struct vkCopyMicromapEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        const VkCopyMicromapInfoEXT *pInfo;
+        VkResult result;
+    } *params = args;
     VkCopyMicromapInfoEXT_host pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
@@ -17284,7 +18672,13 @@ static NTSTATUS thunk64_vkCopyMicromapToMemoryEXT(void *args)
 
 static NTSTATUS thunk32_vkCopyMicromapToMemoryEXT(void *args)
 {
-    struct vkCopyMicromapToMemoryEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        const VkCopyMicromapToMemoryInfoEXT *pInfo;
+        VkResult result;
+    } *params = args;
     VkCopyMicromapToMemoryInfoEXT_host pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
@@ -17312,7 +18706,14 @@ static NTSTATUS thunk64_vkCreateAccelerationStructureKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateAccelerationStructureKHR(void *args)
 {
-    struct vkCreateAccelerationStructureKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAccelerationStructureCreateInfoKHR *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkAccelerationStructureKHR *pAccelerationStructure;
+        VkResult result;
+    } *params = args;
     VkAccelerationStructureCreateInfoKHR_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pAccelerationStructure);
@@ -17340,7 +18741,14 @@ static NTSTATUS thunk64_vkCreateAccelerationStructureNV(void *args)
 
 static NTSTATUS thunk32_vkCreateAccelerationStructureNV(void *args)
 {
-    struct vkCreateAccelerationStructureNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAccelerationStructureCreateInfoNV *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkAccelerationStructureNV *pAccelerationStructure;
+        VkResult result;
+    } *params = args;
     VkAccelerationStructureCreateInfoNV_host pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -17371,7 +18779,14 @@ static NTSTATUS thunk64_vkCreateBuffer(void *args)
 
 static NTSTATUS thunk32_vkCreateBuffer(void *args)
 {
-    struct vkCreateBuffer_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkBuffer *pBuffer;
+        VkResult result;
+    } *params = args;
     VkBufferCreateInfo_host pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -17402,7 +18817,14 @@ static NTSTATUS thunk64_vkCreateBufferView(void *args)
 
 static NTSTATUS thunk32_vkCreateBufferView(void *args)
 {
-    struct vkCreateBufferView_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferViewCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkBufferView *pView;
+        VkResult result;
+    } *params = args;
     VkBufferViewCreateInfo_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pView);
@@ -17430,7 +18852,15 @@ static NTSTATUS thunk64_vkCreateCommandPool(void *args)
 
 static NTSTATUS thunk32_vkCreateCommandPool(void *args)
 {
-    struct vkCreateCommandPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkCommandPoolCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkCommandPool *pCommandPool;
+        void *client_ptr;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool);
 
@@ -17461,7 +18891,16 @@ static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 
 static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
 {
-    struct vkCreateComputePipelines_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineCache DECLSPEC_ALIGN(8) pipelineCache;
+        uint32_t createInfoCount;
+        const VkComputePipelineCreateInfo *pCreateInfos;
+        const VkAllocationCallbacks *pAllocator;
+        VkPipeline *pPipelines;
+        VkResult result;
+    } *params = args;
     const VkComputePipelineCreateInfo_host *pCreateInfos_host;
     struct conversion_context ctx;
 
@@ -17493,7 +18932,14 @@ static NTSTATUS thunk64_vkCreateCuFunctionNVX(void *args)
 
 static NTSTATUS thunk32_vkCreateCuFunctionNVX(void *args)
 {
-    struct vkCreateCuFunctionNVX_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkCuFunctionCreateInfoNVX *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkCuFunctionNVX *pFunction;
+        VkResult result;
+    } *params = args;
     VkCuFunctionCreateInfoNVX_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pFunction);
@@ -17521,7 +18967,14 @@ static NTSTATUS thunk64_vkCreateCuModuleNVX(void *args)
 
 static NTSTATUS thunk32_vkCreateCuModuleNVX(void *args)
 {
-    struct vkCreateCuModuleNVX_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkCuModuleCreateInfoNVX *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkCuModuleNVX *pModule;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pModule);
 
@@ -17547,7 +19000,14 @@ static NTSTATUS thunk64_vkCreateDebugReportCallbackEXT(void *args)
 
 static NTSTATUS thunk32_vkCreateDebugReportCallbackEXT(void *args)
 {
-    struct vkCreateDebugReportCallbackEXT_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        const VkDebugReportCallbackCreateInfoEXT *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDebugReportCallbackEXT *pCallback;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pCallback);
 
@@ -17573,7 +19033,14 @@ static NTSTATUS thunk64_vkCreateDebugUtilsMessengerEXT(void *args)
 
 static NTSTATUS thunk32_vkCreateDebugUtilsMessengerEXT(void *args)
 {
-    struct vkCreateDebugUtilsMessengerEXT_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDebugUtilsMessengerEXT *pMessenger;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pMessenger);
 
@@ -17599,7 +19066,13 @@ static NTSTATUS thunk64_vkCreateDeferredOperationKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateDeferredOperationKHR(void *args)
 {
-    struct vkCreateDeferredOperationKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAllocationCallbacks *pAllocator;
+        VkDeferredOperationKHR *pDeferredOperation;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pAllocator, params->pDeferredOperation);
 
@@ -17625,7 +19098,14 @@ static NTSTATUS thunk64_vkCreateDescriptorPool(void *args)
 
 static NTSTATUS thunk32_vkCreateDescriptorPool(void *args)
 {
-    struct vkCreateDescriptorPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorPoolCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDescriptorPool *pDescriptorPool;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorPool);
 
@@ -17651,7 +19131,14 @@ static NTSTATUS thunk64_vkCreateDescriptorSetLayout(void *args)
 
 static NTSTATUS thunk32_vkCreateDescriptorSetLayout(void *args)
 {
-    struct vkCreateDescriptorSetLayout_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorSetLayoutCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDescriptorSetLayout *pSetLayout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSetLayout);
 
@@ -17677,7 +19164,14 @@ static NTSTATUS thunk64_vkCreateDescriptorUpdateTemplate(void *args)
 
 static NTSTATUS thunk32_vkCreateDescriptorUpdateTemplate(void *args)
 {
-    struct vkCreateDescriptorUpdateTemplate_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorUpdateTemplateCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate;
+        VkResult result;
+    } *params = args;
     VkDescriptorUpdateTemplateCreateInfo_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorUpdateTemplate);
@@ -17705,7 +19199,14 @@ static NTSTATUS thunk64_vkCreateDescriptorUpdateTemplateKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateDescriptorUpdateTemplateKHR(void *args)
 {
-    struct vkCreateDescriptorUpdateTemplateKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorUpdateTemplateCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate;
+        VkResult result;
+    } *params = args;
     VkDescriptorUpdateTemplateCreateInfo_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorUpdateTemplate);
@@ -17738,7 +19239,15 @@ static NTSTATUS thunk64_vkCreateDevice(void *args)
 
 static NTSTATUS thunk32_vkCreateDevice(void *args)
 {
-    struct vkCreateDevice_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkDeviceCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkDevice *pDevice;
+        void *client_ptr;
+        VkResult result;
+    } *params = args;
     VkDeviceCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -17769,7 +19278,14 @@ static NTSTATUS thunk64_vkCreateEvent(void *args)
 
 static NTSTATUS thunk32_vkCreateEvent(void *args)
 {
-    struct vkCreateEvent_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkEventCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkEvent *pEvent;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pEvent);
 
@@ -17795,7 +19311,14 @@ static NTSTATUS thunk64_vkCreateFence(void *args)
 
 static NTSTATUS thunk32_vkCreateFence(void *args)
 {
-    struct vkCreateFence_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkFenceCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkFence *pFence;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pFence);
 
@@ -17821,7 +19344,14 @@ static NTSTATUS thunk64_vkCreateFramebuffer(void *args)
 
 static NTSTATUS thunk32_vkCreateFramebuffer(void *args)
 {
-    struct vkCreateFramebuffer_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkFramebufferCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkFramebuffer *pFramebuffer;
+        VkResult result;
+    } *params = args;
     VkFramebufferCreateInfo_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pFramebuffer);
@@ -17854,7 +19384,16 @@ static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 
 static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
 {
-    struct vkCreateGraphicsPipelines_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineCache DECLSPEC_ALIGN(8) pipelineCache;
+        uint32_t createInfoCount;
+        const VkGraphicsPipelineCreateInfo *pCreateInfos;
+        const VkAllocationCallbacks *pAllocator;
+        VkPipeline *pPipelines;
+        VkResult result;
+    } *params = args;
     const VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
     struct conversion_context ctx;
 
@@ -17886,7 +19425,14 @@ static NTSTATUS thunk64_vkCreateImage(void *args)
 
 static NTSTATUS thunk32_vkCreateImage(void *args)
 {
-    struct vkCreateImage_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkImage *pImage;
+        VkResult result;
+    } *params = args;
     VkImageCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -17917,7 +19463,14 @@ static NTSTATUS thunk64_vkCreateImageView(void *args)
 
 static NTSTATUS thunk32_vkCreateImageView(void *args)
 {
-    struct vkCreateImageView_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageViewCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkImageView *pView;
+        VkResult result;
+    } *params = args;
     VkImageViewCreateInfo_host pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -17948,7 +19501,14 @@ static NTSTATUS thunk64_vkCreateIndirectCommandsLayoutNV(void *args)
 
 static NTSTATUS thunk32_vkCreateIndirectCommandsLayoutNV(void *args)
 {
-    struct vkCreateIndirectCommandsLayoutNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkIndirectCommandsLayoutCreateInfoNV *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkIndirectCommandsLayoutNV *pIndirectCommandsLayout;
+        VkResult result;
+    } *params = args;
     VkIndirectCommandsLayoutCreateInfoNV_host pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -17984,7 +19544,14 @@ static NTSTATUS thunk64_vkCreateInstance(void *args)
 
 static NTSTATUS thunk32_vkCreateInstance(void *args)
 {
-    struct vkCreateInstance_params *params = args;
+    struct
+    {
+        const VkInstanceCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkInstance *pInstance;
+        void *client_ptr;
+        VkResult result;
+    } *params = args;
     VkInstanceCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -18015,7 +19582,14 @@ static NTSTATUS thunk64_vkCreateMicromapEXT(void *args)
 
 static NTSTATUS thunk32_vkCreateMicromapEXT(void *args)
 {
-    struct vkCreateMicromapEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkMicromapCreateInfoEXT *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkMicromapEXT *pMicromap;
+        VkResult result;
+    } *params = args;
     VkMicromapCreateInfoEXT_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pMicromap);
@@ -18043,7 +19617,14 @@ static NTSTATUS thunk64_vkCreateOpticalFlowSessionNV(void *args)
 
 static NTSTATUS thunk32_vkCreateOpticalFlowSessionNV(void *args)
 {
-    struct vkCreateOpticalFlowSessionNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkOpticalFlowSessionCreateInfoNV *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkOpticalFlowSessionNV *pSession;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSession);
 
@@ -18069,7 +19650,14 @@ static NTSTATUS thunk64_vkCreatePipelineCache(void *args)
 
 static NTSTATUS thunk32_vkCreatePipelineCache(void *args)
 {
-    struct vkCreatePipelineCache_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPipelineCacheCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkPipelineCache *pPipelineCache;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pPipelineCache);
 
@@ -18095,7 +19683,14 @@ static NTSTATUS thunk64_vkCreatePipelineLayout(void *args)
 
 static NTSTATUS thunk32_vkCreatePipelineLayout(void *args)
 {
-    struct vkCreatePipelineLayout_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPipelineLayoutCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkPipelineLayout *pPipelineLayout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pPipelineLayout);
 
@@ -18121,7 +19716,14 @@ static NTSTATUS thunk64_vkCreatePrivateDataSlot(void *args)
 
 static NTSTATUS thunk32_vkCreatePrivateDataSlot(void *args)
 {
-    struct vkCreatePrivateDataSlot_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPrivateDataSlotCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkPrivateDataSlot *pPrivateDataSlot;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pPrivateDataSlot);
 
@@ -18147,7 +19749,14 @@ static NTSTATUS thunk64_vkCreatePrivateDataSlotEXT(void *args)
 
 static NTSTATUS thunk32_vkCreatePrivateDataSlotEXT(void *args)
 {
-    struct vkCreatePrivateDataSlotEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPrivateDataSlotCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkPrivateDataSlot *pPrivateDataSlot;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pPrivateDataSlot);
 
@@ -18173,7 +19782,14 @@ static NTSTATUS thunk64_vkCreateQueryPool(void *args)
 
 static NTSTATUS thunk32_vkCreateQueryPool(void *args)
 {
-    struct vkCreateQueryPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkQueryPoolCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkQueryPool *pQueryPool;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pQueryPool);
 
@@ -18204,7 +19820,17 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 {
-    struct vkCreateRayTracingPipelinesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) deferredOperation;
+        VkPipelineCache DECLSPEC_ALIGN(8) pipelineCache;
+        uint32_t createInfoCount;
+        const VkRayTracingPipelineCreateInfoKHR *pCreateInfos;
+        const VkAllocationCallbacks *pAllocator;
+        VkPipeline *pPipelines;
+        VkResult result;
+    } *params = args;
     const VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
     struct conversion_context ctx;
 
@@ -18241,7 +19867,16 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 
 static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
 {
-    struct vkCreateRayTracingPipelinesNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineCache DECLSPEC_ALIGN(8) pipelineCache;
+        uint32_t createInfoCount;
+        const VkRayTracingPipelineCreateInfoNV *pCreateInfos;
+        const VkAllocationCallbacks *pAllocator;
+        VkPipeline *pPipelines;
+        VkResult result;
+    } *params = args;
     const VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
     struct conversion_context ctx;
 
@@ -18273,7 +19908,14 @@ static NTSTATUS thunk64_vkCreateRenderPass(void *args)
 
 static NTSTATUS thunk32_vkCreateRenderPass(void *args)
 {
-    struct vkCreateRenderPass_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkRenderPassCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkRenderPass *pRenderPass;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pRenderPass);
 
@@ -18299,7 +19941,14 @@ static NTSTATUS thunk64_vkCreateRenderPass2(void *args)
 
 static NTSTATUS thunk32_vkCreateRenderPass2(void *args)
 {
-    struct vkCreateRenderPass2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkRenderPassCreateInfo2 *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkRenderPass *pRenderPass;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pRenderPass);
 
@@ -18325,7 +19974,14 @@ static NTSTATUS thunk64_vkCreateRenderPass2KHR(void *args)
 
 static NTSTATUS thunk32_vkCreateRenderPass2KHR(void *args)
 {
-    struct vkCreateRenderPass2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkRenderPassCreateInfo2 *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkRenderPass *pRenderPass;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pRenderPass);
 
@@ -18351,7 +20007,14 @@ static NTSTATUS thunk64_vkCreateSampler(void *args)
 
 static NTSTATUS thunk32_vkCreateSampler(void *args)
 {
-    struct vkCreateSampler_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSamplerCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkSampler *pSampler;
+        VkResult result;
+    } *params = args;
     VkSamplerCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -18382,7 +20045,14 @@ static NTSTATUS thunk64_vkCreateSamplerYcbcrConversion(void *args)
 
 static NTSTATUS thunk32_vkCreateSamplerYcbcrConversion(void *args)
 {
-    struct vkCreateSamplerYcbcrConversion_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSamplerYcbcrConversionCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkSamplerYcbcrConversion *pYcbcrConversion;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pYcbcrConversion);
 
@@ -18408,7 +20078,14 @@ static NTSTATUS thunk64_vkCreateSamplerYcbcrConversionKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateSamplerYcbcrConversionKHR(void *args)
 {
-    struct vkCreateSamplerYcbcrConversionKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSamplerYcbcrConversionCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkSamplerYcbcrConversion *pYcbcrConversion;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pYcbcrConversion);
 
@@ -18434,7 +20111,14 @@ static NTSTATUS thunk64_vkCreateSemaphore(void *args)
 
 static NTSTATUS thunk32_vkCreateSemaphore(void *args)
 {
-    struct vkCreateSemaphore_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSemaphoreCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkSemaphore *pSemaphore;
+        VkResult result;
+    } *params = args;
     VkSemaphoreCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -18465,7 +20149,14 @@ static NTSTATUS thunk64_vkCreateShaderModule(void *args)
 
 static NTSTATUS thunk32_vkCreateShaderModule(void *args)
 {
-    struct vkCreateShaderModule_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkShaderModuleCreateInfo *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkShaderModule *pShaderModule;
+        VkResult result;
+    } *params = args;
     VkShaderModuleCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -18498,7 +20189,14 @@ static NTSTATUS thunk64_vkCreateSwapchainKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateSwapchainKHR(void *args)
 {
-    struct vkCreateSwapchainKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSwapchainCreateInfoKHR *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkSwapchainKHR *pSwapchain;
+        VkResult result;
+    } *params = args;
     VkSwapchainCreateInfoKHR_host pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
@@ -18526,7 +20224,14 @@ static NTSTATUS thunk64_vkCreateValidationCacheEXT(void *args)
 
 static NTSTATUS thunk32_vkCreateValidationCacheEXT(void *args)
 {
-    struct vkCreateValidationCacheEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkValidationCacheCreateInfoEXT *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkValidationCacheEXT *pValidationCache;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pValidationCache);
 
@@ -18552,7 +20257,14 @@ static NTSTATUS thunk64_vkCreateWin32SurfaceKHR(void *args)
 
 static NTSTATUS thunk32_vkCreateWin32SurfaceKHR(void *args)
 {
-    struct vkCreateWin32SurfaceKHR_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        const VkWin32SurfaceCreateInfoKHR *pCreateInfo;
+        const VkAllocationCallbacks *pAllocator;
+        VkSurfaceKHR *pSurface;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
 
@@ -18580,7 +20292,12 @@ static NTSTATUS thunk64_vkDebugMarkerSetObjectNameEXT(void *args)
 
 static NTSTATUS thunk32_vkDebugMarkerSetObjectNameEXT(void *args)
 {
-    struct vkDebugMarkerSetObjectNameEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDebugMarkerObjectNameInfoEXT *pNameInfo;
+        VkResult result;
+    } *params = args;
     VkDebugMarkerObjectNameInfoEXT_host pNameInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pNameInfo);
@@ -18610,7 +20327,12 @@ static NTSTATUS thunk64_vkDebugMarkerSetObjectTagEXT(void *args)
 
 static NTSTATUS thunk32_vkDebugMarkerSetObjectTagEXT(void *args)
 {
-    struct vkDebugMarkerSetObjectTagEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDebugMarkerObjectTagInfoEXT *pTagInfo;
+        VkResult result;
+    } *params = args;
     VkDebugMarkerObjectTagInfoEXT_host pTagInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pTagInfo);
@@ -18638,7 +20360,17 @@ static NTSTATUS thunk64_vkDebugReportMessageEXT(void *args)
 
 static NTSTATUS thunk32_vkDebugReportMessageEXT(void *args)
 {
-    struct vkDebugReportMessageEXT_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        VkDebugReportFlagsEXT flags;
+        VkDebugReportObjectTypeEXT objectType;
+        uint64_t DECLSPEC_ALIGN(8) object;
+        size_t location;
+        int32_t messageCode;
+        const char *pLayerPrefix;
+        const char *pMessage;
+    } *params = args;
 
     TRACE("%p, %#x, %#x, 0x%s, 0x%s, %d, %p, %p\n", params->instance, params->flags, params->objectType, wine_dbgstr_longlong(params->object), wine_dbgstr_longlong(params->location), params->messageCode, params->pLayerPrefix, params->pMessage);
 
@@ -18664,7 +20396,12 @@ static NTSTATUS thunk64_vkDeferredOperationJoinKHR(void *args)
 
 static NTSTATUS thunk32_vkDeferredOperationJoinKHR(void *args)
 {
-    struct vkDeferredOperationJoinKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) operation;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->operation));
 
@@ -18690,7 +20427,12 @@ static NTSTATUS thunk64_vkDestroyAccelerationStructureKHR(void *args)
 
 static NTSTATUS thunk32_vkDestroyAccelerationStructureKHR(void *args)
 {
-    struct vkDestroyAccelerationStructureKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkAccelerationStructureKHR DECLSPEC_ALIGN(8) accelerationStructure;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->accelerationStructure), params->pAllocator);
 
@@ -18716,7 +20458,12 @@ static NTSTATUS thunk64_vkDestroyAccelerationStructureNV(void *args)
 
 static NTSTATUS thunk32_vkDestroyAccelerationStructureNV(void *args)
 {
-    struct vkDestroyAccelerationStructureNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkAccelerationStructureNV DECLSPEC_ALIGN(8) accelerationStructure;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->accelerationStructure), params->pAllocator);
 
@@ -18742,7 +20489,12 @@ static NTSTATUS thunk64_vkDestroyBuffer(void *args)
 
 static NTSTATUS thunk32_vkDestroyBuffer(void *args)
 {
-    struct vkDestroyBuffer_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->buffer), params->pAllocator);
 
@@ -18768,7 +20520,12 @@ static NTSTATUS thunk64_vkDestroyBufferView(void *args)
 
 static NTSTATUS thunk32_vkDestroyBufferView(void *args)
 {
-    struct vkDestroyBufferView_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkBufferView DECLSPEC_ALIGN(8) bufferView;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->bufferView), params->pAllocator);
 
@@ -18794,7 +20551,12 @@ static NTSTATUS thunk64_vkDestroyCommandPool(void *args)
 
 static NTSTATUS thunk32_vkDestroyCommandPool(void *args)
 {
-    struct vkDestroyCommandPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCommandPool DECLSPEC_ALIGN(8) commandPool;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->pAllocator);
 
@@ -18820,7 +20582,12 @@ static NTSTATUS thunk64_vkDestroyCuFunctionNVX(void *args)
 
 static NTSTATUS thunk32_vkDestroyCuFunctionNVX(void *args)
 {
-    struct vkDestroyCuFunctionNVX_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCuFunctionNVX DECLSPEC_ALIGN(8) function;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->function), params->pAllocator);
 
@@ -18846,7 +20613,12 @@ static NTSTATUS thunk64_vkDestroyCuModuleNVX(void *args)
 
 static NTSTATUS thunk32_vkDestroyCuModuleNVX(void *args)
 {
-    struct vkDestroyCuModuleNVX_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCuModuleNVX DECLSPEC_ALIGN(8) module;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->module), params->pAllocator);
 
@@ -18872,7 +20644,12 @@ static NTSTATUS thunk64_vkDestroyDebugReportCallbackEXT(void *args)
 
 static NTSTATUS thunk32_vkDestroyDebugReportCallbackEXT(void *args)
 {
-    struct vkDestroyDebugReportCallbackEXT_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        VkDebugReportCallbackEXT DECLSPEC_ALIGN(8) callback;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->callback), params->pAllocator);
 
@@ -18898,7 +20675,12 @@ static NTSTATUS thunk64_vkDestroyDebugUtilsMessengerEXT(void *args)
 
 static NTSTATUS thunk32_vkDestroyDebugUtilsMessengerEXT(void *args)
 {
-    struct vkDestroyDebugUtilsMessengerEXT_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        VkDebugUtilsMessengerEXT DECLSPEC_ALIGN(8) messenger;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->messenger), params->pAllocator);
 
@@ -18924,7 +20706,12 @@ static NTSTATUS thunk64_vkDestroyDeferredOperationKHR(void *args)
 
 static NTSTATUS thunk32_vkDestroyDeferredOperationKHR(void *args)
 {
-    struct vkDestroyDeferredOperationKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) operation;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->operation), params->pAllocator);
 
@@ -18950,7 +20737,12 @@ static NTSTATUS thunk64_vkDestroyDescriptorPool(void *args)
 
 static NTSTATUS thunk32_vkDestroyDescriptorPool(void *args)
 {
-    struct vkDestroyDescriptorPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorPool DECLSPEC_ALIGN(8) descriptorPool;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorPool), params->pAllocator);
 
@@ -18976,7 +20768,12 @@ static NTSTATUS thunk64_vkDestroyDescriptorSetLayout(void *args)
 
 static NTSTATUS thunk32_vkDestroyDescriptorSetLayout(void *args)
 {
-    struct vkDestroyDescriptorSetLayout_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorSetLayout DECLSPEC_ALIGN(8) descriptorSetLayout;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorSetLayout), params->pAllocator);
 
@@ -19002,7 +20799,12 @@ static NTSTATUS thunk64_vkDestroyDescriptorUpdateTemplate(void *args)
 
 static NTSTATUS thunk32_vkDestroyDescriptorUpdateTemplate(void *args)
 {
-    struct vkDestroyDescriptorUpdateTemplate_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorUpdateTemplate DECLSPEC_ALIGN(8) descriptorUpdateTemplate;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorUpdateTemplate), params->pAllocator);
 
@@ -19028,7 +20830,12 @@ static NTSTATUS thunk64_vkDestroyDescriptorUpdateTemplateKHR(void *args)
 
 static NTSTATUS thunk32_vkDestroyDescriptorUpdateTemplateKHR(void *args)
 {
-    struct vkDestroyDescriptorUpdateTemplateKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorUpdateTemplate DECLSPEC_ALIGN(8) descriptorUpdateTemplate;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorUpdateTemplate), params->pAllocator);
 
@@ -19057,7 +20864,11 @@ static NTSTATUS thunk64_vkDestroyDevice(void *args)
 
 static NTSTATUS thunk32_vkDestroyDevice(void *args)
 {
-    struct vkDestroyDevice_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, %p\n", params->device, params->pAllocator);
 
@@ -19086,7 +20897,12 @@ static NTSTATUS thunk64_vkDestroyEvent(void *args)
 
 static NTSTATUS thunk32_vkDestroyEvent(void *args)
 {
-    struct vkDestroyEvent_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->event), params->pAllocator);
 
@@ -19112,7 +20928,12 @@ static NTSTATUS thunk64_vkDestroyFence(void *args)
 
 static NTSTATUS thunk32_vkDestroyFence(void *args)
 {
-    struct vkDestroyFence_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->fence), params->pAllocator);
 
@@ -19138,7 +20959,12 @@ static NTSTATUS thunk64_vkDestroyFramebuffer(void *args)
 
 static NTSTATUS thunk32_vkDestroyFramebuffer(void *args)
 {
-    struct vkDestroyFramebuffer_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkFramebuffer DECLSPEC_ALIGN(8) framebuffer;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->framebuffer), params->pAllocator);
 
@@ -19164,7 +20990,12 @@ static NTSTATUS thunk64_vkDestroyImage(void *args)
 
 static NTSTATUS thunk32_vkDestroyImage(void *args)
 {
-    struct vkDestroyImage_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pAllocator);
 
@@ -19190,7 +21021,12 @@ static NTSTATUS thunk64_vkDestroyImageView(void *args)
 
 static NTSTATUS thunk32_vkDestroyImageView(void *args)
 {
-    struct vkDestroyImageView_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImageView DECLSPEC_ALIGN(8) imageView;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->imageView), params->pAllocator);
 
@@ -19216,7 +21052,12 @@ static NTSTATUS thunk64_vkDestroyIndirectCommandsLayoutNV(void *args)
 
 static NTSTATUS thunk32_vkDestroyIndirectCommandsLayoutNV(void *args)
 {
-    struct vkDestroyIndirectCommandsLayoutNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkIndirectCommandsLayoutNV DECLSPEC_ALIGN(8) indirectCommandsLayout;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->indirectCommandsLayout), params->pAllocator);
 
@@ -19245,7 +21086,11 @@ static NTSTATUS thunk64_vkDestroyInstance(void *args)
 
 static NTSTATUS thunk32_vkDestroyInstance(void *args)
 {
-    struct vkDestroyInstance_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, %p\n", params->instance, params->pAllocator);
 
@@ -19274,7 +21119,12 @@ static NTSTATUS thunk64_vkDestroyMicromapEXT(void *args)
 
 static NTSTATUS thunk32_vkDestroyMicromapEXT(void *args)
 {
-    struct vkDestroyMicromapEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkMicromapEXT DECLSPEC_ALIGN(8) micromap;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->micromap), params->pAllocator);
 
@@ -19300,7 +21150,12 @@ static NTSTATUS thunk64_vkDestroyOpticalFlowSessionNV(void *args)
 
 static NTSTATUS thunk32_vkDestroyOpticalFlowSessionNV(void *args)
 {
-    struct vkDestroyOpticalFlowSessionNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkOpticalFlowSessionNV DECLSPEC_ALIGN(8) session;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->session), params->pAllocator);
 
@@ -19326,7 +21181,12 @@ static NTSTATUS thunk64_vkDestroyPipeline(void *args)
 
 static NTSTATUS thunk32_vkDestroyPipeline(void *args)
 {
-    struct vkDestroyPipeline_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->pipeline), params->pAllocator);
 
@@ -19352,7 +21212,12 @@ static NTSTATUS thunk64_vkDestroyPipelineCache(void *args)
 
 static NTSTATUS thunk32_vkDestroyPipelineCache(void *args)
 {
-    struct vkDestroyPipelineCache_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineCache DECLSPEC_ALIGN(8) pipelineCache;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->pAllocator);
 
@@ -19378,7 +21243,12 @@ static NTSTATUS thunk64_vkDestroyPipelineLayout(void *args)
 
 static NTSTATUS thunk32_vkDestroyPipelineLayout(void *args)
 {
-    struct vkDestroyPipelineLayout_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineLayout DECLSPEC_ALIGN(8) pipelineLayout;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->pipelineLayout), params->pAllocator);
 
@@ -19404,7 +21274,12 @@ static NTSTATUS thunk64_vkDestroyPrivateDataSlot(void *args)
 
 static NTSTATUS thunk32_vkDestroyPrivateDataSlot(void *args)
 {
-    struct vkDestroyPrivateDataSlot_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPrivateDataSlot DECLSPEC_ALIGN(8) privateDataSlot;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->privateDataSlot), params->pAllocator);
 
@@ -19430,7 +21305,12 @@ static NTSTATUS thunk64_vkDestroyPrivateDataSlotEXT(void *args)
 
 static NTSTATUS thunk32_vkDestroyPrivateDataSlotEXT(void *args)
 {
-    struct vkDestroyPrivateDataSlotEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPrivateDataSlot DECLSPEC_ALIGN(8) privateDataSlot;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->privateDataSlot), params->pAllocator);
 
@@ -19456,7 +21336,12 @@ static NTSTATUS thunk64_vkDestroyQueryPool(void *args)
 
 static NTSTATUS thunk32_vkDestroyQueryPool(void *args)
 {
-    struct vkDestroyQueryPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->queryPool), params->pAllocator);
 
@@ -19482,7 +21367,12 @@ static NTSTATUS thunk64_vkDestroyRenderPass(void *args)
 
 static NTSTATUS thunk32_vkDestroyRenderPass(void *args)
 {
-    struct vkDestroyRenderPass_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkRenderPass DECLSPEC_ALIGN(8) renderPass;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->renderPass), params->pAllocator);
 
@@ -19508,7 +21398,12 @@ static NTSTATUS thunk64_vkDestroySampler(void *args)
 
 static NTSTATUS thunk32_vkDestroySampler(void *args)
 {
-    struct vkDestroySampler_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSampler DECLSPEC_ALIGN(8) sampler;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->sampler), params->pAllocator);
 
@@ -19534,7 +21429,12 @@ static NTSTATUS thunk64_vkDestroySamplerYcbcrConversion(void *args)
 
 static NTSTATUS thunk32_vkDestroySamplerYcbcrConversion(void *args)
 {
-    struct vkDestroySamplerYcbcrConversion_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSamplerYcbcrConversion DECLSPEC_ALIGN(8) ycbcrConversion;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->ycbcrConversion), params->pAllocator);
 
@@ -19560,7 +21460,12 @@ static NTSTATUS thunk64_vkDestroySamplerYcbcrConversionKHR(void *args)
 
 static NTSTATUS thunk32_vkDestroySamplerYcbcrConversionKHR(void *args)
 {
-    struct vkDestroySamplerYcbcrConversionKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSamplerYcbcrConversion DECLSPEC_ALIGN(8) ycbcrConversion;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->ycbcrConversion), params->pAllocator);
 
@@ -19586,7 +21491,12 @@ static NTSTATUS thunk64_vkDestroySemaphore(void *args)
 
 static NTSTATUS thunk32_vkDestroySemaphore(void *args)
 {
-    struct vkDestroySemaphore_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->semaphore), params->pAllocator);
 
@@ -19612,7 +21522,12 @@ static NTSTATUS thunk64_vkDestroyShaderModule(void *args)
 
 static NTSTATUS thunk32_vkDestroyShaderModule(void *args)
 {
-    struct vkDestroyShaderModule_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkShaderModule DECLSPEC_ALIGN(8) shaderModule;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->shaderModule), params->pAllocator);
 
@@ -19638,7 +21553,12 @@ static NTSTATUS thunk64_vkDestroySurfaceKHR(void *args)
 
 static NTSTATUS thunk32_vkDestroySurfaceKHR(void *args)
 {
-    struct vkDestroySurfaceKHR_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->surface), params->pAllocator);
 
@@ -19664,7 +21584,12 @@ static NTSTATUS thunk64_vkDestroySwapchainKHR(void *args)
 
 static NTSTATUS thunk32_vkDestroySwapchainKHR(void *args)
 {
-    struct vkDestroySwapchainKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pAllocator);
 
@@ -19690,7 +21615,12 @@ static NTSTATUS thunk64_vkDestroyValidationCacheEXT(void *args)
 
 static NTSTATUS thunk32_vkDestroyValidationCacheEXT(void *args)
 {
-    struct vkDestroyValidationCacheEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkValidationCacheEXT DECLSPEC_ALIGN(8) validationCache;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->validationCache), params->pAllocator);
 
@@ -19716,7 +21646,11 @@ static NTSTATUS thunk64_vkDeviceWaitIdle(void *args)
 
 static NTSTATUS thunk32_vkDeviceWaitIdle(void *args)
 {
-    struct vkDeviceWaitIdle_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p\n", params->device);
 
@@ -19742,7 +21676,11 @@ static NTSTATUS thunk64_vkEndCommandBuffer(void *args)
 
 static NTSTATUS thunk32_vkEndCommandBuffer(void *args)
 {
-    struct vkEndCommandBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p\n", params->commandBuffer);
 
@@ -19768,7 +21706,14 @@ static NTSTATUS thunk64_vkEnumerateDeviceExtensionProperties(void *args)
 
 static NTSTATUS thunk32_vkEnumerateDeviceExtensionProperties(void *args)
 {
-    struct vkEnumerateDeviceExtensionProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const char *pLayerName;
+        uint32_t *pPropertyCount;
+        VkExtensionProperties *pProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
 
@@ -19794,7 +21739,13 @@ static NTSTATUS thunk64_vkEnumerateDeviceLayerProperties(void *args)
 
 static NTSTATUS thunk32_vkEnumerateDeviceLayerProperties(void *args)
 {
-    struct vkEnumerateDeviceLayerProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pPropertyCount;
+        VkLayerProperties *pProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
 
@@ -19820,7 +21771,13 @@ static NTSTATUS thunk64_vkEnumerateInstanceExtensionProperties(void *args)
 
 static NTSTATUS thunk32_vkEnumerateInstanceExtensionProperties(void *args)
 {
-    struct vkEnumerateInstanceExtensionProperties_params *params = args;
+    struct
+    {
+        const char *pLayerName;
+        uint32_t *pPropertyCount;
+        VkExtensionProperties *pProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->pLayerName, params->pPropertyCount, params->pProperties);
 
@@ -19846,7 +21803,11 @@ static NTSTATUS thunk64_vkEnumerateInstanceVersion(void *args)
 
 static NTSTATUS thunk32_vkEnumerateInstanceVersion(void *args)
 {
-    struct vkEnumerateInstanceVersion_params *params = args;
+    struct
+    {
+        uint32_t *pApiVersion;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p\n", params->pApiVersion);
 
@@ -19872,7 +21833,13 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDeviceGroups(void *args)
 
 static NTSTATUS thunk32_vkEnumeratePhysicalDeviceGroups(void *args)
 {
-    struct vkEnumeratePhysicalDeviceGroups_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        uint32_t *pPhysicalDeviceGroupCount;
+        VkPhysicalDeviceGroupProperties *pPhysicalDeviceGroupProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
 
@@ -19898,7 +21865,13 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
 
 static NTSTATUS thunk32_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
 {
-    struct vkEnumeratePhysicalDeviceGroupsKHR_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        uint32_t *pPhysicalDeviceGroupCount;
+        VkPhysicalDeviceGroupProperties *pPhysicalDeviceGroupProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceGroupCount, params->pPhysicalDeviceGroupProperties);
 
@@ -19924,7 +21897,15 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCoun
 
 static NTSTATUS thunk32_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(void *args)
 {
-    struct vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t queueFamilyIndex;
+        uint32_t *pCounterCount;
+        VkPerformanceCounterKHR *pCounters;
+        VkPerformanceCounterDescriptionKHR *pCounterDescriptions;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, %p, %p, %p\n", params->physicalDevice, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
 
@@ -19950,7 +21931,13 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDevices(void *args)
 
 static NTSTATUS thunk32_vkEnumeratePhysicalDevices(void *args)
 {
-    struct vkEnumeratePhysicalDevices_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        uint32_t *pPhysicalDeviceCount;
+        VkPhysicalDevice *pPhysicalDevices;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
 
@@ -19976,7 +21963,13 @@ static NTSTATUS thunk64_vkFlushMappedMemoryRanges(void *args)
 
 static NTSTATUS thunk32_vkFlushMappedMemoryRanges(void *args)
 {
-    struct vkFlushMappedMemoryRanges_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t memoryRangeCount;
+        const VkMappedMemoryRange *pMemoryRanges;
+        VkResult result;
+    } *params = args;
     const VkMappedMemoryRange_host *pMemoryRanges_host;
     struct conversion_context ctx;
 
@@ -20007,7 +22000,13 @@ static NTSTATUS thunk64_vkFreeCommandBuffers(void *args)
 
 static NTSTATUS thunk32_vkFreeCommandBuffers(void *args)
 {
-    struct vkFreeCommandBuffers_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCommandPool DECLSPEC_ALIGN(8) commandPool;
+        uint32_t commandBufferCount;
+        const VkCommandBuffer *pCommandBuffers;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->commandBufferCount, params->pCommandBuffers);
 
@@ -20033,7 +22032,14 @@ static NTSTATUS thunk64_vkFreeDescriptorSets(void *args)
 
 static NTSTATUS thunk32_vkFreeDescriptorSets(void *args)
 {
-    struct vkFreeDescriptorSets_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorPool DECLSPEC_ALIGN(8) descriptorPool;
+        uint32_t descriptorSetCount;
+        const VkDescriptorSet *pDescriptorSets;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->descriptorPool), params->descriptorSetCount, params->pDescriptorSets);
 
@@ -20059,7 +22065,12 @@ static NTSTATUS thunk64_vkFreeMemory(void *args)
 
 static NTSTATUS thunk32_vkFreeMemory(void *args)
 {
-    struct vkFreeMemory_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+        const VkAllocationCallbacks *pAllocator;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->memory), params->pAllocator);
 
@@ -20085,7 +22096,14 @@ static NTSTATUS thunk64_vkGetAccelerationStructureBuildSizesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetAccelerationStructureBuildSizesKHR(void *args)
 {
-    struct vkGetAccelerationStructureBuildSizesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkAccelerationStructureBuildTypeKHR buildType;
+        const VkAccelerationStructureBuildGeometryInfoKHR *pBuildInfo;
+        const uint32_t *pMaxPrimitiveCounts;
+        VkAccelerationStructureBuildSizesInfoKHR *pSizeInfo;
+    } *params = args;
     VkAccelerationStructureBuildGeometryInfoKHR_host pBuildInfo_host;
     VkAccelerationStructureBuildSizesInfoKHR_host pSizeInfo_host;
     struct conversion_context ctx;
@@ -20119,7 +22137,12 @@ static NTSTATUS thunk64_vkGetAccelerationStructureDeviceAddressKHR(void *args)
 
 static NTSTATUS thunk32_vkGetAccelerationStructureDeviceAddressKHR(void *args)
 {
-    struct vkGetAccelerationStructureDeviceAddressKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAccelerationStructureDeviceAddressInfoKHR *pInfo;
+        VkDeviceAddress result;
+    } *params = args;
     VkAccelerationStructureDeviceAddressInfoKHR_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -20147,7 +22170,14 @@ static NTSTATUS thunk64_vkGetAccelerationStructureHandleNV(void *args)
 
 static NTSTATUS thunk32_vkGetAccelerationStructureHandleNV(void *args)
 {
-    struct vkGetAccelerationStructureHandleNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkAccelerationStructureNV DECLSPEC_ALIGN(8) accelerationStructure;
+        size_t dataSize;
+        void *pData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->accelerationStructure), wine_dbgstr_longlong(params->dataSize), params->pData);
 
@@ -20173,7 +22203,12 @@ static NTSTATUS thunk64_vkGetAccelerationStructureMemoryRequirementsNV(void *arg
 
 static NTSTATUS thunk32_vkGetAccelerationStructureMemoryRequirementsNV(void *args)
 {
-    struct vkGetAccelerationStructureMemoryRequirementsNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAccelerationStructureMemoryRequirementsInfoNV *pInfo;
+        VkMemoryRequirements2KHR *pMemoryRequirements;
+    } *params = args;
     VkAccelerationStructureMemoryRequirementsInfoNV_host pInfo_host;
     VkMemoryRequirements2KHR_host pMemoryRequirements_host;
 
@@ -20204,7 +22239,12 @@ static NTSTATUS thunk64_vkGetBufferDeviceAddress(void *args)
 
 static NTSTATUS thunk32_vkGetBufferDeviceAddress(void *args)
 {
-    struct vkGetBufferDeviceAddress_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferDeviceAddressInfo *pInfo;
+        VkDeviceAddress result;
+    } *params = args;
     VkBufferDeviceAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -20232,7 +22272,12 @@ static NTSTATUS thunk64_vkGetBufferDeviceAddressEXT(void *args)
 
 static NTSTATUS thunk32_vkGetBufferDeviceAddressEXT(void *args)
 {
-    struct vkGetBufferDeviceAddressEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferDeviceAddressInfo *pInfo;
+        VkDeviceAddress result;
+    } *params = args;
     VkBufferDeviceAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -20260,7 +22305,12 @@ static NTSTATUS thunk64_vkGetBufferDeviceAddressKHR(void *args)
 
 static NTSTATUS thunk32_vkGetBufferDeviceAddressKHR(void *args)
 {
-    struct vkGetBufferDeviceAddressKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferDeviceAddressInfo *pInfo;
+        VkDeviceAddress result;
+    } *params = args;
     VkBufferDeviceAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -20288,7 +22338,12 @@ static NTSTATUS thunk64_vkGetBufferMemoryRequirements(void *args)
 
 static NTSTATUS thunk32_vkGetBufferMemoryRequirements(void *args)
 {
-    struct vkGetBufferMemoryRequirements_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkBuffer DECLSPEC_ALIGN(8) buffer;
+        VkMemoryRequirements *pMemoryRequirements;
+    } *params = args;
     VkMemoryRequirements_host pMemoryRequirements_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->buffer), params->pMemoryRequirements);
@@ -20316,7 +22371,12 @@ static NTSTATUS thunk64_vkGetBufferMemoryRequirements2(void *args)
 
 static NTSTATUS thunk32_vkGetBufferMemoryRequirements2(void *args)
 {
-    struct vkGetBufferMemoryRequirements2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferMemoryRequirementsInfo2 *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkBufferMemoryRequirementsInfo2_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
 
@@ -20347,7 +22407,12 @@ static NTSTATUS thunk64_vkGetBufferMemoryRequirements2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetBufferMemoryRequirements2KHR(void *args)
 {
-    struct vkGetBufferMemoryRequirements2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferMemoryRequirementsInfo2 *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkBufferMemoryRequirementsInfo2_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
 
@@ -20378,7 +22443,12 @@ static NTSTATUS thunk64_vkGetBufferOpaqueCaptureAddress(void *args)
 
 static NTSTATUS thunk32_vkGetBufferOpaqueCaptureAddress(void *args)
 {
-    struct vkGetBufferOpaqueCaptureAddress_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferDeviceAddressInfo *pInfo;
+        uint64_t result;
+    } *params = args;
     VkBufferDeviceAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -20406,7 +22476,12 @@ static NTSTATUS thunk64_vkGetBufferOpaqueCaptureAddressKHR(void *args)
 
 static NTSTATUS thunk32_vkGetBufferOpaqueCaptureAddressKHR(void *args)
 {
-    struct vkGetBufferOpaqueCaptureAddressKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkBufferDeviceAddressInfo *pInfo;
+        uint64_t result;
+    } *params = args;
     VkBufferDeviceAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -20434,7 +22509,15 @@ static NTSTATUS thunk64_vkGetCalibratedTimestampsEXT(void *args)
 
 static NTSTATUS thunk32_vkGetCalibratedTimestampsEXT(void *args)
 {
-    struct vkGetCalibratedTimestampsEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t timestampCount;
+        const VkCalibratedTimestampInfoEXT *pTimestampInfos;
+        uint64_t *pTimestamps;
+        uint64_t *pMaxDeviation;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, %p, %p, %p\n", params->device, params->timestampCount, params->pTimestampInfos, params->pTimestamps, params->pMaxDeviation);
 
@@ -20460,7 +22543,12 @@ static NTSTATUS thunk64_vkGetDeferredOperationMaxConcurrencyKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeferredOperationMaxConcurrencyKHR(void *args)
 {
-    struct vkGetDeferredOperationMaxConcurrencyKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) operation;
+        uint32_t result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->operation));
 
@@ -20486,7 +22574,12 @@ static NTSTATUS thunk64_vkGetDeferredOperationResultKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeferredOperationResultKHR(void *args)
 {
-    struct vkGetDeferredOperationResultKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeferredOperationKHR DECLSPEC_ALIGN(8) operation;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->operation));
 
@@ -20512,7 +22605,12 @@ static NTSTATUS thunk64_vkGetDescriptorSetHostMappingVALVE(void *args)
 
 static NTSTATUS thunk32_vkGetDescriptorSetHostMappingVALVE(void *args)
 {
-    struct vkGetDescriptorSetHostMappingVALVE_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorSet DECLSPEC_ALIGN(8) descriptorSet;
+        void **ppData;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorSet), params->ppData);
 
@@ -20538,7 +22636,12 @@ static NTSTATUS thunk64_vkGetDescriptorSetLayoutHostMappingInfoVALVE(void *args)
 
 static NTSTATUS thunk32_vkGetDescriptorSetLayoutHostMappingInfoVALVE(void *args)
 {
-    struct vkGetDescriptorSetLayoutHostMappingInfoVALVE_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorSetBindingReferenceVALVE *pBindingReference;
+        VkDescriptorSetLayoutHostMappingInfoVALVE *pHostMapping;
+    } *params = args;
     VkDescriptorSetBindingReferenceVALVE_host pBindingReference_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pBindingReference, params->pHostMapping);
@@ -20566,7 +22669,12 @@ static NTSTATUS thunk64_vkGetDescriptorSetLayoutSupport(void *args)
 
 static NTSTATUS thunk32_vkGetDescriptorSetLayoutSupport(void *args)
 {
-    struct vkGetDescriptorSetLayoutSupport_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorSetLayoutCreateInfo *pCreateInfo;
+        VkDescriptorSetLayoutSupport *pSupport;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pCreateInfo, params->pSupport);
 
@@ -20592,7 +22700,12 @@ static NTSTATUS thunk64_vkGetDescriptorSetLayoutSupportKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDescriptorSetLayoutSupportKHR(void *args)
 {
-    struct vkGetDescriptorSetLayoutSupportKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDescriptorSetLayoutCreateInfo *pCreateInfo;
+        VkDescriptorSetLayoutSupport *pSupport;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pCreateInfo, params->pSupport);
 
@@ -20618,7 +22731,12 @@ static NTSTATUS thunk64_vkGetDeviceAccelerationStructureCompatibilityKHR(void *a
 
 static NTSTATUS thunk32_vkGetDeviceAccelerationStructureCompatibilityKHR(void *args)
 {
-    struct vkGetDeviceAccelerationStructureCompatibilityKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkAccelerationStructureVersionInfoKHR *pVersionInfo;
+        VkAccelerationStructureCompatibilityKHR *pCompatibility;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pVersionInfo, params->pCompatibility);
 
@@ -20644,7 +22762,12 @@ static NTSTATUS thunk64_vkGetDeviceBufferMemoryRequirements(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceBufferMemoryRequirements(void *args)
 {
-    struct vkGetDeviceBufferMemoryRequirements_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceBufferMemoryRequirements *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkDeviceBufferMemoryRequirements_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
     struct conversion_context ctx;
@@ -20678,7 +22801,12 @@ static NTSTATUS thunk64_vkGetDeviceBufferMemoryRequirementsKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceBufferMemoryRequirementsKHR(void *args)
 {
-    struct vkGetDeviceBufferMemoryRequirementsKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceBufferMemoryRequirements *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkDeviceBufferMemoryRequirements_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
     struct conversion_context ctx;
@@ -20712,7 +22840,13 @@ static NTSTATUS thunk64_vkGetDeviceFaultInfoEXT(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceFaultInfoEXT(void *args)
 {
-    struct vkGetDeviceFaultInfoEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceFaultCountsEXT *pFaultCounts;
+        VkDeviceFaultInfoEXT *pFaultInfo;
+        VkResult result;
+    } *params = args;
     VkDeviceFaultCountsEXT_host pFaultCounts_host;
     VkDeviceFaultInfoEXT_host *pFaultInfo_host = NULL;
     struct conversion_context ctx;
@@ -20751,7 +22885,14 @@ static NTSTATUS thunk64_vkGetDeviceGroupPeerMemoryFeatures(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceGroupPeerMemoryFeatures(void *args)
 {
-    struct vkGetDeviceGroupPeerMemoryFeatures_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t heapIndex;
+        uint32_t localDeviceIndex;
+        uint32_t remoteDeviceIndex;
+        VkPeerMemoryFeatureFlags *pPeerMemoryFeatures;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u, %p\n", params->device, params->heapIndex, params->localDeviceIndex, params->remoteDeviceIndex, params->pPeerMemoryFeatures);
 
@@ -20777,7 +22918,14 @@ static NTSTATUS thunk64_vkGetDeviceGroupPeerMemoryFeaturesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceGroupPeerMemoryFeaturesKHR(void *args)
 {
-    struct vkGetDeviceGroupPeerMemoryFeaturesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t heapIndex;
+        uint32_t localDeviceIndex;
+        uint32_t remoteDeviceIndex;
+        VkPeerMemoryFeatureFlags *pPeerMemoryFeatures;
+    } *params = args;
 
     TRACE("%p, %u, %u, %u, %p\n", params->device, params->heapIndex, params->localDeviceIndex, params->remoteDeviceIndex, params->pPeerMemoryFeatures);
 
@@ -20803,7 +22951,12 @@ static NTSTATUS thunk64_vkGetDeviceGroupPresentCapabilitiesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceGroupPresentCapabilitiesKHR(void *args)
 {
-    struct vkGetDeviceGroupPresentCapabilitiesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceGroupPresentCapabilitiesKHR *pDeviceGroupPresentCapabilities;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p\n", params->device, params->pDeviceGroupPresentCapabilities);
 
@@ -20829,7 +22982,13 @@ static NTSTATUS thunk64_vkGetDeviceGroupSurfacePresentModesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceGroupSurfacePresentModesKHR(void *args)
 {
-    struct vkGetDeviceGroupSurfacePresentModesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        VkDeviceGroupPresentModeFlagsKHR *pModes;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->surface), params->pModes);
 
@@ -20855,7 +23014,12 @@ static NTSTATUS thunk64_vkGetDeviceImageMemoryRequirements(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceImageMemoryRequirements(void *args)
 {
-    struct vkGetDeviceImageMemoryRequirements_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceImageMemoryRequirements *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
     struct conversion_context ctx;
@@ -20889,7 +23053,12 @@ static NTSTATUS thunk64_vkGetDeviceImageMemoryRequirementsKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceImageMemoryRequirementsKHR(void *args)
 {
-    struct vkGetDeviceImageMemoryRequirementsKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceImageMemoryRequirements *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
     struct conversion_context ctx;
@@ -20923,7 +23092,13 @@ static NTSTATUS thunk64_vkGetDeviceImageSparseMemoryRequirements(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceImageSparseMemoryRequirements(void *args)
 {
-    struct vkGetDeviceImageSparseMemoryRequirements_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceImageMemoryRequirements *pInfo;
+        uint32_t *pSparseMemoryRequirementCount;
+        VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements;
+    } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
     VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
@@ -20957,7 +23132,13 @@ static NTSTATUS thunk64_vkGetDeviceImageSparseMemoryRequirementsKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceImageSparseMemoryRequirementsKHR(void *args)
 {
-    struct vkGetDeviceImageSparseMemoryRequirementsKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceImageMemoryRequirements *pInfo;
+        uint32_t *pSparseMemoryRequirementCount;
+        VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements;
+    } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
     VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
@@ -20991,7 +23172,12 @@ static NTSTATUS thunk64_vkGetDeviceMemoryCommitment(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceMemoryCommitment(void *args)
 {
-    struct vkGetDeviceMemoryCommitment_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+        VkDeviceSize *pCommittedMemoryInBytes;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->memory), params->pCommittedMemoryInBytes);
 
@@ -21017,7 +23203,12 @@ static NTSTATUS thunk64_vkGetDeviceMemoryOpaqueCaptureAddress(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceMemoryOpaqueCaptureAddress(void *args)
 {
-    struct vkGetDeviceMemoryOpaqueCaptureAddress_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceMemoryOpaqueCaptureAddressInfo *pInfo;
+        uint64_t result;
+    } *params = args;
     VkDeviceMemoryOpaqueCaptureAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -21045,7 +23236,12 @@ static NTSTATUS thunk64_vkGetDeviceMemoryOpaqueCaptureAddressKHR(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceMemoryOpaqueCaptureAddressKHR(void *args)
 {
-    struct vkGetDeviceMemoryOpaqueCaptureAddressKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceMemoryOpaqueCaptureAddressInfo *pInfo;
+        uint64_t result;
+    } *params = args;
     VkDeviceMemoryOpaqueCaptureAddressInfo_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -21073,7 +23269,12 @@ static NTSTATUS thunk64_vkGetDeviceMicromapCompatibilityEXT(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceMicromapCompatibilityEXT(void *args)
 {
-    struct vkGetDeviceMicromapCompatibilityEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkMicromapVersionInfoEXT *pVersionInfo;
+        VkAccelerationStructureCompatibilityKHR *pCompatibility;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pVersionInfo, params->pCompatibility);
 
@@ -21099,7 +23300,13 @@ static NTSTATUS thunk64_vkGetDeviceQueue(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceQueue(void *args)
 {
-    struct vkGetDeviceQueue_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t queueFamilyIndex;
+        uint32_t queueIndex;
+        VkQueue *pQueue;
+    } *params = args;
 
     TRACE("%p, %u, %u, %p\n", params->device, params->queueFamilyIndex, params->queueIndex, params->pQueue);
 
@@ -21125,7 +23332,12 @@ static NTSTATUS thunk64_vkGetDeviceQueue2(void *args)
 
 static NTSTATUS thunk32_vkGetDeviceQueue2(void *args)
 {
-    struct vkGetDeviceQueue2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDeviceQueueInfo2 *pQueueInfo;
+        VkQueue *pQueue;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->device, params->pQueueInfo, params->pQueue);
 
@@ -21151,7 +23363,13 @@ static NTSTATUS thunk64_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(void *ar
 
 static NTSTATUS thunk32_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(void *args)
 {
-    struct vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkRenderPass DECLSPEC_ALIGN(8) renderpass;
+        VkExtent2D *pMaxWorkgroupSize;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->renderpass), params->pMaxWorkgroupSize);
 
@@ -21177,7 +23395,13 @@ static NTSTATUS thunk64_vkGetDynamicRenderingTilePropertiesQCOM(void *args)
 
 static NTSTATUS thunk32_vkGetDynamicRenderingTilePropertiesQCOM(void *args)
 {
-    struct vkGetDynamicRenderingTilePropertiesQCOM_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkRenderingInfo *pRenderingInfo;
+        VkTilePropertiesQCOM *pProperties;
+        VkResult result;
+    } *params = args;
     VkRenderingInfo_host pRenderingInfo_host;
     struct conversion_context ctx;
 
@@ -21208,7 +23432,12 @@ static NTSTATUS thunk64_vkGetEventStatus(void *args)
 
 static NTSTATUS thunk32_vkGetEventStatus(void *args)
 {
-    struct vkGetEventStatus_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->event));
 
@@ -21234,7 +23463,12 @@ static NTSTATUS thunk64_vkGetFenceStatus(void *args)
 
 static NTSTATUS thunk32_vkGetFenceStatus(void *args)
 {
-    struct vkGetFenceStatus_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->fence));
 
@@ -21260,7 +23494,14 @@ static NTSTATUS thunk64_vkGetFramebufferTilePropertiesQCOM(void *args)
 
 static NTSTATUS thunk32_vkGetFramebufferTilePropertiesQCOM(void *args)
 {
-    struct vkGetFramebufferTilePropertiesQCOM_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkFramebuffer DECLSPEC_ALIGN(8) framebuffer;
+        uint32_t *pPropertiesCount;
+        VkTilePropertiesQCOM *pProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->framebuffer), params->pPropertiesCount, params->pProperties);
 
@@ -21286,7 +23527,12 @@ static NTSTATUS thunk64_vkGetGeneratedCommandsMemoryRequirementsNV(void *args)
 
 static NTSTATUS thunk32_vkGetGeneratedCommandsMemoryRequirementsNV(void *args)
 {
-    struct vkGetGeneratedCommandsMemoryRequirementsNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkGeneratedCommandsMemoryRequirementsInfoNV *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkGeneratedCommandsMemoryRequirementsInfoNV_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
 
@@ -21317,7 +23563,12 @@ static NTSTATUS thunk64_vkGetImageMemoryRequirements(void *args)
 
 static NTSTATUS thunk32_vkGetImageMemoryRequirements(void *args)
 {
-    struct vkGetImageMemoryRequirements_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        VkMemoryRequirements *pMemoryRequirements;
+    } *params = args;
     VkMemoryRequirements_host pMemoryRequirements_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pMemoryRequirements);
@@ -21345,7 +23596,12 @@ static NTSTATUS thunk64_vkGetImageMemoryRequirements2(void *args)
 
 static NTSTATUS thunk32_vkGetImageMemoryRequirements2(void *args)
 {
-    struct vkGetImageMemoryRequirements2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageMemoryRequirementsInfo2 *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkImageMemoryRequirementsInfo2_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
 
@@ -21376,7 +23632,12 @@ static NTSTATUS thunk64_vkGetImageMemoryRequirements2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetImageMemoryRequirements2KHR(void *args)
 {
-    struct vkGetImageMemoryRequirements2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageMemoryRequirementsInfo2 *pInfo;
+        VkMemoryRequirements2 *pMemoryRequirements;
+    } *params = args;
     VkImageMemoryRequirementsInfo2_host pInfo_host;
     VkMemoryRequirements2_host pMemoryRequirements_host;
 
@@ -21407,7 +23668,13 @@ static NTSTATUS thunk64_vkGetImageSparseMemoryRequirements(void *args)
 
 static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements(void *args)
 {
-    struct vkGetImageSparseMemoryRequirements_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        uint32_t *pSparseMemoryRequirementCount;
+        VkSparseImageMemoryRequirements *pSparseMemoryRequirements;
+    } *params = args;
     VkSparseImageMemoryRequirements_host *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
 
@@ -21439,7 +23706,13 @@ static NTSTATUS thunk64_vkGetImageSparseMemoryRequirements2(void *args)
 
 static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements2(void *args)
 {
-    struct vkGetImageSparseMemoryRequirements2_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageSparseMemoryRequirementsInfo2 *pInfo;
+        uint32_t *pSparseMemoryRequirementCount;
+        VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements;
+    } *params = args;
     VkImageSparseMemoryRequirementsInfo2_host pInfo_host;
     VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
@@ -21473,7 +23746,13 @@ static NTSTATUS thunk64_vkGetImageSparseMemoryRequirements2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements2KHR(void *args)
 {
-    struct vkGetImageSparseMemoryRequirements2KHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageSparseMemoryRequirementsInfo2 *pInfo;
+        uint32_t *pSparseMemoryRequirementCount;
+        VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements;
+    } *params = args;
     VkImageSparseMemoryRequirementsInfo2_host pInfo_host;
     VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
@@ -21507,7 +23786,13 @@ static NTSTATUS thunk64_vkGetImageSubresourceLayout(void *args)
 
 static NTSTATUS thunk32_vkGetImageSubresourceLayout(void *args)
 {
-    struct vkGetImageSubresourceLayout_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        const VkImageSubresource *pSubresource;
+        VkSubresourceLayout *pLayout;
+    } *params = args;
     VkSubresourceLayout_host pLayout_host;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSubresource, params->pLayout);
@@ -21535,7 +23820,13 @@ static NTSTATUS thunk64_vkGetImageSubresourceLayout2EXT(void *args)
 
 static NTSTATUS thunk32_vkGetImageSubresourceLayout2EXT(void *args)
 {
-    struct vkGetImageSubresourceLayout2EXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImage DECLSPEC_ALIGN(8) image;
+        const VkImageSubresource2EXT *pSubresource;
+        VkSubresourceLayout2EXT *pLayout;
+    } *params = args;
     VkSubresourceLayout2EXT_host pLayout_host;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSubresource, params->pLayout);
@@ -21564,7 +23855,13 @@ static NTSTATUS thunk64_vkGetImageViewAddressNVX(void *args)
 
 static NTSTATUS thunk32_vkGetImageViewAddressNVX(void *args)
 {
-    struct vkGetImageViewAddressNVX_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkImageView DECLSPEC_ALIGN(8) imageView;
+        VkImageViewAddressPropertiesNVX *pProperties;
+        VkResult result;
+    } *params = args;
     VkImageViewAddressPropertiesNVX_host pProperties_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->imageView), params->pProperties);
@@ -21593,7 +23890,12 @@ static NTSTATUS thunk64_vkGetImageViewHandleNVX(void *args)
 
 static NTSTATUS thunk32_vkGetImageViewHandleNVX(void *args)
 {
-    struct vkGetImageViewHandleNVX_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkImageViewHandleInfoNVX *pInfo;
+        uint32_t result;
+    } *params = args;
     VkImageViewHandleInfoNVX_host pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
@@ -21621,7 +23923,14 @@ static NTSTATUS thunk64_vkGetMemoryHostPointerPropertiesEXT(void *args)
 
 static NTSTATUS thunk32_vkGetMemoryHostPointerPropertiesEXT(void *args)
 {
-    struct vkGetMemoryHostPointerPropertiesEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkExternalMemoryHandleTypeFlagBits handleType;
+        const void *pHostPointer;
+        VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %#x, %p, %p\n", params->device, params->handleType, params->pHostPointer, params->pMemoryHostPointerProperties);
 
@@ -21647,7 +23956,13 @@ static NTSTATUS thunk64_vkGetMicromapBuildSizesEXT(void *args)
 
 static NTSTATUS thunk32_vkGetMicromapBuildSizesEXT(void *args)
 {
-    struct vkGetMicromapBuildSizesEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkAccelerationStructureBuildTypeKHR buildType;
+        const VkMicromapBuildInfoEXT *pBuildInfo;
+        VkMicromapBuildSizesInfoEXT *pSizeInfo;
+    } *params = args;
     VkMicromapBuildInfoEXT_host pBuildInfo_host;
     VkMicromapBuildSizesInfoEXT_host pSizeInfo_host;
 
@@ -21678,7 +23993,13 @@ static NTSTATUS thunk64_vkGetPerformanceParameterINTEL(void *args)
 
 static NTSTATUS thunk32_vkGetPerformanceParameterINTEL(void *args)
 {
-    struct vkGetPerformanceParameterINTEL_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPerformanceParameterTypeINTEL parameter;
+        VkPerformanceValueINTEL *pValue;
+        VkResult result;
+    } *params = args;
     VkPerformanceValueINTEL_host pValue_host;
 
     TRACE("%p, %#x, %p\n", params->device, params->parameter, params->pValue);
@@ -21707,7 +24028,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *arg
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
 {
-    struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pTimeDomainCount;
+        VkTimeDomainEXT *pTimeDomains;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pTimeDomainCount, params->pTimeDomains);
 
@@ -21733,7 +24060,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *a
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *args)
 {
-    struct vkGetPhysicalDeviceCooperativeMatrixPropertiesNV_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pPropertyCount;
+        VkCooperativeMatrixPropertiesNV *pProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
 
@@ -21759,7 +24092,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 {
-    struct vkGetPhysicalDeviceExternalBufferProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo;
+        VkExternalBufferProperties *pExternalBufferProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
 
@@ -21785,7 +24123,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *arg
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceExternalBufferPropertiesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo;
+        VkExternalBufferProperties *pExternalBufferProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalBufferInfo, params->pExternalBufferProperties);
 
@@ -21811,7 +24154,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 {
-    struct vkGetPhysicalDeviceExternalFenceProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceExternalFenceInfo *pExternalFenceInfo;
+        VkExternalFenceProperties *pExternalFenceProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
 
@@ -21837,7 +24185,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceExternalFencePropertiesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceExternalFenceInfo *pExternalFenceInfo;
+        VkExternalFenceProperties *pExternalFenceProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pExternalFenceInfo, params->pExternalFenceProperties);
 
@@ -21863,7 +24216,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphoreProperties(void *arg
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalSemaphoreProperties(void *args)
 {
-    struct vkGetPhysicalDeviceExternalSemaphoreProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceExternalSemaphoreInfo *pExternalSemaphoreInfo;
+        VkExternalSemaphoreProperties *pExternalSemaphoreProperties;
+    } *params = args;
     VkPhysicalDeviceExternalSemaphoreInfo pExternalSemaphoreInfo_host;
     struct conversion_context ctx;
 
@@ -21894,7 +24252,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceExternalSemaphorePropertiesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceExternalSemaphoreInfo *pExternalSemaphoreInfo;
+        VkExternalSemaphoreProperties *pExternalSemaphoreProperties;
+    } *params = args;
     VkPhysicalDeviceExternalSemaphoreInfo pExternalSemaphoreInfo_host;
     struct conversion_context ctx;
 
@@ -21925,7 +24288,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFeatures(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFeatures(void *args)
 {
-    struct vkGetPhysicalDeviceFeatures_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceFeatures *pFeatures;
+    } *params = args;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
 
@@ -21951,7 +24318,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFeatures2(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFeatures2(void *args)
 {
-    struct vkGetPhysicalDeviceFeatures2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceFeatures2 *pFeatures;
+    } *params = args;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
 
@@ -21977,7 +24348,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFeatures2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFeatures2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceFeatures2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceFeatures2 *pFeatures;
+    } *params = args;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
 
@@ -22003,7 +24378,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFormatProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFormatProperties(void *args)
 {
-    struct vkGetPhysicalDeviceFormatProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkFormat format;
+        VkFormatProperties *pFormatProperties;
+    } *params = args;
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
 
@@ -22029,7 +24409,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFormatProperties2(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFormatProperties2(void *args)
 {
-    struct vkGetPhysicalDeviceFormatProperties2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkFormat format;
+        VkFormatProperties2 *pFormatProperties;
+    } *params = args;
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
 
@@ -22055,7 +24440,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFormatProperties2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFormatProperties2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceFormatProperties2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkFormat format;
+        VkFormatProperties2 *pFormatProperties;
+    } *params = args;
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
 
@@ -22081,7 +24471,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFragmentShadingRatesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceFragmentShadingRatesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceFragmentShadingRatesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pFragmentShadingRateCount;
+        VkPhysicalDeviceFragmentShadingRateKHR *pFragmentShadingRates;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
 
@@ -22107,7 +24503,17 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties(void *args)
 {
-    struct vkGetPhysicalDeviceImageFormatProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkFormat format;
+        VkImageType type;
+        VkImageTiling tiling;
+        VkImageUsageFlags usage;
+        VkImageCreateFlags flags;
+        VkImageFormatProperties *pImageFormatProperties;
+        VkResult result;
+    } *params = args;
     VkImageFormatProperties_host pImageFormatProperties_host;
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p\n", params->physicalDevice, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
@@ -22135,7 +24541,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
-    struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo;
+        VkImageFormatProperties2 *pImageFormatProperties;
+        VkResult result;
+    } *params = args;
     VkImageFormatProperties2_host pImageFormatProperties_host;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
@@ -22164,7 +24576,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceImageFormatProperties2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo;
+        VkImageFormatProperties2 *pImageFormatProperties;
+        VkResult result;
+    } *params = args;
     VkImageFormatProperties2_host pImageFormatProperties_host;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
@@ -22193,7 +24611,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMemoryProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties(void *args)
 {
-    struct vkGetPhysicalDeviceMemoryProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceMemoryProperties *pMemoryProperties;
+    } *params = args;
     VkPhysicalDeviceMemoryProperties_host pMemoryProperties_host;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
@@ -22221,7 +24643,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMemoryProperties2(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties2(void *args)
 {
-    struct vkGetPhysicalDeviceMemoryProperties2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceMemoryProperties2 *pMemoryProperties;
+    } *params = args;
     VkPhysicalDeviceMemoryProperties2_host pMemoryProperties_host;
     struct conversion_context ctx;
 
@@ -22253,7 +24679,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMemoryProperties2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceMemoryProperties2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceMemoryProperties2 *pMemoryProperties;
+    } *params = args;
     VkPhysicalDeviceMemoryProperties2_host pMemoryProperties_host;
     struct conversion_context ctx;
 
@@ -22285,7 +24715,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMultisamplePropertiesEXT(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceMultisamplePropertiesEXT(void *args)
 {
-    struct vkGetPhysicalDeviceMultisamplePropertiesEXT_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkSampleCountFlagBits samples;
+        VkMultisamplePropertiesEXT *pMultisampleProperties;
+    } *params = args;
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->samples, params->pMultisampleProperties);
 
@@ -22311,7 +24746,14 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(void *args)
 {
-    struct vkGetPhysicalDeviceOpticalFlowImageFormatsNV_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkOpticalFlowImageFormatInfoNV *pOpticalFlowImageFormatInfo;
+        uint32_t *pFormatCount;
+        VkOpticalFlowImageFormatPropertiesNV *pImageFormatProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pOpticalFlowImageFormatInfo, params->pFormatCount, params->pImageFormatProperties);
 
@@ -22337,7 +24779,14 @@ static NTSTATUS thunk64_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 {
-    struct vkGetPhysicalDevicePresentRectanglesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        uint32_t *pRectCount;
+        VkRect2D *pRects;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pRectCount, params->pRects);
 
@@ -22363,7 +24812,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceProperties(void *args)
 {
-    struct vkGetPhysicalDeviceProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceProperties *pProperties;
+    } *params = args;
     VkPhysicalDeviceProperties_host pProperties_host;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
@@ -22391,7 +24844,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2(void *args)
 {
-    struct vkGetPhysicalDeviceProperties2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceProperties2 *pProperties;
+    } *params = args;
     VkPhysicalDeviceProperties2_host pProperties_host;
     struct conversion_context ctx;
 
@@ -22423,7 +24880,11 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceProperties2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceProperties2 *pProperties;
+    } *params = args;
     VkPhysicalDeviceProperties2_host pProperties_host;
     struct conversion_context ctx;
 
@@ -22455,7 +24916,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkQueryPoolPerformanceCreateInfoKHR *pPerformanceQueryCreateInfo;
+        uint32_t *pNumPasses;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPerformanceQueryCreateInfo, params->pNumPasses);
 
@@ -22481,7 +24947,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyProperties(void *args)
 {
-    struct vkGetPhysicalDeviceQueueFamilyProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pQueueFamilyPropertyCount;
+        VkQueueFamilyProperties *pQueueFamilyProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
@@ -22507,7 +24978,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyProperties2(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyProperties2(void *args)
 {
-    struct vkGetPhysicalDeviceQueueFamilyProperties2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pQueueFamilyPropertyCount;
+        VkQueueFamilyProperties2 *pQueueFamilyProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
@@ -22533,7 +25009,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyProperties2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyProperties2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceQueueFamilyProperties2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pQueueFamilyPropertyCount;
+        VkQueueFamilyProperties2 *pQueueFamilyProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
@@ -22559,7 +25040,17 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSparseImageFormatProperties(void *arg
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSparseImageFormatProperties(void *args)
 {
-    struct vkGetPhysicalDeviceSparseImageFormatProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkFormat format;
+        VkImageType type;
+        VkSampleCountFlagBits samples;
+        VkImageUsageFlags usage;
+        VkImageTiling tiling;
+        uint32_t *pPropertyCount;
+        VkSparseImageFormatProperties *pProperties;
+    } *params = args;
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p, %p\n", params->physicalDevice, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
 
@@ -22585,7 +25076,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSparseImageFormatProperties2(void *ar
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSparseImageFormatProperties2(void *args)
 {
-    struct vkGetPhysicalDeviceSparseImageFormatProperties2_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceSparseImageFormatInfo2 *pFormatInfo;
+        uint32_t *pPropertyCount;
+        VkSparseImageFormatProperties2 *pProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pFormatInfo, params->pPropertyCount, params->pProperties);
 
@@ -22611,7 +25108,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(void 
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceSparseImageFormatProperties2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceSparseImageFormatInfo2 *pFormatInfo;
+        uint32_t *pPropertyCount;
+        VkSparseImageFormatProperties2 *pProperties;
+    } *params = args;
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pFormatInfo, params->pPropertyCount, params->pProperties);
 
@@ -22637,7 +25140,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombi
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(void *args)
 {
-    struct vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pCombinationCount;
+        VkFramebufferMixedSamplesCombinationNV *pCombinations;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pCombinationCount, params->pCombinations);
 
@@ -22663,7 +25172,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo;
+        VkSurfaceCapabilities2KHR *pSurfaceCapabilities;
+        VkResult result;
+    } *params = args;
     VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
@@ -22691,7 +25206,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceSurfaceCapabilitiesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        VkSurfaceCapabilitiesKHR *pSurfaceCapabilities;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceCapabilities);
 
@@ -22719,7 +25240,14 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
 {
-    struct vkGetPhysicalDeviceSurfaceFormats2KHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo;
+        uint32_t *pSurfaceFormatCount;
+        VkSurfaceFormat2KHR *pSurfaceFormats;
+        VkResult result;
+    } *params = args;
     VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
@@ -22747,7 +25275,14 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceFormatsKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceFormatsKHR(void *args)
 {
-    struct vkGetPhysicalDeviceSurfaceFormatsKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        uint32_t *pSurfaceFormatCount;
+        VkSurfaceFormatKHR *pSurfaceFormats;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceFormatCount, params->pSurfaceFormats);
 
@@ -22773,7 +25308,14 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfacePresentModesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfacePresentModesKHR(void *args)
 {
-    struct vkGetPhysicalDeviceSurfacePresentModesKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        uint32_t *pPresentModeCount;
+        VkPresentModeKHR *pPresentModes;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pPresentModeCount, params->pPresentModes);
 
@@ -22799,7 +25341,14 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceSupportKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceSupportKHR(void *args)
 {
-    struct vkGetPhysicalDeviceSurfaceSupportKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t queueFamilyIndex;
+        VkSurfaceKHR DECLSPEC_ALIGN(8) surface;
+        VkBool32 *pSupported;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, 0x%s, %p\n", params->physicalDevice, params->queueFamilyIndex, wine_dbgstr_longlong(params->surface), params->pSupported);
 
@@ -22825,7 +25374,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceToolProperties(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceToolProperties(void *args)
 {
-    struct vkGetPhysicalDeviceToolProperties_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pToolCount;
+        VkPhysicalDeviceToolProperties *pToolProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pToolCount, params->pToolProperties);
 
@@ -22851,7 +25406,13 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceToolPropertiesEXT(void *args)
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceToolPropertiesEXT(void *args)
 {
-    struct vkGetPhysicalDeviceToolPropertiesEXT_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t *pToolCount;
+        VkPhysicalDeviceToolProperties *pToolProperties;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pToolCount, params->pToolProperties);
 
@@ -22877,7 +25438,12 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *arg
 
 static NTSTATUS thunk32_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *args)
 {
-    struct vkGetPhysicalDeviceWin32PresentationSupportKHR_params *params = args;
+    struct
+    {
+        VkPhysicalDevice physicalDevice;
+        uint32_t queueFamilyIndex;
+        VkBool32 result;
+    } *params = args;
 
     TRACE("%p, %u\n", params->physicalDevice, params->queueFamilyIndex);
 
@@ -22903,7 +25469,14 @@ static NTSTATUS thunk64_vkGetPipelineCacheData(void *args)
 
 static NTSTATUS thunk32_vkGetPipelineCacheData(void *args)
 {
-    struct vkGetPipelineCacheData_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineCache DECLSPEC_ALIGN(8) pipelineCache;
+        size_t *pDataSize;
+        void *pData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->pDataSize, params->pData);
 
@@ -22929,7 +25502,14 @@ static NTSTATUS thunk64_vkGetPipelineExecutableInternalRepresentationsKHR(void *
 
 static NTSTATUS thunk32_vkGetPipelineExecutableInternalRepresentationsKHR(void *args)
 {
-    struct vkGetPipelineExecutableInternalRepresentationsKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPipelineExecutableInfoKHR *pExecutableInfo;
+        uint32_t *pInternalRepresentationCount;
+        VkPipelineExecutableInternalRepresentationKHR *pInternalRepresentations;
+        VkResult result;
+    } *params = args;
     VkPipelineExecutableInfoKHR_host pExecutableInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pExecutableInfo, params->pInternalRepresentationCount, params->pInternalRepresentations);
@@ -22957,7 +25537,14 @@ static NTSTATUS thunk64_vkGetPipelineExecutablePropertiesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPipelineExecutablePropertiesKHR(void *args)
 {
-    struct vkGetPipelineExecutablePropertiesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPipelineInfoKHR *pPipelineInfo;
+        uint32_t *pExecutableCount;
+        VkPipelineExecutablePropertiesKHR *pProperties;
+        VkResult result;
+    } *params = args;
     VkPipelineInfoKHR_host pPipelineInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pPipelineInfo, params->pExecutableCount, params->pProperties);
@@ -22985,7 +25572,14 @@ static NTSTATUS thunk64_vkGetPipelineExecutableStatisticsKHR(void *args)
 
 static NTSTATUS thunk32_vkGetPipelineExecutableStatisticsKHR(void *args)
 {
-    struct vkGetPipelineExecutableStatisticsKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPipelineExecutableInfoKHR *pExecutableInfo;
+        uint32_t *pStatisticCount;
+        VkPipelineExecutableStatisticKHR *pStatistics;
+        VkResult result;
+    } *params = args;
     VkPipelineExecutableInfoKHR_host pExecutableInfo_host;
     VkPipelineExecutableStatisticKHR_host *pStatistics_host;
     struct conversion_context ctx;
@@ -23019,7 +25613,13 @@ static NTSTATUS thunk64_vkGetPipelinePropertiesEXT(void *args)
 
 static NTSTATUS thunk32_vkGetPipelinePropertiesEXT(void *args)
 {
-    struct vkGetPipelinePropertiesEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkPipelineInfoEXT *pPipelineInfo;
+        VkBaseOutStructure *pPipelineProperties;
+        VkResult result;
+    } *params = args;
     VkPipelineInfoEXT_host pPipelineInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pPipelineInfo, params->pPipelineProperties);
@@ -23047,7 +25647,14 @@ static NTSTATUS thunk64_vkGetPrivateData(void *args)
 
 static NTSTATUS thunk32_vkGetPrivateData(void *args)
 {
-    struct vkGetPrivateData_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkObjectType objectType;
+        uint64_t DECLSPEC_ALIGN(8) objectHandle;
+        VkPrivateDataSlot DECLSPEC_ALIGN(8) privateDataSlot;
+        uint64_t *pData;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, 0x%s, %p\n", params->device, params->objectType, wine_dbgstr_longlong(params->objectHandle), wine_dbgstr_longlong(params->privateDataSlot), params->pData);
 
@@ -23073,7 +25680,14 @@ static NTSTATUS thunk64_vkGetPrivateDataEXT(void *args)
 
 static NTSTATUS thunk32_vkGetPrivateDataEXT(void *args)
 {
-    struct vkGetPrivateDataEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkObjectType objectType;
+        uint64_t DECLSPEC_ALIGN(8) objectHandle;
+        VkPrivateDataSlot DECLSPEC_ALIGN(8) privateDataSlot;
+        uint64_t *pData;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, 0x%s, %p\n", params->device, params->objectType, wine_dbgstr_longlong(params->objectHandle), wine_dbgstr_longlong(params->privateDataSlot), params->pData);
 
@@ -23099,7 +25713,18 @@ static NTSTATUS thunk64_vkGetQueryPoolResults(void *args)
 
 static NTSTATUS thunk32_vkGetQueryPoolResults(void *args)
 {
-    struct vkGetQueryPoolResults_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+        uint32_t queryCount;
+        size_t dataSize;
+        void *pData;
+        VkDeviceSize DECLSPEC_ALIGN(8) stride;
+        VkQueryResultFlags flags;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u, 0x%s, %p, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount, wine_dbgstr_longlong(params->dataSize), params->pData, wine_dbgstr_longlong(params->stride), params->flags);
 
@@ -23125,7 +25750,12 @@ static NTSTATUS thunk64_vkGetQueueCheckpointData2NV(void *args)
 
 static NTSTATUS thunk32_vkGetQueueCheckpointData2NV(void *args)
 {
-    struct vkGetQueueCheckpointData2NV_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        uint32_t *pCheckpointDataCount;
+        VkCheckpointData2NV *pCheckpointData;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->queue, params->pCheckpointDataCount, params->pCheckpointData);
 
@@ -23151,7 +25781,12 @@ static NTSTATUS thunk64_vkGetQueueCheckpointDataNV(void *args)
 
 static NTSTATUS thunk32_vkGetQueueCheckpointDataNV(void *args)
 {
-    struct vkGetQueueCheckpointDataNV_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        uint32_t *pCheckpointDataCount;
+        VkCheckpointDataNV *pCheckpointData;
+    } *params = args;
 
     TRACE("%p, %p, %p\n", params->queue, params->pCheckpointDataCount, params->pCheckpointData);
 
@@ -23177,7 +25812,16 @@ static NTSTATUS thunk64_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(void *
 
 static NTSTATUS thunk32_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(void *args)
 {
-    struct vkGetRayTracingCaptureReplayShaderGroupHandlesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        uint32_t firstGroup;
+        uint32_t groupCount;
+        size_t dataSize;
+        void *pData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->pipeline), params->firstGroup, params->groupCount, wine_dbgstr_longlong(params->dataSize), params->pData);
 
@@ -23203,7 +25847,16 @@ static NTSTATUS thunk64_vkGetRayTracingShaderGroupHandlesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetRayTracingShaderGroupHandlesKHR(void *args)
 {
-    struct vkGetRayTracingShaderGroupHandlesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        uint32_t firstGroup;
+        uint32_t groupCount;
+        size_t dataSize;
+        void *pData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->pipeline), params->firstGroup, params->groupCount, wine_dbgstr_longlong(params->dataSize), params->pData);
 
@@ -23229,7 +25882,16 @@ static NTSTATUS thunk64_vkGetRayTracingShaderGroupHandlesNV(void *args)
 
 static NTSTATUS thunk32_vkGetRayTracingShaderGroupHandlesNV(void *args)
 {
-    struct vkGetRayTracingShaderGroupHandlesNV_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        uint32_t firstGroup;
+        uint32_t groupCount;
+        size_t dataSize;
+        void *pData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->pipeline), params->firstGroup, params->groupCount, wine_dbgstr_longlong(params->dataSize), params->pData);
 
@@ -23255,7 +25917,14 @@ static NTSTATUS thunk64_vkGetRayTracingShaderGroupStackSizeKHR(void *args)
 
 static NTSTATUS thunk32_vkGetRayTracingShaderGroupStackSizeKHR(void *args)
 {
-    struct vkGetRayTracingShaderGroupStackSizeKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        uint32_t group;
+        VkShaderGroupShaderKHR groupShader;
+        VkDeviceSize result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %#x\n", params->device, wine_dbgstr_longlong(params->pipeline), params->group, params->groupShader);
 
@@ -23281,7 +25950,12 @@ static NTSTATUS thunk64_vkGetRenderAreaGranularity(void *args)
 
 static NTSTATUS thunk32_vkGetRenderAreaGranularity(void *args)
 {
-    struct vkGetRenderAreaGranularity_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkRenderPass DECLSPEC_ALIGN(8) renderPass;
+        VkExtent2D *pGranularity;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->renderPass), params->pGranularity);
 
@@ -23307,7 +25981,13 @@ static NTSTATUS thunk64_vkGetSemaphoreCounterValue(void *args)
 
 static NTSTATUS thunk32_vkGetSemaphoreCounterValue(void *args)
 {
-    struct vkGetSemaphoreCounterValue_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+        uint64_t *pValue;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->semaphore), params->pValue);
 
@@ -23333,7 +26013,13 @@ static NTSTATUS thunk64_vkGetSemaphoreCounterValueKHR(void *args)
 
 static NTSTATUS thunk32_vkGetSemaphoreCounterValueKHR(void *args)
 {
-    struct vkGetSemaphoreCounterValueKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSemaphore DECLSPEC_ALIGN(8) semaphore;
+        uint64_t *pValue;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->semaphore), params->pValue);
 
@@ -23359,7 +26045,16 @@ static NTSTATUS thunk64_vkGetShaderInfoAMD(void *args)
 
 static NTSTATUS thunk32_vkGetShaderInfoAMD(void *args)
 {
-    struct vkGetShaderInfoAMD_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipeline DECLSPEC_ALIGN(8) pipeline;
+        VkShaderStageFlagBits shaderStage;
+        VkShaderInfoTypeAMD infoType;
+        size_t *pInfoSize;
+        void *pInfo;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x, %#x, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipeline), params->shaderStage, params->infoType, params->pInfoSize, params->pInfo);
 
@@ -23385,7 +26080,12 @@ static NTSTATUS thunk64_vkGetShaderModuleCreateInfoIdentifierEXT(void *args)
 
 static NTSTATUS thunk32_vkGetShaderModuleCreateInfoIdentifierEXT(void *args)
 {
-    struct vkGetShaderModuleCreateInfoIdentifierEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkShaderModuleCreateInfo *pCreateInfo;
+        VkShaderModuleIdentifierEXT *pIdentifier;
+    } *params = args;
     VkShaderModuleCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
@@ -23416,7 +26116,12 @@ static NTSTATUS thunk64_vkGetShaderModuleIdentifierEXT(void *args)
 
 static NTSTATUS thunk32_vkGetShaderModuleIdentifierEXT(void *args)
 {
-    struct vkGetShaderModuleIdentifierEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkShaderModule DECLSPEC_ALIGN(8) shaderModule;
+        VkShaderModuleIdentifierEXT *pIdentifier;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->shaderModule), params->pIdentifier);
 
@@ -23442,7 +26147,14 @@ static NTSTATUS thunk64_vkGetSwapchainImagesKHR(void *args)
 
 static NTSTATUS thunk32_vkGetSwapchainImagesKHR(void *args)
 {
-    struct vkGetSwapchainImagesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+        uint32_t *pSwapchainImageCount;
+        VkImage *pSwapchainImages;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pSwapchainImageCount, params->pSwapchainImages);
 
@@ -23468,7 +26180,14 @@ static NTSTATUS thunk64_vkGetValidationCacheDataEXT(void *args)
 
 static NTSTATUS thunk32_vkGetValidationCacheDataEXT(void *args)
 {
-    struct vkGetValidationCacheDataEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkValidationCacheEXT DECLSPEC_ALIGN(8) validationCache;
+        size_t *pDataSize;
+        void *pData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->validationCache), params->pDataSize, params->pData);
 
@@ -23494,7 +26213,12 @@ static NTSTATUS thunk64_vkInitializePerformanceApiINTEL(void *args)
 
 static NTSTATUS thunk32_vkInitializePerformanceApiINTEL(void *args)
 {
-    struct vkInitializePerformanceApiINTEL_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkInitializePerformanceApiInfoINTEL *pInitializeInfo;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p\n", params->device, params->pInitializeInfo);
 
@@ -23520,7 +26244,13 @@ static NTSTATUS thunk64_vkInvalidateMappedMemoryRanges(void *args)
 
 static NTSTATUS thunk32_vkInvalidateMappedMemoryRanges(void *args)
 {
-    struct vkInvalidateMappedMemoryRanges_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t memoryRangeCount;
+        const VkMappedMemoryRange *pMemoryRanges;
+        VkResult result;
+    } *params = args;
     const VkMappedMemoryRange_host *pMemoryRanges_host;
     struct conversion_context ctx;
 
@@ -23551,7 +26281,16 @@ static NTSTATUS thunk64_vkMapMemory(void *args)
 
 static NTSTATUS thunk32_vkMapMemory(void *args)
 {
-    struct vkMapMemory_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+        VkDeviceSize DECLSPEC_ALIGN(8) offset;
+        VkDeviceSize DECLSPEC_ALIGN(8) size;
+        VkMemoryMapFlags flags;
+        void **ppData;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, %#x, %p\n", params->device, wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->size), params->flags, params->ppData);
 
@@ -23577,7 +26316,14 @@ static NTSTATUS thunk64_vkMergePipelineCaches(void *args)
 
 static NTSTATUS thunk32_vkMergePipelineCaches(void *args)
 {
-    struct vkMergePipelineCaches_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPipelineCache DECLSPEC_ALIGN(8) dstCache;
+        uint32_t srcCacheCount;
+        const VkPipelineCache *pSrcCaches;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->dstCache), params->srcCacheCount, params->pSrcCaches);
 
@@ -23603,7 +26349,14 @@ static NTSTATUS thunk64_vkMergeValidationCachesEXT(void *args)
 
 static NTSTATUS thunk32_vkMergeValidationCachesEXT(void *args)
 {
-    struct vkMergeValidationCachesEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkValidationCacheEXT DECLSPEC_ALIGN(8) dstCache;
+        uint32_t srcCacheCount;
+        const VkValidationCacheEXT *pSrcCaches;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->dstCache), params->srcCacheCount, params->pSrcCaches);
 
@@ -23629,7 +26382,11 @@ static NTSTATUS thunk64_vkQueueBeginDebugUtilsLabelEXT(void *args)
 
 static NTSTATUS thunk32_vkQueueBeginDebugUtilsLabelEXT(void *args)
 {
-    struct vkQueueBeginDebugUtilsLabelEXT_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        const VkDebugUtilsLabelEXT *pLabelInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->queue, params->pLabelInfo);
 
@@ -23655,7 +26412,14 @@ static NTSTATUS thunk64_vkQueueBindSparse(void *args)
 
 static NTSTATUS thunk32_vkQueueBindSparse(void *args)
 {
-    struct vkQueueBindSparse_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        uint32_t bindInfoCount;
+        const VkBindSparseInfo *pBindInfo;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        VkResult result;
+    } *params = args;
     const VkBindSparseInfo_host *pBindInfo_host;
     struct conversion_context ctx;
 
@@ -23686,7 +26450,10 @@ static NTSTATUS thunk64_vkQueueEndDebugUtilsLabelEXT(void *args)
 
 static NTSTATUS thunk32_vkQueueEndDebugUtilsLabelEXT(void *args)
 {
-    struct vkQueueEndDebugUtilsLabelEXT_params *params = args;
+    struct
+    {
+        VkQueue queue;
+    } *params = args;
 
     TRACE("%p\n", params->queue);
 
@@ -23712,7 +26479,11 @@ static NTSTATUS thunk64_vkQueueInsertDebugUtilsLabelEXT(void *args)
 
 static NTSTATUS thunk32_vkQueueInsertDebugUtilsLabelEXT(void *args)
 {
-    struct vkQueueInsertDebugUtilsLabelEXT_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        const VkDebugUtilsLabelEXT *pLabelInfo;
+    } *params = args;
 
     TRACE("%p, %p\n", params->queue, params->pLabelInfo);
 
@@ -23738,7 +26509,12 @@ static NTSTATUS thunk64_vkQueuePresentKHR(void *args)
 
 static NTSTATUS thunk32_vkQueuePresentKHR(void *args)
 {
-    struct vkQueuePresentKHR_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        const VkPresentInfoKHR *pPresentInfo;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p\n", params->queue, params->pPresentInfo);
 
@@ -23764,7 +26540,12 @@ static NTSTATUS thunk64_vkQueueSetPerformanceConfigurationINTEL(void *args)
 
 static NTSTATUS thunk32_vkQueueSetPerformanceConfigurationINTEL(void *args)
 {
-    struct vkQueueSetPerformanceConfigurationINTEL_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        VkPerformanceConfigurationINTEL DECLSPEC_ALIGN(8) configuration;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->queue, wine_dbgstr_longlong(params->configuration));
 
@@ -23795,7 +26576,14 @@ static NTSTATUS thunk64_vkQueueSubmit(void *args)
 
 static NTSTATUS thunk32_vkQueueSubmit(void *args)
 {
-    struct vkQueueSubmit_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        uint32_t submitCount;
+        const VkSubmitInfo *pSubmits;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        VkResult result;
+    } *params = args;
     const VkSubmitInfo *pSubmits_host;
     struct conversion_context ctx;
 
@@ -23831,7 +26619,14 @@ static NTSTATUS thunk64_vkQueueSubmit2(void *args)
 
 static NTSTATUS thunk32_vkQueueSubmit2(void *args)
 {
-    struct vkQueueSubmit2_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        uint32_t submitCount;
+        const VkSubmitInfo2 *pSubmits;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        VkResult result;
+    } *params = args;
     const VkSubmitInfo2_host *pSubmits_host;
     struct conversion_context ctx;
 
@@ -23867,7 +26662,14 @@ static NTSTATUS thunk64_vkQueueSubmit2KHR(void *args)
 
 static NTSTATUS thunk32_vkQueueSubmit2KHR(void *args)
 {
-    struct vkQueueSubmit2KHR_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        uint32_t submitCount;
+        const VkSubmitInfo2 *pSubmits;
+        VkFence DECLSPEC_ALIGN(8) fence;
+        VkResult result;
+    } *params = args;
     const VkSubmitInfo2_host *pSubmits_host;
     struct conversion_context ctx;
 
@@ -23898,7 +26700,11 @@ static NTSTATUS thunk64_vkQueueWaitIdle(void *args)
 
 static NTSTATUS thunk32_vkQueueWaitIdle(void *args)
 {
-    struct vkQueueWaitIdle_params *params = args;
+    struct
+    {
+        VkQueue queue;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p\n", params->queue);
 
@@ -23924,7 +26730,12 @@ static NTSTATUS thunk64_vkReleasePerformanceConfigurationINTEL(void *args)
 
 static NTSTATUS thunk32_vkReleasePerformanceConfigurationINTEL(void *args)
 {
-    struct vkReleasePerformanceConfigurationINTEL_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkPerformanceConfigurationINTEL DECLSPEC_ALIGN(8) configuration;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->configuration));
 
@@ -23950,7 +26761,10 @@ static NTSTATUS thunk64_vkReleaseProfilingLockKHR(void *args)
 
 static NTSTATUS thunk32_vkReleaseProfilingLockKHR(void *args)
 {
-    struct vkReleaseProfilingLockKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+    } *params = args;
 
     TRACE("%p\n", params->device);
 
@@ -23976,7 +26790,12 @@ static NTSTATUS thunk64_vkResetCommandBuffer(void *args)
 
 static NTSTATUS thunk32_vkResetCommandBuffer(void *args)
 {
-    struct vkResetCommandBuffer_params *params = args;
+    struct
+    {
+        VkCommandBuffer commandBuffer;
+        VkCommandBufferResetFlags flags;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %#x\n", params->commandBuffer, params->flags);
 
@@ -24002,7 +26821,13 @@ static NTSTATUS thunk64_vkResetCommandPool(void *args)
 
 static NTSTATUS thunk32_vkResetCommandPool(void *args)
 {
-    struct vkResetCommandPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCommandPool DECLSPEC_ALIGN(8) commandPool;
+        VkCommandPoolResetFlags flags;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->commandPool), params->flags);
 
@@ -24028,7 +26853,13 @@ static NTSTATUS thunk64_vkResetDescriptorPool(void *args)
 
 static NTSTATUS thunk32_vkResetDescriptorPool(void *args)
 {
-    struct vkResetDescriptorPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorPool DECLSPEC_ALIGN(8) descriptorPool;
+        VkDescriptorPoolResetFlags flags;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->descriptorPool), params->flags);
 
@@ -24054,7 +26885,12 @@ static NTSTATUS thunk64_vkResetEvent(void *args)
 
 static NTSTATUS thunk32_vkResetEvent(void *args)
 {
-    struct vkResetEvent_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->event));
 
@@ -24080,7 +26916,13 @@ static NTSTATUS thunk64_vkResetFences(void *args)
 
 static NTSTATUS thunk32_vkResetFences(void *args)
 {
-    struct vkResetFences_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t fenceCount;
+        const VkFence *pFences;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, %p\n", params->device, params->fenceCount, params->pFences);
 
@@ -24106,7 +26948,13 @@ static NTSTATUS thunk64_vkResetQueryPool(void *args)
 
 static NTSTATUS thunk32_vkResetQueryPool(void *args)
 {
-    struct vkResetQueryPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+        uint32_t queryCount;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u\n", params->device, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount);
 
@@ -24132,7 +26980,13 @@ static NTSTATUS thunk64_vkResetQueryPoolEXT(void *args)
 
 static NTSTATUS thunk32_vkResetQueryPoolEXT(void *args)
 {
-    struct vkResetQueryPoolEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkQueryPool DECLSPEC_ALIGN(8) queryPool;
+        uint32_t firstQuery;
+        uint32_t queryCount;
+    } *params = args;
 
     TRACE("%p, 0x%s, %u, %u\n", params->device, wine_dbgstr_longlong(params->queryPool), params->firstQuery, params->queryCount);
 
@@ -24160,7 +27014,12 @@ static NTSTATUS thunk64_vkSetDebugUtilsObjectNameEXT(void *args)
 
 static NTSTATUS thunk32_vkSetDebugUtilsObjectNameEXT(void *args)
 {
-    struct vkSetDebugUtilsObjectNameEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDebugUtilsObjectNameInfoEXT *pNameInfo;
+        VkResult result;
+    } *params = args;
     VkDebugUtilsObjectNameInfoEXT_host pNameInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pNameInfo);
@@ -24190,7 +27049,12 @@ static NTSTATUS thunk64_vkSetDebugUtilsObjectTagEXT(void *args)
 
 static NTSTATUS thunk32_vkSetDebugUtilsObjectTagEXT(void *args)
 {
-    struct vkSetDebugUtilsObjectTagEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkDebugUtilsObjectTagInfoEXT *pTagInfo;
+        VkResult result;
+    } *params = args;
     VkDebugUtilsObjectTagInfoEXT_host pTagInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pTagInfo);
@@ -24218,7 +27082,12 @@ static NTSTATUS thunk64_vkSetDeviceMemoryPriorityEXT(void *args)
 
 static NTSTATUS thunk32_vkSetDeviceMemoryPriorityEXT(void *args)
 {
-    struct vkSetDeviceMemoryPriorityEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+        float priority;
+    } *params = args;
 
     TRACE("%p, 0x%s, %f\n", params->device, wine_dbgstr_longlong(params->memory), params->priority);
 
@@ -24244,7 +27113,12 @@ static NTSTATUS thunk64_vkSetEvent(void *args)
 
 static NTSTATUS thunk32_vkSetEvent(void *args)
 {
-    struct vkSetEvent_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkEvent DECLSPEC_ALIGN(8) event;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->event));
 
@@ -24270,7 +27144,15 @@ static NTSTATUS thunk64_vkSetPrivateData(void *args)
 
 static NTSTATUS thunk32_vkSetPrivateData(void *args)
 {
-    struct vkSetPrivateData_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkObjectType objectType;
+        uint64_t DECLSPEC_ALIGN(8) objectHandle;
+        VkPrivateDataSlot DECLSPEC_ALIGN(8) privateDataSlot;
+        uint64_t DECLSPEC_ALIGN(8) data;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, 0x%s, 0x%s\n", params->device, params->objectType, wine_dbgstr_longlong(params->objectHandle), wine_dbgstr_longlong(params->privateDataSlot), wine_dbgstr_longlong(params->data));
 
@@ -24296,7 +27178,15 @@ static NTSTATUS thunk64_vkSetPrivateDataEXT(void *args)
 
 static NTSTATUS thunk32_vkSetPrivateDataEXT(void *args)
 {
-    struct vkSetPrivateDataEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkObjectType objectType;
+        uint64_t DECLSPEC_ALIGN(8) objectHandle;
+        VkPrivateDataSlot DECLSPEC_ALIGN(8) privateDataSlot;
+        uint64_t DECLSPEC_ALIGN(8) data;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %#x, 0x%s, 0x%s, 0x%s\n", params->device, params->objectType, wine_dbgstr_longlong(params->objectHandle), wine_dbgstr_longlong(params->privateDataSlot), wine_dbgstr_longlong(params->data));
 
@@ -24322,7 +27212,12 @@ static NTSTATUS thunk64_vkSignalSemaphore(void *args)
 
 static NTSTATUS thunk32_vkSignalSemaphore(void *args)
 {
-    struct vkSignalSemaphore_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSemaphoreSignalInfo *pSignalInfo;
+        VkResult result;
+    } *params = args;
     VkSemaphoreSignalInfo_host pSignalInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pSignalInfo);
@@ -24350,7 +27245,12 @@ static NTSTATUS thunk64_vkSignalSemaphoreKHR(void *args)
 
 static NTSTATUS thunk32_vkSignalSemaphoreKHR(void *args)
 {
-    struct vkSignalSemaphoreKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSemaphoreSignalInfo *pSignalInfo;
+        VkResult result;
+    } *params = args;
     VkSemaphoreSignalInfo_host pSignalInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pSignalInfo);
@@ -24383,7 +27283,13 @@ static NTSTATUS thunk64_vkSubmitDebugUtilsMessageEXT(void *args)
 
 static NTSTATUS thunk32_vkSubmitDebugUtilsMessageEXT(void *args)
 {
-    struct vkSubmitDebugUtilsMessageEXT_params *params = args;
+    struct
+    {
+        VkInstance instance;
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity;
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes;
+        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData;
+    } *params = args;
     VkDebugUtilsMessengerCallbackDataEXT_host pCallbackData_host;
     struct conversion_context ctx;
 
@@ -24414,7 +27320,12 @@ static NTSTATUS thunk64_vkTrimCommandPool(void *args)
 
 static NTSTATUS thunk32_vkTrimCommandPool(void *args)
 {
-    struct vkTrimCommandPool_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCommandPool DECLSPEC_ALIGN(8) commandPool;
+        VkCommandPoolTrimFlags flags;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->commandPool), params->flags);
 
@@ -24440,7 +27351,12 @@ static NTSTATUS thunk64_vkTrimCommandPoolKHR(void *args)
 
 static NTSTATUS thunk32_vkTrimCommandPoolKHR(void *args)
 {
-    struct vkTrimCommandPoolKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkCommandPool DECLSPEC_ALIGN(8) commandPool;
+        VkCommandPoolTrimFlags flags;
+    } *params = args;
 
     TRACE("%p, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->commandPool), params->flags);
 
@@ -24466,7 +27382,10 @@ static NTSTATUS thunk64_vkUninitializePerformanceApiINTEL(void *args)
 
 static NTSTATUS thunk32_vkUninitializePerformanceApiINTEL(void *args)
 {
-    struct vkUninitializePerformanceApiINTEL_params *params = args;
+    struct
+    {
+        VkDevice device;
+    } *params = args;
 
     TRACE("%p\n", params->device);
 
@@ -24492,7 +27411,11 @@ static NTSTATUS thunk64_vkUnmapMemory(void *args)
 
 static NTSTATUS thunk32_vkUnmapMemory(void *args)
 {
-    struct vkUnmapMemory_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+    } *params = args;
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->memory));
 
@@ -24518,7 +27441,13 @@ static NTSTATUS thunk64_vkUpdateDescriptorSetWithTemplate(void *args)
 
 static NTSTATUS thunk32_vkUpdateDescriptorSetWithTemplate(void *args)
 {
-    struct vkUpdateDescriptorSetWithTemplate_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorSet DECLSPEC_ALIGN(8) descriptorSet;
+        VkDescriptorUpdateTemplate DECLSPEC_ALIGN(8) descriptorUpdateTemplate;
+        const void *pData;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorSet), wine_dbgstr_longlong(params->descriptorUpdateTemplate), params->pData);
 
@@ -24544,7 +27473,13 @@ static NTSTATUS thunk64_vkUpdateDescriptorSetWithTemplateKHR(void *args)
 
 static NTSTATUS thunk32_vkUpdateDescriptorSetWithTemplateKHR(void *args)
 {
-    struct vkUpdateDescriptorSetWithTemplateKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkDescriptorSet DECLSPEC_ALIGN(8) descriptorSet;
+        VkDescriptorUpdateTemplate DECLSPEC_ALIGN(8) descriptorUpdateTemplate;
+        const void *pData;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->descriptorSet), wine_dbgstr_longlong(params->descriptorUpdateTemplate), params->pData);
 
@@ -24570,7 +27505,14 @@ static NTSTATUS thunk64_vkUpdateDescriptorSets(void *args)
 
 static NTSTATUS thunk32_vkUpdateDescriptorSets(void *args)
 {
-    struct vkUpdateDescriptorSets_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t descriptorWriteCount;
+        const VkWriteDescriptorSet *pDescriptorWrites;
+        uint32_t descriptorCopyCount;
+        const VkCopyDescriptorSet *pDescriptorCopies;
+    } *params = args;
     const VkWriteDescriptorSet_host *pDescriptorWrites_host;
     const VkCopyDescriptorSet_host *pDescriptorCopies_host;
     struct conversion_context ctx;
@@ -24603,7 +27545,15 @@ static NTSTATUS thunk64_vkWaitForFences(void *args)
 
 static NTSTATUS thunk32_vkWaitForFences(void *args)
 {
-    struct vkWaitForFences_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t fenceCount;
+        const VkFence *pFences;
+        VkBool32 waitAll;
+        uint64_t DECLSPEC_ALIGN(8) timeout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, %p, %u, 0x%s\n", params->device, params->fenceCount, params->pFences, params->waitAll, wine_dbgstr_longlong(params->timeout));
 
@@ -24629,7 +27579,14 @@ static NTSTATUS thunk64_vkWaitForPresentKHR(void *args)
 
 static NTSTATUS thunk32_vkWaitForPresentKHR(void *args)
 {
-    struct vkWaitForPresentKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+        uint64_t DECLSPEC_ALIGN(8) presentId;
+        uint64_t DECLSPEC_ALIGN(8) timeout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->swapchain), wine_dbgstr_longlong(params->presentId), wine_dbgstr_longlong(params->timeout));
 
@@ -24655,7 +27612,13 @@ static NTSTATUS thunk64_vkWaitSemaphores(void *args)
 
 static NTSTATUS thunk32_vkWaitSemaphores(void *args)
 {
-    struct vkWaitSemaphores_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSemaphoreWaitInfo *pWaitInfo;
+        uint64_t DECLSPEC_ALIGN(8) timeout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, 0x%s\n", params->device, params->pWaitInfo, wine_dbgstr_longlong(params->timeout));
 
@@ -24681,7 +27644,13 @@ static NTSTATUS thunk64_vkWaitSemaphoresKHR(void *args)
 
 static NTSTATUS thunk32_vkWaitSemaphoresKHR(void *args)
 {
-    struct vkWaitSemaphoresKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        const VkSemaphoreWaitInfo *pWaitInfo;
+        uint64_t DECLSPEC_ALIGN(8) timeout;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %p, 0x%s\n", params->device, params->pWaitInfo, wine_dbgstr_longlong(params->timeout));
 
@@ -24707,7 +27676,17 @@ static NTSTATUS thunk64_vkWriteAccelerationStructuresPropertiesKHR(void *args)
 
 static NTSTATUS thunk32_vkWriteAccelerationStructuresPropertiesKHR(void *args)
 {
-    struct vkWriteAccelerationStructuresPropertiesKHR_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t accelerationStructureCount;
+        const VkAccelerationStructureKHR *pAccelerationStructures;
+        VkQueryType queryType;
+        size_t dataSize;
+        void *pData;
+        size_t stride;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, %p, %#x, 0x%s, %p, 0x%s\n", params->device, params->accelerationStructureCount, params->pAccelerationStructures, params->queryType, wine_dbgstr_longlong(params->dataSize), params->pData, wine_dbgstr_longlong(params->stride));
 
@@ -24733,7 +27712,17 @@ static NTSTATUS thunk64_vkWriteMicromapsPropertiesEXT(void *args)
 
 static NTSTATUS thunk32_vkWriteMicromapsPropertiesEXT(void *args)
 {
-    struct vkWriteMicromapsPropertiesEXT_params *params = args;
+    struct
+    {
+        VkDevice device;
+        uint32_t micromapCount;
+        const VkMicromapEXT *pMicromaps;
+        VkQueryType queryType;
+        size_t dataSize;
+        void *pData;
+        size_t stride;
+        VkResult result;
+    } *params = args;
 
     TRACE("%p, %u, %p, %#x, 0x%s, %p, 0x%s\n", params->device, params->micromapCount, params->pMicromaps, params->queryType, wine_dbgstr_longlong(params->dataSize), params->pData, wine_dbgstr_longlong(params->stride));
 
