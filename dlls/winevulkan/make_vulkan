@@ -2686,9 +2686,9 @@ class VkGenerator(object):
 
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("{\n")
-        f.write("    init_vulkan,\n")
-        f.write("    vk_is_available_instance_function,\n")
-        f.write("    vk_is_available_device_function,\n")
+        f.write("    init_vulkan32,\n")
+        f.write("    vk_is_available_instance_function32,\n")
+        f.write("    vk_is_available_device_function32,\n")
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue

@@ -42999,9 +42999,9 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    init_vulkan,
-    vk_is_available_instance_function,
-    vk_is_available_device_function,
+    init_vulkan32,
+    vk_is_available_instance_function32,
+    vk_is_available_device_function32,
     thunk32_vkAcquireNextImage2KHR,
     thunk32_vkAcquireNextImageKHR,
     thunk32_vkAcquirePerformanceConfigurationINTEL,
