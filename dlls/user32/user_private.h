@@ -158,6 +158,7 @@ extern BOOL get_icon_size( HICON handle, SIZE *size ) DECLSPEC_HIDDEN;
 extern struct user_api_hook *user_api DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_DefDlgProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_ScrollBarProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
+void WINAPI USER_NonClientButtonDraw(HWND, HDC, enum NONCLIENT_BUTTON_TYPE, RECT, BOOL, BOOL) DECLSPEC_HIDDEN;
 void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
                                const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, UINT,
                                INT, INT, INT, BOOL) DECLSPEC_HIDDEN;

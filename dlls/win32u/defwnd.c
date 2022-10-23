@@ -1351,6 +1351,22 @@ BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
     return TRUE;
 }
 
+BOOL draw_menu_button( HWND hwnd, HDC dc, RECT *r, enum NONCLIENT_BUTTON_TYPE type, BOOL down,
+                       BOOL grayed )
+{
+    struct draw_non_client_button_params params;
+    void *ret_ptr;
+    ULONG ret_len;
+
+    params.hwnd = hwnd;
+    params.hdc = dc;
+    params.type = type;
+    params.rect = *r;
+    params.down = down;
+    params.grayed = grayed;
+    return KeUserModeCallback( NtUserDrawNonClientButton, &params, sizeof(params), &ret_ptr, &ret_len );
+}
+
 BOOL draw_frame_menu( HDC dc, RECT *r, UINT flags )
 {
     RECT rect;

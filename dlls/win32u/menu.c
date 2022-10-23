@@ -2221,7 +2221,7 @@ static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_width, UINT arrow_h
     NtGdiDeleteObjectApp( mem_hdc );
 }
 
-static void draw_bitmap_item( HDC hdc, struct menu_item *item, const RECT *rect,
+static void draw_bitmap_item( HWND hwnd, HDC hdc, struct menu_item *item, const RECT *rect,
                               struct menu *menu, HWND owner, UINT odaction )
 {
     int w = rect->right - rect->left;
@@ -2236,7 +2236,8 @@ static void draw_bitmap_item( HDC hdc, struct menu_item *item, const RECT *rect,
     /* Check if there is a magic menu item associated with this item */
     if (IS_MAGIC_BITMAP( bmp_to_draw ))
     {
-        UINT flags = 0;
+        BOOL down = FALSE, grayed = FALSE;
+        enum NONCLIENT_BUTTON_TYPE type;
         WCHAR bmchr = 0;
         RECT r;
 
@@ -2262,19 +2263,21 @@ static void draw_bitmap_item( HDC hdc, struct menu_item *item, const RECT *rect,
             }
             goto got_bitmap;
         case (INT_PTR)HBMMENU_MBAR_RESTORE:
-            flags = DFCS_CAPTIONRESTORE;
+            type = MENU_RESTORE_BUTTON;
             break;
         case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
-            flags = DFCS_CAPTIONMIN;
+            type = MENU_MIN_BUTTON;
             break;
         case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
-            flags = DFCS_CAPTIONMIN | DFCS_INACTIVE;
+            type = MENU_MIN_BUTTON;
+            grayed = TRUE;
             break;
         case (INT_PTR)HBMMENU_MBAR_CLOSE:
-            flags = DFCS_CAPTIONCLOSE;
+            type = MENU_CLOSE_BUTTON;
             break;
         case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
-            flags = DFCS_CAPTIONCLOSE | DFCS_INACTIVE;
+            type = MENU_CLOSE_BUTTON;
+            grayed = TRUE;
             break;
         case (INT_PTR)HBMMENU_CALLBACK:
             {
@@ -2333,8 +2336,8 @@ static void draw_bitmap_item( HDC hdc, struct menu_item *item, const RECT *rect,
         {
             r = *rect;
             InflateRect( &r, -1, -1 );
-            if (item->fState & MF_HILITE) flags |= DFCS_PUSHED;
-            draw_frame_caption( hdc, &r, flags );
+            if (item->fState & MF_HILITE) down = TRUE;
+            draw_menu_button( hwnd, hdc, &r, type, down, grayed );
         }
         return;
     }
@@ -2605,7 +2608,7 @@ static void draw_menu_item( HWND hwnd, struct menu *menu, HWND owner, HDC hdc,
             POINT origorg;
             /* some applications make this assumption on the DC's origin */
             set_viewport_org( hdc, rect.left, rect.top, &origorg );
-            draw_bitmap_item( hdc, item, &bmprc, menu, owner, odaction );
+            draw_bitmap_item( hwnd, hdc, item, &bmprc, menu, owner, odaction );
             set_viewport_org( hdc, origorg.x, origorg.y, NULL );
         }
         /* Draw the popup-menu arrow */
@@ -2621,7 +2624,7 @@ static void draw_menu_item( HWND hwnd, struct menu *menu, HWND owner, HDC hdc,
         POINT origorg;
 
         set_viewport_org( hdc, rect.left, rect.top, &origorg);
-        draw_bitmap_item( hdc, item, &bmprc, menu, owner, odaction );
+        draw_bitmap_item( hwnd, hdc, item, &bmprc, menu, owner, odaction );
         set_viewport_org( hdc, origorg.x, origorg.y, NULL);
     }
     /* process text if present */

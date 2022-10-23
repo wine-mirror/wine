@@ -241,7 +241,7 @@ extern void register_window_surface( struct window_surface *old,
 extern LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                     BOOL ansi ) DECLSPEC_HIDDEN;
 extern LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
-extern BOOL draw_frame_caption( HDC dc, LPRECT r, UINT uFlags ) DECLSPEC_HIDDEN;
+extern BOOL draw_menu_button( HWND hwnd, HDC dc, RECT *r, enum NONCLIENT_BUTTON_TYPE, BOOL down, BOOL grayed ) DECLSPEC_HIDDEN;
 extern BOOL draw_frame_menu( HDC dc, RECT *r, UINT flags ) DECLSPEC_HIDDEN;
 extern BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down ) DECLSPEC_HIDDEN;
 extern BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT uType, UINT uFlags, UINT width ) DECLSPEC_HIDDEN;

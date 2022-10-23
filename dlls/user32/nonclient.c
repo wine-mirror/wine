@@ -172,3 +172,51 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     }
     return 0;
 }
+
+static void user_draw_mdi_button( HDC hdc, enum NONCLIENT_BUTTON_TYPE type, RECT rect, BOOL down, BOOL grayed )
+{
+    UINT flags;
+
+    switch (type)
+    {
+    case MENU_CLOSE_BUTTON:
+        flags = DFCS_CAPTIONCLOSE;
+        break;
+    case MENU_MIN_BUTTON:
+        flags = DFCS_CAPTIONMIN;
+        break;
+    case MENU_MAX_BUTTON:
+        flags = DFCS_CAPTIONMAX;
+        break;
+    case MENU_RESTORE_BUTTON:
+        flags = DFCS_CAPTIONRESTORE;
+        break;
+    case MENU_HELP_BUTTON:
+        flags = DFCS_CAPTIONHELP;
+        break;
+    default:
+        return;
+    }
+
+    if (down)
+        flags |= DFCS_PUSHED;
+    if (grayed)
+        flags |= DFCS_INACTIVE;
+
+    DrawFrameControl( hdc, &rect, DFC_CAPTION, flags );
+}
+
+void WINAPI USER_NonClientButtonDraw( HWND hwnd, HDC hdc, enum NONCLIENT_BUTTON_TYPE type,
+                                      RECT rect, BOOL down, BOOL grayed )
+{
+    switch (type)
+    {
+    case MENU_CLOSE_BUTTON:
+    case MENU_MIN_BUTTON:
+    case MENU_MAX_BUTTON:
+    case MENU_RESTORE_BUTTON:
+    case MENU_HELP_BUTTON:
+        user_draw_mdi_button( hdc, type, rect, down, grayed );
+        return;
+    }
+}

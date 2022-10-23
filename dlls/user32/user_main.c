@@ -104,6 +104,13 @@ static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, 
     return HandleToUlong( ret );
 }
 
+static NTSTATUS WINAPI User32DrawNonClientButton( const struct draw_non_client_button_params *params, ULONG size )
+{
+    user_api->pNonClientButtonDraw( params->hwnd, params->hdc, params->type, params->rect,
+                                    params->down, params->grayed );
+    return 0;
+}
+
 static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params *params, ULONG size )
 {
     RECT rect = params->rect;
@@ -200,6 +207,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CallWindowProc,
     User32CallWindowsHook,
     User32CopyImage,
+    User32DrawNonClientButton,
     User32DrawScrollBar,
     User32DrawText,
     User32FreeCachedClipboardData,

@@ -1245,6 +1245,7 @@ BOOL WINAPI ThemeHooksInstall(void)
     struct user_api_hook hooks;
 
     hooks.pDefDlgProc = UXTHEME_DefDlgProc;
+    hooks.pNonClientButtonDraw = UXTHEME_NonClientButtonDraw;
     hooks.pScrollBarDraw = UXTHEME_ScrollBarDraw;
     hooks.pScrollBarWndProc = UXTHEME_ScrollbarWndProc;
     return RegisterUserApiHook(&hooks, &user_api);

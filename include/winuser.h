@@ -4789,9 +4789,19 @@ struct SCROLL_TRACKING_INFO
     enum SCROLL_HITTEST hit_test;   /* Hit Test code of the last button-down event */
 };
 
+enum NONCLIENT_BUTTON_TYPE
+{
+    MENU_CLOSE_BUTTON,               /* Menu close button */
+    MENU_MIN_BUTTON,                 /* Menu min button */
+    MENU_MAX_BUTTON,                 /* Menu max button */
+    MENU_RESTORE_BUTTON,             /* Menu restore button */
+    MENU_HELP_BUTTON,                /* Menu help button */
+};
+
 struct user_api_hook
 {
     LRESULT (WINAPI *pDefDlgProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
+    void (WINAPI *pNonClientButtonDraw)(HWND, HDC, enum NONCLIENT_BUTTON_TYPE, RECT, BOOL, BOOL);
     void (WINAPI *pScrollBarDraw)(HWND, HDC, INT, enum SCROLL_HITTEST,
                                   const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, UINT,
                                   INT, INT, INT, BOOL);
