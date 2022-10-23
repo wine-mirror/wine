@@ -864,7 +864,7 @@ class VkFunction(object):
             thunk += "    struct\n"
             thunk += "    {\n"
             for p in self.params:
-                thunk += "        {0};\n".format(p.definition(is_member=True))
+                thunk += "        {0};\n".format(p.definition(is_thunk=True, is_member=True))
             if self.extra_param:
                 thunk += "        void *{0};\n".format(self.extra_param)
             if self.type != "void":
@@ -1386,7 +1386,7 @@ class VkMember(VkVariable):
         else:
             return "{0}{1} = {2}{1};\n".format(output, self.name, input)
 
-    def definition(self, align=False, conv=False):
+    def definition(self, align=False, conv=False, postfix=""):
         """ Generate prototype for given function.
 
         Args:
@@ -1401,16 +1401,20 @@ class VkMember(VkVariable):
         if self.is_struct_forward_declaration():
             text += "struct "
 
-        if conv and self.is_struct():
-            text += "{0}_host".format(self.type)
-        else:
-            text += self.type
+        text += self.type
+        if conv and self.needs_host_type():
+            text += "32"
+        elif postfix and self.needs_host_type():
+            text += postfix
 
         if self.is_pointer():
             text += " {0}{1}".format(self.pointer, self.name)
         else:
             if align and self.needs_alignment():
-                text += " WINE_VK_ALIGN(8) " + self.name
+                if conv:
+                    text += " DECLSPEC_ALIGN(8) " + self.name
+                else:
+                    text += " WINE_VK_ALIGN(8) " + self.name
             else:
                 text += " " + self.name
 
@@ -1612,7 +1616,7 @@ class VkParam(VkVariable):
         proto += self.type
         name = self.name
         if is_thunk and self.needs_host_type():
-            proto += "_host"
+            proto += "32" if is_member else "_host"
 
         if is_member and self.needs_alignment():
             proto += " DECLSPEC_ALIGN(8)"
@@ -1876,6 +1880,8 @@ class VkStruct(Sequence):
 
         if postfix:
             suffix = postfix
+        elif conv:
+            suffix = "32"
         else:
             suffix = ""
 
@@ -1889,16 +1895,11 @@ class VkStruct(Sequence):
 
         for m in self:
             if align and m.needs_alignment():
-                text += "    {0};\n".format(m.definition(align=align))
-            elif conv and m.needs_host_type():
-                text += "    {0};\n".format(m.definition(conv=conv))
+                text += "    {0};\n".format(m.definition(align=align, conv=conv, postfix=postfix))
             else:
-                text += "    {0};\n".format(m.definition())
+                text += "    {0};\n".format(m.definition(conv=conv, postfix=postfix))
 
-        if postfix is not None:
-            text += "}} {0}{1};\n".format(self.name, postfix)
-        else:
-            text += "}} {0};\n".format(self.name)
+        text += "}} {0}{1};\n".format(self.name, suffix)
 
         for aliasee in self.aliased_by:
             text += "typedef {0}{2} {1}{2};\n".format(self.name, aliasee.name, suffix)
@@ -2120,6 +2121,8 @@ class StructConversionFunction(object):
         needs_alloc = self.direction != Direction.OUTPUT and self.operand.needs_alloc(self.conv, self.unwrap)
         host_type = self.type + "_host" if self.operand.needs_host_type() else self.type
         win_type = self.type
+        if self.conv and self.operand.needs_host_type():
+            win_type += "32"
         if self.direction == Direction.OUTPUT and self.const:
             win_type = "const " + win_type
 
@@ -2188,12 +2191,13 @@ class StructConversionFunction(object):
 
                 stype = next(x for x in ext.members if x.name == "sType").values
                 host_type = ext.name + "_host" if self.conv and ext.needs_host_type() else ext.name
+                win_type = ext.name + "32" if self.conv and ext.needs_host_type() else ext.name
                 if self.direction == Direction.INPUT:
-                    in_type = "const " + ext.name
+                    in_type = "const " + win_type
                     out_type = host_type
                 else:
                     in_type = "const " + host_type
-                    out_type = ext.name
+                    out_type = win_type
 
                 body += "        case {0}:\n".format(stype)
                 body += "        {\n"
@@ -2289,9 +2293,11 @@ class ArrayConversionFunction(object):
         else:
             host_type = self.type
         win_type = self.type
-        pointer_part = self.array.pointer if self.array.pointer else "*"
+        if self.conv and self.array.needs_host_type():
+            win_type += "32"
         if self.direction == Direction.OUTPUT and self.array.is_const():
             win_type = "const " + win_type
+        pointer_part = self.array.pointer if self.array.pointer else "*"
 
         if self.direction == Direction.OUTPUT:
             params = ["const {0} {1}in".format(host_type, pointer_part),
@@ -2440,6 +2446,12 @@ class VkGenerator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
+        f.write("#if defined(USE_STRUCT_CONVERSION)\n\n")
+        for struct in self.host_structs:
+            f.write(struct.definition(conv=True, align=True))
+            f.write("\n")
+        f.write("#endif /* USE_STRUCT_CONVERSION */\n\n")
+
         f.write("static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)\n")
         f.write("{\n")
         f.write("    switch(type)\n")
@@ -2587,7 +2599,7 @@ class VkGenerator(object):
             if struct.is_alias():
                 continue
             f.write("#if defined(USE_STRUCT_CONVERSION)\n")
-            f.write(struct.definition(align=False, conv=True, postfix="_host"))
+            f.write(struct.definition(align=False, postfix="_host"))
             f.write("#else\n")
             f.write("typedef {0} {0}_host;\n".format(struct.name))
             for aliasee in struct.aliased_by:
