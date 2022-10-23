@@ -864,7 +864,10 @@ class VkFunction(object):
         return stub
 
     def thunk(self, prefix=None, conv=False):
-        thunk = "NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
+        thunk = ""
+        if not conv:
+            thunk += "#ifdef _WIN64\n"
+        thunk += "static NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
         thunk += "{\n"
         if conv:
             thunk += "    struct\n"
@@ -879,7 +882,10 @@ class VkFunction(object):
         else:
             thunk += "    struct {0}_params *params = args;\n".format(self.name)
         thunk += self.body(conv=conv, unwrap=self.thunk_type == ThunkType.PUBLIC, params_prefix="params->")
-        thunk += "}\n\n"
+        thunk += "}\n"
+        if not conv:
+            thunk += "#endif /* _WIN64 */\n"
+        thunk += "\n"
         return thunk
 
     def loader_thunk(self, prefix=None):
@@ -2205,10 +2211,8 @@ class StructConversionFunction(object):
 
         body = ""
 
-        if self.conv:
-            body += "#if defined(USE_STRUCT_CONVERSION)\n"
-        else:
-            body += "#if !defined(USE_STRUCT_CONVERSION)\n"
+        if not self.conv:
+            body += "#ifdef _WIN64\n"
 
         needs_alloc = self.direction != Direction.OUTPUT and self.operand.needs_alloc(self.conv, self.unwrap)
         win_type = self.type
@@ -2344,7 +2348,9 @@ class StructConversionFunction(object):
             body += "    }\n"
 
         body += "}\n"
-        body += "#endif /* USE_STRUCT_CONVERSION */\n\n"
+        if not self.conv:
+            body += "#endif /* _WIN64 */\n"
+        body += "\n"
 
         return body
 
@@ -2380,10 +2386,8 @@ class ArrayConversionFunction(object):
 
         body = ""
 
-        if self.conv:
-            body += "#if defined(USE_STRUCT_CONVERSION)\n"
-        else:
-            body += "#if !defined(USE_STRUCT_CONVERSION)\n"
+        if not self.conv:
+            body += "#ifdef _WIN64\n"
 
         needs_alloc = self.direction != Direction.OUTPUT and self.array.needs_alloc(self.conv, self.unwrap)
 
@@ -2499,7 +2503,8 @@ class ArrayConversionFunction(object):
             body += "\n    return {0}out;\n".format("(void *)" if self.array.pointer_array else "")
         body += "}\n"
 
-        body += "#endif /* USE_STRUCT_CONVERSION */\n"
+        if not self.conv:
+            body += "#endif /* _WIN64 */\n"
 
         body += "\n"
 
@@ -2565,11 +2570,9 @@ class VkGenerator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
-        f.write("#if defined(USE_STRUCT_CONVERSION)\n\n")
         for struct in self.host_structs:
             f.write(struct.definition(conv=True, align=True))
             f.write("\n")
-        f.write("#endif /* USE_STRUCT_CONVERSION */\n\n")
 
         f.write("static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)\n")
         f.write("{\n")
@@ -2603,13 +2606,8 @@ class VkGenerator(object):
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
-            f.write("#if !defined(USE_STRUCT_CONVERSION)\n\n")
-            f.write("static ")
             f.write(vk_func.thunk(prefix="thunk64_"))
-            f.write("#else /* USE_STRUCT_CONVERSION */\n\n")
-            f.write("static ")
             f.write(vk_func.thunk(prefix="thunk32_", conv=True))
-            f.write("#endif /* USE_STRUCT_CONVERSION */\n\n")
 
         # Create array of device extensions.
         f.write("static const char * const vk_device_extensions[] =\n{\n")
@@ -2665,7 +2663,8 @@ class VkGenerator(object):
         f.write(";\n")
         f.write("}\n\n")
 
-        f.write("#if !defined(USE_STRUCT_CONVERSION)\n\n")
+
+        f.write("#ifdef _WIN64\n\n")
 
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("{\n")
@@ -2682,9 +2681,13 @@ class VkGenerator(object):
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
 
-        f.write("#else /* USE_STRUCT_CONVERSION) */\n\n")
+        f.write("#endif /* _WIN64 */\n\n")
 
+        f.write("#ifdef _WIN64\n")
+        f.write("const unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n")
+        f.write("#else\n")
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
+        f.write("#endif\n")
         f.write("{\n")
         f.write("    init_vulkan32,\n")
         f.write("    vk_is_available_instance_function32,\n")
@@ -2698,8 +2701,6 @@ class VkGenerator(object):
             f.write("    {1}{0},\n".format(vk_func.name, "thunk32_"))
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
-
-        f.write("#endif /* USE_STRUCT_CONVERSION) */\n\n")
 
         f.write("NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)\n")
         f.write("{\n")
