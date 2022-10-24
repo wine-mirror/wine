@@ -167,10 +167,10 @@ static const char *dlltool;
 static const char *msgfmt;
 static const char *ln_s;
 static const char *sed_cmd;
-static const char *delay_load_flag;
 /* per-architecture global variables */
 static const char *strip_progs[MAX_ARCHS];
 static const char *debug_flags[MAX_ARCHS];
+static const char *delay_load_flags[MAX_ARCHS];
 static struct strarray target_flags[MAX_ARCHS];
 
 struct makefile
@@ -2073,10 +2073,9 @@ static struct makefile *get_parent_makefile( struct makefile *make )
 /*******************************************************************
  *         needs_delay_lib
  */
-static int needs_delay_lib( const struct makefile *make )
+static int needs_delay_lib( const struct makefile *make, unsigned int arch )
 {
-    if (delay_load_flag) return 0;
-    if (*dll_ext && archs.count == 1) return 0;
+    if (delay_load_flags[arch]) return 0;
     if (!make->importlib) return 0;
     return strarray_exists( &delay_import_libs, make->importlib );
 }
@@ -2238,7 +2237,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
         {
             const char *ext = NULL;
 
-            if (type == IMPORT_TYPE_DELAYED && !delay_load_flag && (arch || !*dll_ext)) ext = ".delay.a";
+            if (type == IMPORT_TYPE_DELAYED && !delay_load_flags[arch]) ext = ".delay.a";
             else if (arch) ext = ".cross.a";
             if (ext) lib = replace_extension( lib, ".a", ext );
             strarray_add_uniq( deps, lib );
@@ -3175,7 +3174,6 @@ static void output_module( struct makefile *make, unsigned int arch )
     struct strarray imports = make->imports;
     const char *module_name = make->module;
     const char *debug_file;
-    const char *delay_load = delay_load_flag;
     char *spec_file = NULL;
     unsigned int i;
 
@@ -3198,11 +3196,10 @@ static void output_module( struct makefile *make, unsigned int arch )
             strarray_addall( &all_libs, libs );
         }
 
-        if (!arch && *dll_ext) delay_load = "-Wl,-delayload,";
-        if (delay_load)
+        if (delay_load_flags[arch])
         {
             for (i = 0; i < make->delayimports.count; i++)
-                strarray_add( &all_libs, strmake( "%s%s%s", delay_load, make->delayimports.str[i],
+                strarray_add( &all_libs, strmake( "%s%s%s", delay_load_flags[arch], make->delayimports.str[i],
                                                   strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
         }
     }
@@ -3300,7 +3297,7 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
         strarray_add( &make->clean_files, strmake( "lib%s.a", make->importlib ));
         output_filename( strmake( "%s.a", importlib_path ));
     }
-    if ((arch || !*dll_ext) && needs_delay_lib( make ))
+    if (needs_delay_lib( make, arch ))
     {
         strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
         output( " %s.delay.a", importlib_path );
@@ -4299,7 +4296,7 @@ static int parse_option( const char *opt )
 int main( int argc, char *argv[] )
 {
     const char *makeflags = getenv( "MAKEFLAGS" );
-    const char *crosstarget, *debug_flag;
+    const char *crosstarget, *debug_flag, *delay_load_flag;
     unsigned int i, j, arch;
 
     if (makeflags) parse_makeflags( makeflags );
@@ -4408,11 +4405,13 @@ int main( int argc, char *argv[] )
     for (arch = 0; arch < archs.count; arch++)
     {
         if (!is_multiarch( arch )) continue;
+        delay_load_flags[arch] = delay_load_flag;
         debug_flags[arch] = debug_flag;
     }
 
     if (*dll_ext)
     {
+        delay_load_flags[0] = "-Wl,-delayload,";
         debug_flags[0] = NULL;
     }
 
