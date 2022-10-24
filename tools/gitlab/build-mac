@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Building $(git log -1)"
+echo "---"
+
+set -Eeuxo pipefail
+
+./tools/make_requests
+./tools/make_makefiles
+autoreconf
+
+cd build64
+../configure -C --enable-win64 --with-mingw BISON=/usr/local/opt/bison/bin/bison
+make -s -j8
+cd ..
+
+git reset --hard
