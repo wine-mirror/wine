@@ -1918,7 +1918,59 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
 HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cache_req, enum NormalizeState normalize_state,
         struct UiaCondition *normalize_cond, SAFEARRAY **out_req, BSTR *tree_struct)
 {
-    FIXME("(%p, %p, %u, %p, %p, %p): stub\n", huianode, cache_req, normalize_state, normalize_cond, out_req,
-            tree_struct);
-    return E_NOTIMPL;
+    struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
+    SAFEARRAYBOUND sabound[2];
+    SAFEARRAY *sa;
+    LONG idx[2];
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("(%p, %p, %u, %p, %p, %p)\n", huianode, cache_req, normalize_state, normalize_cond, out_req, tree_struct);
+
+    if (!node || !out_req || !tree_struct || !cache_req)
+        return E_INVALIDARG;
+
+    *tree_struct = NULL;
+    *out_req = NULL;
+
+    if (normalize_state != NormalizeState_None)
+    {
+        FIXME("Unsupported NormalizeState %d\n", normalize_state);
+        return E_NOTIMPL;
+    }
+
+    if (cache_req->Scope != TreeScope_Element)
+    {
+        FIXME("Unsupported cache request scope %#x\n", cache_req->Scope);
+        return E_NOTIMPL;
+    }
+
+    sabound[0].cElements = sabound[1].cElements = 1;
+    sabound[0].lLbound = sabound[1].lLbound = 0;
+    if (!(sa = SafeArrayCreate(VT_VARIANT, 2, sabound)))
+    {
+        WARN("Failed to create safearray\n");
+        return E_FAIL;
+    }
+
+    get_variant_for_node(huianode, &v);
+    idx[0] = idx[1] = 0;
+
+    hr = SafeArrayPutElement(sa, idx, &v);
+    if (FAILED(hr))
+    {
+        SafeArrayDestroy(sa);
+        return hr;
+    }
+
+    /*
+     * AddRef huianode since we're returning a reference to the same node we
+     * passed in, rather than creating a new one.
+     */
+    IWineUiaNode_AddRef(&node->IWineUiaNode_iface);
+
+    *out_req = sa;
+    *tree_struct = SysAllocString(L"P)");
+
+    return S_OK;
 }
