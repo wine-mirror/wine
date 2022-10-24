@@ -2721,6 +2721,37 @@ static const IHTMLDocument5Vtbl DocObjHTMLDocument5Vtbl = {
 };
 
 /**********************************************************
+ * IHTMLDocument6 implementation
+ */
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(HTMLDocument6)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument6, get_compatible, IHTMLDocumentCompatibleInfoCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument6, get_documentMode, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument6, put_onstorage, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument6, get_onstorage, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument6, put_onstoragecommit, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument6, get_onstoragecommit, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument6, getElementById, BSTR,IHTMLElement2**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_0(HTMLDocument6, updateSettings)
+
+static const IHTMLDocument6Vtbl DocObjHTMLDocument6Vtbl = {
+    DocObjHTMLDocument6_QueryInterface,
+    DocObjHTMLDocument6_AddRef,
+    DocObjHTMLDocument6_Release,
+    DocObjHTMLDocument6_GetTypeInfoCount,
+    DocObjHTMLDocument6_GetTypeInfo,
+    DocObjHTMLDocument6_GetIDsOfNames,
+    DocObjHTMLDocument6_Invoke,
+    DocObjHTMLDocument6_get_compatible,
+    DocObjHTMLDocument6_get_documentMode,
+    DocObjHTMLDocument6_put_onstorage,
+    DocObjHTMLDocument6_get_onstorage,
+    DocObjHTMLDocument6_put_onstoragecommit,
+    DocObjHTMLDocument6_get_onstoragecommit,
+    DocObjHTMLDocument6_getElementById,
+    DocObjHTMLDocument6_updateSettings
+};
+
+/**********************************************************
  * ISupportErrorInfo implementation
  */
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(SupportErrorInfo)
@@ -2978,6 +3009,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IHTMLDocument4_iface;
     }else if(IsEqualGUID(&IID_IHTMLDocument5, riid)) {
         *ppv = &This->IHTMLDocument5_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDocument6, riid)) {
+        *ppv = &This->IHTMLDocument6_iface;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_IDocumentSelector, riid)) {
@@ -3298,6 +3331,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IHTMLDocument3_iface.lpVtbl = &DocObjHTMLDocument3Vtbl;
     doc->IHTMLDocument4_iface.lpVtbl = &DocObjHTMLDocument4Vtbl;
     doc->IHTMLDocument5_iface.lpVtbl = &DocObjHTMLDocument5Vtbl;
+    doc->IHTMLDocument6_iface.lpVtbl = &DocObjHTMLDocument6Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocObjDocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocObjDocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &DocObjSupportErrorInfoVtbl;

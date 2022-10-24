@@ -3306,126 +3306,118 @@ static const IHTMLDocument5Vtbl HTMLDocument5Vtbl = {
     HTMLDocument5_get_compatMode
 };
 
-static inline HTMLDocument *impl_from_IHTMLDocument6(IHTMLDocument6 *iface)
+static inline HTMLDocumentNode *impl_from_IHTMLDocument6(IHTMLDocument6 *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocument, IHTMLDocument6_iface);
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, IHTMLDocument6_iface);
 }
 
-static HRESULT WINAPI HTMLDocument6_QueryInterface(IHTMLDocument6 *iface,
-        REFIID riid, void **ppv)
+static HRESULT WINAPI HTMLDocument6_QueryInterface(IHTMLDocument6 *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return htmldoc_query_interface(This, riid, ppv);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return htmldoc_query_interface(&This->basedoc, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument6_AddRef(IHTMLDocument6 *iface)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return htmldoc_addref(This);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return htmldoc_addref(&This->basedoc);
 }
 
 static ULONG WINAPI HTMLDocument6_Release(IHTMLDocument6 *iface)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return htmldoc_release(This);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return htmldoc_release(&This->basedoc);
 }
 
 static HRESULT WINAPI HTMLDocument6_GetTypeInfoCount(IHTMLDocument6 *iface, UINT *pctinfo)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->basedoc.IDispatchEx_iface, pctinfo);
 }
 
-static HRESULT WINAPI HTMLDocument6_GetTypeInfo(IHTMLDocument6 *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
+static HRESULT WINAPI HTMLDocument6_GetTypeInfo(IHTMLDocument6 *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return IDispatchEx_GetTypeInfo(&This->basedoc.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
-static HRESULT WINAPI HTMLDocument6_GetIDsOfNames(IHTMLDocument6 *iface, REFIID riid,
-        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+static HRESULT WINAPI HTMLDocument6_GetIDsOfNames(IHTMLDocument6 *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
-            rgDispId);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return IDispatchEx_GetIDsOfNames(&This->basedoc.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI HTMLDocument6_Invoke(IHTMLDocument6 *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+static HRESULT WINAPI HTMLDocument6_Invoke(IHTMLDocument6 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
+    return IDispatchEx_Invoke(&This->basedoc.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLDocument6_get_compatible(IHTMLDocument6 *iface,
         IHTMLDocumentCompatibleInfoCollection **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument6_get_documentMode(IHTMLDocument6 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc_node) {
-        FIXME("NULL doc_node\n");
-        return E_UNEXPECTED;
-    }
-
     V_VT(p) = VT_R4;
-    V_R4(p) = compat_mode_info[This->doc_node->document_mode].document_mode;
+    V_R4(p) = compat_mode_info[This->document_mode].document_mode;
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument6_get_onstorage(IHTMLDocument6 *iface,
         VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(This, EVENTID_STORAGE, p);
+    return get_doc_event(&This->basedoc, EVENTID_STORAGE, p);
 }
 
 static HRESULT WINAPI HTMLDocument6_put_onstorage(IHTMLDocument6 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(This, EVENTID_STORAGE, &v);
+    return set_doc_event(&This->basedoc, EVENTID_STORAGE, &v);
 }
 
 static HRESULT WINAPI HTMLDocument6_get_onstoragecommit(IHTMLDocument6 *iface,
         VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(This, EVENTID_STORAGECOMMIT, p);
+    return get_doc_event(&This->basedoc, EVENTID_STORAGECOMMIT, p);
 }
 
 static HRESULT WINAPI HTMLDocument6_put_onstoragecommit(IHTMLDocument6 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(This, EVENTID_STORAGECOMMIT, &v);
+    return set_doc_event(&This->basedoc, EVENTID_STORAGECOMMIT, &v);
 }
 
 static HRESULT WINAPI HTMLDocument6_getElementById(IHTMLDocument6 *iface,
         BSTR bstrId, IHTMLElement2 **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
     nsIDOMElement *nselem;
     HTMLElement *elem;
     nsAString nsstr;
@@ -3439,13 +3431,13 @@ static HRESULT WINAPI HTMLDocument6_getElementById(IHTMLDocument6 *iface,
      * not search for name attributes, so we may simply let Gecko do the right thing.
      */
 
-    if(!This->doc_node->nsdoc) {
+    if(!This->nsdoc) {
         FIXME("Not a document\n");
         return E_FAIL;
     }
 
     nsAString_InitDepend(&nsstr, bstrId);
-    nsres = nsIDOMHTMLDocument_GetElementById(This->doc_node->nsdoc, &nsstr, &nselem);
+    nsres = nsIDOMHTMLDocument_GetElementById(This->nsdoc, &nsstr, &nselem);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
         ERR("GetElementById failed: %08lx\n", nsres);
@@ -3468,7 +3460,7 @@ static HRESULT WINAPI HTMLDocument6_getElementById(IHTMLDocument6 *iface,
 
 static HRESULT WINAPI HTMLDocument6_updateSettings(IHTMLDocument6 *iface)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument6(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument6(iface);
     FIXME("(%p)->()\n", This);
     return E_NOTIMPL;
 }
@@ -5557,8 +5549,6 @@ BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IDispatchEx_iface;
     else if(IsEqualGUID(&IID_IDispatchEx, riid))
         *ppv = &This->IDispatchEx_iface;
-    else if(IsEqualGUID(&IID_IHTMLDocument6, riid))
-        *ppv = &This->IHTMLDocument6_iface;
     else if(IsEqualGUID(&IID_IHTMLDocument7, riid))
         *ppv = &This->IHTMLDocument7_iface;
     else
@@ -5582,7 +5572,6 @@ static const cpc_entry_t HTMLDocumentNode_cpc[] = {
 
 void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
 {
-    doc->IHTMLDocument6_iface.lpVtbl = &HTMLDocument6Vtbl;
     doc->IHTMLDocument7_iface.lpVtbl = &HTMLDocument7Vtbl;
     doc->IDispatchEx_iface.lpVtbl = &DocDispatchExVtbl;
 
@@ -5614,6 +5603,8 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDocument4_iface;
     else if(IsEqualGUID(&IID_IHTMLDocument5, riid))
         *ppv = &This->IHTMLDocument5_iface;
+    else if(IsEqualGUID(&IID_IHTMLDocument6, riid))
+        *ppv = &This->IHTMLDocument6_iface;
     else if(IsEqualGUID(&IID_IDocumentSelector, riid))
         *ppv = &This->IDocumentSelector_iface;
     else if(IsEqualGUID(&IID_IDocumentEvent, riid))
@@ -6088,6 +6079,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->IHTMLDocument3_iface.lpVtbl = &HTMLDocument3Vtbl;
     doc->IHTMLDocument4_iface.lpVtbl = &HTMLDocument4Vtbl;
     doc->IHTMLDocument5_iface.lpVtbl = &HTMLDocument5Vtbl;
+    doc->IHTMLDocument6_iface.lpVtbl = &HTMLDocument6Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
