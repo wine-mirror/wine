@@ -211,6 +211,7 @@ struct adapter
     LONG refcount;
     struct list entry;
     struct display_device dev;
+    LUID gpu_luid;
     unsigned int id;
     const WCHAR *config_key;
     unsigned int mode_count;
@@ -565,6 +566,17 @@ static int mode_compare(const void *p1, const void *p2)
     return 0;
 }
 
+static unsigned int query_reg_subkey_value( HKEY hkey, const WCHAR *name, unsigned int name_size,
+                                            KEY_VALUE_PARTIAL_INFORMATION *value, unsigned int size )
+{
+    HKEY subkey;
+
+    if (!(subkey = reg_open_key( hkey, name, name_size ))) return 0;
+    size = query_reg_value( subkey, NULL, value, size );
+    NtClose( subkey );
+    return size;
+}
+
 static BOOL read_display_adapter_settings( unsigned int index, struct adapter *info )
 {
     char buffer[4096];
@@ -637,6 +649,14 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     if (!(hkey = reg_open_key( enum_key, value_str, value->DataLength - sizeof(WCHAR) )))
         return FALSE;
 
+    size = query_reg_subkey_value( hkey, devpropkey_gpu_luidW, sizeof(devpropkey_gpu_luidW), value, sizeof(buffer) );
+    if (size != sizeof(info->gpu_luid))
+    {
+        NtClose( hkey );
+        return FALSE;
+    }
+    memcpy( &info->gpu_luid, value->Data, sizeof(info->gpu_luid) );
+
     size = query_reg_value( hkey, hardware_idW, value, sizeof(buffer) );
     NtClose( hkey );
     if (!size || (value->Type != REG_SZ && value->Type != REG_MULTI_SZ))
@@ -644,17 +664,6 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
 
     lstrcpyW( info->dev.device_id, value_str );
     return TRUE;
-}
-
-static unsigned int query_reg_subkey_value( HKEY hkey, const WCHAR *name, unsigned int name_size,
-                                            KEY_VALUE_PARTIAL_INFORMATION *value, unsigned int size )
-{
-    HKEY subkey;
-
-    if (!(subkey = reg_open_key( hkey, name, name_size ))) return 0;
-    size = query_reg_value( subkey, NULL, value, size );
-    NtClose( subkey );
-    return size;
 }
 
 static BOOL read_monitor_settings( struct adapter *adapter, DWORD index, struct monitor *monitor )
