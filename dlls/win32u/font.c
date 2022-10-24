@@ -3043,12 +3043,19 @@ static void update_font_association_info(void)
 
 static void set_multi_value_key( HKEY hkey, const WCHAR *name, const char *value, DWORD len )
 {
-    WCHAR valueW[256];
+    WCHAR *valueW;
+
+    if (!(valueW = malloc( len * sizeof(WCHAR) )))
+    {
+        ERR( "malloc of %d * WCHAR failed\n", len );
+        return;
+    }
     ascii_to_unicode( valueW, value, len );
     if (value)
         set_reg_value( hkey, name, REG_MULTI_SZ, valueW, len * sizeof(WCHAR) );
     else if (name)
         reg_delete_value( hkey, name );
+    free( valueW );
 }
 
 static void update_font_system_link_info(void)
