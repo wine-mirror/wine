@@ -7222,17 +7222,15 @@ static void test_UiaGetUpdatedCache(void)
 
     /* Equivalent to: if (!0) */
     hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!out_req, "out_req == NULL\n");
-    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
-    if (out_req)
-    {
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = exp_elems[1] = 1;
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
-        ok_method_sequence(cache_req_seq1, NULL);
-    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+    ok_method_sequence(cache_req_seq1, NULL);
 
     SafeArrayDestroy(out_req);
     SysFreeString(tree_struct);
@@ -7244,15 +7242,12 @@ static void test_UiaGetUpdatedCache(void)
 
     /* Equivalent to: if (!1) */
     hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(cache_req_seq2, NULL);
-
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!out_req, "out_req != NULL\n");
-    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
-    if (tree_struct)
-        ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    ok(!!tree_struct, "tree_struct == NULL\n");
+    ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
     SysFreeString(tree_struct);
+    ok_method_sequence(cache_req_seq2, NULL);
 
     /*
      * ConditionType_Property tests.

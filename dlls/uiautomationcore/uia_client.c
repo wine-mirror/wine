@@ -1930,10 +1930,24 @@ static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition
     case ConditionType_False:
         return S_FALSE;
 
+    case ConditionType_Not:
+    {
+        struct UiaNotCondition *not_cond = (struct UiaNotCondition *)condition;
+        HRESULT hr;
+
+        hr = uia_condition_check(node, not_cond->pConditions);
+        if (FAILED(hr))
+            return hr;
+
+        if (uia_condition_matched(hr))
+            return S_FALSE;
+        else
+            return S_OK;
+    }
+
     case ConditionType_Property:
     case ConditionType_And:
     case ConditionType_Or:
-    case ConditionType_Not:
         FIXME("Unhandled condition type %d\n", condition->ConditionType);
         return E_NOTIMPL;
 
