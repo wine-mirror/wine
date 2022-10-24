@@ -155,7 +155,6 @@ static const char *dll_ext;
 static const char *host_cpu;
 static const char *pe_dir;
 static const char *so_dir;
-static const char *crossdebug;
 static const char *fontforge;
 static const char *convert;
 static const char *flex;
@@ -171,6 +170,7 @@ static const char *sed_cmd;
 static const char *delay_load_flag;
 /* per-architecture global variables */
 static const char *strip_progs[MAX_ARCHS];
+static const char *debug_flags[MAX_ARCHS];
 static struct strarray target_flags[MAX_ARCHS];
 
 struct makefile
@@ -599,6 +599,18 @@ static char *concat_paths( const char *base, const char *path )
     ret[len++] = '/';
     strcpy( ret + len, path );
     return ret;
+}
+
+
+/*******************************************************************
+ *         is_multiarch
+ *
+ * Check if arch is one of the PE architectures in multiarch.
+ * Also return TRUE for native arch iff there's no PE support.
+ */
+static int is_multiarch( unsigned int arch )
+{
+    return archs.count == 1 || arch;
 }
 
 
@@ -2350,9 +2362,9 @@ static struct strarray remove_warning_flags( struct strarray flags )
 static const char *get_debug_file( struct makefile *make, const char *name, unsigned int arch )
 {
     const char *debug_file = NULL;
-    if (!arch || !crossdebug) return NULL;
-    if (!strcmp( crossdebug, "pdb" )) debug_file = strmake( "%s.pdb", get_base_name( name ));
-    else if(!strncmp( crossdebug, "split", 5 )) debug_file = strmake( "%s.debug", name );
+    if (!debug_flags[arch]) return NULL;
+    if (!strcmp( debug_flags[arch], "pdb" )) debug_file = strmake( "%s.pdb", get_base_name( name ));
+    else if (!strncmp( debug_flags[arch], "split", 5 )) debug_file = strmake( "%s.debug", name );
     if (debug_file) strarray_add( &make->debug_files, debug_file );
     return debug_file;
 }
@@ -4287,8 +4299,8 @@ static int parse_option( const char *opt )
 int main( int argc, char *argv[] )
 {
     const char *makeflags = getenv( "MAKEFLAGS" );
-    const char *crosstarget;
-    int i, j;
+    const char *crosstarget, *debug_flag;
+    unsigned int i, j, arch;
 
     if (makeflags) parse_makeflags( makeflags );
 
@@ -4352,7 +4364,7 @@ int main( int argc, char *argv[] )
     dll_ext            = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
     host_cpu           = get_expanded_make_variable( top_makefile, "host_cpu" );
     crosstarget        = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
-    crossdebug         = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
+    debug_flag         = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
     fontforge          = get_expanded_make_variable( top_makefile, "FONTFORGE" );
     convert            = get_expanded_make_variable( top_makefile, "CONVERT" );
     flex               = get_expanded_make_variable( top_makefile, "FLEX" );
@@ -4390,6 +4402,18 @@ int main( int argc, char *argv[] )
         strarray_add( &target_flags[1], "-b" );
         strarray_add( &target_flags[1], crosstarget );
         strip_progs[1] = strmake( "%s-strip", crosstarget );
+        debug_flags[1] = debug_flag;
+    }
+
+    for (arch = 0; arch < archs.count; arch++)
+    {
+        if (!is_multiarch( arch )) continue;
+        debug_flags[arch] = debug_flag;
+    }
+
+    if (*dll_ext)
+    {
+        debug_flags[0] = NULL;
     }
 
     extra_cflags_extlib = remove_warning_flags( extra_cflags );
