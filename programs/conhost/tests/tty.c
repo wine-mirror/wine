@@ -586,16 +586,17 @@ static void expect_key_pressed_(unsigned int line, unsigned int ctx, WCHAR ch, u
         expect_key_input_(line, ctx, 0, VK_SHIFT, FALSE, 0);
 }
 
-#define expect_char_key(a) expect_char_key_(__LINE__,a)
-static void expect_char_key_(unsigned int line, WCHAR ch)
+#define expect_char_key(a) expect_char_key_(__LINE__,a,0)
+#define expect_char_key_ctrl(a,c) expect_char_key_(__LINE__,a,c)
+static void expect_char_key_(unsigned int line, WCHAR ch, unsigned int ctrl)
 {
-    unsigned int ctrl = 0, vk;
+    unsigned int vk;
 
     vk = VkKeyScanW(ch);
     if (vk == ~0) vk = 0;
     if (vk & 0x0100) ctrl |= SHIFT_PRESSED;
     /* Some keyboard (like German or French one) report right alt as ctrl+alt */
-    if ((vk & 0x0600) == 0x0600) ctrl |= RIGHT_ALT_PRESSED;
+    if ((vk & 0x0600) == 0x0600 && !(ctrl & LEFT_ALT_PRESSED)) ctrl |= RIGHT_ALT_PRESSED;
     if (vk & 0x0200) ctrl |= LEFT_CTRL_PRESSED;
     vk &= 0xff;
     expect_key_pressed_(line, ch, ch, vk, ctrl);
@@ -1448,62 +1449,67 @@ static void test_tty_input(void)
     static const struct
     {
         const char *str;
-        WCHAR ch;
         unsigned int vk;
         unsigned int ctrl;
     } escape_test[] = {
-        { "\x1b[A",          0,      VK_UP,       0 },
-        { "\x1b[B",          0,      VK_DOWN,     0 },
-        { "\x1b[C",          0,      VK_RIGHT,    0 },
-        { "\x1b[D",          0,      VK_LEFT,     0 },
-        { "\x1b[H",          0,      VK_HOME,     0 },
-        { "\x1b[F",          0,      VK_END,      0 },
-        { "\x1b[Z",          0x9,    VK_TAB,      SHIFT_PRESSED },
-        { "\x1b[2~",         0,      VK_INSERT,   0 },
-        { "\x1b[3~",         0,      VK_DELETE,   0 },
-        { "\x1b[5~",         0,      VK_PRIOR,    0 },
-        { "\x1b[6~",         0,      VK_NEXT,     0 },
-        { "\x1b[15~",        0,      VK_F5,       0 },
-        { "\x1b[17~",        0,      VK_F6,       0 },
-        { "\x1b[18~",        0,      VK_F7,       0 },
-        { "\x1b[19~",        0,      VK_F8,       0 },
-        { "\x1b[20~",        0,      VK_F9,       0 },
+        { "\x1b[A",          VK_UP,       0 },
+        { "\x1b[B",          VK_DOWN,     0 },
+        { "\x1b[C",          VK_RIGHT,    0 },
+        { "\x1b[D",          VK_LEFT,     0 },
+        { "\x1b[H",          VK_HOME,     0 },
+        { "\x1b[F",          VK_END,      0 },
+        { "\x1b[2~",         VK_INSERT,   0 },
+        { "\x1b[3~",         VK_DELETE,   0 },
+        { "\x1b[5~",         VK_PRIOR,    0 },
+        { "\x1b[6~",         VK_NEXT,     0 },
+        { "\x1b[15~",        VK_F5,       0 },
+        { "\x1b[17~",        VK_F6,       0 },
+        { "\x1b[18~",        VK_F7,       0 },
+        { "\x1b[19~",        VK_F8,       0 },
+        { "\x1b[20~",        VK_F9,       0 },
+        { "\x1b[21~",        VK_F10,      0 },
         /* 0x10 */
-        { "\x1b[21~",        0,      VK_F10,      0 },
-        { "\x1b[23~",        0,      VK_F11,      0 },
-        { "\x1b[24~",        0,      VK_F12,      0 },
-        { "\x1bOP",          0,      VK_F1,       0 },
-        { "\x1bOQ",          0,      VK_F2,       0 },
-        { "\x1bOR",          0,      VK_F3,       0 },
-        { "\x1bOS",          0,      VK_F4,       0 },
-        { "\x1b[1;1A",       0,      VK_UP,       0 },
-        { "\x1b[1;2A",       0,      VK_UP,       SHIFT_PRESSED },
-        { "\x1b[1;3A",       0,      VK_UP,       LEFT_ALT_PRESSED },
-        { "\x1b[1;4A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
-        { "\x1b[1;5A",       0,      VK_UP,       LEFT_CTRL_PRESSED },
-        { "\x1b[1;6A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_CTRL_PRESSED },
-        { "\x1b[1;7A",       0,      VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
-        { "\x1b[1;8A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
-        { "\x1b[1;9A",       0,      VK_UP,       0 },
+        { "\x1b[23~",        VK_F11,      0 },
+        { "\x1b[24~",        VK_F12,      0 },
+        { "\x1bOP",          VK_F1,       0 },
+        { "\x1bOQ",          VK_F2,       0 },
+        { "\x1bOR",          VK_F3,       0 },
+        { "\x1bOS",          VK_F4,       0 },
+        { "\x1b[1;1A",       VK_UP,       0 },
+        { "\x1b[1;2A",       VK_UP,       SHIFT_PRESSED },
+        { "\x1b[1;3A",       VK_UP,       LEFT_ALT_PRESSED },
+        { "\x1b[1;4A",       VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
+        { "\x1b[1;5A",       VK_UP,       LEFT_CTRL_PRESSED },
+        { "\x1b[1;6A",       VK_UP,       SHIFT_PRESSED | LEFT_CTRL_PRESSED },
+        { "\x1b[1;7A",       VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;8A",       VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;9A",       VK_UP,       0 },
+        { "\x1b[1;10A",      VK_UP,       SHIFT_PRESSED },
         /* 0x20 */
-        { "\x1b[1;10A",      0,      VK_UP,       SHIFT_PRESSED },
-        { "\x1b[1;11A",      0,      VK_UP,       LEFT_ALT_PRESSED },
-        { "\x1b[1;12A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
-        { "\x1b[1;13A",      0,      VK_UP,       LEFT_CTRL_PRESSED },
-        { "\x1b[1;14A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_CTRL_PRESSED },
-        { "\x1b[1;15A",      0,      VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
-        { "\x1b[1;16A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
-        { "\x1b[1;2P",       0,      VK_F1,       SHIFT_PRESSED },
-        { "\x1b[2;3~",       0,      VK_INSERT,   LEFT_ALT_PRESSED },
-        { "\x1b[2;3;5;6~",   0,      VK_INSERT,   0 },
-        { "\x1b[6;2;3;5;1~", 0,      VK_NEXT,     0 },
-        { "\xe4\xb8\x80",    0x4e00, 0,           0 },
-        { "\x1b\x1b",        0x1b,   VK_ESCAPE,   LEFT_ALT_PRESSED },
-        { "\x1b""1",         '1',    '1',         LEFT_ALT_PRESSED },
-        { "\x1b""x",         'x',    'X',         LEFT_ALT_PRESSED },
-        { "\x1b""[",         '[',    VK_OEM_4,    LEFT_ALT_PRESSED },
-        /* 0x30 */
-        { "\x7f",            '\b',   VK_BACK,     0 },
+        { "\x1b[1;11A",      VK_UP,       LEFT_ALT_PRESSED },
+        { "\x1b[1;12A",      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
+        { "\x1b[1;13A",      VK_UP,       LEFT_CTRL_PRESSED },
+        { "\x1b[1;14A",      VK_UP,       SHIFT_PRESSED | LEFT_CTRL_PRESSED },
+        { "\x1b[1;15A",      VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;16A",      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;2P",       VK_F1,       SHIFT_PRESSED },
+        { "\x1b[2;3~",       VK_INSERT,   LEFT_ALT_PRESSED },
+        { "\x1b[2;3;5;6~",   VK_INSERT,   0 },
+        { "\x1b[6;2;3;5;1~", VK_NEXT,     0 },
+    };
+    static const struct
+    {
+        const char *str;
+        WCHAR ch;
+        unsigned int ctrl;
+    } escape_char_test[] = {
+        { "\x1b[Z",          0x9,    SHIFT_PRESSED },
+        { "\xe4\xb8\x80",    0x4e00, 0 },
+        { "\x1b\x1b",        0x1b,   LEFT_ALT_PRESSED },
+        { "\x1b""1",         '1',    LEFT_ALT_PRESSED },
+        { "\x1b""x",         'x',    LEFT_ALT_PRESSED },
+        { "\x1b""[",         '[',    LEFT_ALT_PRESSED },
+        { "\x7f",            '\b',   0 },
     };
 
     write_console_pipe("x");
@@ -1555,7 +1561,13 @@ static void test_tty_input(void)
     for (i = 0; i < ARRAY_SIZE(escape_test); i++)
     {
         write_console_pipe(escape_test[i].str);
-        expect_key_pressed_ctx(i, escape_test[i].ch, escape_test[i].vk, escape_test[i].ctrl);
+        expect_key_pressed_ctx(i, 0, escape_test[i].vk, escape_test[i].ctrl);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(escape_char_test); i++)
+    {
+        write_console_pipe(escape_char_test[i].str);
+        expect_char_key_ctrl(escape_char_test[i].ch, escape_char_test[i].ctrl);
     }
 
     for (i = 0x80; i < 0x100; i += 11)
