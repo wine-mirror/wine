@@ -139,26 +139,6 @@ static const WELLKNOWNRID WellKnownRids[] =
     { WinAccountRasAndIasServersSid, DOMAIN_ALIAS_RID_RAS_SERVERS },
 };
 
-static const SID world_sid = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
-static const DWORD world_access_acl_size = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(world_sid) - sizeof(DWORD);
-
-static void get_world_access_acl( PACL acl )
-{
-    PACCESS_ALLOWED_ACE ace = (PACCESS_ALLOWED_ACE)(acl + 1);
-
-    acl->AclRevision = ACL_REVISION;
-    acl->Sbz1 = 0;
-    acl->AclSize = world_access_acl_size;
-    acl->AceCount = 1;
-    acl->Sbz2 = 0;
-    ace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ace->Header.AceFlags = CONTAINER_INHERIT_ACE;
-    ace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE) + sizeof(world_sid) - sizeof(DWORD);
-    ace->Mask = 0xf3ffffff; /* Everything except reserved bits */
-    memcpy( &ace->SidStart, &world_sid, sizeof(world_sid) );
-}
-
-
 static NTSTATUS open_file( LPCWSTR name, DWORD access, HANDLE *file )
 {
     UNICODE_STRING file_nameW;
@@ -938,7 +918,7 @@ BOOL WINAPI CreatePrivateObjectSecurity( PSECURITY_DESCRIPTOR parent, PSECURITY_
                                          PSECURITY_DESCRIPTOR *descr, BOOL is_container, HANDLE token,
                                          PGENERIC_MAPPING mapping )
 {
-    return CreatePrivateObjectSecurityEx( parent, creator, descr, NULL, is_container, 0, token, mapping );
+    return set_ntstatus( RtlNewSecurityObject( parent, creator, descr, is_container, token, mapping ));
 }
 
 /******************************************************************************
@@ -948,46 +928,7 @@ BOOL WINAPI CreatePrivateObjectSecurityEx( PSECURITY_DESCRIPTOR parent, PSECURIT
                                            PSECURITY_DESCRIPTOR *descr, GUID *type, BOOL is_container,
                                            ULONG flags, HANDLE token, PGENERIC_MAPPING mapping )
 {
-    SECURITY_DESCRIPTOR_RELATIVE *relative;
-    DWORD needed, offset;
-    BYTE *buffer;
-
-    FIXME( "%p %p %p %p %d %lu %p %p - returns fake SECURITY_DESCRIPTOR\n",
-           parent, creator, descr, type, is_container, flags, token, mapping );
-
-    needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-    needed += sizeof(world_sid);
-    needed += sizeof(world_sid);
-    needed += world_access_acl_size;
-    needed += world_access_acl_size;
-
-    if (!(buffer = heap_alloc( needed ))) return FALSE;
-    relative = (SECURITY_DESCRIPTOR_RELATIVE *)buffer;
-    if (!InitializeSecurityDescriptor( relative, SECURITY_DESCRIPTOR_REVISION ))
-    {
-        heap_free( buffer );
-        return FALSE;
-    }
-    relative->Control |= SE_SELF_RELATIVE;
-    offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-
-    memcpy( buffer + offset, &world_sid, sizeof(world_sid) );
-    relative->Owner = offset;
-    offset += sizeof(world_sid);
-
-    memcpy( buffer + offset, &world_sid, sizeof(world_sid) );
-    relative->Group = offset;
-    offset += sizeof(world_sid);
-
-    get_world_access_acl( (ACL *)(buffer + offset) );
-    relative->Dacl = offset;
-    offset += world_access_acl_size;
-
-    get_world_access_acl( (ACL *)(buffer + offset) );
-    relative->Sacl = offset;
-
-    *descr = relative;
-    return TRUE;
+    return set_ntstatus( RtlNewSecurityObjectEx( parent, creator, descr, type, is_container, flags, token, mapping ));
 }
 
 /******************************************************************************
@@ -1000,9 +941,8 @@ BOOL WINAPI CreatePrivateObjectSecurityWithMultipleInheritance( PSECURITY_DESCRI
                                                                 BOOL is_container, ULONG flags,
                                                                 HANDLE token, PGENERIC_MAPPING mapping )
 {
-    FIXME(": semi-stub\n");
-    return CreatePrivateObjectSecurityEx( parent, creator, descr, NULL, is_container,
-                                          flags, token, mapping );
+    return set_ntstatus( RtlNewSecurityObjectWithMultipleInheritance( parent, creator, descr, types, count,
+            is_container, flags, token, mapping ));
 }
 
 /******************************************************************************
@@ -1010,9 +950,7 @@ BOOL WINAPI CreatePrivateObjectSecurityWithMultipleInheritance( PSECURITY_DESCRI
  */
 BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR *descr )
 {
-    FIXME("%p - stub\n", descr);
-    heap_free( *descr );
-    return TRUE;
+    return set_ntstatus( RtlDeleteSecurityObject( descr ));
 }
 
 /******************************************************************************
