@@ -397,32 +397,6 @@ VOID WINAPI RtlReleasePebLock(void)
 }
 
 /******************************************************************************
- *  RtlNewSecurityObject		[NTDLL.@]
- */
-NTSTATUS WINAPI
-RtlNewSecurityObject( PSECURITY_DESCRIPTOR ParentDescriptor,
-                      PSECURITY_DESCRIPTOR CreatorDescriptor,
-                      PSECURITY_DESCRIPTOR *NewDescriptor,
-                      BOOLEAN IsDirectoryObject,
-                      HANDLE Token,
-                      PGENERIC_MAPPING GenericMapping )
-{
-    FIXME("(%p %p %p %d %p %p) stub!\n", ParentDescriptor, CreatorDescriptor,
-          NewDescriptor, IsDirectoryObject, Token, GenericMapping);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *  RtlDeleteSecurityObject		[NTDLL.@]
- */
-NTSTATUS WINAPI
-RtlDeleteSecurityObject( PSECURITY_DESCRIPTOR *ObjectDescriptor )
-{
-    FIXME("(%p) stub!\n", ObjectDescriptor);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
 void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COMPARE_ROUTINE compare,

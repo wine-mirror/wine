@@ -878,8 +878,8 @@
 @ stub RtlNewInstanceSecurityObject
 @ stub RtlNewSecurityGrantedAccess
 @ stdcall RtlNewSecurityObject(ptr ptr ptr long ptr ptr)
-# @ stub RtlNewSecurityObjectEx
-# @ stub RtlNewSecurityObjectWithMultipleInheritance
+@ stdcall RtlNewSecurityObjectEx(ptr ptr ptr ptr long long long ptr)
+@ stdcall RtlNewSecurityObjectWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr)
 @ stdcall RtlNormalizeProcessParams(ptr)
 @ stdcall RtlNormalizeString(long wstr long ptr ptr)
 # @ stub RtlNtPathNameToDosPathName

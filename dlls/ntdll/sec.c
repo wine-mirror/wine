@@ -37,6 +37,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define SELF_RELATIVE_FIELD(sd,field) ((BYTE *)(sd) + ((SECURITY_DESCRIPTOR_RELATIVE *)(sd))->field)
 
+static const SID world_sid = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
+static const DWORD world_access_acl_size = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(world_sid) - sizeof(DWORD);
+
+static void get_world_access_acl( PACL acl )
+{
+    PACCESS_ALLOWED_ACE ace = (PACCESS_ALLOWED_ACE)(acl + 1);
+
+    acl->AclRevision = ACL_REVISION;
+    acl->Sbz1 = 0;
+    acl->AclSize = world_access_acl_size;
+    acl->AceCount = 1;
+    acl->Sbz2 = 0;
+    ace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+    ace->Header.AceFlags = CONTAINER_INHERIT_ACE;
+    ace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE) + sizeof(world_sid) - sizeof(DWORD);
+    ace->Mask = 0xf3ffffff; /* Everything except reserved bits */
+    memcpy( &ace->SidStart, &world_sid, sizeof(world_sid) );
+}
+
 /* helper function to retrieve active length of an ACL */
 static size_t acl_bytesInUse(PACL pAcl)
 {
@@ -1101,6 +1120,83 @@ NTSTATUS WINAPI RtlAbsoluteToSelfRelativeSD(
         SelfRelativeSecurityDescriptor, BufferLength);
 }
 
+/******************************************************************************
+ *  RtlNewSecurityObject		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlNewSecurityObject(PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator,
+    PSECURITY_DESCRIPTOR *descr, BOOLEAN is_container, HANDLE token, PGENERIC_MAPPING mapping)
+{
+    return RtlNewSecurityObjectEx(parent, creator, descr, NULL, is_container, 0, token, mapping);
+}
+
+/******************************************************************************
+ *  RtlNewSecurityObjectEx              [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlNewSecurityObjectEx(PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator,
+    PSECURITY_DESCRIPTOR *descr, GUID *type, BOOLEAN is_container, ULONG flags, HANDLE token, PGENERIC_MAPPING mapping )
+{
+    SECURITY_DESCRIPTOR_RELATIVE *relative;
+    DWORD needed, offset;
+    NTSTATUS status;
+    BYTE *buffer;
+
+    FIXME("%p, %p, %p, %p, %d, %#x, %p %p - semi-stub\n", parent, creator, descr, type, is_container, flags, token, mapping);
+
+    needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    needed += sizeof(world_sid);
+    needed += sizeof(world_sid);
+    needed += world_access_acl_size;
+    needed += world_access_acl_size;
+
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, needed ))) return STATUS_NO_MEMORY;
+    relative = (SECURITY_DESCRIPTOR_RELATIVE *)buffer;
+    if ((status = RtlCreateSecurityDescriptor( relative, SECURITY_DESCRIPTOR_REVISION )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        return status;
+    }
+    relative->Control |= SE_SELF_RELATIVE;
+    offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+
+    memcpy( buffer + offset, &world_sid, sizeof(world_sid) );
+    relative->Owner = offset;
+    offset += sizeof(world_sid);
+
+    memcpy( buffer + offset, &world_sid, sizeof(world_sid) );
+    relative->Group = offset;
+    offset += sizeof(world_sid);
+
+    get_world_access_acl( (ACL *)(buffer + offset) );
+    relative->Dacl = offset;
+    offset += world_access_acl_size;
+
+    get_world_access_acl( (ACL *)(buffer + offset) );
+    relative->Sacl = offset;
+
+    *descr = relative;
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *  RtlNewSecurityObjectWithMultipleInheritance        [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlNewSecurityObjectWithMultipleInheritance(PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator,
+    PSECURITY_DESCRIPTOR *descr, GUID **types, ULONG count, BOOLEAN is_container, ULONG flags,
+    HANDLE token, PGENERIC_MAPPING mapping )
+{
+    FIXME("semi-stub\n");
+    return RtlNewSecurityObjectEx(parent, creator, descr, NULL, is_container, flags, token, mapping);
+}
+
+/******************************************************************************
+ *  RtlDeleteSecurityObject		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlDeleteSecurityObject( PSECURITY_DESCRIPTOR *descr )
+{
+    FIXME("%p stub.\n", descr);
+    RtlFreeHeap( GetProcessHeap(), 0, *descr );
+    return STATUS_SUCCESS;
+}
 
 /*
  *	access control list's
