@@ -640,7 +640,6 @@ struct  ConnectionPoint {
 };
 
 struct HTMLDocument {
-    IHTMLDocument2              IHTMLDocument2_iface;
     IHTMLDocument3              IHTMLDocument3_iface;
     IHTMLDocument4              IHTMLDocument4_iface;
     IHTMLDocument5              IHTMLDocument5_iface;
@@ -680,6 +679,7 @@ struct HTMLDocumentObj {
     DispatchEx dispex;
     IUnknown IUnknown_inner;
     ICustomDoc ICustomDoc_iface;
+    IHTMLDocument2 IHTMLDocument2_iface;
     IDocumentSelector IDocumentSelector_iface;
     IDocumentEvent IDocumentEvent_iface;
     ISupportErrorInfo ISupportErrorInfo_iface;
@@ -899,6 +899,7 @@ struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
+    IHTMLDocument2               IHTMLDocument2_iface;
     IDocumentSelector            IDocumentSelector_iface;
     IDocumentEvent               IDocumentEvent_iface;
     ISupportErrorInfo            ISupportErrorInfo_iface;

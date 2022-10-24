@@ -1147,7 +1147,7 @@ static HRESULT WINAPI HTMLDOMNode2_get_ownerDocument(IHTMLDOMNode2 *iface, IDisp
     if(This == &This->doc->node) {
         *p = NULL;
     }else {
-        *p = (IDispatch*)&This->doc->basedoc.IHTMLDocument2_iface;
+        *p = (IDispatch*)&This->doc->IHTMLDocument2_iface;
         IDispatch_AddRef(*p);
     }
     return S_OK;

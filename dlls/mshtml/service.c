@@ -362,7 +362,7 @@ static HRESULT WINAPI DocNodeServiceProvider_QueryService(IServiceProvider *ifac
 
     if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
         TRACE("SID_SContainerDispatch\n");
-        return IHTMLDocument2_QueryInterface(&This->basedoc.IHTMLDocument2_iface, riid, ppv);
+        return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);
     }
 
     return IServiceProvider_QueryService(&This->basedoc.doc_obj->IServiceProvider_iface, guidService, riid, ppv);
@@ -422,7 +422,7 @@ static HRESULT WINAPI DocObjServiceProvider_QueryService(IServiceProvider *iface
 
     if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
         TRACE("SID_SContainerDispatch\n");
-        return IHTMLDocument2_QueryInterface(&This->basedoc.IHTMLDocument2_iface, riid, ppv);
+        return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);
     }
 
     if(IsEqualGUID(&IID_IWindowForBindingUI, guidService)) {

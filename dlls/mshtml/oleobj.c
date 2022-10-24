@@ -2202,6 +2202,320 @@ static HRESULT WINAPI DocObj##iface##_Invoke(I##iface *_0, DISPID dispIdMember, 
 }
 
 /**********************************************************
+ * IHTMLDocument2 implementation
+ */
+static inline HTMLDocumentObj *impl_from_IHTMLDocument2(IHTMLDocument2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IHTMLDocument2_iface);
+}
+
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(HTMLDocument2)
+
+static HRESULT WINAPI DocObjHTMLDocument2_get_Script(IHTMLDocument2 *iface, IDispatch **p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = IHTMLDocument7_get_parentWindow(&This->basedoc.IHTMLDocument7_iface, (IHTMLWindow2**)p);
+    return hres == S_OK && !*p ? E_PENDING : hres;
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_all, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_body, IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_activeElement, IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_images, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_applets, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_links, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_forms, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_anchors, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_title, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_title, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_scripts, IHTMLElementCollection**)
+
+static HRESULT WINAPI DocObjHTMLDocument2_put_designMode(IHTMLDocument2 *iface, BSTR v)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
+    HRESULT hres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(wcsicmp(v, L"on")) {
+        FIXME("Unsupported arg %s\n", debugstr_w(v));
+        return E_NOTIMPL;
+    }
+
+    hres = setup_edit_mode(This);
+    if(FAILED(hres))
+        return hres;
+
+    call_property_onchanged(&This->cp_container, DISPID_IHTMLDOCUMENT2_DESIGNMODE);
+    return S_OK;
+}
+
+static HRESULT WINAPI DocObjHTMLDocument2_get_designMode(IHTMLDocument2 *iface, BSTR *p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
+
+    FIXME("(%p)->(%p) always returning Off\n", This, p);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    *p = SysAllocString(L"Off");
+    return S_OK;
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_selection, IHTMLSelectionObject**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_readyState, BSTR*)
+
+static HRESULT WINAPI DocObjHTMLDocument2_get_frames(IHTMLDocument2 *iface, IHTMLFramesCollection2 **p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->basedoc.window) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
+    return IHTMLWindow2_get_frames(&This->basedoc.window->base.IHTMLWindow2_iface, p);
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_embeds, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_plugins, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_alinkColor, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_alinkColor, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_bgColor, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_bgColor, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_fgColor, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_fgColor, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_linkColor, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_linkColor, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_vlinkColor, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_vlinkColor, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_referrer, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_location, IHTMLLocation**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_lastModified, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_URL, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_URL, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_domain, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_domain, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_cookie, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_cookie, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_expando, VARIANT_BOOL)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_expando, VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_charset, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_charset, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_defaultCharset, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_defaultCharset, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_mimeType, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_fileSize, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_fileCreatedDate, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_fileModifiedDate, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_fileUpdatedDate, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_security, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_protocol, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_nameProp, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, write, SAFEARRAY*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, writeln, SAFEARRAY*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_5(HTMLDocument2, open, BSTR,VARIANT,VARIANT,VARIANT,IDispatch**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_0(HTMLDocument2, close)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_0(HTMLDocument2, clear)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, queryCommandSupported, BSTR,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, queryCommandEnabled, BSTR,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, queryCommandState, BSTR,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, queryCommandIndeterm, BSTR,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, queryCommandText, BSTR,BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, queryCommandValue, BSTR,VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_4(HTMLDocument2, execCommand, BSTR,VARIANT_BOOL,VARIANT,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, execCommandShowHelp, BSTR,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument2, createElement, BSTR,IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onhelp, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onhelp, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onclick, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onclick, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_ondblclick, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_ondblclick, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onkeyup, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onkeyup, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onkeydown, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onkeydown, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onkeypress, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onkeypress, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onmouseup, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onmouseup, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onmousedown, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onmousedown, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onmousemove, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onmousemove, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onmouseout, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onmouseout, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onmouseover, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onmouseover, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onreadystatechange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onreadystatechange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onafterupdate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onafterupdate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onrowexit, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onrowexit, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onrowenter, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onrowenter, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_ondragstart, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_ondragstart, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onselectstart, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onselectstart, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument2, elementFromPoint, LONG,LONG,IHTMLElement**)
+
+static HRESULT WINAPI DocObjHTMLDocument2_get_parentWindow(IHTMLDocument2 *iface, IHTMLWindow2 **p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = IHTMLDocument7_get_defaultView(&This->basedoc.IHTMLDocument7_iface, p);
+    return hres == S_OK && !*p ? E_FAIL : hres;
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_styleSheets, IHTMLStyleSheetsCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onbeforeupdate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onbeforeupdate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onerrorupdate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onerrorupdate, VARIANT*)
+
+static HRESULT WINAPI DocObjHTMLDocument2_toString(IHTMLDocument2 *iface, BSTR *String)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
+
+    TRACE("(%p)->(%p)\n", This, String);
+
+    return dispex_to_string(&This->dispex, String);
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument2, createStyleSheet, BSTR,LONG,IHTMLStyleSheet**)
+
+static const IHTMLDocument2Vtbl DocObjHTMLDocument2Vtbl = {
+    DocObjHTMLDocument2_QueryInterface,
+    DocObjHTMLDocument2_AddRef,
+    DocObjHTMLDocument2_Release,
+    DocObjHTMLDocument2_GetTypeInfoCount,
+    DocObjHTMLDocument2_GetTypeInfo,
+    DocObjHTMLDocument2_GetIDsOfNames,
+    DocObjHTMLDocument2_Invoke,
+    DocObjHTMLDocument2_get_Script,
+    DocObjHTMLDocument2_get_all,
+    DocObjHTMLDocument2_get_body,
+    DocObjHTMLDocument2_get_activeElement,
+    DocObjHTMLDocument2_get_images,
+    DocObjHTMLDocument2_get_applets,
+    DocObjHTMLDocument2_get_links,
+    DocObjHTMLDocument2_get_forms,
+    DocObjHTMLDocument2_get_anchors,
+    DocObjHTMLDocument2_put_title,
+    DocObjHTMLDocument2_get_title,
+    DocObjHTMLDocument2_get_scripts,
+    DocObjHTMLDocument2_put_designMode,
+    DocObjHTMLDocument2_get_designMode,
+    DocObjHTMLDocument2_get_selection,
+    DocObjHTMLDocument2_get_readyState,
+    DocObjHTMLDocument2_get_frames,
+    DocObjHTMLDocument2_get_embeds,
+    DocObjHTMLDocument2_get_plugins,
+    DocObjHTMLDocument2_put_alinkColor,
+    DocObjHTMLDocument2_get_alinkColor,
+    DocObjHTMLDocument2_put_bgColor,
+    DocObjHTMLDocument2_get_bgColor,
+    DocObjHTMLDocument2_put_fgColor,
+    DocObjHTMLDocument2_get_fgColor,
+    DocObjHTMLDocument2_put_linkColor,
+    DocObjHTMLDocument2_get_linkColor,
+    DocObjHTMLDocument2_put_vlinkColor,
+    DocObjHTMLDocument2_get_vlinkColor,
+    DocObjHTMLDocument2_get_referrer,
+    DocObjHTMLDocument2_get_location,
+    DocObjHTMLDocument2_get_lastModified,
+    DocObjHTMLDocument2_put_URL,
+    DocObjHTMLDocument2_get_URL,
+    DocObjHTMLDocument2_put_domain,
+    DocObjHTMLDocument2_get_domain,
+    DocObjHTMLDocument2_put_cookie,
+    DocObjHTMLDocument2_get_cookie,
+    DocObjHTMLDocument2_put_expando,
+    DocObjHTMLDocument2_get_expando,
+    DocObjHTMLDocument2_put_charset,
+    DocObjHTMLDocument2_get_charset,
+    DocObjHTMLDocument2_put_defaultCharset,
+    DocObjHTMLDocument2_get_defaultCharset,
+    DocObjHTMLDocument2_get_mimeType,
+    DocObjHTMLDocument2_get_fileSize,
+    DocObjHTMLDocument2_get_fileCreatedDate,
+    DocObjHTMLDocument2_get_fileModifiedDate,
+    DocObjHTMLDocument2_get_fileUpdatedDate,
+    DocObjHTMLDocument2_get_security,
+    DocObjHTMLDocument2_get_protocol,
+    DocObjHTMLDocument2_get_nameProp,
+    DocObjHTMLDocument2_write,
+    DocObjHTMLDocument2_writeln,
+    DocObjHTMLDocument2_open,
+    DocObjHTMLDocument2_close,
+    DocObjHTMLDocument2_clear,
+    DocObjHTMLDocument2_queryCommandSupported,
+    DocObjHTMLDocument2_queryCommandEnabled,
+    DocObjHTMLDocument2_queryCommandState,
+    DocObjHTMLDocument2_queryCommandIndeterm,
+    DocObjHTMLDocument2_queryCommandText,
+    DocObjHTMLDocument2_queryCommandValue,
+    DocObjHTMLDocument2_execCommand,
+    DocObjHTMLDocument2_execCommandShowHelp,
+    DocObjHTMLDocument2_createElement,
+    DocObjHTMLDocument2_put_onhelp,
+    DocObjHTMLDocument2_get_onhelp,
+    DocObjHTMLDocument2_put_onclick,
+    DocObjHTMLDocument2_get_onclick,
+    DocObjHTMLDocument2_put_ondblclick,
+    DocObjHTMLDocument2_get_ondblclick,
+    DocObjHTMLDocument2_put_onkeyup,
+    DocObjHTMLDocument2_get_onkeyup,
+    DocObjHTMLDocument2_put_onkeydown,
+    DocObjHTMLDocument2_get_onkeydown,
+    DocObjHTMLDocument2_put_onkeypress,
+    DocObjHTMLDocument2_get_onkeypress,
+    DocObjHTMLDocument2_put_onmouseup,
+    DocObjHTMLDocument2_get_onmouseup,
+    DocObjHTMLDocument2_put_onmousedown,
+    DocObjHTMLDocument2_get_onmousedown,
+    DocObjHTMLDocument2_put_onmousemove,
+    DocObjHTMLDocument2_get_onmousemove,
+    DocObjHTMLDocument2_put_onmouseout,
+    DocObjHTMLDocument2_get_onmouseout,
+    DocObjHTMLDocument2_put_onmouseover,
+    DocObjHTMLDocument2_get_onmouseover,
+    DocObjHTMLDocument2_put_onreadystatechange,
+    DocObjHTMLDocument2_get_onreadystatechange,
+    DocObjHTMLDocument2_put_onafterupdate,
+    DocObjHTMLDocument2_get_onafterupdate,
+    DocObjHTMLDocument2_put_onrowexit,
+    DocObjHTMLDocument2_get_onrowexit,
+    DocObjHTMLDocument2_put_onrowenter,
+    DocObjHTMLDocument2_get_onrowenter,
+    DocObjHTMLDocument2_put_ondragstart,
+    DocObjHTMLDocument2_get_ondragstart,
+    DocObjHTMLDocument2_put_onselectstart,
+    DocObjHTMLDocument2_get_onselectstart,
+    DocObjHTMLDocument2_elementFromPoint,
+    DocObjHTMLDocument2_get_parentWindow,
+    DocObjHTMLDocument2_get_styleSheets,
+    DocObjHTMLDocument2_put_onbeforeupdate,
+    DocObjHTMLDocument2_get_onbeforeupdate,
+    DocObjHTMLDocument2_put_onerrorupdate,
+    DocObjHTMLDocument2_get_onerrorupdate,
+    DocObjHTMLDocument2_toString,
+    DocObjHTMLDocument2_createStyleSheet
+};
+
+/**********************************************************
  * ISupportErrorInfo implementation
  */
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(SupportErrorInfo)
@@ -2451,12 +2765,16 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IUnknown_inner;
     }else if(htmldoc_qi(&This->basedoc, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IHTMLDocument, riid) || IsEqualGUID(&IID_IHTMLDocument2, riid)) {
+        *ppv = &This->IHTMLDocument2_iface;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_IDocumentSelector, riid)) {
         *ppv = &This->IDocumentSelector_iface;
     }else if(IsEqualGUID(&IID_IDocumentEvent, riid)) {
         *ppv = &This->IDocumentEvent_iface;
+    }else if(IsEqualGUID(&DIID_DispHTMLDocument, riid)) {
+        *ppv = &This->IHTMLDocument2_iface;
     }else if(IsEqualGUID(&IID_ISupportErrorInfo, riid)) {
         *ppv = &This->ISupportErrorInfo_iface;
     }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
@@ -2765,6 +3083,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->ref = 1;
     doc->IUnknown_inner.lpVtbl = &HTMLDocumentObjVtbl;
     doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
+    doc->IHTMLDocument2_iface.lpVtbl = &DocObjHTMLDocument2Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocObjDocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocObjDocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &DocObjSupportErrorInfoVtbl;

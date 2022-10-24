@@ -473,7 +473,7 @@ static HRESULT WINAPI OleDocumentView_GetDocument(IOleDocumentView *iface, IUnkn
     if(!ppunk)
         return E_INVALIDARG;
 
-    *ppunk = (IUnknown*)&This->basedoc.IHTMLDocument2_iface;
+    *ppunk = (IUnknown*)&This->IHTMLDocument2_iface;
     IUnknown_AddRef(*ppunk);
     return S_OK;
 }
