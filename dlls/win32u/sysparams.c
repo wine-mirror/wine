@@ -5491,3 +5491,88 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return 0;
     }
 }
+
+/***********************************************************************
+ *           NtUserDisplayConfigGetDeviceInfo    (win32u.@)
+ */
+NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEADER *packet )
+{
+    NTSTATUS ret = STATUS_UNSUCCESSFUL;
+
+    TRACE( "packet %p.\n", packet );
+
+    if (!packet || packet->size < sizeof(*packet))
+        return STATUS_UNSUCCESSFUL;
+
+    switch (packet->type)
+    {
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME:
+    {
+        DISPLAYCONFIG_SOURCE_DEVICE_NAME *source_name = (DISPLAYCONFIG_SOURCE_DEVICE_NAME *)packet;
+        struct adapter *adapter;
+
+        TRACE( "DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME.\n" );
+
+        if (packet->size < sizeof(*source_name))
+            return STATUS_INVALID_PARAMETER;
+
+        if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
+
+        LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+        {
+            if (source_name->header.id != adapter->id) continue;
+            if (memcmp( &source_name->header.adapterId, &adapter->gpu_luid, sizeof(adapter->gpu_luid) )) continue;
+
+            lstrcpyW( source_name->viewGdiDeviceName, adapter->dev.device_name );
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        unlock_display_devices();
+        return ret;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME:
+    {
+        DISPLAYCONFIG_TARGET_DEVICE_NAME *target_name = (DISPLAYCONFIG_TARGET_DEVICE_NAME *)packet;
+
+        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME stub.\n" );
+
+        if (packet->size < sizeof(*target_name))
+            return STATUS_INVALID_PARAMETER;
+
+        return STATUS_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE:
+    {
+        DISPLAYCONFIG_TARGET_PREFERRED_MODE *preferred_mode = (DISPLAYCONFIG_TARGET_PREFERRED_MODE *)packet;
+
+        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE stub.\n" );
+
+        if (packet->size < sizeof(*preferred_mode))
+            return STATUS_INVALID_PARAMETER;
+
+        return STATUS_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME:
+    {
+        DISPLAYCONFIG_ADAPTER_NAME *adapter_name = (DISPLAYCONFIG_ADAPTER_NAME *)packet;
+
+        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME stub.\n" );
+
+        if (packet->size < sizeof(*adapter_name))
+            return STATUS_INVALID_PARAMETER;
+
+        return STATUS_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION:
+    case DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO:
+    case DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL:
+    default:
+        FIXME( "Unimplemented packet type %u.\n", packet->type );
+        return STATUS_INVALID_PARAMETER;
+    }
+}

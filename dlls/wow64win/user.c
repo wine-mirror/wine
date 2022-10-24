@@ -4077,3 +4077,10 @@ NTSTATUS WINAPI wow64_NtUserWindowFromPoint( UINT *args )
 
     return HandleToUlong( NtUserWindowFromPoint( x, y ));
 }
+
+NTSTATUS WINAPI wow64_NtUserDisplayConfigGetDeviceInfo( UINT *args )
+{
+    DISPLAYCONFIG_DEVICE_INFO_HEADER *packet = get_ptr( &args );
+
+    return NtUserDisplayConfigGetDeviceInfo( packet );
+}

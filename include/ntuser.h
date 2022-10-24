@@ -677,6 +677,7 @@ BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
 BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
 BOOL    WINAPI NtUserDisableThreadIme( DWORD thread_id );
 LRESULT WINAPI NtUserDispatchMessage( const MSG *msg );
+NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEADER *packet );
 BOOL    WINAPI NtUserDragDetect( HWND hwnd, int x, int y );
 BOOL    WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *rect, HFONT font,
                                       HICON icon, const WCHAR *str, UINT flags );

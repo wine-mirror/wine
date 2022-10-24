@@ -125,6 +125,7 @@
     SYSCALL_ENTRY( NtUserDestroyWindow ) \
     SYSCALL_ENTRY( NtUserDisableThreadIme ) \
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
+    SYSCALL_ENTRY( NtUserDisplayConfigGetDeviceInfo ) \
     SYSCALL_ENTRY( NtUserDragDetect ) \
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \

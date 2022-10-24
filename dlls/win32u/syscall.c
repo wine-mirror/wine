@@ -139,6 +139,7 @@ static void * const syscalls[] =
     NtUserDestroyWindow,
     NtUserDisableThreadIme,
     NtUserDispatchMessage,
+    NtUserDisplayConfigGetDeviceInfo,
     NtUserDragDetect,
     NtUserDrawIconEx,
     NtUserEmptyClipboard,

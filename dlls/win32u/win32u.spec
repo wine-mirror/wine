@@ -840,7 +840,7 @@
 @ stdcall -syscall NtUserDisableThreadIme(long)
 @ stub NtUserDiscardPointerFrameMessages
 @ stdcall -syscall NtUserDispatchMessage(ptr)
-@ stub NtUserDisplayConfigGetDeviceInfo
+@ stdcall -syscall NtUserDisplayConfigGetDeviceInfo(ptr)
 @ stub NtUserDisplayConfigSetDeviceInfo
 @ stub NtUserDoSoundConnect
 @ stub NtUserDoSoundDisconnect

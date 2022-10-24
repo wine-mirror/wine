@@ -675,6 +675,25 @@ static void test_timer(void)
     DestroyWindow( hwnd );
 }
 
+static void test_NtUserDisplayConfigGetDeviceInfo(void)
+{
+    DISPLAYCONFIG_SOURCE_DEVICE_NAME source_name;
+    NTSTATUS status;
+
+    source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+    source_name.header.size = sizeof(source_name.header);
+    status = NtUserDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status);
+
+    source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+    source_name.header.size = sizeof(source_name);
+    source_name.header.adapterId.LowPart = 0xFFFF;
+    source_name.header.adapterId.HighPart = 0xFFFF;
+    source_name.header.id = 0;
+    status = NtUserDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(status == STATUS_UNSUCCESSFUL || status == STATUS_NOT_SUPPORTED, "got %#lx.\n", status);
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -692,4 +711,5 @@ START_TEST(win32u)
     test_timer();
 
     test_NtUserCloseWindowStation();
+    test_NtUserDisplayConfigGetDeviceInfo();
 }
