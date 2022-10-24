@@ -23,6 +23,8 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 
+#include "initguid.h"
+
 #include "wine/test.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -30,8 +32,13 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
+#include "setupapi.h"
+#include "ntddvdeo.h"
 #include "wine/heap.h"
 #include <stdio.h>
+
+DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
+DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
 
 static LONG (WINAPI *pGetDisplayConfigBufferSizes)(UINT32,UINT32*,UINT32*);
 static BOOL (WINAPI *pGetDpiForMonitorInternal)(HMONITOR,UINT,UINT*,UINT*);
@@ -1624,6 +1631,58 @@ static void test_EnumDisplayMonitors(void)
     ok(ret, "CloseWindowStation failed, error %#lx.\n", GetLastError());
 }
 
+static void check_device_path(const WCHAR *device_path, const LUID *adapter_id, DWORD id)
+{
+    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
+    BOOL ret, found = FALSE;
+    DEVPROPTYPE type;
+    DWORD output_id;
+    unsigned int i;
+    HDEVINFO set;
+    LUID luid;
+
+    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
+    iface_data->cbSize = sizeof(*iface_data);
+
+    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_MONITOR, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "Got error %lu.\n", GetLastError());
+
+    i = 0;
+    while (SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_MONITOR, i, &iface))
+    {
+        ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data,
+                sizeof(iface_detail_buffer), NULL, &device_data);
+        ok(ret, "Got unexpected ret %d, GetLastError() %lu.\n", ret, GetLastError());
+
+        ret = SetupDiGetDevicePropertyW(set, &device_data, &DEVPROPKEY_MONITOR_GPU_LUID, &type,
+                (BYTE *)&luid, sizeof(luid), NULL, 0);
+        ok(ret || broken(GetLastError() == ERROR_NOT_FOUND) /* before Win10 1809 */,
+                "Got error %lu.\n", GetLastError());
+        if (!ret)
+        {
+            win_skip("DEVPROPKEY_MONITOR_GPU_LUID is not found, skipping device path check.\n");
+            SetupDiDestroyDeviceInfoList(set);
+            return;
+        }
+        ret = SetupDiGetDevicePropertyW(set, &device_data, &DEVPROPKEY_MONITOR_OUTPUT_ID,
+                &type, (BYTE *)&output_id, sizeof(output_id), NULL, 0);
+        ok(ret, "Got error %lu.\n", GetLastError());
+
+        if (output_id == id && RtlEqualLuid(&luid, adapter_id) && !wcsicmp(device_path, iface_data->DevicePath))
+        {
+            found = TRUE;
+            break;
+        }
+        ++i;
+    }
+    ok(found, "device_path %s not found, luid %04lx:%04lx.\n", debugstr_w(device_path), adapter_id->HighPart,
+            adapter_id->LowPart);
+    SetupDiDestroyDeviceInfoList(set);
+}
+
 static void test_QueryDisplayConfig_result(UINT32 flags,
         UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
 {
@@ -1654,7 +1713,6 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         ret = pDisplayConfigGetDeviceInfo(&source_name.header);
         ok(ret == ERROR_GEN_FAILURE, "Expected GEN_FAILURE, got %ld\n", ret);
 
-        todo_wine {
         target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
         target_name.header.size = sizeof(target_name);
         target_name.header.adapterId = pi[i].targetInfo.adapterId;
@@ -1662,8 +1720,7 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         target_name.monitorDevicePath[0] = '\0';
         ret = pDisplayConfigGetDeviceInfo(&target_name.header);
         ok(!ret, "Expected 0, got %ld\n", ret);
-        ok(target_name.monitorDevicePath[0] != '\0', "Expected monitor device path, got empty string\n");
-        }
+        check_device_path(target_name.monitorDevicePath, &target_name.header.adapterId, target_name.header.id);
 
         todo_wine {
         preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;

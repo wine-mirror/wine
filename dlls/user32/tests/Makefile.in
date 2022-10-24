@@ -1,5 +1,5 @@
 TESTDLL   = user32.dll
-IMPORTS   = user32 gdi32 advapi32 hid imm32
+IMPORTS   = user32 gdi32 advapi32 hid imm32 setupapi
 
 C_SRCS = \
 	broadcast.c \

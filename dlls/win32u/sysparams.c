@@ -5546,13 +5546,36 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
     case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME:
     {
         DISPLAYCONFIG_TARGET_DEVICE_NAME *target_name = (DISPLAYCONFIG_TARGET_DEVICE_NAME *)packet;
+        char buffer[ARRAY_SIZE(target_name->monitorFriendlyDeviceName)];
+        struct monitor *monitor;
 
-        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME stub.\n" );
+        TRACE( "DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME.\n" );
 
         if (packet->size < sizeof(*target_name))
             return STATUS_INVALID_PARAMETER;
 
-        return STATUS_NOT_SUPPORTED;
+        if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
+
+        memset( &target_name->flags, 0, sizeof(*target_name) - offsetof(DISPLAYCONFIG_TARGET_DEVICE_NAME, flags) );
+
+        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+        {
+            if (target_name->header.id != monitor->output_id) continue;
+            if (memcmp( &target_name->header.adapterId, &monitor->adapter->gpu_luid,
+                        sizeof(monitor->adapter->gpu_luid) ))
+                continue;
+
+            target_name->outputTechnology = DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL;
+            /* FIXME: get real monitor name. */
+            snprintf( buffer, ARRAY_SIZE(buffer), "Display%u", monitor->output_id + 1 );
+            asciiz_to_unicode( target_name->monitorFriendlyDeviceName, buffer );
+            lstrcpyW( target_name->monitorDevicePath, monitor->dev.interface_name );
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        unlock_display_devices();
+        return ret;
     }
     case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE:
     {
