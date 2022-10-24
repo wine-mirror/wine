@@ -543,7 +543,7 @@ static void expect_key_input_(unsigned int line, unsigned int ctx, WCHAR ch, uns
                        "%x: wVirtualScanCode = %x expected %x\n", ctx,
                        record.Event.KeyEvent.wVirtualScanCode, vs);
     ok_(__FILE__,line)(record.Event.KeyEvent.dwControlKeyState == ctrl_state,
-                       "%x: dwControlKeyState = %lx\n", ctx, record.Event.KeyEvent.dwControlKeyState);
+                       "%x: dwControlKeyState = %lx expected %x\n", ctx, record.Event.KeyEvent.dwControlKeyState, ctrl_state);
 }
 
 #define get_input_key_vt() get_input_key_vt_(__LINE__)
@@ -567,12 +567,17 @@ static void expect_key_pressed_(unsigned int line, unsigned int ctx, WCHAR ch, u
     if (ctrl_state & LEFT_ALT_PRESSED)
         expect_key_input_(line, ctx, 0, VK_MENU, TRUE,
                           LEFT_ALT_PRESSED | (ctrl_state & SHIFT_PRESSED));
-    if (ctrl_state & LEFT_CTRL_PRESSED)
+    if (ctrl_state & RIGHT_ALT_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_MENU, TRUE,
+                          RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED | ENHANCED_KEY | (ctrl_state & SHIFT_PRESSED));
+    else if (ctrl_state & LEFT_CTRL_PRESSED)
         expect_key_input_(line, ctx, 0, VK_CONTROL, TRUE,
                           LEFT_CTRL_PRESSED | (ctrl_state & (SHIFT_PRESSED | LEFT_ALT_PRESSED)));
     expect_key_input_(line, ctx, ch, vk, TRUE, ctrl_state);
     expect_key_input_(line, ctx, ch, vk, FALSE, ctrl_state);
-    if (ctrl_state & LEFT_CTRL_PRESSED)
+    if (ctrl_state & RIGHT_ALT_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_MENU, FALSE, ENHANCED_KEY | (ctrl_state & SHIFT_PRESSED));
+    else if (ctrl_state & LEFT_CTRL_PRESSED)
         expect_key_input_(line, ctx, 0, VK_CONTROL, FALSE,
                           ctrl_state & (SHIFT_PRESSED | LEFT_ALT_PRESSED));
     if (ctrl_state & LEFT_ALT_PRESSED)
@@ -585,9 +590,12 @@ static void expect_key_pressed_(unsigned int line, unsigned int ctx, WCHAR ch, u
 static void expect_char_key_(unsigned int line, WCHAR ch)
 {
     unsigned int ctrl = 0, vk;
+
     vk = VkKeyScanW(ch);
     if (vk == ~0) vk = 0;
     if (vk & 0x0100) ctrl |= SHIFT_PRESSED;
+    /* Some keyboard (like German or French one) report right alt as ctrl+alt */
+    if ((vk & 0x0600) == 0x0600) ctrl |= RIGHT_ALT_PRESSED;
     if (vk & 0x0200) ctrl |= LEFT_CTRL_PRESSED;
     vk &= 0xff;
     expect_key_pressed_(line, ch, ch, vk, ctrl);
