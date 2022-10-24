@@ -477,7 +477,7 @@ static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = IHTMLDocument7_get_parentWindow(&This->basedoc.IHTMLDocument7_iface, (IHTMLWindow2**)p);
+    hres = IHTMLDocument7_get_parentWindow(&This->IHTMLDocument7_iface, (IHTMLWindow2**)p);
     return hres == S_OK && !*p ? E_PENDING : hres;
 }
 
@@ -1222,7 +1222,7 @@ static HRESULT WINAPI HTMLDocument_get_charset(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLDocument7_get_characterSet(&This->basedoc.IHTMLDocument7_iface, p);
+    return IHTMLDocument7_get_characterSet(&This->IHTMLDocument7_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_defaultCharset(IHTMLDocument2 *iface, BSTR v)
@@ -1607,7 +1607,7 @@ static HRESULT WINAPI HTMLDocument_put_onclick(IHTMLDocument2 *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_CLICK, &v);
+    return set_doc_event(This, EVENTID_CLICK, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onclick(IHTMLDocument2 *iface, VARIANT *p)
@@ -1616,7 +1616,7 @@ static HRESULT WINAPI HTMLDocument_get_onclick(IHTMLDocument2 *iface, VARIANT *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_CLICK, p);
+    return get_doc_event(This, EVENTID_CLICK, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_ondblclick(IHTMLDocument2 *iface, VARIANT v)
@@ -1625,7 +1625,7 @@ static HRESULT WINAPI HTMLDocument_put_ondblclick(IHTMLDocument2 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_DBLCLICK, &v);
+    return set_doc_event(This, EVENTID_DBLCLICK, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_ondblclick(IHTMLDocument2 *iface, VARIANT *p)
@@ -1634,7 +1634,7 @@ static HRESULT WINAPI HTMLDocument_get_ondblclick(IHTMLDocument2 *iface, VARIANT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_DBLCLICK, p);
+    return get_doc_event(This, EVENTID_DBLCLICK, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onkeyup(IHTMLDocument2 *iface, VARIANT v)
@@ -1643,7 +1643,7 @@ static HRESULT WINAPI HTMLDocument_put_onkeyup(IHTMLDocument2 *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_KEYUP, &v);
+    return set_doc_event(This, EVENTID_KEYUP, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onkeyup(IHTMLDocument2 *iface, VARIANT *p)
@@ -1652,7 +1652,7 @@ static HRESULT WINAPI HTMLDocument_get_onkeyup(IHTMLDocument2 *iface, VARIANT *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_KEYUP, p);
+    return get_doc_event(This, EVENTID_KEYUP, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onkeydown(IHTMLDocument2 *iface, VARIANT v)
@@ -1661,7 +1661,7 @@ static HRESULT WINAPI HTMLDocument_put_onkeydown(IHTMLDocument2 *iface, VARIANT 
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_KEYDOWN, &v);
+    return set_doc_event(This, EVENTID_KEYDOWN, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onkeydown(IHTMLDocument2 *iface, VARIANT *p)
@@ -1670,7 +1670,7 @@ static HRESULT WINAPI HTMLDocument_get_onkeydown(IHTMLDocument2 *iface, VARIANT 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_KEYDOWN, p);
+    return get_doc_event(This, EVENTID_KEYDOWN, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onkeypress(IHTMLDocument2 *iface, VARIANT v)
@@ -1679,7 +1679,7 @@ static HRESULT WINAPI HTMLDocument_put_onkeypress(IHTMLDocument2 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_KEYPRESS, &v);
+    return set_doc_event(This, EVENTID_KEYPRESS, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onkeypress(IHTMLDocument2 *iface, VARIANT *p)
@@ -1688,7 +1688,7 @@ static HRESULT WINAPI HTMLDocument_get_onkeypress(IHTMLDocument2 *iface, VARIANT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_KEYPRESS, p);
+    return get_doc_event(This, EVENTID_KEYPRESS, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onmouseup(IHTMLDocument2 *iface, VARIANT v)
@@ -1697,7 +1697,7 @@ static HRESULT WINAPI HTMLDocument_put_onmouseup(IHTMLDocument2 *iface, VARIANT 
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_MOUSEUP, &v);
+    return set_doc_event(This, EVENTID_MOUSEUP, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onmouseup(IHTMLDocument2 *iface, VARIANT *p)
@@ -1706,7 +1706,7 @@ static HRESULT WINAPI HTMLDocument_get_onmouseup(IHTMLDocument2 *iface, VARIANT 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_MOUSEUP, p);
+    return get_doc_event(This, EVENTID_MOUSEUP, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onmousedown(IHTMLDocument2 *iface, VARIANT v)
@@ -1715,7 +1715,7 @@ static HRESULT WINAPI HTMLDocument_put_onmousedown(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_MOUSEDOWN, &v);
+    return set_doc_event(This, EVENTID_MOUSEDOWN, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onmousedown(IHTMLDocument2 *iface, VARIANT *p)
@@ -1724,7 +1724,7 @@ static HRESULT WINAPI HTMLDocument_get_onmousedown(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_MOUSEDOWN, p);
+    return get_doc_event(This, EVENTID_MOUSEDOWN, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onmousemove(IHTMLDocument2 *iface, VARIANT v)
@@ -1733,7 +1733,7 @@ static HRESULT WINAPI HTMLDocument_put_onmousemove(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_MOUSEMOVE, &v);
+    return set_doc_event(This, EVENTID_MOUSEMOVE, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onmousemove(IHTMLDocument2 *iface, VARIANT *p)
@@ -1742,7 +1742,7 @@ static HRESULT WINAPI HTMLDocument_get_onmousemove(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_MOUSEMOVE, p);
+    return get_doc_event(This, EVENTID_MOUSEMOVE, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onmouseout(IHTMLDocument2 *iface, VARIANT v)
@@ -1751,7 +1751,7 @@ static HRESULT WINAPI HTMLDocument_put_onmouseout(IHTMLDocument2 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_MOUSEOUT, &v);
+    return set_doc_event(This, EVENTID_MOUSEOUT, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onmouseout(IHTMLDocument2 *iface, VARIANT *p)
@@ -1760,7 +1760,7 @@ static HRESULT WINAPI HTMLDocument_get_onmouseout(IHTMLDocument2 *iface, VARIANT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_MOUSEOUT, p);
+    return get_doc_event(This, EVENTID_MOUSEOUT, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onmouseover(IHTMLDocument2 *iface, VARIANT v)
@@ -1769,7 +1769,7 @@ static HRESULT WINAPI HTMLDocument_put_onmouseover(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_MOUSEOVER, &v);
+    return set_doc_event(This, EVENTID_MOUSEOVER, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onmouseover(IHTMLDocument2 *iface, VARIANT *p)
@@ -1778,7 +1778,7 @@ static HRESULT WINAPI HTMLDocument_get_onmouseover(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_MOUSEOVER, p);
+    return get_doc_event(This, EVENTID_MOUSEOVER, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onreadystatechange(IHTMLDocument2 *iface, VARIANT v)
@@ -1787,7 +1787,7 @@ static HRESULT WINAPI HTMLDocument_put_onreadystatechange(IHTMLDocument2 *iface,
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_READYSTATECHANGE, &v);
+    return set_doc_event(This, EVENTID_READYSTATECHANGE, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onreadystatechange(IHTMLDocument2 *iface, VARIANT *p)
@@ -1796,7 +1796,7 @@ static HRESULT WINAPI HTMLDocument_get_onreadystatechange(IHTMLDocument2 *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_READYSTATECHANGE, p);
+    return get_doc_event(This, EVENTID_READYSTATECHANGE, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onafterupdate(IHTMLDocument2 *iface, VARIANT v)
@@ -1847,7 +1847,7 @@ static HRESULT WINAPI HTMLDocument_put_ondragstart(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_DRAGSTART, &v);
+    return set_doc_event(This, EVENTID_DRAGSTART, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_ondragstart(IHTMLDocument2 *iface, VARIANT *p)
@@ -1856,7 +1856,7 @@ static HRESULT WINAPI HTMLDocument_get_ondragstart(IHTMLDocument2 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_DRAGSTART, p);
+    return get_doc_event(This, EVENTID_DRAGSTART, p);
 }
 
 static HRESULT WINAPI HTMLDocument_put_onselectstart(IHTMLDocument2 *iface, VARIANT v)
@@ -1865,7 +1865,7 @@ static HRESULT WINAPI HTMLDocument_put_onselectstart(IHTMLDocument2 *iface, VARI
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_SELECTSTART, &v);
+    return set_doc_event(This, EVENTID_SELECTSTART, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onselectstart(IHTMLDocument2 *iface, VARIANT *p)
@@ -1874,7 +1874,7 @@ static HRESULT WINAPI HTMLDocument_get_onselectstart(IHTMLDocument2 *iface, VARI
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_SELECTSTART, p);
+    return get_doc_event(This, EVENTID_SELECTSTART, p);
 }
 
 static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG x, LONG y,
@@ -1915,7 +1915,7 @@ static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTML
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = IHTMLDocument7_get_defaultView(&This->basedoc.IHTMLDocument7_iface, p);
+    hres = IHTMLDocument7_get_defaultView(&This->IHTMLDocument7_iface, p);
     return hres == S_OK && !*p ? E_FAIL : hres;
 }
 
@@ -2476,7 +2476,7 @@ static HRESULT WINAPI HTMLDocument3_put_oncontextmenu(IHTMLDocument3 *iface, VAR
 
     TRACE("(%p)->()\n", This);
 
-    return set_doc_event(&This->basedoc, EVENTID_CONTEXTMENU, &v);
+    return set_doc_event(This, EVENTID_CONTEXTMENU, &v);
 }
 
 static HRESULT WINAPI HTMLDocument3_get_oncontextmenu(IHTMLDocument3 *iface, VARIANT *p)
@@ -2485,7 +2485,7 @@ static HRESULT WINAPI HTMLDocument3_get_oncontextmenu(IHTMLDocument3 *iface, VAR
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_CONTEXTMENU, p);
+    return get_doc_event(This, EVENTID_CONTEXTMENU, p);
 }
 
 static HRESULT WINAPI HTMLDocument3_put_onstop(IHTMLDocument3 *iface, VARIANT v)
@@ -2873,7 +2873,7 @@ static HRESULT WINAPI HTMLDocument4_put_onselectionchange(IHTMLDocument4 *iface,
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_SELECTIONCHANGE, &v);
+    return set_doc_event(This, EVENTID_SELECTIONCHANGE, &v);
 }
 
 static HRESULT WINAPI HTMLDocument4_get_onselectionchange(IHTMLDocument4 *iface, VARIANT *p)
@@ -2882,7 +2882,7 @@ static HRESULT WINAPI HTMLDocument4_get_onselectionchange(IHTMLDocument4 *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_SELECTIONCHANGE, p);
+    return get_doc_event(This, EVENTID_SELECTIONCHANGE, p);
 }
 
 static HRESULT WINAPI HTMLDocument4_get_namespaces(IHTMLDocument4 *iface, IDispatch **p)
@@ -3062,7 +3062,7 @@ static HRESULT WINAPI HTMLDocument5_put_onmousewheel(IHTMLDocument5 *iface, VARI
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_MOUSEWHEEL, &v);
+    return set_doc_event(This, EVENTID_MOUSEWHEEL, &v);
 }
 
 static HRESULT WINAPI HTMLDocument5_get_onmousewheel(IHTMLDocument5 *iface, VARIANT *p)
@@ -3071,7 +3071,7 @@ static HRESULT WINAPI HTMLDocument5_get_onmousewheel(IHTMLDocument5 *iface, VARI
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_MOUSEWHEEL, p);
+    return get_doc_event(This, EVENTID_MOUSEWHEEL, p);
 }
 
 static HRESULT WINAPI HTMLDocument5_get_doctype(IHTMLDocument5 *iface, IHTMLDOMNode **p)
@@ -3181,7 +3181,7 @@ static HRESULT WINAPI HTMLDocument5_put_onfocusin(IHTMLDocument5 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_FOCUSIN, &v);
+    return set_doc_event(This, EVENTID_FOCUSIN, &v);
 }
 
 static HRESULT WINAPI HTMLDocument5_get_onfocusin(IHTMLDocument5 *iface, VARIANT *p)
@@ -3190,7 +3190,7 @@ static HRESULT WINAPI HTMLDocument5_get_onfocusin(IHTMLDocument5 *iface, VARIANT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_FOCUSIN, p);
+    return get_doc_event(This, EVENTID_FOCUSIN, p);
 }
 
 static HRESULT WINAPI HTMLDocument5_put_onfocusout(IHTMLDocument5 *iface, VARIANT v)
@@ -3199,7 +3199,7 @@ static HRESULT WINAPI HTMLDocument5_put_onfocusout(IHTMLDocument5 *iface, VARIAN
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_FOCUSOUT, &v);
+    return set_doc_event(This, EVENTID_FOCUSOUT, &v);
 }
 
 static HRESULT WINAPI HTMLDocument5_get_onfocusout(IHTMLDocument5 *iface, VARIANT *p)
@@ -3208,7 +3208,7 @@ static HRESULT WINAPI HTMLDocument5_get_onfocusout(IHTMLDocument5 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_FOCUSOUT, p);
+    return get_doc_event(This, EVENTID_FOCUSOUT, p);
 }
 
 static HRESULT WINAPI HTMLDocument5_put_onactivate(IHTMLDocument5 *iface, VARIANT v)
@@ -3383,7 +3383,7 @@ static HRESULT WINAPI HTMLDocument6_get_onstorage(IHTMLDocument6 *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_STORAGE, p);
+    return get_doc_event(This, EVENTID_STORAGE, p);
 }
 
 static HRESULT WINAPI HTMLDocument6_put_onstorage(IHTMLDocument6 *iface, VARIANT v)
@@ -3392,7 +3392,7 @@ static HRESULT WINAPI HTMLDocument6_put_onstorage(IHTMLDocument6 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_STORAGE, &v);
+    return set_doc_event(This, EVENTID_STORAGE, &v);
 }
 
 static HRESULT WINAPI HTMLDocument6_get_onstoragecommit(IHTMLDocument6 *iface,
@@ -3402,7 +3402,7 @@ static HRESULT WINAPI HTMLDocument6_get_onstoragecommit(IHTMLDocument6 *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_doc_event(&This->basedoc, EVENTID_STORAGECOMMIT, p);
+    return get_doc_event(This, EVENTID_STORAGECOMMIT, p);
 }
 
 static HRESULT WINAPI HTMLDocument6_put_onstoragecommit(IHTMLDocument6 *iface, VARIANT v)
@@ -3411,7 +3411,7 @@ static HRESULT WINAPI HTMLDocument6_put_onstoragecommit(IHTMLDocument6 *iface, V
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return set_doc_event(&This->basedoc, EVENTID_STORAGECOMMIT, &v);
+    return set_doc_event(This, EVENTID_STORAGECOMMIT, &v);
 }
 
 static HRESULT WINAPI HTMLDocument6_getElementById(IHTMLDocument6 *iface,
@@ -3483,62 +3483,60 @@ static const IHTMLDocument6Vtbl HTMLDocument6Vtbl = {
     HTMLDocument6_updateSettings
 };
 
-static inline HTMLDocument *impl_from_IHTMLDocument7(IHTMLDocument7 *iface)
+static inline HTMLDocumentNode *impl_from_IHTMLDocument7(IHTMLDocument7 *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocument, IHTMLDocument7_iface);
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, IHTMLDocument7_iface);
 }
 
 static HRESULT WINAPI HTMLDocument7_QueryInterface(IHTMLDocument7 *iface, REFIID riid, void **ppv)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return htmldoc_query_interface(This, riid, ppv);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return htmldoc_query_interface(&This->basedoc, riid, ppv);
 }
 
 static ULONG WINAPI HTMLDocument7_AddRef(IHTMLDocument7 *iface)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return htmldoc_addref(This);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return htmldoc_addref(&This->basedoc);
 }
 
 static ULONG WINAPI HTMLDocument7_Release(IHTMLDocument7 *iface)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return htmldoc_release(This);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return htmldoc_release(&This->basedoc);
 }
 
 static HRESULT WINAPI HTMLDocument7_GetTypeInfoCount(IHTMLDocument7 *iface, UINT *pctinfo)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->basedoc.IDispatchEx_iface, pctinfo);
 }
 
-static HRESULT WINAPI HTMLDocument7_GetTypeInfo(IHTMLDocument7 *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
+static HRESULT WINAPI HTMLDocument7_GetTypeInfo(IHTMLDocument7 *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return IDispatchEx_GetTypeInfo(&This->basedoc.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
-static HRESULT WINAPI HTMLDocument7_GetIDsOfNames(IHTMLDocument7 *iface, REFIID riid,
-        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+static HRESULT WINAPI HTMLDocument7_GetIDsOfNames(IHTMLDocument7 *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
-            rgDispId);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return IDispatchEx_GetIDsOfNames(&This->basedoc.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI HTMLDocument7_Invoke(IHTMLDocument7 *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+static HRESULT WINAPI HTMLDocument7_Invoke(IHTMLDocument7 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
+    return IDispatchEx_Invoke(&This->basedoc.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_defaultView(IHTMLDocument7 *iface, IHTMLWindow2 **p)
 {
-    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface)->doc_node;
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -3553,14 +3551,14 @@ static HRESULT WINAPI HTMLDocument7_get_defaultView(IHTMLDocument7 *iface, IHTML
 
 static HRESULT WINAPI HTMLDocument7_createCDATASection(IHTMLDocument7 *iface, BSTR text, IHTMLDOMNode **newCDATASectionNode)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, newCDATASectionNode);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_getSelection(IHTMLDocument7 *iface, IHTMLSelection **ppIHTMLSelection)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, ppIHTMLSelection);
     return E_NOTIMPL;
 }
@@ -3568,14 +3566,14 @@ static HRESULT WINAPI HTMLDocument7_getSelection(IHTMLDocument7 *iface, IHTMLSel
 static HRESULT WINAPI HTMLDocument7_getElementsByTagNameNS(IHTMLDocument7 *iface, VARIANT *pvarNS,
         BSTR bstrLocalName, IHTMLElementCollection **pelColl)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrLocalName), pelColl);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIANT *pvarNS, BSTR bstrTag, IHTMLElement **newElem)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     nsIDOMElement *dom_element;
     HTMLElement *element;
     nsAString ns, tag;
@@ -3584,7 +3582,7 @@ static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIA
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrTag), newElem);
 
-    if(!This->doc_node->nsdoc) {
+    if(!This->nsdoc) {
         FIXME("NULL nsdoc\n");
         return E_FAIL;
     }
@@ -3594,7 +3592,7 @@ static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIA
 
     nsAString_InitDepend(&ns, pvarNS && V_VT(pvarNS) == VT_BSTR ? V_BSTR(pvarNS) : NULL);
     nsAString_InitDepend(&tag, bstrTag);
-    nsres = nsIDOMHTMLDocument_CreateElementNS(This->doc_node->nsdoc, &ns, &tag, &dom_element);
+    nsres = nsIDOMHTMLDocument_CreateElementNS(This->nsdoc, &ns, &tag, &dom_element);
     nsAString_Finish(&ns);
     nsAString_Finish(&tag);
     if(NS_FAILED(nsres)) {
@@ -3602,7 +3600,7 @@ static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIA
         return map_nsresult(nsres);
     }
 
-    hres = HTMLElement_Create(This->doc_node, (nsIDOMNode*)dom_element, FALSE, &element);
+    hres = HTMLElement_Create(This, (nsIDOMNode*)dom_element, FALSE, &element);
     nsIDOMElement_Release(dom_element);
     if(FAILED(hres))
         return hres;
@@ -3614,21 +3612,21 @@ static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIA
 static HRESULT WINAPI HTMLDocument7_createAttributeNS(IHTMLDocument7 *iface, VARIANT *pvarNS,
         BSTR bstrAttrName, IHTMLDOMAttribute **ppAttribute)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrAttrName), ppAttribute);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onmsthumbnailclick(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onmsthumbnailclick(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -3637,56 +3635,56 @@ static HRESULT WINAPI HTMLDocument7_get_onmsthumbnailclick(IHTMLDocument7 *iface
 
 static HRESULT WINAPI HTMLDocument7_get_characterSet(IHTMLDocument7 *iface, BSTR *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     nsAString charset_str;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc_node->nsdoc) {
+    if(!This->nsdoc) {
         FIXME("NULL nsdoc\n");
         return E_FAIL;
     }
 
     nsAString_Init(&charset_str, NULL);
-    nsres = nsIDOMHTMLDocument_GetCharacterSet(This->doc_node->nsdoc, &charset_str);
+    nsres = nsIDOMHTMLDocument_GetCharacterSet(This->nsdoc, &charset_str);
     return return_nsstr(nsres, &charset_str, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_createElement(IHTMLDocument7 *iface, BSTR bstrTag, IHTMLElement **newElem)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrTag), newElem);
 
-    return IHTMLDocument2_createElement(&This->doc_node->IHTMLDocument2_iface, bstrTag, newElem);
+    return IHTMLDocument2_createElement(&This->IHTMLDocument2_iface, bstrTag, newElem);
 }
 
 static HRESULT WINAPI HTMLDocument7_createAttribute(IHTMLDocument7 *iface, BSTR bstrAttrName, IHTMLDOMAttribute **ppAttribute)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrAttrName), ppAttribute);
 
-    return IHTMLDocument5_createAttribute(&This->doc_node->IHTMLDocument5_iface, bstrAttrName, ppAttribute);
+    return IHTMLDocument5_createAttribute(&This->IHTMLDocument5_iface, bstrAttrName, ppAttribute);
 }
 
 static HRESULT WINAPI HTMLDocument7_getElementsByClassName(IHTMLDocument7 *iface, BSTR v, IHTMLElementCollection **pel)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     nsIDOMNodeList *nslist;
     nsAString nsstr;
     nsresult nsres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
 
-    if(!This->doc_node->nsdoc) {
+    if(!This->nsdoc) {
         FIXME("NULL nsdoc not supported\n");
         return E_NOTIMPL;
     }
 
     nsAString_InitDepend(&nsstr, v);
-    nsres = nsIDOMHTMLDocument_GetElementsByClassName(This->doc_node->nsdoc, &nsstr, &nslist);
+    nsres = nsIDOMHTMLDocument_GetElementsByClassName(This->nsdoc, &nsstr, &nslist);
     nsAString_Finish(&nsstr);
     if(FAILED(nsres)) {
         ERR("GetElementByClassName failed: %08lx\n", nsres);
@@ -3694,7 +3692,7 @@ static HRESULT WINAPI HTMLDocument7_getElementsByClassName(IHTMLDocument7 *iface
     }
 
 
-    *pel = create_collection_from_nodelist(nslist, This->doc_node->document_mode);
+    *pel = create_collection_from_nodelist(nslist, This->document_mode);
     nsIDOMNodeList_Release(nslist);
     return S_OK;
 }
@@ -3702,93 +3700,93 @@ static HRESULT WINAPI HTMLDocument7_getElementsByClassName(IHTMLDocument7 *iface
 static HRESULT WINAPI HTMLDocument7_createProcessingInstruction(IHTMLDocument7 *iface, BSTR target,
         BSTR data, IDOMProcessingInstruction **newProcessingInstruction)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_w(target), debugstr_w(data), newProcessingInstruction);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_adoptNode(IHTMLDocument7 *iface, IHTMLDOMNode *pNodeSource, IHTMLDOMNode3 **ppNodeDest)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p %p)\n", This, pNodeSource, ppNodeDest);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onmssitemodejumplistitemremoved(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onmssitemodejumplistitemremoved(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_all(IHTMLDocument7 *iface, IHTMLElementCollection **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLDocument2_get_all(&This->doc_node->IHTMLDocument2_iface, p);
+    return IHTMLDocument2_get_all(&This->IHTMLDocument2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_inputEncoding(IHTMLDocument7 *iface, BSTR *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_xmlEncoding(IHTMLDocument7 *iface, BSTR *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_xmlStandalone(IHTMLDocument7 *iface, VARIANT_BOOL v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%x)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_xmlStandalone(IHTMLDocument7 *iface, VARIANT_BOOL *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_xmlVersion(IHTMLDocument7 *iface, BSTR v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_xmlVersion(IHTMLDocument7 *iface, BSTR *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_hasAttributes(IHTMLDocument7 *iface, VARIANT_BOOL *pfHasAttributes)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, pfHasAttributes);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onabort(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -3797,7 +3795,7 @@ static HRESULT WINAPI HTMLDocument7_put_onabort(IHTMLDocument7 *iface, VARIANT v
 
 static HRESULT WINAPI HTMLDocument7_get_onabort(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -3806,7 +3804,7 @@ static HRESULT WINAPI HTMLDocument7_get_onabort(IHTMLDocument7 *iface, VARIANT *
 
 static HRESULT WINAPI HTMLDocument7_put_onblur(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -3815,7 +3813,7 @@ static HRESULT WINAPI HTMLDocument7_put_onblur(IHTMLDocument7 *iface, VARIANT v)
 
 static HRESULT WINAPI HTMLDocument7_get_onblur(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -3824,35 +3822,35 @@ static HRESULT WINAPI HTMLDocument7_get_onblur(IHTMLDocument7 *iface, VARIANT *p
 
 static HRESULT WINAPI HTMLDocument7_put_oncanplay(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_oncanplay(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_oncanplaythrough(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_oncanplaythrough(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onchange(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -3861,7 +3859,7 @@ static HRESULT WINAPI HTMLDocument7_put_onchange(IHTMLDocument7 *iface, VARIANT 
 
 static HRESULT WINAPI HTMLDocument7_get_onchange(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -3870,7 +3868,7 @@ static HRESULT WINAPI HTMLDocument7_get_onchange(IHTMLDocument7 *iface, VARIANT 
 
 static HRESULT WINAPI HTMLDocument7_put_ondrag(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -3879,7 +3877,7 @@ static HRESULT WINAPI HTMLDocument7_put_ondrag(IHTMLDocument7 *iface, VARIANT v)
 
 static HRESULT WINAPI HTMLDocument7_get_ondrag(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -3888,119 +3886,119 @@ static HRESULT WINAPI HTMLDocument7_get_ondrag(IHTMLDocument7 *iface, VARIANT *p
 
 static HRESULT WINAPI HTMLDocument7_put_ondragend(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondragend(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ondragenter(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondragenter(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ondragleave(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondragleave(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ondragover(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondragover(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ondrop(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondrop(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ondurationchange(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondurationchange(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onemptied(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onemptied(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onended(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onended(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onerror(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -4009,7 +4007,7 @@ static HRESULT WINAPI HTMLDocument7_put_onerror(IHTMLDocument7 *iface, VARIANT v
 
 static HRESULT WINAPI HTMLDocument7_get_onerror(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4018,7 +4016,7 @@ static HRESULT WINAPI HTMLDocument7_get_onerror(IHTMLDocument7 *iface, VARIANT *
 
 static HRESULT WINAPI HTMLDocument7_put_onfocus(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -4027,7 +4025,7 @@ static HRESULT WINAPI HTMLDocument7_put_onfocus(IHTMLDocument7 *iface, VARIANT v
 
 static HRESULT WINAPI HTMLDocument7_get_onfocus(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4036,7 +4034,7 @@ static HRESULT WINAPI HTMLDocument7_get_onfocus(IHTMLDocument7 *iface, VARIANT *
 
 static HRESULT WINAPI HTMLDocument7_put_oninput(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -4045,7 +4043,7 @@ static HRESULT WINAPI HTMLDocument7_put_oninput(IHTMLDocument7 *iface, VARIANT v
 
 static HRESULT WINAPI HTMLDocument7_get_oninput(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4054,7 +4052,7 @@ static HRESULT WINAPI HTMLDocument7_get_oninput(IHTMLDocument7 *iface, VARIANT *
 
 static HRESULT WINAPI HTMLDocument7_put_onload(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -4063,7 +4061,7 @@ static HRESULT WINAPI HTMLDocument7_put_onload(IHTMLDocument7 *iface, VARIANT v)
 
 static HRESULT WINAPI HTMLDocument7_get_onload(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4072,133 +4070,133 @@ static HRESULT WINAPI HTMLDocument7_get_onload(IHTMLDocument7 *iface, VARIANT *p
 
 static HRESULT WINAPI HTMLDocument7_put_onloadeddata(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onloadeddata(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onloadedmetadata(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onloadedmetadata(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onloadstart(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onloadstart(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onpause(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onpause(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onplay(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onplay(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onplaying(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onplaying(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onprogress(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onprogress(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onratechange(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onratechange(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onreset(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onreset(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onscroll(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -4207,7 +4205,7 @@ static HRESULT WINAPI HTMLDocument7_put_onscroll(IHTMLDocument7 *iface, VARIANT 
 
 static HRESULT WINAPI HTMLDocument7_get_onscroll(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4216,63 +4214,63 @@ static HRESULT WINAPI HTMLDocument7_get_onscroll(IHTMLDocument7 *iface, VARIANT 
 
 static HRESULT WINAPI HTMLDocument7_put_onseekend(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onseekend(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onseeking(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onseeking(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onselect(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onselect(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onstalled(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onstalled(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onsubmit(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -4281,7 +4279,7 @@ static HRESULT WINAPI HTMLDocument7_put_onsubmit(IHTMLDocument7 *iface, VARIANT 
 
 static HRESULT WINAPI HTMLDocument7_get_onsubmit(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4290,63 +4288,63 @@ static HRESULT WINAPI HTMLDocument7_get_onsubmit(IHTMLDocument7 *iface, VARIANT 
 
 static HRESULT WINAPI HTMLDocument7_put_onsuspend(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onsuspend(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ontimeupdate(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ontimeupdate(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onvolumechange(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onvolumechange(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_put_onwaiting(IHTMLDocument7 *iface, VARIANT v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_onwaiting(IHTMLDocument7 *iface, VARIANT *p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_normalize(IHTMLDocument7 *iface)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -4354,14 +4352,14 @@ static HRESULT WINAPI HTMLDocument7_normalize(IHTMLDocument7 *iface)
 static HRESULT WINAPI HTMLDocument7_importNode(IHTMLDocument7 *iface, IHTMLDOMNode *pNodeSource,
         VARIANT_BOOL fDeep, IHTMLDOMNode3 **ppNodeDest)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p %x %p)\n", This, pNodeSource, fDeep, ppNodeDest);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_parentWindow(IHTMLDocument7 *iface, IHTMLWindow2 **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -4370,23 +4368,23 @@ static HRESULT WINAPI HTMLDocument7_get_parentWindow(IHTMLDocument7 *iface, IHTM
 
 static HRESULT WINAPI HTMLDocument7_put_body(IHTMLDocument7 *iface, IHTMLElement *v)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     FIXME("(%p)->(%p)\n", This, v);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_body(IHTMLDocument7 *iface, IHTMLElement **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLDocument2_get_body(&This->doc_node->IHTMLDocument2_iface, p);
+    return IHTMLDocument2_get_body(&This->IHTMLDocument2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_head(IHTMLDocument7 *iface, IHTMLElement **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
     nsIDOMHTMLHeadElement *nshead;
     nsIDOMElement *nselem;
     HTMLElement *elem;
@@ -4395,12 +4393,12 @@ static HRESULT WINAPI HTMLDocument7_get_head(IHTMLDocument7 *iface, IHTMLElement
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc_node->nsdoc) {
+    if(!This->nsdoc) {
         FIXME("No document\n");
         return E_FAIL;
     }
 
-    nsres = nsIDOMHTMLDocument_GetHead(This->doc_node->nsdoc, &nshead);
+    nsres = nsIDOMHTMLDocument_GetHead(This->nsdoc, &nshead);
     assert(nsres == NS_OK);
 
     if(!nshead) {
@@ -5549,8 +5547,6 @@ BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IDispatchEx_iface;
     else if(IsEqualGUID(&IID_IDispatchEx, riid))
         *ppv = &This->IDispatchEx_iface;
-    else if(IsEqualGUID(&IID_IHTMLDocument7, riid))
-        *ppv = &This->IHTMLDocument7_iface;
     else
         return FALSE;
 
@@ -5572,7 +5568,6 @@ static const cpc_entry_t HTMLDocumentNode_cpc[] = {
 
 void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
 {
-    doc->IHTMLDocument7_iface.lpVtbl = &HTMLDocument7Vtbl;
     doc->IDispatchEx_iface.lpVtbl = &DocDispatchExVtbl;
 
     doc->outer_unk = outer;
@@ -5605,6 +5600,8 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDocument5_iface;
     else if(IsEqualGUID(&IID_IHTMLDocument6, riid))
         *ppv = &This->IHTMLDocument6_iface;
+    else if(IsEqualGUID(&IID_IHTMLDocument7, riid))
+        *ppv = &This->IHTMLDocument7_iface;
     else if(IsEqualGUID(&IID_IDocumentSelector, riid))
         *ppv = &This->IDocumentSelector_iface;
     else if(IsEqualGUID(&IID_IDocumentEvent, riid))
@@ -6080,6 +6077,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->IHTMLDocument4_iface.lpVtbl = &HTMLDocument4Vtbl;
     doc->IHTMLDocument5_iface.lpVtbl = &HTMLDocument5Vtbl;
     doc->IHTMLDocument6_iface.lpVtbl = &HTMLDocument6Vtbl;
+    doc->IHTMLDocument7_iface.lpVtbl = &HTMLDocument7Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;

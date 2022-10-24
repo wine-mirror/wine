@@ -270,7 +270,7 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
     if(FAILED(hres))
         return hres;
 
-    *new_document = &new_document_node->basedoc.IHTMLDocument7_iface;
+    *new_document = &new_document_node->IHTMLDocument7_iface;
     return S_OK;
 }
 

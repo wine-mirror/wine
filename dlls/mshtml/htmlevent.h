@@ -149,12 +149,12 @@ static inline HRESULT get_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *
     return get_event_handler(get_node_event_prop_target(node, eid), eid, var);
 }
 
-static inline HRESULT set_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)
+static inline HRESULT set_doc_event(HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
 {
-    return set_event_handler(&doc->doc_node->node.event_target, eid, var);
+    return set_event_handler(&doc->node.event_target, eid, var);
 }
 
-static inline HRESULT get_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)
+static inline HRESULT get_doc_event(HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
 {
-    return get_event_handler(&doc->doc_node->node.event_target, eid, var);
+    return get_event_handler(&doc->node.event_target, eid, var);
 }

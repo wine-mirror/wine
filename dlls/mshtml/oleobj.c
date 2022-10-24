@@ -2218,7 +2218,7 @@ static HRESULT WINAPI DocObjHTMLDocument2_get_Script(IHTMLDocument2 *iface, IDis
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = IHTMLDocument7_get_parentWindow(&This->basedoc.IHTMLDocument7_iface, (IHTMLWindow2**)p);
+    hres = IHTMLDocument7_get_parentWindow(&This->IHTMLDocument7_iface, (IHTMLWindow2**)p);
     return hres == S_OK && !*p ? E_PENDING : hres;
 }
 
@@ -2375,7 +2375,7 @@ static HRESULT WINAPI DocObjHTMLDocument2_get_parentWindow(IHTMLDocument2 *iface
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = IHTMLDocument7_get_defaultView(&This->basedoc.IHTMLDocument7_iface, p);
+    hres = IHTMLDocument7_get_defaultView(&This->IHTMLDocument7_iface, p);
     return hres == S_OK && !*p ? E_FAIL : hres;
 }
 
@@ -2752,6 +2752,258 @@ static const IHTMLDocument6Vtbl DocObjHTMLDocument6Vtbl = {
 };
 
 /**********************************************************
+ * IHTMLDocument7 implementation
+ */
+static inline HTMLDocumentObj *impl_from_IHTMLDocument7(IHTMLDocument7 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IHTMLDocument7_iface);
+}
+
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(HTMLDocument7)
+
+static HRESULT WINAPI DocObjHTMLDocument7_get_defaultView(IHTMLDocument7 *iface, IHTMLWindow2 **p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument7(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->basedoc.window) {
+        *p = &This->basedoc.window->base.IHTMLWindow2_iface;
+        IHTMLWindow2_AddRef(*p);
+    }else {
+        *p = NULL;
+    }
+    return S_OK;
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument7, createCDATASection, BSTR,IHTMLDOMNode**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, getSelection, IHTMLSelection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument7, getElementsByTagNameNS, VARIANT*,BSTR,IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument7, createElementNS, VARIANT*,BSTR,IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument7, createAttributeNS, VARIANT*,BSTR,IHTMLDOMAttribute**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onmsthumbnailclick, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onmsthumbnailclick, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_characterSet, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument7, createElement, BSTR,IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument7, createAttribute, BSTR,IHTMLDOMAttribute**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument7, getElementsByClassName, BSTR,IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument7, createProcessingInstruction, BSTR,BSTR,IDOMProcessingInstruction**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument7, adoptNode, IHTMLDOMNode*,IHTMLDOMNode3**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onmssitemodejumplistitemremoved, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onmssitemodejumplistitemremoved, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_all, IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_inputEncoding, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_xmlEncoding, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_xmlStandalone, VARIANT_BOOL)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_xmlStandalone, VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_xmlVersion, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_xmlVersion, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, hasAttributes, VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onabort, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onabort, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onblur, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onblur, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_oncanplay, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_oncanplay, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_oncanplaythrough, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_oncanplaythrough, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onchange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onchange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondrag, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondrag, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondragend, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondragend, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondragenter, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondragenter, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondragleave, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondragleave, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondragover, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondragover, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondrop, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondrop, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ondurationchange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ondurationchange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onemptied, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onemptied, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onended, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onended, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onerror, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onerror, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onfocus, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onfocus, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_oninput, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_oninput, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onload, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onload, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onloadeddata, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onloadeddata, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onloadedmetadata, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onloadedmetadata, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onloadstart, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onloadstart, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onpause, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onpause, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onplay, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onplay, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onplaying, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onplaying, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onprogress, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onprogress, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onratechange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onratechange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onreset, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onreset, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onscroll, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onscroll, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onseeked, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onseeked, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onseeking, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onseeking, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onselect, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onselect, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onstalled, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onstalled, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onsubmit, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onsubmit, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onsuspend, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onsuspend, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_ontimeupdate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_ontimeupdate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onvolumechange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onvolumechange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, put_onwaiting, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_onwaiting, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_0(HTMLDocument7, normalize)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument7, importNode, IHTMLDOMNode*,VARIANT_BOOL,IHTMLDOMNode3**)
+
+static HRESULT WINAPI DocObjHTMLDocument7_get_parentWindow(IHTMLDocument7 *iface, IHTMLWindow2 **p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument7(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLDocument7_get_defaultView(&This->IHTMLDocument7_iface, p);
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, putref_body, IHTMLElement*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_body, IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument7, get_head, IHTMLElement**)
+
+static const IHTMLDocument7Vtbl DocObjHTMLDocument7Vtbl = {
+    DocObjHTMLDocument7_QueryInterface,
+    DocObjHTMLDocument7_AddRef,
+    DocObjHTMLDocument7_Release,
+    DocObjHTMLDocument7_GetTypeInfoCount,
+    DocObjHTMLDocument7_GetTypeInfo,
+    DocObjHTMLDocument7_GetIDsOfNames,
+    DocObjHTMLDocument7_Invoke,
+    DocObjHTMLDocument7_get_defaultView,
+    DocObjHTMLDocument7_createCDATASection,
+    DocObjHTMLDocument7_getSelection,
+    DocObjHTMLDocument7_getElementsByTagNameNS,
+    DocObjHTMLDocument7_createElementNS,
+    DocObjHTMLDocument7_createAttributeNS,
+    DocObjHTMLDocument7_put_onmsthumbnailclick,
+    DocObjHTMLDocument7_get_onmsthumbnailclick,
+    DocObjHTMLDocument7_get_characterSet,
+    DocObjHTMLDocument7_createElement,
+    DocObjHTMLDocument7_createAttribute,
+    DocObjHTMLDocument7_getElementsByClassName,
+    DocObjHTMLDocument7_createProcessingInstruction,
+    DocObjHTMLDocument7_adoptNode,
+    DocObjHTMLDocument7_put_onmssitemodejumplistitemremoved,
+    DocObjHTMLDocument7_get_onmssitemodejumplistitemremoved,
+    DocObjHTMLDocument7_get_all,
+    DocObjHTMLDocument7_get_inputEncoding,
+    DocObjHTMLDocument7_get_xmlEncoding,
+    DocObjHTMLDocument7_put_xmlStandalone,
+    DocObjHTMLDocument7_get_xmlStandalone,
+    DocObjHTMLDocument7_put_xmlVersion,
+    DocObjHTMLDocument7_get_xmlVersion,
+    DocObjHTMLDocument7_hasAttributes,
+    DocObjHTMLDocument7_put_onabort,
+    DocObjHTMLDocument7_get_onabort,
+    DocObjHTMLDocument7_put_onblur,
+    DocObjHTMLDocument7_get_onblur,
+    DocObjHTMLDocument7_put_oncanplay,
+    DocObjHTMLDocument7_get_oncanplay,
+    DocObjHTMLDocument7_put_oncanplaythrough,
+    DocObjHTMLDocument7_get_oncanplaythrough,
+    DocObjHTMLDocument7_put_onchange,
+    DocObjHTMLDocument7_get_onchange,
+    DocObjHTMLDocument7_put_ondrag,
+    DocObjHTMLDocument7_get_ondrag,
+    DocObjHTMLDocument7_put_ondragend,
+    DocObjHTMLDocument7_get_ondragend,
+    DocObjHTMLDocument7_put_ondragenter,
+    DocObjHTMLDocument7_get_ondragenter,
+    DocObjHTMLDocument7_put_ondragleave,
+    DocObjHTMLDocument7_get_ondragleave,
+    DocObjHTMLDocument7_put_ondragover,
+    DocObjHTMLDocument7_get_ondragover,
+    DocObjHTMLDocument7_put_ondrop,
+    DocObjHTMLDocument7_get_ondrop,
+    DocObjHTMLDocument7_put_ondurationchange,
+    DocObjHTMLDocument7_get_ondurationchange,
+    DocObjHTMLDocument7_put_onemptied,
+    DocObjHTMLDocument7_get_onemptied,
+    DocObjHTMLDocument7_put_onended,
+    DocObjHTMLDocument7_get_onended,
+    DocObjHTMLDocument7_put_onerror,
+    DocObjHTMLDocument7_get_onerror,
+    DocObjHTMLDocument7_put_onfocus,
+    DocObjHTMLDocument7_get_onfocus,
+    DocObjHTMLDocument7_put_oninput,
+    DocObjHTMLDocument7_get_oninput,
+    DocObjHTMLDocument7_put_onload,
+    DocObjHTMLDocument7_get_onload,
+    DocObjHTMLDocument7_put_onloadeddata,
+    DocObjHTMLDocument7_get_onloadeddata,
+    DocObjHTMLDocument7_put_onloadedmetadata,
+    DocObjHTMLDocument7_get_onloadedmetadata,
+    DocObjHTMLDocument7_put_onloadstart,
+    DocObjHTMLDocument7_get_onloadstart,
+    DocObjHTMLDocument7_put_onpause,
+    DocObjHTMLDocument7_get_onpause,
+    DocObjHTMLDocument7_put_onplay,
+    DocObjHTMLDocument7_get_onplay,
+    DocObjHTMLDocument7_put_onplaying,
+    DocObjHTMLDocument7_get_onplaying,
+    DocObjHTMLDocument7_put_onprogress,
+    DocObjHTMLDocument7_get_onprogress,
+    DocObjHTMLDocument7_put_onratechange,
+    DocObjHTMLDocument7_get_onratechange,
+    DocObjHTMLDocument7_put_onreset,
+    DocObjHTMLDocument7_get_onreset,
+    DocObjHTMLDocument7_put_onscroll,
+    DocObjHTMLDocument7_get_onscroll,
+    DocObjHTMLDocument7_put_onseeked,
+    DocObjHTMLDocument7_get_onseeked,
+    DocObjHTMLDocument7_put_onseeking,
+    DocObjHTMLDocument7_get_onseeking,
+    DocObjHTMLDocument7_put_onselect,
+    DocObjHTMLDocument7_get_onselect,
+    DocObjHTMLDocument7_put_onstalled,
+    DocObjHTMLDocument7_get_onstalled,
+    DocObjHTMLDocument7_put_onsubmit,
+    DocObjHTMLDocument7_get_onsubmit,
+    DocObjHTMLDocument7_put_onsuspend,
+    DocObjHTMLDocument7_get_onsuspend,
+    DocObjHTMLDocument7_put_ontimeupdate,
+    DocObjHTMLDocument7_get_ontimeupdate,
+    DocObjHTMLDocument7_put_onvolumechange,
+    DocObjHTMLDocument7_get_onvolumechange,
+    DocObjHTMLDocument7_put_onwaiting,
+    DocObjHTMLDocument7_get_onwaiting,
+    DocObjHTMLDocument7_normalize,
+    DocObjHTMLDocument7_importNode,
+    DocObjHTMLDocument7_get_parentWindow,
+    DocObjHTMLDocument7_putref_body,
+    DocObjHTMLDocument7_get_body,
+    DocObjHTMLDocument7_get_head
+};
+
+/**********************************************************
  * ISupportErrorInfo implementation
  */
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(SupportErrorInfo)
@@ -3011,6 +3263,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IHTMLDocument5_iface;
     }else if(IsEqualGUID(&IID_IHTMLDocument6, riid)) {
         *ppv = &This->IHTMLDocument6_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDocument7, riid)) {
+        *ppv = &This->IHTMLDocument7_iface;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_IDocumentSelector, riid)) {
@@ -3332,6 +3586,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IHTMLDocument4_iface.lpVtbl = &DocObjHTMLDocument4Vtbl;
     doc->IHTMLDocument5_iface.lpVtbl = &DocObjHTMLDocument5Vtbl;
     doc->IHTMLDocument6_iface.lpVtbl = &DocObjHTMLDocument6Vtbl;
+    doc->IHTMLDocument7_iface.lpVtbl = &DocObjHTMLDocument7Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocObjDocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocObjDocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &DocObjSupportErrorInfoVtbl;
