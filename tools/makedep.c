@@ -134,10 +134,6 @@ static struct strarray linguas;
 static struct strarray dll_flags;
 static struct strarray unix_dllflags;
 static struct strarray msvcrt_flags;
-static struct strarray extra_cflags;
-static struct strarray extra_cross_cflags;
-static struct strarray extra_cflags_extlib;
-static struct strarray extra_cross_cflags_extlib;
 static struct strarray cpp_flags;
 static struct strarray lddll_flags;
 static struct strarray libs;
@@ -172,6 +168,8 @@ static const char *strip_progs[MAX_ARCHS];
 static const char *debug_flags[MAX_ARCHS];
 static const char *delay_load_flags[MAX_ARCHS];
 static struct strarray target_flags[MAX_ARCHS];
+static struct strarray extra_cflags[MAX_ARCHS];
+static struct strarray extra_cflags_extlib[MAX_ARCHS];
 
 struct makefile
 {
@@ -3059,7 +3057,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
         if (!source->use_msvcrt) output_filenames( make->unix_cflags );
-        output_filenames( make->extlib ? extra_cflags_extlib : extra_cflags );
+        output_filenames( make->extlib ? extra_cflags_extlib[0] : extra_cflags[0] );
         if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
         {
             output_filenames( unix_dllflags );
@@ -3086,12 +3084,12 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "%s.cross.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CROSSCC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
-        output_filenames( make->extlib ? extra_cross_cflags_extlib : extra_cross_cflags );
+        output_filenames( make->extlib ? extra_cflags_extlib[arch] : extra_cflags[arch] );
         if (make->module && is_crt_module( make->module ))
             output_filename( "-fno-builtin" );
         /* force -Wformat when using 'long' types, until all modules have been converted
          * and we can remove -Wno-format */
-        if (!make->extlib && strarray_exists( &extra_cross_cflags, "-Wno-format" ) &&
+        if (!make->extlib && strarray_exists( &extra_cflags[arch], "-Wno-format" ) &&
             !strarray_exists( &defines, "-DWINE_NO_LONG_TYPES" ))
             output_filename( "-Wformat" );
         output_filenames( cpp_flags );
@@ -4343,8 +4341,8 @@ int main( int argc, char *argv[] )
     target_flags[0]    = get_expanded_make_var_array( top_makefile, "TARGETFLAGS" );
     msvcrt_flags       = get_expanded_make_var_array( top_makefile, "MSVCRTFLAGS" );
     dll_flags          = get_expanded_make_var_array( top_makefile, "DLLFLAGS" );
-    extra_cflags       = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
-    extra_cross_cflags = get_expanded_make_var_array( top_makefile, "EXTRACROSSCFLAGS" );
+    extra_cflags[0]    = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
+    extra_cflags[1]    = get_expanded_make_var_array( top_makefile, "EXTRACROSSCFLAGS" );
     unix_dllflags      = get_expanded_make_var_array( top_makefile, "UNIXDLLFLAGS" );
     cpp_flags          = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
     lddll_flags        = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
@@ -4404,6 +4402,7 @@ int main( int argc, char *argv[] )
 
     for (arch = 0; arch < archs.count; arch++)
     {
+        extra_cflags_extlib[arch] = remove_warning_flags( extra_cflags[arch] );
         if (!is_multiarch( arch )) continue;
         delay_load_flags[arch] = delay_load_flag;
         debug_flags[arch] = debug_flag;
@@ -4414,9 +4413,6 @@ int main( int argc, char *argv[] )
         delay_load_flags[0] = "-Wl,-delayload,";
         debug_flags[0] = NULL;
     }
-
-    extra_cflags_extlib = remove_warning_flags( extra_cflags );
-    extra_cross_cflags_extlib = remove_warning_flags( extra_cross_cflags );
 
     top_makefile->src_dir = root_src_dir;
     subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );
