@@ -2668,6 +2668,59 @@ static const IHTMLDocument4Vtbl DocObjHTMLDocument4Vtbl = {
 };
 
 /**********************************************************
+ * IHTMLDocument5 implementation
+ */
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(HTMLDocument5)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_onmousewheel, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_onmousewheel, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_doctype, IHTMLDOMNode**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_implementation, IHTMLDOMImplementation**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument5, createAttribute, BSTR,IHTMLDOMAttribute**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument5, createComment, BSTR,IHTMLDOMNode**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_onfocusin, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_onfocusin, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_onfocusout, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_onfocusout, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_onactivate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_onactivate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_ondeactivate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_ondeactivate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_onbeforeactivate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_onbeforeactivate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, put_onbeforedeactivate, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_onbeforedeactivate, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument5, get_compatMode, BSTR*)
+
+static const IHTMLDocument5Vtbl DocObjHTMLDocument5Vtbl = {
+    DocObjHTMLDocument5_QueryInterface,
+    DocObjHTMLDocument5_AddRef,
+    DocObjHTMLDocument5_Release,
+    DocObjHTMLDocument5_GetTypeInfoCount,
+    DocObjHTMLDocument5_GetTypeInfo,
+    DocObjHTMLDocument5_GetIDsOfNames,
+    DocObjHTMLDocument5_Invoke,
+    DocObjHTMLDocument5_put_onmousewheel,
+    DocObjHTMLDocument5_get_onmousewheel,
+    DocObjHTMLDocument5_get_doctype,
+    DocObjHTMLDocument5_get_implementation,
+    DocObjHTMLDocument5_createAttribute,
+    DocObjHTMLDocument5_createComment,
+    DocObjHTMLDocument5_put_onfocusin,
+    DocObjHTMLDocument5_get_onfocusin,
+    DocObjHTMLDocument5_put_onfocusout,
+    DocObjHTMLDocument5_get_onfocusout,
+    DocObjHTMLDocument5_put_onactivate,
+    DocObjHTMLDocument5_get_onactivate,
+    DocObjHTMLDocument5_put_ondeactivate,
+    DocObjHTMLDocument5_get_ondeactivate,
+    DocObjHTMLDocument5_put_onbeforeactivate,
+    DocObjHTMLDocument5_get_onbeforeactivate,
+    DocObjHTMLDocument5_put_onbeforedeactivate,
+    DocObjHTMLDocument5_get_onbeforedeactivate,
+    DocObjHTMLDocument5_get_compatMode
+};
+
+/**********************************************************
  * ISupportErrorInfo implementation
  */
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(SupportErrorInfo)
@@ -2923,6 +2976,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IHTMLDocument3_iface;
     }else if(IsEqualGUID(&IID_IHTMLDocument4, riid)) {
         *ppv = &This->IHTMLDocument4_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDocument5, riid)) {
+        *ppv = &This->IHTMLDocument5_iface;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_IDocumentSelector, riid)) {
@@ -3242,6 +3297,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IHTMLDocument2_iface.lpVtbl = &DocObjHTMLDocument2Vtbl;
     doc->IHTMLDocument3_iface.lpVtbl = &DocObjHTMLDocument3Vtbl;
     doc->IHTMLDocument4_iface.lpVtbl = &DocObjHTMLDocument4Vtbl;
+    doc->IHTMLDocument5_iface.lpVtbl = &DocObjHTMLDocument5Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocObjDocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocObjDocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &DocObjSupportErrorInfoVtbl;
