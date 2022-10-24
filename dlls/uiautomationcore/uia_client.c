@@ -1912,6 +1912,37 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
         uia_provider_callback = default_uia_provider_callback;
 }
 
+static BOOL uia_condition_matched(HRESULT hr)
+{
+    if (hr == S_FALSE)
+        return FALSE;
+    else
+        return TRUE;
+}
+
+static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition)
+{
+    switch (condition->ConditionType)
+    {
+    case ConditionType_True:
+        return S_OK;
+
+    case ConditionType_False:
+        return S_FALSE;
+
+    case ConditionType_Property:
+    case ConditionType_And:
+    case ConditionType_Or:
+    case ConditionType_Not:
+        FIXME("Unhandled condition type %d\n", condition->ConditionType);
+        return E_NOTIMPL;
+
+    default:
+        WARN("Invalid condition type %d\n", condition->ConditionType);
+        return E_INVALIDARG;
+    }
+}
+
 /***********************************************************************
  *          UiaGetUpdatedCache (uiautomationcore.@)
  */
@@ -1919,6 +1950,7 @@ HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cac
         struct UiaCondition *normalize_cond, SAFEARRAY **out_req, BSTR *tree_struct)
 {
     struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
+    struct UiaCondition *cond;
     SAFEARRAYBOUND sabound[2];
     SAFEARRAY *sa;
     LONG idx[2];
@@ -1933,16 +1965,42 @@ HRESULT WINAPI UiaGetUpdatedCache(HUIANODE huianode, struct UiaCacheRequest *cac
     *tree_struct = NULL;
     *out_req = NULL;
 
-    if (normalize_state != NormalizeState_None)
-    {
-        FIXME("Unsupported NormalizeState %d\n", normalize_state);
-        return E_NOTIMPL;
-    }
-
     if (cache_req->Scope != TreeScope_Element)
     {
         FIXME("Unsupported cache request scope %#x\n", cache_req->Scope);
         return E_NOTIMPL;
+    }
+
+    switch (normalize_state)
+    {
+    case NormalizeState_None:
+        cond = NULL;
+        break;
+
+    case NormalizeState_View:
+        cond = cache_req->pViewCondition;
+        break;
+
+    case NormalizeState_Custom:
+        cond = normalize_cond;
+        break;
+
+    default:
+        WARN("Invalid normalize_state %d\n", normalize_state);
+        return E_INVALIDARG;
+    }
+
+    if (cond)
+    {
+        hr = uia_condition_check(huianode, cond);
+        if (FAILED(hr))
+            return hr;
+
+        if (!uia_condition_matched(hr))
+        {
+            *tree_struct = SysAllocString(L"");
+            return S_OK;
+        }
     }
 
     sabound[0].cElements = sabound[1].cElements = 1;
