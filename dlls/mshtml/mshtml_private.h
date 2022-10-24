@@ -646,15 +646,7 @@ struct HTMLDocument {
     IHTMLDocument5              IHTMLDocument5_iface;
     IHTMLDocument6              IHTMLDocument6_iface;
     IHTMLDocument7              IHTMLDocument7_iface;
-    IDocumentSelector           IDocumentSelector_iface;
-    IDocumentEvent              IDocumentEvent_iface;
     IDispatchEx                 IDispatchEx_iface;
-    ISupportErrorInfo           ISupportErrorInfo_iface;
-    IProvideMultipleClassInfo   IProvideMultipleClassInfo_iface;
-    IMarkupServices             IMarkupServices_iface;
-    IMarkupContainer            IMarkupContainer_iface;
-    IDisplayServices            IDisplayServices_iface;
-    IDocumentRange              IDocumentRange_iface;
 
     IUnknown *outer_unk;
     IDispatchEx *dispex;
@@ -688,6 +680,14 @@ struct HTMLDocumentObj {
     DispatchEx dispex;
     IUnknown IUnknown_inner;
     ICustomDoc ICustomDoc_iface;
+    IDocumentSelector IDocumentSelector_iface;
+    IDocumentEvent IDocumentEvent_iface;
+    ISupportErrorInfo ISupportErrorInfo_iface;
+    IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
+    IMarkupServices IMarkupServices_iface;
+    IMarkupContainer IMarkupContainer_iface;
+    IDisplayServices IDisplayServices_iface;
+    IDocumentRange IDocumentRange_iface;
     IOleDocumentView IOleDocumentView_iface;
     IViewObjectEx IViewObjectEx_iface;
     IPersistMoniker IPersistMoniker_iface;
@@ -899,6 +899,14 @@ struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
+    IDocumentSelector            IDocumentSelector_iface;
+    IDocumentEvent               IDocumentEvent_iface;
+    ISupportErrorInfo            ISupportErrorInfo_iface;
+    IProvideMultipleClassInfo    IProvideMultipleClassInfo_iface;
+    IMarkupServices              IMarkupServices_iface;
+    IMarkupContainer             IMarkupContainer_iface;
+    IDisplayServices             IDisplayServices_iface;
+    IDocumentRange               IDocumentRange_iface;
     IPersistMoniker              IPersistMoniker_iface;
     IPersistFile                 IPersistFile_iface;
     IMonikerProp                 IMonikerProp_iface;
