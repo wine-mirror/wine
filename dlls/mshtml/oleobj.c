@@ -33,6 +33,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -2109,7 +2110,7 @@ void HTMLDocumentNode_OleObj_Init(HTMLDocumentNode *This)
     This->basedoc.doc_obj->extent.cy = 1;
 }
 
-void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj *This)
+static void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj *This)
 {
     This->IOleObject_iface.lpVtbl = &DocObjOleObjectVtbl;
     This->IOleDocument_iface.lpVtbl = &DocObjOleDocumentVtbl;
@@ -2121,4 +2122,351 @@ void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj *This)
     This->IObjectSafety_iface.lpVtbl = &DocObjObjectSafetyVtbl;
     This->extent.cx = 1;
     This->extent.cy = 1;
+}
+
+static inline HTMLDocumentObj *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_inner);
+}
+
+static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &This->IUnknown_inner;
+    }else if(htmldoc_qi(&This->basedoc, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
+        *ppv = &This->ICustomDoc_iface;
+    }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
+        *ppv = &This->IOleDocumentView_iface;
+    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
+        *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
+        *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
+        *ppv = &This->IViewObjectEx_iface;
+    }else if(IsEqualGUID(&IID_IPersist, riid)) {
+        *ppv = &This->IPersistFile_iface;
+    }else if(IsEqualGUID(&IID_IPersistMoniker, riid)) {
+        *ppv = &This->IPersistMoniker_iface;
+    }else if(IsEqualGUID(&IID_IPersistFile, riid)) {
+        *ppv = &This->IPersistFile_iface;
+    }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
+        *ppv = &This->IMonikerProp_iface;
+    }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
+        *ppv = &This->IPersistStreamInit_iface;
+    }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
+        *ppv = &This->IPersistHistory_iface;
+    }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
+        *ppv = &This->IHlinkTarget_iface;
+    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        *ppv = &This->IOleCommandTarget_iface;
+    }else if(IsEqualGUID(&IID_IOleObject, riid)) {
+        *ppv = &This->IOleObject_iface;
+    }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
+        *ppv = &This->IOleDocument_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
+        *ppv = &This->IOleInPlaceActiveObject_iface;
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        *ppv = &This->IOleInPlaceActiveObject_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
+        *ppv = &This->IOleControl_iface;
+    }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
+        *ppv = &This->IObjectWithSite_iface;
+    }else if(IsEqualGUID(&IID_IOleContainer, riid)) {
+        *ppv = &This->IOleContainer_iface;
+    }else if(IsEqualGUID(&IID_IObjectSafety, riid)) {
+        *ppv = &This->IObjectSafety_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = &This->IServiceProvider_iface;
+    }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
+        *ppv = &This->ITargetContainer_iface;
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        *ppv = &This->cp_container.IConnectionPointContainer_iface;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        FIXME("Unimplemented interface %s\n", debugstr_mshtml_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI HTMLDocumentObj_AddRef(IUnknown *iface)
+{
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref = %lu\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
+{
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref = %lu\n", This, ref);
+
+    if(!ref) {
+        if(This->basedoc.doc_node) {
+            This->basedoc.doc_node->basedoc.doc_obj = NULL;
+            htmldoc_release(&This->basedoc.doc_node->basedoc);
+        }
+        if(This->basedoc.window)
+            IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
+        if(This->advise_holder)
+            IOleAdviseHolder_Release(This->advise_holder);
+
+        if(This->view_sink)
+            IAdviseSink_Release(This->view_sink);
+        if(This->client)
+            IOleObject_SetClientSite(&This->IOleObject_iface, NULL);
+        if(This->hostui)
+            ICustomDoc_SetUIHandler(&This->ICustomDoc_iface, NULL);
+        if(This->in_place_active)
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->IOleInPlaceObjectWindowless_iface);
+        if(This->ipsite)
+            IOleDocumentView_SetInPlaceSite(&This->IOleDocumentView_iface, NULL);
+        if(This->undomgr)
+            IOleUndoManager_Release(This->undomgr);
+        if(This->editsvcs)
+            IHTMLEditServices_Release(This->editsvcs);
+        if(This->tooltips_hwnd)
+            DestroyWindow(This->tooltips_hwnd);
+
+        if(This->hwnd)
+            DestroyWindow(This->hwnd);
+        heap_free(This->mime);
+
+        remove_target_tasks(This->task_magic);
+        ConnectionPointContainer_Destroy(&This->cp_container);
+        release_dispex(&This->dispex);
+
+        if(This->nscontainer)
+            detach_gecko_browser(This->nscontainer);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static const IUnknownVtbl HTMLDocumentObjVtbl = {
+    HTMLDocumentObj_QueryInterface,
+    HTMLDocumentObj_AddRef,
+    HTMLDocumentObj_Release
+};
+
+/**********************************************************
+ * ICustomDoc implementation
+ */
+
+static inline HTMLDocumentObj *impl_from_ICustomDoc(ICustomDoc *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, ICustomDoc_iface);
+}
+
+static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+
+    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+}
+
+static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+
+    return htmldoc_addref(&This->basedoc);
+}
+
+static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+
+    return htmldoc_release(&This->basedoc);
+}
+
+static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+    IOleCommandTarget *cmdtrg;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pUIHandler);
+
+    if(This->custom_hostui && This->hostui == pUIHandler)
+        return S_OK;
+
+    This->custom_hostui = TRUE;
+
+    if(This->hostui)
+        IDocHostUIHandler_Release(This->hostui);
+    if(pUIHandler)
+        IDocHostUIHandler_AddRef(pUIHandler);
+    This->hostui = pUIHandler;
+    if(!pUIHandler)
+        return S_OK;
+
+    hres = IDocHostUIHandler_QueryInterface(pUIHandler, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        FIXME("custom UI handler supports IOleCommandTarget\n");
+        IOleCommandTarget_Release(cmdtrg);
+    }
+
+    return S_OK;
+}
+
+static const ICustomDocVtbl CustomDocVtbl = {
+    CustomDoc_QueryInterface,
+    CustomDoc_AddRef,
+    CustomDoc_Release,
+    CustomDoc_SetUIHandler
+};
+
+static void HTMLDocumentObj_on_advise(IUnknown *iface, cp_static_data_t *cp)
+{
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
+
+    if(This->basedoc.window && This->basedoc.doc_node)
+        update_doc_cp_events(This->basedoc.doc_node, cp);
+}
+
+static cp_static_data_t HTMLDocumentObjEvents_data = { HTMLDocumentEvents_tid, HTMLDocumentObj_on_advise };
+static cp_static_data_t HTMLDocumentObjEvents2_data = { HTMLDocumentEvents2_tid, HTMLDocumentObj_on_advise, TRUE };
+
+static const cpc_entry_t HTMLDocumentObj_cpc[] = {
+    {&IID_IDispatch, &HTMLDocumentObjEvents_data},
+    {&IID_IPropertyNotifySink},
+    {&DIID_HTMLDocumentEvents, &HTMLDocumentObjEvents_data},
+    {&DIID_HTMLDocumentEvents2, &HTMLDocumentObjEvents2_data},
+    {NULL}
+};
+
+static HRESULT HTMLDocumentObj_location_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp, VARIANT *res,
+        EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLDocumentObj *This = CONTAINING_RECORD(dispex, HTMLDocumentObj, dispex);
+
+    if(!(flags & DISPATCH_PROPERTYPUT) || !This->basedoc.window)
+        return S_FALSE;
+
+    return IDispatchEx_InvokeEx(&This->basedoc.window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
+                                0, flags, dp, res, ei, caller);
+}
+
+static const tid_t HTMLDocumentObj_iface_tids[] = {
+    IHTMLDocument3_tid,
+    IHTMLDocument4_tid,
+    IHTMLDocument5_tid,
+    0
+};
+
+static void HTMLDocumentObj_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t document2_hooks[] = {
+        {DISPID_IHTMLDOCUMENT2_URL,      NULL, L"URL"},
+        {DISPID_IHTMLDOCUMENT2_LOCATION, HTMLDocumentObj_location_hook},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLDocument2_tid, document2_hooks);
+}
+
+static dispex_static_data_t HTMLDocumentObj_dispex = {
+    L"HTMLDocumentObj",
+    NULL,
+    DispHTMLDocument_tid,
+    HTMLDocumentObj_iface_tids,
+    HTMLDocumentObj_init_dispex_info
+};
+
+static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *doc;
+    HRESULT hres;
+
+    if(outer && !IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = NULL;
+        return E_INVALIDARG;
+    }
+
+    /* ensure that security manager is initialized */
+    if(!get_security_manager())
+        return E_OUTOFMEMORY;
+
+    doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
+    if(!doc)
+        return E_OUTOFMEMORY;
+
+    doc->ref = 1;
+    doc->IUnknown_inner.lpVtbl = &HTMLDocumentObjVtbl;
+    doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
+
+    doc->basedoc.doc_obj = doc;
+
+    init_dispatch(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex, COMPAT_MODE_QUIRKS);
+    init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_inner, &doc->dispex.IDispatchEx_iface);
+    ConnectionPointContainer_Init(&doc->cp_container, &doc->IUnknown_inner, HTMLDocumentObj_cpc);
+    HTMLDocumentObj_Persist_Init(doc);
+    HTMLDocumentObj_Service_Init(doc);
+    HTMLDocumentObj_OleCmd_Init(doc);
+    HTMLDocumentObj_OleObj_Init(doc);
+    TargetContainer_Init(doc);
+    doc->is_mhtml = is_mhtml;
+
+    doc->task_magic = get_task_target_magic();
+
+    HTMLDocument_View_Init(doc);
+
+    hres = create_gecko_browser(doc, &doc->nscontainer);
+    if(FAILED(hres)) {
+        ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");
+        htmldoc_release(&doc->basedoc);
+        return hres;
+    }
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &doc->IUnknown_inner;
+    }else {
+        hres = htmldoc_query_interface(&doc->basedoc, riid, ppv);
+        htmldoc_release(&doc->basedoc);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    doc->basedoc.window = doc->nscontainer->content_window;
+    IHTMLWindow2_AddRef(&doc->basedoc.window->base.IHTMLWindow2_iface);
+
+    if(!doc->basedoc.doc_node && doc->basedoc.window->base.inner_window->doc) {
+        doc->basedoc.doc_node = doc->basedoc.window->base.inner_window->doc;
+        htmldoc_addref(&doc->basedoc.doc_node->basedoc);
+    }
+
+    get_thread_hwnd();
+
+    return S_OK;
+}
+
+HRESULT HTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
+    return create_document_object(FALSE, outer, riid, ppv);
+}
+
+HRESULT MHTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
+    return create_document_object(TRUE, outer, riid, ppv);
 }

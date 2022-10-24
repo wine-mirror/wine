@@ -680,6 +680,9 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
     return IUnknown_Release(This->outer_unk);
 }
 
+BOOL htmldoc_qi(HTMLDocument*,REFIID,void**) DECLSPEC_HIDDEN;
+void init_doc(HTMLDocument*,IUnknown*,IDispatchEx*) DECLSPEC_HIDDEN;
+
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
     DispatchEx dispex;
@@ -982,7 +985,6 @@ void HTMLDocument_View_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Persist_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_Service_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void HTMLDocumentObj_OleCmd_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
-void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
 void HTMLDocumentNode_Persist_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
