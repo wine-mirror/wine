@@ -2625,6 +2625,49 @@ static const IHTMLDocument3Vtbl DocObjHTMLDocument3Vtbl = {
 };
 
 /**********************************************************
+ * IHTMLDocument4 implementation
+ */
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(HTMLDocument4)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_0(HTMLDocument4, focus)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, hasFocus, VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, put_onselectionchange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, get_onselectionchange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, get_namespaces, IDispatch**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument4, createDocumentFromUrl, BSTR,BSTR,IHTMLDocument2**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, put_media, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, get_media, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument4, createEventObject, VARIANT*,IHTMLEventObj**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument4, fireEvent, BSTR,VARIANT*,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument4, createRenderStyle, BSTR,IHTMLRenderStyle**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, put_oncontrolselect, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, get_oncontrolselect, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument4, get_URLUnencoded, BSTR*)
+
+static const IHTMLDocument4Vtbl DocObjHTMLDocument4Vtbl = {
+    DocObjHTMLDocument4_QueryInterface,
+    DocObjHTMLDocument4_AddRef,
+    DocObjHTMLDocument4_Release,
+    DocObjHTMLDocument4_GetTypeInfoCount,
+    DocObjHTMLDocument4_GetTypeInfo,
+    DocObjHTMLDocument4_GetIDsOfNames,
+    DocObjHTMLDocument4_Invoke,
+    DocObjHTMLDocument4_focus,
+    DocObjHTMLDocument4_hasFocus,
+    DocObjHTMLDocument4_put_onselectionchange,
+    DocObjHTMLDocument4_get_onselectionchange,
+    DocObjHTMLDocument4_get_namespaces,
+    DocObjHTMLDocument4_createDocumentFromUrl,
+    DocObjHTMLDocument4_put_media,
+    DocObjHTMLDocument4_get_media,
+    DocObjHTMLDocument4_createEventObject,
+    DocObjHTMLDocument4_fireEvent,
+    DocObjHTMLDocument4_createRenderStyle,
+    DocObjHTMLDocument4_put_oncontrolselect,
+    DocObjHTMLDocument4_get_oncontrolselect,
+    DocObjHTMLDocument4_get_URLUnencoded
+};
+
+/**********************************************************
  * ISupportErrorInfo implementation
  */
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(SupportErrorInfo)
@@ -2878,6 +2921,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->IHTMLDocument2_iface;
     }else if(IsEqualGUID(&IID_IHTMLDocument3, riid)) {
         *ppv = &This->IHTMLDocument3_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDocument4, riid)) {
+        *ppv = &This->IHTMLDocument4_iface;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_IDocumentSelector, riid)) {
@@ -3196,6 +3241,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
     doc->IHTMLDocument2_iface.lpVtbl = &DocObjHTMLDocument2Vtbl;
     doc->IHTMLDocument3_iface.lpVtbl = &DocObjHTMLDocument3Vtbl;
+    doc->IHTMLDocument4_iface.lpVtbl = &DocObjHTMLDocument4Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocObjDocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocObjDocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &DocObjSupportErrorInfoVtbl;
