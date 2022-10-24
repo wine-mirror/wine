@@ -2516,6 +2516,115 @@ static const IHTMLDocument2Vtbl DocObjHTMLDocument2Vtbl = {
 };
 
 /**********************************************************
+ * IHTMLDocument3 implementation
+ */
+static inline HTMLDocumentObj *impl_from_IHTMLDocument3(IHTMLDocument3 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IHTMLDocument3_iface);
+}
+
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(HTMLDocument3)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_0(HTMLDocument3, releaseCapture)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, recalc, VARIANT_BOOL)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument3, createTextNode, BSTR,IHTMLDOMNode**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_documentElement, IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_uniqueID, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument3, attachEvent, BSTR,IDispatch*,VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument3, detachEvent, BSTR,IDispatch*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_onrowsdelete, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_onrowsdelete, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_onrowsinserted, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_onrowsinserted, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_oncellchange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_oncellchange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_ondatasetchanged, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_ondatasetchanged, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_ondataavailable, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_ondataavailable, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_ondatasetcomplete, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_ondatasetcomplete, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_onpropertychange, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_onpropertychange, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_dir, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_dir, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_oncontextmenu, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_oncontextmenu, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_onstop, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_onstop, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, createDocumentFragment, IHTMLDocument2**)
+
+static HRESULT WINAPI DocObjHTMLDocument3_get_parentDocument(IHTMLDocument3 *iface, IHTMLDocument2 **p)
+{
+    HTMLDocumentObj *This = impl_from_IHTMLDocument3(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_enableDownload, VARIANT_BOOL)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_enableDownload, VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_baseUrl, BSTR)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_baseUrl, BSTR*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_childNodes, IDispatch**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_inheritStyleSheets, VARIANT_BOOL)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_inheritStyleSheets, VARIANT_BOOL*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, put_onbeforeeditfocus, VARIANT)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument3, get_onbeforeeditfocus, VARIANT*)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument3, getElementsByName, BSTR,IHTMLElementCollection**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument3, getElementById, BSTR,IHTMLElement**)
+HTMLDOCUMENTOBJ_FWD_TO_NODE_2(HTMLDocument3, getElementsByTagName, BSTR,IHTMLElementCollection**)
+
+static const IHTMLDocument3Vtbl DocObjHTMLDocument3Vtbl = {
+    DocObjHTMLDocument3_QueryInterface,
+    DocObjHTMLDocument3_AddRef,
+    DocObjHTMLDocument3_Release,
+    DocObjHTMLDocument3_GetTypeInfoCount,
+    DocObjHTMLDocument3_GetTypeInfo,
+    DocObjHTMLDocument3_GetIDsOfNames,
+    DocObjHTMLDocument3_Invoke,
+    DocObjHTMLDocument3_releaseCapture,
+    DocObjHTMLDocument3_recalc,
+    DocObjHTMLDocument3_createTextNode,
+    DocObjHTMLDocument3_get_documentElement,
+    DocObjHTMLDocument3_get_uniqueID,
+    DocObjHTMLDocument3_attachEvent,
+    DocObjHTMLDocument3_detachEvent,
+    DocObjHTMLDocument3_put_onrowsdelete,
+    DocObjHTMLDocument3_get_onrowsdelete,
+    DocObjHTMLDocument3_put_onrowsinserted,
+    DocObjHTMLDocument3_get_onrowsinserted,
+    DocObjHTMLDocument3_put_oncellchange,
+    DocObjHTMLDocument3_get_oncellchange,
+    DocObjHTMLDocument3_put_ondatasetchanged,
+    DocObjHTMLDocument3_get_ondatasetchanged,
+    DocObjHTMLDocument3_put_ondataavailable,
+    DocObjHTMLDocument3_get_ondataavailable,
+    DocObjHTMLDocument3_put_ondatasetcomplete,
+    DocObjHTMLDocument3_get_ondatasetcomplete,
+    DocObjHTMLDocument3_put_onpropertychange,
+    DocObjHTMLDocument3_get_onpropertychange,
+    DocObjHTMLDocument3_put_dir,
+    DocObjHTMLDocument3_get_dir,
+    DocObjHTMLDocument3_put_oncontextmenu,
+    DocObjHTMLDocument3_get_oncontextmenu,
+    DocObjHTMLDocument3_put_onstop,
+    DocObjHTMLDocument3_get_onstop,
+    DocObjHTMLDocument3_createDocumentFragment,
+    DocObjHTMLDocument3_get_parentDocument,
+    DocObjHTMLDocument3_put_enableDownload,
+    DocObjHTMLDocument3_get_enableDownload,
+    DocObjHTMLDocument3_put_baseUrl,
+    DocObjHTMLDocument3_get_baseUrl,
+    DocObjHTMLDocument3_get_childNodes,
+    DocObjHTMLDocument3_put_inheritStyleSheets,
+    DocObjHTMLDocument3_get_inheritStyleSheets,
+    DocObjHTMLDocument3_put_onbeforeeditfocus,
+    DocObjHTMLDocument3_get_onbeforeeditfocus,
+    DocObjHTMLDocument3_getElementsByName,
+    DocObjHTMLDocument3_getElementById,
+    DocObjHTMLDocument3_getElementsByTagName
+};
+
+/**********************************************************
  * ISupportErrorInfo implementation
  */
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(SupportErrorInfo)
@@ -2767,6 +2876,8 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         return *ppv ? S_OK : E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_IHTMLDocument, riid) || IsEqualGUID(&IID_IHTMLDocument2, riid)) {
         *ppv = &This->IHTMLDocument2_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDocument3, riid)) {
+        *ppv = &This->IHTMLDocument3_iface;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_IDocumentSelector, riid)) {
@@ -3084,6 +3195,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IUnknown_inner.lpVtbl = &HTMLDocumentObjVtbl;
     doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
     doc->IHTMLDocument2_iface.lpVtbl = &DocObjHTMLDocument2Vtbl;
+    doc->IHTMLDocument3_iface.lpVtbl = &DocObjHTMLDocument3Vtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocObjDocumentSelectorVtbl;
     doc->IDocumentEvent_iface.lpVtbl = &DocObjDocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &DocObjSupportErrorInfoVtbl;
