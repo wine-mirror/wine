@@ -1097,6 +1097,12 @@ static struct Accessible Accessible_child2 =
     FALSE, 0,
 };
 
+struct Provider_prop_override
+{
+    int prop_id;
+    VARIANT val;
+};
+
 static struct Provider
 {
     IRawElementProviderSimple IRawElementProviderSimple_iface;
@@ -1120,6 +1126,8 @@ static struct Provider
     DWORD last_call_tid;
     BOOL ignore_hwnd_prop;
     HWND override_hwnd;
+    struct Provider_prop_override *prop_override;
+    int prop_override_count;
 } Provider, Provider2, Provider_child, Provider_child2;
 static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_proxy2, Provider_override;
 
@@ -1562,6 +1570,20 @@ HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+
+    if (This->prop_override && This->prop_override_count)
+    {
+        int i;
+
+        for (i = 0; i < This->prop_override_count; i++)
+        {
+            if (This->prop_override[i].prop_id == prop_id)
+            {
+                *ret_val = This->prop_override[i].val;
+                return S_OK;
+            }
+        }
+    }
 
     VariantInit(ret_val);
     switch (prop_id)
@@ -6732,6 +6754,14 @@ static void set_cache_request(struct UiaCacheRequest *req, struct UiaCondition *
     req->automationElementMode = elem_mode;
 }
 
+static void set_property_condition(struct UiaPropertyCondition *cond, int prop_id, VARIANT *val, int flags)
+{
+    cond->ConditionType = ConditionType_Property;
+    cond->PropertyId = prop_id;
+    cond->Value = *val;
+    cond->Flags = flags;
+}
+
 static void set_and_or_condition(struct UiaAndOrCondition *cond, int cond_type,
         struct UiaCondition **conds, int cond_count)
 {
@@ -6888,11 +6918,36 @@ static const struct prov_method_sequence cache_req_seq3[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence cache_req_seq4[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* Dependent upon property condition. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId. */
+    { 0 }
+};
+
+/* Sequence for non-matching property condition. */
+static const struct prov_method_sequence cache_req_seq5[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* Dependent upon property condition. */
+    { &Provider, PROV_GET_PROPERTY_VALUE }, /* Dependent upon property condition. */
+    /* Only done on Win10v1507 and below. */
+    { &Provider, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
+    { 0 }
+};
+
+static const struct prov_method_sequence cache_req_seq6[] = {
+    { &Provider, FRAG_GET_RUNTIME_ID },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId. */
+    /* Only done on Win10v1507 and below. */
+    { &Provider, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
+    { 0 }
+};
+
 static const struct UiaCondition UiaTrueCondition  = { ConditionType_True };
 static const struct UiaCondition UiaFalseCondition = { ConditionType_False };
 static void test_UiaGetUpdatedCache(void)
 {
+    struct Provider_prop_override prop_override;
     struct node_provider_desc exp_node_desc[2];
+    struct UiaPropertyCondition prop_cond;
     struct UiaAndOrCondition and_or_cond;
     LONG exp_lbound[2], exp_elems[2], i;
     struct UiaCacheRequest cache_req;
@@ -7199,6 +7254,154 @@ static void test_UiaGetUpdatedCache(void)
         ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
     SysFreeString(tree_struct);
 
+    /*
+     * ConditionType_Property tests.
+     */
+    Provider.ret_invalid_prop_type = FALSE;
+
+    /* Test UIAutomationType_IntArray property conditions. */
+    if (UiaLookupId(AutomationIdentifierType_Property, &OutlineColor_Property_GUID))
+    {
+        V_VT(&v) = VT_I4 | VT_ARRAY;
+        V_ARRAY(&v) = create_i4_safearray();
+        set_property_condition(&prop_cond, UIA_OutlineColorPropertyId, &v, PropertyConditionFlags_None);
+        set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0,
+                AutomationElementMode_Full);
+        tree_struct = NULL; out_req = NULL;
+
+        hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine ok(!!out_req, "out_req == NULL\n");
+        todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+        if (out_req)
+        {
+            exp_lbound[0] = exp_lbound[1] = 0;
+            exp_elems[0] = exp_elems[1] = 1;
+            test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+            ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+            ok_method_sequence(cache_req_seq4, NULL);
+        }
+
+        SafeArrayDestroy(out_req);
+        SysFreeString(tree_struct);
+        VariantClear(&v);
+
+        /* Same values, except we're short by one element. */
+        V_VT(&v) = VT_I4 | VT_ARRAY;
+        V_ARRAY(&v) = SafeArrayCreateVector(VT_I4, 0, ARRAY_SIZE(uia_i4_arr_prop_val) - 1);
+
+        for (i = 0; i < ARRAY_SIZE(uia_i4_arr_prop_val) - 1; i++)
+            SafeArrayPutElement(V_ARRAY(&prop_cond.Value), &i, (void *)&uia_i4_arr_prop_val[i]);
+
+        set_property_condition(&prop_cond, UIA_OutlineColorPropertyId, &v, PropertyConditionFlags_None);
+        set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0,
+                AutomationElementMode_Full);
+        tree_struct = NULL; out_req = NULL;
+
+        hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ok_method_sequence(cache_req_seq5, NULL);
+        ok(!out_req, "out_req != NULL\n");
+        todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+        if (tree_struct)
+            ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+        SysFreeString(tree_struct);
+        VariantClear(&v);
+    }
+    else
+        win_skip("UIA_OutlineColorPropertyId unavailable, skipping property condition tests for it.\n");
+
+    /* UIA_RuntimeIdPropertyId comparison. */
+    Provider.runtime_id[0] = 0xdeadbeef; Provider.runtime_id[1] = 0xfeedbeef;
+    V_VT(&v) = VT_I4 | VT_ARRAY;
+    V_ARRAY(&v) = SafeArrayCreateVector(VT_I4, 0, ARRAY_SIZE(Provider.runtime_id));
+    for (i = 0; i < ARRAY_SIZE(Provider.runtime_id); i++)
+        SafeArrayPutElement(V_ARRAY(&v), &i, (void *)&Provider.runtime_id[i]);
+
+    set_property_condition(&prop_cond, UIA_RuntimeIdPropertyId, &v, PropertyConditionFlags_None);
+    set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!out_req, "out_req == NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (out_req)
+    {
+        exp_lbound[0] = exp_lbound[1] = 0;
+        exp_elems[0] = exp_elems[1] = 1;
+        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+        ok_method_sequence(cache_req_seq6, NULL);
+    }
+
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+    VariantClear(&prop_cond.Value);
+
+    /* UIAutomationType_Bool property condition tests. */
+    prop_override.prop_id = UIA_IsControlElementPropertyId;
+    V_VT(&prop_override.val) = VT_BOOL;
+    V_BOOL(&prop_override.val) = VARIANT_FALSE;
+    Provider.prop_override = &prop_override;
+    Provider.prop_override_count = 1;
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    set_property_condition(&prop_cond, UIA_IsControlElementPropertyId, &v, PropertyConditionFlags_None);
+    set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!out_req, "out_req == NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (out_req)
+    {
+        exp_lbound[0] = exp_lbound[1] = 0;
+        exp_elems[0] = exp_elems[1] = 1;
+        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+        ok_method_sequence(cache_req_seq4, NULL);
+    }
+
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+    VariantClear(&prop_cond.Value);
+
+    /*
+     * Provider now returns VARIANT_TRUE for UIA_IsControlElementPropertyId,
+     * conditional check will fail.
+     */
+    prop_override.prop_id = UIA_IsControlElementPropertyId;
+    V_VT(&prop_override.val) = VT_BOOL;
+    V_BOOL(&prop_override.val) = VARIANT_TRUE;
+    Provider.prop_override = &prop_override;
+    Provider.prop_override_count = 1;
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    set_property_condition(&prop_cond, UIA_IsControlElementPropertyId, &v, PropertyConditionFlags_None);
+    set_cache_request(&cache_req, (struct UiaCondition *)&prop_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(cache_req_seq5, NULL);
+    ok(!out_req, "out_req != NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (tree_struct)
+        ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    SysFreeString(tree_struct);
+    VariantClear(&v);
+
+    Provider.prop_override = NULL;
+    Provider.prop_override_count = 0;
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
