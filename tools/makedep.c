@@ -196,7 +196,6 @@ struct makefile
     const char     *extlib;
     const char     *sharedlib;
     const char     *staticlib;
-    const char     *staticimplib;
     const char     *importlib;
     const char     *unixlib;
     int             native_unix_lib;
@@ -221,12 +220,11 @@ struct makefile
     struct strarray font_files;
     struct strarray debug_files;
     struct strarray dlldata_files;
-    struct strarray implib_files;
-    struct strarray crossimplib_files;
     struct strarray all_targets;
     struct strarray phony_targets;
     struct strarray dependencies;
     struct strarray object_files[MAX_ARCHS];
+    struct strarray implib_files[MAX_ARCHS];
     struct strarray install_rules[NB_INSTALL_RULES];
 };
 
@@ -1864,11 +1862,6 @@ static void add_generated_sources( struct makefile *make )
             source->files_count = source->files_size = 0;
             source->files = NULL;
         }
-        if (source->file->flags & FLAG_C_IMPLIB)
-        {
-            if (!make->staticimplib && make->importlib && *dll_ext)
-                make->staticimplib = strmake( "lib%s.a", make->importlib );
-        }
         if (strendswith( source->name, ".po" ))
         {
             if (!make->disabled)
@@ -3051,7 +3044,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         if ((source->file->flags & FLAG_C_UNIX) && *dll_ext)
             strarray_add( &make->unixobj_files, strmake( "%s.o", obj ));
         else if (source->file->flags & FLAG_C_IMPLIB)
-            strarray_add( &make->implib_files, strmake( "%s.o", obj ));
+            strarray_add( &make->implib_files[0], strmake( "%s.o", obj ));
         else if (!is_dll_src)
             strarray_add( &make->object_files[0], strmake( "%s.o", obj ));
         else
@@ -3079,7 +3072,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
     if (need_cross)
     {
         if (source->file->flags & FLAG_C_IMPLIB)
-            strarray_add( &make->crossimplib_files, strmake( "%s.cross.o", obj ));
+            strarray_add( &make->implib_files[arch], strmake( "%s.cross.o", obj ));
         else if (!is_dll_src)
             strarray_add( &make->object_files[arch], strmake( "%s.cross.o", obj ));
         else
@@ -3304,14 +3297,14 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
         output( " %s.delay.a", importlib_path );
     }
     output( ": %s %s", tools_path( make, "winebuild" ), spec_file );
-    output_filenames_obj_dir( make, arch ? make->crossimplib_files : make->implib_files );
+    output_filenames_obj_dir( make, make->implib_files[arch] );
     output( "\n" );
     output( "\t%s%s -w --implib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ) );
     output_filenames( target_flags[arch] );
     if (make->is_win16) output_filename( "-m16" );
     output_filename( "--export" );
     output_filename( spec_file );
-    output_filenames_obj_dir( make, arch ? make->crossimplib_files : make->implib_files );
+    output_filenames_obj_dir( make, make->implib_files[arch] );
     output( "\n" );
     add_install_rule( make, make->importlib,
                       arch ? strmake( "lib%s.cross.a", make->importlib ) : strmake( "lib%s.a", make->importlib ),
@@ -3763,11 +3756,10 @@ static void output_sources( struct makefile *make )
     else if (!strcmp( make->obj_dir, "po" ))
         strarray_add( &make->distclean_files, "LINGUAS" );
 
-    strarray_addall( &make->clean_files, make->implib_files );
-    strarray_addall( &make->clean_files, make->crossimplib_files );
     for (arch = 0; arch < archs.count; arch++)
     {
         strarray_addall_uniq( &make->clean_files, make->object_files[arch] );
+        strarray_addall_uniq( &make->clean_files, make->implib_files[arch] );
     }
     strarray_addall( &make->clean_files, make->unixobj_files );
     strarray_addall( &make->clean_files, make->res_files );
