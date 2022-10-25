@@ -216,7 +216,6 @@ struct makefile
     struct strarray maintainerclean_files;
     struct strarray uninstall_files;
     struct strarray unixobj_files;
-    struct strarray res_files;
     struct strarray font_files;
     struct strarray debug_files;
     struct strarray dlldata_files;
@@ -224,6 +223,7 @@ struct makefile
     struct strarray dependencies;
     struct strarray object_files[MAX_ARCHS];
     struct strarray implib_files[MAX_ARCHS];
+    struct strarray res_files[MAX_ARCHS];
     struct strarray all_targets[MAX_ARCHS];
     struct strarray install_rules[NB_INSTALL_RULES];
 };
@@ -2693,19 +2693,19 @@ static void output_source_h( struct makefile *make, struct incl_file *source, co
 static void output_source_rc( struct makefile *make, struct incl_file *source, const char *obj )
 {
     struct strarray defines = get_source_defines( make, source, obj );
-    const char *po_dir = NULL;
-    unsigned int i;
+    const char *po_dir = NULL, *res_file = strmake( "%s.res", obj );
+    unsigned int i, arch;
 
     if (source->file->flags & FLAG_RC_HEADER) return;
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = "po";
-    strarray_add( &make->res_files, strmake( "%s.res", obj ));
+    for (arch = 0; arch < archs.count; arch++) strarray_add( &make->res_files[arch], res_file );
     if (source->file->flags & FLAG_RC_PO)
     {
         strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
         output( "%s.pot ", obj_dir_path( make, obj ) );
     }
-    output( "%s.res: %s", obj_dir_path( make, obj ), source->filename );
+    output( "%s: %s", obj_dir_path( make, res_file ), source->filename );
     output_filename( tools_path( make, "wrc" ));
     if (make->src_dir) output_filename( "nls/locale.nls" );
     output_filenames( source->dependencies );
@@ -2719,7 +2719,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     output( "\n" );
     if (po_dir)
     {
-        output( "%s.res:", obj_dir_path( make, obj ));
+        output( "%s:", obj_dir_path( make, res_file ));
         for (i = 0; i < linguas.count; i++)
             output_filename( strmake( "%s/%s.mo", po_dir, linguas.str[i] ));
         output( "\n" );
@@ -2732,10 +2732,11 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
  */
 static void output_source_mc( struct makefile *make, struct incl_file *source, const char *obj )
 {
-    unsigned int i;
+    unsigned int i, arch;
     char *obj_path = obj_dir_path( make, obj );
+    char *res_file = strmake( "%s.res", obj );
 
-    strarray_add( &make->res_files, strmake( "%s.res", obj ));
+    for (arch = 0; arch < archs.count; arch++) strarray_add( &make->res_files[arch], res_file );
     strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
     output( "%s.pot %s.res: %s", obj_path, obj_path, source->filename );
     output_filename( tools_path( make, "wmc" ));
@@ -2759,7 +2760,7 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
  */
 static void output_source_res( struct makefile *make, struct incl_file *source, const char *obj )
 {
-    strarray_add( &make->res_files, source->name );
+    strarray_add( &make->res_files[source->arch], source->name );
 }
 
 
@@ -3033,7 +3034,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     output_file = obj_dir_path( make, dll_name );
 
     strarray_add( &make->clean_files, dll_name );
-    strarray_add( &make->res_files, strmake( "%s.res", obj ));
+    strarray_add( &make->res_files[arch], strmake( "%s.res", obj ));
     output( "%s.res:", obj_dir_path( make, obj ));
     output_filename( obj_dir_path( make, dll_name ));
     output_filename( tools_path( make, "wrc" ));
@@ -3258,7 +3259,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     output( "%s:", obj_dir_path( make, module_name ));
     if (spec_file) output_filename( spec_file );
     output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
@@ -3272,7 +3273,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     }
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     debug_file = get_debug_file( make, make->module, arch );
     if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
@@ -3302,7 +3303,7 @@ static void output_fake_module( struct makefile *make, unsigned int arch )
 
     output( "%s:", obj_dir_path( make, make->module ));
     if (spec_file) output_filename( spec_file );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
@@ -3314,7 +3315,7 @@ static void output_fake_module( struct makefile *make, unsigned int arch )
         output_filename( spec_file );
     }
     output_filenames( make->extradllflags );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     output( "\n" );
 }
 
@@ -3503,7 +3504,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output_winegcc_command( make, arch );
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     if ((debug_file = get_debug_file( make, testmodule, arch )))
         output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
@@ -3515,13 +3516,13 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output_filename( strmake( "-Wb,-F,%s", testmodule ));
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( all_libs );
     output_filename( arch ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
     output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
     output_filenames_obj_dir( make, make->object_files[arch] );
-    output_filenames_obj_dir( make, make->res_files );
+    output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
@@ -3752,7 +3753,7 @@ static void output_sources( struct makefile *make )
                 if (submakes[i]->testdll && !submakes[i]->disabled)
                     strarray_add( &tests, submakes[i]->testdll );
         for (i = 0; i < tests.count; i++)
-            strarray_add( &make->res_files, replace_extension( tests.str[i], ".dll", "_test.res" ));
+            strarray_add( &make->res_files[arch], replace_extension( tests.str[i], ".dll", "_test.res" ));
     }
 
     if (make->dlldata_files.count)
@@ -3807,10 +3808,10 @@ static void output_sources( struct makefile *make )
     {
         strarray_addall_uniq( &make->clean_files, make->object_files[arch] );
         strarray_addall_uniq( &make->clean_files, make->implib_files[arch] );
+        strarray_addall_uniq( &make->clean_files, make->res_files[arch] );
         strarray_addall_uniq( &make->clean_files, make->all_targets[arch] );
     }
     strarray_addall( &make->clean_files, make->unixobj_files );
-    strarray_addall( &make->clean_files, make->res_files );
     strarray_addall( &make->clean_files, make->pot_files );
     strarray_addall( &make->clean_files, make->debug_files );
 
