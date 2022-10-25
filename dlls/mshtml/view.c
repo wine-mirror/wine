@@ -419,19 +419,19 @@ static inline HTMLDocumentObj *impl_from_IOleDocumentView(IOleDocumentView *ifac
 static HRESULT WINAPI OleDocumentView_QueryInterface(IOleDocumentView *iface, REFIID riid, void **ppvObject)
 {
     HTMLDocumentObj *This = impl_from_IOleDocumentView(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppvObject);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppvObject);
 }
 
 static ULONG WINAPI OleDocumentView_AddRef(IOleDocumentView *iface)
 {
     HTMLDocumentObj *This = impl_from_IOleDocumentView(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI OleDocumentView_Release(IOleDocumentView *iface)
 {
     HTMLDocumentObj *This = impl_from_IOleDocumentView(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI OleDocumentView_SetInPlaceSite(IOleDocumentView *iface, IOleInPlaceSite *pIPSite)
@@ -727,19 +727,19 @@ static inline HTMLDocumentObj *impl_from_IViewObjectEx(IViewObjectEx *iface)
 static HRESULT WINAPI ViewObject_QueryInterface(IViewObjectEx *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = impl_from_IViewObjectEx(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI ViewObject_AddRef(IViewObjectEx *iface)
 {
     HTMLDocumentObj *This = impl_from_IViewObjectEx(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI ViewObject_Release(IViewObjectEx *iface)
 {
     HTMLDocumentObj *This = impl_from_IViewObjectEx(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI ViewObject_Draw(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect,
@@ -894,13 +894,13 @@ static HRESULT WINAPI WindowForBindingUI_QueryInterface(IWindowForBindingUI *ifa
 static ULONG WINAPI WindowForBindingUI_AddRef(IWindowForBindingUI *iface)
 {
     HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI WindowForBindingUI_Release(IWindowForBindingUI *iface)
 {
     HTMLDocumentObj *This = impl_from_IWindowForBindingUI(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI WindowForBindingUI_GetWindow(IWindowForBindingUI *iface, REFGUID rguidReason, HWND *phwnd)

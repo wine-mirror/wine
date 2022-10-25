@@ -1441,7 +1441,7 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
     if(This->nsnode)
         nsIDOMNode_Release(This->nsnode);
     if(This->doc && &This->doc->node != This)
-        htmldoc_release(&This->doc->basedoc);
+        IHTMLDOMNode_Release(&This->doc->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -1479,7 +1479,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     EventTarget_Init(&node->event_target, (IUnknown*)&node->IHTMLDOMNode_iface, dispex_data, doc->document_mode);
 
     if(&doc->node != node)
-        htmldoc_addref(&doc->basedoc);
+        IHTMLDOMNode_AddRef(&doc->node.IHTMLDOMNode_iface);
     node->doc = doc;
 
     nsIDOMNode_AddRef(nsnode);
@@ -1601,7 +1601,7 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
     if(This->doc && &This->doc->node != This) {
         HTMLDocumentNode *doc = This->doc;
         This->doc = NULL;
-        htmldoc_release(&doc->basedoc);
+        IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
     }else {
         This->doc = NULL;
     }
@@ -1667,6 +1667,6 @@ HRESULT get_node(nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
         return E_FAIL;
 
     hres = create_node(document, nsnode, ret);
-    htmldoc_release(&document->basedoc);
+    IHTMLDOMNode_Release(&document->node.IHTMLDOMNode_iface);
     return hres;
 }

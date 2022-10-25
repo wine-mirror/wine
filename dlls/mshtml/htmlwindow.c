@@ -259,7 +259,7 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     if(This->doc) {
         This->doc->window = NULL;
-        htmldoc_release(&This->doc->basedoc);
+        IHTMLDOMNode_Release(&This->doc->node.IHTMLDOMNode_iface);
     }
 
     release_event_target(&This->event_target);
@@ -4187,9 +4187,9 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
     if(is_main_content_window(outer_window) || !outer_window->browser->content_window) {
         HTMLDocumentObj *doc_obj = outer_window->browser->doc;
         if(doc_obj->basedoc.doc_node)
-            htmldoc_release(&doc_obj->basedoc.doc_node->basedoc);
+            IHTMLDOMNode_Release(&doc_obj->basedoc.doc_node->node.IHTMLDOMNode_iface);
         doc_obj->basedoc.doc_node = window->doc;
-        htmldoc_addref(&window->doc->basedoc);
+        IHTMLDOMNode_AddRef(&window->doc->node.IHTMLDOMNode_iface);
     }
 
     return hres;

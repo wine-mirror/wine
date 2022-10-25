@@ -801,19 +801,19 @@ static const cmdtable_t base_cmds[] = {
 static HRESULT WINAPI DocNodeOleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleCommandTarget(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleCommandTarget_AddRef(IOleCommandTarget *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleCommandTarget(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleCommandTarget_Release(IOleCommandTarget *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleCommandTarget(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT query_from_table(HTMLDocumentNode *doc, const cmdtable_t *cmdtable, OLECMD *cmd)
@@ -965,19 +965,19 @@ static const IOleCommandTargetVtbl DocNodeOleCommandTargetVtbl = {
 static HRESULT WINAPI DocObjOleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleCommandTarget_AddRef(IOleCommandTarget *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleCommandTarget_Release(IOleCommandTarget *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjOleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,

@@ -237,7 +237,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     connect_scripts(doc->window);
 
-    htmldoc_addref(&doc->basedoc);
+    IHTMLDOMNode_AddRef(&doc->node.IHTMLDOMNode_iface);
 
     if(doc_obj)
         handle_docobj_load(doc_obj);
@@ -278,7 +278,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         WARN("no window\n");
     }
 
-    htmldoc_release(&doc->basedoc);
+    IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
     return NS_OK;
 }
 

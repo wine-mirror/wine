@@ -147,19 +147,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IOleObject(IOleObject *ifa
 static HRESULT WINAPI DocNodeOleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleObject_AddRef(IOleObject *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleObject_Release(IOleObject *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeOleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
@@ -336,19 +336,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IOleObject(IOleObject *iface
 static HRESULT WINAPI DocObjOleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleObject(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleObject_AddRef(IOleObject *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleObject(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleObject_Release(IOleObject *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleObject(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static void update_hostinfo(HTMLDocumentObj *This, DOCHOSTUIINFO *hostinfo)
@@ -909,19 +909,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IOleDocument(IOleDocument 
 static HRESULT WINAPI DocNodeOleDocument_QueryInterface(IOleDocument *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleDocument(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleDocument_AddRef(IOleDocument *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleDocument(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleDocument_Release(IOleDocument *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleDocument(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeOleDocument_CreateView(IOleDocument *iface, IOleInPlaceSite *pIPSite, IStream *pstm,
@@ -963,19 +963,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IOleDocument(IOleDocument *i
 static HRESULT WINAPI DocObjOleDocument_QueryInterface(IOleDocument *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleDocument(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleDocument_AddRef(IOleDocument *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleDocument(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleDocument_Release(IOleDocument *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleDocument(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjOleDocument_CreateView(IOleDocument *iface, IOleInPlaceSite *pIPSite, IStream *pstm,
@@ -1046,19 +1046,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IOleControl(IOleControl *i
 static HRESULT WINAPI DocNodeOleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleControl(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleControl_AddRef(IOleControl *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleControl(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleControl_Release(IOleControl *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleControl(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeOleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
@@ -1106,19 +1106,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IOleControl(IOleControl *ifa
 static HRESULT WINAPI DocObjOleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleControl(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleControl_AddRef(IOleControl *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleControl(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleControl_Release(IOleControl *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleControl(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjOleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
@@ -1286,19 +1286,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IOleInPlaceActiveObject(IO
 static HRESULT WINAPI DocNodeOleInPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceActiveObject(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleInPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceActiveObject(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleInPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceActiveObject(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeOleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface, HWND *phwnd)
@@ -1371,19 +1371,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IOleInPlaceActiveObject(IOle
 static HRESULT WINAPI DocObjOleInPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleInPlaceActiveObject(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleInPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleInPlaceActiveObject(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleInPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleInPlaceActiveObject(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjOleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface, HWND *phwnd)
@@ -1479,19 +1479,19 @@ static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_QueryInterface(IOleInPla
         REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceObjectWindowless(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleInPlaceObjectWindowless_AddRef(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceObjectWindowless(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceObjectWindowless(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface,
@@ -1574,19 +1574,19 @@ static HRESULT WINAPI DocObjOleInPlaceObjectWindowless_QueryInterface(IOleInPlac
         REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleInPlaceObjectWindowless(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleInPlaceObjectWindowless_AddRef(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleInPlaceObjectWindowless(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleInPlaceObjectWindowless(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjOleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface,
@@ -1717,19 +1717,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IObjectWithSite(IObjectWit
 static HRESULT WINAPI DocNodeObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectWithSite(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeObjectWithSite_AddRef(IObjectWithSite *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectWithSite(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeObjectWithSite_Release(IObjectWithSite *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectWithSite(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
@@ -1762,19 +1762,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IObjectWithSite(IObjectWithS
 static HRESULT WINAPI DocObjObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IObjectWithSite(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjObjectWithSite_AddRef(IObjectWithSite *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IObjectWithSite(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjObjectWithSite_Release(IObjectWithSite *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IObjectWithSite(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
@@ -1811,19 +1811,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IOleContainer(IOleContaine
 static HRESULT WINAPI DocNodeOleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleContainer(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeOleContainer_AddRef(IOleContainer *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleContainer(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeOleContainer_Release(IOleContainer *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleContainer(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeOleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc, LPOLESTR pszDisplayName,
@@ -1864,19 +1864,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IOleContainer(IOleContainer 
 static HRESULT WINAPI DocObjOleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleContainer(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjOleContainer_AddRef(IOleContainer *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleContainer(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjOleContainer_Release(IOleContainer *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleContainer(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjOleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc, LPOLESTR pszDisplayName,
@@ -1988,19 +1988,19 @@ static inline HTMLDocumentNode *HTMLDocumentNode_from_IObjectSafety(IObjectSafet
 static HRESULT WINAPI DocNodeObjectSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectSafety(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
 }
 
 static ULONG WINAPI DocNodeObjectSafety_AddRef(IObjectSafety *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectSafety(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
 static ULONG WINAPI DocNodeObjectSafety_Release(IObjectSafety *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectSafety(iface);
-    return htmldoc_release(&This->basedoc);
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
 static HRESULT WINAPI DocNodeObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *iface,
@@ -2035,19 +2035,19 @@ static inline HTMLDocumentObj *HTMLDocumentObj_from_IObjectSafety(IObjectSafety 
 static HRESULT WINAPI DocObjObjectSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IObjectSafety(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjObjectSafety_AddRef(IObjectSafety *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IObjectSafety(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjObjectSafety_Release(IObjectSafety *iface)
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IObjectSafety(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *iface,
@@ -2128,17 +2128,17 @@ static void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj *This)
 static HRESULT WINAPI DocObj##iface##_QueryInterface(I##iface *_0, REFIID riid, void **ppv) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return htmldoc_query_interface(&This->basedoc, riid, ppv); \
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv); \
 } \
 static ULONG WINAPI DocObj##iface##_AddRef(I##iface *_0) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return htmldoc_addref(&This->basedoc); \
+    return IUnknown_AddRef(This->outer_unk); \
 } \
 static ULONG WINAPI DocObj##iface##_Release(I##iface *_0) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return htmldoc_release(&This->basedoc); \
+    return IUnknown_Release(This->outer_unk); \
 }
 
 #define HTMLDOCUMENTOBJ_IDISPATCH_METHODS(iface) HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(iface) \
@@ -3391,7 +3391,7 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
     if(!ref) {
         if(This->basedoc.doc_node) {
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
-            htmldoc_release(&This->basedoc.doc_node->basedoc);
+            IHTMLDOMNode_Release(&This->basedoc.doc_node->node.IHTMLDOMNode_iface);
         }
         if(This->basedoc.window)
             IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
@@ -3448,19 +3448,19 @@ static inline HTMLDocumentObj *impl_from_IDispatchEx(IDispatchEx *iface)
 static HRESULT WINAPI DocObjDispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI DocObjDispatchEx_AddRef(IDispatchEx *iface)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI DocObjDispatchEx_Release(IDispatchEx *iface)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
@@ -3588,21 +3588,21 @@ static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, v
 {
     HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
 
-    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
 {
     HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
 
-    return htmldoc_addref(&This->basedoc);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
 {
     HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
 
-    return htmldoc_release(&This->basedoc);
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
@@ -3735,7 +3735,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IDisplayServices_iface.lpVtbl = &DocObjDisplayServicesVtbl;
     doc->IDocumentRange_iface.lpVtbl = &DocObjDocumentRangeVtbl;
 
-    doc->basedoc.outer_unk = outer ? outer : &doc->IUnknown_inner;
+    doc->outer_unk = outer ? outer : &doc->IUnknown_inner;
     doc->basedoc.doc_obj = doc;
 
     init_dispatch(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex, COMPAT_MODE_QUIRKS);
@@ -3754,15 +3754,15 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     hres = create_gecko_browser(doc, &doc->nscontainer);
     if(FAILED(hres)) {
         ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");
-        htmldoc_release(&doc->basedoc);
+        IUnknown_Release(&doc->IUnknown_inner);
         return hres;
     }
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = &doc->IUnknown_inner;
     }else {
-        hres = htmldoc_query_interface(&doc->basedoc, riid, ppv);
-        htmldoc_release(&doc->basedoc);
+        hres = IUnknown_QueryInterface(doc->outer_unk, riid, ppv);
+        IUnknown_Release(doc->outer_unk);
         if(FAILED(hres))
             return hres;
     }
@@ -3772,7 +3772,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
 
     if(!doc->basedoc.doc_node && doc->basedoc.window->base.inner_window->doc) {
         doc->basedoc.doc_node = doc->basedoc.window->base.inner_window->doc;
-        htmldoc_addref(&doc->basedoc.doc_node->basedoc);
+        IHTMLDOMNode_AddRef(&doc->basedoc.doc_node->node.IHTMLDOMNode_iface);
     }
 
     get_thread_hwnd();

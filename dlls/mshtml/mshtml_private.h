@@ -640,28 +640,11 @@ struct  ConnectionPoint {
 };
 
 struct HTMLDocument {
-    IUnknown *outer_unk;
-
     HTMLDocumentObj *doc_obj;
     HTMLDocumentNode *doc_node;
 
     HTMLOuterWindow *window;
 };
-
-static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
-{
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
-}
-
-static inline ULONG htmldoc_addref(HTMLDocument *This)
-{
-    return IUnknown_AddRef(This->outer_unk);
-}
-
-static inline ULONG htmldoc_release(HTMLDocument *This)
-{
-    return IUnknown_Release(This->outer_unk);
-}
 
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
@@ -707,6 +690,7 @@ struct HTMLDocumentObj {
 
     LONG ref;
 
+    IUnknown *outer_unk;
     GeckoBrowser *nscontainer;
 
     IOleClientSite *client;
