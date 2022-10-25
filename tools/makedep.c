@@ -216,8 +216,6 @@ struct makefile
     struct strarray distclean_files;
     struct strarray maintainerclean_files;
     struct strarray uninstall_files;
-    struct strarray object_files;
-    struct strarray crossobj_files;
     struct strarray unixobj_files;
     struct strarray res_files;
     struct strarray font_files;
@@ -228,6 +226,7 @@ struct makefile
     struct strarray all_targets;
     struct strarray phony_targets;
     struct strarray dependencies;
+    struct strarray object_files[MAX_ARCHS];
     struct strarray install_rules[NB_INSTALL_RULES];
 };
 
@@ -3054,7 +3053,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         else if (source->file->flags & FLAG_C_IMPLIB)
             strarray_add( &make->implib_files, strmake( "%s.o", obj ));
         else if (!is_dll_src)
-            strarray_add( &make->object_files, strmake( "%s.o", obj ));
+            strarray_add( &make->object_files[0], strmake( "%s.o", obj ));
         else
             strarray_add( &make->clean_files, strmake( "%s.o", obj ));
         output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
@@ -3082,7 +3081,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         if (source->file->flags & FLAG_C_IMPLIB)
             strarray_add( &make->crossimplib_files, strmake( "%s.cross.o", obj ));
         else if (!is_dll_src)
-            strarray_add( &make->crossobj_files, strmake( "%s.cross.o", obj ));
+            strarray_add( &make->object_files[arch], strmake( "%s.cross.o", obj ));
         else
             strarray_add( &make->clean_files, strmake( "%s.cross.o", obj ));
         output( "%s.cross.o: %s\n", obj_dir_path( make, obj ), source->filename );
@@ -3219,7 +3218,7 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     output( "%s:", obj_dir_path( make, module_name ));
     if (spec_file) output_filename( spec_file );
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
@@ -3233,7 +3232,7 @@ static void output_module( struct makefile *make, unsigned int arch )
         output_filename( spec_file );
     }
     output_filenames( make->extradllflags );
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files );
     debug_file = get_debug_file( make, make->module, arch );
     if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
@@ -3384,12 +3383,12 @@ static void output_static_lib( struct makefile *make, unsigned int arch )
 
     strarray_add( &make->clean_files, name );
     output( "%s: %s", obj_dir_path( make, name ), tools_path( make, "winebuild" ));
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     if (!arch) output_filenames_obj_dir( make, make->unixobj_files );
     output( "\n" );
     output( "\t%s%s -w --staticlib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ));
     output_filenames( target_flags[arch] );
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     if (!arch) output_filenames_obj_dir( make, make->unixobj_files );
     output( "\n" );
     if (!make->extlib)
@@ -3419,11 +3418,11 @@ static void output_shared_lib( struct makefile *make )
     strarray_addall( &all_libs, libs );
 
     output( "%s:", obj_dir_path( make, make->sharedlib ));
-    output_filenames_obj_dir( make, make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames( dep_libs );
     output( "\n" );
     output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
-    output_filenames_obj_dir( make, make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
@@ -3464,7 +3463,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output( "%s:\n", output_file );
     output_winegcc_command( make, arch );
     output_filenames( make->extradllflags );
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files );
     if ((debug_file = get_debug_file( make, testmodule, arch )))
         output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
@@ -3476,13 +3475,13 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output_filename( "-s" );
     output_filename( strmake( "-Wb,-F,%s", testmodule ));
     output_filenames( make->extradllflags );
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
     output_filename( arch ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
     output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
-    output_filenames_obj_dir( make, arch ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
@@ -3522,6 +3521,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
 static void output_programs( struct makefile *make )
 {
     unsigned int i, j;
+    unsigned int arch = 0;  /* programs are always native */
 
     for (i = 0; i < make->programs.count; i++)
     {
@@ -3532,7 +3532,7 @@ static void output_programs( struct makefile *make )
         struct strarray objs     = get_expanded_file_local_var( make, make->programs.str[i], "OBJS" );
         struct strarray symlinks = get_expanded_file_local_var( make, make->programs.str[i], "SYMLINKS" );
 
-        if (!objs.count) objs = make->object_files;
+        if (!objs.count) objs = make->object_files[arch];
         if (!strarray_exists( &all_libs, "-nodefaultlibs" ))
         {
             strarray_addall( &all_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
@@ -3763,10 +3763,12 @@ static void output_sources( struct makefile *make )
     else if (!strcmp( make->obj_dir, "po" ))
         strarray_add( &make->distclean_files, "LINGUAS" );
 
-    strarray_addall( &make->clean_files, make->object_files );
-    strarray_addall( &make->clean_files, make->crossobj_files );
     strarray_addall( &make->clean_files, make->implib_files );
     strarray_addall( &make->clean_files, make->crossimplib_files );
+    for (arch = 0; arch < archs.count; arch++)
+    {
+        strarray_addall_uniq( &make->clean_files, make->object_files[arch] );
+    }
     strarray_addall( &make->clean_files, make->unixobj_files );
     strarray_addall( &make->clean_files, make->res_files );
     strarray_addall( &make->clean_files, make->pot_files );
