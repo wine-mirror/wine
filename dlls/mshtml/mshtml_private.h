@@ -406,7 +406,7 @@ HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*) DECLSPEC_HIDDEN
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**) DECLSPEC_HIDDEN;
 HRESULT get_dispids(tid_t,DWORD*,DISPID**) DECLSPEC_HIDDEN;
 HRESULT remove_attribute(DispatchEx*,DISPID,VARIANT_BOOL*) DECLSPEC_HIDDEN;
-HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
+HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,BOOL,DISPID*) DECLSPEC_HIDDEN;
 void dispex_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*) DECLSPEC_HIDDEN;
 void dispex_unlink(DispatchEx*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
@@ -640,10 +640,7 @@ struct  ConnectionPoint {
 };
 
 struct HTMLDocument {
-    IDispatchEx                 IDispatchEx_iface;
-
     IUnknown *outer_unk;
-    IDispatchEx *dispex;
 
     HTMLDocumentObj *doc_obj;
     HTMLDocumentNode *doc_node;
@@ -666,13 +663,11 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
     return IUnknown_Release(This->outer_unk);
 }
 
-BOOL htmldoc_qi(HTMLDocument*,REFIID,void**) DECLSPEC_HIDDEN;
-void init_doc(HTMLDocument*,IUnknown*,IDispatchEx*) DECLSPEC_HIDDEN;
-
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
     DispatchEx dispex;
     IUnknown IUnknown_inner;
+    IDispatchEx IDispatchEx_iface;
     ICustomDoc ICustomDoc_iface;
     IHTMLDocument2 IHTMLDocument2_iface;
     IHTMLDocument3 IHTMLDocument3_iface;
@@ -899,6 +894,7 @@ struct HTMLDocumentNode {
     HTMLDOMNode node;
     HTMLDocument basedoc;
 
+    IDispatchEx                  IDispatchEx_iface;
     IHTMLDocument2               IHTMLDocument2_iface;
     IHTMLDocument3               IHTMLDocument3_iface;
     IHTMLDocument4               IHTMLDocument4_iface;
