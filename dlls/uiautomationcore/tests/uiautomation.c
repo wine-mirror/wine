@@ -6732,6 +6732,20 @@ static void set_cache_request(struct UiaCacheRequest *req, struct UiaCondition *
     req->automationElementMode = elem_mode;
 }
 
+static void set_and_or_condition(struct UiaAndOrCondition *cond, int cond_type,
+        struct UiaCondition **conds, int cond_count)
+{
+    cond->ConditionType = cond_type;
+    cond->ppConditions = conds;
+    cond->cConditions = cond_count;
+}
+
+static void set_not_condition(struct UiaNotCondition *cond, struct UiaCondition *not_cond)
+{
+    cond->ConditionType = ConditionType_Not;
+    cond->pConditions = not_cond;
+}
+
 #define MAX_NODE_PROVIDERS 4
 struct node_provider_desc {
     DWORD pid;
@@ -6879,8 +6893,11 @@ static const struct UiaCondition UiaFalseCondition = { ConditionType_False };
 static void test_UiaGetUpdatedCache(void)
 {
     struct node_provider_desc exp_node_desc[2];
+    struct UiaAndOrCondition and_or_cond;
     LONG exp_lbound[2], exp_elems[2], i;
     struct UiaCacheRequest cache_req;
+    struct UiaCondition *cond_arr[2];
+    struct UiaNotCondition not_cond;
     SAFEARRAY *out_req;
     BSTR tree_struct;
     HUIANODE node;
@@ -7044,6 +7061,144 @@ static void test_UiaGetUpdatedCache(void)
     ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
     SafeArrayDestroy(out_req);
     SysFreeString(tree_struct);
+
+    /*
+     * ConditionType_And tests.
+     */
+    for (i = 0; i < ARRAY_SIZE(exp_node_desc); i++)
+        init_node_provider_desc(&exp_node_desc[i], GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    cond_arr[0] = (struct UiaCondition *)&UiaTrueCondition;
+    cond_arr[1] = (struct UiaCondition *)&UiaTrueCondition;
+    set_and_or_condition(&and_or_cond, ConditionType_And, cond_arr, ARRAY_SIZE(cond_arr));
+    set_cache_request(&cache_req, (struct UiaCondition *)&and_or_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    /* Equivalent to: if (1 && 1) */
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!out_req, "out_req == NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (out_req)
+    {
+        exp_lbound[0] = exp_lbound[1] = 0;
+        exp_elems[0] = exp_elems[1] = 1;
+        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+        ok_method_sequence(cache_req_seq1, NULL);
+    }
+
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+
+    cond_arr[0] = (struct UiaCondition *)&UiaTrueCondition;
+    cond_arr[1] = (struct UiaCondition *)&UiaFalseCondition;
+    set_and_or_condition(&and_or_cond, ConditionType_And, cond_arr, ARRAY_SIZE(cond_arr));
+    set_cache_request(&cache_req, (struct UiaCondition *)&and_or_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    /* Equivalent to: if (1 && 0) */
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(cache_req_seq2, NULL);
+
+    ok(!out_req, "out_req != NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (tree_struct)
+        ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    SysFreeString(tree_struct);
+
+    /*
+     * ConditionType_Or tests.
+     */
+    cond_arr[0] = (struct UiaCondition *)&UiaTrueCondition;
+    cond_arr[1] = (struct UiaCondition *)&UiaFalseCondition;
+    set_and_or_condition(&and_or_cond, ConditionType_Or, cond_arr, ARRAY_SIZE(cond_arr));
+    set_cache_request(&cache_req, (struct UiaCondition *)&and_or_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    /* Equivalent to: if (1 || 0) */
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!out_req, "out_req == NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (out_req)
+    {
+        exp_lbound[0] = exp_lbound[1] = 0;
+        exp_elems[0] = exp_elems[1] = 1;
+        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+        ok_method_sequence(cache_req_seq1, NULL);
+    }
+
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+
+    cond_arr[0] = (struct UiaCondition *)&UiaFalseCondition;
+    cond_arr[1] = (struct UiaCondition *)&UiaFalseCondition;
+    set_and_or_condition(&and_or_cond, ConditionType_Or, cond_arr, ARRAY_SIZE(cond_arr));
+    set_cache_request(&cache_req, (struct UiaCondition *)&and_or_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    /* Equivalent to: if (0 || 0) */
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(cache_req_seq2, NULL);
+
+    ok(!out_req, "out_req != NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (tree_struct)
+        ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    SysFreeString(tree_struct);
+
+    /*
+     * ConditionType_Not tests.
+     */
+    set_not_condition(&not_cond, (struct UiaCondition *)&UiaFalseCondition);
+    set_cache_request(&cache_req, (struct UiaCondition *)&not_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    /* Equivalent to: if (!0) */
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!out_req, "out_req == NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (out_req)
+    {
+        exp_lbound[0] = exp_lbound[1] = 0;
+        exp_elems[0] = exp_elems[1] = 1;
+        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+        ok_method_sequence(cache_req_seq1, NULL);
+    }
+
+    SafeArrayDestroy(out_req);
+    SysFreeString(tree_struct);
+
+    set_not_condition(&not_cond, (struct UiaCondition *)&UiaTrueCondition);
+    set_cache_request(&cache_req, (struct UiaCondition *)&not_cond, TreeScope_Element, NULL, 0, NULL, 0,
+            AutomationElementMode_Full);
+    tree_struct = NULL; out_req = NULL;
+
+    /* Equivalent to: if (!1) */
+    hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok_method_sequence(cache_req_seq2, NULL);
+
+    ok(!out_req, "out_req != NULL\n");
+    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
+    if (tree_struct)
+        ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    SysFreeString(tree_struct);
+
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
