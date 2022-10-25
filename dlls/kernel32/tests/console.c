@@ -925,10 +925,16 @@ static void testScreenBuffer(HANDLE hConOut)
     SetConsoleCursorPosition(hConOutRW, c);
     ret = WriteConsoleA(hConOutRW, test_cp866, lstrlenA(test_cp866), &len, NULL);
     ok(ret && len == lstrlenA(test_cp866), "WriteConsoleA failed\n");
-    ret = ReadConsoleOutputCharacterW(hConOutRW, str_wbuf, lstrlenA(test_cp866), c, &len);
-    ok(ret && len == lstrlenA(test_cp866), "ReadConsoleOutputCharacterW failed\n");
-    str_wbuf[lstrlenA(test_cp866)] = 0;
-    ok(!lstrcmpW(str_wbuf, test_unicode), "string does not match the pattern\n");
+    ret = ReadConsoleOutputCharacterW(hConOutRW, str_wbuf, lstrlenW(test_unicode), c, &len);
+    /* Work around some broken results under Windows with some locale (ja, cn, ko...)
+     * Looks like a real bug in Win10 (at least).
+     */
+    if (ret && broken(len == lstrlenW(test_unicode) / sizeof(WCHAR)))
+        ret = ReadConsoleOutputCharacterW(hConOutRW, str_wbuf, lstrlenW(test_unicode) * sizeof(WCHAR), c, &len);
+    ok(ret, "ReadConsoleOutputCharacterW failed\n");
+    ok(len == lstrlenW(test_unicode), "unexpected len %lu %u\n", len, lstrlenW(test_unicode));
+    ok(!memcmp(str_wbuf, test_unicode, lstrlenW(test_unicode) * sizeof(WCHAR)),
+       "string does not match the pattern\n");
 
     /*
      * cp866 is OK, let's switch to cp1251.
