@@ -746,7 +746,6 @@ static void test_SHCreateQueryCancelAutoPlayMoniker(void)
 }
 
 #define WM_EXPECTED_VALUE WM_APP
-#define DROPTEST_FILENAME "c:\\wintest.bin"
 struct DragParam {
     HWND hwnd;
     HANDLE ready;
@@ -755,10 +754,12 @@ struct DragParam {
 static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static BOOL expected;
+    static char expected_filename[MAX_PATH];
 
     switch (msg) {
     case WM_EXPECTED_VALUE:
     {
+        lstrcpynA(expected_filename, (const char*)wparam, sizeof(expected_filename));
         expected = lparam;
         break;
     }
@@ -768,19 +769,44 @@ static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         char filename[MAX_PATH] = "dummy";
         POINT pt;
         BOOL r;
-        UINT num;
+        UINT num, len;
+        winetest_push_context("%s", wine_dbgstr_a(expected_filename));
+
         num = DragQueryFileA(hDrop, 0xffffffff, NULL, 0);
         ok(num == 1, "expected 1, got %u\n", num);
+
         num = DragQueryFileA(hDrop, 0xffffffff, (char*)0xdeadbeef, 0xffffffff);
         ok(num == 1, "expected 1, got %u\n", num);
+
+        len = strlen(expected_filename);
+        num = DragQueryFileA(hDrop, 0, NULL, 0);
+        todo_wine_if(expected_filename[0] == 'd')
+        ok(num == len, "expected %u, got %u\n", len, num);
+
+        num = DragQueryFileA(hDrop, 0, filename, 0);
+        todo_wine_if(expected_filename[0] == 'd')
+        ok(num == len, "expected %u, got %u\n", len, num);
+        ok(!strcmp(filename, "dummy"), "got %s\n", filename);
+
         num = DragQueryFileA(hDrop, 0, filename, sizeof(filename));
-        ok(num == strlen(DROPTEST_FILENAME), "got %u\n", num);
-        ok(!strcmp(filename, DROPTEST_FILENAME), "got %s\n", filename);
+        todo_wine_if(expected_filename[0] == 'd')
+        ok(num == len, "expected %u, got %u\n", len, num);
+        ok(!strcmp(filename, expected_filename), "expected %s, got %s\n",
+           expected_filename, filename);
+
+        memset(filename, 0xaa, sizeof(filename));
+        num = DragQueryFileA(hDrop, 0, filename, 2);
+        todo_wine ok(num == 1, "expected 1, got %u\n", num);
+        ok(filename[0] == expected_filename[0], "expected '%c', got '%c'\n",
+           expected_filename[0], filename[0]);
+        ok(filename[1] == '\0', "expected nul, got %#x\n", (BYTE)filename[1]);
+
         r = DragQueryPoint(hDrop, &pt);
         ok(r == expected, "expected %d, got %d\n", expected, r);
         ok(pt.x == 10, "expected 10, got %ld\n", pt.x);
         ok(pt.y == 20, "expected 20, got %ld\n", pt.y);
         DragFinish(hDrop);
+        winetest_pop_context();
         return 0;
     }
     }
@@ -841,8 +867,15 @@ static void test_DragQueryFile(BOOL non_client_flag)
     DWORD rc;
     HGLOBAL hDrop;
     DROPFILES *pDrop;
-    int ret;
+    int ret, i;
     BOOL r;
+    static const struct {
+        UINT codepage;
+        const char* filename;
+    } testcase[] = {
+        { 0, "c:\\wintest.bin" },
+        { 932, "d:\\\x89\xb9\x8a\x79_02.CHY" },
+    };
 
     param.ready = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(param.ready != NULL, "can't create event\n");
@@ -851,23 +884,39 @@ static void test_DragQueryFile(BOOL non_client_flag)
     rc = WaitForSingleObject(param.ready, 5000);
     ok(rc == WAIT_OBJECT_0, "got %lu\n", rc);
 
-    hDrop = GlobalAlloc(GHND, sizeof(DROPFILES) + (strlen(DROPTEST_FILENAME) + 2) * sizeof(WCHAR));
-    pDrop = GlobalLock(hDrop);
-    pDrop->pt.x = 10;
-    pDrop->pt.y = 20;
-    pDrop->fNC = non_client_flag;
-    pDrop->pFiles = sizeof(DROPFILES);
-    ret = MultiByteToWideChar(CP_ACP, 0, DROPTEST_FILENAME, -1,
-                              (LPWSTR)(pDrop + 1), strlen(DROPTEST_FILENAME) + 1);
-    ok(ret > 0, "got %d\n", ret);
-    pDrop->fWide = TRUE;
-    GlobalUnlock(hDrop);
+    for (i = 0; i < ARRAY_SIZE(testcase); i++)
+    {
+        winetest_push_context("%d", i);
+        if (testcase[i].codepage && testcase[i].codepage != GetACP())
+        {
+            skip("need codepage %u for this test\n", testcase[i].codepage);
+            winetest_pop_context();
+            continue;
+        }
 
-    r = PostMessageA(param.hwnd, WM_EXPECTED_VALUE, 0, !non_client_flag);
-    ok(r, "got %d\n", r);
+        ret = MultiByteToWideChar(CP_ACP, 0, testcase[i].filename, -1, NULL, 0);
+        ok(ret > 0, "got %d\n", ret);
+        hDrop = GlobalAlloc(GHND, sizeof(DROPFILES) + (ret + 1) * sizeof(WCHAR));
+        pDrop = GlobalLock(hDrop);
+        pDrop->pt.x = 10;
+        pDrop->pt.y = 20;
+        pDrop->fNC = non_client_flag;
+        pDrop->pFiles = sizeof(DROPFILES);
+        ret = MultiByteToWideChar(CP_ACP, 0, testcase[i].filename, -1,
+                                  (LPWSTR)(pDrop + 1), ret);
+        ok(ret > 0, "got %d\n", ret);
+        pDrop->fWide = TRUE;
+        GlobalUnlock(hDrop);
 
-    r = PostMessageA(param.hwnd, WM_DROPFILES, (WPARAM)hDrop, 0);
-    ok(r, "got %d\n", r);
+        r = PostMessageA(param.hwnd, WM_EXPECTED_VALUE,
+                         (WPARAM)testcase[i].filename, !non_client_flag);
+        ok(r, "got %d\n", r);
+
+        r = PostMessageA(param.hwnd, WM_DROPFILES, (WPARAM)hDrop, 0);
+        ok(r, "got %d\n", r);
+
+        winetest_pop_context();
+    }
 
     r = PostMessageA(param.hwnd, WM_QUIT, 0, 0);
     ok(r, "got %d\n", r);
@@ -879,7 +928,6 @@ static void test_DragQueryFile(BOOL non_client_flag)
     CloseHandle(hThread);
 }
 #undef WM_EXPECTED_VALUE
-#undef DROPTEST_FILENAME
 
 static void test_SHCreateSessionKey(void)
 {
