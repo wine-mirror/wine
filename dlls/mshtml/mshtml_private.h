@@ -639,13 +639,7 @@ struct  ConnectionPoint {
     cp_static_data_t *data;
 };
 
-struct HTMLDocument {
-    HTMLDocumentObj *doc_obj;
-    HTMLDocumentNode *doc_node;
-};
-
 struct HTMLDocumentObj {
-    HTMLDocument basedoc;
     DispatchEx dispex;
     IUnknown IUnknown_inner;
     IDispatchEx IDispatchEx_iface;
@@ -691,6 +685,7 @@ struct HTMLDocumentObj {
     IUnknown *outer_unk;
     HTMLOuterWindow *window;
     GeckoBrowser *nscontainer;
+    HTMLDocumentNode *doc_node;
 
     IOleClientSite *client;
     IDocHostUIHandler *hostui;
@@ -875,7 +870,6 @@ typedef struct nsDocumentEventListener nsDocumentEventListener;
 
 struct HTMLDocumentNode {
     HTMLDOMNode node;
-    HTMLDocument basedoc;
 
     IDispatchEx                  IDispatchEx_iface;
     IHTMLDocument2               IHTMLDocument2_iface;
@@ -917,6 +911,7 @@ struct HTMLDocumentNode {
     ConnectionPointContainer cp_container;
     HTMLOuterWindow *outer_window;
     HTMLInnerWindow *window;
+    HTMLDocumentObj *doc_obj;
 
     GeckoBrowser *browser;
     struct list browser_entry;

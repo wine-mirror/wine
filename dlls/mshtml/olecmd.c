@@ -457,7 +457,7 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
 
     TRACE("(%p)->(%ld %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
-    if(doc != doc->browser->doc->basedoc.doc_node) {
+    if(doc != doc->browser->doc->doc_node) {
         FIXME("Unsupported on frame documents\n");
         return E_NOTIMPL;
     }
@@ -859,8 +859,8 @@ static HRESULT WINAPI DocNodeOleCommandTarget_QueryStatus(IOleCommandTarget *ifa
                     OLECMD olecmd;
 
                     prgCmds[i].cmdf = OLECMDF_SUPPORTED;
-                    if(This->basedoc.doc_obj->client) {
-                        hres = IOleClientSite_QueryInterface(This->basedoc.doc_obj->client, &IID_IOleCommandTarget,
+                    if(This->doc_obj->client) {
+                        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget,
                                 (void**)&cmdtrg);
                         if(SUCCEEDED(hres)) {
                             olecmd.cmdID = prgCmds[i].cmdID;
@@ -985,9 +985,9 @@ static HRESULT WINAPI DocObjOleCommandTarget_QueryStatus(IOleCommandTarget *ifac
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
 
-    if(!This->basedoc.doc_node)
+    if(!This->doc_node)
         return E_UNEXPECTED;
-    return IOleCommandTarget_QueryStatus(&This->basedoc.doc_node->IOleCommandTarget_iface,
+    return IOleCommandTarget_QueryStatus(&This->doc_node->IOleCommandTarget_iface,
                                          pguidCmdGroup, cCmds, prgCmds, pCmdText);
 }
 
@@ -996,9 +996,9 @@ static HRESULT WINAPI DocObjOleCommandTarget_Exec(IOleCommandTarget *iface, cons
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
 
-    if(!This->basedoc.doc_node)
+    if(!This->doc_node)
         return E_UNEXPECTED;
-    return IOleCommandTarget_Exec(&This->basedoc.doc_node->IOleCommandTarget_iface,
+    return IOleCommandTarget_Exec(&This->doc_node->IOleCommandTarget_iface,
                                   pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 }
 

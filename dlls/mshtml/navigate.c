@@ -2390,7 +2390,7 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
     return S_OK;
 }
 
-HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschannel, DWORD hlnf, BOOL *cancel)
+HRESULT hlink_frame_navigate(HTMLDocumentObj *doc, LPCWSTR url, nsChannel *nschannel, DWORD hlnf, BOOL *cancel)
 {
     IHlinkFrame *hlink_frame;
     nsChannelBSC *callback;
@@ -2401,7 +2401,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
 
     *cancel = FALSE;
 
-    hres = do_query_service((IUnknown*)doc->doc_obj->client, &IID_IHlinkFrame, &IID_IHlinkFrame,
+    hres = do_query_service((IUnknown*)doc->client, &IID_IHlinkFrame, &IID_IHlinkFrame,
             (void**)&hlink_frame);
     if(FAILED(hres))
         return S_OK;
@@ -2486,7 +2486,7 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
     if(is_main_content_window(window)) {
         BOOL cancel;
 
-        hres = hlink_frame_navigate(&window->base.inner_window->doc->basedoc, display_uri, NULL, 0, &cancel);
+        hres = hlink_frame_navigate(window->base.inner_window->doc->doc_obj, display_uri, NULL, 0, &cancel);
         if(FAILED(hres))
             return hres;
 

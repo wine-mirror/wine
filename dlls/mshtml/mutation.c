@@ -275,7 +275,7 @@ static void parse_complete(HTMLDocumentObj *doc)
     TRACE("(%p)\n", doc);
 
     if(doc->nscontainer->usermode == EDITMODE)
-        init_editor(doc->basedoc.doc_node);
+        init_editor(doc->doc_node);
 
     call_explorer_69(doc);
     if(doc->view_sink)
@@ -293,15 +293,15 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
 {
     TRACE("(%p)\n", This);
 
-    if(!This->basedoc.doc_obj)
+    if(!This->doc_obj)
         return NS_OK;
 
-    if(This == This->basedoc.doc_obj->basedoc.doc_node) {
+    if(This == This->doc_obj->doc_node) {
         /*
          * This should be done in the worker thread that parses HTML,
          * but we don't have such thread (Gecko parses HTML for us).
          */
-        parse_complete(This->basedoc.doc_obj);
+        parse_complete(This->doc_obj);
     }
 
     bind_event_scripts(This);

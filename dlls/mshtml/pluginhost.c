@@ -1918,12 +1918,12 @@ static HRESULT WINAPI PHInPlaceSite_GetWindowContext(IOleInPlaceSiteEx *iface,
 
     TRACE("(%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, frame_info);
 
-    if(!This->doc || !This->doc->basedoc.doc_obj || !This->doc->basedoc.doc_obj->ipsite) {
+    if(!This->doc || !This->doc->doc_obj || !This->doc->doc_obj->ipsite) {
         FIXME("No ipsite\n");
         return E_UNEXPECTED;
     }
 
-    hres = IOleInPlaceSite_GetWindowContext(This->doc->basedoc.doc_obj->ipsite, &ip_frame, &ip_window, &pr, &cr, frame_info);
+    hres = IOleInPlaceSite_GetWindowContext(This->doc->doc_obj->ipsite, &ip_frame, &ip_window, &pr, &cr, frame_info);
     if(FAILED(hres)) {
         WARN("GetWindowContext failed: %08lx\n", hres);
         return hres;

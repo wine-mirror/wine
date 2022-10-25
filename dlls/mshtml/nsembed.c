@@ -1681,7 +1681,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
     case CONTEXT_TEXT: {
         nsISelection *selection;
 
-        nsres = nsIDOMHTMLDocument_GetSelection(This->doc->basedoc.doc_node->nsdoc, &selection);
+        nsres = nsIDOMHTMLDocument_GetSelection(This->doc->doc_node->nsdoc, &selection);
         if(NS_SUCCEEDED(nsres) && selection) {
             cpp_bool is_collapsed;
 

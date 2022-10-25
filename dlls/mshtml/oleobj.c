@@ -165,13 +165,13 @@ static ULONG WINAPI DocNodeOleObject_Release(IOleObject *iface)
 static HRESULT WINAPI DocNodeOleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_SetClientSite(&This->basedoc.doc_obj->IOleObject_iface, pClientSite);
+    return IOleObject_SetClientSite(&This->doc_obj->IOleObject_iface, pClientSite);
 }
 
 static HRESULT WINAPI DocNodeOleObject_GetClientSite(IOleObject *iface, IOleClientSite **ppClientSite)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_GetClientSite(&This->basedoc.doc_obj->IOleObject_iface, ppClientSite);
+    return IOleObject_GetClientSite(&This->doc_obj->IOleObject_iface, ppClientSite);
 }
 
 static HRESULT WINAPI DocNodeOleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp, LPCOLESTR szContainerObj)
@@ -184,7 +184,7 @@ static HRESULT WINAPI DocNodeOleObject_SetHostNames(IOleObject *iface, LPCOLESTR
 static HRESULT WINAPI DocNodeOleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_Close(&This->basedoc.doc_obj->IOleObject_iface, dwSaveOption);
+    return IOleObject_Close(&This->doc_obj->IOleObject_iface, dwSaveOption);
 }
 
 static HRESULT WINAPI DocNodeOleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
@@ -220,7 +220,7 @@ static HRESULT WINAPI DocNodeOleObject_DoVerb(IOleObject *iface, LONG iVerb, LPM
                                               LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_DoVerb(&This->basedoc.doc_obj->IOleObject_iface, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
+    return IOleObject_DoVerb(&This->doc_obj->IOleObject_iface, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
 }
 
 static HRESULT WINAPI DocNodeOleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEnumOleVerb)
@@ -247,7 +247,7 @@ static HRESULT WINAPI DocNodeOleObject_IsUpToDate(IOleObject *iface)
 static HRESULT WINAPI DocNodeOleObject_GetUserClassID(IOleObject *iface, CLSID *pClsid)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_GetUserClassID(&This->basedoc.doc_obj->IOleObject_iface, pClsid);
+    return IOleObject_GetUserClassID(&This->doc_obj->IOleObject_iface, pClsid);
 }
 
 static HRESULT WINAPI DocNodeOleObject_GetUserType(IOleObject *iface, DWORD dwFormOfType, LPOLESTR *pszUserType)
@@ -260,31 +260,31 @@ static HRESULT WINAPI DocNodeOleObject_GetUserType(IOleObject *iface, DWORD dwFo
 static HRESULT WINAPI DocNodeOleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_SetExtent(&This->basedoc.doc_obj->IOleObject_iface, dwDrawAspect, psizel);
+    return IOleObject_SetExtent(&This->doc_obj->IOleObject_iface, dwDrawAspect, psizel);
 }
 
 static HRESULT WINAPI DocNodeOleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_GetExtent(&This->basedoc.doc_obj->IOleObject_iface, dwDrawAspect, psizel);
+    return IOleObject_GetExtent(&This->doc_obj->IOleObject_iface, dwDrawAspect, psizel);
 }
 
 static HRESULT WINAPI DocNodeOleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink, DWORD *pdwConnection)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_Advise(&This->basedoc.doc_obj->IOleObject_iface, pAdvSink, pdwConnection);
+    return IOleObject_Advise(&This->doc_obj->IOleObject_iface, pAdvSink, pdwConnection);
 }
 
 static HRESULT WINAPI DocNodeOleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_Unadvise(&This->basedoc.doc_obj->IOleObject_iface, dwConnection);
+    return IOleObject_Unadvise(&This->doc_obj->IOleObject_iface, dwConnection);
 }
 
 static HRESULT WINAPI DocNodeOleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ppenumAdvise)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleObject(iface);
-    return IOleObject_EnumAdvise(&This->basedoc.doc_obj->IOleObject_iface, ppenumAdvise);
+    return IOleObject_EnumAdvise(&This->doc_obj->IOleObject_iface, ppenumAdvise);
 }
 
 static HRESULT WINAPI DocNodeOleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
@@ -928,7 +928,7 @@ static HRESULT WINAPI DocNodeOleDocument_CreateView(IOleDocument *iface, IOleInP
                                                     DWORD dwReserved, IOleDocumentView **ppView)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleDocument(iface);
-    return IOleDocument_CreateView(&This->basedoc.doc_obj->IOleDocument_iface, pIPSite, pstm, dwReserved, ppView);
+    return IOleDocument_CreateView(&This->doc_obj->IOleDocument_iface, pIPSite, pstm, dwReserved, ppView);
 }
 
 static HRESULT WINAPI DocNodeOleDocument_GetDocMiscStatus(IOleDocument *iface, DWORD *pdwStatus)
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI DocNodeOleControl_OnMnemonic(IOleControl *iface, MSG *pMsg
 static HRESULT WINAPI DocNodeOleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleControl(iface);
-    return IOleControl_OnAmbientPropertyChange(&This->basedoc.doc_obj->IOleControl_iface, dispID);
+    return IOleControl_OnAmbientPropertyChange(&This->doc_obj->IOleControl_iface, dispID);
 }
 
 static HRESULT WINAPI DocNodeOleControl_FreezeEvents(IOleControl *iface, BOOL bFreeze)
@@ -1304,7 +1304,7 @@ static ULONG WINAPI DocNodeOleInPlaceActiveObject_Release(IOleInPlaceActiveObjec
 static HRESULT WINAPI DocNodeOleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface, HWND *phwnd)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceActiveObject(iface);
-    return IOleInPlaceActiveObject_GetWindow(&This->basedoc.doc_obj->IOleInPlaceActiveObject_iface, phwnd);
+    return IOleInPlaceActiveObject_GetWindow(&This->doc_obj->IOleInPlaceActiveObject_iface, phwnd);
 }
 
 static HRESULT WINAPI DocNodeOleInPlaceActiveObject_ContextSensitiveHelp(IOleInPlaceActiveObject *iface, BOOL fEnterMode)
@@ -1325,7 +1325,7 @@ static HRESULT WINAPI DocNodeOleInPlaceActiveObject_OnFrameWindowActivate(IOleIn
         BOOL fActivate)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceActiveObject(iface);
-    return IOleInPlaceActiveObject_OnFrameWindowActivate(&This->basedoc.doc_obj->IOleInPlaceActiveObject_iface, fActivate);
+    return IOleInPlaceActiveObject_OnFrameWindowActivate(&This->doc_obj->IOleInPlaceActiveObject_iface, fActivate);
 }
 
 static HRESULT WINAPI DocNodeOleInPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface, BOOL fActivate)
@@ -1511,7 +1511,7 @@ static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_ContextSensitiveHelp(IOl
 static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceObjectWindowless(iface);
-    return IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->basedoc.doc_obj->IOleInPlaceObjectWindowless_iface);
+    return IOleInPlaceObjectWindowless_InPlaceDeactivate(&This->doc_obj->IOleInPlaceObjectWindowless_iface);
 }
 
 static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectWindowless *iface)
@@ -1525,7 +1525,7 @@ static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_SetObjectRects(IOleInPla
         const RECT *pos, const RECT *clip)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleInPlaceObjectWindowless(iface);
-    return IOleInPlaceObjectWindowless_SetObjectRects(&This->basedoc.doc_obj->IOleInPlaceObjectWindowless_iface, pos, clip);
+    return IOleInPlaceObjectWindowless_SetObjectRects(&This->doc_obj->IOleInPlaceObjectWindowless_iface, pos, clip);
 }
 
 static HRESULT WINAPI DocNodeOleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)
@@ -1837,7 +1837,7 @@ static HRESULT WINAPI DocNodeOleContainer_ParseDisplayName(IOleContainer *iface,
 static HRESULT WINAPI DocNodeOleContainer_EnumObjects(IOleContainer *iface, DWORD grfFlags, IEnumUnknown **ppenum)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IOleContainer(iface);
-    return IOleContainer_EnumObjects(&This->basedoc.doc_obj->IOleContainer_iface, grfFlags, ppenum);
+    return IOleContainer_EnumObjects(&This->doc_obj->IOleContainer_iface, grfFlags, ppenum);
 }
 
 static HRESULT WINAPI DocNodeOleContainer_LockContainer(IOleContainer *iface, BOOL fLock)
@@ -2015,7 +2015,7 @@ static HRESULT WINAPI DocNodeObjectSafety_SetInterfaceSafetyOptions(IObjectSafet
         REFIID riid, DWORD dwOptionSetMask, DWORD dwEnabledOptions)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IObjectSafety(iface);
-    return IObjectSafety_SetInterfaceSafetyOptions(&This->basedoc.doc_obj->IObjectSafety_iface,
+    return IObjectSafety_SetInterfaceSafetyOptions(&This->doc_obj->IObjectSafety_iface,
                                                    riid, dwOptionSetMask, dwEnabledOptions);
 }
 
@@ -2106,8 +2106,8 @@ void HTMLDocumentNode_OleObj_Init(HTMLDocumentNode *This)
     This->IObjectWithSite_iface.lpVtbl = &DocNodeObjectWithSiteVtbl;
     This->IOleContainer_iface.lpVtbl = &DocNodeOleContainerVtbl;
     This->IObjectSafety_iface.lpVtbl = &DocNodeObjectSafetyVtbl;
-    This->basedoc.doc_obj->extent.cx = 1;
-    This->basedoc.doc_obj->extent.cy = 1;
+    This->doc_obj->extent.cx = 1;
+    This->doc_obj->extent.cy = 1;
 }
 
 static void HTMLDocumentObj_OleObj_Init(HTMLDocumentObj *This)
@@ -2168,37 +2168,37 @@ static HRESULT WINAPI DocObj##iface##_Invoke(I##iface *_0, DISPID dispIdMember, 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_0(iface, method) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->basedoc.doc_node ? This->basedoc.doc_node->I##iface##_iface.lpVtbl->method(&This->basedoc.doc_node->I##iface##_iface) : E_UNEXPECTED; \
+    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface) : E_UNEXPECTED; \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_1(iface, method, a) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->basedoc.doc_node ? This->basedoc.doc_node->I##iface##_iface.lpVtbl->method(&This->basedoc.doc_node->I##iface##_iface, _1) : E_UNEXPECTED; \
+    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1) : E_UNEXPECTED; \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_2(iface, method, a,b) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->basedoc.doc_node ? This->basedoc.doc_node->I##iface##_iface.lpVtbl->method(&This->basedoc.doc_node->I##iface##_iface, _1, _2) : E_UNEXPECTED; \
+    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2) : E_UNEXPECTED; \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_3(iface, method, a,b,c) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2, c _3) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->basedoc.doc_node ? This->basedoc.doc_node->I##iface##_iface.lpVtbl->method(&This->basedoc.doc_node->I##iface##_iface, _1, _2, _3) : E_UNEXPECTED; \
+    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3) : E_UNEXPECTED; \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_4(iface, method, a,b,c,d) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2, c _3, d _4) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->basedoc.doc_node ? This->basedoc.doc_node->I##iface##_iface.lpVtbl->method(&This->basedoc.doc_node->I##iface##_iface, _1, _2, _3, _4) : E_UNEXPECTED; \
+    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3, _4) : E_UNEXPECTED; \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_5(iface, method, a,b,c,d,e) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2, c _3, d _4, e _5) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->basedoc.doc_node ? This->basedoc.doc_node->I##iface##_iface.lpVtbl->method(&This->basedoc.doc_node->I##iface##_iface, _1, _2, _3, _4, _5) : E_UNEXPECTED; \
+    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3, _4, _5) : E_UNEXPECTED; \
 }
 
 /**********************************************************
@@ -3389,9 +3389,9 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
     TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref) {
-        if(This->basedoc.doc_node) {
-            This->basedoc.doc_node->basedoc.doc_obj = NULL;
-            IHTMLDOMNode_Release(&This->basedoc.doc_node->node.IHTMLDOMNode_iface);
+        if(This->doc_node) {
+            This->doc_node->doc_obj = NULL;
+            IHTMLDOMNode_Release(&This->doc_node->node.IHTMLDOMNode_iface);
         }
         if(This->window)
             IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
@@ -3646,8 +3646,8 @@ static void HTMLDocumentObj_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
     HTMLDocumentObj *This = impl_from_IUnknown(iface);
 
-    if(This->window && This->basedoc.doc_node)
-        update_doc_cp_events(This->basedoc.doc_node, cp);
+    if(This->window && This->doc_node)
+        update_doc_cp_events(This->doc_node, cp);
 }
 
 static cp_static_data_t HTMLDocumentObjEvents_data = { HTMLDocumentEvents_tid, HTMLDocumentObj_on_advise };
@@ -3736,7 +3736,6 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IDocumentRange_iface.lpVtbl = &DocObjDocumentRangeVtbl;
 
     doc->outer_unk = outer ? outer : &doc->IUnknown_inner;
-    doc->basedoc.doc_obj = doc;
 
     init_dispatch(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex, COMPAT_MODE_QUIRKS);
     ConnectionPointContainer_Init(&doc->cp_container, &doc->IUnknown_inner, HTMLDocumentObj_cpc);
@@ -3770,9 +3769,9 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->window = doc->nscontainer->content_window;
     IHTMLWindow2_AddRef(&doc->window->base.IHTMLWindow2_iface);
 
-    if(!doc->basedoc.doc_node && doc->window->base.inner_window->doc) {
-        doc->basedoc.doc_node = doc->window->base.inner_window->doc;
-        IHTMLDOMNode_AddRef(&doc->basedoc.doc_node->node.IHTMLDOMNode_iface);
+    if(!doc->doc_node && doc->window->base.inner_window->doc) {
+        doc->doc_node = doc->window->base.inner_window->doc;
+        IHTMLDOMNode_AddRef(&doc->doc_node->node.IHTMLDOMNode_iface);
     }
 
     get_thread_hwnd();

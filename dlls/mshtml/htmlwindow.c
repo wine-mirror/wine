@@ -4186,9 +4186,9 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
 
     if(is_main_content_window(outer_window) || !outer_window->browser->content_window) {
         HTMLDocumentObj *doc_obj = outer_window->browser->doc;
-        if(doc_obj->basedoc.doc_node)
-            IHTMLDOMNode_Release(&doc_obj->basedoc.doc_node->node.IHTMLDOMNode_iface);
-        doc_obj->basedoc.doc_node = window->doc;
+        if(doc_obj->doc_node)
+            IHTMLDOMNode_Release(&doc_obj->doc_node->node.IHTMLDOMNode_iface);
+        doc_obj->doc_node = window->doc;
         IHTMLDOMNode_AddRef(&window->doc->node.IHTMLDOMNode_iface);
     }
 

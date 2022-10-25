@@ -129,9 +129,9 @@ static nsresult NSAPI handle_blur(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     TRACE("(%p)\n", doc);
 
-    if(!doc || !doc->basedoc.doc_obj)
+    if(!doc || !doc->doc_obj)
         return NS_ERROR_FAILURE;
-    doc_obj = doc->basedoc.doc_obj;
+    doc_obj = doc->doc_obj;
 
     if(doc_obj->focus && !is_doc_child_focus(doc_obj->nscontainer)) {
         doc_obj->focus = FALSE;
@@ -151,7 +151,7 @@ static nsresult NSAPI handle_focus(nsIDOMEventListener *iface, nsIDOMEvent *even
 
     if(!doc)
         return NS_ERROR_FAILURE;
-    doc_obj = doc->basedoc.doc_obj;
+    doc_obj = doc->doc_obj;
 
     if(!doc_obj->focus) {
         doc_obj->focus = TRUE;
@@ -232,8 +232,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     if(!doc || !doc->outer_window)
         return NS_ERROR_FAILURE;
-    if(doc->basedoc.doc_obj && doc->basedoc.doc_obj->basedoc.doc_node == doc)
-        doc_obj = doc->basedoc.doc_obj;
+    if(doc->doc_obj && doc->doc_obj->doc_node == doc)
+        doc_obj = doc->doc_obj;
 
     connect_scripts(doc->window);
 

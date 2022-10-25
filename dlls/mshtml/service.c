@@ -365,7 +365,7 @@ static HRESULT WINAPI DocNodeServiceProvider_QueryService(IServiceProvider *ifac
         return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);
     }
 
-    return IServiceProvider_QueryService(&This->basedoc.doc_obj->IServiceProvider_iface, guidService, riid, ppv);
+    return IServiceProvider_QueryService(&This->doc_obj->IServiceProvider_iface, guidService, riid, ppv);
 }
 
 static const IServiceProviderVtbl DocNodeServiceProviderVtbl = {

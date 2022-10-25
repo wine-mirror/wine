@@ -683,7 +683,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
         ERR("CreateRange failed: %08lx\n", nsres);
     }
 
-    hres = HTMLTxtRange_Create(This->element.node.doc->basedoc.doc_node, nsrange, range);
+    hres = HTMLTxtRange_Create(This->element.node.doc, nsrange, range);
 
     nsIDOMRange_Release(nsrange);
     return hres;

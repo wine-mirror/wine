@@ -140,7 +140,7 @@ typedef struct {
 HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
 HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;
 
-HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
+HRESULT hlink_frame_navigate(HTMLDocumentObj*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
 HRESULT create_doc_uri(IUri*,nsWineURI**) DECLSPEC_HIDDEN;
 HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsIInputStream*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLOuterWindow*,IMoniker*,IUri*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;

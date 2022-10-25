@@ -581,7 +581,7 @@ static HRESULT WINAPI DocNodePersistMoniker_Load(IPersistMoniker *iface, BOOL fF
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistMoniker(iface);
-    return IPersistMoniker_Load(&This->basedoc.doc_obj->IPersistMoniker_iface, fFullyAvailable, pimkName, pibc, grfMode);
+    return IPersistMoniker_Load(&This->doc_obj->IPersistMoniker_iface, fFullyAvailable, pimkName, pibc, grfMode);
 }
 
 static HRESULT WINAPI DocNodePersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,
@@ -602,7 +602,7 @@ static HRESULT WINAPI DocNodePersistMoniker_SaveCompleted(IPersistMoniker *iface
 static HRESULT WINAPI DocNodePersistMoniker_GetCurMoniker(IPersistMoniker *iface, IMoniker **ppimkName)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistMoniker(iface);
-    return IPersistMoniker_GetCurMoniker(&This->basedoc.doc_obj->IPersistMoniker_iface, ppimkName);
+    return IPersistMoniker_GetCurMoniker(&This->doc_obj->IPersistMoniker_iface, ppimkName);
 }
 
 static const IPersistMonikerVtbl DocNodePersistMonikerVtbl = {
@@ -786,7 +786,7 @@ static ULONG WINAPI DocNodeMonikerProp_Release(IMonikerProp *iface)
 static HRESULT WINAPI DocNodeMonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPERTY mkp, LPCWSTR val)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IMonikerProp(iface);
-    return IMonikerProp_PutProperty(&This->basedoc.doc_obj->IMonikerProp_iface, mkp, val);
+    return IMonikerProp_PutProperty(&This->doc_obj->IMonikerProp_iface, mkp, val);
 }
 
 static const IMonikerPropVtbl DocNodeMonikerPropVtbl = {
@@ -879,7 +879,7 @@ static ULONG WINAPI DocNodePersistFile_Release(IPersistFile *iface)
 static HRESULT WINAPI DocNodePersistFile_GetClassID(IPersistFile *iface, CLSID *pClassID)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistFile(iface);
-    return IPersistFile_GetClassID(&This->basedoc.doc_obj->IPersistFile_iface, pClassID);
+    return IPersistFile_GetClassID(&This->doc_obj->IPersistFile_iface, pClassID);
 }
 
 static HRESULT WINAPI DocNodePersistFile_IsDirty(IPersistFile *iface)
@@ -1005,11 +1005,11 @@ static HRESULT WINAPI DocObjPersistFile_Save(IPersistFile *iface, LPCOLESTR pszF
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IPersistFile(iface);
 
-    if(!This->basedoc.doc_node) {
+    if(!This->doc_node) {
         FIXME("No doc_node\n");
         return E_UNEXPECTED;
     }
-    return IPersistFile_Save(&This->basedoc.doc_node->IPersistFile_iface, pszFileName, fRemember);
+    return IPersistFile_Save(&This->doc_node->IPersistFile_iface, pszFileName, fRemember);
 }
 
 static HRESULT WINAPI DocObjPersistFile_SaveCompleted(IPersistFile *iface, LPCOLESTR pszFileName)
@@ -1071,13 +1071,13 @@ static HRESULT WINAPI DocNodePersistStreamInit_GetClassID(IPersistStreamInit *if
 static HRESULT WINAPI DocNodePersistStreamInit_IsDirty(IPersistStreamInit *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistStreamInit(iface);
-    return IPersistStreamInit_IsDirty(&This->basedoc.doc_obj->IPersistStreamInit_iface);
+    return IPersistStreamInit_IsDirty(&This->doc_obj->IPersistStreamInit_iface);
 }
 
 static HRESULT WINAPI DocNodePersistStreamInit_Load(IPersistStreamInit *iface, IStream *pStm)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistStreamInit(iface);
-    return IPersistStreamInit_Load(&This->basedoc.doc_obj->IPersistStreamInit_iface, pStm);
+    return IPersistStreamInit_Load(&This->doc_obj->IPersistStreamInit_iface, pStm);
 }
 
 static HRESULT WINAPI DocNodePersistStreamInit_Save(IPersistStreamInit *iface, IStream *pStm,
@@ -1101,7 +1101,7 @@ static HRESULT WINAPI DocNodePersistStreamInit_Save(IPersistStreamInit *iface, I
     heap_free(str);
 
     if(fClearDirty)
-        set_dirty(This->basedoc.doc_obj->nscontainer, VARIANT_FALSE);
+        set_dirty(This->doc_obj->nscontainer, VARIANT_FALSE);
 
     return S_OK;
 }
@@ -1117,7 +1117,7 @@ static HRESULT WINAPI DocNodePersistStreamInit_GetSizeMax(IPersistStreamInit *if
 static HRESULT WINAPI DocNodePersistStreamInit_InitNew(IPersistStreamInit *iface)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistStreamInit(iface);
-    return IPersistStreamInit_InitNew(&This->basedoc.doc_obj->IPersistStreamInit_iface);
+    return IPersistStreamInit_InitNew(&This->doc_obj->IPersistStreamInit_iface);
 }
 
 static const IPersistStreamInitVtbl DocNodePersistStreamInitVtbl = {
@@ -1199,11 +1199,11 @@ static HRESULT WINAPI DocObjPersistStreamInit_Save(IPersistStreamInit *iface, IS
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IPersistStreamInit(iface);
 
-    if(!This->basedoc.doc_node) {
+    if(!This->doc_node) {
         FIXME("No doc_node\n");
         return E_UNEXPECTED;
     }
-    return IPersistStreamInit_Save(&This->basedoc.doc_node->IPersistStreamInit_iface, pStm, fClearDirty);
+    return IPersistStreamInit_Save(&This->doc_node->IPersistStreamInit_iface, pStm, fClearDirty);
 }
 
 static HRESULT WINAPI DocObjPersistStreamInit_GetSizeMax(IPersistStreamInit *iface,
@@ -1285,13 +1285,13 @@ static HRESULT WINAPI DocNodePersistHistory_GetClassID(IPersistHistory *iface, C
 static HRESULT WINAPI DocNodePersistHistory_LoadHistory(IPersistHistory *iface, IStream *pStream, IBindCtx *pbc)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistHistory(iface);
-    return IPersistHistory_LoadHistory(&This->basedoc.doc_obj->IPersistHistory_iface, pStream, pbc);
+    return IPersistHistory_LoadHistory(&This->doc_obj->IPersistHistory_iface, pStream, pbc);
 }
 
 static HRESULT WINAPI DocNodePersistHistory_SaveHistory(IPersistHistory *iface, IStream *pStream)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IPersistHistory(iface);
-    return IPersistHistory_SaveHistory(&This->basedoc.doc_obj->IPersistHistory_iface, pStream);
+    return IPersistHistory_SaveHistory(&This->doc_obj->IPersistHistory_iface, pStream);
 }
 
 static HRESULT WINAPI DocNodePersistHistory_SetPositionCookie(IPersistHistory *iface, DWORD dwPositioncookie)
@@ -1507,10 +1507,10 @@ static HRESULT WINAPI DocNodeHlinkTarget_Navigate(IHlinkTarget *iface, DWORD grf
     if(pwzJumpLocation)
         FIXME("JumpLocation not supported\n");
 
-    if(This->basedoc.doc_obj->client)
+    if(This->doc_obj->client)
         return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
 
-    return IHlinkTarget_Navigate(&This->basedoc.doc_obj->IHlinkTarget_iface, grfHLNF, pwzJumpLocation);
+    return IHlinkTarget_Navigate(&This->doc_obj->IHlinkTarget_iface, grfHLNF, pwzJumpLocation);
 }
 
 static HRESULT WINAPI DocNodeHlinkTarget_GetMoniker(IHlinkTarget *iface, LPCWSTR pwzLocation, DWORD dwAssign,

@@ -846,7 +846,7 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
         return E_NOTIMPL;
     }
 
-    hres = setup_edit_mode(This->basedoc.doc_obj);
+    hres = setup_edit_mode(This->doc_obj);
     if(FAILED(hres))
         return hres;
 
@@ -5939,8 +5939,8 @@ static EventTarget *HTMLDocumentNode_get_parent_event_target(DispatchEx *dispex)
 static ConnectionPointContainer *HTMLDocumentNode_get_cp_container(DispatchEx *dispex)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
-    ConnectionPointContainer *container = This->basedoc.doc_obj
-        ? &This->basedoc.doc_obj->cp_container : &This->cp_container;
+    ConnectionPointContainer *container = This->doc_obj
+        ? &This->doc_obj->cp_container : &This->cp_container;
     IConnectionPointContainer_AddRef(&container->IConnectionPointContainer_iface);
     return container;
 }
@@ -6063,8 +6063,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->IDisplayServices_iface.lpVtbl = &DisplayServicesVtbl;
     doc->IDocumentRange_iface.lpVtbl = &DocumentRangeVtbl;
 
-    doc->basedoc.doc_node = doc;
-    doc->basedoc.doc_obj = doc_obj;
+    doc->doc_obj = doc_obj;
     doc->outer_window = window ? window->base.outer_window : NULL;
     doc->window = window;
 
@@ -6133,7 +6132,7 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
 {
     HTMLDocumentNode *doc_frag;
 
-    doc_frag = alloc_doc_node(doc_node->basedoc.doc_obj, doc_node->window);
+    doc_frag = alloc_doc_node(doc_node->doc_obj, doc_node->window);
     if(!doc_frag)
         return E_OUTOFMEMORY;
 

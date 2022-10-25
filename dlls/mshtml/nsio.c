@@ -273,7 +273,7 @@ static nsresult before_async_open(nsChannel *channel, GeckoBrowser *container, B
         return NS_OK;
     }
 
-    hres = hlink_frame_navigate(&doc->basedoc, display_uri, channel, 0, cancel);
+    hres = hlink_frame_navigate(doc, display_uri, channel, 0, cancel);
     SysFreeString(display_uri);
     if(FAILED(hres))
         *cancel = TRUE;
