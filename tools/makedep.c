@@ -149,8 +149,6 @@ static const char *tools_ext;
 static const char *exe_ext;
 static const char *dll_ext;
 static const char *host_cpu;
-static const char *pe_dir;
-static const char *so_dir;
 static const char *fontforge;
 static const char *convert;
 static const char *flex;
@@ -164,6 +162,7 @@ static const char *msgfmt;
 static const char *ln_s;
 static const char *sed_cmd;
 /* per-architecture global variables */
+static const char *arch_install_dirs[MAX_ARCHS];
 static const char *strip_progs[MAX_ARCHS];
 static const char *debug_flags[MAX_ARCHS];
 static const char *delay_load_flags[MAX_ARCHS];
@@ -2456,19 +2455,22 @@ static void output_srcdir_symlink( struct makefile *make, const char *obj )
  */
 static void output_install_commands( struct makefile *make, struct strarray files )
 {
-    unsigned int i;
+    unsigned int i, arch;
     char *install_sh = root_src_dir_path( "tools/install-sh" );
 
     for (i = 0; i < files.count; i += 2)
     {
         const char *file = files.str[i];
         const char *dest = strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 );
+        char type = *files.str[i + 1];
 
-        switch (*files.str[i + 1])
+        switch (type)
         {
-        case 'c':  /* cross-compiled program */
+        case '1': case '2': case '3': case '4': case '5':
+        case '6': case '7': case '8': case '9': /* arch-dependent program */
+            arch = type - '0';
             output( "\tSTRIPPROG=%s %s -m 644 $(INSTALL_PROGRAM_FLAGS) %s %s\n",
-                    strip_progs[1], install_sh, obj_dir_path( make, file ), dest );
+                    strip_progs[arch], install_sh, obj_dir_path( make, file ), dest );
             output( "\t%s --builtin %s\n", tools_path( make, "winebuild" ), dest );
             break;
         case 'd':  /* data file */
@@ -2479,6 +2481,7 @@ static void output_install_commands( struct makefile *make, struct strarray file
             output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
                     install_sh, src_dir_path( make, file ), dest );
             break;
+        case '0':  /* native arch program file */
         case 'p':  /* program file */
             output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s %s\n",
                     install_sh, obj_dir_path( make, file ), dest );
@@ -2525,7 +2528,8 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
         const char *file = files.str[i];
         switch (*files.str[i + 1])
         {
-        case 'c':  /* cross-compiled program */
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9': /* arch-dependent program */
         case 'd':  /* data file */
         case 'p':  /* program file */
         case 's':  /* script */
@@ -3205,11 +3209,10 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     if (make->data_only)
         add_install_rule( make, make->module, module_name,
-                          strmake( "d%s/%s", *dll_ext ? pe_dir : "$(dlldir)", module_name ));
-    else if (arch)
-        add_install_rule( make, make->module, module_name, strmake( "c%s/%s", pe_dir, module_name ));
-    else if (*dll_ext)
-        add_install_rule( make, make->module, module_name, strmake( "p%s/%s", so_dir, module_name ));
+                          strmake( "d%s%s", arch_install_dirs[arch], make->module ));
+    else if (arch || *dll_ext)
+        add_install_rule( make, make->module, module_name,
+                          strmake( "%c%s%s", '0' + arch, arch_install_dirs[arch], module_name ));
     else
         add_install_rule( make, make->module, module_name,
                           strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", module_name ));
@@ -3256,7 +3259,8 @@ static void output_fake_module( struct makefile *make, unsigned int arch )
     if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
 
     strarray_add( &make->all_targets, make->module );
-    add_install_rule( make, make->module, make->module, strmake( "d%s/%s", pe_dir, make->module ));
+    add_install_rule( make, make->module, make->module,
+                      strmake( "d%s%s", arch_install_dirs[arch], make->module ));
 
     output( "%s:", obj_dir_path( make, make->module ));
     if (spec_file) output_filename( spec_file );
@@ -3312,7 +3316,7 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
     output( "\n" );
     add_install_rule( make, make->importlib,
                       arch ? strmake( "lib%s.cross.a", make->importlib ) : strmake( "lib%s.a", make->importlib ),
-                      strmake( "d%s/lib%s.a", arch ? pe_dir : so_dir, make->importlib ));
+                      strmake( "d%slib%s.a", arch_install_dirs[arch], make->importlib ));
 }
 
 
@@ -3324,6 +3328,7 @@ static void output_unix_lib( struct makefile *make )
     struct strarray unix_libs = empty_strarray;
     struct strarray unix_deps = empty_strarray;
     char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+    unsigned int arch = 0;  /* unix libs are always native */
 
     if (!make->native_unix_lib)
     {
@@ -3341,7 +3346,8 @@ static void output_unix_lib( struct makefile *make )
     else unix_libs = add_unix_libraries( make, &unix_deps );
 
     strarray_add( &make->all_targets, make->unixlib );
-    add_install_rule( make, make->module, make->unixlib, strmake( "p%s/%s", so_dir, make->unixlib ));
+    add_install_rule( make, make->module, make->unixlib,
+                      strmake( "p%s%s", arch_install_dirs[arch], make->unixlib ));
     output( "%s:", obj_dir_path( make, make->unixlib ));
     output_filenames_obj_dir( make, make->unixobj_files );
     output_filenames( unix_deps );
@@ -3388,7 +3394,7 @@ static void output_static_lib( struct makefile *make, unsigned int arch )
     output( "\n" );
     if (!make->extlib)
         add_install_rule( make, make->staticlib, name,
-                          strmake( "d%s/%s", arch ? pe_dir : so_dir, make->staticlib ));
+                          strmake( "d%s%s", arch_install_dirs[arch], make->staticlib ));
 }
 
 
@@ -3402,6 +3408,7 @@ static void output_shared_lib( struct makefile *make )
     struct strarray names = get_shared_lib_names( make->sharedlib );
     struct strarray all_libs = empty_strarray;
     struct strarray dep_libs = empty_strarray;
+    unsigned int arch = 0;  /* shared libs are always native */
 
     basename = xstrdup( make->sharedlib );
     if ((p = strchr( basename, '.' ))) *p = 0;
@@ -3420,12 +3427,14 @@ static void output_shared_lib( struct makefile *make )
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
-    add_install_rule( make, make->sharedlib, make->sharedlib, strmake( "p%s/%s", so_dir, make->sharedlib ));
+    add_install_rule( make, make->sharedlib, make->sharedlib,
+                      strmake( "p%s%s", arch_install_dirs[arch], make->sharedlib ));
     for (i = 1; i < names.count; i++)
     {
         output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
         output_symlink_rule( names.str[i-1], obj_dir_path( make, names.str[i] ), 0 );
-        add_install_rule( make, names.str[i], names.str[i-1], strmake( "y%s/%s", so_dir, names.str[i] ));
+        add_install_rule( make, names.str[i], names.str[i-1],
+                          strmake( "y%s%s", arch_install_dirs[arch], names.str[i] ));
     }
     strarray_addall( &make->all_targets, names );
 }
@@ -4377,18 +4386,10 @@ int main( int argc, char *argv[] )
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
-    if (host_cpu && (host_cpu = normalize_arch( host_cpu )))
-    {
-        so_dir = strmake( "$(dlldir)/%s-unix", host_cpu );
-        pe_dir = strmake( "$(dlldir)/%s-windows", host_cpu );
-    }
-    else
-    {
-        host_cpu = "unknown";
-        so_dir = pe_dir = "$(dlldir)";
-    }
+    if (!host_cpu || !(host_cpu = normalize_arch( host_cpu ))) host_cpu = "unknown";
 
     strarray_add( &archs, host_cpu );
+    arch_install_dirs[0] = *dll_ext ? strmake( "$(dlldir)/%s-unix/", archs.str[0] ) : "$(dlldir)/";
     strip_progs[0] = "\"$(STRIP)\"";
 
     if (crosstarget)
@@ -4398,6 +4399,11 @@ int main( int argc, char *argv[] )
         strarray_add( &target_flags[1], crosstarget );
         strip_progs[1] = strmake( "%s-strip", crosstarget );
         debug_flags[1] = debug_flag;
+    }
+
+    for (arch = 1; arch < archs.count; arch++)
+    {
+        arch_install_dirs[arch] = strmake( "$(dlldir)/%s-windows/", archs.str[arch] );
     }
 
     for (arch = 0; arch < archs.count; arch++)
