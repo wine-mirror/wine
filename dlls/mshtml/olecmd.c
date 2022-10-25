@@ -69,7 +69,7 @@ static nsIClipboardCommands *get_clipboard_commands(HTMLDocumentNode *doc)
     nsIDocShell *doc_shell;
     nsresult nsres;
 
-    nsres = get_nsinterface((nsISupports*)doc->basedoc.window->nswindow, &IID_nsIDocShell, (void**)&doc_shell);
+    nsres = get_nsinterface((nsISupports*)doc->outer_window->nswindow, &IID_nsIDocShell, (void**)&doc_shell);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDocShell interface\n");
         return NULL;
@@ -475,17 +475,17 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
         }
     }
 
-    if(!doc->basedoc.window)
+    if(!doc->outer_window)
         return E_UNEXPECTED;
 
     task = heap_alloc(sizeof(*task));
     if(!task)
         return E_OUTOFMEMORY;
 
-    IHTMLWindow2_AddRef(&doc->basedoc.window->base.IHTMLWindow2_iface);
-    task->window = doc->basedoc.window;
+    IHTMLWindow2_AddRef(&doc->outer_window->base.IHTMLWindow2_iface);
+    task->window = doc->outer_window;
 
-    return push_task(&task->header, refresh_proc, refresh_destr, doc->basedoc.window->task_magic);
+    return push_task(&task->header, refresh_proc, refresh_destr, doc->outer_window->task_magic);
 }
 
 static HRESULT exec_stop(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)

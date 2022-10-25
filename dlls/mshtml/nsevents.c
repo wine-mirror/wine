@@ -230,7 +230,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
     TRACE("(%p)\n", doc);
 
-    if(!doc || !doc->basedoc.window)
+    if(!doc || !doc->outer_window)
         return NS_ERROR_FAILURE;
     if(doc->basedoc.doc_obj && doc->basedoc.doc_obj->basedoc.doc_node == doc)
         doc_obj = doc->basedoc.doc_obj;
@@ -242,7 +242,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(doc_obj)
         handle_docobj_load(doc_obj);
 
-    set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
+    set_ready_state(doc->outer_window, READYSTATE_COMPLETE);
 
     if(doc_obj) {
         if(doc_obj->view_sink)
@@ -254,9 +254,9 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     }
 
     if(doc_obj && doc_obj->nscontainer->usermode != EDITMODE && doc_obj->doc_object_service
-       && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
+       && !(doc->outer_window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
-                &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
+                &doc->outer_window->base.IHTMLWindow2_iface, 0);
 
     if(doc->nsdoc) {
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
@@ -383,7 +383,7 @@ static nsIDOMEventTarget *get_default_document_target(HTMLDocumentNode *doc)
     nsISupports *target_iface;
     nsresult nsres;
 
-    target_iface = doc->window ? (nsISupports*)doc->basedoc.window->nswindow : (nsISupports*)doc->nsdoc;
+    target_iface = doc->window ? (nsISupports*)doc->outer_window->nswindow : (nsISupports*)doc->nsdoc;
     nsres = nsISupports_QueryInterface(target_iface, &IID_nsIDOMEventTarget, (void**)&target);
     return NS_SUCCEEDED(nsres) ? target : NULL;
 }

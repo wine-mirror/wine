@@ -407,7 +407,7 @@ void set_document_navigation(HTMLDocumentObj *doc, BOOL doc_can_navigate)
 
     if(doc_can_navigate) {
         V_VT(&var) = VT_UNKNOWN;
-        V_UNKNOWN(&var) = (IUnknown*)&doc->basedoc.window->base.IHTMLWindow2_iface;
+        V_UNKNOWN(&var) = (IUnknown*)&doc->window->base.IHTMLWindow2_iface;
     }
 
     IOleCommandTarget_Exec(doc->client_cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0,
@@ -2276,11 +2276,11 @@ static HRESULT WINAPI DocObjHTMLDocument2_get_frames(IHTMLDocument2 *iface, IHTM
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->basedoc.window) {
+    if(!This->window) {
         /* Not implemented by IE */
         return E_NOTIMPL;
     }
-    return IHTMLWindow2_get_frames(&This->basedoc.window->base.IHTMLWindow2_iface, p);
+    return IHTMLWindow2_get_frames(&This->window->base.IHTMLWindow2_iface, p);
 }
 
 HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_embeds, IHTMLElementCollection**)
@@ -2767,8 +2767,8 @@ static HRESULT WINAPI DocObjHTMLDocument7_get_defaultView(IHTMLDocument7 *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->basedoc.window) {
-        *p = &This->basedoc.window->base.IHTMLWindow2_iface;
+    if(This->window) {
+        *p = &This->window->base.IHTMLWindow2_iface;
         IHTMLWindow2_AddRef(*p);
     }else {
         *p = NULL;
@@ -3393,8 +3393,8 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             IHTMLDOMNode_Release(&This->basedoc.doc_node->node.IHTMLDOMNode_iface);
         }
-        if(This->basedoc.window)
-            IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
+        if(This->window)
+            IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
         if(This->advise_holder)
             IOleAdviseHolder_Release(This->advise_holder);
 
@@ -3502,7 +3502,7 @@ static HRESULT WINAPI DocObjDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, L
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    if(This->basedoc.window) {
+    if(This->window) {
         switch(id) {
         case DISPID_READYSTATE:
             TRACE("DISPID_READYSTATE\n");
@@ -3511,7 +3511,7 @@ static HRESULT WINAPI DocObjDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, L
                 return E_INVALIDARG;
 
             V_VT(pvarRes) = VT_I4;
-            V_I4(pvarRes) = This->basedoc.window->readystate;
+            V_I4(pvarRes) = This->window->readystate;
             return S_OK;
         default:
             break;
@@ -3646,7 +3646,7 @@ static void HTMLDocumentObj_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
     HTMLDocumentObj *This = impl_from_IUnknown(iface);
 
-    if(This->basedoc.window && This->basedoc.doc_node)
+    if(This->window && This->basedoc.doc_node)
         update_doc_cp_events(This->basedoc.doc_node, cp);
 }
 
@@ -3666,10 +3666,10 @@ static HRESULT HTMLDocumentObj_location_hook(DispatchEx *dispex, WORD flags, DIS
 {
     HTMLDocumentObj *This = CONTAINING_RECORD(dispex, HTMLDocumentObj, dispex);
 
-    if(!(flags & DISPATCH_PROPERTYPUT) || !This->basedoc.window)
+    if(!(flags & DISPATCH_PROPERTYPUT) || !This->window)
         return S_FALSE;
 
-    return IDispatchEx_InvokeEx(&This->basedoc.window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
+    return IDispatchEx_InvokeEx(&This->window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
                                 0, flags, dp, res, ei, caller);
 }
 
@@ -3767,11 +3767,11 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
             return hres;
     }
 
-    doc->basedoc.window = doc->nscontainer->content_window;
-    IHTMLWindow2_AddRef(&doc->basedoc.window->base.IHTMLWindow2_iface);
+    doc->window = doc->nscontainer->content_window;
+    IHTMLWindow2_AddRef(&doc->window->base.IHTMLWindow2_iface);
 
-    if(!doc->basedoc.doc_node && doc->basedoc.window->base.inner_window->doc) {
-        doc->basedoc.doc_node = doc->basedoc.window->base.inner_window->doc;
+    if(!doc->basedoc.doc_node && doc->window->base.inner_window->doc) {
+        doc->basedoc.doc_node = doc->window->base.inner_window->doc;
         IHTMLDOMNode_AddRef(&doc->basedoc.doc_node->node.IHTMLDOMNode_iface);
     }
 

@@ -283,8 +283,8 @@ static void parse_complete(HTMLDocumentObj *doc)
     call_property_onchanged(&doc->cp_container, 1005);
     call_explorer_69(doc);
 
-    if(doc->webbrowser && doc->nscontainer->usermode != EDITMODE && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
-        IDocObjectService_FireNavigateComplete2(doc->doc_object_service, &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
+    if(doc->webbrowser && doc->nscontainer->usermode != EDITMODE && !(doc->window->load_flags & BINDING_REFRESH))
+        IDocObjectService_FireNavigateComplete2(doc->doc_object_service, &doc->window->base.IHTMLWindow2_iface, 0);
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
 }
@@ -305,7 +305,7 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
     }
 
     bind_event_scripts(This);
-    set_ready_state(This->basedoc.window, READYSTATE_INTERACTIVE);
+    set_ready_state(This->outer_window, READYSTATE_INTERACTIVE);
     return NS_OK;
 }
 

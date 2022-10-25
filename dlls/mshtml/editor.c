@@ -133,7 +133,7 @@ static nsresult get_ns_command_state(GeckoBrowser *This, const char *cmd, nsICom
         return nsres;
     }
 
-    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, This->doc->basedoc.window->window_proxy, nsparam);
+    nsres = nsICommandManager_GetCommandState(cmdmgr, cmd, This->doc->window->window_proxy, nsparam);
     if(NS_FAILED(nsres))
         ERR("GetCommandState(%s) failed: %08lx\n", debugstr_a(cmd), nsres);
 
@@ -146,7 +146,7 @@ static DWORD query_ns_edit_status(HTMLDocumentNode *doc, const char *nscmd)
     nsICommandParams *nsparam;
     cpp_bool b = FALSE;
 
-    if(doc->browser->usermode != EDITMODE || doc->basedoc.window->readystate < READYSTATE_INTERACTIVE)
+    if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     if(nscmd) {
@@ -180,7 +180,7 @@ static DWORD query_align_status(HTMLDocumentNode *doc, const WCHAR *align)
     cpp_bool b;
     nsresult nsres;
 
-    if(doc->browser->usermode != EDITMODE || doc->basedoc.window->readystate < READYSTATE_INTERACTIVE)
+    if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     nsAString_Init(&justify_str, align);
@@ -198,7 +198,7 @@ static nsISelection *get_ns_selection(HTMLDocumentNode *doc)
     nsISelection *nsselection = NULL;
     nsresult nsres;
 
-    nsres = nsIDOMWindow_GetSelection(doc->basedoc.window->nswindow, &nsselection);
+    nsres = nsIDOMWindow_GetSelection(doc->outer_window->nswindow, &nsselection);
     if(NS_FAILED(nsres))
         ERR("GetSelection failed %08lx\n", nsres);
 
@@ -661,7 +661,7 @@ static HRESULT query_justify(HTMLDocumentNode *doc, OLECMD *cmd)
     case IDM_JUSTIFYLEFT:
         TRACE("(%p) IDM_JUSTIFYLEFT\n", doc);
         /* FIXME: We should set OLECMDF_LATCHED only if it's set explicitly. */
-        if(doc->browser->usermode != EDITMODE || doc->basedoc.window->readystate < READYSTATE_INTERACTIVE)
+        if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
             cmd->cmdf = OLECMDF_SUPPORTED;
         else
             cmd->cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -1191,9 +1191,9 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
 
     doc->nscontainer->usermode = EDITMODE;
 
-    if(doc->basedoc.window->mon) {
+    if(doc->window->mon) {
         CLSID clsid = IID_NULL;
-        hres = IMoniker_GetClassID(doc->basedoc.window->mon, &clsid);
+        hres = IMoniker_GetClassID(doc->window->mon, &clsid);
         if(SUCCEEDED(hres)) {
             /* We should use IMoniker::Save here */
             FIXME("Use CLSID %s\n", debugstr_guid(&clsid));
@@ -1203,7 +1203,7 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
     if(doc->frame)
         IOleInPlaceFrame_SetStatusText(doc->frame, NULL);
 
-    doc->basedoc.window->readystate = READYSTATE_UNINITIALIZED;
+    doc->window->readystate = READYSTATE_UNINITIALIZED;
 
     if(doc->client) {
         IOleCommandTarget *cmdtrg;
@@ -1235,11 +1235,11 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
 
     update_doc(doc, UPDATE_UI);
 
-    if(doc->basedoc.window->mon) {
+    if(doc->window->mon) {
         /* FIXME: We should find nicer way to do this */
         remove_target_tasks(doc->task_magic);
 
-        mon = doc->basedoc.window->mon;
+        mon = doc->window->mon;
         IMoniker_AddRef(mon);
     }else {
         hres = CreateURLMoniker(NULL, L"about:blank", &mon);

@@ -2238,12 +2238,12 @@ static HRESULT WINAPI PHServiceProvider_QueryService(IServiceProvider *iface, RE
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
-    if(!This->doc || !This->doc->basedoc.window) {
+    if(!This->doc || !This->doc->outer_window) {
         *ppv = NULL;
         return E_NOINTERFACE;
     }
 
-    return IServiceProvider_QueryService(&This->doc->basedoc.window->base.IServiceProvider_iface,
+    return IServiceProvider_QueryService(&This->doc->outer_window->base.IServiceProvider_iface,
             guidService, riid, ppv);
 }
 

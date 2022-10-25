@@ -50,7 +50,7 @@ static HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
     window = mozwindow_to_window(mozwindow);
     if(!window && frame->element.node.doc->browser)
         hres = create_outer_window(frame->element.node.doc->browser, mozwindow,
-                frame->element.node.doc->basedoc.window, &window);
+                frame->element.node.doc->outer_window, &window);
     mozIDOMWindowProxy_Release(mozwindow);
     if(FAILED(hres))
         return hres;
@@ -127,7 +127,7 @@ static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->content_window || !This->element.node.doc || !This->element.node.doc->basedoc.window) {
+    if(!This->content_window || !This->element.node.doc || !This->element.node.doc->outer_window) {
         nsAString nsstr;
         nsresult nsres;
 
@@ -145,7 +145,7 @@ static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
         return S_OK;
     }
 
-    return navigate_url(This->content_window, v, This->element.node.doc->basedoc.window->uri, BINDING_NAVIGATED);
+    return navigate_url(This->content_window, v, This->element.node.doc->outer_window->uri, BINDING_NAVIGATED);
 }
 
 static HRESULT WINAPI HTMLFrameBase_get_src(IHTMLFrameBase *iface, BSTR *p)

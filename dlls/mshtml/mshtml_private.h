@@ -642,8 +642,6 @@ struct  ConnectionPoint {
 struct HTMLDocument {
     HTMLDocumentObj *doc_obj;
     HTMLDocumentNode *doc_node;
-
-    HTMLOuterWindow *window;
 };
 
 struct HTMLDocumentObj {
@@ -691,6 +689,7 @@ struct HTMLDocumentObj {
     LONG ref;
 
     IUnknown *outer_unk;
+    HTMLOuterWindow *window;
     GeckoBrowser *nscontainer;
 
     IOleClientSite *client;
@@ -916,6 +915,7 @@ struct HTMLDocumentNode {
     LONG ref;
 
     ConnectionPointContainer cp_container;
+    HTMLOuterWindow *outer_window;
     HTMLInnerWindow *window;
 
     GeckoBrowser *browser;

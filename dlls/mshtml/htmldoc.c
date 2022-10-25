@@ -893,7 +893,7 @@ static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p
     if(!p)
         return E_POINTER;
 
-    return get_readystate_string(This->basedoc.window ? This->basedoc.window->readystate : 0, p);
+    return get_readystate_string(This->outer_window ? This->outer_window->readystate : 0, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFramesCollection2 **p)
@@ -902,11 +902,11 @@ static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFrames
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->basedoc.window) {
+    if(!This->outer_window) {
         /* Not implemented by IE */
         return E_NOTIMPL;
     }
-    return IHTMLWindow2_get_frames(&This->basedoc.window->base.IHTMLWindow2_iface, p);
+    return IHTMLWindow2_get_frames(&This->outer_window->base.IHTMLWindow2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_embeds(IHTMLDocument2 *iface, IHTMLElementCollection **p)
@@ -1074,12 +1074,12 @@ static HRESULT WINAPI HTMLDocument_put_URL(IHTMLDocument2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->basedoc.window) {
+    if(!This->outer_window) {
         FIXME("No window available\n");
         return E_FAIL;
     }
 
-    return navigate_url(This->basedoc.window, v, This->basedoc.window->uri, BINDING_NAVIGATED);
+    return navigate_url(This->outer_window, v, This->outer_window->uri, BINDING_NAVIGATED);
 }
 
 static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
@@ -1088,7 +1088,7 @@ static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", iface, p);
 
-    *p = SysAllocString(This->basedoc.window && This->basedoc.window->url ? This->basedoc.window->url : L"about:blank");
+    *p = SysAllocString(This->outer_window && This->outer_window->url ? This->outer_window->url : L"about:blank");
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -1121,7 +1121,7 @@ static HRESULT WINAPI HTMLDocument_get_domain(IHTMLDocument2 *iface, BSTR *p)
 
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMHTMLDocument_GetDomain(This->nsdoc, &nsstr);
-    if(NS_SUCCEEDED(nsres) && This->basedoc.window && This->basedoc.window->uri) {
+    if(NS_SUCCEEDED(nsres) && This->outer_window && This->outer_window->uri) {
         const PRUnichar *str;
         HRESULT hres;
 
@@ -1129,7 +1129,7 @@ static HRESULT WINAPI HTMLDocument_get_domain(IHTMLDocument2 *iface, BSTR *p)
         if(!*str) {
             TRACE("Gecko returned empty string, fallback to loaded URL.\n");
             nsAString_Finish(&nsstr);
-            hres = IUri_GetHost(This->basedoc.window->uri, p);
+            hres = IUri_GetHost(This->outer_window->uri, p);
             return FAILED(hres) ? hres : S_OK;
         }
     }
@@ -1144,10 +1144,10 @@ static HRESULT WINAPI HTMLDocument_put_cookie(IHTMLDocument2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->basedoc.window)
+    if(!This->outer_window)
         return S_OK;
 
-    bret = InternetSetCookieExW(This->basedoc.window->url, NULL, v, 0, 0);
+    bret = InternetSetCookieExW(This->outer_window->url, NULL, v, 0, 0);
     if(!bret) {
         FIXME("InternetSetCookieExW failed: %lu\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
@@ -1164,13 +1164,13 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->basedoc.window) {
+    if(!This->outer_window) {
         *p = NULL;
         return S_OK;
     }
 
     size = 0;
-    bret = InternetGetCookieExW(This->basedoc.window->url, NULL, NULL, &size, 0, NULL);
+    bret = InternetGetCookieExW(This->outer_window->url, NULL, NULL, &size, 0, NULL);
     if(!bret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         WARN("InternetGetCookieExW failed: %lu\n", GetLastError());
         *p = NULL;
@@ -1186,7 +1186,7 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
     if(!*p)
         return E_OUTOFMEMORY;
 
-    bret = InternetGetCookieExW(This->basedoc.window->url, NULL, *p, &size, 0, NULL);
+    bret = InternetGetCookieExW(This->outer_window->url, NULL, *p, &size, 0, NULL);
     if(!bret) {
         ERR("InternetGetCookieExW failed: %lu\n", GetLastError());
         return E_FAIL;
@@ -1391,7 +1391,7 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
 
     *pomWindowResult = NULL;
 
-    if(!This->basedoc.window)
+    if(!This->outer_window)
         return E_FAIL;
 
     if(!This->nsdoc) {
@@ -1413,8 +1413,8 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
     if(tmp)
         nsISupports_Release(tmp);
 
-    *pomWindowResult = (IDispatch*)&This->basedoc.window->base.IHTMLWindow2_iface;
-    IHTMLWindow2_AddRef(&This->basedoc.window->base.IHTMLWindow2_iface);
+    *pomWindowResult = (IDispatch*)&This->outer_window->base.IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(&This->outer_window->base.IHTMLWindow2_iface);
     return S_OK;
 }
 
@@ -2272,7 +2272,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->basedoc.window && This->basedoc.window->readystate == READYSTATE_UNINITIALIZED) {
+    if(This->outer_window && This->outer_window->readystate == READYSTATE_UNINITIALIZED) {
         *p = NULL;
         return S_OK;
     }
@@ -4728,7 +4728,7 @@ static void HTMLDocumentNode_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
     HTMLDocumentNode *This = CONTAINING_RECORD((IHTMLDocument2*)iface, HTMLDocumentNode, IHTMLDocument2_iface);
 
-    if(This->basedoc.window)
+    if(This->outer_window)
         update_doc_cp_events(This, cp);
 }
 
@@ -5956,10 +5956,10 @@ static HRESULT HTMLDocumentNode_location_hook(DispatchEx *dispex, WORD flags, DI
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
 
-    if(!(flags & DISPATCH_PROPERTYPUT) || !This->basedoc.window)
+    if(!(flags & DISPATCH_PROPERTYPUT) || !This->outer_window)
         return S_FALSE;
 
-    return IDispatchEx_InvokeEx(&This->basedoc.window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
+    return IDispatchEx_InvokeEx(&This->outer_window->base.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
                                 0, flags, dp, res, ei, caller);
 }
 
@@ -6065,7 +6065,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
 
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
-    doc->basedoc.window = window ? window->base.outer_window : NULL;
+    doc->outer_window = window ? window->base.outer_window : NULL;
     doc->window = window;
 
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface, HTMLDocumentNode_cpc);
@@ -6098,7 +6098,7 @@ HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, H
         lock_document_mode(doc);
     }
 
-    if(!doc_obj->basedoc.window || (window && is_main_content_window(window->base.outer_window)))
+    if(!doc_obj->window || (window && is_main_content_window(window->base.outer_window)))
         doc->cp_container.forward_container = &doc_obj->cp_container;
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc, &HTMLDocumentNode_dispex);

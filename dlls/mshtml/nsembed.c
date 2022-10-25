@@ -1228,7 +1228,7 @@ void setup_editor_controller(GeckoBrowser *This)
     }
 
     nsres = nsIEditingSession_GetEditorForWindow(editing_session,
-            This->doc->basedoc.window->window_proxy, &This->editor);
+            This->doc->window->window_proxy, &This->editor);
     nsIEditingSession_Release(editing_session);
     if(NS_FAILED(nsres)) {
         ERR("Could not get editor: %08lx\n", nsres);

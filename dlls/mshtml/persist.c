@@ -302,11 +302,11 @@ void prepare_for_binding(HTMLDocumentObj *This, IMoniker *mon, DWORD flags)
         }
     }
 
-    if(This->basedoc.window->mon) {
+    if(This->window->mon) {
         update_doc(This, UPDATE_TITLE|UPDATE_UI);
     }else {
         update_doc(This, UPDATE_TITLE);
-        set_current_mon(This->basedoc.window, mon, flags);
+        set_current_mon(This->window, mon, flags);
     }
 
     if(This->client) {
@@ -318,7 +318,7 @@ void prepare_for_binding(HTMLDocumentObj *This, IMoniker *mon, DWORD flags)
 
             if(flags & BINDING_NAVIGATED) {
                 V_VT(&var) = VT_UNKNOWN;
-                V_UNKNOWN(&var) = (IUnknown*)&This->basedoc.window->base.IHTMLWindow2_iface;
+                V_UNKNOWN(&var) = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
                 V_VT(&out) = VT_EMPTY;
                 hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 63, 0, &var, &out);
                 if(SUCCEEDED(hres))
@@ -707,12 +707,12 @@ static HRESULT WINAPI DocObjPersistMoniker_Load(IPersistMoniker *iface, BOOL fFu
 
     prepare_for_binding(This, mon, FALSE);
     call_docview_84(This);
-    hres = set_moniker(This->basedoc.window, mon, NULL, pibc, NULL, TRUE);
+    hres = set_moniker(This->window, mon, NULL, pibc, NULL, TRUE);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
 
-    return start_binding(This->basedoc.window->pending_window, (BSCallback*)This->basedoc.window->pending_window->bscallback, pibc);
+    return start_binding(This->window->pending_window, (BSCallback*)This->window->pending_window->bscallback, pibc);
 }
 
 static HRESULT WINAPI DocObjPersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,
@@ -736,11 +736,11 @@ static HRESULT WINAPI DocObjPersistMoniker_GetCurMoniker(IPersistMoniker *iface,
 
     TRACE("(%p)->(%p)\n", This, ppimkName);
 
-    if(!This->basedoc.window || !This->basedoc.window->mon)
+    if(!This->window || !This->window->mon)
         return E_UNEXPECTED;
 
-    IMoniker_AddRef(This->basedoc.window->mon);
-    *ppimkName = This->basedoc.window->mon;
+    IMoniker_AddRef(This->window->mon);
+    *ppimkName = This->window->mon;
     return S_OK;
 }
 
@@ -1186,9 +1186,9 @@ static HRESULT WINAPI DocObjPersistStreamInit_Load(IPersistStreamInit *iface, IS
     }
 
     prepare_for_binding(This, mon, FALSE);
-    hres = set_moniker(This->basedoc.window, mon, NULL, NULL, NULL, TRUE);
+    hres = set_moniker(This->window, mon, NULL, NULL, NULL, TRUE);
     if(SUCCEEDED(hres))
-        hres = channelbsc_load_stream(This->basedoc.window->pending_window, mon, pStm);
+        hres = channelbsc_load_stream(This->window->pending_window, mon, pStm);
 
     IMoniker_Release(mon);
     return hres;
@@ -1229,9 +1229,9 @@ static HRESULT WINAPI DocObjPersistStreamInit_InitNew(IPersistStreamInit *iface)
     }
 
     prepare_for_binding(This, mon, FALSE);
-    hres = set_moniker(This->basedoc.window, mon, NULL, NULL, NULL, FALSE);
+    hres = set_moniker(This->window, mon, NULL, NULL, NULL, FALSE);
     if(SUCCEEDED(hres))
-        hres = channelbsc_load_stream(This->basedoc.window->pending_window, mon, NULL);
+        hres = channelbsc_load_stream(This->window->pending_window, mon, NULL);
 
     IMoniker_Release(mon);
     return hres;
@@ -1358,7 +1358,7 @@ static HRESULT WINAPI DocObjPersistHistory_LoadHistory(IPersistHistory *iface, I
 
     TRACE("(%p)->(%p %p)\n", This, pStream, pbc);
 
-    if(!This->basedoc.window) {
+    if(!This->window) {
         FIXME("No current window\n");
         return E_UNEXPECTED;
     }
@@ -1397,7 +1397,7 @@ static HRESULT WINAPI DocObjPersistHistory_LoadHistory(IPersistHistory *iface, I
     if(FAILED(hres))
         return hres;
 
-    hres = load_uri(This->basedoc.window, uri, BINDING_FROMHIST);
+    hres = load_uri(This->window, uri, BINDING_FROMHIST);
     IUri_Release(uri);
     return hres;
 }
@@ -1411,14 +1411,14 @@ static HRESULT WINAPI DocObjPersistHistory_SaveHistory(IPersistHistory *iface, I
 
     TRACE("(%p)->(%p)\n", This, pStream);
 
-    if(!This->basedoc.window || !This->basedoc.window->uri) {
+    if(!This->window || !This->window->uri) {
         FIXME("No current URI\n");
         return E_FAIL;
     }
 
     /* NOTE: The format we store is *not* compatible with native MSHTML. We currently
      * store only URI of the page (as a length followed by a string) */
-    hres = IUri_GetDisplayUri(This->basedoc.window->uri, &display_uri);
+    hres = IUri_GetDisplayUri(This->window->uri, &display_uri);
     if(FAILED(hres))
         return hres;
 
@@ -1592,7 +1592,7 @@ static HRESULT WINAPI DocObjHlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfH
         HRESULT hres;
         BSTR uri;
 
-        hres = IUri_GetAbsoluteUri(This->basedoc.window->uri, &uri);
+        hres = IUri_GetAbsoluteUri(This->window->uri, &uri);
         if(FAILED(hres))
             return hres;
 
