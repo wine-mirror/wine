@@ -2568,6 +2568,37 @@ static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
     }
 }
 
+static BOOL validate_print_proc(WCHAR *server, const WCHAR *name)
+{
+    PRINTPROCESSOR_INFO_1W *ppi;
+    DWORD size, i, no;
+
+    if (!EnumPrintProcessorsW(server, NULL, 1, NULL, 0, &size, &no)
+            && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+    {
+        return FALSE;
+    }
+    ppi = malloc(size);
+    if (!ppi)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    if (!EnumPrintProcessorsW(server, NULL, 1, (BYTE*)ppi, size, &size, &no))
+    {
+        free(ppi);
+        return FALSE;
+    }
+
+    for (i = 0; i < no; i++)
+    {
+        if (!wcsicmp(ppi[i].pName, name))
+            break;
+    }
+    free(ppi);
+    return i != no;
+}
+
 /*****************************************************************************
  *          AddPrinterW  [WINSPOOL.@]
  */
@@ -2628,7 +2659,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     RegCloseKey(hkeyDriver);
     RegCloseKey(hkeyDrivers);
 
-    if (wcsicmp( pi->pPrintProcessor, L"WinPrint" ))
+    if (!validate_print_proc(pName, pi->pPrintProcessor))
     {
         FIXME("Can't find processor %s\n", debugstr_w(pi->pPrintProcessor));
 	SetLastError(ERROR_UNKNOWN_PRINTPROCESSOR);
