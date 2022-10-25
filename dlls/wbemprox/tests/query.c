@@ -2097,6 +2097,28 @@ static void test_Win32_LogicalDisk( IWbemServices *services )
 
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
+
+    query = SysAllocString( L"SELECT * FROM Win32_LogicalDisk WHERE DeviceID > 'b:' AND DeviceID < 'd:'" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %#x\n", hr );
+    count = 0;
+    hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+    ok( hr == S_OK, "got %#x\n", hr );
+    ok( count == 1, "got %u\n", count );
+    IWbemClassObject_Release( obj );
+    SysFreeString( query );
+
+    query = SysAllocString( L"SELECT * FROM Win32_LogicalDisk WHERE DeviceID = 'C:'" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %#x\n", hr );
+    count = 0;
+    hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+    ok( hr == S_OK, "got %#x\n", hr );
+    ok( count == 1, "got %u\n", count );
+    IWbemClassObject_Release( obj );
+    SysFreeString( query );
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
     SysFreeString( wql );
 }
 
