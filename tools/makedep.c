@@ -115,7 +115,6 @@ static const struct
     { FLAG_IDL_PROXY,      "_p.c" },
     { FLAG_IDL_SERVER,     "_s.c" },
     { FLAG_IDL_REGISTER,   "_r.res" },
-    { FLAG_IDL_HEADER,     ".h" }
 };
 
 #define HASH_SIZE 197
@@ -2770,20 +2769,15 @@ static void output_source_res( struct makefile *make, struct incl_file *source, 
 static void output_source_idl( struct makefile *make, struct incl_file *source, const char *obj )
 {
     struct strarray defines = get_source_defines( make, source, obj );
-    struct strarray targets = empty_strarray;
-    char *dest;
-    unsigned int i;
+    struct strarray headers = empty_strarray;
+    struct strarray multiarch_targets[MAX_ARCHS] = { empty_strarray };
+    const char *dest;
+    unsigned int i, arch;
+    int multiarch;
 
     if (find_include_file( make, strmake( "%s.h", obj ))) source->file->flags |= FLAG_IDL_HEADER;
     if (!source->file->flags) return;
 
-    for (i = 0; i < ARRAY_SIZE(idl_outputs); i++)
-    {
-        if (!(source->file->flags & idl_outputs[i].flag)) continue;
-        dest = strmake( "%s%s", obj, idl_outputs[i].ext );
-        if (!find_src_file( make, dest )) strarray_add( &make->clean_files, dest );
-        strarray_add( &targets, dest );
-    }
     if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &make->dlldata_files, source->name );
     if (source->file->flags & FLAG_INSTALL)
     {
@@ -2793,28 +2787,66 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
             add_install_rule( make, source->name, strmake( "%s.h", obj ),
                               strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
     }
-    if (!targets.count) return;
-
-    output_filenames_obj_dir( make, targets );
-    output( ": %s\n", tools_path( make, "widl" ));
-    output( "\t%s%s -o $@", cmd_prefix( "WIDL" ), tools_path( make, "widl" ) );
-    output_filenames( target_flags[0] );
-    output_filename( "--nostdinc" );
-    output_filename( "-Ldlls/\\*" );
-    output_filenames( defines );
-    output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
-    output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));
-    output_filename( source->filename );
-    output( "\n" );
-    output_filenames_obj_dir( make, targets );
-    output( ": %s", source->filename );
-    output_filenames( source->dependencies );
-    for (i = 0; i < source->importlibdeps.count; i++)
+    if (source->file->flags & FLAG_IDL_HEADER)
     {
-        struct makefile *submake = find_importlib_module( source->importlibdeps.str[i] );
-        output_filename( obj_dir_path( submake, submake->module ));
+        dest = strmake( "%s.h", obj );
+        strarray_add( &headers, dest );
+        if (!find_src_file( make, dest )) strarray_add( &make->clean_files, dest );
     }
+
+    for (i = 0; i < ARRAY_SIZE(idl_outputs); i++)
+    {
+        if (!(source->file->flags & idl_outputs[i].flag)) continue;
+        multiarch = (make->use_msvcrt && archs.count > 1);
+        for (arch = 0; arch < archs.count; arch++)
+        {
+            if (!arch != !multiarch) continue;
+            dest = strmake( "%s%s", obj, idl_outputs[i].ext );
+            if (!find_src_file( make, dest )) strarray_add( &make->clean_files, dest );
+            strarray_add( &multiarch_targets[arch], dest );
+        }
+    }
+
+    for (arch = 0; arch < archs.count; arch++)
+    {
+        if (multiarch_targets[arch].count + (arch ? 0 : headers.count) == 0) continue;
+        if (!arch) output_filenames_obj_dir( make, headers );
+        output_filenames_obj_dir( make, multiarch_targets[arch] );
+        output( ":\n" );
+        output( "\t%s%s -o $@", cmd_prefix( "WIDL" ), tools_path( make, "widl" ) );
+        output_filenames( target_flags[arch] );
+        output_filename( "--nostdinc" );
+        output_filename( "-Ldlls/\\*" );
+        output_filenames( defines );
+        output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
+        output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));
+        output_filename( source->filename );
+        output( "\n" );
+    }
+
+    output_filenames_obj_dir( make, headers );
+    for (arch = 0; arch < archs.count; arch++) output_filenames_obj_dir( make, multiarch_targets[arch] );
+    output( ":" );
+    output_filename( tools_path( make, "widl" ));
+    output_filename( source->filename );
+    output_filenames( source->dependencies );
     output( "\n" );
+
+    if (source->importlibdeps.count)
+    {
+        for (arch = 0; arch < archs.count; arch++)
+        {
+            if (!multiarch_targets[arch].count) continue;
+            output_filenames_obj_dir( make, multiarch_targets[arch] );
+            output( ":" );
+            for (i = 0; i < source->importlibdeps.count; i++)
+            {
+                struct makefile *submake = find_importlib_module( source->importlibdeps.str[i] );
+                output_filename( obj_dir_path( submake, submake->module ));
+            }
+            output( "\n" );
+        }
+    }
 }
 
 
