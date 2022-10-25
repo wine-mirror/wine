@@ -2627,6 +2627,57 @@ emP_cleanup:
     return (res);
 }
 
+static BOOL WINAPI fpAddPrintProcessor(WCHAR *name, WCHAR *environment, WCHAR *path,
+        WCHAR *print_proc)
+{
+    const printenv_t * env;
+    HKEY hroot = NULL;
+    WCHAR *regpath;
+    LSTATUS s;
+
+    TRACE("(%s, %s, %s, %s)\n", debugstr_w(name), debugstr_w(environment),
+            debugstr_w(path), debugstr_w(print_proc));
+
+    if (!path || !print_proc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (name && name[0])
+    {
+        FIXME("server %s not supported\n", debugstr_w(name));
+        SetLastError(ERROR_INVALID_NAME);
+        return FALSE;
+    }
+
+    env = validate_envW(environment);
+    if (!env)
+        return FALSE;
+
+    regpath = malloc(sizeof(fmt_printprocessorsW) +
+            wcslen(env->envname) * sizeof(WCHAR));
+    if (!regpath)
+        return FALSE;
+    wsprintfW(regpath, fmt_printprocessorsW, env->envname);
+
+    s = RegCreateKeyW(HKEY_LOCAL_MACHINE, regpath, &hroot);
+    free(regpath);
+    if (!s)
+    {
+        s = RegSetKeyValueW(hroot, print_proc, L"Driver", REG_SZ, path,
+                (wcslen(path) + 1) * sizeof(WCHAR));
+    }
+    RegCloseKey(hroot);
+    if (s)
+    {
+        SetLastError(s);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 /*****************************************************************************
  * fpEnumPrintProcessors [exported through PRINTPROVIDOR]
  *
@@ -3715,7 +3766,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpGetPrinterDriver */
         fpGetPrinterDriverDirectory,
         NULL,   /* fpDeletePrinterDriver */
-        NULL,   /* fpAddPrintProcessor */
+        fpAddPrintProcessor,
         fpEnumPrintProcessors,
         fpGetPrintProcessorDirectory,
         NULL,   /* fpDeletePrintProcessor */

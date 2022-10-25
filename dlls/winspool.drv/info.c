@@ -4799,12 +4799,19 @@ BOOL WINAPI AddPrintProcessorA(LPSTR pName, LPSTR pEnvironment, LPSTR pPathName,
 /*****************************************************************************
  *          AddPrintProcessorW  [WINSPOOL.@]
  */
-BOOL WINAPI AddPrintProcessorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPathName,
-                               LPWSTR pPrintProcessorName)
+BOOL WINAPI AddPrintProcessorW(WCHAR *name, WCHAR *env, WCHAR *path, WCHAR *print_proc)
 {
-    FIXME("(%s,%s,%s,%s): stub\n", debugstr_w(pName), debugstr_w(pEnvironment),
-          debugstr_w(pPathName), debugstr_w(pPrintProcessorName));
-    return TRUE;
+    TRACE("(%s,%s,%s,%s)\n", debugstr_w(name), debugstr_w(env),
+            debugstr_w(path), debugstr_w(print_proc));
+
+    if (!path || !print_proc)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if ((backend == NULL)  && !load_backend()) return FALSE;
+    return backend->fpAddPrintProcessor(name, env, path, print_proc);
 }
 
 /*****************************************************************************
