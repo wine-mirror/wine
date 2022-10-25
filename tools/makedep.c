@@ -75,6 +75,7 @@ struct incl_file
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
     enum incl_type     type;          /* type of include */
+    unsigned int       arch;          /* architecture for multi-arch files, otherwise 0 */
     int                use_msvcrt:1;  /* put msvcrt headers in the search path? */
     int                is_external:1; /* file from external library? */
     struct incl_file  *owner;
@@ -835,13 +836,14 @@ found:
  *
  * Add a generated source file to the list.
  */
-static struct incl_file *add_generated_source( struct makefile *make,
-                                               const char *name, const char *filename )
+static struct incl_file *add_generated_source( struct makefile *make, const char *name,
+                                               const char *filename, unsigned int arch )
 {
     struct incl_file *file = xmalloc( sizeof(*file) );
 
     memset( file, 0, sizeof(*file) );
     file->file = add_file( name );
+    file->arch = arch;
     file->name = xstrdup( name );
     file->basename = xstrdup( filename ? filename : name );
     file->filename = obj_dir_path( make, file->basename );
@@ -1773,78 +1775,86 @@ static struct makefile *parse_makefile( const char *path )
  */
 static void add_generated_sources( struct makefile *make )
 {
-    unsigned int i;
+    unsigned int i, arch;
     struct incl_file *source, *next, *file, *dlldata = NULL;
     struct strarray objs = get_expanded_make_var_array( make, "EXTRA_OBJS" );
+    int multiarch = archs.count > 1 && make->use_msvcrt;
 
     LIST_FOR_EACH_ENTRY_SAFE( source, next, &make->sources, struct incl_file, entry )
     {
-        if (source->file->flags & FLAG_IDL_CLIENT)
+        for (arch = 0; arch < archs.count; arch++)
         {
-            file = add_generated_source( make, replace_extension( source->name, ".idl", "_c.c" ), NULL );
-            add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
-            add_all_includes( make, file, file->file );
-        }
-        if (source->file->flags & FLAG_IDL_SERVER)
-        {
-            file = add_generated_source( make, replace_extension( source->name, ".idl", "_s.c" ), NULL );
-            add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
-            add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
-            add_all_includes( make, file, file->file );
-        }
-        if (source->file->flags & FLAG_IDL_IDENT)
-        {
-            file = add_generated_source( make, replace_extension( source->name, ".idl", "_i.c" ), NULL );
-            add_dependency( file->file, "rpc.h", INCL_NORMAL );
-            add_dependency( file->file, "rpcndr.h", INCL_NORMAL );
-            add_dependency( file->file, "guiddef.h", INCL_NORMAL );
-            add_all_includes( make, file, file->file );
-        }
-        if (source->file->flags & FLAG_IDL_PROXY)
-        {
-            if (!dlldata)
+            if (!arch != !multiarch) continue;
+            if (source->file->flags & FLAG_IDL_CLIENT)
             {
-                dlldata = add_generated_source( make, "dlldata.o", "dlldata.c" );
-                add_dependency( dlldata->file, "objbase.h", INCL_NORMAL );
-                add_dependency( dlldata->file, "rpcproxy.h", INCL_NORMAL );
-                add_all_includes( make, dlldata, dlldata->file );
+                file = add_generated_source( make, replace_extension( source->name, ".idl", "_c.c" ), NULL, arch );
+                add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
+                add_all_includes( make, file, file->file );
             }
-            file = add_generated_source( make, replace_extension( source->name, ".idl", "_p.c" ), NULL );
-            add_dependency( file->file, "objbase.h", INCL_NORMAL );
-            add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
-            add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
-            add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
-            add_all_includes( make, file, file->file );
+            if (source->file->flags & FLAG_IDL_SERVER)
+            {
+                file = add_generated_source( make, replace_extension( source->name, ".idl", "_s.c" ), NULL, arch );
+                add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
+                add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
+                add_all_includes( make, file, file->file );
+            }
+            if (source->file->flags & FLAG_IDL_IDENT)
+            {
+                file = add_generated_source( make, replace_extension( source->name, ".idl", "_i.c" ), NULL, arch );
+                add_dependency( file->file, "rpc.h", INCL_NORMAL );
+                add_dependency( file->file, "rpcndr.h", INCL_NORMAL );
+                add_dependency( file->file, "guiddef.h", INCL_NORMAL );
+                add_all_includes( make, file, file->file );
+            }
+            if (source->file->flags & FLAG_IDL_PROXY)
+            {
+                file = add_generated_source( make, replace_extension( source->name, ".idl", "_p.c" ), NULL, arch );
+                add_dependency( file->file, "objbase.h", INCL_NORMAL );
+                add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
+                add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
+                add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
+                add_all_includes( make, file, file->file );
+            }
+            if (source->file->flags & FLAG_IDL_TYPELIB)
+            {
+                add_generated_source( make, replace_extension( source->name, ".idl", "_l.res" ), NULL, arch );
+            }
+            if (source->file->flags & FLAG_IDL_REGTYPELIB)
+            {
+                add_generated_source( make, replace_extension( source->name, ".idl", "_t.res" ), NULL, arch );
+            }
+            if (source->file->flags & FLAG_IDL_REGISTER)
+            {
+                add_generated_source( make, replace_extension( source->name, ".idl", "_r.res" ), NULL, arch );
+            }
         }
-        if (source->file->flags & FLAG_IDL_TYPELIB)
+
+        /* now the arch-independent files */
+
+        if ((source->file->flags & FLAG_IDL_PROXY) && !dlldata)
         {
-            add_generated_source( make, replace_extension( source->name, ".idl", "_l.res" ), NULL );
-        }
-        if (source->file->flags & FLAG_IDL_REGTYPELIB)
-        {
-            add_generated_source( make, replace_extension( source->name, ".idl", "_t.res" ), NULL );
-        }
-        if (source->file->flags & FLAG_IDL_REGISTER)
-        {
-            add_generated_source( make, replace_extension( source->name, ".idl", "_r.res" ), NULL );
+            dlldata = add_generated_source( make, "dlldata.o", "dlldata.c", 0 );
+            add_dependency( dlldata->file, "objbase.h", INCL_NORMAL );
+            add_dependency( dlldata->file, "rpcproxy.h", INCL_NORMAL );
+            add_all_includes( make, dlldata, dlldata->file );
         }
         if (source->file->flags & FLAG_IDL_HEADER)
         {
-            add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL );
+            add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL, 0 );
         }
         if (!source->file->flags && strendswith( source->name, ".idl" ))
         {
             if (!strncmp( source->name, "wine/", 5 )) continue;
             source->file->flags = FLAG_IDL_HEADER | FLAG_INSTALL;
-            add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL );
+            add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL, 0 );
         }
         if (strendswith( source->name, ".x" ))
         {
-            add_generated_source( make, replace_extension( source->name, ".x", ".h" ), NULL );
+            add_generated_source( make, replace_extension( source->name, ".x", ".h" ), NULL, 0 );
         }
         if (strendswith( source->name, ".y" ))
         {
-            file = add_generated_source( make, replace_extension( source->name, ".y", ".tab.c" ), NULL );
+            file = add_generated_source( make, replace_extension( source->name, ".y", ".tab.c" ), NULL, 0 );
             /* steal the includes list from the source file */
             file->files_count = source->files_count;
             file->files_size = source->files_size;
@@ -1854,7 +1864,7 @@ static void add_generated_sources( struct makefile *make )
         }
         if (strendswith( source->name, ".l" ))
         {
-            file = add_generated_source( make, replace_extension( source->name, ".l", ".yy.c" ), NULL );
+            file = add_generated_source( make, replace_extension( source->name, ".l", ".yy.c" ), NULL, 0 );
             /* steal the includes list from the source file */
             file->files_count = source->files_count;
             file->files_size = source->files_size;
@@ -1876,23 +1886,27 @@ static void add_generated_sources( struct makefile *make )
     }
     if (make->testdll)
     {
-        file = add_generated_source( make, "testlist.o", "testlist.c" );
-        add_dependency( file->file, "wine/test.h", INCL_NORMAL );
-        add_all_includes( make, file, file->file );
+        for (arch = 0; arch < archs.count; arch++)
+        {
+            if (!arch != !multiarch) continue;
+            file = add_generated_source( make, "testlist.o", "testlist.c", arch );
+            add_dependency( file->file, "wine/test.h", INCL_NORMAL );
+            add_all_includes( make, file, file->file );
+        }
     }
     for (i = 0; i < objs.count; i++)
     {
         /* default to .c for unknown extra object files */
         if (strendswith( objs.str[i], ".o" ))
         {
-            file = add_generated_source( make, objs.str[i], replace_extension( objs.str[i], ".o", ".c" ));
+            file = add_generated_source( make, objs.str[i], replace_extension( objs.str[i], ".o", ".c" ), 0);
             file->file->flags |= FLAG_C_UNIX;
             file->use_msvcrt = 0;
         }
         else if (strendswith( objs.str[i], ".res" ))
-            add_generated_source( make, replace_extension( objs.str[i], ".res", ".rc" ), NULL );
+            add_generated_source( make, replace_extension( objs.str[i], ".res", ".rc" ), NULL, 0 );
         else
-            add_generated_source( make, objs.str[i], NULL );
+            add_generated_source( make, objs.str[i], NULL, 0 );
     }
 }
 
