@@ -609,6 +609,15 @@ static int is_multiarch( unsigned int arch )
 
 
 /*******************************************************************
+ *         arch_make_variable
+ */
+static char *arch_make_variable( const char *name, unsigned int arch )
+{
+    return arch ? strmake( "$(CROSS%s)", name ) : strmake( "$(%s)", name );
+}
+
+
+/*******************************************************************
  *         obj_dir_path
  */
 static char *obj_dir_path( const struct makefile *make, const char *path )
@@ -3058,7 +3067,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     if ((debug_file = get_debug_file( make, dll_name, arch )))
         output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
-    output_filename( arch ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
+    output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
 }
 
@@ -3098,11 +3107,10 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         strarray_add( &make->clean_files, obj_name );
 
     output( "%s: %s\n", obj_dir_path( make, obj_name ), source->filename );
-    output( "\t%s%s -c -o $@ %s", cmd_prefix( "CC" ), arch ? "$(CROSSCC)" : "$(CC)", source->filename );
+    output( "\t%s%s -c -o $@ %s", cmd_prefix( "CC" ), arch_make_variable( "CC", arch ), source->filename );
     output_filenames( defines );
     if (!source->use_msvcrt) output_filenames( make->unix_cflags );
     output_filenames( make->extlib ? extra_cflags_extlib[arch] : extra_cflags[arch] );
-
     if (!arch)
     {
         if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
@@ -3129,7 +3137,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         output_filename( "-Wformat" );
 
     output_filenames( cpp_flags );
-    output_filename( arch ? "$(CROSSCFLAGS)" : "$(CFLAGS)" );
+    output_filename( arch_make_variable( "CFLAGS", arch ));
     output( "\n" );
 
     if (make->testdll && !is_dll_src && strendswith( source->name, ".c" ) &&
@@ -3301,7 +3309,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     debug_file = get_debug_file( make, make->module, arch );
     if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
-    output_filename( arch ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
+    output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
 
     if (*dll_ext && make->is_exe && !make->is_win16 && strendswith( make->module, ".exe" ))
@@ -3532,7 +3540,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     if ((debug_file = get_debug_file( make, testmodule, arch )))
         output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
-    output_filename( arch ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
+    output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
     output( "%s%s:\n", obj_dir_path( make, stripped ), ext );
     output_winegcc_command( make, arch );
@@ -3542,7 +3550,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( all_libs );
-    output_filename( arch ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
+    output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
     output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
     output_filenames_obj_dir( make, make->object_files[arch] );
