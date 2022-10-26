@@ -1472,6 +1472,7 @@ enable_winhttp
 enable_wininet
 enable_winmm
 enable_winnls32
+enable_winprint
 enable_winscard
 enable_winspool_drv
 enable_winsta
@@ -21918,6 +21919,7 @@ wine_fn_config_makefile dlls/winmm enable_winmm
 wine_fn_config_makefile dlls/winmm/tests enable_tests
 wine_fn_config_makefile dlls/winnls.dll16 enable_win16
 wine_fn_config_makefile dlls/winnls32 enable_winnls32
+wine_fn_config_makefile dlls/winprint enable_winprint
 wine_fn_config_makefile dlls/winscard enable_winscard
 wine_fn_config_makefile dlls/winsock.dll16 enable_win16
 wine_fn_config_makefile dlls/winspool.drv enable_winspool_drv

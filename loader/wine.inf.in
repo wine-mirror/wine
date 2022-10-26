@@ -2149,6 +2149,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 16427,System\OLE DB,msdasql.dll
 16427,System\ADO,msado15.dll
 66000,3,wineps.drv
+55,,winprint.dll
 12,,*.sys,-
 11,,*.msstyles,-
 11,,*
@@ -2211,6 +2212,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 16427,System\OLE DB,msdasql.dll
 16427,System\ADO,msado15.dll
 66000,3,wineps.drv
+55,,winprint.dll
 12,,*.sys
 11,,*
 

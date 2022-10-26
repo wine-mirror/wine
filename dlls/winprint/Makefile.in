@@ -1,0 +1,4 @@
+MODULE    = winprint.dll
+
+C_SRCS = \
+	printproc.c
