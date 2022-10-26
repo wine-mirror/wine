@@ -94,6 +94,12 @@ static void test_select( IWbemServices *services )
         L"SELECT * FROM Win32_BIOS WHERE NULL = NAME",
         L"SELECT * FROM Win32_LogicalDiskToPartition",
         L"SELECT * FROM Win32_DiskDriveToDiskPartition",
+        L"SELECT \x80 FROM \x80",
+        L"SELECT \xC6 FROM \xC6",
+        L"SELECT \xFF FROM \xFF",
+        L"SELECT \x200C FROM \x200C",
+        L"SELECT \xFF21 FROM \xFF21",
+        L"SELECT \xFFFD FROM \xFFFD",
     };
     HRESULT hr;
     IEnumWbemClassObject *result;

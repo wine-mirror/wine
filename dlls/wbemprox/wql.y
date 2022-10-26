@@ -645,6 +645,11 @@ static const char id_char[] =
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 };
 
+static int is_idchar(WCHAR chr)
+{
+    return chr >= ARRAY_SIZE(id_char) || id_char[chr];
+}
+
 struct wql_keyword
 {
     const WCHAR *name;
@@ -802,9 +807,9 @@ static int get_token( const WCHAR *s, int *token )
         for (i = 1; is_digit( s[i] ); i++) {}
         return i;
     default:
-        if (!id_char[*s]) break;
+        if (!is_idchar(*s)) break;
 
-        for (i = 1; id_char[s[i]]; i++) {}
+        for (i = 1; is_idchar(s[i]); i++) {}
         *token = keyword_type( s, i );
         return i;
     }
