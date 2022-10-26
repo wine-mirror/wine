@@ -6927,7 +6927,7 @@ static const struct prov_method_sequence cache_req_seq4[] = {
 /* Sequence for non-matching property condition. */
 static const struct prov_method_sequence cache_req_seq5[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* Dependent upon property condition. */
-    { &Provider, PROV_GET_PROPERTY_VALUE }, /* Dependent upon property condition. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* Dependent upon property condition. */
     /* Only done on Win10v1507 and below. */
     { &Provider, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
     { 0 }
@@ -7343,21 +7343,19 @@ static void test_UiaGetUpdatedCache(void)
     tree_struct = NULL; out_req = NULL;
 
     hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!out_req, "out_req == NULL\n");
-    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
-    if (out_req)
-    {
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = exp_elems[1] = 1;
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-        ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
-        ok_method_sequence(cache_req_seq4, NULL);
-    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!out_req, "out_req == NULL\n");
+    ok(!!tree_struct, "tree_struct == NULL\n");
+
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+    ok(!wcscmp(tree_struct, L"P)"), "tree structure %s\n", debugstr_w(tree_struct));
+    ok_method_sequence(cache_req_seq4, NULL);
 
     SafeArrayDestroy(out_req);
     SysFreeString(tree_struct);
-    VariantClear(&prop_cond.Value);
+    VariantClear(&v);
 
     /*
      * Provider now returns VARIANT_TRUE for UIA_IsControlElementPropertyId,
@@ -7377,13 +7375,12 @@ static void test_UiaGetUpdatedCache(void)
     tree_struct = NULL; out_req = NULL;
 
     hr = UiaGetUpdatedCache(node, &cache_req, NormalizeState_View, NULL, &out_req, &tree_struct);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok_method_sequence(cache_req_seq5, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_method_sequence(cache_req_seq5, NULL);
     ok(!out_req, "out_req != NULL\n");
-    todo_wine ok(!!tree_struct, "tree_struct == NULL\n");
-    if (tree_struct)
-        ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+    ok(!!tree_struct, "tree_struct == NULL\n");
+    ok(!wcscmp(tree_struct, L""), "tree structure %s\n", debugstr_w(tree_struct));
+
     SysFreeString(tree_struct);
     VariantClear(&v);
 

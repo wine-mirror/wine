@@ -1920,6 +1920,41 @@ static BOOL uia_condition_matched(HRESULT hr)
         return TRUE;
 }
 
+static HRESULT uia_property_condition_check(HUIANODE node, struct UiaPropertyCondition *prop_cond)
+{
+    const struct uia_prop_info *prop_info = uia_prop_info_from_id(prop_cond->PropertyId);
+    HRESULT hr;
+    VARIANT v;
+
+    if (!prop_info)
+        return E_INVALIDARG;
+
+    switch (prop_info->type)
+    {
+    case UIAutomationType_Bool:
+        hr = UiaGetPropertyValue(node, prop_info->prop_id, &v);
+        if (FAILED(hr) || V_VT(&v) == VT_UNKNOWN)
+        {
+            hr = S_FALSE;
+            break;
+        }
+
+        if ((V_VT(&v) == V_VT(&prop_cond->Value)) && (V_BOOL(&v) == V_BOOL(&prop_cond->Value)))
+            hr = S_OK;
+        else
+            hr = S_FALSE;
+
+        break;
+
+    default:
+        FIXME("PropertyCondition comparison unimplemented for type %#x\n", prop_info->type);
+        return E_NOTIMPL;
+    }
+
+    VariantClear(&v);
+    return hr;
+}
+
 static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition)
 {
     HRESULT hr;
@@ -1971,8 +2006,7 @@ static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition
     }
 
     case ConditionType_Property:
-        FIXME("Unhandled condition type %d\n", condition->ConditionType);
-        return E_NOTIMPL;
+        return uia_property_condition_check(node, (struct UiaPropertyCondition *)condition);
 
     default:
         WARN("Invalid condition type %d\n", condition->ConditionType);
