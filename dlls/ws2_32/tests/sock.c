@@ -2123,7 +2123,7 @@ static void test_so_reuseaddr(void)
         closesocket(s3);
         closesocket(s4);
 
-        /* Test binding and listening on any addr together with loopback. */
+        /* Test binding and listening on any addr together with loopback, any addr first. */
         s1 = socket(tests[i].domain, SOCK_STREAM, 0);
         ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
@@ -2151,6 +2151,41 @@ static void test_so_reuseaddr(void)
         size = tests[i].addrlen;
         s4 = accept(s2, &saddr, &size);
         todo_wine ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        closesocket(s1);
+        closesocket(s2);
+        closesocket(s3);
+        closesocket(s4);
+
+        /* Test binding and listening on any addr together with loopback, loopback addr first. */
+
+        s1 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        rc = bind(s1, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        rc = listen(s1, 1);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s2 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        rc = bind(s2, tests[i].addr_any, tests[i].addrlen);
+        todo_wine ok(!rc, "got rc %d, error %d.\n", rc, WSAGetLastError());
+
+        rc = listen(s2, 1);
+        todo_wine ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s3 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s3 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        rc = connect(s3, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+        size = tests[i].addrlen;
+        s4 = accept(s1, &saddr, &size);
+
+        ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
         closesocket(s1);
         closesocket(s2);
