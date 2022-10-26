@@ -2337,7 +2337,7 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
     }
     strarray_addall( &ret, make->define_args );
     strarray_addall( &ret, get_expanded_file_local_var( make, obj, "EXTRADEFS" ));
-    if ((source->file->flags & FLAG_C_UNIX) && *dll_ext) strarray_add( &ret, "-DWINE_UNIX_LIB" );
+    if (source->file->flags & FLAG_C_UNIX) strarray_add( &ret, "-DWINE_UNIX_LIB" );
     return ret;
 }
 
@@ -3064,43 +3064,47 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
 
 
 /*******************************************************************
- *         output_source_default
+ *         output_source_one_arch
  */
-static void output_source_default( struct makefile *make, struct incl_file *source, const char *obj )
+static void output_source_one_arch( struct makefile *make, struct incl_file *source, const char *obj,
+                                    struct strarray defines, struct strarray *targets,
+                                    unsigned int arch, int is_dll_src )
 {
-    struct strarray defines = get_source_defines( make, source, obj );
-    unsigned int arch = make->is_cross ? 1 : 0;
-    int is_dll_src = (make->testdll &&
-                      strendswith( source->name, ".c" ) &&
-                      find_src_file( make, replace_extension( source->name, ".c", ".spec" )));
-    int need_cross = (archs.count > 1 &&
-                      !(source->file->flags & FLAG_C_UNIX) &&
-                      (arch || make->staticlib ||
-                       (source->file->flags & FLAG_C_IMPLIB)));
-    int need_obj = ((*dll_ext || !(source->file->flags & FLAG_C_UNIX)) &&
-                    (!need_cross ||
-                     (source->file->flags & FLAG_C_IMPLIB) ||
-                     (make->staticlib && !make->extlib)));
+    const char *obj_name;
 
-    if ((source->file->flags & FLAG_GENERATED) &&
-        (!make->testdll || !strendswith( source->filename, "testlist.c" )))
-        strarray_add( &make->clean_files, source->basename );
-
-    if (need_obj)
+    if (arch)
     {
-        if ((source->file->flags & FLAG_C_UNIX) && *dll_ext)
-            strarray_add( &make->unixobj_files, strmake( "%s.o", obj ));
-        else if (source->file->flags & FLAG_C_IMPLIB)
-            strarray_add( &make->implib_files[0], strmake( "%s.o", obj ));
-        else if (!is_dll_src)
-            strarray_add( &make->object_files[0], strmake( "%s.o", obj ));
-        else
-            strarray_add( &make->clean_files, strmake( "%s.o", obj ));
-        output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
-        output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
-        output_filenames( defines );
-        if (!source->use_msvcrt) output_filenames( make->unix_cflags );
-        output_filenames( make->extlib ? extra_cflags_extlib[0] : extra_cflags[0] );
+        if (source->file->flags & FLAG_C_UNIX) return;
+        if (!make->use_msvcrt && !make->staticlib && !(source->file->flags & FLAG_C_IMPLIB)) return;
+    }
+    else if (source->file->flags & FLAG_C_UNIX)
+    {
+        if (!*dll_ext) return;
+    }
+    else if (archs.count > 1 && make->use_msvcrt &&
+             !(source->file->flags & FLAG_C_IMPLIB) &&
+             (!make->staticlib || make->extlib)) return;
+
+    obj_name = strmake( "%s%s.o", obj, arch ? ".cross" : "" );
+    strarray_add( targets, obj_name );
+
+    if (source->file->flags & FLAG_C_UNIX)
+        strarray_add( &make->unixobj_files, obj_name );
+    else if (source->file->flags & FLAG_C_IMPLIB)
+        strarray_add( &make->implib_files[arch], obj_name );
+    else if (!is_dll_src)
+        strarray_add( &make->object_files[arch], obj_name );
+    else
+        strarray_add( &make->clean_files, obj_name );
+
+    output( "%s: %s\n", obj_dir_path( make, obj_name ), source->filename );
+    output( "\t%s%s -c -o $@ %s", cmd_prefix( "CC" ), arch ? "$(CROSSCC)" : "$(CC)", source->filename );
+    output_filenames( defines );
+    if (!source->use_msvcrt) output_filenames( make->unix_cflags );
+    output_filenames( make->extlib ? extra_cflags_extlib[arch] : extra_cflags[arch] );
+
+    if (!arch)
+    {
         if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
         {
             output_filenames( unix_dllflags );
@@ -3112,47 +3116,67 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             if (!*dll_ext && make->module && is_crt_module( make->module ))
                 output_filename( "-fno-builtin" );
         }
-        output_filenames( cpp_flags );
-        output_filename( "$(CFLAGS)" );
-        output( "\n" );
     }
-    if (need_cross)
+    else
     {
-        if (source->file->flags & FLAG_C_IMPLIB)
-            strarray_add( &make->implib_files[arch], strmake( "%s.cross.o", obj ));
-        else if (!is_dll_src)
-            strarray_add( &make->object_files[arch], strmake( "%s.cross.o", obj ));
-        else
-            strarray_add( &make->clean_files, strmake( "%s.cross.o", obj ));
-        output( "%s.cross.o: %s\n", obj_dir_path( make, obj ), source->filename );
-        output( "\t%s$(CROSSCC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
-        output_filenames( defines );
-        output_filenames( make->extlib ? extra_cflags_extlib[arch] : extra_cflags[arch] );
-        if (make->module && is_crt_module( make->module ))
-            output_filename( "-fno-builtin" );
-        /* force -Wformat when using 'long' types, until all modules have been converted
-         * and we can remove -Wno-format */
-        if (!make->extlib && strarray_exists( &extra_cflags[arch], "-Wno-format" ) &&
-            !strarray_exists( &defines, "-DWINE_NO_LONG_TYPES" ))
-            output_filename( "-Wformat" );
-        output_filenames( cpp_flags );
-        output_filename( "$(CROSSCFLAGS)" );
-        output( "\n" );
+        if (make->module && is_crt_module( make->module )) output_filename( "-fno-builtin" );
     }
+
+    /* force -Wformat when using 'long' types, until all modules have been converted
+     * and we can remove -Wno-format */
+    if (!make->extlib && strarray_exists( &extra_cflags[arch], "-Wno-format" ) &&
+        !strarray_exists( &defines, "-DWINE_NO_LONG_TYPES" ))
+        output_filename( "-Wformat" );
+
+    output_filenames( cpp_flags );
+    output_filename( arch ? "$(CROSSCFLAGS)" : "$(CFLAGS)" );
+    output( "\n" );
+
     if (make->testdll && !is_dll_src && strendswith( source->name, ".c" ) &&
         !(source->file->flags & FLAG_GENERATED))
     {
-        strarray_add( &make->test_files, obj );
-        strarray_add( &make->ok_files, strmake( "%s.ok", obj ));
-        output( "%s.ok:\n", obj_dir_path( make, obj ));
+        const char *ok_file, *test_exe;
+
+        ok_file = strmake( "%s.ok", obj );
+        test_exe = replace_extension( make->testdll, ".dll", "_test.exe" );
+
+        strarray_add( &make->ok_files, ok_file );
+        output( "%s:\n", obj_dir_path( make, ok_file ));
         output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s%s %s && touch $@\n",
                 cmd_prefix( "TEST" ),
                 root_src_dir_path( "tools/runtest" ), make->testdll,
-                obj_dir_path( make, replace_extension( make->testdll, ".dll", "_test.exe" )),
-                arch ? "" : dll_ext, obj );
+                obj_dir_path( make, test_exe ), arch ? "" : dll_ext, obj );
     }
-    if (need_obj) output_filename( strmake( "%s.o", obj_dir_path( make, obj )));
-    if (need_cross) output_filename( strmake( "%s.cross.o", obj_dir_path( make, obj )));
+}
+
+
+/*******************************************************************
+ *         output_source_default
+ */
+static void output_source_default( struct makefile *make, struct incl_file *source, const char *obj )
+{
+    struct strarray defines = get_source_defines( make, source, obj );
+    struct strarray targets = empty_strarray;
+    int is_dll_src = (make->testdll && strendswith( source->name, ".c" ) &&
+                      find_src_file( make, replace_extension( source->name, ".c", ".spec" )));
+    unsigned int arch;
+
+    for (arch = 0; arch < archs.count; arch++)
+        if (!source->arch || source->arch == arch)
+            output_source_one_arch( make, source, obj, defines, &targets, arch, is_dll_src );
+
+    if (source->file->flags & FLAG_GENERATED)
+    {
+        if (!make->testdll || !strendswith( source->filename, "testlist.c" ))
+            strarray_add( &make->clean_files, source->basename );
+    }
+    else
+    {
+        if (make->testdll && !is_dll_src && strendswith( source->name, ".c" ))
+            strarray_add( &make->test_files, obj );
+    }
+
+    output_filenames_obj_dir( make, targets );
     output( ":" );
     output_filenames( source->dependencies );
     output( "\n" );
