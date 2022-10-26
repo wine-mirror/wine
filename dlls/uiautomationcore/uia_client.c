@@ -1922,6 +1922,8 @@ static BOOL uia_condition_matched(HRESULT hr)
 
 static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition)
 {
+    HRESULT hr;
+
     switch (condition->ConditionType)
     {
     case ConditionType_True:
@@ -1933,7 +1935,6 @@ static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition
     case ConditionType_Not:
     {
         struct UiaNotCondition *not_cond = (struct UiaNotCondition *)condition;
-        HRESULT hr;
 
         hr = uia_condition_check(node, not_cond->pConditions);
         if (FAILED(hr))
@@ -1945,9 +1946,31 @@ static HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition
             return S_OK;
     }
 
-    case ConditionType_Property:
     case ConditionType_And:
     case ConditionType_Or:
+    {
+        struct UiaAndOrCondition *and_or_cond = (struct UiaAndOrCondition *)condition;
+        int i;
+
+        for (i = 0; i < and_or_cond->cConditions; i++)
+        {
+            hr = uia_condition_check(node, and_or_cond->ppConditions[i]);
+            if (FAILED(hr))
+                return hr;
+
+            if (condition->ConditionType == ConditionType_And && !uia_condition_matched(hr))
+                return S_FALSE;
+            else if (condition->ConditionType == ConditionType_Or && uia_condition_matched(hr))
+                return S_OK;
+        }
+
+        if (condition->ConditionType == ConditionType_Or)
+            return S_FALSE;
+        else
+            return S_OK;
+    }
+
+    case ConditionType_Property:
         FIXME("Unhandled condition type %d\n", condition->ConditionType);
         return E_NOTIMPL;
 
