@@ -609,6 +609,15 @@ static int is_multiarch( unsigned int arch )
 
 
 /*******************************************************************
+ *         arch_module_name
+ */
+static char *arch_module_name( const char *module, unsigned int arch )
+{
+    return strmake( "%s%s", module, arch ? "" : dll_ext );
+}
+
+
+/*******************************************************************
  *         arch_make_variable
  */
 static char *arch_make_variable( const char *name, unsigned int arch )
@@ -3038,7 +3047,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ) );
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
 
-    dll_name = strmake( "%s.dll%s", obj, arch ? "" : dll_ext );
+    dll_name = arch_module_name( strmake( "%s.dll", obj ), arch );
     obj_name = strmake( "%s%s", obj_dir_path( make, obj ), arch ? ".cross.o" : ".o" );
     output_file = obj_dir_path( make, dll_name );
 
@@ -3150,10 +3159,10 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
 
         strarray_add( &make->ok_files, ok_file );
         output( "%s:\n", obj_dir_path( make, ok_file ));
-        output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s%s %s && touch $@\n",
+        output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s %s && touch $@\n",
                 cmd_prefix( "TEST" ),
                 root_src_dir_path( "tools/runtest" ), make->testdll,
-                obj_dir_path( make, test_exe ), arch ? "" : dll_ext, obj );
+                obj_dir_path( make, arch_module_name( test_exe, arch )), obj );
     }
 }
 
@@ -3254,8 +3263,7 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     if (!make->data_only)
     {
-        if (*dll_ext && !arch && !make->data_only)
-            module_name = strmake( "%s%s", make->module, dll_ext );
+        module_name = arch_module_name( make->module, arch );
 
         if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
 
@@ -3516,23 +3524,21 @@ static void output_shared_lib( struct makefile *make )
  */
 static void output_test_module( struct makefile *make, unsigned int arch )
 {
-    char *testmodule = replace_extension( make->testdll, ".dll", "_test.exe" );
-    char *stripped = replace_extension( make->testdll, ".dll", "_test-stripped.exe" );
-    char *testres = replace_extension( make->testdll, ".dll", "_test.res" );
+    char *basemodule = replace_extension( make->testdll, ".dll", "" );
+    char *stripped = arch_module_name( strmake( "%s_test-stripped.exe", basemodule ), arch );
+    char *testmodule = arch_module_name( strmake( "%s_test.exe", basemodule ), arch );
     struct strarray default_imports = get_default_imports( make, make->imports );
-    struct strarray dep_libs = empty_strarray, all_libs = empty_strarray;
+    struct strarray dep_libs = empty_strarray;
+    struct strarray all_libs = empty_strarray;
     struct makefile *parent = get_parent_makefile( make );
-    const char *ext = arch ? "" : dll_ext;
     const char *debug_file;
-    char *output_file;
 
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, IMPORT_TYPE_DIRECT, arch ) );
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
 
-    strarray_add( &make->all_targets[arch], strmake( "%s%s", testmodule, ext ));
-    strarray_add( &make->clean_files, strmake( "%s%s", stripped, ext ));
-    output_file = strmake( "%s%s", obj_dir_path( make, testmodule ), ext );
-    output( "%s:\n", output_file );
+    strarray_add( &make->all_targets[arch], testmodule );
+    strarray_add( &make->clean_files, stripped );
+    output( "%s:\n", obj_dir_path( make, testmodule ));
     output_winegcc_command( make, arch );
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
@@ -3542,17 +3548,17 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output_filenames( all_libs );
     output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
-    output( "%s%s:\n", obj_dir_path( make, stripped ), ext );
+    output( "%s:\n", obj_dir_path( make, stripped ));
     output_winegcc_command( make, arch );
     output_filename( "-s" );
-    output_filename( strmake( "-Wb,-F,%s", testmodule ));
+    output_filename( strmake( "-Wb,-F,%s_test.exe", basemodule ));
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( all_libs );
     output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
-    output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
+    output( "%s %s:", obj_dir_path( make, testmodule ), obj_dir_path( make, stripped ));
     output_filenames_obj_dir( make, make->object_files[arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( dep_libs );
@@ -3560,16 +3566,16 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
 
-    output( "programs/winetest/%s: %s%s\n", testres, obj_dir_path( make, stripped ), ext );
-    output( "\t%secho \"%s TESTRES \\\"%s%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ),
-            testmodule, obj_dir_path( make, stripped ), ext, tools_path( make, "wrc" ));
+    output( "programs/winetest/%s_test.res: %s\n", basemodule, obj_dir_path( make, stripped ));
+    output( "\t%secho \"%s_test.exe TESTRES \\\"%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ),
+            basemodule, obj_dir_path( make, stripped ), tools_path( make, "wrc" ));
 
     output_filenames_obj_dir( make, make->ok_files );
-    output( ": %s%s", obj_dir_path( make, testmodule ), ext );
+    output( ": %s", obj_dir_path( make, testmodule ));
     if (parent)
     {
-        output_filename( parent->is_cross ? obj_dir_path( parent, make->testdll )
-                         : strmake( "%s%s", obj_dir_path( parent, make->testdll ), dll_ext ));
+        char *parent_module = arch_module_name( make->testdll, parent->use_msvcrt ? arch : 0 );
+        output_filename( obj_dir_path( parent, parent_module ));
         if (parent->unixlib) output_filename( obj_dir_path( parent, parent->unixlib ));
     }
     output( "\n" );
