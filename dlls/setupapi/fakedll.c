@@ -407,6 +407,21 @@ static inline WCHAR *prepend( WCHAR *buffer, const WCHAR *str, size_t len )
     return memcpy( buffer - len, str, len * sizeof(WCHAR) );
 }
 
+static inline WCHAR *prepend_build_dir_path( WCHAR *ptr, const WCHAR *ext, const WCHAR *arch_dir,
+                                             const WCHAR *top_dir, const WCHAR *build_dir )
+{
+    WCHAR *name = ptr;
+    unsigned int namelen = wcslen(name), extlen = wcslen(ext);
+
+    if (namelen > extlen && !wcscmp( name + namelen - extlen, ext )) namelen -= extlen;
+    ptr = prepend( ptr, arch_dir, wcslen(arch_dir) );
+    ptr = prepend( ptr, name, namelen );
+    ptr = prepend( ptr, top_dir, wcslen(top_dir) );
+    ptr = prepend( ptr, build_dir, wcslen(build_dir) );
+    return ptr;
+}
+
+
 static const WCHAR *enum_load_path( unsigned int idx )
 {
     WCHAR buffer[32];
@@ -421,7 +436,7 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
     const WCHAR *path;
     WCHAR *file, *ptr;
     void *data = NULL;
-    unsigned int i, pos, len, namelen, maxlen = 0;
+    unsigned int i, pos, len, maxlen = 0;
     WCHAR *p;
     int res = 0;
 
@@ -442,23 +457,13 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
     if (build_dir)
     {
         /* try as a dll */
-        ptr = file + pos;
-        namelen = len + 1;
         file[pos + len + 1] = 0;
-        if (namelen > 4 && !wcsncmp( ptr + namelen - 4, L".dll", 4 )) namelen -= 4;
-        ptr = prepend( ptr, ptr, namelen );
-        ptr = prepend( ptr, L"\\dlls", 5 );
-        ptr = prepend( ptr, build_dir, lstrlenW(build_dir) );
+        ptr = prepend_build_dir_path( file + pos, L".dll", pe_dir, L"\\dlls", build_dir );
         if ((res = read_file( ptr, &data, size ))) goto done;
 
         /* now as a program */
-        ptr = file + pos;
-        namelen = len + 1;
         file[pos + len + 1] = 0;
-        if (namelen > 4 && !wcsncmp( ptr + namelen - 4, L".exe", 4 )) namelen -= 4;
-        ptr = prepend( ptr, ptr, namelen );
-        ptr = prepend( ptr, L"\\programs", 9 );
-        ptr = prepend( ptr, build_dir, lstrlenW(build_dir) );
+        ptr = prepend_build_dir_path( file + pos, L".exe", pe_dir, L"\\programs", build_dir );
         if ((res = read_file( ptr, &data, size ))) goto done;
     }
 
@@ -979,6 +984,7 @@ static void install_lib_dir( WCHAR *dest, WCHAR *file, const WCHAR *wildcard,
         lstrcpyW( name, data.name );
         if (default_ext)  /* inside build dir */
         {
+            lstrcatW( name, pe_dir );
             lstrcatW( name, L"\\" );
             lstrcatW( name, data.name );
             if (wcschr( data.name, '.' ) && install_fake_dll( dest, file, delete, &delay_copy ))

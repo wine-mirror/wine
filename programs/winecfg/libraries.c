@@ -252,14 +252,14 @@ static void clear_settings(HWND dialog)
 /* load the list of available libraries from a given dir */
 static void load_library_list_from_dir( HWND dialog, const WCHAR *dir_path, int check_subdirs )
 {
-    static const WCHAR * const ext[] = { L".dll", L".dll.so", L".so", L"" };
+    static const WCHAR * const ext[] = { L".dll", L"", L".dll.so", L".so" };
     WCHAR *buffer, *p, name[256];
     unsigned int i;
     HANDLE handle;
     WIN32_FIND_DATAW data;
+    ULONG maxlen = wcslen(dir_path) + wcslen(pe_dir) + 10 + 2 * ARRAY_SIZE(name);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, (wcslen(dir_path) + 10) * sizeof(WCHAR) + 2 * sizeof(name) );
-
+    buffer = HeapAlloc( GetProcessHeap(), 0, maxlen * sizeof(WCHAR) );
     wcscpy( buffer, dir_path );
     wcscat( buffer, L"\\*" );
     buffer[1] = '\\';  /* change \??\ to \\?\ */
@@ -282,7 +282,9 @@ static void load_library_list_from_dir( HWND dialog, const WCHAR *dir_path, int 
             if (!show_dll_in_list( data.cFileName )) continue;
             for (i = 0; i < ARRAY_SIZE( ext ); i++)
             {
-                swprintf( p, 2 * ARRAY_SIZE(name) + 10, L"%s\\%s%s", data.cFileName, data.cFileName, ext[i] );
+                if (!ext[i][0] && !wcschr( data.cFileName, '.' )) continue;
+                swprintf( p, buffer + maxlen - p, L"%s%s\\%s%s", data.cFileName,
+                          i > 1 ? L"" : pe_dir, data.cFileName, ext[i] );
                 if (GetFileAttributesW( buffer ) != INVALID_FILE_ATTRIBUTES)
                 {
                     SendDlgItemMessageW( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)data.cFileName );

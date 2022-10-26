@@ -1441,6 +1441,21 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
     return memcpy( buffer - len, str, len );
 }
 
+static inline char *prepend_build_dir_path( char *ptr, const char *ext, const char *arch_dir,
+                                            const char *top_dir )
+{
+    char *name = ptr;
+    unsigned int namelen = strlen(name), extlen = strlen(ext);
+
+    if (namelen > extlen && !strcmp( name + namelen - extlen, ext )) namelen -= extlen;
+    ptr = prepend( ptr, arch_dir, strlen(arch_dir) );
+    ptr = prepend( ptr, name, namelen );
+    ptr = prepend( ptr, top_dir, strlen(top_dir) );
+    ptr = prepend( ptr, build_dir, strlen(build_dir) );
+    return ptr;
+}
+
+
 /***********************************************************************
  *	open_dll_file
  *
@@ -1536,7 +1551,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
                                   SECTION_IMAGE_INFORMATION *image_info,
                                   ULONG_PTR zero_bits, WORD machine, BOOL prefer_native )
 {
-    unsigned int i, pos, namepos, namelen, maxlen = 0;
+    unsigned int i, pos, namepos, maxlen = 0;
     unsigned int len = nt_name->Length / sizeof(WCHAR);
     char *ptr = NULL, *file, *ext = NULL;
     const char *pe_dir = get_pe_dir( machine );
@@ -1569,28 +1584,20 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     if (build_dir)
     {
         /* try as a dll */
-        ptr = file + pos;
-        namelen = len + 1;
         file[pos + len + 1] = 0;
-        if (ext && !strcmp( ext, ".dll" )) namelen -= 4;
-        ptr = prepend( ptr, ptr, namelen );
-        ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
-        ptr = prepend( ptr, build_dir, strlen(build_dir) );
+        ptr = prepend_build_dir_path( file + pos, ".dll", pe_dir, "/dlls" );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, zero_bits, machine, prefer_native );
+        ptr = prepend_build_dir_path( file + pos, ".dll", "", "/dlls" );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
 
         /* now as a program */
-        ptr = file + pos;
-        namelen = len + 1;
         file[pos + len + 1] = 0;
-        if (ext && !strcmp( ext, ".exe" )) namelen -= 4;
-        ptr = prepend( ptr, ptr, namelen );
-        ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
-        ptr = prepend( ptr, build_dir, strlen(build_dir) );
+        ptr = prepend_build_dir_path( file + pos, ".exe", pe_dir, "/programs" );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, zero_bits, machine, prefer_native );
+        ptr = prepend_build_dir_path( file + pos, ".exe", "", "/programs" );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
@@ -1983,7 +1990,7 @@ static void load_ntdll(void)
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
 
     name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/ntdll.dll.so") );
-    if (build_dir) sprintf( name, "%s/ntdll.dll", ntdll_dir );
+    if (build_dir) sprintf( name, "%s%s/ntdll.dll", ntdll_dir, pe_dir );
     else sprintf( name, "%s%s/ntdll.dll", dll_dir, pe_dir );
     status = open_builtin_pe_file( name, &attr, &module, &size, &info, 0, current_machine, FALSE );
     if (status == STATUS_DLL_NOT_FOUND)
@@ -2023,8 +2030,8 @@ static void load_apiset_dll(void)
     init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
 
-    name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/apisetschema.dll") );
-    if (build_dir) sprintf( name, "%s/dlls/apisetschema/apisetschema.dll", build_dir );
+    name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/apisetschema/apisetschema.dll") );
+    if (build_dir) sprintf( name, "%s/dlls/apisetschema%s/apisetschema.dll", build_dir, pe_dir );
     else sprintf( name, "%s%s/apisetschema.dll", dll_dir, pe_dir );
     status = open_unix_file( &handle, name, GENERIC_READ | SYNCHRONIZE, &attr, 0,
                              FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN,
