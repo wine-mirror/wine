@@ -1159,7 +1159,7 @@ struct uia_provider_thread_map_entry
 static int uia_runtime_id_compare(const void *key, const struct rb_entry *entry)
 {
     struct uia_provider_thread_map_entry *prov_entry = RB_ENTRY_VALUE(entry, struct uia_provider_thread_map_entry, entry);
-    return uia_compare_runtime_ids(prov_entry->runtime_id, (SAFEARRAY *)key);
+    return uia_compare_safearrays(prov_entry->runtime_id, (SAFEARRAY *)key, UIAutomationType_IntArray);
 }
 
 void uia_provider_thread_remove_node(HUIANODE node)

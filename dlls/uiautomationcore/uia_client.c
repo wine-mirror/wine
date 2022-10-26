@@ -49,7 +49,7 @@ static HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems)
     return S_OK;
 }
 
-int uia_compare_runtime_ids(SAFEARRAY *sa1, SAFEARRAY *sa2)
+int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type)
 {
     LONG i, idx, lbound[2], elems[2];
     int val[2];
@@ -71,6 +71,12 @@ int uia_compare_runtime_ids(SAFEARRAY *sa1, SAFEARRAY *sa2)
 
     if (elems[0] != elems[1])
         return (elems[0] > elems[1]) - (elems[0] < elems[1]);
+
+    if (prop_type != UIAutomationType_IntArray)
+    {
+        FIXME("Array type %#x value comparsion currently unimplemented.\n", prop_type);
+        return -1;
+    }
 
     for (i = 0; i < elems[0]; i++)
     {
@@ -1932,24 +1938,42 @@ static HRESULT uia_property_condition_check(HUIANODE node, struct UiaPropertyCon
     switch (prop_info->type)
     {
     case UIAutomationType_Bool:
-        hr = UiaGetPropertyValue(node, prop_info->prop_id, &v);
-        if (FAILED(hr) || V_VT(&v) == VT_UNKNOWN)
-        {
-            hr = S_FALSE;
-            break;
-        }
-
-        if ((V_VT(&v) == V_VT(&prop_cond->Value)) && (V_BOOL(&v) == V_BOOL(&prop_cond->Value)))
-            hr = S_OK;
-        else
-            hr = S_FALSE;
-
+    case UIAutomationType_IntArray:
         break;
 
     default:
         FIXME("PropertyCondition comparison unimplemented for type %#x\n", prop_info->type);
         return E_NOTIMPL;
     }
+
+    hr = UiaGetPropertyValue(node, prop_info->prop_id, &v);
+    if (FAILED(hr) || V_VT(&v) == VT_UNKNOWN)
+        return S_FALSE;
+
+    if (V_VT(&v) == V_VT(&prop_cond->Value))
+    {
+        switch (prop_info->type)
+        {
+        case UIAutomationType_Bool:
+            if (V_BOOL(&v) == V_BOOL(&prop_cond->Value))
+                hr = S_OK;
+            else
+                hr = S_FALSE;
+            break;
+
+        case UIAutomationType_IntArray:
+            if (!uia_compare_safearrays(V_ARRAY(&v), V_ARRAY(&prop_cond->Value), prop_info->type))
+                hr = S_OK;
+            else
+                hr = S_FALSE;
+            break;
+
+        default:
+            break;
+        }
+    }
+    else
+        hr = S_FALSE;
 
     VariantClear(&v);
     return hr;
