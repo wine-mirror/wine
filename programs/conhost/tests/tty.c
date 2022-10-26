@@ -1858,6 +1858,16 @@ static void test_pseudoconsole(void)
             if (i != 39) expect_output_sequence("\r\n");
         }
         skip_sequence("\x1b[H\x1b[?25h");
+        /* native sometimes redraws the screen afterwards */
+        if (skip_sequence("\x1b[25l"))
+        {
+            unsigned int line_feed = 0;
+            /* not checking exact output, depends too heavily on previous tests */
+            for (i = 0; i < console_output_count - 2; i++)
+                if (!memcmp(console_output + i, "\r\n", 2)) line_feed++;
+            ok(line_feed == 39, "Wrong number of line feeds %u\n", line_feed);
+            console_output_count = 0;
+        }
     }
     expect_empty_output();
 
