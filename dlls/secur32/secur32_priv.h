@@ -147,6 +147,12 @@ struct get_unique_channel_binding_params
     ULONG *bufsize;
 };
 
+enum control_token
+{
+    control_token_none,
+    control_token_shutdown,
+};
+
 struct handshake_params
 {
     schan_session session;
@@ -156,6 +162,7 @@ struct handshake_params
     ULONG *input_offset;
     int *output_buffer_idx;
     ULONG *output_offset;
+    enum control_token control_token;
 };
 
 struct recv_params

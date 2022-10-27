@@ -1869,13 +1869,13 @@ static void test_connection_shutdown(void)
     context2.dwLower = context2.dwUpper = 0xdeadbeef;
     status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0, &buffers[1], 0,
                                          &context2, &buffers[0], &attrs, NULL );
-    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
     ok( context.dwLower == context2.dwLower, "dwLower mismatch, expected %#Ix, got %#Ix\n",
                                              context.dwLower, context2.dwLower );
     ok( context.dwUpper == context2.dwUpper, "dwUpper mismatch, expected %#Ix, got %#Ix\n",
                                              context.dwUpper, context2.dwUpper );
-    todo_wine ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
-    todo_wine ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
+    ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
+    ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
 
     buf->BufferType = SECBUFFER_TOKEN;
     buf->cbBuffer = 1000;
@@ -1896,9 +1896,9 @@ static void test_connection_shutdown(void)
     buf->cbBuffer = 1000;
     status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0,
                                          NULL, 0, NULL, &buffers[0], &attrs, NULL );
-    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
-    todo_wine ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
-    todo_wine ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
+    ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
+    ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
 
     free_buffers( &buffers[0] );
     free_buffers( &buffers[1] );

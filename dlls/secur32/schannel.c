@@ -65,6 +65,7 @@ struct schan_context
     ULONG req_ctx_attr;
     const CERT_CONTEXT *cert;
     SIZE_T header_size;
+    BOOL shutdown_requested;
 };
 
 static struct schan_handle *schan_handle_table;
@@ -901,9 +902,9 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         unsigned char *ptr;
 
         if (!(ctx = schan_get_object(phContext->dwLower, SCHAN_HANDLE_CTX))) return SEC_E_INVALID_HANDLE;
-        if (!pInput && !is_dtls_context(ctx)) return SEC_E_INCOMPLETE_MESSAGE;
+        if (!pInput && !ctx->shutdown_requested && !is_dtls_context(ctx)) return SEC_E_INCOMPLETE_MESSAGE;
 
-        if (pInput)
+        if (!ctx->shutdown_requested && pInput)
         {
             if (!validate_input_buffers(pInput)) return SEC_E_INVALID_TOKEN;
             if ((idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_TOKEN)) == -1) return SEC_E_INCOMPLETE_MESSAGE;
@@ -976,6 +977,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     params.input_offset = &input_offset;
     params.output_buffer_idx = &output_buffer_idx;
     params.output_offset = &output_offset;
+    params.control_token = ctx->shutdown_requested ? control_token_shutdown : control_token_none;
+    ctx->shutdown_requested = FALSE;
     ret = GNUTLS_CALL( handshake, &params );
 
     if (output_buffer_idx != -1)
@@ -1575,6 +1578,8 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
 
 static SECURITY_STATUS SEC_ENTRY schan_ApplyControlToken(PCtxtHandle context_handle, PSecBufferDesc input)
 {
+    struct schan_context *ctx;
+
     TRACE("%p %p\n", context_handle, input);
 
     dump_buffer_desc(input);
@@ -1587,7 +1592,8 @@ static SECURITY_STATUS SEC_ENTRY schan_ApplyControlToken(PCtxtHandle context_han
     if (input->pBuffers[0].cbBuffer < sizeof(DWORD)) return SEC_E_UNSUPPORTED_FUNCTION;
     if (*(DWORD *)input->pBuffers[0].pvBuffer != SCHANNEL_SHUTDOWN) return SEC_E_UNSUPPORTED_FUNCTION;
 
-    FIXME("stub.\n");
+    ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX);
+    ctx->shutdown_requested = TRUE;
 
     return SEC_E_OK;
 }

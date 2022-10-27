@@ -121,6 +121,7 @@ MAKE_FUNCPTR(gnutls_x509_crt_deinit);
 MAKE_FUNCPTR(gnutls_x509_crt_import);
 MAKE_FUNCPTR(gnutls_x509_crt_init);
 MAKE_FUNCPTR(gnutls_x509_privkey_deinit);
+MAKE_FUNCPTR(gnutls_alert_send);
 #undef MAKE_FUNCPTR
 
 #if GNUTLS_VERSION_MAJOR < 3
@@ -557,6 +558,25 @@ static NTSTATUS schan_handshake( void *args )
     t->in.limit = params->input_size;
     init_schan_buffers(&t->out, params->output);
 
+    if (params->control_token == control_token_shutdown)
+    {
+        err = pgnutls_alert_send(s, GNUTLS_AL_WARNING, GNUTLS_A_CLOSE_NOTIFY);
+        if (err == GNUTLS_E_SUCCESS)
+        {
+            status = SEC_E_OK;
+        }
+        else if (err == GNUTLS_E_AGAIN)
+        {
+            status = SEC_E_INVALID_TOKEN;
+        }
+        else
+        {
+            pgnutls_perror(err);
+            status = SEC_E_INTERNAL_ERROR;
+        }
+        goto done;
+    }
+
     while (1)
     {
         err = pgnutls_handshake(s);
@@ -598,6 +618,7 @@ static NTSTATUS schan_handshake( void *args )
         break;
     }
 
+done:
     *params->input_offset = t->in.offset;
     *params->output_buffer_idx = t->out.current_buffer_idx;
     *params->output_offset = t->out.offset;
@@ -1427,6 +1448,7 @@ static NTSTATUS process_attach( void *args )
     LOAD_FUNCPTR(gnutls_x509_crt_import)
     LOAD_FUNCPTR(gnutls_x509_crt_init)
     LOAD_FUNCPTR(gnutls_x509_privkey_deinit)
+    LOAD_FUNCPTR(gnutls_alert_send)
 #undef LOAD_FUNCPTR
 
     if (!(pgnutls_cipher_get_block_size = dlsym(libgnutls_handle, "gnutls_cipher_get_block_size")))
@@ -1707,6 +1729,7 @@ static NTSTATUS wow64_schan_handshake( void *args )
         PTR32 input_offset;
         PTR32 output_buffer_idx;
         PTR32 output_offset;
+        enum control_token control_token;
     } const *params32 = args;
     struct handshake_params params =
     {
@@ -1717,6 +1740,7 @@ static NTSTATUS wow64_schan_handshake( void *args )
         ULongToPtr(params32->input_offset),
         ULongToPtr(params32->output_buffer_idx),
         ULongToPtr(params32->output_offset),
+        params32->control_token,
     };
     if (params32->input)
     {
