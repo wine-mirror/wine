@@ -695,7 +695,7 @@
 @ cdecl _mbccpy_s(ptr long ptr ptr)
 @ cdecl _mbccpy_s_l(ptr long ptr ptr ptr)
 @ cdecl _mbcjistojms (long)
-# stub _mbcjistojms_l(long ptr)
+@ cdecl _mbcjistojms_l(long ptr)
 @ cdecl _mbcjmstojis(long)
 # stub _mbcjmstojis_l(long ptr)
 @ cdecl _mbclen(ptr)

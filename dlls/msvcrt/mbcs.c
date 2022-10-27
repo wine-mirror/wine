@@ -556,17 +556,24 @@ unsigned int CDECL _mbctombb(unsigned int c)
 }
 
 /*********************************************************************
- *		_mbcjistojms(MSVCRT.@)
+ *		_mbcjistojms_l(MSVCRT.@)
  *
  *		Converts a jis character to sjis.
  *		Based on description from
  *		http://www.slayers.ne.jp/~oouchi/code/jistosjis.html
  */
-unsigned int CDECL _mbcjistojms(unsigned int c)
+unsigned int CDECL _mbcjistojms_l(unsigned int c, _locale_t locale)
 {
+  pthreadmbcinfo mbcinfo;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+
   /* Conversion takes place only when codepage is 932.
      In all other cases, c is returned unchanged */
-  if(get_mbcinfo()->mbcodepage == 932)
+  if(mbcinfo->mbcodepage == 932)
   {
     if(HIBYTE(c) >= 0x21 && HIBYTE(c) <= 0x7e &&
        LOBYTE(c) >= 0x21 && LOBYTE(c) <= 0x7e)
@@ -589,6 +596,14 @@ unsigned int CDECL _mbcjistojms(unsigned int c)
   }
 
   return c;
+}
+
+/*********************************************************************
+ *		_mbcjistojms(MSVCRT.@)
+ */
+unsigned int CDECL _mbcjistojms(unsigned int c)
+{
+    return _mbcjistojms_l(c, NULL);
 }
 
 /*********************************************************************

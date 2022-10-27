@@ -593,7 +593,7 @@
 @ cdecl _mbccpy_s(ptr long ptr ptr)
 @ cdecl _mbccpy_s_l(ptr long ptr ptr ptr)
 @ cdecl _mbcjistojms(long)
-@ stub _mbcjistojms_l
+@ cdecl _mbcjistojms_l(long ptr)
 @ cdecl _mbcjmstojis(long)
 @ stub _mbcjmstojis_l
 @ cdecl _mbclen(ptr)
@@ -1163,7 +1163,7 @@
 @ cdecl _o__mbccpy_s(ptr long ptr ptr) _mbccpy_s
 @ cdecl _o__mbccpy_s_l(ptr long ptr ptr ptr) _mbccpy_s_l
 @ cdecl _o__mbcjistojms(long) _mbcjistojms
-@ stub _o__mbcjistojms_l
+@ cdecl _o__mbcjistojms_l(long ptr) _mbcjistojms_l
 @ cdecl _o__mbcjmstojis(long) _mbcjmstojis
 @ stub _o__mbcjmstojis_l
 @ cdecl _o__mbclen(ptr) _mbclen
