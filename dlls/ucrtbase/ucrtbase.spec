@@ -584,7 +584,7 @@
 @ cdecl _makepath_s(ptr long str str str str)
 @ cdecl _malloc_base(long)
 @ cdecl _mbbtombc(long)
-@ stub _mbbtombc_l
+@ cdecl _mbbtombc_l(long ptr)
 @ cdecl _mbbtype(long long)
 @ cdecl _mbbtype_l(long long ptr)
 @ stub _mbcasemap

@@ -1512,11 +1512,18 @@ unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
 }
 
 /*********************************************************************
- *		_mbbtombc(MSVCRT.@)
+ *		_mbbtombc_l(MSVCRT.@)
  */
-unsigned int CDECL _mbbtombc(unsigned int c)
+unsigned int CDECL _mbbtombc_l(unsigned int c, _locale_t locale)
 {
-  if(get_mbcinfo()->mbcodepage == 932)
+  pthreadmbcinfo mbcinfo;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+
+  if(mbcinfo->mbcodepage == 932)
   {
     if(c >= 0x20 && c <= 0x7e) {
       if((c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a) || (c >= 0x30 && c <= 0x39))
@@ -1532,6 +1539,14 @@ unsigned int CDECL _mbbtombc(unsigned int c)
     }
   }
   return c;  /* not Japanese or no MB char */
+}
+
+/*********************************************************************
+ *		_mbbtombc(MSVCRT.@)
+ */
+unsigned int CDECL _mbbtombc(unsigned int c)
+{
+    return _mbbtombc_l(c, NULL);
 }
 
 /*********************************************************************

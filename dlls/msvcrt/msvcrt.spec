@@ -687,7 +687,7 @@
 @ cdecl _makepath_s(ptr long str str str str)
 # stub _malloc_dbg(long long str long)
 @ cdecl _mbbtombc(long)
-# stub _mbbtombc_l(long ptr)
+@ cdecl _mbbtombc_l(long ptr)
 @ cdecl _mbbtype(long long)
 # extern _mbcasemap
 @ cdecl _mbccpy(ptr ptr)
