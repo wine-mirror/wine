@@ -694,6 +694,34 @@ static void get_variant_for_node(HUIANODE node, VARIANT *v)
 #endif
 }
 
+static HRESULT get_variant_for_elprov_node(IRawElementProviderSimple *elprov, BOOL out_nested,
+        VARIANT *v)
+{
+    HUIANODE node;
+    HRESULT hr;
+
+    VariantInit(v);
+    hr = create_uia_node_from_elprov(elprov, &node, !out_nested);
+    IRawElementProviderSimple_Release(elprov);
+    if (SUCCEEDED(hr))
+    {
+        if (out_nested)
+        {
+            LRESULT lr = uia_lresult_from_node(node);
+
+            if (!lr)
+                return E_FAIL;
+
+            V_VT(v) = VT_I4;
+            V_I4(v) = lr;
+        }
+        else
+            get_variant_for_node(node, v);
+    }
+
+    return S_OK;
+}
+
 static HRESULT uia_provider_get_elem_prop_val(struct uia_provider *prov,
         const struct uia_prop_info *prop_info, VARIANT *ret_val)
 {
@@ -764,7 +792,6 @@ static HRESULT uia_provider_get_elem_prop_val(struct uia_provider *prov,
     case UIAutomationType_Element:
     {
         IRawElementProviderSimple *elprov;
-        HUIANODE node;
 
         if (V_VT(&v) != VT_UNKNOWN)
         {
@@ -778,23 +805,10 @@ static HRESULT uia_provider_get_elem_prop_val(struct uia_provider *prov,
         if (FAILED(hr))
             goto exit;
 
-        hr = create_uia_node_from_elprov(elprov, &node, !prov->return_nested_node);
-        IRawElementProviderSimple_Release(elprov);
-        if (SUCCEEDED(hr))
-        {
-            if (prov->return_nested_node)
-            {
-                LRESULT lr = uia_lresult_from_node(node);
+        hr = get_variant_for_elprov_node(elprov, prov->return_nested_node, ret_val);
+        if (FAILED(hr))
+            return hr;
 
-                if (!lr)
-                    return E_FAIL;
-
-                V_VT(ret_val) = VT_I4;
-                V_I4(ret_val) = lr;
-            }
-            else
-                get_variant_for_node(node, ret_val);
-        }
         break;
     }
 
