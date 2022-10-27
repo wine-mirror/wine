@@ -2964,11 +2964,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
 
     switch (class)
     {
-    case FileStreamInfo:
-    case FileCompressionInfo:
     case FileRemoteProtocolInfo:
     case FileStorageInfo:
-    case FileAlignmentInfo:
     case FileDispositionInfoEx:
     case FileRenameInfoEx:
     case FileCaseSensitiveInfo:
@@ -2976,6 +2973,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
         FIXME( "%p, %u, %p, %lu\n", handle, class, info, size );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
+
+    case FileStreamInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileStreamInformation );
+        break;
+
+    case FileCompressionInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileCompressionInformation );
+        break;
+
+    case FileAlignmentInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileAlignmentInformation );
+        break;
 
     case FileAttributeTagInfo:
         status = NtQueryInformationFile( handle, &io, info, size, FileAttributeTagInformation );
