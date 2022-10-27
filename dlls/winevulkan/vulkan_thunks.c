@@ -2158,7 +2158,18 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->surface = in->surface;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
 {
     if (!in) return;
 
@@ -2168,8 +2179,8 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const V
 }
 #endif /* USE_STRUCT_CONVERSION */
 
-#if !defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
 {
     if (!in) return;
 
@@ -17227,7 +17238,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
 
-    convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(params->pSurfaceInfo, &pSurfaceInfo_host);
+    convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_host(params->pSurfaceInfo, &pSurfaceInfo_host);
     params->result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, &pSurfaceInfo_host, params->pSurfaceCapabilities);
     return STATUS_SUCCESS;
 }
