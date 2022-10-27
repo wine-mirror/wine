@@ -1155,7 +1155,7 @@
 @ cdecl _o__makepath_s(ptr long str str str str) _makepath_s
 @ cdecl _o__malloc_base(long) _malloc_base
 @ cdecl _o__mbbtombc(long) _mbbtombc
-@ stub _o__mbbtombc_l
+@ cdecl _o__mbbtombc_l(long ptr) _mbbtombc_l
 @ cdecl _o__mbbtype(long long) _mbbtype
 @ cdecl _o__mbbtype_l(long long ptr) _mbbtype_l
 @ cdecl _o__mbccpy(ptr ptr) _mbccpy
@@ -1173,11 +1173,11 @@
 @ cdecl _o__mbctokata(long) _mbctokata
 @ stub _o__mbctokata_l
 @ cdecl _o__mbctolower(long) _mbctolower
-@ stub _o__mbctolower_l
+@ cdecl _o__mbctolower_l(long ptr) _mbctolower_l
 @ cdecl _o__mbctombb(long) _mbctombb
 @ stub _o__mbctombb_l
 @ cdecl _o__mbctoupper(long) _mbctoupper
-@ stub _o__mbctoupper_l
+@ cdecl _o__mbctoupper_l(long ptr) _mbctoupper_l
 @ stub _o__mblen_l
 @ cdecl _o__mbsbtype(str long) _mbsbtype
 @ stub _o__mbsbtype_l
@@ -1206,7 +1206,7 @@
 @ cdecl _o__mbslwr(str) _mbslwr
 @ stub _o__mbslwr_l
 @ cdecl _o__mbslwr_s(str long) _mbslwr_s
-@ stub _o__mbslwr_s_l
+@ cdecl _o__mbslwr_s_l(str long ptr) _mbslwr_s_l
 @ cdecl _o__mbsnbcat(str str long) _mbsnbcat
 @ stub _o__mbsnbcat_l
 @ cdecl _o__mbsnbcat_s(str long ptr long) _mbsnbcat_s
@@ -1286,7 +1286,7 @@
 @ cdecl _o__mbsupr(str) _mbsupr
 @ stub _o__mbsupr_l
 @ cdecl _o__mbsupr_s(str long) _mbsupr_s
-@ stub _o__mbsupr_s_l
+@ cdecl _o__mbsupr_s_l(str long ptr) _mbsupr_s_l
 @ cdecl _o__mbtowc_l(ptr str long ptr) _mbtowc_l
 @ cdecl _o__memicmp(str str long) _memicmp
 @ cdecl _o__memicmp_l(str str long ptr) _memicmp_l
