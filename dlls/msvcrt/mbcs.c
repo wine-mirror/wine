@@ -528,13 +528,19 @@ unsigned int CDECL _mbctoupper(unsigned int c)
 }
 
 /*********************************************************************
- *		_mbctombb (MSVCRT.@)
+ *		_mbctombb_l (MSVCRT.@)
  */
-unsigned int CDECL _mbctombb(unsigned int c)
+unsigned int CDECL _mbctombb_l(unsigned int c, _locale_t locale)
 {
+    pthreadmbcinfo mbcinfo;
     unsigned int value;
 
-    if(get_mbcinfo()->mbcodepage == 932)
+    if(locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if(mbcinfo->mbcodepage == 932)
     {
         if(c >= 0x829f && c <= 0x82f1)    /* Hiragana */
             return mbctombb_932_kana[c - 0x829f];
@@ -553,6 +559,14 @@ unsigned int CDECL _mbctombb(unsigned int c)
         /* all other cases return c */
     }
     return c;
+}
+
+/*********************************************************************
+ *		_mbctombb (MSVCRT.@)
+ */
+unsigned int CDECL _mbctombb(unsigned int c)
+{
+    return _mbctombb_l(c, NULL);
 }
 
 /*********************************************************************

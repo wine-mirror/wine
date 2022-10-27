@@ -1090,7 +1090,7 @@
 @ cdecl _mbctolower(long)
 @ cdecl _mbctolower_l(long ptr)
 @ cdecl _mbctombb(long)
-@ stub _mbctombb_l
+@ cdecl _mbctombb_l(long ptr)
 @ cdecl _mbctoupper(long)
 @ cdecl _mbctoupper_l(long ptr)
 @ extern _mbctype MSVCRT_mbctype
