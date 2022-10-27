@@ -2967,12 +2967,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
     case FileStreamInfo:
     case FileCompressionInfo:
     case FileRemoteProtocolInfo:
-    case FileFullDirectoryInfo:
-    case FileFullDirectoryRestartInfo:
     case FileStorageInfo:
     case FileAlignmentInfo:
-    case FileIdExtdDirectoryInfo:
-    case FileIdExtdDirectoryRestartInfo:
         FIXME( "%p, %u, %p, %lu\n", handle, class, info, size );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
@@ -3002,6 +2998,20 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
         status = NtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, info, size,
                                        FileIdBothDirectoryInformation, FALSE, NULL,
                                        (class == FileIdBothDirectoryRestartInfo) );
+        break;
+
+    case FileFullDirectoryInfo:
+    case FileFullDirectoryRestartInfo:
+        status = NtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, info, size,
+                                       FileFullDirectoryInformation, FALSE, NULL,
+                                       (class == FileFullDirectoryRestartInfo) );
+        break;
+
+    case FileIdExtdDirectoryInfo:
+    case FileIdExtdDirectoryRestartInfo:
+        status = NtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, info, size,
+                                       FileIdExtdDirectoryInformation, FALSE, NULL,
+                                       (class == FileIdExtdDirectoryRestartInfo) );
         break;
 
     case FileRenameInfo:
