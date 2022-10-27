@@ -43,6 +43,7 @@ _ACRTIMP int            __cdecl _ismbcl0(unsigned int);
 _ACRTIMP int            __cdecl _ismbcl1(unsigned int);
 _ACRTIMP int            __cdecl _ismbcl2(unsigned int);
 _ACRTIMP int            __cdecl _ismbclegal(unsigned int);
+_ACRTIMP int            __cdecl _ismbclegal_l(unsigned int, _locale_t);
 _ACRTIMP int            __cdecl _ismbclower(unsigned int);
 _ACRTIMP int            __cdecl _ismbcprint(unsigned int);
 _ACRTIMP int            __cdecl _ismbcpunct(unsigned int);

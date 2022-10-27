@@ -595,7 +595,7 @@
 @ cdecl _mbcjistojms(long)
 @ cdecl _mbcjistojms_l(long ptr)
 @ cdecl _mbcjmstojis(long)
-@ stub _mbcjmstojis_l
+@ cdecl _mbcjmstojis_l(long ptr)
 @ cdecl _mbclen(ptr)
 @ cdecl _mbclen_l(ptr ptr)
 @ cdecl _mbctohira(long)
@@ -1165,7 +1165,7 @@
 @ cdecl _o__mbcjistojms(long) _mbcjistojms
 @ cdecl _o__mbcjistojms_l(long ptr) _mbcjistojms_l
 @ cdecl _o__mbcjmstojis(long) _mbcjmstojis
-@ stub _o__mbcjmstojis_l
+@ cdecl _o__mbcjmstojis_l(long ptr) _mbcjmstojis_l
 @ cdecl _o__mbclen(ptr) _mbclen
 @ cdecl _o__mbclen_l(ptr ptr) _mbclen_l
 @ cdecl _o__mbctohira(long) _mbctohira

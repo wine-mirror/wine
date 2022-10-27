@@ -607,17 +607,24 @@ unsigned int CDECL _mbcjistojms(unsigned int c)
 }
 
 /*********************************************************************
- *		_mbcjmstojis(MSVCRT.@)
+ *		_mbcjmstojis_l(MSVCRT.@)
  *
  *		Converts a sjis character to jis.
  */
-unsigned int CDECL _mbcjmstojis(unsigned int c)
+unsigned int CDECL _mbcjmstojis_l(unsigned int c, _locale_t locale)
 {
+  pthreadmbcinfo mbcinfo;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+
   /* Conversion takes place only when codepage is 932.
      In all other cases, c is returned unchanged */
-  if(get_mbcinfo()->mbcodepage == 932)
+  if(mbcinfo->mbcodepage == 932)
   {
-    if(_ismbclegal(c) && HIBYTE(c) < 0xf0)
+    if(_ismbclegal_l(c, locale) && HIBYTE(c) < 0xf0)
     {
       if(HIBYTE(c) >= 0xe0)
         c -= 0x4000;
@@ -637,6 +644,14 @@ unsigned int CDECL _mbcjmstojis(unsigned int c)
   }
 
   return c;
+}
+
+/*********************************************************************
+ *		_mbcjmstojis(MSVCRT.@)
+ */
+unsigned int CDECL _mbcjmstojis(unsigned int c)
+{
+    return _mbcjmstojis_l(c, NULL);
 }
 
 /*********************************************************************

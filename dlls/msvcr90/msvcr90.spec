@@ -730,7 +730,7 @@
 @ cdecl _mbcjistojms(long)
 @ cdecl _mbcjistojms_l(long ptr)
 @ cdecl _mbcjmstojis(long)
-@ stub _mbcjmstojis_l
+@ cdecl _mbcjmstojis_l(long ptr)
 @ cdecl _mbclen(ptr)
 @ cdecl _mbclen_l(ptr ptr)
 @ cdecl _mbctohira(long)
