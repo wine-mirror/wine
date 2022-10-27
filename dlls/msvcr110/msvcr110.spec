@@ -1443,7 +1443,7 @@
 @ cdecl _mbctohira(long)
 @ cdecl _mbctohira_l(long ptr)
 @ cdecl _mbctokata(long)
-@ stub _mbctokata_l
+@ cdecl _mbctokata_l(long ptr)
 @ cdecl _mbctolower(long)
 @ cdecl _mbctolower_l(long ptr)
 @ cdecl _mbctombb(long)

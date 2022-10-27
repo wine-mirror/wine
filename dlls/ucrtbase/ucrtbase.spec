@@ -601,7 +601,7 @@
 @ cdecl _mbctohira(long)
 @ cdecl _mbctohira_l(long ptr)
 @ cdecl _mbctokata(long)
-@ stub _mbctokata_l
+@ cdecl _mbctokata_l(long ptr)
 @ cdecl _mbctolower(long)
 @ cdecl _mbctolower_l(long ptr)
 @ cdecl _mbctombb(long)
@@ -1171,7 +1171,7 @@
 @ cdecl _o__mbctohira(long) _mbctohira
 @ cdecl _o__mbctohira_l(long ptr) _mbctohira_l
 @ cdecl _o__mbctokata(long) _mbctokata
-@ stub _o__mbctokata_l
+@ cdecl _o__mbctokata_l(long ptr) _mbctokata_l
 @ cdecl _o__mbctolower(long) _mbctolower
 @ cdecl _o__mbctolower_l(long ptr) _mbctolower_l
 @ cdecl _o__mbctombb(long) _mbctombb
