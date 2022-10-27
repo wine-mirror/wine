@@ -90,7 +90,7 @@ static const char *get_self_exe( char *argv0 )
     static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
     size_t path_size = PATH_MAX;
     char *path = malloc( path_size );
-    if (path && !sysctl( pathname, ARRAY_SIZE( pathname ), path, &path_size, NULL, 0 ))
+    if (path && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), path, &path_size, NULL, 0 ))
         return path;
     free( path );
 #endif
