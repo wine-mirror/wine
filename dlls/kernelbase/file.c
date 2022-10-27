@@ -2969,6 +2969,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
     case FileRemoteProtocolInfo:
     case FileStorageInfo:
     case FileAlignmentInfo:
+    case FileDispositionInfoEx:
+    case FileRenameInfoEx:
+    case FileCaseSensitiveInfo:
+    case FileNormalizedNameInfo:
         FIXME( "%p, %u, %p, %lu\n", handle, class, info, size );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
