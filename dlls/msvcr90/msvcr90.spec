@@ -633,7 +633,7 @@
 @ cdecl _ismbcgraph(long)
 @ cdecl _ismbcgraph_l(long ptr)
 @ cdecl _ismbchira(long)
-@ stub _ismbchira_l
+@ cdecl _ismbchira_l(long ptr)
 @ cdecl _ismbckata(long)
 @ stub _ismbckata_l
 @ cdecl _ismbcl0(long)

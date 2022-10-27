@@ -1730,16 +1730,31 @@ int CDECL _ismbcpunct(unsigned int ch)
 }
 
 /*********************************************************************
- *		_ismbchira(MSVCRT.@)
+ *		_ismbchira_l(MSVCRT.@)
  */
-int CDECL _ismbchira(unsigned int c)
+int CDECL _ismbchira_l(unsigned int c, _locale_t locale)
 {
-  if(get_mbcinfo()->mbcodepage == 932)
+  pthreadmbcinfo mbcinfo;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+
+  if(mbcinfo->mbcodepage == 932)
   {
     /* Japanese/Hiragana, CP 932 */
     return (c >= 0x829f && c <= 0x82f1);
   }
   return 0;
+}
+
+/*********************************************************************
+ *		_ismbchira(MSVCRT.@)
+ */
+int CDECL _ismbchira(unsigned int c)
+{
+    return _ismbchira_l(c, NULL);
 }
 
 /*********************************************************************
