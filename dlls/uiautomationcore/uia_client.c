@@ -355,6 +355,22 @@ static HRESULT get_prov_opts_from_node_provider(IWineUiaNode *node, int idx, int
     return hr;
 }
 
+static HRESULT get_has_parent_from_node_provider(IWineUiaNode *node, int idx, BOOL *out_val)
+{
+    IWineUiaProvider *prov;
+    HRESULT hr;
+
+    *out_val = FALSE;
+    hr = IWineUiaNode_get_provider(node, idx, &prov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWineUiaProvider_has_parent(prov, out_val);
+    IWineUiaProvider_Release(prov);
+
+    return hr;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -561,7 +577,33 @@ static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
 static BOOL is_nested_node_provider(IWineUiaProvider *iface);
 static HRESULT prepare_uia_node(struct uia_node *node)
 {
-    int i;
+    int i, prov_idx;
+    HRESULT hr;
+
+    /*
+     * HUIANODEs can only have one 'parent link' provider, which handles
+     * parent and sibling navigation for the entire HUIANODE. Each provider is
+     * queried for a parent in descending order, starting with the override
+     * provider. The first provider to have a valid parent is made parent
+     * link. If no providers return a valid parent, the provider at index 0
+     * is made parent link by default.
+     */
+    for (i = prov_idx = 0; i < PROV_TYPE_COUNT; i++)
+    {
+        BOOL has_parent;
+
+        if (!node->prov[i])
+            continue;
+
+        hr = get_has_parent_from_node_provider(&node->IWineUiaNode_iface, prov_idx, &has_parent);
+        if (SUCCEEDED(hr) && has_parent)
+        {
+            node->parent_link_idx = prov_idx;
+            break;
+        }
+
+        prov_idx++;
+    }
 
     for (i = 0; i < PROV_TYPE_COUNT; i++)
     {
@@ -889,12 +931,45 @@ static HRESULT WINAPI uia_provider_get_prov_opts(IWineUiaProvider *iface, int *o
     return S_OK;
 }
 
+static HRESULT WINAPI uia_provider_has_parent(IWineUiaProvider *iface, BOOL *out_val)
+{
+    struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
+
+    TRACE("%p, %p\n", iface, out_val);
+
+    if (!prov->parent_check_ran)
+    {
+        IRawElementProviderFragment *elfrag, *elfrag2;
+        HRESULT hr;
+
+        prov->has_parent = FALSE;
+        hr = IRawElementProviderSimple_QueryInterface(prov->elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+        if (SUCCEEDED(hr) && elfrag)
+        {
+            hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
+            IRawElementProviderFragment_Release(elfrag);
+            if (SUCCEEDED(hr) && elfrag2)
+            {
+                prov->has_parent = TRUE;
+                IRawElementProviderFragment_Release(elfrag2);
+            }
+        }
+
+        prov->parent_check_ran = TRUE;
+    }
+
+    *out_val = prov->has_parent;
+
+    return S_OK;
+}
+
 static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_QueryInterface,
     uia_provider_AddRef,
     uia_provider_Release,
     uia_provider_get_prop_val,
     uia_provider_get_prov_opts,
+    uia_provider_has_parent,
 };
 
 static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov,
@@ -1260,12 +1335,22 @@ static HRESULT WINAPI uia_nested_node_provider_get_prov_opts(IWineUiaProvider *i
     return get_prov_opts_from_node_provider(prov->nested_node, 0, out_opts);
 }
 
+static HRESULT WINAPI uia_nested_node_provider_has_parent(IWineUiaProvider *iface, BOOL *out_val)
+{
+    struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
+
+    TRACE("%p, %p\n", iface, out_val);
+
+    return get_has_parent_from_node_provider(prov->nested_node, 0, out_val);
+}
+
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_QueryInterface,
     uia_nested_node_provider_AddRef,
     uia_nested_node_provider_Release,
     uia_nested_node_provider_get_prop_val,
     uia_nested_node_provider_get_prov_opts,
+    uia_nested_node_provider_has_parent,
 };
 
 static BOOL is_nested_node_provider(IWineUiaProvider *iface)
@@ -1340,6 +1425,7 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
         IWineUiaProvider_AddRef(provider_iface);
         prov_data = impl_from_IWineUiaProvider(provider_iface);
         prov_data->return_nested_node = FALSE;
+        prov_data->parent_check_ran = FALSE;
 
         IWineUiaNode_Release(nested_node);
         uia_stop_client_thread();

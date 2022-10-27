@@ -4048,7 +4048,7 @@ static const struct prov_method_sequence node_from_prov2[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Only called on Windows versions past Win10v1507. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
@@ -4061,7 +4061,7 @@ static const struct prov_method_sequence node_from_prov3[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Only called on Windows versions past Win10v1507. */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
@@ -4073,7 +4073,7 @@ static const struct prov_method_sequence node_from_prov4[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Only called on Windows versions past Win10v1507. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
@@ -4089,12 +4089,12 @@ static const struct prov_method_sequence node_from_prov5[] = {
     /* Win10v1507 and below call this. */
     { &Provider2, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider2, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* These three are only done on Win10v1507 and below. */
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider2, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* This is only done on Win10v1507. */
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     /* Only called on Windows versions past Win10v1507. */
@@ -4114,13 +4114,13 @@ static const struct prov_method_sequence node_from_prov6[] = {
     /* Win10v1507 and below call this. */
     { &Provider2, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider2, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider2, PROV_GET_PROVIDER_OPTIONS },
     { &Provider2, PROV_GET_PROVIDER_OPTIONS },
     /* Only called on Windows versions past Win10v1507. */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider2, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* This is only done on Win10v1507. */
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     /* Only called on Windows versions past Win10v1507. */
@@ -4139,13 +4139,13 @@ static const struct prov_method_sequence node_from_prov7[] = {
     /* Win10v1507 and below call this. */
     { &Provider2, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider2, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider2, PROV_GET_PROVIDER_OPTIONS },
     { &Provider2, PROV_GET_PROVIDER_OPTIONS },
     /* Only called on Windows versions past Win10v1507. */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider2, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* This is only done on Win10v1507. */
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     /* Only called on Windows versions past Win10v1507. */
@@ -4161,7 +4161,7 @@ static const struct prov_method_sequence node_from_prov8[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Only called on Windows versions past Win10v1507. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { 0 }
@@ -4537,7 +4537,7 @@ static const struct prov_method_sequence get_elem_prop_seq[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Only called on Windows versions past Win10v1507. */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL },
@@ -4552,14 +4552,14 @@ static const struct prov_method_sequence get_elem_arr_prop_seq[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child2, PROV_GET_PROVIDER_OPTIONS },
     /* Win10v1507 and below call this. */
     { &Provider_child2, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child2, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child2, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_child2, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child, PROV_GET_PROPERTY_VALUE },
     { &Provider_child2, PROV_GET_PROPERTY_VALUE },
@@ -5196,10 +5196,10 @@ static const struct prov_method_sequence node_from_hwnd2[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Windows 10+ calls this. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
@@ -5211,7 +5211,7 @@ static const struct prov_method_sequence node_from_hwnd3[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
@@ -5225,7 +5225,7 @@ static const struct prov_method_sequence node_from_hwnd4[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Only called on Windows versions past Win10v1507. */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
@@ -5240,7 +5240,7 @@ static const struct prov_method_sequence node_from_hwnd5[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     /* Only done in Windows 8+. */
     { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
@@ -5258,7 +5258,7 @@ static const struct prov_method_sequence node_from_hwnd6[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     /* Next 4 are only done in Windows 8+. */
     { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
@@ -5283,13 +5283,13 @@ static const struct prov_method_sequence node_from_hwnd7[] = {
     /* Win10v1507 and below call this. */
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
@@ -5301,7 +5301,7 @@ static const struct prov_method_sequence node_from_hwnd8[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
@@ -5315,7 +5315,7 @@ static const struct prov_method_sequence node_from_hwnd9[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     /* Only done in Windows 8+. */
     { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
@@ -5333,7 +5333,7 @@ static const struct prov_method_sequence disconnect_prov1[] = {
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_child, FRAG_GET_RUNTIME_ID },
     { &Provider_child, FRAG_GET_FRAGMENT_ROOT },
@@ -5348,7 +5348,7 @@ static const struct prov_method_sequence disconnect_prov2[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, FRAG_GET_RUNTIME_ID },
     { &Provider, FRAG_GET_FRAGMENT_ROOT },
@@ -5361,7 +5361,7 @@ static const struct prov_method_sequence disconnect_prov3[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
     { &Provider, PROV_GET_PROPERTY_VALUE }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, FRAG_GET_RUNTIME_ID },
     { 0 }
@@ -5372,7 +5372,7 @@ static const struct prov_method_sequence disconnect_prov4[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { 0 }
 };
@@ -6071,7 +6071,7 @@ static void test_UiaNodeFromHandle(const char *name)
 }
 
 static const struct prov_method_sequence reg_prov_cb1[] = {
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10+. */
     { &Provider_nc, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
@@ -6081,7 +6081,7 @@ static const struct prov_method_sequence reg_prov_cb2[] = {
     /* These two are only done on Win10v1809+. */
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_hwnd, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10+. */
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
@@ -6092,9 +6092,9 @@ static const struct prov_method_sequence reg_prov_cb3[] = {
     /* These two are only done on Win10v1809+. */
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider_proxy, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_proxy, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* These three only done on Win10+. */
     { &Provider_proxy, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -6111,9 +6111,9 @@ static const struct prov_method_sequence reg_prov_cb4[] = {
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_override, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_proxy, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_proxy, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* These four only done on Win10+. */
     { &Provider_override, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_proxy, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -6176,9 +6176,9 @@ static const struct prov_method_sequence reg_prov_cb10[] = {
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider_override, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_proxy, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_proxy, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* These four only done on Win10+. */
     { &Provider_override, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_proxy, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -6192,16 +6192,16 @@ static const struct prov_method_sequence reg_prov_cb11[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider_proxy2, HWND_OVERRIDE_GET_OVERRIDE_PROVIDER, METHOD_TODO },
     /* These two are only done on Win10v1809+. */
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* These three only done on Win10+. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -6217,7 +6217,7 @@ static const struct prov_method_sequence reg_prov_cb12[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
@@ -6231,9 +6231,9 @@ static const struct prov_method_sequence reg_prov_cb12[] = {
     /* These two are only done on Win10v1809+. */
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* These three only done on Win10+. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -6249,7 +6249,7 @@ static const struct prov_method_sequence reg_prov_cb13[] = {
     /* Win10v1507 and below call this. */
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     { &Provider2, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
@@ -6271,9 +6271,9 @@ static const struct prov_method_sequence reg_prov_cb13[] = {
     { &Provider_hwnd, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
     /* Only done on Win10v1809+. */
     { &Provider_override, FRAG_NAVIGATE, METHOD_OPTIONAL }, /* NavigateDirection_Parent */
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_override, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, /* Only done on Win10v1809+ */
     /* These three only done on Win10+. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -7417,7 +7417,7 @@ static void test_UiaGetUpdatedCache(void)
     /* Win10v1507 and below call this. */ \
     { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
     { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER }, \
-    { prov , FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */ \
+    { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
 static const struct prov_method_sequence nav_seq1[] = {
@@ -7425,9 +7425,9 @@ static const struct prov_method_sequence nav_seq1[] = {
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     /* Only done on Win10v1809+ */
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_hwnd, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_hwnd, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Windows 10+ calls these. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
@@ -7641,8 +7641,8 @@ static const struct prov_method_sequence nav_seq13[] = {
     { &Provider, PROV_GET_PROVIDER_OPTIONS },
     /* Only done on Win10v1809+ */
     { &Provider_hwnd, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
-    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
-    { &Provider_nc, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
+    { &Provider_nc, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     /* Windows 10+ calls these. */
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },

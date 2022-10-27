@@ -45,6 +45,7 @@ library UIA_wine_private
     {
         HRESULT get_prop_val([in]const struct uia_prop_info *prop_info, [out, retval]VARIANT *ret_val);
         HRESULT get_prov_opts([out, retval]int *out_opts);
+        HRESULT has_parent([out, retval]BOOL *out_val);
     }
 
     [
