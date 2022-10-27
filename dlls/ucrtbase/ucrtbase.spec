@@ -599,7 +599,7 @@
 @ cdecl _mbclen(ptr)
 @ cdecl _mbclen_l(ptr ptr)
 @ cdecl _mbctohira(long)
-@ stub _mbctohira_l
+@ cdecl _mbctohira_l(long ptr)
 @ cdecl _mbctokata(long)
 @ stub _mbctokata_l
 @ cdecl _mbctolower(long)
@@ -1169,7 +1169,7 @@
 @ cdecl _o__mbclen(ptr) _mbclen
 @ cdecl _o__mbclen_l(ptr ptr) _mbclen_l
 @ cdecl _o__mbctohira(long) _mbctohira
-@ stub _o__mbctohira_l
+@ cdecl _o__mbctohira_l(long ptr) _mbctohira_l
 @ cdecl _o__mbctokata(long) _mbctokata
 @ stub _o__mbctokata_l
 @ cdecl _o__mbctolower(long) _mbctolower

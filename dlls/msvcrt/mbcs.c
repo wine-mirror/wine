@@ -2950,15 +2950,23 @@ int CDECL mbsrtowcs_s(size_t *ret, wchar_t *wcstr, size_t len,
 }
 
 /*********************************************************************
- *		_mbctohira (MSVCRT.@)
+ *		_mbctohira_l (MSVCRT.@)
  *
  *              Converts a sjis katakana character to hiragana.
  */
-unsigned int CDECL _mbctohira(unsigned int c)
+unsigned int CDECL _mbctohira_l(unsigned int c, _locale_t locale)
 {
-    if(_ismbckata(c) && c <= 0x8393)
+    if(_ismbckata_l(c, locale) && c <= 0x8393)
         return (c - 0x8340 - (c >= 0x837f ? 1 : 0)) + 0x829f;
     return c;
+}
+
+/*********************************************************************
+ *		_mbctohira (MSVCRT.@)
+ */
+unsigned int CDECL _mbctohira(unsigned int c)
+{
+    return _mbctohira_l(c, NULL);
 }
 
 /*********************************************************************
