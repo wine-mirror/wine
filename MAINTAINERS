@@ -219,7 +219,11 @@ F:	dlls/winegstreamer/wmv_decoder.c
 
 Microsoft C Runtime
 M:	Piotr Caban <piotr@codeweavers.com>
+F:	dlls/concrt140/
 F:	dlls/msvc*/
+F:	dlls/ucrtbase/
+F:	dlls/vcruntime140/
+F:	dlls/vcruntime140_1/
 
 MSI installers
 M:	Hans Leidekker <hans@codeweavers.com>
