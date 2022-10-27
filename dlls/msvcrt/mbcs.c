@@ -1758,11 +1758,18 @@ int CDECL _ismbchira(unsigned int c)
 }
 
 /*********************************************************************
- *		_ismbckata(MSVCRT.@)
+ *		_ismbckata_l(MSVCRT.@)
  */
-int CDECL _ismbckata(unsigned int c)
+int CDECL _ismbckata_l(unsigned int c, _locale_t locale)
 {
-  if(get_mbcinfo()->mbcodepage == 932)
+  pthreadmbcinfo mbcinfo;
+
+  if(locale)
+      mbcinfo = locale->mbcinfo;
+  else
+      mbcinfo = get_mbcinfo();
+
+  if(mbcinfo->mbcodepage == 932)
   {
     /* Japanese/Katakana, CP 932 */
     return (c >= 0x8340 && c <= 0x8396 && c != 0x837f);
@@ -1770,6 +1777,13 @@ int CDECL _ismbckata(unsigned int c)
   return 0;
 }
 
+/*********************************************************************
+ *		_ismbckata(MSVCRT.@)
+ */
+int CDECL _ismbckata(unsigned int c)
+{
+    return _ismbckata_l(c, NULL);
+}
 
 /*********************************************************************
  *		_ismbblead_l(MSVCRT.@)

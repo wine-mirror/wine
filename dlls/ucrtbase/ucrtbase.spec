@@ -477,7 +477,7 @@
 @ cdecl _ismbchira(long)
 @ cdecl _ismbchira_l(long ptr)
 @ cdecl _ismbckata(long)
-@ stub _ismbckata_l
+@ cdecl _ismbckata_l(long ptr)
 @ cdecl _ismbcl0(long)
 @ cdecl _ismbcl0_l(long ptr)
 @ cdecl _ismbcl1(long)
@@ -1076,7 +1076,7 @@
 @ cdecl _o__ismbchira(long) _ismbchira
 @ cdecl _o__ismbchira_l(long ptr) _ismbchira_l
 @ cdecl _o__ismbckata(long) _ismbckata
-@ stub _o__ismbckata_l
+@ cdecl _o__ismbckata_l(long ptr) _ismbckata_l
 @ cdecl _o__ismbcl0(long) _ismbcl0
 @ cdecl _o__ismbcl0_l(long ptr) _ismbcl0_l
 @ cdecl _o__ismbcl1(long) _ismbcl1
