@@ -17,18 +17,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-struct sockaddr_hdr
-{
-    unsigned short sa_family;
-};
-
 struct pcap_address
 {
     struct pcap_address *next;
-    struct sockaddr_hdr *addr;
-    struct sockaddr_hdr *netmask;
-    struct sockaddr_hdr *broadaddr;
-    struct sockaddr_hdr *dstaddr;
+    struct sockaddr *addr;
+    struct sockaddr *netmask;
+    struct sockaddr *broadaddr;
+    struct sockaddr *dstaddr;
 };
 
 struct pcap_interface
@@ -56,7 +51,6 @@ struct pcap
     void *handle;
     struct pcap_pkthdr_win32 hdr;
 };
-
 
 struct compile_params
 {
