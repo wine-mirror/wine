@@ -462,7 +462,7 @@
 @ cdecl _fpreset()
 @ varargs _fprintf_l(ptr str ptr)
 @ varargs _fprintf_p(ptr str)
-# stub _fprintf_p_l(ptr str ptr)
+@ varargs _fprintf_p_l(ptr str ptr)
 # stub _fprintf_s_l(ptr str ptr)
 @ cdecl _fputchar(long)
 @ cdecl _fputwchar(long)

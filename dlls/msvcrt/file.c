@@ -5609,6 +5609,19 @@ int CDECL _fprintf_p(FILE* file, const char *format, ...)
 }
 
 /*********************************************************************
+ *    _fprintf_p_l (MSVCRT.@)
+ */
+int CDECL _fprintf_p_l(FILE* file, const char *format, _locale_t locale, ...)
+{
+    va_list valist;
+    int res;
+    va_start(valist, locale);
+    res = _vfprintf_p_l(file, format, locale, valist);
+    va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		fwprintf (MSVCRT.@)
  */
 int WINAPIV fwprintf(FILE* file, const wchar_t *format, ...)
