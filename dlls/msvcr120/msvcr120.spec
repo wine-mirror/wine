@@ -1213,7 +1213,7 @@
 @ varargs _fwprintf_l(ptr wstr ptr)
 @ varargs _fwprintf_p(ptr wstr)
 @ varargs _fwprintf_p_l(ptr wstr ptr)
-@ stub _fwprintf_s_l
+@ varargs _fwprintf_s_l(ptr wstr ptr)
 @ cdecl _fwrite_nolock(ptr long long ptr)
 @ varargs _fwscanf_l(ptr wstr ptr)
 @ varargs _fwscanf_s_l(ptr wstr ptr)
