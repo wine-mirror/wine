@@ -590,7 +590,7 @@ struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface) DECLSP
 
 struct d2d_device
 {
-    ID2D1Device ID2D1Device_iface;
+    ID2D1Device1 ID2D1Device1_iface;
     LONG refcount;
     ID2D1Factory1 *factory;
     IDXGIDevice *dxgi_device;

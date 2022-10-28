@@ -529,12 +529,9 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory3 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDevice(ID2D1Factory3 *iface,
-        IDXGIDevice *dxgi_device, ID2D1Device **device)
-{
+static HRESULT d2d_factory_create_device(ID2D1Factory3 *iface, IDXGIDevice *dxgi_device,
+        ID2D1Device1 **device) {
     struct d2d_device *object;
-
-    TRACE("iface %p, dxgi_device %p, device %p.\n", iface, dxgi_device, device);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -542,9 +539,17 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDevice(ID2D1Factory3 *iface,
     d2d_device_init(object, (ID2D1Factory1 *)iface, dxgi_device);
 
     TRACE("Create device %p.\n", object);
-    *device = &object->ID2D1Device_iface;
+    *device = &object->ID2D1Device1_iface;
 
     return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDevice(ID2D1Factory3 *iface,
+        IDXGIDevice *dxgi_device, ID2D1Device **device)
+{
+    TRACE("iface %p, dxgi_device %p, device %p.\n", iface, dxgi_device, device);
+
+    return d2d_factory_create_device(iface, dxgi_device, (ID2D1Device1 **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle1(ID2D1Factory3 *iface,
@@ -1080,9 +1085,9 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_GetEffectProperties(ID2D1Factory3 *
 static HRESULT STDMETHODCALLTYPE d2d_factory_ID2D1Factory2_CreateDevice(ID2D1Factory3 *iface, IDXGIDevice *dxgi_device,
         ID2D1Device1 **device)
 {
-    FIXME("iface %p, dxgi_device %p, device %p stub!\n", iface, dxgi_device, device);
+    TRACE("iface %p, dxgi_device %p, device %p.\n", iface, dxgi_device, device);
 
-    return E_NOTIMPL;
+    return d2d_factory_create_device(iface, dxgi_device, device);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_ID2D1Factory3_CreateDevice(ID2D1Factory3 *iface, IDXGIDevice *dxgi_device,

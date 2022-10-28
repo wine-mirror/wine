@@ -35,12 +35,12 @@ struct d2d_draw_text_layout_ctx
     D2D1_DRAW_TEXT_OPTIONS options;
 };
 
-static inline struct d2d_device *impl_from_ID2D1Device(ID2D1Device *iface)
+static inline struct d2d_device *impl_from_ID2D1Device(ID2D1Device1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device_iface);
+    return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device1_iface);
 }
 
-static struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device *iface);
+static struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
 
 static ID2D1Brush *d2d_draw_get_text_brush(struct d2d_draw_text_layout_ctx *context, IUnknown *effect)
 {
@@ -2336,7 +2336,7 @@ static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext1 *
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = context->device;
+    *device = (ID2D1Device *)context->device;
     ID2D1Device_AddRef(*device);
 }
 
@@ -4238,7 +4238,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     render_target->outer_unknown = outer_unknown ? outer_unknown : &render_target->IUnknown_iface;
     render_target->ops = ops;
 
-    device_impl = unsafe_impl_from_ID2D1Device(device);
+    device_impl = unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device);
     if (FAILED(hr = IDXGIDevice_QueryInterface(device_impl->dxgi_device,
             &IID_ID3D11Device1, (void **)&render_target->d3d_device)))
     {
@@ -4477,15 +4477,16 @@ HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface,
     return S_OK;
 }
 
-static HRESULT WINAPI d2d_device_QueryInterface(ID2D1Device *iface, REFIID iid, void **out)
+static HRESULT WINAPI d2d_device_QueryInterface(ID2D1Device1 *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_ID2D1Device)
+    if (IsEqualGUID(iid, &IID_ID2D1Device1)
+            || IsEqualGUID(iid, &IID_ID2D1Device)
             || IsEqualGUID(iid, &IID_ID2D1Resource)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
-        ID2D1Device_AddRef(iface);
+        ID2D1Device1_AddRef(iface);
         *out = iface;
         return S_OK;
     }
@@ -4496,7 +4497,7 @@ static HRESULT WINAPI d2d_device_QueryInterface(ID2D1Device *iface, REFIID iid, 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI d2d_device_AddRef(ID2D1Device *iface)
+static ULONG WINAPI d2d_device_AddRef(ID2D1Device1 *iface)
 {
     struct d2d_device *device = impl_from_ID2D1Device(iface);
     ULONG refcount = InterlockedIncrement(&device->refcount);
@@ -4506,7 +4507,7 @@ static ULONG WINAPI d2d_device_AddRef(ID2D1Device *iface)
     return refcount;
 }
 
-static ULONG WINAPI d2d_device_Release(ID2D1Device *iface)
+static ULONG WINAPI d2d_device_Release(ID2D1Device1 *iface)
 {
     struct d2d_device *device = impl_from_ID2D1Device(iface);
     ULONG refcount = InterlockedDecrement(&device->refcount);
@@ -4523,7 +4524,7 @@ static ULONG WINAPI d2d_device_Release(ID2D1Device *iface)
     return refcount;
 }
 
-static void WINAPI d2d_device_GetFactory(ID2D1Device *iface, ID2D1Factory **factory)
+static void WINAPI d2d_device_GetFactory(ID2D1Device1 *iface, ID2D1Factory **factory)
 {
     struct d2d_device *device = impl_from_ID2D1Device(iface);
 
@@ -4533,7 +4534,7 @@ static void WINAPI d2d_device_GetFactory(ID2D1Device *iface, ID2D1Factory **fact
     ID2D1Factory1_AddRef(device->factory);
 }
 
-static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
+static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
         ID2D1DeviceContext **context)
 {
     struct d2d_device_context *object;
@@ -4547,7 +4548,7 @@ static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device *iface, D2D1_DE
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_device_context_init(object, iface, NULL, NULL)))
+    if (FAILED(hr = d2d_device_context_init(object, (ID2D1Device *)iface, NULL, NULL)))
     {
         WARN("Failed to initialise device context, hr %#lx.\n", hr);
         free(object);
@@ -4560,7 +4561,7 @@ static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device *iface, D2D1_DE
     return S_OK;
 }
 
-static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device *iface, IWICImagingFactory *wic_factory,
+static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device1 *iface, IWICImagingFactory *wic_factory,
         IPrintDocumentPackageTarget *document_target, const D2D1_PRINT_CONTROL_PROPERTIES *desc,
         ID2D1PrintControl **print_control)
 {
@@ -4570,26 +4571,46 @@ static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device *iface, IWICImag
     return E_NOTIMPL;
 }
 
-static void WINAPI d2d_device_SetMaximumTextureMemory(ID2D1Device *iface, UINT64 max_texture_memory)
+static void WINAPI d2d_device_SetMaximumTextureMemory(ID2D1Device1 *iface, UINT64 max_texture_memory)
 {
     FIXME("iface %p, max_texture_memory %s stub!\n", iface, wine_dbgstr_longlong(max_texture_memory));
 }
 
-static UINT64 WINAPI d2d_device_GetMaximumTextureMemory(ID2D1Device *iface)
+static UINT64 WINAPI d2d_device_GetMaximumTextureMemory(ID2D1Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT WINAPI d2d_device_ClearResources(ID2D1Device *iface, UINT msec_since_use)
+static HRESULT WINAPI d2d_device_ClearResources(ID2D1Device1 *iface, UINT msec_since_use)
 {
     FIXME("iface %p, msec_since_use %u stub!\n", iface, msec_since_use);
 
     return E_NOTIMPL;
 }
 
-static const struct ID2D1DeviceVtbl d2d_device_vtbl =
+static D2D1_RENDERING_PRIORITY WINAPI d2d_device_GetRenderingPriority(ID2D1Device1 *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D2D1_RENDERING_PRIORITY_NORMAL;
+}
+
+static void WINAPI d2d_device_SetRenderingPriority(ID2D1Device1 *iface, D2D1_RENDERING_PRIORITY priority)
+{
+    FIXME("iface %p, priority %#x stub!\n", iface, priority);
+}
+
+static HRESULT WINAPI d2d_device_CreateDeviceContext1(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
+        ID2D1DeviceContext1 **context)
+{
+    FIXME("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID2D1Device1Vtbl d2d_device_vtbl =
 {
     d2d_device_QueryInterface,
     d2d_device_AddRef,
@@ -4600,19 +4621,22 @@ static const struct ID2D1DeviceVtbl d2d_device_vtbl =
     d2d_device_SetMaximumTextureMemory,
     d2d_device_GetMaximumTextureMemory,
     d2d_device_ClearResources,
+    d2d_device_GetRenderingPriority,
+    d2d_device_SetRenderingPriority,
+    d2d_device_CreateDeviceContext1,
 };
 
-static struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device *iface)
+static struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface)
 {
     if (!iface)
         return NULL;
     assert(iface->lpVtbl == &d2d_device_vtbl);
-    return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device_iface);
+    return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device1_iface);
 }
 
 void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *iface, IDXGIDevice *dxgi_device)
 {
-    device->ID2D1Device_iface.lpVtbl = &d2d_device_vtbl;
+    device->ID2D1Device1_iface.lpVtbl = &d2d_device_vtbl;
     device->refcount = 1;
     device->factory = iface;
     ID2D1Factory1_AddRef(device->factory);

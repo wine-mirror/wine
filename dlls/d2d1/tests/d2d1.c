@@ -9190,6 +9190,21 @@ static void test_device_context(BOOL d3d11)
 
     ID2D1DeviceContext_Release(device_context);
 
+    if (ctx.factory2)
+    {
+        ID2D1Device1 *device1;
+        ID2D1DeviceContext1 *device_context1;
+
+        hr = ID2D1Factory2_CreateDevice(ctx.factory2, ctx.device, &device1);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Device1_CreateDeviceContext(device1, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context1);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        if (hr == S_OK) ID2D1DeviceContext1_Release(device_context1);
+        ID2D1Device1_Release(device1);
+    }
+
     /* DXGI target */
     rt = ctx.rt;
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
