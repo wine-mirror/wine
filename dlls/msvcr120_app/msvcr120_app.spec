@@ -1107,7 +1107,7 @@
 @ varargs _fprintf_l(ptr str ptr) msvcr120._fprintf_l
 @ varargs _fprintf_p(ptr str) msvcr120._fprintf_p
 @ varargs _fprintf_p_l(ptr str ptr) msvcr120._fprintf_p_l
-@ stub _fprintf_s_l
+@ varargs _fprintf_s_l(ptr str ptr) msvcr120._fprintf_s_l
 @ cdecl _fputc_nolock(long ptr) msvcr120._fputc_nolock
 @ cdecl _fputchar(long) msvcr120._fputchar
 @ cdecl _fputwc_nolock(long ptr) msvcr120._fputwc_nolock
