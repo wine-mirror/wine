@@ -885,7 +885,7 @@
 @ varargs _scanf_l(str ptr)
 @ varargs _scanf_s_l(str ptr)
 @ varargs _scprintf(str)
-# stub _scprintf_l(str ptr)
+@ varargs _scprintf_l(str ptr)
 # stub _scprintf_p_l(str ptr)
 @ varargs _scwprintf(wstr)
 # stub _scwprintf_l(wstr ptr)
