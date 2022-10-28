@@ -1058,7 +1058,7 @@
 @ varargs _swprintf(ptr wstr)
 @ varargs _swprintf_c(ptr long str)
 @ varargs _swprintf_c_l(ptr long str ptr)
-@ stub _swprintf_p
+@ varargs _swprintf_p(ptr long wstr)
 @ varargs _swprintf_p_l(ptr long wstr ptr)
 @ varargs _swprintf_s_l(ptr long wstr ptr)
 @ varargs _swscanf_l(wstr wstr ptr)

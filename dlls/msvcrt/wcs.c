@@ -1887,6 +1887,22 @@ int WINAPIV _sprintf_p(char *buffer, size_t length, const char *format, ...)
 #endif
 
 /*********************************************************************
+ *		_swprintf_p (MSVCRT.@)
+ */
+int WINAPIV _swprintf_p(wchar_t *buffer, size_t length,
+        const wchar_t *format, ...)
+{
+    va_list valist;
+    int r;
+
+    va_start(valist, format);
+    r = vswprintf_p_l_opt(buffer, length, format, 0, NULL, valist);
+    va_end(valist);
+
+    return r;
+}
+
+/*********************************************************************
  *		_swprintf_p_l (MSVCRT.@)
  */
 int WINAPIV _swprintf_p_l(wchar_t *buffer, size_t length,
