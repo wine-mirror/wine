@@ -460,7 +460,7 @@
 @ cdecl -arch=!i386 _fpclassf(float)
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
-# stub _fprintf_l(ptr str ptr)
+@ varargs _fprintf_l(ptr str ptr)
 # stub _fprintf_p(ptr str)
 # stub _fprintf_p_l(ptr str ptr)
 # stub _fprintf_s_l(ptr str ptr)

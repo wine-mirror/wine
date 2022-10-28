@@ -681,12 +681,12 @@ BOOL msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
       *handle_ptr = INVALID_HANDLE_VALUE;
     }
     wxflag_ptr++; handle_ptr++;
-  } 
+  }
   return TRUE;
 }
 
-/* INTERNAL: Set up all file descriptors, 
- * as well as default streams (stdin, stderr and stdout) 
+/* INTERNAL: Set up all file descriptors,
+ * as well as default streams (stdin, stderr and stdout)
  */
 void msvcrt_init_io(void)
 {
@@ -1286,7 +1286,7 @@ int CDECL _dup(int od)
 {
   int fd, ret;
   ioinfo *info = get_ioinfo_alloc(&fd);
- 
+
   if (_dup2(od, fd) == 0)
     ret = fd;
   else
@@ -5577,6 +5577,19 @@ int WINAPIV fprintf_s(FILE* file, const char *format, ...)
     int res;
     va_start(valist, format);
     res = vfprintf_s(file, format, valist);
+    va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *    _fprintf_l (MSVCRT.@)
+ */
+int CDECL _fprintf_l(FILE* file, const char *format, _locale_t locale, ...)
+{
+    va_list valist;
+    int res;
+    va_start(valist, locale);
+    res = _vfprintf_l(file, format, locale, valist);
     va_end(valist);
     return res;
 }
