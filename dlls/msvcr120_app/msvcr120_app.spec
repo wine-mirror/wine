@@ -1141,7 +1141,7 @@
 @ cdecl _futime64(long ptr) msvcr120._futime64
 @ varargs _fwprintf_l(ptr wstr ptr) msvcr120._fwprintf_l
 @ varargs _fwprintf_p(ptr wstr) msvcr120._fwprintf_p
-@ stub _fwprintf_p_l
+@ varargs _fwprintf_p_l(ptr wstr ptr) msvcr120._fwprintf_p_l
 @ stub _fwprintf_s_l
 @ cdecl _fwrite_nolock(ptr long long ptr) msvcr120._fwrite_nolock
 @ varargs _fwscanf_l(ptr wstr ptr) msvcr120._fwscanf_l

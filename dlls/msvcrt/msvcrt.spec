@@ -496,7 +496,7 @@
 @ cdecl _futime64(long ptr)
 @ varargs _fwprintf_l(ptr wstr ptr)
 @ varargs _fwprintf_p(ptr wstr)
-# stub _fwprintf_p_l(ptr wstr ptr)
+@ varargs _fwprintf_p_l(ptr wstr ptr)
 # stub _fwprintf_s_l(ptr wstr ptr)
 @ varargs _fwscanf_l(ptr wstr ptr)
 @ varargs _fwscanf_s_l(ptr wstr ptr)
