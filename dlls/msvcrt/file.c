@@ -5674,6 +5674,20 @@ int WINAPIV _fwprintf_l(FILE* file, const wchar_t *format, _locale_t locale, ...
 }
 
 /*********************************************************************
+ *              _fwprintf_p (MSVCRT.@)
+ */
+int WINAPIV _fwprintf_p(FILE* file, const wchar_t *format, ...)
+{
+    va_list valist;
+    int res;
+    va_start(valist, format);
+    res = _vfwprintf_p_l(file, format, NULL, valist);
+    va_end(valist);
+    return res;
+}
+
+
+/*********************************************************************
  *		printf (MSVCRT.@)
  */
 int WINAPIV printf(const char *format, ...)

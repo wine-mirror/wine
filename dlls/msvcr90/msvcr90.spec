@@ -512,7 +512,7 @@
 @ cdecl _futime32(long ptr)
 @ cdecl _futime64(long ptr)
 @ varargs _fwprintf_l(ptr wstr ptr)
-@ stub _fwprintf_p
+@ varargs _fwprintf_p(ptr wstr)
 @ stub _fwprintf_p_l
 @ stub _fwprintf_s_l
 @ cdecl _fwrite_nolock(ptr long long ptr)
