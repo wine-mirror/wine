@@ -1105,7 +1105,7 @@
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr) msvcr120._fpieee_flt
 @ cdecl _fpreset() msvcr120._fpreset
 @ varargs _fprintf_l(ptr str ptr) msvcr120._fprintf_l
-@ stub _fprintf_p
+@ varargs _fprintf_p(ptr str) msvcr120._fprintf_p
 @ stub _fprintf_p_l
 @ stub _fprintf_s_l
 @ cdecl _fputc_nolock(long ptr) msvcr120._fputc_nolock

@@ -494,7 +494,7 @@
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
 @ varargs _fprintf_l(ptr str ptr)
-@ stub _fprintf_p
+@ varargs _fprintf_p(ptr str)
 @ stub _fprintf_p_l
 @ stub _fprintf_s_l
 @ cdecl _fputc_nolock(long ptr)
