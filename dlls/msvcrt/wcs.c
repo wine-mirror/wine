@@ -1330,6 +1330,19 @@ int WINAPIV _scprintf_l(const char *format, _locale_t locale, ...)
 }
 
 /*********************************************************************
+ *              _scprintf_p (MSVCRT.@)
+ */
+int WINAPIV _scprintf_p(const char *format, ...)
+{
+    int retval;
+    va_list valist;
+    va_start(valist, format);
+    retval = _vscprintf_p_l(format, NULL, valist);
+    va_end(valist);
+    return retval;
+}
+
+/*********************************************************************
  *              _vsnwprintf (MSVCRT.@)
  */
 int CDECL _vsnwprintf(wchar_t *str, size_t len,
