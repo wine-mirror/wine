@@ -1262,7 +1262,7 @@
 @ varargs _scprintf(str)
 @ varargs _scprintf_l(str ptr)
 @ varargs _scprintf_p(str)
-@ stub _scprintf_p_l
+@ varargs _scprintf_p_l(str ptr)
 @ varargs _scwprintf(wstr)
 @ stub _scwprintf_l
 @ stub _scwprintf_p

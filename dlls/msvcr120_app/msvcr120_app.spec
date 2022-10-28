@@ -1356,7 +1356,7 @@
 @ varargs _scprintf(str) msvcr120._scprintf
 @ varargs _scprintf_l(str ptr) msvcr120._scprintf_l
 @ varargs _scprintf_p(str) msvcr120._scprintf_p
-@ stub _scprintf_p_l
+@ varargs _scprintf_p_l(str ptr) msvcr120._scprintf_p_l
 @ varargs _scwprintf(wstr) msvcr120._scwprintf
 @ stub _scwprintf_l
 @ stub _scwprintf_p
