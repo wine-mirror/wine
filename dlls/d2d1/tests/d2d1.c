@@ -9199,9 +9199,9 @@ static void test_device_context(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Device1_CreateDeviceContext(device1, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context1);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        if (hr == S_OK) ID2D1DeviceContext1_Release(device_context1);
+        ID2D1DeviceContext1_Release(device_context1);
         ID2D1Device1_Release(device1);
     }
 

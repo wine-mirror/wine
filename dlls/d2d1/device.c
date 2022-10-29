@@ -4534,13 +4534,10 @@ static void WINAPI d2d_device_GetFactory(ID2D1Device1 *iface, ID2D1Factory **fac
     ID2D1Factory1_AddRef(device->factory);
 }
 
-static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
-        ID2D1DeviceContext **context)
-{
+static HRESULT d2d_device_create_device_context(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
+        ID2D1DeviceContext1 **context) {
     struct d2d_device_context *object;
     HRESULT hr;
-
-    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
 
     if (options)
         FIXME("Options are ignored %#x.\n", options);
@@ -4556,9 +4553,17 @@ static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device1 *iface, D2D1_D
     }
 
     TRACE("Created device context %p.\n", object);
-    *context = (ID2D1DeviceContext *)&object->ID2D1DeviceContext1_iface;
+    *context = &object->ID2D1DeviceContext1_iface;
 
     return S_OK;
+}
+
+static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
+        ID2D1DeviceContext **context)
+{
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return d2d_device_create_device_context(iface, options, (ID2D1DeviceContext1 **)context);
 }
 
 static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device1 *iface, IWICImagingFactory *wic_factory,
@@ -4605,9 +4610,9 @@ static void WINAPI d2d_device_SetRenderingPriority(ID2D1Device1 *iface, D2D1_REN
 static HRESULT WINAPI d2d_device_CreateDeviceContext1(ID2D1Device1 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
         ID2D1DeviceContext1 **context)
 {
-    FIXME("iface %p, options %#x, context %p.\n", iface, options, context);
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
 
-    return E_NOTIMPL;
+    return d2d_device_create_device_context(iface, options, context);
 }
 
 static const struct ID2D1Device1Vtbl d2d_device_vtbl =
