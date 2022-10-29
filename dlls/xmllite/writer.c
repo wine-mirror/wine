@@ -1808,13 +1808,21 @@ static HRESULT WINAPI xmlwriter_WriteRaw(IXmlWriter *iface, LPCWSTR data)
     return hr;
 }
 
-static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *pwch, UINT cwch)
+static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *characters, UINT length)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
+    unsigned int count;
 
-    FIXME("%p %s %d\n", This, wine_dbgstr_w(pwch), cwch);
+    TRACE("%p, %s, %d.\n", iface, debugstr_wn(characters, length), length);
 
-    switch (This->state)
+    if ((characters == NULL && length != 0))
+        return E_INVALIDARG;
+
+    if (length == 0)
+        return S_OK;
+
+    switch (writer->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
@@ -1822,11 +1830,25 @@ static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *p
         return MX_E_ENCODING;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
+    case XmlWriterState_Ready:
+        write_xmldecl(writer, XmlStandalone_Omit);
+        break;
+    case XmlWriterState_ElemStarted:
+        writer_close_starttag(writer);
     default:
         ;
     }
 
-    return E_NOTIMPL;
+    while (length)
+    {
+        if (FAILED(hr = writer_get_next_write_count(characters, length, &count))) return hr;
+        if (FAILED(hr = write_output_buffer(writer->output, characters, count))) return hr;
+
+        characters += count;
+        length -= count;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandalone standalone)
