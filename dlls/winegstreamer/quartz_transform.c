@@ -129,7 +129,9 @@ static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
     {
         IMemAllocator_Decommit(filter->source.pAllocator);
 
+        EnterCriticalSection(&filter->filter.stream_cs);
         wg_transform_destroy(filter->transform);
+        LeaveCriticalSection(&filter->filter.stream_cs);
     }
 
     return S_OK;
