@@ -235,6 +235,8 @@ struct GpPen{
     GpBrush *brush;
     GpPenAlignment align;
     GpMatrix transform;
+    REAL *compound_array;
+    INT compound_array_size;
 };
 
 struct GpGraphics{

@@ -2356,6 +2356,9 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
         if (pen->align != PenAlignmentCenter)
             FIXME("unimplemented pen alignment %d\n", pen->align);
 
+        if (pen->compound_array_size != 0)
+            FIXME("unimplemented pen compoundline. Solid line will be drawn instead: %d\n", pen->compound_array_size);
+
         for (i=0; i < flat_path->pathdata.Count; i++)
         {
             if ((types[i]&PathPointTypePathTypeMask) == PathPointTypeStart)

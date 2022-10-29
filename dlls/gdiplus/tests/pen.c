@@ -351,6 +351,9 @@ static void test_compoundarray(void)
     GpStatus status;
     GpPen *pen;
     static const REAL testvalues[] = {0.2, 0.4, 0.6, 0.8};
+    static const REAL notSortedValues[] = {0.2, 0.6, 0.4, 0.8};
+    static const REAL negativeValues[] = {-1.2, 0.4, 0.6, 0.8};
+    static const REAL tooLargeValues[] = {0.2, 0.4, 0.6, 2.8};
     INT count;
 
     status = GdipSetPenCompoundArray(NULL, testvalues, 4);
@@ -382,8 +385,15 @@ todo_wine {
     status = GdipSetPenCompoundArray(pen, testvalues, -2);
     expect(InvalidParameter, status);
 
+    status = GdipSetPenCompoundArray(pen, notSortedValues, 4);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCompoundArray(pen, negativeValues, 4);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCompoundArray(pen, tooLargeValues, 4);
+    expect(InvalidParameter, status);
+
     status = GdipSetPenCompoundArray(pen, testvalues, 4);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     status = GdipSetPenCompoundArray(pen, NULL, 0);
     expect(InvalidParameter, status);
 
