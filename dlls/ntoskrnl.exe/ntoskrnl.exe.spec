@@ -600,12 +600,16 @@
 @ stub KePulseEvent
 @ stdcall KeQueryActiveProcessors()
 @ stdcall KeQueryActiveProcessorCountEx(long)
+@ stdcall KeQueryActiveGroupCount() GetActiveProcessorGroupCount
 @ stdcall KeQueryInterruptTime()
 @ stdcall KeQueryPriorityThread(ptr)
 @ stub KeQueryRuntimeThread
 @ stdcall KeQuerySystemTime(ptr)
 @ stdcall KeQueryTickCount(ptr)
 @ stdcall KeQueryTimeIncrement()
+@ stdcall KeQueryMaximumGroupCount() GetMaximumProcessorGroupCount
+@ stdcall KeQueryMaximumProcessorCountEx(long)
+@ stdcall KeQueryMaximumProcessorCount()
 @ stub KeRaiseUserException
 @ stdcall KeReadStateEvent(ptr)
 @ stub KeReadStateMutant

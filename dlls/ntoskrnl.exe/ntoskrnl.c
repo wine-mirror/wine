@@ -3415,6 +3415,22 @@ ULONG WINAPI KeGetCurrentProcessorNumberEx(PPROCESSOR_NUMBER process_number)
 }
 
 /***********************************************************************
+ *          KeQueryMaximumProcessorCountEx   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI KeQueryMaximumProcessorCountEx(USHORT group_number)
+{
+    return GetMaximumProcessorCount(group_number);
+}
+
+/***********************************************************************
+ *          KeQueryMaximumProcessorCount   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI KeQueryMaximumProcessorCount(void)
+{
+    return KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+}
+
+/***********************************************************************
  *           READ_REGISTER_BUFFER_UCHAR   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI READ_REGISTER_BUFFER_UCHAR(PUCHAR Register, PUCHAR Buffer, ULONG Count)
