@@ -600,6 +600,7 @@
 @ stub KePulseEvent
 @ stdcall KeQueryActiveProcessors()
 @ stdcall KeQueryActiveProcessorCountEx(long)
+@ stdcall KeQueryActiveProcessorCount(ptr)
 @ stdcall KeQueryActiveGroupCount() GetActiveProcessorGroupCount
 @ stdcall KeQueryInterruptTime()
 @ stdcall KeQueryPriorityThread(ptr)

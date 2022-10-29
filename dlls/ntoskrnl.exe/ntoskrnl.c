@@ -2602,6 +2602,16 @@ ULONG WINAPI KeQueryActiveProcessorCountEx(USHORT group_number)
     return GetActiveProcessorCount(group_number);
 }
 
+ULONG WINAPI KeQueryActiveProcessorCount(PKAFFINITY active_processors)
+{
+    TRACE("active_processors %p.\n", active_processors);
+
+    if(active_processors)
+        *active_processors = KeQueryActiveProcessors();
+
+    return KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+}
+
 /**********************************************************************
  *           KeQueryInterruptTime   (NTOSKRNL.EXE.@)
  *
