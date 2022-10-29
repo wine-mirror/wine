@@ -528,12 +528,12 @@ GpStatus WINGDIPAPI GdipSetPenColor(GpPen *pen, ARGB argb)
 
 GpStatus WINGDIPAPI GdipGetPenCompoundCount(GpPen *pen, INT *count)
 {
-    FIXME("(%p, %p): stub\n", pen, count);
+    TRACE("(%p, %p)\n", pen, count);
 
     if (!pen || !count)
         return InvalidParameter;
-
-    return NotImplemented;
+    *count = pen->compound_array_size;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetPenCompoundArray(GpPen *pen, GDIPCONST REAL *compoundarray,

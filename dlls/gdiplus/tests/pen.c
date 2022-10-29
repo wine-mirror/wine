@@ -370,10 +370,9 @@ static void test_compoundarray(void)
 
     count = 10;
     status = GdipGetPenCompoundCount(pen, &count);
-todo_wine {
     expect(Ok, status);
     ok(count == 0, "Unexpected compound count %d\n", count);
-}
+
     status = GdipSetPenCompoundArray(pen, NULL, 0);
     expect(InvalidParameter, status);
     status = GdipSetPenCompoundArray(pen, NULL, 4);
