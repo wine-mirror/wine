@@ -621,50 +621,58 @@ UINT WINAPI DragQueryFileW(
 	LPWSTR lpszwFile,
 	UINT lLength)
 {
-	LPWSTR lpwDrop;
+	LPWSTR buffer = NULL;
+	LPCWSTR filename;
 	UINT i = 0;
-	DROPFILES *lpDropFileStruct = GlobalLock(hDrop);
+	const DROPFILES *lpDropFileStruct = GlobalLock(hDrop);
 
 	TRACE("(%p, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
 
 	if(!lpDropFileStruct) goto end;
 
-	lpwDrop = (LPWSTR) ((LPSTR)lpDropFileStruct + lpDropFileStruct->pFiles);
-
-        if(lpDropFileStruct->fWide == FALSE) {
-            LPSTR lpszFileA = NULL;
-
-            if(lpszwFile && lFile != 0xFFFFFFFF) {
-                lpszFileA = malloc(lLength);
-                if(lpszFileA == NULL) {
+        if(lpDropFileStruct->fWide)
+        {
+            LPCWSTR p = (LPCWSTR) ((LPCSTR)lpDropFileStruct + lpDropFileStruct->pFiles);
+            while (i++ < lFile)
+            {
+                while (*p++); /* skip filename */
+                if (!*p)
+                {
+                    i = (lFile == 0xFFFFFFFF) ? i : 0;
                     goto end;
                 }
             }
-            i = DragQueryFileA(hDrop, lFile, lpszFileA, lLength);
-
-            if(lpszFileA) {
-                MultiByteToWideChar(CP_ACP, 0, lpszFileA, -1, lpszwFile, lLength);
-                free(lpszFileA);
+            filename = p;
+        }
+        else
+        {
+            LPCSTR p = (LPCSTR)lpDropFileStruct + lpDropFileStruct->pFiles;
+            while (i++ < lFile)
+            {
+                while (*p++); /* skip filename */
+                if (!*p)
+                {
+                    i = (lFile == 0xFFFFFFFF) ? i : 0;
+                    goto end;
+                }
             }
-            goto end;
+            i = MultiByteToWideChar(CP_ACP, 0, p, -1, NULL, 0);
+            buffer = malloc(i * sizeof(WCHAR));
+            if (!buffer)
+            {
+                i = 0;
+                goto end;
+            }
+            MultiByteToWideChar(CP_ACP, 0, p, -1, buffer, i);
+            filename = buffer;
         }
 
-	i = 0;
-	while (i++ < lFile)
-	{
-	  while (*lpwDrop++); /* skip filename */
-	  if (!*lpwDrop)
-	  {
-	    i = (lFile == 0xFFFFFFFF) ? i : 0;
-	    goto end;
-	  }
-	}
-
-	i = lstrlenW(lpwDrop);
+	i = lstrlenW(filename);
 	if ( !lpszwFile) goto end;   /* needed buffer size */
-	lstrcpynW (lpszwFile, lpwDrop, lLength);
+	lstrcpynW(lpszwFile, filename, lLength);
 end:
 	GlobalUnlock(hDrop);
+	free(buffer);
 	return i;
 }
 

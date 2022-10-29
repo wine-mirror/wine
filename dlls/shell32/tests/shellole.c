@@ -809,16 +809,13 @@ static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 
         len = wcslen(expected_filenameW);
         num = DragQueryFileW(hDrop, 0, NULL, 0);
-        todo_wine_if(expected_filename[0] == 'd' && !(flags & DROP_WIDE_FILENAME))
         ok(num == len, "expected %u, got %u\n", len, num);
 
         num = DragQueryFileW(hDrop, 0, filenameW, 0);
-        todo_wine_if(expected_filename[0] == 'd' && !(flags & DROP_WIDE_FILENAME))
         ok(num == len, "expected %u, got %u\n", len, num);
         ok(!wcscmp(filenameW, L"dummy"), "got %s\n", wine_dbgstr_w(filenameW));
 
         num = DragQueryFileW(hDrop, 0, filenameW, ARRAY_SIZE(filename));
-        todo_wine_if(expected_filename[0] == 'd' && !(flags & DROP_WIDE_FILENAME))
         ok(num == len, "expected %u, got %u\n", len, num);
         ok(!wcscmp(filenameW, expected_filenameW), "expected %s, got %s\n",
            wine_dbgstr_w(expected_filenameW), wine_dbgstr_w(filenameW));
