@@ -138,6 +138,8 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
 {
     IXmlReader *reader;
     HRESULT hr;
+    WCHAR low = 0xdcef;
+    WCHAR high = 0xdaff;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -217,7 +219,8 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
     hr = IXmlWriter_WriteString(writer, L"a");
     ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
-    /* FIXME: add WriteSurrogateCharEntity */
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, low, high);
+    ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteWhitespace(writer, L" ");
     ok(hr == exp_hr, "Unexpected hr %#lx, expected %#lx.\n", hr, exp_hr);
@@ -372,6 +375,8 @@ static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
 {
     IXmlReader *reader;
     HRESULT hr;
+    WCHAR low = 0xdcef;
+    WCHAR high = 0xdaff;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -448,7 +453,8 @@ static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
     hr = IXmlWriter_WriteString(writer, L"a");
     ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
 
-    /* TODO: WriteSurrogateCharEntity */
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, low, high);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteWhitespace(writer, L" ");
     ok(hr == MX_E_ENCODING, "Unexpected hr %#lx.\n", hr);
@@ -2021,6 +2027,60 @@ static void test_WriteRawChars(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_WriteSurrogateCharEntity(void)
+{
+    IXmlWriter *writer;
+    IStream *stream;
+    HRESULT hr;
+    WCHAR low = 0xdcef;
+    WCHAR high = 0xdaff;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, high, low);
+    ok(hr == WC_E_XMLCHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, low, high);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"root", NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, high, low);
+    ok(hr == WC_E_XMLCHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "<root");
+
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, low, high);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream, "<root>&#xCFCEF;</root>");
+    IStream_Release(stream);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == WR_E_INVALIDACTION, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteSurrogateCharEntity(writer, low, high);
+    ok(hr == WR_E_INVALIDACTION, "Unexpected hr %#lx.\n", hr);
+
+    IXmlWriter_Release(writer);
+    IStream_Release(stream);
+}
+
 static void test_WriteString(void)
 {
     static const WCHAR surrogates[] = {0xd800, 0xdc00, 'x', 'y', '\0'};
@@ -2903,6 +2963,7 @@ START_TEST(writer)
     test_WriteCharEntity();
     test_WriteChars();
     test_WriteRawChars();
+    test_WriteSurrogateCharEntity();
     test_WriteString();
     test_WriteDocType();
     test_WriteWhitespace();

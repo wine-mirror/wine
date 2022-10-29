@@ -1979,11 +1979,35 @@ static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, const WCHAR *stri
 
 static HRESULT WINAPI xmlwriter_WriteSurrogateCharEntity(IXmlWriter *iface, WCHAR wchLow, WCHAR wchHigh)
 {
-    xmlwriter *This = impl_from_IXmlWriter(iface);
+    xmlwriter *writer = impl_from_IXmlWriter(iface);
+    int codepoint;
+    WCHAR bufW[16];
 
-    FIXME("%p %d %d\n", This, wchLow, wchHigh);
+    TRACE("%p, %d, %d.\n", iface, wchLow, wchHigh);
 
-    return E_NOTIMPL;
+    if (!IS_SURROGATE_PAIR(wchHigh, wchLow))
+        return WC_E_XMLCHARACTER;
+
+    switch (writer->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_InvalidEncoding:
+        return MX_E_ENCODING;
+    case XmlWriterState_ElemStarted:
+        writer_close_starttag(writer);
+        break;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
+    codepoint = ((wchHigh - 0xd800) * 0x400) + (wchLow - 0xdc00) + 0x10000;
+    swprintf(bufW, ARRAY_SIZE(bufW), L"&#x%X;", codepoint);
+    write_output_buffer(writer->output, bufW, -1);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteWhitespace(IXmlWriter *iface, LPCWSTR text)
