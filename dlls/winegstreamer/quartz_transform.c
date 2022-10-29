@@ -78,7 +78,6 @@ static void transform_destroy(struct strmbase_filter *iface)
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
 
-    wg_sample_queue_destroy(filter->sample_queue);
     free(filter);
 }
 
@@ -109,9 +108,15 @@ static HRESULT transform_init_stream(struct strmbase_filter *iface)
         if (!amt_to_wg_format(&filter->source.pin.mt, &output_format))
             return E_FAIL;
 
+        if (FAILED(hr = wg_sample_queue_create(&filter->sample_queue)))
+            return hr;
+
         filter->transform = wg_transform_create(&input_format, &output_format);
         if (!filter->transform)
+        {
+            wg_sample_queue_destroy(filter->sample_queue);
             return E_FAIL;
+        }
 
         hr = IMemAllocator_Commit(filter->source.pAllocator);
         if (FAILED(hr))
@@ -131,6 +136,7 @@ static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
 
         EnterCriticalSection(&filter->filter.stream_cs);
         wg_transform_destroy(filter->transform);
+        wg_sample_queue_destroy(filter->sample_queue);
         LeaveCriticalSection(&filter->filter.stream_cs);
     }
 
@@ -538,17 +544,10 @@ static const IQualityControlVtbl source_quality_control_vtbl =
 static HRESULT transform_create(IUnknown *outer, const CLSID *clsid, const struct transform_ops *ops, struct transform **out)
 {
     struct transform *object;
-    HRESULT hr;
 
     object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
-
-    if (FAILED(hr = wg_sample_queue_create(&object->sample_queue)))
-    {
-        free(object);
-        return hr;
-    }
 
     strmbase_filter_init(&object->filter, outer, clsid, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
