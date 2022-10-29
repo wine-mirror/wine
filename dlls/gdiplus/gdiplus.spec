@@ -334,7 +334,7 @@
 334 stdcall GdipGetPathWorldBoundsI(ptr ptr ptr ptr)
 335 stdcall GdipGetPenBrushFill(ptr ptr)
 336 stdcall GdipGetPenColor(ptr ptr)
-337 stub GdipGetPenCompoundArray
+337 stdcall GdipGetPenCompoundArray(ptr ptr long)
 338 stdcall GdipGetPenCompoundCount(ptr ptr)
 339 stdcall GdipGetPenCustomEndCap(ptr ptr)
 340 stdcall GdipGetPenCustomStartCap(ptr ptr)

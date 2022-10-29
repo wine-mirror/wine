@@ -526,6 +526,17 @@ GpStatus WINGDIPAPI GdipSetPenColor(GpPen *pen, ARGB argb)
     return GdipSetSolidFillColor(((GpSolidFill*)pen->brush), argb);
 }
 
+GpStatus WINGDIPAPI GdipGetPenCompoundArray(GpPen *pen, REAL *compoundarray, INT count)
+{
+    TRACE("(%p, %p, %i)\n", pen, compoundarray, count);
+
+    if (!pen || !compoundarray || count > pen->compound_array_size)
+        return InvalidParameter;
+    if (pen->compound_array && count > 0)
+        memcpy(compoundarray, pen->compound_array, count * sizeof(REAL));
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPenCompoundCount(GpPen *pen, INT *count)
 {
     TRACE("(%p, %p)\n", pen, count);

@@ -350,6 +350,7 @@ static void test_compoundarray(void)
 {
     GpStatus status;
     GpPen *pen;
+    REAL *returnvalues;
     static const REAL testvalues[] = {0.2, 0.4, 0.6, 0.8};
     static const REAL notSortedValues[] = {0.2, 0.6, 0.4, 0.8};
     static const REAL negativeValues[] = {-1.2, 0.4, 0.6, 0.8};
@@ -398,10 +399,29 @@ static void test_compoundarray(void)
 
     count = 0;
     status = GdipGetPenCompoundCount(pen, &count);
-todo_wine {
     expect(Ok, status);
     ok(count == 4, "Unexpected compound count %d\n", count);
-}
+
+    returnvalues = calloc(5, sizeof(REAL));
+    /* When count larger than stored array return error */
+    status = GdipGetPenCompoundArray(pen, returnvalues, 40);
+    expect(InvalidParameter, status);
+    status = GdipGetPenCompoundArray(NULL, returnvalues, 4);
+    expect(InvalidParameter, status);
+    /* When count is zero, it should do nothing */
+    status = GdipGetPenCompoundArray(pen, returnvalues, 0);
+    expect(Ok, status);
+    ok(returnvalues[0] == 0.0, "Unexpected compound array %f\n", returnvalues[0]);
+
+    status = GdipGetPenCompoundArray(pen, returnvalues, 4);
+    expect(Ok, status);
+    ok(memcmp(returnvalues, testvalues, 4 * sizeof(REAL)) == 0, "Unexpected compound array\n");
+
+    status = GdipGetPenCompoundArray(pen, returnvalues, -10);
+    expect(Ok, status);
+    ok(memcmp(returnvalues, testvalues, 4 * sizeof(REAL)) == 0, "Unexpected compound array\n");
+
+    free(returnvalues);
     GdipDeletePen(pen);
 }
 
