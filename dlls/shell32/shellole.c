@@ -560,56 +560,40 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
  *  DragQueryFileA		[SHELL32.@]
  *  DragQueryFile 		[SHELL32.@]
  */
-UINT WINAPI DragQueryFileA(
-	HDROP hDrop,
-	UINT lFile,
-	LPSTR lpszFile,
-	UINT lLength)
+UINT WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile, UINT lLength)
 {
-	LPSTR lpDrop;
-	UINT i = 0;
-	DROPFILES *lpDropFileStruct = GlobalLock(hDrop);
+    LPWSTR filenameW = NULL;
+    LPSTR filename = NULL;
+    UINT i;
 
-	TRACE("(%p, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
+    TRACE("(%p, %x, %p, %u)\n", hDrop, lFile, lpszFile, lLength);
 
-	if(!lpDropFileStruct) goto end;
+    i = DragQueryFileW(hDrop, lFile, NULL, 0);
+    if (!i || lFile == 0xFFFFFFFF) goto end;
+    filenameW = malloc((i + 1) * sizeof(WCHAR));
+    if (!filenameW) goto error;
+    if (!DragQueryFileW(hDrop, lFile, filenameW, i + 1)) goto error;
 
-	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->pFiles;
+    i = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+    if (!lpszFile || !lLength)
+    {
+        /* minus a trailing null */
+        i--;
+        goto end;
+    }
+    filename = malloc(i);
+    if (!filename) goto error;
+    WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, i, NULL, NULL);
 
-        if(lpDropFileStruct->fWide) {
-            LPWSTR lpszFileW = NULL;
-
-            if(lpszFile && lFile != 0xFFFFFFFF) {
-                lpszFileW = malloc(lLength * sizeof(WCHAR));
-                if(lpszFileW == NULL) {
-                    goto end;
-                }
-            }
-            i = DragQueryFileW(hDrop, lFile, lpszFileW, lLength);
-
-            if(lpszFileW) {
-                WideCharToMultiByte(CP_ACP, 0, lpszFileW, -1, lpszFile, lLength, 0, NULL);
-                free(lpszFileW);
-            }
-            goto end;
-        }
-
-	while (i++ < lFile)
-	{
-	  while (*lpDrop++); /* skip filename */
-	  if (!*lpDrop)
-	  {
-	    i = (lFile == 0xFFFFFFFF) ? i : 0;
-	    goto end;
-	  }
-	}
-
-	i = strlen(lpDrop);
-	if (!lpszFile ) goto end;   /* needed buffer size */
-	lstrcpynA (lpszFile, lpDrop, lLength);
+    i = strlen(filename);
+    lstrcpynA(lpszFile, filename, lLength);
 end:
-	GlobalUnlock(hDrop);
-	return i;
+    free(filenameW);
+    free(filename);
+    return i;
+error:
+    i = 0;
+    goto end;
 }
 
 /*************************************************************************

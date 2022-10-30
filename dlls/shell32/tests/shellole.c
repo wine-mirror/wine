@@ -783,16 +783,13 @@ static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 
         len = strlen(expected_filename);
         num = DragQueryFileA(hDrop, 0, NULL, 0);
-        todo_wine_if(expected_filename[0] == 'd' && (flags & DROP_WIDE_FILENAME))
         ok(num == len, "expected %u, got %u\n", len, num);
 
         num = DragQueryFileA(hDrop, 0, filename, 0);
-        todo_wine_if(expected_filename[0] == 'd' && (flags & DROP_WIDE_FILENAME))
         ok(num == len, "expected %u, got %u\n", len, num);
         ok(!strcmp(filename, "dummy"), "got %s\n", filename);
 
         num = DragQueryFileA(hDrop, 0, filename, sizeof(filename));
-        todo_wine_if(expected_filename[0] == 'd' && (flags & DROP_WIDE_FILENAME))
         ok(num == len, "expected %u, got %u\n", len, num);
         ok(!strcmp(filename, expected_filename), "expected %s, got %s\n",
            expected_filename, filename);
