@@ -2389,8 +2389,8 @@
 @ extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA locale__Locimp__Clocptr
 @ cdecl -arch=win32 ?_Clocptr_func@_Locimp@locale@std@@CAAAPAV123@XZ() locale__Locimp__Clocptr_func
 @ cdecl -arch=win64 ?_Clocptr_func@_Locimp@locale@std@@CAAEAPEAV123@XZ() locale__Locimp__Clocptr_func
-@ stub -arch=win32 ?_Clog_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
-@ stub -arch=win64 ?_Clog_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
+@ cdecl -arch=win32 ?_Clog_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Clog_func
+@ cdecl -arch=win64 ?_Clog_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Clog_func
 @ stub -arch=win64 ?_Cm@?5???$log@M@std@@YA?AV?$complex@M@1@AEBV21@@Z@4MB
 @ stub -arch=win64 ?_Cm@?5???$log@N@std@@YA?AV?$complex@N@1@AEBV21@@Z@4NB
 @ thiscall -arch=win32 ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z(ptr long long) basic_string_char__Copy

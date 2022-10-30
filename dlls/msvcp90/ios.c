@@ -15987,3 +15987,10 @@ basic_ostream_char* __cdecl _Cout_func(void)
 {
     return &cout.obj;
 }
+
+/* ?_Clog_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
+/* ?_Clog_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
+basic_ostream_char* __cdecl _Clog_func(void)
+{
+    return &MSVCP_clog.obj;
+}
