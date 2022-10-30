@@ -2109,8 +2109,8 @@
 @ cdecl -arch=win64 ?_BADOFF_func@std@@YAAEB_JXZ() std_BADOFF_func
 @ thiscall -arch=i386 ?_Callfns@ios_base@std@@AAEXW4event@12@@Z(ptr long) ios_base_Callfns
 @ cdecl -arch=win64 ?_Callfns@ios_base@std@@AEAAXW4event@12@@Z(ptr long) ios_base_Callfns
-@ stub -arch=win32 ?_Cerr_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
-@ stub -arch=win64 ?_Cerr_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
+@ cdecl -arch=win32 ?_Cerr_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Cerr_func
+@ cdecl -arch=win64 ?_Cerr_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Cerr_func
 @ thiscall -arch=win32 ?_Chassign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXIID@Z(ptr long long long) MSVCP_basic_string_char_Chassign
 @ cdecl -arch=win64 ?_Chassign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_K0D@Z(ptr long long long) MSVCP_basic_string_char_Chassign
 @ thiscall -arch=win32 ?_Chassign@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IAEXIIG@Z(ptr long long long) MSVCP_basic_string_wchar_Chassign
