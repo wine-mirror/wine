@@ -15988,6 +15988,21 @@ basic_ostream_char* __cdecl _Cout_func(void)
     return &cout.obj;
 }
 
+/* ?_Wcout_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ */
+/* ?_Wcout_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ */
+basic_ostream_wchar* __cdecl _Wcout_func_short(void)
+{
+    return &ucout.obj;
+}
+
+
+/* ?_Wcout_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ */
+/* ?_Wcout_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ */
+basic_ostream_wchar* __cdecl _Wcout_func(void)
+{
+    return &wcout.obj;
+}
+
 /* ?_Clog_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
 /* ?_Clog_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
 basic_ostream_char* __cdecl _Clog_func(void)

@@ -2832,10 +2832,10 @@
 @ stub -arch=win64 ?_Wclog_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ
 @ stub -arch=win32 ?_Wclog_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ
 @ stub -arch=win64 ?_Wclog_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ
-@ stub -arch=win32 ?_Wcout_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ
-@ stub -arch=win64 ?_Wcout_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ
-@ stub -arch=win32 ?_Wcout_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ
-@ stub -arch=win64 ?_Wcout_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ
+@ cdecl -arch=win32 ?_Wcout_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ() _Wcout_func_short
+@ cdecl -arch=win64 ?_Wcout_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ() _Wcout_func_short
+@ cdecl -arch=win32 ?_Wcout_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ() _Wcout_func
+@ cdecl -arch=win64 ?_Wcout_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ() _Wcout_func
 @ thiscall -arch=win32 ?_Widen_s@?$ctype@D@std@@QBEPBDPBD0PADI@Z(ptr ptr ptr ptr long) ctype_char__Widen_s
 @ cdecl -arch=win64 ?_Widen_s@?$ctype@D@std@@QEBAPEBDPEBD0PEAD_K@Z(ptr ptr ptr ptr long) ctype_char__Widen_s
 @ thiscall -arch=win32 ?_Widen_s@?$ctype@G@std@@QBEPBDPBD0PAGI@Z(ptr ptr ptr ptr long) ctype_wchar__Widen_s
