@@ -53,7 +53,7 @@
 @ stub TransformPattern_Move
 @ stub TransformPattern_Resize
 @ stub TransformPattern_Rotate
-@ stub UiaAddEvent
+@ stdcall UiaAddEvent(ptr long ptr long ptr long ptr ptr)
 @ stdcall UiaClientsAreListening()
 #@ stub UiaDisconnectAllProviders
 @ stdcall UiaDisconnectProvider(ptr)

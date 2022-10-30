@@ -393,6 +393,7 @@ struct UiaFindParams {
 };
 
 typedef SAFEARRAY * WINAPI UiaProviderCallback(HWND hwnd,enum ProviderType providerType);
+typedef void WINAPI UiaEventCallback(struct UiaEventArgs *pArgs,SAFEARRAY *pRequestedData,BSTR pTreeStructure);
 
 HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value);
 HRESULT WINAPI UiaGetReservedNotSupportedValue(IUnknown **value);
@@ -418,6 +419,8 @@ HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct
         struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct);
 HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, struct UiaCacheRequest *cache_req, SAFEARRAY **out_req,
         SAFEARRAY **out_offsets, SAFEARRAY **out_tree_structs);
+HRESULT WINAPI UiaAddEvent(HUIANODE huianode, EVENTID event_id, UiaEventCallback *callback, enum TreeScope scope,
+        PROPERTYID *prop_ids, int prop_ids_count, struct UiaCacheRequest *cache_req, HUIAEVENT *huiaevent);
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent);
 HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd);
 HRESULT WINAPI UiaEventRemoveWindow(HUIAEVENT huiaevent, HWND hwnd);
