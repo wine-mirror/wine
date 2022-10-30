@@ -3022,3 +3022,12 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
     FIXME("(%p): stub\n", huiaevent);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *          UiaEventAddWindow (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd)
+{
+    FIXME("(%p, %p): stub\n", huiaevent, hwnd);
+    return E_NOTIMPL;
+}

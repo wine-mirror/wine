@@ -419,6 +419,7 @@ HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct
 HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, struct UiaCacheRequest *cache_req, SAFEARRAY **out_req,
         SAFEARRAY **out_offsets, SAFEARRAY **out_tree_structs);
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent);
+HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd);
 
 #ifdef __cplusplus
 }
