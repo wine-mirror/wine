@@ -16010,6 +16010,20 @@ basic_ostream_char* __cdecl _Clog_func(void)
     return &MSVCP_clog.obj;
 }
 
+/* ?_Wclog_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ */
+/* ?_Wclog_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ */
+basic_ostream_wchar* __cdecl _Wclog_func_short(void)
+{
+    return &uclog.obj;
+}
+
+/* ?_Wclog_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ */
+/* ?_Wclog_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ */
+basic_ostream_wchar* __cdecl _Wclog_func(void)
+{
+    return &wclog.obj;
+}
+
 /* ?_Cerr_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
 /* ?_Cerr_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
 basic_ostream_char* __cdecl _Cerr_func(void)
