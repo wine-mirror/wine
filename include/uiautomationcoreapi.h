@@ -420,6 +420,7 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
         SAFEARRAY **out_offsets, SAFEARRAY **out_tree_structs);
 HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent);
 HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd);
+HRESULT WINAPI UiaEventRemoveWindow(HUIAEVENT huiaevent, HWND hwnd);
 
 #ifdef __cplusplus
 }

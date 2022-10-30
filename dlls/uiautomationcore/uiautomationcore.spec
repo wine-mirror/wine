@@ -58,7 +58,7 @@
 #@ stub UiaDisconnectAllProviders
 @ stdcall UiaDisconnectProvider(ptr)
 @ stdcall UiaEventAddWindow(ptr long)
-@ stub UiaEventRemoveWindow
+@ stdcall UiaEventRemoveWindow(ptr long)
 @ stdcall UiaFind(ptr ptr ptr ptr ptr ptr)
 @ stub UiaGetErrorDescription
 @ stub UiaGetPatternProvider
