@@ -652,8 +652,9 @@ UINT WINAPI DragQueryFileW(
         }
 
 	i = lstrlenW(filename);
-	if ( !lpszwFile) goto end;   /* needed buffer size */
+	if (!lpszwFile || !lLength) goto end;   /* needed buffer size */
 	lstrcpynW(lpszwFile, filename, lLength);
+	i = min(i, lLength - 1);
 end:
 	GlobalUnlock(hDrop);
 	free(buffer);
