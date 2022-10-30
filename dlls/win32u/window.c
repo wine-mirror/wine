@@ -5539,3 +5539,13 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return 0;
     }
 }
+
+/*******************************************************************
+ *           NtUserDragObject (win32u.@)
+ */
+DWORD WINAPI NtUserDragObject( HWND parent, HWND hwnd, UINT fmt, ULONG_PTR data, HCURSOR cursor )
+{
+    FIXME( "%p, %p, %u, %#lx, %p stub!\n", parent, hwnd, fmt, data, cursor );
+
+    return 0;
+}

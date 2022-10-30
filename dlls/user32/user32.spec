@@ -182,7 +182,7 @@
 @ stdcall DlgDirSelectExA(long ptr long long)
 @ stdcall DlgDirSelectExW(long ptr long long)
 @ stdcall DragDetect(long int64)
-@ stub DragObject
+@ stdcall DragObject(long long long long long) NtUserDragObject
 @ stdcall DrawAnimatedRects(long long ptr ptr)
 @ stdcall DrawCaption(long long ptr long)
 @ stdcall DrawCaptionTempA(long long ptr long long str long)

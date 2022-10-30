@@ -127,6 +127,7 @@
     SYSCALL_ENTRY( NtUserDispatchMessage ) \
     SYSCALL_ENTRY( NtUserDisplayConfigGetDeviceInfo ) \
     SYSCALL_ENTRY( NtUserDragDetect ) \
+    SYSCALL_ENTRY( NtUserDragObject ) \
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEnableMenuItem ) \

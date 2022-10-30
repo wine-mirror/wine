@@ -141,6 +141,7 @@ static void * const syscalls[] =
     NtUserDispatchMessage,
     NtUserDisplayConfigGetDeviceInfo,
     NtUserDragDetect,
+    NtUserDragObject,
     NtUserDrawIconEx,
     NtUserEmptyClipboard,
     NtUserEnableMenuItem,

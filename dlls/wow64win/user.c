@@ -1558,6 +1558,17 @@ NTSTATUS WINAPI wow64_NtUserDragDetect( UINT *args )
     return NtUserDragDetect( hwnd, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtUserDragObject( UINT *args )
+{
+    HWND parent = get_handle( &args );
+    HWND hwnd = get_handle( &args );
+    UINT fmt = get_ulong( &args );
+    ULONG_PTR data = get_ulong( &args );
+    HCURSOR hcursor = get_handle( &args );
+
+    return NtUserDragObject( parent, hwnd, fmt, data, hcursor );
+}
+
 NTSTATUS WINAPI wow64_NtUserDrawIconEx( UINT *args )
 {
     HDC hdc = get_handle( &args );
