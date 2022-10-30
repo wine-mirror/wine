@@ -92,7 +92,7 @@
 @ stub UiaRaiseStructureChangedEvent
 #@ stub UiaRaiseTextEditTextChangedEvent
 @ stdcall UiaRegisterProviderCallback(ptr)
-@ stub UiaRemoveEvent
+@ stdcall UiaRemoveEvent(ptr)
 @ stdcall UiaReturnRawElementProvider(long long long ptr)
 @ stub UiaSetFocus
 @ stub UiaTextRangeRelease

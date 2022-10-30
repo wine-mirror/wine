@@ -418,6 +418,7 @@ HRESULT WINAPI UiaNavigate(HUIANODE huianode, enum NavigateDirection dir, struct
         struct UiaCacheRequest *cache_req, SAFEARRAY **out_req, BSTR *tree_struct);
 HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, struct UiaCacheRequest *cache_req, SAFEARRAY **out_req,
         SAFEARRAY **out_offsets, SAFEARRAY **out_tree_structs);
+HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent);
 
 #ifdef __cplusplus
 }

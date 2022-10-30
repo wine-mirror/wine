@@ -3013,3 +3013,12 @@ exit:
 
     return hr;
 }
+
+/***********************************************************************
+ *          UiaRemoveEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
+{
+    FIXME("(%p): stub\n", huiaevent);
+    return E_NOTIMPL;
+}
