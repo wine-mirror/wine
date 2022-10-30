@@ -583,10 +583,10 @@ UINT WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile, UINT lLength
     }
     filename = malloc(i);
     if (!filename) goto error;
-    WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, i, NULL, NULL);
+    i = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, i, NULL, NULL);
 
-    i = strlen(filename);
     lstrcpynA(lpszFile, filename, lLength);
+    i = min(i, lLength) - 1;
 end:
     free(filenameW);
     free(filename);

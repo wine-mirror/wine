@@ -796,7 +796,7 @@ static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 
         memset(filename, 0xaa, sizeof(filename));
         num = DragQueryFileA(hDrop, 0, filename, 2);
-        todo_wine ok(num == 1, "expected 1, got %u\n", num);
+        ok(num == 1, "expected 1, got %u\n", num);
         ok(filename[0] == expected_filename[0], "expected '%c', got '%c'\n",
            expected_filename[0], filename[0]);
         ok(filename[1] == '\0', "expected nul, got %#x\n", (BYTE)filename[1]);
