@@ -427,6 +427,18 @@ LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
     return ret;
 }
 
+/***********************************************************************
+ *           KeInitializeGuardedMutex   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeGuardedMutex(PKGUARDED_MUTEX mutex)
+{
+    TRACE("mutex %p.\n", mutex);
+    mutex->Count = FM_LOCK_BIT;
+    mutex->Owner = NULL;
+    mutex->Contention = 0;
+    KeInitializeEvent(&mutex->Event, SynchronizationEvent, FALSE);
+}
+
 static void CALLBACK ke_timer_complete_proc(PTP_CALLBACK_INSTANCE instance, void *timer_, PTP_TIMER tp_timer)
 {
     KTIMER *timer = timer_;

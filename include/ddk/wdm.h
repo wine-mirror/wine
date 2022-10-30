@@ -253,6 +253,23 @@ typedef struct _FAST_MUTEX
     ULONG OldIrql;
 } FAST_MUTEX, *PFAST_MUTEX;
 
+typedef struct _KGUARDED_MUTEX
+{
+     LONG Count;
+     PKTHREAD Owner;
+     ULONG Contention;
+     KEVENT Event;
+     union
+     {
+          struct
+          {
+               SHORT KernelApcDisable;
+               SHORT SpecialApcDisable;
+          };
+          ULONG CombinedApcDisable;
+     };
+} KGUARDED_MUTEX, *PKGUARDED_MUTEX;
+
 #define MAXIMUM_VOLUME_LABEL_LENGTH       (32 * sizeof(WCHAR))
 
 typedef struct _VPB {
