@@ -2117,8 +2117,8 @@
 @ cdecl -arch=win64 ?_Chassign@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEAAX_K0G@Z(ptr long long long) MSVCP_basic_string_wchar_Chassign
 @ thiscall -arch=win32 ?_Chassign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII_W@Z(ptr long long long) MSVCP_basic_string_wchar_Chassign
 @ cdecl -arch=win64 ?_Chassign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0_W@Z(ptr long long long) MSVCP_basic_string_wchar_Chassign
-@ stub -arch=win32 ?_Cin_func@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@1@XZ
-@ stub -arch=win64 ?_Cin_func@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@1@XZ
+@ cdecl -arch=win32 ?_Cin_func@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@1@XZ() _Cin_func
+@ cdecl -arch=win64 ?_Cin_func@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@1@XZ() _Cin_func
 # extern -arch=win64 ?_Cl@?5???$log@M@std@@YA?AV?$complex@M@1@AEBV21@@Z@4MB
 # extern -arch=win32 ?_Cl@?5???$log@N@std@@YA?AV?$complex@N@1@ABV21@@Z@4NB
 # extern -arch=win64 ?_Cl@?5???$log@N@std@@YA?AV?$complex@N@1@AEBV21@@Z@4NB

@@ -15959,3 +15959,10 @@ void free_io(void)
     basic_ostream_wchar_vbase_dtor(&wclog.obj);
     basic_filebuf_wchar_dtor(&filebuf_wchar_log);
 }
+
+/* ?_Cin_func@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@1@XZ */
+/* ?_Cin_func@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@1@XZ */
+basic_istream_char* __cdecl _Cin_func(void)
+{
+    return &cin.obj;
+}
