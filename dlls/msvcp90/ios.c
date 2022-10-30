@@ -15980,3 +15980,10 @@ basic_istream_wchar* __cdecl _Wcin_func(void)
 {
     return &wcin.obj;
 }
+
+/* ?_Cout_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
+/* ?_Cout_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ */
+basic_ostream_char* __cdecl _Cout_func(void)
+{
+    return &cout.obj;
+}

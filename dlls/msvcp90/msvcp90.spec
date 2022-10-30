@@ -2414,8 +2414,8 @@
 @ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
 @ stub ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
-@ stub -arch=win32 ?_Cout_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
-@ stub -arch=win64 ?_Cout_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
+@ cdecl -arch=win32 ?_Cout_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Cout_func
+@ cdecl -arch=win64 ?_Cout_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Cout_func
 @ stub -arch=win32 ?_Debug_message@std@@YAXPBD0@Z
 @ stub -arch=win64 ?_Debug_message@std@@YAXPEBD0@Z
 @ thiscall -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
