@@ -15966,3 +15966,17 @@ basic_istream_char* __cdecl _Cin_func(void)
 {
     return &cin.obj;
 }
+
+/* ?_Wcin_func@std@@YAAAV?$basic_istream@GU?$char_traits@G@std@@@1@XZ */
+/* ?_Wcin_func@std@@YAAEAV?$basic_istream@GU?$char_traits@G@std@@@1@XZ */
+basic_istream_wchar* __cdecl _Wcin_func_short(void)
+{
+    return &ucin.obj;
+}
+
+/* ?_Wcin_func@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@1@XZ */
+/* ?_Wcin_func@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@1@XZ */
+basic_istream_wchar* __cdecl _Wcin_func(void)
+{
+    return &wcin.obj;
+}
