@@ -16030,3 +16030,17 @@ basic_ostream_char* __cdecl _Cerr_func(void)
 {
     return &cerr.obj;
 }
+
+/* ?_Wcerr_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ */
+/* ?_Wcerr_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ */
+basic_ostream_wchar* __cdecl _Wcerr_func_short(void)
+{
+    return &ucerr.obj;
+}
+
+/* ?_Wcerr_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ */
+/* ?_Wcerr_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ */
+basic_ostream_wchar* __cdecl _Wcerr_func(void)
+{
+    return &wcerr.obj;
+}

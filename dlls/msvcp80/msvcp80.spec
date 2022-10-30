@@ -2820,10 +2820,10 @@
 @ cdecl -arch=win64 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ(ptr) basic_streambuf_wchar__Unlock
 @ thiscall -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ(ptr) mutex_unlock
 @ cdecl -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ(ptr) mutex_unlock
-@ stub -arch=win32 ?_Wcerr_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ
-@ stub -arch=win64 ?_Wcerr_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ
-@ stub -arch=win32 ?_Wcerr_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ
-@ stub -arch=win64 ?_Wcerr_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ
+@ cdecl -arch=win32 ?_Wcerr_func@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ() _Wcerr_func_short
+@ cdecl -arch=win64 ?_Wcerr_func@std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@1@XZ() _Wcerr_func_short
+@ cdecl -arch=win32 ?_Wcerr_func@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ() _Wcerr_func
+@ cdecl -arch=win64 ?_Wcerr_func@std@@YAAEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@XZ() _Wcerr_func
 @ cdecl -arch=win32 ?_Wcin_func@std@@YAAAV?$basic_istream@GU?$char_traits@G@std@@@1@XZ() _Wcin_func_short
 @ cdecl -arch=win64 ?_Wcin_func@std@@YAAEAV?$basic_istream@GU?$char_traits@G@std@@@1@XZ() _Wcin_func_short
 @ cdecl -arch=win32 ?_Wcin_func@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@1@XZ() _Wcin_func
