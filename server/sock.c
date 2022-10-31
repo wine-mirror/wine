@@ -187,6 +187,7 @@ struct bound_addr
 {
     struct rb_entry entry;
     union unix_sockaddr addr;
+    int match_any_addr;
     int reuse_count;
 };
 
@@ -276,7 +277,8 @@ static int addr_compare( const void *key, const struct wine_rb_entry *entry )
     {
         if (addr->addr.in.sin_port != bound_addr->addr.in.sin_port)
             return addr->addr.in.sin_port < bound_addr->addr.in.sin_port ? -1 : 1;
-        if (addr->addr.in.sin_addr.s_addr == bound_addr->addr.in.sin_addr.s_addr)
+        if (bound_addr->match_any_addr || addr->match_any_addr
+            || addr->addr.in.sin_addr.s_addr == bound_addr->addr.in.sin_addr.s_addr)
             return 0;
         return addr->addr.in.sin_addr.s_addr < bound_addr->addr.in.sin_addr.s_addr ? -1 : 1;
     }
@@ -284,14 +286,16 @@ static int addr_compare( const void *key, const struct wine_rb_entry *entry )
     assert( addr->addr.addr.sa_family == AF_INET6 );
     if (addr->addr.in6.sin6_port != bound_addr->addr.in6.sin6_port)
         return addr->addr.in6.sin6_port < bound_addr->addr.in6.sin6_port ? -1 : 1;
+    if (bound_addr->match_any_addr || addr->match_any_addr) return 0;
     return memcmp( &addr->addr.in6.sin6_addr, &bound_addr->addr.in6.sin6_addr, sizeof(addr->addr.in6.sin6_addr) );
 }
 
-static int ipv4addr_from_v6( union unix_sockaddr *v4addr, const struct sockaddr_in6 *in6 )
+static int ipv4addr_from_v6( union unix_sockaddr *v4addr, const struct sockaddr_in6 *in6, int map_unspecified )
 {
     v4addr->in.sin_family = AF_INET;
     v4addr->in.sin_port = in6->sin6_port;
-    if (IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
+
+    if (map_unspecified && IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
     {
         v4addr->in.sin_addr.s_addr = htonl( INADDR_ANY );
         return 1;
@@ -318,6 +322,15 @@ static int should_track_conflicts_for_addr( struct sock *sock, const union unix_
     return 0;
 }
 
+static int is_any_addr( const union unix_sockaddr *addr )
+{
+    if (addr->addr.sa_family == AF_INET && addr->in.sin_addr.s_addr == htonl( INADDR_ANY ))
+        return 1;
+    if (addr->addr.sa_family == AF_INET6 && IN6_IS_ADDR_UNSPECIFIED(&addr->in6.sin6_addr))
+        return 1;
+    return 0;
+}
+
 static int check_addr_usage( struct sock *sock, const union unix_sockaddr *addr, int v6only )
 {
     struct bound_addr *bound_addr, search_addr;
@@ -326,26 +339,30 @@ static int check_addr_usage( struct sock *sock, const union unix_sockaddr *addr,
     if (!should_track_conflicts_for_addr( sock, addr )) return 0;
 
     search_addr.addr = *addr;
+    search_addr.match_any_addr = sock->exclusiveaddruse && is_any_addr( addr );
 
     if ((entry = rb_get( &bound_addresses_tree, &search_addr )))
     {
         bound_addr = WINE_RB_ENTRY_VALUE(entry, struct bound_addr, entry);
         if (bound_addr->reuse_count == -1 || !sock->reuseaddr)
         {
-            set_error( sock->reuseaddr ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
+            set_error( sock->reuseaddr || bound_addr->match_any_addr
+                       ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
             return 1;
         }
     }
 
     if (sock->family != WS_AF_INET6 || v6only) return 0;
-    if (!ipv4addr_from_v6( &search_addr.addr, &addr->in6 )) return 0;
+    if (!ipv4addr_from_v6( &search_addr.addr, &addr->in6, sock->exclusiveaddruse )) return 0;
 
+    search_addr.match_any_addr = sock->exclusiveaddruse && is_any_addr( &search_addr.addr );
     if ((entry = rb_get( &bound_addresses_tree, &search_addr )))
     {
         bound_addr = WINE_RB_ENTRY_VALUE(entry, struct bound_addr, entry);
         if (bound_addr->reuse_count == -1 || !sock->reuseaddr)
         {
-            set_error( sock->reuseaddr ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
+            set_error( sock->reuseaddr || bound_addr->match_any_addr
+                       ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
             return 1;
         }
     }
@@ -360,6 +377,7 @@ static struct bound_addr *register_bound_address( struct sock *sock, const union
         return NULL;
 
     bound_addr->addr = *addr;
+    bound_addr->match_any_addr = sock->exclusiveaddruse && is_any_addr( addr );
 
     if (rb_put( &bound_addresses_tree, bound_addr, &bound_addr->entry ))
     {
@@ -392,7 +410,8 @@ static void update_addr_usage( struct sock *sock, const union unix_sockaddr *add
     sock->bound_addr[0] = register_bound_address( sock, addr );
 
     if (sock->family != WS_AF_INET6 || v6only) return;
-    if (!ipv4addr_from_v6( &v4addr, &addr->in6 )) return;
+
+    if (!ipv4addr_from_v6( &v4addr, &addr->in6, sock->exclusiveaddruse )) return;
 
     sock->bound_addr[1] = register_bound_address( sock, &v4addr );
 }

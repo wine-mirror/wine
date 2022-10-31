@@ -2043,19 +2043,18 @@ static void test_reuseaddr(void)
         }
         s[2];
         int error;
-        BOOL todo;
     }
     tests_exclusive[] =
     {
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, },
             { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, }},
-            WSAEACCES, TRUE,
+            WSAEACCES,
         },
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), TRUE, },
             { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, }},
-            WSAEACCES, TRUE,
+            WSAEACCES,
         },
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, },
@@ -2065,7 +2064,7 @@ static void test_reuseaddr(void)
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, },
             { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, }},
-            WSAEACCES, TRUE,
+            WSAEACCES,
         },
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, },
@@ -2075,12 +2074,12 @@ static void test_reuseaddr(void)
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, },
             { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
-            WSAEADDRINUSE, TRUE,
+            WSAEADDRINUSE,
         },
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, },
             { AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), TRUE, }},
-            WSAEADDRINUSE, TRUE,
+            WSAEADDRINUSE,
         },
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback, sizeof(saddr_in6_loopback), FALSE, },
@@ -2095,17 +2094,17 @@ static void test_reuseaddr(void)
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback_v4mapped, sizeof(saddr_in6_loopback_v4mapped), FALSE, },
             { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
-            WSAEADDRINUSE, TRUE,
+            WSAEADDRINUSE,
         },
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), TRUE, },
             { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
-            WSAEACCES, TRUE,
+            WSAEACCES,
         },
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), FALSE, },
             { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
-            NOERROR, TRUE,
+            NOERROR,
         },
         {
             {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, },
@@ -2120,7 +2119,7 @@ static void test_reuseaddr(void)
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), FALSE, },
             { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
-            NOERROR, TRUE,
+            NOERROR,
         },
         {
             {{ AF_INET6, (struct sockaddr *)&saddr_in6_any_v4mapped, sizeof(saddr_in6_any_v4mapped), FALSE, },
@@ -2398,14 +2397,11 @@ static void test_reuseaddr(void)
 
         rc = bind(s[1], tests_exclusive[i].s[1].addr, tests_exclusive[i].s[1].addrlen);
 
-        todo_wine_if(tests_exclusive[i].todo)
-        {
         if (tests_exclusive[i].error)
             ok(rc == SOCKET_ERROR && WSAGetLastError() == tests_exclusive[i].error,
                     "got rc %d, error %d, expected error %d.\n", rc, WSAGetLastError(), tests_exclusive[i].error);
         else
             ok(!rc, "got error %d.\n", WSAGetLastError());
-        }
 
         closesocket(s[0]);
         closesocket(s[1]);
