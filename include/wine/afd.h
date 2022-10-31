@@ -283,6 +283,8 @@ C_ASSERT( sizeof(struct afd_get_events_params) == 56 );
 #define IOCTL_AFD_WINE_SET_IP_RECVTTL                   WINE_AFD_IOC(294)
 #define IOCTL_AFD_WINE_GET_IP_RECVTOS                   WINE_AFD_IOC(295)
 #define IOCTL_AFD_WINE_SET_IP_RECVTOS                   WINE_AFD_IOC(296)
+#define IOCTL_AFD_WINE_GET_SO_EXCLUSIVEADDRUSE          WINE_AFD_IOC(297)
+#define IOCTL_AFD_WINE_SET_SO_EXCLUSIVEADDRUSE          WINE_AFD_IOC(298)
 
 struct afd_iovec
 {

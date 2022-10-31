@@ -256,6 +256,7 @@ struct sock
     unsigned int        bound : 1;   /* is the socket bound? */
     unsigned int        reset : 1;   /* did we get a TCP reset? */
     unsigned int        reuseaddr : 1; /* winsock SO_REUSEADDR option value */
+    unsigned int        exclusiveaddruse : 1; /* winsock SO_EXCLUSIVEADDRUSE option value */
 };
 
 static int is_tcp_socket( struct sock *sock )
@@ -1697,6 +1698,7 @@ static struct sock *create_socket(void)
     sock->bound = 0;
     sock->reset = 0;
     sock->reuseaddr = 0;
+    sock->exclusiveaddruse = 0;
     sock->rcvbuf = 0;
     sock->sndbuf = 0;
     sock->rcvtimeo = 0;
@@ -3103,6 +3105,21 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return;
     }
 
+    case IOCTL_AFD_WINE_SET_SO_EXCLUSIVEADDRUSE:
+    {
+        int exclusive;
+
+        if (get_req_data_size() < sizeof(exclusive))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+
+        exclusive = *(int *)get_req_data();
+        sock->exclusiveaddruse = !!exclusive;
+        return;
+    }
+
     case IOCTL_AFD_WINE_GET_SO_SNDBUF:
     {
         int sndbuf = sock->sndbuf;
@@ -3202,6 +3219,21 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         reuse = sock->reuseaddr;
         set_reply_data( &reuse, min( sizeof(reuse), get_reply_max_size() ));
+        return;
+    }
+
+    case IOCTL_AFD_WINE_GET_SO_EXCLUSIVEADDRUSE:
+    {
+        int exclusive;
+
+        if (!get_reply_max_size())
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+
+        exclusive = sock->exclusiveaddruse;
+        set_reply_data( &exclusive, min( sizeof(exclusive), get_reply_max_size() ));
         return;
     }
 

@@ -1818,6 +1818,11 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
             if (!ret && *optlen < sizeof(DWORD)) *optlen = 1;
             return ret;
 
+        case SO_EXCLUSIVEADDRUSE:
+            ret = server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_EXCLUSIVEADDRUSE, optval, optlen );
+            if (!ret && *optlen < sizeof(DWORD)) *optlen = 1;
+            return ret;
+
         case SO_SNDBUF:
             if (*optlen < sizeof(DWORD) || !optval)
             {
@@ -3215,6 +3220,15 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             memcpy( &value, optval, min( optlen, sizeof(value) ));
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_REUSEADDR, (char *)&value, sizeof(value) );
 
+        case SO_EXCLUSIVEADDRUSE:
+            if (!optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            memcpy( &value, optval, min( optlen, sizeof(value) ));
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_EXCLUSIVEADDRUSE, (char *)&value, sizeof(value) );
+
         case SO_SNDBUF:
             if (optlen < 0) optlen = 4;
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_SNDBUF, optval, optlen );
@@ -3238,12 +3252,6 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
                 return -1;
             }
             SetLastError( ERROR_SUCCESS );
-            return 0;
-
-        /* Stops two sockets from being bound to the same port. Always happens
-         * on unix systems, so just drop it. */
-        case SO_EXCLUSIVEADDRUSE:
-            TRACE("Ignoring SO_EXCLUSIVEADDRUSE, is always set.\n");
             return 0;
 
         /* After a ConnectEx call succeeds, the socket can't be used with half of the
