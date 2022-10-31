@@ -1394,51 +1394,6 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     return TRUE;
 }
 
-/*******************************************************************
- *           NtUserDragDetect (win32u.@)
- */
-BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
-{
-    WORD width, height;
-    RECT rect;
-    MSG msg;
-
-    TRACE( "%p (%d,%d)\n", hwnd, x, y );
-
-    if (!(NtUserGetKeyState( VK_LBUTTON ) & 0x8000)) return FALSE;
-
-    width  = get_system_metrics( SM_CXDRAG );
-    height = get_system_metrics( SM_CYDRAG );
-    SetRect( &rect, x - width, y - height, x + width, y + height );
-
-    NtUserSetCapture( hwnd );
-
-    for (;;)
-    {
-        while (NtUserPeekMessage( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE ))
-        {
-            if (msg.message == WM_LBUTTONUP)
-            {
-                release_capture();
-                return FALSE;
-            }
-            if (msg.message == WM_MOUSEMOVE)
-            {
-                POINT tmp;
-                tmp.x = (short)LOWORD( msg.lParam );
-                tmp.y = (short)HIWORD( msg.lParam );
-                if (!PtInRect( &rect, tmp ))
-                {
-                    release_capture();
-                    return TRUE;
-                }
-            }
-        }
-        NtUserMsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, QS_ALLINPUT, 0 );
-    }
-    return FALSE;
-}
-
 /**********************************************************************
  *		set_capture_window
  */
