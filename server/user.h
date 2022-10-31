@@ -132,6 +132,7 @@ extern rectangle_t *get_region_data( const struct region *region, data_size_t ma
 extern rectangle_t *get_region_data_and_free( struct region *region, data_size_t max_size,
                                               data_size_t *total_size );
 extern int is_region_empty( const struct region *region );
+extern int is_region_equal( const struct region *region1, const struct region *region2 );
 extern void get_region_extents( const struct region *region, rectangle_t *rect );
 extern void offset_region( struct region *region, int x, int y );
 extern void mirror_region( const rectangle_t *client_rect, struct region *region );
@@ -175,6 +176,7 @@ extern struct window_class *grab_class( struct process *process, atom_t atom,
 extern void release_class( struct window_class *class );
 extern int is_desktop_class( struct window_class *class );
 extern int is_hwnd_message_class( struct window_class *class );
+extern int get_class_style( struct window_class *class );
 extern atom_t get_class_atom( struct window_class *class );
 extern client_ptr_t get_class_client_ptr( struct window_class *class );
 
@@ -190,6 +192,13 @@ extern void set_process_default_desktop( struct process *process, struct desktop
 extern void close_process_desktop( struct process *process );
 extern void set_thread_default_desktop( struct thread *thread, struct desktop *desktop, obj_handle_t handle );
 extern void release_thread_desktop( struct thread *thread, int close );
+
+/* checks if two rectangles are identical */
+static inline int is_rect_equal( const rectangle_t *rect1, const rectangle_t *rect2 )
+{
+    return (rect1->left == rect2->left && rect1->right == rect2->right &&
+            rect1->top == rect2->top && rect1->bottom == rect2->bottom);
+}
 
 static inline int is_rect_empty( const rectangle_t *rect )
 {

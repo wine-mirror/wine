@@ -141,6 +141,11 @@ int is_hwnd_message_class( struct window_class *class )
     return (!class->local && class->atom == find_global_atom( NULL, &name ));
 }
 
+int get_class_style( struct window_class *class )
+{
+    return class->style;
+}
+
 atom_t get_class_atom( struct window_class *class )
 {
     return class->base_atom;

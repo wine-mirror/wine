@@ -789,6 +789,21 @@ int is_window_transparent( user_handle_t window )
     return (win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT);
 }
 
+static int is_window_using_parent_dc( struct window *win )
+{
+    return (win->style & (WS_POPUP|WS_CHILD)) == WS_CHILD && (get_class_style( win->class ) & CS_PARENTDC) != 0;
+}
+
+static int is_window_composited( struct window *win )
+{
+    return (win->ex_style & WS_EX_COMPOSITED) != 0 && !is_window_using_parent_dc(win);
+}
+
+static int is_parent_composited( struct window *win )
+{
+    return win->parent && is_window_composited( win->parent );
+}
+
 /* check if point is inside the window, and map to window dpi */
 static int is_point_in_window( struct window *win, int *x, int *y, unsigned int dpi )
 {
@@ -1712,12 +1727,23 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
                                      struct region *old_vis_rgn )
 {
     struct region *new_vis_rgn, *exposed_rgn;
+    int is_composited = is_parent_composited( win );
 
     if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return NULL;
 
+    if (is_composited &&
+        is_rect_equal( old_window_rect, &win->window_rect ) &&
+        is_region_equal( old_vis_rgn, new_vis_rgn ))
+    {
+        free_region( new_vis_rgn );
+        return NULL;
+    }
+
     if ((exposed_rgn = create_empty_region()))
     {
-        if (subtract_region( exposed_rgn, new_vis_rgn, old_vis_rgn ) && !is_region_empty( exposed_rgn ))
+        if ((is_composited ? union_region( exposed_rgn, new_vis_rgn, old_vis_rgn )
+                           : subtract_region( exposed_rgn, new_vis_rgn, old_vis_rgn )) &&
+            !is_region_empty( exposed_rgn ))
         {
             /* make it relative to the new client area */
             offset_region( exposed_rgn, win->window_rect.left - win->client_rect.left,
@@ -1736,7 +1762,8 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
         offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
                        win->window_rect.top - old_window_rect->top  );
 
-        if ((win->parent->style & WS_CLIPCHILDREN) ?
+        if (is_composited ? union_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ) :
+            (win->parent->style & WS_CLIPCHILDREN) ?
             subtract_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ) :
             xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
         {

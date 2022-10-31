@@ -684,6 +684,23 @@ int is_region_empty( const struct region *region )
 }
 
 
+/* checks if two regions are identical */
+int is_region_equal( const struct region *region1, const struct region *region2 )
+{
+    int i;
+
+    if (region1->num_rects != region2->num_rects) return 0;
+    if (region1->num_rects == 0) return 1;
+    if (!is_rect_equal( &region1->extents, &region2->extents )) return 0;
+    for (i = 0; i < region1->num_rects; i++)
+    {
+        if (!is_rect_equal( &region1->rects[i], &region2->rects[i] )) return 0;
+    }
+
+    return 1;
+}
+
+
 /* get the extents rect of a region */
 void get_region_extents( const struct region *region, rectangle_t *rect )
 {
