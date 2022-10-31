@@ -1,5 +1,5 @@
 TESTDLL   = mshtml.dll
-IMPORTS   = ole32 oleaut32 wininet user32 urlmon gdi32 advapi32
+IMPORTS   = ole32 oleaut32 shlwapi wininet user32 urlmon gdi32 advapi32
 C_SRCS = \
 	activex.c \
 	dom.c \

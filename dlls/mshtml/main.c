@@ -126,6 +126,109 @@ BSTR charset_string_from_cp(UINT cp)
     return SysAllocString(info.wszWebCharset);
 }
 
+HRESULT get_mime_type_display_name(const WCHAR *content_type, BSTR *ret)
+{
+    /* undocumented */
+    extern BOOL WINAPI GetMIMETypeSubKeyW(LPCWSTR,LPWSTR,DWORD);
+
+    WCHAR buffer[128], ext[128], *str, *progid;
+    DWORD type, len;
+    HKEY key = NULL;
+    LSTATUS status;
+    HRESULT hres;
+    CLSID clsid;
+
+    str = buffer;
+    if(!GetMIMETypeSubKeyW(content_type, buffer, ARRAY_SIZE(buffer))) {
+        len = wcslen(content_type) + 32;
+        for(;;) {
+            if(!(str = heap_alloc(len * sizeof(WCHAR))))
+                return E_OUTOFMEMORY;
+            if(GetMIMETypeSubKeyW(content_type, str, len))
+                break;
+            heap_free(str);
+            len *= 2;
+        }
+    }
+
+    status = RegOpenKeyExW(HKEY_CLASSES_ROOT, str, 0, KEY_QUERY_VALUE, &key);
+    if(str != buffer)
+        heap_free(str);
+    if(status != ERROR_SUCCESS)
+        goto fail;
+
+    len = sizeof(ext);
+    status = RegQueryValueExW(key, L"Extension", NULL, &type, (BYTE*)ext, &len);
+    if(status != ERROR_SUCCESS || type != REG_SZ) {
+        len = sizeof(buffer);
+        status = RegQueryValueExW(key, L"CLSID", NULL, &type, (BYTE*)buffer, &len);
+        if(status != ERROR_SUCCESS || type != REG_SZ || CLSIDFromString(buffer, &clsid) != S_OK)
+            goto fail;
+
+        hres = ProgIDFromCLSID(&clsid, &progid);
+        if(hres == E_OUTOFMEMORY) {
+            RegCloseKey(key);
+            return hres;
+        }
+        if(hres != S_OK)
+            goto fail;
+    }else {
+        progid = ext;
+    }
+
+    len = ARRAY_SIZE(buffer);
+    str = buffer;
+    for(;;) {
+        hres = AssocQueryStringW(ASSOCF_NOTRUNCATE, ASSOCSTR_FRIENDLYDOCNAME, progid, NULL, str, &len);
+        if(hres == S_OK && len)
+            break;
+        if(str != buffer)
+            heap_free(str);
+        if(hres != E_POINTER) {
+            if(progid != ext) {
+                CoTaskMemFree(progid);
+                goto fail;
+            }
+
+            /* Try from CLSID */
+            len = sizeof(buffer);
+            status = RegQueryValueExW(key, L"CLSID", NULL, &type, (BYTE*)buffer, &len);
+            if(status != ERROR_SUCCESS || type != REG_SZ || CLSIDFromString(buffer, &clsid) != S_OK)
+                goto fail;
+
+            hres = ProgIDFromCLSID(&clsid, &progid);
+            if(hres == E_OUTOFMEMORY) {
+                RegCloseKey(key);
+                return hres;
+            }
+            if(hres != S_OK)
+                goto fail;
+
+            len = ARRAY_SIZE(buffer);
+            str = buffer;
+            continue;
+        }
+        str = heap_alloc(len * sizeof(WCHAR));
+    }
+    if(progid != ext)
+        CoTaskMemFree(progid);
+    RegCloseKey(key);
+
+    *ret = SysAllocString(str);
+    if(str != buffer)
+        heap_free(str);
+    return *ret ? S_OK : E_OUTOFMEMORY;
+
+fail:
+    RegCloseKey(key);
+
+    WARN("Did not find MIME in database for %s\n", debugstr_w(content_type));
+
+    /* native seems to return "File" when it doesn't know the content type */
+    *ret = SysAllocString(L"File");
+    return *ret ? S_OK : E_OUTOFMEMORY;
+}
+
 IInternetSecurityManager *get_security_manager(void)
 {
     if(!security_manager) {

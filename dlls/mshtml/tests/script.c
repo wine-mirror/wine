@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "shlwapi.h"
 #include "wininet.h"
 #include "docobj.h"
 #include "dispex.h"
@@ -157,6 +158,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_IS_ENGLISH     0x300009
 #define DISPID_EXTERNAL_LIST_SEP       0x30000A
 #define DISPID_EXTERNAL_TEST_VARS      0x30000B
+#define DISPID_EXTERNAL_GETMIMETYPE    0x30000C
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -198,6 +200,84 @@ static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
     RegCloseKey(hkey);
 
     return res == ERROR_SUCCESS;
+}
+
+static BSTR get_mime_type_display_name(const WCHAR *content_type)
+{
+    WCHAR buffer[128], ext[128], *str, *progid;
+    HKEY key, type_key = NULL;
+    DWORD type, len;
+    LSTATUS status;
+    HRESULT hres;
+    CLSID clsid;
+    BSTR ret;
+
+    status = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"MIME\\Database\\Content Type", 0, KEY_READ, &key);
+    if(status != ERROR_SUCCESS)
+        goto fail;
+
+    status = RegOpenKeyExW(key, content_type, 0, KEY_QUERY_VALUE, &type_key);
+    RegCloseKey(key);
+    if(status != ERROR_SUCCESS)
+        goto fail;
+
+    len = sizeof(ext);
+    status = RegQueryValueExW(type_key, L"Extension", NULL, &type, (BYTE*)ext, &len);
+    if(status != ERROR_SUCCESS || type != REG_SZ) {
+        len = sizeof(buffer);
+        status = RegQueryValueExW(type_key, L"CLSID", NULL, &type, (BYTE*)buffer, &len);
+
+        if(status != ERROR_SUCCESS || type != REG_SZ || CLSIDFromString(buffer, &clsid) != S_OK ||
+           ProgIDFromCLSID(&clsid, &progid) != S_OK)
+            goto fail;
+    }else {
+        /* For some reason w1064v1809 testbot VM uses .htm here, despite .html being set in the database */
+        if(!wcscmp(ext, L".html"))
+            wcscpy(ext, L".htm");
+        progid = ext;
+    }
+
+    len = ARRAY_SIZE(buffer);
+    str = buffer;
+    for(;;) {
+        hres = AssocQueryStringW(ASSOCF_NOTRUNCATE, ASSOCSTR_FRIENDLYDOCNAME, progid, NULL, str, &len);
+        if(hres == S_OK && len)
+            break;
+        if(str != buffer)
+            free(str);
+        if(hres != E_POINTER) {
+            if(progid != ext) {
+                CoTaskMemFree(progid);
+                goto fail;
+            }
+
+            /* Try from CLSID */
+            len = sizeof(buffer);
+            status = RegQueryValueExW(type_key, L"CLSID", NULL, &type, (BYTE*)buffer, &len);
+
+            if(status != ERROR_SUCCESS || type != REG_SZ || CLSIDFromString(buffer, &clsid) != S_OK ||
+               ProgIDFromCLSID(&clsid, &progid) != S_OK)
+                goto fail;
+
+            len = ARRAY_SIZE(buffer);
+            str = buffer;
+            continue;
+        }
+        str = malloc(len * sizeof(WCHAR));
+    }
+    if(progid != ext)
+        CoTaskMemFree(progid);
+    RegCloseKey(type_key);
+
+    ret = SysAllocString(str);
+    if(str != buffer)
+        free(str);
+    return ret;
+
+fail:
+    RegCloseKey(type_key);
+    trace("Did not find MIME in database for %s\n", debugstr_w(content_type));
+    return SysAllocString(L"File");
 }
 
 static void test_script_vars(unsigned argc, VARIANTARG *argv)
@@ -715,6 +795,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         *pid = DISPID_EXTERNAL_TEST_VARS;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"getExpectedMimeType")) {
+        *pid = DISPID_EXTERNAL_GETMIMETYPE;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -946,6 +1030,20 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
         ok(pei != NULL, "pei == NULL\n");
         test_script_vars(pdp->cArgs, pdp->rgvarg);
+        return S_OK;
+
+    case DISPID_EXTERNAL_GETMIMETYPE:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+        V_BSTR(pvarRes) = get_mime_type_display_name(V_BSTR(pdp->rgvarg));
+        V_VT(pvarRes) = V_BSTR(pvarRes) ? VT_BSTR : VT_NULL;
         return S_OK;
 
     default:

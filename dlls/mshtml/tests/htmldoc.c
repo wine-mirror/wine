@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "initguid.h"
 #include "ole2.h"
+#include "shlwapi.h"
 #include "mshtml.h"
 #include "docobj.h"
 #include "docobjectservice.h"
@@ -447,6 +448,84 @@ static void _test_current_url(unsigned line, IUnknown *unk, const WCHAR *exurl)
     SysFreeString(url);
 
     IHTMLDocument2_Release(doc);
+}
+
+static BSTR get_mime_type_display_name(const WCHAR *content_type)
+{
+    WCHAR buffer[128], ext[128], *str, *progid;
+    HKEY key, type_key = NULL;
+    DWORD type, len;
+    LSTATUS status;
+    HRESULT hres;
+    CLSID clsid;
+    BSTR ret;
+
+    status = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"MIME\\Database\\Content Type", 0, KEY_READ, &key);
+    if(status != ERROR_SUCCESS)
+        goto fail;
+
+    status = RegOpenKeyExW(key, content_type, 0, KEY_QUERY_VALUE, &type_key);
+    RegCloseKey(key);
+    if(status != ERROR_SUCCESS)
+        goto fail;
+
+    len = sizeof(ext);
+    status = RegQueryValueExW(type_key, L"Extension", NULL, &type, (BYTE*)ext, &len);
+    if(status != ERROR_SUCCESS || type != REG_SZ) {
+        len = sizeof(buffer);
+        status = RegQueryValueExW(type_key, L"CLSID", NULL, &type, (BYTE*)buffer, &len);
+
+        if(status != ERROR_SUCCESS || type != REG_SZ || CLSIDFromString(buffer, &clsid) != S_OK ||
+           ProgIDFromCLSID(&clsid, &progid) != S_OK)
+            goto fail;
+    }else {
+        /* For some reason w1064v1809 testbot VM uses .htm here, despite .html being set in the database */
+        if(!wcscmp(ext, L".html"))
+            wcscpy(ext, L".htm");
+        progid = ext;
+    }
+
+    len = ARRAY_SIZE(buffer);
+    str = buffer;
+    for(;;) {
+        hres = AssocQueryStringW(ASSOCF_NOTRUNCATE, ASSOCSTR_FRIENDLYDOCNAME, progid, NULL, str, &len);
+        if(hres == S_OK && len)
+            break;
+        if(str != buffer)
+            free(str);
+        if(hres != E_POINTER) {
+            if(progid != ext) {
+                CoTaskMemFree(progid);
+                goto fail;
+            }
+
+            /* Try from CLSID */
+            len = sizeof(buffer);
+            status = RegQueryValueExW(type_key, L"CLSID", NULL, &type, (BYTE*)buffer, &len);
+
+            if(status != ERROR_SUCCESS || type != REG_SZ || CLSIDFromString(buffer, &clsid) != S_OK ||
+               ProgIDFromCLSID(&clsid, &progid) != S_OK)
+                goto fail;
+
+            len = ARRAY_SIZE(buffer);
+            str = buffer;
+            continue;
+        }
+        str = malloc(len * sizeof(WCHAR));
+    }
+    if(progid != ext)
+        CoTaskMemFree(progid);
+    RegCloseKey(type_key);
+
+    ret = SysAllocString(str);
+    if(str != buffer)
+        free(str);
+    return ret;
+
+fail:
+    RegCloseKey(type_key);
+    trace("Did not find MIME in database for %s\n", debugstr_w(content_type));
+    return SysAllocString(L"File");
 }
 
 DEFINE_GUID(IID_External_unk,0x30510406,0x98B5,0x11CF,0xBB,0x82,0x00,0xAA,0x00,0xBD,0xCE,0x0B);
@@ -7680,6 +7759,25 @@ static void test_QueryInterface(IHTMLDocument2 *htmldoc)
     IUnknown_Release(qi);
 }
 
+static void test_mimeType(IHTMLDocument2 *doc, const WCHAR *content_type)
+{
+    BSTR mime_type = (BSTR)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_mimeType(doc, &mime_type);
+    if(content_type) {
+        BSTR display_name = get_mime_type_display_name(content_type);
+        ok(hres == S_OK, "get_mimeType returned %08lx\n", hres);
+        ok(!wcscmp(mime_type, display_name), "mime type = %s, expected %s\n",
+            debugstr_w(mime_type), debugstr_w(display_name));
+        SysFreeString(display_name);
+    }else {
+        ok(hres == S_OK || broken(hres == E_FAIL), "get_mimeType returned %08lx\n", hres);
+        ok(!mime_type || !mime_type[0], "mime type = %s\n", debugstr_w(mime_type));
+    }
+    SysFreeString(mime_type);
+}
+
 static void init_test(enum load_state_t ls) {
     doc_unk = NULL;
     doc_hwnd = last_hwnd = NULL;
@@ -7733,6 +7831,7 @@ static void test_HTMLDocument(BOOL do_load, BOOL mime)
         test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL, FALSE);
         test_elem_from_point(doc);
     }
+    test_mimeType(doc, do_load ? L"text/html" : NULL);
 
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
     test_OleCommandTarget_fail(doc);
@@ -7844,6 +7943,7 @@ static void test_MHTMLDocument(void)
     set_custom_uihandler(doc, &CustomDocHostUIHandler);
     test_GetCurMoniker((IUnknown*)doc, NULL, L"mhtml:winetest:doc", FALSE);
     test_download(0);
+    test_mimeType(doc, L"text/html");
 
     test_exec_onunload(doc);
     test_UIDeactivate();

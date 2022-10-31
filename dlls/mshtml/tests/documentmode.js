@@ -311,6 +311,7 @@ sync_test("doc_props", function() {
     }
 
     var v = document.documentMode;
+    ok(document.mimeType === external.getExpectedMimeType("text/html"), "mimeType = " + document.mimeType);
 
     test_exposed("onstorage", v < 9);
     test_exposed("textContent", v >= 9);
