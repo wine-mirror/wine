@@ -955,6 +955,16 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     case VT_NULL:
         hres = V_VT(src) == VT_NULL ? S_OK : E_NOTIMPL;
         break;
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        if(V_VT(src) != vt)
+            hres = E_NOTIMPL;
+        else {
+            IUnknown_AddRef(V_UNKNOWN(src));
+            V_UNKNOWN(dst) = V_UNKNOWN(src);
+            hres = S_OK;
+        }
+        break;
     default:
         FIXME("vt %d not implemented\n", vt);
         hres = E_NOTIMPL;

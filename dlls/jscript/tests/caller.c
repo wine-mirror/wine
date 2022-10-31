@@ -97,14 +97,14 @@ static void _call_change_type(unsigned line, IVariantChangeType *change_type, VA
     HRESULT hres;
 
     VariantInit(dst);
-    if(V_VT(src) == VT_DISPATCH && vt != VT_BOOL) {
+    if(V_VT(src) != vt && vt != VT_BOOL && (V_VT(src) == VT_DISPATCH || V_VT(src) == VT_UNKNOWN)) {
         SET_EXPECT(OnEnterScript);
         SET_EXPECT(OnLeaveScript);
     }
     hres = IVariantChangeType_ChangeType(change_type, dst, src, 0, vt);
     ok_(__FILE__,line)(hres == S_OK, "ChangeType(%d) failed: %08lx\n", vt, hres);
     ok_(__FILE__,line)(V_VT(dst) == vt, "V_VT(dst) = %d\n", V_VT(dst));
-    if(V_VT(src) == VT_DISPATCH && vt != VT_BOOL) {
+    if(V_VT(src) != vt && vt != VT_BOOL && (V_VT(src) == VT_DISPATCH || V_VT(src) == VT_UNKNOWN)) {
         CHECK_CALLED(OnEnterScript);
         CHECK_CALLED(OnLeaveScript);
     }
@@ -118,7 +118,7 @@ static void _change_type_fail(unsigned line, IVariantChangeType *change_type, VA
 
     V_VT(&v) = VT_EMPTY;
     hres = IVariantChangeType_ChangeType(change_type, &v, src, 0, vt);
-    ok_(__FILE__,line)(hres == exhres, "ChangeType failed: %08lx, expected %08lx\n", hres, exhres);
+    ok_(__FILE__,line)(hres == exhres, "ChangeType failed: %08lx, expected %08lx [%d]\n", hres, exhres, V_VT(src));
 }
 
 static void test_change_type(IVariantChangeType *change_type, VARIANT *src, const conv_results_t *ex)
@@ -158,6 +158,20 @@ static void test_change_type(IVariantChangeType *change_type, VARIANT *src, cons
 
     call_change_type(change_type, &v, src, VT_I2);
     ok(V_I2(&v) == (INT16)ex->int_result, "V_I2(v) = %d, expected %d\n", V_I2(&v), ex->int_result);
+
+    if(V_VT(src) != VT_UNKNOWN)
+        change_type_fail(change_type, src, VT_UNKNOWN, E_NOTIMPL);
+    else {
+        call_change_type(change_type, &v, src, VT_UNKNOWN);
+        ok(V_UNKNOWN(&v) == V_UNKNOWN(src), "V_UNKNOWN(v) != V_UNKNOWN(src)\n");
+    }
+
+    if(V_VT(src) != VT_DISPATCH)
+        change_type_fail(change_type, src, VT_DISPATCH, E_NOTIMPL);
+    else {
+        call_change_type(change_type, &v, src, VT_DISPATCH);
+        ok(V_DISPATCH(&v) == V_DISPATCH(src), "V_DISPATCH(v) != V_DISPATCH(src)\n");
+    }
 }
 
 static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_disp)
@@ -199,6 +213,10 @@ static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_di
 
     V_VT(&v) = VT_NULL;
     test_change_type(change_type, &v, &null_results);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)obj_disp;
+    test_change_type(change_type, &v, &obj_results);
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = obj_disp;
