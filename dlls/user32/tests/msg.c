@@ -9302,8 +9302,6 @@ static void subtest_swp_paint_regions_( int line, int wrap_toplevel, LPCSTR pare
             }
             else
             {
-                todo_wine_if( !EqualRect( &rect_old, &rect_new ) &&
-                              (extest->style & WS_CLIPCHILDREN) == 0 && !is_composited )
                 ok( !!rgn_ok, "Parent update region shall match expected region\n" );
             }
 
@@ -9365,8 +9363,6 @@ static void subtest_swp_paint_regions_( int line, int wrap_toplevel, LPCSTR pare
             }
             else
             {
-                todo_wine_if( !EqualRect( &rect_old, &rect_new ) &&
-                              (extest->style & WS_CLIPCHILDREN) == 0 && !is_composited )
                 ok( !!rgn_ok, "Child update region shall match expected region\n" );
             }
 
