@@ -293,7 +293,7 @@ static int ipv4addr_from_v6( union unix_sockaddr *v4addr, const struct sockaddr_
     v4addr->in.sin_port = in6->sin6_port;
     if (IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
     {
-        v4addr->in.sin_addr.s_addr = INADDR_ANY;
+        v4addr->in.sin_addr.s_addr = htonl( INADDR_ANY );
         return 1;
     }
     if (IN6_IS_ADDR_LOOPBACK(&in6->sin6_addr))
