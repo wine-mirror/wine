@@ -667,7 +667,6 @@ libwine_soversion=`expr $libwine_version : '\([[0-9]]*\)\..*'`
 
 case $host_os in
   cygwin*|mingw32*)
-    AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     LIBEXT="dll"
     EXTRACFLAGS="-D__WINE_PE_BUILD"
     dnl Disable stdcall fixups to catch prototype mismatches

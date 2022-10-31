@@ -157,7 +157,6 @@ static const char *ar;
 static const char *ranlib;
 static const char *rsvg;
 static const char *icotool;
-static const char *dlltool;
 static const char *msgfmt;
 static const char *ln_s;
 static const char *sed_cmd;
@@ -4480,7 +4479,6 @@ int main( int argc, char *argv[] )
     ranlib             = get_expanded_make_variable( top_makefile, "RANLIB" );
     rsvg               = get_expanded_make_variable( top_makefile, "RSVG" );
     icotool            = get_expanded_make_variable( top_makefile, "ICOTOOL" );
-    dlltool            = get_expanded_make_variable( top_makefile, "DLLTOOL" );
     msgfmt             = get_expanded_make_variable( top_makefile, "MSGFMT" );
     sed_cmd            = get_expanded_make_variable( top_makefile, "SED_CMD" );
     ln_s               = get_expanded_make_variable( top_makefile, "LN_S" );
