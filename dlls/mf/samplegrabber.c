@@ -83,6 +83,7 @@ struct sample_grabber
     IUnknown *cancel_key;
     UINT32 ignore_clock;
     UINT64 sample_time_offset;
+    float rate;
     enum sink_state state;
     CRITICAL_SECTION cs;
 };
@@ -1138,7 +1139,13 @@ static HRESULT sample_grabber_set_state(struct sample_grabber *grabber, enum sin
             }
             do_callback = state != grabber->state || state != SINK_STATE_PAUSED;
             if (do_callback)
+            {
+                if (grabber->rate == 0.0f && state == SINK_STATE_RUNNING)
+                    IMFStreamSink_QueueEvent(&grabber->IMFStreamSink_iface, MEStreamSinkScrubSampleComplete,
+                            &GUID_NULL, S_OK, NULL);
+
                 IMFStreamSink_QueueEvent(&grabber->IMFStreamSink_iface, events[state], &GUID_NULL, S_OK, NULL);
+            }
             grabber->state = state;
         }
     }
@@ -1212,7 +1219,10 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink
     if (grabber->is_shut_down)
         hr = MF_E_SHUTDOWN;
     else
+    {
         IMFStreamSink_QueueEvent(&grabber->IMFStreamSink_iface, MEStreamSinkRateChanged, &GUID_NULL, S_OK, NULL);
+        grabber->rate = rate;
+    }
 
     LeaveCriticalSection(&grabber->cs);
 
@@ -1433,6 +1443,7 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     object->IMFMediaTypeHandler_iface.lpVtbl = &sample_grabber_stream_type_handler_vtbl;
     object->timer_callback.lpVtbl = &sample_grabber_stream_timer_callback_vtbl;
     object->refcount = 1;
+    object->rate = 1.0f;
     if (FAILED(IMFSampleGrabberSinkCallback_QueryInterface(context->callback, &IID_IMFSampleGrabberSinkCallback2,
             (void **)&object->callback2)))
     {
