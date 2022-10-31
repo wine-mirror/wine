@@ -2013,9 +2013,10 @@ static void test_set_getsockopt(void)
     }
 }
 
-static void test_so_reuseaddr(void)
+static void test_reuseaddr(void)
 {
     static struct sockaddr_in6 saddr_in6_any, saddr_in6_loopback;
+    static struct sockaddr_in6 saddr_in6_any_v4mapped, saddr_in6_loopback_v4mapped;
     static struct sockaddr_in saddr_in_any, saddr_in_loopback;
 
     static const struct
@@ -2030,10 +2031,132 @@ static void test_so_reuseaddr(void)
         { AF_INET, (struct sockaddr *)&saddr_in_any, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_any) },
         { AF_INET6, (struct sockaddr *)&saddr_in6_any, (struct sockaddr *)&saddr_in6_loopback, sizeof(saddr_in6_any) },
     };
-    unsigned int rc, reuse;
+    static const struct
+    {
+        struct
+        {
+            int domain;
+            struct sockaddr *addr;
+            socklen_t addrlen;
+            BOOL exclusive;
+        }
+        s[2];
+        int error;
+        BOOL todo;
+    }
+    tests_exclusive[] =
+    {
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, }},
+            WSAEACCES, TRUE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, }},
+            WSAEACCES, TRUE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, }},
+            NOERROR,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, }},
+            WSAEACCES, TRUE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
+            NOERROR,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
+            WSAEADDRINUSE, TRUE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, },
+            { AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), TRUE, }},
+            WSAEADDRINUSE, TRUE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback, sizeof(saddr_in6_loopback), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
+            NOERROR,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback, sizeof(saddr_in6_loopback), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, }},
+            NOERROR,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback_v4mapped, sizeof(saddr_in6_loopback_v4mapped), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
+            WSAEADDRINUSE, TRUE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
+            WSAEACCES, TRUE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
+            NOERROR, TRUE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), TRUE, }},
+            WSAEADDRINUSE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
+            WSAEADDRINUSE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_any, sizeof(saddr_in6_any), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
+            NOERROR, TRUE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_any_v4mapped, sizeof(saddr_in6_any_v4mapped), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_any, sizeof(saddr_in_any), FALSE, }},
+            WSAEADDRINUSE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback_v4mapped, sizeof(saddr_in6_loopback_v4mapped), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, }},
+            WSAEADDRINUSE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, },
+            { AF_INET6, (struct sockaddr *)&saddr_in6_loopback_v4mapped, sizeof(saddr_in6_loopback_v4mapped), FALSE, }},
+            WSAEADDRINUSE,
+        },
+        {
+            {{ AF_INET6, (struct sockaddr *)&saddr_in6_loopback, sizeof(saddr_in6_loopback), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, }},
+            NOERROR,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, }},
+            WSAEADDRINUSE,
+        },
+        {
+            {{ AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), FALSE, },
+            { AF_INET, (struct sockaddr *)&saddr_in_loopback, sizeof(saddr_in_loopback), TRUE, }},
+            WSAEADDRINUSE,
+        },
+    };
+
+    unsigned int rc, reuse, value;
     struct sockaddr saddr;
     SOCKET s1, s2, s3, s4;
-    unsigned int i;
+    unsigned int i, j;
     int size;
 
     saddr_in_any.sin_family = AF_INET;
@@ -2047,6 +2170,14 @@ static void test_so_reuseaddr(void)
     memset( &saddr_in6_any.sin6_addr, 0, sizeof(saddr_in6_any.sin6_addr) );
     saddr_in6_loopback = saddr_in6_any;
     inet_pton(AF_INET6, "::1", &saddr_in6_loopback.sin6_addr);
+
+    saddr_in6_loopback_v4mapped = saddr_in6_any;
+    rc = inet_pton(AF_INET6, "::ffff:127.0.0.1", &saddr_in6_loopback_v4mapped.sin6_addr);
+    ok(rc, "got error %d.\n", WSAGetLastError());
+
+    saddr_in6_any_v4mapped = saddr_in6_any;
+    rc = inet_pton(AF_INET6, "::ffff:0.0.0.0", &saddr_in6_any_v4mapped.sin6_addr);
+    ok(rc, "got error %d.\n", WSAGetLastError());
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -2208,6 +2339,75 @@ static void test_so_reuseaddr(void)
         closesocket(s1);
         closesocket(s2);
 
+        winetest_pop_context();
+    }
+
+    /* SO_REUSEADDR and SO_EXCLUSIVEADDRUSE are mutually exclusive. */
+    s1 = socket(AF_INET, SOCK_STREAM, 0);
+    ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+    value = 1;
+    rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(value));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    value = 1;
+    rc = setsockopt(s1, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&value, sizeof(value));
+    todo_wine ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL, "got rc %d, error %d.\n", rc, WSAGetLastError());
+
+    value = 0;
+    rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(value));
+
+    value = 1;
+    rc = setsockopt(s1, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&value, sizeof(value));
+    ok(!rc, "got error %d.\n", WSAGetLastError());
+
+    value = 1;
+    rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(value));
+    todo_wine ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL, "got rc %d, error %d.\n", rc, WSAGetLastError());
+
+    closesocket(s1);
+
+    /* Test SO_EXCLUSIVEADDRUSE. */
+    for (i = 0; i < ARRAY_SIZE(tests_exclusive); ++i)
+    {
+        SOCKET s[2];
+
+        winetest_push_context("test %u", i);
+
+        for (j = 0; j < 2; ++j)
+        {
+            s[j] = socket(tests_exclusive[i].s[j].domain, SOCK_STREAM, 0);
+            ok(s[j] != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+            if (tests_exclusive[i].s[j].exclusive)
+            {
+                value = 1;
+                rc = setsockopt(s[j], SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&value, sizeof(value));
+                ok(!rc, "got error %d.\n", WSAGetLastError());
+            }
+            if (tests_exclusive[i].s[j].domain == AF_INET6)
+            {
+                value = 0;
+                rc = setsockopt(s[j], IPPROTO_IPV6, IPV6_V6ONLY, (char*)&value, sizeof(value));
+                ok(!rc, "got error %d.\n", WSAGetLastError());
+            }
+        }
+        rc = bind(s[0], tests_exclusive[i].s[0].addr, tests_exclusive[i].s[0].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        rc = bind(s[1], tests_exclusive[i].s[1].addr, tests_exclusive[i].s[1].addrlen);
+
+        todo_wine_if(tests_exclusive[i].todo)
+        {
+        if (tests_exclusive[i].error)
+            ok(rc == SOCKET_ERROR && WSAGetLastError() == tests_exclusive[i].error,
+                    "got rc %d, error %d, expected error %d.\n", rc, WSAGetLastError(), tests_exclusive[i].error);
+        else
+            ok(!rc, "got error %d.\n", WSAGetLastError());
+        }
+
+        closesocket(s[0]);
+        closesocket(s[1]);
         winetest_pop_context();
     }
 }
@@ -13389,7 +13589,7 @@ START_TEST( sock )
     Init();
 
     test_set_getsockopt();
-    test_so_reuseaddr();
+    test_reuseaddr();
     test_ip_pktinfo();
     test_ipv4_cmsg();
     test_ipv6_cmsg();
