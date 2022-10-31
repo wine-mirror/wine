@@ -308,7 +308,7 @@ static struct display_mode_descriptor* create_original_display_mode_descriptor(C
 
     snprintf(display_key, sizeof(display_key), display_key_format, CGDisplayUnitNumber(displayID));
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver\Initial Display Mode\Display 0xnnnnnnnn */
-    if (!(hkey = reg_open_key(NULL, nameW, asciiz_to_unicode(nameW, display_key))))
+    if (!(hkey = reg_open_key(NULL, nameW, asciiz_to_unicode(nameW, display_key) - sizeof(WCHAR))))
         return NULL;
 
     desc = malloc(sizeof(*desc));
