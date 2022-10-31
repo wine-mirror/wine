@@ -296,11 +296,6 @@ static int ipv4addr_from_v6( union unix_sockaddr *v4addr, const struct sockaddr_
         v4addr->in.sin_addr.s_addr = htonl( INADDR_ANY );
         return 1;
     }
-    if (IN6_IS_ADDR_LOOPBACK(&in6->sin6_addr))
-    {
-        v4addr->in.sin_addr.s_addr = INADDR_LOOPBACK;
-        return 1;
-    }
     if (IN6_IS_ADDR_V4COMPAT(&in6->sin6_addr) || IN6_IS_ADDR_V4MAPPED(&in6->sin6_addr))
     {
         memcpy( &v4addr->in.sin_addr.s_addr, &in6->sin6_addr.s6_addr[12], sizeof(v4addr->in.sin_addr.s_addr) );
