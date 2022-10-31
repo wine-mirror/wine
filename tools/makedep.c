@@ -3065,14 +3065,15 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
 static void output_source_spec( struct makefile *make, struct incl_file *source, const char *obj )
 {
     struct strarray imports = get_expanded_file_local_var( make, obj, "IMPORTS" );
-    struct strarray dll_flags = get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" );
+    struct strarray dll_flags = empty_strarray;
     struct strarray all_libs = empty_strarray, dep_libs = empty_strarray;
     struct strarray default_imports = empty_strarray;
     const char *dll_name, *obj_name, *res_name, *output_file, *debug_file;
     unsigned int arch = make->is_cross ? 1 : 0;
 
     if (!imports.count) imports = make->imports;
-    if (!dll_flags.count) dll_flags = make->extradllflags;
+    strarray_addall( &dll_flags, make->extradllflags );
+    strarray_addall( &dll_flags, get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" ));
     if (!strarray_exists( &dll_flags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
 
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ) );
