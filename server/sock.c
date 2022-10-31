@@ -335,7 +335,11 @@ static int check_addr_usage( struct sock *sock, const union unix_sockaddr *addr,
     if ((entry = rb_get( &bound_addresses_tree, &search_addr )))
     {
         bound_addr = WINE_RB_ENTRY_VALUE(entry, struct bound_addr, entry);
-        if (bound_addr->reuse_count == -1 || !sock->reuseaddr) return 1;
+        if (bound_addr->reuse_count == -1 || !sock->reuseaddr)
+        {
+            set_error( sock->reuseaddr ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
+            return 1;
+        }
     }
 
     if (sock->family != WS_AF_INET6 || v6only) return 0;
@@ -344,7 +348,11 @@ static int check_addr_usage( struct sock *sock, const union unix_sockaddr *addr,
     if ((entry = rb_get( &bound_addresses_tree, &search_addr )))
     {
         bound_addr = WINE_RB_ENTRY_VALUE(entry, struct bound_addr, entry);
-        if (bound_addr->reuse_count == -1 || !sock->reuseaddr) return 1;
+        if (bound_addr->reuse_count == -1 || !sock->reuseaddr)
+        {
+            set_error( sock->reuseaddr ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
+            return 1;
+        }
     }
     return 0;
 }
@@ -2895,10 +2903,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 #endif
 
         if (check_addr_usage( sock, &bind_addr, v6only ))
-        {
-            set_error( sock->reuseaddr ? STATUS_ACCESS_DENIED : STATUS_SHARING_VIOLATION );
             return;
-        }
 
         if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
         {
