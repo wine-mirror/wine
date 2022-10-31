@@ -2353,7 +2353,7 @@ static void test_reuseaddr(void)
 
     value = 1;
     rc = setsockopt(s1, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&value, sizeof(value));
-    todo_wine ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL, "got rc %d, error %d.\n", rc, WSAGetLastError());
+    ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL, "got rc %d, error %d.\n", rc, WSAGetLastError());
 
     value = 0;
     rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(value));
@@ -2364,7 +2364,7 @@ static void test_reuseaddr(void)
 
     value = 1;
     rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&value, sizeof(value));
-    todo_wine ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL, "got rc %d, error %d.\n", rc, WSAGetLastError());
+    ok(rc == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL, "got rc %d, error %d.\n", rc, WSAGetLastError());
 
     closesocket(s1);
 

@@ -3091,6 +3091,13 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
 
         reuse = *(int *)get_req_data();
+
+        if (reuse && sock->exclusiveaddruse)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+
         if (is_tcp_socket( sock ))
             ret = 0;
         else
@@ -3116,6 +3123,11 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
 
         exclusive = *(int *)get_req_data();
+        if (exclusive && sock->reuseaddr)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
         sock->exclusiveaddruse = !!exclusive;
         return;
     }
