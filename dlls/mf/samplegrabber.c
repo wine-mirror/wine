@@ -1203,10 +1203,23 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
 {
     struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
 
-    return IMFSampleGrabberSinkCallback_OnClockSetRate(sample_grabber_get_callback(grabber), systime, rate);
+    EnterCriticalSection(&grabber->cs);
+
+    if (grabber->is_shut_down)
+        hr = MF_E_SHUTDOWN;
+    else
+        IMFStreamSink_QueueEvent(&grabber->IMFStreamSink_iface, MEStreamSinkRateChanged, &GUID_NULL, S_OK, NULL);
+
+    LeaveCriticalSection(&grabber->cs);
+
+    if (SUCCEEDED(hr))
+        hr = IMFSampleGrabberSinkCallback_OnClockSetRate(sample_grabber_get_callback(grabber), systime, rate);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_events_QueryInterface(IMFMediaEventGenerator *iface, REFIID riid, void **obj)
