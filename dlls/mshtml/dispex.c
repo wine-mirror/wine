@@ -1072,7 +1072,8 @@ HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *ca
         if(SUCCEEDED(hres)) {
             hres = IVariantChangeType_ChangeType(change_type, dst, src, LOCALE_NEUTRAL, vt);
             IVariantChangeType_Release(change_type);
-            return hres;
+            if(SUCCEEDED(hres))
+                return S_OK;
         }
     }
 
@@ -1081,6 +1082,14 @@ HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *ca
         if(V_VT(src) == VT_BSTR) {
             V_VT(dst) = VT_BOOL;
             V_BOOL(dst) = variant_bool(V_BSTR(src) && *V_BSTR(src));
+            return S_OK;
+        }
+        break;
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        if(V_VT(src) == VT_EMPTY || V_VT(src) == VT_NULL) {
+            V_VT(dst) = vt;
+            V_DISPATCH(dst) = NULL;
             return S_OK;
         }
         break;

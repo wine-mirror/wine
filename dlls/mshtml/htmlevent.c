@@ -3870,6 +3870,11 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
     event_listener_t *listener;
     eventid_t eid;
 
+    if(!disp) {
+        *res = VARIANT_FALSE;
+        return S_OK;
+    }
+
     eid = attr_to_eid(name);
     if(eid == EVENTID_LAST) {
         WARN("Unknown event\n");

@@ -135,7 +135,8 @@ DEFINE_EXPECT(external_success);
 DEFINE_EXPECT(QS_VariantConversion);
 DEFINE_EXPECT(QS_IActiveScriptSite);
 DEFINE_EXPECT(QS_GetCaller);
-DEFINE_EXPECT(ChangeType);
+DEFINE_EXPECT(ChangeType_bstr);
+DEFINE_EXPECT(ChangeType_dispatch);
 DEFINE_EXPECT(GetTypeInfo);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
@@ -364,18 +365,29 @@ static ULONG WINAPI VariantChangeType_Release(IVariantChangeType *iface)
 
 static HRESULT WINAPI VariantChangeType_ChangeType(IVariantChangeType *iface, VARIANT *dst, VARIANT *src, LCID lcid, VARTYPE vt)
 {
-    CHECK_EXPECT(ChangeType);
-
     ok(dst != NULL, "dst = NULL\n");
     ok(V_VT(dst) == VT_EMPTY, "V_VT(dst) = %d\n", V_VT(dst));
     ok(src != NULL, "src = NULL\n");
-    ok(V_VT(src) == VT_I4, "V_VT(src) = %d\n", V_VT(src));
-    ok(V_I4(src) == 0xf0f0f0, "V_I4(src) = %lx\n", V_I4(src));
     ok(lcid == LOCALE_NEUTRAL, "lcid = %ld\n", lcid);
-    ok(vt == VT_BSTR, "vt = %d\n", vt);
 
-    V_VT(dst) = VT_BSTR;
-    V_BSTR(dst) = SysAllocString(L"red");
+    switch(vt) {
+    case VT_BSTR:
+        CHECK_EXPECT(ChangeType_bstr);
+        ok(V_VT(src) == VT_I4, "V_VT(src) = %d\n", V_VT(src));
+        ok(V_I4(src) == 0xf0f0f0, "V_I4(src) = %lx\n", V_I4(src));
+        V_VT(dst) = VT_BSTR;
+        V_BSTR(dst) = SysAllocString(L"red");
+        break;
+    case VT_DISPATCH:
+        CHECK_EXPECT(ChangeType_dispatch);
+        ok(V_VT(src) == VT_NULL, "V_VT(src) = %d\n", V_VT(src));
+        /* native jscript returns E_NOTIMPL, use a "valid" error to test that it doesn't matter */
+        return E_OUTOFMEMORY;
+    default:
+        ok(0, "unexpected vt %d\n", vt);
+        return E_NOTIMPL;
+    }
+
     return S_OK;
 }
 
@@ -2292,10 +2304,13 @@ static void test_global_id(void)
 
 static void test_arg_conv(IHTMLWindow2 *window)
 {
+    DISPPARAMS dp = { 0 };
     IHTMLDocument2 *doc;
     IDispatchEx *dispex;
     IHTMLElement *elem;
-    VARIANT v;
+    VARIANT v, args[2];
+    DISPID id;
+    BSTR bstr;
     HRESULT hres;
 
     hres = IHTMLWindow2_get_document(window, &doc);
@@ -2310,20 +2325,60 @@ static void test_arg_conv(IHTMLWindow2 *window)
     ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
 
     SET_EXPECT(QS_VariantConversion);
-    SET_EXPECT(ChangeType);
+    SET_EXPECT(ChangeType_bstr);
     V_VT(&v) = VT_I4;
     V_I4(&v) = 0xf0f0f0;
     hres = dispex_propput(dispex, DISPID_IHTMLBODYELEMENT_BACKGROUND, 0, &v, &caller_sp);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     CHECK_CALLED(QS_VariantConversion);
-    CHECK_CALLED(ChangeType);
+    CHECK_CALLED(ChangeType_bstr);
 
     V_VT(&v) = VT_EMPTY;
     hres = dispex_propget(dispex, DISPID_IHTMLBODYELEMENT_BGCOLOR, &v, &caller_sp);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(&var) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    IDispatchEx_Release(dispex);
 
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+
+    SET_EXPECT(GetScriptDispatch);
+    bstr = SysAllocString(L"attachEvent");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    CHECK_CALLED(GetScriptDispatch);
+    SysFreeString(bstr);
+
+    SET_EXPECT(QS_VariantConversion);
+    SET_EXPECT(ChangeType_dispatch);
+    dp.cArgs = 2;
+    dp.rgvarg = args;
+    V_VT(&args[1]) = VT_BSTR;
+    V_BSTR(&args[1]) = SysAllocString(L"onload");
+    V_VT(&args[0]) = VT_NULL;
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, &v, NULL, &caller_sp);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(var) = %d\n", V_VT(&v));
+    ok(V_BOOL(&v) == VARIANT_FALSE, "V_BOOL(var) = %d\n", V_BOOL(&v));
+    CHECK_CALLED(QS_VariantConversion);
+    CHECK_CALLED(ChangeType_dispatch);
+
+    SET_EXPECT(GetScriptDispatch);
+    bstr = SysAllocString(L"detachEvent");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    CHECK_CALLED(GetScriptDispatch);
+    SysFreeString(bstr);
+
+    SET_EXPECT(QS_VariantConversion);
+    SET_EXPECT(ChangeType_dispatch);
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, &caller_sp);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    CHECK_CALLED(QS_VariantConversion);
+    CHECK_CALLED(ChangeType_dispatch);
+
+    SysFreeString(V_BSTR(&args[1]));
     IDispatchEx_Release(dispex);
 }
 
