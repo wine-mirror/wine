@@ -267,24 +267,24 @@ static int is_tcp_socket( struct sock *sock )
 static int addr_compare( const void *key, const struct wine_rb_entry *entry )
 {
     const struct bound_addr *bound_addr = RB_ENTRY_VALUE(entry, struct bound_addr, entry);
-    const union unix_sockaddr *addr = key;
+    const struct bound_addr *addr = key;
 
-    if (addr->addr.sa_family != bound_addr->addr.addr.sa_family)
-        return addr->addr.sa_family < bound_addr->addr.addr.sa_family ? -1 : 1;
+    if (addr->addr.addr.sa_family != bound_addr->addr.addr.sa_family)
+        return addr->addr.addr.sa_family < bound_addr->addr.addr.sa_family ? -1 : 1;
 
-    if (addr->addr.sa_family == AF_INET)
+    if (addr->addr.addr.sa_family == AF_INET)
     {
-        if (addr->in.sin_port != bound_addr->addr.in.sin_port)
-            return addr->in.sin_port < bound_addr->addr.in.sin_port ? -1 : 1;
-        if (addr->in.sin_addr.s_addr == bound_addr->addr.in.sin_addr.s_addr)
+        if (addr->addr.in.sin_port != bound_addr->addr.in.sin_port)
+            return addr->addr.in.sin_port < bound_addr->addr.in.sin_port ? -1 : 1;
+        if (addr->addr.in.sin_addr.s_addr == bound_addr->addr.in.sin_addr.s_addr)
             return 0;
-        return addr->in.sin_addr.s_addr < bound_addr->addr.in.sin_addr.s_addr ? -1 : 1;
+        return addr->addr.in.sin_addr.s_addr < bound_addr->addr.in.sin_addr.s_addr ? -1 : 1;
     }
 
-    assert( addr->addr.sa_family == AF_INET6 );
-    if (addr->in6.sin6_port != bound_addr->addr.in6.sin6_port)
-        return addr->in6.sin6_port < bound_addr->addr.in6.sin6_port ? -1 : 1;
-    return memcmp( &addr->in6.sin6_addr, &bound_addr->addr.in6.sin6_addr, sizeof(addr->in6.sin6_addr) );
+    assert( addr->addr.addr.sa_family == AF_INET6 );
+    if (addr->addr.in6.sin6_port != bound_addr->addr.in6.sin6_port)
+        return addr->addr.in6.sin6_port < bound_addr->addr.in6.sin6_port ? -1 : 1;
+    return memcmp( &addr->addr.in6.sin6_addr, &bound_addr->addr.in6.sin6_addr, sizeof(addr->addr.in6.sin6_addr) );
 }
 
 static int ipv4addr_from_v6( union unix_sockaddr *v4addr, const struct sockaddr_in6 *in6 )
@@ -325,21 +325,23 @@ static int should_track_conflicts_for_addr( struct sock *sock, const union unix_
 
 static int check_addr_usage( struct sock *sock, const union unix_sockaddr *addr, int v6only )
 {
-    struct bound_addr *bound_addr;
-    union unix_sockaddr v4addr;
+    struct bound_addr *bound_addr, search_addr;
     struct rb_entry *entry;
 
     if (!should_track_conflicts_for_addr( sock, addr )) return 0;
 
-    if ((entry = rb_get( &bound_addresses_tree, addr )))
+    search_addr.addr = *addr;
+
+    if ((entry = rb_get( &bound_addresses_tree, &search_addr )))
     {
         bound_addr = WINE_RB_ENTRY_VALUE(entry, struct bound_addr, entry);
         if (bound_addr->reuse_count == -1 || !sock->reuseaddr) return 1;
     }
 
     if (sock->family != WS_AF_INET6 || v6only) return 0;
-    if (!ipv4addr_from_v6( &v4addr, &addr->in6 )) return 0;
-    if ((entry = rb_get( &bound_addresses_tree, &v4addr )))
+    if (!ipv4addr_from_v6( &search_addr.addr, &addr->in6 )) return 0;
+
+    if ((entry = rb_get( &bound_addresses_tree, &search_addr )))
     {
         bound_addr = WINE_RB_ENTRY_VALUE(entry, struct bound_addr, entry);
         if (bound_addr->reuse_count == -1 || !sock->reuseaddr) return 1;
@@ -349,15 +351,18 @@ static int check_addr_usage( struct sock *sock, const union unix_sockaddr *addr,
 
 static struct bound_addr *register_bound_address( struct sock *sock, const union unix_sockaddr *addr )
 {
-    struct bound_addr *bound_addr;
+    struct bound_addr *bound_addr, *temp;
 
     if (!(bound_addr = mem_alloc( sizeof(*bound_addr) )))
         return NULL;
 
-    if (rb_put( &bound_addresses_tree, addr, &bound_addr->entry ))
+    bound_addr->addr = *addr;
+
+    if (rb_put( &bound_addresses_tree, bound_addr, &bound_addr->entry ))
     {
-        free( bound_addr );
-        bound_addr = WINE_RB_ENTRY_VALUE(rb_get( &bound_addresses_tree, addr ), struct bound_addr, entry);
+        temp = bound_addr;
+        bound_addr = WINE_RB_ENTRY_VALUE(rb_get( &bound_addresses_tree, temp ), struct bound_addr, entry);
+        free( temp );
         if (bound_addr->reuse_count == -1)
         {
             if (debug_level)
@@ -368,7 +373,6 @@ static struct bound_addr *register_bound_address( struct sock *sock, const union
     }
     else
     {
-        bound_addr->addr = *addr;
         bound_addr->reuse_count = sock->reuseaddr ? 1 : -1;
     }
     return bound_addr;
