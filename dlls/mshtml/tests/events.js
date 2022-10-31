@@ -198,6 +198,21 @@ sync_test("add_remove_listener", function() {
     calls = "";
     div.click();
     ok(calls === "", "calls = " + calls);
+
+    /* test undefined function argument */
+    div.addEventListener("click", undefined, false);
+
+    calls = "";
+    div.click();
+    ok(calls === "", "calls = " + calls);
+
+    div.addEventListener("click", listener, false);
+    div.removeEventListener("click", undefined);
+
+    calls = "";
+    div.click();
+    ok(calls === "listener,", "calls = " + calls);
+    div.removeEventListener("click", listener);
 });
 
 sync_test("event_phase", function() {

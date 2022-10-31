@@ -1898,6 +1898,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     VariantClear(&v);
 
     if(document_mode >= 9) {
+        add_event_listener((IUnknown*)div, L"click", NULL, VARIANT_FALSE);
         add_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
         add_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
     }
@@ -2052,6 +2053,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     doc_detach_event(doc, L"onclick", (IDispatch*)&doc_onclick_attached_obj);
 
     if(document_mode >= 9) {
+        remove_event_listener((IUnknown*)div, L"click", NULL, VARIANT_FALSE);
         remove_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
         remove_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
     }
