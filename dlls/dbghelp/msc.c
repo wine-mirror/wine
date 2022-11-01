@@ -2101,7 +2101,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
     const union codeview_type* cvt;
     struct symt_inlinesite* inlined;
     struct cv_binannot cvba;
-    BOOL srcok, found = FALSE;
+    BOOL srcok;
     unsigned offset, line, srcfile;
     const struct CV_Checksum_t* chksms;
 
@@ -2111,42 +2111,17 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         return NULL;
     }
 
-    /* grasp first code offset in binary annotation to compute inline site start address */
-    cvba.annot = annot;
-    cvba.last_annot = last_annot;
-    while (codeview_advance_binannot(&cvba))
-        if (cvba.opcode == BA_OP_CodeOffset ||
-            cvba.opcode == BA_OP_ChangeCodeOffset ||
-            cvba.opcode == BA_OP_ChangeCodeOffsetAndLineOffset)
-        {
-            offset = cvba.arg1;
-            found = TRUE;
-            break;
-        }
-        else if (cvba.opcode == BA_OP_ChangeCodeLengthAndCodeOffset)
-        {
-            offset = cvba.arg2;
-            found = TRUE;
-            break;
-        }
-
-    if (!found)
-    {
-        WARN("Couldn't find start address of inlined\n");
-        return NULL;
-    }
-
     switch (cvt->generic.id)
     {
     case LF_FUNC_ID:
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
-                                      cvt->func_id_v3.name, top_func->address + offset,
+                                      cvt->func_id_v3.name,
                                       codeview_get_type(cvt->func_id_v3.type, FALSE));
         break;
     case LF_MFUNC_ID:
         /* FIXME we just declare a function, not a method */
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
-                                      cvt->mfunc_id_v3.name, top_func->address + offset,
+                                      cvt->mfunc_id_v3.name,
                                       codeview_get_type(cvt->mfunc_id_v3.type, FALSE));
         break;
     default:
@@ -2228,6 +2203,8 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         if (range->low == range->high) WARN("pending empty range at end of %s inside %s\n",
                                              inlined->func.hash_elt.name,
                                              top_func->hash_elt.name);
+        /* temporary: update address field */
+        inlined->func.address = ((struct addr_range*)vector_at(&inlined->vranges, 0))->low;
     }
     return inlined;
 }

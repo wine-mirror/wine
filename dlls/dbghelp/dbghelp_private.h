@@ -850,7 +850,6 @@ extern struct symt_inlinesite*
                                         struct symt_function* func,
                                         struct symt* parent,
                                         const char* name,
-                                        ULONG_PTR addr,
                                         struct symt* type) DECLSPEC_HIDDEN;
 extern void         symt_add_func_line(struct module* module,
                                        struct symt_function* func, 

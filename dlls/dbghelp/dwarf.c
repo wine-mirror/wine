@@ -2141,13 +2141,15 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   subpgm->top_func,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
-                                  adranges[0].low, &sig_type->symt);
+                                  &sig_type->symt);
     subpgm->current_func = (struct symt_function*)inlined;
     subpgm->current_block = NULL;
 
     for (i = 0; i < num_adranges; ++i)
         symt_add_inlinesite_range(subpgm->ctx->module_ctx->module, inlined,
                                   adranges[i].low, adranges[i].high);
+    /* temporary: update address field */
+    inlined->func.address = adranges[0].low;
     free(adranges);
 
     children = dwarf2_get_di_children(di);

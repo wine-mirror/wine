@@ -362,17 +362,16 @@ struct symt_inlinesite* symt_new_inlinesite(struct module* module,
                                             struct symt_function* func,
                                             struct symt* container,
                                             const char* name,
-                                            ULONG_PTR addr,
                                             struct symt* sig_type)
 {
     struct symt_inlinesite* sym;
 
-    TRACE_(dbghelp_symt)("Adding inline site %s @%Ix\n", name, addr);
+    TRACE_(dbghelp_symt)("Adding inline site %s\n", name);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         struct symt** p;
         assert(container);
-        init_function_or_inlinesite(&sym->func, module, SymTagInlineSite, container, name, addr, 0, sig_type);
+        init_function_or_inlinesite(&sym->func, module, SymTagInlineSite, container, name, 0, 0, sig_type);
         vector_init(&sym->vranges, sizeof(struct addr_range), 2); /* FIXME: number of elts => to be set on input */
         /* chain inline sites */
         sym->func.next_inlinesite = func->next_inlinesite;
