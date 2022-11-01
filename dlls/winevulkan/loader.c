@@ -257,6 +257,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
     struct vkCreateInstance_params params;
     struct VkInstance_T *instance;
     uint32_t phys_dev_count = 8, i;
+    NTSTATUS status;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, ret);
 
@@ -275,7 +276,8 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         params.pAllocator = allocator;
         params.pInstance = ret;
         params.client_ptr = instance;
-        vk_unix_call(unix_vkCreateInstance, &params);
+        status = vk_unix_call(unix_vkCreateInstance, &params);
+        assert(!status);
         if (instance->phys_dev_count <= phys_dev_count)
             break;
         phys_dev_count = instance->phys_dev_count;
@@ -290,9 +292,12 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
 void WINAPI vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *pAllocator)
 {
     struct vkDestroyInstance_params params;
+    NTSTATUS status;
+
     params.instance = instance;
     params.pAllocator = pAllocator;
-    vk_unix_call(unix_vkDestroyInstance, &params);
+    status = vk_unix_call(unix_vkDestroyInstance, &params);
+    assert(!status);
     free(instance);
 }
 
@@ -300,6 +305,7 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
     struct vkEnumerateInstanceExtensionProperties_params params;
+    NTSTATUS status;
 
     TRACE("%p, %p, %p\n", layer_name, count, properties);
 
@@ -318,13 +324,15 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
     params.pLayerName = layer_name;
     params.pPropertyCount = count;
     params.pProperties = properties;
-    vk_unix_call(unix_vkEnumerateInstanceExtensionProperties, &params);
+    status = vk_unix_call(unix_vkEnumerateInstanceExtensionProperties, &params);
+    assert(!status);
     return params.result;
 }
 
 VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
 {
     struct vkEnumerateInstanceVersion_params params;
+    NTSTATUS status;
 
     TRACE("%p\n", version);
 
@@ -335,7 +343,8 @@ VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
     }
 
     params.pApiVersion = version;
-    vk_unix_call(unix_vkEnumerateInstanceVersion, &params);
+    status = vk_unix_call(unix_vkEnumerateInstanceVersion, &params);
+    assert(!status);
     return params.result;
 }
 
@@ -434,12 +443,14 @@ void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
         VkPhysicalDeviceProperties2 *properties2)
 {
     struct vkGetPhysicalDeviceProperties2_params params;
+    NTSTATUS status;
 
     TRACE("%p, %p\n", phys_dev, properties2);
 
     params.physicalDevice = phys_dev;
     params.pProperties = properties2;
-    vk_unix_call(unix_vkGetPhysicalDeviceProperties2, &params);
+    status = vk_unix_call(unix_vkGetPhysicalDeviceProperties2, &params);
+    assert(!status);
     fill_luid_property(properties2);
 }
 
@@ -447,12 +458,14 @@ void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
         VkPhysicalDeviceProperties2 *properties2)
 {
     struct vkGetPhysicalDeviceProperties2KHR_params params;
+    NTSTATUS status;
 
     TRACE("%p, %p\n", phys_dev, properties2);
 
     params.physicalDevice = phys_dev;
     params.pProperties = properties2;
-    vk_unix_call(unix_vkGetPhysicalDeviceProperties2KHR, &params);
+    status = vk_unix_call(unix_vkGetPhysicalDeviceProperties2KHR, &params);
+    assert(!status);
     fill_luid_property(properties2);
 }
 
@@ -462,6 +475,7 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
     struct vkCreateDevice_params params;
     uint32_t queue_count = 0, i;
     VkDevice device;
+    NTSTATUS status;
 
     for (i = 0; i < create_info->queueCreateInfoCount; i++)
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
@@ -475,7 +489,8 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
     params.pAllocator = allocator;
     params.pDevice = ret;
     params.client_ptr = device;
-    vk_unix_call(unix_vkCreateDevice, &params);
+    status = vk_unix_call(unix_vkCreateDevice, &params);
+    assert(!status);
     if (!device->base.unix_handle)
         free(device);
     return params.result;
@@ -484,10 +499,12 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
 void WINAPI vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *allocator)
 {
     struct vkDestroyDevice_params params;
+    NTSTATUS status;
 
     params.device = device;
     params.pAllocator = allocator;
-    vk_unix_call(unix_vkDestroyDevice, &params);
+    status = vk_unix_call(unix_vkDestroyDevice, &params);
+    assert(!status);
     free(device);
 }
 
@@ -496,6 +513,7 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
 {
     struct vkCreateCommandPool_params params;
     struct vk_command_pool *cmd_pool;
+    NTSTATUS status;
 
     if (!(cmd_pool = malloc(sizeof(*cmd_pool))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -507,7 +525,8 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     params.pAllocator = allocator;
     params.pCommandPool = ret;
     params.client_ptr = cmd_pool;
-    vk_unix_call(unix_vkCreateCommandPool, &params);
+    status = vk_unix_call(unix_vkCreateCommandPool, &params);
+    assert(!status);
     if (!cmd_pool->unix_handle)
         free(cmd_pool);
     return params.result;
@@ -518,6 +537,7 @@ void WINAPI vkDestroyCommandPool(VkDevice device, VkCommandPool handle, const Vk
     struct vk_command_pool *cmd_pool = command_pool_from_handle(handle);
     struct vkDestroyCommandPool_params params;
     VkCommandBuffer buffer, cursor;
+    NTSTATUS status;
 
     if (!cmd_pool)
         return;
@@ -534,7 +554,8 @@ void WINAPI vkDestroyCommandPool(VkDevice device, VkCommandPool handle, const Vk
     params.device = device;
     params.commandPool = handle;
     params.pAllocator = allocator;
-    vk_unix_call(unix_vkDestroyCommandPool, &params);
+    status = vk_unix_call(unix_vkDestroyCommandPool, &params);
+    assert(!status);
     free(cmd_pool);
 }
 
@@ -543,6 +564,7 @@ VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferA
 {
     struct vk_command_pool *pool = command_pool_from_handle(allocate_info->commandPool);
     struct vkAllocateCommandBuffers_params params;
+    NTSTATUS status;
     uint32_t i;
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
@@ -551,7 +573,8 @@ VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferA
     params.device = device;
     params.pAllocateInfo = allocate_info;
     params.pCommandBuffers = buffers;
-    vk_unix_call(unix_vkAllocateCommandBuffers, &params);
+    status = vk_unix_call(unix_vkAllocateCommandBuffers, &params);
+    assert(!status);
     if (params.result == VK_SUCCESS)
     {
         for (i = 0; i < allocate_info->commandBufferCount; i++)
@@ -572,13 +595,15 @@ void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool cmd_pool, uint32
                                  const VkCommandBuffer *buffers)
 {
     struct vkFreeCommandBuffers_params params;
+    NTSTATUS status;
     uint32_t i;
 
     params.device = device;
     params.commandPool = cmd_pool;
     params.commandBufferCount = count;
     params.pCommandBuffers = buffers;
-    vk_unix_call(unix_vkFreeCommandBuffers, &params);
+    status = vk_unix_call(unix_vkFreeCommandBuffers, &params);
+    assert(!status);
     for (i = 0; i < count; i++)
     {
         list_remove(&buffers[i]->pool_link);
