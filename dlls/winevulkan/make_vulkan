@@ -2,6 +2,7 @@
 # Wine Vulkan generator
 #
 # Copyright 2017-2018 Roderick Colenbrander
+# Copyright 2022 Jacek Caban for CodeWeavers
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -645,11 +646,9 @@ class VkFunction(object):
     def needs_dispatch(self):
         return self.dispatch
 
-    def needs_thunk(self):
-        return self.thunk_type != ThunkType.NONE
-
     def needs_private_thunk(self):
-        return self.thunk_type == ThunkType.PRIVATE
+        return self.needs_exposing() and self.loader_thunk_type != ThunkType.NONE and \
+            self.thunk_type != ThunkType.PUBLIC
 
     def needs_exposing(self):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
@@ -2556,7 +2555,7 @@ class VkGenerator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.needs_exposing() or vk_func.thunk_type == ThunkType.PUBLIC:
+            if not vk_func.needs_private_thunk():
                 continue
 
             f.write("{0};\n".format(vk_func.prototype(prefix=prefix, postfix="DECLSPEC_HIDDEN", is_thunk=True)))
