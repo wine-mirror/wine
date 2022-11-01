@@ -362,20 +362,21 @@ struct symt_inlinesite* symt_new_inlinesite(struct module* module,
                                             struct symt_function* func,
                                             struct symt* container,
                                             const char* name,
-                                            struct symt* sig_type)
+                                            struct symt* sig_type,
+                                            unsigned num_ranges)
 {
     struct symt_inlinesite* sym;
 
     TRACE_(dbghelp_symt)("Adding inline site %s\n", name);
-    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    if ((sym = pool_alloc(&module->pool, offsetof(struct symt_inlinesite, ranges[num_ranges]))))
     {
         struct symt** p;
         assert(container);
         init_function_or_inlinesite(&sym->func, module, SymTagInlineSite, container, name, 0, 0, sig_type);
-        vector_init(&sym->vranges, sizeof(struct addr_range), 2); /* FIXME: number of elts => to be set on input */
         /* chain inline sites */
         sym->func.next_inlinesite = func->next_inlinesite;
         func->next_inlinesite = sym;
+        sym->num_ranges = num_ranges;
         if (container->tag == SymTagFunction || container->tag == SymTagInlineSite)
             p = vector_add(&((struct symt_function*)container)->vchildren, &module->pool);
         else
@@ -534,7 +535,7 @@ struct symt_block* symt_open_func_block(struct module* module,
     assert(num_ranges > 0);
     assert(!parent_block || parent_block->symt.tag == SymTagBlock);
 
-    block = pool_alloc(&module->pool, sizeof(*block) + num_ranges * sizeof(block->ranges[0]));
+    block = pool_alloc(&module->pool, offsetof(struct symt_block, ranges[num_ranges]));
     block->symt.tag = SymTagBlock;
     block->num_ranges = num_ranges;
     block->container = parent_block ? &parent_block->symt : &func->symt;
@@ -577,42 +578,6 @@ struct symt_hierarchy_point* symt_add_function_point(struct module* module,
         *p = &sym->symt;
     }
     return sym;
-}
-
-/* low and high are absolute addresses */
-BOOL symt_add_inlinesite_range(struct module* module,
-                               struct symt_inlinesite* inlined,
-                               ULONG_PTR low, ULONG_PTR high)
-{
-    struct addr_range* p;
-
-    p = vector_add(&inlined->vranges, &module->pool);
-    p->low = low;
-    p->high = high;
-    if (TRUE)
-    {
-        int i;
-
-        /* see dbghelp_private.h for the assumptions */
-        for (i = 0; i < inlined->vranges.num_elts - 1; i++)
-        {
-            if (!addr_range_disjoint((struct addr_range*)vector_at(&inlined->vranges, i), p))
-            {
-                FIXME("Added addr_range isn't disjoint from siblings\n");
-            }
-        }
-        for ( ; inlined->func.symt.tag != SymTagFunction; inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined))
-        {
-            for (i = 0; i < inlined->vranges.num_elts; i++)
-            {
-                struct addr_range* ar = (struct addr_range*)vector_at(&inlined->vranges, i);
-                if (!addr_range_disjoint(ar, p) && !addr_range_inside(ar, p))
-                    WARN("Added addr_range not compatible with parent\n");
-            }
-        }
-    }
-
-    return TRUE;
 }
 
 struct symt_thunk* symt_new_thunk(struct module* module, 
@@ -1244,11 +1209,10 @@ struct symt_inlinesite* symt_find_lowest_inlined(struct symt_function* func, DWO
     assert(func->symt.tag == SymTagFunction);
     for (current = func->next_inlinesite; current; current = current->func.next_inlinesite)
     {
-        for (i = 0; i < current->vranges.num_elts; ++i)
+        for (i = 0; i < current->num_ranges; ++i)
         {
-            struct addr_range* ar = (struct addr_range*)vector_at(&current->vranges, i);
             /* first matching range gives the lowest inline site; see dbghelp_private.h for details */
-            if (ar->low <= addr && addr < ar->high)
+            if (current->ranges[i].low <= addr && addr < current->ranges[i].high)
                 return current;
         }
     }

@@ -2077,16 +2077,46 @@ static BOOL cv_dbgsubsect_find_inlinee(const struct msc_debug_info* msc_dbg,
     return FALSE;
 }
 
-static inline void inline_site_update_last_range(struct symt_inlinesite* inlined, ULONG_PTR hi)
+static inline void inline_site_update_last_range(struct symt_inlinesite* inlined, unsigned index, ULONG_PTR hi)
 {
-    unsigned num = inlined->vranges.num_elts;
-    if (num)
+    if (index && index <= inlined->num_ranges)
     {
-        struct addr_range* range = vector_at(&inlined->vranges, num - 1);
+        struct addr_range* range = &inlined->ranges[index - 1];
         /* only change range if it has no span (code start without code end) */
         if (range->low == range->high)
             range->high = hi;
     }
+}
+
+static unsigned inline_site_get_num_ranges(const unsigned char* annot,
+                                           const unsigned char* last_annot)
+{
+    struct cv_binannot cvba;
+    unsigned num_ranges = 0;
+
+    cvba.annot = annot;
+    cvba.last_annot = last_annot;
+
+    while (codeview_advance_binannot(&cvba))
+    {
+        switch (cvba.opcode)
+        {
+        case BA_OP_CodeOffset:
+        case BA_OP_ChangeCodeLength:
+        case BA_OP_ChangeFile:
+        case BA_OP_ChangeLineOffset:
+            break;
+        case BA_OP_ChangeCodeOffset:
+        case BA_OP_ChangeCodeOffsetAndLineOffset:
+        case BA_OP_ChangeCodeLengthAndCodeOffset:
+            num_ranges++;
+            break;
+        default:
+            WARN("Unsupported op %d\n", cvba.opcode);
+            break;
+        }
+    }
+    return num_ranges;
 }
 
 static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debug_info* msc_dbg,
@@ -2102,7 +2132,8 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
     struct symt_inlinesite* inlined;
     struct cv_binannot cvba;
     BOOL srcok;
-    unsigned offset, line, srcfile;
+    unsigned num_ranges;
+    unsigned offset, index, line, srcfile;
     const struct CV_Checksum_t* chksms;
 
     if (!cvmod->ipi_ctp || !(cvt = codeview_jump_to_type(cvmod->ipi_ctp, inlinee)))
@@ -2110,19 +2141,23 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         FIXME("Couldn't find type %x in IPI stream\n", inlinee);
         return NULL;
     }
+    num_ranges = inline_site_get_num_ranges(annot, last_annot);
+    if (!num_ranges) return NULL;
 
     switch (cvt->generic.id)
     {
     case LF_FUNC_ID:
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
                                       cvt->func_id_v3.name,
-                                      codeview_get_type(cvt->func_id_v3.type, FALSE));
+                                      codeview_get_type(cvt->func_id_v3.type, FALSE),
+                                      num_ranges);
         break;
     case LF_MFUNC_ID:
         /* FIXME we just declare a function, not a method */
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
                                       cvt->mfunc_id_v3.name,
-                                      codeview_get_type(cvt->mfunc_id_v3.type, FALSE));
+                                      codeview_get_type(cvt->mfunc_id_v3.type, FALSE),
+                                      num_ranges);
         break;
     default:
         FIXME("unsupported inlinee kind %x\n", cvt->generic.id);
@@ -2144,6 +2179,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
 
     /* rescan all annotations and store ranges & line information */
     offset = 0;
+    index = 0;
     cvba.annot = annot;
     cvba.last_annot = last_annot;
 
@@ -2156,18 +2192,15 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
             break;
         case BA_OP_ChangeCodeOffset:
             offset += cvba.arg1;
-            inline_site_update_last_range(inlined, top_func->address + offset);
+            inline_site_update_last_range(inlined, index, top_func->address + offset);
             if (srcok)
                 symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
-            symt_add_inlinesite_range(msc_dbg->module, inlined, top_func->address + offset, top_func->address + offset);
+            inlined->ranges[index  ].low = top_func->address + offset;
+            inlined->ranges[index++].high = top_func->address + offset;
             break;
         case BA_OP_ChangeCodeLength:
             /* this op doesn't seem widely used... */
-            if (inlined->vranges.num_elts)
-            {
-                struct addr_range* range = vector_at(&inlined->vranges, inlined->vranges.num_elts - 1);
-                inline_site_update_last_range(inlined, range->low + cvba.arg1);
-            }
+            inline_site_update_last_range(inlined, index, inlined->ranges[index - 1].low + cvba.arg1);
             break;
         case BA_OP_ChangeFile:
             chksms = CV_RECORD_GAP(hdr_files, cvba.arg1);
@@ -2180,31 +2213,35 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         case BA_OP_ChangeCodeOffsetAndLineOffset:
             line += binannot_getsigned(cvba.arg2);
             offset += cvba.arg1;
-            inline_site_update_last_range(inlined, top_func->address + offset);
+            inline_site_update_last_range(inlined, index, top_func->address + offset);
             if (srcok)
                 symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
-            symt_add_inlinesite_range(msc_dbg->module, inlined, top_func->address + offset, top_func->address + offset);
+            inlined->ranges[index  ].low = top_func->address + offset;
+            inlined->ranges[index++].high = top_func->address + offset;
             break;
         case BA_OP_ChangeCodeLengthAndCodeOffset:
             offset += cvba.arg2;
-            inline_site_update_last_range(inlined, top_func->address + offset);
+            inline_site_update_last_range(inlined, index, top_func->address + offset);
             if (srcok)
                 symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
-            symt_add_inlinesite_range(msc_dbg->module, inlined, top_func->address + offset, top_func->address + offset + cvba.arg1);
+            inlined->ranges[index  ].low = top_func->address + offset;
+            inlined->ranges[index++].high = top_func->address + offset + cvba.arg1;
             break;
         default:
             WARN("Unsupported op %d\n", cvba.opcode);
             break;
         }
     }
-    if (inlined->vranges.num_elts)
+    if (index != num_ranges) /* sanity check */
+        FIXME("Internal logic error\n");
+    if (inlined->num_ranges)
     {
-        struct addr_range* range = vector_at(&inlined->vranges, inlined->vranges.num_elts - 1);
+        struct addr_range* range = &inlined->ranges[inlined->num_ranges - 1];
         if (range->low == range->high) WARN("pending empty range at end of %s inside %s\n",
                                              inlined->func.hash_elt.name,
                                              top_func->hash_elt.name);
         /* temporary: update address field */
-        inlined->func.address = ((struct addr_range*)vector_at(&inlined->vranges, 0))->low;
+        inlined->func.address = inlined->ranges[0].low;
     }
     return inlined;
 }

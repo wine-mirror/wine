@@ -294,7 +294,8 @@ struct symt_function
 struct symt_inlinesite
 {
     struct symt_function        func;
-    struct vector               vranges;        /* of addr_range: where the inline site is actually defined */
+    unsigned                    num_ranges;
+    struct addr_range           ranges[];
 };
 
 struct symt_hierarchy_point
@@ -850,7 +851,8 @@ extern struct symt_inlinesite*
                                         struct symt_function* func,
                                         struct symt* parent,
                                         const char* name,
-                                        struct symt* type) DECLSPEC_HIDDEN;
+                                        struct symt* type,
+                                        unsigned num_ranges) DECLSPEC_HIDDEN;
 extern void         symt_add_func_line(struct module* module,
                                        struct symt_function* func, 
                                        unsigned source_idx, int line_num, 
@@ -880,11 +882,8 @@ extern struct symt_hierarchy_point*
                                             enum SymTagEnum point, 
                                             const struct location* loc,
                                             const char* name) DECLSPEC_HIDDEN;
-extern BOOL         symt_add_inlinesite_range(struct module* module,
-                                              struct symt_inlinesite* inlined,
-                                              ULONG_PTR low, ULONG_PTR high) DECLSPEC_HIDDEN;
 extern struct symt_thunk*
-                    symt_new_thunk(struct module* module, 
+                    symt_new_thunk(struct module* module,
                                    struct symt_compiland* parent,
                                    const char* name, THUNK_ORDINAL ord,
                                    ULONG_PTR addr, ULONG_PTR size) DECLSPEC_HIDDEN;

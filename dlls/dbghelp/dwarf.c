@@ -2117,12 +2117,11 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
-    struct addr_range*  adranges;
-    unsigned            num_adranges;
+    unsigned            num_ranges;
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if ((adranges = dwarf2_get_ranges(di, &num_adranges)) == NULL)
+    if (!(num_ranges = dwarf2_get_num_ranges(di)))
     {
         WARN("cannot read ranges\n");
         return;
@@ -2141,16 +2140,17 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   subpgm->top_func,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
-                                  &sig_type->symt);
+                                  &sig_type->symt, num_ranges);
     subpgm->current_func = (struct symt_function*)inlined;
     subpgm->current_block = NULL;
 
-    for (i = 0; i < num_adranges; ++i)
-        symt_add_inlinesite_range(subpgm->ctx->module_ctx->module, inlined,
-                                  adranges[i].low, adranges[i].high);
+    if (!dwarf2_fill_ranges(di, inlined->ranges, num_ranges))
+    {
+        FIXME("Unexpected situation\n");
+        inlined->num_ranges = 0;
+    }
     /* temporary: update address field */
-    inlined->func.address = adranges[0].low;
-    free(adranges);
+    inlined->func.address = inlined->ranges[0].low;
 
     children = dwarf2_get_di_children(di);
     if (children) for (i = 0; i < vector_length(children); i++)
@@ -2616,10 +2616,9 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
         for (inlined = func->next_inlinesite; inlined; inlined = inlined->func.next_inlinesite)
         {
             int i;
-            for (i = 0; i < inlined->vranges.num_elts; ++i)
+            for (i = 0; i < inlined->num_ranges; ++i)
             {
-                struct addr_range* ar = (struct addr_range*)vector_at(&inlined->vranges, i);
-                if (ar->low <= address && address < ar->high)
+                if (inlined->ranges[i].low <= address && address < inlined->ranges[i].high)
                 {
                     symt_add_func_line(module, &inlined->func, *psrc, line, address);
                     return; /* only add to lowest matching inline site */
