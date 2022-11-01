@@ -655,6 +655,7 @@ TAGSFLAGS
 LDAP_LIBS
 LDAP_CFLAGS
 RT_LIBS
+DELAYLOADFLAG
 MSVCRTFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
@@ -733,13 +734,7 @@ GSM_PE_CFLAGS
 FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
 MINGW_PKG_CONFIG
-CROSSDEBUG
-DELAYLOADFLAG
-CROSSLDFLAGS
-EXTRACROSSCFLAGS
-CROSSCFLAGS
-CROSSCC
-CROSSTARGET
+PE_ARCHS
 LIBWINE_DEPENDS
 PRELINK
 WINELOADER_DEPENDS
@@ -800,6 +795,39 @@ SED_CMD
 RUNTESTFLAGS
 MAKEDEP
 toolsdir
+x86_64_DISABLED_SUBDIRS
+x86_64_DELAYLOADFLAG
+x86_64_TARGET
+x86_64_DEBUG
+x86_64_LDFLAGS
+x86_64_EXTRACFLAGS
+x86_64_CFLAGS
+x86_64_CC
+i386_DISABLED_SUBDIRS
+i386_DELAYLOADFLAG
+i386_TARGET
+i386_DEBUG
+i386_LDFLAGS
+i386_EXTRACFLAGS
+i386_CFLAGS
+i386_CC
+arm_DISABLED_SUBDIRS
+arm_DELAYLOADFLAG
+arm_TARGET
+arm_DEBUG
+arm_LDFLAGS
+arm_EXTRACFLAGS
+arm_CFLAGS
+arm_CC
+aarch64_DISABLED_SUBDIRS
+aarch64_DELAYLOADFLAG
+aarch64_TARGET
+aarch64_DEBUG
+aarch64_LDFLAGS
+aarch64_EXTRACFLAGS
+aarch64_CFLAGS
+aarch64_CC
+HOST_ARCH
 toolsext
 TARGETFLAGS
 LD
@@ -870,6 +898,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+enable_archs
 enable_win16
 enable_win64
 enable_tests
@@ -2366,6 +2395,8 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-archs={i386,x86_64,arm,aarch64}
+                          enable multiple architectures for PE compilation
   --disable-win16         do not include Win16 support
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
                           binaries)
@@ -4087,6 +4118,12 @@ ac_config_headers="$ac_config_headers include/config.h"
 
 libwine_version="1.0"
 
+
+# Check whether --enable-archs was given.
+if test ${enable_archs+y}
+then :
+  enableval=$enable_archs;
+fi
 
 # Check whether --enable-win16 was given.
 if test ${enable_win16+y}
@@ -6179,7 +6216,7 @@ esac
 
 case $host in
   x86_64*|amd64*)
-    if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
+    if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes" -a x"$enable_archs" = x
     then
       CC="$CC -m32"
       CXX="$CXX -m32"
@@ -6218,7 +6255,6 @@ printf "%s\n" "$wine_cv_cc_m32" >&6; }
       TARGETFLAGS="$TARGETFLAGS -m32"
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib32/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
-      enable_win16=${enable_win16:-yes}
       with_unwind=${with_unwind:-no}
     else
       if test "x${GCC}" = "xyes"
@@ -6257,9 +6293,6 @@ printf "%s\n" "$wine_cv_builtin_ms_va_list" >&6; }
       host_cpu="x86_64"
       notice_platform="64-bit "
       TARGETFLAGS="$TARGETFLAGS -m64"
-      enable_wow64=${enable_wow64:-yes}
-      enable_wow64win=${enable_wow64win:-yes}
-      enable_wow64cpu=${enable_wow64cpu:-yes}
     fi
     ;;
   arm*)
@@ -6350,21 +6383,16 @@ printf "%s\n" "$wine_cv_float_abi" >&6; }
     CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
     TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
     ;;
-  aarch64*)
-    enable_wow64=${enable_wow64:-yes}
-    enable_wow64win=${enable_wow64win:-yes}
-    ;;
   i[3456789]86*)
-    enable_win16=${enable_win16:-yes}
     with_unwind=${with_unwind:-no}
     ;;
 esac
 
-enable_win16=${enable_win16:-no}
+enable_win16=${enable_win16:-i386}
 enable_win64=${enable_win64:-no}
-enable_wow64=${enable_wow64:-no}
-enable_wow64win=${enable_wow64win:-no}
-enable_wow64cpu=${enable_wow64cpu:-no}
+enable_wow64=${enable_wow64:-aarch64,x86_64}
+enable_wow64win=${enable_wow64win:-aarch64,x86_64}
+enable_wow64cpu=${enable_wow64cpu:-x86_64}
 
 enable_winetest=${enable_winetest:-$enable_tests}
 
@@ -6380,6 +6408,15 @@ case $build_os in
   *) toolsext=""
  ;;
 esac
+
+HOST_ARCH=unknown
+case "$host_cpu" in
+  aarch64*)        HOST_ARCH=aarch64 ;;
+  arm*)            HOST_ARCH=arm ;;
+  i[3456789]86*) HOST_ARCH=i386 ;;
+  x86_64)          HOST_ARCH=x86_64 ;;
+esac
+
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for the directory containing the Wine tools" >&5
 printf %s "checking for the directory containing the Wine tools... " >&6; }
@@ -9424,36 +9461,36 @@ DISABLED_SUBDIRS=""
 CONFIGURE_TARGETS=""
 
 
-wine_fn_append_file ()
-{
-    as_fn_append $1 " \\$as_nl	$2"
-}
-
-wine_fn_append_rule ()
-{
-    as_fn_append wine_rules "$as_nl$1"
-}
-
 wine_fn_config_makefile ()
 {
-    wine_fn_append_file SUBDIRS $1
-    if eval test \"x\$"$2"\" = x"no"
-then :
-  wine_fn_append_file DISABLED_SUBDIRS $1
-fi
+    as_fn_append SUBDIRS " \\$as_nl	$1"
+    eval enable=\$$2
+    case "$enable" in
+      no) as_fn_append DISABLED_SUBDIRS " $1" ;;
+      *aarch64*|*arm*|*i386*|*x86_64*)
+        if test -n "$PE_ARCHS"
+        then
+            for i in $PE_ARCHS
+            do
+                test $(expr ",$enable," : ".*,$i,") -gt 0 || as_fn_append ${i}_DISABLED_SUBDIRS " $1"
+            done
+        else
+            test $(expr ",$enable," : ".*,$HOST_ARCH,") -gt 0 || as_fn_append DISABLED_SUBDIRS " $1"
+        fi;;
+    esac
 }
 
 wine_fn_config_symlink ()
 {
     ac_links=$@
-    wine_fn_append_rule \
-"$ac_links:
+    as_fn_append wine_rules "
+$ac_links:
 	@./config.status \$@"
-    for f in $ac_links; do wine_fn_append_file CONFIGURE_TARGETS $f; done
+    for f in $ac_links; do as_fn_append CONFIGURE_TARGETS " $f"; done
 }
 
 wine_binary="wine"
-test "x$enable_win64" != "xyes" || wine_binary="wine64"
+test "$HOST_ARCH" != x86_64 || wine_binary="wine64"
 WINELOADER_PROGRAMS="$wine_binary"
 
 libwine_soversion=`expr $libwine_version : '\([0-9]*\)\..*'`
@@ -9927,7 +9964,7 @@ if test "x$ac_cv_cflags__Wl__no_pie" = xyes
 then :
   WINEPRELOADER_LDFLAGS="-Wl,-no_pie $WINEPRELOADER_LDFLAGS"
 fi
-        test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
+        test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
         WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
     else
         as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
@@ -10531,37 +10568,53 @@ enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 
+PE_ARCHS=""
 
-if test "x$with_mingw" != xno
-then
-    case "x$with_mingw" in
-      x|xyes) case "$host_cpu" in
-  aarch64*)
-    ac_prefix_list="aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang" ;;
-  arm*)
-    ac_prefix_list="armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang" ;;
-  i[3456789]86*)
-    ac_prefix_list="i686-w64-mingw32-gcc i586-w64-mingw32-gcc i486-w64-mingw32-gcc i386-w64-mingw32-gcc i686-pc-mingw32-gcc i586-pc-mingw32-gcc i486-pc-mingw32-gcc i386-pc-mingw32-gcc i686-mingw32msvc-gcc i586-mingw32msvc-gcc i486-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i586-mingw32-gcc i486-mingw32-gcc i386-mingw32-gcc
-                     i686-w64-mingw32-clang i586-w64-mingw32-clang i486-w64-mingw32-clang i386-w64-mingw32-clang
-                     mingw32-gcc clang" ;;
-  x86_64)
-    ac_prefix_list="x86_64-pc-mingw32-gcc amd64-pc-mingw32-gcc x86_64-w64-mingw32-gcc amd64-w64-mingw32-gcc x86_64-mingw32msvc-gcc amd64-mingw32msvc-gcc
-                    x86_64-w64-mingw32-clang amd64-w64-mingw32-clang  clang" ;;
-  *)
-    ac_prefix_list="" ;;
-esac
-for ac_prog in $ac_prefix_list
+cross_archs=
+if test ${enable_archs+y}
+then :
+  test "x$with_system_dllpath" = "x" || as_fn_error $? "\"The --with-system-dllpath option is not compatible with --enable-archs\"" "$LINENO" 5
+     ac_save_IFS=$IFS
+     IFS=' ,'
+     set x $enable_archs
+     IFS=$ac_save_IFS
+     shift
+     for arch
+     do
+         case $arch in
+           i386|x86_64|arm|aarch64) cross_archs="$cross_archs $arch" ;;
+           *) as_fn_error $? "Unknown cross-compilation architecture '$arch'" "$LINENO" 5 ;;
+         esac
+     done
+else $as_nop
+  if test "x$with_mingw" != xno
+     then
+         test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
+         case "x$with_mingw" in
+           x|xyes) ;;
+           *) eval "${cross_archs}_CC=\$with_mingw" ;;
+         esac
+     fi
+fi
+
+for wine_arch in $cross_archs
+do
+    if eval \${${wine_arch}_CC:+false} :
+then :
+  case $wine_arch in
+          aarch64)
+            for ac_prog in aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_CROSSCC+y}
+if test ${ac_cv_prog_aarch64_CC+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  if test -n "$CROSSCC"; then
-  ac_cv_prog_CROSSCC="$CROSSCC" # Let the user override the test.
+  if test -n "$aarch64_CC"; then
+  ac_cv_prog_aarch64_CC="$aarch64_CC" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -10574,7 +10627,7 @@ do
   esac
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_CROSSCC="$ac_prog"
+    ac_cv_prog_aarch64_CC="$ac_prog"
     printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -10584,39 +10637,196 @@ IFS=$as_save_IFS
 
 fi
 fi
-CROSSCC=$ac_cv_prog_CROSSCC
-if test -n "$CROSSCC"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $CROSSCC" >&5
-printf "%s\n" "$CROSSCC" >&6; }
+aarch64_CC=$ac_cv_prog_aarch64_CC
+if test -n "$aarch64_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $aarch64_CC" >&5
+printf "%s\n" "$aarch64_CC" >&6; }
 else
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
 fi
 
 
-  test -n "$CROSSCC" && break
+  test -n "$aarch64_CC" && break
 done
-test -n "$CROSSCC" || CROSSCC="false"
- ;;
-      *) CROSSCC=$with_mingw ;;
-    esac
-    if test "$CROSSCC" != "false"
-    then
-        ac_save_CC="$CC"
-        saved_CFLAGS=$CFLAGS
-        saved_LDFLAGS=$LDFLAGS
-        CROSSCFLAGS=${CROSSCFLAGS:-"-g -O2"}
+test -n "$aarch64_CC" || aarch64_CC="false"
 
-        EXTRACROSSCFLAGS="-D__WINE_PE_BUILD -Wall"
+            ;;
+          arm)
+            for ac_prog in armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_arm_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$arm_CC"; then
+  ac_cv_prog_arm_CC="$arm_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_arm_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+arm_CC=$ac_cv_prog_arm_CC
+if test -n "$arm_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $arm_CC" >&5
+printf "%s\n" "$arm_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
 
 
+  test -n "$arm_CC" && break
+done
+test -n "$arm_CC" || arm_CC="false"
 
-        CC="$CROSSCC"
-        CFLAGS=$CROSSCFLAGS
-        LDFLAGS=$CROSSLDFLAGS
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
-printf %s "checking whether $CROSSCC works... " >&6; }
-if test ${wine_cv_crosscc+y}
+            ;;
+         i386)
+            ac_prefix_list="i686-w64-mingw32-gcc i586-w64-mingw32-gcc i486-w64-mingw32-gcc i386-w64-mingw32-gcc i686-w64-mingw32-clang i586-w64-mingw32-clang i486-w64-mingw32-clang i386-w64-mingw32-clang "
+            for ac_prog in $ac_prefix_list clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_i386_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$i386_CC"; then
+  ac_cv_prog_i386_CC="$i386_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_i386_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+i386_CC=$ac_cv_prog_i386_CC
+if test -n "$i386_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $i386_CC" >&5
+printf "%s\n" "$i386_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$i386_CC" && break
+done
+test -n "$i386_CC" || i386_CC="false"
+
+            ;;
+         x86_64)
+            ac_prefix_list="x86_64-w64-mingw32-gcc amd64-w64-mingw32-gcc x86_64-w64-mingw32-clang amd64-w64-mingw32-clang "
+            for ac_prog in $ac_prefix_list clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_x86_64_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$x86_64_CC"; then
+  ac_cv_prog_x86_64_CC="$x86_64_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_x86_64_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+x86_64_CC=$ac_cv_prog_x86_64_CC
+if test -n "$x86_64_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $x86_64_CC" >&5
+printf "%s\n" "$x86_64_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$x86_64_CC" && break
+done
+test -n "$x86_64_CC" || x86_64_CC="false"
+
+            ;;
+        esac
+fi
+
+    if eval test \"x\$"${wine_arch}_CC"\" = x"false"
+then :
+  continue
+fi
+
+    saved_CC=$CC
+    saved_CFLAGS=$CFLAGS
+
+    CFLAGS=${CROSSCFLAGS:-"-g -O2"}
+    eval CC=\$${wine_arch}_CC
+    eval ${wine_arch}_CFLAGS=\$CFLAGS
+    eval ${wine_arch}_LDFLAGS=\$LDFLAGS
+    eval "${wine_arch}_EXTRACFLAGS=\"-D__WINE_PE_BUILD -Wall\""
+
+    target=""
+    as_wine_cv_crosscc=`printf "%s\n" "ac_cv_${wine_arch}_crosscc" | $as_tr_sh`
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
+printf %s "checking whether $CC works... " >&6; }
+if eval test \${$as_wine_cv_crosscc+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
@@ -10633,51 +10843,51 @@ main (void)
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"
 then :
-  wine_cv_crosscc=yes
+  eval "$as_wine_cv_crosscc=yes"
 else $as_nop
-  wine_cv_crosscc=no
+  eval "$as_wine_cv_crosscc=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_crosscc" >&5
-printf "%s\n" "$wine_cv_crosscc" >&6; }
-        if test $wine_cv_crosscc = yes
-        then
-            set x $CROSSCC
-            shift
-            while test $# -ge 1
-            do
-                case "$1" in
-                    *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
-                    *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
-                esac
-                shift
-            done
-
-                        llvm_target=$CROSSTARGET
-            llvm_cflags="-fuse-ld=lld"
-            if test -z "$llvm_target"
-            then
-                case $host_cpu in
-                *i[3456789]86*) llvm_target=i686-windows ;;
-                *) llvm_target=$host_cpu-windows ;;
-                esac
-            fi
-            case $llvm_target in
-            *windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
+eval ac_res=\$$as_wine_cv_crosscc
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+    if eval test \"x\$"$as_wine_cv_crosscc"\" = x"yes"
+then :
+  set x $CC
+        shift
+        while test $# -ge 1
+        do
+            case "$1" in
+                *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+                *-clang) target=`expr "$1" : '\(.*\)-clang'` ;;
             esac
-            as_ac_var=`printf "%s\n" "ac_cv_crosscflags_-target $llvm_target $llvm_cflags" | $as_tr_sh`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -target $llvm_target $llvm_cflags" >&5
-printf %s "checking whether the cross-compiler supports -target $llvm_target $llvm_cflags... " >&6; }
+            shift
+        done
+
+                llvm_target=$target
+        llvm_cflags="-fuse-ld=lld"
+        if test -z "$llvm_target"
+        then
+            case $wine_arch in
+            i386) llvm_target=i686-windows ;;
+            arm)  llvm_target=armv7-windows ;;
+            *)    llvm_target=$wine_arch-windows ;;
+            esac
+        fi
+        case $llvm_target in
+          *windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
+        esac
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-target $llvm_target $llvm_cflags" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -target $llvm_target $llvm_cflags" >&5
+printf %s "checking whether $CC supports -target $llvm_target $llvm_cflags... " >&6; }
 if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -target $llvm_target $llvm_cflags"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -target $llvm_target $llvm_cflags"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10692,7 +10902,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
 eval ac_res=\$$as_ac_var
@@ -10700,59 +10909,71 @@ eval ac_res=\$$as_ac_var
 printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  CROSSTARGET=$llvm_target
-                                  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
-                                  DELAYLOADFLAG="-Wl,-delayload,"
-
-                                  CFLAGS="$CFLAGS $llvm_cflags"
+  target=$llvm_target
+                            eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
+                            as_fn_append ${wine_arch}_EXTRACFLAGS " -target $target"
+                            CFLAGS="$CFLAGS -target $target $llvm_cflags"
+fi }
+        eval "${wine_arch}_TARGET=\$target"
+        PE_ARCHS="$PE_ARCHS $wine_arch"
 fi
-        fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CROSSCC option to enable C99 features" >&5
-printf %s "checking for $CROSSCC option to enable C99 features... " >&6; }
-        if test ${wine_cv_crosscc_c99+y}
+
+
+    as_wine_cv_crosscc_c99=`printf "%s\n" "ac_cv_${wine_arch}_crosscc_c99" | $as_tr_sh`
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CC option to enable C99 features" >&5
+printf %s "checking for $CC option to enable C99 features... " >&6; }
+    if eval test \${$as_wine_cv_crosscc_c99+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  wine_cv_crosscc_c99=no
-             for arg in '' '-std=gnu99'
-             do
-                 CC="$CROSSCC $arg"
-                 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  eval "$as_wine_cv_crosscc_c99=no"
+         for arg in '' '-std=gnu99'
+         do
+             test -z "$arg" || CC="$CC $arg"
+             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 $ac_c_conftest_c99_program
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"
 then :
-  wine_cv_crosscc_c99=$arg
+  eval "$as_wine_cv_crosscc_c99=\$arg"
 else $as_nop
-  wine_cv_crosscc_c99=no
+  eval "$as_wine_cv_crosscc_c99=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-                 test "x$wine_cv_crosscc_c99" != xno && break
-             done
+             eval CC=\$${wine_arch}_CC
+             if eval test \"x\$"$as_wine_cv_crosscc_c99"\" = x"no"
+then :
+
+else $as_nop
+  break
+fi
+         done
 fi
 
-        case "x$wine_cv_crosscc_c99" in
-          x) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
+    eval res=\$$as_wine_cv_crosscc_c99
+    case "x$res" in
+      x) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
 printf "%s\n" "none needed" >&6; } ;;
-          xno) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
+      xno) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
 printf "%s\n" "unsupported" >&6; } ;;
-          x*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_crosscc_c99" >&5
-printf "%s\n" "$wine_cv_crosscc_c99" >&6; }
-              CROSSCC="$CROSSCC $wine_cv_crosscc_c99" ;;
-        esac
+      x*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $res" >&5
+printf "%s\n" "$res" >&6; }
+          as_fn_append ${wine_arch}_CC " $res" ;;
+    esac
 
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
-printf %s "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
-if test ${ac_cv_crosscflags__fno_strict_aliasing+y}
+
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
+printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -fno-strict-aliasing"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -fno-strict-aliasing"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10760,33 +10981,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__fno_strict_aliasing=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__fno_strict_aliasing=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__fno_strict_aliasing" >&5
-printf "%s\n" "$ac_cv_crosscflags__fno_strict_aliasing" >&6; }
-if test "x$ac_cv_crosscflags__fno_strict_aliasing" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-strict-aliasing"
-fi
-                { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=unknown-warning-option" >&5
-printf %s "checking whether the cross-compiler supports -Werror=unknown-warning-option... " >&6; }
-if test ${ac_cv_crosscflags__Werror_unknown_warning_option+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -fno-strict-aliasing"
+fi }
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror=unknown-warning-option" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=unknown-warning-option" >&5
+printf %s "checking whether $CC supports -Werror=unknown-warning-option... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Werror=unknown-warning-option"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Werror=unknown-warning-option"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10794,33 +11014,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Werror_unknown_warning_option=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Werror_unknown_warning_option=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror_unknown_warning_option" >&5
-printf "%s\n" "$ac_cv_crosscflags__Werror_unknown_warning_option" >&6; }
-if test "x$ac_cv_crosscflags__Werror_unknown_warning_option" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   CFLAGS="$CFLAGS -Werror=unknown-warning-option"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=ignored-optimization-argument" >&5
-printf %s "checking whether the cross-compiler supports -Werror=ignored-optimization-argument... " >&6; }
-if test ${ac_cv_crosscflags__Werror_ignored_optimization_argument+y}
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror=ignored-optimization-argument" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=ignored-optimization-argument" >&5
+printf %s "checking whether $CC supports -Werror=ignored-optimization-argument... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Werror=ignored-optimization-argument"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Werror=ignored-optimization-argument"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10828,33 +11047,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Werror_ignored_optimization_argument=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Werror_ignored_optimization_argument=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror_ignored_optimization_argument" >&5
-printf "%s\n" "$ac_cv_crosscflags__Werror_ignored_optimization_argument" >&6; }
-if test "x$ac_cv_crosscflags__Werror_ignored_optimization_argument" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wdeclaration-after-statement" >&5
-printf %s "checking whether the cross-compiler supports -Wdeclaration-after-statement... " >&6; }
-if test ${ac_cv_crosscflags__Wdeclaration_after_statement+y}
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wdeclaration-after-statement" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wdeclaration-after-statement" >&5
+printf %s "checking whether $CC supports -Wdeclaration-after-statement... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wdeclaration-after-statement"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wdeclaration-after-statement"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10862,33 +11080,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wdeclaration_after_statement=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wdeclaration_after_statement=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wdeclaration_after_statement" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wdeclaration_after_statement" >&6; }
-if test "x$ac_cv_crosscflags__Wdeclaration_after_statement" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wdeclaration-after-statement"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wempty-body" >&5
-printf %s "checking whether the cross-compiler supports -Wempty-body... " >&6; }
-if test ${ac_cv_crosscflags__Wempty_body+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wdeclaration-after-statement"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wempty-body" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wempty-body" >&5
+printf %s "checking whether $CC supports -Wempty-body... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wempty-body"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wempty-body"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10896,33 +11113,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wempty_body=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wempty_body=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wempty_body" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wempty_body" >&6; }
-if test "x$ac_cv_crosscflags__Wempty_body" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wempty-body"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wignored-qualifiers" >&5
-printf %s "checking whether the cross-compiler supports -Wignored-qualifiers... " >&6; }
-if test ${ac_cv_crosscflags__Wignored_qualifiers+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wempty-body"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wignored-qualifiers" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wignored-qualifiers" >&5
+printf %s "checking whether $CC supports -Wignored-qualifiers... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wignored-qualifiers"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wignored-qualifiers"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10930,33 +11146,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wignored_qualifiers=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wignored_qualifiers=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wignored_qualifiers" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wignored_qualifiers" >&6; }
-if test "x$ac_cv_crosscflags__Wignored_qualifiers" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wignored-qualifiers"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Winit-self" >&5
-printf %s "checking whether the cross-compiler supports -Winit-self... " >&6; }
-if test ${ac_cv_crosscflags__Winit_self+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wignored-qualifiers"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Winit-self" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Winit-self" >&5
+printf %s "checking whether $CC supports -Winit-self... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Winit-self"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Winit-self"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10964,33 +11179,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Winit_self=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Winit_self=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Winit_self" >&5
-printf "%s\n" "$ac_cv_crosscflags__Winit_self" >&6; }
-if test "x$ac_cv_crosscflags__Winit_self" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Winit-self"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpacked-not-aligned" >&5
-printf %s "checking whether the cross-compiler supports -Wpacked-not-aligned... " >&6; }
-if test ${ac_cv_crosscflags__Wpacked_not_aligned+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Winit-self"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpacked-not-aligned" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpacked-not-aligned" >&5
+printf %s "checking whether $CC supports -Wpacked-not-aligned... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wpacked-not-aligned"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wpacked-not-aligned"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10998,33 +11212,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wpacked_not_aligned=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wpacked_not_aligned=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wpacked_not_aligned" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wpacked_not_aligned" >&6; }
-if test "x$ac_cv_crosscflags__Wpacked_not_aligned" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-packed-not-aligned"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpragma-pack" >&5
-printf %s "checking whether the cross-compiler supports -Wpragma-pack... " >&6; }
-if test ${ac_cv_crosscflags__Wpragma_pack+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-packed-not-aligned"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpragma-pack" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpragma-pack" >&5
+printf %s "checking whether $CC supports -Wpragma-pack... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wpragma-pack"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wpragma-pack"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11032,33 +11245,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wpragma_pack=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wpragma_pack=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wpragma_pack" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wpragma_pack" >&6; }
-if test "x$ac_cv_crosscflags__Wpragma_pack" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-pragma-pack"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wshift-overflow=2" >&5
-printf %s "checking whether the cross-compiler supports -Wshift-overflow=2... " >&6; }
-if test ${ac_cv_crosscflags__Wshift_overflow_2+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-pragma-pack"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wshift-overflow=2" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wshift-overflow=2" >&5
+printf %s "checking whether $CC supports -Wshift-overflow=2... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wshift-overflow=2"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wshift-overflow=2"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11066,33 +11278,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wshift_overflow_2=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wshift_overflow_2=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wshift_overflow_2" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wshift_overflow_2" >&6; }
-if test "x$ac_cv_crosscflags__Wshift_overflow_2" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wshift-overflow=2"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wstrict-prototypes" >&5
-printf %s "checking whether the cross-compiler supports -Wstrict-prototypes... " >&6; }
-if test ${ac_cv_crosscflags__Wstrict_prototypes+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wshift-overflow=2"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wstrict-prototypes" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wstrict-prototypes" >&5
+printf %s "checking whether $CC supports -Wstrict-prototypes... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wstrict-prototypes"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wstrict-prototypes"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11100,33 +11311,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wstrict_prototypes=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wstrict_prototypes=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wstrict_prototypes" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wstrict_prototypes" >&6; }
-if test "x$ac_cv_crosscflags__Wstrict_prototypes" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wstrict-prototypes"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wtype-limits" >&5
-printf %s "checking whether the cross-compiler supports -Wtype-limits... " >&6; }
-if test ${ac_cv_crosscflags__Wtype_limits+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wstrict-prototypes"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wtype-limits" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wtype-limits" >&5
+printf %s "checking whether $CC supports -Wtype-limits... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wtype-limits"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wtype-limits"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11134,33 +11344,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wtype_limits=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wtype_limits=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wtype_limits" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wtype_limits" >&6; }
-if test "x$ac_cv_crosscflags__Wtype_limits" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wtype-limits"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wunused-but-set-parameter" >&5
-printf %s "checking whether the cross-compiler supports -Wunused-but-set-parameter... " >&6; }
-if test ${ac_cv_crosscflags__Wunused_but_set_parameter+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wtype-limits"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wunused-but-set-parameter" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wunused-but-set-parameter" >&5
+printf %s "checking whether $CC supports -Wunused-but-set-parameter... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wunused-but-set-parameter"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wunused-but-set-parameter"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11168,33 +11377,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wunused_but_set_parameter=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wunused_but_set_parameter=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wunused_but_set_parameter" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wunused_but_set_parameter" >&6; }
-if test "x$ac_cv_crosscflags__Wunused_but_set_parameter" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wunused-but-set-parameter"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wvla" >&5
-printf %s "checking whether the cross-compiler supports -Wvla... " >&6; }
-if test ${ac_cv_crosscflags__Wvla+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wunused-but-set-parameter"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wvla" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wvla" >&5
+printf %s "checking whether $CC supports -Wvla... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wvla"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wvla"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11202,33 +11410,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wvla=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wvla=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wvla" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wvla" >&6; }
-if test "x$ac_cv_crosscflags__Wvla" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wvla"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wwrite-strings" >&5
-printf %s "checking whether the cross-compiler supports -Wwrite-strings... " >&6; }
-if test ${ac_cv_crosscflags__Wwrite_strings+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wvla"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wwrite-strings" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wwrite-strings" >&5
+printf %s "checking whether $CC supports -Wwrite-strings... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wwrite-strings"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wwrite-strings"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11236,33 +11443,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wwrite_strings=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wwrite_strings=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wwrite_strings" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wwrite_strings" >&6; }
-if test "x$ac_cv_crosscflags__Wwrite_strings" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wwrite-strings"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpointer-arith" >&5
-printf %s "checking whether the cross-compiler supports -Wpointer-arith... " >&6; }
-if test ${ac_cv_crosscflags__Wpointer_arith+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wwrite-strings"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpointer-arith" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpointer-arith" >&5
+printf %s "checking whether $CC supports -Wpointer-arith... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wpointer-arith"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wpointer-arith"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11270,33 +11476,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wpointer_arith=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wpointer_arith=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wpointer_arith" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wpointer_arith" >&6; }
-if test "x$ac_cv_crosscflags__Wpointer_arith" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wpointer-arith"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wlogical-op" >&5
-printf %s "checking whether the cross-compiler supports -Wlogical-op... " >&6; }
-if test ${ac_cv_crosscflags__Wlogical_op+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wpointer-arith"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wlogical-op" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wlogical-op" >&5
+printf %s "checking whether $CC supports -Wlogical-op... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wlogical-op"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wlogical-op"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11304,33 +11509,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wlogical_op=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wlogical_op=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wlogical_op" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wlogical_op" >&6; }
-if test "x$ac_cv_crosscflags__Wlogical_op" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wlogical-op"
-fi
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wabsolute-value" >&5
-printf %s "checking whether the cross-compiler supports -Wabsolute-value... " >&6; }
-if test ${ac_cv_crosscflags__Wabsolute_value+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wlogical-op"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wabsolute-value" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wabsolute-value" >&5
+printf %s "checking whether $CC supports -Wabsolute-value... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wabsolute-value"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wabsolute-value"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11338,35 +11542,34 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wabsolute_value=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wabsolute_value=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wabsolute_value" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wabsolute_value" >&6; }
-if test "x$ac_cv_crosscflags__Wabsolute_value" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wabsolute-value"
-fi
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wabsolute-value"
+fi }
 
-        case $host_cpu in
-          *i[3456789]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-omit-frame-pointer" >&5
-printf %s "checking whether the cross-compiler supports -fno-omit-frame-pointer... " >&6; }
-if test ${ac_cv_crosscflags__fno_omit_frame_pointer+y}
+    case $wine_arch in
+      i386) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-omit-frame-pointer" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-omit-frame-pointer" >&5
+printf %s "checking whether $CC supports -fno-omit-frame-pointer... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -fno-omit-frame-pointer"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -fno-omit-frame-pointer"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11374,33 +11577,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__fno_omit_frame_pointer=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__fno_omit_frame_pointer=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__fno_omit_frame_pointer" >&5
-printf "%s\n" "$ac_cv_crosscflags__fno_omit_frame_pointer" >&6; }
-if test "x$ac_cv_crosscflags__fno_omit_frame_pointer" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-omit-frame-pointer"
-fi
-                            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,--disable-stdcall-fixup" >&5
-printf %s "checking whether the cross-compiler supports -Wl,--disable-stdcall-fixup... " >&6; }
-if test ${ac_cv_crosscflags__Wl___disable_stdcall_fixup+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -fno-omit-frame-pointer"
+fi }
+            { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,--disable-stdcall-fixup" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,--disable-stdcall-fixup" >&5
+printf %s "checking whether $CC supports -Wl,--disable-stdcall-fixup... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wl,--disable-stdcall-fixup"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wl,--disable-stdcall-fixup"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11408,33 +11610,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wl___disable_stdcall_fixup=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wl___disable_stdcall_fixup=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wl___disable_stdcall_fixup" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wl___disable_stdcall_fixup" >&6; }
-if test "x$ac_cv_crosscflags__Wl___disable_stdcall_fixup" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--disable-stdcall-fixup"
-fi ;;
-          x86_64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
-printf %s "checking whether the cross-compiler supports -Wno-format... " >&6; }
-if test ${ac_cv_crosscflags__Wno_format+y}
+  as_fn_append ${wine_arch}_LDFLAGS " -Wl,--disable-stdcall-fixup"
+fi } ;;
+      x86_64) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wno-format" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wno-format" >&5
+printf %s "checking whether $CC supports -Wno-format... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wno-format"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wno-format"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11442,33 +11643,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wno_format=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wno_format=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wno_format" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wno_format" >&6; }
-if test "x$ac_cv_crosscflags__Wno_format" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-format"
-fi
-                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wformat-overflow" >&5
-printf %s "checking whether the cross-compiler supports -Wformat-overflow... " >&6; }
-if test ${ac_cv_crosscflags__Wformat_overflow+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-format"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wformat-overflow" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wformat-overflow" >&5
+printf %s "checking whether $CC supports -Wformat-overflow... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wformat-overflow"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wformat-overflow"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11476,33 +11676,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wformat_overflow=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wformat_overflow=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wformat_overflow" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wformat_overflow" >&6; }
-if test "x$ac_cv_crosscflags__Wformat_overflow" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wformat-overflow"
-fi
-                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wnonnull" >&5
-printf %s "checking whether the cross-compiler supports -Wnonnull... " >&6; }
-if test ${ac_cv_crosscflags__Wnonnull+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wformat-overflow"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wnonnull" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wnonnull" >&5
+printf %s "checking whether $CC supports -Wnonnull... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wnonnull"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wnonnull"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11510,33 +11709,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wnonnull=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wnonnull=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wnonnull" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wnonnull" >&6; }
-if test "x$ac_cv_crosscflags__Wnonnull" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wnonnull"
-fi
-                  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -mcx16" >&5
-printf %s "checking whether the cross-compiler supports -mcx16... " >&6; }
-if test ${ac_cv_crosscflags__mcx16+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wnonnull"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mcx16" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mcx16" >&5
+printf %s "checking whether $CC supports -mcx16... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -mcx16"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -mcx16"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11544,33 +11742,32 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__mcx16=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__mcx16=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__mcx16" >&5
-printf "%s\n" "$ac_cv_crosscflags__mcx16" >&6; }
-if test "x$ac_cv_crosscflags__mcx16" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -mcx16"
-fi ;;
-          aarch64) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
-printf %s "checking whether the cross-compiler supports -Wno-format... " >&6; }
-if test ${ac_cv_crosscflags__Wno_format+y}
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -mcx16"
+fi } ;;
+      aarch64) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wno-format" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wno-format" >&5
+printf %s "checking whether $CC supports -Wno-format... " >&6; }
+if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wno-format"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wno-format"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11578,198 +11775,193 @@ int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_crosscflags__Wno_format=yes
+  eval "$as_ac_var=yes"
 else $as_nop
-  ac_cv_crosscflags__Wno_format=no
+  eval "$as_ac_var=no"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wno_format" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wno_format" >&6; }
-if test "x$ac_cv_crosscflags__Wno_format" = xyes
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-format"
-fi ;;
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-format"
+fi } ;;
+    esac
+
+        wine_crossdebug=$CROSSDEBUG
+    if test -z "$wine_crossdebug"
+    then
+      for ac_flag in $CFLAGS; do
+        case $ac_flag in
+         -gdwarf*)    wine_crossdebug=dwarf ;;
+         -gcodeview)  wine_crossdebug=pdb ;;
+         -g)          wine_crossdebug=${wine_crossdebug:-dwarf} ;;
         esac
-
-
-        if test -z "$CROSSDEBUG"
-        then
-          for ac_flag in $CROSSCFLAGS; do
-            case $ac_flag in
-             -gdwarf*)    CROSSDEBUG=dwarf ;;
-             -gcodeview)  CROSSDEBUG=pdb ;;
-             -g)          CROSSDEBUG=${CROSSDEBUG:-dwarf} ;;
-            esac
-          done
-        fi
-
-        ac_debug_format_seen=""
-        for ac_flag in $CROSSCFLAGS; do
-          case $ac_flag in
-           -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
-          esac
-        done
-        if test "x$ac_debug_format_seen" = x
-        then
-          case $CROSSDEBUG in
-            *dwarf)  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-4" >&5
-printf %s "checking whether the cross-compiler supports -gdwarf-4... " >&6; }
-if test ${ac_cv_crosscflags__gdwarf_4+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -gdwarf-4"
-CC="$CROSSCC"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_crosscflags__gdwarf_4=yes
-else $as_nop
-  ac_cv_crosscflags__gdwarf_4=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
-ac_exeext=$ac_wine_try_cflags_saved_exeext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__gdwarf_4" >&5
-printf "%s\n" "$ac_cv_crosscflags__gdwarf_4" >&6; }
-if test "x$ac_cv_crosscflags__gdwarf_4" = xyes
-then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gdwarf-4"
-fi ;;
-            pdb)     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gcodeview" >&5
-printf %s "checking whether the cross-compiler supports -gcodeview... " >&6; }
-if test ${ac_cv_crosscflags__gcodeview+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -gcodeview"
-CC="$CROSSCC"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_crosscflags__gcodeview=yes
-else $as_nop
-  ac_cv_crosscflags__gcodeview=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
-ac_exeext=$ac_wine_try_cflags_saved_exeext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__gcodeview" >&5
-printf "%s\n" "$ac_cv_crosscflags__gcodeview" >&6; }
-if test "x$ac_cv_crosscflags__gcodeview" = xyes
-then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gcodeview"
-fi ;;
-          esac
-        fi
-
-        if test "x$enable_werror" = "xyes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
-printf %s "checking whether the cross-compiler supports -Werror... " >&6; }
-if test ${ac_cv_crosscflags__Werror+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Werror"
-CC="$CROSSCC"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_crosscflags__Werror=yes
-else $as_nop
-  ac_cv_crosscflags__Werror=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
-ac_exeext=$ac_wine_try_cflags_saved_exeext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror" >&5
-printf "%s\n" "$ac_cv_crosscflags__Werror" >&6; }
-if test "x$ac_cv_crosscflags__Werror" = xyes
-then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror"
-fi
-        fi
-        if test "x$enable_build_id" = "xyes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,--build-id" >&5
-printf %s "checking whether the cross-compiler supports -Wl,--build-id... " >&6; }
-if test ${ac_cv_crosscflags__Wl___build_id+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wl,--build-id"
-CC="$CROSSCC"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_crosscflags__Wl___build_id=yes
-else $as_nop
-  ac_cv_crosscflags__Wl___build_id=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
-ac_exeext=$ac_wine_try_cflags_saved_exeext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wl___build_id" >&5
-printf "%s\n" "$ac_cv_crosscflags__Wl___build_id" >&6; }
-if test "x$ac_cv_crosscflags__Wl___build_id" = xyes
-then :
-  CROSSCFLAGS="$CROSSCFLAGS -Wl,--build-id"
-                            CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--build-id"
-fi
-        fi
-
-        CFLAGS=$saved_CFLAGS
-        LDFLAGS=$saved_LDFLAGS
-        CC="$ac_save_CC"
+      done
     fi
+
+    ac_debug_format_seen=""
+    for ac_flag in $CFLAGS; do
+      case $ac_flag in
+       -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
+      esac
+    done
+    if test "x$ac_debug_format_seen" = x
+    then
+      case $wine_crossdebug in
+        *dwarf)  { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gdwarf-4" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gdwarf-4" >&5
+printf %s "checking whether $CC supports -gdwarf-4... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -gdwarf-4"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
 fi
-if test "x$CROSSTARGET" = "x"
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -gdwarf-4"
+fi } ;;
+        pdb)     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gcodeview" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gcodeview" >&5
+printf %s "checking whether $CC supports -gcodeview... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -gcodeview"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -gcodeview"
+fi } ;;
+      esac
+    fi
+    eval "${wine_arch}_DEBUG=\$wine_crossdebug"
+
+    test "x$enable_werror" != xyes || { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror" >&5
+printf %s "checking whether $CC supports -Werror... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Werror"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Werror"
+fi }
+    test "x$enable_build_id" != xyes || { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,--build-id" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,--build-id" >&5
+printf %s "checking whether $CC supports -Wl,--build-id... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wl,--build-id"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_CFLAGS " -Wl,--build-id"
+                                          as_fn_append ${wine_arch}_LDFLAGS " -Wl,--build-id"
+fi }
+
+    CC=$saved_CC
+    CFLAGS=$saved_CFLAGS
+done
+
+if test $HOST_ARCH = aarch64 -a "x$PE_ARCHS" = x
+then
+    as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
+fi
+
+if test "x$PE_ARCHS" = "x"
 then :
   case "x$with_mingw" in
   x)   as_fn_append wine_notices "|MinGW compiler not found, cross-compiling PE files won't be supported." ;;
@@ -11780,12 +11972,8 @@ esac
 
 fi
 
-case $host_cpu in
-  aarch64*) test "x$CROSSTARGET" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5 ;;
-esac
 
-
-if test "x$with_system_dllpath" != "x" -a "$CROSSCC" != "false"
+if test "x$with_system_dllpath" != "x" -a -n "$PE_ARCHS"
 then
     case "$host_cpu" in
   i[3456789]86*)
@@ -11866,7 +12054,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11903,7 +12091,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lFAudio $FAUDIO_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -11976,7 +12164,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12014,7 +12202,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-ljpeg $JPEG_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12087,7 +12275,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12124,7 +12312,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-llcms2 $LCMS2_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12197,7 +12385,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12234,7 +12422,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lmpg123 $MPG123_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12307,7 +12495,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12344,7 +12532,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lpng $PNG_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12417,7 +12605,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12454,7 +12642,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-ltiff $TIFF_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12527,7 +12715,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12565,7 +12753,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12603,7 +12791,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12644,7 +12832,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lxml2 $XML2_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12718,7 +12906,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12756,7 +12944,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12797,7 +12985,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lxslt $XSLT_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12871,7 +13059,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12909,7 +13097,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12950,7 +13138,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lvkd3d $VKD3D_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12997,7 +13185,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lvkd3d-shader $VKD3D_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -13076,7 +13264,7 @@ then :
 else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -13113,7 +13301,7 @@ else $as_nop
   ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
 LIBS="-lz $ZLIB_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -19281,7 +19469,7 @@ if test "x$ac_cv_cflags__Wno_format" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wno-format"
 fi ;;
-                *) if test -z "$CROSSTARGET"
+                *) if test -z "$PE_ARCHS"
            then
                { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working -mabi=ms" >&5
 printf %s "checking for working -mabi=ms... " >&6; }
@@ -19483,11 +19671,9 @@ then
    DLLFLAGS="$DLLFLAGS -fasynchronous-unwind-tables"
    LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
    UNIXDLLFLAGS="$UNIXDLLFLAGS -fasynchronous-unwind-tables"
-else
-   if test "x$enable_win64" = "xyes"
-   then
-      as_fn_append wine_warnings "|building 64-bit Wine without support for CFI directives; exception handling will not work properly."
-   fi
+elif test $HOST_ARCH = x86_64
+then
+   as_fn_append wine_warnings "|building 64-bit Wine without support for CFI directives; exception handling will not work properly."
 fi
 
 
@@ -19495,7 +19681,7 @@ case $host_os in
   linux*)
     case $host_cpu in
       *i[3456789]86*|x86_64*|*aarch64*|arm*)
-        test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
+        test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
         WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
         ;;
     esac
@@ -21130,7 +21316,7 @@ test "$srcdir" = . || wine_srcdir="$srcdir/"
 
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
-if test "x$enable_win64" != xno -o -n "$with_wine64"; then
+if test "$HOST_ARCH" = x86_64 -o -n "$with_wine64"; then
 ac_config_links="$ac_config_links wine64:tools/winewrapper"
 wine_fn_config_symlink wine64
 fi
@@ -22209,18 +22395,18 @@ test "x$enable_tools" = xno || wine_fn_config_makefile tools/wmc enable_wmc
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/wrc enable_wrc
 
 
-wine_fn_append_file CONFIGURE_TARGETS "TAGS"
-wine_fn_append_file CONFIGURE_TARGETS "tags"
-wine_fn_append_file CONFIGURE_TARGETS "autom4te.cache"
-wine_fn_append_file CONFIGURE_TARGETS "config.log"
-wine_fn_append_file CONFIGURE_TARGETS "config.status"
-wine_fn_append_file CONFIGURE_TARGETS "include/config.h"
-wine_fn_append_file CONFIGURE_TARGETS "include/stamp-h"
-test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine"
+as_fn_append CONFIGURE_TARGETS " TAGS"
+as_fn_append CONFIGURE_TARGETS " tags"
+as_fn_append CONFIGURE_TARGETS " autom4te.cache"
+as_fn_append CONFIGURE_TARGETS " config.log"
+as_fn_append CONFIGURE_TARGETS " config.status"
+as_fn_append CONFIGURE_TARGETS " include/config.h"
+as_fn_append CONFIGURE_TARGETS " include/stamp-h"
+test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine"
 
 if test "x$enable_tools" != xno
 then
-    wine_fn_append_file CONFIGURE_TARGETS "tools/makedep$ac_exeext"
+    as_fn_append CONFIGURE_TARGETS " tools/makedep$ac_exeext"
     ac_config_commands="$ac_config_commands tools/makedep"
 
 fi
@@ -22232,7 +22418,8 @@ ac_config_commands="$ac_config_commands Makefile"
 SHELL=/bin/sh
 
 
-wine_fn_append_rule "all: wine
+as_fn_append wine_rules "
+all: wine
 	@echo \"Wine build complete.\"
 .INIT: Makefile
 .MAKEFILEDEPS:
@@ -22243,7 +22430,8 @@ depend: \$(MAKEDEP)
 	\$(MAKEDEP)$makedep_flags"
 
 
-wine_fn_append_rule "config.status: ${wine_srcdir}configure
+as_fn_append wine_rules "
+config.status: ${wine_srcdir}configure
 	@./config.status --recheck
 include/config.h: include/stamp-h
 include/stamp-h: ${wine_srcdir}include/config.h.in config.status
@@ -22251,7 +22439,8 @@ include/stamp-h: ${wine_srcdir}include/config.h.in config.status
 
 if test "x$enable_maintainer_mode" = xyes
 then
-    wine_fn_append_rule "configure: configure.ac aclocal.m4
+    as_fn_append wine_rules "
+configure: configure.ac aclocal.m4
 	autoconf --warnings=all
 include/config.h.in: include/stamp-h.in
 include/stamp-h.in: configure.ac aclocal.m4
@@ -22261,11 +22450,13 @@ fi
 
 if test "x$enable_tools" != xno
 then
-    wine_fn_append_rule "tools/makedep$ac_exeext: ${wine_srcdir}tools/makedep.c include/config.h config.status
+    as_fn_append wine_rules "
+tools/makedep$ac_exeext: ${wine_srcdir}tools/makedep.c include/config.h config.status
 	@./config.status tools/makedep
 Makefile: tools/makedep$ac_exeext"
 else
-    wine_fn_append_rule "\$(MAKEDEP):
+    as_fn_append wine_rules "
+\$(MAKEDEP):
 	@echo \"You need to run make in $toolsdir first\" && false"
 fi
 
@@ -22277,7 +22468,8 @@ then
       *)  reldir="../" ;;
     esac
         rm -f fonts server 2>/dev/null
-    wine_fn_append_rule "all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
+    as_fn_append wine_rules "
+all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 loader/wine64 loader/wine64-preloader:
 	rm -f \$@ && \$(LN_S) $reldir$with_wine64/\$@ \$@
 $with_wine64/loader/wine:
@@ -22313,13 +22505,15 @@ server/wineserver"
 fi
 
 
-wine_fn_append_rule "distclean:: clean
+as_fn_append wine_rules "
+distclean:: clean
 	rm -rf autom4te.cache
 maintainer-clean::
 	rm -f configure include/config.h.in"
 
 
-wine_fn_append_rule "dlls/ntdll/unix/version.c: dummy
+as_fn_append wine_rules "
+dlls/ntdll/unix/version.c: dummy
 	@version=\`(GIT_DIR=${wine_srcdir}.git git describe HEAD 2>/dev/null || echo \"wine-\$(PACKAGE_VERSION)\") | sed -n -e '\$\$s/\(.*\)/const char wine_build[] = \"\\1\";/p'\` && (echo \$\$version | cmp -s - \$@) || echo \$\$version >\$@ || (rm -f \$@ && exit 1)
 programs/winetest/build.rc: dummy
 	@build=\"STRINGTABLE { 1 \\\"\`GIT_DIR=${wine_srcdir}.git git rev-parse HEAD 2>/dev/null\`\\\" }\" && (echo \$\$build | cmp -s - \$@) || echo \$\$build >\$@ || (rm -f \$@ && exit 1)
@@ -22332,7 +22526,8 @@ dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_sr
 
 TAGSFLAGS="--langmap='c:+.idl.l.rh,make:(Make*.in)'"
 
-wine_fn_append_rule "TAGS etags:
+as_fn_append wine_rules "
+TAGS etags:
 	rm -f TAGS
 	(test -d .git && git ls-files || find -L $srcdir -name '*.[ch]' -print) | xargs etags -a \$(TAGSFLAGS)
 tags ctags:
@@ -23102,6 +23297,39 @@ CPPBIN = $CPPBIN
 LD = $LD
 TARGETFLAGS = $TARGETFLAGS
 toolsext = $toolsext
+HOST_ARCH = $HOST_ARCH
+aarch64_CC = $aarch64_CC
+aarch64_CFLAGS = $aarch64_CFLAGS
+aarch64_EXTRACFLAGS = $aarch64_EXTRACFLAGS
+aarch64_LDFLAGS = $aarch64_LDFLAGS
+aarch64_DEBUG = $aarch64_DEBUG
+aarch64_TARGET = $aarch64_TARGET
+aarch64_DELAYLOADFLAG = $aarch64_DELAYLOADFLAG
+aarch64_DISABLED_SUBDIRS = $aarch64_DISABLED_SUBDIRS
+arm_CC = $arm_CC
+arm_CFLAGS = $arm_CFLAGS
+arm_EXTRACFLAGS = $arm_EXTRACFLAGS
+arm_LDFLAGS = $arm_LDFLAGS
+arm_DEBUG = $arm_DEBUG
+arm_TARGET = $arm_TARGET
+arm_DELAYLOADFLAG = $arm_DELAYLOADFLAG
+arm_DISABLED_SUBDIRS = $arm_DISABLED_SUBDIRS
+i386_CC = $i386_CC
+i386_CFLAGS = $i386_CFLAGS
+i386_EXTRACFLAGS = $i386_EXTRACFLAGS
+i386_LDFLAGS = $i386_LDFLAGS
+i386_DEBUG = $i386_DEBUG
+i386_TARGET = $i386_TARGET
+i386_DELAYLOADFLAG = $i386_DELAYLOADFLAG
+i386_DISABLED_SUBDIRS = $i386_DISABLED_SUBDIRS
+x86_64_CC = $x86_64_CC
+x86_64_CFLAGS = $x86_64_CFLAGS
+x86_64_EXTRACFLAGS = $x86_64_EXTRACFLAGS
+x86_64_LDFLAGS = $x86_64_LDFLAGS
+x86_64_DEBUG = $x86_64_DEBUG
+x86_64_TARGET = $x86_64_TARGET
+x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
+x86_64_DISABLED_SUBDIRS = $x86_64_DISABLED_SUBDIRS
 toolsdir = $toolsdir
 MAKEDEP = $MAKEDEP
 RUNTESTFLAGS = $RUNTESTFLAGS
@@ -23162,13 +23390,7 @@ LIBWINE_LDFLAGS = $LIBWINE_LDFLAGS
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS
 PRELINK = $PRELINK
 LIBWINE_DEPENDS = $LIBWINE_DEPENDS
-CROSSTARGET = $CROSSTARGET
-CROSSCC = $CROSSCC
-CROSSCFLAGS = $CROSSCFLAGS
-EXTRACROSSCFLAGS = $EXTRACROSSCFLAGS
-CROSSLDFLAGS = $CROSSLDFLAGS
-DELAYLOADFLAG = $DELAYLOADFLAG
-CROSSDEBUG = $CROSSDEBUG
+PE_ARCHS = $PE_ARCHS
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
@@ -23247,6 +23469,7 @@ PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
 MSVCRTFLAGS = $MSVCRTFLAGS
+DELAYLOADFLAG = $DELAYLOADFLAG
 RT_LIBS = $RT_LIBS
 LDAP_CFLAGS = $LDAP_CFLAGS
 LDAP_LIBS = $LDAP_LIBS

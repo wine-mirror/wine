@@ -6,8 +6,9 @@ IMPORTS   = winecrt0
 UNIX_CFLAGS  = $(UNWIND_CFLAGS)
 UNIX_LIBS    = $(IOKIT_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(UNWIND_LIBS) $(I386_LIBS) $(PROCSTAT_LIBS)
 
-EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
-x86_64_EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x170000000
+EXTRADLLFLAGS = -nodefaultlibs
+i386_EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
+x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x170000000
 
 C_SRCS = \
 	actctx.c \

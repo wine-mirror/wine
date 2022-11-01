@@ -199,26 +199,23 @@ AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check if we can link an empty program with special CFLAGS ****
 dnl
-dnl Usage: WINE_TRY_CROSSCFLAGS(flags,[action-if-yes,[action-if-no]])
+dnl Usage: WINE_TRY_PE_CFLAGS(flags,[action-if-yes,[action-if-no]])
 dnl
-dnl The default action-if-yes is to append the flags to EXTRACROSSCFLAGS.
+dnl The default action-if-yes is to append the flags to the arch-specific EXTRACFLAGS.
 dnl
-AC_DEFUN([WINE_TRY_CROSSCFLAGS],
-[AS_VAR_PUSHDEF([ac_var], ac_cv_crosscflags_[[$1]])dnl
-AC_CACHE_CHECK([whether the cross-compiler supports $1], ac_var,
+AC_DEFUN([WINE_TRY_PE_CFLAGS],
+[{ AS_VAR_PUSHDEF([ac_var], ac_cv_${wine_arch}_cflags_[[$1]])dnl
+AC_CACHE_CHECK([whether $CC supports $1], ac_var,
 [ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs $1"
-CC="$CROSSCC"
+CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs $1"
 ac_exeext=".exe"
 AC_LINK_IFELSE([AC_LANG_SOURCE([[int __cdecl mainCRTStartup(void) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext])
-AS_VAR_IF([ac_var],[yes],[m4_default([$2], [EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS $1"])], [$3])dnl
-AS_VAR_POPDEF([ac_var])])
+AS_VAR_IF([ac_var],[yes],[m4_default([$2], [AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $1"])], [$3])])dnl
+AS_VAR_POPDEF([ac_var]) }])
 
 dnl **** Check whether the given MinGW header is available ****
 dnl
@@ -229,7 +226,7 @@ AC_DEFUN([WINE_CHECK_MINGW_HEADER],
 AC_CACHE_CHECK([for MinGW $1], ac_var,
 [ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-CC="$CROSSCC"
+AS_VAR_COPY([CC],[${wine_arch}_CC])
 ac_exeext=".exe"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[$4
 #include <$1>]])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])])
@@ -248,7 +245,7 @@ AC_CACHE_CHECK([for $2 in MinGW -l$1], ac_var,
 [ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
 ac_wine_check_headers_saved_libs=$LIBS
-CC="$CROSSCC"
+AS_VAR_COPY([CC],[${wine_arch}_CC])
 ac_exeext=".exe"
 LIBS="-l$1 $5 $LIBS"
 AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])])
@@ -298,31 +295,6 @@ LIBS="$LIBS $2"
 AC_CHECK_FUNCS([$1],[$3],[$4])
 LIBS="$ac_wine_check_funcs_save_LIBS"])
 
-dnl **** Check for a mingw program, trying the various mingw prefixes ****
-dnl
-dnl Usage: WINE_CHECK_MINGW_PROG(variable,[value-if-not-found],[path])
-dnl
-AC_DEFUN([WINE_CHECK_MINGW_PROG],
-[case "$host_cpu" in
-  aarch64*)
-    ac_prefix_list="aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang" ;;
-  arm*)
-    ac_prefix_list="armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang" ;;
-  i[[3456789]]86*)
-    ac_prefix_list="m4_foreach([ac_wine_prefix],[w64-mingw32, pc-mingw32, mingw32msvc, mingw32],
-                        m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-ac_wine_prefix-gcc ]))
-                     m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-w64-mingw32-clang ])
-                     mingw32-gcc clang" ;;
-  x86_64)
-    ac_prefix_list="m4_foreach([ac_wine_prefix],[pc-mingw32, w64-mingw32, mingw32msvc],
-                        m4_foreach([ac_wine_cpu],[x86_64,amd64],[ac_wine_cpu-ac_wine_prefix-gcc ]))
-                    m4_foreach([ac_wine_cpu],[x86_64,amd64],[ac_wine_cpu-w64-mingw32-clang ]) clang" ;;
-  *)
-    ac_prefix_list="" ;;
-esac
-AC_CHECK_PROGS([$1],[$ac_prefix_list],[$2],[$3])])
-
-
 dnl **** Define helper functions for creating config.status files ****
 dnl
 dnl Usage: AC_REQUIRE([WINE_CONFIG_HELPERS])
@@ -333,36 +305,40 @@ AC_SUBST(SUBDIRS,"")
 AC_SUBST(DISABLED_SUBDIRS,"")
 AC_SUBST(CONFIGURE_TARGETS,"")
 
-wine_fn_append_file ()
-{
-    AS_VAR_APPEND($[1]," \\$as_nl	$[2]")
-}
-
-wine_fn_append_rule ()
-{
-    AS_VAR_APPEND(wine_rules,"$as_nl$[1]")
-}
-
 wine_fn_config_makefile ()
 {
-    wine_fn_append_file SUBDIRS $[1]
-    AS_VAR_IF([$[2]],[no],[wine_fn_append_file DISABLED_SUBDIRS $[1]])
+    AS_VAR_APPEND([SUBDIRS],[" \\$as_nl	$[1]"])
+    AS_VAR_COPY([enable],[$[2]])
+    case "$enable" in
+      no) AS_VAR_APPEND([DISABLED_SUBDIRS],[" $[1]"]) ;;
+      *aarch64*|*arm*|*i386*|*x86_64*)
+        if test -n "$PE_ARCHS"
+        then
+            for i in $PE_ARCHS
+            do
+                test $(expr ",$enable," : ".*,$i,") -gt 0 || AS_VAR_APPEND([${i}_DISABLED_SUBDIRS],[" $[1]"])
+            done
+        else
+            test $(expr ",$enable," : ".*,$HOST_ARCH,") -gt 0 || AS_VAR_APPEND([DISABLED_SUBDIRS],[" $[1]"])
+        fi;;
+    esac
 }
 
 wine_fn_config_symlink ()
 {
     ac_links=$[@]
-    wine_fn_append_rule \
-"$ac_links:
-	@./config.status \$[@]"
-    for f in $ac_links; do wine_fn_append_file CONFIGURE_TARGETS $f; done
+    AS_VAR_APPEND([wine_rules],["
+$ac_links:
+	@./config.status \$[@]"])
+    for f in $ac_links; do AS_VAR_APPEND([CONFIGURE_TARGETS],[" $f"]); done
 }])
 
 dnl **** Define helper function to append a rule to a makefile command list ****
 dnl
 dnl Usage: WINE_APPEND_RULE(rule)
 dnl
-AC_DEFUN([WINE_APPEND_RULE],[AC_REQUIRE([WINE_CONFIG_HELPERS])wine_fn_append_rule "$1"])
+AC_DEFUN([WINE_APPEND_RULE],[AC_REQUIRE([WINE_CONFIG_HELPERS])AS_VAR_APPEND([wine_rules],["
+$1"])])
 
 dnl **** Create symlinks from config.status ****
 dnl
@@ -391,7 +367,7 @@ dnl
 dnl Usage: WINE_IGNORE_FILE(file,enable)
 dnl
 AC_DEFUN([WINE_IGNORE_FILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_ifval([$2],[test "x$[$2]" = xno || ])wine_fn_append_file CONFIGURE_TARGETS $1])
+m4_ifval([$2],[test "x$[$2]" = xno || ])AS_VAR_APPEND([CONFIGURE_TARGETS],[" $1"])])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl
