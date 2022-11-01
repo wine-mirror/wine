@@ -796,7 +796,15 @@ class VkFunction(object):
 
         if needs_alloc:
             body += "    struct conversion_context ctx;\n"
+        body += "\n"
         body += "    {0}\n".format(self.trace(params_prefix=params_prefix))
+
+        if self.params[0].optional and self.params[0].is_handle():
+            if self.type != "void":
+                LOGGER.warning("return type {0} with optional handle not supported".format(self.type))
+            body += "    if (!{0}{1})\n".format(params_prefix, self.params[0].name)
+            body += "        return STATUS_SUCCESS;\n\n"
+
         if needs_alloc:
             body += "    init_conversion_context(&ctx);\n"
 
@@ -1102,7 +1110,7 @@ class VkHandle(object):
 
 class VkVariable(object):
     def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_len=None,
-                 dyn_array_len=None, object_type=None):
+                 dyn_array_len=None, object_type=None, optional=False):
         self.const = const
         self.type_info = type_info
         self.type = type
@@ -1111,6 +1119,7 @@ class VkVariable(object):
         self.array_len = array_len
         self.dyn_array_len = dyn_array_len
         self.object_type = object_type
+        self.optional = optional
         if type_info:
             self.set_type_info(type_info)
 
@@ -1205,9 +1214,8 @@ class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
             dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None):
         VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_len=array_len,
-                            dyn_array_len=dyn_array_len, object_type=object_type)
+                            dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
         self.struct_fwd_decl = struct_fwd_decl
-        self.optional = optional
         self.values = values
         self.bit_width = bit_width
 
@@ -1424,10 +1432,10 @@ class VkMember(VkVariable):
 class VkParam(VkVariable):
     """ Helper class which describes a parameter to a function call. """
 
-    def __init__(self, type_info, const=None, pointer=None, name=None, array_len=None, dyn_array_len=None, object_type=None):
+    def __init__(self, type_info, const=None, pointer=None, name=None, array_len=None, dyn_array_len=None, object_type=None, optional=False):
         VkVariable.__init__(self, const=const, type_info=type_info, type=type_info["name"], name=name,
                             pointer=pointer, array_len=array_len, dyn_array_len=dyn_array_len,
-                            object_type=object_type)
+                            object_type=object_type, optional=optional)
 
         self._set_direction()
         self._set_format_string()
@@ -1460,6 +1468,9 @@ class VkParam(VkVariable):
         type_elem = param.find("type")
         pointer = type_elem.tail.strip() if type_elem.tail.strip() != "" else None
 
+        attr = param.get("optional")
+        optional = attr and attr.startswith("true")
+
         # Some uint64_t are actually handles with a separate type param
         object_type = param.get("objecttype", None)
 
@@ -1468,7 +1479,7 @@ class VkParam(VkVariable):
         if type_info is None:
             LOGGER.err("type info not found for: {0}".format(type_elem.text))
 
-        return VkParam(type_info, const=const, pointer=pointer, name=name, array_len=array_len, dyn_array_len=dyn_array_len, object_type=object_type)
+        return VkParam(type_info, const=const, pointer=pointer, name=name, array_len=array_len, dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
 
     def set_conversions(self, func):
         """ Internal helper function to configure any needed conversion functions. """
