@@ -330,7 +330,22 @@ static void test_hash(const struct hash_test *test)
 
     if (pBCryptHash)
     {
+        ret = pBCryptHash(BCRYPT_SHA1_ALG_HANDLE, NULL, 0, NULL, 0, hash_buf, 20);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        ret = pBCryptHash(BCRYPT_SHA1_ALG_HANDLE, NULL, 0, (UCHAR *)"test", sizeof("test"), NULL, 20);
+        ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+        ret = pBCryptHash(BCRYPT_SHA1_ALG_HANDLE, NULL, 0, (UCHAR *)"test", sizeof("test"), hash_buf, 21);
+        ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+        ret = pBCryptHash(BCRYPT_SHA1_ALG_HANDLE, NULL, 0, (UCHAR *)"test", sizeof("test"), hash_buf, 20);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
         ret = BCryptCreateHash(BCRYPT_SHA1_ALG_HANDLE, &hash, NULL, 0, NULL, 0, 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
+        ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+        ret = BCryptFinishHash(hash, hash_buf, 21, 0);
+        ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+        ret = BCryptFinishHash(hash, hash_buf, 20, 0);
         ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
         ret = BCryptDestroyHash(hash);
         ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
