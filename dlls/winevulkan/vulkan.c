@@ -1662,8 +1662,11 @@ VkResult wine_vkCreateComputePipelines(VkDevice handle, VkPipelineCache pipeline
     VkResult res;
     uint32_t i;
 
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
     res = device->funcs.p_vkCreateComputePipelines(device->device, pipeline_cache, count, create_infos,
-                                                   allocator, pipelines);
+                                                   NULL /* allocator */, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
@@ -1679,8 +1682,11 @@ VkResult wine_vkCreateGraphicsPipelines(VkDevice handle, VkPipelineCache pipelin
     VkResult res;
     uint32_t i;
 
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
     res = device->funcs.p_vkCreateGraphicsPipelines(device->device, pipeline_cache, count, create_infos,
-                                                    allocator, pipelines);
+                                                    NULL /* allocator */, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
@@ -1697,8 +1703,11 @@ VkResult wine_vkCreateRayTracingPipelinesKHR(VkDevice handle, VkDeferredOperatio
     VkResult res;
     uint32_t i;
 
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
     res = device->funcs.p_vkCreateRayTracingPipelinesKHR(device->device, deferred_operation, pipeline_cache,
-                                                         count, create_infos, allocator, pipelines);
+                                                         count, create_infos, NULL /* allocator */, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
@@ -1714,8 +1723,11 @@ VkResult wine_vkCreateRayTracingPipelinesNV(VkDevice handle, VkPipelineCache pip
     VkResult res;
     uint32_t i;
 
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
     res = device->funcs.p_vkCreateRayTracingPipelinesNV(device->device, pipeline_cache, count, create_infos,
-                                                        allocator, pipelines);
+                                                        NULL /* allocator */, pipelines);
 
     for (i = 0; i < count; i++)
         fixup_pipeline_feedback_info(&create_infos[i]);
