@@ -314,23 +314,27 @@ struct symt_data* symt_new_global_variable(struct module* module,
     return sym;
 }
 
-static void init_function_or_inlinesite(struct symt_function* sym,
-                                        struct module* module,
-                                        DWORD tag,
-                                        struct symt* container,
-                                        const char* name,
-                                        ULONG_PTR addr, ULONG_PTR size,
-                                        struct symt* sig_type)
+static struct symt_function* init_function_or_inlinesite(struct module* module,
+                                                         DWORD tag,
+                                                         struct symt* container,
+                                                         const char* name,
+                                                         struct symt* sig_type,
+                                                         unsigned num_ranges)
 {
+    struct symt_function* sym;
+
     assert(!sig_type || sig_type->tag == SymTagFunctionType);
-    sym->symt.tag  = tag;
-    sym->hash_elt.name = pool_strdup(&module->pool, name);
-    sym->container = container;
-    sym->ranges[0].low = addr;
-    sym->ranges[0].high = addr + size;
-    sym->type      = sig_type;
-    vector_init(&sym->vlines,  sizeof(struct line_info), 64);
-    vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+    if ((sym = pool_alloc(&module->pool, offsetof(struct symt_function, ranges[num_ranges]))))
+    {
+        sym->symt.tag  = tag;
+        sym->hash_elt.name = pool_strdup(&module->pool, name);
+        sym->container = container;
+        sym->type      = sig_type;
+        vector_init(&sym->vlines,  sizeof(struct line_info), 64);
+        vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        sym->num_ranges = num_ranges;
+    }
+    return sym;
 }
 
 struct symt_function* symt_new_function(struct module* module,
@@ -343,10 +347,11 @@ struct symt_function* symt_new_function(struct module* module,
 
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%Ix-%Ix\n",
                          debugstr_w(module->modulename), name, addr, addr + size - 1);
-    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    if ((sym = init_function_or_inlinesite(module, SymTagFunction, &compiland->symt, name, sig_type, 1)))
     {
         struct symt** p;
-        init_function_or_inlinesite(sym, module, SymTagFunction, &compiland->symt, name, addr, size, sig_type);
+        sym->ranges[0].low = addr;
+        sym->ranges[0].high = addr + size;
         sym->next_inlinesite = NULL; /* first of list */
         symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
@@ -358,25 +363,24 @@ struct symt_function* symt_new_function(struct module* module,
     return sym;
 }
 
-struct symt_inlinesite* symt_new_inlinesite(struct module* module,
-                                            struct symt_function* func,
-                                            struct symt* container,
-                                            const char* name,
-                                            struct symt* sig_type,
-                                            unsigned num_ranges)
+struct symt_function* symt_new_inlinesite(struct module* module,
+                                          struct symt_function* func,
+                                          struct symt* container,
+                                          const char* name,
+                                          struct symt* sig_type,
+                                          unsigned num_ranges)
 {
-    struct symt_inlinesite* sym;
+    struct symt_function* sym;
 
     TRACE_(dbghelp_symt)("Adding inline site %s\n", name);
-    if ((sym = pool_alloc(&module->pool, offsetof(struct symt_inlinesite, ranges[num_ranges]))))
+    if ((sym = init_function_or_inlinesite(module, SymTagInlineSite, container, name, sig_type, num_ranges)))
     {
         struct symt** p;
         assert(container);
-        init_function_or_inlinesite(&sym->func, module, SymTagInlineSite, container, name, 0, 0, sig_type);
+
         /* chain inline sites */
-        sym->func.next_inlinesite = func->next_inlinesite;
+        sym->next_inlinesite = func->next_inlinesite;
         func->next_inlinesite = sym;
-        sym->num_ranges = num_ranges;
         if (container->tag == SymTagFunction || container->tag == SymTagInlineSite)
             p = vector_add(&((struct symt_function*)container)->vchildren, &module->pool);
         else
@@ -384,7 +388,7 @@ struct symt_inlinesite* symt_new_inlinesite(struct module* module,
             assert(container->tag == SymTagBlock);
             p = vector_add(&((struct symt_block*)container)->vchildren, &module->pool);
         }
-        *p = &sym->func.symt;
+        *p = &sym->symt;
     }
     return sym;
 }
@@ -1201,13 +1205,13 @@ void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
 }
 
 /* return the lowest inline site inside a function */
-struct symt_inlinesite* symt_find_lowest_inlined(struct symt_function* func, DWORD64 addr)
+struct symt_function* symt_find_lowest_inlined(struct symt_function* func, DWORD64 addr)
 {
-    struct symt_inlinesite* current;
+    struct symt_function* current;
     int i;
 
     assert(func->symt.tag == SymTagFunction);
-    for (current = func->next_inlinesite; current; current = current->func.next_inlinesite)
+    for (current = func->next_inlinesite; current; current = current->next_inlinesite)
     {
         for (i = 0; i < current->num_ranges; ++i)
         {
@@ -1220,9 +1224,9 @@ struct symt_inlinesite* symt_find_lowest_inlined(struct symt_function* func, DWO
 }
 
 /* from an inline function, get either the enclosing inlined function, or the top function when no inlined */
-struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
+struct symt* symt_get_upper_inlined(struct symt_function* inlined)
 {
-    struct symt* symt = &inlined->func.symt;
+    struct symt* symt = &inlined->symt;
 
     do
     {
@@ -1237,18 +1241,18 @@ struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
 }
 
 /* lookup in module for an inline site (from addr and inline_ctx) */
-struct symt_inlinesite* symt_find_inlined_site(struct module* module, DWORD64 addr, DWORD inline_ctx)
+struct symt_function* symt_find_inlined_site(struct module* module, DWORD64 addr, DWORD inline_ctx)
 {
     struct symt_ht* symt = symt_find_symbol_at(module, addr);
 
     if (symt_check_tag(&symt->symt, SymTagFunction))
     {
         struct symt_function* func = (struct symt_function*)symt;
-        struct symt_inlinesite* curr = symt_find_lowest_inlined(func, addr);
+        struct symt_function* curr = symt_find_lowest_inlined(func, addr);
         DWORD depth = IFC_DEPTH(inline_ctx);
 
         if (curr)
-            for ( ; &curr->func != func; curr = (struct symt_inlinesite*)symt_get_upper_inlined(curr))
+            for ( ; curr != func; curr = (struct symt_function*)symt_get_upper_inlined(curr))
                 if (depth-- == 0) return curr;
     }
     return NULL;
@@ -1264,10 +1268,10 @@ DWORD symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr)
         struct symt_ht* symt = symt_find_symbol_at(pair.effective, addr);
         if (symt_check_tag(&symt->symt, SymTagFunction))
         {
-            struct symt_inlinesite* inlined = symt_find_lowest_inlined((struct symt_function*)symt, addr);
+            struct symt_function* inlined = symt_find_lowest_inlined((struct symt_function*)symt, addr);
             if (inlined)
             {
-                for ( ; &inlined->func.symt != &symt->symt; inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined))
+                for ( ; &inlined->symt != &symt->symt; inlined = (struct symt_function*)symt_get_upper_inlined(inlined))
                     ++depth;
             }
         }
@@ -2673,7 +2677,7 @@ PWSTR WINAPI SymSetHomeDirectoryW(HANDLE hProcess, PCWSTR dir)
 BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, PDWORD64 disp, PSYMBOL_INFO si)
 {
     struct module_pair pair;
-    struct symt_inlinesite* inlined;
+    struct symt_function* inlined;
 
     TRACE("(%p, %#I64x, 0x%lx, %p, %p)\n", hProcess, addr, inline_ctx, disp, si);
 
@@ -2684,8 +2688,8 @@ BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx
         inlined = symt_find_inlined_site(pair.effective, addr, inline_ctx);
         if (inlined)
         {
-            symt_fill_sym_info(&pair, NULL, &inlined->func.symt, si);
-            if (disp) *disp = addr - inlined->func.ranges[0].low;
+            symt_fill_sym_info(&pair, NULL, &inlined->symt, si);
+            if (disp) *disp = addr - inlined->ranges[0].low;
             return TRUE;
         }
         /* fall through */
@@ -2728,14 +2732,14 @@ static BOOL get_line_from_inline_context(HANDLE hProcess, DWORD64 addr, ULONG in
                                          struct internal_line_t* intl)
 {
     struct module_pair pair;
-    struct symt_inlinesite* inlined;
+    struct symt_function* inlined;
 
     if (!module_init_pair(&pair, hProcess, mod_addr ? mod_addr : addr)) return FALSE;
     switch (IFC_MODE(inline_ctx))
     {
     case IFC_MODE_INLINE:
         inlined = symt_find_inlined_site(pair.effective, addr, inline_ctx);
-        if (inlined && get_line_from_function(&pair, &inlined->func, addr, disp, intl))
+        if (inlined && get_line_from_function(&pair, inlined, addr, disp, intl))
             return TRUE;
         /* fall through: check if we can find line info at top function level */
     case IFC_MODE_IGNORE:

@@ -706,7 +706,7 @@ BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
 BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD inlinectx)
 {
     struct module_pair pair;
-    struct symt_inlinesite* inlined;
+    struct symt_function* inlined;
 
     TRACE("(%p %I64x %lx)\n", hProcess, addr, inlinectx);
 
@@ -718,7 +718,7 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
         if (inlined)
         {
             pair.pcs->localscope_pc = addr;
-            pair.pcs->localscope_symt = &inlined->func.symt;
+            pair.pcs->localscope_symt = &inlined->symt;
             return TRUE;
         }
         /* fall through */

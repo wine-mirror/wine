@@ -2077,7 +2077,7 @@ static BOOL cv_dbgsubsect_find_inlinee(const struct msc_debug_info* msc_dbg,
     return FALSE;
 }
 
-static inline void inline_site_update_last_range(struct symt_inlinesite* inlined, unsigned index, ULONG_PTR hi)
+static inline void inline_site_update_last_range(struct symt_function* inlined, unsigned index, ULONG_PTR hi)
 {
     if (index && index <= inlined->num_ranges)
     {
@@ -2119,17 +2119,17 @@ static unsigned inline_site_get_num_ranges(const unsigned char* annot,
     return num_ranges;
 }
 
-static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debug_info* msc_dbg,
-                                                           const struct cv_module_snarf* cvmod,
-                                                           struct symt_function* top_func,
-                                                           struct symt* container,
-                                                           cv_itemid_t inlinee,
-                                                           const unsigned char* annot,
-                                                           const unsigned char* last_annot)
+static struct symt_function* codeview_create_inline_site(const struct msc_debug_info* msc_dbg,
+                                                         const struct cv_module_snarf* cvmod,
+                                                         struct symt_function* top_func,
+                                                         struct symt* container,
+                                                         cv_itemid_t inlinee,
+                                                         const unsigned char* annot,
+                                                         const unsigned char* last_annot)
 {
     const struct CV_DebugSSubsectionHeader_t* hdr_files = NULL;
     const union codeview_type* cvt;
-    struct symt_inlinesite* inlined;
+    struct symt_function* inlined;
     struct cv_binannot cvba;
     BOOL srcok;
     unsigned num_ranges;
@@ -2194,7 +2194,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
             offset += cvba.arg1;
             inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             if (srcok)
-                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->ranges[0].low + offset);
+                symt_add_func_line(msc_dbg->module, inlined, srcfile, line, top_func->ranges[0].low + offset);
             inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
             inlined->ranges[index++].high = top_func->ranges[0].low + offset;
             break;
@@ -2215,7 +2215,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
             offset += cvba.arg1;
             inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             if (srcok)
-                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->ranges[0].low + offset);
+                symt_add_func_line(msc_dbg->module, inlined, srcfile, line, top_func->ranges[0].low + offset);
             inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
             inlined->ranges[index++].high = top_func->ranges[0].low + offset;
             break;
@@ -2223,7 +2223,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
             offset += cvba.arg2;
             inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             if (srcok)
-                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->ranges[0].low + offset);
+                symt_add_func_line(msc_dbg->module, inlined, srcfile, line, top_func->ranges[0].low + offset);
             inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
             inlined->ranges[index++].high = top_func->ranges[0].low + offset + cvba.arg1;
             break;
@@ -2238,10 +2238,8 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
     {
         struct addr_range* range = &inlined->ranges[inlined->num_ranges - 1];
         if (range->low == range->high) WARN("pending empty range at end of %s inside %s\n",
-                                             inlined->func.hash_elt.name,
+                                             inlined->hash_elt.name,
                                              top_func->hash_elt.name);
-        /* temporary: update address field */
-        inlined->func.ranges[0].low = inlined->ranges[0].low;
     }
     return inlined;
 }
@@ -2657,11 +2655,11 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
         case S_INLINESITE:
             {
-                struct symt_inlinesite* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
-                                                                              block ? &block->symt : &curr_func->symt,
-                                                                              sym->inline_site_v3.inlinee,
-                                                                              sym->inline_site_v3.binaryAnnotations,
-                                                                              (const unsigned char*)sym + length);
+                struct symt_function* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
+                                                                            block ? &block->symt : &curr_func->symt,
+                                                                            sym->inline_site_v3.inlinee,
+                                                                            sym->inline_site_v3.binaryAnnotations,
+                                                                            (const unsigned char*)sym + length);
                 if (inlined)
                 {
                     curr_func = (struct symt_function*)inlined;
@@ -2678,11 +2676,11 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
         case S_INLINESITE2:
             {
-                struct symt_inlinesite* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
-                                                                              block ? &block->symt : &curr_func->symt,
-                                                                              sym->inline_site2_v3.inlinee,
-                                                                              sym->inline_site2_v3.binaryAnnotations,
-                                                                              (const unsigned char*)sym + length);
+                struct symt_function* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
+                                                                            block ? &block->symt : &curr_func->symt,
+                                                                            sym->inline_site2_v3.inlinee,
+                                                                            sym->inline_site2_v3.binaryAnnotations,
+                                                                            (const unsigned char*)sym + length);
                 if (inlined)
                 {
                     curr_func = (struct symt_function*)inlined;
@@ -2701,7 +2699,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_INLINESITE_END:
             block = symt_check_tag(curr_func->container, SymTagBlock) ?
                 (struct symt_block*)curr_func->container : NULL;
-            curr_func = (struct symt_function*)symt_get_upper_inlined((struct symt_inlinesite*)curr_func);
+            curr_func = (struct symt_function*)symt_get_upper_inlined(curr_func);
             break;
 
          /*

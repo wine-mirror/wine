@@ -1012,7 +1012,7 @@ BOOL module_remove(struct process* pcs, struct module* module)
     {
         struct symt* locsym = pcs->localscope_symt;
         if (symt_check_tag(locsym, SymTagInlineSite))
-            locsym = &symt_get_function_from_inlined((struct symt_inlinesite*)locsym)->symt;
+            locsym = &symt_get_function_from_inlined((struct symt_function*)locsym)->symt;
         if (symt_check_tag(locsym, SymTagFunction))
         {
             locsym = ((struct symt_function*)locsym)->container;

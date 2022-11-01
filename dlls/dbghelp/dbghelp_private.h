@@ -284,20 +284,13 @@ struct symt_data
 
 struct symt_function
 {
-    struct symt                 symt;           /* SymTagFunction (or SymTagInlineSite when embedded in symt_inlinesite) */
-    struct hash_table_elt       hash_elt;       /* if global symbol */
-    struct symt*                container;      /* compiland */
+    struct symt                 symt;           /* SymTagFunction or SymTagInlineSite */
+    struct hash_table_elt       hash_elt;       /* if global symbol, inline site */
+    struct symt*                container;      /* compiland (for SymTagFunction) or function (for SymTagInlineSite) */
     struct symt*                type;           /* points to function_signature */
     struct vector               vlines;
     struct vector               vchildren;      /* locals, params, blocks, start/end, labels, inline sites */
-    struct symt_inlinesite*     next_inlinesite;/* linked list of inline sites in this function */
-    struct addr_range           ranges[1];
-};
-
-/* a symt_inlinesite* can be casted to a symt_function* to access all function bits */
-struct symt_inlinesite
-{
-    struct symt_function        func;
+    struct symt_function*       next_inlinesite;/* linked list of inline sites in this function */
     unsigned                    num_ranges;
     struct addr_range           ranges[];
 };
@@ -850,7 +843,7 @@ extern struct symt_function*
                                       const char* name,
                                       ULONG_PTR addr, ULONG_PTR size,
                                       struct symt* type) DECLSPEC_HIDDEN;
-extern struct symt_inlinesite*
+extern struct symt_function*
                     symt_new_inlinesite(struct module* module,
                                         struct symt_function* func,
                                         struct symt* parent,
@@ -945,18 +938,18 @@ extern struct symt_pointer*
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name) DECLSPEC_HIDDEN;
-extern struct symt_inlinesite*
+extern struct symt_function*
                     symt_find_lowest_inlined(struct symt_function* func, DWORD64 addr) DECLSPEC_HIDDEN;
 extern struct symt*
-                    symt_get_upper_inlined(struct symt_inlinesite* inlined) DECLSPEC_HIDDEN;
+                    symt_get_upper_inlined(struct symt_function* inlined) DECLSPEC_HIDDEN;
 static inline struct symt_function*
-                    symt_get_function_from_inlined(struct symt_inlinesite* inlined)
+                    symt_get_function_from_inlined(struct symt_function* inlined)
 {
-    while (!symt_check_tag(&inlined->func.symt, SymTagFunction))
-        inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined);
-    return &inlined->func;
+    while (!symt_check_tag(&inlined->symt, SymTagFunction))
+        inlined = (struct symt_function*)symt_get_upper_inlined(inlined);
+    return inlined;
 }
-extern struct symt_inlinesite*
+extern struct symt_function*
                     symt_find_inlined_site(struct module* module,
                                            DWORD64 addr, DWORD inline_ctx) DECLSPEC_HIDDEN;
 extern DWORD        symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr) DECLSPEC_HIDDEN;
