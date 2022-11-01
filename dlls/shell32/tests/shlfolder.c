@@ -775,9 +775,11 @@ static void test_GetDisplayName(void)
     ok (!lstrcmpiW(wszTestFile, wszTestFile2), "SHGetPathFromIDListW returns incorrect path!\n");
 
     /* SHBindToParent fails, if called with a NULL PIDL. */
+    pidlLast = (LPITEMIDLIST)0xdeadbeef;
     hr = SHBindToParent(NULL, &IID_IShellFolder, (void **)&psfPersonal, &pidlLast);
     ok (hr == E_INVALIDARG || broken(hr == E_OUTOFMEMORY) /* XP */,
         "SHBindToParent(NULL) should fail! hr = %08lx\n", hr);
+    todo_wine ok(pidlLast == NULL, "got %p\n", pidlLast);
 
     /* But it succeeds with an empty PIDL. */
     hr = SHBindToParent(pidlEmpty, &IID_IShellFolder, (void **)&psfPersonal, &pidlLast);
