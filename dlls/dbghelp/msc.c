@@ -1614,7 +1614,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                 /* unfortunately, we can have several functions in the same block, if there's no
                  * gap between them... find the new function if needed
                  */
-                if (!func || addr >= func->address + func->size)
+                if (!func || addr >= func->ranges[0].high)
                 {
                     func = (struct symt_function*)symt_find_symbol_at(msc_dbg->module, addr);
                     /* FIXME: at least labels support line numbers */
@@ -1927,8 +1927,8 @@ static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg
                 break;
             case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
                 locinfo->offset = symrange->defrange_frameptr_relfullscope_v3.offFramePointer;
-                locinfo->start = curr_func->address;
-                locinfo->rangelen = curr_func->size;
+                locinfo->start = curr_func->ranges[0].low;
+                locinfo->rangelen = addr_range_size(&curr_func->ranges[0]);
                 break;
             case S_DEFRANGE_REGISTER_REL:
                 locinfo->reg = symrange->defrange_registerrel_v3.baseReg;
@@ -2192,11 +2192,11 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
             break;
         case BA_OP_ChangeCodeOffset:
             offset += cvba.arg1;
-            inline_site_update_last_range(inlined, index, top_func->address + offset);
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             if (srcok)
-                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
-            inlined->ranges[index  ].low = top_func->address + offset;
-            inlined->ranges[index++].high = top_func->address + offset;
+                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->ranges[0].low + offset);
+            inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
+            inlined->ranges[index++].high = top_func->ranges[0].low + offset;
             break;
         case BA_OP_ChangeCodeLength:
             /* this op doesn't seem widely used... */
@@ -2213,19 +2213,19 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         case BA_OP_ChangeCodeOffsetAndLineOffset:
             line += binannot_getsigned(cvba.arg2);
             offset += cvba.arg1;
-            inline_site_update_last_range(inlined, index, top_func->address + offset);
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             if (srcok)
-                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
-            inlined->ranges[index  ].low = top_func->address + offset;
-            inlined->ranges[index++].high = top_func->address + offset;
+                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->ranges[0].low + offset);
+            inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
+            inlined->ranges[index++].high = top_func->ranges[0].low + offset;
             break;
         case BA_OP_ChangeCodeLengthAndCodeOffset:
             offset += cvba.arg2;
-            inline_site_update_last_range(inlined, index, top_func->address + offset);
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             if (srcok)
-                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
-            inlined->ranges[index  ].low = top_func->address + offset;
-            inlined->ranges[index++].high = top_func->address + offset + cvba.arg1;
+                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->ranges[0].low + offset);
+            inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
+            inlined->ranges[index++].high = top_func->ranges[0].low + offset + cvba.arg1;
             break;
         default:
             WARN("Unsupported op %d\n", cvba.opcode);
@@ -2241,7 +2241,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
                                              inlined->func.hash_elt.name,
                                              top_func->hash_elt.name);
         /* temporary: update address field */
-        inlined->func.address = inlined->ranges[0].low;
+        inlined->func.ranges[0].low = inlined->ranges[0].low;
     }
     return inlined;
 }
@@ -2534,7 +2534,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (curr_func)
             {
                 loc.kind = loc_absolute;
-                loc.offset = codeview_get_address(msc_dbg, sym->label_v1.segment, sym->label_v1.offset) - curr_func->address;
+                loc.offset = codeview_get_address(msc_dbg, sym->label_v1.segment, sym->label_v1.offset) - curr_func->ranges[0].low;
                 symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, &loc,
                                         terminate_string(&sym->label_v1.p_name));
             }
@@ -2546,7 +2546,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (curr_func)
             {
                 loc.kind = loc_absolute;
-                loc.offset = codeview_get_address(msc_dbg, sym->label_v3.segment, sym->label_v3.offset) - curr_func->address;
+                loc.offset = codeview_get_address(msc_dbg, sym->label_v3.segment, sym->label_v3.offset) - curr_func->ranges[0].low;
                 symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel,
                                         &loc, sym->label_v3.name);
             }
@@ -2798,8 +2798,8 @@ static BOOL codeview_is_inside(const struct cv_local_info* locinfo, const struct
     /* ip must be in local_info range, but not in any of its gaps */
     if (ip < locinfo->start || ip >= locinfo->start + locinfo->rangelen) return FALSE;
     for (i = 0; i < locinfo->ngaps; ++i)
-        if (func->address + locinfo->gaps[i].gapStartOffset <= ip &&
-            ip < func->address + locinfo->gaps[i].gapStartOffset + locinfo->gaps[i].cbRange)
+        if (func->ranges[0].low + locinfo->gaps[i].gapStartOffset <= ip &&
+            ip < func->ranges[0].low + locinfo->gaps[i].gapStartOffset + locinfo->gaps[i].cbRange)
             return FALSE;
     return TRUE;
 }

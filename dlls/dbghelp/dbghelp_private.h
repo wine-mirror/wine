@@ -120,6 +120,11 @@ struct addr_range
     DWORD64                     high;           /* absolute address of first byte after the range */
 };
 
+static inline DWORD64 addr_range_size(const struct addr_range* ar)
+{
+    return ar->high - ar->low;
+}
+
 /* tests whether ar2 is inside ar1 */
 static inline BOOL addr_range_inside(const struct addr_range* ar1, const struct addr_range* ar2)
 {
@@ -281,13 +286,12 @@ struct symt_function
 {
     struct symt                 symt;           /* SymTagFunction (or SymTagInlineSite when embedded in symt_inlinesite) */
     struct hash_table_elt       hash_elt;       /* if global symbol */
-    ULONG_PTR                   address;
     struct symt*                container;      /* compiland */
     struct symt*                type;           /* points to function_signature */
-    ULONG_PTR                   size;
     struct vector               vlines;
     struct vector               vchildren;      /* locals, params, blocks, start/end, labels, inline sites */
     struct symt_inlinesite*     next_inlinesite;/* linked list of inline sites in this function */
+    struct addr_range           ranges[1];
 };
 
 /* a symt_inlinesite* can be casted to a symt_function* to access all function bits */

@@ -1166,9 +1166,9 @@ static void pending_flush(struct pending_list* pending, struct module* module,
             break;
         case PENDING_LINE:
             if (module->type == DMT_MACHO)
-                pending->objs[i].u.line.offset -= func->address - pending->objs[i].u.line.load_offset;
+                pending->objs[i].u.line.offset -= func->ranges[0].low - pending->objs[i].u.line.load_offset;
             symt_add_func_line(module, func, pending->objs[i].u.line.source_idx,
-                               pending->objs[i].u.line.line_num, func->address + pending->objs[i].u.line.offset);
+                               pending->objs[i].u.line.line_num, func->ranges[0].low + pending->objs[i].u.line.offset);
             break;
         default:
             ERR("Unknown pending object tag %u\n", (unsigned)pending->objs[i].tag);
@@ -1199,15 +1199,15 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
      * Not 100% bullet proof, but better than nothing
      */
     il.SizeOfStruct = sizeof(il);
-    if (SymGetLineFromAddr64(module->process->handle, func->address, &disp, &il) &&
+    if (SymGetLineFromAddr64(module->process->handle, func->ranges[0].low, &disp, &il) &&
         SymGetLineNext64(module->process->handle, &il))
     {
         loc.kind = loc_absolute;
-        loc.offset = il.Address - func->address;
+        loc.offset = il.Address - func->ranges[0].low;
         symt_add_function_point(module, func, SymTagFuncDebugStart, 
                                 &loc, NULL);
     }
-    if (size) func->size = size;
+    if (size) func->ranges[0].high = func->ranges[0].low + size;
 }
 
 static inline void stabbuf_append(char **buf, unsigned *buf_size, const char *str)
@@ -1375,7 +1375,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             if (curr_func)
             {
                 block = symt_open_func_block(module, curr_func, block, 1);
-                block->ranges[0].low = curr_func->address + n_value;
+                block->ranges[0].low = curr_func->ranges[0].low + n_value;
                 block->ranges[0].high = 0; /* will be set by N_RBRAC */
                 pending_flush(&pending_block, module, curr_func, block);
             }
@@ -1383,7 +1383,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
         case N_RBRAC:
             if (curr_func)
             {
-                block->ranges[0].high = curr_func->address + n_value;
+                block->ranges[0].high = curr_func->ranges[0].low + n_value;
                 block = symt_close_func_block(module, curr_func, block);
             }
             break;
@@ -1493,9 +1493,9 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             {
                 ULONG_PTR offset = n_value;
                 if (module->type == DMT_MACHO)
-                    offset -= curr_func->address - load_offset;
+                    offset -= curr_func->ranges[0].low - load_offset;
                 symt_add_func_line(module, curr_func, source_idx, 
-                                   stab_ptr->n_desc, curr_func->address + offset);
+                                   stab_ptr->n_desc, curr_func->ranges[0].low + offset);
             }
             else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
                                   n_value, load_offset);
@@ -1531,7 +1531,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                      */
                     stabs_finalize_function(module, curr_func, 
                                             n_value ?
-                                                (load_offset + n_value - curr_func->address) : 0);
+                                                (load_offset + n_value - curr_func->ranges[0].low) : 0);
                 }
                 func_type = symt_new_function_signature(module, 
                                                         stabs_parse_type(ptr), -1);

@@ -2093,7 +2093,7 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
     if (dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc))
     {
         loc.kind = loc_absolute;
-        loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->top_func->address;
+        loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->top_func->ranges[0].low;
         symt_add_function_point(subpgm->ctx->module_ctx->module, subpgm->top_func, SymTagLabel,
                                 &loc, name.u.string);
     }
@@ -2150,7 +2150,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
         inlined->num_ranges = 0;
     }
     /* temporary: update address field */
-    inlined->func.address = inlined->ranges[0].low;
+    inlined->func.ranges[0].low = inlined->ranges[0].low;
 
     children = dwarf2_get_di_children(di);
     if (children) for (i = 0; i < vector_length(children); i++)

@@ -1063,15 +1063,16 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
             {
             case SymTagFunction:
                 func = (struct symt_function*)sym;
-                if (func->address == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
+                if (func->ranges[0].low == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                 {
-                    TRACE("Adjusting function %p/%s!%s from 0x%08Ix to 0x%08Ix\n", func,
+                    TRACE("Adjusting function %p/%s!%s from %#I64x to %#Ix\n", func,
                           debugstr_w(module->modulename), sym->hash_elt.name,
-                          func->address, ste->addr);
-                    func->address = ste->addr;
+                          func->ranges[0].low, ste->addr);
+                    func->ranges[0].high += ste->addr - func->ranges[0].low;
+                    func->ranges[0].low = ste->addr;
                     adjusted = TRUE;
                 }
-                if (func->address == ste->addr)
+                if (func->ranges[0].low == ste->addr)
                     ste->used = 1;
                 break;
             case SymTagData:

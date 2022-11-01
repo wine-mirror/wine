@@ -326,9 +326,9 @@ static void init_function_or_inlinesite(struct symt_function* sym,
     sym->symt.tag  = tag;
     sym->hash_elt.name = pool_strdup(&module->pool, name);
     sym->container = container;
-    sym->address   = addr;
+    sym->ranges[0].low = addr;
+    sym->ranges[0].high = addr + size;
     sym->type      = sig_type;
-    sym->size      = size;
     vector_init(&sym->vlines,  sizeof(struct line_info), 64);
     vector_init(&sym->vchildren, sizeof(struct symt*), 8);
 }
@@ -2685,7 +2685,7 @@ BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx
         if (inlined)
         {
             symt_fill_sym_info(&pair, NULL, &inlined->func.symt, si);
-            if (disp) *disp = addr - inlined->func.address;
+            if (disp) *disp = addr - inlined->func.ranges[0].low;
             return TRUE;
         }
         /* fall through */

@@ -694,7 +694,7 @@ BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
     sym = symt_index2ptr(pair.effective, index);
     if (!symt_check_tag(sym, SymTagFunction)) return FALSE;
 
-    pair.pcs->localscope_pc = ((struct symt_function*)sym)->address; /* FIXME of FuncDebugStart when it exists? */
+    pair.pcs->localscope_pc = ((struct symt_function*)sym)->ranges[0].low; /* FIXME of FuncDebugStart when it exists? */
     pair.pcs->localscope_symt = sym;
 
     return TRUE;

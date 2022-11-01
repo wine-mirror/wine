@@ -153,10 +153,10 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         *addr = ((const struct symt_block*)type)->ranges[0].low;
         break;
     case SymTagFunction:
-        *addr = ((const struct symt_function*)type)->address;
+        *addr = ((const struct symt_function*)type)->ranges[0].low;
         break;
     case SymTagInlineSite:
-        *addr = ((const struct symt_inlinesite*)type)->func.address;
+        *addr = ((const struct symt_inlinesite*)type)->func.ranges[0].low;
         break;
     case SymTagPublicSymbol:
         *addr = ((const struct symt_public*)type)->address;
@@ -816,7 +816,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD64) = ((const struct symt_basic*)type)->size;
             break;
         case SymTagFunction:
-            X(DWORD64) = ((const struct symt_function*)type)->size;
+            X(DWORD64) = addr_range_size(&((const struct symt_function*)type)->ranges[0]);
             break;
         case SymTagBlock:
             /* When there are several ranges available, we can only return one contiguous chunk of memory.
