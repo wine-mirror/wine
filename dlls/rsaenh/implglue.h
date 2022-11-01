@@ -41,7 +41,7 @@ typedef union tagKEY_CONTEXT {
 BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle) DECLSPEC_HIDDEN;
 BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData,
                       DWORD dwDataLen) DECLSPEC_HIDDEN;
-BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *pbHashValue) DECLSPEC_HIDDEN;
+BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *hash_value, DWORD hash_size) DECLSPEC_HIDDEN;
 BOOL duplicate_hash_impl(BCRYPT_HASH_HANDLE src_hash_handle,
                          BCRYPT_HASH_HANDLE *dest_hash_handle) DECLSPEC_HIDDEN;
 

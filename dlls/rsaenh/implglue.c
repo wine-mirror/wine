@@ -70,9 +70,9 @@ BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData, DWORD 
     return TRUE;
 }
 
-BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *pbHashValue)
+BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *hash_value, DWORD hash_size)
 {
-    BCryptFinishHash(hash_handle, pbHashValue, RSAENH_MAX_HASH_SIZE, 0);
+    BCryptFinishHash(hash_handle, hash_value, hash_size, 0);
     BCryptDestroyHash(hash_handle);
     return TRUE;
 }

@@ -816,7 +816,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash)
             if (pCryptHash->pHMACInfo) {
                 BYTE abHashValue[RSAENH_MAX_HASH_SIZE];
 
-                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
+                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue, pCryptHash->dwHashSize);
                 memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
                 init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash_handle);
                 update_hash_impl(pCryptHash->hash_handle,
@@ -824,7 +824,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash)
                                  pCryptHash->pHMACInfo->cbOuterString);
                 update_hash_impl(pCryptHash->hash_handle,
                                  abHashValue, pCryptHash->dwHashSize);
-                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
+                finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue, pCryptHash->dwHashSize);
                 pCryptHash->hash_handle = NULL;
             } 
             break;
@@ -842,7 +842,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash)
             break;
 
         default:
-            finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue);
+            finalize_hash_impl(pCryptHash->hash_handle, pCryptHash->abHashValue, pCryptHash->dwHashSize);
             pCryptHash->hash_handle = NULL;
     }
 }
