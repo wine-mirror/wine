@@ -2756,6 +2756,8 @@ static int read_utf8(ioinfo *fdinfo, wchar_t *buf, unsigned int count)
                 return 0;
             }else {
                 msvcrt_set_errno(GetLastError());
+                if (GetLastError() == ERROR_ACCESS_DENIED)
+                    *_errno() = EBADF;
                 return -1;
             }
         }else if(!num_read) {
@@ -2813,6 +2815,8 @@ static int read_utf8(ioinfo *fdinfo, wchar_t *buf, unsigned int count)
             return 0;
         }else {
             msvcrt_set_errno(GetLastError());
+            if (GetLastError() == ERROR_ACCESS_DENIED)
+                *_errno() = EBADF;
             if (readbuf != min_buf) free(readbuf);
             return -1;
         }
@@ -3041,6 +3045,8 @@ static int read_i(int fd, ioinfo *fdinfo, void *buf, unsigned int count)
         {
             TRACE(":failed-last error (%ld)\n", GetLastError());
             msvcrt_set_errno(GetLastError());
+            if (GetLastError() == ERROR_ACCESS_DENIED)
+                *_errno() = EBADF;
             return -1;
         }
     }

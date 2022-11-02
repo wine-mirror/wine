@@ -258,6 +258,13 @@ static void test_readmode( BOOL ascii_mode )
         write (fd, &padbuffer[i], 1);
     write (fd, nlbuffer, strlen(nlbuffer));
     write (fd, outbuffer, sizeof (outbuffer));
+
+    errno = 0xdeadbeef;
+    _doserrno = 0xdeadbeef;
+    ok(read(fd, buffer, 1) == -1, "read succeeded on write-only file\n");
+    ok(errno == EBADF, "errno = %d\n", errno);
+    ok(_doserrno == ERROR_ACCESS_DENIED, "doserrno = %ld\n", _doserrno);
+
     close (fd);
     
     if (ascii_mode) {
