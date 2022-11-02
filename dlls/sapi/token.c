@@ -814,7 +814,10 @@ static HRESULT WINAPI token_enum_Item( ISpObjectTokenEnumBuilder *iface,
 
     hr = token_create( NULL, &IID_ISpObjectToken, (void**)&subtoken );
     if (FAILED(hr))
+    {
+        heap_free(subkey);
         return hr;
+    }
 
     object = impl_from_ISpObjectToken( subtoken );
     object->token_key = key;
