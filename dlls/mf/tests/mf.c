@@ -3581,19 +3581,51 @@ static void test_topology_loader_evr(void)
         hr = IMFTopologyNode_GetNodeType(node, &node_type);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        if (node_type == MF_TOPOLOGY_OUTPUT_NODE)
+        switch (node_type)
+        {
+        case MF_TOPOLOGY_OUTPUT_NODE:
         {
             value = 1;
             hr = IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_STREAMID, &value);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(!value, "Unexpected stream id %u.\n", value);
+            break;
         }
-        else if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+        {
+            IMFAttributes *attrs;
+            IMFTransform *copier;
+            IUnknown *obj;
+
+            hr = IMFTopologyNode_GetObject(node, (IUnknown **)&obj);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = IUnknown_QueryInterface(obj, &IID_IMFTransform, (void **)&copier);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = IMFTransform_GetAttributes(copier, &attrs);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            value = 0xdeadbeef;
+            hr = IMFAttributes_GetUINT32(attrs, &MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, &value);
+            ok(value == 1, "Unexpected dynamic state support state %u.\n", value);
+
+            IMFAttributes_Release(attrs);
+            IMFTransform_Release(copier);
+            IUnknown_Release(obj);
+            break;
+        }
+        case MF_TOPOLOGY_SOURCESTREAM_NODE:
         {
             value64 = 1;
             hr = IMFTopologyNode_GetUINT64(node, &MF_TOPONODE_MEDIASTART, &value64);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(!value64, "Unexpected value.\n");
+            break;
+        }
+        default:
+           ok(0, "Got unexpected node type %u.\n", node_type);
+           break;
         }
 
         IMFTopologyNode_Release(node);
