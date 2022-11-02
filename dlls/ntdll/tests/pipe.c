@@ -2920,13 +2920,13 @@ static void subtest_pipe_name(const struct pipe_name_test *pnt)
         return;
     }
 
-    ok(pipe != NULL, "expected non-NULL handle, got %p\n", client);
+    ok(pipe != NULL, "expected non-NULL handle\n");
 
     client = NULL;
     status = NtCreateFile(&client, SYNCHRONIZE, &attr, &iosb, NULL, 0,
                           FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0);
     ok(status == STATUS_SUCCESS, "Expected success, got %#lx\n", status);
-    ok(client != NULL, "expected non-NULL handle, got %p\n", client);
+    ok(client != NULL, "expected non-NULL handle\n");
     NtClose(client);
 
     if (pnt->no_open_name)
