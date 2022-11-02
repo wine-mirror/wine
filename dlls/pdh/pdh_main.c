@@ -1063,6 +1063,23 @@ PDH_STATUS WINAPI PdhVbAddCounter( PDH_HQUERY query, LPCSTR path, PDH_HCOUNTER *
 }
 
 /***********************************************************************
+ *              PdhVbGetDoubleCounterValue   (PDH.@)
+ */
+double WINAPI PdhVbGetDoubleCounterValue( PDH_HCOUNTER handle, PDH_STATUS *counter_status )
+{
+    PDH_FMT_COUNTERVALUE value;
+    PDH_STATUS status;
+
+    TRACE( "%p %p\n", handle, counter_status );
+
+    memset( &value, 0, sizeof(value) );
+    status = PdhGetFormattedCounterValue( handle, PDH_FMT_DOUBLE, NULL, &value );
+
+    if (counter_status) *counter_status = status;
+    return value.u.doubleValue;
+}
+
+/***********************************************************************
  *              PdhValidatePathExA   (PDH.@)
  */
 PDH_STATUS WINAPI PdhValidatePathExA( PDH_HLOG source, LPCSTR path )
