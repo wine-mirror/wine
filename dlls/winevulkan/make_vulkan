@@ -1090,7 +1090,7 @@ class VkHandle(object):
 
 class VkVariable(object):
     def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_len=None,
-                 dyn_array_len=None, object_type=None, optional=False):
+                 dyn_array_len=None, object_type=None, optional=False, returnedonly=False):
         self.const = const
         self.type_info = type_info
         self.type = type
@@ -1100,6 +1100,7 @@ class VkVariable(object):
         self.dyn_array_len = dyn_array_len
         self.object_type = object_type
         self.optional = optional
+        self.returnedonly = returnedonly
         if type_info:
             self.set_type_info(type_info)
 
@@ -1196,9 +1197,11 @@ class VkVariable(object):
 
 class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
-            dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None):
+                 dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None,
+                 returnedonly=False):
         VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_len=array_len,
-                            dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
+                            dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
+                            returnedonly=returnedonly)
         self.struct_fwd_decl = struct_fwd_decl
         self.values = values
         self.bit_width = bit_width
@@ -1217,7 +1220,7 @@ class VkMember(VkVariable):
                 self.name, self.array_len, self.dyn_array_len)
 
     @staticmethod
-    def from_xml(member):
+    def from_xml(member, returnedonly):
         """ Helper function for parsing a member tag within a struct or union. """
 
         name_elem = member.find("name")
@@ -1280,8 +1283,9 @@ class VkMember(VkVariable):
             LOGGER.debug("Found bit field")
             bit_width = int(name_elem.tail[1:])
 
-        return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer, name=name_elem.text,
-                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, values=values, object_type=object_type, bit_width=bit_width)
+        return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer,
+                        name=name_elem.text, array_len=array_len, dyn_array_len=dyn_array_len, optional=optional,
+                        values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly)
 
     def copy(self, input, output, direction, conv, unwrap):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
@@ -1804,7 +1808,7 @@ class VkStruct(Sequence):
 
         members = []
         for member in struct.findall("member"):
-            vk_member = VkMember.from_xml(member)
+            vk_member = VkMember.from_xml(member, returnedonly)
             members.append(vk_member)
 
         return VkStruct(name, members, returnedonly, structextends, union=union)
