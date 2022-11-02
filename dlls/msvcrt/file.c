@@ -3590,6 +3590,8 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
             TRACE("WriteFile (fd %d, hand %p) failed-last error (%ld)\n", fd,
                     hand, GetLastError());
             msvcrt_set_errno(GetLastError());
+            if (GetLastError() == ERROR_ACCESS_DENIED)
+                *_errno() = EBADF;
             num_written = -1;
         }
 
@@ -3718,6 +3720,8 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
             TRACE("WriteFile/WriteConsoleW (fd %d, hand %p) failed-last error (%ld)\n", fd,
                     hand, GetLastError());
             msvcrt_set_errno(GetLastError());
+            if (GetLastError() == ERROR_ACCESS_DENIED)
+                *_errno() = EBADF;
             release_ioinfo(info);
             return -1;
         }

@@ -311,6 +311,12 @@ static void test_readmode( BOOL ascii_mode )
     ok(l == pl+fp,"line 2 ftell got %ld should be %d in %s\n", l, pl+fp, IOMODE);
     ok(lstrlenA(buffer) == 2+ao,"line 2 fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), 2+ao, IOMODE);
+
+    errno = 0xdeadbeef;
+    _doserrno = 0xdeadbeef;
+    ok(write(fd, buffer, 1) == -1, "read succeeded on write-only file\n");
+    ok(errno == EBADF, "errno = %d\n", errno);
+    ok(_doserrno == ERROR_ACCESS_DENIED, "doserrno = %ld\n", _doserrno);
     
     /* test fread across buffer boundary */
     rewind(file);
