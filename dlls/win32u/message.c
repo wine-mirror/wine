@@ -1368,7 +1368,6 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp) );
 
     dispatch_win_proc_params( params, sizeof(*params) + size );
-    if (params != &p) free( params );
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
@@ -1376,6 +1375,9 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwpret.wParam  = wparam;
     cwpret.message = msg;
     cwpret.hwnd    = params->hwnd;
+
+    if (params != &p) free( params );
+
     call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, sizeof(cwpret) );
     return result;
 }
