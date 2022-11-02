@@ -145,7 +145,7 @@
 @ stub PdhVbCreateCounterPathList
 @ stub PdhVbGetCounterPathElements
 @ stub PdhVbGetCounterPathFromList
-@ stub PdhVbGetDoubleCounterValue
+@ stdcall PdhVbGetDoubleCounterValue(ptr ptr)
 @ stub PdhVbGetLogFileSize
 @ stub PdhVbGetOneCounterPath
 @ stub PdhVbIsGoodStatus
