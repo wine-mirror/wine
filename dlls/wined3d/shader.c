@@ -2395,7 +2395,6 @@ static void shader_trace(const void *code, size_t size, enum vkd3d_shader_source
 static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    enum vkd3d_shader_source_type source_type;
     HRESULT hr;
 
     TRACE("byte_code %p, byte_code_size %#lx.\n", desc->byte_code, (long)desc->byte_code_size);
@@ -2424,8 +2423,8 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         const DWORD *ptr;
         void *fe_data;
 
-        source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
-        if (!(shader->frontend = shader_select_frontend(source_type)))
+        shader->source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
+        if (!(shader->frontend = shader_select_frontend(shader->source_type)))
         {
             FIXME("Unable to find frontend for shader.\n");
             hr = WINED3DERR_INVALIDCALL;
@@ -2471,10 +2470,10 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         shader->byte_code_size = desc->byte_code_size;
 
         max_version = shader_max_version_from_feature_level(device->cs->c.state->feature_level);
-        if (FAILED(hr = wined3d_shader_extract_from_dxbc(shader, max_version, &source_type)))
+        if (FAILED(hr = wined3d_shader_extract_from_dxbc(shader, max_version, &shader->source_type)))
             goto fail;
 
-        if (!(shader->frontend = shader_select_frontend(source_type)))
+        if (!(shader->frontend = shader_select_frontend(shader->source_type)))
         {
             FIXME("Unable to find frontend for shader.\n");
             hr = WINED3DERR_INVALIDCALL;
@@ -2484,10 +2483,10 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
 
     if (TRACE_ON(d3d_shader))
     {
-        if (source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
-            shader_trace(shader->function, shader->functionLength, source_type);
+        if (shader->source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+            shader_trace(shader->function, shader->functionLength, shader->source_type);
         else
-            shader_trace(shader->byte_code, shader->byte_code_size, source_type);
+            shader_trace(shader->byte_code, shader->byte_code_size, shader->source_type);
     }
 
 

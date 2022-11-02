@@ -228,9 +228,9 @@ static void shader_spirv_init_shader_interface_vk(struct wined3d_shader_spirv_sh
 }
 
 static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *context_vk,
-        const struct wined3d_shader_desc *shader_desc, enum wined3d_shader_type shader_type,
-        const struct shader_spirv_compile_arguments *args, const struct shader_spirv_resource_bindings *bindings,
-        const struct wined3d_stream_output_desc *so_desc)
+        const struct wined3d_shader_desc *shader_desc, enum vkd3d_shader_source_type source_type,
+        enum wined3d_shader_type shader_type, const struct shader_spirv_compile_arguments *args,
+        const struct shader_spirv_resource_bindings *bindings, const struct wined3d_stream_output_desc *so_desc)
 {
     struct wined3d_shader_spirv_compile_args compile_args;
     struct wined3d_shader_spirv_shader_interface iface;
@@ -252,7 +252,7 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
     info.next = &compile_args.spirv_target;
     info.source.code = shader_desc->byte_code;
     info.source.size = shader_desc->byte_code_size;
-    info.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
+    info.source_type = source_type;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
     info.options = spirv_compile_options;
     info.option_count = ARRAY_SIZE(spirv_compile_options);
@@ -338,11 +338,19 @@ static struct shader_spirv_graphics_program_variant_vk *shader_spirv_find_graphi
     variant_vk->compile_args = args;
     variant_vk->binding_base = binding_base;
 
-    shader_desc.byte_code = shader->byte_code;
-    shader_desc.byte_code_size = shader->byte_code_size;
+    if (shader->source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+    {
+        shader_desc.byte_code = shader->function;
+        shader_desc.byte_code_size = shader->functionLength;
+    }
+    else
+    {
+        shader_desc.byte_code = shader->byte_code;
+        shader_desc.byte_code_size = shader->byte_code_size;
+    }
 
-    if (!(variant_vk->vk_module = shader_spirv_compile_shader(context_vk, &shader_desc, shader_type, &args,
-            bindings, so_desc)))
+    if (!(variant_vk->vk_module = shader_spirv_compile_shader(context_vk, &shader_desc,
+            shader->source_type, shader_type, &args, bindings, so_desc)))
         return NULL;
     ++program_vk->variant_count;
 
@@ -370,8 +378,8 @@ static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program
     shader_desc.byte_code = shader->byte_code;
     shader_desc.byte_code_size = shader->byte_code_size;
 
-    if (!(program->vk_module = shader_spirv_compile_shader(context_vk, &shader_desc, WINED3D_SHADER_TYPE_COMPUTE,
-            NULL, bindings, NULL)))
+    if (!(program->vk_module = shader_spirv_compile_shader(context_vk, &shader_desc,
+            shader->source_type, WINED3D_SHADER_TYPE_COMPUTE, NULL, bindings, NULL)))
         return NULL;
 
     if (!(layout = wined3d_context_vk_get_pipeline_layout(context_vk,
@@ -692,7 +700,7 @@ static void shader_spirv_scan_shader(struct wined3d_shader *shader,
     info.next = descriptor_info;
     info.source.code = shader->byte_code;
     info.source.size = shader->byte_code_size;
-    info.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
+    info.source_type = shader->source_type;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
     info.options = spirv_compile_options;
     info.option_count = ARRAY_SIZE(spirv_compile_options);
@@ -1049,7 +1057,8 @@ static uint64_t shader_spirv_compile(struct wined3d_context *context, const stru
         enum wined3d_shader_type shader_type)
 {
     struct shader_spirv_resource_bindings bindings = {0};
-    return (uint64_t)shader_spirv_compile_shader(wined3d_context_vk(context), shader_desc, shader_type, NULL, &bindings, NULL);
+    return (uint64_t)shader_spirv_compile_shader(wined3d_context_vk(context), shader_desc,
+            VKD3D_SHADER_SOURCE_DXBC_TPF, shader_type, NULL, &bindings, NULL);
 }
 
 static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =

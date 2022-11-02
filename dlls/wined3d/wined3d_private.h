@@ -4251,6 +4251,7 @@ struct wined3d_shader
     void *byte_code;
     unsigned int byte_code_size;
     BOOL load_local_constsF;
+    enum vkd3d_shader_source_type source_type;
     const struct wined3d_shader_frontend *frontend;
     void *frontend_data;
     void *backend_data;
