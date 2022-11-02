@@ -114,6 +114,8 @@ static DWORD WINAPI notify_thread(void *p)
     struct notify_context notify;
     BOOL quit;
 
+    SetThreadDescription(GetCurrentThread(), L"winealsa_midi_notify");
+
     params.notify = &notify;
     params.quit = &quit;
 

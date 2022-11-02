@@ -238,6 +238,8 @@ static DWORD WINAPI alsa_timer_thread(void *user)
     struct timer_loop_params params;
     struct ACImpl *This = user;
 
+    SetThreadDescription(GetCurrentThread(), L"winealsa_timer");
+
     params.stream = This->stream;
 
     ALSA_CALL(timer_loop, &params);
