@@ -2162,7 +2162,6 @@ static void test_Win32_LogicalDisk( IWbemServices *services )
     ok( hr == S_OK, "got %#lx\n", hr );
     ok( count == 1, "got %lu\n", count );
     IWbemClassObject_Release( obj );
-    SysFreeString( query );
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
