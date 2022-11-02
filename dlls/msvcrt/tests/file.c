@@ -1948,7 +1948,7 @@ static void test_fopen_fclose_fcloseall( void )
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
     ret = fclose(NULL);
     ok(ret == EOF, "Closing NULL file returned %d\n", ret);
-    ok(errno = EINVAL, "errno = %d\n", errno);
+    ok(errno == EINVAL, "errno = %d\n", errno);
 
     /* testing fcloseall() */
     numclosed = _fcloseall();
