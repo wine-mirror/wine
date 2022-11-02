@@ -654,19 +654,6 @@ class VkFunction(object):
     def returns_longlong(self):
         return self.type in ["uint64_t", "VkDeviceAddress"]
 
-    def needs_conversion(self):
-        """ Check if the function needs any input/output type conversion.
-        Functions need input/output conversion if struct parameters have
-        alignment differences between Win32 and Linux 32-bit.
-        """
-
-        for p in self.params:
-            if p.needs_conversion():
-                LOGGER.debug("Parameter {0} to {1} requires conversion".format(p.name, self.name))
-                return True
-
-        return False
-
     def needs_unwrapping(self):
         """ Check if the function needs any input/output type unwrapping.
         Functions need input/output unwrapping if struct parameters have
@@ -1098,9 +1085,6 @@ class VkHandle(object):
     def is_wrapped(self):
         return self.native_handle("test") is not None
 
-    def needs_conversion(self):
-        return False
-
     def needs_unwrapping(self):
         return self.is_wrapped()
 
@@ -1384,20 +1368,17 @@ class VkMember(VkVariable):
     def get_conversions(self, func=None):
         """ Return any conversion description for this member and its children when conversion is needed. """
 
-        # Check if we need conversion either for this member itself or for any child members
-        # in case member represents a struct.
-        if not self.needs_conversion() and not self.needs_unwrapping():
-            return None
-
         conversions = []
 
         # Collect any conversion for any member structs.
         if self.is_struct():
             struct = self.type_info["data"]
             for m in struct:
+                if m.type == struct.name:
+                    continue
+
                 m.needs_struct_extensions_conversion()
-                if m.needs_conversion() or m.needs_unwrapping():
-                    conversions.extend(m.get_conversions(func))
+                conversions.extend(m.get_conversions(func))
 
             struct.needs_struct_extensions_conversion()
             direction = Direction.OUTPUT if struct.returnedonly else Direction.INPUT
@@ -1640,9 +1621,6 @@ class VkParam(VkVariable):
         elif not self.is_handle():
             return None
 
-        if not self.needs_conversion() and not self.needs_unwrapping():
-            return None
-
         conversions = []
 
         # Collect any member conversions first, so we can guarantee
@@ -1651,9 +1629,6 @@ class VkParam(VkVariable):
         if self.is_struct():
             for m in self.struct:
                 if not m.is_struct():
-                    continue
-
-                if not m.needs_conversion() and not m.needs_unwrapping():
                     continue
 
                 conversions.extend(m.get_conversions(func))
@@ -2332,9 +2307,6 @@ class VkGenerator(object):
         self.host_structs = []
         for func in self.registry.funcs.values():
             if not func.is_required():
-                continue
-
-            if not func.needs_conversion() and not func.needs_unwrapping():
                 continue
 
             conversions = func.get_conversions()
