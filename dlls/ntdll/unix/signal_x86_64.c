@@ -223,7 +223,9 @@ _STRUCT_X86_THREAD_FULL_STATE64
         __uint64_t                      __ss;
         __uint64_t                      __gsbase;
 };
+#endif
 
+#ifndef _STRUCT_MCONTEXT64_FULL
 #define _STRUCT_MCONTEXT64_FULL      struct __darwin_mcontext64_full
 _STRUCT_MCONTEXT64_FULL
 {
@@ -231,7 +233,9 @@ _STRUCT_MCONTEXT64_FULL
         _STRUCT_X86_THREAD_FULL_STATE64 __ss;
         _STRUCT_X86_FLOAT_STATE64       __fs;
 };
+#endif
 
+#ifndef _STRUCT_MCONTEXT_AVX64_FULL
 #define _STRUCT_MCONTEXT_AVX64_FULL  struct __darwin_mcontext_avx64_full
 _STRUCT_MCONTEXT_AVX64_FULL
 {
