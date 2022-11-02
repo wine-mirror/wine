@@ -1549,6 +1549,19 @@ static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_hos
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(const VkAccelerationStructureBuildSizesInfoKHR_host *in, VkAccelerationStructureBuildSizesInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->accelerationStructureSize = in->accelerationStructureSize;
+    out->updateScratchSize = in->updateScratchSize;
+    out->buildScratchSize = in->buildScratchSize;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win32_to_host(const VkAccelerationStructureDeviceAddressInfoKHR *in, VkAccelerationStructureDeviceAddressInfoKHR_host *out)
 {
     if (!in) return;
@@ -1696,6 +1709,19 @@ static inline void convert_VkDeviceBufferMemoryRequirements_win32_to_host(struct
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFaultCountsEXT *in, VkDeviceFaultCountsEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->addressInfoCount = in->addressInfoCount;
+    out->vendorInfoCount = in->vendorInfoCount;
+    out->vendorBinarySize = in->vendorBinarySize;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFaultCountsEXT_host *in, VkDeviceFaultCountsEXT *out)
 {
     if (!in) return;
 
@@ -1912,6 +1938,19 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromap
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMicromapBuildSizesInfoEXT *in, VkMicromapBuildSizesInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->micromapSize = in->micromapSize;
+    out->buildScratchSize = in->buildScratchSize;
+    out->discardable = in->discardable;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMicromapBuildSizesInfoEXT_host *in, VkMicromapBuildSizesInfoEXT *out)
 {
     if (!in) return;
 
@@ -14744,6 +14783,7 @@ static NTSTATUS thunk32_vkGetAccelerationStructureBuildSizesKHR(void *args)
     convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(params->pBuildInfo, &pBuildInfo_host);
     convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_host(params->pSizeInfo, &pSizeInfo_host);
     wine_device_from_handle(params->device)->funcs.p_vkGetAccelerationStructureBuildSizesKHR(wine_device_from_handle(params->device)->device, params->buildType, &pBuildInfo_host, params->pMaxPrimitiveCounts, &pSizeInfo_host);
+    convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(&pSizeInfo_host, params->pSizeInfo);
     return STATUS_SUCCESS;
 }
 
@@ -15369,6 +15409,7 @@ static NTSTATUS thunk32_vkGetDeviceFaultInfoEXT(void *args)
     convert_VkDeviceFaultCountsEXT_win32_to_host(params->pFaultCounts, &pFaultCounts_host);
     convert_VkDeviceFaultInfoEXT_win32_to_host(&ctx, params->pFaultInfo, &pFaultInfo_host);
     params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceFaultInfoEXT(wine_device_from_handle(params->device)->device, &pFaultCounts_host, &pFaultInfo_host);
+    convert_VkDeviceFaultCountsEXT_host_to_win32(&pFaultCounts_host, params->pFaultCounts);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -16252,6 +16293,7 @@ static NTSTATUS thunk32_vkGetMicromapBuildSizesEXT(void *args)
     convert_VkMicromapBuildInfoEXT_win32_to_host(params->pBuildInfo, &pBuildInfo_host);
     convert_VkMicromapBuildSizesInfoEXT_win32_to_host(params->pSizeInfo, &pSizeInfo_host);
     wine_device_from_handle(params->device)->funcs.p_vkGetMicromapBuildSizesEXT(wine_device_from_handle(params->device)->device, params->buildType, &pBuildInfo_host, &pSizeInfo_host);
+    convert_VkMicromapBuildSizesInfoEXT_host_to_win32(&pSizeInfo_host, params->pSizeInfo);
     return STATUS_SUCCESS;
 }
 
