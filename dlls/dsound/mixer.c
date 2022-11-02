@@ -783,6 +783,7 @@ DWORD CALLBACK DSOUND_mixthread(void *p)
 {
 	DirectSoundDevice *dev = p;
 	TRACE("(%p)\n", dev);
+	SetThreadDescription(GetCurrentThread(), L"wine_dsound_mixer");
 
 	while (dev->ref) {
 		DWORD ret;

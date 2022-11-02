@@ -951,6 +951,8 @@ static DWORD WINAPI DSOUND_capture_thread(void *user)
     DWORD ret, wait_ms;
     REFERENCE_TIME period;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_dsound_capture");
+
     hr = IAudioClient_GetDevicePeriod(buffer->device->client, &period, NULL);
     if(FAILED(hr)){
         WARN("GetDevicePeriod failed: %08lx\n", hr);
