@@ -3275,6 +3275,38 @@ static char *get_unix_lib_name( struct makefile *make )
 
 
 /*******************************************************************
+ *         output_fake_module
+ */
+static void output_fake_module( struct makefile *make )
+{
+    unsigned int arch = 0;  /* fake modules are always native */
+    const char *spec_file = NULL, *name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
+
+    if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+
+    strarray_add( &make->all_targets[arch], name );
+    add_install_rule( make, make->module, arch, name, strmake( "d$(dlldir)/%s", name ));
+
+    output( "%s:", obj_dir_path( make, name ));
+    if (spec_file) output_filename( spec_file );
+    output_filenames_obj_dir( make, make->res_files[arch] );
+    output_filename( tools_path( make, "winebuild" ));
+    output_filename( tools_path( make, "winegcc" ));
+    output( "\n" );
+    output_winegcc_command( make, arch );
+    output_filename( "-Wb,--fake-module" );
+    if (spec_file)
+    {
+        output_filename( "-shared" );
+        output_filename( spec_file );
+    }
+    output_filenames( make->extradllflags );
+    output_filenames_obj_dir( make, make->res_files[arch] );
+    output( "\n" );
+}
+
+
+/*******************************************************************
  *         output_module
  */
 static void output_module( struct makefile *make, unsigned int arch )
@@ -3348,37 +3380,8 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_filenames( all_libs );
     output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
-}
 
-
-/*******************************************************************
- *         output_fake_module
- */
-static void output_fake_module( struct makefile *make, unsigned int arch )
-{
-    const char *spec_file = NULL, *name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
-
-    if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
-
-    strarray_add( &make->all_targets[arch], name );
-    add_install_rule( make, make->module, arch, name, strmake( "d$(dlldir)/%s", name ));
-
-    output( "%s:", obj_dir_path( make, name ));
-    if (spec_file) output_filename( spec_file );
-    output_filenames_obj_dir( make, make->res_files[arch] );
-    output_filename( tools_path( make, "winebuild" ));
-    output_filename( tools_path( make, "winegcc" ));
-    output( "\n" );
-    output_winegcc_command( make, arch );
-    output_filename( "-Wb,--fake-module" );
-    if (spec_file)
-    {
-        output_filename( "-shared" );
-        output_filename( spec_file );
-    }
-    output_filenames( make->extradllflags );
-    output_filenames_obj_dir( make, make->res_files[arch] );
-    output( "\n" );
+    if (!make->data_only && !arch && *dll_ext) output_fake_module( make );
 }
 
 
@@ -3842,10 +3845,11 @@ static void output_sources( struct makefile *make )
     }
     else if (make->module)
     {
-        for (arch = 0; arch < archs.count; arch++)
+        if (!make->use_msvcrt) output_module( make, 0 );
+        else
         {
-            if (!is_multiarch( arch ) == !make->use_msvcrt) output_module( make, arch );
-            else if (is_multiarch( arch ) && *dll_ext) output_fake_module( make, arch );
+            for (arch = 0; arch < archs.count; arch++)
+                if (is_multiarch( arch )) output_module( make, arch );
         }
         if (make->unixlib) output_unix_lib( make );
         if (make->importlib) for (arch = 0; arch < archs.count; arch++) output_import_lib( make, arch );
