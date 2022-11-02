@@ -1733,7 +1733,6 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output( ".L__wine_delay_import_handle:\n" );
         output( "\t%s 0\n", get_asm_ptr_keyword() );
 
-        output( "\n\t.section \".text$2\"\n" );
         output( "%s\n", asm_globl( import_desc ) );
         output( "\t.long 1\n" );                         /* DllAttributes */
         output_rva( "%s", asm_name( import_name ) );     /* DllNameRVA */
