@@ -1833,7 +1833,7 @@ static void BUTTON_DrawThemedLabel(const BUTTON_INFO *info, HDC hdc, UINT text_f
 static void PB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
 {
     RECT     rc, labelRect, imageRect, textRect;
-    UINT     dtFlags, uState;
+    UINT     dtFlags = (UINT)-1, uState;
     HPEN     hOldPen, hpen;
     HBRUSH   hOldBrush;
     INT      oldBkMode;
