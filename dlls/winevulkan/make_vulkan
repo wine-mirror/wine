@@ -711,7 +711,7 @@ class VkFunction(object):
                 pfn += param.const + " "
 
             pfn += param.type
-            if conv and param.needs_conversion():
+            if conv and param.needs_host_type():
                 pfn += "_host"
 
             if param.is_pointer():
@@ -780,7 +780,7 @@ class VkFunction(object):
 
         # Declare any tmp parameters for conversion.
         for p in self.params:
-            if p.needs_conversion() and conv:
+            if p.needs_host_type() and conv:
                 if p.is_dynamic_array():
                     body += "    {0}_host *{1}_host;\n".format(p.type, p.name)
                 else:
@@ -1206,6 +1206,10 @@ class VkVariable(object):
 
         return self.is_struct() and self.struct.needs_alloc(conv, unwrap)
 
+    def needs_host_type(self):
+        return self.is_struct() and self.struct.needs_host_type()
+
+
 class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
             dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None):
@@ -1580,7 +1584,7 @@ class VkParam(VkVariable):
 
         proto += self.type
         name = self.name
-        if is_thunk and self.needs_conversion():
+        if is_thunk and self.needs_host_type():
             proto += "_host"
 
         if is_member and self.needs_alignment():
@@ -1685,13 +1689,6 @@ class VkParam(VkVariable):
         """ Returns if parameter needs conversion between win32 and host. """
 
         if not self.is_struct():
-            return False
-
-        # VkSparseImageMemoryRequirements(2) is used by vkGetImageSparseMemoryRequirements(2).
-        # This function is tricky to wrap, because how to wrap depends on whether
-        # pSparseMemoryRequirements is NULL or not. Luckily for VkSparseImageMemoryRequirements(2)
-        # the alignment works out in such a way that no conversion is needed between win32 and Linux.
-        if self.type in ["VkSparseImageMemoryRequirements", "VkSparseImageMemoryRequirements2"]:
             return False
 
         # If a structure needs alignment changes, it means we need to
@@ -1956,6 +1953,13 @@ class VkStruct(Sequence):
         or if they include other structures which need alignment.
         """
 
+        # VkSparseImageMemoryRequirements(2) is used by vkGetImageSparseMemoryRequirements(2).
+        # This function is tricky to wrap, because how to wrap depends on whether
+        # pSparseMemoryRequirements is NULL or not. Luckily for VkSparseImageMemoryRequirements(2)
+        # the alignment works out in such a way that no conversion is needed between win32 and Linux.
+        if self.name in ["VkSparseImageMemoryRequirements", "VkSparseImageMemoryRequirements2"]:
+            return False
+
         if self.needs_alignment():
             return True
 
@@ -1986,6 +1990,19 @@ class VkStruct(Sequence):
                 return True
 
         return False
+
+    def needs_host_type(self):
+        # FIXME: Remove once we don't need need it
+        if self.name in ["VkSparseImageMemoryRequirements", "VkSparseImageMemoryRequirements2"]:
+            return False
+
+        for m in self.members:
+            if self.name == m.type:
+                continue
+            if m.needs_alignment():
+                return True
+            if m.is_struct() and m.struct.needs_host_type():
+                return True
 
     def needs_struct_extensions_conversion(self):
         """ Checks if structure extensions in pNext chain need conversion. """
@@ -2037,7 +2054,7 @@ class ConversionFunction(object):
         else:
             body += "#if !defined(USE_STRUCT_CONVERSION)\n"
 
-        if self.conv and self.operand.needs_conversion():
+        if self.conv and isinstance(self.operand, VkStruct) and self.operand.needs_host_type():
             host_type = "{0}_host".format(self.type)
         else:
             host_type = self.type
@@ -2549,7 +2566,7 @@ class VkGenerator(object):
                 LOGGER.debug("skipping {0} in vulkan_device_funcs".format(vk_func.name))
                 continue
 
-            f.write("    {0};\n".format(vk_func.pfn(conv=vk_func.needs_conversion())))
+            f.write("    {0};\n".format(vk_func.pfn(conv=True)))
         f.write("};\n\n")
 
         f.write("/* For use by vkInstance and children */\n")
@@ -2562,7 +2579,7 @@ class VkGenerator(object):
                 LOGGER.debug("skipping {0} in vulkan_instance_funcs".format(vk_func.name))
                 continue
 
-            f.write("    {0};\n".format(vk_func.pfn(conv=vk_func.needs_conversion())))
+            f.write("    {0};\n".format(vk_func.pfn(conv=True)))
         f.write("};\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS() \\\n")
