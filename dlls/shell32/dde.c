@@ -403,6 +403,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
         }
 
         free(opcode);
+        opcode = NULL;
         for (i = 0; i < argc; i++) free(argv[i]);
         free(argv);
 
