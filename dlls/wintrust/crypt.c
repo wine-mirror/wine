@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wintrust.h"
+#include "winver.h"
 #include "mscat.h"
 #include "mssip.h"
 #include "imagehlp.h"

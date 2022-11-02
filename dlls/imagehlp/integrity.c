@@ -29,6 +29,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winnt.h"
+#include "winver.h"
 #include "imagehlp.h"
 #include "wine/debug.h"
 

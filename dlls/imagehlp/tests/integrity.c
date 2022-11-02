@@ -25,6 +25,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "winnt.h"
+#include "winver.h"
 #include "imagehlp.h"
 #define PSAPI_VERSION 1
 #include "psapi.h"

@@ -22,6 +22,7 @@
 #define __WINE_IMAGEHLP_H
 
 #include <wintrust.h>
+#include <minidumpapiset.h>
 
 #ifdef __cplusplus
 extern "C" {
