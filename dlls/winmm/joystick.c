@@ -159,7 +159,7 @@ static BOOL WINAPI joystick_load_once( INIT_ONCE *once, void *param, void **cont
     return TRUE;
 }
 
-void joystick_unload()
+void joystick_unload(void)
 {
     int i;
 
