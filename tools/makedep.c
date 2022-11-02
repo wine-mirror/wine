@@ -3404,6 +3404,7 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
     output_filenames_obj_dir( make, make->implib_files[arch] );
     output( "\n" );
     output( "\t%s%s -w --implib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ) );
+    if (!delay_load_flags[arch]) output_filename( "--without-dlltool" );
     output_filenames( target_flags[arch] );
     if (make->is_win16) output_filename( "-m16" );
     output_filename( "--export" );

@@ -357,6 +357,7 @@ extern int verbose;
 extern int link_ext_symbols;
 extern int force_pointer_size;
 extern int unwind_tables;
+extern int use_dlltool;
 extern int use_msvcrt;
 extern int unix_lib;
 extern int safe_seh;

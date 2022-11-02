@@ -1581,8 +1581,8 @@ void output_static_lib( const char *output_name, struct strarray files, int crea
     }
 }
 
-/* create a Windows-style import library */
-static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
+/* create a Windows-style import library using dlltool */
+static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
 {
     struct strarray args;
     char *def_file;
@@ -1625,6 +1625,13 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
     spawn( args );
 
     if (files.count) output_static_lib( output_file_name, files, 0 );
+}
+
+/* create a Windows-style import library */
+static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
+{
+    if (verbose) fprintf( stderr, "Not implemented, falling back to dlltool.\n" );
+    build_dlltool_import_lib( output_file_name, spec, files );
 }
 
 /* create a Unix-style import library */
@@ -1689,5 +1696,6 @@ static void build_unix_import_lib( DLLSPEC *spec, struct strarray files )
 void output_import_lib( DLLSPEC *spec, struct strarray files )
 {
     if (!is_pe()) build_unix_import_lib( spec, files );
+    else if (use_dlltool) build_dlltool_import_lib( output_file_name, spec, files );
     else build_windows_import_lib( output_file_name, spec, files );
 }

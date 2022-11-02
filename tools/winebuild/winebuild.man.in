@@ -279,6 +279,9 @@ Display the program version and exit.
 .TP
 .B \-w, --warnings
 Turn on warnings.
+.TP
+.B \--without-dlltool
+Generate import library without using dlltool.
 .SH "SPEC FILE SYNTAX"
 .SS "General syntax"
 A spec file should contain a list of ordinal declarations. The general
