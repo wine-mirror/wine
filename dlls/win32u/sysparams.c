@@ -1846,6 +1846,9 @@ static BOOL is_window_rect_full_screen( const RECT *rect )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
+        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE))
+            continue;
+
         if (rect->left <= monitor->rc_monitor.left && rect->right >= monitor->rc_monitor.right &&
             rect->top <= monitor->rc_monitor.top && rect->bottom >= monitor->rc_monitor.bottom)
         {
