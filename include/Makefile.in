@@ -800,6 +800,7 @@ SOURCES = \
 	windows.gaming.input.custom.idl \
 	windows.gaming.input.forcefeedback.idl \
 	windows.gaming.input.idl \
+	windows.gaming.ui.idl \
 	windows.globalization.idl \
 	windows.h \
 	windows.media.closedcaptioning.idl \
