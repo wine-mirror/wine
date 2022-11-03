@@ -3641,6 +3641,7 @@ static void test_ime(void)
     /* Test IME messages when EIMES_GETCOMPSTRATONCE is not set */
     old_proc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)edit_ime_subclass_proc);
     SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)old_proc);
+    flush_events();
 
     himc = ImmGetContext(hwnd);
     ret = ImmSetCompositionStringA(himc, SCS_SETSTR, "Wine", 4, NULL, 0);
