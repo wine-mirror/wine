@@ -190,6 +190,7 @@ _ACRTIMP int           __cdecl _set_error_mode(int);
 _ACRTIMP void          __cdecl _seterrormode(int);
 _ACRTIMP void          __cdecl _sleep(__msvcrt_ulong);
 _ACRTIMP void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
+_ACRTIMP errno_t       __cdecl _splitpath_s(const char*,char*,size_t,char*,size_t,char*,size_t,char*,size_t);
 _ACRTIMP void          __cdecl _swab(char*,char*,int);
 _ACRTIMP char*         __cdecl _ui64toa(unsigned __int64,char*,int);
 _ACRTIMP errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
