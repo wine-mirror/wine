@@ -59,6 +59,7 @@ _ACRTIMP errno_t  __cdecl wcscpy_s(wchar_t*,size_t,const wchar_t*);
 _ACRTIMP size_t   __cdecl wcscspn(const wchar_t*,const wchar_t*);
 _ACRTIMP size_t   __cdecl wcslen(const wchar_t*);
 _ACRTIMP wchar_t* __cdecl wcsncat(wchar_t*,const wchar_t*,size_t);
+_ACRTIMP errno_t  __cdecl wcsncat_s(wchar_t*,size_t,const wchar_t*,size_t);
 _ACRTIMP int      __cdecl wcsncmp(const wchar_t*,const wchar_t*,size_t);
 _ACRTIMP wchar_t* __cdecl wcsncpy(wchar_t*,const wchar_t*,size_t);
 _ACRTIMP errno_t  __cdecl wcsncpy_s(wchar_t*,size_t,const wchar_t*,size_t);
