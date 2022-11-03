@@ -1617,6 +1617,16 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}} };
 
+    /* CJK */
+    static const WCHAR test_cjk[] = {0x4e2d, 0x6587, 0x65e5, 0x672c, 0x8a9e};
+    static const shapeTest_char cjk_c[] = {{0,{0,0}},{1,{0,0}},{2,{0,0}},{3,{0,0}},{4,{0,0}}};
+    static const shapeTest_glyph cjk_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}} };
+
     static const font_fingerprint fingerprint_estrangelo = {
         {'A','a','B','b','C','c','D','d',0,0},
         {284,310,285,311,286,312,287,313,0,0}};
@@ -1798,6 +1808,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_kannada, 5, &Control, &State, 0, 4, kannada_c, kannada_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "SimSun", 59, test_cjk[0], &hfont, &hfont_orig, NULL);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_cjk, 5, &Control, &State, 0, 5, cjk_c, cjk_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
