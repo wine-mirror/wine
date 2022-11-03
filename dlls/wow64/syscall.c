@@ -492,7 +492,7 @@ static HMODULE load_64bit_module( const WCHAR *name )
 
     swprintf( path, MAX_PATH, L"%s\\%s", dir, name );
     RtlInitUnicodeString( &str, path );
-    if ((status = LdrLoadDll( NULL, 0, &str, &module )))
+    if ((status = LdrLoadDll( dir, 0, &str, &module )))
     {
         ERR( "failed to load dll %lx\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );
