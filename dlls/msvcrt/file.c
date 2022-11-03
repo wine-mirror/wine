@@ -4650,7 +4650,7 @@ FILE* CDECL freopen(const char *path, const char *mode, FILE* file)
 /*********************************************************************
  *      freopen_s (MSVCRT.@)
  */
-int CDECL freopen_s(FILE** pFile,
+errno_t CDECL freopen_s(FILE** pFile,
         const char *path, const char *mode, FILE* file)
 {
     if (!MSVCRT_CHECK_PMT(pFile != NULL)) return EINVAL;
