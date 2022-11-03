@@ -2221,4 +2221,46 @@ call testTimeSerial(10, 60, 2, 11, 0, 2, DateSerial(1899, 12, 30))
 call testTimeSerial(10, 0, 60, 10, 1, 0, DateSerial(1899, 12, 30))
 call testTimeSerialError()
 
+sub testRnd(arg, expresult)
+    dim x
+    x = Rnd(arg)
+    call ok(x = expresult, "result = " & x & " expected " & expresult)
+    call ok(getVT(x) = "VT_R4*", "getVT = " & getVT(x))
+end sub
+
+' Initial seed value
+call testRnd(0, 327680 / 16777216)
+call testRnd(0, 327680 / 16777216)
+' Negative argument is a seed, does not use current RNG state
+call ok(Rnd(-2) = Rnd(-2), "Expected same result")
+call ok(Rnd(-1) <> Rnd(-2), "Expected differing result")
+
+sub testRandomizeError()
+    on error resume next
+    dim x
+    call Err.clear()
+    x = Randomize(0)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+end sub
+
+' Randomize uses current RNG value, so it's reset using Rnd(-1)
+sub testRandomize()
+    dim x, y
+
+    Rnd(-1)
+    Randomize(123)
+    x = Rnd()
+    Randomize(123)
+    y = Rnd()
+    call ok(x <> y, "Expected differing result")
+    Rnd(-1)
+    Randomize(123)
+    y = Rnd()
+    call ok(x = y, "Expected same result")
+end sub
+
+call testRandomize()
+call testRandomizeError()
+
 Call reportSuccess()

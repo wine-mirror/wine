@@ -1516,6 +1516,7 @@ HRESULT create_script_disp(script_ctx_t *ctx, ScriptDisp **ret)
     script_disp->ref = 1;
     script_disp->ctx = ctx;
     heap_pool_init(&script_disp->heap);
+    script_disp->rnd = 0x50000;
 
     *ret = script_disp;
     return S_OK;

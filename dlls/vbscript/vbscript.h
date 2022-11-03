@@ -136,6 +136,8 @@ typedef struct {
 
     script_ctx_t *ctx;
     heap_pool_t heap;
+
+    unsigned int rnd;
 } ScriptDisp;
 
 typedef struct _builtin_prop_t builtin_prop_t;
