@@ -160,6 +160,7 @@ struct transform_stream
 enum topo_node_flags
 {
     TOPO_NODE_END_OF_STREAM = 0x1,
+    TOPO_NODE_SCRUB_SAMPLE_COMPLETE = 0x2,
 };
 
 struct topo_node
@@ -3317,6 +3318,30 @@ static BOOL session_nodes_is_mask_set(struct media_session *session, MF_TOPOLOGY
     return TRUE;
 }
 
+static void session_nodes_unset_mask(struct media_session *session, MF_TOPOLOGY_TYPE node_type, unsigned int flags)
+{
+    struct media_source *source;
+    struct topo_node *node;
+
+    if (node_type == MF_TOPOLOGY_MAX)
+    {
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            source->flags &= ~flags;
+        }
+    }
+    else
+    {
+        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+        {
+            if (node->type == node_type)
+            {
+                node->flags &= ~flags;
+            }
+        }
+    }
+}
+
 static void session_raise_end_of_presentation(struct media_session *session)
 {
     if (!(session_nodes_is_mask_set(session, MF_TOPOLOGY_SOURCESTREAM_NODE, TOPO_NODE_END_OF_STREAM)))
@@ -3384,6 +3409,28 @@ static void session_sink_stream_marker(struct media_session *session, IMFStreamS
         session_set_topo_status(session, S_OK, MF_TOPOSTATUS_ENDED);
         session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
         session_stop(session);
+    }
+}
+
+static void session_sink_stream_scrub_complete(struct media_session *session, IMFStreamSink *stream_sink)
+{
+    struct topo_node *node;
+
+    if (!(node = session_get_node_object(session, (IUnknown *)stream_sink, MF_TOPOLOGY_OUTPUT_NODE))
+            || node->flags & TOPO_NODE_SCRUB_SAMPLE_COMPLETE)
+    {
+        return;
+    }
+
+    node->flags |= TOPO_NODE_SCRUB_SAMPLE_COMPLETE;
+
+    /* Scrubbing event is not limited to the started state transition, or even the started state.
+       Events are processed and forwarded at any point after transition from initial idle state. */
+    if (session->presentation.flags & SESSION_FLAG_SOURCES_SUBSCRIBED &&
+            session_nodes_is_mask_set(session, MF_TOPOLOGY_OUTPUT_NODE, TOPO_NODE_SCRUB_SAMPLE_COMPLETE))
+    {
+        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionScrubSampleComplete, &GUID_NULL, S_OK, NULL);
+        session_nodes_unset_mask(session, MF_TOPOLOGY_OUTPUT_NODE, TOPO_NODE_SCRUB_SAMPLE_COMPLETE);
     }
 }
 
@@ -3523,6 +3570,12 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             session_request_sample(session, (IMFStreamSink *)event_source);
             LeaveCriticalSection(&session->cs);
 
+            break;
+        case MEStreamSinkScrubSampleComplete:
+
+            EnterCriticalSection(&session->cs);
+            session_sink_stream_scrub_complete(session, (IMFStreamSink *)event_source);
+            LeaveCriticalSection(&session->cs);
             break;
         case MEMediaSample:
 
