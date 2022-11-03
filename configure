@@ -1446,6 +1446,7 @@ enable_wimgapi
 enable_win32u
 enable_windows_devices_enumeration
 enable_windows_gaming_input
+enable_windows_gaming_ui_gamebar
 enable_windows_globalization
 enable_windows_media_devices
 enable_windows_media_speech
@@ -22102,6 +22103,8 @@ wine_fn_config_makefile dlls/windows.devices.enumeration enable_windows_devices_
 wine_fn_config_makefile dlls/windows.devices.enumeration/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.input enable_windows_gaming_input
 wine_fn_config_makefile dlls/windows.gaming.input/tests enable_tests
+wine_fn_config_makefile dlls/windows.gaming.ui.gamebar enable_windows_gaming_ui_gamebar
+wine_fn_config_makefile dlls/windows.gaming.ui.gamebar/tests enable_tests
 wine_fn_config_makefile dlls/windows.globalization enable_windows_globalization
 wine_fn_config_makefile dlls/windows.globalization/tests enable_tests
 wine_fn_config_makefile dlls/windows.media.devices enable_windows_media_devices
