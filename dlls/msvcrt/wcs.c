@@ -2508,7 +2508,7 @@ wchar_t* __cdecl wcscat( wchar_t *dst, const wchar_t *src )
 /*********************************************************************
  *           wcsncat_s (MSVCRT.@)
  */
-INT CDECL wcsncat_s(wchar_t *dst, size_t elem, const wchar_t *src, size_t count)
+errno_t CDECL wcsncat_s(wchar_t *dst, size_t elem, const wchar_t *src, size_t count)
 {
     size_t i, j;
 
