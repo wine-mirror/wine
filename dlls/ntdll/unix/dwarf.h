@@ -233,6 +233,8 @@
 #define DW_EH_PE_indirect 0x80
 #define DW_EH_PE_omit     0xff
 
+#ifndef NTDLL_DWARF_H_NO_UNWINDER
+
 struct dwarf_eh_bases
 {
     void *tbase;
@@ -1010,7 +1012,26 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state,
     *context = new_context;
 }
 
-#if defined(__x86_64__)
+#endif /* NTDLL_DWARF_H_NO_UNWINDER */
+
+#if defined(__i386__)
+
+#define DW_OP_ecx DW_OP_breg1
+#define DW_OP_ebx DW_OP_breg3
+#define DW_OP_esp DW_OP_breg4
+#define DW_OP_ebp DW_OP_breg5
+
+#define DW_REG_eax 0x00
+#define DW_REG_ecx 0x01
+#define DW_REG_edx 0x02
+#define DW_REG_ebx 0x03
+#define DW_REG_esp 0x04
+#define DW_REG_ebp 0x05
+#define DW_REG_esi 0x06
+#define DW_REG_edi 0x07
+#define DW_REG_eip 0x08
+
+#elif defined(__x86_64__)
 
 #define DW_OP_rcx DW_OP_breg2
 #define DW_OP_rbp DW_OP_breg6

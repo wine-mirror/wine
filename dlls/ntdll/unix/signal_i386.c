@@ -62,6 +62,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+#define NTDLL_DWARF_H_NO_UNWINDER
+#include "dwarf.h"
+
 #undef ERR  /* Solaris needs to define this */
 
 /***********************************************************************
@@ -2500,11 +2503,17 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %fs:0x1f8,%ecx\n\t"       /* x86_thread_data()->syscall_frame */
                    "movw $0,0x02(%ecx)\n\t"        /* frame->restore_flags */
                    "popl 0x08(%ecx)\n\t"           /* frame->eip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                   __ASM_CFI_REG_IS_AT1(eip, ecx, 0x08)
                    "pushfl\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "popl 0x04(%ecx)\n\t"           /* frame->eflags */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_prolog_end") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movl %esp,0x0c(%ecx)\n\t"      /* frame->esp */
+                   __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
+                   __ASM_CFI_REG_IS_AT1(esp, ecx, 0x0c)
                    "movw %cs,0x10(%ecx)\n\t"
                    "movw %ss,0x12(%ecx)\n\t"
                    "movw %ds,0x14(%ecx)\n\t"
@@ -2513,10 +2522,21 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movw %gs,0x1a(%ecx)\n\t"
                    "movl %eax,0x1c(%ecx)\n\t"
                    "movl %ebx,0x20(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(ebx, ecx, 0x20)
                    "movl %edi,0x2c(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(edi, ecx, 0x2c)
                    "movl %esi,0x30(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(esi, ecx, 0x30)
                    "movl %ebp,0x34(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(ebp, ecx, 0x34)
                    "leal 0x34(%ecx),%ebp\n\t"
+                   __ASM_CFI_CFA_IS_AT1(ebp, 0x58)
+                   __ASM_CFI_REG_IS_AT1(esp, ebp, 0x58)
+                   __ASM_CFI_REG_IS_AT1(eip, ebp, 0x54)
+                   __ASM_CFI_REG_IS_AT1(ebx, ebp, 0x6c)
+                   __ASM_CFI_REG_IS_AT1(edi, ebp, 0x78)
+                   __ASM_CFI_REG_IS_AT1(esi, ebp, 0x7c)
+                   __ASM_CFI_REG_IS_AT1(ebp, ebp, 0x00)
                    "leal 4(%esp),%esi\n\t"         /* first argument */
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
@@ -2570,7 +2590,15 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "rep; movsl\n\t"
                    "call *(%eax,%edx,4)\n\t"
                    "leal -0x34(%ebp),%esp\n"
-                   "5:\tmovl 0(%esp),%ecx\n\t"     /* frame->syscall_flags + (frame->restore_flags << 16) */
+                   "5:\t"
+                   __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
+                   __ASM_CFI_REG_IS_AT1(esp, esp, 0x0c)
+                   __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
+                   __ASM_CFI_REG_IS_AT1(ebx, esp, 0x20)
+                   __ASM_CFI_REG_IS_AT1(edi, esp, 0x2c)
+                   __ASM_CFI_REG_IS_AT1(esi, esp, 0x30)
+                   __ASM_CFI_REG_IS_AT1(ebp, esp, 0x34)
+                   "movl 0(%esp),%ecx\n\t"         /* frame->syscall_flags + (frame->restore_flags << 16) */
                    "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
                    "jz 3f\n\t"
                    "testl $3,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
@@ -2588,38 +2616,69 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "2:\tfrstor 0x40(%esp)\n\t"
                    "fwait\n"
                    "3:\tmovl 0x2c(%esp),%edi\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
                    "movl 0x30(%esp),%esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
                    "movl 0x34(%esp),%ebp\n\t"
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "testl $0x7 << 16,%ecx\n\t"     /* CONTEXT_CONTROL | CONTEXT_SEGMENTS | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
                    "movl 0x20(%esp),%ebx\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
                    "movl 0x08(%esp),%ecx\n\t"      /* frame->eip */
+                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    "movl 0x0c(%esp),%esp\n\t"      /* frame->esp */
+                   __ASM_CFI(".cfi_same_value %esp\n\t")
                    "jmpl *%ecx\n"
+                   __ASM_CFI("\t.cfi_restore_state\n")
                    "1:\ttestl $0x2 << 16,%ecx\n\t" /* CONTEXT_INTEGER */
                    "jz 1f\n\t"
                    "movl 0x1c(%esp),%eax\n\t"
                    "movl 0x24(%esp),%ecx\n\t"
                    "movl 0x28(%esp),%edx\n"
                    "1:\tmovl 0x0c(%esp),%ebx\n\t"  /* frame->esp */
+                   __ASM_CFI(".cfi_register %esp, %ebx\n\t")
                    "movw 0x12(%esp),%ss\n\t"
                    "xchgl %ebx,%esp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp, 0\n\t")
+                   __ASM_CFI(".cfi_same_value %esp\n\t")
+                   __ASM_CFI_REG_IS_AT1(eip, ebx, 0x08)
+                   __ASM_CFI_REG_IS_AT1(ebx, ebx, 0x20)
                    "pushl 0x04(%ebx)\n\t"          /* frame->eflags */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 0x10(%ebx)\n\t"          /* frame->cs */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 0x08(%ebx)\n\t"          /* frame->eip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %eip, 0\n\t")
                    "pushl 0x14(%ebx)\n\t"          /* frame->ds */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "movw 0x16(%ebx),%es\n\t"
                    "movw 0x18(%ebx),%fs\n\t"
                    "movw 0x1a(%ebx),%gs\n\t"
                    "movl 0x20(%ebx),%ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
                    "popl %ds\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    "iret\n"
+                   __ASM_CFI("\t.cfi_restore_state\n")
                    "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
                    "jmp 5b\n\t"
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
+                   __ASM_CFI(".cfi_def_cfa %esp, 4\n\t")
+                   __ASM_CFI(".cfi_restore %esp\n\t")
+                   __ASM_CFI(".cfi_restore %eip\n\t")
+                   __ASM_CFI(".cfi_restore %ebx\n\t")
+                   __ASM_CFI(".cfi_restore %edi\n\t")
+                   __ASM_CFI(".cfi_restore %esi\n\t")
+                   __ASM_CFI(".cfi_restore %ebp\n\t")
                    "movl 8(%esp),%eax\n\t"
                    "movl 4(%esp),%esp\n\t"
+                   __ASM_CFI(".cfi_restore_state\n\t")
                    "jmp 5b" )
 
 
