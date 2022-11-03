@@ -2024,7 +2024,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryHeap_static_array_host_to_win32(const VkMemoryHeap_host *in, VkMemoryHeap *out, uint32_t count)
+static inline void convert_VkMemoryHeap_array_host_to_win32(const VkMemoryHeap_host *in, VkMemoryHeap *out, uint32_t count)
 {
     unsigned int i;
 
@@ -2046,7 +2046,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win32(const 
     out->memoryTypeCount = in->memoryTypeCount;
     memcpy(out->memoryTypes, in->memoryTypes, VK_MAX_MEMORY_TYPES * sizeof(VkMemoryType));
     out->memoryHeapCount = in->memoryHeapCount;
-    convert_VkMemoryHeap_static_array_host_to_win32(in->memoryHeaps, out->memoryHeaps, VK_MAX_MEMORY_HEAPS);
+    convert_VkMemoryHeap_array_host_to_win32(in->memoryHeaps, out->memoryHeaps, VK_MAX_MEMORY_HEAPS);
 }
 #endif /* USE_STRUCT_CONVERSION */
 

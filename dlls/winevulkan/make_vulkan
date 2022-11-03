@@ -1323,7 +1323,7 @@ class VkMember(VkVariable):
                 count = self.array_len
                 if direction == Direction.OUTPUT:
                     # Needed by VkMemoryHeap.memoryHeaps
-                    return "convert_{0}_static_array_host_to_{5}({2}{1}, {3}{1}, {4});\n".format(self.type, self.name, input, output, count, win_type)
+                    return "convert_{0}_array_host_to_{5}({2}{1}, {3}{1}, {4});\n".format(self.type, self.name, input, output, count, win_type)
                 else:
                     # Nothing needed this yet.
                     LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type, self.name))
@@ -2148,9 +2148,7 @@ class ConversionFunction(object):
 
     def _set_name(self):
         name = "convert_{0}_".format(self.type)
-        if self.array:
-            name += "static_array_"
-        elif self.dyn_array:
+        if self.array or self.dyn_array:
             name += "array_"
 
         win_type = "win32" if self.conv else "win64"
