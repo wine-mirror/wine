@@ -121,6 +121,7 @@ _ACRTIMP int    __cdecl fputs(const char*,FILE*);
 _ACRTIMP size_t __cdecl fread(void*,size_t,size_t,FILE*);
 _ACRTIMP size_t __cdecl fread_s(void*,size_t,size_t,size_t,FILE*);
 _ACRTIMP FILE*  __cdecl freopen(const char*,const char*,FILE*);
+_ACRTIMP errno_t __cdecl freopen_s(FILE**,const char*,const char*,FILE*);
 _ACRTIMP int    __cdecl fseek(FILE*,__msvcrt_long,int);
 _ACRTIMP int    __cdecl _fseeki64(FILE*,__int64,int);
 _ACRTIMP int    __cdecl fsetpos(FILE*,fpos_t*);
