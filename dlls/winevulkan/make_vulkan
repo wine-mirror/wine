@@ -2003,6 +2003,9 @@ class ConversionFunction(object):
         self.unwrap = unwrap or not self.operand.needs_unwrapping()
         self.needs_alloc = direction != Direction.OUTPUT and variable.needs_alloc(conv, unwrap)
 
+        if variable.is_static_array() and direction == Direction.INPUT:
+            LOGGER.error("Static array input conversion is not supported")
+
         self._set_name()
 
     def __eq__(self, other):
@@ -2025,8 +2028,8 @@ class ConversionFunction(object):
 
         if self.conv:
             if self.direction == Direction.OUTPUT:
-                params = ["const {0} *in".format(host_type), "uint32_t count"]
-                return_type = self.type
+                params = ["const {0} *in".format(host_type), "{0} *out".format(self.type), "uint32_t count"]
+                return_type = None
             else:
                 params = ["const {0} *in".format(self.type), "uint32_t count"]
                 return_type = host_type
@@ -2035,18 +2038,27 @@ class ConversionFunction(object):
             return_type = self.type
 
         # Generate function prototype.
-        body += "static inline {0} *{1}(".format(return_type, self.name)
+        if return_type:
+            body += "static inline {0} *{1}(".format(return_type, self.name)
+        else:
+            body += "static inline void {0}(".format(self.name)
         if self.needs_alloc:
             body += "struct conversion_context *ctx, "
         body += ", ".join(p for p in params)
         body += ")\n{\n"
 
-        body += "    {0} *out;\n".format(return_type)
+        if return_type:
+            body += "    {0} *out;\n".format(return_type)
 
         body += "    unsigned int i;\n\n"
-        body += "    if (!in || !count) return NULL;\n\n"
 
-        body += "    out = conversion_context_alloc(ctx, count * sizeof(*out));\n"
+        if return_type:
+            body += "    if (!in || !count) return NULL;\n\n"
+        else:
+            body += "    if (!in) return;\n\n"
+
+        if self.direction == Direction.INPUT:
+            body += "    out = conversion_context_alloc(ctx, count * sizeof(*out));\n"
 
         body += "    for (i = 0; i < count; i++)\n"
         body += "    {\n"
@@ -2063,8 +2075,9 @@ class ConversionFunction(object):
             LOGGER.warn("Unhandled conversion operand type")
             body += "        out[i] = in[i];\n"
 
-        body += "    }\n\n"
-        body += "    return out;\n"
+        body += "    }\n"
+        if return_type:
+            body += "\n    return out;\n"
         body += "}\n"
 
         body += "#endif /* USE_STRUCT_CONVERSION */\n"
@@ -2133,55 +2146,6 @@ class ConversionFunction(object):
 
         return body
 
-    def _generate_static_array_conversion_func(self):
-        """ Helper function for generating a conversion function for array operands. """
-
-        body = ""
-
-        if self.conv:
-            body += "#if defined(USE_STRUCT_CONVERSION)\n"
-            if self.direction == Direction.OUTPUT:
-                params = ["const {0}_host *in".format(self.type), "{0} *out".format(self.type), "uint32_t count"]
-            else:
-                params = ["const {0} *in".format(self.type), "{0} *out_host".format(self.type), "uint32_t count"]
-
-
-            # Generate function prototype.
-            body += "static inline void {0}(".format(self.name)
-            body += ", ".join(p for p in params)
-            body += ")\n"
-        else:
-            body += "#if !defined(USE_STRUCT_CONVERSION)\n"
-
-            params = ["const {0} *in".format(self.type), "{0} *out".format(self.type), "uint32_t count"]
-
-            # Generate function prototype.
-            body += "static inline void {0}(".format(self.name)
-            body += ", ".join(p for p in params)
-            body += ")\n"
-
-        body += "{\n"
-        body += "    unsigned int i;\n\n"
-        body += "    if (!in) return;\n\n"
-        body += "    for (i = 0; i < count; i++)\n"
-        body += "    {\n"
-
-        if isinstance(self.operand, VkStruct):
-            for m in self.operand:
-                # TODO: support copying of pNext extension structures!
-                body += "        " + m.copy("in[i].", "out[i].", self.direction, self.conv, self.unwrap)
-        elif isinstance(self.operand, VkHandle) and self.direction == Direction.INPUT:
-            body += "        out[i] = " + self.operand.driver_handle("in[i]") + ";\n"
-        else:
-            LOGGER.warn("Unhandled conversion operand type")
-            body += "        out[i] = in[i];\n"
-
-        body += "    }\n"
-        body += "}\n"
-        body += "#endif /* USE_STRUCT_CONVERSION) */\n\n"
-
-        return body
-
     def _set_name(self):
         name = "convert_{0}_".format(self.type)
         if self.array:
@@ -2199,9 +2163,7 @@ class ConversionFunction(object):
         self.name = name
 
     def definition(self):
-        if self.array:
-            return self._generate_static_array_conversion_func()
-        elif self.dyn_array:
+        if self.array or self.dyn_array:
             return self._generate_array_conversion_func()
         else:
             return self._generate_conversion_func()

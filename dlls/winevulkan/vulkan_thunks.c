@@ -2036,7 +2036,7 @@ static inline void convert_VkMemoryHeap_static_array_host_to_win32(const VkMemor
         out[i].flags = in[i].flags;
     }
 }
-#endif /* USE_STRUCT_CONVERSION) */
+#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win32(const VkPhysicalDeviceMemoryProperties_host *in, VkPhysicalDeviceMemoryProperties *out)
