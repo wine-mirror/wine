@@ -1176,7 +1176,7 @@ class VkVariable(object):
             return False
         elif self.type == "size_t":
             return False
-        elif self.type in ["uint64_t", "VkDeviceSize"]:
+        elif self.type in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
             return True
         elif self.is_struct():
             return self.struct.needs_alignment()

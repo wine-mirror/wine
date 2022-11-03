@@ -1051,7 +1051,7 @@ struct vkCmdCopyImageToBuffer2KHR_params
 struct vkCmdCopyMemoryIndirectNV_params
 {
     VkCommandBuffer commandBuffer;
-    VkDeviceAddress copyBufferAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) copyBufferAddress;
     uint32_t copyCount;
     uint32_t stride;
 };
@@ -1065,7 +1065,7 @@ struct vkCmdCopyMemoryToAccelerationStructureKHR_params
 struct vkCmdCopyMemoryToImageIndirectNV_params
 {
     VkCommandBuffer commandBuffer;
-    VkDeviceAddress copyBufferAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) copyBufferAddress;
     uint32_t copyCount;
     uint32_t stride;
     VkImage DECLSPEC_ALIGN(8) dstImage;
@@ -1129,8 +1129,8 @@ struct vkCmdDebugMarkerInsertEXT_params
 struct vkCmdDecompressMemoryIndirectCountNV_params
 {
     VkCommandBuffer commandBuffer;
-    VkDeviceAddress indirectCommandsAddress;
-    VkDeviceAddress indirectCommandsCountAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) indirectCommandsAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) indirectCommandsCountAddress;
     uint32_t stride;
 };
 
@@ -2209,7 +2209,7 @@ struct vkCmdSubpassShadingHUAWEI_params
 struct vkCmdTraceRaysIndirect2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    VkDeviceAddress indirectDeviceAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) indirectDeviceAddress;
 };
 
 struct vkCmdTraceRaysIndirectKHR_params
@@ -2219,7 +2219,7 @@ struct vkCmdTraceRaysIndirectKHR_params
     const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable;
     const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable;
     const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable;
-    VkDeviceAddress indirectDeviceAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) indirectDeviceAddress;
 };
 
 struct vkCmdTraceRaysKHR_params

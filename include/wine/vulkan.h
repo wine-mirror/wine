@@ -4695,7 +4695,7 @@ typedef struct VkAccelerationStructureCreateInfoKHR
     VkDeviceSize WINE_VK_ALIGN(8) offset;
     VkDeviceSize WINE_VK_ALIGN(8) size;
     VkAccelerationStructureTypeKHR type;
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
 } VkAccelerationStructureCreateInfoKHR;
 
 typedef struct VkAccelerationStructureDeviceAddressInfoKHR
@@ -4910,7 +4910,7 @@ typedef VkBindImagePlaneMemoryInfo VkBindImagePlaneMemoryInfoKHR;
 
 typedef struct VkBindIndexBufferIndirectCommandNV
 {
-    VkDeviceAddress bufferAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) bufferAddress;
     uint32_t size;
     VkIndexType indexType;
 } VkBindIndexBufferIndirectCommandNV;
@@ -4922,7 +4922,7 @@ typedef struct VkBindShaderGroupIndirectCommandNV
 
 typedef struct VkBindVertexBufferIndirectCommandNV
 {
-    VkDeviceAddress bufferAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) bufferAddress;
     uint32_t size;
     uint32_t stride;
 } VkBindVertexBufferIndirectCommandNV;
@@ -4960,7 +4960,7 @@ typedef struct VkBufferDeviceAddressCreateInfoEXT
 {
     VkStructureType sType;
     const void *pNext;
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
 } VkBufferDeviceAddressCreateInfoEXT;
 
 typedef struct VkBufferDeviceAddressInfo
@@ -5245,8 +5245,8 @@ typedef struct VkCopyDescriptorSet
 
 typedef struct VkCopyMemoryIndirectCommandNV
 {
-    VkDeviceAddress srcAddress;
-    VkDeviceAddress dstAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) srcAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) dstAddress;
     VkDeviceSize WINE_VK_ALIGN(8) size;
 } VkCopyMemoryIndirectCommandNV;
 
@@ -5371,8 +5371,8 @@ typedef struct VkDebugUtilsObjectTagInfoEXT
 
 typedef struct VkDecompressMemoryRegionNV
 {
-    VkDeviceAddress srcAddress;
-    VkDeviceAddress dstAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) srcAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) dstAddress;
     VkDeviceSize WINE_VK_ALIGN(8) compressedSize;
     VkDeviceSize WINE_VK_ALIGN(8) decompressedSize;
     VkMemoryDecompressionMethodFlagsNV decompressionMethod;
@@ -5521,7 +5521,7 @@ typedef struct VkDeviceAddressBindingCallbackDataEXT
     VkStructureType sType;
     void *pNext;
     VkDeviceAddressBindingFlagsEXT flags;
-    VkDeviceAddress baseAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) baseAddress;
     VkDeviceSize WINE_VK_ALIGN(8) size;
     VkDeviceAddressBindingTypeEXT bindingType;
 } VkDeviceAddressBindingCallbackDataEXT;
@@ -5544,7 +5544,7 @@ typedef struct VkDeviceDiagnosticsConfigCreateInfoNV
 typedef struct VkDeviceFaultAddressInfoEXT
 {
     VkDeviceFaultAddressTypeEXT addressType;
-    VkDeviceAddress reportedAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) reportedAddress;
     VkDeviceSize WINE_VK_ALIGN(8) addressPrecision;
 } VkDeviceFaultAddressInfoEXT;
 
@@ -5657,13 +5657,13 @@ typedef struct VkDeviceMemoryOverallocationCreateInfoAMD
 
 typedef union VkDeviceOrHostAddressConstKHR
 {
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
     const void *hostAddress;
 } VkDeviceOrHostAddressConstKHR;
 
 typedef union VkDeviceOrHostAddressKHR
 {
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
     void *hostAddress;
 } VkDeviceOrHostAddressKHR;
 
@@ -6123,7 +6123,7 @@ typedef struct VkImageViewAddressPropertiesNVX
 {
     VkStructureType sType;
     void *pNext;
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
     VkDeviceSize WINE_VK_ALIGN(8) size;
 } VkImageViewAddressPropertiesNVX;
 
@@ -6386,7 +6386,7 @@ typedef struct VkMicromapCreateInfoEXT
     VkDeviceSize WINE_VK_ALIGN(8) offset;
     VkDeviceSize WINE_VK_ALIGN(8) size;
     VkMicromapTypeEXT type;
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
 } VkMicromapCreateInfoEXT;
 
 typedef struct VkMicromapTriangleEXT
@@ -9870,7 +9870,7 @@ typedef struct VkStencilOpState
 
 typedef struct VkStridedDeviceAddressRegionKHR
 {
-    VkDeviceAddress deviceAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) deviceAddress;
     VkDeviceSize WINE_VK_ALIGN(8) stride;
     VkDeviceSize WINE_VK_ALIGN(8) size;
 } VkStridedDeviceAddressRegionKHR;
@@ -10115,15 +10115,15 @@ typedef VkTimelineSemaphoreSubmitInfo VkTimelineSemaphoreSubmitInfoKHR;
 
 typedef struct VkTraceRaysIndirectCommand2KHR
 {
-    VkDeviceAddress raygenShaderRecordAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) raygenShaderRecordAddress;
     VkDeviceSize WINE_VK_ALIGN(8) raygenShaderRecordSize;
-    VkDeviceAddress missShaderBindingTableAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) missShaderBindingTableAddress;
     VkDeviceSize WINE_VK_ALIGN(8) missShaderBindingTableSize;
     VkDeviceSize WINE_VK_ALIGN(8) missShaderBindingTableStride;
-    VkDeviceAddress hitShaderBindingTableAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) hitShaderBindingTableAddress;
     VkDeviceSize WINE_VK_ALIGN(8) hitShaderBindingTableSize;
     VkDeviceSize WINE_VK_ALIGN(8) hitShaderBindingTableStride;
-    VkDeviceAddress callableShaderBindingTableAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) callableShaderBindingTableAddress;
     VkDeviceSize WINE_VK_ALIGN(8) callableShaderBindingTableSize;
     VkDeviceSize WINE_VK_ALIGN(8) callableShaderBindingTableStride;
     uint32_t width;
@@ -10490,7 +10490,7 @@ typedef struct VkCopyMemoryToAccelerationStructureInfoKHR
 
 typedef struct VkCopyMemoryToImageIndirectCommandNV
 {
-    VkDeviceAddress srcAddress;
+    VkDeviceAddress WINE_VK_ALIGN(8) srcAddress;
     uint32_t bufferRowLength;
     uint32_t bufferImageHeight;
     VkImageSubresourceLayers imageSubresource;
