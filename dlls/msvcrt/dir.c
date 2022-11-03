@@ -1062,7 +1062,7 @@ int CDECL _wrmdir(const wchar_t * dir)
 /******************************************************************
  *		_splitpath_s (MSVCRT.@)
  */
-int CDECL _splitpath_s(const char* inpath,
+errno_t CDECL _splitpath_s(const char* inpath,
         char* drive, size_t sz_drive,
         char* dir, size_t sz_dir,
         char* fname, size_t sz_fname,
