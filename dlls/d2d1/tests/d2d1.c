@@ -6075,11 +6075,32 @@ static void test_hwnd_target(BOOL d3d11)
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     ID2D1HwndRenderTarget *rt, *rt2;
+    D2D1_PIXEL_FORMAT pixel_format;
     struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
     D2D1_SIZE_U size;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct format_test
+    {
+        D2D1_PIXEL_FORMAT format;
+        D2D1_PIXEL_FORMAT expected_format;
+        BOOL expected_failure;
+        BOOL todo;
+    }
+    format_tests[] =
+    {
+        {{DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+        {{DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, FALSE, TRUE},
+        {{DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT}, TRUE},
+        {{DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+        {{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}, FALSE, TRUE},
+        {{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
+        {{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT}, TRUE},
+        {{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+    };
 
     if (!init_test_context(&ctx, d3d11))
         return;
@@ -6131,6 +6152,33 @@ static void test_hwnd_target(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1HwndRenderTarget_Release(rt);
+
+    /* Test render target format */
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        winetest_push_context("test %d", i);
+
+        desc.pixelFormat = format_tests[i].format;
+        hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+        if (format_tests[i].expected_failure)
+        {
+            todo_wine
+            ok(FAILED(hr), "Got unexpected hr %#lx.\n", hr);
+            winetest_pop_context();
+            continue;
+        }
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        pixel_format = ID2D1HwndRenderTarget_GetPixelFormat(rt);
+        ok(pixel_format.format == format_tests[i].expected_format.format,
+                "Got unexpected format %#x.\n", pixel_format.format);
+        todo_wine_if(format_tests[i].todo)
+        ok(pixel_format.alphaMode == format_tests[i].expected_format.alphaMode,
+                "Got unexpected alpha mode %d.\n", pixel_format.alphaMode);
+
+        ID2D1HwndRenderTarget_Release(rt);
+        winetest_pop_context();
+    }
 
     DestroyWindow(hwnd_rt_desc.hwnd);
     ID2D1Factory_Release(factory);
