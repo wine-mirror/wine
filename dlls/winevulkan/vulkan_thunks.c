@@ -671,6 +671,28 @@ static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoN
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionNV_array_win32_to_host(struct conversion_context *ctx, const VkDecompressMemoryRegionNV *in, uint32_t count)
+{
+    VkDecompressMemoryRegionNV_host *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].srcAddress = in[i].srcAddress;
+        out[i].dstAddress = in[i].dstAddress;
+        out[i].compressedSize = in[i].compressedSize;
+        out[i].decompressedSize = in[i].decompressedSize;
+        out[i].decompressionMethod = in[i].decompressionMethod;
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline VkCommandBuffer *convert_VkCommandBuffer_array_win64_to_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
 {
@@ -3393,6 +3415,38 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(struct conversion_context *ctx,
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_FEATURES_NV:
+        {
+            const VkPhysicalDeviceCopyMemoryIndirectFeaturesNV *in = (const VkPhysicalDeviceCopyMemoryIndirectFeaturesNV *)in_header;
+            VkPhysicalDeviceCopyMemoryIndirectFeaturesNV *out;
+
+            if (!(out = conversion_context_alloc(ctx, sizeof(*out)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->indirectCopy = in->indirectCopy;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV:
+        {
+            const VkPhysicalDeviceMemoryDecompressionFeaturesNV *in = (const VkPhysicalDeviceMemoryDecompressionFeaturesNV *)in_header;
+            VkPhysicalDeviceMemoryDecompressionFeaturesNV *out;
+
+            if (!(out = conversion_context_alloc(ctx, sizeof(*out)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->memoryDecompression = in->memoryDecompression;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV:
         {
             const VkPhysicalDeviceShadingRateImageFeaturesNV *in = (const VkPhysicalDeviceShadingRateImageFeaturesNV *)in_header;
@@ -5148,6 +5202,38 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(struct conversion_context *ctx,
             out->pNext = NULL;
             out->deviceFault = in->deviceFault;
             out->deviceFaultVendorBinary = in->deviceFaultVendorBinary;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM:
+        {
+            const VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *in = (const VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *)in_header;
+            VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *out;
+
+            if (!(out = conversion_context_alloc(ctx, sizeof(*out)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderCoreBuiltins = in->shaderCoreBuiltins;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
+        {
+            const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *in = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *)in_header;
+            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out;
+
+            if (!(out = conversion_context_alloc(ctx, sizeof(*out)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->rayTracingInvocationReorder = in->rayTracingInvocationReorder;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -7043,6 +7129,32 @@ static NTSTATUS thunk32_vkCmdCopyImageToBuffer2KHR(void *args)
 
 #if !defined(USE_STRUCT_CONVERSION)
 
+static NTSTATUS thunk64_vkCmdCopyMemoryIndirectNV(void *args)
+{
+    struct vkCmdCopyMemoryIndirectNV_params *params = args;
+
+    TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->copyBufferAddress), params->copyCount, params->stride);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryIndirectNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->copyBufferAddress, params->copyCount, params->stride);
+    return STATUS_SUCCESS;
+}
+
+#else /* USE_STRUCT_CONVERSION */
+
+static NTSTATUS thunk32_vkCmdCopyMemoryIndirectNV(void *args)
+{
+    struct vkCmdCopyMemoryIndirectNV_params *params = args;
+
+    TRACE("%p, 0x%s, %u, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->copyBufferAddress), params->copyCount, params->stride);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryIndirectNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->copyBufferAddress, params->copyCount, params->stride);
+    return STATUS_SUCCESS;
+}
+
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+
 static NTSTATUS thunk64_vkCmdCopyMemoryToAccelerationStructureKHR(void *args)
 {
     struct vkCmdCopyMemoryToAccelerationStructureKHR_params *params = args;
@@ -7064,6 +7176,32 @@ static NTSTATUS thunk32_vkCmdCopyMemoryToAccelerationStructureKHR(void *args)
 
     convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_host(params->pInfo, &pInfo_host);
     wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryToAccelerationStructureKHR(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, &pInfo_host);
+    return STATUS_SUCCESS;
+}
+
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+
+static NTSTATUS thunk64_vkCmdCopyMemoryToImageIndirectNV(void *args)
+{
+    struct vkCmdCopyMemoryToImageIndirectNV_params *params = args;
+
+    TRACE("%p, 0x%s, %u, %u, 0x%s, %#x, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->copyBufferAddress), params->copyCount, params->stride, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->pImageSubresources);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryToImageIndirectNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->copyBufferAddress, params->copyCount, params->stride, params->dstImage, params->dstImageLayout, params->pImageSubresources);
+    return STATUS_SUCCESS;
+}
+
+#else /* USE_STRUCT_CONVERSION */
+
+static NTSTATUS thunk32_vkCmdCopyMemoryToImageIndirectNV(void *args)
+{
+    struct vkCmdCopyMemoryToImageIndirectNV_params *params = args;
+
+    TRACE("%p, 0x%s, %u, %u, 0x%s, %#x, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->copyBufferAddress), params->copyCount, params->stride, wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->pImageSubresources);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCopyMemoryToImageIndirectNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->copyBufferAddress, params->copyCount, params->stride, params->dstImage, params->dstImageLayout, params->pImageSubresources);
     return STATUS_SUCCESS;
 }
 
@@ -7280,6 +7418,63 @@ static NTSTATUS thunk32_vkCmdDebugMarkerInsertEXT(void *args)
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
 
     wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDebugMarkerInsertEXT(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->pMarkerInfo);
+    return STATUS_SUCCESS;
+}
+
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+
+static NTSTATUS thunk64_vkCmdDecompressMemoryIndirectCountNV(void *args)
+{
+    struct vkCmdDecompressMemoryIndirectCountNV_params *params = args;
+
+    TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->indirectCommandsAddress), wine_dbgstr_longlong(params->indirectCommandsCountAddress), params->stride);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDecompressMemoryIndirectCountNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->indirectCommandsAddress, params->indirectCommandsCountAddress, params->stride);
+    return STATUS_SUCCESS;
+}
+
+#else /* USE_STRUCT_CONVERSION */
+
+static NTSTATUS thunk32_vkCmdDecompressMemoryIndirectCountNV(void *args)
+{
+    struct vkCmdDecompressMemoryIndirectCountNV_params *params = args;
+
+    TRACE("%p, 0x%s, 0x%s, %u\n", params->commandBuffer, wine_dbgstr_longlong(params->indirectCommandsAddress), wine_dbgstr_longlong(params->indirectCommandsCountAddress), params->stride);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDecompressMemoryIndirectCountNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->indirectCommandsAddress, params->indirectCommandsCountAddress, params->stride);
+    return STATUS_SUCCESS;
+}
+
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+
+static NTSTATUS thunk64_vkCmdDecompressMemoryNV(void *args)
+{
+    struct vkCmdDecompressMemoryNV_params *params = args;
+
+    TRACE("%p, %u, %p\n", params->commandBuffer, params->decompressRegionCount, params->pDecompressMemoryRegions);
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDecompressMemoryNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->decompressRegionCount, params->pDecompressMemoryRegions);
+    return STATUS_SUCCESS;
+}
+
+#else /* USE_STRUCT_CONVERSION */
+
+static NTSTATUS thunk32_vkCmdDecompressMemoryNV(void *args)
+{
+    struct vkCmdDecompressMemoryNV_params *params = args;
+    VkDecompressMemoryRegionNV_host *pDecompressMemoryRegions_host;
+    struct conversion_context ctx;
+
+    TRACE("%p, %u, %p\n", params->commandBuffer, params->decompressRegionCount, params->pDecompressMemoryRegions);
+
+    init_conversion_context(&ctx);
+    pDecompressMemoryRegions_host = convert_VkDecompressMemoryRegionNV_array_win32_to_host(&ctx, params->pDecompressMemoryRegions, params->decompressRegionCount);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdDecompressMemoryNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->decompressRegionCount, pDecompressMemoryRegions_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -19120,6 +19315,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_shader_trinary_minmax",
     "VK_AMD_texture_gather_bias_lod",
     "VK_ARM_rasterization_order_attachment_access",
+    "VK_ARM_shader_core_builtins",
     "VK_EXT_4444_formats",
     "VK_EXT_astc_decode_mode",
     "VK_EXT_attachment_feedback_loop_layout",
@@ -19289,6 +19485,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_clip_space_w_scaling",
     "VK_NV_compute_shader_derivatives",
     "VK_NV_cooperative_matrix",
+    "VK_NV_copy_memory_indirect",
     "VK_NV_corner_sampled_image",
     "VK_NV_coverage_reduction_mode",
     "VK_NV_dedicated_allocation",
@@ -19305,10 +19502,12 @@ static const char * const vk_device_extensions[] =
     "VK_NV_glsl_shader",
     "VK_NV_inherited_viewport_scissor",
     "VK_NV_linear_color_attachment",
+    "VK_NV_memory_decompression",
     "VK_NV_mesh_shader",
     "VK_NV_optical_flow",
     "VK_NV_present_barrier",
     "VK_NV_ray_tracing",
+    "VK_NV_ray_tracing_invocation_reorder",
     "VK_NV_ray_tracing_motion_blur",
     "VK_NV_representative_fragment_test",
     "VK_NV_sample_mask_override_coverage",
@@ -19481,7 +19680,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkCmdCopyImageToBuffer,
     thunk64_vkCmdCopyImageToBuffer2,
     thunk64_vkCmdCopyImageToBuffer2KHR,
+    thunk64_vkCmdCopyMemoryIndirectNV,
     thunk64_vkCmdCopyMemoryToAccelerationStructureKHR,
+    thunk64_vkCmdCopyMemoryToImageIndirectNV,
     thunk64_vkCmdCopyMemoryToMicromapEXT,
     thunk64_vkCmdCopyMicromapEXT,
     thunk64_vkCmdCopyMicromapToMemoryEXT,
@@ -19490,6 +19691,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkCmdDebugMarkerBeginEXT,
     thunk64_vkCmdDebugMarkerEndEXT,
     thunk64_vkCmdDebugMarkerInsertEXT,
+    thunk64_vkCmdDecompressMemoryIndirectCountNV,
+    thunk64_vkCmdDecompressMemoryNV,
     thunk64_vkCmdDispatch,
     thunk64_vkCmdDispatchBase,
     thunk64_vkCmdDispatchBaseKHR,
@@ -20002,7 +20205,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkCmdCopyImageToBuffer,
     thunk32_vkCmdCopyImageToBuffer2,
     thunk32_vkCmdCopyImageToBuffer2KHR,
+    thunk32_vkCmdCopyMemoryIndirectNV,
     thunk32_vkCmdCopyMemoryToAccelerationStructureKHR,
+    thunk32_vkCmdCopyMemoryToImageIndirectNV,
     thunk32_vkCmdCopyMemoryToMicromapEXT,
     thunk32_vkCmdCopyMicromapEXT,
     thunk32_vkCmdCopyMicromapToMemoryEXT,
@@ -20011,6 +20216,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkCmdDebugMarkerBeginEXT,
     thunk32_vkCmdDebugMarkerEndEXT,
     thunk32_vkCmdDebugMarkerInsertEXT,
+    thunk32_vkCmdDecompressMemoryIndirectCountNV,
+    thunk32_vkCmdDecompressMemoryNV,
     thunk32_vkCmdDispatch,
     thunk32_vkCmdDispatchBase,
     thunk32_vkCmdDispatchBaseKHR,

@@ -568,6 +568,19 @@ typedef VkCuLaunchInfoNVX VkCuLaunchInfoNVX_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkDecompressMemoryRegionNV_host
+{
+    VkDeviceAddress srcAddress;
+    VkDeviceAddress dstAddress;
+    VkDeviceSize compressedSize;
+    VkDeviceSize decompressedSize;
+    VkMemoryDecompressionMethodFlagsNV decompressionMethod;
+} VkDecompressMemoryRegionNV_host;
+#else
+typedef VkDecompressMemoryRegionNV VkDecompressMemoryRegionNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkIndirectCommandsStreamNV_host
 {
     VkBuffer buffer;
@@ -2005,7 +2018,9 @@ struct vulkan_device_funcs
     void (*p_vkCmdCopyImageToBuffer)(VkCommandBuffer, VkImage, VkImageLayout, VkBuffer, uint32_t, const VkBufferImageCopy_host *);
     void (*p_vkCmdCopyImageToBuffer2)(VkCommandBuffer, const VkCopyImageToBufferInfo2_host *);
     void (*p_vkCmdCopyImageToBuffer2KHR)(VkCommandBuffer, const VkCopyImageToBufferInfo2_host *);
+    void (*p_vkCmdCopyMemoryIndirectNV)(VkCommandBuffer, VkDeviceAddress, uint32_t, uint32_t);
     void (*p_vkCmdCopyMemoryToAccelerationStructureKHR)(VkCommandBuffer, const VkCopyMemoryToAccelerationStructureInfoKHR_host *);
+    void (*p_vkCmdCopyMemoryToImageIndirectNV)(VkCommandBuffer, VkDeviceAddress, uint32_t, uint32_t, VkImage, VkImageLayout, const VkImageSubresourceLayers *);
     void (*p_vkCmdCopyMemoryToMicromapEXT)(VkCommandBuffer, const VkCopyMemoryToMicromapInfoEXT_host *);
     void (*p_vkCmdCopyMicromapEXT)(VkCommandBuffer, const VkCopyMicromapInfoEXT_host *);
     void (*p_vkCmdCopyMicromapToMemoryEXT)(VkCommandBuffer, const VkCopyMicromapToMemoryInfoEXT_host *);
@@ -2014,6 +2029,8 @@ struct vulkan_device_funcs
     void (*p_vkCmdDebugMarkerBeginEXT)(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT *);
     void (*p_vkCmdDebugMarkerEndEXT)(VkCommandBuffer);
     void (*p_vkCmdDebugMarkerInsertEXT)(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT *);
+    void (*p_vkCmdDecompressMemoryIndirectCountNV)(VkCommandBuffer, VkDeviceAddress, VkDeviceAddress, uint32_t);
+    void (*p_vkCmdDecompressMemoryNV)(VkCommandBuffer, uint32_t, const VkDecompressMemoryRegionNV_host *);
     void (*p_vkCmdDispatch)(VkCommandBuffer, uint32_t, uint32_t, uint32_t);
     void (*p_vkCmdDispatchBase)(VkCommandBuffer, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
     void (*p_vkCmdDispatchBaseKHR)(VkCommandBuffer, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
@@ -2516,7 +2533,9 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdCopyImageToBuffer) \
     USE_VK_FUNC(vkCmdCopyImageToBuffer2) \
     USE_VK_FUNC(vkCmdCopyImageToBuffer2KHR) \
+    USE_VK_FUNC(vkCmdCopyMemoryIndirectNV) \
     USE_VK_FUNC(vkCmdCopyMemoryToAccelerationStructureKHR) \
+    USE_VK_FUNC(vkCmdCopyMemoryToImageIndirectNV) \
     USE_VK_FUNC(vkCmdCopyMemoryToMicromapEXT) \
     USE_VK_FUNC(vkCmdCopyMicromapEXT) \
     USE_VK_FUNC(vkCmdCopyMicromapToMemoryEXT) \
@@ -2525,6 +2544,8 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdDebugMarkerBeginEXT) \
     USE_VK_FUNC(vkCmdDebugMarkerEndEXT) \
     USE_VK_FUNC(vkCmdDebugMarkerInsertEXT) \
+    USE_VK_FUNC(vkCmdDecompressMemoryIndirectCountNV) \
+    USE_VK_FUNC(vkCmdDecompressMemoryNV) \
     USE_VK_FUNC(vkCmdDispatch) \
     USE_VK_FUNC(vkCmdDispatchBase) \
     USE_VK_FUNC(vkCmdDispatchBaseKHR) \

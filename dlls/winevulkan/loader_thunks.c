@@ -766,6 +766,18 @@ void WINAPI vkCmdCopyImageToBuffer2KHR(VkCommandBuffer commandBuffer, const VkCo
     assert(!status);
 }
 
+void WINAPI vkCmdCopyMemoryIndirectNV(VkCommandBuffer commandBuffer, VkDeviceAddress copyBufferAddress, uint32_t copyCount, uint32_t stride)
+{
+    struct vkCmdCopyMemoryIndirectNV_params params;
+    NTSTATUS status;
+    params.commandBuffer = commandBuffer;
+    params.copyBufferAddress = copyBufferAddress;
+    params.copyCount = copyCount;
+    params.stride = stride;
+    status = p_vk_direct_unix_call(unix_handle, unix_vkCmdCopyMemoryIndirectNV, &params);
+    assert(!status);
+}
+
 void WINAPI vkCmdCopyMemoryToAccelerationStructureKHR(VkCommandBuffer commandBuffer, const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo)
 {
     struct vkCmdCopyMemoryToAccelerationStructureKHR_params params;
@@ -773,6 +785,21 @@ void WINAPI vkCmdCopyMemoryToAccelerationStructureKHR(VkCommandBuffer commandBuf
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
     status = p_vk_direct_unix_call(unix_handle, unix_vkCmdCopyMemoryToAccelerationStructureKHR, &params);
+    assert(!status);
+}
+
+void WINAPI vkCmdCopyMemoryToImageIndirectNV(VkCommandBuffer commandBuffer, VkDeviceAddress copyBufferAddress, uint32_t copyCount, uint32_t stride, VkImage dstImage, VkImageLayout dstImageLayout, const VkImageSubresourceLayers *pImageSubresources)
+{
+    struct vkCmdCopyMemoryToImageIndirectNV_params params;
+    NTSTATUS status;
+    params.commandBuffer = commandBuffer;
+    params.copyBufferAddress = copyBufferAddress;
+    params.copyCount = copyCount;
+    params.stride = stride;
+    params.dstImage = dstImage;
+    params.dstImageLayout = dstImageLayout;
+    params.pImageSubresources = pImageSubresources;
+    status = p_vk_direct_unix_call(unix_handle, unix_vkCmdCopyMemoryToImageIndirectNV, &params);
     assert(!status);
 }
 
@@ -858,6 +885,29 @@ void WINAPI vkCmdDebugMarkerInsertEXT(VkCommandBuffer commandBuffer, const VkDeb
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
     status = p_vk_direct_unix_call(unix_handle, unix_vkCmdDebugMarkerInsertEXT, &params);
+    assert(!status);
+}
+
+void WINAPI vkCmdDecompressMemoryIndirectCountNV(VkCommandBuffer commandBuffer, VkDeviceAddress indirectCommandsAddress, VkDeviceAddress indirectCommandsCountAddress, uint32_t stride)
+{
+    struct vkCmdDecompressMemoryIndirectCountNV_params params;
+    NTSTATUS status;
+    params.commandBuffer = commandBuffer;
+    params.indirectCommandsAddress = indirectCommandsAddress;
+    params.indirectCommandsCountAddress = indirectCommandsCountAddress;
+    params.stride = stride;
+    status = p_vk_direct_unix_call(unix_handle, unix_vkCmdDecompressMemoryIndirectCountNV, &params);
+    assert(!status);
+}
+
+void WINAPI vkCmdDecompressMemoryNV(VkCommandBuffer commandBuffer, uint32_t decompressRegionCount, const VkDecompressMemoryRegionNV *pDecompressMemoryRegions)
+{
+    struct vkCmdDecompressMemoryNV_params params;
+    NTSTATUS status;
+    params.commandBuffer = commandBuffer;
+    params.decompressRegionCount = decompressRegionCount;
+    params.pDecompressMemoryRegions = pDecompressMemoryRegions;
+    status = p_vk_direct_unix_call(unix_handle, unix_vkCmdDecompressMemoryNV, &params);
     assert(!status);
 }
 
@@ -5969,7 +6019,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdCopyImageToBuffer", vkCmdCopyImageToBuffer},
     {"vkCmdCopyImageToBuffer2", vkCmdCopyImageToBuffer2},
     {"vkCmdCopyImageToBuffer2KHR", vkCmdCopyImageToBuffer2KHR},
+    {"vkCmdCopyMemoryIndirectNV", vkCmdCopyMemoryIndirectNV},
     {"vkCmdCopyMemoryToAccelerationStructureKHR", vkCmdCopyMemoryToAccelerationStructureKHR},
+    {"vkCmdCopyMemoryToImageIndirectNV", vkCmdCopyMemoryToImageIndirectNV},
     {"vkCmdCopyMemoryToMicromapEXT", vkCmdCopyMemoryToMicromapEXT},
     {"vkCmdCopyMicromapEXT", vkCmdCopyMicromapEXT},
     {"vkCmdCopyMicromapToMemoryEXT", vkCmdCopyMicromapToMemoryEXT},
@@ -5978,6 +6030,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDebugMarkerBeginEXT", vkCmdDebugMarkerBeginEXT},
     {"vkCmdDebugMarkerEndEXT", vkCmdDebugMarkerEndEXT},
     {"vkCmdDebugMarkerInsertEXT", vkCmdDebugMarkerInsertEXT},
+    {"vkCmdDecompressMemoryIndirectCountNV", vkCmdDecompressMemoryIndirectCountNV},
+    {"vkCmdDecompressMemoryNV", vkCmdDecompressMemoryNV},
     {"vkCmdDispatch", vkCmdDispatch},
     {"vkCmdDispatchBase", vkCmdDispatchBase},
     {"vkCmdDispatchBaseKHR", vkCmdDispatchBaseKHR},
