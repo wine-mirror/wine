@@ -1173,6 +1173,46 @@ class VkVariable(object):
     def needs_host_type(self):
         return self.is_struct() and self.struct.needs_host_type()
 
+    def get_conversions(self, unwrap, parent_const=False):
+        """ Get a list of conversions required for this parameter if any.
+        Parameters which are structures may require conversion between win32
+        and the host platform. This function returns a list of conversions
+        required.
+        """
+
+        if self.is_struct():
+            self.struct.needs_struct_extensions_conversion()
+            for m in self.struct:
+                if m.type == self.struct.name:
+                    continue
+                m.needs_struct_extensions_conversion()
+        elif not self.is_handle():
+            return []
+
+        conversions = []
+
+        # Collect any member conversions first, so we can guarantee
+        # those functions will be defined prior to usage by the
+        # 'parent' param requiring conversion.
+        if self.is_struct():
+            is_const = self.is_const() if self.is_pointer() else parent_const
+            for m in self.struct:
+                if m.type == self.struct.name:
+                    continue
+                if not m.is_struct():
+                    continue
+
+                conversions.extend(m.get_conversions(unwrap, is_const))
+
+        # Conversion requirements for the 'parent' parameter.
+        for conv in [False, True]:
+            if self.needs_conversion(conv, unwrap, Direction.INPUT, parent_const):
+                conversions.append(ConversionFunction(self, Direction.INPUT, conv, unwrap))
+            if self.needs_conversion(conv, unwrap, Direction.OUTPUT, parent_const):
+                conversions.append(ConversionFunction(self, Direction.OUTPUT, conv, unwrap))
+
+        return conversions
+
 
 class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
@@ -1347,34 +1387,6 @@ class VkMember(VkVariable):
             text += ":{}".format(self.bit_width)
 
         return text
-
-    def get_conversions(self, unwrap, parent_const):
-        """ Return any conversion description for this member and its children when conversion is needed. """
-
-        conversions = []
-
-        # Collect any conversion for any member structs.
-        if self.is_struct():
-            struct = self.type_info["data"]
-            for m in struct:
-                if m.type == struct.name:
-                    continue
-
-                m.needs_struct_extensions_conversion()
-                conversions.extend(m.get_conversions(parent_const, unwrap))
-
-            struct.needs_struct_extensions_conversion()
-            direction = Direction.OUTPUT if struct.returnedonly else Direction.INPUT
-        elif self.is_handle() or self.is_generic_handle():
-            direction = Direction.INPUT
-        else:
-            return []
-
-        for conv in [False, True]:
-            if self.needs_conversion(conv, unwrap, direction, parent_const):
-                conversions.append(ConversionFunction(self, direction, conv, unwrap))
-
-        return conversions
 
     def is_struct_forward_declaration(self):
         return self.struct_fwd_decl
@@ -1594,41 +1606,6 @@ class VkParam(VkVariable):
 
     def format_string(self):
         return self.format_str
-
-    def get_conversions(self, unwrap):
-        """ Get a list of conversions required for this parameter if any.
-        Parameters which are structures may require conversion between win32
-        and the host platform. This function returns a list of conversions
-        required.
-        """
-
-        if self.is_struct():
-            self.struct.needs_struct_extensions_conversion()
-            for m in self.struct:
-                m.needs_struct_extensions_conversion()
-        elif not self.is_handle():
-            return []
-
-        conversions = []
-
-        # Collect any member conversions first, so we can guarantee
-        # those functions will be defined prior to usage by the
-        # 'parent' param requiring conversion.
-        if self.is_struct():
-            for m in self.struct:
-                if not m.is_struct():
-                    continue
-
-                conversions.extend(m.get_conversions(unwrap, False))
-
-        # Conversion requirements for the 'parent' parameter.
-        for conv in [False, True]:
-            if self.needs_conversion(conv, unwrap, Direction.INPUT):
-                conversions.append(ConversionFunction(self, Direction.INPUT, conv, unwrap))
-            if self.needs_conversion(conv, unwrap, Direction.OUTPUT):
-                conversions.append(ConversionFunction(self, Direction.OUTPUT, conv, unwrap))
-
-        return conversions
 
     def is_dispatchable(self):
         if not self.is_handle():
