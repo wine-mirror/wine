@@ -279,7 +279,6 @@ class Direction(Enum):
     """ Parameter direction: input, output, input_output. """
     INPUT = 1
     OUTPUT = 2
-    INPUT_OUTPUT = 3
 
 
 class VkBaseType(object):
