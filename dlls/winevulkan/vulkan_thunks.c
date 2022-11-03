@@ -114,6 +114,22 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(const VkMemoryAllo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(const VkCommandBufferInheritanceInfo *in, VkCommandBufferInheritanceInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->renderPass = in->renderPass;
+    out->subpass = in->subpass;
+    out->framebuffer = in->framebuffer;
+    out->occlusionQueryEnable = in->occlusionQueryEnable;
+    out->queryFlags = in->queryFlags;
+    out->pipelineStatistics = in->pipelineStatistics;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheritanceInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo *in, uint32_t count)
 {
     VkCommandBufferInheritanceInfo_host *out;
@@ -124,14 +140,7 @@ static inline VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheri
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].renderPass = in[i].renderPass;
-        out[i].subpass = in[i].subpass;
-        out[i].framebuffer = in[i].framebuffer;
-        out[i].occlusionQueryEnable = in[i].occlusionQueryEnable;
-        out[i].queryFlags = in[i].queryFlags;
-        out[i].pipelineStatistics = in[i].pipelineStatistics;
+        convert_VkCommandBufferInheritanceInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -151,6 +160,21 @@ static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct convers
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host(const VkBindAccelerationStructureMemoryInfoNV *in, VkBindAccelerationStructureMemoryInfoNV_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->accelerationStructure = in->accelerationStructure;
+    out->memory = in->memory;
+    out->memoryOffset = in->memoryOffset;
+    out->deviceIndexCount = in->deviceIndexCount;
+    out->pDeviceIndices = in->pDeviceIndices;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV *in, uint32_t count)
 {
     VkBindAccelerationStructureMemoryInfoNV_host *out;
@@ -161,16 +185,23 @@ static inline VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccele
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].accelerationStructure = in[i].accelerationStructure;
-        out[i].memory = in[i].memory;
-        out[i].memoryOffset = in[i].memoryOffset;
-        out[i].deviceIndexCount = in[i].deviceIndexCount;
-        out[i].pDeviceIndices = in[i].pDeviceIndices;
+        convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBindBufferMemoryInfo_win32_to_host(const VkBindBufferMemoryInfo *in, VkBindBufferMemoryInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->buffer = in->buffer;
+    out->memory = in->memory;
+    out->memoryOffset = in->memoryOffset;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -185,14 +216,23 @@ static inline VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_array_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].buffer = in[i].buffer;
-        out[i].memory = in[i].memory;
-        out[i].memoryOffset = in[i].memoryOffset;
+        convert_VkBindBufferMemoryInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBindImageMemoryInfo_win32_to_host(const VkBindImageMemoryInfo *in, VkBindImageMemoryInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->image = in->image;
+    out->memory = in->memory;
+    out->memoryOffset = in->memoryOffset;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -207,14 +247,29 @@ static inline VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_array_wi
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].image = in[i].image;
-        out[i].memory = in[i].memory;
-        out[i].memoryOffset = in[i].memoryOffset;
+        convert_VkBindImageMemoryInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(const VkAccelerationStructureBuildGeometryInfoKHR *in, VkAccelerationStructureBuildGeometryInfoKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->type = in->type;
+    out->flags = in->flags;
+    out->mode = in->mode;
+    out->srcAccelerationStructure = in->srcAccelerationStructure;
+    out->dstAccelerationStructure = in->dstAccelerationStructure;
+    out->geometryCount = in->geometryCount;
+    out->pGeometries = in->pGeometries;
+    out->ppGeometries = in->ppGeometries;
+    out->scratchData = in->scratchData;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -229,20 +284,31 @@ static inline VkAccelerationStructureBuildGeometryInfoKHR_host *convert_VkAccele
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].type = in[i].type;
-        out[i].flags = in[i].flags;
-        out[i].mode = in[i].mode;
-        out[i].srcAccelerationStructure = in[i].srcAccelerationStructure;
-        out[i].dstAccelerationStructure = in[i].dstAccelerationStructure;
-        out[i].geometryCount = in[i].geometryCount;
-        out[i].pGeometries = in[i].pGeometries;
-        out[i].ppGeometries = in[i].ppGeometries;
-        out[i].scratchData = in[i].scratchData;
+        convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromapBuildInfoEXT *in, VkMicromapBuildInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->type = in->type;
+    out->flags = in->flags;
+    out->mode = in->mode;
+    out->dstMicromap = in->dstMicromap;
+    out->usageCountsCount = in->usageCountsCount;
+    out->pUsageCounts = in->pUsageCounts;
+    out->ppUsageCounts = in->ppUsageCounts;
+    out->data = in->data;
+    out->scratchData = in->scratchData;
+    out->triangleArray = in->triangleArray;
+    out->triangleArrayStride = in->triangleArrayStride;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -257,19 +323,7 @@ static inline VkMicromapBuildInfoEXT_host *convert_VkMicromapBuildInfoEXT_array_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].type = in[i].type;
-        out[i].flags = in[i].flags;
-        out[i].mode = in[i].mode;
-        out[i].dstMicromap = in[i].dstMicromap;
-        out[i].usageCountsCount = in[i].usageCountsCount;
-        out[i].pUsageCounts = in[i].pUsageCounts;
-        out[i].ppUsageCounts = in[i].ppUsageCounts;
-        out[i].data = in[i].data;
-        out[i].scratchData = in[i].scratchData;
-        out[i].triangleArray = in[i].triangleArray;
-        out[i].triangleArrayStride = in[i].triangleArrayStride;
+        convert_VkMicromapBuildInfoEXT_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -305,6 +359,24 @@ static inline void convert_VkRenderPassBeginInfo_win32_to_host(const VkRenderPas
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRenderingAttachmentInfo *in, VkRenderingAttachmentInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->imageView = in->imageView;
+    out->imageLayout = in->imageLayout;
+    out->resolveMode = in->resolveMode;
+    out->resolveImageView = in->resolveImageView;
+    out->resolveImageLayout = in->resolveImageLayout;
+    out->loadOp = in->loadOp;
+    out->storeOp = in->storeOp;
+    out->clearValue = in->clearValue;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmentInfo_array_win32_to_host(struct conversion_context *ctx, const VkRenderingAttachmentInfo *in, uint32_t count)
 {
     VkRenderingAttachmentInfo_host *out;
@@ -315,16 +387,7 @@ static inline VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmentInfo_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].imageView = in[i].imageView;
-        out[i].imageLayout = in[i].imageLayout;
-        out[i].resolveMode = in[i].resolveMode;
-        out[i].resolveImageView = in[i].resolveImageView;
-        out[i].resolveImageLayout = in[i].resolveImageLayout;
-        out[i].loadOp = in[i].loadOp;
-        out[i].storeOp = in[i].storeOp;
-        out[i].clearValue = in[i].clearValue;
+        convert_VkRenderingAttachmentInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -412,6 +475,19 @@ static inline void convert_VkGeometryDataNV_win32_to_host(const VkGeometryDataNV
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkGeometryNV_win32_to_host(const VkGeometryNV *in, VkGeometryNV_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->geometryType = in->geometryType;
+    convert_VkGeometryDataNV_win32_to_host(&in->geometry, &out->geometry);
+    out->flags = in->flags;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkGeometryNV_host *convert_VkGeometryNV_array_win32_to_host(struct conversion_context *ctx, const VkGeometryNV *in, uint32_t count)
 {
     VkGeometryNV_host *out;
@@ -422,11 +498,7 @@ static inline VkGeometryNV_host *convert_VkGeometryNV_array_win32_to_host(struct
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].geometryType = in[i].geometryType;
-        convert_VkGeometryDataNV_win32_to_host(&in[i].geometry, &out[i].geometry);
-        out[i].flags = in[i].flags;
+        convert_VkGeometryNV_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -475,6 +547,17 @@ static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_h
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBufferCopy_win32_to_host(const VkBufferCopy *in, VkBufferCopy_host *out)
+{
+    if (!in) return;
+
+    out->srcOffset = in->srcOffset;
+    out->dstOffset = in->dstOffset;
+    out->size = in->size;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferCopy_host *convert_VkBufferCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy *in, uint32_t count)
 {
     VkBufferCopy_host *out;
@@ -485,12 +568,23 @@ static inline VkBufferCopy_host *convert_VkBufferCopy_array_win32_to_host(struct
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].srcOffset = in[i].srcOffset;
-        out[i].dstOffset = in[i].dstOffset;
-        out[i].size = in[i].size;
+        convert_VkBufferCopy_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBufferCopy2_win32_to_host(const VkBufferCopy2 *in, VkBufferCopy2_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcOffset = in->srcOffset;
+    out->dstOffset = in->dstOffset;
+    out->size = in->size;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -505,11 +599,7 @@ static inline VkBufferCopy2_host *convert_VkBufferCopy2_array_win32_to_host(stru
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].srcOffset = in[i].srcOffset;
-        out[i].dstOffset = in[i].dstOffset;
-        out[i].size = in[i].size;
+        convert_VkBufferCopy2_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -531,6 +621,20 @@ static inline void convert_VkCopyBufferInfo2_win32_to_host(struct conversion_con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBufferImageCopy_win32_to_host(const VkBufferImageCopy *in, VkBufferImageCopy_host *out)
+{
+    if (!in) return;
+
+    out->bufferOffset = in->bufferOffset;
+    out->bufferRowLength = in->bufferRowLength;
+    out->bufferImageHeight = in->bufferImageHeight;
+    out->imageSubresource = in->imageSubresource;
+    out->imageOffset = in->imageOffset;
+    out->imageExtent = in->imageExtent;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy *in, uint32_t count)
 {
     VkBufferImageCopy_host *out;
@@ -541,15 +645,26 @@ static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win32_to_h
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].bufferOffset = in[i].bufferOffset;
-        out[i].bufferRowLength = in[i].bufferRowLength;
-        out[i].bufferImageHeight = in[i].bufferImageHeight;
-        out[i].imageSubresource = in[i].imageSubresource;
-        out[i].imageOffset = in[i].imageOffset;
-        out[i].imageExtent = in[i].imageExtent;
+        convert_VkBufferImageCopy_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBufferImageCopy2_win32_to_host(const VkBufferImageCopy2 *in, VkBufferImageCopy2_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->bufferOffset = in->bufferOffset;
+    out->bufferRowLength = in->bufferRowLength;
+    out->bufferImageHeight = in->bufferImageHeight;
+    out->imageSubresource = in->imageSubresource;
+    out->imageOffset = in->imageOffset;
+    out->imageExtent = in->imageExtent;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -564,14 +679,7 @@ static inline VkBufferImageCopy2_host *convert_VkBufferImageCopy2_array_win32_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].bufferOffset = in[i].bufferOffset;
-        out[i].bufferRowLength = in[i].bufferRowLength;
-        out[i].bufferImageHeight = in[i].bufferImageHeight;
-        out[i].imageSubresource = in[i].imageSubresource;
-        out[i].imageOffset = in[i].imageOffset;
-        out[i].imageExtent = in[i].imageExtent;
+        convert_VkBufferImageCopy2_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -699,6 +807,19 @@ static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoN
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDecompressMemoryRegionNV_win32_to_host(const VkDecompressMemoryRegionNV *in, VkDecompressMemoryRegionNV_host *out)
+{
+    if (!in) return;
+
+    out->srcAddress = in->srcAddress;
+    out->dstAddress = in->dstAddress;
+    out->compressedSize = in->compressedSize;
+    out->decompressedSize = in->decompressedSize;
+    out->decompressionMethod = in->decompressionMethod;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionNV_array_win32_to_host(struct conversion_context *ctx, const VkDecompressMemoryRegionNV *in, uint32_t count)
 {
     VkDecompressMemoryRegionNV_host *out;
@@ -709,11 +830,7 @@ static inline VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionN
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].srcAddress = in[i].srcAddress;
-        out[i].dstAddress = in[i].dstAddress;
-        out[i].compressedSize = in[i].compressedSize;
-        out[i].decompressedSize = in[i].decompressedSize;
-        out[i].decompressionMethod = in[i].decompressionMethod;
+        convert_VkDecompressMemoryRegionNV_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -757,6 +874,16 @@ static inline VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkIndirectCommandsStreamNV_win32_to_host(const VkIndirectCommandsStreamNV *in, VkIndirectCommandsStreamNV_host *out)
+{
+    if (!in) return;
+
+    out->buffer = in->buffer;
+    out->offset = in->offset;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsStreamNV *in, uint32_t count)
 {
     VkIndirectCommandsStreamNV_host *out;
@@ -767,8 +894,7 @@ static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamN
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].buffer = in[i].buffer;
-        out[i].offset = in[i].offset;
+        convert_VkIndirectCommandsStreamNV_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -799,6 +925,23 @@ static inline void convert_VkGeneratedCommandsInfoNV_win32_to_host(struct conver
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMemoryBarrier *in, VkBufferMemoryBarrier_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcAccessMask = in->srcAccessMask;
+    out->dstAccessMask = in->dstAccessMask;
+    out->srcQueueFamilyIndex = in->srcQueueFamilyIndex;
+    out->dstQueueFamilyIndex = in->dstQueueFamilyIndex;
+    out->buffer = in->buffer;
+    out->offset = in->offset;
+    out->size = in->size;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier *in, uint32_t count)
 {
     VkBufferMemoryBarrier_host *out;
@@ -809,18 +952,28 @@ static inline VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_wi
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].srcAccessMask = in[i].srcAccessMask;
-        out[i].dstAccessMask = in[i].dstAccessMask;
-        out[i].srcQueueFamilyIndex = in[i].srcQueueFamilyIndex;
-        out[i].dstQueueFamilyIndex = in[i].dstQueueFamilyIndex;
-        out[i].buffer = in[i].buffer;
-        out[i].offset = in[i].offset;
-        out[i].size = in[i].size;
+        convert_VkBufferMemoryBarrier_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkImageMemoryBarrier_win32_to_host(const VkImageMemoryBarrier *in, VkImageMemoryBarrier_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcAccessMask = in->srcAccessMask;
+    out->dstAccessMask = in->dstAccessMask;
+    out->oldLayout = in->oldLayout;
+    out->newLayout = in->newLayout;
+    out->srcQueueFamilyIndex = in->srcQueueFamilyIndex;
+    out->dstQueueFamilyIndex = in->dstQueueFamilyIndex;
+    out->image = in->image;
+    out->subresourceRange = in->subresourceRange;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -835,19 +988,29 @@ static inline VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win3
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].srcAccessMask = in[i].srcAccessMask;
-        out[i].dstAccessMask = in[i].dstAccessMask;
-        out[i].oldLayout = in[i].oldLayout;
-        out[i].newLayout = in[i].newLayout;
-        out[i].srcQueueFamilyIndex = in[i].srcQueueFamilyIndex;
-        out[i].dstQueueFamilyIndex = in[i].dstQueueFamilyIndex;
-        out[i].image = in[i].image;
-        out[i].subresourceRange = in[i].subresourceRange;
+        convert_VkImageMemoryBarrier_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMemoryBarrier2 *in, VkBufferMemoryBarrier2_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcStageMask = in->srcStageMask;
+    out->srcAccessMask = in->srcAccessMask;
+    out->dstStageMask = in->dstStageMask;
+    out->dstAccessMask = in->dstAccessMask;
+    out->srcQueueFamilyIndex = in->srcQueueFamilyIndex;
+    out->dstQueueFamilyIndex = in->dstQueueFamilyIndex;
+    out->buffer = in->buffer;
+    out->offset = in->offset;
+    out->size = in->size;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -862,20 +1025,30 @@ static inline VkBufferMemoryBarrier2_host *convert_VkBufferMemoryBarrier2_array_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].srcStageMask = in[i].srcStageMask;
-        out[i].srcAccessMask = in[i].srcAccessMask;
-        out[i].dstStageMask = in[i].dstStageMask;
-        out[i].dstAccessMask = in[i].dstAccessMask;
-        out[i].srcQueueFamilyIndex = in[i].srcQueueFamilyIndex;
-        out[i].dstQueueFamilyIndex = in[i].dstQueueFamilyIndex;
-        out[i].buffer = in[i].buffer;
-        out[i].offset = in[i].offset;
-        out[i].size = in[i].size;
+        convert_VkBufferMemoryBarrier2_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkImageMemoryBarrier2_win32_to_host(const VkImageMemoryBarrier2 *in, VkImageMemoryBarrier2_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcStageMask = in->srcStageMask;
+    out->srcAccessMask = in->srcAccessMask;
+    out->dstStageMask = in->dstStageMask;
+    out->dstAccessMask = in->dstAccessMask;
+    out->oldLayout = in->oldLayout;
+    out->newLayout = in->newLayout;
+    out->srcQueueFamilyIndex = in->srcQueueFamilyIndex;
+    out->dstQueueFamilyIndex = in->dstQueueFamilyIndex;
+    out->image = in->image;
+    out->subresourceRange = in->subresourceRange;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -890,18 +1063,7 @@ static inline VkImageMemoryBarrier2_host *convert_VkImageMemoryBarrier2_array_wi
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].srcStageMask = in[i].srcStageMask;
-        out[i].srcAccessMask = in[i].srcAccessMask;
-        out[i].dstStageMask = in[i].dstStageMask;
-        out[i].dstAccessMask = in[i].dstAccessMask;
-        out[i].oldLayout = in[i].oldLayout;
-        out[i].newLayout = in[i].newLayout;
-        out[i].srcQueueFamilyIndex = in[i].srcQueueFamilyIndex;
-        out[i].dstQueueFamilyIndex = in[i].dstQueueFamilyIndex;
-        out[i].image = in[i].image;
-        out[i].subresourceRange = in[i].subresourceRange;
+        convert_VkImageMemoryBarrier2_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -926,6 +1088,17 @@ static inline void convert_VkDependencyInfo_win32_to_host(struct conversion_cont
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDescriptorImageInfo_win32_to_host(const VkDescriptorImageInfo *in, VkDescriptorImageInfo_host *out)
+{
+    if (!in) return;
+
+    out->sampler = in->sampler;
+    out->imageView = in->imageView;
+    out->imageLayout = in->imageLayout;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorImageInfo *in, uint32_t count)
 {
     VkDescriptorImageInfo_host *out;
@@ -936,12 +1109,21 @@ static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_wi
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sampler = in[i].sampler;
-        out[i].imageView = in[i].imageView;
-        out[i].imageLayout = in[i].imageLayout;
+        convert_VkDescriptorImageInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDescriptorBufferInfo_win32_to_host(const VkDescriptorBufferInfo *in, VkDescriptorBufferInfo_host *out)
+{
+    if (!in) return;
+
+    out->buffer = in->buffer;
+    out->offset = in->offset;
+    out->range = in->range;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -956,12 +1138,28 @@ static inline VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].buffer = in[i].buffer;
-        out[i].offset = in[i].offset;
-        out[i].range = in[i].range;
+        convert_VkDescriptorBufferInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet *in, VkWriteDescriptorSet_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->dstSet = in->dstSet;
+    out->dstBinding = in->dstBinding;
+    out->dstArrayElement = in->dstArrayElement;
+    out->descriptorCount = in->descriptorCount;
+    out->descriptorType = in->descriptorType;
+    out->pImageInfo = convert_VkDescriptorImageInfo_array_win32_to_host(ctx, in->pImageInfo, in->descriptorCount);
+    out->pBufferInfo = convert_VkDescriptorBufferInfo_array_win32_to_host(ctx, in->pBufferInfo, in->descriptorCount);
+    out->pTexelBufferView = in->pTexelBufferView;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -976,16 +1174,7 @@ static inline VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win3
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].dstSet = in[i].dstSet;
-        out[i].dstBinding = in[i].dstBinding;
-        out[i].dstArrayElement = in[i].dstArrayElement;
-        out[i].descriptorCount = in[i].descriptorCount;
-        out[i].descriptorType = in[i].descriptorType;
-        out[i].pImageInfo = convert_VkDescriptorImageInfo_array_win32_to_host(ctx, in[i].pImageInfo, in[i].descriptorCount);
-        out[i].pBufferInfo = convert_VkDescriptorBufferInfo_array_win32_to_host(ctx, in[i].pBufferInfo, in[i].descriptorCount);
-        out[i].pTexelBufferView = in[i].pTexelBufferView;
+        convert_VkWriteDescriptorSet_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -1054,15 +1243,7 @@ static inline VkDependencyInfo_host *convert_VkDependencyInfo_array_win32_to_hos
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].dependencyFlags = in[i].dependencyFlags;
-        out[i].memoryBarrierCount = in[i].memoryBarrierCount;
-        out[i].pMemoryBarriers = in[i].pMemoryBarriers;
-        out[i].bufferMemoryBarrierCount = in[i].bufferMemoryBarrierCount;
-        out[i].pBufferMemoryBarriers = convert_VkBufferMemoryBarrier2_array_win32_to_host(ctx, in[i].pBufferMemoryBarriers, in[i].bufferMemoryBarrierCount);
-        out[i].imageMemoryBarrierCount = in[i].imageMemoryBarrierCount;
-        out[i].pImageMemoryBarriers = convert_VkImageMemoryBarrier2_array_win32_to_host(ctx, in[i].pImageMemoryBarriers, in[i].imageMemoryBarrierCount);
+        convert_VkDependencyInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -1144,6 +1325,21 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkComputePipelineCreateInfo_win32_to_host(const VkComputePipelineCreateInfo *in, VkComputePipelineCreateInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    convert_VkPipelineShaderStageCreateInfo_win32_to_host(&in->stage, &out->stage);
+    out->layout = in->layout;
+    out->basePipelineHandle = in->basePipelineHandle;
+    out->basePipelineIndex = in->basePipelineIndex;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
 {
     VkComputePipelineCreateInfo_host *out;
@@ -1154,13 +1350,7 @@ static inline VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateI
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        convert_VkPipelineShaderStageCreateInfo_win32_to_host(&in[i].stage, &out[i].stage);
-        out[i].layout = in[i].layout;
-        out[i].basePipelineHandle = in[i].basePipelineHandle;
-        out[i].basePipelineIndex = in[i].basePipelineIndex;
+        convert_VkComputePipelineCreateInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -1225,16 +1415,37 @@ static inline VkPipelineShaderStageCreateInfo_host *convert_VkPipelineShaderStag
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].stage = in[i].stage;
-        out[i].module = in[i].module;
-        out[i].pName = in[i].pName;
-        out[i].pSpecializationInfo = in[i].pSpecializationInfo;
+        convert_VkPipelineShaderStageCreateInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, VkGraphicsPipelineCreateInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->stageCount = in->stageCount;
+    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in->pStages, in->stageCount);
+    out->pVertexInputState = in->pVertexInputState;
+    out->pInputAssemblyState = in->pInputAssemblyState;
+    out->pTessellationState = in->pTessellationState;
+    out->pViewportState = in->pViewportState;
+    out->pRasterizationState = in->pRasterizationState;
+    out->pMultisampleState = in->pMultisampleState;
+    out->pDepthStencilState = in->pDepthStencilState;
+    out->pColorBlendState = in->pColorBlendState;
+    out->pDynamicState = in->pDynamicState;
+    out->layout = in->layout;
+    out->renderPass = in->renderPass;
+    out->subpass = in->subpass;
+    out->basePipelineHandle = in->basePipelineHandle;
+    out->basePipelineIndex = in->basePipelineIndex;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -1249,25 +1460,7 @@ static inline VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreat
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].stageCount = in[i].stageCount;
-        out[i].pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in[i].pStages, in[i].stageCount);
-        out[i].pVertexInputState = in[i].pVertexInputState;
-        out[i].pInputAssemblyState = in[i].pInputAssemblyState;
-        out[i].pTessellationState = in[i].pTessellationState;
-        out[i].pViewportState = in[i].pViewportState;
-        out[i].pRasterizationState = in[i].pRasterizationState;
-        out[i].pMultisampleState = in[i].pMultisampleState;
-        out[i].pDepthStencilState = in[i].pDepthStencilState;
-        out[i].pColorBlendState = in[i].pColorBlendState;
-        out[i].pDynamicState = in[i].pDynamicState;
-        out[i].layout = in[i].layout;
-        out[i].renderPass = in[i].renderPass;
-        out[i].subpass = in[i].subpass;
-        out[i].basePipelineHandle = in[i].basePipelineHandle;
-        out[i].basePipelineIndex = in[i].basePipelineIndex;
+        convert_VkGraphicsPipelineCreateInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -1291,6 +1484,29 @@ static inline void convert_VkImageViewCreateInfo_win32_to_host(const VkImageView
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const VkIndirectCommandsLayoutTokenNV *in, VkIndirectCommandsLayoutTokenNV_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->tokenType = in->tokenType;
+    out->stream = in->stream;
+    out->offset = in->offset;
+    out->vertexBindingUnit = in->vertexBindingUnit;
+    out->vertexDynamicStride = in->vertexDynamicStride;
+    out->pushconstantPipelineLayout = in->pushconstantPipelineLayout;
+    out->pushconstantShaderStageFlags = in->pushconstantShaderStageFlags;
+    out->pushconstantOffset = in->pushconstantOffset;
+    out->pushconstantSize = in->pushconstantSize;
+    out->indirectStateFlags = in->indirectStateFlags;
+    out->indexTypeCount = in->indexTypeCount;
+    out->pIndexTypes = in->pIndexTypes;
+    out->pIndexTypeValues = in->pIndexTypeValues;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutTokenNV *in, uint32_t count)
 {
     VkIndirectCommandsLayoutTokenNV_host *out;
@@ -1301,21 +1517,7 @@ static inline VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLa
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].tokenType = in[i].tokenType;
-        out[i].stream = in[i].stream;
-        out[i].offset = in[i].offset;
-        out[i].vertexBindingUnit = in[i].vertexBindingUnit;
-        out[i].vertexDynamicStride = in[i].vertexDynamicStride;
-        out[i].pushconstantPipelineLayout = in[i].pushconstantPipelineLayout;
-        out[i].pushconstantShaderStageFlags = in[i].pushconstantShaderStageFlags;
-        out[i].pushconstantOffset = in[i].pushconstantOffset;
-        out[i].pushconstantSize = in[i].pushconstantSize;
-        out[i].indirectStateFlags = in[i].indirectStateFlags;
-        out[i].indexTypeCount = in[i].indexTypeCount;
-        out[i].pIndexTypes = in[i].pIndexTypes;
-        out[i].pIndexTypeValues = in[i].pIndexTypeValues;
+        convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -1355,6 +1557,28 @@ static inline void convert_VkMicromapCreateInfoEXT_win32_to_host(const VkMicroma
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, VkRayTracingPipelineCreateInfoKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->stageCount = in->stageCount;
+    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in->pStages, in->stageCount);
+    out->groupCount = in->groupCount;
+    out->pGroups = in->pGroups;
+    out->maxPipelineRayRecursionDepth = in->maxPipelineRayRecursionDepth;
+    out->pLibraryInfo = in->pLibraryInfo;
+    out->pLibraryInterface = in->pLibraryInterface;
+    out->pDynamicState = in->pDynamicState;
+    out->layout = in->layout;
+    out->basePipelineHandle = in->basePipelineHandle;
+    out->basePipelineIndex = in->basePipelineIndex;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoKHR_host *out;
@@ -1365,23 +1589,29 @@ static inline VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipeli
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].stageCount = in[i].stageCount;
-        out[i].pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in[i].pStages, in[i].stageCount);
-        out[i].groupCount = in[i].groupCount;
-        out[i].pGroups = in[i].pGroups;
-        out[i].maxPipelineRayRecursionDepth = in[i].maxPipelineRayRecursionDepth;
-        out[i].pLibraryInfo = in[i].pLibraryInfo;
-        out[i].pLibraryInterface = in[i].pLibraryInterface;
-        out[i].pDynamicState = in[i].pDynamicState;
-        out[i].layout = in[i].layout;
-        out[i].basePipelineHandle = in[i].basePipelineHandle;
-        out[i].basePipelineIndex = in[i].basePipelineIndex;
+        convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, VkRayTracingPipelineCreateInfoNV_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->stageCount = in->stageCount;
+    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in->pStages, in->stageCount);
+    out->groupCount = in->groupCount;
+    out->pGroups = in->pGroups;
+    out->maxRecursionDepth = in->maxRecursionDepth;
+    out->layout = in->layout;
+    out->basePipelineHandle = in->basePipelineHandle;
+    out->basePipelineIndex = in->basePipelineIndex;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -1396,17 +1626,7 @@ static inline VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelin
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].stageCount = in[i].stageCount;
-        out[i].pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in[i].pStages, in[i].stageCount);
-        out[i].groupCount = in[i].groupCount;
-        out[i].pGroups = in[i].pGroups;
-        out[i].maxRecursionDepth = in[i].maxRecursionDepth;
-        out[i].layout = in[i].layout;
-        out[i].basePipelineHandle = in[i].basePipelineHandle;
-        out[i].basePipelineIndex = in[i].basePipelineIndex;
+        convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -1522,6 +1742,19 @@ static inline void convert_VkDebugMarkerObjectTagInfoEXT_win32_to_host(const VkD
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemoryRange *in, VkMappedMemoryRange_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->memory = in->memory;
+    out->offset = in->offset;
+    out->size = in->size;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange *in, uint32_t count)
 {
     VkMappedMemoryRange_host *out;
@@ -1532,33 +1765,10 @@ static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win32_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].memory = in[i].memory;
-        out[i].offset = in[i].offset;
-        out[i].size = in[i].size;
+        convert_VkMappedMemoryRange_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
-}
-#endif /* USE_STRUCT_CONVERSION */
-
-#if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(const VkAccelerationStructureBuildGeometryInfoKHR *in, VkAccelerationStructureBuildGeometryInfoKHR_host *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->type = in->type;
-    out->flags = in->flags;
-    out->mode = in->mode;
-    out->srcAccelerationStructure = in->srcAccelerationStructure;
-    out->dstAccelerationStructure = in->dstAccelerationStructure;
-    out->geometryCount = in->geometryCount;
-    out->pGeometries = in->pGeometries;
-    out->ppGeometries = in->ppGeometries;
-    out->scratchData = in->scratchData;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -1709,14 +1919,7 @@ static inline VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_win32_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].size = in[i].size;
-        out[i].usage = in[i].usage;
-        out[i].sharingMode = in[i].sharingMode;
-        out[i].queueFamilyIndexCount = in[i].queueFamilyIndexCount;
-        out[i].pQueueFamilyIndices = in[i].pQueueFamilyIndices;
+        convert_VkBufferCreateInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -1761,6 +1964,17 @@ static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFa
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultAddressInfoEXT_win32_to_host(const VkDeviceFaultAddressInfoEXT *in, VkDeviceFaultAddressInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->addressType = in->addressType;
+    out->reportedAddress = in->reportedAddress;
+    out->addressPrecision = in->addressPrecision;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDeviceFaultAddressInfoEXT_host *convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultAddressInfoEXT *in, uint32_t count)
 {
     VkDeviceFaultAddressInfoEXT_host *out;
@@ -1771,12 +1985,21 @@ static inline VkDeviceFaultAddressInfoEXT_host *convert_VkDeviceFaultAddressInfo
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].addressType = in[i].addressType;
-        out[i].reportedAddress = in[i].reportedAddress;
-        out[i].addressPrecision = in[i].addressPrecision;
+        convert_VkDeviceFaultAddressInfoEXT_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultVendorInfoEXT_win32_to_host(const VkDeviceFaultVendorInfoEXT *in, VkDeviceFaultVendorInfoEXT_host *out)
+{
+    if (!in) return;
+
+    memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
+    out->vendorFaultCode = in->vendorFaultCode;
+    out->vendorFaultData = in->vendorFaultData;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -1791,9 +2014,7 @@ static inline VkDeviceFaultVendorInfoEXT_host *convert_VkDeviceFaultVendorInfoEX
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        memcpy(out[i].description, in[i].description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
-        out[i].vendorFaultCode = in[i].vendorFaultCode;
-        out[i].vendorFaultData = in[i].vendorFaultData;
+        convert_VkDeviceFaultVendorInfoEXT_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -1943,27 +2164,6 @@ static inline void convert_VkMemoryGetWin32HandleInfoKHR_win32_to_host(const VkM
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromapBuildInfoEXT *in, VkMicromapBuildInfoEXT_host *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->type = in->type;
-    out->flags = in->flags;
-    out->mode = in->mode;
-    out->dstMicromap = in->dstMicromap;
-    out->usageCountsCount = in->usageCountsCount;
-    out->pUsageCounts = in->pUsageCounts;
-    out->ppUsageCounts = in->ppUsageCounts;
-    out->data = in->data;
-    out->scratchData = in->scratchData;
-    out->triangleArray = in->triangleArray;
-    out->triangleArrayStride = in->triangleArrayStride;
-}
-#endif /* USE_STRUCT_CONVERSION */
-
-#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMicromapBuildSizesInfoEXT *in, VkMicromapBuildSizesInfoEXT_host *out)
 {
     if (!in) return;
@@ -2024,6 +2224,16 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMemoryHeap_host_to_win32(const VkMemoryHeap_host *in, VkMemoryHeap *out)
+{
+    if (!in) return;
+
+    out->size = in->size;
+    out->flags = in->flags;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryHeap_array_host_to_win32(const VkMemoryHeap_host *in, VkMemoryHeap *out, uint32_t count)
 {
     unsigned int i;
@@ -2032,8 +2242,7 @@ static inline void convert_VkMemoryHeap_array_host_to_win32(const VkMemoryHeap_h
 
     for (i = 0; i < count; i++)
     {
-        out[i].size = in[i].size;
-        out[i].flags = in[i].flags;
+        convert_VkMemoryHeap_host_to_win32(&in[i], &out[i]);
     }
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -2291,6 +2500,19 @@ static inline void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoE
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemoryBind *in, VkSparseMemoryBind_host *out)
+{
+    if (!in) return;
+
+    out->resourceOffset = in->resourceOffset;
+    out->size = in->size;
+    out->memory = in->memory;
+    out->memoryOffset = in->memoryOffset;
+    out->flags = in->flags;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseMemoryBind *in, uint32_t count)
 {
     VkSparseMemoryBind_host *out;
@@ -2301,14 +2523,21 @@ static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win32_to
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].resourceOffset = in[i].resourceOffset;
-        out[i].size = in[i].size;
-        out[i].memory = in[i].memory;
-        out[i].memoryOffset = in[i].memoryOffset;
-        out[i].flags = in[i].flags;
+        convert_VkSparseMemoryBind_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo *in, VkSparseBufferMemoryBindInfo_host *out)
+{
+    if (!in) return;
+
+    out->buffer = in->buffer;
+    out->bindCount = in->bindCount;
+    out->pBinds = convert_VkSparseMemoryBind_array_win32_to_host(ctx, in->pBinds, in->bindCount);
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2323,12 +2552,21 @@ static inline VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBin
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].buffer = in[i].buffer;
-        out[i].bindCount = in[i].bindCount;
-        out[i].pBinds = convert_VkSparseMemoryBind_array_win32_to_host(ctx, in[i].pBinds, in[i].bindCount);
+        convert_VkSparseBufferMemoryBindInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo *in, VkSparseImageOpaqueMemoryBindInfo_host *out)
+{
+    if (!in) return;
+
+    out->image = in->image;
+    out->bindCount = in->bindCount;
+    out->pBinds = convert_VkSparseMemoryBind_array_win32_to_host(ctx, in->pBinds, in->bindCount);
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2343,12 +2581,24 @@ static inline VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqu
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].image = in[i].image;
-        out[i].bindCount = in[i].bindCount;
-        out[i].pBinds = convert_VkSparseMemoryBind_array_win32_to_host(ctx, in[i].pBinds, in[i].bindCount);
+        convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseImageMemoryBind *in, VkSparseImageMemoryBind_host *out)
+{
+    if (!in) return;
+
+    out->subresource = in->subresource;
+    out->offset = in->offset;
+    out->extent = in->extent;
+    out->memory = in->memory;
+    out->memoryOffset = in->memoryOffset;
+    out->flags = in->flags;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2363,15 +2613,21 @@ static inline VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_arra
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].subresource = in[i].subresource;
-        out[i].offset = in[i].offset;
-        out[i].extent = in[i].extent;
-        out[i].memory = in[i].memory;
-        out[i].memoryOffset = in[i].memoryOffset;
-        out[i].flags = in[i].flags;
+        convert_VkSparseImageMemoryBind_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo *in, VkSparseImageMemoryBindInfo_host *out)
+{
+    if (!in) return;
+
+    out->image = in->image;
+    out->bindCount = in->bindCount;
+    out->pBinds = convert_VkSparseImageMemoryBind_array_win32_to_host(ctx, in->pBinds, in->bindCount);
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2386,12 +2642,30 @@ static inline VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindI
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].image = in[i].image;
-        out[i].bindCount = in[i].bindCount;
-        out[i].pBinds = convert_VkSparseImageMemoryBind_array_win32_to_host(ctx, in[i].pBinds, in[i].bindCount);
+        convert_VkSparseImageMemoryBindInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo *in, VkBindSparseInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->waitSemaphoreCount = in->waitSemaphoreCount;
+    out->pWaitSemaphores = in->pWaitSemaphores;
+    out->bufferBindCount = in->bufferBindCount;
+    out->pBufferBinds = convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(ctx, in->pBufferBinds, in->bufferBindCount);
+    out->imageOpaqueBindCount = in->imageOpaqueBindCount;
+    out->pImageOpaqueBinds = convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(ctx, in->pImageOpaqueBinds, in->imageOpaqueBindCount);
+    out->imageBindCount = in->imageBindCount;
+    out->pImageBinds = convert_VkSparseImageMemoryBindInfo_array_win32_to_host(ctx, in->pImageBinds, in->imageBindCount);
+    out->signalSemaphoreCount = in->signalSemaphoreCount;
+    out->pSignalSemaphores = in->pSignalSemaphores;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2406,21 +2680,44 @@ static inline VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win32_to_hos
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].waitSemaphoreCount = in[i].waitSemaphoreCount;
-        out[i].pWaitSemaphores = in[i].pWaitSemaphores;
-        out[i].bufferBindCount = in[i].bufferBindCount;
-        out[i].pBufferBinds = convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(ctx, in[i].pBufferBinds, in[i].bufferBindCount);
-        out[i].imageOpaqueBindCount = in[i].imageOpaqueBindCount;
-        out[i].pImageOpaqueBinds = convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(ctx, in[i].pImageOpaqueBinds, in[i].imageOpaqueBindCount);
-        out[i].imageBindCount = in[i].imageBindCount;
-        out[i].pImageBinds = convert_VkSparseImageMemoryBindInfo_array_win32_to_host(ctx, in[i].pImageBinds, in[i].imageBindCount);
-        out[i].signalSemaphoreCount = in[i].signalSemaphoreCount;
-        out[i].pSignalSemaphores = in[i].pSignalSemaphores;
+        convert_VkBindSparseInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubmitInfo_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, VkSubmitInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->waitSemaphoreCount = in->waitSemaphoreCount;
+    out->pWaitSemaphores = in->pWaitSemaphores;
+    out->pWaitDstStageMask = in->pWaitDstStageMask;
+    out->commandBufferCount = in->commandBufferCount;
+    out->pCommandBuffers = convert_VkCommandBuffer_array_win64_to_host(ctx, in->pCommandBuffers, in->commandBufferCount);
+    out->signalSemaphoreCount = in->signalSemaphoreCount;
+    out->pSignalSemaphores = in->pSignalSemaphores;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, VkSubmitInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->waitSemaphoreCount = in->waitSemaphoreCount;
+    out->pWaitSemaphores = in->pWaitSemaphores;
+    out->pWaitDstStageMask = in->pWaitDstStageMask;
+    out->commandBufferCount = in->commandBufferCount;
+    out->pCommandBuffers = convert_VkCommandBuffer_array_win32_to_host(ctx, in->pCommandBuffers, in->commandBufferCount);
+    out->signalSemaphoreCount = in->signalSemaphoreCount;
+    out->pSignalSemaphores = in->pSignalSemaphores;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2435,15 +2732,7 @@ static inline VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_host(struct conv
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].waitSemaphoreCount = in[i].waitSemaphoreCount;
-        out[i].pWaitSemaphores = in[i].pWaitSemaphores;
-        out[i].pWaitDstStageMask = in[i].pWaitDstStageMask;
-        out[i].commandBufferCount = in[i].commandBufferCount;
-        out[i].pCommandBuffers = convert_VkCommandBuffer_array_win64_to_host(ctx, in[i].pCommandBuffers, in[i].commandBufferCount);
-        out[i].signalSemaphoreCount = in[i].signalSemaphoreCount;
-        out[i].pSignalSemaphores = in[i].pSignalSemaphores;
+        convert_VkSubmitInfo_win64_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -2461,18 +2750,24 @@ static inline VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_host(struct conv
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].waitSemaphoreCount = in[i].waitSemaphoreCount;
-        out[i].pWaitSemaphores = in[i].pWaitSemaphores;
-        out[i].pWaitDstStageMask = in[i].pWaitDstStageMask;
-        out[i].commandBufferCount = in[i].commandBufferCount;
-        out[i].pCommandBuffers = convert_VkCommandBuffer_array_win32_to_host(ctx, in[i].pCommandBuffers, in[i].commandBufferCount);
-        out[i].signalSemaphoreCount = in[i].signalSemaphoreCount;
-        out[i].pSignalSemaphores = in[i].pSignalSemaphores;
+        convert_VkSubmitInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphoreSubmitInfo *in, VkSemaphoreSubmitInfo_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->semaphore = in->semaphore;
+    out->value = in->value;
+    out->stageMask = in->stageMask;
+    out->deviceIndex = in->deviceIndex;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2487,15 +2782,34 @@ static inline VkSemaphoreSubmitInfo_host *convert_VkSemaphoreSubmitInfo_array_wi
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].semaphore = in[i].semaphore;
-        out[i].value = in[i].value;
-        out[i].stageMask = in[i].stageMask;
-        out[i].deviceIndex = in[i].deviceIndex;
+        convert_VkSemaphoreSubmitInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkCommandBufferSubmitInfo_win64_to_host(const VkCommandBufferSubmitInfo *in, VkCommandBufferSubmitInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->commandBuffer = wine_cmd_buffer_from_handle(in->commandBuffer)->command_buffer;
+    out->deviceMask = in->deviceMask;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkCommandBufferSubmitInfo_win32_to_host(const VkCommandBufferSubmitInfo *in, VkCommandBufferSubmitInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->commandBuffer = wine_cmd_buffer_from_handle(in->commandBuffer)->command_buffer;
+    out->deviceMask = in->deviceMask;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2510,10 +2824,7 @@ static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].commandBuffer = wine_cmd_buffer_from_handle(in[i].commandBuffer)->command_buffer;
-        out[i].deviceMask = in[i].deviceMask;
+        convert_VkCommandBufferSubmitInfo_win64_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -2531,13 +2842,44 @@ static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].commandBuffer = wine_cmd_buffer_from_handle(in[i].commandBuffer)->command_buffer;
-        out[i].deviceMask = in[i].deviceMask;
+        convert_VkCommandBufferSubmitInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if !defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubmitInfo2_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, VkSubmitInfo2 *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->waitSemaphoreInfoCount = in->waitSemaphoreInfoCount;
+    out->pWaitSemaphoreInfos = in->pWaitSemaphoreInfos;
+    out->commandBufferInfoCount = in->commandBufferInfoCount;
+    out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win64_to_host(ctx, in->pCommandBufferInfos, in->commandBufferInfoCount);
+    out->signalSemaphoreInfoCount = in->signalSemaphoreInfoCount;
+    out->pSignalSemaphoreInfos = in->pSignalSemaphoreInfos;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, VkSubmitInfo2_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->waitSemaphoreInfoCount = in->waitSemaphoreInfoCount;
+    out->pWaitSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, in->pWaitSemaphoreInfos, in->waitSemaphoreInfoCount);
+    out->commandBufferInfoCount = in->commandBufferInfoCount;
+    out->pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win32_to_host(ctx, in->pCommandBufferInfos, in->commandBufferInfoCount);
+    out->signalSemaphoreInfoCount = in->signalSemaphoreInfoCount;
+    out->pSignalSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, in->pSignalSemaphoreInfos, in->signalSemaphoreInfoCount);
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -2552,15 +2894,7 @@ static inline VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(struct co
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].waitSemaphoreInfoCount = in[i].waitSemaphoreInfoCount;
-        out[i].pWaitSemaphoreInfos = in[i].pWaitSemaphoreInfos;
-        out[i].commandBufferInfoCount = in[i].commandBufferInfoCount;
-        out[i].pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win64_to_host(ctx, in[i].pCommandBufferInfos, in[i].commandBufferInfoCount);
-        out[i].signalSemaphoreInfoCount = in[i].signalSemaphoreInfoCount;
-        out[i].pSignalSemaphoreInfos = in[i].pSignalSemaphoreInfos;
+        convert_VkSubmitInfo2_win64_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -2578,15 +2912,7 @@ static inline VkSubmitInfo2_host *convert_VkSubmitInfo2_array_win32_to_host(stru
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].flags = in[i].flags;
-        out[i].waitSemaphoreInfoCount = in[i].waitSemaphoreInfoCount;
-        out[i].pWaitSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, in[i].pWaitSemaphoreInfos, in[i].waitSemaphoreInfoCount);
-        out[i].commandBufferInfoCount = in[i].commandBufferInfoCount;
-        out[i].pCommandBufferInfos = convert_VkCommandBufferSubmitInfo_array_win32_to_host(ctx, in[i].pCommandBufferInfos, in[i].commandBufferInfoCount);
-        out[i].signalSemaphoreInfoCount = in[i].signalSemaphoreInfoCount;
-        out[i].pSignalSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, in[i].pSignalSemaphoreInfos, in[i].signalSemaphoreInfoCount);
+        convert_VkSubmitInfo2_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -2672,11 +2998,7 @@ static inline VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoE
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].objectType = in[i].objectType;
-        out[i].objectHandle = wine_vk_unwrap_handle(in[i].objectType, in[i].objectHandle);
-        out[i].pObjectName = in[i].pObjectName;
+        convert_VkDebugUtilsObjectNameInfoEXT_win64_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -2694,11 +3016,7 @@ static inline VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectName
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].objectType = in[i].objectType;
-        out[i].objectHandle = wine_vk_unwrap_handle(in[i].objectType, in[i].objectHandle);
-        out[i].pObjectName = in[i].pObjectName;
+        convert_VkDebugUtilsObjectNameInfoEXT_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -2746,6 +3064,23 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(st
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescriptorSet *in, VkCopyDescriptorSet_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcSet = in->srcSet;
+    out->srcBinding = in->srcBinding;
+    out->srcArrayElement = in->srcArrayElement;
+    out->dstSet = in->dstSet;
+    out->dstBinding = in->dstBinding;
+    out->dstArrayElement = in->dstArrayElement;
+    out->descriptorCount = in->descriptorCount;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkCopyDescriptorSet *in, uint32_t count)
 {
     VkCopyDescriptorSet_host *out;
@@ -2756,15 +3091,7 @@ static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win32_
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i].sType = in[i].sType;
-        out[i].pNext = in[i].pNext;
-        out[i].srcSet = in[i].srcSet;
-        out[i].srcBinding = in[i].srcBinding;
-        out[i].srcArrayElement = in[i].srcArrayElement;
-        out[i].dstSet = in[i].dstSet;
-        out[i].dstBinding = in[i].dstBinding;
-        out[i].dstArrayElement = in[i].dstArrayElement;
-        out[i].descriptorCount = in[i].descriptorCount;
+        convert_VkCopyDescriptorSet_win32_to_host(&in[i], &out[i]);
     }
 
     return out;

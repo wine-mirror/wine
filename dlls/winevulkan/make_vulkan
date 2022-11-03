@@ -1203,18 +1203,18 @@ class VkVariable(object):
 
                 conversions.extend(m.get_conversions(unwrap, is_const))
 
+            for conv in [False, True]:
+                if self.needs_conversion(conv, unwrap, Direction.INPUT, parent_const):
+                    conversions.append(StructConversionFunction(self.struct, Direction.INPUT, conv, unwrap))
+                if self.needs_conversion(conv, unwrap, Direction.OUTPUT, parent_const):
+                    conversions.append(StructConversionFunction(self.struct, Direction.OUTPUT, conv, unwrap))
+
         if self.is_static_array() or self.is_dynamic_array():
             for conv in [False, True]:
                 if self.needs_conversion(conv, unwrap, Direction.INPUT, parent_const):
                     conversions.append(ArrayConversionFunction(self, Direction.INPUT, conv, unwrap))
                 if self.needs_conversion(conv, unwrap, Direction.OUTPUT, parent_const):
                     conversions.append(ArrayConversionFunction(self, Direction.OUTPUT, conv, unwrap))
-        elif self.is_struct():
-            for conv in [False, True]:
-                if self.needs_conversion(conv, unwrap, Direction.INPUT, parent_const):
-                    conversions.append(StructConversionFunction(self.struct, Direction.INPUT, conv, unwrap))
-                if self.needs_conversion(conv, unwrap, Direction.OUTPUT, parent_const):
-                    conversions.append(StructConversionFunction(self.struct, Direction.OUTPUT, conv, unwrap))
 
         return conversions
 
@@ -2034,14 +2034,15 @@ class StructConversionFunction(object):
             body += "#if !defined(USE_STRUCT_CONVERSION)\n"
 
         needs_alloc = self.direction != Direction.OUTPUT and self.operand.needs_alloc(self.conv, self.unwrap)
+        host_type = self.type + "_host" if self.operand.needs_host_type() else self.type
 
         if self.conv:
             body += "static inline void {0}(".format(self.name)
 
             if self.direction == Direction.OUTPUT:
-                params = ["const {0}_host *in".format(self.type), "{0} *out".format(self.type)]
+                params = ["const {0} *in".format(host_type), "{0} *out".format(self.type)]
             else:
-                params = ["const {0} *in".format(self.type), "{0}_host *out".format(self.type)]
+                params = ["const {0} *in".format(self.type), "{0} *out".format(host_type)]
 
             # Generate parameter list
             if needs_alloc:
@@ -2171,11 +2172,20 @@ class ArrayConversionFunction(object):
         body += "    {\n"
 
         if self.array.is_struct():
-            for m in self.array.struct:
-                # TODO: support copying of pNext extension structures!
-                # Luckily though no extension struct at this point needs conversion.
-                body += "        " + m.copy("in[i].", "out[i].", self.direction, self.conv, self.unwrap)
+            struct = self.array.struct
+            win_part = "win32" if self.conv else "win64"
+            host_part = "host" if self.unwrap else "unwrapped_host"
+            if self.direction == Direction.INPUT:
+                conv_suffix = "{0}_to_{1}".format(win_part, host_part)
+            else:
+                conv_suffix = "{0}_to_{1}".format(host_part, win_part)
 
+            ctx_part = ""
+            if self.direction == Direction.INPUT and struct.needs_alloc(self.conv, self.unwrap):
+                ctx_part = "ctx, "
+
+            body += "        convert_{0}_{1}({2}&in[i], &out[i]);\n".format(
+                struct.name, conv_suffix, ctx_part)
         elif self.array.is_handle() and self.direction == Direction.INPUT:
             body += "        out[i] = " + self.array.handle.driver_handle("in[i]") + ";\n"
         else:
