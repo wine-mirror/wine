@@ -6520,7 +6520,7 @@ static void test_max_height(void)
     r = GetTextMetricsA(hdc, &tm1);
     ok(r, "GetTextMetrics failed\n");
     ok(tm1.tmHeight > 0, "expected a positive value, got %ld\n", tm1.tmHeight);
-    ok(tm1.tmAveCharWidth > 0, "expected a positive value, got %ld\n", tm1.tmHeight);
+    ok(tm1.tmAveCharWidth > 0, "expected a positive value, got %ld\n", tm1.tmAveCharWidth);
     DeleteObject(SelectObject(hdc, hfont_old));
 
     /* test the largest value */
