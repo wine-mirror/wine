@@ -50,25 +50,6 @@ static BOOL paged_mode, recurse, wide, bare, lower, shortname, usernames, separa
 static ULONG showattrs, attrsbits;
 
 /*****************************************************************************
- * WCMD_strrev
- *
- * Reverse a WCHARacter string in-place (strrev() is not available under unixen :-( ).
- */
-static WCHAR * WCMD_strrev (WCHAR *buff) {
-
-  int r, i;
-  WCHAR b;
-
-  r = lstrlenW (buff);
-  for (i=0; i<r/2; i++) {
-    b = buff[i];
-    buff[i] = buff[r-i-1];
-    buff[r-i-1] = b;
-  }
-  return (buff);
-}
-
-/*****************************************************************************
  * WCMD_filesize64
  *
  * Convert a 64-bit number into a WCHARacter string, with commas every three digits.
@@ -92,7 +73,7 @@ static WCHAR * WCMD_filesize64 (ULONGLONG n) {
     *p = '\0';
     n = q;
   } while (n != 0);
-  WCMD_strrev (buff);
+  wcsrev(buff);
   return buff;
 }
 
