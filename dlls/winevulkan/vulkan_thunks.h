@@ -1763,23 +1763,6 @@ typedef VkBindSparseInfo VkBindSparseInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
-typedef struct VkSubmitInfo_host
-{
-    VkStructureType sType;
-    const void *pNext;
-    uint32_t waitSemaphoreCount;
-    const VkSemaphore *pWaitSemaphores;
-    const VkPipelineStageFlags *pWaitDstStageMask;
-    uint32_t commandBufferCount;
-    const VkCommandBuffer *pCommandBuffers;
-    uint32_t signalSemaphoreCount;
-    const VkSemaphore *pSignalSemaphores;
-} VkSubmitInfo_host;
-#else
-typedef VkSubmitInfo VkSubmitInfo_host;
-#endif
-
-#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSemaphoreSubmitInfo_host
 {
     VkStructureType sType;
@@ -1792,19 +1775,6 @@ typedef struct VkSemaphoreSubmitInfo_host
 typedef VkSemaphoreSubmitInfo VkSemaphoreSubmitInfoKHR;
 #else
 typedef VkSemaphoreSubmitInfo VkSemaphoreSubmitInfo_host;
-#endif
-
-#if defined(USE_STRUCT_CONVERSION)
-typedef struct VkCommandBufferSubmitInfo_host
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkCommandBuffer commandBuffer;
-    uint32_t deviceMask;
-} VkCommandBufferSubmitInfo_host;
-typedef VkCommandBufferSubmitInfo VkCommandBufferSubmitInfoKHR;
-#else
-typedef VkCommandBufferSubmitInfo VkCommandBufferSubmitInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)

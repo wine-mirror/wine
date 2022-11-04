@@ -2097,7 +2097,6 @@ class ArrayConversionFunction(object):
     def __init__(self, array, direction, conv, unwrap):
         self.array = array
         self.direction = direction
-        self.operand = array.struct if array.is_struct() else array.handle
         self.type = array.type
         self.conv = conv
         self.unwrap = unwrap or not array.needs_unwrapping()
@@ -2302,7 +2301,7 @@ class VkGenerator(object):
                 if not any(c == conv for c in self.conversions):
                     self.conversions.append(conv)
 
-                if not isinstance(conv.operand, VkStruct):
+                if not isinstance(conv, StructConversionFunction) or not conv.operand.needs_host_type():
                     continue
 
                 # Structs can be used in different ways by different conversions
