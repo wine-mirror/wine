@@ -154,6 +154,7 @@ static void test_ndr_simple_type(void)
 
     StubMsg.BufferLength = 16;
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.Buffer + StubMsg.BufferLength;
     l = 0xcafebabe;
     NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, FC_LONG);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 4, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
