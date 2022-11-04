@@ -177,8 +177,6 @@ static int __cdecl WCMD_dir_sort (const void *a, const void *b)
 
 /*****************************************************************************
  * WCMD_getfileowner
- *
- * Reverse a WCHARacter string in-place (strrev() is not available under unixen :-( ).
  */
 static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
 
