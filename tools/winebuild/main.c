@@ -176,6 +176,7 @@ static void set_target( const char *name )
 
     if (!parse_target( name, &target )) fatal_error( "Unrecognized target '%s'\n", name );
     if (target.cpu == CPU_ARM && is_pe()) thumb_mode = 1;
+    if (is_pe()) unwind_tables = 1;
 }
 
 /* cleanup on program exit */
@@ -623,6 +624,7 @@ int main(int argc, char **argv)
 
     target = init_argv0_target( argv[0] );
     if (target.platform == PLATFORM_CYGWIN) target.platform = PLATFORM_MINGW;
+    if (is_pe()) unwind_tables = 1;
 
     files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
 
