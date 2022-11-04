@@ -2292,7 +2292,7 @@ class VkGenerator(object):
         self.struct_chain_conversions = []
         self.host_structs = []
         for func in self.registry.funcs.values():
-            if not func.is_required():
+            if not func.needs_exposing():
                 continue
 
             conversions = func.get_conversions()
@@ -2517,7 +2517,7 @@ class VkGenerator(object):
         f.write("/* For use by vkDevice and children */\n")
         f.write("struct vulkan_device_funcs\n{\n")
         for vk_func in self.registry.device_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             if not vk_func.needs_dispatch():
@@ -2530,7 +2530,7 @@ class VkGenerator(object):
         f.write("/* For use by vkInstance and children */\n")
         f.write("struct vulkan_instance_funcs\n{\n")
         for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             if not vk_func.needs_dispatch():
@@ -2543,7 +2543,7 @@ class VkGenerator(object):
         f.write("#define ALL_VK_DEVICE_FUNCS() \\\n")
         first = True
         for vk_func in self.registry.device_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             if not vk_func.needs_dispatch():
@@ -2560,7 +2560,7 @@ class VkGenerator(object):
         f.write("#define ALL_VK_INSTANCE_FUNCS() \\\n")
         first = True
         for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             if not vk_func.needs_dispatch():

@@ -1410,18 +1410,6 @@ typedef VkImageViewHandleInfoNVX VkImageViewHandleInfoNVX_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
-typedef struct VkMemoryGetWin32HandleInfoKHR_host
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkDeviceMemory memory;
-    VkExternalMemoryHandleTypeFlagBits handleType;
-} VkMemoryGetWin32HandleInfoKHR_host;
-#else
-typedef VkMemoryGetWin32HandleInfoKHR VkMemoryGetWin32HandleInfoKHR_host;
-#endif
-
-#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMicromapBuildSizesInfoEXT_host
 {
     VkStructureType sType;
@@ -2308,8 +2296,6 @@ struct vulkan_device_funcs
     VkResult (*p_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX_host *);
     uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX_host *);
     VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
-    VkResult (*p_vkGetMemoryWin32HandleKHR)(VkDevice, const VkMemoryGetWin32HandleInfoKHR_host *, HANDLE *);
-    VkResult (*p_vkGetMemoryWin32HandlePropertiesKHR)(VkDevice, VkExternalMemoryHandleTypeFlagBits, HANDLE, VkMemoryWin32HandlePropertiesKHR *);
     void (*p_vkGetMicromapBuildSizesEXT)(VkDevice, VkAccelerationStructureBuildTypeKHR, const VkMicromapBuildInfoEXT_host *, VkMicromapBuildSizesInfoEXT_host *);
     VkResult (*p_vkGetPerformanceParameterINTEL)(VkDevice, VkPerformanceParameterTypeINTEL, VkPerformanceValueINTEL *);
     VkResult (*p_vkGetPipelineCacheData)(VkDevice, VkPipelineCache, size_t *, void *);
@@ -2823,8 +2809,6 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetImageViewAddressNVX) \
     USE_VK_FUNC(vkGetImageViewHandleNVX) \
     USE_VK_FUNC(vkGetMemoryHostPointerPropertiesEXT) \
-    USE_VK_FUNC(vkGetMemoryWin32HandleKHR) \
-    USE_VK_FUNC(vkGetMemoryWin32HandlePropertiesKHR) \
     USE_VK_FUNC(vkGetMicromapBuildSizesEXT) \
     USE_VK_FUNC(vkGetPerformanceParameterINTEL) \
     USE_VK_FUNC(vkGetPipelineCacheData) \

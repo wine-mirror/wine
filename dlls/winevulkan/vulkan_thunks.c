@@ -2152,18 +2152,6 @@ static inline void convert_VkImageViewHandleInfoNVX_win32_to_host(const VkImageV
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryGetWin32HandleInfoKHR_win32_to_host(const VkMemoryGetWin32HandleInfoKHR *in, VkMemoryGetWin32HandleInfoKHR_host *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->memory = in->memory;
-    out->handleType = in->handleType;
-}
-#endif /* USE_STRUCT_CONVERSION */
-
-#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMicromapBuildSizesInfoEXT *in, VkMicromapBuildSizesInfoEXT_host *out)
 {
     if (!in) return;
