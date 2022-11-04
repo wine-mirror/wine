@@ -1021,8 +1021,11 @@ const char *asm_globl( const char *func )
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-        buffer = strmake( "\t.globl %s\n%s:", asm_name( func ), asm_name( func ) );
+    {
+        const char *name = asm_name( func );
+        buffer = strmake( "\t.globl %s\n%s:", name, name );
         break;
+    }
     default:
         buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
         break;
