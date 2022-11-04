@@ -25,15 +25,21 @@
 #include "netlistmgr.h"
 #include "wine/test.h"
 
-static void test_INetwork( INetwork *network )
+static void test_INetwork( INetwork *network, INetworkConnection *conn )
 {
     NLM_NETWORK_CATEGORY category;
     NLM_CONNECTIVITY connectivity;
     NLM_DOMAIN_TYPE domain_type;
     VARIANT_BOOL connected;
+    IEnumNetworkConnections *conn_iter;
+    VARIANT_BOOL is_connection_present;
+    GUID conn_id;
+    GUID local_conn_id;
     GUID id;
     BSTR str;
     HRESULT hr;
+    INetworkConnection *local_conn;
+    ULONG fetched;
 
     str = NULL;
     hr = INetwork_GetName( network, &str );
@@ -81,6 +87,40 @@ static void test_INetwork( INetwork *network )
     hr = INetwork_get_IsConnectedToInternet( network, &connected );
     ok( hr == S_OK, "got %08lx\n", hr );
     trace("connected to internet %d\n", connected);
+
+    if (!conn) return;
+
+    trace("about to test GetNetworkConnections\n");
+    memset( &conn_id, 0, sizeof(conn_id) );
+    hr = INetworkConnection_GetConnectionId( conn, &conn_id );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    trace("input connection id %s\n", wine_dbgstr_guid(&conn_id));
+
+    conn_iter = NULL;
+    hr = INetwork_GetNetworkConnections( network, &conn_iter );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
+
+    is_connection_present = FALSE;
+    if (conn_iter)
+    {
+        while ((hr = IEnumNetworkConnections_Next( conn_iter, 1, &local_conn, &fetched )) == S_OK)
+        {
+            memset( &local_conn_id, 0, sizeof(local_conn_id) );
+            hr = INetworkConnection_GetConnectionId( local_conn, &local_conn_id );
+            ok( hr == S_OK, "got %08lx\n", hr );
+            trace("local connection id %s\n", wine_dbgstr_guid(&local_conn_id));
+
+            if (IsEqualGUID(&conn_id, &local_conn_id))
+                is_connection_present = TRUE;
+
+            INetworkConnection_Release( local_conn );
+            local_conn = (void *)0xdeadbeef;
+        }
+        ok( !local_conn, "got wrong pointer: %p.\n", local_conn );
+        IEnumNetworkConnections_Release( conn_iter );
+    }
+
+    todo_wine ok( is_connection_present, "connection was not present in network\n" );
 }
 
 static void test_INetworkConnection( INetworkConnection *conn )
@@ -130,7 +170,7 @@ static void test_INetworkConnection( INetworkConnection *conn )
     ok( hr == S_OK, "got %08lx\n", hr );
     if (network)
     {
-        test_INetwork( network );
+        test_INetwork( network, conn );
         INetwork_Release( network );
     }
 
@@ -344,7 +384,7 @@ static void test_INetworkListManager( void )
     {
         while ((hr = IEnumNetworks_Next( network_iter, 1, &network, NULL )) == S_OK)
         {
-            test_INetwork( network );
+            test_INetwork( network, NULL );
             INetwork_Release( network );
         }
         IEnumNetworks_Release( network_iter );
