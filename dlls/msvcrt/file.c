@@ -5594,7 +5594,7 @@ int WINAPIV fprintf_s(FILE* file, const char *format, ...)
 /*********************************************************************
  *    _fprintf_l (MSVCRT.@)
  */
-int CDECL _fprintf_l(FILE* file, const char *format, _locale_t locale, ...)
+int WINAPIV _fprintf_l(FILE* file, const char *format, _locale_t locale, ...)
 {
     va_list valist;
     int res;
@@ -5608,7 +5608,7 @@ int CDECL _fprintf_l(FILE* file, const char *format, _locale_t locale, ...)
 /*********************************************************************
  *    _fprintf_p (MSVCRT.@)
  */
-int CDECL _fprintf_p(FILE* file, const char *format, ...)
+int WINAPIV _fprintf_p(FILE* file, const char *format, ...)
 {
     va_list valist;
     int res;
@@ -5621,7 +5621,7 @@ int CDECL _fprintf_p(FILE* file, const char *format, ...)
 /*********************************************************************
  *    _fprintf_p_l (MSVCRT.@)
  */
-int CDECL _fprintf_p_l(FILE* file, const char *format, _locale_t locale, ...)
+int WINAPIV _fprintf_p_l(FILE* file, const char *format, _locale_t locale, ...)
 {
     va_list valist;
     int res;
@@ -5634,7 +5634,7 @@ int CDECL _fprintf_p_l(FILE* file, const char *format, _locale_t locale, ...)
 /*********************************************************************
  *    _fprintf_s_l (MSVCRT.@)
  */
-int CDECL _fprintf_s_l(FILE* file, const char *format, _locale_t locale, ...)
+int WINAPIV _fprintf_s_l(FILE* file, const char *format, _locale_t locale, ...)
 {
     va_list valist;
     int res;

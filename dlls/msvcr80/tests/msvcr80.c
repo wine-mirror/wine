@@ -57,7 +57,7 @@ typedef struct
 
 static ioinfo **__pioinfo;
 
-static int (__cdecl *p__open)(const char *, int, ...);
+static int (WINAPIV *p__open)(const char *, int, ...);
 static int (__cdecl *p__close)(int);
 static intptr_t (__cdecl *p__get_osfhandle)(int);
 static int (__cdecl *p_strcmp)(const char *, const char *);

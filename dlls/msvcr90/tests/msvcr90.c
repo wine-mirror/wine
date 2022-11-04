@@ -111,7 +111,7 @@ static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
 static int (__cdecl *p_tmpfile_s)(FILE**);
 static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
-static int (__cdecl *p__open)(const char *, int, ...);
+static int (WINAPIV *p__open)(const char *, int, ...);
 static int (__cdecl *p__close)(int);
 static intptr_t (__cdecl *p__get_osfhandle)(int);
 static int (__cdecl *p_sopen_s)(int*, const char*, int, int, int);
