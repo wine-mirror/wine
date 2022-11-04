@@ -827,7 +827,7 @@ int xmlThrDefDoValidityCheckingDefaultValue(int v) {
 }
 
 #undef	xmlGenericError
-xmlGenericErrorFunc *
+xmlGenericErrorFunc * XMLCALL
 __xmlGenericError(void) {
     if (IS_MAIN_THREAD)
 	return (&xmlGenericError);

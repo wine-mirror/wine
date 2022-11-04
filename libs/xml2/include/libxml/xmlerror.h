@@ -916,7 +916,7 @@ XMLPUBFUN int XMLCALL
 /*
  * Internal callback reporting routine
  */
-XMLPUBFUN void XMLCALL
+XMLPUBFUN void XMLCDECL
     __xmlRaiseError		(xmlStructuredErrorFunc schannel,
 				 xmlGenericErrorFunc channel,
 				 void *data,
