@@ -21,6 +21,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
+static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
+{
+    switch(type)
+    {
+    case VK_OBJECT_TYPE_COMMAND_BUFFER:
+        return (uint64_t) (uintptr_t) wine_cmd_buffer_from_handle(((VkCommandBuffer) (uintptr_t) handle))->command_buffer;
+    case VK_OBJECT_TYPE_COMMAND_POOL:
+        return (uint64_t) wine_cmd_pool_from_handle(handle)->command_pool;
+    case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT:
+        return (uint64_t) wine_debug_report_callback_from_handle(handle)->debug_callback;
+    case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT:
+        return (uint64_t) wine_debug_utils_messenger_from_handle(handle)->debug_messenger;
+    case VK_OBJECT_TYPE_DEVICE:
+        return (uint64_t) (uintptr_t) wine_device_from_handle(((VkDevice) (uintptr_t) handle))->device;
+    case VK_OBJECT_TYPE_INSTANCE:
+        return (uint64_t) (uintptr_t) wine_instance_from_handle(((VkInstance) (uintptr_t) handle))->instance;
+    case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
+        return (uint64_t) (uintptr_t) wine_phys_dev_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->phys_dev;
+    case VK_OBJECT_TYPE_QUEUE:
+        return (uint64_t) (uintptr_t) wine_queue_from_handle(((VkQueue) (uintptr_t) handle))->queue;
+    case VK_OBJECT_TYPE_SURFACE_KHR:
+        return (uint64_t) wine_surface_from_handle(handle)->surface;
+    default:
+       return handle;
+    }
+}
+
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkAcquireNextImageInfoKHR_win32_to_host(const VkAcquireNextImageInfoKHR *in, VkAcquireNextImageInfoKHR_host *out)
 {
@@ -19634,33 +19661,6 @@ BOOL wine_vk_is_type_wrapped(VkObjectType type)
         type == VK_OBJECT_TYPE_PHYSICAL_DEVICE ||
         type == VK_OBJECT_TYPE_QUEUE ||
         type == VK_OBJECT_TYPE_SURFACE_KHR;
-}
-
-uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
-{
-    switch(type)
-    {
-    case VK_OBJECT_TYPE_COMMAND_BUFFER:
-        return (uint64_t) (uintptr_t) wine_cmd_buffer_from_handle(((VkCommandBuffer) (uintptr_t) handle))->command_buffer;
-    case VK_OBJECT_TYPE_COMMAND_POOL:
-        return (uint64_t) wine_cmd_pool_from_handle(handle)->command_pool;
-    case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT:
-        return (uint64_t) wine_debug_report_callback_from_handle(handle)->debug_callback;
-    case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT:
-        return (uint64_t) wine_debug_utils_messenger_from_handle(handle)->debug_messenger;
-    case VK_OBJECT_TYPE_DEVICE:
-        return (uint64_t) (uintptr_t) wine_device_from_handle(((VkDevice) (uintptr_t) handle))->device;
-    case VK_OBJECT_TYPE_INSTANCE:
-        return (uint64_t) (uintptr_t) wine_instance_from_handle(((VkInstance) (uintptr_t) handle))->instance;
-    case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
-        return (uint64_t) (uintptr_t) wine_phys_dev_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->phys_dev;
-    case VK_OBJECT_TYPE_QUEUE:
-        return (uint64_t) (uintptr_t) wine_queue_from_handle(((VkQueue) (uintptr_t) handle))->queue;
-    case VK_OBJECT_TYPE_SURFACE_KHR:
-        return (uint64_t) wine_surface_from_handle(handle)->surface;
-    default:
-       return handle;
-    }
 }
 
 #if !defined(USE_STRUCT_CONVERSION)

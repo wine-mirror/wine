@@ -2349,6 +2349,26 @@ class VkGenerator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
+        f.write("static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)\n")
+        f.write("{\n")
+        f.write("    switch(type)\n")
+        f.write("    {\n")
+        for handle in self.registry.handles:
+            if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
+                continue
+            f.write("    case {}:\n".format(handle.object_type))
+            if handle.is_dispatchable():
+                f.write("        return (uint64_t) (uintptr_t) ")
+                f.write(handle.native_handle("(({}) (uintptr_t) handle)".format(handle.name)))
+            else:
+                f.write("        return (uint64_t) ")
+                f.write(handle.native_handle("handle"))
+            f.write(";\n");
+        f.write("    default:\n")
+        f.write("       return handle;\n")
+        f.write("    }\n")
+        f.write("}\n\n")
+
         # Generate any conversion helper functions.
         for conv in self.conversions:
             f.write(conv.definition())
@@ -2424,26 +2444,6 @@ class VkGenerator(object):
                 continue
             f.write(" ||\n        type == {}".format(handle.object_type))
         f.write(";\n")
-        f.write("}\n\n")
-
-        f.write("uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)\n")
-        f.write("{\n")
-        f.write("    switch(type)\n")
-        f.write("    {\n")
-        for handle in self.registry.handles:
-            if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
-                continue
-            f.write("    case {}:\n".format(handle.object_type))
-            if handle.is_dispatchable():
-                f.write("        return (uint64_t) (uintptr_t) ")
-                f.write(handle.native_handle("(({}) (uintptr_t) handle)".format(handle.name)))
-            else:
-                f.write("        return (uint64_t) ")
-                f.write(handle.native_handle("handle"))
-            f.write(";\n");
-        f.write("    default:\n")
-        f.write("       return handle;\n")
-        f.write("    }\n")
         f.write("}\n\n")
 
         f.write("#if !defined(USE_STRUCT_CONVERSION)\n\n")
