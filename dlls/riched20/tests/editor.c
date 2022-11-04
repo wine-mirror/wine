@@ -8913,6 +8913,47 @@ static void fill_reobject_struct(REOBJECT *reobj, LONG cp, LPOLEOBJECT poleobj,
     reobj->dwUser = user;
 }
 
+static BOOL change_received = FALSE;
+
+static LRESULT WINAPI ChangeWatcherWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_COMMAND && (wParam >> 16) == EN_CHANGE) change_received = TRUE;
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+static LRESULT WINAPI RichEditWithEventsWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_CREATE)
+        SendMessageA(hwnd, EM_SETEVENTMASK, 0, ENM_CHANGE);
+    return CallWindowProcA(richeditProc, hwnd, message, wParam, lParam);
+}
+
+static void test_init_messages(void)
+{
+    WNDCLASSA cls;
+    HWND parent, edit;
+
+    /* register class to capture EN_CHANGE */
+    cls = make_simple_class(ChangeWatcherWndProc, "ChangeWatcherClass");
+    if (!RegisterClassA(&cls)) assert(0);
+
+    /* and a class that sets ENM_CHANGE during WM_CREATE */
+    if (!GetClassInfoA(hmoduleRichEdit, RICHEDIT_CLASS20A, &cls)) return;
+    richeditProc = cls.lpfnWndProc;
+    cls.lpfnWndProc = RichEditWithEventsWndProc;
+    cls.lpszClassName = "RichEditWithEvents";
+    if (!RegisterClassA(&cls)) assert(0);
+
+    parent = CreateWindowA("ChangeWatcherClass", NULL, WS_POPUP|WS_VISIBLE,
+                          0, 0, 200, 60, NULL, NULL, NULL, NULL);
+    ok(parent != 0, "Failed to create parent window\n");
+    change_received = FALSE;
+    edit = new_window("RichEditWithEvents", 0, parent);
+    todo_wine ok(change_received == FALSE, "Creating a RichEdit should not make any EN_CHANGE events\n");
+    DestroyWindow(edit);
+    DestroyWindow(parent);
+}
+
 static void test_EM_SELECTIONTYPE(void)
 {
     HWND hwnd = new_richedit(NULL);
@@ -9091,6 +9132,7 @@ START_TEST( editor )
   test_background();
   test_eop_char_fmt();
   test_para_numbering();
+  test_init_messages();
   test_EM_SELECTIONTYPE();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
