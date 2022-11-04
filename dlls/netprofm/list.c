@@ -94,6 +94,9 @@ struct sink_entry
     IUnknown *unk;
 };
 
+static HRESULT create_connections_enum(
+    struct list_manager *, IEnumNetworkConnections** );
+
 static inline struct list_manager *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, struct list_manager, IConnectionPointContainer_iface);
@@ -109,6 +112,12 @@ static inline struct connection_point *impl_from_IConnectionPoint(
     IConnectionPoint *iface )
 {
     return CONTAINING_RECORD( iface, struct connection_point, IConnectionPoint_iface );
+}
+
+static inline struct list_manager *impl_from_INetworkListManager(
+    INetworkListManager *iface )
+{
+    return CONTAINING_RECORD( iface, struct list_manager, INetworkListManager_iface );
 }
 
 static HRESULT WINAPI connection_point_QueryInterface(
@@ -432,12 +441,42 @@ static HRESULT WINAPI network_GetDomainType(
     return S_OK;
 }
 
+static ULONG WINAPI connection_Release(
+    INetworkConnection  *iface );
+
 static HRESULT WINAPI network_GetNetworkConnections(
     INetwork *iface,
     IEnumNetworkConnections **ppEnumNetworkConnection )
 {
-    FIXME( "%p, %p\n", iface, ppEnumNetworkConnection );
-    return E_NOTIMPL;
+    HRESULT hr;
+    INetworkListManager *network_list_mgr = NULL;
+    struct list_manager *mgr = NULL;
+    struct network *current_network = impl_from_INetwork( iface );
+
+    struct connection *connection, *next;
+    struct network *network;
+
+    if (FAILED(hr = list_manager_create((void**)&network_list_mgr)))
+        return hr;
+
+    mgr = impl_from_INetworkListManager(network_list_mgr);
+
+    if (FAILED(hr = create_connections_enum(mgr, ppEnumNetworkConnection)))
+        return hr;
+
+    TRACE("%p, %s\n", iface, debugstr_guid(&current_network->id));
+
+    LIST_FOR_EACH_ENTRY_SAFE(connection, next, &mgr->connections, struct connection, entry)
+    {
+        network = impl_from_INetwork(connection->network);
+        if (!IsEqualGUID(&network->id, &current_network->id))
+        {
+            TRACE("Filtering %s\n", debugstr_guid(&network->id));
+            list_remove(&connection->entry);
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI network_GetTimeCreatedAndConnected(
@@ -881,12 +920,6 @@ static HRESULT create_networks_enum(
     return S_OK;
 }
 
-static inline struct list_manager *impl_from_INetworkListManager(
-    INetworkListManager *iface )
-{
-    return CONTAINING_RECORD( iface, struct list_manager, INetworkListManager_iface );
-}
-
 struct connections_enum
 {
     IEnumNetworkConnections IEnumNetworkConnections_iface;
@@ -1056,9 +1089,6 @@ static HRESULT WINAPI connections_enum_Reset(
     iter->cursor = list_head( &iter->mgr->connections );
     return S_OK;
 }
-
-static HRESULT create_connections_enum(
-    struct list_manager *, IEnumNetworkConnections** );
 
 static HRESULT WINAPI connections_enum_Clone(
     IEnumNetworkConnections *iface, IEnumNetworkConnections **ret )

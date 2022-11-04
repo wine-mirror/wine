@@ -98,7 +98,7 @@ static void test_INetwork( INetwork *network, INetworkConnection *conn )
 
     conn_iter = NULL;
     hr = INetwork_GetNetworkConnections( network, &conn_iter );
-    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
+    ok( hr == S_OK, "got %08lx\n", hr );
 
     is_connection_present = FALSE;
     if (conn_iter)
@@ -120,7 +120,7 @@ static void test_INetwork( INetwork *network, INetworkConnection *conn )
         IEnumNetworkConnections_Release( conn_iter );
     }
 
-    todo_wine ok( is_connection_present, "connection was not present in network\n" );
+    ok( is_connection_present, "connection was not present in network\n" );
 }
 
 static void test_INetworkConnection( INetworkConnection *conn )
