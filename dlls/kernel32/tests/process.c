@@ -4280,16 +4280,26 @@ static void test_handle_list_attribute(BOOL child, HANDLE handle1, HANDLE handle
 
     if (child)
     {
+        char name1[256], name2[256];
         DWORD flags;
 
         flags = 0;
         ret = GetHandleInformation(handle1, &flags);
         ok(ret, "Failed to get handle info, error %ld.\n", GetLastError());
         ok(flags == HANDLE_FLAG_INHERIT, "Unexpected flags %#lx.\n", flags);
+        ret = GetFileInformationByHandleEx(handle1, FileNameInfo, name1, sizeof(name1));
+        ok(ret, "Failed to get pipe name, error %ld\n", GetLastError());
         CloseHandle(handle1);
-
+        flags = 0;
         ret = GetHandleInformation(handle2, &flags);
-        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected return value, error %ld.\n", GetLastError());
+        if (ret)
+        {
+            ok(!(flags & HANDLE_FLAG_INHERIT), "Parent's handle shouldn't have been inherited\n");
+            ret = GetFileInformationByHandleEx(handle2, FileNameInfo, name2, sizeof(name2));
+            ok(!ret || strcmp(name1, name2), "Parent's handle shouldn't have been inherited\n");
+        }
+        else
+            ok(GetLastError() == ERROR_INVALID_HANDLE, "Unexpected return value, error %ld.\n", GetLastError());
 
         return;
     }
