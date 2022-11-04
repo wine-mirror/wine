@@ -701,7 +701,6 @@ static void test_VerQueryValue_EmptyData(void)
     ret = VerQueryValueW(ver, L"\\StringFileInfo\\FFFF0000\\FileVersion", (LPVOID *)&p, &len);
     ok(ret, "VerQueryValueW error %lu\n", GetLastError());
     ok(len == 0, "VerQueryValueW returned %u, expected 0\n", len);
-    todo_wine
     ok(p == (ver + offsetof(rsrc_section_t, FileVersion_key) + 11 * sizeof(WCHAR)), "p was %p, expected %p\n", p, ver + offsetof(rsrc_section_t, FileVersion_key) + 11 * sizeof(WCHAR));
 
     /* The key behind it, to show that parsing continues just fine */

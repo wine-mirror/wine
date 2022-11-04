@@ -1069,6 +1069,7 @@ static BOOL VersionInfo16_QueryValue( const VS_VERSION_INFO_STRUCT16 *info, LPCS
 static BOOL VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *info, LPCWSTR lpSubBlock,
                                       LPVOID *lplpBuffer, UINT *puLen, BOOL *pbText )
 {
+    PVOID ptr;
     TRACE("lpSubBlock : (%s)\n", debugstr_w(lpSubBlock));
 
     while ( *lpSubBlock )
@@ -1100,7 +1101,11 @@ static BOOL VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *info, LPCW
     }
 
     /* Return value */
-    *lplpBuffer = VersionInfo32_Value( info );
+    ptr = VersionInfo32_Value(info);
+    if ((PBYTE)ptr >= ((PBYTE)info + info->wLength))  /* empty value */
+        ptr = (WCHAR*)info->szKey + wcslen(info->szKey);
+
+    *lplpBuffer = ptr;
     if (puLen)
         *puLen = info->wValueLength;
     if (pbText)
