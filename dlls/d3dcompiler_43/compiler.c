@@ -173,6 +173,23 @@ static void close_include(const struct vkd3d_shader_code *code, void *context)
     ID3DInclude_Close(iface, code->code);
 }
 
+static const char *get_line(const char **ptr)
+{
+    const char *p, *q;
+
+    p = *ptr;
+    if (!(q = strstr(p, "\n")))
+    {
+        if (!*p)
+            return NULL;
+        *ptr += strlen(p);
+        return p;
+    }
+    *ptr = q + 1;
+
+    return p;
+}
+
 static HRESULT preprocess_shader(const void *data, SIZE_T data_size, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, ID3DBlob **shader_blob,
         ID3DBlob **messages_blob)
@@ -486,8 +503,25 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
     }
 
     ret = vkd3d_shader_compile(&compile_info, &byte_code, &messages);
+
+    if (ret)
+        ERR("Failed to compile shader, vkd3d result %d.\n", ret);
+
     if (messages)
     {
+        if (*messages && ERR_ON(d3dcompiler))
+        {
+            const char *ptr = messages;
+            const char *line;
+
+            ERR("Shader log:\n");
+            while ((line = get_line(&ptr)))
+            {
+                ERR("    %.*s", (int)(ptr - line), line);
+            }
+            ERR("\n");
+        }
+
         if (messages_blob)
         {
             size_t size = strlen(messages);
