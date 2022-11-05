@@ -942,7 +942,7 @@
 @ varargs _scprintf_p(str)
 @ varargs _scprintf_p_l(str ptr)
 @ varargs _scwprintf(wstr)
-@ stub _scwprintf_l
+@ varargs _scwprintf_l(wstr ptr)
 @ stub _scwprintf_p
 @ stub _scwprintf_p_l
 @ cdecl _searchenv(str str ptr)

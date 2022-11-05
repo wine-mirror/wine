@@ -1620,6 +1620,20 @@ int WINAPIV sprintf_s( char *str, size_t num, const char *format, ... )
 }
 
 /*********************************************************************
+ *		_scwprintf_l (MSVCRT.@)
+ */
+int WINAPIV _scwprintf_l( const wchar_t *format, _locale_t locale, ... )
+{
+    va_list ap;
+    int r;
+
+    va_start( ap, locale );
+    r = _vsnwprintf_l( NULL, INT_MAX, format, locale, ap );
+    va_end( ap );
+    return r;
+}
+
+/*********************************************************************
  *		_scwprintf (MSVCRT.@)
  */
 int WINAPIV _scwprintf( const wchar_t *format, ... )
