@@ -1036,7 +1036,7 @@
 @ cdecl _utime32(str ptr)
 @ cdecl _utime64(str ptr)
 @ cdecl _vcprintf(str ptr)
-# stub _vcprintf_l(str ptr ptr)
+@ cdecl _vcprintf_l(str ptr ptr)
 # stub _vcprintf_p(str ptr)
 # stub _vcprintf_p_l(str ptr ptr)
 # stub _vcprintf_s(str ptr)
